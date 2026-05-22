@@ -264,17 +264,45 @@ function MenuEngineeringDashboard({ onBackToPlatform }) {
     [menuRows, unitsById]
   );
 
-  const completeRows = useMemo(() => rowsWithUnits.filter((r) => r.price != null && r.trueCost != null), [rowsWithUnits]);
-  const averageVolume = completeRows.length ? completeRows.reduce((sum, r) => sum + Number(r.units || 0), 0) / completeRows.length : 0;
-  const volumeThreshold = averageVolume;
-  const marginThreshold = Number(manualMargin || 0);
+    const completeRowsWithUnits = useMemo(
+    () =>
+      rowsWithUnits.filter(
+        (r) =>
+          r.price != null &&
+          r.trueCost != null &&
+          r.price > 0 &&
+          Number(r.units || 0) > 0
+      ),
+    [rowsWithUnits]
+  );
+
+  const averageActiveVolume = completeRowsWithUnits.length
+    ? completeRowsWithUnits.reduce((sum, r) => sum + Number(r.units || 0), 0) / completeRowsWithUnits.length
+    : 0;
 
   const engineered = useMemo(
     () =>
       rowsWithUnits.map((row) => {
-        if (row.price == null || row.unitProfit == null) return { ...row, engineering: "COMPLIMENTARY", marginRank: "—", volumeRank: "—" };
-        const marginHigh = row.unitProfit >= marginThreshold;
-        const volumeHigh = Number(row.units || 0) >= volumeThreshold;
+        if (row.price == null || row.trueCost == null || row.price <= 0) {
+          return {
+            ...row,
+            engineering: "COMPLIMENTARY",
+            marginRank: "—",
+            volumeRank: "—",
+          };
+        }
+
+        const foodCostPct = row.trueCost / row.price;
+        const targetFcDecimal =
+          parsedTargetFoodCost == null ? 0.3 : Number(parsedTargetFoodCost) / 100;
+
+        const marginHigh = foodCostPct <= targetFcDecimal;
+
+        const units = Number(row.units || 0);
+        const volumeHigh =
+          units > 0 &&
+          (averageActiveVolume === 0 || units >= averageActiveVolume);
+
         return {
           ...row,
           engineering: classify(marginHigh, volumeHigh),
@@ -282,7 +310,7 @@ function MenuEngineeringDashboard({ onBackToPlatform }) {
           volumeRank: volumeHigh ? "HIGH" : "LOW",
         };
       }),
-    [rowsWithUnits, marginThreshold, volumeThreshold]
+    [rowsWithUnits, parsedTargetFoodCost, averageActiveVolume]
   );
 
   const filtered = useMemo(() => {
