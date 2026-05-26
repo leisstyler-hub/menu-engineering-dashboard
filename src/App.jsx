@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 import { Search, Star, TrendingUp, HelpCircle, Dog, SlidersHorizontal, ChefHat, DollarSign } from "lucide-react";
+import { Analytics } from '@vercel/analytics/react';
 
 import MENUWORKS_ITEMS from "./data/menuItems.json";
 
@@ -143,10 +144,20 @@ export default function CulinaryToolsPlatformApp() {
   const [activeTool, setActiveTool] = useState("home");
 
   if (activeTool === "menuEngineering") {
-    return <MenuEngineeringDashboard onBackToPlatform={() => setActiveTool("home")} />;
+    return (
+      <>
+        <MenuEngineeringDashboard onBackToPlatform={() => setActiveTool("home")} />
+        <Analytics />
+      </>
+    );
   }
 
-  return <LandingPage onOpenMenuEngineering={() => setActiveTool("menuEngineering")} />;
+  return (
+    <>
+      <LandingPage onOpenMenuEngineering={() => setActiveTool("menuEngineering")} />
+      <Analytics />
+    </>
+  );
 }
 
 function LandingPage({ onOpenMenuEngineering }) {
