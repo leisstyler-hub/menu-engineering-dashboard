@@ -2,7 +2,11 @@
 // Required environment variables:
 // - SMARTSHEET_ACCESS_TOKEN
 // - SMARTSHEET_SHEET_ID
-// This route upserts rows by the app's "Record ID" column so Save Draft / Submit Rotation can update the same café/week instead of duplicating rows.
+// Supports:
+// - GET: load rows from Smartsheet for app read/Executive View
+// - POST action=upsertRecords: add/update rows by Record ID
+// Required-column validation is intentionally limited to columns used by the submitted payload,
+// so future/optional database fields do not block current Neighborhood Rotation writes.
 
 const SMARTSHEET_API_BASE = "https://api.smartsheet.com/2.0";
 
@@ -56,7 +60,7 @@ function getCellValue(row, columnId) {
 
 function buildSmartsheetCells(record, columnMap) {
   return Object.entries(record)
-    .filter(([columnName]) => columnMap.has(columnName))
+    .filter(([columnName]) => !columnName.startsWith("__") && columnMap.has(columnName))
     .map(([columnName, value]) => ({
       columnId: columnMap.get(columnName),
       value: value === undefined || value === null ? "" : value,
@@ -75,6 +79,18 @@ function rowToRecord(row, columnsById) {
   return record;
 }
 
+function usedColumnsFromRecords(records = [], recordIdColumn = "Record ID") {
+  const used = new Set([recordIdColumn]);
+  for (const record of records) {
+    for (const [columnName, value] of Object.entries(record || {})) {
+      if (columnName.startsWith("__")) continue;
+      if (value === undefined || value === null || value === "") continue;
+      used.add(columnName);
+    }
+  }
+  return Array.from(used);
+}
+
 export default async function handler(req, res) {
   const sheetId = process.env.SMARTSHEET_SHEET_ID;
   if (!sheetId) {
@@ -89,6 +105,8 @@ export default async function handler(req, res) {
 
       return res.status(200).json({
         ok: true,
+        sheetId,
+        sheetName: sheet.name || "",
         columns: (sheet.columns || []).map((column) => column.title),
         records,
         count: records.length,
@@ -120,12 +138,20 @@ export default async function handler(req, res) {
     const sheet = await smartsheetFetch(`/sheets/${sheetId}`);
     const columnMap = columnMapByTitle(sheet);
 
-    const missingColumns = requiredColumns.filter((columnName) => !columnMap.has(columnName));
+    const requiredForThisPayload = requiredColumns.length
+      ? requiredColumns
+      : usedColumnsFromRecords(records, recordIdColumn);
+
+    const missingColumns = requiredForThisPayload.filter((columnName) => !columnMap.has(columnName));
     if (missingColumns.length) {
       return res.status(400).json({
         ok: false,
-        message: `Smartsheet is missing ${missingColumns.length} required column${missingColumns.length === 1 ? "" : "s"}.`,
+        message: `Smartsheet is missing ${missingColumns.length} required column${missingColumns.length === 1 ? "" : "s"} used by this submission.`,
         missingColumns,
+        requiredColumnMode: context.requiredColumnMode || "used-columns-only",
+        sheetId,
+        sheetName: sheet.name || "",
+        availableColumns: (sheet.columns || []).map((column) => column.title),
       });
     }
 
@@ -134,6 +160,7 @@ export default async function handler(req, res) {
       return res.status(400).json({
         ok: false,
         message: `Missing required Record ID column: ${recordIdColumn}`,
+        missingColumns: [recordIdColumn],
       });
     }
 
@@ -177,6 +204,10 @@ export default async function handler(req, res) {
       ok: true,
       action,
       context,
+      sheetId,
+      sheetName: sheet.name || "",
+      requiredColumnMode: context.requiredColumnMode || "used-columns-only",
+      requiredColumnCount: requiredForThisPayload.length,
       synced: toUpdate.length + toAdd.length,
       updated: toUpdate.length,
       added: toAdd.length,
