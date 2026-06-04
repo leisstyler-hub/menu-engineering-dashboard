@@ -64,18 +64,43 @@ function buildSmartsheetCells(record, columnMap) {
     }));
 }
 
-export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    res.setHeader("Allow", "POST");
-    return res.status(405).json({ ok: false, message: "Method not allowed" });
+function rowToRecord(row, columnsById) {
+  const record = {};
+  for (const cell of row.cells || []) {
+    const title = columnsById.get(String(cell.columnId));
+    if (!title) continue;
+    record[title] = cell.displayValue ?? cell.value ?? "";
   }
+  record.__smartsheetRowId = row.id;
+  return record;
+}
 
+export default async function handler(req, res) {
   const sheetId = process.env.SMARTSHEET_SHEET_ID;
   if (!sheetId) {
     return res.status(500).json({ ok: false, message: "Missing SMARTSHEET_SHEET_ID environment variable" });
   }
 
   try {
+    if (req.method === "GET") {
+      const sheet = await smartsheetFetch(`/sheets/${sheetId}`);
+      const columnsById = new Map((sheet.columns || []).map((column) => [String(column.id), column.title]));
+      const records = (sheet.rows || []).map((row) => rowToRecord(row, columnsById));
+
+      return res.status(200).json({
+        ok: true,
+        columns: (sheet.columns || []).map((column) => column.title),
+        records,
+        count: records.length,
+        message: `Loaded ${records.length} row${records.length === 1 ? "" : "s"} from Smartsheet.`,
+      });
+    }
+
+    if (req.method !== "POST") {
+      res.setHeader("Allow", "GET, POST");
+      return res.status(405).json({ ok: false, message: "Method not allowed" });
+    }
+
     const {
       action,
       records = [],
