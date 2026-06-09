@@ -2,6 +2,8 @@
 
 ## 2026-06-08
 
+- Fixed the Neighborhood Rotations screen after the feature split by importing the shared `VersionStamp` component.
+- Set visible app version to `v2026-06-08-rotations-version-import-fix`.
 - Set visible app version to `v2026-06-08-backbone-feature-split`.
 - Linked the local Codex workspace to the existing Vercel project.
 - Moved the app entry into a stable shell at `src/App.jsx`.

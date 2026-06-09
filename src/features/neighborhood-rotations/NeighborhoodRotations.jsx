@@ -6,6 +6,7 @@ import MENUWORKS_ITEMS from "../../data/menuItems.json";
 import { loadRecordsFromSmartsheet, syncRecordsToSmartsheet } from "../../integrations/smartsheet/client.js";
 import { NEIGHBORHOOD_ROTATIONS_STORAGE_KEY, SMARTSHEET_COLUMNS, SMARTSHEET_DATABASE_STORAGE_KEY, SMARTSHEET_RECORD_TYPES, SMARTSHEET_SELECTION_TYPES, STATION_SMARTSHEET_LABELS } from "../../integrations/smartsheet/contract.js";
 import { money, pct, titleCase } from "../../shared/formatting.js";
+import VersionStamp from "../../shared/ui/VersionStamp.jsx";
 
 const DISTRICTS = {
   South: ["Doppler", "Day 1", "Nitro", "Re:Invent"],
