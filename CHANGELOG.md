@@ -1,0 +1,19 @@
+# Changelog
+
+## 2026-06-08
+
+- Set visible app version to `v2026-06-08-backbone-feature-split`.
+- Linked the local Codex workspace to the existing Vercel project.
+- Moved the app entry into a stable shell at `src/App.jsx`.
+- Created a small app coordinator at `src/app/CulinaryToolsPlatformApp.jsx`.
+- Moved the platform landing screen to `src/app/LandingPage.jsx`.
+- Moved Menu Engineering to `src/features/menu-engineering/MenuEngineeringDashboard.jsx`.
+- Moved Neighborhood Rotations to `src/features/neighborhood-rotations/NeighborhoodRotations.jsx`.
+- Moved Ladle Compliance to `src/features/ladle-compliance/LadleComplianceDashboard.jsx`.
+- Extracted shared formatting helpers into `src/shared/formatting.js`.
+- Extracted the app version into `src/shared/appConfig.js`.
+- Extracted `VersionStamp` into `src/shared/ui/VersionStamp.jsx`.
+- Extracted Smartsheet column/type constants into `src/integrations/smartsheet/contract.js`.
+- Extracted Smartsheet load/sync helpers into `src/integrations/smartsheet/client.js`.
+- Added feature folders for menu engineering, neighborhood rotations, and Ladle compliance.
+- Added build verification guidance and ignore rules for generated files.
