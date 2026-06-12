@@ -1198,8 +1198,8 @@ export default function NeighborhoodRotations({ onBackToPlatform }) {
           <>
             <section className="grid grid-cols-1 lg:grid-cols-4 gap-4">
               <ControlCard label="District" value={district} setValue={setDistrict} options={Object.keys(DISTRICTS)} placeholder="Select district..." />
-              <ControlCard label="Week" value={week} setValue={setWeek} options={ROTATION_WEEKS} />
               <ControlCard label="Café" value={selectedCafe} setValue={setSelectedCafe} options={cafes} placeholder="Select café/unit..." disabled={!district} />
+              <ControlCard label="Week" value={week} setValue={setWeek} options={ROTATION_WEEKS} />
               <StatusCard ready={Boolean(district && selectedCafe)} conflicts={Object.values(conflictMenus).filter((count) => count > 1).length} completed={districtWeekRows.filter((row) => row.menu).length} total={cafes.length} />
             </section>
             <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">

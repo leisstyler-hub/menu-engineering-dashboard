@@ -2,6 +2,8 @@
 
 ## 2026-06-12
 
+- Reordered Chef Planner selector cards to `District`, `Café`, then `Week`.
+- Set visible app version to `2026.06.12.003-ui-planner-selector-order`.
 - Added source-detail warnings in Neighborhood Rotations item description panels so incomplete legacy/uploaded rows no longer look like confirmed no-allergen results.
 - Renamed remaining station item rollup panels to `Items Description`.
 - Flagged the MenuWorks source-data completeness issue found in the local dataset: 113 unique item names are missing both description and allergen detail.
