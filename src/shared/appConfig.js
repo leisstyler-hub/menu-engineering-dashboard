@@ -1,1 +1,1 @@
-export const APP_VERSION_STAMP = "2026.06.12.001-fix-items-description-rollup";
+export const APP_VERSION_STAMP = "2026.06.12.002-fix-source-detail-warnings";

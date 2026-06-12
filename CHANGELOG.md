@@ -2,6 +2,10 @@
 
 ## 2026-06-12
 
+- Added source-detail warnings in Neighborhood Rotations item description panels so incomplete legacy/uploaded rows no longer look like confirmed no-allergen results.
+- Renamed remaining station item rollup panels to `Items Description`.
+- Flagged the MenuWorks source-data completeness issue found in the local dataset: 113 unique item names are missing both description and allergen detail.
+- Set visible app version to `2026.06.12.002-fix-source-detail-warnings`.
 - Renamed the Neighborhood Rotations selected-items panel to `Items Description`.
 - Fixed selected item detail lookup so one selected item no longer expands into every matching MenuWorks row.
 - Improved allergen and description handling for MenuWorks rows that store allergens as summaries or detail flags.

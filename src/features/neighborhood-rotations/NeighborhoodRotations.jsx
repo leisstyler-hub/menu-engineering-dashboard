@@ -498,6 +498,7 @@ const getDescription = (row) =>
   row.ingredients ||
   row.menuItemNotes ||
   "";
+const isEnhancedMenuWorksRow = (row) => String(row.dataSource || "").includes("enhanced");
 const getAllergens = (row) => {
   if (Array.isArray(row.allergens) && row.allergens.length) return row.allergens.join(", ");
   if (typeof row.allergens === "string" && row.allergens.trim()) return row.allergens;
@@ -517,6 +518,8 @@ const getAllergens = (row) => {
   }
   return "";
 };
+const isAllergenDataMissing = (row) => !getAllergens(row) && !isEnhancedMenuWorksRow(row);
+const isSourceDetailMissing = (row) => !getDescription(row) || isAllergenDataMissing(row);
 const stationLabel = (cafe, stationKey) => {
   if (cafe === "Doppler" && stationKey === "global") return "Wok Xahn";
   if (cafe === "Day 1" && stationKey === "grill") return "Adelaide's";
@@ -920,20 +923,20 @@ function globalSelectedRows(rotation, options) {
   return rowsForSelectedNames([...baseNames, ...blockNames], options);
 }
 
-function grillSelectedRows(rotation) {
-  return rowsForSelectedNames([rotation.grill?.regionalSpecial, rotation.grill?.locationSpotlight]);
+function grillSelectedRows(rotation, options) {
+  return rowsForSelectedNames([rotation.grill?.regionalSpecial, rotation.grill?.locationSpotlight], options);
 }
 
-function ltoSelectedRows(rotation, stationKey) {
-  return rowsForSelectedNames([...(rotation.ltos?.[stationKey] || []), ...(rotation.uploadedLtos?.[stationKey] || [])]);
+function ltoSelectedRows(rotation, stationKey, options) {
+  return rowsForSelectedNames([...(rotation.ltos?.[stationKey] || []), ...(rotation.uploadedLtos?.[stationKey] || [])], options);
 }
 
-function wokSelectedRows(rotation) {
-  return rowsForSelectedNames([...(rotation.ltos?.wokEntrees || []), ...(rotation.ltos?.wokSides || []), ...(rotation.ltos?.wokBase || []), ...(rotation.ltos?.wokSubRecipes || [])]);
+function wokSelectedRows(rotation, options) {
+  return rowsForSelectedNames([...(rotation.ltos?.wokEntrees || []), ...(rotation.ltos?.wokSides || []), ...(rotation.ltos?.wokBase || []), ...(rotation.ltos?.wokSubRecipes || [])], options);
 }
 
-function carverySelectedRows(rotation) {
-  return rowsForSelectedNames(Object.values(rotation.carvery || {}));
+function carverySelectedRows(rotation, options) {
+  return rowsForSelectedNames(Object.values(rotation.carvery || {}), options);
 }
 
 function selectedItems(rotation) {
@@ -2007,7 +2010,7 @@ function ReInventGlobalSection({ cafe, week, rotation, menuOptions, stationOptio
           );
         })}
       </div>
-      <StationSelectedList title="Selected ReInvent Global Items Rollup" items={globalSelectedRows(rotation)} />
+      <StationSelectedList title="Items Description" items={globalSelectedRows(rotation, { unique: true })} />
     </CollapsibleStation>
   );
 }
@@ -2046,14 +2049,20 @@ function CollapsibleStation({ title, eyebrow, complete, children }) {
   );
 }
 
-function StationSelectedList({ title = "Selected Items Rollup", items }) {
+function StationSelectedList({ title = "Items Description", items }) {
   const [isOpen, setIsOpen] = useState(false);
+  const missingDetailCount = items.filter(isSourceDetailMissing).length;
+  const descriptionMissingCount = items.filter((row) => !getDescription(row)).length;
+  const reviewCount = Math.max(missingDetailCount, descriptionMissingCount);
   return (
     <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
       <button type="button" onClick={() => setIsOpen((value) => !value)} className="w-full flex items-center justify-between gap-3 text-left">
         <div>
           <p className="text-sm font-bold text-slate-900">{title}</p>
-          <p className="text-xs text-slate-500 mt-1">{items.length} selected • descriptions, diet tags, and allergens</p>
+          <p className="text-xs text-slate-500 mt-1">
+            {items.length} selected - descriptions, diet tags, and allergens
+            {reviewCount ? ` - ${reviewCount} need source detail` : ""}
+          </p>
         </div>
         <span className="rounded-full bg-slate-900 text-white px-3 py-1 text-xs font-bold inline-flex items-center gap-1">
           {isOpen ? "Hide" : "View"} {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -2062,22 +2071,32 @@ function StationSelectedList({ title = "Selected Items Rollup", items }) {
       {isOpen && (
         <div className="mt-4 space-y-2">
           {!items.length && <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-500">No items selected yet.</div>}
+          {Boolean(reviewCount) && (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+              <span className="font-bold">Source detail check:</span> {reviewCount} selected item{reviewCount === 1 ? "" : "s"} need MenuWorks detail review before using descriptions or allergen language externally.
+            </div>
+          )}
           {items.map((row, index) => {
             const diet = getDiet(row);
             const allergens = String(getAllergens(row) || "").split(",").map((value) => value.trim()).filter(Boolean);
-            const description = getDescription(row) || "No description available.";
+            const allergenDataMissing = isAllergenDataMissing(row);
+            const missingSourceDetail = isSourceDetailMissing(row);
+            const description = getDescription(row) || "Description missing in source data.";
             return (
-              <div key={`${getItemIdentity(row)}-${index}`} className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+              <div key={`${getItemIdentity(row)}-${index}`} className={`rounded-2xl border p-3 ${missingSourceDetail ? "border-amber-200 bg-amber-50/70" : "border-slate-200 bg-slate-50"}`}>
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <p className="font-bold text-slate-900">{getDisplayName(row)}</p>
                   <div className="flex flex-wrap justify-end gap-2">
+                    {missingSourceDetail && <span className="rounded-full bg-amber-100 border border-amber-200 px-3 py-1 text-xs font-bold text-amber-800">Source Detail Missing</span>}
                     {diet && <span className="rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-bold text-emerald-800">{diet}</span>}
                     {allergens.length ? allergens.map((allergen) => (
                       <span key={allergen} className="rounded-full bg-rose-50 border border-rose-200 px-3 py-1 text-xs font-bold text-rose-800">{titleCase(allergen)}</span>
-                    )) : <span className="rounded-full bg-slate-100 border border-slate-200 px-3 py-1 text-xs font-bold text-slate-500">No Allergens Listed</span>}
+                    )) : allergenDataMissing
+                      ? <span className="rounded-full bg-amber-100 border border-amber-200 px-3 py-1 text-xs font-bold text-amber-800">Allergen Data Missing</span>
+                      : <span className="rounded-full bg-slate-100 border border-slate-200 px-3 py-1 text-xs font-bold text-slate-500">No Allergens Listed</span>}
                   </div>
                 </div>
-                <p className="text-sm text-slate-600 mt-1">{description}</p>
+                <p className={`text-sm mt-1 ${missingSourceDetail ? "text-amber-900" : "text-slate-600"}`}>{description}</p>
               </div>
             );
           })}
@@ -2143,7 +2162,7 @@ function GrillSection({ cafe, rotation, updateGrill }) {
         <GrillSelect label="Regional Special" value={rotation.grill?.regionalSpecial || ""} onChange={(value) => updateGrill("regionalSpecial", value)} items={options} />
         <GrillSelect label="Location Spotlight" value={rotation.grill?.locationSpotlight || ""} onChange={(value) => updateGrill("locationSpotlight", value)} items={options} />
       </div>
-      <StationSelectedList title="Selected Grill Items Rollup" items={grillSelectedRows(rotation)} />
+      <StationSelectedList title="Items Description" items={grillSelectedRows(rotation, { unique: true })} />
     </div>
   );
 }
@@ -2168,7 +2187,7 @@ function SimpleLTOSection({ stationKey, title, slots, values = [], uploaded = []
           </div>
         ))}
       </div>
-      <StationSelectedList title={`Selected ${title} Rollup`} items={ltoSelectedRows({ ltos: { [stationKey]: values }, uploadedLtos: { [stationKey]: uploaded } }, stationKey)} />
+      <StationSelectedList title="Items Description" items={ltoSelectedRows({ ltos: { [stationKey]: values }, uploadedLtos: { [stationKey]: uploaded } }, stationKey, { unique: true })} />
     </CollapsibleStation>
   );
 }
@@ -2182,7 +2201,7 @@ function WokSection({ rotation, updateLto }) {
         <PickerGroup title="Wok Base" limit="1 base" items={stationPool("wokBase")} values={rotation.ltos?.wokBase || EMPTY_ROTATION.ltos.wokBase} onChange={(index, value) => updateLto("wokBase", index, value)} />
         <PickerGroup title="Wok Sub Recipes" limit="up to 2" items={stationPool("wokSubRecipes")} values={rotation.ltos?.wokSubRecipes || EMPTY_ROTATION.ltos.wokSubRecipes} onChange={(index, value) => updateLto("wokSubRecipes", index, value)} />
       </div>
-      <StationSelectedList title="Selected Wok Items Rollup" items={wokSelectedRows(rotation)} />
+      <StationSelectedList title="Items Description" items={wokSelectedRows(rotation, { unique: true })} />
     </CollapsibleStation>
   );
 }
@@ -2213,7 +2232,7 @@ function CarverySection({ rotation, updateCarvery }) {
           </div>
         ))}
       </div>
-      <StationSelectedList title="Selected Carvery Items Rollup" items={carverySelectedRows(rotation)} />
+      <StationSelectedList title="Items Description" items={carverySelectedRows(rotation, { unique: true })} />
     </CollapsibleStation>
   );
 }
