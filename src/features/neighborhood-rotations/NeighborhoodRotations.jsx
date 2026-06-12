@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
-import { ArrowLeft, AlertTriangle, Building2, CalendarDays, CheckCircle2, ChevronDown, ChevronUp, Upload } from "lucide-react";
+import { ArrowLeft, AlertTriangle, CalendarDays, CheckCircle2, ChevronDown, ChevronUp, Upload } from "lucide-react";
 
 import MENUWORKS_ITEMS from "../../data/menuItems.json";
 import { loadRecordsFromSmartsheet, syncRecordsToSmartsheet } from "../../integrations/smartsheet/client.js";
@@ -1423,18 +1423,20 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, updateRota
   };
 
   return (
-    <div className="rounded-[2rem] bg-white border border-slate-200 p-6 shadow-2xl">
+    <div className="rounded-lg bg-white border border-slate-200 p-6 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm uppercase tracking-[0.2em] text-slate-400">Chef Planner</p>
+          <p className="text-xs uppercase tracking-[0.18em] text-slate-500 font-bold">Chef Planner</p>
           <h2 className="text-3xl font-bold mt-1">{cafe}</h2>
           {cafe === "Nitro" && <p className="text-sm text-slate-500 mt-1">Frontier follows Nitro for tracking.</p>}
         </div>
-        <Building2 className="text-slate-300" size={32} />
+        <span className={`rounded-full border px-3 py-1 text-xs font-bold ${rotation.status === "Submitted" ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-amber-50 border-amber-200 text-amber-800"}`}>
+          {rotation.status || "Draft"}
+        </span>
       </div>
 
       <StationPills cafe={cafe} stations={cafeStations} />
-      <SubmitBar rotation={rotation} cafe={cafe} requirements={requirements} canSubmit={canSubmitRotation} onSaveDraft={markDraft} onSubmit={submitRotation} />
+      <PlannerSnapshot rotation={rotation} items={items} />
       <PlannerControlsPanel cafe={cafe} copiedRotation={copiedRotation} onCopy={copyCurrentRotation} onLoad={loadCopiedRotation} preview={preview} setPreview={setPreview} applyPreview={applyPreview} week={week} printRows={printRows} />
       <CompactSystemStatusPanel district={district} cafe={cafe} week={week} rotation={rotation} loadStatus={databaseLoadStatus} syncStatus={databaseSyncStatus} onRefreshDatabase={onRefreshDatabase} />
       <StationCostOverview rows={stationCostOverview} />
@@ -1458,6 +1460,39 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, updateRota
           selectedItems={items}
         />
       ))}
+      <SubmitBar rotation={rotation} cafe={cafe} requirements={requirements} canSubmit={canSubmitRotation} onSaveDraft={markDraft} onSubmit={submitRotation} />
+    </div>
+  );
+}
+
+function PlannerSnapshot({ rotation, items }) {
+  const trueCostRange = selectedTrueCostRange(items);
+  const foodCostRange = selectedFoodCostRange(items);
+  const foodCostMidpoint = foodCostRange.low != null && foodCostRange.high != null ? (foodCostRange.low + foodCostRange.high) / 2 : null;
+  const foodCostTone = foodCostMidpoint == null ? "neutral" : foodCostMidpoint > 0.34 ? "amber" : "green";
+
+  return (
+    <div className="mt-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+      <PlannerSnapshotCard label="Global Menu" value={rotation.menu || "Not selected"} note={rotation.station || "choose menu and station theme"} />
+      <PlannerSnapshotCard label="Station Theme" value={rotation.station || "Not selected"} note="filters item choices" />
+      <PlannerSnapshotCard label="True Cost Range" value={moneyRange(trueCostRange)} note={trueCostRangeNote(trueCostRange)} />
+      <PlannerSnapshotCard label="Mix Food Cost %" value={pctRange(foodCostRange)} note={foodCostRangeNote(foodCostRange)} tone={foodCostTone} />
+    </div>
+  );
+}
+
+function PlannerSnapshotCard({ label, value, note, tone = "neutral" }) {
+  const toneClass = tone === "amber"
+    ? "border-amber-200 bg-amber-50 text-amber-900"
+    : tone === "green"
+      ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+      : "border-slate-200 bg-white text-slate-900";
+
+  return (
+    <div className={`rounded-lg border p-4 shadow-sm ${toneClass}`}>
+      <p className="text-xs font-bold uppercase text-slate-500">{label}</p>
+      <p className="mt-2 text-xl font-bold leading-tight">{value}</p>
+      <p className="mt-2 text-xs opacity-70">{note}</p>
     </div>
   );
 }

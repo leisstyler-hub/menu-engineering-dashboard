@@ -2,6 +2,8 @@
 
 ## 2026-06-12
 
+- Added the Figma-inspired Neighborhood Rotations planner polish: tighter planner card, status pill, operating snapshot metrics, and submit-after-planning flow.
+- Set visible app version to `2026.06.12.006-ui-figma-rotations-planner`.
 - Replaced generic home overview panels with culinary program metrics: tools, menu items, menus, and costed items.
 - Set visible app version to `2026.06.12.005-ui-program-overview-metrics`.
 - Redesigned the platform home screen into a tighter operations console with clearer tool cards, status cues, and product-style navigation.
