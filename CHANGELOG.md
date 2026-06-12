@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-06-12
+
+- Renamed the Neighborhood Rotations selected-items panel to `Items Description`.
+- Fixed selected item detail lookup so one selected item no longer expands into every matching MenuWorks row.
+- Improved allergen and description handling for MenuWorks rows that store allergens as summaries or detail flags.
+- Set visible app version to `2026.06.12.001-fix-items-description-rollup`.
+
 ## 2026-06-11
 
 - Fixed the Neighborhood Rotations cafe-selection screen by importing `APP_VERSION_STAMP` for the system status panel.

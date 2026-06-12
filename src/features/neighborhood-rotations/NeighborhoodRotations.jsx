@@ -140,7 +140,7 @@ const rotationKey = (week, district, cafe) => `${week}|${district}|${cafe}`;
 const rotationRecordParentId = (week, district, cafe) => `rotation|${parseWeekStart(week) || week}|${district}|${cafe}`;
 const makeDatabaseRecordId = (...parts) => parts.filter(Boolean).join("|").replace(/\s+/g, " ").trim();
 const compactValues = (values = []) => values.filter((value) => String(value || "").trim());
-const selectedRowForName = (name) => MENUWORKS_ITEMS.find((row) => getItemIdentity(row) === name) || makeUploadedItem(name);
+const selectedRowForName = (name) => findBestRowForName(name) || makeUploadedItem(name);
 
 function baseDatabaseRecord({ parentId, recordId, recordType, status, district, cafe, week, stationKey, stationDisplayName, notes }) {
   return {
@@ -187,7 +187,7 @@ function selectionDatabaseRecord({ parentId, district, cafe, week, rotation, sta
     [SMARTSHEET_COLUMNS.price]: price ?? "",
     [SMARTSHEET_COLUMNS.trueCost]: trueCost ?? "",
     [SMARTSHEET_COLUMNS.foodCostPct]: foodCost == null ? "" : Number((foodCost * 100).toFixed(1)),
-    [SMARTSHEET_COLUMNS.enticingDescription]: row.enticingDescription || row.description || row["Enticing Description"] || "",
+    [SMARTSHEET_COLUMNS.enticingDescription]: getDescription(row),
     [SMARTSHEET_COLUMNS.dietTags]: getDiet(row),
     [SMARTSHEET_COLUMNS.allergens]: getAllergens(row),
   };
@@ -474,13 +474,49 @@ const getItemIdentity = (row) =>
   row["Short Name"] ||
   "";
 
+const normalizeItemName = (value = "") => String(value || "").toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, " ").trim();
+const getItemAliases = (row) => [
+  row.item,
+  row.recipeName,
+  row.displayName,
+  row.shortName,
+  row["Recipe Name"],
+  row["Short Name"]
+].map(normalizeItemName).filter(Boolean);
+
 const getDisplayName = (row) => titleCase(row.displayName || row.shortName || row.item || row.recipeName || row["Recipe Name"] || "");
 const getMenuName = (row) => row.menu || row.menuName || row["Menu Name"] || "";
 const getStationName = (row) => row.station || row.stationName || row["Station"] || "";
 const getPrice = (row) => row.price ?? row.sellPrice ?? row["Sell Price"] ?? null;
 const getTrueCost = (row) => row.trueCost ?? row.itemCostWithWaste ?? row["Item + Waste Cost"] ?? row["Recipe Cost"] ?? row.recipeCost ?? null;
 const getCategory = (row) => String(row.category || row.itemType || row["Item Type"] || row.classification || "").toLowerCase();
-const getAllergens = (row) => Array.isArray(row.allergens) ? row.allergens.join(", ") : (row.allergens || row.allergenSummary || row["Allergens"] || "");
+const getDescription = (row) =>
+  row.enticingDescription ||
+  row.description ||
+  row["Enticing Description"] ||
+  row.ingredientsCommonName ||
+  row.ingredients ||
+  row.menuItemNotes ||
+  "";
+const getAllergens = (row) => {
+  if (Array.isArray(row.allergens) && row.allergens.length) return row.allergens.join(", ");
+  if (typeof row.allergens === "string" && row.allergens.trim()) return row.allergens;
+  if (typeof row.allergenSummary === "string" && row.allergenSummary.trim()) {
+    return row.allergenSummary
+      .split(",")
+      .map((value) => value.replace(/^contains\s+/i, "").trim())
+      .filter(Boolean)
+      .join(", ");
+  }
+  if (typeof row["Allergens"] === "string" && row["Allergens"].trim()) return row["Allergens"];
+  if (row.allergenDetails && typeof row.allergenDetails === "object") {
+    return Object.entries(row.allergenDetails)
+      .filter(([, value]) => /^(yes|contains|at risk)$/i.test(String(value || "").trim()))
+      .map(([allergen, value]) => String(value).toLowerCase() === "at risk" ? `${allergen} (At Risk)` : allergen)
+      .join(", ");
+  }
+  return "";
+};
 const stationLabel = (cafe, stationKey) => {
   if (cafe === "Doppler" && stationKey === "global") return "Wok Xahn";
   if (cafe === "Day 1" && stationKey === "grill") return "Adelaide's";
@@ -515,7 +551,7 @@ function getDiet(row) {
   ].map(normalize).filter(Boolean).join(" ").toLowerCase();
 
   const name = String(getItemIdentity(row)).toLowerCase();
-  const description = String(row.enticingDescription || row.description || row["Enticing Description"] || "").toLowerCase();
+  const description = String(getDescription(row)).toLowerCase();
   const text = `${name} ${description}`;
 
   if (row.vegan === true || combined.includes("vegan") || combined.includes("plant-based") || combined.includes("plant based")) return "Vegan";
@@ -843,19 +879,45 @@ function leadershipRead(rows, conflictMenus) {
   return parts.join(" ");
 }
 
-function rowsForSelectedNames(names = []) {
-  const cleanNames = names.filter(Boolean);
-  const matched = MENUWORKS_ITEMS.filter((row) => cleanNames.includes(getItemIdentity(row)));
-  const missing = cleanNames.filter((name) => !matched.some((row) => getItemIdentity(row) === name)).map(makeUploadedItem);
-  return [...matched, ...missing];
+function itemDetailScore(row) {
+  return [
+    getDescription(row) ? 50 : 0,
+    getAllergens(row) ? 40 : 0,
+    String(row.dataSource || "").includes("enhanced") ? 25 : 0,
+    getPrice(row) != null ? 10 : 0,
+    getTrueCost(row) != null ? 10 : 0,
+    row.mrn || row.MRN ? 5 : 0,
+    row.portion || row.Portion ? 5 : 0
+  ].reduce((sum, value) => sum + value, 0);
 }
 
-function globalSelectedRows(rotation) {
+function findBestRowForName(name) {
+  const normalizedName = normalizeItemName(name);
+  if (!normalizedName) return null;
+  const matches = MENUWORKS_ITEMS.filter((row) => getItemAliases(row).includes(normalizedName));
+  if (!matches.length) return null;
+  return [...matches].sort((a, b) => itemDetailScore(b) - itemDetailScore(a))[0];
+}
+
+function rowsForSelectedNames(names = [], { unique = false } = {}) {
+  const selectedRows = [];
+  const seen = new Set();
+  names.filter(Boolean).forEach((name) => {
+    const key = normalizeItemName(name);
+    if (!key) return;
+    if (unique && seen.has(key)) return;
+    seen.add(key);
+    selectedRows.push(findBestRowForName(name) || makeUploadedItem(name));
+  });
+  return selectedRows;
+}
+
+function globalSelectedRows(rotation, options) {
   const baseNames = [...(rotation.entrees || []), ...(rotation.sides || []), ...(rotation.subRecipes || []), ...(rotation.extensions || [])];
   const blockNames = Object.values(rotation.globalBlocks || {}).flatMap((block) => [
     ...(block.entrees || []), ...(block.sides || []), ...(block.subRecipes || []), ...(block.extensions || [])
   ]);
-  return rowsForSelectedNames([...baseNames, ...blockNames]);
+  return rowsForSelectedNames([...baseNames, ...blockNames], options);
 }
 
 function grillSelectedRows(rotation) {
@@ -1828,7 +1890,7 @@ function GlobalSection({ cafe, week, rotation, menuOptions, stationOptions, cate
         <PickerGroup title="Sub Recipes" limit="up to 4" items={categorized.subRecipes} values={rotation.subRecipes || ["", "", "", ""]} onChange={(index, value) => updateSlot("subRecipes", index, value)} />
         <PickerGroup title="Extensions" limit="up to 2" items={categorized.extensions} values={rotation.extensions || ["", ""]} onChange={(index, value) => updateSlot("extensions", index, value)} />
       </div>
-      <StationSelectedList title="Selected Global Items Rollup" items={globalSelectedRows(rotation)} />
+      <StationSelectedList title="Items Description" items={globalSelectedRows(rotation, { unique: true })} />
     </CollapsibleStation>
   );
 }
@@ -2003,7 +2065,7 @@ function StationSelectedList({ title = "Selected Items Rollup", items }) {
           {items.map((row, index) => {
             const diet = getDiet(row);
             const allergens = String(getAllergens(row) || "").split(",").map((value) => value.trim()).filter(Boolean);
-            const description = row.enticingDescription || row.description || row["Enticing Description"] || "No description available.";
+            const description = getDescription(row) || "No description available.";
             return (
               <div key={`${getItemIdentity(row)}-${index}`} className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
                 <div className="flex flex-wrap items-start justify-between gap-2">
