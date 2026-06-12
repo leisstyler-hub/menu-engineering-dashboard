@@ -1,3 +1,36 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    background: #f6f7f9;
+  }
+
+  * {
+    letter-spacing: 0;
+  }
+}
+
+@layer components {
+  .rounded-\[2rem\],
+  .rounded-3xl,
+  .rounded-2xl {
+    border-radius: 0.5rem;
+  }
+
+  .shadow-2xl,
+  .shadow-xl {
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.06), 0 12px 28px rgb(15 23 42 / 0.08);
+  }
+
+  .border-2 {
+    border-width: 1px;
+  }
+
+  select,
+  input,
+  button {
+    letter-spacing: 0;
+  }
+}

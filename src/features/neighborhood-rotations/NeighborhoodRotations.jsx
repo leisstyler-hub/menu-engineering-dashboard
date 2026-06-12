@@ -1186,10 +1186,10 @@ export default function NeighborhoodRotations({ onBackToPlatform }) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-[#f6f7f9] text-slate-950 p-4 md:p-6">
+      <div className="max-w-7xl mx-auto space-y-5">
         <NeighborhoodHeader onBackToPlatform={onBackToPlatform} district={district} />
-        <section className="flex flex-wrap gap-3">
+        <section className="inline-flex flex-wrap gap-1 rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
           <RotationTab label="Chef Planner" value="planner" active={rotationView} setActive={setRotationView} />
           <RotationTab label="Executive View" value="executive" active={rotationView} setActive={setRotationView} />
           <RotationTab label="Results" value="results" active={rotationView} setActive={setRotationView} />
@@ -1219,17 +1219,17 @@ export default function NeighborhoodRotations({ onBackToPlatform }) {
 
 function NeighborhoodHeader({ onBackToPlatform, district }) {
   return (
-    <header className="rounded-[2rem] bg-white border border-slate-200 p-6 shadow-2xl">
-      <button onClick={onBackToPlatform} className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-900"><ArrowLeft size={16} /> Back to platform</button>
+    <header className="rounded-lg bg-white border border-slate-200 p-5 shadow-sm">
+      <button onClick={onBackToPlatform} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-white hover:text-slate-950"><ArrowLeft size={16} /> Back to platform</button>
       <div className="mt-5 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
         <div>
           <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Still in Development</p>
-          <h1 className="text-4xl font-bold mt-2">Neighborhood Rotations</h1>
+          <h1 className="text-3xl md:text-4xl font-bold mt-2">Neighborhood Rotations</h1>
           <p className="text-slate-600 mt-3 max-w-3xl">Chefs declare weekly Global Menu rotations and station LTOs by café.</p>
         </div>
         <div className="flex flex-col items-start lg:items-end gap-2">
           <VersionStamp compact />
-          {district === "South" && <div className="rounded-2xl bg-slate-100 border border-slate-200 px-4 py-3 text-sm text-slate-600">Frontier follows Nitro for tracking.</div>}
+          {district === "South" && <div className="rounded-lg bg-slate-50 border border-slate-200 px-4 py-3 text-sm text-slate-600">Frontier follows Nitro for tracking.</div>}
         </div>
       </div>
     </header>
@@ -1237,14 +1237,14 @@ function NeighborhoodHeader({ onBackToPlatform, district }) {
 }
 
 function RotationTab({ label, value, active, setActive }) {
-  return <button onClick={() => setActive(value)} className={`rounded-2xl px-5 py-3 font-semibold border ${active === value ? "bg-slate-900 text-white border-slate-900" : "bg-white border-slate-300 text-slate-700"}`}>{label}</button>;
+  return <button onClick={() => setActive(value)} className={`rounded-md px-4 py-2.5 text-sm font-bold transition ${active === value ? "bg-slate-950 text-white shadow-sm" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"}`}>{label}</button>;
 }
 
 function ControlCard({ label, value, setValue, options, placeholder, disabled = false }) {
   return (
-    <div className="rounded-3xl bg-white border border-slate-200 p-5 shadow-xl">
+    <div className="rounded-lg bg-white border border-slate-200 p-4 shadow-sm">
       <label className="block text-sm font-semibold text-slate-500 mb-2">{label}</label>
-      <select disabled={disabled} value={value} onChange={(e) => setValue(e.target.value)} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100 disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200">
+      <select disabled={disabled} value={value} onChange={(e) => setValue(e.target.value)} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100 disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200">
         {placeholder && <option value="">{placeholder}</option>}
         {options.map((option) => <option key={option} value={option}>{option}</option>)}
       </select>
@@ -1254,7 +1254,7 @@ function ControlCard({ label, value, setValue, options, placeholder, disabled = 
 
 function StatusCard({ ready, conflicts, completed, total }) {
   return (
-    <div className="rounded-3xl bg-white border border-slate-200 p-5 shadow-xl">
+    <div className="rounded-lg bg-white border border-slate-200 p-4 shadow-sm">
       <p className="text-sm font-semibold text-slate-500">Week Status</p>
       {!ready ? (
         <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">Select a district and café/unit to view status.</div>
@@ -2036,13 +2036,13 @@ function DayToggleGroup({ title, values = [], onToggle, tone = "sky" }) {
 
 function CollapsibleStation({ title, eyebrow, complete, children }) {
   return (
-    <div className="mt-6 rounded-3xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-5 shadow-sm">
+    <div className="mt-5 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-sm uppercase tracking-[0.18em] text-slate-400">{eyebrow}</p>
           <h3 className="text-2xl font-bold mt-1">{title}</h3>
         </div>
-        <span className={`rounded-full px-3 py-1 text-xs font-bold border ${complete ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-sky-50 border-sky-200 text-sky-700"}`}>{complete ? "complete" : "needs selection"}</span>
+        <span className={`rounded-full px-3 py-1 text-xs font-bold border ${complete ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-amber-50 border-amber-200 text-amber-800"}`}>{complete ? "complete" : "needs selection"}</span>
       </div>
       <div className="mt-4">{children}</div>
     </div>
@@ -2055,7 +2055,7 @@ function StationSelectedList({ title = "Items Description", items }) {
   const descriptionMissingCount = items.filter((row) => !getDescription(row)).length;
   const reviewCount = Math.max(missingDetailCount, descriptionMissingCount);
   return (
-    <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
+    <div className="mt-4 rounded-lg border border-slate-200 bg-white p-4">
       <button type="button" onClick={() => setIsOpen((value) => !value)} className="w-full flex items-center justify-between gap-3 text-left">
         <div>
           <p className="text-sm font-bold text-slate-900">{title}</p>
@@ -2070,9 +2070,9 @@ function StationSelectedList({ title = "Items Description", items }) {
       </button>
       {isOpen && (
         <div className="mt-4 space-y-2">
-          {!items.length && <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-500">No items selected yet.</div>}
+          {!items.length && <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-500">No items selected yet.</div>}
           {Boolean(reviewCount) && (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
               <span className="font-bold">Source detail check:</span> {reviewCount} selected item{reviewCount === 1 ? "" : "s"} need MenuWorks detail review before using descriptions or allergen language externally.
             </div>
           )}
@@ -2083,7 +2083,7 @@ function StationSelectedList({ title = "Items Description", items }) {
             const missingSourceDetail = isSourceDetailMissing(row);
             const description = getDescription(row) || "Description missing in source data.";
             return (
-              <div key={`${getItemIdentity(row)}-${index}`} className={`rounded-2xl border p-3 ${missingSourceDetail ? "border-amber-200 bg-amber-50/70" : "border-slate-200 bg-slate-50"}`}>
+              <div key={`${getItemIdentity(row)}-${index}`} className={`rounded-lg border p-3 ${missingSourceDetail ? "border-amber-200 bg-amber-50/70" : "border-slate-200 bg-slate-50"}`}>
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <p className="font-bold text-slate-900">{getDisplayName(row)}</p>
                   <div className="flex flex-wrap justify-end gap-2">
@@ -2114,7 +2114,7 @@ function LiveAnalytics({ selectedItems }) {
   const foodCostDisplayNote = foodCostRange.low == null && immediateSelectedCost > 0 ? "cost accepted; add priced entrée to calculate %" : foodCostRangeNote(foodCostRange);
 
   return (
-    <div className="mt-5 rounded-3xl border border-slate-200 bg-white p-5">
+    <div className="mt-5 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <div>
         <p className="text-sm uppercase tracking-[0.18em] text-slate-400">Live Selection Analytics</p>
         <h3 className="text-2xl font-bold mt-1">Current Rotation Mix</h3>
@@ -2135,12 +2135,12 @@ function Mini({ title, value, sub, tone = "neutral", emphasize = false }) {
 
 function PickerGroup({ title, limit, items, values, onChange }) {
   return (
-    <div className="rounded-3xl border-2 border-sky-200 bg-sky-50/80 p-4 shadow-sm ring-1 ring-sky-100">
-      <div className="flex items-center justify-between gap-2"><p className="font-bold text-slate-900">{title}</p><span className="rounded-full bg-white border border-sky-200 px-3 py-1 text-xs font-bold text-sky-700">choose here</span></div>
-      <p className="text-xs text-sky-700 mt-1 font-semibold">{limit}</p>
+    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex items-center justify-between gap-2"><p className="font-bold text-slate-900">{title}</p><span className="rounded-full bg-slate-100 border border-slate-200 px-3 py-1 text-xs font-bold text-slate-600">select</span></div>
+      <p className="text-xs text-slate-500 mt-1 font-semibold">{limit}</p>
       <div className="mt-3 space-y-2">
         {values.map((value, index) => (
-          <select key={index} value={value} onChange={(e) => onChange(index, e.target.value)} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-3 py-2 text-sm font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
+          <select key={index} value={value} onChange={(e) => onChange(index, e.target.value)} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
             <option value="">Select {title.toLowerCase()}...</option>
             {items.map((row) => <option key={`${getItemIdentity(row)}-${index}`} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}
           </select>

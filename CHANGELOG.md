@@ -2,7 +2,12 @@
 
 ## 2026-06-12
 
-- Reordered Chef Planner selector cards to `District`, `Café`, then `Week`.
+- Replaced generic home overview panels with culinary program metrics: tools, menu items, menus, and costed items.
+- Set visible app version to `2026.06.12.005-ui-program-overview-metrics`.
+- Redesigned the platform home screen into a tighter operations console with clearer tool cards, status cues, and product-style navigation.
+- Refined the Neighborhood Rotations planner shell, tabs, selector cards, station panels, and picker groups for a cleaner product UI.
+- Set visible app version to `2026.06.12.004-ui-console-design-pass`.
+- Reordered Chef Planner selector cards to `District`, `Cafe`, then `Week`.
 - Set visible app version to `2026.06.12.003-ui-planner-selector-order`.
 - Added source-detail warnings in Neighborhood Rotations item description panels so incomplete legacy/uploaded rows no longer look like confirmed no-allergen results.
 - Renamed remaining station item rollup panels to `Items Description`.
