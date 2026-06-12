@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-06-11
+
+- Fixed the Neighborhood Rotations cafe-selection screen by importing `APP_VERSION_STAMP` for the system status panel.
+- Set visible app version to `2026.06.11.001-fix-rotations-cafe-view`.
+
 ## 2026-06-08
 
 - Fixed the Neighborhood Rotations screen after the feature split by importing the shared `VersionStamp` component.

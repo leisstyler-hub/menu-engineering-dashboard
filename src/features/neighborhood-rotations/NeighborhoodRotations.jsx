@@ -5,6 +5,7 @@ import { ArrowLeft, AlertTriangle, Building2, CalendarDays, CheckCircle2, Chevro
 import MENUWORKS_ITEMS from "../../data/menuItems.json";
 import { loadRecordsFromSmartsheet, syncRecordsToSmartsheet } from "../../integrations/smartsheet/client.js";
 import { NEIGHBORHOOD_ROTATIONS_STORAGE_KEY, SMARTSHEET_COLUMNS, SMARTSHEET_DATABASE_STORAGE_KEY, SMARTSHEET_RECORD_TYPES, SMARTSHEET_SELECTION_TYPES, STATION_SMARTSHEET_LABELS } from "../../integrations/smartsheet/contract.js";
+import { APP_VERSION_STAMP } from "../../shared/appConfig.js";
 import { money, pct, titleCase } from "../../shared/formatting.js";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
 

@@ -1,1 +1,1 @@
-export const APP_VERSION_STAMP = "v2026-06-08-rotations-version-import-fix";
+export const APP_VERSION_STAMP = "2026.06.11.001-fix-rotations-cafe-view";
