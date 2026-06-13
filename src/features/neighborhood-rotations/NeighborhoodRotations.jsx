@@ -1674,7 +1674,7 @@ function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, s
   return (
     <div className="mb-5 rounded-[1.75rem] border border-slate-300 bg-slate-950 p-3 shadow-lg print:hidden">
       <div className="rounded-[1.35rem] border border-slate-700 bg-slate-900 p-4">
-        <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+        <div className="space-y-4">
           <div>
             <p className="text-xs uppercase tracking-[0.18em] text-emerald-300 font-bold">Planner Remote Control</p>
             <h3 className="text-2xl font-bold mt-1 text-white">{rotation?.status || "Draft"}</h3>
@@ -1684,7 +1684,7 @@ function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, s
               {rotation?.updatedAt && <span className="rounded-full border border-slate-600 bg-slate-800 px-3 py-1 font-semibold text-slate-300">Updated {rotation.updatedAt}</span>}
             </div>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
             <RemoteButton icon={Clipboard} label="Copy" onClick={onCopy} />
             <RemoteButton icon={ChevronDown} label="Load" onClick={onLoad} disabled={!copiedRotation} />
             <RemoteUploadButton onChange={handleUpload} />
@@ -1744,7 +1744,7 @@ function RemoteButton({ icon: Icon, label, onClick, disabled = false, tone = "de
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`flex min-h-[72px] min-w-[92px] flex-col items-center justify-center gap-1 rounded-2xl border px-3 py-3 text-xs font-bold shadow-sm transition ${disabled ? "cursor-not-allowed border-slate-700 bg-slate-800 text-slate-500 opacity-60" : toneClass}`}
+      className={`flex min-h-[64px] min-w-0 flex-col items-center justify-center gap-1 rounded-2xl border px-2.5 py-2.5 text-center text-[11px] font-bold leading-tight shadow-sm transition ${disabled ? "cursor-not-allowed border-slate-700 bg-slate-800 text-slate-500 opacity-60" : toneClass}`}
     >
       <Icon size={18} />
       <span>{label}</span>
@@ -1754,7 +1754,7 @@ function RemoteButton({ icon: Icon, label, onClick, disabled = false, tone = "de
 
 function RemoteUploadButton({ onChange }) {
   return (
-    <label className="flex min-h-[72px] min-w-[92px] cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border border-slate-600 bg-slate-800 px-3 py-3 text-xs font-bold text-slate-100 shadow-sm transition hover:bg-slate-700">
+    <label className="flex min-h-[64px] min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border border-slate-600 bg-slate-800 px-2.5 py-2.5 text-center text-[11px] font-bold leading-tight text-slate-100 shadow-sm transition hover:bg-slate-700">
       <Upload size={18} />
       <span>Upload</span>
       <input type="file" accept="application/pdf,.pdf" onChange={onChange} className="hidden" />

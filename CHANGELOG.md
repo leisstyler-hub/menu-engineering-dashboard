@@ -2,6 +2,8 @@
 
 ## 2026-06-13
 
+- Relaxed the Planner Remote Control layout so status chips and action buttons no longer crowd each other when every state is active.
+- Set visible app version to `2026.06.13.003-ui-remote-spacing`.
 - Fixed Neighborhood Rotations food-cost range logic so a single selected mix does not display an artificial range.
 - Scoped Live Selection Analytics to Global Rotation picker selections instead of unrelated station selections.
 - Added the Planner Remote Control above Chef Planner with save, submit, copy, load, upload, and print actions grouped together.
