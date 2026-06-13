@@ -2535,6 +2535,7 @@ function LeadershipOverview({ district, week, rows, conflictMenus }) {
 }
 
 function ExecutiveView({ week, setWeek, rows, conflictMenus }) {
+  const locked = rows.filter((row) => row.status === "Submitted").length;
   const declared = rows.filter((row) => row.menu).length;
   const conflicts = rows.filter((row) => row.menu && conflictMenus[`${row.district}|${row.menu}`] > 1).length;
   const globalRows = rows.filter((row) => row.menu);
@@ -2549,26 +2550,24 @@ function ExecutiveView({ week, setWeek, rows, conflictMenus }) {
     : null;
 
   const districtNames = Object.keys(DISTRICTS);
-  const read = leadershipRead(rows, conflictMenus);
+  const selectedCount = rows.reduce((sum, row) => sum + selectedItems(row).length, 0);
 
   return (
     <div className="space-y-5">
-      <section className="rounded-[2rem] bg-white border border-slate-200 p-6 shadow-2xl">
-        <p className="text-sm uppercase tracking-[0.18em] text-slate-400">Leadership Read</p>
-        <h2 className="text-3xl font-bold mt-1">This Week at a Glance</h2>
-        <p className="text-slate-600 mt-3 text-lg leading-relaxed">{read}</p>
-      </section>
-      <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <LeadershipStatusBoard rows={rows} />
+      <section className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-4">
         <ControlCard label="Leadership Week View" value={week} setValue={setWeek} options={ROTATION_WEEKS} />
+        <ExecutiveMetric title="Locked In" value={`${locked}/${rows.length}`} sub="submitted rotations" tone={locked === rows.length ? "green" : "amber"} />
+        <ExecutiveMetric title="Menu Items" value={selectedCount} sub="selected this week" />
         <ExecutiveMetric title="Declared" value={`${declared}/${rows.length}`} sub="cafés submitted" />
         <ExecutiveMetric title="Duplicate Menus" value={conflicts} sub="within district" tone={conflicts ? "amber" : "green"} />
         <ExecutiveMetric title="Projected Global FC%" value={pct(averageGlobalFc)} sub="based on selected rotation mix" tone={averageGlobalFc != null && averageGlobalFc > 0.34 ? "amber" : "green"} />
       </section>
 
-      <section className="rounded-[2rem] bg-white border border-slate-200 p-6 shadow-2xl">
+      <section className="rounded-[2rem] bg-white border-2 border-slate-200 p-6 shadow-2xl">
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
           <div>
-            <p className="text-sm uppercase tracking-[0.18em] text-slate-400">Executive Rotation View</p>
+            <p className="text-sm uppercase tracking-[0.18em] text-emerald-500 font-bold">Executive Rotation View</p>
             <h2 className="text-3xl font-bold mt-1">Weekly Rotation Health</h2>
             <p className="text-sm text-slate-500 mt-1">One card per café showing rotation status, food cost signal, duplicate flags, and station completion gaps.</p>
           </div>
@@ -2576,10 +2575,15 @@ function ExecutiveView({ week, setWeek, rows, conflictMenus }) {
         <div className="mt-5 space-y-6">
           {districtNames.map((districtName) => {
             const districtRows = rows.filter((row) => row.district === districtName);
+            const districtLocked = districtRows.filter((row) => row.status === "Submitted").length;
+            const districtSelected = districtRows.reduce((sum, row) => sum + selectedItems(row).length, 0);
             return (
-              <div key={districtName}>
+              <div key={districtName} className="rounded-3xl border border-slate-200 bg-slate-50/70 p-4">
                 <div className="flex items-center justify-between gap-3">
-                  <h3 className="text-xl font-bold">{districtName}</h3>
+                  <div>
+                    <h3 className="text-xl font-bold">{districtName}</h3>
+                    <p className="text-xs font-semibold text-slate-500 mt-1">{districtLocked}/{districtRows.length} locked - {districtSelected} selected items</p>
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     <p className="rounded-full bg-slate-100 border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600">{districtRows.filter((row) => row.menu).length}/{districtRows.length} declared</p>
                     <p className="rounded-full bg-emerald-50 border border-emerald-200 px-3 py-2 text-xs font-semibold text-emerald-800">≤30% favorable</p>
@@ -2598,6 +2602,35 @@ function ExecutiveView({ week, setWeek, rows, conflictMenus }) {
         </div>
       </section>
     </div>
+  );
+}
+
+function LeadershipStatusBoard({ rows }) {
+  const locked = rows.filter((row) => row.status === "Submitted").length;
+  return (
+    <section className="rounded-[2rem] bg-slate-950 border border-slate-800 p-6 shadow-2xl text-white">
+      <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+        <div>
+          <p className="text-sm uppercase tracking-[0.18em] text-emerald-300 font-bold">Leadership Read</p>
+          <h2 className="text-3xl font-bold mt-1">Cafe Lock Board</h2>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <span className="rounded-full border border-emerald-400/40 bg-emerald-400/15 px-4 py-2 text-sm font-bold text-emerald-100">{locked} locked</span>
+          <span className="rounded-full border border-rose-400/40 bg-rose-400/15 px-4 py-2 text-sm font-bold text-rose-100">{rows.length - locked} open</span>
+        </div>
+      </div>
+      <div className="mt-5 flex flex-wrap gap-3">
+        {rows.map((row) => {
+          const isLocked = row.status === "Submitted";
+          return (
+            <span key={`${row.district}-${row.cafe}`} className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-bold shadow-sm ${isLocked ? "border-emerald-300 bg-emerald-400 text-slate-950" : "border-rose-300 bg-rose-500 text-white"}`}>
+              <span className={`h-2.5 w-2.5 rounded-full ${isLocked ? "bg-slate-950" : "bg-white"}`} />
+              {row.cafe}
+            </span>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
@@ -2665,16 +2698,40 @@ function ResultsView({ rows, resultsDistrict, setResultsDistrict, resultsCafe, s
   const draftRows = rows.filter((row) => row.status !== "Submitted");
   const pricedRows = rows.map((row) => ({ ...row, summary: foodSummary(selectedItems(row)) })).filter((row) => row.summary.fc != null);
   const averageFc = pricedRows.length ? pricedRows.reduce((sum, row) => sum + row.summary.fc, 0) / pricedRows.length : null;
-  const trueCostRows = rows.map((row) => ({ ...row, trueCostRange: selectedTrueCostRange(selectedItems(row)) })).filter((row) => row.trueCostRange.low != null);
+  const costRangeRows = rows.map((row) => ({ ...row, trueCostRange: selectedTrueCostRange(selectedItems(row)) })).filter((row) => row.trueCostRange.low != null);
+  const trueCostRows = costRangeRows;
   const mostUsedMenus = Object.entries(rows.reduce((acc, row) => { if (row.menu) acc[row.menu] = (acc[row.menu] || 0) + 1; return acc; }, {})).sort((a, b) => b[1] - a[1]).slice(0, 3);
+  const allSelections = rows.flatMap((row) => selectedItems(row));
+  const globalSelections = rows.flatMap((row) => globalSelectedRows(row, { unique: true }));
+  const uniqueItems = new Set(allSelections.map((row) => normalizeItemName(getItemIdentity(row))).filter(Boolean));
+  const selectedItemCounts = Object.entries(allSelections.reduce((acc, row) => {
+    const name = getDisplayName(row) || titleCase(getItemIdentity(row));
+    if (name) acc[name] = (acc[name] || 0) + 1;
+    return acc;
+  }, {})).sort((a, b) => b[1] - a[1]);
+  const mostPopularItem = selectedItemCounts[0];
+  const averageSelectedItems = rows.length ? allSelections.length / rows.length : 0;
+  const averageGlobalItems = rows.length ? globalSelections.length / rows.length : 0;
+  const stationTotals = rows.reduce((acc, row) => {
+    const stationKeys = CAFE_STATION_CONFIG[row.cafe] || [];
+    acc.total += stationKeys.length;
+    acc.complete += stationKeys.filter((stationKey) => stationComplete(row, stationKey, row.cafe, row.week)).length;
+    return acc;
+  }, { complete: 0, total: 0 });
+  const widestRange = costRangeRows
+    .map((row) => ({ ...row, spread: row.trueCostRange.high - row.trueCostRange.low }))
+    .sort((a, b) => b.spread - a.spread)[0];
+  const tightRangeCount = costRangeRows.filter((row) => Math.abs(row.trueCostRange.high - row.trueCostRange.low) < 0.005).length;
+  const topItems = selectedItemCounts.slice(0, 6).map(([item, count]) => `${item} (${count})`);
 
   return (
     <div className="space-y-5">
-      <section className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <section className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-4">
         <ControlCard label="District Filter" value={resultsDistrict} setValue={setResultsDistrict} options={["All", ...Object.keys(DISTRICTS)]} />
         <ControlCard label="Café Filter" value={resultsCafe} setValue={setResultsCafe} options={["All", ...allCafeOptions]} />
         <ExecutiveMetric title="Saved Entries" value={rows.length} sub="declared rotations" />
         <ExecutiveMetric title="Submitted" value={submittedRows.length} sub={`${draftRows.length} drafts`} tone={draftRows.length ? "amber" : "green"} />
+        <ExecutiveMetric title="Menu Variety" value={uniqueItems.size} sub={`${allSelections.length} selections`} tone="green" />
         <ExecutiveMetric title="Projected FC%" value={pct(averageFc)} sub="based on saved rotation mix" tone={averageFc != null && averageFc > 0.34 ? "amber" : "green"} />
       </section>
       <section className="rounded-[2rem] bg-white border border-slate-200 p-6 shadow-2xl">
@@ -2685,9 +2742,17 @@ function ResultsView({ rows, resultsDistrict, setResultsDistrict, resultsCafe, s
             <p className="text-sm text-slate-500 mt-1">A quick read of saved declarations across the selected filter.</p>
           </div>
         </div>
-        <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="hidden">
           <SummaryBucket title="True Cost Range Records" value={trueCostRows.length || "—"} details={trueCostRows.map((row) => `${row.cafe} • ${row.week}: ${moneyRange(row.trueCostRange)}`).slice(0, 5)} empty="no true cost history yet" />
           <SummaryBucket title="Most Used Menus" value={mostUsedMenus.length || "—"} details={mostUsedMenus.map(([menu, count]) => `${menu} (${count})`)} empty="no menu history yet" />
+        </div>
+        <div className="mt-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+          <SummaryBucket title="Most Used Menus" value={mostUsedMenus.length || "-"} details={mostUsedMenus.map(([menu, count]) => `${menu} (${count})`)} empty="no menu history yet" tone="green" />
+          <SummaryBucket title="Most Picked Items" value={topItems.length || "-"} details={topItems} empty="no item selections yet" />
+          <SummaryBucket title="Selection Range" value={widestRange ? moneyRange(widestRange.trueCostRange) : "-"} details={widestRange ? [`Widest: ${widestRange.cafe} - ${widestRange.week}`, `${tightRangeCount} single-cost rotation${tightRangeCount === 1 ? "" : "s"}`, `${averageSelectedItems.toFixed(1)} avg items per rotation`] : []} empty="no costed selections yet" tone={widestRange?.spread > 3 ? "amber" : "green"} />
+          <SummaryBucket title="Global Items" value={globalSelections.length} details={[`${averageGlobalItems.toFixed(1)} avg Global items`, `${globalSelections.filter((row) => row.__selectionGroup === "entrees").length} entrees`, `${globalSelections.filter((row) => row.__selectionGroup === "sides").length} sides`]} empty="no Global selections yet" />
+          <SummaryBucket title="Station Completion" value={`${stationTotals.complete}/${stationTotals.total || 0}`} details={[`${stationTotals.total ? Math.round((stationTotals.complete / stationTotals.total) * 100) : 0}% complete`, `${draftRows.length} draft rotation${draftRows.length === 1 ? "" : "s"}`, `${submittedRows.length} submitted`]} empty="no station history yet" tone={stationTotals.total && stationTotals.complete === stationTotals.total ? "green" : "amber"} />
+          <SummaryBucket title="Top Item Signal" value={mostPopularItem ? mostPopularItem[1] : "-"} details={mostPopularItem ? [mostPopularItem[0], `${uniqueItems.size} unique items used`, `${allSelections.length} total selections`] : []} empty="no selected item history yet" tone="green" />
         </div>
       </section>
       <section className="overflow-hidden rounded-[2rem] bg-white border border-slate-200 shadow-2xl">
@@ -2708,7 +2773,7 @@ function ResultsView({ rows, resultsDistrict, setResultsDistrict, resultsCafe, s
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Global Menu</th>
                 <th className="px-4 py-3">Food Cost %</th>
-                <th className="px-4 py-3">True Cost Range</th>
+                <th className="px-4 py-3">Selected Cost Range</th>
                 <th className="px-4 py-3">Updated</th>
                 <th className="px-4 py-3">Submitted</th>
               </tr>

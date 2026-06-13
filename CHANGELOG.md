@@ -2,6 +2,11 @@
 
 ## 2026-06-13
 
+- Replaced the Executive View leadership paragraph with a green/red Cafe Lock Board for submitted versus open cafes.
+- Added stronger district-board styling and weekly rotation health context for leadership review.
+- Reworked Results Summary around selection analytics: menu variety, most picked items, global items, station completion, range spread, and top item signal.
+- Renamed the Results table cost column to `Selected Cost Range`.
+- Set visible app version to `2026.06.13.006-ui-executive-results-analytics`.
 - Added prior-week Global carryover visibility for Monday/Tuesday cycle patterns so saved carryover menus can be seen in the planner.
 - Filtered Global Menu choices to Global concepts, including AMZ+RA menus, and limited sub-concept selection to Street Eats.
 - Strengthened station and completed Items Description borders so finished stations draw attention to the View action.
