@@ -1,10 +1,10 @@
 import React from "react";
-import { ArrowRight, BarChart3, CalendarRange, ClipboardCheck, Database } from "lucide-react";
+import { ArrowRight, BarChart3, CalendarRange, ClipboardCheck, Database, Smartphone } from "lucide-react";
 
 import CompassOneLogo from "../shared/ui/CompassOneLogo.jsx";
 import VersionStamp from "../shared/ui/VersionStamp.jsx";
 
-export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodRotations, onOpenLadleCompliance }) {
+export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodRotations, onOpenLadleCompliance, onOpenLeanTool }) {
   const tools = [
     {
       title: "Menu Engineering",
@@ -35,6 +35,16 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
       icon: ClipboardCheck,
       tone: "amber",
       meta: "Prototype"
+    },
+    {
+      title: "Lean Tool",
+      eyebrow: "New",
+      description: "Run fast phone or tablet observations using DOWNTIME waste categories, live marks, and report-out email.",
+      action: "Open Lean Tool",
+      onOpen: onOpenLeanTool,
+      icon: Smartphone,
+      tone: "lime",
+      meta: "Field tracker"
     }
   ];
 
@@ -59,7 +69,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
               Built for quick chef decisions: choose the workstream, check status, and move straight into the active tool.
             </p>
             <div className="mt-5 grid grid-cols-2 gap-3">
-              <Metric label="Tools" value="3" />
+              <Metric label="Tools" value="4" />
               <Metric label="Menu items" value="1,325" />
               <Metric label="Menus" value="43" />
               <Metric label="Costed items" value="1,057" />
@@ -75,7 +85,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
             </div>
           </aside>
 
-          <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <section className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-4">
             {tools.map((tool) => (
               <ToolCard key={tool.title} {...tool} />
             ))}
@@ -99,7 +109,8 @@ function ToolCard({ title, eyebrow, description, action, onOpen, icon: Icon, ton
   const tones = {
     emerald: "bg-emerald-50 text-emerald-800 border-emerald-200",
     sky: "bg-sky-50 text-sky-800 border-sky-200",
-    amber: "bg-amber-50 text-amber-900 border-amber-200"
+    amber: "bg-amber-50 text-amber-900 border-amber-200",
+    lime: "bg-lime-50 text-lime-900 border-lime-200"
   };
 
   return (

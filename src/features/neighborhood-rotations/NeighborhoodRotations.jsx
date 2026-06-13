@@ -2730,22 +2730,15 @@ function ResultsView({ rows, resultsDistrict, setResultsDistrict, resultsCafe, s
   const costRangeRows = rows.map((row) => ({ ...row, trueCostRange: selectedTrueCostRange(selectedItems(row)) })).filter((row) => row.trueCostRange.low != null);
   const mostUsedMenus = Object.entries(rows.reduce((acc, row) => { if (row.menu) acc[row.menu] = (acc[row.menu] || 0) + 1; return acc; }, {})).sort((a, b) => b[1] - a[1]).slice(0, 3);
   const allSelections = rows.flatMap((row) => selectedItems(row));
-  const globalSelections = rows.flatMap((row) => globalSelectedRows(row, { unique: true }));
   const uniqueItems = new Set(allSelections.map((row) => normalizeItemName(getItemIdentity(row))).filter(Boolean));
   const selectedItemCounts = Object.entries(allSelections.reduce((acc, row) => {
     const name = getDisplayName(row) || titleCase(getItemIdentity(row));
     if (name) acc[name] = (acc[name] || 0) + 1;
     return acc;
   }, {})).sort((a, b) => b[1] - a[1]);
-  const mostPopularItem = selectedItemCounts[0];
+  const declaredRows = rows.filter((row) => row.menu);
   const averageSelectedItems = rows.length ? allSelections.length / rows.length : 0;
-  const averageGlobalItems = rows.length ? globalSelections.length / rows.length : 0;
-  const stationTotals = rows.reduce((acc, row) => {
-    const stationKeys = CAFE_STATION_CONFIG[row.cafe] || [];
-    acc.total += stationKeys.length;
-    acc.complete += stationKeys.filter((stationKey) => stationComplete(row, stationKey, row.cafe, row.week)).length;
-    return acc;
-  }, { complete: 0, total: 0 });
+  const highFoodCostRows = pricedRows.filter((row) => row.summary.fc > 0.34);
   const widestRange = costRangeRows
     .map((row) => ({ ...row, spread: row.trueCostRange.high - row.trueCostRange.low }))
     .sort((a, b) => b.spread - a.spread)[0];
@@ -2771,12 +2764,12 @@ function ResultsView({ rows, resultsDistrict, setResultsDistrict, resultsCafe, s
           </div>
         </div>
         <div className="mt-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+          <SummaryBucket title="Rotation Coverage" value={`${declaredRows.length}/${rows.length || 0}`} details={[`${submittedRows.length} submitted`, `${draftRows.length} draft/open`, `${rows.length - declaredRows.length} missing menu`]} empty="no saved rotations yet" tone={rows.length && declaredRows.length === rows.length ? "green" : "amber"} />
+          <SummaryBucket title="Item Variety" value={uniqueItems.size || "-"} details={[`${allSelections.length} total selected items`, `${averageSelectedItems.toFixed(1)} avg items per rotation`, `${costRangeRows.length} rotations with cost data`]} empty="no item selections yet" tone="green" />
+          <SummaryBucket title="Food Cost Watch" value={pct(averageFc)} details={[`${highFoodCostRows.length} rotation${highFoodCostRows.length === 1 ? "" : "s"} above 34%`, `${pricedRows.length} priced rotation${pricedRows.length === 1 ? "" : "s"}`, averageFc == null ? "no food cost data yet" : averageFc > 0.34 ? "review mix" : "on track"]} empty="no priced rotations yet" tone={highFoodCostRows.length ? "amber" : "green"} />
           <SummaryBucket title="Most Used Menus" value={mostUsedMenus.length || "-"} details={mostUsedMenus.map(([menu, count]) => `${menu} (${count})`)} empty="no menu history yet" tone="green" />
           <SummaryBucket title="Most Picked Items" value={topItems.length || "-"} details={topItems} empty="no item selections yet" />
           <SummaryBucket title="Selection Range" value={widestRange ? moneyRange(widestRange.trueCostRange) : "-"} details={widestRange ? [`Widest: ${widestRange.cafe} - ${widestRange.week}`, `${tightRangeCount} single-cost rotation${tightRangeCount === 1 ? "" : "s"}`, `${averageSelectedItems.toFixed(1)} avg items per rotation`] : []} empty="no costed selections yet" tone={widestRange?.spread > 3 ? "amber" : "green"} />
-          <SummaryBucket title="Global Items" value={globalSelections.length} details={[`${averageGlobalItems.toFixed(1)} avg Global items`, `${globalSelections.filter((row) => row.__selectionGroup === "entrees").length} entrees`, `${globalSelections.filter((row) => row.__selectionGroup === "sides").length} sides`]} empty="no Global selections yet" />
-          <SummaryBucket title="Station Completion" value={`${stationTotals.complete}/${stationTotals.total || 0}`} details={[`${stationTotals.total ? Math.round((stationTotals.complete / stationTotals.total) * 100) : 0}% complete`, `${draftRows.length} draft rotation${draftRows.length === 1 ? "" : "s"}`, `${submittedRows.length} submitted`]} empty="no station history yet" tone={stationTotals.total && stationTotals.complete === stationTotals.total ? "green" : "amber"} />
-          <SummaryBucket title="Top Item Signal" value={mostPopularItem ? mostPopularItem[1] : "-"} details={mostPopularItem ? [mostPopularItem[0], `${uniqueItems.size} unique items used`, `${allSelections.length} total selections`] : []} empty="no selected item history yet" tone="green" />
         </div>
       </section>
       <section className="overflow-hidden rounded-[2rem] bg-white border border-slate-200 shadow-2xl">

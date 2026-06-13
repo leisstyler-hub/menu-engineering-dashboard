@@ -2,6 +2,10 @@
 
 ## 2026-06-13
 
+- Added `Lean Tool` as the fourth platform module with phone/tablet-friendly DOWNTIME observation marking.
+- Added Lean Tool report-out email flow with recipient buttons labeled by leader name instead of email address.
+- Simplified Neighborhood Rotations Results cards by replacing unclear `Global Items`, `Station Completion`, and `Top Item Signal` cards with clearer coverage, variety, and food-cost watch cards.
+- Set visible app version to `2026.06.13.008-feature-lean-tool-email`.
 - Updated `AMZ: Harvest Co.` and `AMZ: Breakfast` from the MenuWorks truth exports, including item details, descriptions, ingredients, categories, and allergen flags.
 - Added a 410410 initiated MenuWorks upload flow with richer import review for menu, item, cost, description, ingredient, and allergen changes.
 - Removed confusing station-theme language from Global Menu planning and renamed sub-concept selection to `Street Eats Option`.
