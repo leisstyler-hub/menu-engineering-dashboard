@@ -2,6 +2,10 @@
 
 ## 2026-06-13
 
+- Centered the Compass One logo text so `one` reads clearly inside the gold circle.
+- Set visible app version to `2026.06.13.015-fix-compass-one-logo-readability`.
+- Masked the Menu Engineering upload initiation code in the visible UI and status messages with `<Six Digits>`, and changed the entry field to hide typed digits.
+- Set visible app version to `2026.06.13.014-fix-menu-upload-code-mask`.
 - Strengthened app-wide section framing so major panels across all tools use the same clearer light-blue border rhythm as the cafe station cards.
 - Restored true `border-2` weight so highlighted station and completed-section borders read more clearly.
 - Set visible app version to `2026.06.13.013-ui-section-border-rhythm`.
