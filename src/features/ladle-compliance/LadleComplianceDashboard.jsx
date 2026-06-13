@@ -149,6 +149,14 @@ export default function LadleComplianceDashboard({ onBackToPlatform }) {
           </div>
         </header>
 
+        <section className="rounded-[2rem] border-4 border-red-500 bg-red-50 p-6 shadow-2xl">
+          <p className="text-sm font-black uppercase tracking-[0.24em] text-red-700">Important Data Notice</p>
+          <h2 className="mt-2 text-3xl font-black text-red-950">This Ladle dashboard data is not factual.</h2>
+          <p className="mt-3 max-w-4xl text-lg font-bold leading-7 text-red-900">
+            All Ladle Compliance numbers, trends, unit scores, missed checks, heat maps, and follow-up callouts shown here are placeholder concept data only. Do not use this screen for actual performance reporting, accountability, or operational decisions until a verified Ladle data source is connected.
+          </p>
+        </section>
+
         <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <LadleControl label="District" value={district} setValue={setDistrict} options={districtOptions} />
           <LadleControl label="Week / Period" value={week} setValue={setWeek} options={weekOptions} />

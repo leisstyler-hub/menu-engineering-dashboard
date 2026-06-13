@@ -2,6 +2,8 @@
 
 ## 2026-06-13
 
+- Added a large red Ladle Compliance notice stating the dashboard data is placeholder concept data and not factual.
+- Set visible app version to `2026.06.13.011-fix-ladle-data-notice`.
 - Changed Lean Tool observer buttons to `DC`, `DM`, `RDO`, `VPO`, `EC`, `DR`, and `GM`.
 - Set visible app version to `2026.06.13.010-fix-lean-observer-roles`.
 - Reworked Lean Tool observations around a running session stopwatch with timestamped marks and duration since prior mark.
