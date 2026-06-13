@@ -51,6 +51,176 @@ const classConfig = {
   },
 };
 
+const MENU_ENGINEERING_OVERRIDE_STORAGE_KEY = "culinaryToolsMenuEngineeringItems_v2";
+const MENUWORKS_IMPORT_INITIATION_CODE = "410410";
+const MENUWORKS_ALLERGEN_COLUMNS = [
+  "Egg",
+  "Fish",
+  "Milk",
+  "Peanuts",
+  "Sesame",
+  "Shellfish - Crustacean",
+  "Soy",
+  "Tree Nuts",
+  "Wheat",
+  "Alcohol",
+  "Beef",
+  "Buckwheat",
+  "Celery",
+  "Garlic",
+  "Gluten",
+  "Lupin",
+  "MSG",
+  "Mushroom",
+  "Mustard",
+  "Onion",
+  "Orange",
+  "Pork",
+  "Poultry",
+  "Shellfish - Mollusk",
+  "Strawberry",
+  "Sulphites",
+  "Tomato",
+];
+
+function readStoredMenuItems() {
+  if (typeof window === "undefined") return MENUWORKS_ITEMS;
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(MENU_ENGINEERING_OVERRIDE_STORAGE_KEY) || "null");
+    return Array.isArray(parsed) && parsed.length ? parsed : MENUWORKS_ITEMS;
+  } catch {
+    return MENUWORKS_ITEMS;
+  }
+}
+
+function textValue(row, ...keys) {
+  for (const key of keys) {
+    const value = row?.[key];
+    if (value !== null && value !== undefined && String(value).trim()) return String(value).trim();
+  }
+  return "";
+}
+
+function stripRecipePrefix(value = "") {
+  return String(value).replace(/^(AMZ|EUR|RA|AMZ\+RA):\s*/i, "").trim();
+}
+
+function cleanMrn(value = "") {
+  return String(value || "").replace(/^'/, "").trim();
+}
+
+function normalizeWastePct(value) {
+  if (value == null) return null;
+  return value > 1 ? value / 100 : value;
+}
+
+function cleanNumber(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const number = Number(String(value).replace(/[$,%]/g, ""));
+  return Number.isFinite(number) ? number : null;
+}
+
+function menuBaseName(menu = "") {
+  return stripRecipePrefix(menu);
+}
+
+function menuPrefix(menu = "") {
+  const match = String(menu || "").match(/^([^:]+):/);
+  return match ? match[1] : "";
+}
+
+function inferImportedCategory(row, price) {
+  const notes = textValue(row, "Menu Item Notes").toLowerCase();
+  const recipeCategory = textValue(row, "Recipe Category.", "Recipe Category").toLowerCase();
+  const productionArea = textValue(row, "Recipe Production Area.", "Recipe Production Area").toLowerCase();
+  const station = textValue(row, "Station", "Station.").toLowerCase();
+  const itemText = `${textValue(row, "Recipe Name")} ${textValue(row, "Short Name")} ${recipeCategory}`.toLowerCase();
+
+  if (price == null) return "subRecipe";
+  if (/extension/.test(notes) || /cookie|cake|dessert|pastry|beverage|smoothie|chips|salsa|guacamole|queso/.test(itemText)) return "extension";
+  if (/a la carte|side choice/.test(notes) || /hot side/.test(productionArea) || /starch\/grain|vegetable/.test(recipeCategory)) return "side";
+  if (/entree/.test(notes) || /main entree|breakfast|sandwich\/wrap/.test(recipeCategory) || price >= 9) return "entree";
+  if (/side/.test(station)) return "side";
+  return price >= 5 ? "entree" : "side";
+}
+
+function parseAllergenDetails(row) {
+  const allergenDetails = {};
+  const allergens = [];
+  MENUWORKS_ALLERGEN_COLUMNS.forEach((allergen) => {
+    const value = textValue(row, allergen);
+    if (!value || value.toLowerCase() === "no") return;
+    allergenDetails[allergen] = value;
+    allergens.push(value.toLowerCase().includes("at risk") ? `${allergen} (At Risk)` : allergen);
+  });
+
+  const summary = textValue(row, "Allergens.", "Allergens");
+  if (summary && !allergens.length) {
+    summary.split(",").map((value) => value.replace(/^contains\s+/i, "").trim()).filter(Boolean).forEach((allergen) => {
+      allergenDetails[allergen] = "Yes";
+      allergens.push(allergen);
+    });
+  }
+
+  return { allergenSummary: summary || null, allergenDetails, allergens };
+}
+
+function parseImportedMenuWorksRow(row, index) {
+  const menu = textValue(row, "Menu Name");
+  const recipeName = textValue(row, "Recipe Name", "Menu Item");
+  if (!menu || !recipeName || !/^(AMZ|AMZ\+RA|EUR|RA):/i.test(menu)) return null;
+
+  const price = cleanNumber(textValue(row, "Sell Price", "Price"));
+  const itemCost = cleanNumber(textValue(row, "Menu Item Cost", "Item Cost"));
+  const wastePct = normalizeWastePct(cleanNumber(textValue(row, "Waste %", "Waste")));
+  const trueCost = cleanNumber(textValue(row, "Item + Waste Cost", "True Cost")) ?? (itemCost == null ? null : Number((itemCost * (1 + (wastePct || 0))).toFixed(4)));
+  const displayName = titleCase(textValue(row, "Short Name") || stripRecipePrefix(recipeName));
+  const { allergens, allergenDetails, allergenSummary } = parseAllergenDetails(row);
+
+  return {
+    id: index,
+    menu,
+    meal: textValue(row, "Meal", "Meal Period"),
+    station: textValue(row, "Station", "Station.") || menuBaseName(menu),
+    item: displayName,
+    mrn: cleanMrn(textValue(row, "Recipe Number", "MRN")),
+    portion: textValue(row, "Menu Portion Size", "Portion"),
+    price,
+    itemCost,
+    wastePct,
+    trueCost,
+    forecast: 0,
+    menuPrefix: menuPrefix(menu),
+    menuBaseName: menuBaseName(menu),
+    recipeName,
+    recipePrefix: menuPrefix(recipeName),
+    recipeSource: textValue(row, "Recipe Source."),
+    displayName,
+    shortName: displayName,
+    portionOz: cleanNumber(textValue(row, "Menu Portion Weight(oz)")),
+    category: inferImportedCategory(row, price),
+    enticingDescription: textValue(row, "Enticing Description"),
+    dietDescription: textValue(row, "Diet Description"),
+    dietTags: [textValue(row, "Diet"), textValue(row, "Vegan Tag."), textValue(row, "Vegetarian Tag."), textValue(row, "Compass Fit.")].filter(Boolean).join(", "),
+    ingredients: textValue(row, "Ingredients"),
+    ingredientsCommonName: textValue(row, "Ingredients Common Name"),
+    recipeCategory: textValue(row, "Recipe Category."),
+    recipeProductionArea: textValue(row, "Recipe Production Area."),
+    productionArea: textValue(row, "Production Area"),
+    menuItemNotes: textValue(row, "Menu Item Notes"),
+    allergenSummary,
+    allergens,
+    allergenDetails,
+    compassFit: textValue(row, "Compass Fit.") || null,
+    exceedsSodiumLimit: textValue(row, "Exceeds Sodium Limit.") || null,
+    ghgEmissions: textValue(row, "GHG Emissions.") || null,
+    madeFromSingleSource: textValue(row, "Made from Single Source.") || null,
+    veganTag: textValue(row, "Vegan Tag.") || null,
+    vegetarianTag: textValue(row, "Vegetarian Tag.") || null,
+    dataSource: "menuworks-user-upload",
+  };
+}
+
 function clampScore(value) {
   return Math.max(0, Math.min(100, Math.round(value)));
 }
@@ -121,9 +291,11 @@ function calculateMenuHealth({ avgFoodCost, grossProfitPct, stars, cashCows, puz
 
 
 export default function MenuEngineeringDashboard({ onBackToPlatform }) {
-  const [menuItems, setMenuItems] = useState(MENUWORKS_ITEMS);
+  const [menuItems, setMenuItems] = useState(readStoredMenuItems);
   const [selectedMenu, setSelectedMenu] = useState(MENUWORKS_ITEMS[0]?.menu || "");
   const [pendingImport, setPendingImport] = useState(null);
+  const [uploadInitiationCode, setUploadInitiationCode] = useState("");
+  const [uploadStatus, setUploadStatus] = useState("");
   const [globalSearch, setGlobalSearch] = useState("");
   const [fillUnitsValue, setFillUnitsValue] = useState(5);
   const [viewMode, setViewMode] = useState("operations");
@@ -385,12 +557,6 @@ export default function MenuEngineeringDashboard({ onBackToPlatform }) {
     });
   };
 
-  const cleanNumber = (value) => {
-    if (value === null || value === undefined || value === "") return null;
-    const number = Number(String(value).replace(/[$,%]/g, ""));
-    return Number.isFinite(number) ? number : null;
-  };
-
   const baseRowKey = (row) => String([row.menu, row.station, row.mrn, row.item, row.portion].join("|")).toLowerCase();
 
   const buildComparableMap = (rows) => {
@@ -408,27 +574,24 @@ export default function MenuEngineeringDashboard({ onBackToPlatform }) {
   const parseMenuWorksFile = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    if (uploadInitiationCode.trim() !== MENUWORKS_IMPORT_INITIATION_CODE) {
+      setUploadStatus("Enter initiation code 410410 before uploading a MenuWorks truth file.");
+      event.target.value = "";
+      return;
+    }
+
     const buffer = await file.arrayBuffer();
     const workbook = XLSX.read(buffer, { type: "array" });
     const sheet = workbook.Sheets.Report || workbook.Sheets[workbook.SheetNames[0]];
     const rawRows = XLSX.utils.sheet_to_json(sheet, { defval: null });
+    const importedRows = rawRows.map((row, index) => parseImportedMenuWorksRow(row, index)).filter(Boolean);
 
-    const importedRows = rawRows
-      .filter((row) => row["Menu Name"] && row["Menu Item"])
-      .map((row, index) => ({
-        id: index,
-        menu: row["Menu Name"] || "Unassigned Menu",
-        meal: row["Meal"] || row["Meal Period"] || "",
-        station: row["Station"] || "—",
-        item: row["Menu Item"] || "Unnamed Item",
-        mrn: row["MRN"] || "—",
-        portion: row["Portion"] || "—",
-        price: cleanNumber(row["Sell Price"]),
-        itemCost: cleanNumber(row["Item Cost"]),
-        wastePct: cleanNumber(row["Waste %"]),
-        trueCost: cleanNumber(row["Item + Waste Cost"]) ?? cleanNumber(row["Item Cost"]),
-        forecast: 0,
-      }));
+    if (!importedRows.length) {
+      setUploadStatus("No MenuWorks menu item rows were detected. Use the Menu Item Index or MenuWorks export format.");
+      event.target.value = "";
+      return;
+    }
+    setUploadStatus("");
 
     const importedMenuNames = Array.from(new Set(importedRows.map((row) => row.menu).filter(Boolean)));
     const currentRowsInScope = menuItems.filter((row) => importedMenuNames.includes(row.menu));
@@ -452,7 +615,14 @@ export default function MenuEngineeringDashboard({ onBackToPlatform }) {
       const costChanged = current.trueCost !== row.trueCost;
       const itemCostChanged = current.itemCost !== row.itemCost;
       const portionChanged = current.portion !== row.portion;
-      if (priceChanged || costChanged || itemCostChanged || portionChanged) {
+      const detailChanged =
+        current.item !== row.item ||
+        current.station !== row.station ||
+        current.category !== row.category ||
+        current.enticingDescription !== row.enticingDescription ||
+        current.ingredientsCommonName !== row.ingredientsCommonName ||
+        JSON.stringify(current.allergenDetails || {}) !== JSON.stringify(row.allergenDetails || {});
+      if (priceChanged || costChanged || itemCostChanged || portionChanged || detailChanged) {
         const change = { before: current, after: row };
         changedItems.push(change);
         if (costChanged && row.trueCost > current.trueCost) costIncreases.push(change);
@@ -494,14 +664,21 @@ export default function MenuEngineeringDashboard({ onBackToPlatform }) {
   };
 
   const acceptImport = () => {
-    if (!pendingImport) return;
+    if (!pendingImport || uploadInitiationCode.trim() !== MENUWORKS_IMPORT_INITIATION_CODE) {
+      setUploadStatus("Enter initiation code 410410 before accepting an import.");
+      return;
+    }
     const importedMenuNames = pendingImport.importedMenuNames || Array.from(new Set(pendingImport.importedRows.map((row) => row.menu).filter(Boolean)));
     const retainedRows = menuItems.filter((row) => !importedMenuNames.includes(row.menu));
     const nextRows = [...retainedRows, ...pendingImport.importedRows].map((row, index) => ({ ...row, id: index }));
     setMenuItems(nextRows);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(MENU_ENGINEERING_OVERRIDE_STORAGE_KEY, JSON.stringify(nextRows));
+    }
     setUnitsById({});
     setSelectedMenu(pendingImport.importedRows[0]?.menu || retainedRows[0]?.menu || "");
     setPendingImport(null);
+    setUploadStatus(`Accepted ${pendingImport.importedRows.length} MenuWorks row${pendingImport.importedRows.length === 1 ? "" : "s"} from ${pendingImport.fileName}.`);
   };
 
   return (
@@ -534,7 +711,7 @@ export default function MenuEngineeringDashboard({ onBackToPlatform }) {
             <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
               <Metric title="New menus" value={pendingImport.newMenus.length} sub="added to dropdown" />
               <Metric title="New items" value={pendingImport.newItems.length} sub="not in current data" />
-              <Metric title="Updated items" value={pendingImport.changedItems.length} sub="price, cost, or portion changed" />
+              <Metric title="Updated items" value={pendingImport.changedItems.length} sub="details, allergens, price, or cost changed" />
               <Metric title="Cost increases" value={pendingImport.costIncreases?.length || 0} sub="true cost went up" />
               <Metric title="Removed items" value={pendingImport.removedItems.length} sub="missing from upload" />
             </div>
@@ -575,8 +752,13 @@ export default function MenuEngineeringDashboard({ onBackToPlatform }) {
 
             <div className="rounded-3xl bg-slate-100 border border-slate-200 p-4 min-w-[320px] space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-500 mb-2">Admin upload MenuWorks report</label>
-                <input type="file" accept=".xlsx,.xls,.csv" onChange={parseMenuWorksFile} className="block w-full text-sm text-slate-700 file:mr-3 file:rounded-xl file:border-0 file:bg-slate-900 file:px-4 file:py-2 file:text-white hover:file:bg-slate-700" />
+                <label className="block text-sm font-semibold text-slate-500 mb-2">Initiate MenuWorks Upload</label>
+                <div className="grid grid-cols-1 sm:grid-cols-[120px_1fr] gap-2">
+                  <input value={uploadInitiationCode} onChange={(e) => setUploadInitiationCode(e.target.value)} placeholder="410410" className="rounded-2xl bg-white border border-slate-300 px-3 py-3 text-sm font-semibold outline-none focus:border-slate-500" />
+                  <input disabled={uploadInitiationCode.trim() !== MENUWORKS_IMPORT_INITIATION_CODE} type="file" accept=".xlsx,.xls,.csv" onChange={parseMenuWorksFile} className="block w-full text-sm text-slate-700 file:mr-3 file:rounded-xl file:border-0 file:bg-slate-900 file:px-4 file:py-2 file:text-white hover:file:bg-slate-700 disabled:opacity-50" />
+                </div>
+                <p className="mt-2 text-xs text-slate-500">Enter the initiation code, upload a MenuWorks truth file, review changes, then accept.</p>
+                {uploadStatus && <p className="mt-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-semibold text-sky-900">{uploadStatus}</p>}
               </div>
 
               <div>

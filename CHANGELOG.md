@@ -2,6 +2,13 @@
 
 ## 2026-06-13
 
+- Updated `AMZ: Harvest Co.` and `AMZ: Breakfast` from the MenuWorks truth exports, including item details, descriptions, ingredients, categories, and allergen flags.
+- Added a 410410 initiated MenuWorks upload flow with richer import review for menu, item, cost, description, ingredient, and allergen changes.
+- Removed confusing station-theme language from Global Menu planning and renamed sub-concept selection to `Street Eats Option`.
+- Renamed Smartsheet refresh actions to `Sync Latest` and disabled the control while a read is already running.
+- Aligned the Smartsheet storage contract to the provided Culinary Tools Database workbook headers.
+- Softened the Executive View Cafe Lock Board and restyled Weekly Rotation Health cards with clearer lock/open signals, progress bars, and stronger borders.
+- Set visible app version to `2026.06.13.007-data-menuworks-upload-refresh`.
 - Replaced the Executive View leadership paragraph with a green/red Cafe Lock Board for submitted versus open cafes.
 - Added stronger district-board styling and weekly rotation health context for leadership review.
 - Reworked Results Summary around selection analytics: menu variety, most picked items, global items, station completion, range spread, and top item signal.

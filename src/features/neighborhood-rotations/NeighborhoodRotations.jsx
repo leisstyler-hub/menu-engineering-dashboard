@@ -516,8 +516,14 @@ const getDescription = (row) =>
   row.ingredients ||
   row.menuItemNotes ||
   "";
-const isEnhancedMenuWorksRow = (row) => String(row.dataSource || "").includes("enhanced");
+const isEnhancedMenuWorksRow = (row) => /enhanced|menuworks-truth|menuworks-user-upload/i.test(String(row.dataSource || ""));
 const getAllergens = (row) => {
+  if (row.allergenDetails && typeof row.allergenDetails === "object") {
+    return Object.entries(row.allergenDetails)
+      .filter(([, value]) => /yes|contains|at risk/i.test(String(value || "").trim()))
+      .map(([allergen, value]) => String(value).toLowerCase().includes("at risk") ? `${allergen} (At Risk)` : allergen)
+      .join(", ");
+  }
   if (Array.isArray(row.allergens) && row.allergens.length) return row.allergens.join(", ");
   if (typeof row.allergens === "string" && row.allergens.trim()) return row.allergens;
   if (typeof row.allergenSummary === "string" && row.allergenSummary.trim()) {
@@ -528,12 +534,6 @@ const getAllergens = (row) => {
       .join(", ");
   }
   if (typeof row["Allergens"] === "string" && row["Allergens"].trim()) return row["Allergens"];
-  if (row.allergenDetails && typeof row.allergenDetails === "object") {
-    return Object.entries(row.allergenDetails)
-      .filter(([, value]) => /^(yes|contains|at risk)$/i.test(String(value || "").trim()))
-      .map(([allergen, value]) => String(value).toLowerCase() === "at risk" ? `${allergen} (At Risk)` : allergen)
-      .join(", ");
-  }
   return "";
 };
 const isAllergenDataMissing = (row) => !getAllergens(row) && !isEnhancedMenuWorksRow(row);
@@ -1425,6 +1425,7 @@ function DatabaseAlignmentNotice({ district, cafe, week, rotation }) {
 
 function CompactSystemStatusPanel({ district, cafe, week, rotation, loadStatus, syncStatus, onRefreshDatabase }) {
   const records = buildDatabaseRecordsForRotation({ week, district, cafe, rotation });
+  const isReading = loadStatus?.state === "loading";
   const readTone = loadStatus?.state === "loaded" ? "text-emerald-800 bg-emerald-50 border-emerald-200" : loadStatus?.state === "loading" ? "text-sky-800 bg-sky-50 border-sky-200" : "text-slate-600 bg-slate-50 border-slate-200";
   const writeTone = syncStatus?.state === "synced" ? "text-emerald-800 bg-emerald-50 border-emerald-200" : syncStatus?.state === "syncing" ? "text-sky-800 bg-sky-50 border-sky-200" : syncStatus?.state === "fallback" ? "text-amber-800 bg-amber-50 border-amber-200" : "text-slate-600 bg-slate-50 border-slate-200";
 
@@ -1438,7 +1439,7 @@ function CompactSystemStatusPanel({ district, cafe, week, rotation, loadStatus, 
         <div className="flex flex-wrap gap-2">
           <span className={`rounded-full border px-3 py-1 text-xs font-bold ${readTone}`}>Read: {loadStatus?.state === "loaded" ? "connected" : loadStatus?.state || "idle"}</span>
           <span className={`rounded-full border px-3 py-1 text-xs font-bold ${writeTone}`}>Write: {syncStatus?.state === "synced" ? "synced" : syncStatus?.state || "idle"}</span>
-          <button type="button" onClick={onRefreshDatabase} className="rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-bold text-slate-700 hover:bg-slate-100">Refresh from Smartsheet</button>
+          <button type="button" onClick={onRefreshDatabase} disabled={isReading} className="rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-bold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50">Sync Latest</button>
         </div>
       </div>
       {syncStatus?.state === "fallback" && (
@@ -1453,6 +1454,7 @@ function CompactSystemStatusPanel({ district, cafe, week, rotation, loadStatus, 
 }
 
 function SmartsheetDatabaseStatusPanel({ loadStatus, syncStatus, onRefreshDatabase }) {
+  const isReading = loadStatus?.state === "loading";
   const toneForState = (state) => {
     if (state === "synced") return "border-emerald-200 bg-emerald-50 text-emerald-900";
     if (state === "syncing" || state === "loading") return "border-sky-200 bg-sky-50 text-sky-900";
@@ -1467,8 +1469,8 @@ function SmartsheetDatabaseStatusPanel({ loadStatus, syncStatus, onRefreshDataba
           <p className="font-bold text-slate-900">Smartsheet live database</p>
           <p className="mt-1 text-slate-500">The planner writes to Smartsheet and reloads saved database rows for Executive View.</p>
         </div>
-        <button type="button" onClick={onRefreshDatabase} className="rounded-2xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">
-          Refresh from Smartsheet
+        <button type="button" onClick={onRefreshDatabase} disabled={isReading} className="rounded-2xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50">
+          Sync Latest
         </button>
       </div>
       <div className="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-3">
@@ -1622,8 +1624,8 @@ function PlannerSnapshot({ rotation, items }) {
 
   return (
     <div className="mt-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
-      <PlannerSnapshotCard label="Global Menu" value={rotation.menu || "Not selected"} note={rotation.station || "choose menu and station theme"} />
-      <PlannerSnapshotCard label="Station Theme" value={rotation.station || "Not selected"} note="filters item choices" />
+      <PlannerSnapshotCard label="Global Menu" value={rotation.menu || "Not selected"} note={rotation.station || "choose Global menu"} />
+      <PlannerSnapshotCard label="Selected Items" value={items.length} note="current planner selections" />
       <PlannerSnapshotCard label="True Cost Range" value={moneyRange(trueCostRange)} note={trueCostRangeNote(trueCostRange)} />
       <PlannerSnapshotCard label="Mix Food Cost %" value={pctRange(foodCostRange)} note={foodCostRangeNote(foodCostRange)} tone={foodCostTone} />
     </div>
@@ -2117,9 +2119,9 @@ function GlobalSection({ cafe, week, rotation, previousRotation, previousWeek, m
         </div>
         {rotation.menu && menuStationOptions.length > 1 && (
           <div>
-            <label className="block text-sm font-semibold text-slate-500 mb-2">Station / Sub-Concept</label>
+            <label className="block text-sm font-semibold text-slate-500 mb-2">Street Eats Option</label>
             <select value={rotation.station || ""} onChange={(e) => selectStation(e.target.value)} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
-              <option value="">Select Sub-Concept</option>
+              <option value="">Select Street Eats Option</option>
               {menuStationOptions.map((station) => <option key={station} value={station}>{station}</option>)}
             </select>
           </div>
@@ -2235,9 +2237,9 @@ function ReInventGlobalSection({ cafe, week, rotation, previousRotation, previou
                 </div>
                 {block.menu && blockStationOptions.length > 1 && (
                   <div>
-                    <label className="block text-sm font-semibold text-slate-500 mb-2">Station / Sub-Concept</label>
+                    <label className="block text-sm font-semibold text-slate-500 mb-2">Street Eats Option</label>
                     <select value={block.station || ""} onChange={(e) => updateBlock(blockInfo.id, { ...blankGlobalBlock(block.menu, e.target.value) })} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
-                      <option value="">Select Sub-Concept</option>
+                      <option value="">Select Street Eats Option</option>
                       {blockStationOptions.map((station) => <option key={station} value={station}>{station}</option>)}
                     </select>
                   </div>
@@ -2608,23 +2610,23 @@ function ExecutiveView({ week, setWeek, rows, conflictMenus }) {
 function LeadershipStatusBoard({ rows }) {
   const locked = rows.filter((row) => row.status === "Submitted").length;
   return (
-    <section className="rounded-[2rem] bg-slate-950 border border-slate-800 p-6 shadow-2xl text-white">
+    <section className="rounded-[2rem] bg-white border-2 border-emerald-200 p-6 shadow-2xl text-slate-950">
       <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
         <div>
-          <p className="text-sm uppercase tracking-[0.18em] text-emerald-300 font-bold">Leadership Read</p>
+          <p className="text-sm uppercase tracking-[0.18em] text-emerald-600 font-bold">Leadership Read</p>
           <h2 className="text-3xl font-bold mt-1">Cafe Lock Board</h2>
         </div>
         <div className="flex flex-wrap gap-2">
-          <span className="rounded-full border border-emerald-400/40 bg-emerald-400/15 px-4 py-2 text-sm font-bold text-emerald-100">{locked} locked</span>
-          <span className="rounded-full border border-rose-400/40 bg-rose-400/15 px-4 py-2 text-sm font-bold text-rose-100">{rows.length - locked} open</span>
+          <span className="rounded-full border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-800">{locked} locked</span>
+          <span className="rounded-full border border-rose-300 bg-rose-50 px-4 py-2 text-sm font-bold text-rose-800">{rows.length - locked} open</span>
         </div>
       </div>
       <div className="mt-5 flex flex-wrap gap-3">
         {rows.map((row) => {
           const isLocked = row.status === "Submitted";
           return (
-            <span key={`${row.district}-${row.cafe}`} className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-bold shadow-sm ${isLocked ? "border-emerald-300 bg-emerald-400 text-slate-950" : "border-rose-300 bg-rose-500 text-white"}`}>
-              <span className={`h-2.5 w-2.5 rounded-full ${isLocked ? "bg-slate-950" : "bg-white"}`} />
+            <span key={`${row.district}-${row.cafe}`} className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-bold shadow-sm ${isLocked ? "border-emerald-300 bg-emerald-100 text-emerald-900" : "border-rose-300 bg-rose-100 text-rose-900"}`}>
+              <span className={`h-2.5 w-2.5 rounded-full ${isLocked ? "bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.18)]" : "bg-rose-500 shadow-[0_0_0_3px_rgba(244,63,94,0.18)]"}`} />
               {row.cafe}
             </span>
           );
@@ -2652,23 +2654,39 @@ function SummaryCard({ row, conflict, showDistrict = true }) {
   const fcMidpoint = fcRange.low != null && fcRange.high != null ? (fcRange.low + fcRange.high) / 2 : summary.fc;
   const stationKeys = CAFE_STATION_CONFIG[row.cafe] || [];
   const completedStations = stationKeys.filter((stationKey) => stationComplete(row, stationKey)).length;
-  const tone = !row.menu ? "border-slate-200 bg-slate-50" : fcMidpoint == null ? "border-slate-300 bg-slate-100" : fcMidpoint > 0.34 ? "border-amber-200 bg-amber-50" : fcMidpoint <= 0.30 ? "border-emerald-200 bg-emerald-50" : "border-slate-200 bg-white";
+  const progressPct = stationKeys.length ? Math.round((completedStations / stationKeys.length) * 100) : 0;
+  const locked = row.status === "Submitted";
+  const tone = !row.menu ? "border-slate-200 bg-white" : fcMidpoint == null ? "border-slate-300 bg-slate-50" : fcMidpoint > 0.34 ? "border-amber-300 bg-amber-50" : fcMidpoint <= 0.30 ? "border-emerald-300 bg-emerald-50" : "border-sky-200 bg-sky-50";
+  const statusTone = locked ? "bg-emerald-500 text-white border-emerald-500" : row.menu ? "bg-amber-100 text-amber-900 border-amber-200" : "bg-rose-100 text-rose-900 border-rose-200";
 
   return (
-    <div className={`rounded-2xl border p-4 ${tone}`}>
+    <div className={`rounded-3xl border-2 p-4 shadow-sm ${tone}`}>
       <div className="flex items-start justify-between gap-3">
         <div>
           {showDistrict && row.district && <p className="text-xs uppercase tracking-[0.16em] text-slate-400">{row.district}</p>}
-          <p className="font-bold text-slate-900">{row.cafe}</p>
+          <div className="flex items-center gap-2">
+            <span className={`h-2.5 w-2.5 rounded-full ${locked ? "bg-emerald-500" : row.menu ? "bg-amber-500" : "bg-rose-500"}`} />
+            <p className="font-bold text-slate-900">{row.cafe}</p>
+          </div>
           {row.copiedFrom ? <p className="text-xs text-slate-500 mt-1">Copied from {row.copiedFrom}</p> : row.cafe === "Nitro" ? <p className="text-xs text-slate-500 mt-1">Frontier follows Nitro</p> : null}
           <p className="text-sm text-slate-600 mt-1">{row.menu || "No menu declared"}</p>
-          {row.status && <p className="text-xs text-slate-500 mt-1">{row.status}{row.updatedAt ? ` • Updated ${row.updatedAt}` : ""}</p>}
+          {row.updatedAt && <p className="text-xs text-slate-500 mt-1">Updated {row.updatedAt}</p>}
           {row.submittedBy && <p className="text-xs text-slate-500 mt-1">By {row.submittedBy}</p>}
           {row.station && <p className="text-xs text-slate-500 mt-1">{row.station}</p>}
         </div>
         <div className="flex flex-col items-end gap-2">
+          <span className={`rounded-full border px-3 py-1 text-xs font-bold ${statusTone}`}>{locked ? "locked" : row.menu ? "draft" : "open"}</span>
           <span className="rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-xs font-bold text-slate-700">{pctRange(fcRange)}</span>
           {conflict ? <AlertTriangle className="text-amber-600" size={18} /> : row.menu ? <CheckCircle2 className="text-emerald-600" size={18} /> : null}
+        </div>
+      </div>
+      <div className="mt-4">
+        <div className="flex items-center justify-between text-xs font-bold text-slate-500">
+          <span>Station Progress</span>
+          <span>{completedStations}/{stationKeys.length || 0}</span>
+        </div>
+        <div className="mt-2 h-2 overflow-hidden rounded-full border border-slate-200 bg-white">
+          <div className={`h-full rounded-full ${progressPct === 100 ? "bg-emerald-500" : "bg-sky-500"}`} style={{ width: `${progressPct}%` }} />
         </div>
       </div>
       <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
@@ -2699,7 +2717,6 @@ function ResultsView({ rows, resultsDistrict, setResultsDistrict, resultsCafe, s
   const pricedRows = rows.map((row) => ({ ...row, summary: foodSummary(selectedItems(row)) })).filter((row) => row.summary.fc != null);
   const averageFc = pricedRows.length ? pricedRows.reduce((sum, row) => sum + row.summary.fc, 0) / pricedRows.length : null;
   const costRangeRows = rows.map((row) => ({ ...row, trueCostRange: selectedTrueCostRange(selectedItems(row)) })).filter((row) => row.trueCostRange.low != null);
-  const trueCostRows = costRangeRows;
   const mostUsedMenus = Object.entries(rows.reduce((acc, row) => { if (row.menu) acc[row.menu] = (acc[row.menu] || 0) + 1; return acc; }, {})).sort((a, b) => b[1] - a[1]).slice(0, 3);
   const allSelections = rows.flatMap((row) => selectedItems(row));
   const globalSelections = rows.flatMap((row) => globalSelectedRows(row, { unique: true }));
@@ -2741,10 +2758,6 @@ function ResultsView({ rows, resultsDistrict, setResultsDistrict, resultsCafe, s
             <h2 className="text-3xl font-bold mt-1">Rotation History Health</h2>
             <p className="text-sm text-slate-500 mt-1">A quick read of saved declarations across the selected filter.</p>
           </div>
-        </div>
-        <div className="hidden">
-          <SummaryBucket title="True Cost Range Records" value={trueCostRows.length || "—"} details={trueCostRows.map((row) => `${row.cafe} • ${row.week}: ${moneyRange(row.trueCostRange)}`).slice(0, 5)} empty="no true cost history yet" />
-          <SummaryBucket title="Most Used Menus" value={mostUsedMenus.length || "—"} details={mostUsedMenus.map(([menu, count]) => `${menu} (${count})`)} empty="no menu history yet" />
         </div>
         <div className="mt-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
           <SummaryBucket title="Most Used Menus" value={mostUsedMenus.length || "-"} details={mostUsedMenus.map(([menu, count]) => `${menu} (${count})`)} empty="no menu history yet" tone="green" />
