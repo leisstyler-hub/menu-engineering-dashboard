@@ -93,6 +93,13 @@ const weekIndexFromLabel = (weekLabel = "") => {
 const isReInventFridayMondayWeek = (weekLabel = "") => weekIndexFromLabel(weekLabel) % 2 === 0;
 const ROTATION_WEEKS = Array.from({ length: 160 }, (_, index) => makeWeekOption(addDays(ROTATION_CYCLE_START, index * 7)));
 const DEFAULT_ROTATION_WEEK = makeWeekOption(getMonday(new Date()));
+const previousRotationWeek = (weekLabel = "") => {
+  const index = ROTATION_WEEKS.indexOf(weekLabel);
+  if (index > 0) return ROTATION_WEEKS[index - 1];
+  const start = parseWeekStart(weekLabel);
+  if (!start) return "";
+  return makeWeekOption(addDays(new Date(`${start}T00:00:00`), -7));
+};
 
 const ROLLING_HISTORY_WEEK_COUNT = 26;
 const ROLLING_ROTATION_WEEKS = ROTATION_WEEKS.slice(0, ROLLING_HISTORY_WEEK_COUNT);
@@ -491,6 +498,16 @@ const getStationName = (row) => row.station || row.stationName || row["Station"]
 const getPrice = (row) => row.price ?? row.sellPrice ?? row["Sell Price"] ?? null;
 const getTrueCost = (row) => row.trueCost ?? row.itemCostWithWaste ?? row["Item + Waste Cost"] ?? row["Recipe Cost"] ?? row.recipeCost ?? null;
 const getCategory = (row) => String(row.category || row.itemType || row["Item Type"] || row.classification || "").toLowerCase();
+const isGlobalMenuOption = (menu = "") =>
+  /^AMZ\+RA:/i.test(menu) ||
+  !/Cafe Express|Carvery|Fish Market|Fresh Five|Grill Core|Pizzas? & Flatbreads?|Soup/i.test(menu);
+const allowsSubConcept = (menu = "") => /Street Eats/i.test(menu);
+const globalMenuRows = (menu = "", station = "") =>
+  MENUWORKS_ITEMS.filter((row) => getMenuName(row) === menu && (!allowsSubConcept(menu) || !station || getStationName(row) === station));
+const subConceptOptionsForMenu = (menu = "") => {
+  if (!allowsSubConcept(menu)) return [];
+  return Array.from(new Set(MENUWORKS_ITEMS.filter((row) => getMenuName(row) === menu).map((row) => getStationName(row)).filter(Boolean))).sort();
+};
 const getDescription = (row) =>
   row.enticingDescription ||
   row.description ||
@@ -795,6 +812,25 @@ function blockComplete(block) {
 
 function getRotationGlobalBlock(rotation, blockId) {
   return rotation.globalBlocks?.[blockId] || blankGlobalBlock();
+}
+
+function carryoverGlobalBlock(rotation = {}, preferredBlockId = "") {
+  const blocks = rotation.globalBlocks || {};
+  const candidates = [preferredBlockId, "friCarry", "thuFri", "monTue", "wedThu", "tueWed"].filter(Boolean);
+  for (const blockId of candidates) {
+    if (blocks[blockId]?.menu) return blocks[blockId];
+  }
+  if (rotation.menu) {
+    return {
+      menu: rotation.menu,
+      station: rotation.station || "",
+      entrees: rotation.entrees || [],
+      sides: rotation.sides || [],
+      subRecipes: rotation.subRecipes || [],
+      extensions: rotation.extensions || [],
+    };
+  }
+  return blankGlobalBlock();
 }
 
 function potatoSides() {
@@ -1198,7 +1234,9 @@ export default function NeighborhoodRotations({ onBackToPlatform }) {
   useEffect(() => { if (district && selectedCafe && !cafes.includes(selectedCafe)) setSelectedCafe(""); }, [district, cafes, selectedCafe]);
 
   const currentRotation = selectedCafe ? (rotations[rotationKey(week, district, selectedCafe)] || EMPTY_ROTATION) : EMPTY_ROTATION;
-  const menus = useMemo(() => Array.from(new Set(MENUWORKS_ITEMS.map((row) => getMenuName(row)).filter(Boolean))).sort(), []);
+  const carryoverWeek = previousRotationWeek(week);
+  const previousRotation = selectedCafe && carryoverWeek ? (rotations[rotationKey(carryoverWeek, district, selectedCafe)] || EMPTY_ROTATION) : EMPTY_ROTATION;
+  const menus = useMemo(() => Array.from(new Set(MENUWORKS_ITEMS.map((row) => getMenuName(row)).filter(Boolean).filter(isGlobalMenuOption))).sort(), []);
   const updateRotation = (patch) => setRotations((prev) => ({
     ...prev,
     [rotationKey(week, district, selectedCafe)]: { ...(prev[rotationKey(week, district, selectedCafe)] || EMPTY_ROTATION), ...patch }
@@ -1252,7 +1290,7 @@ export default function NeighborhoodRotations({ onBackToPlatform }) {
             </section>
             <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
               <div className="xl:col-span-2 space-y-6">
-                {district && selectedCafe ? <RotationPlannerCard cafe={selectedCafe} district={district} menuOptions={menus} rotation={currentRotation} updateRotation={updateRotation} week={week} printRows={allRows} persistRotationToDatabase={persistRotationToDatabase} databaseLoadStatus={databaseLoadStatus} databaseSyncStatus={databaseSyncStatus} onRefreshDatabase={refreshFromSmartsheet} /> : <SelectPlannerPrompt />}
+                {district && selectedCafe ? <RotationPlannerCard cafe={selectedCafe} district={district} menuOptions={menus} rotation={currentRotation} previousRotation={previousRotation} previousWeek={carryoverWeek} updateRotation={updateRotation} week={week} printRows={allRows} persistRotationToDatabase={persistRotationToDatabase} databaseLoadStatus={databaseLoadStatus} databaseSyncStatus={databaseSyncStatus} onRefreshDatabase={refreshFromSmartsheet} /> : <SelectPlannerPrompt />}
               </div>
               <LeadershipOverview district={district} week={week} rows={leadershipRows} conflictMenus={conflictMenus} />
             </section>
@@ -1459,12 +1497,12 @@ function SmartsheetDatabaseStatusPanel({ loadStatus, syncStatus, onRefreshDataba
   );
 }
 
-function RotationPlannerCard({ cafe, district, menuOptions, rotation, updateRotation, week, printRows, persistRotationToDatabase, databaseLoadStatus, databaseSyncStatus, onRefreshDatabase }) {
+function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRotation, previousWeek, updateRotation, week, printRows, persistRotationToDatabase, databaseLoadStatus, databaseSyncStatus, onRefreshDatabase }) {
   const [preview, setPreview] = useState(null);
   const [copiedRotation, setCopiedRotation] = useState(null);
 
-  const stationOptions = Array.from(new Set(MENUWORKS_ITEMS.filter((row) => getMenuName(row) === rotation.menu).map((row) => getStationName(row) || "—"))).sort();
-  const menuItems = MENUWORKS_ITEMS.filter((row) => getMenuName(row) === rotation.menu && (!rotation.station || getStationName(row) === rotation.station));
+  const stationOptions = subConceptOptionsForMenu(rotation.menu);
+  const menuItems = globalMenuRows(rotation.menu, rotation.station);
   const categorized = categorize(menuItems);
   const items = selectedItems(rotation);
   const summary = foodSummary(items);
@@ -1557,6 +1595,8 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, updateRota
           cafe={cafe}
           week={week}
           rotation={rotation}
+          previousRotation={previousRotation}
+          previousWeek={previousWeek}
           menuOptions={menuOptions}
           stationOptions={stationOptions}
           categorized={categorized}
@@ -1972,8 +2012,8 @@ function StationPills({ cafe, stations }) {
 }
 
 function CafeStationSection(props) {
-  const { stationKey, cafe, week, rotation, menuOptions, stationOptions, categorized, updateRotation, updateSlot, updateGrill, updateLto, updateCarvery, summary, selectedItems } = props;
-  if (stationKey === "global") return <GlobalSection cafe={cafe} week={week} rotation={rotation} menuOptions={menuOptions} stationOptions={stationOptions} categorized={categorized} updateRotation={updateRotation} updateSlot={updateSlot} summary={summary} selectedItems={selectedItems} />;
+  const { stationKey, cafe, week, rotation, previousRotation, previousWeek, menuOptions, stationOptions, categorized, updateRotation, updateSlot, updateGrill, updateLto, updateCarvery, summary, selectedItems } = props;
+  if (stationKey === "global") return <GlobalSection cafe={cafe} week={week} rotation={rotation} previousRotation={previousRotation} previousWeek={previousWeek} menuOptions={menuOptions} stationOptions={stationOptions} categorized={categorized} updateRotation={updateRotation} updateSlot={updateSlot} summary={summary} selectedItems={selectedItems} />;
   if (stationKey === "grill") return <GrillSection cafe={cafe} rotation={rotation} updateGrill={updateGrill} />;
   if (stationKey === "salad") return <SimpleLTOSection stationKey="salad" title="Salad LTOs" slots={Array.from({ length: stationSlots(cafe, "salad") }, (_, i) => `Salad LTO ${i + 1}`)} values={rotation.ltos?.salad || EMPTY_ROTATION.ltos.salad} uploaded={rotation.uploadedLtos?.salad || []} updateLto={updateLto} complete={stationComplete(rotation, "salad")} />;
   if (stationKey === "pizza") return <SimpleLTOSection stationKey="pizza" title="Pizza / Flatbread LTOs" slots={Array.from({ length: stationSlots(cafe, "pizza") }, (_, i) => `Pizza/Flatbread LTO ${i + 1}`)} values={rotation.ltos?.pizza || EMPTY_ROTATION.ltos.pizza} uploaded={rotation.uploadedLtos?.pizza || []} updateLto={updateLto} complete={stationComplete(rotation, "pizza")} />;
@@ -1986,11 +2026,14 @@ function CafeStationSection(props) {
   return null;
 }
 
-function GlobalSection({ cafe, week, rotation, menuOptions, stationOptions, categorized, updateRotation, updateSlot, summary, selectedItems }) {
+function GlobalSection({ cafe, week, rotation, previousRotation, previousWeek, menuOptions, stationOptions, categorized, updateRotation, updateSlot, summary, selectedItems }) {
   const globalTitle = cafe === "Doppler" ? "Wok Xahn" : "Global Station";
   const cycle = globalCycleConfig(cafe, week);
   const promo = rotation.promotionOverride || EMPTY_ROTATION.promotionOverride;
   const updatePromo = (patch) => updateRotation({ promotionOverride: { ...promo, ...patch } });
+  const menuStationOptions = subConceptOptionsForMenu(rotation.menu);
+  const menuCategorized = categorize(globalMenuRows(rotation.menu, rotation.station));
+  const carryover = carryoverGlobalBlock(previousRotation);
 
   const selectMenu = (menu) => {
     const next = menu ? blankRotation(menu) : blankRotation();
@@ -2006,7 +2049,7 @@ function GlobalSection({ cafe, week, rotation, menuOptions, stationOptions, cate
   };
 
   if (cafe === "Re:Invent") {
-    return <ReInventGlobalSection cafe={cafe} week={week} rotation={rotation} menuOptions={menuOptions} stationOptions={stationOptions} categorized={categorized} updateRotation={updateRotation} updateSlot={updateSlot} summary={summary} selectedItems={selectedItems} promo={promo} updatePromo={updatePromo} />;
+    return <ReInventGlobalSection cafe={cafe} week={week} rotation={rotation} previousRotation={previousRotation} previousWeek={previousWeek} menuOptions={menuOptions} stationOptions={stationOptions} categorized={categorized} updateRotation={updateRotation} updateSlot={updateSlot} summary={summary} selectedItems={selectedItems} promo={promo} updatePromo={updatePromo} />;
   }
 
   return (
@@ -2034,6 +2077,15 @@ function GlobalSection({ cafe, week, rotation, menuOptions, stationOptions, cate
         </div>
       </div>
 
+      {cycle.startedPreviousWeek && (
+        <CarryoverPanel
+          title="Monday + Tuesday Carryover"
+          previousWeek={previousWeek}
+          block={carryover}
+          empty="No saved prior-week Global found yet. Once last week's rotation is saved, Monday and Tuesday will show here."
+        />
+      )}
+
       {promo.enabled && (
         <div className="mt-4 rounded-3xl border border-purple-200 bg-purple-50/80 p-4">
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
@@ -2059,34 +2111,34 @@ function GlobalSection({ cafe, week, rotation, menuOptions, stationOptions, cate
         <div>
           <label className="block text-sm font-semibold text-slate-500 mb-2">Global Menu</label>
           <select value={rotation.menu} onChange={(e) => selectMenu(e.target.value)} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
-            <option value="">Select menu...</option>
+            <option value="">Select Menu</option>
             {menuOptions.map((menu) => <option key={menu} value={menu}>{menu}</option>)}
           </select>
         </div>
-        {rotation.menu && stationOptions.length > 1 && (
+        {rotation.menu && menuStationOptions.length > 1 && (
           <div>
             <label className="block text-sm font-semibold text-slate-500 mb-2">Station / Sub-Concept</label>
             <select value={rotation.station || ""} onChange={(e) => selectStation(e.target.value)} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
-              <option value="">All stations</option>
-              {stationOptions.map((station) => <option key={station} value={station}>{station}</option>)}
+              <option value="">Select Sub-Concept</option>
+              {menuStationOptions.map((station) => <option key={station} value={station}>{station}</option>)}
             </select>
           </div>
         )}
       </div>
       {rotation.menu && <LiveAnalytics summary={summary} selectedItems={globalSelectedRows(rotation)} />}
       <div className="mt-5 grid grid-cols-1 xl:grid-cols-4 gap-5">
-        <PickerGroup title="Entrees" limit="up to 3" items={categorized.entrees} values={rotation.entrees || ["", "", ""]} onChange={(index, value) => updateSlot("entrees", index, value)} />
-        <PickerGroup title="Sides" limit="up to 4" items={categorized.sides} values={rotation.sides || ["", "", "", ""]} onChange={(index, value) => updateSlot("sides", index, value)} />
-        <PickerGroup title="Sub Recipes" limit="up to 4" items={categorized.subRecipes} values={rotation.subRecipes || ["", "", "", ""]} onChange={(index, value) => updateSlot("subRecipes", index, value)} />
-        <PickerGroup title="Extensions" limit="up to 2" items={categorized.extensions} values={rotation.extensions || ["", ""]} onChange={(index, value) => updateSlot("extensions", index, value)} />
+        <PickerGroup title="Entrees" limit="up to 3" items={menuCategorized.entrees} values={rotation.entrees || ["", "", ""]} onChange={(index, value) => updateSlot("entrees", index, value)} />
+        <PickerGroup title="Sides" limit="up to 4" items={menuCategorized.sides} values={rotation.sides || ["", "", "", ""]} onChange={(index, value) => updateSlot("sides", index, value)} />
+        <PickerGroup title="Sub Recipes" limit="up to 4" items={menuCategorized.subRecipes} values={rotation.subRecipes || ["", "", "", ""]} onChange={(index, value) => updateSlot("subRecipes", index, value)} />
+        <PickerGroup title="Extensions" limit="up to 2" items={menuCategorized.extensions} values={rotation.extensions || ["", ""]} onChange={(index, value) => updateSlot("extensions", index, value)} />
       </div>
-      <StationSelectedList title="Items Description" items={globalSelectedRows(rotation, { unique: true })} />
+      <StationSelectedList title="Items Description" items={globalSelectedRows(rotation, { unique: true })} complete={stationComplete(rotation, "global")} />
     </CollapsibleStation>
   );
 }
 
 
-function ReInventGlobalSection({ cafe, week, rotation, menuOptions, stationOptions, categorized, updateRotation, selectedItems, promo, updatePromo }) {
+function ReInventGlobalSection({ cafe, week, rotation, previousRotation, previousWeek, menuOptions, stationOptions, categorized, updateRotation, selectedItems, promo, updatePromo }) {
   const cycle = globalCycleConfig(cafe, week);
   const layout = reInventGlobalBlockLayout(week);
   const updateBlock = (blockId, patch) => {
@@ -2145,15 +2197,21 @@ function ReInventGlobalSection({ cafe, week, rotation, menuOptions, stationOptio
       <div className="mt-5 space-y-5">
         {layout.map((blockInfo, index) => {
           const block = getRotationGlobalBlock(rotation, blockInfo.id);
+          const blockStationOptions = subConceptOptionsForMenu(block.menu);
+          const blockCategorized = categorize(globalMenuRows(block.menu, block.station));
           if (blockInfo.readOnly) {
+            const carryover = carryoverGlobalBlock(previousRotation, "friCarry");
             return (
               <div key={blockInfo.id} className="rounded-3xl border border-indigo-200 bg-indigo-50 p-5">
                 <p className="text-xs uppercase tracking-[0.18em] text-indigo-700 font-bold">Read Only Carryover</p>
                 <h4 className="text-2xl font-bold text-indigo-950 mt-1">{blockInfo.title}</h4>
                 <p className="text-sm text-indigo-900 mt-1">{blockInfo.help}</p>
-                <div className="mt-3 rounded-2xl bg-white border border-indigo-200 p-4 text-sm text-indigo-900">
-                  Prior Friday Global will display here when the previous week has been saved to Smartsheet.
-                </div>
+                <CarryoverPanel
+                  title="Prior Friday Global"
+                  previousWeek={previousWeek}
+                  block={carryover}
+                  empty="No saved prior-Friday Global found yet. Once last week's Friday block is saved, Monday will show here."
+                />
               </div>
             );
           }
@@ -2171,34 +2229,54 @@ function ReInventGlobalSection({ cafe, week, rotation, menuOptions, stationOptio
                 <div>
                   <label className="block text-sm font-semibold text-slate-500 mb-2">Global Menu</label>
                   <select value={block.menu || ""} onChange={(e) => updateBlock(blockInfo.id, { ...blankGlobalBlock(e.target.value, "") })} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
-                    <option value="">Select menu...</option>
+                    <option value="">Select Menu</option>
                     {menuOptions.map((menu) => <option key={menu} value={menu}>{menu}</option>)}
                   </select>
                 </div>
-                {block.menu && stationOptions.length > 1 && (
+                {block.menu && blockStationOptions.length > 1 && (
                   <div>
                     <label className="block text-sm font-semibold text-slate-500 mb-2">Station / Sub-Concept</label>
                     <select value={block.station || ""} onChange={(e) => updateBlock(blockInfo.id, { ...blankGlobalBlock(block.menu, e.target.value) })} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
-                      <option value="">All stations</option>
-                      {stationOptions.map((station) => <option key={station} value={station}>{station}</option>)}
+                      <option value="">Select Sub-Concept</option>
+                      {blockStationOptions.map((station) => <option key={station} value={station}>{station}</option>)}
                     </select>
                   </div>
                 )}
               </div>
               {block.menu && (
                 <div className="mt-5 grid grid-cols-1 xl:grid-cols-4 gap-5">
-                  <PickerGroup title="Entrees" limit="up to 3" items={categorized.entrees} values={block.entrees || ["", "", ""]} onChange={(slot, value) => updateBlockSlot(blockInfo.id, "entrees", slot, value)} />
-                  <PickerGroup title="Sides" limit="up to 4" items={categorized.sides} values={block.sides || ["", "", "", ""]} onChange={(slot, value) => updateBlockSlot(blockInfo.id, "sides", slot, value)} />
-                  <PickerGroup title="Sub Recipes" limit="up to 4" items={categorized.subRecipes} values={block.subRecipes || ["", "", "", ""]} onChange={(slot, value) => updateBlockSlot(blockInfo.id, "subRecipes", slot, value)} />
-                  <PickerGroup title="Extensions" limit="up to 2" items={categorized.extensions} values={block.extensions || ["", ""]} onChange={(slot, value) => updateBlockSlot(blockInfo.id, "extensions", slot, value)} />
+                  <PickerGroup title="Entrees" limit="up to 3" items={blockCategorized.entrees} values={block.entrees || ["", "", ""]} onChange={(slot, value) => updateBlockSlot(blockInfo.id, "entrees", slot, value)} />
+                  <PickerGroup title="Sides" limit="up to 4" items={blockCategorized.sides} values={block.sides || ["", "", "", ""]} onChange={(slot, value) => updateBlockSlot(blockInfo.id, "sides", slot, value)} />
+                  <PickerGroup title="Sub Recipes" limit="up to 4" items={blockCategorized.subRecipes} values={block.subRecipes || ["", "", "", ""]} onChange={(slot, value) => updateBlockSlot(blockInfo.id, "subRecipes", slot, value)} />
+                  <PickerGroup title="Extensions" limit="up to 2" items={blockCategorized.extensions} values={block.extensions || ["", ""]} onChange={(slot, value) => updateBlockSlot(blockInfo.id, "extensions", slot, value)} />
                 </div>
               )}
             </div>
           );
         })}
       </div>
-      <StationSelectedList title="Items Description" items={globalSelectedRows(rotation, { unique: true })} />
+      <StationSelectedList title="Items Description" items={globalSelectedRows(rotation, { unique: true })} complete={stationComplete(rotation, "global", cafe, week)} />
     </CollapsibleStation>
+  );
+}
+
+function CarryoverPanel({ title, previousWeek, block, empty }) {
+  const itemCount = compactValues([...(block.entrees || []), ...(block.sides || []), ...(block.subRecipes || []), ...(block.extensions || [])]).length;
+  return (
+    <div className="mt-3 rounded-2xl bg-white border border-indigo-200 p-4 text-sm text-indigo-900">
+      <p className="text-xs uppercase tracking-[0.16em] font-bold text-indigo-700">{title}</p>
+      {block?.menu ? (
+        <div className="mt-2">
+          <p className="text-lg font-bold text-indigo-950">{block.menu}</p>
+          {allowsSubConcept(block.menu) && block.station && <p className="mt-1 font-semibold">{block.station}</p>}
+          <p className="mt-1 text-xs font-semibold text-indigo-700">
+            {previousWeek ? `From ${previousWeek}` : "From prior week"}{itemCount ? ` - ${itemCount} selected item${itemCount === 1 ? "" : "s"}` : ""}
+          </p>
+        </div>
+      ) : (
+        <p className="mt-2 font-semibold">{empty}</p>
+      )}
+    </div>
   );
 }
 
@@ -2223,7 +2301,7 @@ function DayToggleGroup({ title, values = [], onToggle, tone = "sky" }) {
 
 function CollapsibleStation({ title, eyebrow, complete, children }) {
   return (
-    <div className="mt-5 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <div className={`mt-5 rounded-lg border-2 p-5 shadow-md ${complete ? "border-emerald-300 bg-emerald-50/20" : "border-slate-300 bg-white"}`}>
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-sm uppercase tracking-[0.18em] text-slate-400">{eyebrow}</p>
@@ -2236,13 +2314,15 @@ function CollapsibleStation({ title, eyebrow, complete, children }) {
   );
 }
 
-function StationSelectedList({ title = "Items Description", items }) {
+function StationSelectedList({ title = "Items Description", items, complete = false }) {
   const [isOpen, setIsOpen] = useState(false);
   const missingDetailCount = items.filter(isSourceDetailMissing).length;
   const descriptionMissingCount = items.filter((row) => !getDescription(row)).length;
   const reviewCount = Math.max(missingDetailCount, descriptionMissingCount);
+  const attentionClass = complete && items.length ? "border-2 border-emerald-300 bg-emerald-50/80 shadow-sm" : "border border-slate-200 bg-white";
+  const buttonClass = complete && items.length ? "bg-emerald-500 text-slate-950 ring-2 ring-emerald-200" : "bg-slate-900 text-white";
   return (
-    <div className="mt-4 rounded-lg border border-slate-200 bg-white p-4">
+    <div className={`mt-4 rounded-lg p-4 ${attentionClass}`}>
       <button type="button" onClick={() => setIsOpen((value) => !value)} className="w-full flex items-center justify-between gap-3 text-left">
         <div>
           <p className="text-sm font-bold text-slate-900">{title}</p>
@@ -2251,7 +2331,7 @@ function StationSelectedList({ title = "Items Description", items }) {
             {reviewCount ? ` - ${reviewCount} need source detail` : ""}
           </p>
         </div>
-        <span className="rounded-full bg-slate-900 text-white px-3 py-1 text-xs font-bold inline-flex items-center gap-1">
+        <span className={`rounded-full px-3 py-1 text-xs font-bold inline-flex items-center gap-1 ${buttonClass}`}>
           {isOpen ? "Hide" : "View"} {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
         </span>
       </button>
@@ -2328,7 +2408,7 @@ function PickerGroup({ title, limit, items, values, onChange }) {
       <div className="mt-3 space-y-2">
         {values.map((value, index) => (
           <select key={index} value={value} onChange={(e) => onChange(index, e.target.value)} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
-            <option value="">Select {title.toLowerCase()}...</option>
+            <option value="">&lt;Select Item&gt;</option>
             {items.map((row) => <option key={`${getItemIdentity(row)}-${index}`} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}
           </select>
         ))}
@@ -2341,21 +2421,22 @@ function GrillSection({ cafe, rotation, updateGrill }) {
   const grillItems = categorize(MENUWORKS_ITEMS.filter((row) => getMenuName(row) === "AMZ: Grill Core" || getStationName(row).toLowerCase().includes("grill"))).entrees;
   const grillTitle = cafe === "Day 1" ? "Adelaide's" : "Core Grill Additions";
   const options = grillItems.length ? grillItems : stationPool("carveryProtein");
+  const complete = stationComplete(rotation, "grill");
   return (
-    <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-5">
+    <div className={`mt-6 rounded-3xl border-2 p-5 shadow-md ${complete ? "border-emerald-300 bg-emerald-50/20" : "border-slate-300 bg-slate-50"}`}>
       <p className="text-sm uppercase tracking-[0.18em] text-slate-400">Grill Station</p>
       <h3 className="text-2xl font-bold mt-1">{grillTitle}</h3>
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
         <GrillSelect label="Regional Special" value={rotation.grill?.regionalSpecial || ""} onChange={(value) => updateGrill("regionalSpecial", value)} items={options} />
         <GrillSelect label="Location Spotlight" value={rotation.grill?.locationSpotlight || ""} onChange={(value) => updateGrill("locationSpotlight", value)} items={options} />
       </div>
-      <StationSelectedList title="Items Description" items={grillSelectedRows(rotation, { unique: true })} />
+      <StationSelectedList title="Items Description" items={grillSelectedRows(rotation, { unique: true })} complete={complete} />
     </div>
   );
 }
 
 function GrillSelect({ label, value, onChange, items }) {
-  return <div className="rounded-3xl border-2 border-sky-200 bg-sky-50/80 p-4 shadow-sm"><div className="flex items-center justify-between gap-2 mb-2"><label className="block text-sm font-bold text-slate-900">{label}</label><span className="rounded-full bg-white border border-sky-200 px-3 py-1 text-xs font-bold text-sky-700">choose here</span></div><select value={value} onChange={(e) => onChange(e.target.value)} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100"><option value="">Select {label.toLowerCase()}...</option>{items.map((row) => <option key={`${label}-${getItemIdentity(row)}`} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}</select></div>;
+  return <div className="rounded-3xl border-2 border-sky-200 bg-sky-50/80 p-4 shadow-sm"><div className="flex items-center justify-between gap-2 mb-2"><label className="block text-sm font-bold text-slate-900">{label}</label><span className="rounded-full bg-white border border-sky-200 px-3 py-1 text-xs font-bold text-sky-700">choose here</span></div><select value={value} onChange={(e) => onChange(e.target.value)} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100"><option value="">&lt;Select Item&gt;</option>{items.map((row) => <option key={`${label}-${getItemIdentity(row)}`} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}</select></div>;
 }
 
 function SimpleLTOSection({ stationKey, title, slots, values = [], uploaded = [], updateLto, complete }) {
@@ -2367,14 +2448,14 @@ function SimpleLTOSection({ stationKey, title, slots, values = [], uploaded = []
           <div key={slot} className="rounded-3xl border-2 border-sky-200 bg-sky-50/80 p-4 shadow-sm">
             <div className="flex items-center justify-between gap-2 mb-2"><label className="block text-sm font-bold text-slate-900">{slot}</label><span className="rounded-full bg-white border border-sky-200 px-3 py-1 text-xs font-bold text-sky-700">choose here</span></div>
             <select value={values[index] || uploaded[index] || ""} onChange={(e) => updateLto(stationKey, index, e.target.value)} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
-              <option value="">Select {slot.toLowerCase()}...</option>
+              <option value="">&lt;Select Item&gt;</option>
               {uploaded[index] && <option value={uploaded[index]}>{titleCase(uploaded[index])}</option>}
               {pool.map((row) => <option key={`${stationKey}-${slot}-${getItemIdentity(row)}`} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}
             </select>
           </div>
         ))}
       </div>
-      <StationSelectedList title="Items Description" items={ltoSelectedRows({ ltos: { [stationKey]: values }, uploadedLtos: { [stationKey]: uploaded } }, stationKey, { unique: true })} />
+      <StationSelectedList title="Items Description" items={ltoSelectedRows({ ltos: { [stationKey]: values }, uploadedLtos: { [stationKey]: uploaded } }, stationKey, { unique: true })} complete={complete} />
     </CollapsibleStation>
   );
 }
@@ -2388,7 +2469,7 @@ function WokSection({ rotation, updateLto }) {
         <PickerGroup title="Wok Base" limit="1 base" items={stationPool("wokBase")} values={rotation.ltos?.wokBase || EMPTY_ROTATION.ltos.wokBase} onChange={(index, value) => updateLto("wokBase", index, value)} />
         <PickerGroup title="Wok Sub Recipes" limit="up to 2" items={stationPool("wokSubRecipes")} values={rotation.ltos?.wokSubRecipes || EMPTY_ROTATION.ltos.wokSubRecipes} onChange={(index, value) => updateLto("wokSubRecipes", index, value)} />
       </div>
-      <StationSelectedList title="Items Description" items={wokSelectedRows(rotation, { unique: true })} />
+      <StationSelectedList title="Items Description" items={wokSelectedRows(rotation, { unique: true })} complete={stationComplete(rotation, "wok")} />
     </CollapsibleStation>
   );
 }
@@ -2413,13 +2494,13 @@ function CarverySection({ rotation, updateCarvery }) {
           <div key={field} className="rounded-3xl border-2 border-sky-200 bg-sky-50/80 p-4 shadow-sm">
             <div className="flex items-center justify-between gap-2 mb-2"><label className="block text-sm font-bold text-slate-900">{label}</label><span className="rounded-full bg-white border border-sky-200 px-3 py-1 text-xs font-bold text-sky-700">choose here</span></div>
             <select value={rotation.carvery?.[field] || ""} onChange={(e) => updateCarvery(field, e.target.value)} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
-              <option value="">Select {label.toLowerCase()}...</option>
+              <option value="">&lt;Select Item&gt;</option>
               {options.map((row) => <option key={`${field}-${getItemIdentity(row)}`} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}
             </select>
           </div>
         ))}
       </div>
-      <StationSelectedList title="Items Description" items={carverySelectedRows(rotation, { unique: true })} />
+      <StationSelectedList title="Items Description" items={carverySelectedRows(rotation, { unique: true })} complete={stationComplete(rotation, "carvery")} />
     </CollapsibleStation>
   );
 }

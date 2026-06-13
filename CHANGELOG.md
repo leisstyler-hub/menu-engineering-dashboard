@@ -2,6 +2,11 @@
 
 ## 2026-06-13
 
+- Added prior-week Global carryover visibility for Monday/Tuesday cycle patterns so saved carryover menus can be seen in the planner.
+- Filtered Global Menu choices to Global concepts, including AMZ+RA menus, and limited sub-concept selection to Street Eats.
+- Strengthened station and completed Items Description borders so finished stations draw attention to the View action.
+- Simplified item picker placeholder text to `<Select Item>` to avoid clipped labels.
+- Set visible app version to `2026.06.13.005-fix-carryover-global-controls`.
 - Renamed the planner-side leadership card headline to `District At Large` and moved district/week context into supporting text.
 - Set visible app version to `2026.06.13.004-ui-district-at-large-title`.
 - Relaxed the Planner Remote Control layout so status chips and action buttons no longer crowd each other when every state is active.
