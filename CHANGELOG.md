@@ -2,6 +2,8 @@
 
 ## 2026-06-13
 
+- Reworked the Culinary Tools landing page into a smart dashboard with diet mix donut chart, category bars, newest item signal, latest changelog feed, top menu libraries, and live MenuWorks coverage stats.
+- Set visible app version to `2026.06.13.018-ui-landing-smart-dashboard`.
 - Added Smartsheet sync for Lean Tool completed results, including summary rows, timestamped mark rows, shared role visibility, and Results refresh from Smartsheet.
 - Added support for a dedicated `SMARTSHEET_LEAN_SHEET_ID` so Lean results can live in their own shared Smartsheet while falling back to the current sheet when needed.
 - Set visible app version to `2026.06.13.017-feature-lean-smartsheet-results`.
