@@ -27,18 +27,17 @@ export default function CompassOneLogo({ compact = false }) {
       </text>
       <circle cx="143" cy="29" r="28" fill="#b99b55" />
       <text
-        x="103"
+        x="143"
         y="37"
         fill="#ffffff"
         fontFamily="Arial, Helvetica, sans-serif"
-        fontSize="22"
-        fontWeight="400"
-        letterSpacing="-0.6"
+        fontSize="21"
+        fontWeight="500"
+        letterSpacing="0"
+        textAnchor="middle"
       >
         one
       </text>
-      <circle cx="171" cy="21" r="2.4" fill="#ffffff" opacity="0.9" />
-      <path d="M174 21h9" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" opacity="0.9" />
     </svg>
   );
 }
