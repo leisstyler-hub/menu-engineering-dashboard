@@ -24,8 +24,16 @@
     box-shadow: 0 1px 2px rgb(15 23 42 / 0.06), 0 12px 28px rgb(15 23 42 / 0.08);
   }
 
-  .border-2 {
-    border-width: 1px;
+  :where(header, main, aside, section, article, div)[class*="bg-white"][class*="border"][class*="shadow"] {
+    border-width: 2px;
+    border-color: #bae6fd;
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.06), 0 14px 30px rgb(15 23 42 / 0.09);
+  }
+
+  :where(header, main, aside, section, article, div)[class*="bg-slate-50"][class*="border"][class*="shadow"],
+  :where(header, main, aside, section, article, div)[class*="bg-emerald-50"][class*="border"][class*="shadow"],
+  :where(header, main, aside, section, article, div)[class*="bg-sky-50"][class*="border"][class*="shadow"] {
+    border-width: 2px;
   }
 
   select,

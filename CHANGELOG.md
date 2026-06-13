@@ -2,6 +2,9 @@
 
 ## 2026-06-13
 
+- Strengthened app-wide section framing so major panels across all tools use the same clearer light-blue border rhythm as the cafe station cards.
+- Restored true `border-2` weight so highlighted station and completed-section borders read more clearly.
+- Set visible app version to `2026.06.13.013-ui-section-border-rhythm`.
 - Added a Lean Tool completion pop-up with the completed observation summary, top waste/activity, DOWNTIME breakdown, timestamped marks, and OK action.
 - Highlighted the Lean Tool Email Report Out section after a completed observation is acknowledged.
 - Set visible app version to `2026.06.13.012-feature-lean-complete-modal`.
