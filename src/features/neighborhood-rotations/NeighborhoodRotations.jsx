@@ -2564,6 +2564,24 @@ function ExecutiveView({ week, setWeek, rows, conflictMenus }) {
 
   const districtNames = Object.keys(DISTRICTS);
   const selectedCount = rows.reduce((sum, row) => sum + selectedItems(row).length, 0);
+  const districtSignals = districtNames.map((districtName) => {
+    const districtRows = rows.filter((row) => row.district === districtName);
+    const districtLocked = districtRows.filter((row) => row.status === "Submitted").length;
+    const districtDeclared = districtRows.filter((row) => row.menu).length;
+    const districtConflicts = districtRows.filter((row) => row.menu && conflictMenus[`${row.district}|${row.menu}`] > 1).length;
+    const pricedRows = districtRows
+      .map((row) => {
+        const range = selectedFoodCostRange(selectedItems(row));
+        const midpoint = range.low != null && range.high != null ? (range.low + range.high) / 2 : null;
+        return { row, midpoint };
+      })
+      .filter((entry) => entry.midpoint != null);
+    const averageFc = pricedRows.length ? pricedRows.reduce((sum, entry) => sum + entry.midpoint, 0) / pricedRows.length : null;
+    const lockPct = districtRows.length ? Math.round((districtLocked / districtRows.length) * 100) : 0;
+    const declarationPct = districtRows.length ? Math.round((districtDeclared / districtRows.length) * 100) : 0;
+    const score = Math.max(0, Math.min(100, Math.round((lockPct * 0.45) + (declarationPct * 0.35) + (districtConflicts ? 0 : 15) + (averageFc == null ? 5 : averageFc <= 0.34 ? 5 : -10))));
+    return { district: districtName, total: districtRows.length, locked: districtLocked, declared: districtDeclared, conflicts: districtConflicts, averageFc, lockPct, declarationPct, score };
+  });
 
   return (
     <div className="space-y-5">
@@ -2576,6 +2594,7 @@ function ExecutiveView({ week, setWeek, rows, conflictMenus }) {
         <ExecutiveMetric title="Duplicate Menus" value={conflicts} sub="within district" tone={conflicts ? "amber" : "green"} />
         <ExecutiveMetric title="Projected Global FC%" value={pct(averageGlobalFc)} sub="based on selected rotation mix" tone={averageGlobalFc != null && averageGlobalFc > 0.34 ? "amber" : "green"} />
       </section>
+      <LeadershipPulsePanel signals={districtSignals} rows={rows} conflictMenus={conflictMenus} />
 
       <section className="rounded-[2rem] bg-white border-2 border-slate-200 p-6 shadow-2xl">
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
@@ -2642,6 +2661,78 @@ function LeadershipStatusBoard({ rows }) {
             </span>
           );
         })}
+      </div>
+    </section>
+  );
+}
+
+function LeadershipPulsePanel({ signals, rows, conflictMenus }) {
+  const openRows = rows.filter((row) => row.status !== "Submitted");
+  const missingMenuRows = rows.filter((row) => !row.menu);
+  const duplicateRows = rows.filter((row) => row.menu && conflictMenus[`${row.district}|${row.menu}`] > 1);
+  const highCostRows = rows.filter((row) => {
+    const range = selectedFoodCostRange(selectedItems(row));
+    const midpoint = range.low != null && range.high != null ? (range.low + range.high) / 2 : null;
+    return midpoint != null && midpoint > 0.34;
+  });
+  const actionRows = [
+    { label: "Open submissions", value: openRows.length, detail: openRows.slice(0, 4).map((row) => row.cafe).join(", ") || "clear", tone: openRows.length ? "amber" : "green" },
+    { label: "Missing menus", value: missingMenuRows.length, detail: missingMenuRows.slice(0, 4).map((row) => row.cafe).join(", ") || "clear", tone: missingMenuRows.length ? "amber" : "green" },
+    { label: "Duplicate menus", value: duplicateRows.length, detail: duplicateRows.slice(0, 4).map((row) => `${row.district}: ${row.menu}`).join(", ") || "clear", tone: duplicateRows.length ? "amber" : "green" },
+    { label: "Food cost watch", value: highCostRows.length, detail: highCostRows.slice(0, 4).map((row) => row.cafe).join(", ") || "clear", tone: highCostRows.length ? "amber" : "green" },
+  ];
+
+  return (
+    <section className="rounded-[2rem] border-2 border-emerald-200 bg-white p-6 shadow-2xl">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-sm uppercase tracking-[0.18em] text-emerald-600 font-bold">Leadership Pulse</p>
+          <h2 className="mt-1 text-3xl font-bold">District operating signal</h2>
+        </div>
+        <span className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-bold text-slate-600">submission, cost, and duplicate health</span>
+      </div>
+      <div className="mt-5 grid grid-cols-1 gap-4 xl:grid-cols-[1fr_420px]">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          {signals.map((signal) => {
+            const tone = signal.score >= 85 ? "border-emerald-300 bg-emerald-50" : signal.score >= 65 ? "border-sky-200 bg-sky-50" : "border-amber-300 bg-amber-50";
+            const bar = signal.score >= 85 ? "bg-emerald-500" : signal.score >= 65 ? "bg-sky-500" : "bg-amber-500";
+            return (
+              <div key={signal.district} className={`rounded-3xl border-2 p-4 ${tone}`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xl font-black text-slate-950">{signal.district}</p>
+                    <p className="mt-1 text-xs font-bold text-slate-600">{signal.locked}/{signal.total} locked - {signal.declared}/{signal.total} declared</p>
+                  </div>
+                  <span className="rounded-full border border-white bg-white/80 px-3 py-1 text-xs font-black text-slate-700">{signal.score}</span>
+                </div>
+                <div className="mt-4 h-2 overflow-hidden rounded-full bg-white">
+                  <div className={`h-full rounded-full ${bar}`} style={{ width: `${signal.score}%` }} />
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold text-slate-600">
+                  <span className="rounded-full border border-white bg-white/80 px-3 py-1">{signal.lockPct}% locked</span>
+                  <span className="rounded-full border border-white bg-white/80 px-3 py-1">{signal.conflicts} duplicate flags</span>
+                  <span className="rounded-full border border-white bg-white/80 px-3 py-1">FC {pct(signal.averageFc)}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Action Queue</p>
+          <div className="mt-3 space-y-3">
+            {actionRows.map((row) => (
+              <div key={row.label} className={`rounded-2xl border p-3 ${row.tone === "green" ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-amber-200 bg-amber-50 text-amber-900"}`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-black">{row.label}</p>
+                    <p className="mt-1 text-xs font-semibold opacity-75">{row.detail}</p>
+                  </div>
+                  <span className="rounded-full border border-white bg-white/80 px-3 py-1 text-xs font-black">{row.value}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -2744,6 +2835,12 @@ function ResultsView({ rows, resultsDistrict, setResultsDistrict, resultsCafe, s
     .sort((a, b) => b.spread - a.spread)[0];
   const tightRangeCount = costRangeRows.filter((row) => Math.abs(row.trueCostRange.high - row.trueCostRange.low) < 0.005).length;
   const topItems = selectedItemCounts.slice(0, 6).map(([item, count]) => `${item} (${count})`);
+  const describedSelections = allSelections.filter((row) => getDescription(row) && !/no description/i.test(getDescription(row))).length;
+  const allergenSelections = allSelections.filter((row) => getAllergens(row) && !/no allergens listed/i.test(getAllergens(row))).length;
+  const costedSelections = allSelections.filter((row) => row.trueCost != null).length;
+  const selectedDetailPct = allSelections.length ? Math.round((describedSelections / allSelections.length) * 100) : 0;
+  const selectedAllergenPct = allSelections.length ? Math.round((allergenSelections / allSelections.length) * 100) : 0;
+  const selectedCostPct = allSelections.length ? Math.round((costedSelections / allSelections.length) * 100) : 0;
 
   return (
     <div className="space-y-5">
@@ -2770,6 +2867,7 @@ function ResultsView({ rows, resultsDistrict, setResultsDistrict, resultsCafe, s
           <SummaryBucket title="Most Used Menus" value={mostUsedMenus.length || "-"} details={mostUsedMenus.map(([menu, count]) => `${menu} (${count})`)} empty="no menu history yet" tone="green" />
           <SummaryBucket title="Most Picked Items" value={topItems.length || "-"} details={topItems} empty="no item selections yet" />
           <SummaryBucket title="Selection Range" value={widestRange ? moneyRange(widestRange.trueCostRange) : "-"} details={widestRange ? [`Widest: ${widestRange.cafe} - ${widestRange.week}`, `${tightRangeCount} single-cost rotation${tightRangeCount === 1 ? "" : "s"}`, `${averageSelectedItems.toFixed(1)} avg items per rotation`] : []} empty="no costed selections yet" tone={widestRange?.spread > 3 ? "amber" : "green"} />
+          <SummaryBucket title="Data Confidence" value={`${selectedDetailPct}%`} details={[`${selectedDetailPct}% description coverage`, `${selectedAllergenPct}% allergen signal`, `${selectedCostPct}% cost coverage`]} empty="no selected item data yet" tone={selectedDetailPct >= 80 && selectedCostPct >= 80 ? "green" : "amber"} />
         </div>
       </section>
       <section className="overflow-hidden rounded-[2rem] bg-white border border-slate-200 shadow-2xl">

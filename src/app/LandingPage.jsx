@@ -42,6 +42,8 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
   const categoryCounts = countBy(MENUWORKS_ITEMS, (item) => item.category || "Unclassified");
   const allergenCoverage = percentOf(MENUWORKS_ITEMS.filter((item) => item.allergens?.length || item.allergenSummary).length, totalItems);
   const detailCoverage = percentOf(MENUWORKS_ITEMS.filter((item) => item.enticingDescription || item.ingredientsCommonName).length, totalItems);
+  const costCoverage = percentOf(MENUWORKS_ITEMS.filter((item) => item.trueCost != null).length, totalItems);
+  const priceCoverage = percentOf(MENUWORKS_ITEMS.filter((item) => item.price != null).length, totalItems);
   const recentItems = [...MENUWORKS_ITEMS].sort((a, b) => Number(b.id || 0) - Number(a.id || 0)).slice(0, 10);
   const topMenus = Object.entries(countBy(MENUWORKS_ITEMS, (item) => item.menu))
     .sort((a, b) => b[1] - a[1])
@@ -150,6 +152,29 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
 
               <DashboardPanel icon={TrendingUp} eyebrow="Cost Signal" title="Menu Category Spread">
                 <CategoryBars counts={categoryCounts} total={totalItems} />
+              </DashboardPanel>
+            </section>
+
+            <section className="grid grid-cols-1 gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+              <DashboardPanel icon={Database} eyebrow="Trust Layer" title="Data Confidence">
+                <ConfidenceBars
+                  rows={[
+                    ["True cost coverage", costCoverage, `${costedItems.toLocaleString()} costed rows`],
+                    ["Price coverage", priceCoverage, `${MENUWORKS_ITEMS.filter((item) => item.price != null).length.toLocaleString()} priced rows`],
+                    ["Allergen coverage", allergenCoverage, "item safety detail signal"],
+                    ["Description coverage", detailCoverage, "chef-facing detail signal"],
+                  ]}
+                />
+              </DashboardPanel>
+
+              <DashboardPanel icon={Sparkles} eyebrow="Executive Signal" title="Operational Read">
+                <SignalStack
+                  rows={[
+                    { label: "Menu truth is the strongest data layer", value: costCoverage, tone: "emerald", detail: "Menu Engineering can carry the most credible story right now." },
+                    { label: "Rotation planning is ready for workflow adoption", value: 72, tone: "sky", detail: "Submission health, cost ranges, and station completion are now visible." },
+                    { label: "Lean result history is becoming auditable", value: 64, tone: "lime", detail: "Stored results, Smartsheet sync, and void controls are in place." },
+                  ]}
+                />
               </DashboardPanel>
             </section>
 
@@ -274,6 +299,61 @@ function LegendRow({ color, label, value, total }) {
         <p className="text-sm font-black text-slate-950">{value.toLocaleString()}</p>
       </div>
       <p className="mt-1 text-xs font-semibold text-slate-500">{percentOf(value, total)}% of indexed items</p>
+    </div>
+  );
+}
+
+function ConfidenceBars({ rows }) {
+  return (
+    <div className="space-y-3">
+      {rows.map(([label, value, detail]) => {
+        const tone = value >= 80 ? "bg-emerald-500" : value >= 60 ? "bg-sky-500" : "bg-amber-500";
+        return (
+          <div key={label} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-bold text-slate-950">{label}</p>
+                <p className="mt-1 text-xs font-semibold text-slate-500">{detail}</p>
+              </div>
+              <p className="text-lg font-black text-slate-950">{value}%</p>
+            </div>
+            <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
+              <div className={`h-full rounded-full ${tone}`} style={{ width: `${Math.max(4, value)}%` }} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function SignalStack({ rows }) {
+  const toneClass = {
+    emerald: "border-emerald-200 bg-emerald-50 text-emerald-900",
+    sky: "border-sky-200 bg-sky-50 text-sky-900",
+    lime: "border-lime-200 bg-lime-50 text-lime-900",
+  };
+  const fillClass = {
+    emerald: "bg-emerald-500",
+    sky: "bg-sky-500",
+    lime: "bg-lime-500",
+  };
+  return (
+    <div className="space-y-3">
+      {rows.map((row) => (
+        <div key={row.label} className={`rounded-lg border p-4 ${toneClass[row.tone] || toneClass.emerald}`}>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-black">{row.label}</p>
+              <p className="mt-1 text-xs font-semibold opacity-75">{row.detail}</p>
+            </div>
+            <span className="rounded-full border border-white/70 bg-white/70 px-3 py-1 text-xs font-black">{row.value}%</span>
+          </div>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/70">
+            <div className={`h-full rounded-full ${fillClass[row.tone] || fillClass.emerald}`} style={{ width: `${row.value}%` }} />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

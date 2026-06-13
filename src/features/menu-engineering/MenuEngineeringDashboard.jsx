@@ -94,6 +94,34 @@ function readStoredMenuItems() {
   }
 }
 
+function coveragePct(value, total) {
+  return total ? Math.round((value / total) * 100) : 0;
+}
+
+function getMenuDataQuality(rows = []) {
+  const total = rows.length;
+  const priced = rows.filter((row) => row.price != null).length;
+  const costed = rows.filter((row) => row.trueCost != null).length;
+  const described = rows.filter((row) => row.enticingDescription || row.ingredientsCommonName).length;
+  const allergenRows = rows.filter((row) => row.allergens?.length || row.allergenSummary || Object.values(row.allergenDetails || {}).some(Boolean)).length;
+  const complimentary = rows.filter((row) => row.price == null).length;
+  const uploaded = rows.filter((row) => /upload|truth|enhanced/i.test(String(row.dataSource || ""))).length;
+  return {
+    total,
+    priced,
+    costed,
+    described,
+    allergenRows,
+    complimentary,
+    uploaded,
+    priceCoverage: coveragePct(priced, total),
+    costCoverage: coveragePct(costed, total),
+    descriptionCoverage: coveragePct(described, total),
+    allergenCoverage: coveragePct(allergenRows, total),
+    uploadedCoverage: coveragePct(uploaded, total),
+  };
+}
+
 function textValue(row, ...keys) {
   for (const key of keys) {
     const value = row?.[key];
@@ -534,6 +562,8 @@ export default function MenuEngineeringDashboard({ onBackToPlatform }) {
   }, [portfolioRows]);
 
   const portfolioHealth = portfolioHealthDetails.score;
+  const dataQuality = useMemo(() => getMenuDataQuality(menuItems), [menuItems]);
+  const selectedMenuDataQuality = useMemo(() => getMenuDataQuality(menuRows), [menuRows]);
 
   const updateUnits = (id, value) => {
     setUnitsById((prev) => ({ ...prev, [id]: value === "" ? "" : Math.max(0, Number(value)) }));
@@ -660,6 +690,7 @@ export default function MenuEngineeringDashboard({ onBackToPlatform }) {
       fileName: file.name,
       comparableCostChangePct,
       totalCostChangePct,
+      importQuality: getMenuDataQuality(importedRows),
     });
     event.target.value = "";
   };
@@ -717,6 +748,16 @@ export default function MenuEngineeringDashboard({ onBackToPlatform }) {
               <Metric title="Removed items" value={pendingImport.removedItems.length} sub="missing from upload" />
             </div>
 
+            <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-700">Import Data Confidence</p>
+              <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
+                <QualityMini label="Price" value={pendingImport.importQuality.priceCoverage} detail={`${pendingImport.importQuality.priced}/${pendingImport.importQuality.total}`} />
+                <QualityMini label="Cost" value={pendingImport.importQuality.costCoverage} detail={`${pendingImport.importQuality.costed}/${pendingImport.importQuality.total}`} />
+                <QualityMini label="Details" value={pendingImport.importQuality.descriptionCoverage} detail={`${pendingImport.importQuality.described}/${pendingImport.importQuality.total}`} />
+                <QualityMini label="Allergens" value={pendingImport.importQuality.allergenCoverage} detail={`${pendingImport.importQuality.allergenRows}/${pendingImport.importQuality.total}`} />
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-5 gap-3 max-h-80 overflow-auto">
               <ChangeList title="New menus" items={pendingImport.newMenus} empty="No new menus." />
               <ChangeList title="New items" items={pendingImport.newItems.slice(0, 25).map((row) => titleCase(row.menu) + " • " + titleCase(row.item))} empty="No new items." />
@@ -760,6 +801,10 @@ export default function MenuEngineeringDashboard({ onBackToPlatform }) {
                 </div>
                 <p className="mt-2 text-xs text-slate-500">Enter the initiation code, upload a MenuWorks truth file, review changes, then accept.</p>
                 {uploadStatus && <p className="mt-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-semibold text-sky-900">{uploadStatus}</p>}
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <QualityMini label="All data" value={dataQuality.costCoverage} detail={`${dataQuality.costed}/${dataQuality.total} costed`} />
+                  <QualityMini label="This view" value={selectedMenuDataQuality.descriptionCoverage} detail={`${selectedMenuDataQuality.described}/${selectedMenuDataQuality.total} detailed`} />
+                </div>
               </div>
 
               <div>
@@ -868,6 +913,22 @@ export default function MenuEngineeringDashboard({ onBackToPlatform }) {
 
         {viewMode === "portfolio" && <PortfolioTable rows={portfolioRows} parsedTargetFoodCost={parsedTargetFoodCost} parsedTargetMarginPct={parsedTargetMarginPct} />}
       </div>
+    </div>
+  );
+}
+
+function QualityMini({ label, value, detail }) {
+  const tone = value >= 80 ? "bg-emerald-500" : value >= 60 ? "bg-sky-500" : "bg-amber-500";
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-3">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">{label}</p>
+        <p className="text-sm font-black text-slate-950">{value}%</p>
+      </div>
+      <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+        <div className={`h-full rounded-full ${tone}`} style={{ width: `${Math.max(4, value)}%` }} />
+      </div>
+      <p className="mt-2 text-xs font-semibold text-slate-500">{detail}</p>
     </div>
   );
 }

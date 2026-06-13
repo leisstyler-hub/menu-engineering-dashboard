@@ -2,6 +2,12 @@
 
 ## 2026-06-13
 
+- Added stronger operational dashboard signals across the platform landing page, including data-confidence coverage and executive readiness panels.
+- Added Neighborhood Rotations leadership pulse cards with district health scoring and an action queue for open submissions, missing menus, duplicate menus, and food-cost watch items.
+- Added selected-item data confidence to Neighborhood Rotation Results for description, allergen, and cost coverage.
+- Improved Menu Engineering upload review with incoming file data-confidence checks for price, cost, descriptions, and allergens.
+- Added Lean Results trend panels for waste, activity, repeat station opportunities, and latest-result follow-up.
+- Set visible app version to `2026.06.13.020-feature-operational-dashboards`.
 - Added controlled Lean result voiding so test, accident, duplicate, and wrong-location records are hidden from dashboards without being erased.
 - Added Lean result audit fields for void reason, voided by, voided at, notes, test-record flag, and dashboard visibility in the Smartsheet contract.
 - Changed Lean Results role language to `Shared audience` so access roles are not presented like user-selectable authority.

@@ -911,6 +911,9 @@ function LeanResultsView({ results, resultsDistrict, setResultsDistrict, results
   const selectedResult = filteredResults.find((result) => result.id === selectedResultId) || filteredResults[0] || null;
   const totalObservedSeconds = filteredResults.reduce((sum, result) => sum + Number(result.observedSeconds || 0), 0);
   const totalMarks = filteredResults.reduce((sum, result) => sum + Number(result.totalMarks || 0), 0);
+  const trendRows = filteredResults.flatMap((result) => result.observations || []);
+  const wasteTrendRows = tallySeconds(trendRows, "waste").slice(0, 5);
+  const activityTrendRows = tallySeconds(trendRows, "activity").slice(0, 5);
   const topWaste = tallySeconds(filteredResults.map((result) => ({ waste: result.topWaste || "Unclassified", seconds: result.observedSeconds || 0 })), "waste")[0];
   const cafeStationRows = filteredResults.reduce((acc, result) => {
     const key = `${result.district}|${result.cafe}|${result.area}`;
@@ -966,6 +969,8 @@ function LeanResultsView({ results, resultsDistrict, setResultsDistrict, results
         <MiniMetric icon={BarChart3} label="Top Waste" value={topWaste?.[0] || "-"} />
       </div>
 
+      <LeanTrendPanel results={filteredResults} wasteRows={wasteTrendRows} activityRows={activityTrendRows} stationRows={stationRows} totalSeconds={totalObservedSeconds} />
+
       <div className="mt-5 grid grid-cols-1 gap-4 xl:grid-cols-[420px_1fr]">
         <div className="rounded-[2rem] border border-slate-200 bg-slate-50 p-4">
           <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Cafe / Station List</p>
@@ -1007,6 +1012,70 @@ function LeanResultsView({ results, resultsDistrict, setResultsDistrict, results
         </div>
       </div>
     </section>
+  );
+}
+
+function LeanTrendPanel({ results, wasteRows, activityRows, stationRows, totalSeconds }) {
+  const latestResult = results[0] || null;
+  const repeatStations = stationRows.filter((row) => row.count > 1).length;
+  const opportunity = wasteRows[0]?.[0] || "No trend yet";
+  return (
+    <section className="mt-5 rounded-[2rem] border-2 border-emerald-200 bg-white p-4 shadow-sm">
+      <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600">Lean Trend Read</p>
+          <h3 className="mt-1 text-2xl font-black text-slate-950">Waste, activity, and follow-up signal</h3>
+        </div>
+        <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-black text-slate-600">{results.length} visible result{results.length === 1 ? "" : "s"}</span>
+      </div>
+      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[1fr_1fr_360px]">
+        <TrendBars title="Waste Trend" rows={wasteRows} totalSeconds={totalSeconds} tone="emerald" />
+        <TrendBars title="Activity Trend" rows={activityRows} totalSeconds={totalSeconds} tone="sky" />
+        <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Leader Follow-Up</p>
+          <div className="mt-3 space-y-3">
+            <TrendSignal label="Top opportunity" value={opportunity} detail={wasteRows[0] ? `${formatSeconds(wasteRows[0][1])} observed` : "complete observations to generate signal"} />
+            <TrendSignal label="Repeat stations" value={repeatStations} detail="stations with more than one visible result" />
+            <TrendSignal label="Latest result" value={latestResult ? latestResult.cafe : "-"} detail={latestResult ? `${latestResult.area} - ${latestResult.observationDate}` : "no result selected"} />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TrendBars({ title, rows, totalSeconds, tone }) {
+  const fill = tone === "sky" ? "bg-sky-500" : "bg-emerald-500";
+  return (
+    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+      <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">{title}</p>
+      <div className="mt-3 space-y-3">
+        {rows.length ? rows.map(([name, seconds]) => {
+          const percent = totalSeconds ? Math.round((seconds / totalSeconds) * 100) : 0;
+          return (
+            <div key={name}>
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <p className="font-black text-slate-900">{name || "Unclassified"}</p>
+                <p className="font-mono font-black text-slate-600">{percent}%</p>
+              </div>
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-white">
+                <div className={`h-full rounded-full ${fill}`} style={{ width: `${Math.max(4, percent)}%` }} />
+              </div>
+            </div>
+          );
+        }) : <p className="rounded-2xl border border-dashed border-slate-200 bg-white p-4 text-sm font-semibold text-slate-500">No trend data yet.</p>}
+      </div>
+    </div>
+  );
+}
+
+function TrendSignal({ label, value, detail }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-3">
+      <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">{label}</p>
+      <p className="mt-1 truncate text-lg font-black text-slate-950">{value}</p>
+      <p className="mt-1 text-xs font-semibold text-slate-500">{detail}</p>
+    </div>
   );
 }
 
