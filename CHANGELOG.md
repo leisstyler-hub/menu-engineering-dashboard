@@ -2,6 +2,8 @@
 
 ## 2026-06-13
 
+- Changed the embedded browser/bookmark title to `Culinary Tools Platform`.
+- Set visible app version to `2026.06.13.021-fix-browser-title`.
 - Added stronger operational dashboard signals across the platform landing page, including data-confidence coverage and executive readiness panels.
 - Added Neighborhood Rotations leadership pulse cards with district health scoring and an action queue for open submissions, missing menus, duplicate menus, and food-cost watch items.
 - Added selected-item data confidence to Neighborhood Rotation Results for description, allergen, and cost coverage.
