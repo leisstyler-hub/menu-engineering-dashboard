@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
-import { ArrowLeft, AlertTriangle, CalendarDays, CheckCircle2, ChevronDown, ChevronUp, Upload } from "lucide-react";
+import { ArrowLeft, AlertTriangle, CalendarDays, CheckCircle2, ChevronDown, ChevronUp, Clipboard, Printer, Save, Send, Upload } from "lucide-react";
 
 import MENUWORKS_ITEMS from "../../data/menuItems.json";
 import { loadRecordsFromSmartsheet, syncRecordsToSmartsheet } from "../../integrations/smartsheet/client.js";
@@ -903,7 +903,7 @@ function findBestRowForName(name) {
   return [...matches].sort((a, b) => itemDetailScore(b) - itemDetailScore(a))[0];
 }
 
-function rowsForSelectedNames(names = [], { unique = false } = {}) {
+function rowsForSelectedNames(names = [], { unique = false, selectionGroup = "" } = {}) {
   const selectedRows = [];
   const seen = new Set();
   names.filter(Boolean).forEach((name) => {
@@ -911,17 +911,39 @@ function rowsForSelectedNames(names = [], { unique = false } = {}) {
     if (!key) return;
     if (unique && seen.has(key)) return;
     seen.add(key);
-    selectedRows.push(findBestRowForName(name) || makeUploadedItem(name));
+    selectedRows.push({
+      ...(findBestRowForName(name) || makeUploadedItem(name)),
+      __selectionGroup: selectionGroup
+    });
   });
   return selectedRows;
 }
 
 function globalSelectedRows(rotation, options) {
-  const baseNames = [...(rotation.entrees || []), ...(rotation.sides || []), ...(rotation.subRecipes || []), ...(rotation.extensions || [])];
-  const blockNames = Object.values(rotation.globalBlocks || {}).flatMap((block) => [
-    ...(block.entrees || []), ...(block.sides || []), ...(block.subRecipes || []), ...(block.extensions || [])
-  ]);
-  return rowsForSelectedNames([...baseNames, ...blockNames], options);
+  const rows = [
+    ...rowsForSelectedNames(rotation.entrees || [], { ...options, selectionGroup: "entrees" }),
+    ...rowsForSelectedNames(rotation.sides || [], { ...options, selectionGroup: "sides" }),
+    ...rowsForSelectedNames(rotation.subRecipes || [], { ...options, selectionGroup: "subRecipes" }),
+    ...rowsForSelectedNames(rotation.extensions || [], { ...options, selectionGroup: "extensions" })
+  ];
+
+  Object.values(rotation.globalBlocks || {}).forEach((block) => {
+    rows.push(
+      ...rowsForSelectedNames(block.entrees || [], { ...options, selectionGroup: "entrees" }),
+      ...rowsForSelectedNames(block.sides || [], { ...options, selectionGroup: "sides" }),
+      ...rowsForSelectedNames(block.subRecipes || [], { ...options, selectionGroup: "subRecipes" }),
+      ...rowsForSelectedNames(block.extensions || [], { ...options, selectionGroup: "extensions" })
+    );
+  });
+
+  if (!options?.unique) return rows;
+  const seen = new Set();
+  return rows.filter((row) => {
+    const key = normalizeItemName(getItemIdentity(row));
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function grillSelectedRows(rotation, options) {
@@ -956,26 +978,61 @@ function foodSummary(items) {
   return { priced: priced.length, sell, cost, fc: sell ? cost / sell : null };
 }
 
-function selectedTrueCostRange(items) {
+function selectionRole(row) {
+  if (row.__selectionGroup === "entrees") return "entree";
+  if (row.__selectionGroup === "sides") return "side";
+  if (row.__selectionGroup === "subRecipes") return "subRecipe";
+  if (row.__selectionGroup === "extensions") return "extension";
+  if (isEntree(row)) return "entree";
+  if (isSide(row)) return "side";
+  if (isSubRecipe(row)) return "subRecipe";
+  return "extension";
+}
+
+function selectedPlateParts(items) {
   const costedItems = items.filter((row) => getTrueCost(row) != null);
-  const entrees = costedItems.filter((row) => isEntree(row)).map((row) => Number(getTrueCost(row) || 0)).sort((a, b) => a - b);
-  const sides = costedItems.filter((row) => isSide(row)).map((row) => Number(getTrueCost(row) || 0)).sort((a, b) => a - b);
-  const subRecipeCost = costedItems.filter((row) => isSubRecipe(row)).reduce((sum, row) => sum + Number(getTrueCost(row) || 0), 0);
-
-  if (!entrees.length) {
-    return { low: subRecipeCost > 0 ? subRecipeCost : null, high: subRecipeCost > 0 ? subRecipeCost : null, subRecipeCost, partial: subRecipeCost > 0 };
-  }
-
-  const lowestEntree = entrees[0];
-  const highestEntree = entrees[entrees.length - 1];
-  const lowestTwoSides = sides.slice(0, 2).reduce((sum, value) => sum + value, 0);
-  const highestTwoSides = sides.slice(-2).reduce((sum, value) => sum + value, 0);
+  const toPart = (row) => ({
+    row,
+    cost: Number(getTrueCost(row) || 0),
+    price: getPrice(row) == null ? null : Number(getPrice(row) || 0)
+  });
+  const entrees = costedItems.filter((row) => selectionRole(row) === "entree").map(toPart).sort((a, b) => a.cost - b.cost);
+  const sides = costedItems.filter((row) => selectionRole(row) === "side").map(toPart).sort((a, b) => a.cost - b.cost);
+  const subRecipeCost = costedItems.filter((row) => selectionRole(row) === "subRecipe").reduce((sum, row) => sum + Number(getTrueCost(row) || 0), 0);
+  const sideCount = Math.min(2, sides.length);
 
   return {
-    low: lowestEntree + lowestTwoSides + subRecipeCost,
-    high: highestEntree + highestTwoSides + subRecipeCost,
+    entrees,
+    sides,
     subRecipeCost,
-    partial: sides.length < 2
+    lowestEntree: entrees[0] || null,
+    highestEntree: entrees[entrees.length - 1] || null,
+    lowestSides: sides.slice(0, sideCount),
+    highestSides: sideCount ? sides.slice(-sideCount) : [],
+    partial: entrees.length > 0 && sides.length < 2
+  };
+}
+
+function plateCost(entree, sides, subRecipeCost) {
+  return (entree?.cost || 0) + sides.reduce((sum, row) => sum + row.cost, 0) + subRecipeCost;
+}
+
+function plateSell(entree, sides) {
+  return (entree?.price || 0) + sides.reduce((sum, row) => sum + (row.price || 0), 0);
+}
+
+function selectedTrueCostRange(items) {
+  const parts = selectedPlateParts(items);
+
+  if (!parts.entrees.length) {
+    return { low: parts.subRecipeCost > 0 ? parts.subRecipeCost : null, high: parts.subRecipeCost > 0 ? parts.subRecipeCost : null, subRecipeCost: parts.subRecipeCost, partial: parts.subRecipeCost > 0 };
+  }
+
+  return {
+    low: plateCost(parts.lowestEntree, parts.lowestSides, parts.subRecipeCost),
+    high: plateCost(parts.highestEntree, parts.highestSides, parts.subRecipeCost),
+    subRecipeCost: parts.subRecipeCost,
+    partial: parts.partial
   };
 }
 
@@ -987,35 +1044,24 @@ function moneyRange(range) {
 
 function trueCostRangeNote(range) {
   if (!range || range.low == null) return "select items to calculate";
-  if (range.partial) return "partial range; add entrée/sides to complete";
+  if (range.partial) return "selected mix; add sides to complete plate";
+  if (Math.abs(range.low - range.high) < 0.005) return "selected plate cost";
   return "1 entrée + 2 sides + sub recipes";
 }
 
 function selectedFoodCostRange(items) {
-  const costedItems = items.filter((row) => getTrueCost(row) != null);
-  const pricedItems = items.filter((row) => getPrice(row) != null && getTrueCost(row) != null && Number(getPrice(row)) > 0);
-
-  const entreeRows = pricedItems.filter((row) => isEntree(row)).map((row) => ({ cost: Number(getTrueCost(row) || 0), price: Number(getPrice(row) || 0) })).sort((a, b) => a.cost - b.cost);
-  const sideRows = pricedItems.filter((row) => isSide(row)).map((row) => ({ cost: Number(getTrueCost(row) || 0), price: Number(getPrice(row) || 0) })).sort((a, b) => a.cost - b.cost);
-  const subRecipeCost = costedItems.filter((row) => isSubRecipe(row)).reduce((sum, row) => sum + Number(getTrueCost(row) || 0), 0);
-
-  if (!entreeRows.length) return { low: null, high: null, partial: true, subRecipeCost };
-
-  const lowestEntree = entreeRows[0];
-  const highestEntree = entreeRows[entreeRows.length - 1];
-  const lowestTwoSides = sideRows.slice(0, 2);
-  const highestTwoSides = sideRows.slice(-2);
-
-  const lowCost = lowestEntree.cost + lowestTwoSides.reduce((sum, row) => sum + row.cost, 0) + subRecipeCost;
-  const highCost = highestEntree.cost + highestTwoSides.reduce((sum, row) => sum + row.cost, 0) + subRecipeCost;
-  const lowSell = lowestEntree.price + lowestTwoSides.reduce((sum, row) => sum + row.price, 0);
-  const highSell = highestEntree.price + highestTwoSides.reduce((sum, row) => sum + row.price, 0);
+  const parts = selectedPlateParts(items);
+  const lowestSell = plateSell(parts.lowestEntree, parts.lowestSides);
+  const highestSell = plateSell(parts.highestEntree, parts.highestSides);
+  const lowPct = parts.lowestEntree && lowestSell > 0 ? plateCost(parts.lowestEntree, parts.lowestSides, parts.subRecipeCost) / lowestSell : null;
+  const highPct = parts.highestEntree && highestSell > 0 ? plateCost(parts.highestEntree, parts.highestSides, parts.subRecipeCost) / highestSell : null;
+  const values = [lowPct, highPct].filter((value) => value != null).sort((a, b) => a - b);
 
   return {
-    low: lowSell > 0 ? lowCost / lowSell : null,
-    high: highSell > 0 ? highCost / highSell : null,
-    partial: sideRows.length < 2,
-    subRecipeCost
+    low: values[0] ?? null,
+    high: values[values.length - 1] ?? null,
+    partial: parts.partial || !parts.entrees.length,
+    subRecipeCost: parts.subRecipeCost
   };
 }
 
@@ -1029,7 +1075,8 @@ function foodCostRangeNote(range) {
   if (!range) return "select entrée to calculate";
   if (range.low == null && range.subRecipeCost > 0) return "sub recipe cost accepted; add priced entrée to calculate %";
   if (range.low == null) return "select entrée to calculate";
-  if (range.partial) return "partial range; add sides to complete";
+  if (range.partial) return "selected mix; add sides to complete plate";
+  if (Math.abs(range.low - range.high) < 0.0005) return "selected mix food cost";
   return "plate range with sub recipes included";
 }
 
@@ -1229,7 +1276,6 @@ function NeighborhoodHeader({ onBackToPlatform, district }) {
         <div>
           <p className="text-xs uppercase tracking-[0.18em] text-emerald-700 font-bold">Chef planning workspace</p>
           <h1 className="text-3xl md:text-4xl font-bold mt-2">Neighborhood Rotations</h1>
-          <p className="text-slate-600 mt-2 max-w-3xl">Chefs declare weekly global menu rotations and station LTOs by cafe.</p>
         </div>
         <div className="flex flex-col items-start lg:items-end gap-2">
           <VersionStamp compact />
@@ -1473,6 +1519,22 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, updateRota
 
   return (
     <div className="rounded-lg bg-white border border-slate-200 p-6 shadow-sm">
+      <PlannerControlsPanel
+        cafe={cafe}
+        copiedRotation={copiedRotation}
+        onCopy={copyCurrentRotation}
+        onLoad={loadCopiedRotation}
+        preview={preview}
+        setPreview={setPreview}
+        applyPreview={applyPreview}
+        week={week}
+        printRows={printRows}
+        rotation={rotation}
+        requirements={requirements}
+        canSubmit={canSubmitRotation}
+        onSaveDraft={markDraft}
+        onSubmit={submitRotation}
+      />
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-[0.18em] text-slate-500 font-bold">Chef Planner</p>
@@ -1486,8 +1548,6 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, updateRota
 
       <StationPills cafe={cafe} stations={cafeStations} />
       <PlannerSnapshot rotation={rotation} items={items} />
-      <PlannerControlsPanel cafe={cafe} copiedRotation={copiedRotation} onCopy={copyCurrentRotation} onLoad={loadCopiedRotation} preview={preview} setPreview={setPreview} applyPreview={applyPreview} week={week} printRows={printRows} />
-      <CompactSystemStatusPanel district={district} cafe={cafe} week={week} rotation={rotation} loadStatus={databaseLoadStatus} syncStatus={databaseSyncStatus} onRefreshDatabase={onRefreshDatabase} />
       <StationCostOverview rows={stationCostOverview} />
 
       {cafeStations.map((stationKey) => (
@@ -1509,7 +1569,7 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, updateRota
           selectedItems={items}
         />
       ))}
-      <SubmitBar rotation={rotation} cafe={cafe} requirements={requirements} canSubmit={canSubmitRotation} onSaveDraft={markDraft} onSubmit={submitRotation} />
+      <CompactSystemStatusPanel district={district} cafe={cafe} week={week} rotation={rotation} loadStatus={databaseLoadStatus} syncStatus={databaseSyncStatus} onRefreshDatabase={onRefreshDatabase} />
     </div>
   );
 }
@@ -1598,11 +1658,11 @@ function StationCostOverview({ rows }) {
 }
 
 
-function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, setPreview, applyPreview, week, printRows }) {
+function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, setPreview, applyPreview, week, printRows, rotation, requirements, canSubmit, onSaveDraft, onSubmit }) {
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const copiedSummary = copiedRotation?.menu
     ? `${copiedRotation.menu}${copiedRotation.station ? ` • ${copiedRotation.station}` : ""}`
-    : "No copied rotation saved";
+    : "No copy loaded";
 
   const handleUpload = (event) => {
     const file = event.target.files?.[0];
@@ -1612,23 +1672,37 @@ function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, s
   };
 
   return (
-    <div className="mt-4 rounded-3xl border border-sky-200 bg-sky-50/80 p-5 shadow-sm print:hidden">
-      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-        <div>
-          <p className="text-sm uppercase tracking-[0.18em] text-sky-700 font-bold">Planner Controls</p>
-          <h3 className="text-2xl font-bold mt-1">Copy, Upload, and Print</h3>
-          <p className="text-sm text-slate-600 mt-1">Use these controls to reuse rotations, import Week at a Glance, or print a clean weekly packet.</p>
-          <p className="text-xs text-slate-500 mt-2">Saved copy: {copiedSummary}</p>
+    <div className="mb-5 rounded-[1.75rem] border border-slate-300 bg-slate-950 p-3 shadow-lg print:hidden">
+      <div className="rounded-[1.35rem] border border-slate-700 bg-slate-900 p-4">
+        <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.18em] text-emerald-300 font-bold">Planner Remote Control</p>
+            <h3 className="text-2xl font-bold mt-1 text-white">{rotation?.status || "Draft"}</h3>
+            <div className="mt-2 flex flex-wrap gap-2 text-xs">
+              <span className="rounded-full border border-slate-600 bg-slate-800 px-3 py-1 font-semibold text-slate-300">{copiedSummary}</span>
+              <span className={`rounded-full border px-3 py-1 font-semibold ${canSubmit ? "border-emerald-400 bg-emerald-500/15 text-emerald-200" : "border-amber-400 bg-amber-500/15 text-amber-200"}`}>{canSubmit ? "Ready to submit" : "Needs selections"}</span>
+              {rotation?.updatedAt && <span className="rounded-full border border-slate-600 bg-slate-800 px-3 py-1 font-semibold text-slate-300">Updated {rotation.updatedAt}</span>}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2">
+            <RemoteButton icon={Clipboard} label="Copy" onClick={onCopy} />
+            <RemoteButton icon={ChevronDown} label="Load" onClick={onLoad} disabled={!copiedRotation} />
+            <RemoteUploadButton onChange={handleUpload} />
+            <RemoteButton icon={Printer} label={showPrintPreview ? "Hide Print" : "Print"} onClick={() => setShowPrintPreview((value) => !value)} />
+            <RemoteButton icon={Save} label="Save Draft" onClick={onSaveDraft} tone="light" />
+            <RemoteButton icon={Send} label="Submit" onClick={onSubmit} disabled={!canSubmit} tone="go" />
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <button onClick={onCopy} className="rounded-2xl bg-white border border-sky-200 px-5 py-3 text-sm font-semibold text-sky-800 hover:bg-sky-100">Copy Current Rotation</button>
-          <button onClick={onLoad} disabled={!copiedRotation} className={`rounded-2xl border px-5 py-3 text-sm font-semibold ${copiedRotation ? "bg-white border-sky-200 text-sky-800 hover:bg-sky-100" : "bg-slate-200 border-slate-200 text-slate-400 cursor-not-allowed"}`}>Load Copied Rotation</button>
-          <label className="inline-flex items-center gap-2 rounded-2xl bg-white border border-sky-200 px-5 py-3 text-sm font-semibold text-sky-800 hover:bg-sky-100 cursor-pointer">
-            <Upload size={16} /> Upload Week at a Glance
-            <input type="file" accept="application/pdf,.pdf" onChange={handleUpload} className="hidden" />
-          </label>
-          <button onClick={() => setShowPrintPreview((value) => !value)} className="rounded-2xl bg-slate-900 text-white px-5 py-3 text-sm font-semibold hover:bg-slate-700">{showPrintPreview ? "Hide Print Preview" : "Print Weekly Packet"}</button>
-        </div>
+        {!canSubmit && (
+          <div className="mt-3 rounded-2xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-xs font-semibold text-amber-100">
+            {!requirements.globalReady && <span>Missing Global Menu or two entrees. </span>}
+            {requirements.incompleteStations.length > 0 && <span>Missing station: {requirements.incompleteStations.map((stationKey) => stationLabel(cafe, stationKey)).join(", ")}.</span>}
+          </div>
+        )}
+      </div>
+      <div className="mt-3 rounded-[1.35rem] border border-slate-700 bg-slate-900 px-4 py-3">
+        <p className="text-xs uppercase tracking-[0.18em] text-slate-400 font-bold">Current Cafe</p>
+        <p className="mt-1 text-sm font-semibold text-slate-200">{cafe} · {week}</p>
       </div>
 
       {showPrintPreview && <WeeklyPrintPreview week={week} cafe={cafe} rows={printRows || []} />}
@@ -1656,6 +1730,35 @@ function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, s
         </div>
       )}
     </div>
+  );
+}
+
+function RemoteButton({ icon: Icon, label, onClick, disabled = false, tone = "default" }) {
+  const toneClass = tone === "go"
+    ? "border-emerald-400 bg-emerald-400 text-slate-950 hover:bg-emerald-300"
+    : tone === "light"
+      ? "border-slate-500 bg-white text-slate-950 hover:bg-slate-100"
+      : "border-slate-600 bg-slate-800 text-slate-100 hover:bg-slate-700";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`flex min-h-[72px] min-w-[92px] flex-col items-center justify-center gap-1 rounded-2xl border px-3 py-3 text-xs font-bold shadow-sm transition ${disabled ? "cursor-not-allowed border-slate-700 bg-slate-800 text-slate-500 opacity-60" : toneClass}`}
+    >
+      <Icon size={18} />
+      <span>{label}</span>
+    </button>
+  );
+}
+
+function RemoteUploadButton({ onChange }) {
+  return (
+    <label className="flex min-h-[72px] min-w-[92px] cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border border-slate-600 bg-slate-800 px-3 py-3 text-xs font-bold text-slate-100 shadow-sm transition hover:bg-slate-700">
+      <Upload size={18} />
+      <span>Upload</span>
+      <input type="file" accept="application/pdf,.pdf" onChange={onChange} className="hidden" />
+    </label>
   );
 }
 
@@ -1970,7 +2073,7 @@ function GlobalSection({ cafe, week, rotation, menuOptions, stationOptions, cate
           </div>
         )}
       </div>
-      {rotation.menu && <LiveAnalytics summary={summary} selectedItems={selectedItems} />}
+      {rotation.menu && <LiveAnalytics summary={summary} selectedItems={globalSelectedRows(rotation)} />}
       <div className="mt-5 grid grid-cols-1 xl:grid-cols-4 gap-5">
         <PickerGroup title="Entrees" limit="up to 3" items={categorized.entrees} values={rotation.entrees || ["", "", ""]} onChange={(index, value) => updateSlot("entrees", index, value)} />
         <PickerGroup title="Sides" limit="up to 4" items={categorized.sides} values={rotation.sides || ["", "", "", ""]} onChange={(index, value) => updateSlot("sides", index, value)} />

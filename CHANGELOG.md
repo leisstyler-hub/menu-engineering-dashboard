@@ -2,6 +2,11 @@
 
 ## 2026-06-13
 
+- Fixed Neighborhood Rotations food-cost range logic so a single selected mix does not display an artificial range.
+- Scoped Live Selection Analytics to Global Rotation picker selections instead of unrelated station selections.
+- Added the Planner Remote Control above Chef Planner with save, submit, copy, load, upload, and print actions grouped together.
+- Moved System Status to the bottom of the planner card and reduced header copy.
+- Set visible app version to `2026.06.13.002-fix-cost-remote-control`.
 - Replaced the Neighborhood Rotations planner district and cafe dropdowns with button-style toggle controls for limited option sets.
 - Added bright green active outlines and indicator dots to selected planning controls.
 - Added a more colorful but professional Neighborhood Rotations page treatment with a subtle green canvas, gold header accent, and stronger status-card states.
