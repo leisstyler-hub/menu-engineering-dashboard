@@ -2,6 +2,10 @@
 
 ## 2026-06-13
 
+- Reworked Lean Tool observations around a running session stopwatch with timestamped marks and duration since prior mark.
+- Added a large modern digital timer display with running/complete status, last-mark timestamp, and timed-session readout.
+- Added Complete-session behavior that captures the final active segment and generates a smarter time-weighted DOWNTIME report.
+- Set visible app version to `2026.06.13.009-fix-lean-session-timer`.
 - Added `Lean Tool` as the fourth platform module with phone/tablet-friendly DOWNTIME observation marking.
 - Added Lean Tool report-out email flow with recipient buttons labeled by leader name instead of email address.
 - Simplified Neighborhood Rotations Results cards by replacing unclear `Global Items`, `Station Completion`, and `Top Item Signal` cards with clearer coverage, variety, and food-cost watch cards.
