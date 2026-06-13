@@ -5,6 +5,14 @@ import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
 
 const STORAGE_KEY = "culinaryToolsLeanObservations_v1";
+const RESULTS_STORAGE_KEY = "culinaryToolsLeanResults_v1";
+
+const DISTRICTS = {
+  South: ["Doppler", "Day 1", "Nitro", "Re:Invent"],
+  North: ["Dawson", "Nessie", "Cricket", "Moby", "Commissary", "Atlas"],
+  East: ["East Cafe 1", "East Cafe 2", "East Cafe 3"],
+  LAX: ["LAX22", "LAX35", "LAX75", "LAX78", "SNA3"],
+};
 
 const RECIPIENTS = [
   { name: "Shane James", email: "shane.james@compass-usa.com" },
@@ -43,7 +51,6 @@ const ACTIVITIES = [
   "Other",
 ];
 
-const CAFE_OPTIONS = ["Doppler", "Day 1", "Nitro", "Re:Invent", "Dawson", "Nessie", "Cricket", "Moby", "Atlas"];
 const AREA_OPTIONS = ["Expo", "Grill", "Wok", "Salad", "Deli", "Pizza", "Dish", "Storage", "Line", "Other"];
 const OBSERVER_OPTIONS = ["DC", "DM", "RDO", "VPO", "EC", "DR", "GM"];
 
@@ -75,6 +82,41 @@ function readStoredObservations() {
   } catch {
     return [];
   }
+}
+
+function readStoredResults() {
+  try {
+    return JSON.parse(localStorage.getItem(RESULTS_STORAGE_KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function getDistrictForCafe(cafe = "") {
+  return Object.entries(DISTRICTS).find(([, cafes]) => cafes.includes(cafe))?.[0] || "South";
+}
+
+function normalizeResult(result) {
+  const summary = result.summary || summarizeRows(result.observations || []);
+  return {
+    ...result,
+    district: result.district || getDistrictForCafe(result.cafe),
+    summary,
+    totalMarks: result.totalMarks ?? summary.total,
+    observedSeconds: result.observedSeconds ?? summary.seconds,
+    topWaste: result.topWaste || summary.byWasteSeconds[0]?.[0] || "",
+    topActivity: result.topActivity || summary.byActivitySeconds[0]?.[0] || "",
+  };
+}
+
+function saveLeanResult(nextResult, existingResults = []) {
+  const normalized = normalizeResult(nextResult);
+  const nextResults = [
+    normalized,
+    ...existingResults.filter((result) => result.id !== normalized.id),
+  ].slice(0, 100);
+  localStorage.setItem(RESULTS_STORAGE_KEY, JSON.stringify(nextResults));
+  return nextResults;
 }
 
 function getRecommendation(summary) {
@@ -151,6 +193,8 @@ function summarizeRows(rows) {
 
 export default function LeanTool({ onBackToPlatform }) {
   const emailSectionRef = useRef(null);
+  const [viewMode, setViewMode] = useState("tracker");
+  const [district, setDistrict] = useState("South");
   const [cafe, setCafe] = useState("Doppler");
   const [area, setArea] = useState("Line");
   const [observer, setObserver] = useState("DC");
@@ -170,8 +214,20 @@ export default function LeanTool({ onBackToPlatform }) {
   const [emailHighlight, setEmailHighlight] = useState(false);
   const [selectedRecipients, setSelectedRecipients] = useState(() => RECIPIENTS.map((person) => person.email));
   const [observations, setObservations] = useState(readStoredObservations);
+  const [results, setResults] = useState(() => readStoredResults().map(normalizeResult));
+  const [resultsDistrict, setResultsDistrict] = useState("All");
+  const [resultsCafe, setResultsCafe] = useState("All");
+  const [resultsArea, setResultsArea] = useState("All");
 
-  const scopedObservations = observations.filter((row) => row.cafe === cafe && row.area === area && row.observationDate === observationDate);
+  const cafesForDistrict = DISTRICTS[district] || [];
+
+  useEffect(() => {
+    if (district && cafe && !cafesForDistrict.includes(cafe)) {
+      setCafe(cafesForDistrict[0] || "");
+    }
+  }, [district, cafe, cafesForDistrict]);
+
+  const scopedObservations = observations.filter((row) => (row.district || getDistrictForCafe(row.cafe)) === district && row.cafe === cafe && row.area === area && row.observationDate === observationDate);
   const sessionObservations = scopedObservations.filter((row) => row.sessionId === sessionId);
   const activeRows = sessionId ? sessionObservations : scopedObservations;
   const summary = useMemo(() => summarizeRows(activeRows), [activeRows]);
@@ -233,6 +289,7 @@ export default function LeanTool({ onBackToPlatform }) {
     const nextEntry = {
       id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
       sessionId: activeSessionId,
+      district,
       cafe,
       area,
       observer,
@@ -263,6 +320,7 @@ export default function LeanTool({ onBackToPlatform }) {
         const finalEntry = {
           id: `${now}-${Math.random().toString(16).slice(2)}`,
           sessionId,
+          district,
           cafe,
           area,
           observer,
@@ -284,9 +342,29 @@ export default function LeanTool({ onBackToPlatform }) {
       }
     }
     const stamp = nowTime();
+    const finalSummary = summarizeRows(completedRows);
+    const completedResult = {
+      id: sessionId || `${now}-${Math.random().toString(16).slice(2)}`,
+      sessionId: sessionId || "",
+      district,
+      cafe,
+      area,
+      observer,
+      observationDate,
+      completedAt: stamp,
+      completedTimestamp: new Date(now).toISOString(),
+      observations: completedRows,
+      summary: finalSummary,
+      totalMarks: finalSummary.total,
+      observedSeconds: finalSummary.seconds,
+      topWaste: finalSummary.byWasteSeconds[0]?.[0] || "",
+      topActivity: finalSummary.byActivitySeconds[0]?.[0] || "",
+      recommendation: getRecommendation(finalSummary),
+    };
+    setResults((prev) => saveLeanResult(completedResult, prev));
     setRunning(false);
     setCompletedAt(stamp);
-    setCompletedSummary(summarizeRows(completedRows));
+    setCompletedSummary(finalSummary);
     setShowCompletionModal(true);
   };
 
@@ -350,10 +428,21 @@ export default function LeanTool({ onBackToPlatform }) {
           </div>
         </header>
 
+        <nav className="flex w-fit rounded-2xl border border-slate-200 bg-white p-1 shadow-sm">
+          <button onClick={() => setViewMode("tracker")} className={`rounded-xl px-5 py-3 text-sm font-black ${viewMode === "tracker" ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-slate-50"}`}>
+            Tracker
+          </button>
+          <button onClick={() => setViewMode("results")} className={`rounded-xl px-5 py-3 text-sm font-black ${viewMode === "results" ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-slate-50"}`}>
+            Results
+          </button>
+        </nav>
+
+        {viewMode === "tracker" ? (
         <section className="grid grid-cols-1 gap-4 xl:grid-cols-[300px_1fr_360px]">
           <aside className="rounded-[2rem] border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Observation Setup</p>
-            <Segmented label="Cafe / Unit" value={cafe} setValue={setCafe} options={CAFE_OPTIONS} />
+            <Segmented label="District" value={district} setValue={setDistrict} options={Object.keys(DISTRICTS)} />
+            <Segmented label="Cafe / Unit" value={cafe} setValue={setCafe} options={cafesForDistrict} />
             <Segmented label="Area" value={area} setValue={setArea} options={AREA_OPTIONS} />
             <Segmented label="Observer" value={observer} setValue={setObserver} options={OBSERVER_OPTIONS} />
             <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
@@ -361,7 +450,7 @@ export default function LeanTool({ onBackToPlatform }) {
                 <UserCheck size={18} />
                 Report Scope
               </div>
-              <p className="mt-2 text-sm text-emerald-900">{cafe} / {area}</p>
+              <p className="mt-2 text-sm text-emerald-900">{district} / {cafe} / {area}</p>
               <p className="text-xs text-emerald-800">{observationDate}</p>
             </div>
           </aside>
@@ -523,6 +612,17 @@ export default function LeanTool({ onBackToPlatform }) {
             </section>
           </aside>
         </section>
+        ) : (
+          <LeanResultsView
+            results={results}
+            resultsDistrict={resultsDistrict}
+            setResultsDistrict={setResultsDistrict}
+            resultsCafe={resultsCafe}
+            setResultsCafe={setResultsCafe}
+            resultsArea={resultsArea}
+            setResultsArea={setResultsArea}
+          />
+        )}
       </div>
       {showCompletionModal && completedSummary && (
         <CompletionReportModal
@@ -537,6 +637,190 @@ export default function LeanTool({ onBackToPlatform }) {
         />
       )}
     </div>
+  );
+}
+
+function LeanResultsView({ results, resultsDistrict, setResultsDistrict, resultsCafe, setResultsCafe, resultsArea, setResultsArea }) {
+  const normalizedResults = useMemo(() => results.map(normalizeResult).sort((a, b) => String(b.completedTimestamp || "").localeCompare(String(a.completedTimestamp || ""))), [results]);
+  const cafeOptions = Array.from(new Set(normalizedResults.map((result) => result.cafe).filter(Boolean))).sort();
+  const areaOptions = Array.from(new Set(normalizedResults.map((result) => result.area).filter(Boolean))).sort();
+  const filteredResults = normalizedResults.filter((result) =>
+    (resultsDistrict === "All" || result.district === resultsDistrict) &&
+    (resultsCafe === "All" || result.cafe === resultsCafe) &&
+    (resultsArea === "All" || result.area === resultsArea)
+  );
+  const [selectedResultId, setSelectedResultId] = useState("");
+
+  useEffect(() => {
+    if (!filteredResults.length) {
+      setSelectedResultId("");
+      return;
+    }
+    if (!filteredResults.some((result) => result.id === selectedResultId)) {
+      setSelectedResultId(filteredResults[0].id);
+    }
+  }, [filteredResults, selectedResultId]);
+
+  const selectedResult = filteredResults.find((result) => result.id === selectedResultId) || filteredResults[0] || null;
+  const totalObservedSeconds = filteredResults.reduce((sum, result) => sum + Number(result.observedSeconds || 0), 0);
+  const totalMarks = filteredResults.reduce((sum, result) => sum + Number(result.totalMarks || 0), 0);
+  const topWaste = tallySeconds(filteredResults.map((result) => ({ waste: result.topWaste || "Unclassified", seconds: result.observedSeconds || 0 })), "waste")[0];
+  const cafeStationRows = filteredResults.reduce((acc, result) => {
+    const key = `${result.district}|${result.cafe}|${result.area}`;
+    if (!acc[key]) {
+      acc[key] = {
+        key,
+        district: result.district,
+        cafe: result.cafe,
+        area: result.area,
+        count: 0,
+        seconds: 0,
+        topWasteSeconds: {},
+      };
+    }
+    acc[key].count += 1;
+    acc[key].seconds += Number(result.observedSeconds || 0);
+    acc[key].topWasteSeconds[result.topWaste || "Unclassified"] = (acc[key].topWasteSeconds[result.topWaste || "Unclassified"] || 0) + Number(result.observedSeconds || 0);
+    return acc;
+  }, {});
+  const stationRows = Object.values(cafeStationRows).sort((a, b) => b.seconds - a.seconds);
+
+  return (
+    <section className="rounded-[2rem] border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600">Lean Results</p>
+          <h2 className="mt-2 text-4xl font-black tracking-normal">Observation history</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Filter by district, cafe, and station. Click a cafe/station result to open the completed observation report.</p>
+        </div>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <ResultFilter label="District" value={resultsDistrict} setValue={setResultsDistrict} options={["All", ...Object.keys(DISTRICTS)]} />
+          <ResultFilter label="Cafe" value={resultsCafe} setValue={setResultsCafe} options={["All", ...cafeOptions]} />
+          <ResultFilter label="Station" value={resultsArea} setValue={setResultsArea} options={["All", ...areaOptions]} />
+        </div>
+      </div>
+
+      <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-4">
+        <MiniMetric icon={ClipboardList} label="Results" value={filteredResults.length} />
+        <MiniMetric icon={Timer} label="Observed" value={formatSeconds(totalObservedSeconds)} />
+        <MiniMetric icon={CheckCircle2} label="Marks" value={totalMarks} />
+        <MiniMetric icon={BarChart3} label="Top Waste" value={topWaste?.[0] || "-"} />
+      </div>
+
+      <div className="mt-5 grid grid-cols-1 gap-4 xl:grid-cols-[420px_1fr]">
+        <div className="rounded-[2rem] border border-slate-200 bg-slate-50 p-4">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Cafe / Station List</p>
+          <div className="mt-3 space-y-3">
+            {stationRows.length ? stationRows.map((row) => {
+              const stationTopWaste = Object.entries(row.topWasteSeconds).sort((a, b) => b[1] - a[1])[0];
+              const firstResult = filteredResults.find((result) => result.district === row.district && result.cafe === row.cafe && result.area === row.area);
+              const active = firstResult && selectedResult?.district === row.district && selectedResult?.cafe === row.cafe && selectedResult?.area === row.area;
+              return (
+                <button key={row.key} onClick={() => firstResult && setSelectedResultId(firstResult.id)} className={`w-full rounded-3xl border-2 p-4 text-left transition ${active ? "border-emerald-400 bg-emerald-50 shadow-[0_0_0_4px_rgba(16,185,129,0.14)]" : "border-slate-200 bg-white hover:border-emerald-200"}`}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">{row.district}</p>
+                      <h3 className="mt-1 text-xl font-black text-slate-950">{row.cafe}</h3>
+                      <p className="mt-1 text-sm font-bold text-slate-600">{row.area}</p>
+                    </div>
+                    <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-black text-slate-600">{row.count} result{row.count === 1 ? "" : "s"}</span>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold text-slate-600">
+                    <span className="rounded-full bg-slate-100 px-3 py-1">{formatSeconds(row.seconds)}</span>
+                    <span className="rounded-full bg-slate-100 px-3 py-1">Top: {stationTopWaste?.[0] || "-"}</span>
+                  </div>
+                </button>
+              );
+            }) : <p className="rounded-3xl border border-dashed border-slate-200 bg-white p-5 text-sm font-semibold text-slate-500">No completed Lean results match these filters yet.</p>}
+          </div>
+        </div>
+
+        <div className="rounded-[2rem] border border-slate-200 bg-white p-4 shadow-sm">
+          {selectedResult ? (
+            <LeanResultDetail result={selectedResult} sameScopeResults={filteredResults.filter((result) => result.district === selectedResult.district && result.cafe === selectedResult.cafe && result.area === selectedResult.area)} setSelectedResultId={setSelectedResultId} />
+          ) : (
+            <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center">
+              <p className="text-lg font-black text-slate-900">Complete a Lean observation to create a result.</p>
+              <p className="mt-2 text-sm text-slate-500">Results save in this app first. Smartsheet can become the shared source once we add the sheet or columns.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function LeanResultDetail({ result, sameScopeResults, setSelectedResultId }) {
+  const summary = result.summary || summarizeRows(result.observations || []);
+  const topWaste = summary.byWasteSeconds[0];
+  const topActivity = summary.byActivitySeconds[0];
+  return (
+    <div>
+      <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600">Selected Result</p>
+          <h3 className="mt-2 text-3xl font-black text-slate-950">{result.cafe} / {result.area}</h3>
+          <p className="mt-2 text-sm font-semibold text-slate-600">{result.district} - {result.observationDate} - {result.observer} - Completed {result.completedAt || "n/a"}</p>
+        </div>
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+          <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">Observed</p>
+          <p className="mt-1 font-mono text-3xl font-black text-emerald-950">{formatSeconds(summary.seconds)}</p>
+        </div>
+      </div>
+
+      {sameScopeResults.length > 1 && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {sameScopeResults.map((entry) => (
+            <button key={entry.id} onClick={() => setSelectedResultId(entry.id)} className={`rounded-full border px-3 py-2 text-xs font-black ${entry.id === result.id ? "border-emerald-400 bg-emerald-50 text-emerald-900" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}>
+              {entry.observationDate} - {entry.completedAt || "complete"}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-3">
+        <MiniMetric icon={ClipboardList} label="Marks" value={summary.total} />
+        <MiniMetric icon={BarChart3} label="Top Waste" value={topWaste?.[0] || "-"} />
+        <MiniMetric icon={Clock3} label="Top Activity" value={topActivity?.[0] || "-"} />
+      </div>
+
+      <div className="mt-5 rounded-3xl border border-emerald-200 bg-emerald-50 p-4">
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">Leadership Read</p>
+        <p className="mt-2 text-lg font-black text-emerald-950">{topWaste ? `${topWaste[0]} is the largest observed opportunity.` : "No top waste captured yet."}</p>
+        <p className="mt-2 text-sm leading-6 text-emerald-900">{result.recommendation || getRecommendation(summary)}</p>
+      </div>
+
+      <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <ReportBreakdown title="DOWNTIME Breakdown" rows={summary.byWasteSeconds} totalSeconds={summary.seconds} />
+        <ReportBreakdown title="Activity Breakdown" rows={summary.byActivitySeconds} totalSeconds={summary.seconds} />
+      </div>
+
+      <div className="mt-5 rounded-3xl border border-slate-200 bg-slate-50 p-4">
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Timestamped Marks</p>
+        <div className="mt-3 space-y-2">
+          {(result.observations || []).slice().reverse().map((entry) => (
+            <div key={entry.id} className="rounded-2xl border border-slate-200 bg-white p-3">
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-black text-slate-950">+{formatSeconds(entry.timestampSeconds)} - {entry.activity}</p>
+                <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-bold text-slate-600">{formatSeconds(entry.seconds)}</span>
+              </div>
+              <p className="mt-1 text-sm text-slate-600">{entry.waste}{entry.note ? ` - ${entry.note}` : ""}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ResultFilter({ label, value, setValue, options }) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-xs font-black uppercase tracking-[0.14em] text-slate-500">{label}</span>
+      <select value={value} onChange={(event) => setValue(event.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-900 outline-none focus:border-emerald-400">
+        {options.map((option) => <option key={option} value={option}>{option}</option>)}
+      </select>
+    </label>
   );
 }
 

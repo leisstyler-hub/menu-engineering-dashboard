@@ -2,6 +2,8 @@
 
 ## 2026-06-13
 
+- Added a Lean Tool Results tab that stores completed observations in the app, filters by district, cafe, and station, and opens detailed result reports from a cafe/station list.
+- Set visible app version to `2026.06.13.016-feature-lean-results-history`.
 - Centered the Compass One logo text so `one` reads clearly inside the gold circle.
 - Set visible app version to `2026.06.13.015-fix-compass-one-logo-readability`.
 - Masked the Menu Engineering upload initiation code in the visible UI and status messages with `<Six Digits>`, and changed the entry field to hide typed digits.
