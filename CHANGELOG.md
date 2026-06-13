@@ -2,6 +2,9 @@
 
 ## 2026-06-13
 
+- Added a Lean Tool completion pop-up with the completed observation summary, top waste/activity, DOWNTIME breakdown, timestamped marks, and OK action.
+- Highlighted the Lean Tool Email Report Out section after a completed observation is acknowledged.
+- Set visible app version to `2026.06.13.012-feature-lean-complete-modal`.
 - Added a large red Ladle Compliance notice stating the dashboard data is placeholder concept data and not factual.
 - Set visible app version to `2026.06.13.011-fix-ladle-data-notice`.
 - Changed Lean Tool observer buttons to `DC`, `DM`, `RDO`, `VPO`, `EC`, `DR`, and `GM`.

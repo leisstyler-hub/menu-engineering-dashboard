@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, BarChart3, CheckCircle2, ClipboardList, Clock3, Mail, Play, RotateCcw, Send, Smartphone, Timer, Trash2, UserCheck } from "lucide-react";
 
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
@@ -77,21 +77,22 @@ function readStoredObservations() {
   }
 }
 
+function getRecommendation(summary) {
+  const topWaste = summary.byWasteSeconds[0];
+  if (!topWaste) return "Primary opportunity: complete an observation session to generate a recommendation.";
+  if (topWaste[0] === "Motion") return "Primary opportunity: reduce walking/searching by staging tools, ingredients, or labels closer to the point of use.";
+  if (topWaste[0] === "Waiting") return "Primary opportunity: identify the constraint causing idle time and rebalance handoffs, prep readiness, or equipment access.";
+  if (topWaste[0] === "Defects") return "Primary opportunity: reduce rework by clarifying standards, recipes, tickets, or quality checks before service.";
+  return `Primary opportunity: focus first on ${topWaste[0]} because it consumed the largest observed time block.`;
+}
+
 function buildReport({ cafe, area, observer, observationDate, observations, summary, note, completedAt }) {
   const topWaste = summary.byWasteSeconds[0];
   const topActivity = summary.byActivitySeconds[0];
   const wasteLines = summary.byWasteSeconds.map(([name, seconds]) => `- ${name}: ${formatSeconds(seconds)} (${summary.seconds ? ((seconds / summary.seconds) * 100).toFixed(0) : 0}%)`).join("\n") || "- No waste time captured";
   const activityLines = summary.byActivitySeconds.map(([name, seconds]) => `- ${name}: ${formatSeconds(seconds)} (${summary.seconds ? ((seconds / summary.seconds) * 100).toFixed(0) : 0}%)`).join("\n") || "- No activity time captured";
   const latest = observations.slice().reverse().map((entry) => `- +${formatSeconds(entry.timestampSeconds)}: ${entry.activity} / ${entry.waste} for ${formatSeconds(entry.seconds)}${entry.note ? ` - ${entry.note}` : ""}`).join("\n") || "- No observations captured";
-  const recommendation = topWaste
-    ? topWaste[0] === "Motion"
-      ? "Primary opportunity: reduce walking/searching by staging tools, ingredients, or labels closer to the point of use."
-      : topWaste[0] === "Waiting"
-        ? "Primary opportunity: identify the constraint causing idle time and rebalance handoffs, prep readiness, or equipment access."
-        : topWaste[0] === "Defects"
-          ? "Primary opportunity: reduce rework by clarifying standards, recipes, tickets, or quality checks before service."
-          : `Primary opportunity: focus first on ${topWaste[0]} because it consumed the largest observed time block.`
-    : "Primary opportunity: complete an observation session to generate a recommendation.";
+  const recommendation = getRecommendation(summary);
 
   return [
     "Lean Tool Observation Report",
@@ -149,6 +150,7 @@ function summarizeRows(rows) {
 }
 
 export default function LeanTool({ onBackToPlatform }) {
+  const emailSectionRef = useRef(null);
   const [cafe, setCafe] = useState("Doppler");
   const [area, setArea] = useState("Line");
   const [observer, setObserver] = useState("DC");
@@ -164,6 +166,8 @@ export default function LeanTool({ onBackToPlatform }) {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [completedAt, setCompletedAt] = useState("");
   const [completedSummary, setCompletedSummary] = useState(null);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [emailHighlight, setEmailHighlight] = useState(false);
   const [selectedRecipients, setSelectedRecipients] = useState(() => RECIPIENTS.map((person) => person.email));
   const [observations, setObservations] = useState(readStoredObservations);
 
@@ -189,6 +193,8 @@ export default function LeanTool({ onBackToPlatform }) {
     setElapsedSeconds(0);
     setCompletedAt("");
     setCompletedSummary(null);
+    setShowCompletionModal(false);
+    setEmailHighlight(false);
     setRunning(true);
   };
 
@@ -205,6 +211,8 @@ export default function LeanTool({ onBackToPlatform }) {
     setElapsedSeconds(0);
     setCompletedAt("");
     setCompletedSummary(null);
+    setShowCompletionModal(false);
+    setEmailHighlight(false);
   };
 
   const markObservation = () => {
@@ -220,6 +228,8 @@ export default function LeanTool({ onBackToPlatform }) {
     }
     setCompletedAt("");
     setCompletedSummary(null);
+    setShowCompletionModal(false);
+    setEmailHighlight(false);
     const nextEntry = {
       id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
       sessionId: activeSessionId,
@@ -277,6 +287,7 @@ export default function LeanTool({ onBackToPlatform }) {
     setRunning(false);
     setCompletedAt(stamp);
     setCompletedSummary(summarizeRows(completedRows));
+    setShowCompletionModal(true);
   };
 
   const clearScope = () => {
@@ -294,6 +305,15 @@ export default function LeanTool({ onBackToPlatform }) {
     const subject = `Lean Tool Report - ${cafe} ${area} - ${observationDate}`;
     const to = selectedRecipients.join(",");
     window.location.href = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
+
+  const handleCompletionOk = () => {
+    setShowCompletionModal(false);
+    setEmailHighlight(true);
+    window.setTimeout(() => {
+      emailSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 80);
+    window.setTimeout(() => setEmailHighlight(false), 4500);
   };
 
   const reportSummary = completedSummary || summary;
@@ -475,11 +495,16 @@ export default function LeanTool({ onBackToPlatform }) {
               </div>
             </section>
 
-            <section className="rounded-[2rem] border-2 border-emerald-200 bg-white p-4 shadow-sm">
+            <section ref={emailSectionRef} className={`rounded-[2rem] border-2 bg-white p-4 shadow-sm transition-all duration-500 ${emailHighlight ? "border-emerald-400 shadow-[0_0_0_6px_rgba(16,185,129,0.18),0_20px_45px_rgba(15,23,42,0.12)]" : "border-emerald-200"}`}>
               <div className="flex items-center gap-2">
                 <Mail className="text-emerald-600" size={20} />
                 <p className="text-sm font-black text-slate-900">Email Report Out</p>
               </div>
+              {emailHighlight && (
+                <div className="mt-3 rounded-2xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-emerald-900">
+                  Completed report is ready to send
+                </div>
+              )}
               <div className="mt-3 flex flex-wrap gap-2">
                 {RECIPIENTS.map((person) => {
                   const active = selectedRecipients.includes(person.email);
@@ -498,6 +523,107 @@ export default function LeanTool({ onBackToPlatform }) {
             </section>
           </aside>
         </section>
+      </div>
+      {showCompletionModal && completedSummary && (
+        <CompletionReportModal
+          cafe={cafe}
+          area={area}
+          observer={observer}
+          observationDate={observationDate}
+          completedAt={completedAt}
+          observations={activeRows}
+          summary={completedSummary}
+          onOk={handleCompletionOk}
+        />
+      )}
+    </div>
+  );
+}
+
+function CompletionReportModal({ cafe, area, observer, observationDate, completedAt, observations, summary, onOk }) {
+  const topWaste = summary.byWasteSeconds[0];
+  const topActivity = summary.byActivitySeconds[0];
+  const latestMarks = observations.slice().reverse().slice(0, 5);
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 py-6 backdrop-blur-sm">
+      <div className="max-h-[92vh] w-full max-w-3xl overflow-auto rounded-[2rem] border border-emerald-200 bg-white p-5 shadow-2xl md:p-6">
+        <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 md:flex-row md:items-start md:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-emerald-700">Completed Lean Read</p>
+            <h2 className="mt-2 text-3xl font-black text-slate-950">Observation report is ready</h2>
+            <p className="mt-2 text-sm font-semibold text-slate-600">{cafe} / {area} • {observationDate} • {observer} • Completed {completedAt}</p>
+          </div>
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-center">
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">Observed</p>
+            <p className="mt-1 font-mono text-3xl font-black tabular-nums text-emerald-950">{formatSeconds(summary.seconds)}</p>
+          </div>
+        </div>
+
+        <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-3">
+          <MiniMetric icon={ClipboardList} label="Marks" value={summary.total} />
+          <MiniMetric icon={BarChart3} label="Top Waste" value={topWaste?.[0] || "-"} />
+          <MiniMetric icon={Clock3} label="Top Activity" value={topActivity?.[0] || "-"} />
+        </div>
+
+        <div className="mt-5 rounded-3xl border border-emerald-200 bg-emerald-50 p-4">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">Smart Read</p>
+          <p className="mt-2 text-lg font-black text-emerald-950">
+            {topWaste ? `${topWaste[0]} led the observed waste at ${formatSeconds(topWaste[1])}.` : "No DOWNTIME pattern captured yet."}
+          </p>
+          <p className="mt-2 text-sm leading-6 text-emerald-900">{getRecommendation(summary)}</p>
+        </div>
+
+        <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <ReportBreakdown title="DOWNTIME Breakdown" rows={summary.byWasteSeconds} totalSeconds={summary.seconds} />
+          <ReportBreakdown title="Activity Breakdown" rows={summary.byActivitySeconds} totalSeconds={summary.seconds} />
+        </div>
+
+        <div className="mt-5 rounded-3xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Timestamped Marks</p>
+          <div className="mt-3 space-y-2">
+            {latestMarks.length ? latestMarks.map((entry) => (
+              <div key={entry.id} className="rounded-2xl border border-slate-200 bg-white p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-black text-slate-950">+{formatSeconds(entry.timestampSeconds)} • {entry.activity}</p>
+                  <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-bold text-slate-600">{formatSeconds(entry.seconds)}</span>
+                </div>
+                <p className="mt-1 text-sm text-slate-600">{entry.waste}{entry.note ? ` - ${entry.note}` : ""}</p>
+              </div>
+            )) : <p className="rounded-2xl border border-dashed border-slate-200 bg-white p-4 text-sm text-slate-500">No timestamped marks captured.</p>}
+          </div>
+        </div>
+
+        <div className="mt-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <p className="text-sm font-semibold text-slate-600">Click OK to return to the Lean Tool and send the email report out.</p>
+          <button onClick={onOk} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 py-4 text-sm font-black text-white shadow-lg shadow-emerald-200 hover:bg-emerald-600">
+            <CheckCircle2 size={20} />
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ReportBreakdown({ title, rows, totalSeconds }) {
+  return (
+    <div className="rounded-3xl border border-slate-200 bg-white p-4">
+      <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">{title}</p>
+      <div className="mt-3 space-y-3">
+        {rows.length ? rows.slice(0, 5).map(([name, seconds]) => {
+          const percent = totalSeconds ? Math.round((seconds / totalSeconds) * 100) : 0;
+          return (
+            <div key={name}>
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <p className="font-black text-slate-900">{name}</p>
+                <p className="font-mono font-black text-slate-600">{formatSeconds(seconds)} • {percent}%</p>
+              </div>
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+                <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.max(4, Math.min(100, percent))}%` }} />
+              </div>
+            </div>
+          );
+        }) : <p className="rounded-2xl border border-dashed border-slate-200 p-4 text-sm text-slate-500">No time captured yet.</p>}
       </div>
     </div>
   );
