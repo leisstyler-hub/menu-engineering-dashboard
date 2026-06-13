@@ -4,6 +4,7 @@ import { Search, Star, TrendingUp, HelpCircle, Dog, SlidersHorizontal, ChefHat, 
 
 import MENUWORKS_ITEMS from "../../data/menuItems.json";
 import { money, pct, priceLabel, smartMenuEngineeringSort, titleCase } from "../../shared/formatting.js";
+import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
 
 function classify(marginHigh, volumeHigh) {
   if (marginHigh && volumeHigh) return "STAR";
@@ -556,13 +557,14 @@ export default function MenuEngineeringDashboard({ onBackToPlatform }) {
 
       <div className="max-w-7xl mx-auto space-y-6">
         <header className="rounded-[2rem] bg-white border border-slate-200 p-6 md:p-8 shadow-2xl">
-          <div className="mb-6">
+          <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <button
               onClick={onBackToPlatform}
               className="rounded-2xl bg-slate-100 border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200"
             >
               ← Back to Culinary Tools Platform
             </button>
+            <CompassOneLogo compact />
           </div>
           <div className="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-6">
             <div>

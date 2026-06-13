@@ -1,6 +1,7 @@
 import React from "react";
-import { ArrowRight, BarChart3, CalendarRange, ClipboardCheck, Database, LayoutDashboard } from "lucide-react";
+import { ArrowRight, BarChart3, CalendarRange, ClipboardCheck, Database } from "lucide-react";
 
+import CompassOneLogo from "../shared/ui/CompassOneLogo.jsx";
 import VersionStamp from "../shared/ui/VersionStamp.jsx";
 
 export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodRotations, onOpenLadleCompliance }) {
@@ -42,11 +43,8 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
       <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-5 md:px-6">
         <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-slate-950 text-white">
-              <LayoutDashboard size={22} />
-            </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Compass culinary systems</p>
+              <CompassOneLogo />
               <h1 className="text-2xl font-bold tracking-normal md:text-3xl">Culinary Tools Platform</h1>
             </div>
           </div>

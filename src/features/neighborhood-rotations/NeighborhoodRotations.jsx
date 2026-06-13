@@ -7,6 +7,7 @@ import { loadRecordsFromSmartsheet, syncRecordsToSmartsheet } from "../../integr
 import { NEIGHBORHOOD_ROTATIONS_STORAGE_KEY, SMARTSHEET_COLUMNS, SMARTSHEET_DATABASE_STORAGE_KEY, SMARTSHEET_RECORD_TYPES, SMARTSHEET_SELECTION_TYPES, STATION_SMARTSHEET_LABELS } from "../../integrations/smartsheet/contract.js";
 import { APP_VERSION_STAMP } from "../../shared/appConfig.js";
 import { money, pct, titleCase } from "../../shared/formatting.js";
+import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
 
 const DISTRICTS = {
@@ -1220,7 +1221,10 @@ export default function NeighborhoodRotations({ onBackToPlatform }) {
 function NeighborhoodHeader({ onBackToPlatform, district }) {
   return (
     <header className="rounded-lg bg-white border border-slate-200 p-5 shadow-sm">
-      <button onClick={onBackToPlatform} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-white hover:text-slate-950"><ArrowLeft size={16} /> Back to platform</button>
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <button onClick={onBackToPlatform} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-white hover:text-slate-950"><ArrowLeft size={16} /> Back to platform</button>
+        <CompassOneLogo compact />
+      </div>
       <div className="mt-5 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
         <div>
           <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Still in Development</p>

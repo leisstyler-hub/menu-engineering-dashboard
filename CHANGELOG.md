@@ -2,6 +2,8 @@
 
 ## 2026-06-12
 
+- Added a reusable Compass One logo mark and placed it in the platform and tool headers.
+- Set visible app version to `2026.06.12.007-brand-compass-one-logo`.
 - Added the Figma-inspired Neighborhood Rotations planner polish: tighter planner card, status pill, operating snapshot metrics, and submit-after-planning flow.
 - Set visible app version to `2026.06.12.006-ui-figma-rotations-planner`.
 - Replaced generic home overview panels with culinary program metrics: tools, menu items, menus, and costed items.
