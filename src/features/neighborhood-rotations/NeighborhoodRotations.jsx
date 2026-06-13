@@ -2447,7 +2447,7 @@ function SubmitBar({ rotation, cafe, requirements, canSubmit, onSaveDraft, onSub
 function LeadershipOverview({ district, week, rows, conflictMenus }) {
   return (
     <div className="rounded-[2rem] bg-white border border-slate-200 p-6 shadow-2xl">
-      <div className="flex items-start gap-3"><CalendarDays className="text-slate-400" /><div><p className="text-sm uppercase tracking-[0.2em] text-slate-400">Leadership Overview</p><h2 className="text-2xl font-bold mt-1">{district} • {week}</h2></div></div>
+      <div className="flex items-start gap-3"><CalendarDays className="text-slate-400" /><div><p className="text-sm uppercase tracking-[0.2em] text-slate-400">Leadership Overview</p><h2 className="text-2xl font-bold mt-1">District At Large</h2><p className="mt-1 text-sm font-semibold text-slate-500">{district || "Select district"} • {week}</p></div></div>
       <div className="mt-5 space-y-3">{rows.map((row) => <SummaryCard key={row.cafe} row={row} conflict={row.menu && conflictMenus[row.menu] > 1} />)}</div>
     </div>
   );

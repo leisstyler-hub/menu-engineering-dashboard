@@ -2,6 +2,8 @@
 
 ## 2026-06-13
 
+- Renamed the planner-side leadership card headline to `District At Large` and moved district/week context into supporting text.
+- Set visible app version to `2026.06.13.004-ui-district-at-large-title`.
 - Relaxed the Planner Remote Control layout so status chips and action buttons no longer crowd each other when every state is active.
 - Set visible app version to `2026.06.13.003-ui-remote-spacing`.
 - Fixed Neighborhood Rotations food-cost range logic so a single selected mix does not display an artificial range.
