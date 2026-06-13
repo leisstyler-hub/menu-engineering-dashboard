@@ -2,6 +2,9 @@
 
 ## 2026-06-13
 
+- Added Smartsheet sync for Lean Tool completed results, including summary rows, timestamped mark rows, shared role visibility, and Results refresh from Smartsheet.
+- Added support for a dedicated `SMARTSHEET_LEAN_SHEET_ID` so Lean results can live in their own shared Smartsheet while falling back to the current sheet when needed.
+- Set visible app version to `2026.06.13.017-feature-lean-smartsheet-results`.
 - Added a Lean Tool Results tab that stores completed observations in the app, filters by district, cafe, and station, and opens detailed result reports from a cafe/station list.
 - Set visible app version to `2026.06.13.016-feature-lean-results-history`.
 - Centered the Compass One logo text so `one` reads clearly inside the gold circle.

@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, BarChart3, CheckCircle2, ClipboardList, Clock3, Mail, Play, RotateCcw, Send, Smartphone, Timer, Trash2, UserCheck } from "lucide-react";
 
+import { loadRecordsFromSmartsheet, syncRecordsToSmartsheet } from "../../integrations/smartsheet/client.js";
+import { SMARTSHEET_COLUMNS, SMARTSHEET_RECORD_TYPES } from "../../integrations/smartsheet/contract.js";
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
 
@@ -53,6 +55,7 @@ const ACTIVITIES = [
 
 const AREA_OPTIONS = ["Expo", "Grill", "Wok", "Salad", "Deli", "Pizza", "Dish", "Storage", "Line", "Other"];
 const OBSERVER_OPTIONS = ["DC", "DM", "RDO", "VPO", "EC", "DR", "GM"];
+const LEAN_AUDIENCE_ROLES = ["SVP", "VPO", "RDO", "DM", "DC", "EC", "DR", "GM", "Chef", "Manager"];
 
 const colorClasses = {
   rose: "border-rose-300 bg-rose-50 text-rose-900",
@@ -117,6 +120,120 @@ function saveLeanResult(nextResult, existingResults = []) {
   ].slice(0, 100);
   localStorage.setItem(RESULTS_STORAGE_KEY, JSON.stringify(nextResults));
   return nextResults;
+}
+
+function breakdownText(rows = []) {
+  return rows.map(([name, seconds]) => `${name}: ${formatSeconds(seconds)}`).join("; ");
+}
+
+function leanParentRecordId(result) {
+  return `lean|${result.sessionId || result.id}`;
+}
+
+function buildLeanSmartsheetRecords(result) {
+  const normalized = normalizeResult(result);
+  const parentId = leanParentRecordId(normalized);
+  const summary = normalized.summary || summarizeRows(normalized.observations || []);
+  const submittedAt = normalized.completedTimestamp || new Date().toISOString();
+  const base = {
+    [SMARTSHEET_COLUMNS.parentRecordId]: parentId,
+    [SMARTSHEET_COLUMNS.status]: "Completed",
+    [SMARTSHEET_COLUMNS.district]: normalized.district,
+    [SMARTSHEET_COLUMNS.cafeUnit]: normalized.cafe,
+    [SMARTSHEET_COLUMNS.businessDate]: normalized.observationDate,
+    [SMARTSHEET_COLUMNS.station]: normalized.area,
+    [SMARTSHEET_COLUMNS.stationDisplayName]: normalized.area,
+    [SMARTSHEET_COLUMNS.stationKey]: normalized.area,
+    [SMARTSHEET_COLUMNS.submittedBy]: normalized.observer,
+    [SMARTSHEET_COLUMNS.submittedAt]: submittedAt,
+    [SMARTSHEET_COLUMNS.leanSessionId]: normalized.sessionId || normalized.id,
+    [SMARTSHEET_COLUMNS.leanAudienceRoles]: LEAN_AUDIENCE_ROLES.join(", "),
+    [SMARTSHEET_COLUMNS.leanObserverRole]: normalized.observer,
+  };
+
+  const header = {
+    ...base,
+    [SMARTSHEET_COLUMNS.recordId]: parentId,
+    [SMARTSHEET_COLUMNS.parentRecordId]: "",
+    [SMARTSHEET_COLUMNS.recordType]: SMARTSHEET_RECORD_TYPES.leanObservationResult,
+    [SMARTSHEET_COLUMNS.savedEntryCount]: summary.total,
+    [SMARTSHEET_COLUMNS.notes]: normalized.recommendation || getRecommendation(summary),
+    [SMARTSHEET_COLUMNS.leanObservedSeconds]: Number(summary.seconds || 0).toFixed(1),
+    [SMARTSHEET_COLUMNS.leanTotalMarks]: summary.total,
+    [SMARTSHEET_COLUMNS.leanTopWaste]: summary.byWasteSeconds[0]?.[0] || "",
+    [SMARTSHEET_COLUMNS.leanTopActivity]: summary.byActivitySeconds[0]?.[0] || "",
+    [SMARTSHEET_COLUMNS.leanRecommendation]: normalized.recommendation || getRecommendation(summary),
+    [SMARTSHEET_COLUMNS.leanWasteBreakdown]: breakdownText(summary.byWasteSeconds),
+    [SMARTSHEET_COLUMNS.leanActivityBreakdown]: breakdownText(summary.byActivitySeconds),
+  };
+
+  const markRows = (normalized.observations || []).slice().reverse().map((entry, index) => ({
+    ...base,
+    [SMARTSHEET_COLUMNS.recordId]: `${parentId}|mark|${index + 1}`,
+    [SMARTSHEET_COLUMNS.parentRecordId]: parentId,
+    [SMARTSHEET_COLUMNS.recordType]: SMARTSHEET_RECORD_TYPES.leanObservationMark,
+    [SMARTSHEET_COLUMNS.slotNumber]: index + 1,
+    [SMARTSHEET_COLUMNS.notes]: entry.note || "",
+    [SMARTSHEET_COLUMNS.leanActivity]: entry.activity || "",
+    [SMARTSHEET_COLUMNS.leanWaste]: entry.waste || "",
+    [SMARTSHEET_COLUMNS.leanTimestampSeconds]: Number(entry.timestampSeconds || 0).toFixed(1),
+    [SMARTSHEET_COLUMNS.leanDurationSeconds]: Number(entry.seconds || 0).toFixed(1),
+    [SMARTSHEET_COLUMNS.leanMarkTime]: entry.time || "",
+  }));
+
+  return [header, ...markRows];
+}
+
+function parseLeanResultsFromSmartsheet(records = []) {
+  const leanHeaders = records.filter((record) => record[SMARTSHEET_COLUMNS.recordType] === SMARTSHEET_RECORD_TYPES.leanObservationResult);
+  const leanMarks = records.filter((record) => record[SMARTSHEET_COLUMNS.recordType] === SMARTSHEET_RECORD_TYPES.leanObservationMark);
+  const marksByParent = leanMarks.reduce((acc, record) => {
+    const parentId = String(record[SMARTSHEET_COLUMNS.parentRecordId] || "");
+    if (!parentId) return acc;
+    if (!acc[parentId]) acc[parentId] = [];
+    acc[parentId].push(record);
+    return acc;
+  }, {});
+
+  return leanHeaders.map((record) => {
+    const parentId = String(record[SMARTSHEET_COLUMNS.recordId] || "");
+    const observations = (marksByParent[parentId] || [])
+      .sort((a, b) => Number(a[SMARTSHEET_COLUMNS.slotNumber] || 0) - Number(b[SMARTSHEET_COLUMNS.slotNumber] || 0))
+      .map((mark, index) => ({
+        id: String(mark[SMARTSHEET_COLUMNS.recordId] || `${parentId}|mark|${index + 1}`),
+        sessionId: String(record[SMARTSHEET_COLUMNS.leanSessionId] || parentId),
+        district: String(mark[SMARTSHEET_COLUMNS.district] || record[SMARTSHEET_COLUMNS.district] || ""),
+        cafe: String(mark[SMARTSHEET_COLUMNS.cafeUnit] || record[SMARTSHEET_COLUMNS.cafeUnit] || ""),
+        area: String(mark[SMARTSHEET_COLUMNS.stationDisplayName] || mark[SMARTSHEET_COLUMNS.station] || record[SMARTSHEET_COLUMNS.stationDisplayName] || ""),
+        observer: String(mark[SMARTSHEET_COLUMNS.leanObserverRole] || record[SMARTSHEET_COLUMNS.leanObserverRole] || ""),
+        observationDate: String(mark[SMARTSHEET_COLUMNS.businessDate] || record[SMARTSHEET_COLUMNS.businessDate] || ""),
+        activity: String(mark[SMARTSHEET_COLUMNS.leanActivity] || ""),
+        waste: String(mark[SMARTSHEET_COLUMNS.leanWaste] || ""),
+        seconds: Number(mark[SMARTSHEET_COLUMNS.leanDurationSeconds] || 0),
+        timestampSeconds: Number(mark[SMARTSHEET_COLUMNS.leanTimestampSeconds] || 0),
+        note: String(mark[SMARTSHEET_COLUMNS.notes] || ""),
+        time: String(mark[SMARTSHEET_COLUMNS.leanMarkTime] || ""),
+      }));
+    const summary = summarizeRows(observations);
+    return normalizeResult({
+      id: parentId,
+      sessionId: String(record[SMARTSHEET_COLUMNS.leanSessionId] || parentId),
+      district: String(record[SMARTSHEET_COLUMNS.district] || ""),
+      cafe: String(record[SMARTSHEET_COLUMNS.cafeUnit] || ""),
+      area: String(record[SMARTSHEET_COLUMNS.stationDisplayName] || record[SMARTSHEET_COLUMNS.station] || ""),
+      observer: String(record[SMARTSHEET_COLUMNS.leanObserverRole] || record[SMARTSHEET_COLUMNS.submittedBy] || ""),
+      observationDate: String(record[SMARTSHEET_COLUMNS.businessDate] || ""),
+      completedAt: String(record[SMARTSHEET_COLUMNS.submittedAt] || ""),
+      completedTimestamp: String(record[SMARTSHEET_COLUMNS.submittedAt] || ""),
+      observations,
+      summary,
+      totalMarks: Number(record[SMARTSHEET_COLUMNS.leanTotalMarks] || summary.total),
+      observedSeconds: Number(record[SMARTSHEET_COLUMNS.leanObservedSeconds] || summary.seconds),
+      topWaste: String(record[SMARTSHEET_COLUMNS.leanTopWaste] || summary.byWasteSeconds[0]?.[0] || ""),
+      topActivity: String(record[SMARTSHEET_COLUMNS.leanTopActivity] || summary.byActivitySeconds[0]?.[0] || ""),
+      recommendation: String(record[SMARTSHEET_COLUMNS.leanRecommendation] || record[SMARTSHEET_COLUMNS.notes] || ""),
+    });
+  });
 }
 
 function getRecommendation(summary) {
@@ -218,6 +335,8 @@ export default function LeanTool({ onBackToPlatform }) {
   const [resultsDistrict, setResultsDistrict] = useState("All");
   const [resultsCafe, setResultsCafe] = useState("All");
   const [resultsArea, setResultsArea] = useState("All");
+  const [leanSyncStatus, setLeanSyncStatus] = useState({ state: "idle", message: "Smartsheet ready" });
+  const [leanLoadStatus, setLeanLoadStatus] = useState({ state: "idle", message: "Local results loaded" });
 
   const cafesForDistrict = DISTRICTS[district] || [];
 
@@ -231,6 +350,43 @@ export default function LeanTool({ onBackToPlatform }) {
   const sessionObservations = scopedObservations.filter((row) => row.sessionId === sessionId);
   const activeRows = sessionId ? sessionObservations : scopedObservations;
   const summary = useMemo(() => summarizeRows(activeRows), [activeRows]);
+
+  const syncLeanResultToSmartsheet = async (result) => {
+    const records = buildLeanSmartsheetRecords(result);
+    setLeanSyncStatus({ state: "syncing", message: "Syncing Lean result to Smartsheet..." });
+    try {
+      const payload = await syncRecordsToSmartsheet(records, {
+        tool: "Lean Tool",
+        recordType: SMARTSHEET_RECORD_TYPES.leanObservationResult,
+        district: result.district,
+        cafe: result.cafe,
+        station: result.area,
+        requiredColumnMode: "used-columns-only",
+        autoCreateMissingColumns: true,
+      });
+      const created = payload.autoCreatedColumns?.length ? ` Added ${payload.autoCreatedColumns.length} Lean column${payload.autoCreatedColumns.length === 1 ? "" : "s"}.` : "";
+      setLeanSyncStatus({ state: "synced", message: `${payload.message || "Lean result synced to Smartsheet."}${created}` });
+    } catch (error) {
+      setLeanSyncStatus({ state: "error", message: error?.payload?.message || error.message || "Lean Smartsheet sync failed." });
+    }
+  };
+
+  const refreshLeanResultsFromSmartsheet = async () => {
+    setLeanLoadStatus({ state: "loading", message: "Loading Lean results from Smartsheet..." });
+    try {
+      const records = await loadRecordsFromSmartsheet({ tool: "lean" });
+      const sharedResults = parseLeanResultsFromSmartsheet(records);
+      const merged = [
+        ...sharedResults,
+        ...results.filter((local) => !sharedResults.some((shared) => shared.id === local.id)),
+      ].map(normalizeResult).slice(0, 100);
+      setResults(merged);
+      localStorage.setItem(RESULTS_STORAGE_KEY, JSON.stringify(merged));
+      setLeanLoadStatus({ state: "loaded", message: `Loaded ${sharedResults.length} shared Lean result${sharedResults.length === 1 ? "" : "s"} from Smartsheet.` });
+    } catch (error) {
+      setLeanLoadStatus({ state: "error", message: error?.payload?.message || error.message || "Could not load Lean results from Smartsheet." });
+    }
+  };
 
   useEffect(() => {
     if (!running || !sessionStartMs) return undefined;
@@ -362,6 +518,7 @@ export default function LeanTool({ onBackToPlatform }) {
       recommendation: getRecommendation(finalSummary),
     };
     setResults((prev) => saveLeanResult(completedResult, prev));
+    syncLeanResultToSmartsheet(completedResult);
     setRunning(false);
     setCompletedAt(stamp);
     setCompletedSummary(finalSummary);
@@ -452,6 +609,9 @@ export default function LeanTool({ onBackToPlatform }) {
               </div>
               <p className="mt-2 text-sm text-emerald-900">{district} / {cafe} / {area}</p>
               <p className="text-xs text-emerald-800">{observationDate}</p>
+            </div>
+            <div className={`mt-3 rounded-2xl border p-3 text-xs font-bold ${leanSyncStatus.state === "synced" ? "border-emerald-200 bg-emerald-50 text-emerald-900" : leanSyncStatus.state === "error" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-slate-200 bg-slate-50 text-slate-600"}`}>
+              Smartsheet: {leanSyncStatus.message}
             </div>
           </aside>
 
@@ -621,6 +781,9 @@ export default function LeanTool({ onBackToPlatform }) {
             setResultsCafe={setResultsCafe}
             resultsArea={resultsArea}
             setResultsArea={setResultsArea}
+            leanLoadStatus={leanLoadStatus}
+            leanSyncStatus={leanSyncStatus}
+            onRefreshSmartsheet={refreshLeanResultsFromSmartsheet}
           />
         )}
       </div>
@@ -640,7 +803,7 @@ export default function LeanTool({ onBackToPlatform }) {
   );
 }
 
-function LeanResultsView({ results, resultsDistrict, setResultsDistrict, resultsCafe, setResultsCafe, resultsArea, setResultsArea }) {
+function LeanResultsView({ results, resultsDistrict, setResultsDistrict, resultsCafe, setResultsCafe, resultsArea, setResultsArea, leanLoadStatus, leanSyncStatus, onRefreshSmartsheet }) {
   const normalizedResults = useMemo(() => results.map(normalizeResult).sort((a, b) => String(b.completedTimestamp || "").localeCompare(String(a.completedTimestamp || ""))), [results]);
   const cafeOptions = Array.from(new Set(normalizedResults.map((result) => result.cafe).filter(Boolean))).sort();
   const areaOptions = Array.from(new Set(normalizedResults.map((result) => result.area).filter(Boolean))).sort();
@@ -692,11 +855,19 @@ function LeanResultsView({ results, resultsDistrict, setResultsDistrict, results
           <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600">Lean Results</p>
           <h2 className="mt-2 text-4xl font-black tracking-normal">Observation history</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Filter by district, cafe, and station. Click a cafe/station result to open the completed observation report.</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-900">Visible roles: {LEAN_AUDIENCE_ROLES.join(", ")}</span>
+            <span className={`rounded-full border px-3 py-1 text-xs font-black ${leanLoadStatus.state === "loaded" ? "border-emerald-200 bg-emerald-50 text-emerald-900" : leanLoadStatus.state === "error" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-slate-200 bg-slate-50 text-slate-600"}`}>{leanLoadStatus.message}</span>
+            <span className={`rounded-full border px-3 py-1 text-xs font-black ${leanSyncStatus.state === "synced" ? "border-emerald-200 bg-emerald-50 text-emerald-900" : leanSyncStatus.state === "error" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-slate-200 bg-slate-50 text-slate-600"}`}>Sync: {leanSyncStatus.message}</span>
+          </div>
         </div>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           <ResultFilter label="District" value={resultsDistrict} setValue={setResultsDistrict} options={["All", ...Object.keys(DISTRICTS)]} />
           <ResultFilter label="Cafe" value={resultsCafe} setValue={setResultsCafe} options={["All", ...cafeOptions]} />
           <ResultFilter label="Station" value={resultsArea} setValue={setResultsArea} options={["All", ...areaOptions]} />
+          <button onClick={onRefreshSmartsheet} className="rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-900 hover:bg-emerald-100 sm:col-span-3">
+            Sync Latest From Smartsheet
+          </button>
         </div>
       </div>
 

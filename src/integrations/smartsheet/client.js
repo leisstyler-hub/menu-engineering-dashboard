@@ -40,8 +40,10 @@ export async function syncRecordsToSmartsheet(records = [], context = {}) {
   return payload;
 }
 
-export async function loadRecordsFromSmartsheet() {
-  const response = await fetch("/api/smartsheet/records");
+export async function loadRecordsFromSmartsheet(context = {}) {
+  const params = new URLSearchParams();
+  if (context.tool) params.set("tool", context.tool);
+  const response = await fetch(`/api/smartsheet/records${params.toString() ? `?${params.toString()}` : ""}`);
   const payload = await response.json().catch(() => ({}));
   if (!response.ok || payload.ok === false) {
     const error = new Error(payload.message || "Smartsheet load failed");

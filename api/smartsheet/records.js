@@ -68,6 +68,23 @@ function buildSmartsheetCells(record, columnMap) {
     }));
 }
 
+async function addMissingColumns(sheetId, sheet, missingColumns = []) {
+  if (!missingColumns.length) return sheet;
+  const startIndex = (sheet.columns || []).length;
+  const columns = missingColumns.map((title, index) => ({
+    title,
+    type: "TEXT_NUMBER",
+    index: startIndex + index,
+  }));
+
+  await smartsheetFetch(`/sheets/${sheetId}/columns`, {
+    method: "POST",
+    body: JSON.stringify(columns),
+  });
+
+  return smartsheetFetch(`/sheets/${sheetId}`);
+}
+
 function rowToRecord(row, columnsById) {
   const record = {};
   for (const cell of row.cells || []) {
@@ -92,9 +109,11 @@ function usedColumnsFromRecords(records = [], recordIdColumn = "Record ID") {
 }
 
 export default async function handler(req, res) {
-  const sheetId = process.env.SMARTSHEET_SHEET_ID;
+  const requestedTool = req.query?.tool || req.body?.context?.tool || "";
+  const useLeanSheet = String(requestedTool).toLowerCase().includes("lean") && process.env.SMARTSHEET_LEAN_SHEET_ID;
+  const sheetId = useLeanSheet ? process.env.SMARTSHEET_LEAN_SHEET_ID : process.env.SMARTSHEET_SHEET_ID;
   if (!sheetId) {
-    return res.status(500).json({ ok: false, message: "Missing SMARTSHEET_SHEET_ID environment variable" });
+    return res.status(500).json({ ok: false, message: useLeanSheet ? "Missing SMARTSHEET_LEAN_SHEET_ID environment variable" : "Missing SMARTSHEET_SHEET_ID environment variable" });
   }
 
   try {
@@ -135,8 +154,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ ok: false, message: "No records supplied" });
     }
 
-    const sheet = await smartsheetFetch(`/sheets/${sheetId}`);
-    const columnMap = columnMapByTitle(sheet);
+    let sheet = await smartsheetFetch(`/sheets/${sheetId}`);
+    let columnMap = columnMapByTitle(sheet);
 
     const requiredForThisPayload = requiredColumns.length
       ? requiredColumns
@@ -144,15 +163,20 @@ export default async function handler(req, res) {
 
     const missingColumns = requiredForThisPayload.filter((columnName) => !columnMap.has(columnName));
     if (missingColumns.length) {
-      return res.status(400).json({
-        ok: false,
-        message: `Smartsheet is missing ${missingColumns.length} required column${missingColumns.length === 1 ? "" : "s"} used by this submission.`,
-        missingColumns,
-        requiredColumnMode: context.requiredColumnMode || "used-columns-only",
-        sheetId,
-        sheetName: sheet.name || "",
-        availableColumns: (sheet.columns || []).map((column) => column.title),
-      });
+      if (context.autoCreateMissingColumns) {
+        sheet = await addMissingColumns(sheetId, sheet, missingColumns);
+        columnMap = columnMapByTitle(sheet);
+      } else {
+        return res.status(400).json({
+          ok: false,
+          message: `Smartsheet is missing ${missingColumns.length} required column${missingColumns.length === 1 ? "" : "s"} used by this submission.`,
+          missingColumns,
+          requiredColumnMode: context.requiredColumnMode || "used-columns-only",
+          sheetId,
+          sheetName: sheet.name || "",
+          availableColumns: (sheet.columns || []).map((column) => column.title),
+        });
+      }
     }
 
     const recordIdColumnId = columnMap.get(recordIdColumn);
@@ -208,6 +232,7 @@ export default async function handler(req, res) {
       sheetName: sheet.name || "",
       requiredColumnMode: context.requiredColumnMode || "used-columns-only",
       requiredColumnCount: requiredForThisPayload.length,
+      autoCreatedColumns: missingColumns.length && context.autoCreateMissingColumns ? missingColumns : [],
       synced: toUpdate.length + toAdd.length,
       updated: toUpdate.length,
       added: toAdd.length,

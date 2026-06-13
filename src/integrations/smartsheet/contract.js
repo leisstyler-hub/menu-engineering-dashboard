@@ -112,6 +112,21 @@ export const SMARTSHEET_COLUMNS = Object.freeze({
   ladleFollowUpNeeded: "Ladle Follow-Up Needed",
   ladleFollowUpOwner: "Ladle Follow-Up Owner",
   ladleFollowUpNotes: "Ladle Follow-Up Notes",
+  leanSessionId: "Lean Session ID",
+  leanAudienceRoles: "Lean Audience Roles",
+  leanObserverRole: "Lean Observer Role",
+  leanObservedSeconds: "Lean Observed Seconds",
+  leanTotalMarks: "Lean Total Marks",
+  leanTopWaste: "Lean Top Waste",
+  leanTopActivity: "Lean Top Activity",
+  leanRecommendation: "Lean Recommendation",
+  leanWasteBreakdown: "Lean Waste Breakdown",
+  leanActivityBreakdown: "Lean Activity Breakdown",
+  leanActivity: "Lean Activity",
+  leanWaste: "Lean Waste",
+  leanTimestampSeconds: "Lean Timestamp Seconds",
+  leanDurationSeconds: "Lean Duration Seconds",
+  leanMarkTime: "Lean Mark Time",
 });
 
 export const SMARTSHEET_RECORD_TYPES = Object.freeze({
@@ -128,6 +143,8 @@ export const SMARTSHEET_RECORD_TYPES = Object.freeze({
   ladleCompliance: "Ladle Compliance",
   menuWorksItem: "MenuWorks Item",
   menuEngineeringScenario: "Menu Engineering Scenario",
+  leanObservationResult: "Lean Observation Result",
+  leanObservationMark: "Lean Observation Mark",
 });
 
 export const SMARTSHEET_SELECTION_TYPES = Object.freeze({
