@@ -53,6 +53,7 @@ const classConfig = {
 
 const MENU_ENGINEERING_OVERRIDE_STORAGE_KEY = "culinaryToolsMenuEngineeringItems_v2";
 const MENUWORKS_IMPORT_INITIATION_CODE = "410410";
+const MENUWORKS_IMPORT_CODE_HINT = "<Six Digits>";
 const MENUWORKS_ALLERGEN_COLUMNS = [
   "Egg",
   "Fish",
@@ -575,7 +576,7 @@ export default function MenuEngineeringDashboard({ onBackToPlatform }) {
     const file = event.target.files?.[0];
     if (!file) return;
     if (uploadInitiationCode.trim() !== MENUWORKS_IMPORT_INITIATION_CODE) {
-      setUploadStatus("Enter initiation code 410410 before uploading a MenuWorks truth file.");
+      setUploadStatus(`Enter initiation code ${MENUWORKS_IMPORT_CODE_HINT} before uploading a MenuWorks truth file.`);
       event.target.value = "";
       return;
     }
@@ -665,7 +666,7 @@ export default function MenuEngineeringDashboard({ onBackToPlatform }) {
 
   const acceptImport = () => {
     if (!pendingImport || uploadInitiationCode.trim() !== MENUWORKS_IMPORT_INITIATION_CODE) {
-      setUploadStatus("Enter initiation code 410410 before accepting an import.");
+      setUploadStatus(`Enter initiation code ${MENUWORKS_IMPORT_CODE_HINT} before accepting an import.`);
       return;
     }
     const importedMenuNames = pendingImport.importedMenuNames || Array.from(new Set(pendingImport.importedRows.map((row) => row.menu).filter(Boolean)));
@@ -754,7 +755,7 @@ export default function MenuEngineeringDashboard({ onBackToPlatform }) {
               <div>
                 <label className="block text-sm font-semibold text-slate-500 mb-2">Initiate MenuWorks Upload</label>
                 <div className="grid grid-cols-1 sm:grid-cols-[120px_1fr] gap-2">
-                  <input value={uploadInitiationCode} onChange={(e) => setUploadInitiationCode(e.target.value)} placeholder="410410" className="rounded-2xl bg-white border border-slate-300 px-3 py-3 text-sm font-semibold outline-none focus:border-slate-500" />
+                  <input type="password" inputMode="numeric" maxLength={6} value={uploadInitiationCode} onChange={(e) => setUploadInitiationCode(e.target.value)} placeholder={MENUWORKS_IMPORT_CODE_HINT} className="rounded-2xl bg-white border border-slate-300 px-3 py-3 text-sm font-semibold outline-none focus:border-slate-500" />
                   <input disabled={uploadInitiationCode.trim() !== MENUWORKS_IMPORT_INITIATION_CODE} type="file" accept=".xlsx,.xls,.csv" onChange={parseMenuWorksFile} className="block w-full text-sm text-slate-700 file:mr-3 file:rounded-xl file:border-0 file:bg-slate-900 file:px-4 file:py-2 file:text-white hover:file:bg-slate-700 disabled:opacity-50" />
                 </div>
                 <p className="mt-2 text-xs text-slate-500">Enter the initiation code, upload a MenuWorks truth file, review changes, then accept.</p>
