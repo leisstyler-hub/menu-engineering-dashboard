@@ -2,6 +2,10 @@
 
 ## 2026-06-13
 
+- Added controlled Lean result voiding so test, accident, duplicate, and wrong-location records are hidden from dashboards without being erased.
+- Added Lean result audit fields for void reason, voided by, voided at, notes, test-record flag, and dashboard visibility in the Smartsheet contract.
+- Changed Lean Results role language to `Shared audience` so access roles are not presented like user-selectable authority.
+- Set visible app version to `2026.06.13.019-feature-lean-void-controls`.
 - Reworked the Culinary Tools landing page into a smart dashboard with diet mix donut chart, category bars, newest item signal, latest changelog feed, top menu libraries, and live MenuWorks coverage stats.
 - Set visible app version to `2026.06.13.018-ui-landing-smart-dashboard`.
 - Added Smartsheet sync for Lean Tool completed results, including summary rows, timestamped mark rows, shared role visibility, and Results refresh from Smartsheet.

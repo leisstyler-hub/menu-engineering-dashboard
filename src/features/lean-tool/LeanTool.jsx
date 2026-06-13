@@ -56,6 +56,8 @@ const ACTIVITIES = [
 const AREA_OPTIONS = ["Expo", "Grill", "Wok", "Salad", "Deli", "Pizza", "Dish", "Storage", "Line", "Other"];
 const OBSERVER_OPTIONS = ["DC", "DM", "RDO", "VPO", "EC", "DR", "GM"];
 const LEAN_AUDIENCE_ROLES = ["SVP", "VPO", "RDO", "DM", "DC", "EC", "DR", "GM", "Chef", "Manager"];
+const VOID_REASONS = ["Test record", "Accident", "Duplicate", "Wrong cafe/station", "Training/demo", "Other"];
+const VOIDED_STATUSES = new Set(["Void", "Voided", "Deleted", "Test / Void"]);
 
 const colorClasses = {
   rose: "border-rose-300 bg-rose-50 text-rose-900",
@@ -71,6 +73,10 @@ const colorClasses = {
 const nowTime = () => new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 const today = () => new Date().toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
 const formatSeconds = (value) => `${Number(value || 0).toFixed(1)}s`;
+const yesNo = (value) => (value ? "Yes" : "No");
+const isYes = (value) => ["true", "yes", "y", "1"].includes(String(value || "").trim().toLowerCase());
+const isTestVoidReason = (value) => /test|training|demo/i.test(String(value || ""));
+const isVoidedResult = (result = {}) => VOIDED_STATUSES.has(String(result.status || ""));
 const formatClock = (value) => {
   const totalTenths = Math.max(0, Math.round(Number(value || 0) * 10));
   const minutes = Math.floor(totalTenths / 600);
@@ -101,14 +107,23 @@ function getDistrictForCafe(cafe = "") {
 
 function normalizeResult(result) {
   const summary = result.summary || summarizeRows(result.observations || []);
+  const status = result.status || "Completed";
+  const voidReason = result.voidReason || "";
   return {
     ...result,
+    status,
     district: result.district || getDistrictForCafe(result.cafe),
     summary,
     totalMarks: result.totalMarks ?? summary.total,
     observedSeconds: result.observedSeconds ?? summary.seconds,
     topWaste: result.topWaste || summary.byWasteSeconds[0]?.[0] || "",
     topActivity: result.topActivity || summary.byActivitySeconds[0]?.[0] || "",
+    visibleInDashboard: result.visibleInDashboard ?? !VOIDED_STATUSES.has(String(status || "")),
+    voidReason,
+    voidedBy: result.voidedBy || "",
+    voidedAt: result.voidedAt || "",
+    voidNotes: result.voidNotes || "",
+    isTestRecord: Boolean(result.isTestRecord) || isTestVoidReason(voidReason),
   };
 }
 
@@ -135,9 +150,11 @@ function buildLeanSmartsheetRecords(result) {
   const parentId = leanParentRecordId(normalized);
   const summary = normalized.summary || summarizeRows(normalized.observations || []);
   const submittedAt = normalized.completedTimestamp || new Date().toISOString();
+  const status = normalized.status || "Completed";
+  const visibleInDashboard = normalized.visibleInDashboard !== false && !isVoidedResult(normalized);
   const base = {
     [SMARTSHEET_COLUMNS.parentRecordId]: parentId,
-    [SMARTSHEET_COLUMNS.status]: "Completed",
+    [SMARTSHEET_COLUMNS.status]: status,
     [SMARTSHEET_COLUMNS.district]: normalized.district,
     [SMARTSHEET_COLUMNS.cafeUnit]: normalized.cafe,
     [SMARTSHEET_COLUMNS.businessDate]: normalized.observationDate,
@@ -146,6 +163,14 @@ function buildLeanSmartsheetRecords(result) {
     [SMARTSHEET_COLUMNS.stationKey]: normalized.area,
     [SMARTSHEET_COLUMNS.submittedBy]: normalized.observer,
     [SMARTSHEET_COLUMNS.submittedAt]: submittedAt,
+    [SMARTSHEET_COLUMNS.updatedBy]: normalized.voidedBy || normalized.observer,
+    [SMARTSHEET_COLUMNS.updatedAt]: normalized.voidedAt || submittedAt,
+    [SMARTSHEET_COLUMNS.voidReason]: normalized.voidReason || "",
+    [SMARTSHEET_COLUMNS.voidedBy]: normalized.voidedBy || "",
+    [SMARTSHEET_COLUMNS.voidedAt]: normalized.voidedAt || "",
+    [SMARTSHEET_COLUMNS.voidNotes]: normalized.voidNotes || "",
+    [SMARTSHEET_COLUMNS.visibleInDashboard]: yesNo(visibleInDashboard),
+    [SMARTSHEET_COLUMNS.isTestRecord]: yesNo(Boolean(normalized.isTestRecord)),
     [SMARTSHEET_COLUMNS.leanSessionId]: normalized.sessionId || normalized.id,
     [SMARTSHEET_COLUMNS.leanAudienceRoles]: LEAN_AUDIENCE_ROLES.join(", "),
     [SMARTSHEET_COLUMNS.leanObserverRole]: normalized.observer,
@@ -218,6 +243,7 @@ function parseLeanResultsFromSmartsheet(records = []) {
     return normalizeResult({
       id: parentId,
       sessionId: String(record[SMARTSHEET_COLUMNS.leanSessionId] || parentId),
+      status: String(record[SMARTSHEET_COLUMNS.status] || "Completed"),
       district: String(record[SMARTSHEET_COLUMNS.district] || ""),
       cafe: String(record[SMARTSHEET_COLUMNS.cafeUnit] || ""),
       area: String(record[SMARTSHEET_COLUMNS.stationDisplayName] || record[SMARTSHEET_COLUMNS.station] || ""),
@@ -232,6 +258,12 @@ function parseLeanResultsFromSmartsheet(records = []) {
       topWaste: String(record[SMARTSHEET_COLUMNS.leanTopWaste] || summary.byWasteSeconds[0]?.[0] || ""),
       topActivity: String(record[SMARTSHEET_COLUMNS.leanTopActivity] || summary.byActivitySeconds[0]?.[0] || ""),
       recommendation: String(record[SMARTSHEET_COLUMNS.leanRecommendation] || record[SMARTSHEET_COLUMNS.notes] || ""),
+      visibleInDashboard: !record[SMARTSHEET_COLUMNS.visibleInDashboard] || isYes(record[SMARTSHEET_COLUMNS.visibleInDashboard]),
+      voidReason: String(record[SMARTSHEET_COLUMNS.voidReason] || ""),
+      voidedBy: String(record[SMARTSHEET_COLUMNS.voidedBy] || ""),
+      voidedAt: String(record[SMARTSHEET_COLUMNS.voidedAt] || ""),
+      voidNotes: String(record[SMARTSHEET_COLUMNS.voidNotes] || ""),
+      isTestRecord: isYes(record[SMARTSHEET_COLUMNS.isTestRecord]),
     });
   });
 }
@@ -337,6 +369,10 @@ export default function LeanTool({ onBackToPlatform }) {
   const [resultsArea, setResultsArea] = useState("All");
   const [leanSyncStatus, setLeanSyncStatus] = useState({ state: "idle", message: "Smartsheet ready" });
   const [leanLoadStatus, setLeanLoadStatus] = useState({ state: "idle", message: "Local results loaded" });
+  const [voidTarget, setVoidTarget] = useState(null);
+  const [voidReason, setVoidReason] = useState("Test record");
+  const [voidedBy, setVoidedBy] = useState("DM");
+  const [voidNotes, setVoidNotes] = useState("");
 
   const cafesForDistrict = DISTRICTS[district] || [];
 
@@ -549,6 +585,37 @@ export default function LeanTool({ onBackToPlatform }) {
       emailSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 80);
     window.setTimeout(() => setEmailHighlight(false), 4500);
+  };
+
+  const requestVoidResult = (result) => {
+    setVoidTarget(normalizeResult(result));
+    setVoidReason("Test record");
+    setVoidedBy(observer || "DM");
+    setVoidNotes("");
+  };
+
+  const cancelVoidResult = () => {
+    setVoidTarget(null);
+    setVoidReason("Test record");
+    setVoidedBy(observer || "DM");
+    setVoidNotes("");
+  };
+
+  const confirmVoidResult = () => {
+    if (!voidTarget) return;
+    const voidedResult = normalizeResult({
+      ...voidTarget,
+      status: "Void",
+      visibleInDashboard: false,
+      voidReason,
+      voidedBy,
+      voidedAt: new Date().toISOString(),
+      voidNotes: voidNotes.trim(),
+      isTestRecord: isTestVoidReason(voidReason),
+    });
+    setResults((prev) => saveLeanResult(voidedResult, prev));
+    syncLeanResultToSmartsheet(voidedResult);
+    cancelVoidResult();
   };
 
   const reportSummary = completedSummary || summary;
@@ -784,6 +851,7 @@ export default function LeanTool({ onBackToPlatform }) {
             leanLoadStatus={leanLoadStatus}
             leanSyncStatus={leanSyncStatus}
             onRefreshSmartsheet={refreshLeanResultsFromSmartsheet}
+            onRequestVoid={requestVoidResult}
           />
         )}
       </div>
@@ -799,15 +867,31 @@ export default function LeanTool({ onBackToPlatform }) {
           onOk={handleCompletionOk}
         />
       )}
+      {voidTarget && (
+        <VoidResultModal
+          result={voidTarget}
+          reason={voidReason}
+          setReason={setVoidReason}
+          voidedBy={voidedBy}
+          setVoidedBy={setVoidedBy}
+          notes={voidNotes}
+          setNotes={setVoidNotes}
+          onCancel={cancelVoidResult}
+          onConfirm={confirmVoidResult}
+        />
+      )}
     </div>
   );
 }
 
-function LeanResultsView({ results, resultsDistrict, setResultsDistrict, resultsCafe, setResultsCafe, resultsArea, setResultsArea, leanLoadStatus, leanSyncStatus, onRefreshSmartsheet }) {
+function LeanResultsView({ results, resultsDistrict, setResultsDistrict, resultsCafe, setResultsCafe, resultsArea, setResultsArea, leanLoadStatus, leanSyncStatus, onRefreshSmartsheet, onRequestVoid }) {
+  const [showVoided, setShowVoided] = useState(false);
   const normalizedResults = useMemo(() => results.map(normalizeResult).sort((a, b) => String(b.completedTimestamp || "").localeCompare(String(a.completedTimestamp || ""))), [results]);
-  const cafeOptions = Array.from(new Set(normalizedResults.map((result) => result.cafe).filter(Boolean))).sort();
-  const areaOptions = Array.from(new Set(normalizedResults.map((result) => result.area).filter(Boolean))).sort();
-  const filteredResults = normalizedResults.filter((result) =>
+  const dashboardResults = showVoided ? normalizedResults : normalizedResults.filter((result) => !isVoidedResult(result) && result.visibleInDashboard !== false);
+  const voidedCount = normalizedResults.filter((result) => isVoidedResult(result) || result.visibleInDashboard === false).length;
+  const cafeOptions = Array.from(new Set(dashboardResults.map((result) => result.cafe).filter(Boolean))).sort();
+  const areaOptions = Array.from(new Set(dashboardResults.map((result) => result.area).filter(Boolean))).sort();
+  const filteredResults = dashboardResults.filter((result) =>
     (resultsDistrict === "All" || result.district === resultsDistrict) &&
     (resultsCafe === "All" || result.cafe === resultsCafe) &&
     (resultsArea === "All" || result.area === resultsArea)
@@ -856,7 +940,8 @@ function LeanResultsView({ results, resultsDistrict, setResultsDistrict, results
           <h2 className="mt-2 text-4xl font-black tracking-normal">Observation history</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Filter by district, cafe, and station. Click a cafe/station result to open the completed observation report.</p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-900">Visible roles: {LEAN_AUDIENCE_ROLES.join(", ")}</span>
+            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-900">Shared audience: {LEAN_AUDIENCE_ROLES.join(", ")}</span>
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-black text-slate-600">{voidedCount} voided hidden</span>
             <span className={`rounded-full border px-3 py-1 text-xs font-black ${leanLoadStatus.state === "loaded" ? "border-emerald-200 bg-emerald-50 text-emerald-900" : leanLoadStatus.state === "error" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-slate-200 bg-slate-50 text-slate-600"}`}>{leanLoadStatus.message}</span>
             <span className={`rounded-full border px-3 py-1 text-xs font-black ${leanSyncStatus.state === "synced" ? "border-emerald-200 bg-emerald-50 text-emerald-900" : leanSyncStatus.state === "error" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-slate-200 bg-slate-50 text-slate-600"}`}>Sync: {leanSyncStatus.message}</span>
           </div>
@@ -867,6 +952,9 @@ function LeanResultsView({ results, resultsDistrict, setResultsDistrict, results
           <ResultFilter label="Station" value={resultsArea} setValue={setResultsArea} options={["All", ...areaOptions]} />
           <button onClick={onRefreshSmartsheet} className="rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-900 hover:bg-emerald-100 sm:col-span-3">
             Sync Latest From Smartsheet
+          </button>
+          <button onClick={() => setShowVoided((value) => !value)} className={`rounded-2xl border px-4 py-3 text-sm font-black sm:col-span-3 ${showVoided ? "border-amber-300 bg-amber-50 text-amber-900" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}>
+            {showVoided ? "Hide Voided Records" : "Show Voided Records"}
           </button>
         </div>
       </div>
@@ -886,15 +974,16 @@ function LeanResultsView({ results, resultsDistrict, setResultsDistrict, results
               const stationTopWaste = Object.entries(row.topWasteSeconds).sort((a, b) => b[1] - a[1])[0];
               const firstResult = filteredResults.find((result) => result.district === row.district && result.cafe === row.cafe && result.area === row.area);
               const active = firstResult && selectedResult?.district === row.district && selectedResult?.cafe === row.cafe && selectedResult?.area === row.area;
+              const rowVoided = firstResult && isVoidedResult(firstResult);
               return (
-                <button key={row.key} onClick={() => firstResult && setSelectedResultId(firstResult.id)} className={`w-full rounded-3xl border-2 p-4 text-left transition ${active ? "border-emerald-400 bg-emerald-50 shadow-[0_0_0_4px_rgba(16,185,129,0.14)]" : "border-slate-200 bg-white hover:border-emerald-200"}`}>
+                <button key={row.key} onClick={() => firstResult && setSelectedResultId(firstResult.id)} className={`w-full rounded-3xl border-2 p-4 text-left transition ${active ? "border-emerald-400 bg-emerald-50 shadow-[0_0_0_4px_rgba(16,185,129,0.14)]" : rowVoided ? "border-amber-200 bg-amber-50 hover:border-amber-300" : "border-slate-200 bg-white hover:border-emerald-200"}`}>
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">{row.district}</p>
                       <h3 className="mt-1 text-xl font-black text-slate-950">{row.cafe}</h3>
                       <p className="mt-1 text-sm font-bold text-slate-600">{row.area}</p>
                     </div>
-                    <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-black text-slate-600">{row.count} result{row.count === 1 ? "" : "s"}</span>
+                    <span className={`rounded-full border px-3 py-1 text-xs font-black ${rowVoided ? "border-amber-300 bg-white text-amber-900" : "border-slate-200 bg-white text-slate-600"}`}>{rowVoided ? "Voided" : `${row.count} result${row.count === 1 ? "" : "s"}`}</span>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold text-slate-600">
                     <span className="rounded-full bg-slate-100 px-3 py-1">{formatSeconds(row.seconds)}</span>
@@ -908,7 +997,7 @@ function LeanResultsView({ results, resultsDistrict, setResultsDistrict, results
 
         <div className="rounded-[2rem] border border-slate-200 bg-white p-4 shadow-sm">
           {selectedResult ? (
-            <LeanResultDetail result={selectedResult} sameScopeResults={filteredResults.filter((result) => result.district === selectedResult.district && result.cafe === selectedResult.cafe && result.area === selectedResult.area)} setSelectedResultId={setSelectedResultId} />
+            <LeanResultDetail result={selectedResult} sameScopeResults={filteredResults.filter((result) => result.district === selectedResult.district && result.cafe === selectedResult.cafe && result.area === selectedResult.area)} setSelectedResultId={setSelectedResultId} onRequestVoid={onRequestVoid} />
           ) : (
             <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center">
               <p className="text-lg font-black text-slate-900">Complete a Lean observation to create a result.</p>
@@ -921,21 +1010,35 @@ function LeanResultsView({ results, resultsDistrict, setResultsDistrict, results
   );
 }
 
-function LeanResultDetail({ result, sameScopeResults, setSelectedResultId }) {
+function LeanResultDetail({ result, sameScopeResults, setSelectedResultId, onRequestVoid }) {
   const summary = result.summary || summarizeRows(result.observations || []);
   const topWaste = summary.byWasteSeconds[0];
   const topActivity = summary.byActivitySeconds[0];
+  const voided = isVoidedResult(result) || result.visibleInDashboard === false;
   return (
     <div>
       <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600">Selected Result</p>
+          <p className={`text-xs font-black uppercase tracking-[0.2em] ${voided ? "text-amber-600" : "text-emerald-600"}`}>{voided ? "Voided Result" : "Selected Result"}</p>
           <h3 className="mt-2 text-3xl font-black text-slate-950">{result.cafe} / {result.area}</h3>
           <p className="mt-2 text-sm font-semibold text-slate-600">{result.district} - {result.observationDate} - {result.observer} - Completed {result.completedAt || "n/a"}</p>
+          {voided && (
+            <p className="mt-2 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-bold text-amber-900">
+              Hidden from dashboard: {result.voidReason || "Void reason not captured"}{result.voidedBy ? ` by ${result.voidedBy}` : ""}.
+            </p>
+          )}
         </div>
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-          <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">Observed</p>
-          <p className="mt-1 font-mono text-3xl font-black text-emerald-950">{formatSeconds(summary.seconds)}</p>
+        <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
+          <div className={`rounded-2xl border px-4 py-3 ${voided ? "border-amber-200 bg-amber-50" : "border-emerald-200 bg-emerald-50"}`}>
+            <p className={`text-xs font-black uppercase tracking-[0.14em] ${voided ? "text-amber-700" : "text-emerald-700"}`}>Observed</p>
+            <p className={`mt-1 font-mono text-3xl font-black ${voided ? "text-amber-950" : "text-emerald-950"}`}>{formatSeconds(summary.seconds)}</p>
+          </div>
+          {!voided && (
+            <button onClick={() => onRequestVoid(result)} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-black text-rose-900 hover:bg-rose-100">
+              <Trash2 size={17} />
+              Void Result
+            </button>
+          )}
         </div>
       </div>
 
@@ -992,6 +1095,70 @@ function ResultFilter({ label, value, setValue, options }) {
         {options.map((option) => <option key={option} value={option}>{option}</option>)}
       </select>
     </label>
+  );
+}
+
+function VoidResultModal({ result, reason, setReason, voidedBy, setVoidedBy, notes, setNotes, onCancel, onConfirm }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 py-6 backdrop-blur-sm">
+      <div className="w-full max-w-2xl rounded-[2rem] border border-rose-200 bg-white p-5 shadow-2xl md:p-6">
+        <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 md:flex-row md:items-start md:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-rose-700">Controlled Record Void</p>
+            <h2 className="mt-2 text-3xl font-black text-slate-950">Hide this Lean result?</h2>
+            <p className="mt-2 text-sm font-semibold text-slate-600">
+              {result.cafe} / {result.area} - {result.observationDate} - {result.observer}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-center">
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-rose-700">Action</p>
+            <p className="mt-1 text-xl font-black text-rose-950">Void</p>
+          </div>
+        </div>
+
+        <div className="mt-5 rounded-3xl border border-amber-200 bg-amber-50 p-4 text-sm font-bold leading-6 text-amber-950">
+          This will hide the record from normal dashboards and keep the audit trail for review. It does not erase the result.
+        </div>
+
+        <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Reason</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {VOID_REASONS.map((option) => (
+                <button key={option} onClick={() => setReason(option)} className={`rounded-full border px-3 py-2 text-xs font-black ${reason === option ? "border-rose-400 bg-rose-50 text-rose-900 shadow-[0_0_0_3px_rgba(244,63,94,0.12)]" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}>
+                  {option}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Voided By</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {OBSERVER_OPTIONS.map((option) => (
+                <button key={option} onClick={() => setVoidedBy(option)} className={`rounded-full border px-3 py-2 text-xs font-black ${voidedBy === option ? "border-emerald-400 bg-emerald-50 text-emerald-900 shadow-[0_0_0_3px_rgba(16,185,129,0.12)]" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}>
+                  {option}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <label className="mt-5 block">
+          <span className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-slate-500">Notes</span>
+          <textarea value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Optional audit note" className="min-h-24 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 outline-none focus:border-rose-300" />
+        </label>
+
+        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button onClick={onCancel} className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-700 hover:bg-slate-50">
+            Cancel
+          </button>
+          <button onClick={onConfirm} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-5 py-3 text-sm font-black text-white hover:bg-rose-700">
+            <Trash2 size={17} />
+            Void Result
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
