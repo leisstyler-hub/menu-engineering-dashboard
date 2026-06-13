@@ -1203,11 +1203,20 @@ export default function NeighborhoodRotations({ onBackToPlatform }) {
   });
   const [databaseLoadStatus, setDatabaseLoadStatus] = useState({ state: "idle", message: "Using local saved data until Smartsheet is loaded.", loadedAt: "" });
   const [databaseSyncStatus, setDatabaseSyncStatus] = useState({ state: "idle", message: "No Smartsheet sync attempted yet.", syncedAt: "" });
+  const [smartsheetReadCooldown, setSmartsheetReadCooldown] = useState(false);
 
   useEffect(() => { localStorage.setItem(NEIGHBORHOOD_ROTATIONS_STORAGE_KEY, JSON.stringify(rotations)); }, [rotations]);
   useEffect(() => { localStorage.setItem(SMARTSHEET_DATABASE_STORAGE_KEY, JSON.stringify(databaseRecords)); }, [databaseRecords]);
 
   const refreshFromSmartsheet = async () => {
+    if (databaseLoadStatus.state === "loading" || smartsheetReadCooldown) {
+      setDatabaseLoadStatus((prev) => ({
+        ...prev,
+        message: "Sync Latest is already running or cooling down. Try again in a few seconds.",
+      }));
+      return;
+    }
+    setSmartsheetReadCooldown(true);
     setDatabaseLoadStatus({ state: "loading", message: "Loading saved rotations from Smartsheet...", loadedAt: "" });
     try {
       const records = await loadRecordsFromSmartsheet();
@@ -1225,6 +1234,8 @@ export default function NeighborhoodRotations({ onBackToPlatform }) {
         message: error.message || "Could not load Smartsheet records. Using local fallback records.",
         loadedAt: nowStamp(),
       });
+    } finally {
+      window.setTimeout(() => setSmartsheetReadCooldown(false), 10000);
     }
   };
 
@@ -1290,7 +1301,7 @@ export default function NeighborhoodRotations({ onBackToPlatform }) {
             </section>
             <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
               <div className="xl:col-span-2 space-y-6">
-                {district && selectedCafe ? <RotationPlannerCard cafe={selectedCafe} district={district} menuOptions={menus} rotation={currentRotation} previousRotation={previousRotation} previousWeek={carryoverWeek} updateRotation={updateRotation} week={week} printRows={allRows} persistRotationToDatabase={persistRotationToDatabase} databaseLoadStatus={databaseLoadStatus} databaseSyncStatus={databaseSyncStatus} onRefreshDatabase={refreshFromSmartsheet} /> : <SelectPlannerPrompt />}
+                {district && selectedCafe ? <RotationPlannerCard cafe={selectedCafe} district={district} menuOptions={menus} rotation={currentRotation} previousRotation={previousRotation} previousWeek={carryoverWeek} updateRotation={updateRotation} week={week} printRows={allRows} persistRotationToDatabase={persistRotationToDatabase} databaseLoadStatus={databaseLoadStatus} databaseSyncStatus={databaseSyncStatus} onRefreshDatabase={refreshFromSmartsheet} isRefreshCoolingDown={smartsheetReadCooldown} /> : <SelectPlannerPrompt />}
               </div>
               <LeadershipOverview district={district} week={week} rows={leadershipRows} conflictMenus={conflictMenus} />
             </section>
@@ -1423,9 +1434,9 @@ function DatabaseAlignmentNotice({ district, cafe, week, rotation }) {
 }
 
 
-function CompactSystemStatusPanel({ district, cafe, week, rotation, loadStatus, syncStatus, onRefreshDatabase }) {
+function CompactSystemStatusPanel({ district, cafe, week, rotation, loadStatus, syncStatus, onRefreshDatabase, isRefreshCoolingDown = false }) {
   const records = buildDatabaseRecordsForRotation({ week, district, cafe, rotation });
-  const isReading = loadStatus?.state === "loading";
+  const isReading = loadStatus?.state === "loading" || isRefreshCoolingDown;
   const readTone = loadStatus?.state === "loaded" ? "text-emerald-800 bg-emerald-50 border-emerald-200" : loadStatus?.state === "loading" ? "text-sky-800 bg-sky-50 border-sky-200" : "text-slate-600 bg-slate-50 border-slate-200";
   const writeTone = syncStatus?.state === "synced" ? "text-emerald-800 bg-emerald-50 border-emerald-200" : syncStatus?.state === "syncing" ? "text-sky-800 bg-sky-50 border-sky-200" : syncStatus?.state === "fallback" ? "text-amber-800 bg-amber-50 border-amber-200" : "text-slate-600 bg-slate-50 border-slate-200";
 
@@ -1453,8 +1464,8 @@ function CompactSystemStatusPanel({ district, cafe, week, rotation, loadStatus, 
   );
 }
 
-function SmartsheetDatabaseStatusPanel({ loadStatus, syncStatus, onRefreshDatabase }) {
-  const isReading = loadStatus?.state === "loading";
+function SmartsheetDatabaseStatusPanel({ loadStatus, syncStatus, onRefreshDatabase, isRefreshCoolingDown = false }) {
+  const isReading = loadStatus?.state === "loading" || isRefreshCoolingDown;
   const toneForState = (state) => {
     if (state === "synced") return "border-emerald-200 bg-emerald-50 text-emerald-900";
     if (state === "syncing" || state === "loading") return "border-sky-200 bg-sky-50 text-sky-900";
@@ -1499,7 +1510,7 @@ function SmartsheetDatabaseStatusPanel({ loadStatus, syncStatus, onRefreshDataba
   );
 }
 
-function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRotation, previousWeek, updateRotation, week, printRows, persistRotationToDatabase, databaseLoadStatus, databaseSyncStatus, onRefreshDatabase }) {
+function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRotation, previousWeek, updateRotation, week, printRows, persistRotationToDatabase, databaseLoadStatus, databaseSyncStatus, onRefreshDatabase, isRefreshCoolingDown = false }) {
   const [preview, setPreview] = useState(null);
   const [copiedRotation, setCopiedRotation] = useState(null);
 
@@ -1611,7 +1622,7 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
           selectedItems={items}
         />
       ))}
-      <CompactSystemStatusPanel district={district} cafe={cafe} week={week} rotation={rotation} loadStatus={databaseLoadStatus} syncStatus={databaseSyncStatus} onRefreshDatabase={onRefreshDatabase} />
+      <CompactSystemStatusPanel district={district} cafe={cafe} week={week} rotation={rotation} loadStatus={databaseLoadStatus} syncStatus={databaseSyncStatus} onRefreshDatabase={onRefreshDatabase} isRefreshCoolingDown={isRefreshCoolingDown} />
     </div>
   );
 }
