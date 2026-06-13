@@ -45,7 +45,7 @@ const ACTIVITIES = [
 
 const CAFE_OPTIONS = ["Doppler", "Day 1", "Nitro", "Re:Invent", "Dawson", "Nessie", "Cricket", "Moby", "Atlas"];
 const AREA_OPTIONS = ["Expo", "Grill", "Wok", "Salad", "Deli", "Pizza", "Dish", "Storage", "Line", "Other"];
-const OBSERVER_OPTIONS = ["Tyler Leiss", "Chef", "Manager", "Leader"];
+const OBSERVER_OPTIONS = ["DC", "DM", "RDO", "VPO", "EC", "DR", "GM"];
 
 const colorClasses = {
   rose: "border-rose-300 bg-rose-50 text-rose-900",
@@ -151,7 +151,7 @@ function summarizeRows(rows) {
 export default function LeanTool({ onBackToPlatform }) {
   const [cafe, setCafe] = useState("Doppler");
   const [area, setArea] = useState("Line");
-  const [observer, setObserver] = useState("Tyler Leiss");
+  const [observer, setObserver] = useState("DC");
   const [observationDate] = useState(today);
   const [selectedActivity, setSelectedActivity] = useState("Walking");
   const [selectedWaste, setSelectedWaste] = useState("Motion");

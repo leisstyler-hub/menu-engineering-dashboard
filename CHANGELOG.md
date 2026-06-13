@@ -2,6 +2,8 @@
 
 ## 2026-06-13
 
+- Changed Lean Tool observer buttons to `DC`, `DM`, `RDO`, `VPO`, `EC`, `DR`, and `GM`.
+- Set visible app version to `2026.06.13.010-fix-lean-observer-roles`.
 - Reworked Lean Tool observations around a running session stopwatch with timestamped marks and duration since prior mark.
 - Added a large modern digital timer display with running/complete status, last-mark timestamp, and timed-session readout.
 - Added Complete-session behavior that captures the final active segment and generates a smarter time-weighted DOWNTIME report.
