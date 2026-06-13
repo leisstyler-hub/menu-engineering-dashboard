@@ -1,1 +1,1 @@
-export const APP_VERSION_STAMP = "2026.06.12.007-brand-compass-one-logo";
+export const APP_VERSION_STAMP = "2026.06.13.001-ui-toggle-color-controls";

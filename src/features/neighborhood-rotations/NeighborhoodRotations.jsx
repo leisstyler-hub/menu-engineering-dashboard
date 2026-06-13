@@ -1187,7 +1187,7 @@ export default function NeighborhoodRotations({ onBackToPlatform }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#f6f7f9] text-slate-950 p-4 md:p-6">
+    <div className="min-h-screen bg-[linear-gradient(180deg,#f6f7f9_0%,#eef7f2_100%)] text-slate-950 p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-5">
         <NeighborhoodHeader onBackToPlatform={onBackToPlatform} district={district} />
         <section className="inline-flex flex-wrap gap-1 rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
@@ -1198,8 +1198,8 @@ export default function NeighborhoodRotations({ onBackToPlatform }) {
         {rotationView === "planner" && (
           <>
             <section className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-              <ControlCard label="District" value={district} setValue={setDistrict} options={Object.keys(DISTRICTS)} placeholder="Select district..." />
-              <ControlCard label="Café" value={selectedCafe} setValue={setSelectedCafe} options={cafes} placeholder="Select café/unit..." disabled={!district} />
+              <ChoiceCard label="District" value={district} setValue={setDistrict} options={Object.keys(DISTRICTS)} />
+              <ChoiceCard label="Cafe" value={selectedCafe} setValue={setSelectedCafe} options={cafes} disabled={!district} />
               <ControlCard label="Week" value={week} setValue={setWeek} options={ROTATION_WEEKS} />
               <StatusCard ready={Boolean(district && selectedCafe)} conflicts={Object.values(conflictMenus).filter((count) => count > 1).length} completed={districtWeekRows.filter((row) => row.menu).length} total={cafes.length} />
             </section>
@@ -1220,16 +1220,16 @@ export default function NeighborhoodRotations({ onBackToPlatform }) {
 
 function NeighborhoodHeader({ onBackToPlatform, district }) {
   return (
-    <header className="rounded-lg bg-white border border-slate-200 p-5 shadow-sm">
+    <header className="rounded-lg bg-white border border-slate-200 border-t-4 border-t-[#b99b55] p-5 shadow-sm">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <button onClick={onBackToPlatform} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-white hover:text-slate-950"><ArrowLeft size={16} /> Back to platform</button>
         <CompassOneLogo compact />
       </div>
       <div className="mt-5 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
         <div>
-          <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Still in Development</p>
+          <p className="text-xs uppercase tracking-[0.18em] text-emerald-700 font-bold">Chef planning workspace</p>
           <h1 className="text-3xl md:text-4xl font-bold mt-2">Neighborhood Rotations</h1>
-          <p className="text-slate-600 mt-3 max-w-3xl">Chefs declare weekly Global Menu rotations and station LTOs by café.</p>
+          <p className="text-slate-600 mt-2 max-w-3xl">Chefs declare weekly global menu rotations and station LTOs by cafe.</p>
         </div>
         <div className="flex flex-col items-start lg:items-end gap-2">
           <VersionStamp compact />
@@ -1256,16 +1256,61 @@ function ControlCard({ label, value, setValue, options, placeholder, disabled = 
   );
 }
 
-function StatusCard({ ready, conflicts, completed, total }) {
+function ChoiceCard({ label, value, setValue, options, disabled = false }) {
+  const isDisabled = disabled || !options.length;
   return (
-    <div className="rounded-lg bg-white border border-slate-200 p-4 shadow-sm">
+    <div className={`rounded-lg border p-4 shadow-sm ${isDisabled ? "bg-slate-50 border-slate-200 opacity-70" : "bg-white border-slate-200"}`}>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-semibold text-slate-500">{label}</p>
+        {value ? (
+          <span className="rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-800">
+            active
+          </span>
+        ) : (
+          <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-bold text-slate-500">
+            choose
+          </span>
+        )}
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        {options.map((option) => {
+          const selected = option === value;
+          return (
+            <button
+              key={option}
+              type="button"
+              disabled={isDisabled}
+              onClick={() => setValue(option)}
+              className={`min-h-[44px] rounded-lg border px-3 py-2 text-left text-sm font-bold transition ${
+                selected
+                  ? "border-emerald-400 bg-emerald-50 text-emerald-950 shadow-sm ring-2 ring-emerald-200"
+                  : "border-slate-200 bg-white text-slate-700 hover:border-sky-300 hover:bg-sky-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <span className={`h-2.5 w-2.5 rounded-full ${selected ? "bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.16)]" : "bg-slate-300"}`} />
+                {option}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      {!options.length && <p className="mt-3 text-xs font-semibold text-slate-500">Select a district first.</p>}
+    </div>
+  );
+}
+
+function StatusCard({ ready, conflicts, completed, total }) {
+  const readyTone = conflicts ? "border-amber-200 bg-amber-50" : "border-emerald-300 bg-emerald-50";
+  return (
+    <div className={`rounded-lg border p-4 shadow-sm ${ready ? readyTone : "bg-white border-slate-200"}`}>
       <p className="text-sm font-semibold text-slate-500">Week Status</p>
       {!ready ? (
-        <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">Select a district and café/unit to view status.</div>
+        <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">Select a district and cafe/unit to view status.</div>
       ) : (
         <>
-          <div className="mt-3 flex items-end gap-3"><p className="text-3xl font-bold">{completed}/{total}</p><p className="text-sm text-slate-500 mb-1">cafés declared</p></div>
-          <p className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs font-bold ${conflicts ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"}`}>{conflicts ? `${conflicts} conflict group` : "No conflicts"}</p>
+          <div className="mt-3 flex items-end gap-3"><p className="text-3xl font-bold">{completed}/{total}</p><p className="text-sm text-slate-500 mb-1">cafes declared</p></div>
+          <p className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-bold ${conflicts ? "border-amber-300 bg-white text-amber-800" : "border-emerald-300 bg-white text-emerald-800"}`}>{conflicts ? `${conflicts} conflict group` : "No conflicts"}</p>
         </>
       )}
     </div>

@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-06-13
+
+- Replaced the Neighborhood Rotations planner district and cafe dropdowns with button-style toggle controls for limited option sets.
+- Added bright green active outlines and indicator dots to selected planning controls.
+- Added a more colorful but professional Neighborhood Rotations page treatment with a subtle green canvas, gold header accent, and stronger status-card states.
+- Set visible app version to `2026.06.13.001-ui-toggle-color-controls`.
+
 ## 2026-06-12
 
 - Added a reusable Compass One logo mark and placed it in the platform and tool headers.
