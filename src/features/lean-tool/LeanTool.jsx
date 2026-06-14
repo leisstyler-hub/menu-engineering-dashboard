@@ -622,7 +622,7 @@ export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const reportSummary = completedSummary || summary;
 
   return (
-    <div className="min-h-screen bg-[#f4f8f7] text-[16px] text-slate-950">
+    <div className="lean-tool-page min-h-screen bg-[#f4f8f7] text-[16px] text-slate-950">
       <div className="mx-auto flex max-w-7xl flex-col gap-4 px-3 py-3 sm:px-4 sm:py-5 md:px-6">
         <header className="rounded-[2rem] border border-emerald-200 bg-white p-4 shadow-xl sm:p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

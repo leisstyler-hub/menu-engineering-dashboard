@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { BarChart3, CalendarRange, Home, ShieldCheck } from "lucide-react";
 import LandingPage from "./LandingPage.jsx";
 import MenuEngineeringDashboard from "../features/menu-engineering/MenuEngineeringDashboard.jsx";
 import NeighborhoodRotations from "../features/neighborhood-rotations/NeighborhoodRotations.jsx";
@@ -11,23 +12,48 @@ export default function CulinaryToolsPlatformApp() {
   const openSmartsheetHealth = () => setActiveTool("smartsheetHealth");
 
   if (activeTool === "menuEngineering") {
-    return <MenuEngineeringDashboard onBackToPlatform={() => setActiveTool("home")} onOpenSmartsheetHealth={openSmartsheetHealth} />;
+    return (
+      <>
+        <MenuEngineeringDashboard onBackToPlatform={() => setActiveTool("home")} onOpenSmartsheetHealth={openSmartsheetHealth} />
+        <MobileToolNav activeTool={activeTool} setActiveTool={setActiveTool} />
+      </>
+    );
   }
 
   if (activeTool === "neighborhoodRotations") {
-    return <NeighborhoodRotations onBackToPlatform={() => setActiveTool("home")} onOpenSmartsheetHealth={openSmartsheetHealth} />;
+    return (
+      <>
+        <NeighborhoodRotations onBackToPlatform={() => setActiveTool("home")} onOpenSmartsheetHealth={openSmartsheetHealth} />
+        <MobileToolNav activeTool={activeTool} setActiveTool={setActiveTool} />
+      </>
+    );
   }
 
   if (activeTool === "ladleCompliance") {
-    return <LadleComplianceDashboard onBackToPlatform={() => setActiveTool("home")} onOpenSmartsheetHealth={openSmartsheetHealth} />;
+    return (
+      <>
+        <LadleComplianceDashboard onBackToPlatform={() => setActiveTool("home")} onOpenSmartsheetHealth={openSmartsheetHealth} />
+        <MobileToolNav activeTool={activeTool} setActiveTool={setActiveTool} />
+      </>
+    );
   }
 
   if (activeTool === "leanTool") {
-    return <LeanTool onBackToPlatform={() => setActiveTool("home")} onOpenSmartsheetHealth={openSmartsheetHealth} />;
+    return (
+      <>
+        <LeanTool onBackToPlatform={() => setActiveTool("home")} onOpenSmartsheetHealth={openSmartsheetHealth} />
+        <MobileToolNav activeTool={activeTool} setActiveTool={setActiveTool} />
+      </>
+    );
   }
 
   if (activeTool === "smartsheetHealth") {
-    return <SmartsheetHealth onBackToPlatform={() => setActiveTool("home")} />;
+    return (
+      <>
+        <SmartsheetHealth onBackToPlatform={() => setActiveTool("home")} />
+        <MobileToolNav activeTool={activeTool} setActiveTool={setActiveTool} />
+      </>
+    );
   }
 
   return (
@@ -38,6 +64,34 @@ export default function CulinaryToolsPlatformApp() {
       onOpenLeanTool={() => setActiveTool("leanTool")}
       onOpenSmartsheetHealth={openSmartsheetHealth}
     />
+  );
+}
+
+function MobileToolNav({ activeTool, setActiveTool }) {
+  const items = [
+    { key: "home", label: "Home", icon: Home },
+    { key: "menuEngineering", label: "Engineering", icon: BarChart3 },
+    { key: "neighborhoodRotations", label: "Rotations", icon: CalendarRange },
+    { key: "ladleCompliance", label: "Compliance", icon: ShieldCheck },
+  ];
+
+  return (
+    <nav className="global-mobile-tool-nav md:hidden" aria-label="Mobile tool navigation">
+      {items.map((item) => {
+        const Icon = item.icon;
+        return (
+          <button
+            key={item.key}
+            type="button"
+            onClick={() => setActiveTool(item.key)}
+            className={activeTool === item.key ? "active" : ""}
+          >
+            <Icon size={20} />
+            <span>{item.label}</span>
+          </button>
+        );
+      })}
+    </nav>
   );
 }
 

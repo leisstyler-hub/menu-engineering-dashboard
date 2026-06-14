@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowRight, BarChart3, CalendarRange, ClipboardCheck, Database, ListChecks, PieChart, Smartphone, Sparkles, TrendingUp } from "lucide-react";
+import { ArrowRight, BarChart3, CalendarRange, ClipboardCheck, Database, Home, ListChecks, PieChart, Settings, ShieldCheck, Smartphone, Sparkles, TrendingUp, Utensils, Wrench } from "lucide-react";
 
 import CHANGELOG_TEXT from "../../CHANGELOG.md?raw";
 import MENUWORKS_ITEMS from "../data/menuItems.json";
@@ -215,7 +215,22 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
 
   return (
     <div className="min-h-screen bg-[#f6f7f9] text-slate-950">
-      <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-5 md:px-6">
+      <MobileLanding
+        tools={tools}
+        totalItems={totalItems}
+        menuCount={menuCount}
+        costedItems={costedItems}
+        allergenCoverage={allergenCoverage}
+        detailCoverage={detailCoverage}
+        avgFoodCost={avgFoodCost}
+        onOpenMenuEngineering={onOpenMenuEngineering}
+        onOpenNeighborhoodRotations={onOpenNeighborhoodRotations}
+        onOpenLadleCompliance={onOpenLadleCompliance}
+        onOpenLeanTool={onOpenLeanTool}
+        onOpenSmartsheetHealth={onOpenSmartsheetHealth}
+      />
+
+      <div className="mx-auto hidden max-w-7xl flex-col gap-5 px-4 py-5 md:flex md:px-6">
         <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
             <div>
@@ -376,6 +391,144 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
         </main>
       </div>
     </div>
+  );
+}
+
+function MobileLanding({
+  tools,
+  totalItems,
+  menuCount,
+  costedItems,
+  allergenCoverage,
+  detailCoverage,
+  avgFoodCost,
+  onOpenMenuEngineering,
+  onOpenNeighborhoodRotations,
+  onOpenLadleCompliance,
+  onOpenLeanTool,
+  onOpenSmartsheetHealth,
+}) {
+  const metricTiles = [
+    { label: "Tools", value: "4", icon: Wrench, tone: "bg-[#fff7e7] text-[#8a621b]" },
+    { label: "Menu Items", value: totalItems.toLocaleString(), icon: Utensils, tone: "bg-[#eaf8f2] text-emerald-700" },
+    { label: "Menus", value: menuCount, icon: ListChecks, tone: "bg-[#edf5ff] text-sky-700" },
+    { label: "Costed Items", value: costedItems.toLocaleString(), icon: Database, tone: "bg-[#f0eefb] text-indigo-700" },
+  ];
+
+  const navItems = [
+    { label: "Home", icon: Home, onOpen: null, active: true },
+    { label: "Engineering", icon: BarChart3, onOpen: onOpenMenuEngineering },
+    { label: "Rotations", icon: CalendarRange, onOpen: onOpenNeighborhoodRotations },
+    { label: "Compliance", icon: ShieldCheck, onOpen: onOpenLadleCompliance },
+  ];
+
+  return (
+    <div className="mobile-app-shell md:hidden">
+      <header className="mobile-app-header">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <CompassOneLogo compact />
+            <div className="mt-3">
+              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[#b99b55]">Culinary Tools</p>
+              <h1 className="mt-1 text-[30px] font-black leading-none text-slate-950">Culinary Tools</h1>
+              <p className="mt-2 text-sm font-semibold text-slate-500">Plan, price, and audit menus</p>
+            </div>
+          </div>
+          <PlatformSettings onOpenSmartsheetHealth={onOpenSmartsheetHealth} label={<Settings size={18} />} />
+        </div>
+      </header>
+
+      <main className="mobile-app-content">
+        <section className="mobile-kpi-grid" aria-label="Platform summary">
+          {metricTiles.map((tile) => (
+            <MobileMetricTile key={tile.label} {...tile} />
+          ))}
+        </section>
+
+        <section className="mobile-smart-read">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-emerald-700">Smart Read</p>
+              <p className="mt-2 text-sm font-semibold leading-6 text-slate-700">
+                {allergenCoverage}% allergen coverage, {detailCoverage}% description coverage, average priced item food cost at {pct(avgFoodCost)}.
+              </p>
+            </div>
+            <div className="mobile-smart-icon">
+              <Sparkles size={19} />
+            </div>
+          </div>
+        </section>
+
+        <section className="space-y-3" aria-label="Tools">
+          {tools.map((tool) => (
+            <MobileToolCard key={tool.title} {...tool} />
+          ))}
+        </section>
+      </main>
+
+      <nav className="mobile-bottom-nav" aria-label="Mobile tools navigation">
+        {navItems.map((item) => (
+          <button
+            key={item.label}
+            type="button"
+            onClick={item.onOpen || undefined}
+            className={item.active ? "active" : ""}
+          >
+            <item.icon size={20} />
+            <span>{item.label}</span>
+          </button>
+        ))}
+      </nav>
+    </div>
+  );
+}
+
+function MobileMetricTile({ label, value, icon: Icon, tone }) {
+  return (
+    <article className="mobile-kpi-tile">
+      <div className={`mobile-kpi-icon ${tone}`}>
+        <Icon size={18} />
+      </div>
+      <p className="mt-4 text-[12px] font-black uppercase tracking-[0.1em] text-slate-500">{label}</p>
+      <p className="mt-1 text-2xl font-black text-slate-950">{value}</p>
+    </article>
+  );
+}
+
+function MobileToolCard({ title, eyebrow, description, action, onOpen, icon: Icon, tone, meta }) {
+  const tones = {
+    emerald: "bg-emerald-50 text-emerald-700 border-emerald-100",
+    sky: "bg-sky-50 text-sky-700 border-sky-100",
+    amber: "bg-amber-50 text-amber-700 border-amber-100",
+    lime: "bg-lime-50 text-lime-700 border-lime-100",
+  };
+  const chipLabels = {
+    "Menu Engineering": "Live",
+    "Neighborhood Rotations": "Live",
+    "Ladle Compliance": "Test concept",
+    "Lean Tool": "New",
+  };
+
+  return (
+    <button type="button" onClick={onOpen} className="mobile-tool-card">
+      <div className={`mobile-tool-icon ${tones[tone]}`}>
+        <Icon size={21} />
+      </div>
+      <div className="min-w-0 flex-1 text-left">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">{meta}</p>
+            <h2 className="mt-1 truncate text-lg font-black text-slate-950">{title}</h2>
+          </div>
+          <span className="mobile-status-chip">{chipLabels[title] || eyebrow}</span>
+        </div>
+        <p className="mt-2 line-clamp-2 text-sm font-semibold leading-5 text-slate-500">{description}</p>
+        <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-sm font-black text-slate-950">
+          <span>{action}</span>
+          <ArrowRight size={18} />
+        </div>
+      </div>
+    </button>
   );
 }
 

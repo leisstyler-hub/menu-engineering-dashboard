@@ -18,6 +18,226 @@
 }
 
 @layer components {
+  .mobile-app-shell {
+    min-height: 100vh;
+    padding: 16px 14px 108px;
+    background:
+      radial-gradient(circle at 10% 0%, rgb(255 255 255 / 0.95) 0, rgb(255 255 255 / 0) 34%),
+      linear-gradient(180deg, #f7f8f3 0%, #eef7f3 46%, #f5f7fb 100%);
+  }
+
+  .mobile-app-header {
+    position: relative;
+    overflow: visible;
+    border: 1px solid #dbe8ef;
+    border-radius: 28px;
+    background: rgb(255 255 255 / 0.92);
+    padding: 16px;
+    box-shadow: 0 18px 50px rgb(15 23 42 / 0.10);
+  }
+
+  .mobile-app-header > div {
+    align-items: flex-start;
+  }
+
+  .mobile-app-header svg {
+    width: 118px;
+    height: auto;
+  }
+
+  .mobile-app-header button {
+    min-height: 44px;
+    min-width: 44px;
+    justify-content: center;
+    border-radius: 16px;
+    padding: 0;
+    color: #0f172a;
+  }
+
+  .mobile-app-header button svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .mobile-app-content {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .mobile-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .mobile-kpi-tile {
+    min-height: 136px;
+    border: 1px solid #e1e8ef;
+    border-radius: 24px;
+    background: rgb(255 255 255 / 0.96);
+    padding: 15px;
+    box-shadow: 0 12px 30px rgb(15 23 42 / 0.08);
+  }
+
+  .mobile-kpi-icon,
+  .mobile-tool-icon,
+  .mobile-smart-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    border: 1px solid currentColor;
+  }
+
+  .mobile-kpi-icon {
+    height: 40px;
+    width: 40px;
+    border-color: rgb(255 255 255 / 0.5);
+  }
+
+  .mobile-smart-read {
+    border: 1px solid #cce9dc;
+    border-radius: 26px;
+    background: linear-gradient(135deg, #ffffff 0%, #effaf3 100%);
+    padding: 16px;
+    box-shadow: 0 14px 34px rgb(16 185 129 / 0.12);
+  }
+
+  .mobile-smart-icon {
+    height: 42px;
+    width: 42px;
+    flex: 0 0 auto;
+    border-color: #b7e7d0;
+    background: #e9fbf2;
+    color: #059669;
+  }
+
+  .mobile-tool-card {
+    display: flex;
+    width: 100%;
+    gap: 13px;
+    border: 1px solid #e0e7ef;
+    border-radius: 26px;
+    background: #ffffff;
+    padding: 14px;
+    text-align: left;
+    box-shadow: 0 14px 38px rgb(15 23 42 / 0.09);
+    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background-color 160ms ease;
+  }
+
+  .mobile-tool-card:active {
+    transform: translateY(1px) scale(0.99);
+    background: #f8fafc;
+    box-shadow: 0 8px 20px rgb(15 23 42 / 0.08);
+  }
+
+  .mobile-tool-icon {
+    height: 48px;
+    width: 48px;
+    flex: 0 0 auto;
+  }
+
+  .mobile-status-chip {
+    flex: 0 0 auto;
+    max-width: 104px;
+    border-radius: 999px;
+    border: 1px solid #d7e1ea;
+    background: #f8fafc;
+    padding: 5px 9px;
+    color: #475569;
+    font-size: 10px;
+    font-weight: 900;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .mobile-bottom-nav {
+    position: fixed;
+    right: 14px;
+    bottom: 14px;
+    left: 14px;
+    z-index: 40;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    border: 1px solid rgb(226 232 240 / 0.85);
+    border-radius: 26px;
+    background: rgb(255 255 255 / 0.94);
+    padding: 8px;
+    box-shadow: 0 18px 48px rgb(15 23 42 / 0.18);
+    backdrop-filter: blur(18px);
+  }
+
+  .global-mobile-tool-nav {
+    position: fixed;
+    right: 14px;
+    bottom: 14px;
+    left: 14px;
+    z-index: 40;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    border: 1px solid rgb(226 232 240 / 0.85);
+    border-radius: 26px;
+    background: rgb(255 255 255 / 0.94);
+    padding: 8px;
+    box-shadow: 0 18px 48px rgb(15 23 42 / 0.18);
+    backdrop-filter: blur(18px);
+  }
+
+  .global-mobile-tool-nav button {
+    display: flex;
+    min-height: 58px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border-radius: 20px;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 900;
+    line-height: 1;
+    transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
+  }
+
+  .global-mobile-tool-nav button.active,
+  .global-mobile-tool-nav button:active {
+    background: #07111f;
+    color: #ffffff;
+    transform: translateY(-1px);
+  }
+
+  .mobile-bottom-nav button {
+    display: flex;
+    min-height: 58px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border-radius: 20px;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 900;
+    line-height: 1;
+    transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
+  }
+
+  .mobile-bottom-nav button.active,
+  .mobile-bottom-nav button:active {
+    background: #07111f;
+    color: #ffffff;
+    transform: translateY(-1px);
+  }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
   .rounded-\[2rem\],
   .rounded-3xl,
   .rounded-2xl {
@@ -76,6 +296,215 @@
 
     body {
       background: radial-gradient(circle at top, #ffffff 0%, #eef7f2 48%, #edf3f8 100%);
+    }
+  }
+
+  @media (max-width: 767px) {
+    body {
+      background:
+        radial-gradient(circle at 20% 0%, #ffffff 0%, rgb(255 255 255 / 0) 36%),
+        linear-gradient(180deg, #f7f8f3 0%, #edf7f2 46%, #f6f8fb 100%);
+    }
+
+    body > div,
+    #root > div > .min-h-screen {
+      padding-bottom: 106px;
+    }
+
+    #root > div > .min-h-screen > .mx-auto,
+    .lean-tool-page > .mx-auto {
+      padding: 14px 12px 112px;
+      gap: 14px;
+    }
+
+    #root > div > .min-h-screen header,
+    #root > div > .min-h-screen section,
+    #root > div > .min-h-screen aside,
+    #root > div > .min-h-screen article {
+      border-radius: 26px;
+    }
+
+    #root > div > .min-h-screen header[class*="bg-white"],
+    #root > div > .min-h-screen section[class*="bg-white"],
+    #root > div > .min-h-screen aside[class*="bg-white"],
+    #root > div > .min-h-screen article[class*="bg-white"] {
+      border-color: #dce7ef;
+      box-shadow: 0 14px 38px rgb(15 23 42 / 0.09);
+    }
+
+    #root > div > .min-h-screen h1 {
+      font-size: clamp(2rem, 9vw, 2.8rem);
+      line-height: 1.05;
+    }
+
+    #root > div > .min-h-screen h2 {
+      line-height: 1.08;
+    }
+
+    #root > div > .min-h-screen table {
+      min-width: 720px;
+    }
+
+    #root > div > .min-h-screen input,
+    #root > div > .min-h-screen select,
+    #root > div > .min-h-screen textarea {
+      border-radius: 18px;
+      font-size: 16px;
+    }
+
+    #root > div > .min-h-screen button {
+      border-radius: 18px;
+      touch-action: manipulation;
+    }
+
+    .lean-tool-page {
+      background:
+        radial-gradient(circle at 15% 0%, #ffffff 0%, rgb(255 255 255 / 0) 34%),
+        linear-gradient(180deg, #f8faf7 0%, #edf8f2 44%, #f6f7fb 100%) !important;
+    }
+
+    .lean-tool-page header {
+      padding: 16px !important;
+      border-radius: 28px !important;
+      background: rgb(255 255 255 / 0.94) !important;
+      box-shadow: 0 18px 48px rgb(15 23 42 / 0.11) !important;
+    }
+
+    .lean-tool-page header > div:first-child {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .lean-tool-page header > div:first-child button {
+      min-height: 44px;
+      width: 44px;
+      overflow: hidden;
+      white-space: nowrap;
+      padding: 0 12px !important;
+    }
+
+    .lean-tool-page header > div:first-child button svg {
+      flex: 0 0 auto;
+    }
+
+    .lean-tool-page header > div:first-child button {
+      font-size: 0;
+    }
+
+    .lean-tool-page header > div:first-child button svg {
+      margin: 0;
+    }
+
+    .lean-tool-page header .flex-wrap svg[aria-label],
+    .lean-tool-page header .flex-wrap > svg {
+      width: 108px;
+      height: auto;
+    }
+
+    .lean-tool-page header p {
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .lean-tool-page header h1 {
+      font-size: 2.05rem !important;
+      line-height: 1.02 !important;
+      letter-spacing: 0;
+    }
+
+    .lean-tool-page header .rounded-3xl {
+      border-radius: 22px !important;
+      padding: 14px !important;
+    }
+
+    .lean-tool-page nav:not(.global-mobile-tool-nav) {
+      position: sticky;
+      top: 8px;
+      z-index: 20;
+      border-radius: 22px;
+      background: rgb(255 255 255 / 0.92);
+      backdrop-filter: blur(16px);
+    }
+
+    .lean-tool-page nav:not(.global-mobile-tool-nav) button {
+      min-height: 54px;
+      font-size: 16px;
+    }
+
+    .lean-tool-page aside,
+    .lean-tool-page main,
+    .lean-tool-page section {
+      border-radius: 26px !important;
+    }
+
+    .lean-tool-page main > div:nth-child(2) {
+      border-radius: 28px !important;
+      padding: 20px 16px !important;
+    }
+
+    .lean-tool-page main > div:nth-child(2) p[class*="font-mono"] {
+      font-size: clamp(4.4rem, 22vw, 6rem) !important;
+    }
+
+    .lean-tool-page main button {
+      min-height: 58px;
+      font-size: 16px;
+      box-shadow: none;
+    }
+
+    .lean-tool-page main input {
+      min-height: 58px;
+    }
+
+    .lean-tool-page main button:active,
+    .lean-tool-page aside button:active {
+      transform: scale(0.99);
+    }
+
+    .lean-tool-page textarea {
+      min-height: 110px;
+    }
+
+    .lean-tool-page [class*="grid-cols-1"] > label select,
+    .lean-tool-page label select {
+      min-height: 56px;
+      background-color: #ffffff;
+    }
+  }
+
+  @media (max-width: 380px) {
+    .mobile-app-shell {
+      padding-right: 10px;
+      padding-left: 10px;
+    }
+
+    .mobile-app-header,
+    .mobile-kpi-tile,
+    .mobile-smart-read,
+    .mobile-tool-card {
+      border-radius: 22px;
+    }
+
+    .mobile-kpi-tile {
+      min-height: 126px;
+      padding: 13px;
+    }
+
+    .mobile-tool-card {
+      gap: 10px;
+      padding: 12px;
+    }
+
+    .mobile-tool-icon {
+      height: 44px;
+      width: 44px;
+    }
+
+    .mobile-status-chip {
+      max-width: 88px;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   }
 
@@ -256,6 +685,61 @@
   html.dark [class*="bg-yellow-500"],
   html.dark [class*="bg-orange-500"] {
     background-color: #f59e0b !important;
+  }
+
+  html.dark .mobile-app-shell {
+    background:
+      radial-gradient(circle at 0% 0%, rgb(15 118 110 / 0.22) 0, rgb(15 118 110 / 0) 34%),
+      linear-gradient(180deg, #07111f 0%, #0f172a 100%);
+  }
+
+  html.dark .mobile-app-header,
+  html.dark .mobile-kpi-tile,
+  html.dark .mobile-tool-card,
+  html.dark .mobile-bottom-nav {
+    border-color: #334155;
+    background: rgb(15 23 42 / 0.94);
+    box-shadow: 0 18px 48px rgb(0 0 0 / 0.28);
+  }
+
+  html.dark .global-mobile-tool-nav {
+    border-color: #334155;
+    background: rgb(15 23 42 / 0.94);
+    box-shadow: 0 18px 48px rgb(0 0 0 / 0.28);
+  }
+
+  html.dark .global-mobile-tool-nav button {
+    color: #cbd5e1;
+  }
+
+  html.dark .global-mobile-tool-nav button.active,
+  html.dark .global-mobile-tool-nav button:active {
+    background: #e2e8f0;
+    color: #020617;
+  }
+
+  html.dark .lean-tool-page {
+    background:
+      radial-gradient(circle at 0% 0%, rgb(15 118 110 / 0.22) 0, rgb(15 118 110 / 0) 34%),
+      linear-gradient(180deg, #07111f 0%, #0f172a 100%) !important;
+  }
+
+  html.dark .mobile-smart-read {
+    border-color: #115e59;
+    background: linear-gradient(135deg, #0f172a 0%, #0b332d 100%);
+    box-shadow: 0 16px 44px rgb(0 0 0 / 0.26);
+  }
+
+  html.dark .mobile-smart-icon {
+    border-color: #0f766e;
+    background: #0b3b34;
+    color: #5eead4;
+  }
+
+  html.dark .mobile-status-chip {
+    border-color: #334155;
+    background: #111827;
+    color: #cbd5e1;
   }
 
   html.dark input,

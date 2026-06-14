@@ -2,6 +2,9 @@
 
 ## 2026-06-14
 
+- [Jun 14, 2:41 PM] Redesigned the phone home screen with app-style header, compact KPI tiles, tappable tool cards, and mobile bottom navigation.
+- [Jun 14, 2:41 PM] Extended the mobile app treatment across tool screens and tightened the Lean Tool phone layout for field use.
+- [Jun 14, 2:41 PM] Set visible app version to `2026.06.14.012-feature-mobile-app-design`.
 - [Jun 14, 2:27 PM] Removed product-builder wording from the changelog display, upgraded the trust action CSV with fill-in guidance, and softened phone/tablet card styling.
 - [Jun 14, 2:27 PM] Set visible app version to `2026.06.14.011-fix-mobile-trust-changelog`.
 - [Jun 14, 2:19 PM] Removed draft records from Rotation History, added changelog velocity counters, tightened trust-layer pricing logic, added a downloadable trust gap list, and redesigned Lean Tool phone readability.
