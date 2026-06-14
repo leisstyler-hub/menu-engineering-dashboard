@@ -1,0 +1,33 @@
+@media (max-width: 767px) {
+  .lean-tracker-grid {
+    display: flex !important;
+    flex-direction: column;
+  }
+
+  .lean-setup-panel {
+    order: 1 !important;
+  }
+
+  .lean-marking-panel {
+    order: 2 !important;
+  }
+
+  .lean-side-panel {
+    order: 3 !important;
+    display: flex !important;
+    flex-direction: column;
+    gap: 10px !important;
+  }
+
+  .lean-side-panel > section:nth-child(3) {
+    order: 1 !important;
+  }
+
+  .lean-side-panel > section:nth-child(1) {
+    order: 2 !important;
+  }
+
+  .lean-side-panel > section:nth-child(2) {
+    order: 3 !important;
+  }
+}

@@ -2,6 +2,8 @@
 
 ## 2026-06-14
 
+- [Jun 14, 3:18 PM] Reordered Lean Tool mobile flow to read Observation Setup, What are they doing, then Email Report Out.
+- [Jun 14, 3:18 PM] Set visible app version to `2026.06.14.016-fix-lean-mobile-flow`.
 - [Jun 14, 3:04 PM] Moved the Lean Tool mobile Home bubble to hug the lower-left edge of the screen.
 - [Jun 14, 3:04 PM] Set visible app version to `2026.06.14.015-fix-lean-home-bubble`.
 - [Jun 14, 3:00 PM] Removed the full mobile tool switcher from Lean Tool, added a small floating Home bubble, tightened the Tracker/Results selector, and fixed clipped timer stats.

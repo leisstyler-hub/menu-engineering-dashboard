@@ -481,24 +481,39 @@
     }
 
     .lean-marking-panel {
-      order: 1;
+      order: 2;
       padding: 10px !important;
       border-radius: 22px !important;
     }
 
     .lean-setup-panel {
-      order: 2;
+      order: 1;
       padding: 10px !important;
       border-radius: 22px !important;
     }
 
     .lean-side-panel {
       order: 3;
+      display: flex;
+      flex-direction: column;
+      gap: 10px !important;
     }
 
     .lean-side-panel > section {
       padding: 10px !important;
       border-radius: 22px !important;
+    }
+
+    .lean-email-section {
+      order: 1;
+    }
+
+    .lean-live-summary-section {
+      order: 2;
+    }
+
+    .lean-recent-marks-section {
+      order: 3;
     }
 
     .lean-tool-page aside,

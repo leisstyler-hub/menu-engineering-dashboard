@@ -785,7 +785,7 @@ export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
           </main>
 
           <aside className="lean-side-panel space-y-4">
-            <section className="rounded-[2rem] border border-slate-200 bg-white p-4 shadow-sm">
+            <section className="lean-live-summary-section rounded-[2rem] border border-slate-200 bg-white p-4 shadow-sm">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Live Summary</p>
               <div className="mt-3 grid grid-cols-2 gap-2">
                 <MiniMetric icon={ClipboardList} label="Marks" value={summary.total} />
@@ -795,7 +795,7 @@ export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
               </div>
             </section>
 
-            <section className="rounded-[2rem] border border-slate-200 bg-white p-4 shadow-sm">
+            <section className="lean-recent-marks-section rounded-[2rem] border border-slate-200 bg-white p-4 shadow-sm">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Recent Marks</p>
                 <button onClick={clearScope} className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1 text-xs font-bold text-slate-600 hover:bg-slate-50">
@@ -817,7 +817,7 @@ export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
               </div>
             </section>
 
-            <section ref={emailSectionRef} className={`rounded-[2rem] border-2 bg-white p-4 shadow-sm transition-all duration-500 ${emailHighlight ? "border-emerald-400 shadow-[0_0_0_6px_rgba(16,185,129,0.18),0_20px_45px_rgba(15,23,42,0.12)]" : "border-emerald-200"}`}>
+            <section ref={emailSectionRef} className={`lean-email-section rounded-[2rem] border-2 bg-white p-4 shadow-sm transition-all duration-500 ${emailHighlight ? "border-emerald-400 shadow-[0_0_0_6px_rgba(16,185,129,0.18),0_20px_45px_rgba(15,23,42,0.12)]" : "border-emerald-200"}`}>
               <div className="flex items-center gap-2">
                 <Mail className="text-emerald-600" size={20} />
                 <p className="text-sm font-black text-slate-900">Email Report Out</p>
