@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BarChart3, CalendarRange, Home, ShieldCheck } from "lucide-react";
 import LandingPage from "./LandingPage.jsx";
 import MenuEngineeringDashboard from "../features/menu-engineering/MenuEngineeringDashboard.jsx";
@@ -10,6 +10,12 @@ import SmartsheetHealth from "../features/smartsheet-health/SmartsheetHealth.jsx
 export default function CulinaryToolsPlatformApp() {
   const [activeTool, setActiveTool] = useState("home");
   const openSmartsheetHealth = () => setActiveTool("smartsheetHealth");
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [activeTool]);
 
   if (activeTool === "menuEngineering") {
     return (

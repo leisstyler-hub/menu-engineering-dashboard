@@ -2,6 +2,8 @@
 
 ## 2026-06-14
 
+- [Jun 14, 3:33 PM] Reset the page to the top whenever a tool opens so Lean Tool no longer inherits the mobile landing-page scroll depth.
+- [Jun 14, 3:33 PM] Set visible app version to `2026.06.14.017-fix-tool-scroll-reset`.
 - [Jun 14, 3:18 PM] Reordered Lean Tool mobile flow to read Observation Setup, What are they doing, then Email Report Out.
 - [Jun 14, 3:18 PM] Set visible app version to `2026.06.14.016-fix-lean-mobile-flow`.
 - [Jun 14, 3:04 PM] Moved the Lean Tool mobile Home bubble to hug the lower-left edge of the screen.
