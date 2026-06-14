@@ -251,7 +251,7 @@ function SheetHealthCard({ title, health, onRefresh, onRepairMissing, scope = "a
         />
       </label>
 
-      <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <HealthMetric icon={Database} label="Sheet" value={data.sheetName || "-"} detail={maskedSheetId(data.sheetId)} />
         <HealthMetric icon={Table2} label="Scope Rows" value={records.length.toLocaleString()} detail={`${allRecords.length} sheet rows loaded`} />
         <HealthMetric icon={Columns3} label="Columns" value={columns.length} detail={`${missing.length} missing expected`} tone={missing.length ? "amber" : "green"} />
@@ -287,13 +287,13 @@ function SheetHealthCard({ title, health, onRefresh, onRepairMissing, scope = "a
 function HealthMetric({ icon: Icon, label, value, detail, tone = "neutral" }) {
   const toneClass = tone === "green" ? "border-emerald-200 bg-emerald-50" : tone === "amber" ? "border-amber-200 bg-amber-50" : "border-slate-200 bg-slate-50";
   return (
-    <div className={`rounded-lg border p-3 ${toneClass}`}>
-      <div className="flex items-center gap-2 text-slate-500">
-        <Icon size={15} />
-        <p className="text-xs font-black uppercase tracking-[0.12em]">{label}</p>
+    <div className={`min-w-0 rounded-lg border p-3 ${toneClass}`}>
+      <div className="flex items-start gap-2 text-slate-500">
+        <Icon className="mt-0.5 shrink-0" size={15} />
+        <p className="text-xs font-black uppercase leading-4 tracking-[0.12em]">{label}</p>
       </div>
-      <p className="mt-2 truncate text-xl font-black text-slate-950">{value}</p>
-      <p className="mt-1 truncate text-xs font-semibold text-slate-500">{detail}</p>
+      <p className="mt-2 break-words text-lg font-black leading-6 text-slate-950">{value}</p>
+      <p className="mt-1 break-words text-xs font-semibold leading-5 text-slate-500">{detail}</p>
     </div>
   );
 }
@@ -317,7 +317,7 @@ function SummaryPanel({ icon: Icon, title, rows, empty }) {
           return (
             <div key={label}>
               <div className="flex items-center justify-between gap-3 text-sm">
-                <p className="truncate font-black text-slate-900">{label}</p>
+                <p className="break-words font-black text-slate-900">{label}</p>
                 <p className="font-mono font-black text-slate-600">{count}</p>
               </div>
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">

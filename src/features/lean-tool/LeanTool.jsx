@@ -638,8 +638,8 @@ export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
           <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-[1fr_360px] lg:items-end">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-600">Lean Tool</p>
-              <h1 className="mt-2 text-4xl font-bold tracking-normal md:text-5xl">Fast DOWNTIME observation tracker</h1>
-              <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
+              <h1 className="mt-2 text-3xl font-bold tracking-normal md:text-5xl">Fast DOWNTIME observation tracker</h1>
+              <p className="mt-3 hidden max-w-3xl text-sm leading-6 text-slate-600 sm:block">
                 Built for phone and tablet field walks: watch the work, tap what happened, and send a leader-ready report.
               </p>
             </div>
@@ -656,11 +656,11 @@ export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
           </div>
         </header>
 
-        <nav className="flex w-fit rounded-2xl border border-slate-200 bg-white p-1 shadow-sm">
-          <button onClick={() => setViewMode("tracker")} className={`rounded-xl px-5 py-3 text-sm font-black ${viewMode === "tracker" ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-slate-50"}`}>
+        <nav className="grid w-full grid-cols-2 rounded-2xl border border-slate-200 bg-white p-1 shadow-sm sm:flex sm:w-fit">
+          <button onClick={() => setViewMode("tracker")} className={`min-h-12 rounded-xl px-5 py-3 text-base font-black sm:text-sm ${viewMode === "tracker" ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-slate-50"}`}>
             Tracker
           </button>
-          <button onClick={() => setViewMode("results")} className={`rounded-xl px-5 py-3 text-sm font-black ${viewMode === "results" ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-slate-50"}`}>
+          <button onClick={() => setViewMode("results")} className={`min-h-12 rounded-xl px-5 py-3 text-base font-black sm:text-sm ${viewMode === "results" ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-slate-50"}`}>
             Results
           </button>
         </nav>
@@ -669,10 +669,12 @@ export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
         <section className="grid grid-cols-1 gap-4 xl:grid-cols-[300px_1fr_360px]">
           <aside className="rounded-[2rem] border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Observation Setup</p>
-            <Segmented label="District" value={district} setValue={setDistrict} options={Object.keys(DISTRICTS)} />
-            <Segmented label="Cafe / Unit" value={cafe} setValue={setCafe} options={cafesForDistrict} />
-            <Segmented label="Area" value={area} setValue={setArea} options={AREA_OPTIONS} />
-            <Segmented label="Observer" value={observer} setValue={setObserver} options={OBSERVER_OPTIONS} />
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:block">
+              <Segmented label="District" value={district} setValue={setDistrict} options={Object.keys(DISTRICTS)} />
+              <Segmented label="Cafe / Unit" value={cafe} setValue={setCafe} options={cafesForDistrict} />
+              <Segmented label="Area" value={area} setValue={setArea} options={AREA_OPTIONS} />
+              <Segmented label="Observer" value={observer} setValue={setObserver} options={OBSERVER_OPTIONS} />
+            </div>
             <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
               <div className="flex items-center gap-2 text-sm font-bold text-emerald-900">
                 <UserCheck size={18} />
@@ -692,16 +694,16 @@ export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Live Marking Board</p>
                 <h2 className="mt-1 text-3xl font-bold">What are they doing?</h2>
               </div>
-              <div className="flex flex-wrap gap-2">
-                <button onClick={handleStart} className={`inline-flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold ${running ? "bg-emerald-500 text-white" : "bg-slate-950 text-white"}`}>
+              <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
+                <button onClick={handleStart} className={`inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl px-4 py-3 text-base font-black sm:text-sm ${running ? "bg-emerald-500 text-white" : "bg-slate-950 text-white"}`}>
                   {running ? <Timer size={18} /> : <Play size={18} />}
                   {running ? "Observing" : "Start"}
                 </button>
-                <button onClick={completeSession} disabled={!sessionId || !summary.total} className="inline-flex items-center gap-2 rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-900 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50">
+                <button onClick={completeSession} disabled={!sessionId || !summary.total} className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-base font-black text-emerald-900 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm">
                   <CheckCircle2 size={18} />
                   Complete
                 </button>
-                <button onClick={resetSession} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50">
+                <button onClick={resetSession} className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base font-black text-slate-700 hover:bg-slate-50 sm:text-sm">
                   <RotateCcw size={18} />
                   Reset
                 </button>
@@ -751,7 +753,7 @@ export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
               <p className="text-sm font-bold text-slate-700">DOWNTIME Waste</p>
               <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
                 {WASTE_TYPES.map((waste) => (
-                  <button key={waste.key} onClick={() => setSelectedWaste(waste.key)} className={`flex items-center gap-3 rounded-2xl border-2 p-3 text-left transition ${selectedWaste === waste.key ? `${colorClasses[waste.color]} shadow-[0_0_0_3px_rgba(16,185,129,0.12)]` : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}>
+                  <button key={waste.key} onClick={() => setSelectedWaste(waste.key)} className={`flex min-h-20 items-center gap-3 rounded-2xl border-2 p-3 text-left transition ${selectedWaste === waste.key ? `${colorClasses[waste.color]} shadow-[0_0_0_3px_rgba(16,185,129,0.12)]` : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}>
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-lg font-black">{waste.letter}</span>
                     <span>
                       <span className="block font-bold">{waste.label}</span>
@@ -764,7 +766,7 @@ export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
 
             <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-[1fr_180px]">
               <input value={note} onChange={(event) => setNote(event.target.value)} placeholder="Quick note, optional" className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-base font-semibold outline-none focus:border-emerald-400" />
-              <button onClick={markObservation} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-5 py-4 text-lg font-black text-white shadow-lg shadow-emerald-200 hover:bg-emerald-600">
+              <button onClick={markObservation} className="inline-flex min-h-16 items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-5 py-4 text-xl font-black text-white shadow-lg shadow-emerald-200 hover:bg-emerald-600">
                 <CheckCircle2 size={22} />
                 Mark
               </button>
@@ -892,7 +894,9 @@ function LeanResultsView({ results, resultsDistrict, setResultsDistrict, results
   const [showVoided, setShowVoided] = useState(false);
   const normalizedResults = useMemo(() => results.map(normalizeResult).sort((a, b) => String(b.completedTimestamp || "").localeCompare(String(a.completedTimestamp || ""))), [results]);
   const dashboardResults = showVoided ? normalizedResults : normalizedResults.filter((result) => !isVoidedResult(result) && result.visibleInDashboard !== false);
-  const voidedCount = normalizedResults.filter((result) => isVoidedResult(result) || result.visibleInDashboard === false).length;
+  const voidedResults = normalizedResults.filter((result) => isVoidedResult(result) || result.visibleInDashboard === false);
+  const voidedCount = voidedResults.length;
+  const voidedRowCount = voidedResults.reduce((sum, result) => sum + 1 + (result.observations || []).length, 0);
   const cafeOptions = Array.from(new Set(dashboardResults.map((result) => result.cafe).filter(Boolean))).sort();
   const areaOptions = Array.from(new Set(dashboardResults.map((result) => result.area).filter(Boolean))).sort();
   const filteredResults = dashboardResults.filter((result) =>
@@ -948,7 +952,7 @@ function LeanResultsView({ results, resultsDistrict, setResultsDistrict, results
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Filter by district, cafe, and station. Click a cafe/station result to open the completed observation report.</p>
           <div className="mt-3 flex flex-wrap gap-2">
             <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-900">Shared audience: {LEAN_AUDIENCE_ROLES.join(", ")}</span>
-            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-black text-slate-600">{voidedCount} voided hidden</span>
+            <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-black text-amber-900">{voidedCount} voided record{voidedCount === 1 ? "" : "s"} / {voidedRowCount} row{voidedRowCount === 1 ? "" : "s"} hidden</span>
             <span className={`rounded-full border px-3 py-1 text-xs font-black ${leanLoadStatus.state === "loaded" ? "border-emerald-200 bg-emerald-50 text-emerald-900" : leanLoadStatus.state === "error" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-slate-200 bg-slate-50 text-slate-600"}`}>{leanLoadStatus.message}</span>
             <span className={`rounded-full border px-3 py-1 text-xs font-black ${leanSyncStatus.state === "synced" ? "border-emerald-200 bg-emerald-50 text-emerald-900" : leanSyncStatus.state === "error" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-slate-200 bg-slate-50 text-slate-600"}`}>Sync: {leanSyncStatus.message}</span>
           </div>
@@ -966,10 +970,11 @@ function LeanResultsView({ results, resultsDistrict, setResultsDistrict, results
         </div>
       </div>
 
-      <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-4">
-        <MiniMetric icon={ClipboardList} label="Results" value={filteredResults.length} />
+      <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <MiniMetric icon={ClipboardList} label="Visible Results" value={filteredResults.length} />
         <MiniMetric icon={Timer} label="Observed" value={formatSeconds(totalObservedSeconds)} />
         <MiniMetric icon={CheckCircle2} label="Marks" value={totalMarks} />
+        <MiniMetric icon={Trash2} label="Voided Rows" value={voidedRowCount} />
         <MiniMetric icon={BarChart3} label="Top Waste" value={topWaste?.[0] || "-"} />
       </div>
 
@@ -1077,8 +1082,8 @@ function TrendSignal({ label, value, detail }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-3">
       <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">{label}</p>
-      <p className="mt-1 truncate text-lg font-black text-slate-950">{value}</p>
-      <p className="mt-1 text-xs font-semibold text-slate-500">{detail}</p>
+      <p className="mt-1 break-words text-lg font-black leading-6 text-slate-950">{value}</p>
+      <p className="mt-1 break-words text-xs font-semibold leading-5 text-slate-500">{detail}</p>
     </div>
   );
 }
@@ -1311,7 +1316,7 @@ function ReportBreakdown({ title, rows, totalSeconds }) {
             <div key={name}>
               <div className="flex items-center justify-between gap-3 text-sm">
                 <p className="font-black text-slate-900">{name}</p>
-                <p className="font-mono font-black text-slate-600">{formatSeconds(seconds)} • {percent}%</p>
+                <p className="font-mono font-black text-slate-600">{formatSeconds(seconds)} / {percent}%</p>
               </div>
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
                 <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.max(4, Math.min(100, percent))}%` }} />
@@ -1326,9 +1331,16 @@ function ReportBreakdown({ title, rows, totalSeconds }) {
 
 function Segmented({ label, value, setValue, options }) {
   return (
-    <div className="mt-4">
+    <div className="xl:mt-4">
       <p className="text-sm font-bold text-slate-700">{label}</p>
-      <div className="mt-2 flex flex-wrap gap-2">
+      <select
+        value={value}
+        onChange={(event) => setValue(event.target.value)}
+        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-base font-black text-slate-900 outline-none focus:border-emerald-400 xl:hidden"
+      >
+        {options.map((option) => <option key={option} value={option}>{option}</option>)}
+      </select>
+      <div className="mt-2 hidden flex-wrap gap-2 xl:flex">
         {options.map((option) => (
           <button key={option} onClick={() => setValue(option)} className={`rounded-full border px-3 py-2 text-xs font-bold ${value === option ? "border-emerald-400 bg-emerald-50 text-emerald-900 shadow-[0_0_0_2px_rgba(16,185,129,0.14)]" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}>
             {option}
@@ -1341,7 +1353,7 @@ function Segmented({ label, value, setValue, options }) {
 
 function TapButton({ active, onClick, children }) {
   return (
-    <button onClick={onClick} className={`rounded-2xl border-2 px-4 py-4 text-left text-base font-black transition ${active ? "border-emerald-400 bg-emerald-50 text-emerald-900 shadow-[0_0_0_3px_rgba(16,185,129,0.16)]" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}>
+    <button onClick={onClick} className={`min-h-16 rounded-2xl border-2 px-4 py-4 text-left text-base font-black leading-5 transition ${active ? "border-emerald-400 bg-emerald-50 text-emerald-900 shadow-[0_0_0_3px_rgba(16,185,129,0.16)]" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}>
       {children}
     </button>
   );
@@ -1349,12 +1361,12 @@ function TapButton({ active, onClick, children }) {
 
 function MiniMetric({ icon: Icon, label, value }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-      <div className="flex items-center gap-2 text-slate-500">
-        <Icon size={16} />
-        <p className="text-xs font-bold uppercase tracking-[0.12em]">{label}</p>
+    <div className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+      <div className="flex items-start gap-2 text-slate-500">
+        <Icon className="mt-0.5 shrink-0" size={16} />
+        <p className="text-xs font-bold uppercase leading-4 tracking-[0.12em]">{label}</p>
       </div>
-      <p className="mt-2 truncate text-xl font-black text-slate-950">{value}</p>
+      <p className="mt-2 break-words text-xl font-black leading-6 text-slate-950">{value}</p>
     </div>
   );
 }

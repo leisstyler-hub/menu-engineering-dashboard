@@ -2,6 +2,10 @@
 
 ## 2026-06-14
 
+- Improved Lean Tool mobile mode with larger primary controls and compact mobile selectors for district, cafe, area, and observer.
+- Added visible Lean Results voided record and voided row counts.
+- Removed forced truncation from Lean and Smartsheet Health metric cards so labels and values wrap instead of being cut off.
+- Set visible app version to `2026.06.14.008-fix-lean-mobile-wrap-voids`.
 - Improved landing-page dark mode contrast for the Diet Mix regular segment, Lean result signal card, percent pill, and Compass One wordmark.
 - Set visible app version to `2026.06.14.007-fix-dark-landing-contrast`.
 - Added a guarded Smartsheet cleanup action that can delete named columns only when every row is blank.
