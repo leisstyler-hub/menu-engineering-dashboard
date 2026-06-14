@@ -127,6 +127,33 @@
     transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background-color 160ms ease;
   }
 
+  .mobile-data-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .mobile-data-panel {
+    border: 1px solid #e0e7ef;
+    border-radius: 26px;
+    background: rgb(255 255 255 / 0.96);
+    padding: 14px;
+    box-shadow: 0 14px 38px rgb(15 23 42 / 0.08);
+  }
+
+  .mobile-data-icon {
+    display: inline-flex;
+    height: 40px;
+    width: 40px;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    border-radius: 15px;
+    border: 1px solid #b7e7d0;
+    background: #e9fbf2;
+    color: #059669;
+  }
+
   .mobile-tool-card:active {
     transform: translateY(1px) scale(0.99);
     background: #f8fafc;
@@ -364,8 +391,8 @@
     }
 
     .lean-tool-page header {
-      padding: 16px !important;
-      border-radius: 28px !important;
+      padding: 10px 12px !important;
+      border-radius: 22px !important;
       background: rgb(255 255 255 / 0.94) !important;
       box-shadow: 0 18px 48px rgb(15 23 42 / 0.11) !important;
     }
@@ -403,19 +430,27 @@
     }
 
     .lean-tool-page header p {
-      font-size: 13px;
-      line-height: 1.5;
+      font-size: 12px;
+      line-height: 1.35;
     }
 
     .lean-tool-page header h1 {
-      font-size: 2.05rem !important;
+      font-size: 1.45rem !important;
       line-height: 1.02 !important;
       letter-spacing: 0;
     }
 
+    .lean-tool-page header h1 + p {
+      display: none;
+    }
+
+    .lean-tool-page header > div:nth-child(2) {
+      margin-top: 8px !important;
+      gap: 8px !important;
+    }
+
     .lean-tool-page header .rounded-3xl {
-      border-radius: 22px !important;
-      padding: 14px !important;
+      display: none;
     }
 
     .lean-tool-page nav:not(.global-mobile-tool-nav) {
@@ -428,33 +463,138 @@
     }
 
     .lean-tool-page nav:not(.global-mobile-tool-nav) button {
-      min-height: 54px;
-      font-size: 16px;
+      min-height: 42px;
+      font-size: 14px;
+    }
+
+    .lean-tracker-grid {
+      display: flex !important;
+      flex-direction: column;
+      gap: 10px !important;
+    }
+
+    .lean-marking-panel {
+      order: 1;
+      padding: 10px !important;
+      border-radius: 22px !important;
+    }
+
+    .lean-setup-panel {
+      order: 2;
+      padding: 10px !important;
+      border-radius: 22px !important;
+    }
+
+    .lean-side-panel {
+      order: 3;
+    }
+
+    .lean-side-panel > section {
+      padding: 10px !important;
+      border-radius: 22px !important;
     }
 
     .lean-tool-page aside,
     .lean-tool-page main,
     .lean-tool-page section {
-      border-radius: 26px !important;
+      border-radius: 22px !important;
     }
 
-    .lean-tool-page main > div:nth-child(2) {
-      border-radius: 28px !important;
-      padding: 20px 16px !important;
+    .lean-marking-panel > div:first-child {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px !important;
     }
 
-    .lean-tool-page main > div:nth-child(2) p[class*="font-mono"] {
-      font-size: clamp(4.4rem, 22vw, 6rem) !important;
+    .lean-marking-panel > div:first-child p {
+      display: none;
+    }
+
+    .lean-marking-panel > div:first-child h2 {
+      margin: 0 !important;
+      font-size: 1.35rem !important;
+      line-height: 1.05 !important;
+    }
+
+    .lean-run-actions {
+      display: grid !important;
+      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+      gap: 6px !important;
+    }
+
+    .lean-run-actions button {
+      min-height: 40px !important;
+      padding: 7px 8px !important;
+      font-size: 12px !important;
+      border-radius: 14px !important;
+    }
+
+    .lean-run-actions button svg {
+      width: 15px;
+      height: 15px;
+    }
+
+    .lean-timer-panel {
+      margin-top: 8px !important;
+      border-radius: 20px !important;
+      padding: 10px !important;
+      box-shadow: 0 10px 26px rgb(15 23 42 / 0.16) !important;
+    }
+
+    .lean-timer-panel > div:first-child {
+      flex-direction: row !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      gap: 8px !important;
+    }
+
+    .lean-timer-panel > div:first-child p:first-child {
+      font-size: 10px !important;
+      letter-spacing: 0.12em !important;
+    }
+
+    .lean-timer-panel > div:first-child p:nth-child(2) {
+      display: none;
+    }
+
+    .lean-timer-panel > div:nth-child(2) {
+      margin-top: 8px !important;
+      display: grid !important;
+      grid-template-columns: 1fr 132px;
+      align-items: center !important;
+      gap: 8px !important;
+    }
+
+    .lean-timer-panel p[class*="font-mono"] {
+      font-size: clamp(2.85rem, 16vw, 4.6rem) !important;
+    }
+
+    .lean-timer-panel div[class*="grid"][class*="grid-cols-2"] {
+      gap: 4px !important;
+      min-width: 0 !important;
+      border-radius: 16px !important;
+      padding: 8px !important;
+    }
+
+    .lean-timer-panel div[class*="grid"][class*="grid-cols-2"] p:first-child {
+      font-size: 9px !important;
+      letter-spacing: 0.08em !important;
+    }
+
+    .lean-timer-panel div[class*="grid"][class*="grid-cols-2"] p:nth-child(2) {
+      margin-top: 2px !important;
+      font-size: 16px !important;
+      line-height: 1 !important;
     }
 
     .lean-tool-page main button {
-      min-height: 58px;
-      font-size: 16px;
+      min-height: 42px;
+      font-size: 14px;
       box-shadow: none;
     }
 
     .lean-tool-page main input {
-      min-height: 58px;
+      min-height: 44px;
     }
 
     .lean-tool-page main button:active,
@@ -466,9 +606,131 @@
       min-height: 110px;
     }
 
+    .lean-marking-panel > div {
+      margin-top: 10px !important;
+    }
+
+    .lean-marking-panel > div:nth-child(3) p,
+    .lean-marking-panel > div:nth-child(4) p {
+      font-size: 12px !important;
+      line-height: 1 !important;
+    }
+
+    .lean-activity-grid {
+      display: grid !important;
+      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+      gap: 6px !important;
+    }
+
+    .lean-activity-grid button {
+      min-height: 38px !important;
+      padding: 7px 8px !important;
+      border-radius: 14px !important;
+      font-size: 12px !important;
+      line-height: 1.05 !important;
+      text-align: center !important;
+    }
+
+    .lean-waste-grid {
+      display: grid !important;
+      grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+      gap: 6px !important;
+    }
+
+    .lean-waste-grid button {
+      min-height: 46px !important;
+      flex-direction: column;
+      align-items: center !important;
+      justify-content: center;
+      gap: 2px !important;
+      border-radius: 15px !important;
+      padding: 6px 4px !important;
+      text-align: center !important;
+    }
+
+    .lean-waste-grid button > span:first-child {
+      height: 22px !important;
+      width: 22px !important;
+      border-radius: 8px !important;
+      font-size: 12px !important;
+      line-height: 1 !important;
+    }
+
+    .lean-waste-grid button > span:nth-child(2) > span:first-child {
+      font-size: 10px !important;
+      line-height: 1.05 !important;
+    }
+
+    .lean-waste-grid button > span:nth-child(2) > span:nth-child(2) {
+      display: none !important;
+    }
+
+    .lean-note-mark-row {
+      position: sticky;
+      bottom: 86px;
+      z-index: 25;
+      grid-template-columns: 1fr 104px !important;
+      gap: 8px !important;
+      margin-top: 10px !important;
+      border-radius: 20px;
+      background: rgb(255 255 255 / 0.92);
+      padding: 8px;
+      box-shadow: 0 -10px 30px rgb(15 23 42 / 0.10);
+      backdrop-filter: blur(16px);
+    }
+
+    .lean-note-mark-row input {
+      min-height: 46px !important;
+      padding: 10px 12px !important;
+      font-size: 14px !important;
+    }
+
+    .lean-note-mark-row button {
+      min-height: 46px !important;
+      padding: 10px !important;
+      border-radius: 16px !important;
+      font-size: 17px !important;
+    }
+
+    .lean-note-mark-row button svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .lean-setup-panel p:first-child {
+      font-size: 10px !important;
+      letter-spacing: 0.12em !important;
+    }
+
+    .lean-setup-panel > div:nth-child(2) {
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 8px !important;
+      margin-top: 8px !important;
+    }
+
+    .lean-setup-panel label,
+    .lean-setup-panel select {
+      font-size: 13px !important;
+    }
+
+    .lean-setup-panel select {
+      margin-top: 4px !important;
+      min-height: 42px !important;
+      padding: 8px 10px !important;
+      border-radius: 14px !important;
+    }
+
+    .lean-setup-panel > div:nth-child(3),
+    .lean-setup-panel > div:nth-child(4) {
+      margin-top: 8px !important;
+      padding: 8px !important;
+      border-radius: 16px !important;
+    }
+
     .lean-tool-page [class*="grid-cols-1"] > label select,
     .lean-tool-page label select {
-      min-height: 56px;
+      min-height: 42px;
       background-color: #ffffff;
     }
   }
@@ -728,6 +990,18 @@
     border-color: #115e59;
     background: linear-gradient(135deg, #0f172a 0%, #0b332d 100%);
     box-shadow: 0 16px 44px rgb(0 0 0 / 0.26);
+  }
+
+  html.dark .mobile-data-panel {
+    border-color: #334155;
+    background: rgb(15 23 42 / 0.94);
+    box-shadow: 0 18px 48px rgb(0 0 0 / 0.26);
+  }
+
+  html.dark .mobile-data-icon {
+    border-color: #0f766e;
+    background: #0b3b34;
+    color: #5eead4;
   }
 
   html.dark .mobile-smart-icon {

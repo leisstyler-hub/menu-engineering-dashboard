@@ -2,6 +2,9 @@
 
 ## 2026-06-14
 
+- [Jun 14, 2:51 PM] Compressed the Lean Tool phone cockpit so Start, activity, DOWNTIME waste, and Mark are usable with far less vertical swiping.
+- [Jun 14, 2:51 PM] Added compact mobile dashboard data cards for trust layer, diet mix, recently added items, and changelog while keeping the floating selector.
+- [Jun 14, 2:51 PM] Set visible app version to `2026.06.14.013-fix-lean-mobile-cockpit`.
 - [Jun 14, 2:41 PM] Redesigned the phone home screen with app-style header, compact KPI tiles, tappable tool cards, and mobile bottom navigation.
 - [Jun 14, 2:41 PM] Extended the mobile app treatment across tool screens and tightened the Lean Tool phone layout for field use.
 - [Jun 14, 2:41 PM] Set visible app version to `2026.06.14.012-feature-mobile-app-design`.

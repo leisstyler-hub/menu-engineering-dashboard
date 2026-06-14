@@ -222,7 +222,12 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
         costedItems={costedItems}
         allergenCoverage={allergenCoverage}
         detailCoverage={detailCoverage}
+        costCoverage={costCoverage}
+        priceCoverage={priceCoverage}
         avgFoodCost={avgFoodCost}
+        dietCounts={dietCounts}
+        categoryCounts={categoryCounts}
+        recentItems={recentItems}
         onOpenMenuEngineering={onOpenMenuEngineering}
         onOpenNeighborhoodRotations={onOpenNeighborhoodRotations}
         onOpenLadleCompliance={onOpenLadleCompliance}
@@ -401,7 +406,12 @@ function MobileLanding({
   costedItems,
   allergenCoverage,
   detailCoverage,
+  costCoverage,
+  priceCoverage,
   avgFoodCost,
+  dietCounts,
+  categoryCounts,
+  recentItems,
   onOpenMenuEngineering,
   onOpenNeighborhoodRotations,
   onOpenLadleCompliance,
@@ -464,6 +474,59 @@ function MobileLanding({
             <MobileToolCard key={tool.title} {...tool} />
           ))}
         </section>
+
+        <section className="mobile-data-stack" aria-label="Platform intelligence">
+          <MobileDataPanel icon={Database} eyebrow="Trust Layer" title="Data Confidence">
+            <MobileProgressRow label="Recipe cost" value={costCoverage} tone="emerald" />
+            <MobileProgressRow label="Price-required" value={priceCoverage} tone="sky" />
+            <MobileProgressRow label="Allergens" value={allergenCoverage} tone="amber" />
+            <MobileProgressRow label="Descriptions" value={detailCoverage} tone="indigo" />
+          </MobileDataPanel>
+
+          <MobileDataPanel icon={PieChart} eyebrow="Menu Intelligence" title="Diet Mix">
+            <div className="grid grid-cols-3 gap-2">
+              {["Vegan", "Vegetarian", "Regular"].map((label) => (
+                <div key={label} className="rounded-2xl border border-slate-100 bg-slate-50 p-3 text-center">
+                  <p className="text-lg font-black text-slate-950">{(dietCounts[label] || 0).toLocaleString()}</p>
+                  <p className="mt-1 text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">{label}</p>
+                </div>
+              ))}
+            </div>
+          </MobileDataPanel>
+
+          <MobileDataPanel icon={ListChecks} eyebrow="Newest Data Signal" title="Recently Added">
+            <div className="space-y-2">
+              {recentItems.slice(0, 4).map((item) => (
+                <div key={item.id} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-black text-slate-950">{item.item}</p>
+                    <p className="truncate text-[11px] font-semibold text-slate-500">{item.menu}</p>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-white px-2 py-1 text-[11px] font-black text-slate-600">
+                    {item.price == null ? "Comp" : money(item.price)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </MobileDataPanel>
+
+          <MobileDataPanel icon={Sparkles} eyebrow="Release Signal" title="Changelog">
+            <div className="mb-3 rounded-2xl border border-slate-100 bg-slate-50 p-3">
+              <p className="text-sm font-black text-slate-950">{CHANGELOG_ENTRIES.length.toLocaleString()} total logged changes</p>
+            </div>
+            <div className="space-y-2">
+              {firstTenChangelogItems.slice(0, 4).map((item, index) => (
+                <div key={`${item.text}-${index}`} className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                  <p className="line-clamp-2 text-xs font-bold leading-5 text-slate-700">{item.text}</p>
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <p className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">{item.date}</p>
+                    <span className="rounded-full bg-white px-2 py-1 text-[10px] font-black text-slate-500">#{CHANGELOG_ENTRIES.length - index}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </MobileDataPanel>
+        </section>
       </main>
 
       <nav className="mobile-bottom-nav" aria-label="Mobile tools navigation">
@@ -479,6 +542,44 @@ function MobileLanding({
           </button>
         ))}
       </nav>
+    </div>
+  );
+}
+
+function MobileDataPanel({ icon: Icon, eyebrow, title, children }) {
+  return (
+    <section className="mobile-data-panel">
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">{eyebrow}</p>
+          <h2 className="mt-1 text-lg font-black text-slate-950">{title}</h2>
+        </div>
+        <div className="mobile-data-icon">
+          <Icon size={18} />
+        </div>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function MobileProgressRow({ label, value, tone }) {
+  const fill = {
+    emerald: "bg-emerald-500",
+    sky: "bg-sky-500",
+    amber: "bg-amber-400",
+    indigo: "bg-indigo-500",
+  }[tone] || "bg-emerald-500";
+
+  return (
+    <div className="mb-3 last:mb-0">
+      <div className="flex items-center justify-between gap-3 text-xs">
+        <p className="font-black text-slate-700">{label}</p>
+        <p className="font-black text-slate-950">{value}%</p>
+      </div>
+      <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+        <div className={`h-full rounded-full ${fill}`} style={{ width: `${Math.max(4, value)}%` }} />
+      </div>
     </div>
   );
 }
