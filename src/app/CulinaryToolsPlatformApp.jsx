@@ -8,21 +8,22 @@ import SmartsheetHealth from "../features/smartsheet-health/SmartsheetHealth.jsx
 
 export default function CulinaryToolsPlatformApp() {
   const [activeTool, setActiveTool] = useState("home");
+  const openSmartsheetHealth = () => setActiveTool("smartsheetHealth");
 
   if (activeTool === "menuEngineering") {
-    return <MenuEngineeringDashboard onBackToPlatform={() => setActiveTool("home")} />;
+    return <MenuEngineeringDashboard onBackToPlatform={() => setActiveTool("home")} onOpenSmartsheetHealth={openSmartsheetHealth} />;
   }
 
   if (activeTool === "neighborhoodRotations") {
-    return <NeighborhoodRotations onBackToPlatform={() => setActiveTool("home")} />;
+    return <NeighborhoodRotations onBackToPlatform={() => setActiveTool("home")} onOpenSmartsheetHealth={openSmartsheetHealth} />;
   }
 
   if (activeTool === "ladleCompliance") {
-    return <LadleComplianceDashboard onBackToPlatform={() => setActiveTool("home")} />;
+    return <LadleComplianceDashboard onBackToPlatform={() => setActiveTool("home")} onOpenSmartsheetHealth={openSmartsheetHealth} />;
   }
 
   if (activeTool === "leanTool") {
-    return <LeanTool onBackToPlatform={() => setActiveTool("home")} />;
+    return <LeanTool onBackToPlatform={() => setActiveTool("home")} onOpenSmartsheetHealth={openSmartsheetHealth} />;
   }
 
   if (activeTool === "smartsheetHealth") {
@@ -35,7 +36,7 @@ export default function CulinaryToolsPlatformApp() {
       onOpenNeighborhoodRotations={() => setActiveTool("neighborhoodRotations")}
       onOpenLadleCompliance={() => setActiveTool("ladleCompliance")}
       onOpenLeanTool={() => setActiveTool("leanTool")}
-      onOpenSmartsheetHealth={() => setActiveTool("smartsheetHealth")}
+      onOpenSmartsheetHealth={openSmartsheetHealth}
     />
   );
 }

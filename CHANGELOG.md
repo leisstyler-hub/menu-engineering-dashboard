@@ -2,7 +2,10 @@
 
 ## 2026-06-14
 
-- Renamed the main Smartsheet Health card to `Menu Selection Portions`.
+- Renamed the main Smartsheet Health card to `Menu Rotation Smartsheet`.
+- Added Settings to every tool header so dark mode, refresh, print/save PDF, and Smartsheet Health are always reachable.
+- Reworked dark mode contrast for colored panels, status cards, inputs, and section borders so tool pages stay readable.
+- Set visible app version to `2026.06.14.003-fix-dark-settings-health-label`.
 - Scoped Smartsheet Health cards by record type so menu selection portion rows and Lean result rows no longer show the same counts when they share a sheet.
 - Added card-level search fields for filtering menu selection and Lean records separately.
 - Set visible app version to `2026.06.14.002-fix-smartsheet-health-scopes`.

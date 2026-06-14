@@ -4,6 +4,7 @@ import { ArrowLeft, BarChart3, CheckCircle2, ClipboardList, Clock3, Mail, Play, 
 import { loadRecordsFromSmartsheet, syncRecordsToSmartsheet } from "../../integrations/smartsheet/client.js";
 import { SMARTSHEET_COLUMNS, SMARTSHEET_RECORD_TYPES } from "../../integrations/smartsheet/contract.js";
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
+import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
 
 const STORAGE_KEY = "culinaryToolsLeanObservations_v1";
@@ -340,7 +341,7 @@ function summarizeRows(rows) {
   };
 }
 
-export default function LeanTool({ onBackToPlatform }) {
+export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const emailSectionRef = useRef(null);
   const [viewMode, setViewMode] = useState("tracker");
   const [district, setDistrict] = useState("South");
@@ -629,7 +630,10 @@ export default function LeanTool({ onBackToPlatform }) {
               <ArrowLeft size={18} />
               Back to Platform
             </button>
-            <CompassOneLogo compact />
+            <div className="flex flex-wrap items-center gap-2">
+              <PlatformSettings onOpenSmartsheetHealth={onOpenSmartsheetHealth} />
+              <CompassOneLogo compact />
+            </div>
           </div>
           <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-[1fr_360px] lg:items-end">
             <div>

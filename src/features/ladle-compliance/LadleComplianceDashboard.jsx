@@ -2,8 +2,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
+import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 
-export default function LadleComplianceDashboard({ onBackToPlatform }) {
+export default function LadleComplianceDashboard({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const seededRows = [
     { district: "South", unit: "Doppler", week: "Current Week", compliance: 96, completed: 144, expected: 150, missed: 6, trend: 4 },
     { district: "South", unit: "Day 1", week: "Current Week", compliance: 91, completed: 137, expected: 150, missed: 13, trend: 2 },
@@ -129,7 +130,10 @@ export default function LadleComplianceDashboard({ onBackToPlatform }) {
             >
               ← Back to Culinary Tools Platform
             </button>
-            <CompassOneLogo compact />
+            <div className="flex flex-wrap items-center gap-2">
+              <PlatformSettings onOpenSmartsheetHealth={onOpenSmartsheetHealth} />
+              <CompassOneLogo compact />
+            </div>
           </div>
 
           <div className="mt-6 flex flex-col xl:flex-row xl:items-end xl:justify-between gap-6">

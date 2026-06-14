@@ -157,7 +157,7 @@ export default function SmartsheetHealth({ onBackToPlatform }) {
         </header>
 
         <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-          <SheetHealthCard title="Menu Selection Portions" scope="menuSelection" expectedColumns={MENU_SELECTION_EXPECTED_COLUMNS} health={mainHealth} onRefresh={() => refreshOne(setMainHealth)} />
+          <SheetHealthCard title="Menu Rotation Smartsheet" scope="menuSelection" expectedColumns={MENU_SELECTION_EXPECTED_COLUMNS} health={mainHealth} onRefresh={() => refreshOne(setMainHealth)} />
           <SheetHealthCard title="Lean Results Smartsheet" scope="lean" expectedColumns={LEAN_EXPECTED_COLUMNS} health={leanHealth} onRefresh={() => refreshOne(setLeanHealth, { tool: "lean" })} />
         </section>
 

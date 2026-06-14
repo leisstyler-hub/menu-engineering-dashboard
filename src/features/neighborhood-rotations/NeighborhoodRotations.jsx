@@ -8,6 +8,7 @@ import { NEIGHBORHOOD_ROTATIONS_STORAGE_KEY, SMARTSHEET_COLUMNS, SMARTSHEET_DATA
 import { APP_VERSION_STAMP } from "../../shared/appConfig.js";
 import { money, pct, titleCase } from "../../shared/formatting.js";
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
+import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
 
 const DISTRICTS = {
@@ -1188,7 +1189,7 @@ function weekAtGlancePreview(fileName) {
   };
 }
 
-export default function NeighborhoodRotations({ onBackToPlatform }) {
+export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const [district, setDistrict] = useState("");
   const [week, setWeek] = useState(DEFAULT_ROTATION_WEEK);
   const [selectedCafe, setSelectedCafe] = useState("");
@@ -1285,7 +1286,7 @@ export default function NeighborhoodRotations({ onBackToPlatform }) {
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#f6f7f9_0%,#eef7f2_100%)] text-slate-950 p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-5">
-        <NeighborhoodHeader onBackToPlatform={onBackToPlatform} district={district} />
+        <NeighborhoodHeader onBackToPlatform={onBackToPlatform} onOpenSmartsheetHealth={onOpenSmartsheetHealth} district={district} />
         <section className="inline-flex flex-wrap gap-1 rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
           <RotationTab label="Chef Planner" value="planner" active={rotationView} setActive={setRotationView} />
           <RotationTab label="Executive View" value="executive" active={rotationView} setActive={setRotationView} />
@@ -1314,12 +1315,15 @@ export default function NeighborhoodRotations({ onBackToPlatform }) {
   );
 }
 
-function NeighborhoodHeader({ onBackToPlatform, district }) {
+function NeighborhoodHeader({ onBackToPlatform, onOpenSmartsheetHealth, district }) {
   return (
     <header className="rounded-lg bg-white border border-slate-200 border-t-4 border-t-[#b99b55] p-5 shadow-sm">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <button onClick={onBackToPlatform} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-white hover:text-slate-950"><ArrowLeft size={16} /> Back to platform</button>
-        <CompassOneLogo compact />
+        <div className="flex flex-wrap items-center gap-2">
+          <PlatformSettings onOpenSmartsheetHealth={onOpenSmartsheetHealth} />
+          <CompassOneLogo compact />
+        </div>
       </div>
       <div className="mt-5 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
         <div>

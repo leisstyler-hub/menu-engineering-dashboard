@@ -5,6 +5,7 @@ import { Search, Star, TrendingUp, HelpCircle, Dog, SlidersHorizontal, ChefHat, 
 import MENUWORKS_ITEMS from "../../data/menuItems.json";
 import { money, pct, priceLabel, smartMenuEngineeringSort, titleCase } from "../../shared/formatting.js";
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
+import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 
 function classify(marginHigh, volumeHigh) {
   if (marginHigh && volumeHigh) return "STAR";
@@ -319,7 +320,7 @@ function calculateMenuHealth({ avgFoodCost, grossProfitPct, stars, cashCows, puz
 }
 
 
-export default function MenuEngineeringDashboard({ onBackToPlatform }) {
+export default function MenuEngineeringDashboard({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const [menuItems, setMenuItems] = useState(readStoredMenuItems);
   const [selectedMenu, setSelectedMenu] = useState(MENUWORKS_ITEMS[0]?.menu || "");
   const [pendingImport, setPendingImport] = useState(null);
@@ -783,7 +784,10 @@ export default function MenuEngineeringDashboard({ onBackToPlatform }) {
             >
               ← Back to Culinary Tools Platform
             </button>
-            <CompassOneLogo compact />
+            <div className="flex flex-wrap items-center gap-2">
+              <PlatformSettings onOpenSmartsheetHealth={onOpenSmartsheetHealth} />
+              <CompassOneLogo compact />
+            </div>
           </div>
           <div className="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-6">
             <div>
