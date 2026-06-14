@@ -695,8 +695,8 @@
 
     .lean-home-bubble {
       position: fixed;
-      right: 14px;
-      bottom: 84px;
+      left: 14px;
+      bottom: 14px;
       z-index: 45;
       display: inline-flex;
       min-height: 42px !important;
