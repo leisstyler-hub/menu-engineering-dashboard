@@ -2,6 +2,8 @@
 
 ## 2026-06-14
 
+- [Jun 14, 2:27 PM] Removed product-builder wording from the changelog display, upgraded the trust action CSV with fill-in guidance, and softened phone/tablet card styling.
+- [Jun 14, 2:27 PM] Set visible app version to `2026.06.14.011-fix-mobile-trust-changelog`.
 - [Jun 14, 2:19 PM] Removed draft records from Rotation History, added changelog velocity counters, tightened trust-layer pricing logic, added a downloadable trust gap list, and redesigned Lean Tool phone readability.
 - [Jun 14, 2:19 PM] Set visible app version to `2026.06.14.010-feature-trust-history-mobile`.
 - Added a hard-stop Neighborhood Rotations submit guard with clear blocked-state messaging and a persistent warning popup.
@@ -140,7 +142,7 @@
 - Fixed the Neighborhood Rotations screen after the feature split by importing the shared `VersionStamp` component.
 - Set visible app version to `v2026-06-08-rotations-version-import-fix`.
 - Set visible app version to `v2026-06-08-backbone-feature-split`.
-- Linked the local Codex workspace to the existing Vercel project.
+- Linked the local workspace to the existing Vercel project.
 - Moved the app entry into a stable shell at `src/App.jsx`.
 - Created a small app coordinator at `src/app/CulinaryToolsPlatformApp.jsx`.
 - Moved the platform landing screen to `src/app/LandingPage.jsx`.

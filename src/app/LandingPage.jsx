@@ -61,20 +61,71 @@ const isComplimentaryItem = (item) => {
 
 const csvEscape = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
 
+function trustGapInstruction(gapType) {
+  if (gapType === "Protein price gap") {
+    return {
+      reason: "This item appears to contain protein and does not have a positive selling price.",
+      field: "Price",
+      acceptableInput: "Enter menu selling price, for example 11.75.",
+      where: "Fill the ENTER VALUE HERE cell, then send this CSV back or update the MenuWorks source file."
+    };
+  }
+  if (gapType === "Price-required gap") {
+    return {
+      reason: "This item does not look complimentary and does not have a positive selling price.",
+      field: "Price or Complimentary Confirmation",
+      acceptableInput: "Enter price, or write COMPLIMENTARY if this should not count against price coverage.",
+      where: "Fill the ENTER VALUE HERE cell, then send this CSV back or update the MenuWorks source file."
+    };
+  }
+  if (gapType === "Missing true cost") {
+    return {
+      reason: "This row is missing true cost, so food cost and margin reads may be incomplete.",
+      field: "True Cost",
+      acceptableInput: "Enter true cost as a number, for example 2.57.",
+      where: "Fill the ENTER VALUE HERE cell, then send this CSV back or update the MenuWorks source file."
+    };
+  }
+  if (gapType === "Missing allergen detail") {
+    return {
+      reason: "This row has no allergen signal for chef-facing safety review.",
+      field: "Allergen Summary / Allergen Details",
+      acceptableInput: "Enter allergens, or write NONE if reviewed and no allergens apply.",
+      where: "Fill the ENTER VALUE HERE cell, then send this CSV back or update the MenuWorks source file."
+    };
+  }
+  return {
+    reason: "This row is missing chef-facing description or ingredient detail.",
+    field: "Enticing Description / Ingredients Common Name",
+    acceptableInput: "Enter a short menu description or ingredient detail.",
+    where: "Fill the ENTER VALUE HERE cell, then send this CSV back or update the MenuWorks source file."
+  };
+}
+
 function downloadTrustLayerGapList(rows) {
-  const headers = ["Gap Type", "Item", "Menu", "Station", "Category", "MRN", "Recipe Category", "Current Price", "True Cost", "Notes"];
-  const body = rows.map((row) => [
-    row.gapType,
-    row.item || row.displayName,
-    row.menu,
-    row.station,
-    row.category,
-    row.mrn,
-    row.recipeCategory,
-    row.price ?? "",
-    row.trueCost ?? "",
-    row.menuItemNotes || "",
-  ]);
+  const headers = ["REVIEW STATUS", "WHY THIS ROW IS LISTED", "FIELD TO FILL IN", "ENTER VALUE HERE", "ACCEPTABLE INPUT", "WHERE TO PUT IT", "GAP TYPE", "PRIORITY", "ITEM", "MENU", "STATION", "CATEGORY", "MRN", "RECIPE CATEGORY", "CURRENT PRICE", "TRUE COST", "CURRENT NOTES"];
+  const body = rows.map((row) => {
+    const instruction = trustGapInstruction(row.gapType);
+    return [
+      "NEEDS REVIEW",
+      instruction.reason,
+      instruction.field,
+      "FILL THIS IN",
+      instruction.acceptableInput,
+      instruction.where,
+      row.gapType,
+      row.gapType === "Protein price gap" ? "HIGH" : row.gapType === "Price-required gap" ? "MEDIUM" : "STANDARD",
+      row.item || row.displayName,
+      row.menu,
+      row.station,
+      row.category,
+      row.mrn,
+      row.recipeCategory,
+      row.price ?? "",
+      row.trueCost ?? "",
+      row.menuItemNotes || "",
+    ];
+  });
   const csv = [headers, ...body].map((line) => line.map(csvEscape).join(",")).join("\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
@@ -248,7 +299,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
                     <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-amber-900">{proteinPriceGaps.length.toLocaleString()} protein price gaps</span>
                   </div>
                   <button onClick={() => downloadTrustLayerGapList(trustGapRows)} className="mt-3 w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-black text-slate-800 hover:bg-slate-100">
-                    Download trust gap list
+                    Download trust action CSV
                   </button>
                 </div>
               </DashboardPanel>
@@ -283,9 +334,8 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
 
               <DashboardPanel icon={Database} eyebrow="Release Signal" title="Latest Changelog">
                 <div className="space-y-2">
-                  <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-                    <p className="text-sm font-black text-emerald-950">{CHANGELOG_ENTRIES.length.toLocaleString()} total logged changes</p>
-                    <p className="mt-1 text-xs font-semibold text-emerald-800">A visible record of how quickly this platform is evolving with Codex.</p>
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                    <p className="text-sm font-black text-slate-950">{CHANGELOG_ENTRIES.length.toLocaleString()} total logged changes</p>
                   </div>
                   {firstTenChangelogItems.map((item, index) => (
                     <div key={`${item.text}-${index}`} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
