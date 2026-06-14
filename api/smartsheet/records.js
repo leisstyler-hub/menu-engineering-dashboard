@@ -6,6 +6,7 @@
 // - GET: load rows from Smartsheet for app read/Executive View
 // - POST action=upsertRecords: add/update rows by Record ID
 // - POST action=ensureColumns: add missing expected columns without creating rows
+// - POST action=deleteEmptyColumns: remove named columns only when every row is blank
 // Required-column validation is intentionally limited to columns used by the submitted payload,
 // so future/optional database fields do not block current Neighborhood Rotation writes.
 
@@ -85,6 +86,34 @@ async function addMissingColumns(sheetId, sheet, missingColumns = []) {
   }
 
   return latestSheet;
+}
+
+async function deleteEmptyColumnsByTitle(sheetId, sheet, columnTitles = []) {
+  const deletedColumns = [];
+  const skippedColumns = [];
+  let latestSheet = sheet;
+
+  for (const title of columnTitles) {
+    const column = (latestSheet.columns || []).find((entry) => entry.title === title);
+    if (!column) {
+      skippedColumns.push({ title, reason: "not found" });
+      continue;
+    }
+
+    const hasValues = (latestSheet.rows || []).some((row) => String(getCellValue(row, column.id) || "").trim() !== "");
+    if (hasValues) {
+      skippedColumns.push({ title, reason: "column has data" });
+      continue;
+    }
+
+    await smartsheetFetch(`/sheets/${sheetId}/columns/${column.id}`, {
+      method: "DELETE",
+    });
+    deletedColumns.push(title);
+    latestSheet = await smartsheetFetch(`/sheets/${sheetId}`);
+  }
+
+  return { sheet: latestSheet, deletedColumns, skippedColumns };
 }
 
 function rowToRecord(row, columnsById) {
@@ -173,6 +202,30 @@ export default async function handler(req, res) {
         message: missingColumns.length
           ? `Added ${missingColumns.length} missing Smartsheet column${missingColumns.length === 1 ? "" : "s"}.`
           : "Smartsheet already has the expected columns.",
+      });
+    }
+
+    if (action === "deleteEmptyColumns") {
+      const columnTitles = Array.isArray(req.body?.columnTitles) ? req.body.columnTitles : [];
+      if (!columnTitles.length) {
+        return res.status(400).json({ ok: false, message: "No column titles supplied for cleanup" });
+      }
+
+      const cleanup = await deleteEmptyColumnsByTitle(sheetId, sheet, columnTitles);
+      sheet = cleanup.sheet;
+
+      return res.status(200).json({
+        ok: true,
+        action,
+        context,
+        sheetId,
+        sheetName: sheet.name || "",
+        deletedColumns: cleanup.deletedColumns,
+        skippedColumns: cleanup.skippedColumns,
+        columns: (sheet.columns || []).map((column) => column.title),
+        message: cleanup.deletedColumns.length
+          ? `Deleted ${cleanup.deletedColumns.length} empty Smartsheet column${cleanup.deletedColumns.length === 1 ? "" : "s"}.`
+          : "No empty Smartsheet columns were deleted.",
       });
     }
 

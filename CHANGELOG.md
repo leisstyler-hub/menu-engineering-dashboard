@@ -2,6 +2,8 @@
 
 ## 2026-06-14
 
+- Added a guarded Smartsheet cleanup action that can delete named columns only when every row is blank.
+- Set visible app version to `2026.06.14.006-fix-smartsheet-column-cleanup`.
 - Changed Smartsheet column repair to add columns one at a time so Smartsheet accepts end-of-sheet inserts.
 - Set visible app version to `2026.06.14.005-fix-smartsheet-column-repair`.
 - Added a Smartsheet Health repair action that can create missing expected columns without creating placeholder rows.
