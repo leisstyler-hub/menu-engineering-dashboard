@@ -7,6 +7,11 @@
     background: #f6f7f9;
   }
 
+  html.dark body {
+    background: #07111f;
+    color: #e2e8f0;
+  }
+
   * {
     letter-spacing: 0;
   }
@@ -40,5 +45,50 @@
   input,
   button {
     letter-spacing: 0;
+  }
+
+  html.dark .min-h-screen {
+    background: linear-gradient(180deg, #07111f 0%, #0f172a 100%) !important;
+    color: #e2e8f0;
+  }
+
+  html.dark [class*="bg-white"] {
+    background-color: #111827 !important;
+  }
+
+  html.dark [class*="bg-slate-50"],
+  html.dark [class*="bg-slate-100"] {
+    background-color: #0f172a !important;
+  }
+
+  html.dark [class*="border-slate-200"],
+  html.dark [class*="border-sky-200"],
+  html.dark :where(header, main, aside, section, article, div)[class*="border"][class*="shadow"] {
+    border-color: #334155 !important;
+  }
+
+  html.dark [class*="text-slate-950"],
+  html.dark [class*="text-slate-900"],
+  html.dark [class*="text-slate-800"],
+  html.dark [class*="text-slate-700"] {
+    color: #f8fafc !important;
+  }
+
+  html.dark [class*="text-slate-600"],
+  html.dark [class*="text-slate-500"],
+  html.dark [class*="text-slate-400"] {
+    color: #cbd5e1 !important;
+  }
+
+  html.dark input,
+  html.dark select,
+  html.dark textarea {
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+  }
+
+  html.dark [class*="shadow"] {
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.25), 0 16px 36px rgb(0 0 0 / 0.35) !important;
   }
 }

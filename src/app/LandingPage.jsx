@@ -4,6 +4,7 @@ import { ArrowRight, BarChart3, CalendarRange, ClipboardCheck, Database, ListChe
 import CHANGELOG_TEXT from "../../CHANGELOG.md?raw";
 import MENUWORKS_ITEMS from "../data/menuItems.json";
 import CompassOneLogo from "../shared/ui/CompassOneLogo.jsx";
+import PlatformSettings from "../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../shared/ui/VersionStamp.jsx";
 import { money, pct } from "../shared/formatting.js";
 
@@ -30,7 +31,7 @@ const countBy = (rows, getKey) =>
 
 const percentOf = (value, total) => total ? Math.round((value / total) * 100) : 0;
 
-export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodRotations, onOpenLadleCompliance, onOpenLeanTool }) {
+export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodRotations, onOpenLadleCompliance, onOpenLeanTool, onOpenSmartsheetHealth }) {
   const totalItems = MENUWORKS_ITEMS.length;
   const menuCount = new Set(MENUWORKS_ITEMS.map((item) => item.menu).filter(Boolean)).size;
   const costedItems = MENUWORKS_ITEMS.filter((item) => item.trueCost != null).length;
@@ -102,7 +103,10 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
               <h1 className="text-2xl font-bold tracking-normal md:text-3xl">Culinary Tools Platform</h1>
             </div>
           </div>
-          <VersionStamp />
+          <div className="flex flex-wrap items-center gap-2">
+            <PlatformSettings onOpenSmartsheetHealth={onOpenSmartsheetHealth} />
+            <VersionStamp />
+          </div>
         </header>
 
         <main className="grid grid-cols-1 gap-5 xl:grid-cols-[340px_1fr]">

@@ -4,6 +4,7 @@ import MenuEngineeringDashboard from "../features/menu-engineering/MenuEngineeri
 import NeighborhoodRotations from "../features/neighborhood-rotations/NeighborhoodRotations.jsx";
 import LadleComplianceDashboard from "../features/ladle-compliance/LadleComplianceDashboard.jsx";
 import LeanTool from "../features/lean-tool/LeanTool.jsx";
+import SmartsheetHealth from "../features/smartsheet-health/SmartsheetHealth.jsx";
 
 export default function CulinaryToolsPlatformApp() {
   const [activeTool, setActiveTool] = useState("home");
@@ -24,12 +25,17 @@ export default function CulinaryToolsPlatformApp() {
     return <LeanTool onBackToPlatform={() => setActiveTool("home")} />;
   }
 
+  if (activeTool === "smartsheetHealth") {
+    return <SmartsheetHealth onBackToPlatform={() => setActiveTool("home")} />;
+  }
+
   return (
     <LandingPage
       onOpenMenuEngineering={() => setActiveTool("menuEngineering")}
       onOpenNeighborhoodRotations={() => setActiveTool("neighborhoodRotations")}
       onOpenLadleCompliance={() => setActiveTool("ladleCompliance")}
       onOpenLeanTool={() => setActiveTool("leanTool")}
+      onOpenSmartsheetHealth={() => setActiveTool("smartsheetHealth")}
     />
   );
 }

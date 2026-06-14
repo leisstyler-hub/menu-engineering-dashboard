@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-06-14
+
+- Added a premium Settings dropdown with dark mode, refresh current view, and print/save PDF actions.
+- Added Smartsheet Health as a Settings-accessed system view instead of mixing it into the main tool cards.
+- Added Smartsheet Health checks for main records and Lean records, including sheet name, masked sheet ID, row counts, column counts, missing expected columns, record types, statuses, and district signals.
+- Set visible app version to `2026.06.14.001-feature-settings-smartsheet-health`.
+
 ## 2026-06-13
 
 - Changed the embedded browser/bookmark title to `Culinary Tools Platform`.
