@@ -2,6 +2,8 @@
 
 ## 2026-06-14
 
+- [Jun 14, 3:46 PM] Hid the Lean Tool mobile Home bubble while the sticky Quick note and Mark controls are visible so the controls no longer overlap.
+- [Jun 14, 3:46 PM] Set visible app version to `2026.06.14.018-fix-lean-home-overlap`.
 - [Jun 14, 3:33 PM] Reset the page to the top whenever a tool opens so Lean Tool no longer inherits the mobile landing-page scroll depth.
 - [Jun 14, 3:33 PM] Set visible app version to `2026.06.14.017-fix-tool-scroll-reset`.
 - [Jun 14, 3:18 PM] Reordered Lean Tool mobile flow to read Observation Setup, What are they doing, then Email Report Out.

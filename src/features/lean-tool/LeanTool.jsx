@@ -343,6 +343,7 @@ function summarizeRows(rows) {
 
 export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const emailSectionRef = useRef(null);
+  const markBarRef = useRef(null);
   const [viewMode, setViewMode] = useState("tracker");
   const [district, setDistrict] = useState("South");
   const [cafe, setCafe] = useState("Doppler");
@@ -374,6 +375,7 @@ export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const [voidReason, setVoidReason] = useState("Test record");
   const [voidedBy, setVoidedBy] = useState("DM");
   const [voidNotes, setVoidNotes] = useState("");
+  const [markBarVisible, setMarkBarVisible] = useState(false);
 
   const cafesForDistrict = DISTRICTS[district] || [];
 
@@ -432,6 +434,21 @@ export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
     const timerId = window.setInterval(update, 100);
     return () => window.clearInterval(timerId);
   }, [running, sessionStartMs]);
+
+  useEffect(() => {
+    if (viewMode !== "tracker") {
+      setMarkBarVisible(false);
+      return undefined;
+    }
+    const markBar = markBarRef.current;
+    if (!markBar || typeof IntersectionObserver === "undefined") return undefined;
+    const observer = new IntersectionObserver(
+      ([entry]) => setMarkBarVisible(Boolean(entry?.isIntersecting)),
+      { threshold: 0.1 }
+    );
+    observer.observe(markBar);
+    return () => observer.disconnect();
+  }, [viewMode]);
 
   const startSession = () => {
     const now = Date.now();
@@ -622,7 +639,7 @@ export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const reportSummary = completedSummary || summary;
 
   return (
-    <div className="lean-tool-page min-h-screen bg-[#f4f8f7] text-[16px] text-slate-950">
+    <div className={`lean-tool-page min-h-screen bg-[#f4f8f7] text-[16px] text-slate-950 ${markBarVisible ? "lean-home-bubble-hidden" : ""}`}>
       <div className="mx-auto flex max-w-7xl flex-col gap-4 px-3 py-3 sm:px-4 sm:py-5 md:px-6">
         <header className="rounded-[2rem] border border-emerald-200 bg-white p-4 shadow-xl sm:p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -764,7 +781,7 @@ export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
               </div>
             </div>
 
-            <div className="lean-note-mark-row mt-5 grid grid-cols-1 gap-3 lg:grid-cols-[1fr_180px]">
+            <div ref={markBarRef} className="lean-note-mark-row mt-5 grid grid-cols-1 gap-3 lg:grid-cols-[1fr_180px]">
               <input value={note} onChange={(event) => setNote(event.target.value)} placeholder="Quick note, optional" className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-lg font-semibold outline-none focus:border-emerald-400 sm:text-base" />
               <button onClick={markObservation} className="inline-flex min-h-20 items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-5 py-4 text-2xl font-black text-white shadow-lg shadow-emerald-200 hover:bg-emerald-600 sm:min-h-16 sm:text-xl">
                 <CheckCircle2 size={22} />
