@@ -272,7 +272,7 @@ function DietDonut({ counts, total }) {
   const veganDeg = total ? (vegan / total) * 360 : 0;
   const vegetarianDeg = total ? (vegetarian / total) * 360 : 0;
   const donut = {
-    background: `conic-gradient(#16a34a 0deg ${veganDeg}deg, #84cc16 ${veganDeg}deg ${veganDeg + vegetarianDeg}deg, #0f172a ${veganDeg + vegetarianDeg}deg 360deg)`,
+    background: `conic-gradient(#16a34a 0deg ${veganDeg}deg, #84cc16 ${veganDeg}deg ${veganDeg + vegetarianDeg}deg, #64748b ${veganDeg + vegetarianDeg}deg 360deg)`,
   };
 
   return (
@@ -286,7 +286,7 @@ function DietDonut({ counts, total }) {
       <div className="space-y-3">
         <LegendRow color="bg-emerald-600" label="Vegan" value={vegan} total={total} />
         <LegendRow color="bg-lime-500" label="Vegetarian" value={vegetarian} total={total} />
-        <LegendRow color="bg-slate-950" label="Regular" value={regular} total={total} />
+        <LegendRow color="bg-slate-500" label="Regular" value={regular} total={total} />
       </div>
     </div>
   );

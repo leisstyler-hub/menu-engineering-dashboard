@@ -2,6 +2,8 @@
 
 ## 2026-06-14
 
+- Improved landing-page dark mode contrast for the Diet Mix regular segment, Lean result signal card, percent pill, and Compass One wordmark.
+- Set visible app version to `2026.06.14.007-fix-dark-landing-contrast`.
 - Added a guarded Smartsheet cleanup action that can delete named columns only when every row is blank.
 - Set visible app version to `2026.06.14.006-fix-smartsheet-column-cleanup`.
 - Changed Smartsheet column repair to add columns one at a time so Smartsheet accepts end-of-sheet inserts.

@@ -11,17 +11,17 @@ export default function CompassOneLogo({ compact = false }) {
       viewBox="0 0 190 58"
       width={width}
       height={height}
-      className="block shrink-0"
+      className="block shrink-0 text-slate-950 dark:text-white"
     >
       <rect width="190" height="58" fill="transparent" />
       <text
         x="0"
         y="36"
-        fill="#111827"
+        fill="currentColor"
         fontFamily="Arial, Helvetica, sans-serif"
         fontSize="22"
         fontWeight="400"
-        letterSpacing="-0.7"
+        letterSpacing="0"
       >
         compass
       </text>
