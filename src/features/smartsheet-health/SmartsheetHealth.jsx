@@ -1,13 +1,62 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Activity, AlertTriangle, ArrowLeft, CheckCircle2, Columns3, Database, RefreshCcw, ShieldCheck, Table2 } from "lucide-react";
 
-import { loadSmartsheetHealth, missingRequiredDatabaseColumns } from "../../integrations/smartsheet/client.js";
-import { SMARTSHEET_COLUMNS } from "../../integrations/smartsheet/contract.js";
+import { loadSmartsheetHealth } from "../../integrations/smartsheet/client.js";
+import { SMARTSHEET_COLUMNS, SMARTSHEET_RECORD_TYPES } from "../../integrations/smartsheet/contract.js";
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
 import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
 
 const nowStamp = () => new Date().toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+const MENU_SELECTION_RECORD_TYPES = new Set([
+  SMARTSHEET_RECORD_TYPES.rotationHeader,
+  SMARTSHEET_RECORD_TYPES.globalBlock,
+  SMARTSHEET_RECORD_TYPES.globalSelection,
+  SMARTSHEET_RECORD_TYPES.stationSelection,
+  SMARTSHEET_RECORD_TYPES.grillSelection,
+  SMARTSHEET_RECORD_TYPES.carverySelection,
+  SMARTSHEET_RECORD_TYPES.wokSelection,
+  SMARTSHEET_RECORD_TYPES.weekAtGlanceUpload,
+  SMARTSHEET_RECORD_TYPES.uploadedItem,
+]);
+const LEAN_RECORD_TYPES = new Set([
+  SMARTSHEET_RECORD_TYPES.leanObservationResult,
+  SMARTSHEET_RECORD_TYPES.leanObservationMark,
+]);
+const MENU_SELECTION_EXPECTED_COLUMNS = [
+  SMARTSHEET_COLUMNS.recordId,
+  SMARTSHEET_COLUMNS.parentRecordId,
+  SMARTSHEET_COLUMNS.recordType,
+  SMARTSHEET_COLUMNS.status,
+  SMARTSHEET_COLUMNS.district,
+  SMARTSHEET_COLUMNS.cafeUnit,
+  SMARTSHEET_COLUMNS.dateRangeLabel,
+  SMARTSHEET_COLUMNS.station,
+  SMARTSHEET_COLUMNS.selectionType,
+  SMARTSHEET_COLUMNS.menuItemSelection,
+  SMARTSHEET_COLUMNS.trueCost,
+  SMARTSHEET_COLUMNS.foodCostPct,
+  SMARTSHEET_COLUMNS.submittedAt,
+  SMARTSHEET_COLUMNS.updatedAt,
+];
+const LEAN_EXPECTED_COLUMNS = [
+  SMARTSHEET_COLUMNS.recordId,
+  SMARTSHEET_COLUMNS.parentRecordId,
+  SMARTSHEET_COLUMNS.recordType,
+  SMARTSHEET_COLUMNS.status,
+  SMARTSHEET_COLUMNS.district,
+  SMARTSHEET_COLUMNS.cafeUnit,
+  SMARTSHEET_COLUMNS.station,
+  SMARTSHEET_COLUMNS.businessDate,
+  SMARTSHEET_COLUMNS.leanSessionId,
+  SMARTSHEET_COLUMNS.leanObservedSeconds,
+  SMARTSHEET_COLUMNS.leanTotalMarks,
+  SMARTSHEET_COLUMNS.leanTopWaste,
+  SMARTSHEET_COLUMNS.leanActivity,
+  SMARTSHEET_COLUMNS.leanWaste,
+  SMARTSHEET_COLUMNS.voidReason,
+  SMARTSHEET_COLUMNS.visibleInDashboard,
+];
 
 function maskedSheetId(value = "") {
   const text = String(value || "");
@@ -28,6 +77,17 @@ function getLatestRecordTime(records = []) {
   return records
     .flatMap((record) => fields.map((field) => String(record[field] || "")).filter(Boolean))
     .sort((a, b) => b.localeCompare(a))[0] || "";
+}
+
+function scopedRecords(records = [], scope = "all", search = "") {
+  const typeSet = scope === "lean" ? LEAN_RECORD_TYPES : scope === "menuSelection" ? MENU_SELECTION_RECORD_TYPES : null;
+  const query = search.trim().toLowerCase();
+  return records.filter((record) => {
+    const recordType = String(record[SMARTSHEET_COLUMNS.recordType] || "");
+    if (typeSet && !typeSet.has(recordType)) return false;
+    if (!query) return true;
+    return Object.values(record).some((value) => String(value || "").toLowerCase().includes(query));
+  });
 }
 
 export default function SmartsheetHealth({ onBackToPlatform }) {
@@ -58,8 +118,8 @@ export default function SmartsheetHealth({ onBackToPlatform }) {
   }, []);
 
   const combinedRecords = useMemo(() => [
-    ...(mainHealth.data?.records || []),
-    ...(leanHealth.data?.records || []),
+    ...scopedRecords(mainHealth.data?.records || [], "menuSelection"),
+    ...scopedRecords(leanHealth.data?.records || [], "lean"),
   ], [mainHealth.data, leanHealth.data]);
   const recordTypeRows = countBy(combinedRecords, SMARTSHEET_COLUMNS.recordType).slice(0, 8);
   const statusRows = countBy(combinedRecords, SMARTSHEET_COLUMNS.status).slice(0, 6);
@@ -97,8 +157,8 @@ export default function SmartsheetHealth({ onBackToPlatform }) {
         </header>
 
         <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-          <SheetHealthCard title="Main Smartsheet Database" health={mainHealth} onRefresh={() => refreshOne(setMainHealth)} />
-          <SheetHealthCard title="Lean Results Smartsheet" health={leanHealth} onRefresh={() => refreshOne(setLeanHealth, { tool: "lean" })} />
+          <SheetHealthCard title="Menu Selection Portions" scope="menuSelection" expectedColumns={MENU_SELECTION_EXPECTED_COLUMNS} health={mainHealth} onRefresh={() => refreshOne(setMainHealth)} />
+          <SheetHealthCard title="Lean Results Smartsheet" scope="lean" expectedColumns={LEAN_EXPECTED_COLUMNS} health={leanHealth} onRefresh={() => refreshOne(setLeanHealth, { tool: "lean" })} />
         </section>
 
         <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -123,14 +183,17 @@ export default function SmartsheetHealth({ onBackToPlatform }) {
   );
 }
 
-function SheetHealthCard({ title, health, onRefresh }) {
+function SheetHealthCard({ title, health, onRefresh, scope = "all", expectedColumns = [] }) {
+  const [search, setSearch] = useState("");
   const data = health.data || {};
-  const records = data.records || [];
+  const allRecords = data.records || [];
+  const records = scopedRecords(allRecords, scope, search);
   const columns = data.columns || [];
-  const missing = data.ok ? missingRequiredDatabaseColumns(columns) : [];
+  const missing = data.ok ? expectedColumns.filter((column) => !columns.includes(column)) : [];
   const connected = health.state === "connected";
   const error = health.state === "error";
   const latest = getLatestRecordTime(records);
+  const scopeLabel = scope === "lean" ? "Lean records" : scope === "menuSelection" ? "menu selection portion records" : "records";
 
   return (
     <section className={`rounded-lg border bg-white p-5 shadow-sm ${connected ? "border-emerald-200" : error ? "border-amber-200" : "border-slate-200"}`}>
@@ -140,7 +203,9 @@ function SheetHealthCard({ title, health, onRefresh }) {
             {connected ? "Connected" : error ? "Needs Attention" : "Checking"}
           </p>
           <h2 className="mt-1 text-2xl font-black text-slate-950">{title}</h2>
-          <p className="mt-2 text-sm font-semibold text-slate-600">{health.message}</p>
+          <p className="mt-2 text-sm font-semibold text-slate-600">
+            Showing {records.length} {scopeLabel} from {allRecords.length} loaded Smartsheet row{allRecords.length === 1 ? "" : "s"}.
+          </p>
         </div>
         <button onClick={onRefresh} className="inline-flex w-fit items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-black text-slate-700 hover:bg-white">
           <RefreshCcw size={16} />
@@ -148,9 +213,19 @@ function SheetHealthCard({ title, health, onRefresh }) {
         </button>
       </div>
 
+      <label className="mt-4 block">
+        <span className="mb-2 block text-xs font-black uppercase tracking-[0.14em] text-slate-500">Search This Scope</span>
+        <input
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder={scope === "lean" ? "Search Lean waste, station, cafe..." : "Search rotation, cafe, menu, item..."}
+          className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-bold text-slate-900 outline-none focus:border-emerald-400"
+        />
+      </label>
+
       <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
         <HealthMetric icon={Database} label="Sheet" value={data.sheetName || "-"} detail={maskedSheetId(data.sheetId)} />
-        <HealthMetric icon={Table2} label="Rows" value={(data.count ?? records.length ?? 0).toLocaleString()} detail="loaded from sheet" />
+        <HealthMetric icon={Table2} label="Scope Rows" value={records.length.toLocaleString()} detail={`${allRecords.length} sheet rows loaded`} />
         <HealthMetric icon={Columns3} label="Columns" value={columns.length} detail={`${missing.length} missing expected`} tone={missing.length ? "amber" : "green"} />
         <HealthMetric icon={Activity} label="Latest Signal" value={latest || "-"} detail="updated/submitted/voided" />
       </div>

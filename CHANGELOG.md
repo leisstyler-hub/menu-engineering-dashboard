@@ -2,6 +2,10 @@
 
 ## 2026-06-14
 
+- Renamed the main Smartsheet Health card to `Menu Selection Portions`.
+- Scoped Smartsheet Health cards by record type so menu selection portion rows and Lean result rows no longer show the same counts when they share a sheet.
+- Added card-level search fields for filtering menu selection and Lean records separately.
+- Set visible app version to `2026.06.14.002-fix-smartsheet-health-scopes`.
 - Added a premium Settings dropdown with dark mode, refresh current view, and print/save PDF actions.
 - Added Smartsheet Health as a Settings-accessed system view instead of mixing it into the main tool cards.
 - Added Smartsheet Health checks for main records and Lean records, including sheet name, masked sheet ID, row counts, column counts, missing expected columns, record types, statuses, and district signals.
