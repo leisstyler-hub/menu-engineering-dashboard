@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Activity, AlertTriangle, ArrowLeft, CheckCircle2, Columns3, Database, RefreshCcw, ShieldCheck, Table2 } from "lucide-react";
 
-import { loadSmartsheetHealth } from "../../integrations/smartsheet/client.js";
+import { ensureSmartsheetColumns, loadSmartsheetHealth } from "../../integrations/smartsheet/client.js";
 import { SMARTSHEET_COLUMNS, SMARTSHEET_RECORD_TYPES } from "../../integrations/smartsheet/contract.js";
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
 import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
@@ -113,6 +113,19 @@ export default function SmartsheetHealth({ onBackToPlatform }) {
     setLastChecked(nowStamp());
   };
 
+  const repairOne = async (setter, missingColumns = [], context = {}) => {
+    if (!missingColumns.length) return;
+    setter((prev) => ({ ...prev, state: "loading", message: "Adding missing Smartsheet columns..." }));
+    try {
+      const repairPayload = await ensureSmartsheetColumns(missingColumns, { ...context, source: "Smartsheet Health" });
+      const healthPayload = await loadSmartsheetHealth(context);
+      setter({ state: "connected", data: healthPayload, message: repairPayload.message || "Smartsheet columns repaired." });
+      setLastChecked(nowStamp());
+    } catch (error) {
+      setter({ state: "error", data: error.payload || null, message: error.message || "Smartsheet column repair failed." });
+    }
+  };
+
   useEffect(() => {
     refreshAll();
   }, []);
@@ -157,8 +170,22 @@ export default function SmartsheetHealth({ onBackToPlatform }) {
         </header>
 
         <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-          <SheetHealthCard title="Menu Rotation Smartsheet" scope="menuSelection" expectedColumns={MENU_SELECTION_EXPECTED_COLUMNS} health={mainHealth} onRefresh={() => refreshOne(setMainHealth)} />
-          <SheetHealthCard title="Lean Results Smartsheet" scope="lean" expectedColumns={LEAN_EXPECTED_COLUMNS} health={leanHealth} onRefresh={() => refreshOne(setLeanHealth, { tool: "lean" })} />
+          <SheetHealthCard
+            title="Menu Rotation Smartsheet"
+            scope="menuSelection"
+            expectedColumns={MENU_SELECTION_EXPECTED_COLUMNS}
+            health={mainHealth}
+            onRefresh={() => refreshOne(setMainHealth)}
+            onRepairMissing={(missingColumns) => repairOne(setMainHealth, missingColumns)}
+          />
+          <SheetHealthCard
+            title="Lean Results Smartsheet"
+            scope="lean"
+            expectedColumns={LEAN_EXPECTED_COLUMNS}
+            health={leanHealth}
+            onRefresh={() => refreshOne(setLeanHealth, { tool: "lean" })}
+            onRepairMissing={(missingColumns) => repairOne(setLeanHealth, missingColumns, { tool: "lean" })}
+          />
         </section>
 
         <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -183,7 +210,7 @@ export default function SmartsheetHealth({ onBackToPlatform }) {
   );
 }
 
-function SheetHealthCard({ title, health, onRefresh, scope = "all", expectedColumns = [] }) {
+function SheetHealthCard({ title, health, onRefresh, onRepairMissing, scope = "all", expectedColumns = [] }) {
   const [search, setSearch] = useState("");
   const data = health.data || {};
   const allRecords = data.records || [];
@@ -194,6 +221,7 @@ function SheetHealthCard({ title, health, onRefresh, scope = "all", expectedColu
   const error = health.state === "error";
   const latest = getLatestRecordTime(records);
   const scopeLabel = scope === "lean" ? "Lean records" : scope === "menuSelection" ? "menu selection portion records" : "records";
+  const repairing = health.state === "loading";
 
   return (
     <section className={`rounded-lg border bg-white p-5 shadow-sm ${connected ? "border-emerald-200" : error ? "border-amber-200" : "border-slate-200"}`}>
@@ -237,6 +265,17 @@ function SheetHealthCard({ title, health, onRefresh, scope = "all", expectedColu
             <div>
               <p className="text-sm font-black text-amber-950">Missing expected columns</p>
               <p className="mt-1 text-xs font-semibold text-amber-900">{missing.slice(0, 8).join(", ")}{missing.length > 8 ? `, and ${missing.length - 8} more` : ""}</p>
+              {onRepairMissing && (
+                <button
+                  type="button"
+                  onClick={() => onRepairMissing(missing)}
+                  disabled={repairing}
+                  className="mt-3 inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs font-black text-amber-950 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <RefreshCcw size={14} />
+                  {repairing ? "Repairing..." : "Add missing columns"}
+                </button>
+              )}
             </div>
           </div>
         </div>

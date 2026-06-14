@@ -2,6 +2,9 @@
 
 ## 2026-06-14
 
+- Added a Smartsheet Health repair action that can create missing expected columns without creating placeholder rows.
+- Added repair buttons on Health cards so missing-column warnings can be satisfied from the app.
+- Set visible app version to `2026.06.14.004-feature-smartsheet-column-repair`.
 - Renamed the main Smartsheet Health card to `Menu Rotation Smartsheet`.
 - Added Settings to every tool header so dark mode, refresh, print/save PDF, and Smartsheet Health are always reachable.
 - Reworked dark mode contrast for colored panels, status cards, inputs, and section borders so tool pages stay readable.

@@ -5,6 +5,7 @@
 // Supports:
 // - GET: load rows from Smartsheet for app read/Executive View
 // - POST action=upsertRecords: add/update rows by Record ID
+// - POST action=ensureColumns: add missing expected columns without creating rows
 // Required-column validation is intentionally limited to columns used by the submitted payload,
 // so future/optional database fields do not block current Neighborhood Rotation writes.
 
@@ -146,6 +147,34 @@ export default async function handler(req, res) {
       context = {},
     } = req.body || {};
 
+    let sheet = await smartsheetFetch(`/sheets/${sheetId}`);
+    let columnMap = columnMapByTitle(sheet);
+
+    if (action === "ensureColumns") {
+      if (!Array.isArray(requiredColumns) || requiredColumns.length === 0) {
+        return res.status(400).json({ ok: false, message: "No columns supplied for repair" });
+      }
+
+      const missingColumns = requiredColumns.filter((columnName) => !columnMap.has(columnName));
+      if (missingColumns.length) {
+        sheet = await addMissingColumns(sheetId, sheet, missingColumns);
+        columnMap = columnMapByTitle(sheet);
+      }
+
+      return res.status(200).json({
+        ok: true,
+        action,
+        context,
+        sheetId,
+        sheetName: sheet.name || "",
+        autoCreatedColumns: missingColumns,
+        columns: (sheet.columns || []).map((column) => column.title),
+        message: missingColumns.length
+          ? `Added ${missingColumns.length} missing Smartsheet column${missingColumns.length === 1 ? "" : "s"}.`
+          : "Smartsheet already has the expected columns.",
+      });
+    }
+
     if (action !== "upsertRecords") {
       return res.status(400).json({ ok: false, message: "Unsupported action" });
     }
@@ -153,9 +182,6 @@ export default async function handler(req, res) {
     if (!Array.isArray(records) || records.length === 0) {
       return res.status(400).json({ ok: false, message: "No records supplied" });
     }
-
-    let sheet = await smartsheetFetch(`/sheets/${sheetId}`);
-    let columnMap = columnMapByTitle(sheet);
 
     const requiredForThisPayload = requiredColumns.length
       ? requiredColumns

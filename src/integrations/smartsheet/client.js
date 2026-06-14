@@ -66,3 +66,23 @@ export async function loadSmartsheetHealth(context = {}) {
   return payload;
 }
 
+export async function ensureSmartsheetColumns(requiredColumns = [], context = {}) {
+  const response = await fetch("/api/smartsheet/records", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "ensureColumns",
+      requiredColumns,
+      context,
+    }),
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload.ok === false) {
+    const error = new Error(payload.message || "Smartsheet column repair failed");
+    error.payload = payload;
+    throw error;
+  }
+  return payload;
+}
+
