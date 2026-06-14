@@ -2,6 +2,8 @@
 
 ## 2026-06-14
 
+- Changed Smartsheet column repair to add columns one at a time so Smartsheet accepts end-of-sheet inserts.
+- Set visible app version to `2026.06.14.005-fix-smartsheet-column-repair`.
 - Added a Smartsheet Health repair action that can create missing expected columns without creating placeholder rows.
 - Added repair buttons on Health cards so missing-column warnings can be satisfied from the app.
 - Set visible app version to `2026.06.14.004-feature-smartsheet-column-repair`.

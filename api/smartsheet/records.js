@@ -71,19 +71,20 @@ function buildSmartsheetCells(record, columnMap) {
 
 async function addMissingColumns(sheetId, sheet, missingColumns = []) {
   if (!missingColumns.length) return sheet;
-  const startIndex = (sheet.columns || []).length;
-  const columns = missingColumns.map((title, index) => ({
-    title,
-    type: "TEXT_NUMBER",
-    index: startIndex + index,
-  }));
+  let latestSheet = sheet;
+  for (const title of missingColumns) {
+    await smartsheetFetch(`/sheets/${sheetId}/columns`, {
+      method: "POST",
+      body: JSON.stringify([{
+        title,
+        type: "TEXT_NUMBER",
+        index: (latestSheet.columns || []).length,
+      }]),
+    });
+    latestSheet = await smartsheetFetch(`/sheets/${sheetId}`);
+  }
 
-  await smartsheetFetch(`/sheets/${sheetId}/columns`, {
-    method: "POST",
-    body: JSON.stringify(columns),
-  });
-
-  return smartsheetFetch(`/sheets/${sheetId}`);
+  return latestSheet;
 }
 
 function rowToRecord(row, columnsById) {
