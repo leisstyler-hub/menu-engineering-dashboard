@@ -37,6 +37,16 @@ const CAFE_STATION_CONFIG = {
   SNA3: ["global", "grill", "salad", "freshFive"]
 };
 
+const MENU_CONFLICT_GROUPS = {
+  South: [
+    {
+      label: "South neighborhood rotation",
+      cafes: ["Nitro", "Day 1", "Doppler"],
+      note: "Nitro/Frontier, Day 1, and Doppler cannot run the same Global Menu. Re:Invent is an exception."
+    }
+  ]
+};
+
 const STATION_LABELS = {
   global: "Global Station",
   wok: "Wok Station",
@@ -909,10 +919,56 @@ function rotationRequirements(rotation, cafe, week = "") {
   };
 }
 
+function conflictControlledRows(district, rows) {
+  const groups = MENU_CONFLICT_GROUPS[district];
+  if (!groups?.length) return rows;
+  const controlledCafes = new Set(groups.flatMap((group) => group.cafes));
+  return rows.filter((row) => controlledCafes.has(row.cafe));
+}
+
+function menuConflictCounts(rows) {
+  return rows.reduce((acc, row) => {
+    if (row.menu) acc[row.menu] = (acc[row.menu] || 0) + 1;
+    return acc;
+  }, {});
+}
+
+function menuConflictNote(district, cafe) {
+  const group = (MENU_CONFLICT_GROUPS[district] || []).find((entry) => entry.cafes.includes(cafe));
+  return group?.note || "This Global Menu is already selected by another cafe in the same district/week.";
+}
+
+function cafeUsesMenuConflictRule(district, cafe, copiedFrom = "") {
+  const groups = MENU_CONFLICT_GROUPS[district];
+  if (!groups?.length) return true;
+  return groups.some((group) => group.cafes.includes(cafe) || (copiedFrom && group.cafes.includes(copiedFrom)));
+}
+
+function rowHasMenuConflict(row, conflictMenus) {
+  if (!row.menu || !cafeUsesMenuConflictRule(row.district, row.cafe, row.copiedFrom)) return false;
+  const count = conflictMenus[`${row.district}|${row.menu}`] ?? conflictMenus[row.menu] ?? 0;
+  return count > 1;
+}
+
+function rotationRequirementIssues(requirements, cafe, { menu = "", duplicateMenuCount = 0, conflictNote = "" } = {}) {
+  const issues = [];
+  if (!requirements.globalReady) {
+    issues.push("Select a Global Menu and at least two Global entrees.");
+  }
+  if (requirements.incompleteStations.length > 0) {
+    issues.push(`Complete these station selections: ${requirements.incompleteStations.map((stationKey) => stationLabel(cafe, stationKey)).join(", ")}.`);
+  }
+  if (menu && duplicateMenuCount > 1) {
+    const otherCount = duplicateMenuCount - 1;
+    issues.push(`${menu} is already selected by ${otherCount} other cafe${otherCount === 1 ? "" : "s"}. ${conflictNote} Choose a different Global Menu or clear the duplicate before submitting.`);
+  }
+  return issues;
+}
+
 function leadershipRead(rows, conflictMenus) {
   const declared = rows.filter((row) => row.menu).length;
   const missing = rows.filter((row) => !row.menu).map((row) => row.cafe);
-  const conflicts = rows.filter((row) => row.menu && conflictMenus[`${row.district}|${row.menu}`] > 1);
+  const conflicts = rows.filter((row) => rowHasMenuConflict(row, conflictMenus));
   const parts = [`${declared} of ${rows.length} cafés have a Global declaration.`];
   if (missing.length) parts.push(`${missing.join(", ")} still need to submit.`);
   if (conflicts.length) parts.push(`${conflicts.length} café${conflicts.length === 1 ? " has" : "s have"} duplicate menu flags.`);
@@ -1256,9 +1312,15 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
 
   const districtWeekRows = cafes.map((cafe) => ({ district, cafe, ...(rotations[rotationKey(week, district, cafe)] || EMPTY_ROTATION) }));
   const leadershipRows = district === "South" ? districtWeekRows.flatMap((row) => row.cafe === "Nitro" ? [row, { ...row, cafe: "Frontier", copiedFrom: "Nitro" }] : [row]) : districtWeekRows;
-  const conflictMenus = districtWeekRows.reduce((acc, row) => { if (row.menu) acc[row.menu] = (acc[row.menu] || 0) + 1; return acc; }, {});
+  const conflictMenus = menuConflictCounts(conflictControlledRows(district, districtWeekRows));
   const allRows = Object.entries(DISTRICTS).flatMap(([dist, cafeList]) => cafeList.map((cafe) => ({ district: dist, cafe, ...(rotations[rotationKey(week, dist, cafe)] || EMPTY_ROTATION) })));
-  const allConflictMenus = allRows.reduce((acc, row) => { if (row.menu) acc[`${row.district}|${row.menu}`] = (acc[`${row.district}|${row.menu}`] || 0) + 1; return acc; }, {});
+  const allConflictMenus = Object.entries(DISTRICTS).reduce((acc, [dist, cafeList]) => {
+    const rows = cafeList.map((cafe) => ({ district: dist, cafe, ...(rotations[rotationKey(week, dist, cafe)] || EMPTY_ROTATION) }));
+    Object.entries(menuConflictCounts(conflictControlledRows(dist, rows))).forEach(([menu, count]) => {
+      acc[`${dist}|${menu}`] = count;
+    });
+    return acc;
+  }, {});
   const resultRows = ROLLING_ROTATION_WEEKS.flatMap((wk) => Object.entries(DISTRICTS).flatMap(([dist, cafeList]) => cafeList.map((cafe) => ({ week: wk, district: dist, cafe, ...(rotations[rotationKey(wk, dist, cafe)] || EMPTY_ROTATION) })))).filter((row) => row.menu);
   const filteredResults = resultRows.filter((row) => (resultsDistrict === "All" || row.district === resultsDistrict) && (resultsCafe === "All" || row.cafe === resultsCafe)).reverse();
   const persistRotationToDatabase = async (nextRotation) => {
@@ -1302,7 +1364,7 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
             </section>
             <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
               <div className="xl:col-span-2 space-y-6">
-                {district && selectedCafe ? <RotationPlannerCard cafe={selectedCafe} district={district} menuOptions={menus} rotation={currentRotation} previousRotation={previousRotation} previousWeek={carryoverWeek} updateRotation={updateRotation} week={week} printRows={allRows} persistRotationToDatabase={persistRotationToDatabase} databaseLoadStatus={databaseLoadStatus} databaseSyncStatus={databaseSyncStatus} onRefreshDatabase={refreshFromSmartsheet} isRefreshCoolingDown={smartsheetReadCooldown} /> : <SelectPlannerPrompt />}
+                {district && selectedCafe ? <RotationPlannerCard cafe={selectedCafe} district={district} menuOptions={menus} rotation={currentRotation} previousRotation={previousRotation} previousWeek={carryoverWeek} updateRotation={updateRotation} week={week} printRows={allRows} persistRotationToDatabase={persistRotationToDatabase} databaseLoadStatus={databaseLoadStatus} databaseSyncStatus={databaseSyncStatus} onRefreshDatabase={refreshFromSmartsheet} isRefreshCoolingDown={smartsheetReadCooldown} menuConflictCount={currentRotation.menu && cafeUsesMenuConflictRule(district, selectedCafe) ? (conflictMenus[currentRotation.menu] || 0) : 0} /> : <SelectPlannerPrompt />}
               </div>
               <LeadershipOverview district={district} week={week} rows={leadershipRows} conflictMenus={conflictMenus} />
             </section>
@@ -1514,9 +1576,10 @@ function SmartsheetDatabaseStatusPanel({ loadStatus, syncStatus, onRefreshDataba
   );
 }
 
-function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRotation, previousWeek, updateRotation, week, printRows, persistRotationToDatabase, databaseLoadStatus, databaseSyncStatus, onRefreshDatabase, isRefreshCoolingDown = false }) {
+function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRotation, previousWeek, updateRotation, week, printRows, persistRotationToDatabase, databaseLoadStatus, databaseSyncStatus, onRefreshDatabase, isRefreshCoolingDown = false, menuConflictCount = 0 }) {
   const [preview, setPreview] = useState(null);
   const [copiedRotation, setCopiedRotation] = useState(null);
+  const [submitWarningOpen, setSubmitWarningOpen] = useState(false);
 
   const stationOptions = subConceptOptionsForMenu(rotation.menu);
   const menuItems = globalMenuRows(rotation.menu, rotation.station);
@@ -1526,7 +1589,8 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
   const cafeStations = CAFE_STATION_CONFIG[cafe] || ["global"];
   const stationCostOverview = getStationCostOverview(rotation, cafe);
   const requirements = rotationRequirements(rotation, cafe, week);
-  const canSubmitRotation = requirements.canSubmit;
+  const submitIssues = rotationRequirementIssues(requirements, cafe, { menu: rotation.menu, duplicateMenuCount: menuConflictCount, conflictNote: menuConflictNote(district, cafe) });
+  const canSubmitRotation = requirements.canSubmit && submitIssues.length === 0;
 
   const updateSlot = (group, index, value) => {
     const next = [...(rotation[group] || EMPTY_ROTATION[group])];
@@ -1548,11 +1612,15 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
     persistRotationToDatabase?.(nextRotation);
   };
   const submitRotation = () => {
-    if (!canSubmitRotation) return;
+    if (!canSubmitRotation) {
+      setSubmitWarningOpen(true);
+      return;
+    }
     const stamp = nowStamp();
     const nextRotation = { ...rotation, status: "Submitted", updatedAt: stamp, submittedAt: stamp, submittedBy: "Chef" };
     updateRotation(nextRotation);
     persistRotationToDatabase?.(nextRotation);
+    setSubmitWarningOpen(false);
   };
   const copyCurrentRotation = () => {
     const copy = { ...rotation, status: "Draft", updatedAt: "", submittedAt: "", submittedBy: "" };
@@ -1586,10 +1654,19 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
         printRows={printRows}
         rotation={rotation}
         requirements={requirements}
+        submitIssues={submitIssues}
         canSubmit={canSubmitRotation}
         onSaveDraft={markDraft}
         onSubmit={submitRotation}
       />
+      {submitWarningOpen && (
+        <SubmitBlockedModal
+          cafe={cafe}
+          menu={rotation.menu}
+          issues={submitIssues}
+          onClose={() => setSubmitWarningOpen(false)}
+        />
+      )}
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-[0.18em] text-slate-500 font-bold">Chef Planner</p>
@@ -1715,7 +1792,7 @@ function StationCostOverview({ rows }) {
 }
 
 
-function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, setPreview, applyPreview, week, printRows, rotation, requirements, canSubmit, onSaveDraft, onSubmit }) {
+function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, setPreview, applyPreview, week, printRows, rotation, requirements, submitIssues = [], canSubmit, onSaveDraft, onSubmit }) {
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const copiedSummary = copiedRotation?.menu
     ? `${copiedRotation.menu}${copiedRotation.station ? ` • ${copiedRotation.station}` : ""}`
@@ -1727,6 +1804,7 @@ function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, s
     setPreview(weekAtGlancePreview(file.name));
     event.target.value = "";
   };
+  const submitHelp = submitIssues.length ? submitIssues.join(" ") : "Ready to submit.";
 
   return (
     <div className="mb-5 rounded-[1.75rem] border border-slate-300 bg-slate-950 p-3 shadow-lg print:hidden">
@@ -1737,7 +1815,7 @@ function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, s
             <h3 className="text-2xl font-bold mt-1 text-white">{rotation?.status || "Draft"}</h3>
             <div className="mt-2 flex flex-wrap gap-2 text-xs">
               <span className="rounded-full border border-slate-600 bg-slate-800 px-3 py-1 font-semibold text-slate-300">{copiedSummary}</span>
-              <span className={`rounded-full border px-3 py-1 font-semibold ${canSubmit ? "border-emerald-400 bg-emerald-500/15 text-emerald-200" : "border-amber-400 bg-amber-500/15 text-amber-200"}`}>{canSubmit ? "Ready to submit" : "Needs selections"}</span>
+              <span title={submitHelp} className={`rounded-full border px-3 py-1 font-semibold ${canSubmit ? "border-emerald-400 bg-emerald-500/15 text-emerald-200" : "border-rose-400 bg-rose-500/15 text-rose-100"}`}>{canSubmit ? "Ready to submit" : "Submit blocked"}</span>
               {rotation?.updatedAt && <span className="rounded-full border border-slate-600 bg-slate-800 px-3 py-1 font-semibold text-slate-300">Updated {rotation.updatedAt}</span>}
             </div>
           </div>
@@ -1747,13 +1825,20 @@ function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, s
             <RemoteUploadButton onChange={handleUpload} />
             <RemoteButton icon={Printer} label={showPrintPreview ? "Hide Print" : "Print"} onClick={() => setShowPrintPreview((value) => !value)} />
             <RemoteButton icon={Save} label="Save Draft" onClick={onSaveDraft} tone="light" />
-            <RemoteButton icon={Send} label="Submit" onClick={onSubmit} disabled={!canSubmit} tone="go" />
+            <RemoteButton icon={Send} label="Submit" onClick={onSubmit} blocked={!canSubmit} title={submitHelp} tone="go" />
           </div>
         </div>
         {!canSubmit && (
-          <div className="mt-3 rounded-2xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-xs font-semibold text-amber-100">
-            {!requirements.globalReady && <span>Missing Global Menu or two entrees. </span>}
-            {requirements.incompleteStations.length > 0 && <span>Missing station: {requirements.incompleteStations.map((stationKey) => stationLabel(cafe, stationKey)).join(", ")}.</span>}
+          <div className="mt-3 rounded-2xl border border-rose-400/60 bg-rose-500/15 px-4 py-3 text-sm font-semibold text-rose-50 shadow-[0_0_0_1px_rgba(251,113,133,0.18)]">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="mt-0.5 shrink-0 text-rose-200" size={18} />
+              <div>
+                <p className="font-black">Submit is blocked until these are fixed:</p>
+                <ul className="mt-2 list-disc space-y-1 pl-5">
+                  {submitIssues.map((issue) => <li key={issue}>{issue}</li>)}
+                </ul>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -1790,18 +1875,48 @@ function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, s
   );
 }
 
-function RemoteButton({ icon: Icon, label, onClick, disabled = false, tone = "default" }) {
+function SubmitBlockedModal({ cafe, menu, issues, onClose }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4 print:hidden" role="dialog" aria-modal="true" aria-labelledby="submit-blocked-title">
+      <div className="w-full max-w-xl rounded-[1.75rem] border border-rose-300 bg-white p-6 text-slate-950 shadow-2xl">
+        <div className="flex items-start gap-3">
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-3 text-rose-700">
+            <AlertTriangle size={28} />
+          </div>
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-rose-700">Submission blocked</p>
+            <h3 id="submit-blocked-title" className="mt-1 text-2xl font-black">Fix this before submitting</h3>
+            <p className="mt-2 text-sm font-semibold text-slate-600">{cafe}{menu ? ` - ${menu}` : ""}</p>
+          </div>
+        </div>
+        <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-950">
+          <ul className="list-disc space-y-2 pl-5">
+            {issues.map((issue) => <li key={issue}>{issue}</li>)}
+          </ul>
+        </div>
+        <div className="mt-5 flex justify-end">
+          <button type="button" onClick={onClose} className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white hover:bg-slate-800">OK</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RemoteButton({ icon: Icon, label, onClick, disabled = false, blocked = false, title = "", tone = "default" }) {
   const toneClass = tone === "go"
     ? "border-emerald-400 bg-emerald-400 text-slate-950 hover:bg-emerald-300"
     : tone === "light"
       ? "border-slate-500 bg-white text-slate-950 hover:bg-slate-100"
       : "border-slate-600 bg-slate-800 text-slate-100 hover:bg-slate-700";
+  const blockedClass = "border-rose-400/70 bg-rose-500/15 text-rose-50 hover:bg-rose-500/25";
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`flex min-h-[64px] min-w-0 flex-col items-center justify-center gap-1 rounded-2xl border px-2.5 py-2.5 text-center text-[11px] font-bold leading-tight shadow-sm transition ${disabled ? "cursor-not-allowed border-slate-700 bg-slate-800 text-slate-500 opacity-60" : toneClass}`}
+      aria-disabled={blocked || disabled}
+      title={title}
+      className={`flex min-h-[64px] min-w-0 flex-col items-center justify-center gap-1 rounded-2xl border px-2.5 py-2.5 text-center text-[11px] font-bold leading-tight shadow-sm transition ${disabled ? "cursor-not-allowed border-slate-700 bg-slate-800 text-slate-500 opacity-60" : blocked ? blockedClass : toneClass}`}
     >
       <Icon size={18} />
       <span>{label}</span>
@@ -2053,16 +2168,36 @@ function GlobalSection({ cafe, week, rotation, previousRotation, previousWeek, m
   const carryover = carryoverGlobalBlock(previousRotation);
 
   const selectMenu = (menu) => {
-    const next = menu ? blankRotation(menu) : blankRotation();
-    next.promotionOverride = promo;
-    updateRotation(next);
+    updateRotation({
+      menu,
+      station: "",
+      entrees: [...EMPTY_ROTATION.entrees],
+      sides: [...EMPTY_ROTATION.sides],
+      subRecipes: [...EMPTY_ROTATION.subRecipes],
+      extensions: [...EMPTY_ROTATION.extensions],
+      globalBlocks: {},
+      promotionOverride: promo,
+      status: "Draft",
+      submittedAt: "",
+      submittedBy: "Chef",
+      updatedAt: nowStamp()
+    });
   };
 
   const selectStation = (station) => {
-    const next = blankRotation(rotation.menu, station);
-    next.promotionOverride = promo;
-    next.globalBlocks = rotation.globalBlocks || {};
-    updateRotation(next);
+    updateRotation({
+      station,
+      entrees: [...EMPTY_ROTATION.entrees],
+      sides: [...EMPTY_ROTATION.sides],
+      subRecipes: [...EMPTY_ROTATION.subRecipes],
+      extensions: [...EMPTY_ROTATION.extensions],
+      promotionOverride: promo,
+      globalBlocks: rotation.globalBlocks || {},
+      status: "Draft",
+      submittedAt: "",
+      submittedBy: "Chef",
+      updatedAt: nowStamp()
+    });
   };
 
   if (cafe === "Re:Invent") {
@@ -2546,7 +2681,7 @@ function LeadershipOverview({ district, week, rows, conflictMenus }) {
   return (
     <div className="rounded-[2rem] bg-white border border-slate-200 p-6 shadow-2xl">
       <div className="flex items-start gap-3"><CalendarDays className="text-slate-400" /><div><p className="text-sm uppercase tracking-[0.2em] text-slate-400">Leadership Overview</p><h2 className="text-2xl font-bold mt-1">District At Large</h2><p className="mt-1 text-sm font-semibold text-slate-500">{district || "Select district"} • {week}</p></div></div>
-      <div className="mt-5 space-y-3">{rows.map((row) => <SummaryCard key={row.cafe} row={row} conflict={row.menu && conflictMenus[row.menu] > 1} />)}</div>
+      <div className="mt-5 space-y-3">{rows.map((row) => <SummaryCard key={row.cafe} row={row} conflict={rowHasMenuConflict(row, conflictMenus)} />)}</div>
     </div>
   );
 }
@@ -2554,7 +2689,7 @@ function LeadershipOverview({ district, week, rows, conflictMenus }) {
 function ExecutiveView({ week, setWeek, rows, conflictMenus }) {
   const locked = rows.filter((row) => row.status === "Submitted").length;
   const declared = rows.filter((row) => row.menu).length;
-  const conflicts = rows.filter((row) => row.menu && conflictMenus[`${row.district}|${row.menu}`] > 1).length;
+  const conflicts = rows.filter((row) => rowHasMenuConflict(row, conflictMenus)).length;
   const globalRows = rows.filter((row) => row.menu);
   const globalSummaries = globalRows.map((row) => ({ ...row, summary: foodSummary(selectedItems(row)) }));
   const pricedGlobalSummaries = globalSummaries.filter((row) => row.summary.fc != null);
@@ -2572,7 +2707,7 @@ function ExecutiveView({ week, setWeek, rows, conflictMenus }) {
     const districtRows = rows.filter((row) => row.district === districtName);
     const districtLocked = districtRows.filter((row) => row.status === "Submitted").length;
     const districtDeclared = districtRows.filter((row) => row.menu).length;
-    const districtConflicts = districtRows.filter((row) => row.menu && conflictMenus[`${row.district}|${row.menu}`] > 1).length;
+    const districtConflicts = districtRows.filter((row) => rowHasMenuConflict(row, conflictMenus)).length;
     const pricedRows = districtRows
       .map((row) => {
         const range = selectedFoodCostRange(selectedItems(row));
@@ -2629,7 +2764,7 @@ function ExecutiveView({ week, setWeek, rows, conflictMenus }) {
                 </div>
                 <div className="mt-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                   {districtRows.map((row) => (
-                    <SummaryCard key={`${row.district}-${row.cafe}`} row={row} conflict={row.menu && conflictMenus[`${row.district}|${row.menu}`] > 1} showDistrict={false} />
+                    <SummaryCard key={`${row.district}-${row.cafe}`} row={row} conflict={rowHasMenuConflict(row, conflictMenus)} showDistrict={false} />
                   ))}
                 </div>
               </div>
@@ -2673,7 +2808,7 @@ function LeadershipStatusBoard({ rows }) {
 function LeadershipPulsePanel({ signals, rows, conflictMenus }) {
   const openRows = rows.filter((row) => row.status !== "Submitted");
   const missingMenuRows = rows.filter((row) => !row.menu);
-  const duplicateRows = rows.filter((row) => row.menu && conflictMenus[`${row.district}|${row.menu}`] > 1);
+  const duplicateRows = rows.filter((row) => rowHasMenuConflict(row, conflictMenus));
   const highCostRows = rows.filter((row) => {
     const range = selectedFoodCostRange(selectedItems(row));
     const midpoint = range.low != null && range.high != null ? (range.low + range.high) / 2 : null;

@@ -98,6 +98,8 @@
 
   html.dark [class*="bg-violet-50"],
   html.dark [class*="bg-violet-100"],
+  html.dark [class*="bg-indigo-50"],
+  html.dark [class*="bg-indigo-100"],
   html.dark [class*="bg-purple-50"],
   html.dark [class*="bg-purple-100"] {
     background-color: #2e1a47 !important;
@@ -111,6 +113,7 @@
   html.dark [class*="border-yellow-200"],
   html.dark [class*="border-rose-200"],
   html.dark [class*="border-red-200"],
+  html.dark [class*="border-indigo-200"],
   html.dark [class*="border-violet-200"],
   html.dark :where(header, main, aside, section, article, div)[class*="border"][class*="shadow"] {
     border-color: #334155 !important;
@@ -189,10 +192,18 @@
   html.dark [class*="text-violet-950"],
   html.dark [class*="text-violet-900"],
   html.dark [class*="text-violet-800"],
+  html.dark [class*="text-indigo-950"],
+  html.dark [class*="text-indigo-900"],
+  html.dark [class*="text-indigo-800"],
   html.dark [class*="text-purple-950"],
   html.dark [class*="text-purple-900"],
   html.dark [class*="text-purple-800"] {
     color: #ddd6fe !important;
+  }
+
+  html.dark [class*="text-indigo-700"],
+  html.dark [class*="text-indigo-600"] {
+    color: #c7d2fe !important;
   }
 
   html.dark [class*="bg-emerald-500"],

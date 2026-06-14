@@ -2,6 +2,11 @@
 
 ## 2026-06-14
 
+- Added a hard-stop Neighborhood Rotations submit guard with clear blocked-state messaging and a persistent warning popup.
+- Applied the South no-match rule to Nitro/Frontier, Day 1, and Doppler while keeping Re:Invent as an exception.
+- Preserved non-Global station selections when changing a Global Menu or Street Eats option.
+- Improved dark-mode contrast for previous-week carryover information.
+- Set visible app version to `2026.06.14.009-fix-rotation-submit-guard`.
 - Improved Lean Tool mobile mode with larger primary controls and compact mobile selectors for district, cafe, area, and observer.
 - Added visible Lean Results voided record and voided row counts.
 - Removed forced truncation from Lean and Smartsheet Health metric cards so labels and values wrap instead of being cut off.
