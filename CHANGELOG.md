@@ -2,6 +2,8 @@
 
 ## 2026-06-14
 
+- [Jun 14, 2:19 PM] Removed draft records from Rotation History, added changelog velocity counters, tightened trust-layer pricing logic, added a downloadable trust gap list, and redesigned Lean Tool phone readability.
+- [Jun 14, 2:19 PM] Set visible app version to `2026.06.14.010-feature-trust-history-mobile`.
 - Added a hard-stop Neighborhood Rotations submit guard with clear blocked-state messaging and a persistent warning popup.
 - Applied the South no-match rule to Nitro/Frontier, Day 1, and Doppler while keeping Re:Invent as an exception.
 - Preserved non-Global station selections when changing a Global Menu or Street Eats option.

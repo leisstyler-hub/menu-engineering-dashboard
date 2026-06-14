@@ -622,11 +622,11 @@ export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const reportSummary = completedSummary || summary;
 
   return (
-    <div className="min-h-screen bg-[#f4f8f7] text-slate-950">
-      <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-5 md:px-6">
-        <header className="rounded-[2rem] border border-emerald-200 bg-white p-5 shadow-xl">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <button onClick={onBackToPlatform} className="inline-flex w-fit items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">
+    <div className="min-h-screen bg-[#f4f8f7] text-[16px] text-slate-950">
+      <div className="mx-auto flex max-w-7xl flex-col gap-4 px-3 py-3 sm:px-4 sm:py-5 md:px-6">
+        <header className="rounded-[2rem] border border-emerald-200 bg-white p-4 shadow-xl sm:p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <button onClick={onBackToPlatform} className="inline-flex w-fit items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base font-bold text-slate-700 hover:bg-slate-50 sm:py-2 sm:text-sm">
               <ArrowLeft size={18} />
               Back to Platform
             </button>
@@ -635,19 +635,19 @@ export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
               <CompassOneLogo compact />
             </div>
           </div>
-          <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-[1fr_360px] lg:items-end">
+          <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[1fr_360px] lg:items-end">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-600">Lean Tool</p>
-              <h1 className="mt-2 text-3xl font-bold tracking-normal md:text-5xl">Fast DOWNTIME observation tracker</h1>
-              <p className="mt-3 hidden max-w-3xl text-sm leading-6 text-slate-600 sm:block">
+              <p className="text-sm font-bold uppercase tracking-[0.16em] text-emerald-600 sm:text-xs sm:tracking-[0.2em]">Lean Tool</p>
+              <h1 className="mt-2 text-[2.15rem] font-black leading-[1.05] tracking-normal sm:text-4xl md:text-5xl">Fast DOWNTIME observation tracker</h1>
+              <p className="mt-3 max-w-3xl text-base font-semibold leading-7 text-slate-600 sm:text-sm sm:font-normal sm:leading-6">
                 Built for phone and tablet field walks: watch the work, tap what happened, and send a leader-ready report.
               </p>
             </div>
-            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 sm:p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Mobile Mode</p>
-                  <p className="mt-1 text-2xl font-bold">Tap, mark, report</p>
+                  <p className="text-sm font-bold uppercase tracking-[0.14em] text-slate-500 sm:text-xs sm:tracking-[0.18em]">Mobile Mode</p>
+                  <p className="mt-1 text-2xl font-black">Tap, mark, report</p>
                 </div>
                 <Smartphone className="text-emerald-600" size={34} />
               </div>
@@ -657,19 +657,19 @@ export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
         </header>
 
         <nav className="grid w-full grid-cols-2 rounded-2xl border border-slate-200 bg-white p-1 shadow-sm sm:flex sm:w-fit">
-          <button onClick={() => setViewMode("tracker")} className={`min-h-12 rounded-xl px-5 py-3 text-base font-black sm:text-sm ${viewMode === "tracker" ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-slate-50"}`}>
+          <button onClick={() => setViewMode("tracker")} className={`min-h-14 rounded-xl px-5 py-3 text-lg font-black sm:min-h-12 sm:text-sm ${viewMode === "tracker" ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-slate-50"}`}>
             Tracker
           </button>
-          <button onClick={() => setViewMode("results")} className={`min-h-12 rounded-xl px-5 py-3 text-base font-black sm:text-sm ${viewMode === "results" ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-slate-50"}`}>
+          <button onClick={() => setViewMode("results")} className={`min-h-14 rounded-xl px-5 py-3 text-lg font-black sm:min-h-12 sm:text-sm ${viewMode === "results" ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-slate-50"}`}>
             Results
           </button>
         </nav>
 
         {viewMode === "tracker" ? (
-        <section className="grid grid-cols-1 gap-4 xl:grid-cols-[300px_1fr_360px]">
-          <aside className="rounded-[2rem] border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Observation Setup</p>
-            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:block">
+        <section className="grid grid-cols-1 gap-4 2xl:grid-cols-[300px_1fr_360px]">
+          <aside className="rounded-[2rem] border border-slate-200 bg-white p-4 shadow-sm sm:p-5 2xl:p-4">
+            <p className="text-sm font-bold uppercase tracking-[0.14em] text-slate-500 sm:text-xs sm:tracking-[0.18em]">Observation Setup</p>
+            <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:block">
               <Segmented label="District" value={district} setValue={setDistrict} options={Object.keys(DISTRICTS)} />
               <Segmented label="Cafe / Unit" value={cafe} setValue={setCafe} options={cafesForDistrict} />
               <Segmented label="Area" value={area} setValue={setArea} options={AREA_OPTIONS} />
@@ -683,27 +683,27 @@ export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
               <p className="mt-2 text-sm text-emerald-900">{district} / {cafe} / {area}</p>
               <p className="text-xs text-emerald-800">{observationDate}</p>
             </div>
-            <div className={`mt-3 rounded-2xl border p-3 text-xs font-bold ${leanSyncStatus.state === "synced" ? "border-emerald-200 bg-emerald-50 text-emerald-900" : leanSyncStatus.state === "error" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-slate-200 bg-slate-50 text-slate-600"}`}>
+            <div className={`mt-3 rounded-2xl border p-3 text-sm font-bold sm:text-xs ${leanSyncStatus.state === "synced" ? "border-emerald-200 bg-emerald-50 text-emerald-900" : leanSyncStatus.state === "error" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-slate-200 bg-slate-50 text-slate-600"}`}>
               Smartsheet: {leanSyncStatus.message}
             </div>
           </aside>
 
-          <main className="rounded-[2rem] border border-slate-200 bg-white p-4 shadow-sm">
+          <main className="rounded-[2rem] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Live Marking Board</p>
-                <h2 className="mt-1 text-3xl font-bold">What are they doing?</h2>
+                <p className="text-sm font-bold uppercase tracking-[0.14em] text-slate-500 sm:text-xs sm:tracking-[0.18em]">Live Marking Board</p>
+                <h2 className="mt-1 text-[1.9rem] font-black leading-tight sm:text-3xl">What are they doing?</h2>
               </div>
-              <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
-                <button onClick={handleStart} className={`inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl px-4 py-3 text-base font-black sm:text-sm ${running ? "bg-emerald-500 text-white" : "bg-slate-950 text-white"}`}>
+              <div className="grid grid-cols-1 gap-2 min-[430px]:grid-cols-3 sm:flex sm:flex-wrap">
+                <button onClick={handleStart} className={`inline-flex min-h-16 items-center justify-center gap-2 rounded-2xl px-4 py-3 text-lg font-black sm:min-h-14 sm:text-sm ${running ? "bg-emerald-500 text-white" : "bg-slate-950 text-white"}`}>
                   {running ? <Timer size={18} /> : <Play size={18} />}
                   {running ? "Observing" : "Start"}
                 </button>
-                <button onClick={completeSession} disabled={!sessionId || !summary.total} className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-base font-black text-emerald-900 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm">
+                <button onClick={completeSession} disabled={!sessionId || !summary.total} className="inline-flex min-h-16 items-center justify-center gap-2 rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-lg font-black text-emerald-900 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-14 sm:text-sm">
                   <CheckCircle2 size={18} />
                   Complete
                 </button>
-                <button onClick={resetSession} className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base font-black text-slate-700 hover:bg-slate-50 sm:text-sm">
+                <button onClick={resetSession} className="inline-flex min-h-16 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-lg font-black text-slate-700 hover:bg-slate-50 sm:min-h-14 sm:text-sm">
                   <RotateCcw size={18} />
                   Reset
                 </button>
@@ -722,16 +722,16 @@ export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                 </div>
               </div>
               <div className="mt-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                <p className="font-mono text-[4.6rem] font-black leading-none tracking-normal tabular-nums md:text-[6.4rem]">
+                <p className="font-mono text-[clamp(4rem,18vw,6.4rem)] font-black leading-none tracking-normal tabular-nums">
                   {formatClock(elapsedSeconds)}
                 </p>
-                <div className={`grid min-w-[260px] grid-cols-2 gap-2 rounded-3xl border p-3 ${running || !completedAt ? "border-white/10 bg-white/10" : "border-emerald-200 bg-white/70"}`}>
+                <div className={`grid w-full grid-cols-2 gap-2 rounded-3xl border p-3 lg:min-w-[260px] lg:w-auto ${running || !completedAt ? "border-white/10 bg-white/10" : "border-emerald-200 bg-white/70"}`}>
                   <div>
-                    <p className="text-xs font-black uppercase tracking-[0.14em] opacity-60">Last Mark</p>
+                    <p className="text-sm font-black uppercase tracking-[0.1em] opacity-70 sm:text-xs sm:tracking-[0.14em]">Last Mark</p>
                     <p className="mt-1 font-mono text-2xl font-black tabular-nums">{activeRows[0] ? `+${formatSeconds(activeRows[0].timestampSeconds)}` : "-"}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-black uppercase tracking-[0.14em] opacity-60">Timed</p>
+                    <p className="text-sm font-black uppercase tracking-[0.1em] opacity-70 sm:text-xs sm:tracking-[0.14em]">Timed</p>
                     <p className="mt-1 font-mono text-2xl font-black tabular-nums">{formatSeconds(summary.seconds)}</p>
                   </div>
                 </div>
@@ -739,8 +739,8 @@ export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
             </div>
 
             <div className="mt-5">
-              <p className="text-sm font-bold text-slate-700">Activity</p>
-              <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-3">
+              <p className="text-base font-black text-slate-800 sm:text-sm">Activity</p>
+              <div className="mt-2 grid grid-cols-1 gap-2 min-[430px]:grid-cols-2 lg:grid-cols-3">
                 {ACTIVITIES.map((activity) => (
                   <TapButton key={activity} active={selectedActivity === activity} onClick={() => setSelectedActivity(activity)}>
                     {activity}
@@ -750,23 +750,23 @@ export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
             </div>
 
             <div className="mt-5">
-              <p className="text-sm font-bold text-slate-700">DOWNTIME Waste</p>
-              <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
+              <p className="text-base font-black text-slate-800 sm:text-sm">DOWNTIME Waste</p>
+              <div className="mt-2 grid grid-cols-1 gap-2 lg:grid-cols-2">
                 {WASTE_TYPES.map((waste) => (
-                  <button key={waste.key} onClick={() => setSelectedWaste(waste.key)} className={`flex min-h-20 items-center gap-3 rounded-2xl border-2 p-3 text-left transition ${selectedWaste === waste.key ? `${colorClasses[waste.color]} shadow-[0_0_0_3px_rgba(16,185,129,0.12)]` : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}>
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-lg font-black">{waste.letter}</span>
+                  <button key={waste.key} onClick={() => setSelectedWaste(waste.key)} className={`flex min-h-24 items-center gap-3 rounded-2xl border-2 p-4 text-left transition sm:min-h-20 sm:p-3 ${selectedWaste === waste.key ? `${colorClasses[waste.color]} shadow-[0_0_0_3px_rgba(16,185,129,0.12)]` : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}>
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-xl font-black sm:h-10 sm:w-10 sm:text-lg">{waste.letter}</span>
                     <span>
-                      <span className="block font-bold">{waste.label}</span>
-                      <span className="block text-xs opacity-70">{waste.examples}</span>
+                      <span className="block text-base font-black sm:text-sm">{waste.label}</span>
+                      <span className="block text-sm font-semibold opacity-70 sm:text-xs">{waste.examples}</span>
                     </span>
                   </button>
                 ))}
               </div>
             </div>
 
-            <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-[1fr_180px]">
-              <input value={note} onChange={(event) => setNote(event.target.value)} placeholder="Quick note, optional" className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-base font-semibold outline-none focus:border-emerald-400" />
-              <button onClick={markObservation} className="inline-flex min-h-16 items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-5 py-4 text-xl font-black text-white shadow-lg shadow-emerald-200 hover:bg-emerald-600">
+            <div className="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-[1fr_180px]">
+              <input value={note} onChange={(event) => setNote(event.target.value)} placeholder="Quick note, optional" className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-lg font-semibold outline-none focus:border-emerald-400 sm:text-base" />
+              <button onClick={markObservation} className="inline-flex min-h-20 items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-5 py-4 text-2xl font-black text-white shadow-lg shadow-emerald-200 hover:bg-emerald-600 sm:min-h-16 sm:text-xl">
                 <CheckCircle2 size={22} />
                 Mark
               </button>
@@ -1331,16 +1331,16 @@ function ReportBreakdown({ title, rows, totalSeconds }) {
 
 function Segmented({ label, value, setValue, options }) {
   return (
-    <div className="xl:mt-4">
-      <p className="text-sm font-bold text-slate-700">{label}</p>
+    <div className="2xl:mt-4">
+      <p className="text-base font-black text-slate-800 sm:text-sm sm:font-bold">{label}</p>
       <select
         value={value}
         onChange={(event) => setValue(event.target.value)}
-        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-base font-black text-slate-900 outline-none focus:border-emerald-400 xl:hidden"
+        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-5 text-lg font-black text-slate-900 outline-none focus:border-emerald-400 sm:py-4 sm:text-base 2xl:hidden"
       >
         {options.map((option) => <option key={option} value={option}>{option}</option>)}
       </select>
-      <div className="mt-2 hidden flex-wrap gap-2 xl:flex">
+      <div className="mt-2 hidden flex-wrap gap-2 2xl:flex">
         {options.map((option) => (
           <button key={option} onClick={() => setValue(option)} className={`rounded-full border px-3 py-2 text-xs font-bold ${value === option ? "border-emerald-400 bg-emerald-50 text-emerald-900 shadow-[0_0_0_2px_rgba(16,185,129,0.14)]" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}>
             {option}
@@ -1353,7 +1353,7 @@ function Segmented({ label, value, setValue, options }) {
 
 function TapButton({ active, onClick, children }) {
   return (
-    <button onClick={onClick} className={`min-h-16 rounded-2xl border-2 px-4 py-4 text-left text-base font-black leading-5 transition ${active ? "border-emerald-400 bg-emerald-50 text-emerald-900 shadow-[0_0_0_3px_rgba(16,185,129,0.16)]" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}>
+    <button onClick={onClick} className={`min-h-20 rounded-2xl border-2 px-4 py-4 text-left text-lg font-black leading-6 transition sm:min-h-16 sm:text-base sm:leading-5 ${active ? "border-emerald-400 bg-emerald-50 text-emerald-900 shadow-[0_0_0_3px_rgba(16,185,129,0.16)]" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}>
       {children}
     </button>
   );
@@ -1364,9 +1364,9 @@ function MiniMetric({ icon: Icon, label, value }) {
     <div className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-3">
       <div className="flex items-start gap-2 text-slate-500">
         <Icon className="mt-0.5 shrink-0" size={16} />
-        <p className="text-xs font-bold uppercase leading-4 tracking-[0.12em]">{label}</p>
+        <p className="text-sm font-bold uppercase leading-5 tracking-[0.08em] sm:text-xs sm:leading-4 sm:tracking-[0.12em]">{label}</p>
       </div>
-      <p className="mt-2 break-words text-xl font-black leading-6 text-slate-950">{value}</p>
+      <p className="mt-2 break-words text-2xl font-black leading-7 text-slate-950 sm:text-xl sm:leading-6">{value}</p>
     </div>
   );
 }

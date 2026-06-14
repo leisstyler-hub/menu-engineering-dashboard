@@ -16,11 +16,19 @@ const getDietType = (item) => {
   return "Regular";
 };
 
-const firstTenChangelogItems = CHANGELOG_TEXT
-  .split("\n")
-  .filter((line) => line.startsWith("- "))
-  .slice(0, 10)
-  .map((line) => line.replace(/^- /, ""));
+const CHANGELOG_ENTRIES = (() => {
+  let currentDate = "";
+  return CHANGELOG_TEXT
+    .split("\n")
+    .reduce((entries, line) => {
+      const dateMatch = line.match(/^##\s+(.+)/);
+      if (dateMatch) currentDate = dateMatch[1].trim();
+      if (line.startsWith("- ")) entries.push({ text: line.replace(/^- /, ""), date: currentDate });
+      return entries;
+    }, []);
+})();
+
+const firstTenChangelogItems = CHANGELOG_ENTRIES.slice(0, 10);
 
 const countBy = (rows, getKey) =>
   rows.reduce((acc, row) => {
@@ -31,20 +39,81 @@ const countBy = (rows, getKey) =>
 
 const percentOf = (value, total) => total ? Math.round((value / total) * 100) : 0;
 
+const PROTEIN_PATTERN = /beef|chicken|pork|turkey|salmon|fish|cod|shrimp|tuna|meatball|steak|brisket|carnitas|chorizo|bacon|sausage|egg|tofu|tempeh|paneer|lentil|bean|chickpea|falafel/i;
+const COMPLIMENTARY_PATTERN = /sauce|dressing|dip|salsa|aioli|chutney|relish|gravy|marinade|vinaigrette|condiment|garnish|pickle|seasoning|spice|rub/i;
+
+const itemText = (item) => [
+  item.item,
+  item.displayName,
+  item.recipeName,
+  item.recipeCategory,
+  item.category,
+  item.menuItemNotes,
+  item.ingredientsCommonName,
+].filter(Boolean).join(" ");
+
+const hasProteinSignal = (item) => PROTEIN_PATTERN.test(itemText(item));
+const isComplimentaryItem = (item) => {
+  const category = String(item.category || "").toLowerCase();
+  if (category === "subrecipe") return true;
+  return category === "extension" || COMPLIMENTARY_PATTERN.test(itemText(item));
+};
+
+const csvEscape = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+
+function downloadTrustLayerGapList(rows) {
+  const headers = ["Gap Type", "Item", "Menu", "Station", "Category", "MRN", "Recipe Category", "Current Price", "True Cost", "Notes"];
+  const body = rows.map((row) => [
+    row.gapType,
+    row.item || row.displayName,
+    row.menu,
+    row.station,
+    row.category,
+    row.mrn,
+    row.recipeCategory,
+    row.price ?? "",
+    row.trueCost ?? "",
+    row.menuItemNotes || "",
+  ]);
+  const csv = [headers, ...body].map((line) => line.map(csvEscape).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "culinary-tools-trust-layer-gaps.csv";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodRotations, onOpenLadleCompliance, onOpenLeanTool, onOpenSmartsheetHealth }) {
   const totalItems = MENUWORKS_ITEMS.length;
   const menuCount = new Set(MENUWORKS_ITEMS.map((item) => item.menu).filter(Boolean)).size;
   const costedItems = MENUWORKS_ITEMS.filter((item) => item.trueCost != null).length;
-  const pricedItems = MENUWORKS_ITEMS.filter((item) => item.price != null && item.trueCost != null).length;
-  const avgFoodCost = pricedItems
-    ? MENUWORKS_ITEMS.filter((item) => item.price && item.trueCost != null).reduce((sum, item) => sum + (item.trueCost / item.price), 0) / pricedItems
+  const foodCostRows = MENUWORKS_ITEMS.filter((item) => item.price != null && item.price > 0 && item.trueCost != null);
+  const complimentaryItems = MENUWORKS_ITEMS.filter(isComplimentaryItem);
+  const priceRequiredItems = MENUWORKS_ITEMS.filter((item) => !isComplimentaryItem(item));
+  const pricedRequiredItems = priceRequiredItems.filter((item) => item.price != null && item.price > 0);
+  const proteinPriceGaps = priceRequiredItems.filter((item) => hasProteinSignal(item) && !(item.price != null && item.price > 0));
+  const priceGapRows = priceRequiredItems
+    .filter((item) => !(item.price != null && item.price > 0))
+    .map((item) => ({ ...item, gapType: hasProteinSignal(item) ? "Protein price gap" : "Price-required gap" }));
+  const trustGapRows = [
+    ...priceGapRows,
+    ...MENUWORKS_ITEMS.filter((item) => item.trueCost == null).map((item) => ({ ...item, gapType: "Missing true cost" })),
+    ...MENUWORKS_ITEMS.filter((item) => !(item.allergens?.length || item.allergenSummary)).map((item) => ({ ...item, gapType: "Missing allergen detail" })),
+    ...MENUWORKS_ITEMS.filter((item) => !(item.enticingDescription || item.ingredientsCommonName)).map((item) => ({ ...item, gapType: "Missing description" })),
+  ];
+  const avgFoodCost = foodCostRows.length
+    ? foodCostRows.reduce((sum, item) => sum + (item.trueCost / item.price), 0) / foodCostRows.length
     : null;
   const dietCounts = countBy(MENUWORKS_ITEMS, getDietType);
   const categoryCounts = countBy(MENUWORKS_ITEMS, (item) => item.category || "Unclassified");
   const allergenCoverage = percentOf(MENUWORKS_ITEMS.filter((item) => item.allergens?.length || item.allergenSummary).length, totalItems);
   const detailCoverage = percentOf(MENUWORKS_ITEMS.filter((item) => item.enticingDescription || item.ingredientsCommonName).length, totalItems);
   const costCoverage = percentOf(MENUWORKS_ITEMS.filter((item) => item.trueCost != null).length, totalItems);
-  const priceCoverage = percentOf(MENUWORKS_ITEMS.filter((item) => item.price != null).length, totalItems);
+  const priceCoverage = percentOf(pricedRequiredItems.length, priceRequiredItems.length);
   const recentItems = [...MENUWORKS_ITEMS].sort((a, b) => Number(b.id || 0) - Number(a.id || 0)).slice(0, 10);
   const topMenus = Object.entries(countBy(MENUWORKS_ITEMS, (item) => item.menu))
     .sort((a, b) => b[1] - a[1])
@@ -163,12 +232,25 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
               <DashboardPanel icon={Database} eyebrow="Trust Layer" title="Data Confidence">
                 <ConfidenceBars
                   rows={[
-                    ["True cost coverage", costCoverage, `${costedItems.toLocaleString()} costed rows`],
-                    ["Price coverage", priceCoverage, `${MENUWORKS_ITEMS.filter((item) => item.price != null).length.toLocaleString()} priced rows`],
+                    ["Recipe cost coverage", costCoverage, `${costedItems.toLocaleString()} rows with true cost`],
+                    ["Price-required coverage", priceCoverage, `${pricedRequiredItems.length.toLocaleString()} of ${priceRequiredItems.length.toLocaleString()} required items priced`],
                     ["Allergen coverage", allergenCoverage, "item safety detail signal"],
                     ["Description coverage", detailCoverage, "chef-facing detail signal"],
                   ]}
                 />
+                <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-sm font-black text-slate-950">Trust rule</p>
+                  <p className="mt-1 text-xs font-semibold leading-5 text-slate-600">
+                    Complimentary sauces/sub recipes are excluded from price-required coverage. Protein-bearing items without a positive price are treated as gaps.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold text-slate-600">
+                    <span className="rounded-full border border-slate-200 bg-white px-3 py-1">{complimentaryItems.length.toLocaleString()} complimentary rows</span>
+                    <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-amber-900">{proteinPriceGaps.length.toLocaleString()} protein price gaps</span>
+                  </div>
+                  <button onClick={() => downloadTrustLayerGapList(trustGapRows)} className="mt-3 w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-black text-slate-800 hover:bg-slate-100">
+                    Download trust gap list
+                  </button>
+                </div>
               </DashboardPanel>
 
               <DashboardPanel icon={Sparkles} eyebrow="Executive Signal" title="Operational Read">
@@ -201,9 +283,17 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
 
               <DashboardPanel icon={Database} eyebrow="Release Signal" title="Latest Changelog">
                 <div className="space-y-2">
+                  <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                    <p className="text-sm font-black text-emerald-950">{CHANGELOG_ENTRIES.length.toLocaleString()} total logged changes</p>
+                    <p className="mt-1 text-xs font-semibold text-emerald-800">A visible record of how quickly this platform is evolving with Codex.</p>
+                  </div>
                   {firstTenChangelogItems.map((item, index) => (
-                    <div key={`${item}-${index}`} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                      <p className="text-sm font-semibold leading-5 text-slate-700">{item}</p>
+                    <div key={`${item.text}-${index}`} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <p className="text-sm font-semibold leading-5 text-slate-700">{item.text}</p>
+                        <span className="shrink-0 rounded-full border border-slate-200 bg-white px-2 py-1 text-[10px] font-black text-slate-500">#{CHANGELOG_ENTRIES.length - index}</span>
+                      </div>
+                      <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">{item.date}</p>
                     </div>
                   ))}
                 </div>

@@ -2954,20 +2954,20 @@ function SummaryBucket({ title, value, details, empty, tone = "neutral" }) {
 function ResultsView({ rows, resultsDistrict, setResultsDistrict, resultsCafe, setResultsCafe }) {
   const allCafeOptions = Array.from(new Set(Object.values(DISTRICTS).flat())).sort();
   const submittedRows = rows.filter((row) => row.status === "Submitted");
-  const draftRows = rows.filter((row) => row.status !== "Submitted");
-  const pricedRows = rows.map((row) => ({ ...row, summary: foodSummary(selectedItems(row)) })).filter((row) => row.summary.fc != null);
+  const historyRows = submittedRows;
+  const pricedRows = historyRows.map((row) => ({ ...row, summary: foodSummary(selectedItems(row)) })).filter((row) => row.summary.fc != null);
   const averageFc = pricedRows.length ? pricedRows.reduce((sum, row) => sum + row.summary.fc, 0) / pricedRows.length : null;
-  const costRangeRows = rows.map((row) => ({ ...row, trueCostRange: selectedTrueCostRange(selectedItems(row)) })).filter((row) => row.trueCostRange.low != null);
-  const mostUsedMenus = Object.entries(rows.reduce((acc, row) => { if (row.menu) acc[row.menu] = (acc[row.menu] || 0) + 1; return acc; }, {})).sort((a, b) => b[1] - a[1]).slice(0, 3);
-  const allSelections = rows.flatMap((row) => selectedItems(row));
+  const costRangeRows = historyRows.map((row) => ({ ...row, trueCostRange: selectedTrueCostRange(selectedItems(row)) })).filter((row) => row.trueCostRange.low != null);
+  const mostUsedMenus = Object.entries(historyRows.reduce((acc, row) => { if (row.menu) acc[row.menu] = (acc[row.menu] || 0) + 1; return acc; }, {})).sort((a, b) => b[1] - a[1]).slice(0, 3);
+  const allSelections = historyRows.flatMap((row) => selectedItems(row));
   const uniqueItems = new Set(allSelections.map((row) => normalizeItemName(getItemIdentity(row))).filter(Boolean));
   const selectedItemCounts = Object.entries(allSelections.reduce((acc, row) => {
     const name = getDisplayName(row) || titleCase(getItemIdentity(row));
     if (name) acc[name] = (acc[name] || 0) + 1;
     return acc;
   }, {})).sort((a, b) => b[1] - a[1]);
-  const declaredRows = rows.filter((row) => row.menu);
-  const averageSelectedItems = rows.length ? allSelections.length / rows.length : 0;
+  const declaredRows = historyRows.filter((row) => row.menu);
+  const averageSelectedItems = historyRows.length ? allSelections.length / historyRows.length : 0;
   const highFoodCostRows = pricedRows.filter((row) => row.summary.fc > 0.34);
   const widestRange = costRangeRows
     .map((row) => ({ ...row, spread: row.trueCostRange.high - row.trueCostRange.low }))
@@ -2986,8 +2986,8 @@ function ResultsView({ rows, resultsDistrict, setResultsDistrict, resultsCafe, s
       <section className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-4">
         <ControlCard label="District Filter" value={resultsDistrict} setValue={setResultsDistrict} options={["All", ...Object.keys(DISTRICTS)]} />
         <ControlCard label="Café Filter" value={resultsCafe} setValue={setResultsCafe} options={["All", ...allCafeOptions]} />
-        <ExecutiveMetric title="Saved Entries" value={rows.length} sub="declared rotations" />
-        <ExecutiveMetric title="Submitted" value={submittedRows.length} sub={`${draftRows.length} drafts`} tone={draftRows.length ? "amber" : "green"} />
+        <ExecutiveMetric title="History Entries" value={historyRows.length} sub="submitted rotations only" tone="green" />
+        <ExecutiveMetric title="Excluded Drafts" value={rows.length - historyRows.length} sub="hidden from history" />
         <ExecutiveMetric title="Menu Variety" value={uniqueItems.size} sub={`${allSelections.length} selections`} tone="green" />
         <ExecutiveMetric title="Projected FC%" value={pct(averageFc)} sub="based on saved rotation mix" tone={averageFc != null && averageFc > 0.34 ? "amber" : "green"} />
       </section>
@@ -3000,7 +3000,7 @@ function ResultsView({ rows, resultsDistrict, setResultsDistrict, resultsCafe, s
           </div>
         </div>
         <div className="mt-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-          <SummaryBucket title="Rotation Coverage" value={`${declaredRows.length}/${rows.length || 0}`} details={[`${submittedRows.length} submitted`, `${draftRows.length} draft/open`, `${rows.length - declaredRows.length} missing menu`]} empty="no saved rotations yet" tone={rows.length && declaredRows.length === rows.length ? "green" : "amber"} />
+          <SummaryBucket title="Rotation Coverage" value={`${declaredRows.length}/${historyRows.length || 0}`} details={[`${historyRows.length} submitted history entries`, "drafts excluded", `${historyRows.length - declaredRows.length} missing menu`]} empty="no submitted rotations yet" tone={historyRows.length && declaredRows.length === historyRows.length ? "green" : "amber"} />
           <SummaryBucket title="Item Variety" value={uniqueItems.size || "-"} details={[`${allSelections.length} total selected items`, `${averageSelectedItems.toFixed(1)} avg items per rotation`, `${costRangeRows.length} rotations with cost data`]} empty="no item selections yet" tone="green" />
           <SummaryBucket title="Food Cost Watch" value={pct(averageFc)} details={[`${highFoodCostRows.length} rotation${highFoodCostRows.length === 1 ? "" : "s"} above 34%`, `${pricedRows.length} priced rotation${pricedRows.length === 1 ? "" : "s"}`, averageFc == null ? "no food cost data yet" : averageFc > 0.34 ? "review mix" : "on track"]} empty="no priced rotations yet" tone={highFoodCostRows.length ? "amber" : "green"} />
           <SummaryBucket title="Most Used Menus" value={mostUsedMenus.length || "-"} details={mostUsedMenus.map(([menu, count]) => `${menu} (${count})`)} empty="no menu history yet" tone="green" />
@@ -3014,7 +3014,7 @@ function ResultsView({ rows, resultsDistrict, setResultsDistrict, resultsCafe, s
           <div>
             <p className="text-sm uppercase tracking-[0.18em] text-slate-400">Rolling 6 Month Results</p>
             <h2 className="text-3xl font-bold mt-1">Rotation History</h2>
-            <p className="text-sm text-slate-500 mt-1">Shows the most recent 26 rotation weeks with global declarations, submission status, food cost signal, and timestamps.</p>
+            <p className="text-sm text-slate-500 mt-1">Shows submitted rotations only, with global declarations, food cost signal, and timestamps.</p>
           </div>
         </div>
         <div className="overflow-auto max-h-[680px]">
@@ -3033,9 +3033,9 @@ function ResultsView({ rows, resultsDistrict, setResultsDistrict, resultsCafe, s
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {rows.length === 0 ? (
-                <tr><td colSpan="9" className="px-4 py-8 text-center text-slate-500">No saved declarations match this filter yet.</td></tr>
-              ) : rows.map((row, index) => {
+              {historyRows.length === 0 ? (
+                <tr><td colSpan="9" className="px-4 py-8 text-center text-slate-500">No submitted rotations match this filter yet.</td></tr>
+              ) : historyRows.map((row, index) => {
                 const rowItems = selectedItems(row);
                 const summary = foodSummary(rowItems);
                 const trueCostRange = selectedTrueCostRange(rowItems);
