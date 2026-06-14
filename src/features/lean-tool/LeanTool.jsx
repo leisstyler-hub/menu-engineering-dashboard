@@ -886,6 +886,10 @@ export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
           onConfirm={confirmVoidResult}
         />
       )}
+      <button type="button" onClick={onBackToPlatform} className="lean-home-bubble" aria-label="Back to platform home">
+        <ArrowLeft size={18} />
+        Home
+      </button>
     </div>
   );
 }

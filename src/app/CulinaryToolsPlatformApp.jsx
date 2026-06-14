@@ -42,7 +42,6 @@ export default function CulinaryToolsPlatformApp() {
     return (
       <>
         <LeanTool onBackToPlatform={() => setActiveTool("home")} onOpenSmartsheetHealth={openSmartsheetHealth} />
-        <MobileToolNav activeTool={activeTool} setActiveTool={setActiveTool} />
       </>
     );
   }

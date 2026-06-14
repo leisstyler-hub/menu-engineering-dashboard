@@ -2,6 +2,8 @@
 
 ## 2026-06-14
 
+- [Jun 14, 3:00 PM] Removed the full mobile tool switcher from Lean Tool, added a small floating Home bubble, tightened the Tracker/Results selector, and fixed clipped timer stats.
+- [Jun 14, 3:00 PM] Set visible app version to `2026.06.14.014-fix-lean-mobile-operability`.
 - [Jun 14, 2:51 PM] Compressed the Lean Tool phone cockpit so Start, activity, DOWNTIME waste, and Mark are usable with far less vertical swiping.
 - [Jun 14, 2:51 PM] Added compact mobile dashboard data cards for trust layer, diet mix, recently added items, and changelog while keeping the floating selector.
 - [Jun 14, 2:51 PM] Set visible app version to `2026.06.14.013-fix-lean-mobile-cockpit`.
