@@ -20,10 +20,10 @@ const DISTRICTS = {
 
 // CHECKPOINT: South District station configs intentionally include Fresh $5 as the final station for Doppler, Day 1, Nitro, and Re:Invent.
 const CAFE_STATION_CONFIG = {
-  Nitro: ["global", "carvery", "grill", "pizza", "salad"],
-  Doppler: ["global", "salad", "grill", "pizza", "deli"],
-  "Day 1": ["global", "grill", "salad", "fishMarket", "deli"],
-  "Re:Invent": ["fishMarket", "global", "deli", "grill"],
+  Nitro: ["global", "carvery", "grill", "pizza", "salad", "freshFive"],
+  Doppler: ["global", "salad", "grill", "pizza", "deli", "freshFive"],
+  "Day 1": ["global", "grill", "salad", "fishMarket", "deli", "freshFive"],
+  "Re:Invent": ["fishMarket", "global", "deli", "grill", "freshFive"],
   Dawson: ["global", "carvery", "grill", "salad", "freshFive"],
   Nessie: ["wok", "global", "grill", "deli", "salad", "freshFive"],
   Cricket: ["global", "grill", "deli", "pizza", "freshFive"],
@@ -769,6 +769,10 @@ function stationPool(stationKey) {
 
 function stationSlots(cafe, stationKey) {
   const override = {
+    Nitro: { freshFive: 3 },
+    Doppler: { freshFive: 3 },
+    "Day 1": { freshFive: 3 },
+    "Re:Invent": { freshFive: 3 },
     Dawson: { freshFive: 5 },
     Nessie: { freshFive: 5 },
     Cricket: { freshFive: 5 },

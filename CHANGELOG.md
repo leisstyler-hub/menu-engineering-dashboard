@@ -2,6 +2,8 @@
 
 ## 2026-06-15
 
+- [Jun 15, 4:57 PM] Added Fresh $5 to Doppler, Day 1, Nitro, and Re:Invent with 3 options each.
+- [Jun 15, 4:57 PM] Set visible app version to `2026.06.15.008-add-south-fresh-five-options`.
 - [Jun 15, 4:53 PM] Restored Neighborhood Rotations station cards to open by default while keeping the cafe-switch caching improvements.
 - [Jun 15, 4:53 PM] Set visible app version to `2026.06.15.007-restore-open-station-cards`.
 - [Jun 15, 1:05 PM] Cached Neighborhood Rotations station option pools and selected-cafe planner calculations to reduce lag when switching cafes.
