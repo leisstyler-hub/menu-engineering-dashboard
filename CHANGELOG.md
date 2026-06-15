@@ -2,6 +2,9 @@
 
 ## 2026-06-15
 
+- [Jun 15, 7:21 AM] Kept LTO item details, costs, allergens, and Smartsheet records scoped to the selected station pool after an item is chosen.
+- [Jun 15, 7:21 AM] Prevented uploaded LTO values from appearing twice when the same item already exists in the station dropdown.
+- [Jun 15, 7:21 AM] Set visible app version to `2026.06.15.002-fix-lto-detail-scope`.
 - [Jun 15, 9:00 AM] Tightened Neighborhood Rotations station option logic so station dropdowns show single, scoped menu items instead of broad text-match duplicates.
 - [Jun 15, 9:00 AM] Limited Fish Market LTO choices to unique Fish Market entree options.
 - [Jun 15, 9:00 AM] Set visible app version to `2026.06.15.001-fix-station-option-scope`.

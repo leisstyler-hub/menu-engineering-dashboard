@@ -159,7 +159,7 @@ const rotationKey = (week, district, cafe) => `${week}|${district}|${cafe}`;
 const rotationRecordParentId = (week, district, cafe) => `rotation|${parseWeekStart(week) || week}|${district}|${cafe}`;
 const makeDatabaseRecordId = (...parts) => parts.filter(Boolean).join("|").replace(/\s+/g, " ").trim();
 const compactValues = (values = []) => values.filter((value) => String(value || "").trim());
-const selectedRowForName = (name) => findBestRowForName(name) || makeUploadedItem(name);
+const selectedRowForName = (name, candidateRows = MENUWORKS_ITEMS) => findBestRowForName(name, candidateRows) || findBestRowForName(name) || makeUploadedItem(name);
 
 function baseDatabaseRecord({ parentId, recordId, recordType, status, district, cafe, week, stationKey, stationDisplayName, notes }) {
   return {
@@ -179,8 +179,8 @@ function baseDatabaseRecord({ parentId, recordId, recordType, status, district, 
   };
 }
 
-function selectionDatabaseRecord({ parentId, district, cafe, week, rotation, stationKey, selectionType, itemName, sortOrder, slotNumber }) {
-  const row = selectedRowForName(itemName);
+function selectionDatabaseRecord({ parentId, district, cafe, week, rotation, stationKey, selectionType, itemName, sortOrder, slotNumber, candidateRows }) {
+  const row = selectedRowForName(itemName, candidateRows);
   const price = getPrice(row);
   const trueCost = getTrueCost(row);
   const foodCost = price ? Number(trueCost || 0) / Number(price) : null;
@@ -275,9 +275,9 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
   } : null;
 
   const selectionRows = [];
-  const pushSelections = (stationKey, selectionType, values, offset = 0, sourceRotation = rotation, blockId = "") => {
+  const pushSelections = (stationKey, selectionType, values, offset = 0, sourceRotation = rotation, blockId = "", candidateRows = MENUWORKS_ITEMS) => {
     compactValues(values).forEach((itemName, index) => {
-      const rec = selectionDatabaseRecord({ parentId, district, cafe, week, rotation: sourceRotation, stationKey, selectionType, itemName, sortOrder: offset + index + 1, slotNumber: index + 1 });
+      const rec = selectionDatabaseRecord({ parentId, district, cafe, week, rotation: sourceRotation, stationKey, selectionType, itemName, sortOrder: offset + index + 1, slotNumber: index + 1, candidateRows });
       if (blockId) {
         rec[SMARTSHEET_COLUMNS.globalBlockId] = makeDatabaseRecordId(parentId, "global", blockId);
         rec[SMARTSHEET_COLUMNS.menuBlockLabel] = blockId;
@@ -327,12 +327,12 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
   pushSelections("grill", SMARTSHEET_SELECTION_TYPES.regionalSpecial, [rotation.grill?.regionalSpecial], 400);
   pushSelections("grill", SMARTSHEET_SELECTION_TYPES.locationSpotlight, [rotation.grill?.locationSpotlight], 410);
   ["salad", "pizza", "deli", "fishMarket", "freshFive", "soup"].forEach((stationKey, stationIndex) => {
-    pushSelections(stationKey, SMARTSHEET_SELECTION_TYPES.lto, rotation.ltos?.[stationKey] || [], 500 + stationIndex * 100);
+    pushSelections(stationKey, SMARTSHEET_SELECTION_TYPES.lto, rotation.ltos?.[stationKey] || [], 500 + stationIndex * 100, rotation, "", stationPool(stationKey));
   });
-  pushSelections("wok", SMARTSHEET_SELECTION_TYPES.wokEntree, rotation.ltos?.wokEntrees || [], 1000);
-  pushSelections("wok", SMARTSHEET_SELECTION_TYPES.wokSide, rotation.ltos?.wokSides || [], 1100);
-  pushSelections("wok", SMARTSHEET_SELECTION_TYPES.wokBase, rotation.ltos?.wokBase || [], 1200);
-  pushSelections("wok", SMARTSHEET_SELECTION_TYPES.wokSubRecipe, rotation.ltos?.wokSubRecipes || [], 1300);
+  pushSelections("wok", SMARTSHEET_SELECTION_TYPES.wokEntree, rotation.ltos?.wokEntrees || [], 1000, rotation, "", stationPool("wokEntrees"));
+  pushSelections("wok", SMARTSHEET_SELECTION_TYPES.wokSide, rotation.ltos?.wokSides || [], 1100, rotation, "", stationPool("wokSides"));
+  pushSelections("wok", SMARTSHEET_SELECTION_TYPES.wokBase, rotation.ltos?.wokBase || [], 1200, rotation, "", stationPool("wokBase"));
+  pushSelections("wok", SMARTSHEET_SELECTION_TYPES.wokSubRecipe, rotation.ltos?.wokSubRecipes || [], 1300, rotation, "", stationPool("wokSubRecipes"));
   Object.entries(rotation.carvery || {}).filter(([, value]) => value).forEach(([field, value], index) => {
     const type = field.includes("protein") ? SMARTSHEET_SELECTION_TYPES.carveryProtein : field.includes("vegetable") ? SMARTSHEET_SELECTION_TYPES.carveryVegetable : field.includes("starch") ? SMARTSHEET_SELECTION_TYPES.carveryStarch : field.includes("hot") ? SMARTSHEET_SELECTION_TYPES.carveryHotSide : SMARTSHEET_SELECTION_TYPES.carveryColdSide;
     selectionRows.push(selectionDatabaseRecord({ parentId, district, cafe, week, rotation, stationKey: "carvery", selectionType: type, itemName: value, sortOrder: 1400 + index, slotNumber: index + 1 }));
@@ -698,9 +698,9 @@ function stationPool(stationKey) {
   const scoped = (strictRows, fallbackRows = []) => uniqueOptionRows(strictRows.length ? strictRows : fallbackRows);
 
   const pools = {
-    salad: scoped([...byMenuPattern(/\bsalad\b/i), ...byStationPattern(/\bsalad\b/i)], byText(/salad|greens|slaw/)),
-    pizza: scoped([...byMenuPattern(/pizza|flatbread/i), ...byStationPattern(/pizza|flatbread/i)], byText(/pizza|flatbread/)),
-    deli: scoped([...byMenuPattern(/deli|sandwich/i), ...byStationPattern(/deli|sandwich/i)], byText(/sandwich|deli|wrap|naanwich|banh mi/)),
+    salad: scoped([...byMenuPattern(/\bsalad\b/i), ...byStationPattern(/\bsalad\b/i)], byText(/salad|greens|slaw/)).filter((row) => isEntree(row)),
+    pizza: scoped([...byMenuPattern(/pizza|flatbread/i), ...byStationPattern(/pizza|flatbread/i)], byText(/pizza|flatbread/)).filter((row) => isEntree(row)),
+    deli: scoped([...byMenuPattern(/deli|sandwich/i), ...byStationPattern(/deli|sandwich/i)], byText(/sandwich|deli|wrap|naanwich|banh mi/)).filter((row) => isEntree(row)),
     fishMarket: scoped([...byMenuPattern(/fish market/i), ...byStationPattern(/fish market/i)])
       .filter((row) => (getMenuName(row).toLowerCase().includes("fish market") || getStationName(row).toLowerCase().includes("fish market")) && isEntree(row)),
     freshFive: scoped([...byMenuPattern(/fresh (five|\$5|5)/i), ...byStationPattern(/fresh (five|\$5|5)/i)], byText(/fresh five|fresh \$5|fresh 5/)),
@@ -1005,15 +1005,15 @@ function itemDetailScore(row) {
   ].reduce((sum, value) => sum + value, 0);
 }
 
-function findBestRowForName(name) {
+function findBestRowForName(name, candidateRows = MENUWORKS_ITEMS) {
   const normalizedName = normalizeItemName(name);
   if (!normalizedName) return null;
-  const matches = MENUWORKS_ITEMS.filter((row) => getItemAliases(row).includes(normalizedName));
+  const matches = candidateRows.filter((row) => getItemAliases(row).includes(normalizedName));
   if (!matches.length) return null;
   return [...matches].sort((a, b) => itemDetailScore(b) - itemDetailScore(a))[0];
 }
 
-function rowsForSelectedNames(names = [], { unique = false, selectionGroup = "" } = {}) {
+function rowsForSelectedNames(names = [], { unique = false, selectionGroup = "", candidateRows = MENUWORKS_ITEMS } = {}) {
   const selectedRows = [];
   const seen = new Set();
   names.filter(Boolean).forEach((name) => {
@@ -1022,7 +1022,7 @@ function rowsForSelectedNames(names = [], { unique = false, selectionGroup = "" 
     if (unique && seen.has(key)) return;
     seen.add(key);
     selectedRows.push({
-      ...(findBestRowForName(name) || makeUploadedItem(name)),
+      ...(findBestRowForName(name, candidateRows) || findBestRowForName(name) || makeUploadedItem(name)),
       __selectionGroup: selectionGroup
     });
   });
@@ -1061,7 +1061,10 @@ function grillSelectedRows(rotation, options) {
 }
 
 function ltoSelectedRows(rotation, stationKey, options) {
-  return rowsForSelectedNames([...(rotation.ltos?.[stationKey] || []), ...(rotation.uploadedLtos?.[stationKey] || [])], options);
+  return rowsForSelectedNames(
+    [...(rotation.ltos?.[stationKey] || []), ...(rotation.uploadedLtos?.[stationKey] || [])],
+    { ...options, candidateRows: stationPool(stationKey) }
+  );
 }
 
 function wokSelectedRows(rotation, options) {
@@ -1073,10 +1076,12 @@ function carverySelectedRows(rotation, options) {
 }
 
 function selectedItems(rotation) {
+  const ltoRows = ["salad", "pizza", "deli", "fishMarket", "freshFive", "soup"].flatMap((stationKey) => ltoSelectedRows(rotation, stationKey));
   return [
     ...globalSelectedRows(rotation),
     ...grillSelectedRows(rotation),
-    ...rowsForSelectedNames(Object.values(rotation.ltos || {}).flat()),
+    ...ltoRows,
+    ...wokSelectedRows(rotation),
     ...carverySelectedRows(rotation)
   ];
 }
@@ -2610,6 +2615,7 @@ function GrillSelect({ label, value, onChange, items }) {
 
 function SimpleLTOSection({ stationKey, title, slots, values = [], uploaded = [], updateLto, complete }) {
   const pool = stationPool(stationKey);
+  const poolNames = new Set(pool.map((row) => normalizeItemName(getItemIdentity(row))));
   return (
     <CollapsibleStation title={title} eyebrow="Station Special" complete={complete}>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2618,7 +2624,7 @@ function SimpleLTOSection({ stationKey, title, slots, values = [], uploaded = []
             <div className="flex items-center justify-between gap-2 mb-2"><label className="block text-sm font-bold text-slate-900">{slot}</label><span className="rounded-full bg-white border border-sky-200 px-3 py-1 text-xs font-bold text-sky-700">choose here</span></div>
             <select value={values[index] || uploaded[index] || ""} onChange={(e) => updateLto(stationKey, index, e.target.value)} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
               <option value="">&lt;Select Item&gt;</option>
-              {uploaded[index] && <option value={uploaded[index]}>{titleCase(uploaded[index])}</option>}
+              {uploaded[index] && !poolNames.has(normalizeItemName(uploaded[index])) && <option value={uploaded[index]}>{titleCase(uploaded[index])}</option>}
               {pool.map((row) => <option key={`${stationKey}-${slot}-${getItemIdentity(row)}`} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}
             </select>
           </div>
