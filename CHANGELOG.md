@@ -2,6 +2,7 @@
 
 ## 2026-06-15
 
+- [Jun 15, 8:44 AM] Published the Carvery station pool fix to GitHub for Vercel production deployment.
 - [Jun 15, 8:44 AM] Scoped Carvery planner dropdowns so proteins, vegetables, starches, hot sides, and cold sides pull from Carvery-relevant MenuWorks rows instead of every matching side in the database.
 - [Jun 15, 8:44 AM] Added missing chef-flagged Carvery items for Caribbean Carrot Salad, Spinach Pecan Strawberry Salad with Balsamic, Red Bliss Mashed Potatoes, and Pineapple Glazed Ham.
 - [Jun 15, 8:44 AM] Set visible app version to `2026.06.15.004-fix-carvery-station-pools`.
