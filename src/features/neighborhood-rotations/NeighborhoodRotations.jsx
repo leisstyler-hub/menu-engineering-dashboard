@@ -604,6 +604,19 @@ function uniqueRows(rows) {
   });
 }
 
+function uniqueOptionRows(rows) {
+  const byName = new Map();
+  rows.filter(Boolean).forEach((row) => {
+    const key = normalizeItemName(getDisplayName(row) || getItemIdentity(row));
+    if (!key) return;
+    const current = byName.get(key);
+    if (!current || itemDetailScore(row) > itemDetailScore(current)) {
+      byName.set(key, row);
+    }
+  });
+  return Array.from(byName.values()).sort((a, b) => getDisplayName(a).localeCompare(getDisplayName(b)));
+}
+
 function isPriced(row) {
   return getPrice(row) != null && !Number.isNaN(Number(getPrice(row)));
 }
@@ -679,32 +692,36 @@ function stationPool(stationKey) {
   const all = uniqueRows(MENUWORKS_ITEMS);
   const byMenu = (needle) => all.filter((row) => getMenuName(row).toLowerCase().includes(needle));
   const byStation = (needle) => all.filter((row) => getStationName(row).toLowerCase().includes(needle));
+  const byMenuPattern = (regex) => all.filter((row) => regex.test(getMenuName(row)));
+  const byStationPattern = (regex) => all.filter((row) => regex.test(getStationName(row)));
   const byText = (regex) => all.filter((row) => regex.test(textForRow(row)));
+  const scoped = (strictRows, fallbackRows = []) => uniqueOptionRows(strictRows.length ? strictRows : fallbackRows);
 
   const pools = {
-    salad: uniqueRows([...byMenu("salad"), ...byStation("salad"), ...byText(/salad|greens|slaw/)]),
-    pizza: uniqueRows([...byMenu("pizza"), ...byStation("pizza"), ...byText(/pizza|flatbread/)]),
-    deli: uniqueRows([...byMenu("deli"), ...byStation("deli"), ...byStation("sandwich"), ...byText(/sandwich|deli|wrap|naanwich|banh mi/)]),
-    fishMarket: uniqueRows([...byMenu("fish"), ...byStation("fish"), ...byText(/fish|salmon|tuna|cod|shrimp|crab|seafood/)]),
-    freshFive: uniqueRows([...byMenu("fresh five"), ...byMenu("fresh $5"), ...byStation("fresh"), ...byText(/fresh five|fresh \$5|fresh 5/)]),
-    soup: uniqueRows([...byMenu("soup"), ...byStation("soup"), ...byText(/soup|chili|bisque|chowder/)]),
-    wokEntrees: uniqueRows([...byMenu("wok"), ...byStation("wok"), ...byText(/wok|stir fry|stir-fry|orange peel|sweet and sour|huli huli/)]).filter((row) => isEntree(row)),
-    wokSides: uniqueRows([...byMenu("wok"), ...byStation("wok"), ...byText(/lo mein|fried rice|green beans|carrots|gai lan|slaw/)]).filter((row) => isSide(row)),
-    wokBase: uniqueRows([...byMenu("wok"), ...byStation("wok"), ...byText(/rice|noodle|lo mein|base/)]).filter((row) => isSide(row) || /rice|noodle|base/i.test(getItemIdentity(row))),
-    wokSubRecipes: all.filter((row) => isSubRecipe(row)),
-    carveryProtein: uniqueRows([...byMenu("carvery"), ...byStation("carvery"), ...byText(/beef|chicken|pork|turkey|salmon|tofu|protein/)]).filter((row) => isEntree(row)),
-    carveryVegetable: byText(/broccoli|carrot|green bean|beans|vegetable|veg|cauliflower|brussels|squash|zucchini|asparagus/),
-    carverySide: all.filter((row) => isSide(row))
+    salad: scoped([...byMenuPattern(/\bsalad\b/i), ...byStationPattern(/\bsalad\b/i)], byText(/salad|greens|slaw/)),
+    pizza: scoped([...byMenuPattern(/pizza|flatbread/i), ...byStationPattern(/pizza|flatbread/i)], byText(/pizza|flatbread/)),
+    deli: scoped([...byMenuPattern(/deli|sandwich/i), ...byStationPattern(/deli|sandwich/i)], byText(/sandwich|deli|wrap|naanwich|banh mi/)),
+    fishMarket: scoped([...byMenuPattern(/fish market/i), ...byStationPattern(/fish market/i)])
+      .filter((row) => (getMenuName(row).toLowerCase().includes("fish market") || getStationName(row).toLowerCase().includes("fish market")) && isEntree(row)),
+    freshFive: scoped([...byMenuPattern(/fresh (five|\$5|5)/i), ...byStationPattern(/fresh (five|\$5|5)/i)], byText(/fresh five|fresh \$5|fresh 5/)),
+    soup: scoped([...byMenuPattern(/\bsoup\b/i), ...byStationPattern(/\bsoup\b/i)], byText(/soup|chili|bisque|chowder/)),
+    wokEntrees: scoped([...byMenu("wok"), ...byStation("wok")], byText(/wok|stir fry|stir-fry|orange peel|sweet and sour|huli huli/)).filter((row) => isEntree(row)),
+    wokSides: scoped([...byMenu("wok"), ...byStation("wok")], byText(/lo mein|fried rice|green beans|carrots|gai lan|slaw/)).filter((row) => isSide(row)),
+    wokBase: scoped([...byMenu("wok"), ...byStation("wok")], byText(/rice|noodle|lo mein|base/)).filter((row) => isSide(row) || /rice|noodle|base/i.test(getItemIdentity(row))),
+    wokSubRecipes: uniqueOptionRows(all.filter((row) => isSubRecipe(row))),
+    carveryProtein: scoped([...byMenu("carvery"), ...byStation("carvery")], byText(/beef|chicken|pork|turkey|salmon|tofu|protein/)).filter((row) => isEntree(row)),
+    carveryVegetable: uniqueOptionRows(byText(/broccoli|carrot|green bean|beans|vegetable|veg|cauliflower|brussels|squash|zucchini|asparagus/)),
+    carverySide: uniqueOptionRows(all.filter((row) => isSide(row)))
   };
 
   const pool = pools[stationKey] || [];
   if (pool.length) return pool;
 
   if (["freshFive", "salad", "pizza", "deli", "fishMarket", "soup"].includes(stationKey)) {
-    return all.filter((row) => isEntree(row) || isSide(row));
+    return uniqueOptionRows(all.filter((row) => isEntree(row) || isSide(row)));
   }
 
-  return all;
+  return uniqueOptionRows(all);
 }
 
 function stationSlots(cafe, stationKey) {

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-06-15
+
+- [Jun 15, 9:00 AM] Tightened Neighborhood Rotations station option logic so station dropdowns show single, scoped menu items instead of broad text-match duplicates.
+- [Jun 15, 9:00 AM] Limited Fish Market LTO choices to unique Fish Market entree options.
+- [Jun 15, 9:00 AM] Set visible app version to `2026.06.15.001-fix-station-option-scope`.
+
 ## 2026-06-14
 
 - [Jun 14, 3:46 PM] Hid the Lean Tool mobile Home bubble while the sticky Quick note and Mark controls are visible so the controls no longer overlap.
