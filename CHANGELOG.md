@@ -2,6 +2,9 @@
 
 ## 2026-06-15
 
+- [Jun 15, 1:05 PM] Cached Neighborhood Rotations station option pools and selected-cafe planner calculations to reduce lag when switching cafes.
+- [Jun 15, 1:05 PM] Made station cards lazy-collapsible so dropdown-heavy station bodies render only when opened on mobile.
+- [Jun 15, 1:05 PM] Set visible app version to `2026.06.15.006-fix-neighborhood-cafe-switch-lag`.
 - [Jun 15, 12:53 PM] Removed the extra Carvery hot side slot so Carvery returns to one hot side and two cold sides.
 - [Jun 15, 12:53 PM] Cached Neighborhood Rotations derived rows and Executive View card metrics to reduce mobile tab-switch lag before Executive View opens.
 - [Jun 15, 12:53 PM] Set visible app version to `2026.06.15.005-fix-carvery-hot-side-mobile-executive`.

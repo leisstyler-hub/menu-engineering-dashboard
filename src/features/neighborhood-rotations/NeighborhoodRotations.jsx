@@ -703,8 +703,13 @@ function isCarverySideCandidate(row) {
   );
 }
 
+let cachedMenuWorksOptionRows = null;
+const stationPoolCache = new Map();
+
 function stationPool(stationKey) {
-  const all = uniqueRows(MENUWORKS_ITEMS);
+  if (stationPoolCache.has(stationKey)) return stationPoolCache.get(stationKey);
+
+  const all = cachedMenuWorksOptionRows || (cachedMenuWorksOptionRows = uniqueRows(MENUWORKS_ITEMS));
   const byMenu = (needle) => all.filter((row) => getMenuName(row).toLowerCase().includes(needle));
   const byStation = (needle) => all.filter((row) => getStationName(row).toLowerCase().includes(needle));
   const byMenuPattern = (regex) => all.filter((row) => regex.test(getMenuName(row)));
@@ -746,13 +751,20 @@ function stationPool(stationKey) {
   };
 
   const pool = pools[stationKey] || [];
-  if (pool.length) return pool;
-
-  if (["freshFive", "salad", "pizza", "deli", "fishMarket", "soup"].includes(stationKey)) {
-    return uniqueOptionRows(all.filter((row) => isEntree(row) || isSide(row)));
+  if (pool.length) {
+    stationPoolCache.set(stationKey, pool);
+    return pool;
   }
 
-  return uniqueOptionRows(all);
+  if (["freshFive", "salad", "pizza", "deli", "fishMarket", "soup"].includes(stationKey)) {
+    const fallbackPool = uniqueOptionRows(all.filter((row) => isEntree(row) || isSide(row)));
+    stationPoolCache.set(stationKey, fallbackPool);
+    return fallbackPool;
+  }
+
+  const fallbackPool = uniqueOptionRows(all);
+  stationPoolCache.set(stationKey, fallbackPool);
+  return fallbackPool;
 }
 
 function stationSlots(cafe, stationKey) {
@@ -1569,7 +1581,7 @@ function DatabaseAlignmentNotice({ district, cafe, week, rotation }) {
 
 
 function CompactSystemStatusPanel({ district, cafe, week, rotation, loadStatus, syncStatus, onRefreshDatabase, isRefreshCoolingDown = false }) {
-  const records = buildDatabaseRecordsForRotation({ week, district, cafe, rotation });
+  const records = useMemo(() => buildDatabaseRecordsForRotation({ week, district, cafe, rotation }), [cafe, district, rotation, week]);
   const isReading = loadStatus?.state === "loading" || isRefreshCoolingDown;
   const readTone = loadStatus?.state === "loaded" ? "text-emerald-800 bg-emerald-50 border-emerald-200" : loadStatus?.state === "loading" ? "text-sky-800 bg-sky-50 border-sky-200" : "text-slate-600 bg-slate-50 border-slate-200";
   const writeTone = syncStatus?.state === "synced" ? "text-emerald-800 bg-emerald-50 border-emerald-200" : syncStatus?.state === "syncing" ? "text-sky-800 bg-sky-50 border-sky-200" : syncStatus?.state === "fallback" ? "text-amber-800 bg-amber-50 border-amber-200" : "text-slate-600 bg-slate-50 border-slate-200";
@@ -1649,15 +1661,18 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
   const [copiedRotation, setCopiedRotation] = useState(null);
   const [submitWarningOpen, setSubmitWarningOpen] = useState(false);
 
-  const stationOptions = subConceptOptionsForMenu(rotation.menu);
-  const menuItems = globalMenuRows(rotation.menu, rotation.station);
-  const categorized = categorize(menuItems);
-  const items = selectedItems(rotation);
-  const summary = foodSummary(items);
-  const cafeStations = CAFE_STATION_CONFIG[cafe] || ["global"];
-  const stationCostOverview = getStationCostOverview(rotation, cafe);
-  const requirements = rotationRequirements(rotation, cafe, week);
-  const submitIssues = rotationRequirementIssues(requirements, cafe, { menu: rotation.menu, duplicateMenuCount: menuConflictCount, conflictNote: menuConflictNote(district, cafe) });
+  const stationOptions = useMemo(() => subConceptOptionsForMenu(rotation.menu), [rotation.menu]);
+  const menuItems = useMemo(() => globalMenuRows(rotation.menu, rotation.station), [rotation.menu, rotation.station]);
+  const categorized = useMemo(() => categorize(menuItems), [menuItems]);
+  const items = useMemo(() => selectedItems(rotation), [rotation]);
+  const summary = useMemo(() => foodSummary(items), [items]);
+  const cafeStations = useMemo(() => CAFE_STATION_CONFIG[cafe] || ["global"], [cafe]);
+  const stationCostOverview = useMemo(() => getStationCostOverview(rotation, cafe), [cafe, rotation]);
+  const requirements = useMemo(() => rotationRequirements(rotation, cafe, week), [cafe, rotation, week]);
+  const submitIssues = useMemo(
+    () => rotationRequirementIssues(requirements, cafe, { menu: rotation.menu, duplicateMenuCount: menuConflictCount, conflictNote: menuConflictNote(district, cafe) }),
+    [cafe, district, menuConflictCount, requirements, rotation.menu]
+  );
   const canSubmitRotation = requirements.canSubmit && submitIssues.length === 0;
 
   const updateSlot = (group, index, value) => {
@@ -2251,8 +2266,8 @@ function GlobalSection({ cafe, week, rotation, previousRotation, previousWeek, m
   const cycle = globalCycleConfig(cafe, week);
   const promo = rotation.promotionOverride || EMPTY_ROTATION.promotionOverride;
   const updatePromo = (patch) => updateRotation({ promotionOverride: { ...promo, ...patch } });
-  const menuStationOptions = subConceptOptionsForMenu(rotation.menu);
-  const menuCategorized = categorize(globalMenuRows(rotation.menu, rotation.station));
+  const menuStationOptions = stationOptions;
+  const menuCategorized = categorized;
   const carryover = carryoverGlobalBlock(previousRotation);
 
   const selectMenu = (menu) => {
@@ -2539,17 +2554,28 @@ function DayToggleGroup({ title, values = [], onToggle, tone = "sky" }) {
   );
 }
 
-function CollapsibleStation({ title, eyebrow, complete, children }) {
+function CollapsibleStation({ title, eyebrow, complete, children, defaultOpen = false }) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  useEffect(() => {
+    setIsOpen(defaultOpen);
+  }, [defaultOpen, title, eyebrow]);
+
   return (
     <div className={`mt-5 rounded-lg border-2 p-5 shadow-md ${complete ? "border-emerald-300 bg-emerald-50/20" : "border-slate-300 bg-white"}`}>
-      <div className="flex items-start justify-between gap-4">
+      <button type="button" onClick={() => setIsOpen((value) => !value)} className="w-full flex items-start justify-between gap-4 text-left">
         <div>
           <p className="text-sm uppercase tracking-[0.18em] text-slate-400">{eyebrow}</p>
           <h3 className="text-2xl font-bold mt-1">{title}</h3>
         </div>
-        <span className={`rounded-full px-3 py-1 text-xs font-bold border ${complete ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-amber-50 border-amber-200 text-amber-800"}`}>{complete ? "complete" : "needs selection"}</span>
-      </div>
-      <div className="mt-4">{children}</div>
+        <div className="flex flex-col items-end gap-2">
+          <span className={`rounded-full px-3 py-1 text-xs font-bold border ${complete ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-amber-50 border-amber-200 text-amber-800"}`}>{complete ? "complete" : "needs selection"}</span>
+          <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-bold text-slate-600">
+            {isOpen ? "Collapse" : "Open"} {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          </span>
+        </div>
+      </button>
+      {isOpen && <div className="mt-4">{children}</div>}
     </div>
   );
 }
@@ -2663,15 +2689,13 @@ function GrillSection({ cafe, rotation, updateGrill }) {
   const options = grillItems.length ? grillItems : stationPool("carveryProtein");
   const complete = stationComplete(rotation, "grill");
   return (
-    <div className={`mt-6 rounded-3xl border-2 p-5 shadow-md ${complete ? "border-emerald-300 bg-emerald-50/20" : "border-slate-300 bg-slate-50"}`}>
-      <p className="text-sm uppercase tracking-[0.18em] text-slate-400">Grill Station</p>
-      <h3 className="text-2xl font-bold mt-1">{grillTitle}</h3>
+    <CollapsibleStation title={grillTitle} eyebrow="Grill Station" complete={complete}>
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
         <GrillSelect label="Regional Special" value={rotation.grill?.regionalSpecial || ""} onChange={(value) => updateGrill("regionalSpecial", value)} items={options} />
         <GrillSelect label="Location Spotlight" value={rotation.grill?.locationSpotlight || ""} onChange={(value) => updateGrill("locationSpotlight", value)} items={options} />
       </div>
       <StationSelectedList title="Items Description" items={grillSelectedRows(rotation, { unique: true })} complete={complete} />
-    </div>
+    </CollapsibleStation>
   );
 }
 
