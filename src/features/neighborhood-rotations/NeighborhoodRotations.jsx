@@ -2308,7 +2308,7 @@ function GlobalSection({ cafe, week, rotation, previousRotation, previousWeek, m
   }
 
   return (
-    <CollapsibleStation title={globalTitle} eyebrow="Global Rotation" complete={stationComplete(rotation, "global")} defaultOpen={!stationComplete(rotation, "global")}>
+    <CollapsibleStation title={globalTitle} eyebrow="Global Rotation" complete={stationComplete(rotation, "global")}>
       <div className="rounded-3xl border border-slate-200 bg-white p-4">
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
           <div>
@@ -2408,7 +2408,7 @@ function ReInventGlobalSection({ cafe, week, rotation, previousRotation, previou
   };
 
   return (
-    <CollapsibleStation title="Global Station" eyebrow="Re:Invent Global Rotation" complete={stationComplete(rotation, "global", cafe, week)} defaultOpen={!stationComplete(rotation, "global", cafe, week)}>
+    <CollapsibleStation title="Global Station" eyebrow="Re:Invent Global Rotation" complete={stationComplete(rotation, "global", cafe, week)}>
       <div className="rounded-3xl border border-slate-200 bg-white p-4">
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
           <div>
@@ -2554,7 +2554,7 @@ function DayToggleGroup({ title, values = [], onToggle, tone = "sky" }) {
   );
 }
 
-function CollapsibleStation({ title, eyebrow, complete, children, defaultOpen = false }) {
+function CollapsibleStation({ title, eyebrow, complete, children, defaultOpen = true }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   useEffect(() => {

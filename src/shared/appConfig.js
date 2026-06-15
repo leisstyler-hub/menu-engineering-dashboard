@@ -1,1 +1,1 @@
-export const APP_VERSION_STAMP = "2026.06.15.006-fix-neighborhood-cafe-switch-lag";
+export const APP_VERSION_STAMP = "2026.06.15.007-restore-open-station-cards";

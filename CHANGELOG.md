@@ -2,6 +2,8 @@
 
 ## 2026-06-15
 
+- [Jun 15, 4:53 PM] Restored Neighborhood Rotations station cards to open by default while keeping the cafe-switch caching improvements.
+- [Jun 15, 4:53 PM] Set visible app version to `2026.06.15.007-restore-open-station-cards`.
 - [Jun 15, 1:05 PM] Cached Neighborhood Rotations station option pools and selected-cafe planner calculations to reduce lag when switching cafes.
 - [Jun 15, 1:05 PM] Made station cards lazy-collapsible so dropdown-heavy station bodies render only when opened on mobile.
 - [Jun 15, 1:05 PM] Set visible app version to `2026.06.15.006-fix-neighborhood-cafe-switch-lag`.
