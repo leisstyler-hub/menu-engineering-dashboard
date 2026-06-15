@@ -2,6 +2,9 @@
 
 ## 2026-06-15
 
+- [Jun 15, 8:44 AM] Scoped Carvery planner dropdowns so proteins, vegetables, starches, hot sides, and cold sides pull from Carvery-relevant MenuWorks rows instead of every matching side in the database.
+- [Jun 15, 8:44 AM] Added missing chef-flagged Carvery items for Caribbean Carrot Salad, Spinach Pecan Strawberry Salad with Balsamic, Red Bliss Mashed Potatoes, and Pineapple Glazed Ham.
+- [Jun 15, 8:44 AM] Set visible app version to `2026.06.15.004-fix-carvery-station-pools`.
 - [Jun 15, 7:27 AM] Made Chef Planner station pills clickable so they jump directly to the matching station section.
 - [Jun 15, 7:27 AM] Set visible app version to `2026.06.15.003-fix-station-pill-jump`.
 - [Jun 15, 7:21 AM] Kept LTO item details, costs, allergens, and Smartsheet records scoped to the selected station pool after an item is chosen.

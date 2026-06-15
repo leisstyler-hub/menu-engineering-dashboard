@@ -143,6 +143,7 @@ const EMPTY_ROTATION = {
     vegetable3: "",
     starch: "",
     hotSide1: "",
+    hotSide2: "",
     coldSide1: "",
     coldSide2: ""
   },
@@ -467,7 +468,7 @@ function recordsToRotations(records = []) {
         [SMARTSHEET_SELECTION_TYPES.carveryProtein]: ["protein1", "protein2"],
         [SMARTSHEET_SELECTION_TYPES.carveryVegetable]: ["vegetable1", "vegetable2", "vegetable3"],
         [SMARTSHEET_SELECTION_TYPES.carveryStarch]: ["starch"],
-        [SMARTSHEET_SELECTION_TYPES.carveryHotSide]: ["hotSide1"],
+        [SMARTSHEET_SELECTION_TYPES.carveryHotSide]: ["hotSide1", "hotSide2"],
         [SMARTSHEET_SELECTION_TYPES.carveryColdSide]: ["coldSide1", "coldSide2"],
       };
       const fields = carveryFieldByType[record.selectionType] || [];
@@ -689,6 +690,20 @@ function textForRow(row) {
   return `${getMenuName(row)} ${getStationName(row)} ${getItemIdentity(row)} ${row.enticingDescription || ""} ${row.description || ""}`.toLowerCase();
 }
 
+function carveryRows(all = uniqueRows(MENUWORKS_ITEMS)) {
+  const rows = all.filter((row) => /carvery/i.test(getMenuName(row)) || /carvery/i.test(getStationName(row)));
+  return rows.length ? rows : all.filter((row) => /carvery/i.test(textForRow(row)));
+}
+
+function isCarverySideCandidate(row) {
+  const station = getStationName(row);
+  const recipeCategory = String(row.recipeCategory || row["Recipe Category"] || "").toLowerCase();
+  return isPriced(row) && (
+    /\bsides?\b/i.test(station) ||
+    (isSide(row) && /side salad|starch\/grain|vegetable/.test(recipeCategory))
+  );
+}
+
 function stationPool(stationKey) {
   const all = uniqueRows(MENUWORKS_ITEMS);
   const byMenu = (needle) => all.filter((row) => getMenuName(row).toLowerCase().includes(needle));
@@ -706,13 +721,29 @@ function stationPool(stationKey) {
       .filter((row) => (getMenuName(row).toLowerCase().includes("fish market") || getStationName(row).toLowerCase().includes("fish market")) && isEntree(row)),
     freshFive: scoped([...byMenuPattern(/fresh (five|\$5|5)/i), ...byStationPattern(/fresh (five|\$5|5)/i)], byText(/fresh five|fresh \$5|fresh 5/)),
     soup: scoped([...byMenuPattern(/\bsoup\b/i), ...byStationPattern(/\bsoup\b/i)], byText(/soup|chili|bisque|chowder/)),
+    grill: uniqueOptionRows(all.filter((row) => {
+      const menu = getMenuName(row);
+      const station = getStationName(row);
+      return isPriced(row) && (/grill core/i.test(menu) || (/fresh (five|\$5|5)/i.test(menu) && /grill/i.test(station)));
+    })),
     wokEntrees: scoped([...byMenu("wok"), ...byStation("wok")], byText(/wok|stir fry|stir-fry|orange peel|sweet and sour|huli huli/)).filter((row) => isEntree(row)),
     wokSides: scoped([...byMenu("wok"), ...byStation("wok")], byText(/lo mein|fried rice|green beans|carrots|gai lan|slaw/)).filter((row) => isSide(row)),
     wokBase: scoped([...byMenu("wok"), ...byStation("wok")], byText(/rice|noodle|lo mein|base/)).filter((row) => isSide(row) || /rice|noodle|base/i.test(getItemIdentity(row))),
     wokSubRecipes: uniqueOptionRows(all.filter((row) => isSubRecipe(row))),
-    carveryProtein: scoped([...byMenu("carvery"), ...byStation("carvery")], byText(/beef|chicken|pork|turkey|salmon|tofu|protein/)).filter((row) => isEntree(row)),
-    carveryVegetable: uniqueOptionRows(byText(/broccoli|carrot|green bean|beans|vegetable|veg|cauliflower|brussels|squash|zucchini|asparagus/)),
-    carverySide: uniqueOptionRows(all.filter((row) => isSide(row)))
+    carveryProtein: uniqueOptionRows(carveryRows(all).filter((row) =>
+      isPriced(row) &&
+      isEntree(row) &&
+      !/sandwich|sides?|sauces?|extensions?/i.test(getStationName(row))
+    )),
+    carveryVegetable: uniqueOptionRows(carveryRows(all).filter((row) =>
+      isCarverySideCandidate(row) &&
+      /broccoli|carrot|green bean|beans|vegetable|veg|cauliflower|brussels|squash|zucchini|asparagus|cabbage|corn|collard|broccolini|succotash|salad/.test(textForRow(row))
+    )),
+    carveryStarch: uniqueOptionRows(carveryRows(all).filter((row) =>
+      isCarverySideCandidate(row) &&
+      /potato|potatoes|fries|tots|hash brown|mashed|fingerling|yukon|russet|sweet potato|rice|pilaf|couscous|mac|cheese|polenta/.test(textForRow(row))
+    )),
+    carverySide: uniqueOptionRows(carveryRows(all).filter(isCarverySideCandidate))
   };
 
   const pool = pools[stationKey] || [];
@@ -1058,7 +1089,7 @@ function globalSelectedRows(rotation, options) {
 }
 
 function grillSelectedRows(rotation, options) {
-  return rowsForSelectedNames([rotation.grill?.regionalSpecial, rotation.grill?.locationSpotlight], options);
+  return rowsForSelectedNames([rotation.grill?.regionalSpecial, rotation.grill?.locationSpotlight], { ...options, candidateRows: stationPool("grill") });
 }
 
 function ltoSelectedRows(rotation, stationKey, options) {
@@ -2613,7 +2644,7 @@ function PickerGroup({ title, limit, items, values, onChange }) {
 }
 
 function GrillSection({ cafe, rotation, updateGrill }) {
-  const grillItems = categorize(MENUWORKS_ITEMS.filter((row) => getMenuName(row) === "AMZ: Grill Core" || getStationName(row).toLowerCase().includes("grill"))).entrees;
+  const grillItems = stationPool("grill");
   const grillTitle = cafe === "Day 1" ? "Adelaide's" : "Core Grill Additions";
   const options = grillItems.length ? grillItems : stationPool("carveryProtein");
   const complete = stationComplete(rotation, "grill");
@@ -2677,8 +2708,9 @@ function CarverySection({ rotation, updateCarvery }) {
     ["vegetable1", "Rotating Vegetable 1", stationPool("carveryVegetable")],
     ["vegetable2", "Rotating Vegetable 2", stationPool("carveryVegetable")],
     ["vegetable3", "Rotating Vegetable 3", stationPool("carveryVegetable")],
-    ["starch", "Starch", potatoSides().length ? potatoSides() : stationPool("carverySide")],
+    ["starch", "Starch", stationPool("carveryStarch")],
     ["hotSide1", "Hot Side 1", carveryHotSides()],
+    ["hotSide2", "Hot Side 2", carveryHotSides()],
     ["coldSide1", "Cold Side 1", carveryColdSides()],
     ["coldSide2", "Cold Side 2", carveryColdSides()]
   ];
