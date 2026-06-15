@@ -2,6 +2,8 @@
 
 ## 2026-06-15
 
+- [Jun 15, 7:27 AM] Made Chef Planner station pills clickable so they jump directly to the matching station section.
+- [Jun 15, 7:27 AM] Set visible app version to `2026.06.15.003-fix-station-pill-jump`.
 - [Jun 15, 7:21 AM] Kept LTO item details, costs, allergens, and Smartsheet records scoped to the selected station pool after an item is chosen.
 - [Jun 15, 7:21 AM] Prevented uploaded LTO values from appearing twice when the same item already exists in the station dropdown.
 - [Jun 15, 7:21 AM] Set visible app version to `2026.06.15.002-fix-lto-detail-scope`.
