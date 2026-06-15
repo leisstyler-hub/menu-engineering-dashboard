@@ -143,7 +143,6 @@ const EMPTY_ROTATION = {
     vegetable3: "",
     starch: "",
     hotSide1: "",
-    hotSide2: "",
     coldSide1: "",
     coldSide2: ""
   },
@@ -468,7 +467,7 @@ function recordsToRotations(records = []) {
         [SMARTSHEET_SELECTION_TYPES.carveryProtein]: ["protein1", "protein2"],
         [SMARTSHEET_SELECTION_TYPES.carveryVegetable]: ["vegetable1", "vegetable2", "vegetable3"],
         [SMARTSHEET_SELECTION_TYPES.carveryStarch]: ["starch"],
-        [SMARTSHEET_SELECTION_TYPES.carveryHotSide]: ["hotSide1", "hotSide2"],
+        [SMARTSHEET_SELECTION_TYPES.carveryHotSide]: ["hotSide1"],
         [SMARTSHEET_SELECTION_TYPES.carveryColdSide]: ["coldSide1", "coldSide2"],
       };
       const fields = carveryFieldByType[record.selectionType] || [];
@@ -1352,7 +1351,7 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
 
   useEffect(() => { refreshFromSmartsheet(); }, []);
 
-  const cafes = DISTRICTS[district] || [];
+  const cafes = useMemo(() => DISTRICTS[district] || [], [district]);
   useEffect(() => { if (district && selectedCafe && !cafes.includes(selectedCafe)) setSelectedCafe(""); }, [district, cafes, selectedCafe]);
 
   const currentRotation = selectedCafe ? (rotations[rotationKey(week, district, selectedCafe)] || EMPTY_ROTATION) : EMPTY_ROTATION;
@@ -1364,19 +1363,34 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
     [rotationKey(week, district, selectedCafe)]: { ...(prev[rotationKey(week, district, selectedCafe)] || EMPTY_ROTATION), ...patch }
   }));
 
-  const districtWeekRows = cafes.map((cafe) => ({ district, cafe, ...(rotations[rotationKey(week, district, cafe)] || EMPTY_ROTATION) }));
-  const leadershipRows = district === "South" ? districtWeekRows.flatMap((row) => row.cafe === "Nitro" ? [row, { ...row, cafe: "Frontier", copiedFrom: "Nitro" }] : [row]) : districtWeekRows;
-  const conflictMenus = menuConflictCounts(conflictControlledRows(district, districtWeekRows));
-  const allRows = Object.entries(DISTRICTS).flatMap(([dist, cafeList]) => cafeList.map((cafe) => ({ district: dist, cafe, ...(rotations[rotationKey(week, dist, cafe)] || EMPTY_ROTATION) })));
-  const allConflictMenus = Object.entries(DISTRICTS).reduce((acc, [dist, cafeList]) => {
+  const districtWeekRows = useMemo(
+    () => cafes.map((cafe) => ({ district, cafe, ...(rotations[rotationKey(week, district, cafe)] || EMPTY_ROTATION) })),
+    [cafes, district, rotations, week]
+  );
+  const leadershipRows = useMemo(
+    () => district === "South" ? districtWeekRows.flatMap((row) => row.cafe === "Nitro" ? [row, { ...row, cafe: "Frontier", copiedFrom: "Nitro" }] : [row]) : districtWeekRows,
+    [district, districtWeekRows]
+  );
+  const conflictMenus = useMemo(() => menuConflictCounts(conflictControlledRows(district, districtWeekRows)), [district, districtWeekRows]);
+  const allRows = useMemo(
+    () => Object.entries(DISTRICTS).flatMap(([dist, cafeList]) => cafeList.map((cafe) => ({ district: dist, cafe, ...(rotations[rotationKey(week, dist, cafe)] || EMPTY_ROTATION) }))),
+    [rotations, week]
+  );
+  const allConflictMenus = useMemo(() => Object.entries(DISTRICTS).reduce((acc, [dist, cafeList]) => {
     const rows = cafeList.map((cafe) => ({ district: dist, cafe, ...(rotations[rotationKey(week, dist, cafe)] || EMPTY_ROTATION) }));
     Object.entries(menuConflictCounts(conflictControlledRows(dist, rows))).forEach(([menu, count]) => {
       acc[`${dist}|${menu}`] = count;
     });
     return acc;
-  }, {});
-  const resultRows = ROLLING_ROTATION_WEEKS.flatMap((wk) => Object.entries(DISTRICTS).flatMap(([dist, cafeList]) => cafeList.map((cafe) => ({ week: wk, district: dist, cafe, ...(rotations[rotationKey(wk, dist, cafe)] || EMPTY_ROTATION) })))).filter((row) => row.menu);
-  const filteredResults = resultRows.filter((row) => (resultsDistrict === "All" || row.district === resultsDistrict) && (resultsCafe === "All" || row.cafe === resultsCafe)).reverse();
+  }, {}), [rotations, week]);
+  const resultRows = useMemo(
+    () => ROLLING_ROTATION_WEEKS.flatMap((wk) => Object.entries(DISTRICTS).flatMap(([dist, cafeList]) => cafeList.map((cafe) => ({ week: wk, district: dist, cafe, ...(rotations[rotationKey(wk, dist, cafe)] || EMPTY_ROTATION) })))).filter((row) => row.menu),
+    [rotations]
+  );
+  const filteredResults = useMemo(
+    () => resultRows.filter((row) => (resultsDistrict === "All" || row.district === resultsDistrict) && (resultsCafe === "All" || row.cafe === resultsCafe)).reverse(),
+    [resultRows, resultsCafe, resultsDistrict]
+  );
   const persistRotationToDatabase = async (nextRotation) => {
     if (!week || !district || !selectedCafe) return;
     const nextRecords = buildDatabaseRecordsForRotation({ week, district, cafe: selectedCafe, rotation: nextRotation });
@@ -2709,8 +2723,7 @@ function CarverySection({ rotation, updateCarvery }) {
     ["vegetable2", "Rotating Vegetable 2", stationPool("carveryVegetable")],
     ["vegetable3", "Rotating Vegetable 3", stationPool("carveryVegetable")],
     ["starch", "Starch", stationPool("carveryStarch")],
-    ["hotSide1", "Hot Side 1", carveryHotSides()],
-    ["hotSide2", "Hot Side 2", carveryHotSides()],
+    ["hotSide1", "Hot Side", carveryHotSides()],
     ["coldSide1", "Cold Side 1", carveryColdSides()],
     ["coldSide2", "Cold Side 2", carveryColdSides()]
   ];
@@ -2763,35 +2776,35 @@ function LeadershipOverview({ district, week, rows, conflictMenus }) {
 }
 
 function ExecutiveView({ week, setWeek, rows, conflictMenus }) {
+  const rowMetrics = useMemo(() => rows.map((row) => {
+    const items = selectedItems(row);
+    const summary = foodSummary(items);
+    const fcRange = selectedFoodCostRange(items);
+    const fcMidpoint = fcRange.low != null && fcRange.high != null ? (fcRange.low + fcRange.high) / 2 : summary.fc;
+    const stationKeys = CAFE_STATION_CONFIG[row.cafe] || [];
+    const completedStations = stationKeys.filter((stationKey) => stationComplete(row, stationKey)).length;
+    const progressPct = stationKeys.length ? Math.round((completedStations / stationKeys.length) * 100) : 0;
+
+    return { row, items, summary, fcRange, fcMidpoint, stationKeys, completedStations, progressPct };
+  }), [rows]);
   const locked = rows.filter((row) => row.status === "Submitted").length;
   const declared = rows.filter((row) => row.menu).length;
   const conflicts = rows.filter((row) => rowHasMenuConflict(row, conflictMenus)).length;
-  const globalRows = rows.filter((row) => row.menu);
-  const globalSummaries = globalRows.map((row) => ({ ...row, summary: foodSummary(selectedItems(row)) }));
-  const pricedGlobalSummaries = globalSummaries.filter((row) => row.summary.fc != null);
-  const averageGlobalFc = pricedGlobalSummaries.length
-    ? pricedGlobalSummaries.reduce((sum, row) => {
-      const range = selectedFoodCostRange(selectedItems(row));
-      const midpoint = range.low != null && range.high != null ? (range.low + range.high) / 2 : row.summary.fc;
-      return sum + midpoint;
-    }, 0) / pricedGlobalSummaries.length
+  const pricedGlobalRows = rowMetrics.filter(({ row, fcMidpoint }) => row.menu && fcMidpoint != null);
+  const averageGlobalFc = pricedGlobalRows.length
+    ? pricedGlobalRows.reduce((sum, metric) => sum + metric.fcMidpoint, 0) / pricedGlobalRows.length
     : null;
 
   const districtNames = Object.keys(DISTRICTS);
-  const selectedCount = rows.reduce((sum, row) => sum + selectedItems(row).length, 0);
+  const selectedCount = rowMetrics.reduce((sum, metric) => sum + metric.items.length, 0);
   const districtSignals = districtNames.map((districtName) => {
-    const districtRows = rows.filter((row) => row.district === districtName);
+    const districtMetrics = rowMetrics.filter(({ row }) => row.district === districtName);
+    const districtRows = districtMetrics.map(({ row }) => row);
     const districtLocked = districtRows.filter((row) => row.status === "Submitted").length;
     const districtDeclared = districtRows.filter((row) => row.menu).length;
     const districtConflicts = districtRows.filter((row) => rowHasMenuConflict(row, conflictMenus)).length;
-    const pricedRows = districtRows
-      .map((row) => {
-        const range = selectedFoodCostRange(selectedItems(row));
-        const midpoint = range.low != null && range.high != null ? (range.low + range.high) / 2 : null;
-        return { row, midpoint };
-      })
-      .filter((entry) => entry.midpoint != null);
-    const averageFc = pricedRows.length ? pricedRows.reduce((sum, entry) => sum + entry.midpoint, 0) / pricedRows.length : null;
+    const pricedRows = districtMetrics.filter((metric) => metric.fcMidpoint != null);
+    const averageFc = pricedRows.length ? pricedRows.reduce((sum, metric) => sum + metric.fcMidpoint, 0) / pricedRows.length : null;
     const lockPct = districtRows.length ? Math.round((districtLocked / districtRows.length) * 100) : 0;
     const declarationPct = districtRows.length ? Math.round((districtDeclared / districtRows.length) * 100) : 0;
     const score = Math.max(0, Math.min(100, Math.round((lockPct * 0.45) + (declarationPct * 0.35) + (districtConflicts ? 0 : 15) + (averageFc == null ? 5 : averageFc <= 0.34 ? 5 : -10))));
@@ -2821,9 +2834,10 @@ function ExecutiveView({ week, setWeek, rows, conflictMenus }) {
         </div>
         <div className="mt-5 space-y-6">
           {districtNames.map((districtName) => {
-            const districtRows = rows.filter((row) => row.district === districtName);
+            const districtMetrics = rowMetrics.filter(({ row }) => row.district === districtName);
+            const districtRows = districtMetrics.map(({ row }) => row);
             const districtLocked = districtRows.filter((row) => row.status === "Submitted").length;
-            const districtSelected = districtRows.reduce((sum, row) => sum + selectedItems(row).length, 0);
+            const districtSelected = districtMetrics.reduce((sum, metric) => sum + metric.items.length, 0);
             return (
               <div key={districtName} className="rounded-3xl border border-slate-200 bg-slate-50/70 p-4">
                 <div className="flex items-center justify-between gap-3">
@@ -2839,8 +2853,8 @@ function ExecutiveView({ week, setWeek, rows, conflictMenus }) {
                   </div>
                 </div>
                 <div className="mt-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                  {districtRows.map((row) => (
-                    <SummaryCard key={`${row.district}-${row.cafe}`} row={row} conflict={rowHasMenuConflict(row, conflictMenus)} showDistrict={false} />
+                  {districtMetrics.map((metric) => (
+                    <SummaryCard key={`${metric.row.district}-${metric.row.cafe}`} row={metric.row} conflict={rowHasMenuConflict(metric.row, conflictMenus)} showDistrict={false} metrics={metric} />
                   ))}
                 </div>
               </div>
@@ -2964,14 +2978,14 @@ function ExecutiveMetric({ title, value, sub, tone = "neutral" }) {
   );
 }
 
-function SummaryCard({ row, conflict, showDistrict = true }) {
-  const rowItems = selectedItems(row);
-  const summary = foodSummary(rowItems);
-  const fcRange = selectedFoodCostRange(rowItems);
-  const fcMidpoint = fcRange.low != null && fcRange.high != null ? (fcRange.low + fcRange.high) / 2 : summary.fc;
-  const stationKeys = CAFE_STATION_CONFIG[row.cafe] || [];
-  const completedStations = stationKeys.filter((stationKey) => stationComplete(row, stationKey)).length;
-  const progressPct = stationKeys.length ? Math.round((completedStations / stationKeys.length) * 100) : 0;
+function SummaryCard({ row, conflict, showDistrict = true, metrics = null }) {
+  const rowItems = metrics?.items || selectedItems(row);
+  const summary = metrics?.summary || foodSummary(rowItems);
+  const fcRange = metrics?.fcRange || selectedFoodCostRange(rowItems);
+  const fcMidpoint = metrics?.fcMidpoint ?? (fcRange.low != null && fcRange.high != null ? (fcRange.low + fcRange.high) / 2 : summary.fc);
+  const stationKeys = metrics?.stationKeys || CAFE_STATION_CONFIG[row.cafe] || [];
+  const completedStations = metrics?.completedStations ?? stationKeys.filter((stationKey) => stationComplete(row, stationKey)).length;
+  const progressPct = metrics?.progressPct ?? (stationKeys.length ? Math.round((completedStations / stationKeys.length) * 100) : 0);
   const locked = row.status === "Submitted";
   const tone = !row.menu ? "border-slate-200 bg-white" : fcMidpoint == null ? "border-slate-300 bg-slate-50" : fcMidpoint > 0.34 ? "border-amber-300 bg-amber-50" : fcMidpoint <= 0.30 ? "border-emerald-300 bg-emerald-50" : "border-sky-200 bg-sky-50";
   const statusTone = locked ? "bg-emerald-500 text-white border-emerald-500" : row.menu ? "bg-amber-100 text-amber-900 border-amber-200" : "bg-rose-100 text-rose-900 border-rose-200";
