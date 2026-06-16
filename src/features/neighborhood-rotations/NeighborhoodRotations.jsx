@@ -770,7 +770,7 @@ function stationPool(stationKey) {
 function stationSlots(cafe, stationKey) {
   const override = {
     Nitro: { freshFive: 3 },
-    Doppler: { freshFive: 3 },
+    Doppler: { pizza: 1, salad: 1, freshFive: 3 },
     "Day 1": { freshFive: 3 },
     "Re:Invent": { freshFive: 3 },
     Dawson: { freshFive: 5 },

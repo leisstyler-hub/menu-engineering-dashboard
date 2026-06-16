@@ -2,6 +2,8 @@
 
 ## 2026-06-15
 
+- [Jun 15, 5:01 PM] Reduced Doppler planner slots to 1 Pizza LTO and 1 Salad LTO while keeping 3 Fresh $5 options.
+- [Jun 15, 5:01 PM] Set visible app version to `2026.06.15.009-adjust-doppler-lto-slots`.
 - [Jun 15, 4:57 PM] Added Fresh $5 to Doppler, Day 1, Nitro, and Re:Invent with 3 options each.
 - [Jun 15, 4:57 PM] Set visible app version to `2026.06.15.008-add-south-fresh-five-options`.
 - [Jun 15, 4:53 PM] Restored Neighborhood Rotations station cards to open by default while keeping the cafe-switch caching improvements.
