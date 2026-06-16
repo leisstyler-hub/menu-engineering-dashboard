@@ -122,7 +122,7 @@ const EMPTY_ROTATION = {
   sides: ["", "", "", ""],
   subRecipes: ["", "", "", ""],
   extensions: ["", ""],
-  grill: { regionalSpecial: "", locationSpotlight: "" },
+  grill: { locationSpotlight1: "", locationSpotlight2: "", regionalSpecial: "", locationSpotlight: "" },
   ltos: {
     salad: ["", ""],
     pizza: ["", ""],
@@ -154,6 +154,21 @@ const EMPTY_ROTATION = {
   updatedAt: "",
   submittedAt: ""
 };
+
+function grillSpotlightValues(rotation = {}) {
+  const grill = rotation.grill || {};
+  const first = grill.locationSpotlight1 || grill.regionalSpecial || "";
+  const second = grill.locationSpotlight2 || (first !== grill.locationSpotlight ? grill.locationSpotlight : "") || "";
+  return [first, second];
+}
+
+function setLoadedGrillSpotlight(rotation, itemName, preferredIndex = 0) {
+  if (!itemName) return;
+  const field = preferredIndex > 0 ? "locationSpotlight2" : (rotation.grill.locationSpotlight1 ? "locationSpotlight2" : "locationSpotlight1");
+  rotation.grill[field] = itemName;
+  if (field === "locationSpotlight1") rotation.grill.regionalSpecial = itemName;
+  if (field === "locationSpotlight2") rotation.grill.locationSpotlight = itemName;
+}
 
 const rotationKey = (week, district, cafe) => `${week}|${district}|${cafe}`;
 const rotationRecordParentId = (week, district, cafe) => `rotation|${parseWeekStart(week) || week}|${district}|${cafe}`;
@@ -324,8 +339,7 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
   pushSelections("global", SMARTSHEET_SELECTION_TYPES.subRecipe, rotation.subRecipes || [], 200);
   pushSelections("global", SMARTSHEET_SELECTION_TYPES.extension, rotation.extensions || [], 300);
   }
-  pushSelections("grill", SMARTSHEET_SELECTION_TYPES.regionalSpecial, [rotation.grill?.regionalSpecial], 400);
-  pushSelections("grill", SMARTSHEET_SELECTION_TYPES.locationSpotlight, [rotation.grill?.locationSpotlight], 410);
+  pushSelections("grill", SMARTSHEET_SELECTION_TYPES.locationSpotlight, grillSpotlightValues(rotation), 400, rotation, "", stationPool("grill"));
   ["salad", "pizza", "deli", "fishMarket", "freshFive", "soup"].forEach((stationKey, stationIndex) => {
     pushSelections(stationKey, SMARTSHEET_SELECTION_TYPES.lto, rotation.ltos?.[stationKey] || [], 500 + stationIndex * 100, rotation, "", stationPool(stationKey));
   });
@@ -356,7 +370,14 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
 
 function upsertDatabaseRecords(existingRecords = [], nextRecords = []) {
   const ids = new Set(nextRecords.map((record) => record[SMARTSHEET_COLUMNS.recordId]));
-  return [...existingRecords.filter((record) => !ids.has(record[SMARTSHEET_COLUMNS.recordId])), ...nextRecords];
+  const parentIds = new Set(nextRecords.map((record) => record[SMARTSHEET_COLUMNS.parentRecordId]).filter(Boolean));
+  return [
+    ...existingRecords.filter((record) =>
+      !ids.has(record[SMARTSHEET_COLUMNS.recordId]) &&
+      !parentIds.has(record[SMARTSHEET_COLUMNS.parentRecordId])
+    ),
+    ...nextRecords
+  ];
 }
 
 function normalizeLoadedRotationRecord(record = {}) {
@@ -449,8 +470,8 @@ function recordsToRotations(records = []) {
     }
 
     if (record.stationKey === "grill") {
-      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.regionalSpecial) rotation.grill.regionalSpecial = record.itemName;
-      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.locationSpotlight) rotation.grill.locationSpotlight = record.itemName;
+      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.regionalSpecial) setLoadedGrillSpotlight(rotation, record.itemName, 0);
+      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.locationSpotlight) setLoadedGrillSpotlight(rotation, record.itemName, Math.max(0, (record.slotNumber || 1) - 1));
       return;
     }
 
@@ -941,7 +962,7 @@ function blankRotation(menu = "", station = "") {
     sides: [...EMPTY_ROTATION.sides],
     subRecipes: [...EMPTY_ROTATION.subRecipes],
     extensions: [...EMPTY_ROTATION.extensions],
-    grill: { regionalSpecial: "", locationSpotlight: "" },
+    grill: { ...EMPTY_ROTATION.grill },
     ltos: Object.fromEntries(Object.entries(EMPTY_ROTATION.ltos).map(([key, values]) => [key, [...values]])),
     carvery: { ...EMPTY_ROTATION.carvery },
     uploadedLtos: {},
@@ -963,7 +984,7 @@ function stationComplete(rotation, stationKey, cafe = "", week = "") {
     return reInventGlobalBlockLayout(week).filter((block) => !block.readOnly).every((block) => blockComplete(getRotationGlobalBlock(rotation, block.id)));
   }
   if (stationKey === "global") return Boolean(rotation.menu && (rotation.entrees || []).filter(Boolean).length >= 2);
-  if (stationKey === "grill") return Boolean(rotation.grill?.regionalSpecial || rotation.grill?.locationSpotlight);
+  if (stationKey === "grill") return Boolean(grillSpotlightValues(rotation).some(Boolean));
   if (["salad", "pizza", "deli", "fishMarket", "freshFive", "soup"].includes(stationKey)) {
     return Boolean((rotation.ltos?.[stationKey] || []).some(Boolean) || (rotation.uploadedLtos?.[stationKey] || []).some(Boolean));
   }
@@ -1104,7 +1125,7 @@ function globalSelectedRows(rotation, options) {
 }
 
 function grillSelectedRows(rotation, options) {
-  return rowsForSelectedNames([rotation.grill?.regionalSpecial, rotation.grill?.locationSpotlight], { ...options, candidateRows: stationPool("grill") });
+  return rowsForSelectedNames(grillSpotlightValues(rotation), { ...options, candidateRows: stationPool("grill") });
 }
 
 function ltoSelectedRows(rotation, stationKey, options) {
@@ -1254,7 +1275,7 @@ function getStationCostOverview(rotation, cafe) {
 
   if (cafeStations.includes("grill")) {
     const grillItems = grillSelectedRows(rotation);
-    stationRows.push({ key: "grill", label: stationLabel(cafe, "grill"), items: grillItems, note: "regional + location spotlight" });
+    stationRows.push({ key: "grill", label: stationLabel(cafe, "grill"), items: grillItems, note: "2 location spotlights" });
   }
 
   ["salad", "pizza", "deli", "fishMarket", "freshFive", "soup"].forEach((key) => {
@@ -2133,7 +2154,7 @@ function ExportCafeCard({ row }) {
 }
 
 function ExportStationBlock({ stationKey, cafe, row }) {
-  if (stationKey === "grill") return <ExportLineCard title={stationLabel(cafe, stationKey)} values={[row.grill?.regionalSpecial, row.grill?.locationSpotlight]} />;
+  if (stationKey === "grill") return <ExportLineCard title={stationLabel(cafe, stationKey)} values={grillSpotlightValues(row)} />;
   if (stationKey === "carvery") return <ExportLineCard title={stationLabel(cafe, stationKey)} values={Object.values(row.carvery || {})} />;
   if (stationKey === "wok") return <ExportLineCard title={stationLabel(cafe, stationKey)} values={[...(row.ltos?.wokEntrees || []), ...(row.ltos?.wokSides || []), ...(row.ltos?.wokBase || []), ...(row.ltos?.wokSubRecipes || [])]} />;
   return <ExportLineCard title={stationLabel(cafe, stationKey)} values={row.ltos?.[stationKey] || []} />;
@@ -2692,11 +2713,12 @@ function GrillSection({ cafe, rotation, updateGrill }) {
   const grillTitle = cafe === "Day 1" ? "Adelaide's" : "Core Grill Additions";
   const options = grillItems.length ? grillItems : stationPool("carveryProtein");
   const complete = stationComplete(rotation, "grill");
+  const [locationSpotlight1, locationSpotlight2] = grillSpotlightValues(rotation);
   return (
     <CollapsibleStation title={grillTitle} eyebrow="Grill Station" complete={complete}>
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <GrillSelect label="Regional Special" value={rotation.grill?.regionalSpecial || ""} onChange={(value) => updateGrill("regionalSpecial", value)} items={options} />
-        <GrillSelect label="Location Spotlight" value={rotation.grill?.locationSpotlight || ""} onChange={(value) => updateGrill("locationSpotlight", value)} items={options} />
+        <GrillSelect label="Location Spotlight 1" value={locationSpotlight1} onChange={(value) => updateGrill("locationSpotlight1", value)} items={options} />
+        <GrillSelect label="Location Spotlight 2" value={locationSpotlight2} onChange={(value) => updateGrill("locationSpotlight2", value)} items={options} />
       </div>
       <StationSelectedList title="Items Description" items={grillSelectedRows(rotation, { unique: true })} complete={complete} />
     </CollapsibleStation>

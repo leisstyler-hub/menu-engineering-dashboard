@@ -2,6 +2,8 @@
 
 ## 2026-06-15
 
+- [Jun 15, 5:12 PM] Replaced Grill Regional Special with two Location Spotlight slots that use the shared Grill special-selection pool.
+- [Jun 15, 5:12 PM] Set visible app version to `2026.06.15.011-grill-location-spotlights`.
 - [Jun 15, 5:03 PM] Reduced Doppler planner slots to 1 Pizza LTO, 1 Salad LTO, and 1 Deli LTO while keeping 3 Fresh $5 options.
 - [Jun 15, 5:03 PM] Set visible app version to `2026.06.15.010-adjust-doppler-deli-slot`.
 - [Jun 15, 5:01 PM] Reduced Doppler planner slots to 1 Pizza LTO and 1 Salad LTO while keeping 3 Fresh $5 options.
