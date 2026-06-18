@@ -2,6 +2,8 @@
 
 ## 2026-06-18
 
+- [Jun 18, 9:13 AM] Removed the redundant submitted-rotation edit checkbox from the lock banner so desktop and mobile show one edit/resubmit control.
+- [Jun 18, 9:13 AM] Set visible app version to `2026.06.18.005-remove-redundant-edit-checkbox`.
 - [Jun 18, 12:55 AM] Added a `calories` field to all 1,325 bundled menu items so item calories have a consistent update location.
 - [Jun 18, 12:55 AM] Fixed submitted recap counting across all cafes so totals come from visible station selections instead of broad Global block rollups.
 - [Jun 18, 12:55 AM] Added item descriptions directly into submitted recap item rows.

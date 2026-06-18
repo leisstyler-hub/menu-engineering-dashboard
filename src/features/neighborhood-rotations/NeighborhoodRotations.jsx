@@ -2044,15 +2044,9 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
       </div>
       {rotation.status === "Submitted" && (
         <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="font-black">Locked rotation selections are showing below.</p>
-              <p className="mt-1 font-semibold text-emerald-800">Check edit mode only when you need to revise and resubmit this cafe/week.</p>
-            </div>
-            <label className="inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-white px-4 py-2 text-xs font-black text-emerald-900">
-              <input type="checkbox" checked={editSubmitted} onChange={(event) => setEditSubmitted(event.target.checked)} />
-              Edit locked rotation
-            </label>
+          <div>
+            <p className="font-black">Locked rotation selections are showing below.</p>
+            <p className="mt-1 font-semibold text-emerald-800">Use Edit and resubmit in the recap only when you need to revise this cafe/week.</p>
           </div>
         </div>
       )}
