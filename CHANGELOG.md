@@ -2,6 +2,9 @@
 
 ## 2026-06-18
 
+- [Jun 18, 1:45 PM] Changed Bingo `Make Menu` from an instruction preview into a real PowerPoint generator that downloads the page 3 grill menu with selected chef items written into the highlighted areas.
+- [Jun 18, 1:45 PM] Added a server-side Bingo PPT template edit route so title, calories, price, and description are written into the existing PowerPoint table while preserving the original `sz="1000"` font sizing and removing yellow highlight tags.
+- [Jun 18, 1:45 PM] Set visible app version to `2026.06.18.010-bingo-ppt-download`.
 - [Jun 18, 12:55 PM] Split Bingo Fresh $5 into one Grill Fresh $5 slot and one Salad Fresh $5 slot so customer-facing menu generation can target the correct PowerPoint areas.
 - [Jun 18, 12:55 PM] Limited Bingo Grill to one Location Spotlight selector and added a Bingo-only Generate Menu button for the Grill PowerPoint page 3 test.
 - [Jun 18, 12:55 PM] Added Customer Menu Edit records with customer title, calories, description, and PowerPoint target notes for Bingo grill menu editing.

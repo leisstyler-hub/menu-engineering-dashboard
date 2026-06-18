@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
-import { ArrowLeft, AlertTriangle, CalendarDays, CheckCircle2, ChevronDown, ChevronUp, Clipboard, Printer, Save, Send, Upload } from "lucide-react";
+import { ArrowLeft, AlertTriangle, CalendarDays, CheckCircle2, ChevronDown, ChevronUp, Clipboard, FileDown, Printer, Save, Send, Upload } from "lucide-react";
 
 import MENUWORKS_ITEMS from "../../data/menuItems.json";
 import { loadRecordsFromSmartsheet, syncRecordsToSmartsheet } from "../../integrations/smartsheet/client.js";
@@ -1773,6 +1773,53 @@ function selectedItems(rotation, cafe = rotation?.cafe || "") {
   return allLegacySelectedRows(rotation);
 }
 
+function customerMenuPrice(row, fallback = "") {
+  const price = getSuggestedRetailPrice(row) ?? getPrice(row);
+  if (price == null || Number.isNaN(Number(price))) return fallback;
+  return Number(price).toFixed(2);
+}
+
+function buildBingoCustomerMenuPayload(rotation, week) {
+  const grillSelection = rotation.grill?.regionalSpecial || rotation.grill?.locationSpotlight || "";
+  const freshFiveSelection = rotation.ltos?.grillFreshFive?.[0] || "";
+  const grillRow = grillSelection ? selectedRowForName(grillSelection, stationPool("grill")) : null;
+  const freshFiveRow = freshFiveSelection ? selectedRowForName(freshFiveSelection, stationPool("grillFreshFive")) : null;
+  const makeItem = (row, fallbackTitle, fallbackPrice) => ({
+    title: row ? getDisplayName(row) : titleCase(fallbackTitle || ""),
+    calories: row ? getCalories(row) : null,
+    description: row ? getDescription(row) : "",
+    price: row ? customerMenuPrice(row, fallbackPrice) : fallbackPrice,
+    diet: row ? getDiet(row) : ""
+  });
+
+  return {
+    week,
+    grill: makeItem(grillRow, grillSelection, "11.75"),
+    freshFive: makeItem(freshFiveRow, freshFiveSelection, "5.00")
+  };
+}
+
+function bingoCustomerMenuMissing(payload) {
+  const missing = [];
+  [["Grill Location Spotlight", payload.grill], ["Grill Fresh $5", payload.freshFive]].forEach(([label, item]) => {
+    if (!String(item.title || "").trim()) missing.push(`${label} title`);
+    if (!item.calories) missing.push(`${label} calories`);
+    if (!String(item.description || "").trim()) missing.push(`${label} description`);
+  });
+  return missing;
+}
+
+function downloadBlob(blob, filename) {
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}
+
 function foodSummary(items) {
   const priced = items.filter((row) => getPrice(row) != null && getTrueCost(row) != null && Number(getPrice(row)) > 0);
   const sell = priced.reduce((sum, row) => sum + Number(getPrice(row) || 0), 0);
@@ -2266,6 +2313,8 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
   const [submitWarningOpen, setSubmitWarningOpen] = useState(false);
   const [editSubmitted, setEditSubmitted] = useState(false);
   const [showCustomerMenuPanel, setShowCustomerMenuPanel] = useState(false);
+  const [customerMenuStatus, setCustomerMenuStatus] = useState(null);
+  const [customerMenuGenerating, setCustomerMenuGenerating] = useState(false);
   const lockedForEditing = rotation.status === "Submitted" && !editSubmitted;
   const guardedUpdateRotation = (patch) => {
     if (lockedForEditing) return;
@@ -2350,6 +2399,43 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
     persistRotationToDatabase?.(nextRotation);
     setPreview(null);
   };
+  const generateBingoCustomerMenu = async () => {
+    const payload = buildBingoCustomerMenuPayload(rotation, week);
+    const missing = bingoCustomerMenuMissing(payload);
+    setShowCustomerMenuPanel(true);
+    if (missing.length) {
+      setCustomerMenuStatus({ state: "error", message: `Cannot make menu yet. Missing: ${missing.join(", ")}.` });
+      return;
+    }
+
+    setCustomerMenuGenerating(true);
+    setCustomerMenuStatus({ state: "loading", message: "Making Bingo grill PowerPoint..." });
+    try {
+      const response = await fetch("/api/bingo/customer-menu", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) {
+        let message = "Bingo menu generation failed.";
+        try {
+          const errorPayload = await response.json();
+          message = errorPayload.message || message;
+        } catch {
+          message = await response.text();
+        }
+        throw new Error(message);
+      }
+      const blob = await response.blob();
+      const safeWeek = String(week || "week").replace(/[^a-z0-9-]+/gi, "-").replace(/^-|-$/g, "");
+      downloadBlob(blob, `bingo-grill-menu-${safeWeek || "week"}.pptx`);
+      setCustomerMenuStatus({ state: "success", message: "PowerPoint generated from the selected Bingo grill items." });
+    } catch (error) {
+      setCustomerMenuStatus({ state: "error", message: error.message || "Bingo menu generation failed." });
+    } finally {
+      setCustomerMenuGenerating(false);
+    }
+  };
 
   return (
     <div className="rounded-lg bg-white border border-slate-200 p-6 shadow-sm">
@@ -2369,9 +2455,10 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
         canSubmit={canSubmitRotation}
         onSaveDraft={markDraft}
         onSubmit={submitRotation}
-        onGenerateMenu={cafe === "Bingo" ? () => setShowCustomerMenuPanel((value) => !value) : null}
+        onGenerateMenu={cafe === "Bingo" ? generateBingoCustomerMenu : null}
+        generatingMenu={customerMenuGenerating}
       />
-      {cafe === "Bingo" && showCustomerMenuPanel && <BingoCustomerMenuPanel week={week} rotation={rotation} />}
+      {cafe === "Bingo" && showCustomerMenuPanel && <BingoCustomerMenuPanel week={week} rotation={rotation} status={customerMenuStatus} onGenerate={generateBingoCustomerMenu} generating={customerMenuGenerating} />}
       {submitWarningOpen && (
         <SubmitBlockedModal
           cafe={cafe}
@@ -2591,7 +2678,7 @@ function StationCostOverview({ rows }) {
 }
 
 
-function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, setPreview, applyPreview, week, printRows, rotation, requirements, submitIssues = [], canSubmit, onSaveDraft, onSubmit, onGenerateMenu }) {
+function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, setPreview, applyPreview, week, printRows, rotation, requirements, submitIssues = [], canSubmit, onSaveDraft, onSubmit, onGenerateMenu, generatingMenu = false }) {
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const copiedSummary = copiedRotation?.menu
     ? `${copiedRotation.menu}${copiedRotation.station ? ` • ${copiedRotation.station}` : ""}`
@@ -2623,7 +2710,7 @@ function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, s
             <RemoteButton icon={ChevronDown} label="Load" onClick={onLoad} disabled={!copiedRotation} />
             <RemoteUploadButton onChange={handleUpload} />
             <RemoteButton icon={Printer} label={showPrintPreview ? "Hide View" : "View/Print"} onClick={() => setShowPrintPreview((value) => !value)} tone="light" />
-            {onGenerateMenu && <RemoteButton icon={CalendarDays} label="Generate Menu" onClick={onGenerateMenu} tone="light" />}
+            {onGenerateMenu && <RemoteButton icon={FileDown} label={generatingMenu ? "Making Menu" : "Make Menu"} onClick={onGenerateMenu} disabled={generatingMenu} tone="light" />}
             <RemoteButton icon={Save} label="Save Draft" onClick={onSaveDraft} tone="light" />
             <RemoteButton icon={Send} label="Submit" onClick={onSubmit} blocked={!canSubmit} title={submitHelp} tone="go" />
           </div>
@@ -2937,7 +3024,7 @@ function WeekAtGlanceUpload({ cafe, preview, setPreview, applyPreview }) {
   );
 }
 
-function BingoCustomerMenuPanel({ week, rotation }) {
+function BingoCustomerMenuPanel({ week, rotation, status, onGenerate, generating = false }) {
   const grillItem = rotation.grill?.regionalSpecial || rotation.grill?.locationSpotlight || "";
   const grillFreshFive = rotation.ltos?.grillFreshFive?.[0] || "";
   const rows = [
@@ -2959,19 +3046,42 @@ function BingoCustomerMenuPanel({ week, rotation }) {
       ...row,
       title: itemRow ? getDisplayName(itemRow) : row.item,
       calories: itemRow ? getCalories(itemRow) : "",
-      description: itemRow ? getDescription(itemRow) : ""
+      description: itemRow ? getDescription(itemRow) : "",
+      price: itemRow ? customerMenuPrice(itemRow, row.slot === 2 ? "5.00" : "11.75") : ""
     };
   });
+  const missing = bingoCustomerMenuMissing(buildBingoCustomerMenuPayload(rotation, week));
   return (
     <div className="mb-5 rounded-3xl border-2 border-emerald-200 bg-emerald-50 p-5 shadow-sm">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.18em] text-emerald-700 font-black">Bingo Customer Menu Generator</p>
           <h3 className="mt-1 text-2xl font-black text-slate-950">Grill PowerPoint Page 3</h3>
-          <p className="mt-1 text-sm font-semibold text-emerald-900">Test scope: one Grill Location Spotlight and one Grill Fresh $5. Save Draft or Submit writes these as customer menu edit records.</p>
+          <p className="mt-1 text-sm font-semibold text-emerald-900">Make Menu downloads the Bingo PowerPoint with the selected Grill Location Spotlight and Grill Fresh $5 written into the highlighted areas.</p>
         </div>
-        <span className="rounded-full border border-emerald-300 bg-white px-3 py-1 text-xs font-black text-emerald-800">{week}</span>
+        <div className="flex flex-col gap-2 sm:items-end">
+          <span className="rounded-full border border-emerald-300 bg-white px-3 py-1 text-xs font-black text-emerald-800">{week}</span>
+          <button
+            type="button"
+            onClick={onGenerate}
+            disabled={generating}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-300 bg-white px-4 py-2 text-sm font-black text-emerald-900 shadow-sm transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <FileDown size={16} />
+            {generating ? "Making Menu" : "Make Menu"}
+          </button>
+        </div>
       </div>
+      {status?.message && (
+        <div className={`mt-4 rounded-2xl border p-3 text-sm font-bold ${toneForState(status.state)}`}>
+          {status.message}
+        </div>
+      )}
+      {missing.length > 0 && (
+        <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-900">
+          Missing before menu can be made: {missing.join(", ")}.
+        </div>
+      )}
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
         {rows.map((row) => (
           <div key={row.target} className={`rounded-2xl border p-4 ${row.item ? "border-emerald-300 bg-white" : "border-amber-200 bg-amber-50"}`}>
@@ -2980,19 +3090,16 @@ function BingoCustomerMenuPanel({ week, rotation }) {
             <div className="mt-3 space-y-1 text-xs font-semibold text-slate-600">
               <p>Title: {row.title || "missing"}</p>
               <p>Calories: {row.calories || "missing"}</p>
+              <p>Price: {row.price || "missing"}</p>
               <p>Description: {row.description || "missing"}</p>
-              <p>Record Type: Customer Menu Edit</p>
-              <p>Station Key: customerMenu</p>
               <p>Menu Block Type: PowerPoint Page 3</p>
-              <p>Slot Number: {row.slot}</p>
-              <p>Notes: {row.notes}</p>
             </div>
           </div>
         ))}
       </div>
       <div className="mt-4 rounded-2xl border border-emerald-200 bg-white p-4 text-sm text-slate-700">
-        <p className="font-black text-slate-950">Where this goes in Smartsheet</p>
-        <p className="mt-1">Use the existing Menu Rotation Smartsheet. These rows land under the same Bingo/week parent with <span className="font-bold">Record Type = Customer Menu Edit</span>, <span className="font-bold">Station Display Name = Bingo Customer Menu</span>, and <span className="font-bold">Menu Block Label = Bingo Grill PowerPoint</span>. The customer title writes to <span className="font-bold">Menu Item / Selection</span>, calories write to <span className="font-bold">Calories</span>, the customer copy writes to <span className="font-bold">Enticing Description</span>, and the highlighted PowerPoint area writes to <span className="font-bold">Notes</span>.</p>
+        <p className="font-black text-slate-950">PowerPoint output</p>
+        <p className="mt-1">The server edits the Bingo grill template directly, keeps the original table font size, writes title, calories, price, and description, and removes the highlighted callout from those areas in the downloaded deck.</p>
       </div>
     </div>
   );
