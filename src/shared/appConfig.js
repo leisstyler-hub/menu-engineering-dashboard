@@ -1,1 +1,1 @@
-export const APP_VERSION_STAMP = "2026.06.18.005-remove-redundant-edit-checkbox";
+export const APP_VERSION_STAMP = "2026.06.18.006-import-calorie-report-data";

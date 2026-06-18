@@ -2,6 +2,10 @@
 
 ## 2026-06-18
 
+- [Jun 18, 9:56 AM] Imported the calorie report into bundled menu data, raising the app data file from 1,329 to 1,648 rows with 1,641 calorie values loaded.
+- [Jun 18, 9:56 AM] Filled 263 missing item descriptions plus missing ingredient/common-ingredient fields from the calorie report while preserving existing display names and locked-selection keys.
+- [Jun 18, 9:56 AM] Added report-only menu rows for new RA/BYO programs and known station buckets, with audit checks for duplicate IDs, duplicate dropdown keys, and source-row coverage.
+- [Jun 18, 9:56 AM] Set visible app version to `2026.06.18.006-import-calorie-report-data`.
 - [Jun 18, 9:13 AM] Removed the redundant submitted-rotation edit checkbox from the lock banner so desktop and mobile show one edit/resubmit control.
 - [Jun 18, 9:13 AM] Set visible app version to `2026.06.18.005-remove-redundant-edit-checkbox`.
 - [Jun 18, 12:55 AM] Added a `calories` field to all 1,325 bundled menu items so item calories have a consistent update location.
