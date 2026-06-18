@@ -2,6 +2,8 @@
 
 ## 2026-06-18
 
+- [Jun 18, 12:11 AM] Added calories rounded to the nearest 5 and suggested retail price chips to Items Description cards and submitted selection recap cards.
+- [Jun 18, 12:11 AM] Set visible app version to `2026.06.18.002-feature-selection-build-meta`.
 - [Jun 18, 12:02 AM] Changed submitted Neighborhood Rotation weeks into a recap-card view with an `Edit and resubmit` checkbox that reopens the selectors.
 - [Jun 18, 12:02 AM] Reworked Nitro Global planning into one weekly menu with two item blocks: Monday + Tuesday and Wednesday + Friday.
 - [Jun 18, 12:02 AM] Added Baja Crunch Salad to Salad LTO options and widened Salad LTOs to include Fresh Five-style salad options.

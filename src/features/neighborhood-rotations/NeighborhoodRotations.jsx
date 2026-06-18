@@ -580,6 +580,17 @@ const getMenuName = (row) => row.menu || row.menuName || row["Menu Name"] || "";
 const getStationName = (row) => row.station || row.stationName || row["Station"] || "";
 const getPrice = (row) => row.price ?? row.sellPrice ?? row["Sell Price"] ?? null;
 const getTrueCost = (row) => row.trueCost ?? row.itemCostWithWaste ?? row["Item + Waste Cost"] ?? row["Recipe Cost"] ?? row.recipeCost ?? null;
+const getCalories = (row) => {
+  const raw = row.calories ?? row.calorie ?? row.kcal ?? row.Calories ?? row["Calories"] ?? row["Calories Per Serving"] ?? row.caloriesPerServing ?? null;
+  const value = Number(String(raw ?? "").replace(/[^0-9.]/g, ""));
+  if (!Number.isFinite(value) || value <= 0) return null;
+  return Math.round(value / 5) * 5;
+};
+const getSuggestedRetailPrice = (row) => {
+  const raw = row.suggestedRetailPrice ?? row.retailPrice ?? row.suggestedPrice ?? row.price ?? row.sellPrice ?? row["Suggested Retail Price"] ?? row["Retail Price"] ?? row["Sell Price"] ?? null;
+  const value = Number(String(raw ?? "").replace(/[^0-9.]/g, ""));
+  return Number.isFinite(value) && value > 0 ? value : null;
+};
 const getCategory = (row) => String(row.category || row.itemType || row["Item Type"] || row.classification || "").toLowerCase();
 const isGlobalMenuOption = (menu = "") =>
   /^AMZ\+RA:/i.test(menu) ||
@@ -1994,7 +2005,10 @@ function SubmittedRotationRecap({ cafe, week, rotation, rows, onEdit }) {
             </div>
             {row.items.length ? (
               <ul className="mt-3 space-y-1 text-sm font-semibold text-slate-800">
-                {row.items.map((item, index) => <li key={`${row.key}-${getItemIdentity(item)}-${index}`}>{titleCase(getDisplayName(item) || getItemIdentity(item))}</li>)}
+                {row.items.map((item, index) => <li key={`${row.key}-${getItemIdentity(item)}-${index}`} className="flex flex-col gap-1 rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
+                  <span>{titleCase(getDisplayName(item) || getItemIdentity(item))}</span>
+                  <ItemBuildMeta item={item} />
+                </li>)}
               </ul>
             ) : (
               <p className="mt-3 text-sm font-semibold text-slate-400">No selections saved.</p>
@@ -2003,6 +2017,21 @@ function SubmittedRotationRecap({ cafe, week, rotation, rows, onEdit }) {
         ))}
       </div>
     </section>
+  );
+}
+
+function ItemBuildMeta({ item }) {
+  const calories = getCalories(item);
+  const retail = getSuggestedRetailPrice(item);
+  return (
+    <span className="flex flex-wrap gap-2 text-xs font-black">
+      <span className={`rounded-full border px-2.5 py-1 ${calories == null ? "border-amber-200 bg-amber-50 text-amber-800" : "border-sky-200 bg-sky-50 text-sky-800"}`}>
+        {calories == null ? "Calories not listed" : `${calories} cal`}
+      </span>
+      <span className={`rounded-full border px-2.5 py-1 ${retail == null ? "border-amber-200 bg-amber-50 text-amber-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}>
+        {retail == null ? "Retail not listed" : `Retail ${money(retail)}`}
+      </span>
+    </span>
   );
 }
 
@@ -3014,7 +3043,10 @@ function StationSelectedList({ title = "Items Description", items, complete = fa
             return (
               <div key={`${getItemIdentity(row)}-${index}`} className={`rounded-lg border p-3 ${missingSourceDetail ? "border-amber-200 bg-amber-50/70" : "border-slate-200 bg-slate-50"}`}>
                 <div className="flex flex-wrap items-start justify-between gap-2">
-                  <p className="font-bold text-slate-900">{getDisplayName(row)}</p>
+                  <div>
+                    <p className="font-bold text-slate-900">{getDisplayName(row)}</p>
+                    <div className="mt-2"><ItemBuildMeta item={row} /></div>
+                  </div>
                   <div className="flex flex-wrap justify-end gap-2">
                     {missingSourceDetail && <span className="rounded-full bg-amber-100 border border-amber-200 px-3 py-1 text-xs font-bold text-amber-800">Source Detail Missing</span>}
                     {diet && <span className="rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-bold text-emerald-800">{diet}</span>}

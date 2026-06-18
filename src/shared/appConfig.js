@@ -1,1 +1,1 @@
-export const APP_VERSION_STAMP = "2026.06.18.001-fix-nitro-recap-performance";
+export const APP_VERSION_STAMP = "2026.06.18.002-feature-selection-build-meta";
