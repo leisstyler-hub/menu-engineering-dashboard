@@ -35,7 +35,7 @@ const CAFE_STATION_CONFIG = {
   LAX78: ["global", "grill", "salad", "freshFive"],
   SNA3: ["global", "grill", "salad", "freshFive"],
   Astra: ["global", "grill", "freshFive"],
-  Bingo: ["global", "fishMarket", "grill", "salad", "commissaryEverest", "freshFive"],
+  Bingo: ["global", "fishMarket", "grill", "grillFreshFive", "salad", "saladFreshFive", "commissaryEverest"],
   Sonic: ["global", "grill", "freshFive", "salad", "deli"],
   Blueshift: ["global", "lotusWp", "grill", "salad", "deli", "fishMarket", "freshFive"],
   Eclipse: ["global", "stationTakeover", "freshFive"],
@@ -63,6 +63,8 @@ const STATION_LABELS = {
   fishMarket: "Fish Market LTO",
   carvery: "Carvery Station",
   freshFive: "Fresh $5",
+  grillFreshFive: "Grill Fresh $5",
+  saladFreshFive: "Salad Fresh $5",
   soup: "Soup LTOs",
   streetBeets: "Street Beets",
   commissaryEverest: "Commissary to Everest",
@@ -184,6 +186,8 @@ const EMPTY_ROTATION = {
     deli: ["", ""],
     fishMarket: [""],
     freshFive: ["", "", "", "", ""],
+    grillFreshFive: [""],
+    saladFreshFive: [""],
     soup: ["", ""],
     lotusEntrees: ["", "", "", ""],
     lotusSides: ["", "", "", "", "", ""],
@@ -284,6 +288,7 @@ function selectionDatabaseRecord({ parentId, district, cafe, week, rotation, sta
     [SMARTSHEET_COLUMNS.menuItemSortOrder]: sortOrder,
     [SMARTSHEET_COLUMNS.price]: price ?? "",
     [SMARTSHEET_COLUMNS.trueCost]: trueCost ?? "",
+    [SMARTSHEET_COLUMNS.calories]: getCalories(row) ?? "",
     [SMARTSHEET_COLUMNS.foodCostPct]: foodCost == null ? "" : Number((foodCost * 100).toFixed(1)),
     [SMARTSHEET_COLUMNS.enticingDescription]: getDescription(row),
     [SMARTSHEET_COLUMNS.dietTags]: getDiet(row),
@@ -350,7 +355,6 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
     [SMARTSHEET_COLUMNS.promotionDays]: (promo.days || []).join(", "),
     [SMARTSHEET_COLUMNS.returnToCycleDays]: (promo.returnDays || []).join(", "),
     [SMARTSHEET_COLUMNS.breaksNormalCycle]: Boolean(promo.enabled),
-    [SMARTSHEET_COLUMNS.cycleRecoveryNotes]: promo.enabled ? "Promotion override is isolated to this café/week. Return-to-cycle days restore the normal pattern without changing future weeks." : "",
     [SMARTSHEET_COLUMNS.cycleRecoveryNotes]: promo.enabled ? promoRecoveryNotes(promo) : "",
   } : null;
 
@@ -369,6 +373,17 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
     if (!String(itemName || "").trim()) return;
     const rec = selectionDatabaseRecord({ parentId, district, cafe, week, rotation, stationKey, selectionType, itemName, sortOrder, slotNumber, candidateRows });
     if (notes) rec[SMARTSHEET_COLUMNS.notes] = notes;
+    selectionRows.push(rec);
+  };
+  const pushCustomerMenuEdit = ({ target, itemName, slotNumber, sortOrder }) => {
+    if (!String(itemName || "").trim()) return;
+    const rec = selectionDatabaseRecord({ parentId, district, cafe, week, rotation, stationKey: "customerMenu", selectionType: SMARTSHEET_SELECTION_TYPES.customerMenuReplacement, itemName, sortOrder, slotNumber });
+    rec[SMARTSHEET_COLUMNS.recordType] = SMARTSHEET_RECORD_TYPES.customerMenuEdit;
+    rec[SMARTSHEET_COLUMNS.station] = "Customer Menu";
+    rec[SMARTSHEET_COLUMNS.stationDisplayName] = "Bingo Customer Menu";
+    rec[SMARTSHEET_COLUMNS.menuBlockLabel] = "Bingo Grill PowerPoint";
+    rec[SMARTSHEET_COLUMNS.menuBlockType] = "PowerPoint Page 3";
+    rec[SMARTSHEET_COLUMNS.notes] = `${target}. PowerPoint page 3. Replace highlighted text only, keep text box, font, size, and formatting, then remove highlight.`;
     selectionRows.push(rec);
   };
 
@@ -441,7 +456,7 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
   if (rotation.grill?.promoActive) {
     pushSelections("grill", SMARTSHEET_SELECTION_TYPES.grillPromo, [rotation.grill?.promoItem], 420);
   }
-  ["salad", "pizza", "deli", "fishMarket", "freshFive", "soup"].forEach((stationKey, stationIndex) => {
+  ["salad", "pizza", "deli", "fishMarket", "freshFive", "grillFreshFive", "saladFreshFive", "soup"].forEach((stationKey, stationIndex) => {
     pushSelections(stationKey, SMARTSHEET_SELECTION_TYPES.lto, rotation.ltos?.[stationKey] || [], 500 + stationIndex * 100, rotation, "", stationPool(stationKey));
   });
   pushSelections("wok", SMARTSHEET_SELECTION_TYPES.wokEntree, rotation.ltos?.wokEntrees || [], 1000, rotation, "", stationPool("wokEntrees"));
@@ -475,6 +490,11 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
     (takeover.sides || []).forEach((value, index) => pushCustomSelection("stationTakeover", SMARTSHEET_SELECTION_TYPES.side, value, index + 1, 1610 + index));
     (takeover.subRecipes || []).forEach((value, index) => pushCustomSelection("stationTakeover", SMARTSHEET_SELECTION_TYPES.subRecipe, value, index + 1, 1620 + index));
     (takeover.extensions || []).forEach((value, index) => pushCustomSelection("stationTakeover", SMARTSHEET_SELECTION_TYPES.extension, value, index + 1, 1630 + index));
+  }
+
+  if (cafe === "Bingo") {
+    pushCustomerMenuEdit({ target: "Grill Location Spotlight edit area", itemName: rotation.grill?.regionalSpecial || rotation.grill?.locationSpotlight, slotNumber: 1, sortOrder: 1700 });
+    pushCustomerMenuEdit({ target: "Grill Fresh Five edit area", itemName: rotation.ltos?.grillFreshFive?.[0], slotNumber: 2, sortOrder: 1710 });
   }
 
   const uploadRows = [];
@@ -1098,6 +1118,8 @@ function stationPool(stationKey) {
     fishMarket: exactMenuRows("AMZ: Fish Market")
       .filter((row) => (getMenuName(row).toLowerCase().includes("fish market") || getStationName(row).toLowerCase().includes("fish market")) && isEntree(row)),
     freshFive: exactMenuRows("AMZ: Fresh Five"),
+    grillFreshFive: exactMenuRows("AMZ: Fresh Five"),
+    saladFreshFive: exactMenuRows("AMZ: Fresh Five"),
     soup: exactMenuRows("AMZ: Cafe Express Soup"),
     wokEntrees: exactMenuRows("AMZ: Wok").filter((row) => isEntree(row)),
     wokSides: exactMenuRows("AMZ: Wok").filter((row) => isSide(row)),
@@ -1122,7 +1144,7 @@ function stationPool(stationKey) {
     return pool;
   }
 
-  if (["freshFive", "salad", "pizza", "deli", "fishMarket", "soup"].includes(stationKey)) {
+  if (["freshFive", "grillFreshFive", "saladFreshFive", "salad", "pizza", "deli", "fishMarket", "soup"].includes(stationKey)) {
     const fallback = uniqueOptionRows(all.filter((row) => isEntree(row) || isSide(row)));
     STATION_POOL_CACHE.set(stationKey, fallback);
     return fallback;
@@ -1146,7 +1168,7 @@ function stationSlots(cafe, stationKey) {
     Astra: { freshFive: 2 },
     Grace: { freshFive: 2, salad: 2 },
     Sonic: { freshFive: 2, salad: 5, deli: 4 },
-    Bingo: { fishMarket: 2, salad: 2, freshFive: 2 },
+    Bingo: { fishMarket: 2, salad: 2, grillFreshFive: 1, saladFreshFive: 1 },
     Blueshift: { salad: 5, deli: 4, fishMarket: 2, freshFive: 2 },
     Eclipse: { freshFive: 2 }
   }[cafe]?.[stationKey];
@@ -1163,7 +1185,7 @@ function stationRequiredCount(cafe, stationKey) {
     Astra: { grill: 0, freshFive: 2 },
     Grace: { grill: 1, freshFive: 2, salad: 2 },
     Sonic: { grill: 1, freshFive: 2, salad: 5, deli: 4 },
-    Bingo: { fishMarket: 2, grill: 1, salad: 2, commissaryEverest: 1, freshFive: 2 },
+    Bingo: { fishMarket: 2, grill: 1, grillFreshFive: 1, salad: 2, saladFreshFive: 1, commissaryEverest: 1 },
     Blueshift: { lotusWp: 1, grill: 1, salad: 5, deli: 4, fishMarket: 2, freshFive: 2 },
     Eclipse: { stationTakeover: 0, freshFive: 2 }
   }[cafe]?.[stationKey];
@@ -1457,7 +1479,7 @@ function stationComplete(rotation, stationKey, cafe = "", week = "") {
   }
   if (stationKey === "noodles") return blockComplete(getRotationGlobalBlock(rotation, "noodles"));
   if (stationKey === "grill") return stationRequiredCount(cafe, stationKey) === 0 || Boolean(rotation.grill?.regionalSpecial || rotation.grill?.locationSpotlight || (rotation.grill?.promoActive && rotation.grill?.promoItem));
-  if (["salad", "pizza", "deli", "fishMarket", "freshFive", "soup"].includes(stationKey)) {
+  if (["salad", "pizza", "deli", "fishMarket", "freshFive", "grillFreshFive", "saladFreshFive", "soup"].includes(stationKey)) {
     const required = stationRequiredCount(cafe, stationKey);
     if (required === 0) return true;
     return [...(rotation.ltos?.[stationKey] || []), ...(rotation.uploadedLtos?.[stationKey] || [])].filter(Boolean).length >= required;
@@ -1694,7 +1716,7 @@ function getStationSelectionRows(rotation, cafe) {
     stationRows.push({ key: "grill", label: stationLabel(cafe, "grill"), items: grillItems, note: "regional + location spotlight" });
   }
 
-  ["salad", "pizza", "deli", "fishMarket", "freshFive", "soup"].forEach((key) => {
+  ["salad", "pizza", "deli", "fishMarket", "freshFive", "grillFreshFive", "saladFreshFive", "soup"].forEach((key) => {
     if (cafeStations.includes(key)) {
       const selected = ltoSelectedRows(rotation, key, { unique: true });
       const uploadedItems = (uploaded[key] || []).filter(Boolean).map(makeUploadedItem);
@@ -1720,7 +1742,7 @@ function allLegacySelectedRows(rotation) {
     ...globalSelectedRows(rotation),
     ...blockRows,
     ...grillSelectedRows(rotation),
-    ...["salad", "pizza", "deli", "fishMarket", "freshFive", "soup"].flatMap((stationKey) => ltoSelectedRows(rotation, stationKey)),
+    ...["salad", "pizza", "deli", "fishMarket", "freshFive", "grillFreshFive", "saladFreshFive", "soup"].flatMap((stationKey) => ltoSelectedRows(rotation, stationKey)),
     ...wokSelectedRows(rotation),
     ...carverySelectedRows(rotation),
     ...["streetBeets", "commissaryEverest", "lotusWp", "stationTakeover"].flatMap((stationKey) => customStationRows(rotation, stationKey))
@@ -2243,6 +2265,7 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
   const [copiedRotation, setCopiedRotation] = useState(null);
   const [submitWarningOpen, setSubmitWarningOpen] = useState(false);
   const [editSubmitted, setEditSubmitted] = useState(false);
+  const [showCustomerMenuPanel, setShowCustomerMenuPanel] = useState(false);
   const lockedForEditing = rotation.status === "Submitted" && !editSubmitted;
   const guardedUpdateRotation = (patch) => {
     if (lockedForEditing) return;
@@ -2346,7 +2369,9 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
         canSubmit={canSubmitRotation}
         onSaveDraft={markDraft}
         onSubmit={submitRotation}
+        onGenerateMenu={cafe === "Bingo" ? () => setShowCustomerMenuPanel((value) => !value) : null}
       />
+      {cafe === "Bingo" && showCustomerMenuPanel && <BingoCustomerMenuPanel week={week} rotation={rotation} />}
       {submitWarningOpen && (
         <SubmitBlockedModal
           cafe={cafe}
@@ -2566,7 +2591,7 @@ function StationCostOverview({ rows }) {
 }
 
 
-function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, setPreview, applyPreview, week, printRows, rotation, requirements, submitIssues = [], canSubmit, onSaveDraft, onSubmit }) {
+function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, setPreview, applyPreview, week, printRows, rotation, requirements, submitIssues = [], canSubmit, onSaveDraft, onSubmit, onGenerateMenu }) {
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const copiedSummary = copiedRotation?.menu
     ? `${copiedRotation.menu}${copiedRotation.station ? ` • ${copiedRotation.station}` : ""}`
@@ -2593,11 +2618,12 @@ function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, s
               {rotation?.updatedAt && <span className="rounded-full border border-slate-600 bg-slate-800 px-3 py-1 font-semibold text-slate-300">Updated {rotation.updatedAt}</span>}
             </div>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2">
             <RemoteButton icon={Clipboard} label="Copy" onClick={onCopy} />
             <RemoteButton icon={ChevronDown} label="Load" onClick={onLoad} disabled={!copiedRotation} />
             <RemoteUploadButton onChange={handleUpload} />
             <RemoteButton icon={Printer} label={showPrintPreview ? "Hide View" : "View/Print"} onClick={() => setShowPrintPreview((value) => !value)} tone="light" />
+            {onGenerateMenu && <RemoteButton icon={CalendarDays} label="Generate Menu" onClick={onGenerateMenu} tone="light" />}
             <RemoteButton icon={Save} label="Save Draft" onClick={onSaveDraft} tone="light" />
             <RemoteButton icon={Send} label="Submit" onClick={onSubmit} blocked={!canSubmit} title={submitHelp} tone="go" />
           </div>
@@ -2911,6 +2937,67 @@ function WeekAtGlanceUpload({ cafe, preview, setPreview, applyPreview }) {
   );
 }
 
+function BingoCustomerMenuPanel({ week, rotation }) {
+  const grillItem = rotation.grill?.regionalSpecial || rotation.grill?.locationSpotlight || "";
+  const grillFreshFive = rotation.ltos?.grillFreshFive?.[0] || "";
+  const rows = [
+    {
+      target: "Grill Location Spotlight edit area",
+      item: grillItem,
+      slot: 1,
+      notes: "PowerPoint page 3. Replace highlighted text only, keep text box, font, size, and formatting, then remove highlight."
+    },
+    {
+      target: "Grill Fresh Five edit area",
+      item: grillFreshFive,
+      slot: 2,
+      notes: "PowerPoint page 3. Replace highlighted text only, keep text box, font, size, and formatting, then remove highlight."
+    }
+  ].map((row) => {
+    const itemRow = row.item ? selectedRowForName(row.item) : null;
+    return {
+      ...row,
+      title: itemRow ? getDisplayName(itemRow) : row.item,
+      calories: itemRow ? getCalories(itemRow) : "",
+      description: itemRow ? getDescription(itemRow) : ""
+    };
+  });
+  return (
+    <div className="mb-5 rounded-3xl border-2 border-emerald-200 bg-emerald-50 p-5 shadow-sm">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.18em] text-emerald-700 font-black">Bingo Customer Menu Generator</p>
+          <h3 className="mt-1 text-2xl font-black text-slate-950">Grill PowerPoint Page 3</h3>
+          <p className="mt-1 text-sm font-semibold text-emerald-900">Test scope: one Grill Location Spotlight and one Grill Fresh $5. Save Draft or Submit writes these as customer menu edit records.</p>
+        </div>
+        <span className="rounded-full border border-emerald-300 bg-white px-3 py-1 text-xs font-black text-emerald-800">{week}</span>
+      </div>
+      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+        {rows.map((row) => (
+          <div key={row.target} className={`rounded-2xl border p-4 ${row.item ? "border-emerald-300 bg-white" : "border-amber-200 bg-amber-50"}`}>
+            <p className="text-xs uppercase tracking-[0.16em] font-black text-slate-500">{row.target}</p>
+            <p className="mt-2 text-lg font-black text-slate-950">{row.title || "Select item before generating"}</p>
+            <div className="mt-3 space-y-1 text-xs font-semibold text-slate-600">
+              <p>Title: {row.title || "missing"}</p>
+              <p>Calories: {row.calories || "missing"}</p>
+              <p>Description: {row.description || "missing"}</p>
+              <p>Record Type: Customer Menu Edit</p>
+              <p>Station Key: customerMenu</p>
+              <p>Menu Block Type: PowerPoint Page 3</p>
+              <p>Slot Number: {row.slot}</p>
+              <p>Notes: {row.notes}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 rounded-2xl border border-emerald-200 bg-white p-4 text-sm text-slate-700">
+        <p className="font-black text-slate-950">Where this goes in Smartsheet</p>
+        <p className="mt-1">Use the existing Menu Rotation Smartsheet. These rows land under the same Bingo/week parent with <span className="font-bold">Record Type = Customer Menu Edit</span>, <span className="font-bold">Station Display Name = Bingo Customer Menu</span>, and <span className="font-bold">Menu Block Label = Bingo Grill PowerPoint</span>. The customer title writes to <span className="font-bold">Menu Item / Selection</span>, calories write to <span className="font-bold">Calories</span>, the customer copy writes to <span className="font-bold">Enticing Description</span>, and the highlighted PowerPoint area writes to <span className="font-bold">Notes</span>.</p>
+      </div>
+    </div>
+  );
+}
+
 function PreviewBox({ title, items }) {
   return <div className="rounded-2xl bg-white border border-amber-200 p-4"><p className="font-bold text-amber-950">{title}</p><ul className="mt-2 space-y-1 text-amber-900">{items.map((item) => <li key={item}>• {titleCase(item)}</li>)}</ul></div>;
 }
@@ -2948,6 +3035,8 @@ function CafeStationSection(props) {
   if (stationKey === "fishMarket") content = <SimpleLTOSection stationKey="fishMarket" title="Fish Market LTO" slots={Array.from({ length: stationSlots(cafe, "fishMarket") }, (_, i) => `Fish Market LTO ${i + 1}`)} values={rotation.ltos?.fishMarket || EMPTY_ROTATION.ltos.fishMarket} uploaded={rotation.uploadedLtos?.fishMarket || []} updateLto={updateLto} complete={stationComplete(rotation, "fishMarket", cafe)} />;
   if (stationKey === "noodles") content = <SecondaryGlobalSection blockId="noodles" title="Noodle Station" eyebrow="Secondary Global" rotation={rotation} menuOptions={menuOptions} updateRotation={updateRotation} />;
   if (stationKey === "freshFive") content = <SimpleLTOSection stationKey="freshFive" title="Fresh $5" slots={Array.from({ length: stationSlots(cafe, "freshFive") }, (_, i) => `Fresh $5 Option ${i + 1}`)} values={rotation.ltos?.freshFive || EMPTY_ROTATION.ltos.freshFive} uploaded={rotation.uploadedLtos?.freshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "freshFive", cafe)} />;
+  if (stationKey === "grillFreshFive") content = <SimpleLTOSection stationKey="grillFreshFive" title="Grill Fresh $5" slots={["Grill Fresh $5"]} values={rotation.ltos?.grillFreshFive || EMPTY_ROTATION.ltos.grillFreshFive} uploaded={rotation.uploadedLtos?.grillFreshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "grillFreshFive", cafe)} />;
+  if (stationKey === "saladFreshFive") content = <SimpleLTOSection stationKey="saladFreshFive" title="Salad Fresh $5" slots={["Salad Fresh $5"]} values={rotation.ltos?.saladFreshFive || EMPTY_ROTATION.ltos.saladFreshFive} uploaded={rotation.uploadedLtos?.saladFreshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "saladFreshFive", cafe)} />;
   if (stationKey === "soup") content = <SimpleLTOSection stationKey="soup" title="Soup LTOs" slots={Array.from({ length: stationSlots(cafe, "soup") }, (_, i) => `Soup ${i + 1}`)} values={rotation.ltos?.soup || EMPTY_ROTATION.ltos.soup} uploaded={rotation.uploadedLtos?.soup || []} updateLto={updateLto} complete={stationComplete(rotation, "soup", cafe)} />;
   if (stationKey === "wok") content = <WokSection rotation={rotation} updateLto={updateLto} />;
   if (stationKey === "carvery") content = <CarverySection rotation={rotation} updateCarvery={updateCarvery} />;
@@ -3618,6 +3707,9 @@ function GrillSection({ cafe, rotation, updateGrill }) {
   const options = grillItems.length ? grillItems : stationPool("carveryProtein");
   const complete = stationComplete(rotation, "grill", cafe);
   const promoActive = Boolean(rotation.grill?.promoActive);
+  const locationSpotlightSlots = cafe === "Bingo"
+    ? [["Location Spotlight", "regionalSpecial"]]
+    : [["Location Spotlight 1", "regionalSpecial"], ["Location Spotlight 2", "locationSpotlight"]];
   return (
     <div className={`mt-6 rounded-3xl border-2 p-5 shadow-md ${complete ? "border-emerald-300 bg-emerald-50/20" : "border-slate-300 bg-slate-50"}`}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -3631,8 +3723,9 @@ function GrillSection({ cafe, rotation, updateGrill }) {
         </label>
       </div>
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <GrillSelect label="Location Spotlight 1" value={rotation.grill?.regionalSpecial || ""} onChange={(value) => updateGrill("regionalSpecial", value)} items={options} />
-        <GrillSelect label="Location Spotlight 2" value={rotation.grill?.locationSpotlight || ""} onChange={(value) => updateGrill("locationSpotlight", value)} items={options} />
+        {locationSpotlightSlots.map(([label, field]) => (
+          <GrillSelect key={field} label={label} value={rotation.grill?.[field] || ""} onChange={(value) => updateGrill(field, value)} items={options} />
+        ))}
       </div>
       {promoActive && (
         <div className="mt-4 rounded-3xl border-2 border-emerald-200 bg-emerald-50/80 p-4 shadow-sm">

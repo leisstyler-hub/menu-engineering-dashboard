@@ -2,6 +2,11 @@
 
 ## 2026-06-18
 
+- [Jun 18, 12:55 PM] Split Bingo Fresh $5 into one Grill Fresh $5 slot and one Salad Fresh $5 slot so customer-facing menu generation can target the correct PowerPoint areas.
+- [Jun 18, 12:55 PM] Limited Bingo Grill to one Location Spotlight selector and added a Bingo-only Generate Menu button for the Grill PowerPoint page 3 test.
+- [Jun 18, 12:55 PM] Added Customer Menu Edit records with customer title, calories, description, and PowerPoint target notes for Bingo grill menu editing.
+- [Jun 18, 12:55 PM] Added `Calories` to the Smartsheet contract so customer-facing menu rows can carry title, calorie, and description fields separately.
+- [Jun 18, 12:55 PM] Set visible app version to `2026.06.18.009-bingo-menu-generator`.
 - [Jun 18, 12:30 PM] Fixed Neighborhood Rotation re-edit dropdown hydration so saved LTO selections display in the selector and Items Description count from the same effective values.
 - [Jun 18, 12:30 PM] Scoped Salad LTO dropdowns to `AMZ: Cafe Express Curated Salads` only so burgers, flatbreads, and unrelated Fresh Five items cannot leak into Salad LTO selections.
 - [Jun 18, 12:30 PM] Added East District cafes Astra, Bingo, Sonic, Blueshift, Eclipse, and Grace with their requested Global, Fresh Five, Grill, Salad, Deli, Fish Market, Street Beets, Lotus W&P, Commissary, and Takeover station requirements.
