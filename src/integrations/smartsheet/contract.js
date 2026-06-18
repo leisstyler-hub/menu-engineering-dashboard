@@ -162,6 +162,10 @@ export const SMARTSHEET_SELECTION_TYPES = Object.freeze({
   regionalSpecial: "Regional Special",
   locationSpotlight: "Location Spotlight",
   grillPromo: "Grill Promo",
+  menuName: "Menu Name",
+  hotSide: "Hot Side",
+  coldSide: "Cold Side",
+  riceDish: "Rice Dish",
   carveryProtein: "Carvery Protein",
   carveryVegetable: "Carvery Vegetable",
   carveryStarch: "Carvery Starch",
@@ -185,6 +189,10 @@ export const STATION_SMARTSHEET_LABELS = Object.freeze({
   fishMarket: "Fish Market",
   freshFive: "Fresh Five",
   soup: "Soup",
+  streetBeets: "Street Beets",
+  commissaryEverest: "Everest Commissary",
+  lotusWp: "Lotus W&P",
+  stationTakeover: "Station Takeover",
   ladle: "Ladle",
 });
 

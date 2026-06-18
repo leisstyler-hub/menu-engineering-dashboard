@@ -2,6 +2,12 @@
 
 ## 2026-06-18
 
+- [Jun 18, 12:30 PM] Fixed Neighborhood Rotation re-edit dropdown hydration so saved LTO selections display in the selector and Items Description count from the same effective values.
+- [Jun 18, 12:30 PM] Scoped Salad LTO dropdowns to `AMZ: Cafe Express Curated Salads` only so burgers, flatbreads, and unrelated Fresh Five items cannot leak into Salad LTO selections.
+- [Jun 18, 12:30 PM] Added East District cafes Astra, Bingo, Sonic, Blueshift, Eclipse, and Grace with their requested Global, Fresh Five, Grill, Salad, Deli, Fish Market, Street Beets, Lotus W&P, Commissary, and Takeover station requirements.
+- [Jun 18, 12:30 PM] Added promotion return-cycle controls for Global overrides so return days can be marked as Monday's same cycle or a new menu while showing Mon-Fri coverage chips.
+- [Jun 18, 12:30 PM] Changed Grill planning to two Location Spotlight slots while preserving the optional Grill Promo activation/write-in field across grill stations.
+- [Jun 18, 12:30 PM] Set visible app version to `2026.06.18.008-east-district-promo-reedit-fix`.
 - [Jun 18, 10:05 AM] Tightened station dropdown pool logic so LTO and Carvery selectors use explicit report menu/station/category/notes instead of broad text matches.
 - [Jun 18, 10:05 AM] Removed Carvery Sandwiches, including Reuben-style sandwiches, from Carvery protein options by limiting proteins to Premium Mains or explicit Carvery Protein notes.
 - [Jun 18, 10:05 AM] Scoped Carvery sides, cold sides, hot sides, vegetables, and starches to Carvery rows so unrelated database sides cannot leak into Carvery selectors.
