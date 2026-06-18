@@ -2,6 +2,10 @@
 
 ## 2026-06-18
 
+- [Jun 18, 10:05 AM] Tightened station dropdown pool logic so LTO and Carvery selectors use explicit report menu/station/category/notes instead of broad text matches.
+- [Jun 18, 10:05 AM] Removed Carvery Sandwiches, including Reuben-style sandwiches, from Carvery protein options by limiting proteins to Premium Mains or explicit Carvery Protein notes.
+- [Jun 18, 10:05 AM] Scoped Carvery sides, cold sides, hot sides, vegetables, and starches to Carvery rows so unrelated database sides cannot leak into Carvery selectors.
+- [Jun 18, 10:05 AM] Set visible app version to `2026.06.18.007-tighten-station-pool-logic`.
 - [Jun 18, 9:56 AM] Imported the calorie report into bundled menu data, raising the app data file from 1,329 to 1,648 rows with 1,641 calorie values loaded.
 - [Jun 18, 9:56 AM] Filled 263 missing item descriptions plus missing ingredient/common-ingredient fields from the calorie report while preserving existing display names and locked-selection keys.
 - [Jun 18, 9:56 AM] Added report-only menu rows for new RA/BYO programs and known station buckets, with audit checks for duplicate IDs, duplicate dropdown keys, and source-row coverage.
