@@ -216,7 +216,7 @@ function selectionDatabaseRecord({ parentId, district, cafe, week, rotation, sta
 function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
   if (!week || !district || !cafe) return [];
   const parentId = rotationRecordParentId(week, district, cafe);
-  const selected = selectedItems(rotation);
+  const selected = selectedItems(rotation, cafe);
   const costRange = selectedTrueCostRange(selected);
   const fcRange = selectedFoodCostRange(selected);
   const header = {
@@ -321,7 +321,10 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
 
   const extraGlobalBlockRows = [];
   if (cafe !== "Re:Invent") {
-    Object.entries(rotation.globalBlocks || {}).forEach(([blockId, block], blockIndex) => {
+    const blocksForSave = cafe === "Nitro" && !hasNitroSplitBlocks(rotation) && rotation.menu
+      ? Object.fromEntries(nitroGlobalBlockLayout().map((block) => [block.id, hydrateNitroBlock(rotation, block.id)]))
+      : (rotation.globalBlocks || {});
+    Object.entries(blocksForSave || {}).forEach(([blockId, block], blockIndex) => {
       if (!block?.menu) return;
       const blockRecordId = makeDatabaseRecordId(parentId, "global", blockId);
       const meta = menuBlockMeta(blockId);
@@ -343,7 +346,7 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
     });
   }
 
-  if (cafe !== "Re:Invent") {
+  if (cafe !== "Re:Invent" && cafe !== "Nitro") {
   pushSelections("global", SMARTSHEET_SELECTION_TYPES.entree, rotation.entrees || [], 0);
   pushSelections("global", SMARTSHEET_SELECTION_TYPES.side, rotation.sides || [], 100);
   pushSelections("global", SMARTSHEET_SELECTION_TYPES.subRecipe, rotation.subRecipes || [], 200);
@@ -383,8 +386,19 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
 }
 
 function upsertDatabaseRecords(existingRecords = [], nextRecords = []) {
+  const parentIds = new Set(nextRecords.map((record) => record[SMARTSHEET_COLUMNS.recordId]).filter((id) => String(id || "").startsWith("rotation|")));
+  nextRecords.forEach((record) => {
+    if (record[SMARTSHEET_COLUMNS.parentRecordId]) parentIds.add(record[SMARTSHEET_COLUMNS.parentRecordId]);
+  });
   const ids = new Set(nextRecords.map((record) => record[SMARTSHEET_COLUMNS.recordId]));
-  return [...existingRecords.filter((record) => !ids.has(record[SMARTSHEET_COLUMNS.recordId])), ...nextRecords];
+  return [
+    ...existingRecords.filter((record) => {
+      const recordId = record[SMARTSHEET_COLUMNS.recordId];
+      const parentId = record[SMARTSHEET_COLUMNS.parentRecordId];
+      return !ids.has(recordId) && !parentIds.has(recordId) && !parentIds.has(parentId);
+    }),
+    ...nextRecords
+  ];
 }
 
 function normalizeLoadedRotationRecord(record = {}) {
@@ -451,6 +465,10 @@ function recordsToRotations(records = []) {
     const candidate = fromGlobalId || fromRecordId || fromLabel;
     return ["monTue", "wedThu", "friCarry", "monCarry", "tueWed", "thuFri", "noodles", "nitroMonTue", "nitroWedFri"].includes(candidate) ? candidate : fromLabel;
   };
+  const putSlot = (values, index, itemName) => {
+    if (!Array.isArray(values) || index < 0 || index >= values.length) return;
+    values[index] = itemName;
+  };
 
   records.map(normalizeLoadedRotationRecord).forEach((record) => {
     if (!record.week || !record.district || !record.cafe) return;
@@ -502,17 +520,17 @@ function recordsToRotations(records = []) {
       const blockId = blockIdFromRecord(record);
       if (blockId) {
         const block = rotation.globalBlocks[blockId] || blankGlobalBlock();
-        if (record.selectionType === SMARTSHEET_SELECTION_TYPES.entree) block.entrees[index] = record.itemName;
-        else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.side) block.sides[index] = record.itemName;
-        else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.subRecipe) block.subRecipes[index] = record.itemName;
-        else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.extension) block.extensions[index] = record.itemName;
+        if (record.selectionType === SMARTSHEET_SELECTION_TYPES.entree) putSlot(block.entrees, index, record.itemName);
+        else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.side) putSlot(block.sides, index, record.itemName);
+        else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.subRecipe) putSlot(block.subRecipes, index, record.itemName);
+        else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.extension) putSlot(block.extensions, index, record.itemName);
         rotation.globalBlocks[blockId] = block;
         return;
       }
-      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.entree) rotation.entrees[index] = record.itemName;
-      else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.side) rotation.sides[index] = record.itemName;
-      else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.subRecipe) rotation.subRecipes[index] = record.itemName;
-      else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.extension) rotation.extensions[index] = record.itemName;
+      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.entree) putSlot(rotation.entrees, index, record.itemName);
+      else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.side) putSlot(rotation.sides, index, record.itemName);
+      else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.subRecipe) putSlot(rotation.subRecipes, index, record.itemName);
+      else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.extension) putSlot(rotation.extensions, index, record.itemName);
       return;
     }
 
@@ -527,10 +545,10 @@ function recordsToRotations(records = []) {
     }
 
     if (record.stationKey === "wok") {
-      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.wokEntree) rotation.ltos.wokEntrees[index] = record.itemName;
-      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.wokSide) rotation.ltos.wokSides[index] = record.itemName;
-      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.wokBase) rotation.ltos.wokBase[index] = record.itemName;
-      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.wokSubRecipe) rotation.ltos.wokSubRecipes[index] = record.itemName;
+      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.wokEntree) putSlot(rotation.ltos.wokEntrees, index, record.itemName);
+      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.wokSide) putSlot(rotation.ltos.wokSides, index, record.itemName);
+      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.wokBase) putSlot(rotation.ltos.wokBase, index, record.itemName);
+      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.wokSubRecipe) putSlot(rotation.ltos.wokSubRecipes, index, record.itemName);
       return;
     }
 
@@ -549,7 +567,7 @@ function recordsToRotations(records = []) {
     }
 
     if (rotation.ltos[record.stationKey]) {
-      rotation.ltos[record.stationKey][index] = record.itemName;
+      putSlot(rotation.ltos[record.stationKey], index, record.itemName);
     }
   });
 
@@ -1018,6 +1036,31 @@ function getRotationGlobalBlock(rotation, blockId) {
   return rotation.globalBlocks?.[blockId] || blankGlobalBlock();
 }
 
+function blockHasSelections(block = {}) {
+  return ["entrees", "sides", "subRecipes", "extensions"].some((key) => (block?.[key] || []).some(Boolean));
+}
+
+function hasNitroSplitBlocks(rotation = {}) {
+  return nitroGlobalBlockLayout().some((block) => {
+    const value = getRotationGlobalBlock(rotation, block.id);
+    return Boolean(value?.menu || blockHasSelections(value));
+  });
+}
+
+function hydrateNitroBlock(rotation = {}, blockId = "") {
+  const block = getRotationGlobalBlock(rotation, blockId);
+  if (block.menu || blockHasSelections(block)) return block;
+  if (!rotation.menu && !blockHasSelections(rotation)) return blankGlobalBlock();
+  return {
+    menu: rotation.menu || "",
+    station: rotation.station || "",
+    entrees: rotation.entrees || [...EMPTY_ROTATION.entrees],
+    sides: rotation.sides || [...EMPTY_ROTATION.sides],
+    subRecipes: rotation.subRecipes || [...EMPTY_ROTATION.subRecipes],
+    extensions: rotation.extensions || [...EMPTY_ROTATION.extensions],
+  };
+}
+
 function carryoverGlobalBlock(rotation = {}, preferredBlockId = "") {
   const blocks = rotation.globalBlocks || {};
   const candidates = [preferredBlockId, "friCarry", "thuFri", "monTue", "wedThu", "tueWed"].filter(Boolean);
@@ -1108,7 +1151,8 @@ function stationComplete(rotation, stationKey, cafe = "", week = "") {
     return reInventGlobalBlockLayout(week).filter((block) => !block.readOnly).every((block) => blockComplete(getRotationGlobalBlock(rotation, block.id)));
   }
   if (stationKey === "global" && cafe === "Nitro") {
-    return Boolean(rotation.menu) && nitroGlobalBlockLayout().every((block) => blockComplete(getRotationGlobalBlock(rotation, block.id)));
+    if (!hasNitroSplitBlocks(rotation)) return Boolean(rotation.menu && (rotation.entrees || []).filter(Boolean).length >= 2);
+    return Boolean(rotation.menu) && nitroGlobalBlockLayout().every((block) => blockComplete(hydrateNitroBlock(rotation, block.id)));
   }
   if (stationKey === "global") return Boolean(rotation.menu && (rotation.entrees || []).filter(Boolean).length >= 2);
   if (stationKey === "noodles") return blockComplete(getRotationGlobalBlock(rotation, "noodles"));
@@ -1258,6 +1302,28 @@ function globalSelectedRows(rotation, options) {
   });
 }
 
+function globalSelectedRowsForCafe(rotation, cafe = "", options) {
+  if (cafe !== "Nitro") return globalSelectedRows(rotation, options);
+  const blocks = hasNitroSplitBlocks(rotation)
+    ? nitroGlobalBlockLayout().map((block) => getRotationGlobalBlock(rotation, block.id))
+    : [hydrateNitroBlock(rotation, "nitroMonTue")];
+  const rows = blocks.flatMap((block) => [
+    ...rowsForSelectedNames(block.entrees || [], { ...options, selectionGroup: "entrees" }),
+    ...rowsForSelectedNames(block.sides || [], { ...options, selectionGroup: "sides" }),
+    ...rowsForSelectedNames(block.subRecipes || [], { ...options, selectionGroup: "subRecipes" }),
+    ...rowsForSelectedNames(block.extensions || [], { ...options, selectionGroup: "extensions" })
+  ]);
+
+  if (!options?.unique) return rows;
+  const seen = new Set();
+  return rows.filter((row) => {
+    const key = normalizeItemName(getItemIdentity(row));
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 function grillSelectedRows(rotation, options) {
   return rowsForSelectedNames([rotation.grill?.regionalSpecial, rotation.grill?.locationSpotlight, rotation.grill?.promoActive ? rotation.grill?.promoItem : ""], options);
 }
@@ -1277,10 +1343,10 @@ function carverySelectedRows(rotation, options) {
   return rowsForSelectedNames(Object.values(rotation.carvery || {}), options);
 }
 
-function selectedItems(rotation) {
+function selectedItems(rotation, cafe = rotation?.cafe || "") {
   const ltoRows = ["salad", "pizza", "deli", "fishMarket", "freshFive", "soup"].flatMap((stationKey) => ltoSelectedRows(rotation, stationKey));
   return [
-    ...globalSelectedRows(rotation),
+    ...globalSelectedRowsForCafe(rotation, cafe),
     ...grillSelectedRows(rotation),
     ...ltoRows,
     ...wokSelectedRows(rotation),
@@ -1403,8 +1469,21 @@ function getStationCostOverview(rotation, cafe) {
   const cafeStations = CAFE_STATION_CONFIG[cafe] || ["global"];
 
   if (cafeStations.includes("global")) {
-    const globalItems = globalSelectedRows(rotation);
-    stationRows.push({ key: "global", label: stationLabel(cafe, "global"), items: globalItems, note: rotation.menu ? rotation.menu : "not selected" });
+    if (cafe === "Nitro") {
+      const hasSplit = hasNitroSplitBlocks(rotation);
+      const blockLayout = hasSplit ? nitroGlobalBlockLayout() : [{ id: "nitroMonTue", title: "Weekly Global Selection" }];
+      blockLayout.forEach((blockInfo) => {
+        const block = hasSplit ? getRotationGlobalBlock(rotation, blockInfo.id) : hydrateNitroBlock(rotation, blockInfo.id);
+        const blockItems = rowsForSelectedNames(
+          [...(block.entrees || []), ...(block.sides || []), ...(block.subRecipes || []), ...(block.extensions || [])],
+          { unique: true, candidateRows: globalMenuRows(block.menu, block.station) }
+        );
+        stationRows.push({ key: `global-${blockInfo.id}`, label: blockInfo.title, items: blockItems, note: block.menu ? block.menu : "not selected" });
+      });
+    } else {
+      const globalItems = globalSelectedRows(rotation);
+      stationRows.push({ key: "global", label: stationLabel(cafe, "global"), items: globalItems, note: rotation.menu ? rotation.menu : "not selected" });
+    }
   }
 
   if (cafeStations.includes("noodles")) {
@@ -1562,7 +1641,7 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
     setDatabaseRecords((prev) => upsertDatabaseRecords(prev, nextRecords));
     setDatabaseSyncStatus({ state: "syncing", message: `Syncing ${nextRecords.length} row${nextRecords.length === 1 ? "" : "s"} to Smartsheet...`, syncedAt: "" });
     try {
-      const result = await syncRecordsToSmartsheet(nextRecords, { week, district, cafe: selectedCafe, status: nextRotation.status || "Draft" });
+      const result = await syncRecordsToSmartsheet(nextRecords, { week, district, cafe: selectedCafe, status: nextRotation.status || "Draft", replaceParentRecordIds: [rotationRecordParentId(week, district, selectedCafe)] });
       setDatabaseSyncStatus({ state: "synced", message: result.message || `Synced ${nextRecords.length} row${nextRecords.length === 1 ? "" : "s"} to Smartsheet.`, syncedAt: nowStamp() });
     } catch (error) {
       const missingColumns = error?.payload?.missingColumns || [];
@@ -1823,7 +1902,7 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
   const stationOptions = subConceptOptionsForMenu(rotation.menu);
   const menuItems = globalMenuRows(rotation.menu, rotation.station);
   const categorized = categorize(menuItems);
-  const items = selectedItems(rotation);
+  const items = selectedItems(rotation, cafe);
   const summary = foodSummary(items);
   const cafeStations = CAFE_STATION_CONFIG[cafe] || ["global"];
   const stationCostOverview = getStationCostOverview(rotation, cafe);
@@ -1977,7 +2056,7 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
 
 function SubmittedRotationRecap({ cafe, week, rotation, rows, onEdit }) {
   const menuLabel = rotationMenuLabel(rotation);
-  const totalSelections = selectedItems(rotation).length;
+  const totalSelections = selectedItems(rotation, cafe).length;
   return (
     <section className="mt-5 rounded-[2rem] border-2 border-emerald-200 bg-emerald-50/60 p-5 shadow-sm">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -2675,7 +2754,7 @@ function NitroGlobalSection({ rotation, menuOptions, updateRotation, promo, upda
   };
   const updateBlockSlot = (blockId, key, index, value) => {
     const current = getRotationGlobalBlock(rotation, blockId);
-    const base = current.menu ? current : blankGlobalBlock(rotation.menu, rotation.station);
+    const base = current.menu || blockHasSelections(current) ? current : hydrateNitroBlock(rotation, blockId);
     const nextValues = [...(base[key] || blankGlobalBlock()[key])];
     nextValues[index] = value;
     updateRotation({ globalBlocks: { ...(rotation.globalBlocks || {}), [blockId]: { ...base, [key]: nextValues } } });
@@ -2741,12 +2820,12 @@ function NitroGlobalSection({ rotation, menuOptions, updateRotation, promo, upda
         )}
       </div>
 
-      {rotation.menu && <LiveAnalytics summary={summary} selectedItems={globalSelectedRows(rotation)} />}
+      {rotation.menu && <LiveAnalytics summary={summary} selectedItems={globalSelectedRowsForCafe(rotation, "Nitro")} />}
       {rotation.menu && (
         <div className="mt-5 grid grid-cols-1 gap-5">
           {layout.map((blockInfo) => {
             const block = getRotationGlobalBlock(rotation, blockInfo.id);
-            const hydratedBlock = block.menu ? block : blankGlobalBlock(rotation.menu, rotation.station);
+            const hydratedBlock = block.menu || blockHasSelections(block) ? block : hydrateNitroBlock(rotation, blockInfo.id);
             const blockCategorized = categorize(globalMenuRows(rotation.menu, rotation.station));
             return (
               <div key={blockInfo.id} className="rounded-3xl border-2 border-sky-200 bg-sky-50/60 p-5">
@@ -2769,7 +2848,7 @@ function NitroGlobalSection({ rotation, menuOptions, updateRotation, promo, upda
           })}
         </div>
       )}
-      <StationSelectedList title="Items Description" items={globalSelectedRows(rotation, { unique: true })} complete={stationComplete(rotation, "global", "Nitro")} />
+      <StationSelectedList title="Items Description" items={globalSelectedRowsForCafe(rotation, "Nitro", { unique: true })} complete={stationComplete(rotation, "global", "Nitro")} />
     </CollapsibleStation>
   );
 }

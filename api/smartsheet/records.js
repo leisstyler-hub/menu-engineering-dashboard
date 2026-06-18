@@ -274,6 +274,30 @@ export default async function handler(req, res) {
       if (recordId) existingByRecordId.set(String(recordId), row.id);
     }
 
+    const nextRecordIds = new Set(records.map((record) => String(record[recordIdColumn] || "")).filter(Boolean));
+    const replaceParentRecordIds = new Set((Array.isArray(context.replaceParentRecordIds) ? context.replaceParentRecordIds : []).map(String).filter(Boolean));
+    const parentRecordIdColumnId = columnMap.get("Parent Record ID");
+    const rowsToDelete = [];
+    if (replaceParentRecordIds.size && parentRecordIdColumnId) {
+      for (const row of sheet.rows || []) {
+        const recordId = String(getCellValue(row, recordIdColumnId) || "");
+        const parentId = String(getCellValue(row, parentRecordIdColumnId) || "");
+        const belongsToReplaceParent = replaceParentRecordIds.has(recordId) || replaceParentRecordIds.has(parentId);
+        if (belongsToReplaceParent && !nextRecordIds.has(recordId)) {
+          rowsToDelete.push(row.id);
+        }
+      }
+    }
+
+    if (rowsToDelete.length) {
+      for (let index = 0; index < rowsToDelete.length; index += 400) {
+        const chunk = rowsToDelete.slice(index, index + 400);
+        await smartsheetFetch(`/sheets/${sheetId}/rows?ids=${chunk.join(",")}`, {
+          method: "DELETE",
+        });
+      }
+    }
+
     const toUpdate = [];
     const toAdd = [];
 
@@ -316,7 +340,8 @@ export default async function handler(req, res) {
       synced: toUpdate.length + toAdd.length,
       updated: toUpdate.length,
       added: toAdd.length,
-      message: `Synced ${toUpdate.length + toAdd.length} row${toUpdate.length + toAdd.length === 1 ? "" : "s"} to Smartsheet.`,
+      deletedStale: rowsToDelete.length,
+      message: `Synced ${toUpdate.length + toAdd.length} row${toUpdate.length + toAdd.length === 1 ? "" : "s"} to Smartsheet${rowsToDelete.length ? ` and removed ${rowsToDelete.length} stale row${rowsToDelete.length === 1 ? "" : "s"}` : ""}.`,
     });
   } catch (error) {
     return res.status(error.statusCode || 500).json({

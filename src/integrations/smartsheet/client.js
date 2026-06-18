@@ -19,6 +19,12 @@ export function getColumnsUsedByRecords(records = []) {
 
 export async function syncRecordsToSmartsheet(records = [], context = {}) {
   const requiredColumns = getColumnsUsedByRecords(records);
+  const parentRecordIds = Array.from(new Set([
+    ...(Array.isArray(context.replaceParentRecordIds) ? context.replaceParentRecordIds : []),
+    ...records
+      .map((record) => record[SMARTSHEET_COLUMNS.recordId])
+      .filter((id) => String(id || "").startsWith("rotation|")),
+  ].filter(Boolean)));
   const response = await fetch("/api/smartsheet/records", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -27,7 +33,7 @@ export async function syncRecordsToSmartsheet(records = [], context = {}) {
       records,
       requiredColumns,
       recordIdColumn: SMARTSHEET_COLUMNS.recordId,
-      context: { ...context, requiredColumnMode: "used-columns-only", requiredColumnCount: requiredColumns.length },
+      context: { ...context, replaceParentRecordIds: parentRecordIds, requiredColumnMode: "used-columns-only", requiredColumnCount: requiredColumns.length },
     }),
   });
 

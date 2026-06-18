@@ -2,6 +2,10 @@
 
 ## 2026-06-18
 
+- [Jun 18, 12:31 AM] Fixed Nitro submitted recaps so saved selection counts use the split-week Global blocks instead of over-counting stale Global rows.
+- [Jun 18, 12:31 AM] Made Nitro edit/resubmit preload prior selections into the Monday + Tuesday and Wednesday + Friday selectors.
+- [Jun 18, 12:31 AM] Added stale Smartsheet child-row cleanup on save/resubmit for the selected cafe/week and clamped old bad slot rows so they cannot inflate counts.
+- [Jun 18, 12:31 AM] Set visible app version to `2026.06.18.003-fix-nitro-stale-selection-load`.
 - [Jun 18, 12:11 AM] Added calories rounded to the nearest 5 and suggested retail price chips to Items Description cards and submitted selection recap cards.
 - [Jun 18, 12:11 AM] Set visible app version to `2026.06.18.002-feature-selection-build-meta`.
 - [Jun 18, 12:02 AM] Changed submitted Neighborhood Rotation weeks into a recap-card view with an `Edit and resubmit` checkbox that reopens the selectors.
