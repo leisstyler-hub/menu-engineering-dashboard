@@ -2,6 +2,9 @@
 
 ## 2026-06-17
 
+- [Jun 17, 11:34 PM] Added an optional Grill Promo LTO checkbox with a free-text promo item field so chefs can activate one-off Grill specials without needing the item preloaded.
+- [Jun 17, 11:34 PM] Saved, restored, counted, and included active Grill Promo LTOs in Items Description and View/Print output.
+- [Jun 17, 11:34 PM] Set visible app version to `2026.06.17.002-feature-grill-promo-lto`.
 - [Jun 17, 11:06 PM] Changed Neighborhood Rotations landing status to `Pilot in Place` and fixed the mobile Settings button so only one centered gear displays.
 - [Jun 17, 11:06 PM] Advanced the Re:Invent two-day rotation cycle alignment by one week and fixed Re:Invent global block save/load so submitted selections reload visibly.
 - [Jun 17, 11:06 PM] Added a submitted-rotation lock banner with an edit checkbox so locked choices can be viewed without accidental changes.

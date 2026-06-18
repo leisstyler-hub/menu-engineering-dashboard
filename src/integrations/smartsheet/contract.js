@@ -161,6 +161,7 @@ export const SMARTSHEET_SELECTION_TYPES = Object.freeze({
   lto: "LTO",
   regionalSpecial: "Regional Special",
   locationSpotlight: "Location Spotlight",
+  grillPromo: "Grill Promo",
   carveryProtein: "Carvery Protein",
   carveryVegetable: "Carvery Vegetable",
   carveryStarch: "Carvery Starch",

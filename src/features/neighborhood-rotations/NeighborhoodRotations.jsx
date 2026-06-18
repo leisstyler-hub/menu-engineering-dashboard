@@ -122,7 +122,7 @@ const EMPTY_ROTATION = {
   sides: ["", "", "", ""],
   subRecipes: ["", "", "", ""],
   extensions: ["", ""],
-  grill: { regionalSpecial: "", locationSpotlight: "" },
+  grill: { regionalSpecial: "", locationSpotlight: "", promoActive: false, promoItem: "" },
   ltos: {
     salad: ["", ""],
     pizza: ["", ""],
@@ -350,6 +350,9 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
   }
   pushSelections("grill", SMARTSHEET_SELECTION_TYPES.regionalSpecial, [rotation.grill?.regionalSpecial], 400);
   pushSelections("grill", SMARTSHEET_SELECTION_TYPES.locationSpotlight, [rotation.grill?.locationSpotlight], 410);
+  if (rotation.grill?.promoActive) {
+    pushSelections("grill", SMARTSHEET_SELECTION_TYPES.grillPromo, [rotation.grill?.promoItem], 420);
+  }
   ["salad", "pizza", "deli", "fishMarket", "freshFive", "soup"].forEach((stationKey, stationIndex) => {
     pushSelections(stationKey, SMARTSHEET_SELECTION_TYPES.lto, rotation.ltos?.[stationKey] || [], 500 + stationIndex * 100, rotation, "", stationPool(stationKey));
   });
@@ -513,6 +516,10 @@ function recordsToRotations(records = []) {
     if (record.stationKey === "grill") {
       if (record.selectionType === SMARTSHEET_SELECTION_TYPES.regionalSpecial) rotation.grill.regionalSpecial = record.itemName;
       if (record.selectionType === SMARTSHEET_SELECTION_TYPES.locationSpotlight) rotation.grill.locationSpotlight = record.itemName;
+      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.grillPromo) {
+        rotation.grill.promoActive = true;
+        rotation.grill.promoItem = record.itemName;
+      }
       return;
     }
 
@@ -1004,7 +1011,7 @@ function blankRotation(menu = "", station = "") {
     sides: [...EMPTY_ROTATION.sides],
     subRecipes: [...EMPTY_ROTATION.subRecipes],
     extensions: [...EMPTY_ROTATION.extensions],
-    grill: { regionalSpecial: "", locationSpotlight: "" },
+    grill: { regionalSpecial: "", locationSpotlight: "", promoActive: false, promoItem: "" },
     ltos: Object.fromEntries(Object.entries(EMPTY_ROTATION.ltos).map(([key, values]) => [key, [...values]])),
     carvery: { ...EMPTY_ROTATION.carvery },
     uploadedLtos: {},
@@ -1027,7 +1034,7 @@ function stationComplete(rotation, stationKey, cafe = "", week = "") {
   }
   if (stationKey === "global") return Boolean(rotation.menu && (rotation.entrees || []).filter(Boolean).length >= 2);
   if (stationKey === "noodles") return blockComplete(getRotationGlobalBlock(rotation, "noodles"));
-  if (stationKey === "grill") return Boolean(rotation.grill?.regionalSpecial || rotation.grill?.locationSpotlight);
+  if (stationKey === "grill") return Boolean(rotation.grill?.regionalSpecial || rotation.grill?.locationSpotlight || (rotation.grill?.promoActive && rotation.grill?.promoItem));
   if (["salad", "pizza", "deli", "fishMarket", "freshFive", "soup"].includes(stationKey)) {
     return Boolean((rotation.ltos?.[stationKey] || []).some(Boolean) || (rotation.uploadedLtos?.[stationKey] || []).some(Boolean));
   }
@@ -1168,7 +1175,7 @@ function globalSelectedRows(rotation, options) {
 }
 
 function grillSelectedRows(rotation, options) {
-  return rowsForSelectedNames([rotation.grill?.regionalSpecial, rotation.grill?.locationSpotlight], options);
+  return rowsForSelectedNames([rotation.grill?.regionalSpecial, rotation.grill?.locationSpotlight, rotation.grill?.promoActive ? rotation.grill?.promoItem : ""], options);
 }
 
 function ltoSelectedRows(rotation, stationKey, options) {
@@ -2216,7 +2223,7 @@ function ExportCafeCard({ row }) {
 }
 
 function ExportStationBlock({ stationKey, cafe, row }) {
-  if (stationKey === "grill") return <ExportLineCard title={stationLabel(cafe, stationKey)} values={[row.grill?.regionalSpecial, row.grill?.locationSpotlight]} />;
+  if (stationKey === "grill") return <ExportLineCard title={stationLabel(cafe, stationKey)} values={[row.grill?.regionalSpecial, row.grill?.locationSpotlight, row.grill?.promoActive ? row.grill?.promoItem : ""]} />;
   if (stationKey === "carvery") return <ExportLineCard title={stationLabel(cafe, stationKey)} values={Object.values(row.carvery || {})} />;
   if (stationKey === "wok") return <ExportLineCard title={stationLabel(cafe, stationKey)} values={[...(row.ltos?.wokEntrees || []), ...(row.ltos?.wokSides || []), ...(row.ltos?.wokBase || []), ...(row.ltos?.wokSubRecipes || [])]} />;
   return <ExportLineCard title={stationLabel(cafe, stationKey)} values={row.ltos?.[stationKey] || []} />;
@@ -2819,14 +2826,37 @@ function GrillSection({ cafe, rotation, updateGrill }) {
   const grillTitle = cafe === "Day 1" ? "Adelaide's" : "Core Grill Additions";
   const options = grillItems.length ? grillItems : stationPool("carveryProtein");
   const complete = stationComplete(rotation, "grill");
+  const promoActive = Boolean(rotation.grill?.promoActive);
   return (
     <div className={`mt-6 rounded-3xl border-2 p-5 shadow-md ${complete ? "border-emerald-300 bg-emerald-50/20" : "border-slate-300 bg-slate-50"}`}>
-      <p className="text-sm uppercase tracking-[0.18em] text-slate-400">Grill Station</p>
-      <h3 className="text-2xl font-bold mt-1">{grillTitle}</h3>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-sm uppercase tracking-[0.18em] text-slate-400">Grill Station</p>
+          <h3 className="text-2xl font-bold mt-1">{grillTitle}</h3>
+        </div>
+        <label className={`inline-flex items-center gap-2 self-start rounded-full border px-4 py-2 text-sm font-black transition ${promoActive ? "border-emerald-300 bg-emerald-50 text-emerald-900 shadow-sm" : "border-slate-300 bg-white text-slate-700"}`}>
+          <input type="checkbox" checked={promoActive} onChange={(event) => updateGrill("promoActive", event.target.checked)} />
+          Activate Grill Promo
+        </label>
+      </div>
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
         <GrillSelect label="Regional Special" value={rotation.grill?.regionalSpecial || ""} onChange={(value) => updateGrill("regionalSpecial", value)} items={options} />
         <GrillSelect label="Location Spotlight" value={rotation.grill?.locationSpotlight || ""} onChange={(value) => updateGrill("locationSpotlight", value)} items={options} />
       </div>
+      {promoActive && (
+        <div className="mt-4 rounded-3xl border-2 border-emerald-200 bg-emerald-50/80 p-4 shadow-sm">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <label className="block text-sm font-bold text-slate-900">Promo LTO</label>
+            <span className="rounded-full bg-white border border-emerald-200 px-3 py-1 text-xs font-bold text-emerald-700">type promo</span>
+          </div>
+          <input
+            value={rotation.grill?.promoItem || ""}
+            onChange={(event) => updateGrill("promoItem", event.target.value)}
+            placeholder="Type promo item"
+            className="w-full rounded-2xl border-2 border-emerald-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+          />
+        </div>
+      )}
       <StationSelectedList title="Items Description" items={grillSelectedRows(rotation, { unique: true })} complete={complete} />
     </div>
   );
