@@ -598,10 +598,33 @@ const getMenuName = (row) => row.menu || row.menuName || row["Menu Name"] || "";
 const getStationName = (row) => row.station || row.stationName || row["Station"] || "";
 const getPrice = (row) => row.price ?? row.sellPrice ?? row["Sell Price"] ?? null;
 const getTrueCost = (row) => row.trueCost ?? row.itemCostWithWaste ?? row["Item + Waste Cost"] ?? row["Recipe Cost"] ?? row.recipeCost ?? null;
+const getNumericValue = (...values) => {
+  for (const raw of values) {
+    const value = Number(String(raw ?? "").replace(/[^0-9.]/g, ""));
+    if (Number.isFinite(value) && value > 0) return value;
+  }
+  return null;
+};
 const getCalories = (row) => {
-  const raw = row.calories ?? row.calorie ?? row.kcal ?? row.Calories ?? row["Calories"] ?? row["Calories Per Serving"] ?? row.caloriesPerServing ?? null;
-  const value = Number(String(raw ?? "").replace(/[^0-9.]/g, ""));
-  if (!Number.isFinite(value) || value <= 0) return null;
+  const value = getNumericValue(
+    row.calories,
+    row.calorie,
+    row.kcal,
+    row.kCal,
+    row.energyCalories,
+    row.caloriesPerServing,
+    row.nutritionCalories,
+    row.Calories,
+    row["Calories"],
+    row["Calories."],
+    row["Calories Per Serving"],
+    row["Calories per Serving"],
+    row["kcal"],
+    row["Kcal"],
+    row["Energy (kcal)"],
+    row["Energy Calories"]
+  );
+  if (value == null) return null;
   return Math.round(value / 5) * 5;
 };
 const getSuggestedRetailPrice = (row) => {
@@ -1240,6 +1263,7 @@ function itemDetailScore(row) {
     String(row.dataSource || "").includes("enhanced") ? 25 : 0,
     getPrice(row) != null ? 10 : 0,
     getTrueCost(row) != null ? 10 : 0,
+    getCalories(row) != null ? 8 : 0,
     row.mrn || row.MRN ? 5 : 0,
     row.portion || row.Portion ? 5 : 0
   ].reduce((sum, value) => sum + value, 0);
@@ -1275,23 +1299,7 @@ function rowsForSelectedNames(names = [], { unique = false, selectionGroup = "",
   return selectedRows;
 }
 
-function globalSelectedRows(rotation, options) {
-  const rows = [
-    ...rowsForSelectedNames(rotation.entrees || [], { ...options, selectionGroup: "entrees" }),
-    ...rowsForSelectedNames(rotation.sides || [], { ...options, selectionGroup: "sides" }),
-    ...rowsForSelectedNames(rotation.subRecipes || [], { ...options, selectionGroup: "subRecipes" }),
-    ...rowsForSelectedNames(rotation.extensions || [], { ...options, selectionGroup: "extensions" })
-  ];
-
-  Object.values(rotation.globalBlocks || {}).forEach((block) => {
-    rows.push(
-      ...rowsForSelectedNames(block.entrees || [], { ...options, selectionGroup: "entrees" }),
-      ...rowsForSelectedNames(block.sides || [], { ...options, selectionGroup: "sides" }),
-      ...rowsForSelectedNames(block.subRecipes || [], { ...options, selectionGroup: "subRecipes" }),
-      ...rowsForSelectedNames(block.extensions || [], { ...options, selectionGroup: "extensions" })
-    );
-  });
-
+function uniqueSelectionRows(rows, options) {
   if (!options?.unique) return rows;
   const seen = new Set();
   return rows.filter((row) => {
@@ -1302,26 +1310,110 @@ function globalSelectedRows(rotation, options) {
   });
 }
 
-function globalSelectedRowsForCafe(rotation, cafe = "", options) {
-  if (cafe !== "Nitro") return globalSelectedRows(rotation, options);
-  const blocks = hasNitroSplitBlocks(rotation)
-    ? nitroGlobalBlockLayout().map((block) => getRotationGlobalBlock(rotation, block.id))
-    : [hydrateNitroBlock(rotation, "nitroMonTue")];
-  const rows = blocks.flatMap((block) => [
-    ...rowsForSelectedNames(block.entrees || [], { ...options, selectionGroup: "entrees" }),
-    ...rowsForSelectedNames(block.sides || [], { ...options, selectionGroup: "sides" }),
-    ...rowsForSelectedNames(block.subRecipes || [], { ...options, selectionGroup: "subRecipes" }),
-    ...rowsForSelectedNames(block.extensions || [], { ...options, selectionGroup: "extensions" })
-  ]);
+function selectedRowsFromGlobalBlock(block = {}, options) {
+  const candidateRows = globalMenuRows(block.menu, block.station);
+  const rows = [
+    ...rowsForSelectedNames(block.entrees || [], { ...options, candidateRows, selectionGroup: "entrees" }),
+    ...rowsForSelectedNames(block.sides || [], { ...options, candidateRows, selectionGroup: "sides" }),
+    ...rowsForSelectedNames(block.subRecipes || [], { ...options, candidateRows, selectionGroup: "subRecipes" }),
+    ...rowsForSelectedNames(block.extensions || [], { ...options, candidateRows, selectionGroup: "extensions" })
+  ];
+  return uniqueSelectionRows(rows, options);
+}
 
-  if (!options?.unique) return rows;
-  const seen = new Set();
-  return rows.filter((row) => {
-    const key = normalizeItemName(getItemIdentity(row));
-    if (!key || seen.has(key)) return false;
-    seen.add(key);
-    return true;
+function globalSelectedRows(rotation, options) {
+  const candidateRows = globalMenuRows(rotation.menu, rotation.station);
+  const rows = [
+    ...rowsForSelectedNames(rotation.entrees || [], { ...options, candidateRows, selectionGroup: "entrees" }),
+    ...rowsForSelectedNames(rotation.sides || [], { ...options, candidateRows, selectionGroup: "sides" }),
+    ...rowsForSelectedNames(rotation.subRecipes || [], { ...options, candidateRows, selectionGroup: "subRecipes" }),
+    ...rowsForSelectedNames(rotation.extensions || [], { ...options, candidateRows, selectionGroup: "extensions" })
+  ];
+  return uniqueSelectionRows(rows, options);
+}
+
+function globalSelectedRowsForCafe(rotation, cafe = "", options) {
+  if (cafe === "Nitro") {
+    const blocks = hasNitroSplitBlocks(rotation)
+      ? nitroGlobalBlockLayout().map((block) => getRotationGlobalBlock(rotation, block.id))
+      : [hydrateNitroBlock(rotation, "nitroMonTue")];
+    return uniqueSelectionRows(blocks.flatMap((block) => selectedRowsFromGlobalBlock(block, options)), options);
+  }
+
+  if (cafe === "Re:Invent") {
+    const blockRows = Object.entries(rotation.globalBlocks || {})
+      .filter(([blockId, block]) => blockId !== "noodles" && (block?.menu || blockHasSelections(block)))
+      .flatMap(([, block]) => selectedRowsFromGlobalBlock(block, options));
+    return uniqueSelectionRows(blockRows.length ? blockRows : globalSelectedRows(rotation, options), options);
+  }
+
+  return globalSelectedRows(rotation, options);
+}
+
+function getStationSelectionRows(rotation, cafe) {
+  const uploaded = rotation.uploadedLtos || {};
+  const stationRows = [];
+  const cafeStations = CAFE_STATION_CONFIG[cafe] || ["global"];
+
+  if (cafeStations.includes("global")) {
+    if (cafe === "Nitro") {
+      const hasSplit = hasNitroSplitBlocks(rotation);
+      const blockLayout = hasSplit ? nitroGlobalBlockLayout() : [{ id: "nitroMonTue", title: "Weekly Global Selection" }];
+      blockLayout.forEach((blockInfo) => {
+        const block = hasSplit ? getRotationGlobalBlock(rotation, blockInfo.id) : hydrateNitroBlock(rotation, blockInfo.id);
+        stationRows.push({ key: `global-${blockInfo.id}`, label: blockInfo.title, items: selectedRowsFromGlobalBlock(block, { unique: true }), note: block.menu ? block.menu : "not selected" });
+      });
+    } else if (cafe === "Re:Invent") {
+      const blocks = Object.entries(rotation.globalBlocks || {}).filter(([blockId, block]) => blockId !== "noodles" && (block?.menu || blockHasSelections(block)));
+      if (blocks.length) {
+        blocks.forEach(([blockId, block]) => {
+          const meta = menuBlockMeta(blockId);
+          stationRows.push({ key: `global-${blockId}`, label: meta.label, items: selectedRowsFromGlobalBlock(block, { unique: true }), note: block.menu ? block.menu : "not selected" });
+        });
+      } else {
+        const globalItems = globalSelectedRows(rotation, { unique: true });
+        stationRows.push({ key: "global", label: stationLabel(cafe, "global"), items: globalItems, note: rotation.menu ? rotation.menu : "not selected" });
+      }
+    } else {
+      const globalItems = globalSelectedRows(rotation, { unique: true });
+      stationRows.push({ key: "global", label: stationLabel(cafe, "global"), items: globalItems, note: rotation.menu ? rotation.menu : "not selected" });
+    }
+  }
+
+  if (cafeStations.includes("noodles")) {
+    const noodleBlock = getRotationGlobalBlock(rotation, "noodles");
+    stationRows.push({ key: "noodles", label: stationLabel(cafe, "noodles"), items: selectedRowsFromGlobalBlock(noodleBlock, { unique: true }), note: noodleBlock.menu ? noodleBlock.menu : "not selected" });
+  }
+
+  if (cafeStations.includes("grill")) {
+    const grillItems = grillSelectedRows(rotation, { unique: true });
+    stationRows.push({ key: "grill", label: stationLabel(cafe, "grill"), items: grillItems, note: "regional + location spotlight" });
+  }
+
+  ["salad", "pizza", "deli", "fishMarket", "freshFive", "soup"].forEach((key) => {
+    if (cafeStations.includes(key)) {
+      const selected = ltoSelectedRows(rotation, key, { unique: true });
+      const uploadedItems = (uploaded[key] || []).filter(Boolean).map(makeUploadedItem);
+      stationRows.push({ key, label: STATION_LABELS[key], items: selected.length ? selected : uploadedItems, note: selected.length ? "selected" : uploadedItems.length ? "from upload preview" : "not selected" });
+    }
   });
+
+  if (cafeStations.includes("wok")) stationRows.push({ key: "wok", label: "Wok Station", items: wokSelectedRows(rotation, { unique: true }), note: "wok selections" });
+  if (cafeStations.includes("carvery")) stationRows.push({ key: "carvery", label: "Carvery Station", items: carverySelectedRows(rotation, { unique: true }), note: "carvery selections" });
+
+  return stationRows;
+}
+
+function allLegacySelectedRows(rotation) {
+  const blockRows = Object.values(rotation.globalBlocks || {}).flatMap((block) => selectedRowsFromGlobalBlock(block));
+  return [
+    ...globalSelectedRows(rotation),
+    ...blockRows,
+    ...grillSelectedRows(rotation),
+    ...["salad", "pizza", "deli", "fishMarket", "freshFive", "soup"].flatMap((stationKey) => ltoSelectedRows(rotation, stationKey)),
+    ...wokSelectedRows(rotation),
+    ...carverySelectedRows(rotation)
+  ];
 }
 
 function grillSelectedRows(rotation, options) {
@@ -1344,14 +1436,8 @@ function carverySelectedRows(rotation, options) {
 }
 
 function selectedItems(rotation, cafe = rotation?.cafe || "") {
-  const ltoRows = ["salad", "pizza", "deli", "fishMarket", "freshFive", "soup"].flatMap((stationKey) => ltoSelectedRows(rotation, stationKey));
-  return [
-    ...globalSelectedRowsForCafe(rotation, cafe),
-    ...grillSelectedRows(rotation),
-    ...ltoRows,
-    ...wokSelectedRows(rotation),
-    ...carverySelectedRows(rotation)
-  ];
+  if (cafe) return getStationSelectionRows(rotation, cafe).flatMap((row) => row.items);
+  return allLegacySelectedRows(rotation);
 }
 
 function foodSummary(items) {
@@ -1464,54 +1550,7 @@ function foodCostRangeNote(range) {
 }
 
 function getStationCostOverview(rotation, cafe) {
-  const uploaded = rotation.uploadedLtos || {};
-  const stationRows = [];
-  const cafeStations = CAFE_STATION_CONFIG[cafe] || ["global"];
-
-  if (cafeStations.includes("global")) {
-    if (cafe === "Nitro") {
-      const hasSplit = hasNitroSplitBlocks(rotation);
-      const blockLayout = hasSplit ? nitroGlobalBlockLayout() : [{ id: "nitroMonTue", title: "Weekly Global Selection" }];
-      blockLayout.forEach((blockInfo) => {
-        const block = hasSplit ? getRotationGlobalBlock(rotation, blockInfo.id) : hydrateNitroBlock(rotation, blockInfo.id);
-        const blockItems = rowsForSelectedNames(
-          [...(block.entrees || []), ...(block.sides || []), ...(block.subRecipes || []), ...(block.extensions || [])],
-          { unique: true, candidateRows: globalMenuRows(block.menu, block.station) }
-        );
-        stationRows.push({ key: `global-${blockInfo.id}`, label: blockInfo.title, items: blockItems, note: block.menu ? block.menu : "not selected" });
-      });
-    } else {
-      const globalItems = globalSelectedRows(rotation);
-      stationRows.push({ key: "global", label: stationLabel(cafe, "global"), items: globalItems, note: rotation.menu ? rotation.menu : "not selected" });
-    }
-  }
-
-  if (cafeStations.includes("noodles")) {
-    const noodleBlock = getRotationGlobalBlock(rotation, "noodles");
-    const noodleItems = rowsForSelectedNames(
-      [...(noodleBlock.entrees || []), ...(noodleBlock.sides || []), ...(noodleBlock.subRecipes || []), ...(noodleBlock.extensions || [])],
-      { unique: true, candidateRows: globalMenuRows(noodleBlock.menu, noodleBlock.station) }
-    );
-    stationRows.push({ key: "noodles", label: stationLabel(cafe, "noodles"), items: noodleItems, note: noodleBlock.menu ? noodleBlock.menu : "not selected" });
-  }
-
-  if (cafeStations.includes("grill")) {
-    const grillItems = grillSelectedRows(rotation);
-    stationRows.push({ key: "grill", label: stationLabel(cafe, "grill"), items: grillItems, note: "regional + location spotlight" });
-  }
-
-  ["salad", "pizza", "deli", "fishMarket", "freshFive", "soup"].forEach((key) => {
-    if (cafeStations.includes(key)) {
-      const selected = ltoSelectedRows(rotation, key);
-      const uploadedItems = (uploaded[key] || []).filter(Boolean).map(makeUploadedItem);
-      stationRows.push({ key, label: STATION_LABELS[key], items: selected.length ? selected : uploadedItems, note: selected.length ? "selected" : uploadedItems.length ? "from upload preview" : "not selected" });
-    }
-  });
-
-  if (cafeStations.includes("wok")) stationRows.push({ key: "wok", label: "Wok Station", items: wokSelectedRows(rotation), note: "wok selections" });
-  if (cafeStations.includes("carvery")) stationRows.push({ key: "carvery", label: "Carvery Station", items: carverySelectedRows(rotation), note: "carvery selections" });
-
-  return stationRows.map((row) => {
+  return getStationSelectionRows(rotation, cafe).map((row) => {
     const summary = foodSummary(row.items);
     return { ...row, summary, selectedCount: row.items.length };
   });
@@ -2056,7 +2095,7 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
 
 function SubmittedRotationRecap({ cafe, week, rotation, rows, onEdit }) {
   const menuLabel = rotationMenuLabel(rotation);
-  const totalSelections = selectedItems(rotation, cafe).length;
+  const totalSelections = rows.reduce((sum, row) => sum + row.selectedCount, 0);
   return (
     <section className="mt-5 rounded-[2rem] border-2 border-emerald-200 bg-emerald-50/60 p-5 shadow-sm">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -2084,10 +2123,20 @@ function SubmittedRotationRecap({ cafe, week, rotation, rows, onEdit }) {
             </div>
             {row.items.length ? (
               <ul className="mt-3 space-y-1 text-sm font-semibold text-slate-800">
-                {row.items.map((item, index) => <li key={`${row.key}-${getItemIdentity(item)}-${index}`} className="flex flex-col gap-1 rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
-                  <span>{titleCase(getDisplayName(item) || getItemIdentity(item))}</span>
-                  <ItemBuildMeta item={item} />
-                </li>)}
+                {row.items.map((item, index) => {
+                  const description = getDescription(item);
+                  return (
+                    <li key={`${row.key}-${getItemIdentity(item)}-${index}`} className="flex flex-col gap-2 rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                        <span>{titleCase(getDisplayName(item) || getItemIdentity(item))}</span>
+                        <ItemBuildMeta item={item} />
+                      </div>
+                      <p className={`text-xs leading-relaxed ${description ? "font-medium text-slate-600" : "font-bold text-amber-700"}`}>
+                        {description || "Description missing in source data."}
+                      </p>
+                    </li>
+                  );
+                })}
               </ul>
             ) : (
               <p className="mt-3 text-sm font-semibold text-slate-400">No selections saved.</p>

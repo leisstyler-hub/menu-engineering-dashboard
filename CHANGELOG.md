@@ -2,6 +2,10 @@
 
 ## 2026-06-18
 
+- [Jun 18, 12:55 AM] Added a `calories` field to all 1,325 bundled menu items so item calories have a consistent update location.
+- [Jun 18, 12:55 AM] Fixed submitted recap counting across all cafes so totals come from visible station selections instead of broad Global block rollups.
+- [Jun 18, 12:55 AM] Added item descriptions directly into submitted recap item rows.
+- [Jun 18, 12:55 AM] Set visible app version to `2026.06.18.004-fix-recap-count-calorie-field`.
 - [Jun 18, 12:31 AM] Fixed Nitro submitted recaps so saved selection counts use the split-week Global blocks instead of over-counting stale Global rows.
 - [Jun 18, 12:31 AM] Made Nitro edit/resubmit preload prior selections into the Monday + Tuesday and Wednesday + Friday selectors.
 - [Jun 18, 12:31 AM] Added stale Smartsheet child-row cleanup on save/resubmit for the selected cafe/week and clamped old bad slot rows so they cannot inflate counts.
