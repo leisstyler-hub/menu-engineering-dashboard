@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-06-18
+
+- [Jun 18, 12:02 AM] Changed submitted Neighborhood Rotation weeks into a recap-card view with an `Edit and resubmit` checkbox that reopens the selectors.
+- [Jun 18, 12:02 AM] Reworked Nitro Global planning into one weekly menu with two item blocks: Monday + Tuesday and Wednesday + Friday.
+- [Jun 18, 12:02 AM] Added Baja Crunch Salad to Salad LTO options and widened Salad LTOs to include Fresh Five-style salad options.
+- [Jun 18, 12:02 AM] Added typed Carvery overrides so Nitro proteins, vegetables, sides, and sauces can be entered when the dropdown list is missing the real item.
+- [Jun 18, 12:02 AM] Reduced Neighborhood Rotation lag by caching Global menu rows, Street Eats options, station pools, Carvery side pools, and selected-item detail lookups.
+- [Jun 18, 12:02 AM] Set visible app version to `2026.06.18.001-fix-nitro-recap-performance`.
+
 ## 2026-06-17
 
 - [Jun 17, 11:34 PM] Added an optional Grill Promo LTO checkbox with a free-text promo item field so chefs can activate one-off Grill specials without needing the item preloaded.

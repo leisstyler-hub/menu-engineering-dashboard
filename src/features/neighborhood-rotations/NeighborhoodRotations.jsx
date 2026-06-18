@@ -324,15 +324,16 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
     Object.entries(rotation.globalBlocks || {}).forEach(([blockId, block], blockIndex) => {
       if (!block?.menu) return;
       const blockRecordId = makeDatabaseRecordId(parentId, "global", blockId);
+      const meta = menuBlockMeta(blockId);
       extraGlobalBlockRows.push({
         ...baseDatabaseRecord({ parentId, recordId: blockRecordId, recordType: SMARTSHEET_RECORD_TYPES.globalBlock, status: rotation.status || "Draft", district, cafe, week, stationKey: "global" }),
         [SMARTSHEET_COLUMNS.menuConcept]: block.menu || "",
         [SMARTSHEET_COLUMNS.stationSubConcept]: block.station || "",
-        [SMARTSHEET_COLUMNS.menuBlockLabel]: blockId === "noodles" ? "Noodle Station" : titleCase(blockId),
-        [SMARTSHEET_COLUMNS.menuBlockType]: blockId === "noodles" ? "Secondary Global" : "Additional Global",
+        [SMARTSHEET_COLUMNS.menuBlockLabel]: meta.label,
+        [SMARTSHEET_COLUMNS.menuBlockType]: meta.type,
         [SMARTSHEET_COLUMNS.globalBlockId]: blockRecordId,
         [SMARTSHEET_COLUMNS.globalBlockIndex]: blockIndex + 10,
-        [SMARTSHEET_COLUMNS.globalBlockDays]: blockId === "noodles" ? "Monday, Tuesday, Wednesday, Thursday, Friday" : "",
+        [SMARTSHEET_COLUMNS.globalBlockDays]: meta.days,
         [SMARTSHEET_COLUMNS.isReadOnly]: false,
       });
       pushSelections("global", SMARTSHEET_SELECTION_TYPES.entree, block.entrees || [], 1600 + blockIndex * 400, block, blockId);
@@ -441,12 +442,14 @@ function recordsToRotations(records = []) {
       "Tuesday + Wednesday": "tueWed",
       "Thursday + Friday": "thuFri",
       noodles: "noodles",
-      "Noodle Station": "noodles"
+      "Noodle Station": "noodles",
+      "Monday + Tuesday Proteins": "nitroMonTue",
+      "Wednesday + Friday Proteins": "nitroWedFri"
     }[record.menuBlockLabel] || "";
     const fromGlobalId = String(record.globalBlockId || "").split("|").filter(Boolean).pop() || "";
     const fromRecordId = String(record.recordId || "").split("|").filter(Boolean).pop() || "";
     const candidate = fromGlobalId || fromRecordId || fromLabel;
-    return ["monTue", "wedThu", "friCarry", "monCarry", "tueWed", "thuFri", "noodles"].includes(candidate) ? candidate : fromLabel;
+    return ["monTue", "wedThu", "friCarry", "monCarry", "tueWed", "thuFri", "noodles", "nitroMonTue", "nitroWedFri"].includes(candidate) ? candidate : fromLabel;
   };
 
   records.map(normalizeLoadedRotationRecord).forEach((record) => {
@@ -583,11 +586,26 @@ const isGlobalMenuOption = (menu = "") =>
   !/Cafe Express|Carvery|Fish Market|Fresh Five|Grill Core|Pizzas? & Flatbreads?|Soup/i.test(menu);
 const allowsSubConcept = (menu = "") => /Street Eats/i.test(menu);
 const NOODLE_MENU_PATTERN = /noodle|wok|ramen|pho|lo mein|yakisoba|udon|soba/i;
-const globalMenuRows = (menu = "", station = "") =>
-  MENUWORKS_ITEMS.filter((row) => getMenuName(row) === menu && (!allowsSubConcept(menu) || !station || getStationName(row) === station));
+const GLOBAL_MENU_ROWS_CACHE = new Map();
+const SUB_CONCEPT_OPTIONS_CACHE = new Map();
+const STATION_POOL_CACHE = new Map();
+const BEST_ROW_BY_NAME_CACHE = new Map();
+let POTATO_SIDES_CACHE = null;
+let CARVERY_HOT_SIDES_CACHE = null;
+let CARVERY_COLD_SIDES_CACHE = null;
+const globalMenuRows = (menu = "", station = "") => {
+  const key = `${menu}|${station}`;
+  if (!GLOBAL_MENU_ROWS_CACHE.has(key)) {
+    GLOBAL_MENU_ROWS_CACHE.set(key, MENUWORKS_ITEMS.filter((row) => getMenuName(row) === menu && (!allowsSubConcept(menu) || !station || getStationName(row) === station)));
+  }
+  return GLOBAL_MENU_ROWS_CACHE.get(key);
+};
 const subConceptOptionsForMenu = (menu = "") => {
   if (!allowsSubConcept(menu)) return [];
-  return Array.from(new Set(MENUWORKS_ITEMS.filter((row) => getMenuName(row) === menu).map((row) => getStationName(row)).filter(Boolean))).sort();
+  if (!SUB_CONCEPT_OPTIONS_CACHE.has(menu)) {
+    SUB_CONCEPT_OPTIONS_CACHE.set(menu, Array.from(new Set(MENUWORKS_ITEMS.filter((row) => getMenuName(row) === menu).map((row) => getStationName(row)).filter(Boolean))).sort());
+  }
+  return SUB_CONCEPT_OPTIONS_CACHE.get(menu);
 };
 const noodleMenuOptions = () =>
   Array.from(new Set(MENUWORKS_ITEMS
@@ -785,6 +803,7 @@ function textForRow(row) {
 }
 
 function stationPool(stationKey) {
+  if (STATION_POOL_CACHE.has(stationKey)) return STATION_POOL_CACHE.get(stationKey);
   const carveryRequestedProteins = [
     "Lemon Brined Turkey",
     "Crispy Pork Belly",
@@ -792,6 +811,18 @@ function stationPool(stationKey) {
     "Char Siu Pork",
     "Grilled Flank Steak"
   ].map((name) => makePlanningOption(name, { menu: "AMZ: Carvery", station: "Premium Mains", category: "entree" }));
+  const carveryRequestedVegetables = [
+    "Grilled Vegetables",
+    "Charred Broccoli",
+    "Roasted Carrots",
+    "Charred Green Beans",
+    "Roasted Cauliflower",
+    "Grilled Asparagus",
+    "Roasted Brussels Sprouts"
+  ].map((name) => makePlanningOption(name, { menu: "AMZ: Carvery", station: "Vegetable Carvery", category: "side" }));
+  const saladRequestedOptions = [
+    "Baja Crunch Salad"
+  ].map((name) => makePlanningOption(name, { menu: "AMZ: Fresh Five", station: "Salad LTOs", category: "entree" }));
   const all = MENUWORKS_ITEMS.filter(Boolean);
   const byMenu = (needle) => all.filter((row) => getMenuName(row).toLowerCase().includes(needle));
   const byStation = (needle) => all.filter((row) => getStationName(row).toLowerCase().includes(needle));
@@ -801,7 +832,10 @@ function stationPool(stationKey) {
   const scoped = (strictRows, fallbackRows = []) => uniqueOptionRows(strictRows.length ? strictRows : fallbackRows);
 
   const pools = {
-    salad: scoped([...byMenuPattern(/\bsalad\b/i), ...byStationPattern(/\bsalad\b/i)], byText(/salad|greens|slaw/)).filter((row) => isEntree(row)),
+    salad: uniqueOptionRows([
+      ...scoped([...byMenuPattern(/\bsalad\b/i), ...byStationPattern(/\bsalad\b/i), ...byMenuPattern(/fresh (five|\$5|5)/i), ...byStationPattern(/fresh (five|\$5|5)/i)], byText(/salad|greens|slaw|fresh five|fresh \$5|fresh 5/)).filter((row) => isEntree(row)),
+      ...saladRequestedOptions
+    ]),
     pizza: scoped([...byMenuPattern(/pizza|flatbread/i), ...byStationPattern(/pizza|flatbread/i)], byText(/pizza|flatbread/)).filter((row) => isEntree(row)),
     deli: scoped([...byMenuPattern(/deli|sandwich/i), ...byStationPattern(/deli|sandwich/i)], byText(/sandwich|deli|wrap|naanwich|banh mi/)).filter((row) => isEntree(row)),
     fishMarket: scoped([...byMenuPattern(/fish market/i), ...byStationPattern(/fish market/i)])
@@ -816,18 +850,28 @@ function stationPool(stationKey) {
       ...scoped([...byMenu("carvery"), ...byStation("carvery")], byText(/beef|chicken|pork|turkey|salmon|steelhead|trout|tofu|protein|pork belly|flank steak|char siu|char sui/)).filter((row) => isEntree(row)),
       ...carveryRequestedProteins
     ]),
-    carveryVegetable: uniqueOptionRows(byText(/broccoli|carrot|green bean|beans|vegetable|veg|cauliflower|brussels|squash|zucchini|asparagus/)),
+    carveryVegetable: uniqueOptionRows([
+      ...byText(/broccoli|carrot|green bean|beans|vegetable|veg|cauliflower|brussels|squash|zucchini|asparagus/),
+      ...carveryRequestedVegetables
+    ]),
     carverySide: uniqueOptionRows(all.filter((row) => isSide(row)))
   };
 
   const pool = pools[stationKey] || [];
-  if (pool.length) return pool;
-
-  if (["freshFive", "salad", "pizza", "deli", "fishMarket", "soup"].includes(stationKey)) {
-    return uniqueOptionRows(all.filter((row) => isEntree(row) || isSide(row)));
+  if (pool.length) {
+    STATION_POOL_CACHE.set(stationKey, pool);
+    return pool;
   }
 
-  return uniqueOptionRows(all);
+  if (["freshFive", "salad", "pizza", "deli", "fishMarket", "soup"].includes(stationKey)) {
+    const fallback = uniqueOptionRows(all.filter((row) => isEntree(row) || isSide(row)));
+    STATION_POOL_CACHE.set(stationKey, fallback);
+    return fallback;
+  }
+
+  const fallback = uniqueOptionRows(all);
+  STATION_POOL_CACHE.set(stationKey, fallback);
+  return fallback;
 }
 
 function stationSlots(cafe, stationKey) {
@@ -941,6 +985,20 @@ function reInventGlobalBlockLayout(week = "") {
       ];
 }
 
+function nitroGlobalBlockLayout() {
+  return [
+    { id: "nitroMonTue", title: "Monday + Tuesday Proteins", days: ["Monday", "Tuesday"], help: "Select the Global item mix Nitro runs before the Wednesday protein change." },
+    { id: "nitroWedFri", title: "Wednesday + Friday Proteins", days: ["Wednesday", "Thursday", "Friday"], help: "Select the Global item mix Nitro runs after the Wednesday protein change." }
+  ];
+}
+
+function menuBlockMeta(blockId) {
+  if (blockId === "noodles") return { label: "Noodle Station", type: "Secondary Global", days: "Monday, Tuesday, Wednesday, Thursday, Friday" };
+  const nitroBlock = nitroGlobalBlockLayout().find((block) => block.id === blockId);
+  if (nitroBlock) return { label: nitroBlock.title, type: "Nitro Same-Menu Split", days: nitroBlock.days.join(", ") };
+  return { label: titleCase(blockId), type: "Additional Global", days: "" };
+}
+
 function blockComplete(block) {
   return Boolean(block?.menu && (block?.entrees || []).filter(Boolean).length >= 2);
 }
@@ -979,10 +1037,12 @@ function hasRotationMenu(rotation = {}) {
 }
 
 function potatoSides() {
-  return uniqueRows(MENUWORKS_ITEMS.filter((row) => {
+  if (POTATO_SIDES_CACHE) return POTATO_SIDES_CACHE;
+  POTATO_SIDES_CACHE = uniqueRows(MENUWORKS_ITEMS.filter((row) => {
     const name = String(getItemIdentity(row)).toLowerCase();
     return isSide(row) && /potato|potatoes|fries|tots|hash brown|mashed|fingerling|yukon|russet|sweet potato/.test(name);
   }));
+  return POTATO_SIDES_CACHE;
 }
 
 function carverySideTemperature(row) {
@@ -993,13 +1053,17 @@ function carverySideTemperature(row) {
 }
 
 function carveryHotSides() {
+  if (CARVERY_HOT_SIDES_CACHE) return CARVERY_HOT_SIDES_CACHE;
   const sides = stationPool("carverySide").filter((row) => carverySideTemperature(row) !== "cold");
-  return sides.length ? uniqueRows(sides) : stationPool("carverySide");
+  CARVERY_HOT_SIDES_CACHE = sides.length ? uniqueRows(sides) : stationPool("carverySide");
+  return CARVERY_HOT_SIDES_CACHE;
 }
 
 function carveryColdSides() {
+  if (CARVERY_COLD_SIDES_CACHE) return CARVERY_COLD_SIDES_CACHE;
   const sides = stationPool("carverySide").filter((row) => carverySideTemperature(row) !== "hot");
-  return sides.length ? uniqueRows(sides) : stationPool("carverySide");
+  CARVERY_COLD_SIDES_CACHE = sides.length ? uniqueRows(sides) : stationPool("carverySide");
+  return CARVERY_COLD_SIDES_CACHE;
 }
 
 function blankRotation(menu = "", station = "") {
@@ -1031,6 +1095,9 @@ function nowStamp() {
 function stationComplete(rotation, stationKey, cafe = "", week = "") {
   if (stationKey === "global" && cafe === "Re:Invent") {
     return reInventGlobalBlockLayout(week).filter((block) => !block.readOnly).every((block) => blockComplete(getRotationGlobalBlock(rotation, block.id)));
+  }
+  if (stationKey === "global" && cafe === "Nitro") {
+    return Boolean(rotation.menu) && nitroGlobalBlockLayout().every((block) => blockComplete(getRotationGlobalBlock(rotation, block.id)));
   }
   if (stationKey === "global") return Boolean(rotation.menu && (rotation.entrees || []).filter(Boolean).length >= 2);
   if (stationKey === "noodles") return blockComplete(getRotationGlobalBlock(rotation, "noodles"));
@@ -1126,9 +1193,15 @@ function itemDetailScore(row) {
 function findBestRowForName(name, candidateRows = MENUWORKS_ITEMS) {
   const normalizedName = normalizeItemName(name);
   if (!normalizedName) return null;
+  if (candidateRows === MENUWORKS_ITEMS && BEST_ROW_BY_NAME_CACHE.has(normalizedName)) return BEST_ROW_BY_NAME_CACHE.get(normalizedName);
   const matches = candidateRows.filter((row) => getItemAliases(row).includes(normalizedName));
-  if (!matches.length) return null;
-  return [...matches].sort((a, b) => itemDetailScore(b) - itemDetailScore(a))[0];
+  if (!matches.length) {
+    if (candidateRows === MENUWORKS_ITEMS) BEST_ROW_BY_NAME_CACHE.set(normalizedName, null);
+    return null;
+  }
+  const best = [...matches].sort((a, b) => itemDetailScore(b) - itemDetailScore(a))[0];
+  if (candidateRows === MENUWORKS_ITEMS) BEST_ROW_BY_NAME_CACHE.set(normalizedName, best);
+  return best;
 }
 
 function rowsForSelectedNames(names = [], { unique = false, selectionGroup = "", candidateRows = MENUWORKS_ITEMS } = {}) {
@@ -1855,33 +1928,81 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
         </div>
       )}
 
-      <StationPills cafe={cafe} stations={cafeStations} />
-      <PlannerSnapshot rotation={rotation} items={items} />
-      <StationCostOverview rows={stationCostOverview} />
+      {lockedForEditing ? (
+        <SubmittedRotationRecap cafe={cafe} week={week} rotation={rotation} rows={stationCostOverview} onEdit={() => setEditSubmitted(true)} />
+      ) : (
+        <>
+          <StationPills cafe={cafe} stations={cafeStations} />
+          <PlannerSnapshot rotation={rotation} items={items} />
+          <StationCostOverview rows={stationCostOverview} />
 
-      {cafeStations.map((stationKey) => (
-        <CafeStationSection
-          key={stationKey}
-          stationKey={stationKey}
-          cafe={cafe}
-          week={week}
-          rotation={rotation}
-          previousRotation={previousRotation}
-          previousWeek={previousWeek}
-          menuOptions={menuOptions}
-          stationOptions={stationOptions}
-          categorized={categorized}
-          updateRotation={guardedUpdateRotation}
-          updateSlot={updateSlot}
-          updateGrill={updateGrill}
-          updateLto={updateLto}
-          updateCarvery={updateCarvery}
-          summary={summary}
-          selectedItems={items}
-        />
-      ))}
+          {cafeStations.map((stationKey) => (
+            <CafeStationSection
+              key={stationKey}
+              stationKey={stationKey}
+              cafe={cafe}
+              week={week}
+              rotation={rotation}
+              previousRotation={previousRotation}
+              previousWeek={previousWeek}
+              menuOptions={menuOptions}
+              stationOptions={stationOptions}
+              categorized={categorized}
+              updateRotation={guardedUpdateRotation}
+              updateSlot={updateSlot}
+              updateGrill={updateGrill}
+              updateLto={updateLto}
+              updateCarvery={updateCarvery}
+              summary={summary}
+              selectedItems={items}
+            />
+          ))}
+        </>
+      )}
       <CompactSystemStatusPanel district={district} cafe={cafe} week={week} rotation={rotation} loadStatus={databaseLoadStatus} syncStatus={databaseSyncStatus} onRefreshDatabase={onRefreshDatabase} isRefreshCoolingDown={isRefreshCoolingDown} />
     </div>
+  );
+}
+
+function SubmittedRotationRecap({ cafe, week, rotation, rows, onEdit }) {
+  const menuLabel = rotationMenuLabel(rotation);
+  const totalSelections = selectedItems(rotation).length;
+  return (
+    <section className="mt-5 rounded-[2rem] border-2 border-emerald-200 bg-emerald-50/60 p-5 shadow-sm">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.18em] font-black text-emerald-700">Submitted Menu Recap</p>
+          <h3 className="mt-1 text-3xl font-black text-slate-950">{cafe}</h3>
+          <p className="mt-1 text-sm font-semibold text-slate-600">{week}</p>
+          <p className="mt-2 text-lg font-black text-slate-950">{menuLabel || "No Global menu saved"}</p>
+          <p className="mt-1 text-sm font-semibold text-slate-600">{totalSelections} saved selection{totalSelections === 1 ? "" : "s"}{rotation.submittedAt ? ` - submitted ${rotation.submittedAt}` : ""}</p>
+        </div>
+        <label className="inline-flex items-center gap-3 self-start rounded-2xl border border-emerald-300 bg-white px-4 py-3 text-sm font-black text-emerald-900 shadow-sm">
+          <input type="checkbox" onChange={(event) => event.target.checked && onEdit()} />
+          Edit and resubmit
+        </label>
+      </div>
+      <div className="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-2">
+        {rows.map((row) => (
+          <div key={row.key} className="rounded-3xl border border-white bg-white/90 p-4 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.16em] font-black text-slate-400">{row.label}</p>
+                <p className="mt-1 text-sm font-bold text-slate-500">{row.note}</p>
+              </div>
+              <span className={`rounded-full border px-3 py-1 text-xs font-black ${row.selectedCount ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-slate-200 bg-slate-50 text-slate-500"}`}>{row.selectedCount}</span>
+            </div>
+            {row.items.length ? (
+              <ul className="mt-3 space-y-1 text-sm font-semibold text-slate-800">
+                {row.items.map((item, index) => <li key={`${row.key}-${getItemIdentity(item)}-${index}`}>{titleCase(getDisplayName(item) || getItemIdentity(item))}</li>)}
+              </ul>
+            ) : (
+              <p className="mt-3 text-sm font-semibold text-slate-400">No selections saved.</p>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -2402,6 +2523,10 @@ function GlobalSection({ cafe, week, rotation, previousRotation, previousWeek, m
     return <ReInventGlobalSection cafe={cafe} week={week} rotation={rotation} previousRotation={previousRotation} previousWeek={previousWeek} menuOptions={menuOptions} stationOptions={stationOptions} categorized={categorized} updateRotation={updateRotation} updateSlot={updateSlot} summary={summary} selectedItems={selectedItems} promo={promo} updatePromo={updatePromo} />;
   }
 
+  if (cafe === "Nitro") {
+    return <NitroGlobalSection rotation={rotation} menuOptions={menuOptions} updateRotation={updateRotation} promo={promo} updatePromo={updatePromo} summary={summary} />;
+  }
+
   return (
     <CollapsibleStation title={globalTitle} eyebrow="Global Rotation" complete={stationComplete(rotation, "global")} defaultOpen={!stationComplete(rotation, "global")}>
       <div className="rounded-3xl border border-slate-200 bg-white p-4">
@@ -2483,6 +2608,139 @@ function GlobalSection({ cafe, week, rotation, previousRotation, previousWeek, m
         <PickerGroup title="Extensions" limit="up to 2" items={menuCategorized.extensions} values={rotation.extensions || ["", ""]} onChange={(index, value) => updateSlot("extensions", index, value)} />
       </div>
       <StationSelectedList title="Items Description" items={globalSelectedRows(rotation, { unique: true })} complete={stationComplete(rotation, "global")} />
+    </CollapsibleStation>
+  );
+}
+
+function NitroGlobalSection({ rotation, menuOptions, updateRotation, promo, updatePromo, summary }) {
+  const layout = nitroGlobalBlockLayout();
+  const menuStationOptions = subConceptOptionsForMenu(rotation.menu);
+  const setMenu = (menu) => {
+    const blocks = Object.fromEntries(layout.map((block) => [block.id, blankGlobalBlock(menu, "")]));
+    updateRotation({
+      menu,
+      station: "",
+      entrees: [...EMPTY_ROTATION.entrees],
+      sides: [...EMPTY_ROTATION.sides],
+      subRecipes: [...EMPTY_ROTATION.subRecipes],
+      extensions: [...EMPTY_ROTATION.extensions],
+      globalBlocks: { ...(rotation.globalBlocks || {}), ...blocks },
+      promotionOverride: promo,
+      status: "Draft",
+      submittedAt: "",
+      submittedBy: "Chef",
+      updatedAt: nowStamp()
+    });
+  };
+  const setStation = (station) => {
+    const blocks = Object.fromEntries(layout.map((block) => [block.id, blankGlobalBlock(rotation.menu, station)]));
+    updateRotation({
+      station,
+      globalBlocks: { ...(rotation.globalBlocks || {}), ...blocks },
+      promotionOverride: promo,
+      status: "Draft",
+      submittedAt: "",
+      submittedBy: "Chef",
+      updatedAt: nowStamp()
+    });
+  };
+  const updateBlockSlot = (blockId, key, index, value) => {
+    const current = getRotationGlobalBlock(rotation, blockId);
+    const base = current.menu ? current : blankGlobalBlock(rotation.menu, rotation.station);
+    const nextValues = [...(base[key] || blankGlobalBlock()[key])];
+    nextValues[index] = value;
+    updateRotation({ globalBlocks: { ...(rotation.globalBlocks || {}), [blockId]: { ...base, [key]: nextValues } } });
+  };
+
+  return (
+    <CollapsibleStation title="Global Station" eyebrow="Nitro Same-Menu Split" complete={stationComplete(rotation, "global", "Nitro")} defaultOpen={!stationComplete(rotation, "global", "Nitro")}>
+      <div className="rounded-3xl border border-slate-200 bg-white p-4">
+        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.18em] text-slate-400 font-bold">Cycle Pattern</p>
+            <h4 className="text-xl font-bold mt-1">Nitro Wednesday Protein Change</h4>
+            <p className="mt-1 text-sm text-slate-500 max-w-3xl">Nitro keeps the same Global menu for the week, then changes the selected proteins/items starting Wednesday.</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {layout.map((block) => (
+                <span key={block.id} className={`rounded-full border px-3 py-1 text-xs font-bold ${cycleChipClass("sky")}`}>{block.title}</span>
+              ))}
+            </div>
+          </div>
+          <label className="inline-flex items-center gap-3 rounded-2xl border border-purple-200 bg-purple-50 px-4 py-3 text-sm font-bold text-purple-900 cursor-pointer">
+            <input type="checkbox" checked={Boolean(promo.enabled)} onChange={(e) => updatePromo({ enabled: e.target.checked })} />
+            Promotion Override
+          </label>
+        </div>
+      </div>
+
+      {promo.enabled && (
+        <div className="mt-4 rounded-3xl border border-purple-200 bg-purple-50/80 p-4">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.18em] text-purple-700 font-bold">Promotion Override Active</p>
+              <h4 className="text-xl font-bold text-purple-950 mt-1">Break Nitro's normal weekly pattern for this week only</h4>
+            </div>
+            <button type="button" onClick={() => updatePromo({ enabled: false, name: "", days: [], returnDays: [] })} className="rounded-2xl bg-white border border-purple-200 px-4 py-2 text-sm font-bold text-purple-900 hover:bg-purple-100">Clear Override</button>
+          </div>
+          <div className="mt-4 grid grid-cols-1 xl:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-purple-900 mb-2">Promotion / Takeover Name</label>
+              <input value={promo.name || ""} onChange={(e) => updatePromo({ name: e.target.value })} placeholder="Example: Global Takeover / Promo" className="w-full rounded-2xl border border-purple-200 bg-white px-4 py-3 font-semibold outline-none focus:border-purple-500" />
+            </div>
+            <DayToggleGroup title="Promo Days" values={promo.days || []} onToggle={(day) => updatePromo({ days: updateArrayToggle(promo.days || [], day) })} tone="purple" />
+            <DayToggleGroup title="Return-To-Cycle Days" values={promo.returnDays || []} onToggle={(day) => updatePromo({ returnDays: updateArrayToggle(promo.returnDays || [], day) })} tone="amber" />
+          </div>
+        </div>
+      )}
+
+      <div className="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-semibold text-slate-500 mb-2">Global Menu</label>
+          <select value={rotation.menu} onChange={(e) => setMenu(e.target.value)} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
+            <option value="">Select Menu</option>
+            {menuOptions.map((menu) => <option key={menu} value={menu}>{menu}</option>)}
+          </select>
+        </div>
+        {rotation.menu && menuStationOptions.length > 1 && (
+          <div>
+            <label className="block text-sm font-semibold text-slate-500 mb-2">Street Eats Option</label>
+            <select value={rotation.station || ""} onChange={(e) => setStation(e.target.value)} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
+              <option value="">Select Street Eats Option</option>
+              {menuStationOptions.map((station) => <option key={station} value={station}>{station}</option>)}
+            </select>
+          </div>
+        )}
+      </div>
+
+      {rotation.menu && <LiveAnalytics summary={summary} selectedItems={globalSelectedRows(rotation)} />}
+      {rotation.menu && (
+        <div className="mt-5 grid grid-cols-1 gap-5">
+          {layout.map((blockInfo) => {
+            const block = getRotationGlobalBlock(rotation, blockInfo.id);
+            const hydratedBlock = block.menu ? block : blankGlobalBlock(rotation.menu, rotation.station);
+            const blockCategorized = categorize(globalMenuRows(rotation.menu, rotation.station));
+            return (
+              <div key={blockInfo.id} className="rounded-3xl border-2 border-sky-200 bg-sky-50/60 p-5">
+                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.18em] text-sky-700 font-bold">Nitro Global Split</p>
+                    <h4 className="text-2xl font-bold mt-1">{blockInfo.title}</h4>
+                    <p className="text-sm text-slate-600 mt-1">{blockInfo.help}</p>
+                  </div>
+                  <span className={`rounded-full border px-3 py-1 text-xs font-bold ${blockComplete(hydratedBlock) ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-white border-sky-200 text-sky-800"}`}>{blockComplete(hydratedBlock) ? "complete" : "needs items"}</span>
+                </div>
+                <div className="mt-5 grid grid-cols-1 xl:grid-cols-4 gap-5">
+                  <PickerGroup title="Entrees" limit="up to 3" items={blockCategorized.entrees} values={hydratedBlock.entrees || ["", "", ""]} onChange={(slot, value) => updateBlockSlot(blockInfo.id, "entrees", slot, value)} />
+                  <PickerGroup title="Sides" limit="up to 4" items={blockCategorized.sides} values={hydratedBlock.sides || ["", "", "", ""]} onChange={(slot, value) => updateBlockSlot(blockInfo.id, "sides", slot, value)} />
+                  <PickerGroup title="Sub Recipes" limit="up to 4" items={blockCategorized.subRecipes} values={hydratedBlock.subRecipes || ["", "", "", ""]} onChange={(slot, value) => updateBlockSlot(blockInfo.id, "subRecipes", slot, value)} />
+                  <PickerGroup title="Extensions" limit="up to 2" items={blockCategorized.extensions} values={hydratedBlock.extensions || ["", ""]} onChange={(slot, value) => updateBlockSlot(blockInfo.id, "extensions", slot, value)} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      <StationSelectedList title="Items Description" items={globalSelectedRows(rotation, { unique: true })} complete={stationComplete(rotation, "global", "Nitro")} />
     </CollapsibleStation>
   );
 }
@@ -2923,8 +3181,15 @@ function CarverySection({ rotation, updateCarvery }) {
             <div className="flex items-center justify-between gap-2 mb-2"><label className="block text-sm font-bold text-slate-900">{label}</label><span className="rounded-full bg-white border border-sky-200 px-3 py-1 text-xs font-bold text-sky-700">choose here</span></div>
             <select value={rotation.carvery?.[field] || ""} onChange={(e) => updateCarvery(field, e.target.value)} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
               <option value="">&lt;Select Item&gt;</option>
+              {rotation.carvery?.[field] && !options.some((row) => normalizeItemName(getItemIdentity(row)) === normalizeItemName(rotation.carvery?.[field])) && <option value={rotation.carvery[field]}>{titleCase(rotation.carvery[field])}</option>}
               {options.map((row) => <option key={`${field}-${getItemIdentity(row)}`} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}
             </select>
+            <input
+              value={rotation.carvery?.[field] || ""}
+              onChange={(e) => updateCarvery(field, e.target.value)}
+              placeholder="Type if not listed"
+              className="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+            />
           </div>
         ))}
       </div>
