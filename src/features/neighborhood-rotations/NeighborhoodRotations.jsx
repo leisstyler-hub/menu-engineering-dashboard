@@ -18,12 +18,11 @@ const DISTRICTS = {
   LAX: ["LAX22", "LAX35", "LAX75", "LAX78", "SNA3"]
 };
 
-// CHECKPOINT: South District station configs intentionally include Fresh $5 as the final station for Doppler, Day 1, Nitro, and Re:Invent.
 const CAFE_STATION_CONFIG = {
-  Nitro: ["global", "carvery", "grill", "pizza", "salad", "freshFive"],
-  Doppler: ["global", "salad", "grill", "pizza", "deli", "freshFive"],
-  "Day 1": ["global", "grill", "salad", "fishMarket", "deli", "freshFive"],
-  "Re:Invent": ["fishMarket", "global", "deli", "grill", "freshFive"],
+  Nitro: ["global", "carvery", "grill", "pizza"],
+  Doppler: ["global", "salad", "grill", "pizza", "deli"],
+  "Day 1": ["global", "noodles", "grill", "salad", "fishMarket", "deli"],
+  "Re:Invent": ["fishMarket", "global", "deli", "grill"],
   Dawson: ["global", "carvery", "grill", "salad", "freshFive"],
   Nessie: ["wok", "global", "grill", "deli", "salad", "freshFive"],
   Cricket: ["global", "grill", "deli", "pizza", "freshFive"],
@@ -49,6 +48,7 @@ const MENU_CONFLICT_GROUPS = {
 
 const STATION_LABELS = {
   global: "Global Station",
+  noodles: "Noodle Station",
   wok: "Wok Station",
   grill: "Grill Station",
   salad: "Salad LTOs",
@@ -101,7 +101,7 @@ const weekIndexFromLabel = (weekLabel = "") => {
   if (Number.isNaN(weekStart.getTime())) return 0;
   return Math.max(0, Math.round((weekStart - ROTATION_CYCLE_START) / (7 * 24 * 60 * 60 * 1000)));
 };
-const isReInventFridayMondayWeek = (weekLabel = "") => weekIndexFromLabel(weekLabel) % 2 === 0;
+const isReInventFridayMondayWeek = (weekLabel = "") => (weekIndexFromLabel(weekLabel) + 1) % 2 === 0;
 const ROTATION_WEEKS = Array.from({ length: 160 }, (_, index) => makeWeekOption(addDays(ROTATION_CYCLE_START, index * 7)));
 const DEFAULT_ROTATION_WEEK = makeWeekOption(getMonday(new Date()));
 const previousRotationWeek = (weekLabel = "") => {
@@ -122,7 +122,7 @@ const EMPTY_ROTATION = {
   sides: ["", "", "", ""],
   subRecipes: ["", "", "", ""],
   extensions: ["", ""],
-  grill: { locationSpotlight1: "", locationSpotlight2: "", regionalSpecial: "", locationSpotlight: "" },
+  grill: { regionalSpecial: "", locationSpotlight: "" },
   ltos: {
     salad: ["", ""],
     pizza: ["", ""],
@@ -130,6 +130,7 @@ const EMPTY_ROTATION = {
     fishMarket: [""],
     freshFive: ["", "", "", "", ""],
     soup: ["", ""],
+    noodles: [""],
     wokEntrees: ["", "", ""],
     wokSides: ["", ""],
     wokBase: [""],
@@ -154,21 +155,6 @@ const EMPTY_ROTATION = {
   updatedAt: "",
   submittedAt: ""
 };
-
-function grillSpotlightValues(rotation = {}) {
-  const grill = rotation.grill || {};
-  const first = grill.locationSpotlight1 || grill.regionalSpecial || "";
-  const second = grill.locationSpotlight2 || (first !== grill.locationSpotlight ? grill.locationSpotlight : "") || "";
-  return [first, second];
-}
-
-function setLoadedGrillSpotlight(rotation, itemName, preferredIndex = 0) {
-  if (!itemName) return;
-  const field = preferredIndex > 0 ? "locationSpotlight2" : (rotation.grill.locationSpotlight1 ? "locationSpotlight2" : "locationSpotlight1");
-  rotation.grill[field] = itemName;
-  if (field === "locationSpotlight1") rotation.grill.regionalSpecial = itemName;
-  if (field === "locationSpotlight2") rotation.grill.locationSpotlight = itemName;
-}
 
 const rotationKey = (week, district, cafe) => `${week}|${district}|${cafe}`;
 const rotationRecordParentId = (week, district, cafe) => `rotation|${parseWeekStart(week) || week}|${district}|${cafe}`;
@@ -333,13 +319,37 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
     });
   }
 
+  const extraGlobalBlockRows = [];
+  if (cafe !== "Re:Invent") {
+    Object.entries(rotation.globalBlocks || {}).forEach(([blockId, block], blockIndex) => {
+      if (!block?.menu) return;
+      const blockRecordId = makeDatabaseRecordId(parentId, "global", blockId);
+      extraGlobalBlockRows.push({
+        ...baseDatabaseRecord({ parentId, recordId: blockRecordId, recordType: SMARTSHEET_RECORD_TYPES.globalBlock, status: rotation.status || "Draft", district, cafe, week, stationKey: "global" }),
+        [SMARTSHEET_COLUMNS.menuConcept]: block.menu || "",
+        [SMARTSHEET_COLUMNS.stationSubConcept]: block.station || "",
+        [SMARTSHEET_COLUMNS.menuBlockLabel]: blockId === "noodles" ? "Noodle Station" : titleCase(blockId),
+        [SMARTSHEET_COLUMNS.menuBlockType]: blockId === "noodles" ? "Secondary Global" : "Additional Global",
+        [SMARTSHEET_COLUMNS.globalBlockId]: blockRecordId,
+        [SMARTSHEET_COLUMNS.globalBlockIndex]: blockIndex + 10,
+        [SMARTSHEET_COLUMNS.globalBlockDays]: blockId === "noodles" ? "Monday, Tuesday, Wednesday, Thursday, Friday" : "",
+        [SMARTSHEET_COLUMNS.isReadOnly]: false,
+      });
+      pushSelections("global", SMARTSHEET_SELECTION_TYPES.entree, block.entrees || [], 1600 + blockIndex * 400, block, blockId);
+      pushSelections("global", SMARTSHEET_SELECTION_TYPES.side, block.sides || [], 1700 + blockIndex * 400, block, blockId);
+      pushSelections("global", SMARTSHEET_SELECTION_TYPES.subRecipe, block.subRecipes || [], 1800 + blockIndex * 400, block, blockId);
+      pushSelections("global", SMARTSHEET_SELECTION_TYPES.extension, block.extensions || [], 1900 + blockIndex * 400, block, blockId);
+    });
+  }
+
   if (cafe !== "Re:Invent") {
   pushSelections("global", SMARTSHEET_SELECTION_TYPES.entree, rotation.entrees || [], 0);
   pushSelections("global", SMARTSHEET_SELECTION_TYPES.side, rotation.sides || [], 100);
   pushSelections("global", SMARTSHEET_SELECTION_TYPES.subRecipe, rotation.subRecipes || [], 200);
   pushSelections("global", SMARTSHEET_SELECTION_TYPES.extension, rotation.extensions || [], 300);
   }
-  pushSelections("grill", SMARTSHEET_SELECTION_TYPES.locationSpotlight, grillSpotlightValues(rotation), 400, rotation, "", stationPool("grill"));
+  pushSelections("grill", SMARTSHEET_SELECTION_TYPES.regionalSpecial, [rotation.grill?.regionalSpecial], 400);
+  pushSelections("grill", SMARTSHEET_SELECTION_TYPES.locationSpotlight, [rotation.grill?.locationSpotlight], 410);
   ["salad", "pizza", "deli", "fishMarket", "freshFive", "soup"].forEach((stationKey, stationIndex) => {
     pushSelections(stationKey, SMARTSHEET_SELECTION_TYPES.lto, rotation.ltos?.[stationKey] || [], 500 + stationIndex * 100, rotation, "", stationPool(stationKey));
   });
@@ -365,19 +375,12 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
     });
   });
 
-  return [header, ...(globalBlock ? [globalBlock] : []), ...selectionRows, ...uploadRows];
+  return [header, ...(globalBlock ? [globalBlock] : []), ...reInventBlockRows, ...extraGlobalBlockRows, ...selectionRows, ...uploadRows];
 }
 
 function upsertDatabaseRecords(existingRecords = [], nextRecords = []) {
   const ids = new Set(nextRecords.map((record) => record[SMARTSHEET_COLUMNS.recordId]));
-  const parentIds = new Set(nextRecords.map((record) => record[SMARTSHEET_COLUMNS.parentRecordId]).filter(Boolean));
-  return [
-    ...existingRecords.filter((record) =>
-      !ids.has(record[SMARTSHEET_COLUMNS.recordId]) &&
-      !parentIds.has(record[SMARTSHEET_COLUMNS.parentRecordId])
-    ),
-    ...nextRecords
-  ];
+  return [...existingRecords.filter((record) => !ids.has(record[SMARTSHEET_COLUMNS.recordId])), ...nextRecords];
 }
 
 function normalizeLoadedRotationRecord(record = {}) {
@@ -395,6 +398,8 @@ function normalizeLoadedRotationRecord(record = {}) {
     slotNumber: Number(record[SMARTSHEET_COLUMNS.slotNumber] || 0),
     menuConcept: String(record[SMARTSHEET_COLUMNS.menuConcept] || ""),
     stationSubConcept: String(record[SMARTSHEET_COLUMNS.stationSubConcept] || ""),
+    menuBlockLabel: String(record[SMARTSHEET_COLUMNS.menuBlockLabel] || ""),
+    globalBlockId: String(record[SMARTSHEET_COLUMNS.globalBlockId] || ""),
     submittedBy: String(record[SMARTSHEET_COLUMNS.submittedBy] || ""),
     submittedAt: String(record[SMARTSHEET_COLUMNS.submittedAt] || ""),
     updatedAt: String(record[SMARTSHEET_COLUMNS.updatedAt] || ""),
@@ -424,6 +429,22 @@ function recordsToRotations(records = []) {
     }
     return grouped[key];
   };
+  const blockIdFromRecord = (record) => {
+    const fromLabel = {
+      "Monday + Tuesday": "monTue",
+      "Wednesday + Thursday": "wedThu",
+      Friday: "friCarry",
+      Monday: "monCarry",
+      "Tuesday + Wednesday": "tueWed",
+      "Thursday + Friday": "thuFri",
+      noodles: "noodles",
+      "Noodle Station": "noodles"
+    }[record.menuBlockLabel] || "";
+    const fromGlobalId = String(record.globalBlockId || "").split("|").filter(Boolean).pop() || "";
+    const fromRecordId = String(record.recordId || "").split("|").filter(Boolean).pop() || "";
+    const candidate = fromGlobalId || fromRecordId || fromLabel;
+    return ["monTue", "wedThu", "friCarry", "monCarry", "tueWed", "thuFri", "noodles"].includes(candidate) ? candidate : fromLabel;
+  };
 
   records.map(normalizeLoadedRotationRecord).forEach((record) => {
     if (!record.week || !record.district || !record.cafe) return;
@@ -439,8 +460,18 @@ function recordsToRotations(records = []) {
     }
 
     if (record.recordType === SMARTSHEET_RECORD_TYPES.globalBlock) {
+      const blockId = blockIdFromRecord(record);
+      if (blockId) {
+        const currentBlock = rotation.globalBlocks[blockId] || blankGlobalBlock();
+        rotation.globalBlocks[blockId] = {
+          ...currentBlock,
+          menu: record.menuConcept || currentBlock.menu || "",
+          station: record.stationSubConcept || currentBlock.station || ""
+        };
+      } else {
       rotation.menu = record.menuConcept || rotation.menu || "";
       rotation.station = record.stationSubConcept || rotation.station || "";
+      }
       rotation.status = record.status || rotation.status || "Draft";
       rotation.promotionOverride = {
         enabled: Boolean(record.promotionOverrideEnabled),
@@ -462,6 +493,16 @@ function recordsToRotations(records = []) {
     const index = Math.max(0, (record.slotNumber || 1) - 1);
 
     if (record.stationKey === "global") {
+      const blockId = blockIdFromRecord(record);
+      if (blockId) {
+        const block = rotation.globalBlocks[blockId] || blankGlobalBlock();
+        if (record.selectionType === SMARTSHEET_SELECTION_TYPES.entree) block.entrees[index] = record.itemName;
+        else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.side) block.sides[index] = record.itemName;
+        else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.subRecipe) block.subRecipes[index] = record.itemName;
+        else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.extension) block.extensions[index] = record.itemName;
+        rotation.globalBlocks[blockId] = block;
+        return;
+      }
       if (record.selectionType === SMARTSHEET_SELECTION_TYPES.entree) rotation.entrees[index] = record.itemName;
       else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.side) rotation.sides[index] = record.itemName;
       else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.subRecipe) rotation.subRecipes[index] = record.itemName;
@@ -470,8 +511,8 @@ function recordsToRotations(records = []) {
     }
 
     if (record.stationKey === "grill") {
-      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.regionalSpecial) setLoadedGrillSpotlight(rotation, record.itemName, 0);
-      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.locationSpotlight) setLoadedGrillSpotlight(rotation, record.itemName, Math.max(0, (record.slotNumber || 1) - 1));
+      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.regionalSpecial) rotation.grill.regionalSpecial = record.itemName;
+      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.locationSpotlight) rotation.grill.locationSpotlight = record.itemName;
       return;
     }
 
@@ -534,12 +575,20 @@ const isGlobalMenuOption = (menu = "") =>
   /^AMZ\+RA:/i.test(menu) ||
   !/Cafe Express|Carvery|Fish Market|Fresh Five|Grill Core|Pizzas? & Flatbreads?|Soup/i.test(menu);
 const allowsSubConcept = (menu = "") => /Street Eats/i.test(menu);
+const NOODLE_MENU_PATTERN = /noodle|wok|ramen|pho|lo mein|yakisoba|udon|soba/i;
 const globalMenuRows = (menu = "", station = "") =>
   MENUWORKS_ITEMS.filter((row) => getMenuName(row) === menu && (!allowsSubConcept(menu) || !station || getStationName(row) === station));
 const subConceptOptionsForMenu = (menu = "") => {
   if (!allowsSubConcept(menu)) return [];
   return Array.from(new Set(MENUWORKS_ITEMS.filter((row) => getMenuName(row) === menu).map((row) => getStationName(row)).filter(Boolean))).sort();
 };
+const noodleMenuOptions = () =>
+  Array.from(new Set(MENUWORKS_ITEMS
+    .filter((row) => NOODLE_MENU_PATTERN.test(`${getMenuName(row)} ${getStationName(row)} ${getItemIdentity(row)}`))
+    .map((row) => getMenuName(row))
+    .filter(Boolean)))
+    .sort()
+    .map((menu) => ({ item: menu, displayName: menu, menu: "Day 1 Noodle Station", station: "Noodles", category: "entree", dataSource: "planner-menu-option" }));
 const getDescription = (row) =>
   row.enticingDescription ||
   row.description ||
@@ -696,6 +745,24 @@ function makeUploadedItem(name) {
   };
 }
 
+function makePlanningOption(name, { menu = "Planner Requested Item", station = "Manual Option", category = "entree" } = {}) {
+  return {
+    id: `planner-${String(name).toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+    menu,
+    station,
+    item: name,
+    displayName: name,
+    mrn: "pending",
+    portion: "pending",
+    price: null,
+    trueCost: null,
+    category,
+    enticingDescription: "Planner requested option. Add MenuWorks cost, description, and allergen detail when available.",
+    allergens: "",
+    dataSource: "planner-requested-option"
+  };
+}
+
 function categorize(items) {
   const rows = uniqueRows(items);
   return {
@@ -710,27 +777,15 @@ function textForRow(row) {
   return `${getMenuName(row)} ${getStationName(row)} ${getItemIdentity(row)} ${row.enticingDescription || ""} ${row.description || ""}`.toLowerCase();
 }
 
-function carveryRows(all = uniqueRows(MENUWORKS_ITEMS)) {
-  const rows = all.filter((row) => /carvery/i.test(getMenuName(row)) || /carvery/i.test(getStationName(row)));
-  return rows.length ? rows : all.filter((row) => /carvery/i.test(textForRow(row)));
-}
-
-function isCarverySideCandidate(row) {
-  const station = getStationName(row);
-  const recipeCategory = String(row.recipeCategory || row["Recipe Category"] || "").toLowerCase();
-  return isPriced(row) && (
-    /\bsides?\b/i.test(station) ||
-    (isSide(row) && /side salad|starch\/grain|vegetable/.test(recipeCategory))
-  );
-}
-
-let cachedMenuWorksOptionRows = null;
-const stationPoolCache = new Map();
-
 function stationPool(stationKey) {
-  if (stationPoolCache.has(stationKey)) return stationPoolCache.get(stationKey);
-
-  const all = cachedMenuWorksOptionRows || (cachedMenuWorksOptionRows = uniqueRows(MENUWORKS_ITEMS));
+  const carveryRequestedProteins = [
+    "Lemon Brined Turkey",
+    "Crispy Pork Belly",
+    "Seared Steelhead Trout",
+    "Char Siu Pork",
+    "Grilled Flank Steak"
+  ].map((name) => makePlanningOption(name, { menu: "AMZ: Carvery", station: "Premium Mains", category: "entree" }));
+  const all = MENUWORKS_ITEMS.filter(Boolean);
   const byMenu = (needle) => all.filter((row) => getMenuName(row).toLowerCase().includes(needle));
   const byStation = (needle) => all.filter((row) => getStationName(row).toLowerCase().includes(needle));
   const byMenuPattern = (regex) => all.filter((row) => regex.test(getMenuName(row)));
@@ -746,61 +801,38 @@ function stationPool(stationKey) {
       .filter((row) => (getMenuName(row).toLowerCase().includes("fish market") || getStationName(row).toLowerCase().includes("fish market")) && isEntree(row)),
     freshFive: scoped([...byMenuPattern(/fresh (five|\$5|5)/i), ...byStationPattern(/fresh (five|\$5|5)/i)], byText(/fresh five|fresh \$5|fresh 5/)),
     soup: scoped([...byMenuPattern(/\bsoup\b/i), ...byStationPattern(/\bsoup\b/i)], byText(/soup|chili|bisque|chowder/)),
-    grill: uniqueOptionRows(all.filter((row) => {
-      const menu = getMenuName(row);
-      const station = getStationName(row);
-      return isPriced(row) && (/grill core/i.test(menu) || (/fresh (five|\$5|5)/i.test(menu) && /grill/i.test(station)));
-    })),
     wokEntrees: scoped([...byMenu("wok"), ...byStation("wok")], byText(/wok|stir fry|stir-fry|orange peel|sweet and sour|huli huli/)).filter((row) => isEntree(row)),
     wokSides: scoped([...byMenu("wok"), ...byStation("wok")], byText(/lo mein|fried rice|green beans|carrots|gai lan|slaw/)).filter((row) => isSide(row)),
     wokBase: scoped([...byMenu("wok"), ...byStation("wok")], byText(/rice|noodle|lo mein|base/)).filter((row) => isSide(row) || /rice|noodle|base/i.test(getItemIdentity(row))),
     wokSubRecipes: uniqueOptionRows(all.filter((row) => isSubRecipe(row))),
-    carveryProtein: uniqueOptionRows(carveryRows(all).filter((row) =>
-      isPriced(row) &&
-      isEntree(row) &&
-      !/sandwich|sides?|sauces?|extensions?/i.test(getStationName(row))
-    )),
-    carveryVegetable: uniqueOptionRows(carveryRows(all).filter((row) =>
-      isCarverySideCandidate(row) &&
-      /broccoli|carrot|green bean|beans|vegetable|veg|cauliflower|brussels|squash|zucchini|asparagus|cabbage|corn|collard|broccolini|succotash|salad/.test(textForRow(row))
-    )),
-    carveryStarch: uniqueOptionRows(carveryRows(all).filter((row) =>
-      isCarverySideCandidate(row) &&
-      /potato|potatoes|fries|tots|hash brown|mashed|fingerling|yukon|russet|sweet potato|rice|pilaf|couscous|mac|cheese|polenta/.test(textForRow(row))
-    )),
-    carverySide: uniqueOptionRows(carveryRows(all).filter(isCarverySideCandidate))
+    carveryProtein: uniqueOptionRows([
+      ...scoped([...byMenu("carvery"), ...byStation("carvery")], byText(/beef|chicken|pork|turkey|salmon|steelhead|trout|tofu|protein|pork belly|flank steak|char siu|char sui/)).filter((row) => isEntree(row)),
+      ...carveryRequestedProteins
+    ]),
+    carveryVegetable: uniqueOptionRows(byText(/broccoli|carrot|green bean|beans|vegetable|veg|cauliflower|brussels|squash|zucchini|asparagus/)),
+    carverySide: uniqueOptionRows(all.filter((row) => isSide(row)))
   };
 
   const pool = pools[stationKey] || [];
-  if (pool.length) {
-    stationPoolCache.set(stationKey, pool);
-    return pool;
-  }
+  if (pool.length) return pool;
 
   if (["freshFive", "salad", "pizza", "deli", "fishMarket", "soup"].includes(stationKey)) {
-    const fallbackPool = uniqueOptionRows(all.filter((row) => isEntree(row) || isSide(row)));
-    stationPoolCache.set(stationKey, fallbackPool);
-    return fallbackPool;
+    return uniqueOptionRows(all.filter((row) => isEntree(row) || isSide(row)));
   }
 
-  const fallbackPool = uniqueOptionRows(all);
-  stationPoolCache.set(stationKey, fallbackPool);
-  return fallbackPool;
+  return uniqueOptionRows(all);
 }
 
 function stationSlots(cafe, stationKey) {
   const override = {
-    Nitro: { freshFive: 3 },
-    Doppler: { pizza: 1, salad: 1, deli: 1, freshFive: 3 },
-    "Day 1": { freshFive: 3 },
-    "Re:Invent": { freshFive: 3 },
     Dawson: { freshFive: 5 },
     Nessie: { freshFive: 5 },
     Cricket: { freshFive: 5 },
     Moby: { deli: 4, salad: 4, freshFive: 2 },
     Commissary: { deli: 4, salad: 3, freshFive: 2, soup: 2 },
     Atlas: { freshFive: 2 },
-    Frontier: { freshFive: 2 }
+    Frontier: { freshFive: 2 },
+    Nitro: { pizza: 3 }
   }[cafe]?.[stationKey];
 
   if (override) return override;
@@ -929,6 +961,16 @@ function carryoverGlobalBlock(rotation = {}, preferredBlockId = "") {
   return blankGlobalBlock();
 }
 
+function rotationMenuLabel(rotation = {}) {
+  if (rotation.menu) return rotation.menu;
+  const blockMenus = Object.values(rotation.globalBlocks || {}).map((block) => block?.menu).filter(Boolean);
+  return blockMenus.length ? Array.from(new Set(blockMenus)).join(" / ") : "";
+}
+
+function hasRotationMenu(rotation = {}) {
+  return Boolean(rotationMenuLabel(rotation));
+}
+
 function potatoSides() {
   return uniqueRows(MENUWORKS_ITEMS.filter((row) => {
     const name = String(getItemIdentity(row)).toLowerCase();
@@ -962,7 +1004,7 @@ function blankRotation(menu = "", station = "") {
     sides: [...EMPTY_ROTATION.sides],
     subRecipes: [...EMPTY_ROTATION.subRecipes],
     extensions: [...EMPTY_ROTATION.extensions],
-    grill: { ...EMPTY_ROTATION.grill },
+    grill: { regionalSpecial: "", locationSpotlight: "" },
     ltos: Object.fromEntries(Object.entries(EMPTY_ROTATION.ltos).map(([key, values]) => [key, [...values]])),
     carvery: { ...EMPTY_ROTATION.carvery },
     uploadedLtos: {},
@@ -984,7 +1026,8 @@ function stationComplete(rotation, stationKey, cafe = "", week = "") {
     return reInventGlobalBlockLayout(week).filter((block) => !block.readOnly).every((block) => blockComplete(getRotationGlobalBlock(rotation, block.id)));
   }
   if (stationKey === "global") return Boolean(rotation.menu && (rotation.entrees || []).filter(Boolean).length >= 2);
-  if (stationKey === "grill") return Boolean(grillSpotlightValues(rotation).some(Boolean));
+  if (stationKey === "noodles") return blockComplete(getRotationGlobalBlock(rotation, "noodles"));
+  if (stationKey === "grill") return Boolean(rotation.grill?.regionalSpecial || rotation.grill?.locationSpotlight);
   if (["salad", "pizza", "deli", "fishMarket", "freshFive", "soup"].includes(stationKey)) {
     return Boolean((rotation.ltos?.[stationKey] || []).some(Boolean) || (rotation.uploadedLtos?.[stationKey] || []).some(Boolean));
   }
@@ -1051,8 +1094,8 @@ function rotationRequirementIssues(requirements, cafe, { menu = "", duplicateMen
 }
 
 function leadershipRead(rows, conflictMenus) {
-  const declared = rows.filter((row) => row.menu).length;
-  const missing = rows.filter((row) => !row.menu).map((row) => row.cafe);
+  const declared = rows.filter(hasRotationMenu).length;
+  const missing = rows.filter((row) => !hasRotationMenu(row)).map((row) => row.cafe);
   const conflicts = rows.filter((row) => rowHasMenuConflict(row, conflictMenus));
   const parts = [`${declared} of ${rows.length} cafés have a Global declaration.`];
   if (missing.length) parts.push(`${missing.join(", ")} still need to submit.`);
@@ -1125,7 +1168,7 @@ function globalSelectedRows(rotation, options) {
 }
 
 function grillSelectedRows(rotation, options) {
-  return rowsForSelectedNames(grillSpotlightValues(rotation), { ...options, candidateRows: stationPool("grill") });
+  return rowsForSelectedNames([rotation.grill?.regionalSpecial, rotation.grill?.locationSpotlight], options);
 }
 
 function ltoSelectedRows(rotation, stationKey, options) {
@@ -1273,9 +1316,18 @@ function getStationCostOverview(rotation, cafe) {
     stationRows.push({ key: "global", label: stationLabel(cafe, "global"), items: globalItems, note: rotation.menu ? rotation.menu : "not selected" });
   }
 
+  if (cafeStations.includes("noodles")) {
+    const noodleBlock = getRotationGlobalBlock(rotation, "noodles");
+    const noodleItems = rowsForSelectedNames(
+      [...(noodleBlock.entrees || []), ...(noodleBlock.sides || []), ...(noodleBlock.subRecipes || []), ...(noodleBlock.extensions || [])],
+      { unique: true, candidateRows: globalMenuRows(noodleBlock.menu, noodleBlock.station) }
+    );
+    stationRows.push({ key: "noodles", label: stationLabel(cafe, "noodles"), items: noodleItems, note: noodleBlock.menu ? noodleBlock.menu : "not selected" });
+  }
+
   if (cafeStations.includes("grill")) {
     const grillItems = grillSelectedRows(rotation);
-    stationRows.push({ key: "grill", label: stationLabel(cafe, "grill"), items: grillItems, note: "2 location spotlights" });
+    stationRows.push({ key: "grill", label: stationLabel(cafe, "grill"), items: grillItems, note: "regional + location spotlight" });
   }
 
   ["salad", "pizza", "deli", "fishMarket", "freshFive", "soup"].forEach((key) => {
@@ -1388,7 +1440,7 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
 
   useEffect(() => { refreshFromSmartsheet(); }, []);
 
-  const cafes = useMemo(() => DISTRICTS[district] || [], [district]);
+  const cafes = DISTRICTS[district] || [];
   useEffect(() => { if (district && selectedCafe && !cafes.includes(selectedCafe)) setSelectedCafe(""); }, [district, cafes, selectedCafe]);
 
   const currentRotation = selectedCafe ? (rotations[rotationKey(week, district, selectedCafe)] || EMPTY_ROTATION) : EMPTY_ROTATION;
@@ -1400,34 +1452,19 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
     [rotationKey(week, district, selectedCafe)]: { ...(prev[rotationKey(week, district, selectedCafe)] || EMPTY_ROTATION), ...patch }
   }));
 
-  const districtWeekRows = useMemo(
-    () => cafes.map((cafe) => ({ district, cafe, ...(rotations[rotationKey(week, district, cafe)] || EMPTY_ROTATION) })),
-    [cafes, district, rotations, week]
-  );
-  const leadershipRows = useMemo(
-    () => district === "South" ? districtWeekRows.flatMap((row) => row.cafe === "Nitro" ? [row, { ...row, cafe: "Frontier", copiedFrom: "Nitro" }] : [row]) : districtWeekRows,
-    [district, districtWeekRows]
-  );
-  const conflictMenus = useMemo(() => menuConflictCounts(conflictControlledRows(district, districtWeekRows)), [district, districtWeekRows]);
-  const allRows = useMemo(
-    () => Object.entries(DISTRICTS).flatMap(([dist, cafeList]) => cafeList.map((cafe) => ({ district: dist, cafe, ...(rotations[rotationKey(week, dist, cafe)] || EMPTY_ROTATION) }))),
-    [rotations, week]
-  );
-  const allConflictMenus = useMemo(() => Object.entries(DISTRICTS).reduce((acc, [dist, cafeList]) => {
+  const districtWeekRows = cafes.map((cafe) => ({ district, cafe, ...(rotations[rotationKey(week, district, cafe)] || EMPTY_ROTATION) }));
+  const leadershipRows = district === "South" ? districtWeekRows.flatMap((row) => row.cafe === "Nitro" ? [row, { ...row, cafe: "Frontier", copiedFrom: "Nitro" }] : [row]) : districtWeekRows;
+  const conflictMenus = menuConflictCounts(conflictControlledRows(district, districtWeekRows));
+  const allRows = Object.entries(DISTRICTS).flatMap(([dist, cafeList]) => cafeList.map((cafe) => ({ district: dist, cafe, ...(rotations[rotationKey(week, dist, cafe)] || EMPTY_ROTATION) })));
+  const allConflictMenus = Object.entries(DISTRICTS).reduce((acc, [dist, cafeList]) => {
     const rows = cafeList.map((cafe) => ({ district: dist, cafe, ...(rotations[rotationKey(week, dist, cafe)] || EMPTY_ROTATION) }));
     Object.entries(menuConflictCounts(conflictControlledRows(dist, rows))).forEach(([menu, count]) => {
       acc[`${dist}|${menu}`] = count;
     });
     return acc;
-  }, {}), [rotations, week]);
-  const resultRows = useMemo(
-    () => ROLLING_ROTATION_WEEKS.flatMap((wk) => Object.entries(DISTRICTS).flatMap(([dist, cafeList]) => cafeList.map((cafe) => ({ week: wk, district: dist, cafe, ...(rotations[rotationKey(wk, dist, cafe)] || EMPTY_ROTATION) })))).filter((row) => row.menu),
-    [rotations]
-  );
-  const filteredResults = useMemo(
-    () => resultRows.filter((row) => (resultsDistrict === "All" || row.district === resultsDistrict) && (resultsCafe === "All" || row.cafe === resultsCafe)).reverse(),
-    [resultRows, resultsCafe, resultsDistrict]
-  );
+  }, {});
+  const resultRows = ROLLING_ROTATION_WEEKS.flatMap((wk) => Object.entries(DISTRICTS).flatMap(([dist, cafeList]) => cafeList.map((cafe) => ({ week: wk, district: dist, cafe, ...(rotations[rotationKey(wk, dist, cafe)] || EMPTY_ROTATION) })))).filter(hasRotationMenu);
+  const filteredResults = resultRows.filter((row) => (resultsDistrict === "All" || row.district === resultsDistrict) && (resultsCafe === "All" || row.cafe === resultsCafe)).reverse();
   const persistRotationToDatabase = async (nextRotation) => {
     if (!week || !district || !selectedCafe) return;
     const nextRecords = buildDatabaseRecordsForRotation({ week, district, cafe: selectedCafe, rotation: nextRotation });
@@ -1465,7 +1502,7 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
               <ChoiceCard label="District" value={district} setValue={setDistrict} options={Object.keys(DISTRICTS)} />
               <ChoiceCard label="Cafe" value={selectedCafe} setValue={setSelectedCafe} options={cafes} disabled={!district} />
               <ControlCard label="Week" value={week} setValue={setWeek} options={ROTATION_WEEKS} />
-              <StatusCard ready={Boolean(district && selectedCafe)} conflicts={Object.values(conflictMenus).filter((count) => count > 1).length} completed={districtWeekRows.filter((row) => row.menu).length} total={cafes.length} />
+              <StatusCard ready={Boolean(district && selectedCafe)} conflicts={Object.values(conflictMenus).filter((count) => count > 1).length} completed={districtWeekRows.filter(hasRotationMenu).length} total={cafes.length} />
             </section>
             <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
               <div className="xl:col-span-2 space-y-6">
@@ -1606,7 +1643,7 @@ function DatabaseAlignmentNotice({ district, cafe, week, rotation }) {
 
 
 function CompactSystemStatusPanel({ district, cafe, week, rotation, loadStatus, syncStatus, onRefreshDatabase, isRefreshCoolingDown = false }) {
-  const records = useMemo(() => buildDatabaseRecordsForRotation({ week, district, cafe, rotation }), [cafe, district, rotation, week]);
+  const records = buildDatabaseRecordsForRotation({ week, district, cafe, rotation });
   const isReading = loadStatus?.state === "loading" || isRefreshCoolingDown;
   const readTone = loadStatus?.state === "loaded" ? "text-emerald-800 bg-emerald-50 border-emerald-200" : loadStatus?.state === "loading" ? "text-sky-800 bg-sky-50 border-sky-200" : "text-slate-600 bg-slate-50 border-slate-200";
   const writeTone = syncStatus?.state === "synced" ? "text-emerald-800 bg-emerald-50 border-emerald-200" : syncStatus?.state === "syncing" ? "text-sky-800 bg-sky-50 border-sky-200" : syncStatus?.state === "fallback" ? "text-amber-800 bg-amber-50 border-amber-200" : "text-slate-600 bg-slate-50 border-slate-200";
@@ -1685,35 +1722,46 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
   const [preview, setPreview] = useState(null);
   const [copiedRotation, setCopiedRotation] = useState(null);
   const [submitWarningOpen, setSubmitWarningOpen] = useState(false);
+  const [editSubmitted, setEditSubmitted] = useState(false);
+  const lockedForEditing = rotation.status === "Submitted" && !editSubmitted;
+  const guardedUpdateRotation = (patch) => {
+    if (lockedForEditing) return;
+    updateRotation(patch);
+  };
 
-  const stationOptions = useMemo(() => subConceptOptionsForMenu(rotation.menu), [rotation.menu]);
-  const menuItems = useMemo(() => globalMenuRows(rotation.menu, rotation.station), [rotation.menu, rotation.station]);
-  const categorized = useMemo(() => categorize(menuItems), [menuItems]);
-  const items = useMemo(() => selectedItems(rotation), [rotation]);
-  const summary = useMemo(() => foodSummary(items), [items]);
-  const cafeStations = useMemo(() => CAFE_STATION_CONFIG[cafe] || ["global"], [cafe]);
-  const stationCostOverview = useMemo(() => getStationCostOverview(rotation, cafe), [cafe, rotation]);
-  const requirements = useMemo(() => rotationRequirements(rotation, cafe, week), [cafe, rotation, week]);
-  const submitIssues = useMemo(
-    () => rotationRequirementIssues(requirements, cafe, { menu: rotation.menu, duplicateMenuCount: menuConflictCount, conflictNote: menuConflictNote(district, cafe) }),
-    [cafe, district, menuConflictCount, requirements, rotation.menu]
-  );
+  const stationOptions = subConceptOptionsForMenu(rotation.menu);
+  const menuItems = globalMenuRows(rotation.menu, rotation.station);
+  const categorized = categorize(menuItems);
+  const items = selectedItems(rotation);
+  const summary = foodSummary(items);
+  const cafeStations = CAFE_STATION_CONFIG[cafe] || ["global"];
+  const stationCostOverview = getStationCostOverview(rotation, cafe);
+  const requirements = rotationRequirements(rotation, cafe, week);
+  const submitIssues = rotationRequirementIssues(requirements, cafe, { menu: rotation.menu, duplicateMenuCount: menuConflictCount, conflictNote: menuConflictNote(district, cafe) });
   const canSubmitRotation = requirements.canSubmit && submitIssues.length === 0;
 
   const updateSlot = (group, index, value) => {
+    if (lockedForEditing) return;
     const next = [...(rotation[group] || EMPTY_ROTATION[group])];
     next[index] = value;
     updateRotation({ [group]: next });
   };
 
-  const updateGrill = (field, value) => updateRotation({ grill: { ...(rotation.grill || EMPTY_ROTATION.grill), [field]: value } });
+  const updateGrill = (field, value) => {
+    if (lockedForEditing) return;
+    updateRotation({ grill: { ...(rotation.grill || EMPTY_ROTATION.grill), [field]: value } });
+  };
   const updateLto = (stationKey, index, value) => {
+    if (lockedForEditing) return;
     const current = rotation.ltos?.[stationKey] || EMPTY_ROTATION.ltos[stationKey] || [];
     const next = [...current];
     next[index] = value;
     updateRotation({ ltos: { ...(rotation.ltos || EMPTY_ROTATION.ltos), [stationKey]: next } });
   };
-  const updateCarvery = (field, value) => updateRotation({ carvery: { ...(rotation.carvery || EMPTY_ROTATION.carvery), [field]: value } });
+  const updateCarvery = (field, value) => {
+    if (lockedForEditing) return;
+    updateRotation({ carvery: { ...(rotation.carvery || EMPTY_ROTATION.carvery), [field]: value } });
+  };
   const markDraft = () => {
     const nextRotation = { ...rotation, status: "Draft", updatedAt: nowStamp(), submittedBy: "Chef" };
     updateRotation(nextRotation);
@@ -1741,7 +1789,7 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
     persistRotationToDatabase?.(nextRotation);
   };
   const applyPreview = () => {
-    if (!preview) return;
+    if (!preview || lockedForEditing) return;
     const nextRotation = { ...rotation, ...preview.global, uploadedLtos: preview.uploadedLtos, updatedAt: nowStamp(), submittedBy: "Chef" };
     updateRotation(nextRotation);
     persistRotationToDatabase?.(nextRotation);
@@ -1785,6 +1833,20 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
           {rotation.status || "Draft"}
         </span>
       </div>
+      {rotation.status === "Submitted" && (
+        <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-black">Locked rotation selections are showing below.</p>
+              <p className="mt-1 font-semibold text-emerald-800">Check edit mode only when you need to revise and resubmit this cafe/week.</p>
+            </div>
+            <label className="inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-white px-4 py-2 text-xs font-black text-emerald-900">
+              <input type="checkbox" checked={editSubmitted} onChange={(event) => setEditSubmitted(event.target.checked)} />
+              Edit locked rotation
+            </label>
+          </div>
+        </div>
+      )}
 
       <StationPills cafe={cafe} stations={cafeStations} />
       <PlannerSnapshot rotation={rotation} items={items} />
@@ -1802,7 +1864,7 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
           menuOptions={menuOptions}
           stationOptions={stationOptions}
           categorized={categorized}
-          updateRotation={updateRotation}
+          updateRotation={guardedUpdateRotation}
           updateSlot={updateSlot}
           updateGrill={updateGrill}
           updateLto={updateLto}
@@ -1931,7 +1993,7 @@ function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, s
             <RemoteButton icon={Clipboard} label="Copy" onClick={onCopy} />
             <RemoteButton icon={ChevronDown} label="Load" onClick={onLoad} disabled={!copiedRotation} />
             <RemoteUploadButton onChange={handleUpload} />
-            <RemoteButton icon={Printer} label={showPrintPreview ? "Hide Print" : "Print"} onClick={() => setShowPrintPreview((value) => !value)} />
+            <RemoteButton icon={Printer} label={showPrintPreview ? "Hide View" : "View/Print"} onClick={() => setShowPrintPreview((value) => !value)} tone="light" />
             <RemoteButton icon={Save} label="Save Draft" onClick={onSaveDraft} tone="light" />
             <RemoteButton icon={Send} label="Submit" onClick={onSubmit} blocked={!canSubmit} title={submitHelp} tone="go" />
           </div>
@@ -2154,7 +2216,7 @@ function ExportCafeCard({ row }) {
 }
 
 function ExportStationBlock({ stationKey, cafe, row }) {
-  if (stationKey === "grill") return <ExportLineCard title={stationLabel(cafe, stationKey)} values={grillSpotlightValues(row)} />;
+  if (stationKey === "grill") return <ExportLineCard title={stationLabel(cafe, stationKey)} values={[row.grill?.regionalSpecial, row.grill?.locationSpotlight]} />;
   if (stationKey === "carvery") return <ExportLineCard title={stationLabel(cafe, stationKey)} values={Object.values(row.carvery || {})} />;
   if (stationKey === "wok") return <ExportLineCard title={stationLabel(cafe, stationKey)} values={[...(row.ltos?.wokEntrees || []), ...(row.ltos?.wokSides || []), ...(row.ltos?.wokBase || []), ...(row.ltos?.wokSubRecipes || [])]} />;
   return <ExportLineCard title={stationLabel(cafe, stationKey)} values={row.ltos?.[stationKey] || []} />;
@@ -2278,6 +2340,7 @@ function CafeStationSection(props) {
   if (stationKey === "pizza") content = <SimpleLTOSection stationKey="pizza" title="Pizza / Flatbread LTOs" slots={Array.from({ length: stationSlots(cafe, "pizza") }, (_, i) => `Pizza/Flatbread LTO ${i + 1}`)} values={rotation.ltos?.pizza || EMPTY_ROTATION.ltos.pizza} uploaded={rotation.uploadedLtos?.pizza || []} updateLto={updateLto} complete={stationComplete(rotation, "pizza")} />;
   if (stationKey === "deli") content = <SimpleLTOSection stationKey="deli" title="Deli LTOs" slots={Array.from({ length: stationSlots(cafe, "deli") }, (_, i) => `Deli LTO ${i + 1}`)} values={rotation.ltos?.deli || EMPTY_ROTATION.ltos.deli} uploaded={rotation.uploadedLtos?.deli || []} updateLto={updateLto} complete={stationComplete(rotation, "deli")} />;
   if (stationKey === "fishMarket") content = <SimpleLTOSection stationKey="fishMarket" title="Fish Market LTO" slots={Array.from({ length: stationSlots(cafe, "fishMarket") }, (_, i) => `Fish Market LTO ${i + 1}`)} values={rotation.ltos?.fishMarket || EMPTY_ROTATION.ltos.fishMarket} uploaded={rotation.uploadedLtos?.fishMarket || []} updateLto={updateLto} complete={stationComplete(rotation, "fishMarket")} />;
+  if (stationKey === "noodles") content = <SecondaryGlobalSection blockId="noodles" title="Noodle Station" eyebrow="Secondary Global" rotation={rotation} menuOptions={menuOptions} updateRotation={updateRotation} />;
   if (stationKey === "freshFive") content = <SimpleLTOSection stationKey="freshFive" title="Fresh $5" slots={Array.from({ length: stationSlots(cafe, "freshFive") }, (_, i) => `Fresh $5 Option ${i + 1}`)} values={rotation.ltos?.freshFive || EMPTY_ROTATION.ltos.freshFive} uploaded={rotation.uploadedLtos?.freshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "freshFive")} />;
   if (stationKey === "soup") content = <SimpleLTOSection stationKey="soup" title="Soup LTOs" slots={Array.from({ length: stationSlots(cafe, "soup") }, (_, i) => `Soup ${i + 1}`)} values={rotation.ltos?.soup || EMPTY_ROTATION.ltos.soup} uploaded={rotation.uploadedLtos?.soup || []} updateLto={updateLto} complete={stationComplete(rotation, "soup")} />;
   if (stationKey === "wok") content = <WokSection rotation={rotation} updateLto={updateLto} />;
@@ -2291,8 +2354,8 @@ function GlobalSection({ cafe, week, rotation, previousRotation, previousWeek, m
   const cycle = globalCycleConfig(cafe, week);
   const promo = rotation.promotionOverride || EMPTY_ROTATION.promotionOverride;
   const updatePromo = (patch) => updateRotation({ promotionOverride: { ...promo, ...patch } });
-  const menuStationOptions = stationOptions;
-  const menuCategorized = categorized;
+  const menuStationOptions = subConceptOptionsForMenu(rotation.menu);
+  const menuCategorized = categorize(globalMenuRows(rotation.menu, rotation.station));
   const carryover = carryoverGlobalBlock(previousRotation);
 
   const selectMenu = (menu) => {
@@ -2333,7 +2396,7 @@ function GlobalSection({ cafe, week, rotation, previousRotation, previousWeek, m
   }
 
   return (
-    <CollapsibleStation title={globalTitle} eyebrow="Global Rotation" complete={stationComplete(rotation, "global")}>
+    <CollapsibleStation title={globalTitle} eyebrow="Global Rotation" complete={stationComplete(rotation, "global")} defaultOpen={!stationComplete(rotation, "global")}>
       <div className="rounded-3xl border border-slate-200 bg-white p-4">
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
           <div>
@@ -2433,7 +2496,7 @@ function ReInventGlobalSection({ cafe, week, rotation, previousRotation, previou
   };
 
   return (
-    <CollapsibleStation title="Global Station" eyebrow="Re:Invent Global Rotation" complete={stationComplete(rotation, "global", cafe, week)}>
+    <CollapsibleStation title="Global Station" eyebrow="Re:Invent Global Rotation" complete={stationComplete(rotation, "global", cafe, week)} defaultOpen={!stationComplete(rotation, "global", cafe, week)}>
       <div className="rounded-3xl border border-slate-200 bg-white p-4">
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
           <div>
@@ -2540,6 +2603,60 @@ function ReInventGlobalSection({ cafe, week, rotation, previousRotation, previou
   );
 }
 
+function SecondaryGlobalSection({ blockId, title, eyebrow, rotation, menuOptions, updateRotation }) {
+  const block = getRotationGlobalBlock(rotation, blockId);
+  const blockStationOptions = subConceptOptionsForMenu(block.menu);
+  const blockCategorized = categorize(globalMenuRows(block.menu, block.station));
+  const updateBlock = (patch) => {
+    const current = getRotationGlobalBlock(rotation, blockId);
+    updateRotation({ globalBlocks: { ...(rotation.globalBlocks || {}), [blockId]: { ...current, ...patch } } });
+  };
+  const updateBlockSlot = (key, index, value) => {
+    const current = getRotationGlobalBlock(rotation, blockId);
+    const nextValues = [...(current[key] || blankGlobalBlock()[key])];
+    nextValues[index] = value;
+    updateBlock({ [key]: nextValues });
+  };
+  const blockItems = rowsForSelectedNames(
+    [...(block.entrees || []), ...(block.sides || []), ...(block.subRecipes || []), ...(block.extensions || [])],
+    { unique: true, candidateRows: globalMenuRows(block.menu, block.station) }
+  );
+
+  return (
+    <CollapsibleStation title={title} eyebrow={eyebrow} complete={blockComplete(block)} defaultOpen={!blockComplete(block)}>
+      <div className="rounded-3xl border border-slate-200 bg-white p-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-semibold text-slate-500 mb-2">Menu</label>
+            <select value={block.menu || ""} onChange={(e) => updateBlock({ ...blankGlobalBlock(e.target.value, "") })} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
+              <option value="">Select Menu</option>
+              {menuOptions.map((menu) => <option key={menu} value={menu}>{menu}</option>)}
+            </select>
+          </div>
+          {block.menu && blockStationOptions.length > 1 && (
+            <div>
+              <label className="block text-sm font-semibold text-slate-500 mb-2">Street Eats Option</label>
+              <select value={block.station || ""} onChange={(e) => updateBlock({ ...blankGlobalBlock(block.menu, e.target.value) })} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
+                <option value="">Select Street Eats Option</option>
+                {blockStationOptions.map((station) => <option key={station} value={station}>{station}</option>)}
+              </select>
+            </div>
+          )}
+        </div>
+      </div>
+      {block.menu && (
+        <div className="mt-5 grid grid-cols-1 xl:grid-cols-4 gap-5">
+          <PickerGroup title="Entrees" limit="up to 3" items={blockCategorized.entrees} values={block.entrees || ["", "", ""]} onChange={(slot, value) => updateBlockSlot("entrees", slot, value)} />
+          <PickerGroup title="Sides" limit="up to 4" items={blockCategorized.sides} values={block.sides || ["", "", "", ""]} onChange={(slot, value) => updateBlockSlot("sides", slot, value)} />
+          <PickerGroup title="Sub Recipes" limit="up to 4" items={blockCategorized.subRecipes} values={block.subRecipes || ["", "", "", ""]} onChange={(slot, value) => updateBlockSlot("subRecipes", slot, value)} />
+          <PickerGroup title="Extensions" limit="up to 2" items={blockCategorized.extensions} values={block.extensions || ["", ""]} onChange={(slot, value) => updateBlockSlot("extensions", slot, value)} />
+        </div>
+      )}
+      <StationSelectedList title="Items Description" items={blockItems} complete={blockComplete(block)} />
+    </CollapsibleStation>
+  );
+}
+
 function CarryoverPanel({ title, previousWeek, block, empty }) {
   const itemCount = compactValues([...(block.entrees || []), ...(block.sides || []), ...(block.subRecipes || []), ...(block.extensions || [])]).length;
   return (
@@ -2579,28 +2696,17 @@ function DayToggleGroup({ title, values = [], onToggle, tone = "sky" }) {
   );
 }
 
-function CollapsibleStation({ title, eyebrow, complete, children, defaultOpen = true }) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-
-  useEffect(() => {
-    setIsOpen(defaultOpen);
-  }, [defaultOpen, title, eyebrow]);
-
+function CollapsibleStation({ title, eyebrow, complete, children }) {
   return (
     <div className={`mt-5 rounded-lg border-2 p-5 shadow-md ${complete ? "border-emerald-300 bg-emerald-50/20" : "border-slate-300 bg-white"}`}>
-      <button type="button" onClick={() => setIsOpen((value) => !value)} className="w-full flex items-start justify-between gap-4 text-left">
+      <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-sm uppercase tracking-[0.18em] text-slate-400">{eyebrow}</p>
           <h3 className="text-2xl font-bold mt-1">{title}</h3>
         </div>
-        <div className="flex flex-col items-end gap-2">
-          <span className={`rounded-full px-3 py-1 text-xs font-bold border ${complete ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-amber-50 border-amber-200 text-amber-800"}`}>{complete ? "complete" : "needs selection"}</span>
-          <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-bold text-slate-600">
-            {isOpen ? "Collapse" : "Open"} {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          </span>
-        </div>
-      </button>
-      {isOpen && <div className="mt-4">{children}</div>}
+        <span className={`rounded-full px-3 py-1 text-xs font-bold border ${complete ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-amber-50 border-amber-200 text-amber-800"}`}>{complete ? "complete" : "needs selection"}</span>
+      </div>
+      <div className="mt-4">{children}</div>
     </div>
   );
 }
@@ -2709,19 +2815,20 @@ function PickerGroup({ title, limit, items, values, onChange }) {
 }
 
 function GrillSection({ cafe, rotation, updateGrill }) {
-  const grillItems = stationPool("grill");
+  const grillItems = categorize(MENUWORKS_ITEMS.filter((row) => getMenuName(row) === "AMZ: Grill Core" || getStationName(row).toLowerCase().includes("grill"))).entrees;
   const grillTitle = cafe === "Day 1" ? "Adelaide's" : "Core Grill Additions";
   const options = grillItems.length ? grillItems : stationPool("carveryProtein");
   const complete = stationComplete(rotation, "grill");
-  const [locationSpotlight1, locationSpotlight2] = grillSpotlightValues(rotation);
   return (
-    <CollapsibleStation title={grillTitle} eyebrow="Grill Station" complete={complete}>
+    <div className={`mt-6 rounded-3xl border-2 p-5 shadow-md ${complete ? "border-emerald-300 bg-emerald-50/20" : "border-slate-300 bg-slate-50"}`}>
+      <p className="text-sm uppercase tracking-[0.18em] text-slate-400">Grill Station</p>
+      <h3 className="text-2xl font-bold mt-1">{grillTitle}</h3>
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <GrillSelect label="Location Spotlight 1" value={locationSpotlight1} onChange={(value) => updateGrill("locationSpotlight1", value)} items={options} />
-        <GrillSelect label="Location Spotlight 2" value={locationSpotlight2} onChange={(value) => updateGrill("locationSpotlight2", value)} items={options} />
+        <GrillSelect label="Regional Special" value={rotation.grill?.regionalSpecial || ""} onChange={(value) => updateGrill("regionalSpecial", value)} items={options} />
+        <GrillSelect label="Location Spotlight" value={rotation.grill?.locationSpotlight || ""} onChange={(value) => updateGrill("locationSpotlight", value)} items={options} />
       </div>
       <StationSelectedList title="Items Description" items={grillSelectedRows(rotation, { unique: true })} complete={complete} />
-    </CollapsibleStation>
+    </div>
   );
 }
 
@@ -2772,8 +2879,8 @@ function CarverySection({ rotation, updateCarvery }) {
     ["vegetable1", "Rotating Vegetable 1", stationPool("carveryVegetable")],
     ["vegetable2", "Rotating Vegetable 2", stationPool("carveryVegetable")],
     ["vegetable3", "Rotating Vegetable 3", stationPool("carveryVegetable")],
-    ["starch", "Starch", stationPool("carveryStarch")],
-    ["hotSide1", "Hot Side", carveryHotSides()],
+    ["starch", "Starch", potatoSides().length ? potatoSides() : stationPool("carverySide")],
+    ["hotSide1", "Hot Side 1", carveryHotSides()],
     ["coldSide1", "Cold Side 1", carveryColdSides()],
     ["coldSide2", "Cold Side 2", carveryColdSides()]
   ];
@@ -2826,35 +2933,35 @@ function LeadershipOverview({ district, week, rows, conflictMenus }) {
 }
 
 function ExecutiveView({ week, setWeek, rows, conflictMenus }) {
-  const rowMetrics = useMemo(() => rows.map((row) => {
-    const items = selectedItems(row);
-    const summary = foodSummary(items);
-    const fcRange = selectedFoodCostRange(items);
-    const fcMidpoint = fcRange.low != null && fcRange.high != null ? (fcRange.low + fcRange.high) / 2 : summary.fc;
-    const stationKeys = CAFE_STATION_CONFIG[row.cafe] || [];
-    const completedStations = stationKeys.filter((stationKey) => stationComplete(row, stationKey)).length;
-    const progressPct = stationKeys.length ? Math.round((completedStations / stationKeys.length) * 100) : 0;
-
-    return { row, items, summary, fcRange, fcMidpoint, stationKeys, completedStations, progressPct };
-  }), [rows]);
   const locked = rows.filter((row) => row.status === "Submitted").length;
-  const declared = rows.filter((row) => row.menu).length;
+  const declared = rows.filter(hasRotationMenu).length;
   const conflicts = rows.filter((row) => rowHasMenuConflict(row, conflictMenus)).length;
-  const pricedGlobalRows = rowMetrics.filter(({ row, fcMidpoint }) => row.menu && fcMidpoint != null);
-  const averageGlobalFc = pricedGlobalRows.length
-    ? pricedGlobalRows.reduce((sum, metric) => sum + metric.fcMidpoint, 0) / pricedGlobalRows.length
+  const globalRows = rows.filter(hasRotationMenu);
+  const globalSummaries = globalRows.map((row) => ({ ...row, summary: foodSummary(selectedItems(row)) }));
+  const pricedGlobalSummaries = globalSummaries.filter((row) => row.summary.fc != null);
+  const averageGlobalFc = pricedGlobalSummaries.length
+    ? pricedGlobalSummaries.reduce((sum, row) => {
+      const range = selectedFoodCostRange(selectedItems(row));
+      const midpoint = range.low != null && range.high != null ? (range.low + range.high) / 2 : row.summary.fc;
+      return sum + midpoint;
+    }, 0) / pricedGlobalSummaries.length
     : null;
 
   const districtNames = Object.keys(DISTRICTS);
-  const selectedCount = rowMetrics.reduce((sum, metric) => sum + metric.items.length, 0);
+  const selectedCount = rows.reduce((sum, row) => sum + selectedItems(row).length, 0);
   const districtSignals = districtNames.map((districtName) => {
-    const districtMetrics = rowMetrics.filter(({ row }) => row.district === districtName);
-    const districtRows = districtMetrics.map(({ row }) => row);
+    const districtRows = rows.filter((row) => row.district === districtName);
     const districtLocked = districtRows.filter((row) => row.status === "Submitted").length;
-    const districtDeclared = districtRows.filter((row) => row.menu).length;
+    const districtDeclared = districtRows.filter(hasRotationMenu).length;
     const districtConflicts = districtRows.filter((row) => rowHasMenuConflict(row, conflictMenus)).length;
-    const pricedRows = districtMetrics.filter((metric) => metric.fcMidpoint != null);
-    const averageFc = pricedRows.length ? pricedRows.reduce((sum, metric) => sum + metric.fcMidpoint, 0) / pricedRows.length : null;
+    const pricedRows = districtRows
+      .map((row) => {
+        const range = selectedFoodCostRange(selectedItems(row));
+        const midpoint = range.low != null && range.high != null ? (range.low + range.high) / 2 : null;
+        return { row, midpoint };
+      })
+      .filter((entry) => entry.midpoint != null);
+    const averageFc = pricedRows.length ? pricedRows.reduce((sum, entry) => sum + entry.midpoint, 0) / pricedRows.length : null;
     const lockPct = districtRows.length ? Math.round((districtLocked / districtRows.length) * 100) : 0;
     const declarationPct = districtRows.length ? Math.round((districtDeclared / districtRows.length) * 100) : 0;
     const score = Math.max(0, Math.min(100, Math.round((lockPct * 0.45) + (declarationPct * 0.35) + (districtConflicts ? 0 : 15) + (averageFc == null ? 5 : averageFc <= 0.34 ? 5 : -10))));
@@ -2884,10 +2991,9 @@ function ExecutiveView({ week, setWeek, rows, conflictMenus }) {
         </div>
         <div className="mt-5 space-y-6">
           {districtNames.map((districtName) => {
-            const districtMetrics = rowMetrics.filter(({ row }) => row.district === districtName);
-            const districtRows = districtMetrics.map(({ row }) => row);
+            const districtRows = rows.filter((row) => row.district === districtName);
             const districtLocked = districtRows.filter((row) => row.status === "Submitted").length;
-            const districtSelected = districtMetrics.reduce((sum, metric) => sum + metric.items.length, 0);
+            const districtSelected = districtRows.reduce((sum, row) => sum + selectedItems(row).length, 0);
             return (
               <div key={districtName} className="rounded-3xl border border-slate-200 bg-slate-50/70 p-4">
                 <div className="flex items-center justify-between gap-3">
@@ -2896,15 +3002,15 @@ function ExecutiveView({ week, setWeek, rows, conflictMenus }) {
                     <p className="text-xs font-semibold text-slate-500 mt-1">{districtLocked}/{districtRows.length} locked - {districtSelected} selected items</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <p className="rounded-full bg-slate-100 border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600">{districtRows.filter((row) => row.menu).length}/{districtRows.length} declared</p>
+                    <p className="rounded-full bg-slate-100 border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600">{districtRows.filter(hasRotationMenu).length}/{districtRows.length} declared</p>
                     <p className="rounded-full bg-emerald-50 border border-emerald-200 px-3 py-2 text-xs font-semibold text-emerald-800">≤30% favorable</p>
                     <p className="rounded-full bg-slate-100 border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700">30–34% monitor</p>
                     <p className="rounded-full bg-amber-100 border border-amber-200 px-3 py-2 text-xs font-semibold text-amber-800">&gt;34% watch</p>
                   </div>
                 </div>
                 <div className="mt-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                  {districtMetrics.map((metric) => (
-                    <SummaryCard key={`${metric.row.district}-${metric.row.cafe}`} row={metric.row} conflict={rowHasMenuConflict(metric.row, conflictMenus)} showDistrict={false} metrics={metric} />
+                  {districtRows.map((row) => (
+                    <SummaryCard key={`${row.district}-${row.cafe}`} row={row} conflict={rowHasMenuConflict(row, conflictMenus)} showDistrict={false} />
                   ))}
                 </div>
               </div>
@@ -2947,7 +3053,7 @@ function LeadershipStatusBoard({ rows }) {
 
 function LeadershipPulsePanel({ signals, rows, conflictMenus }) {
   const openRows = rows.filter((row) => row.status !== "Submitted");
-  const missingMenuRows = rows.filter((row) => !row.menu);
+  const missingMenuRows = rows.filter((row) => !hasRotationMenu(row));
   const duplicateRows = rows.filter((row) => rowHasMenuConflict(row, conflictMenus));
   const highCostRows = rows.filter((row) => {
     const range = selectedFoodCostRange(selectedItems(row));
@@ -2957,7 +3063,7 @@ function LeadershipPulsePanel({ signals, rows, conflictMenus }) {
   const actionRows = [
     { label: "Open submissions", value: openRows.length, detail: openRows.slice(0, 4).map((row) => row.cafe).join(", ") || "clear", tone: openRows.length ? "amber" : "green" },
     { label: "Missing menus", value: missingMenuRows.length, detail: missingMenuRows.slice(0, 4).map((row) => row.cafe).join(", ") || "clear", tone: missingMenuRows.length ? "amber" : "green" },
-    { label: "Duplicate menus", value: duplicateRows.length, detail: duplicateRows.slice(0, 4).map((row) => `${row.district}: ${row.menu}`).join(", ") || "clear", tone: duplicateRows.length ? "amber" : "green" },
+    { label: "Duplicate menus", value: duplicateRows.length, detail: duplicateRows.slice(0, 4).map((row) => `${row.district}: ${rotationMenuLabel(row)}`).join(", ") || "clear", tone: duplicateRows.length ? "amber" : "green" },
     { label: "Food cost watch", value: highCostRows.length, detail: highCostRows.slice(0, 4).map((row) => row.cafe).join(", ") || "clear", tone: highCostRows.length ? "amber" : "green" },
   ];
 
@@ -3028,17 +3134,18 @@ function ExecutiveMetric({ title, value, sub, tone = "neutral" }) {
   );
 }
 
-function SummaryCard({ row, conflict, showDistrict = true, metrics = null }) {
-  const rowItems = metrics?.items || selectedItems(row);
-  const summary = metrics?.summary || foodSummary(rowItems);
-  const fcRange = metrics?.fcRange || selectedFoodCostRange(rowItems);
-  const fcMidpoint = metrics?.fcMidpoint ?? (fcRange.low != null && fcRange.high != null ? (fcRange.low + fcRange.high) / 2 : summary.fc);
-  const stationKeys = metrics?.stationKeys || CAFE_STATION_CONFIG[row.cafe] || [];
-  const completedStations = metrics?.completedStations ?? stationKeys.filter((stationKey) => stationComplete(row, stationKey)).length;
-  const progressPct = metrics?.progressPct ?? (stationKeys.length ? Math.round((completedStations / stationKeys.length) * 100) : 0);
+function SummaryCard({ row, conflict, showDistrict = true }) {
+  const rowItems = selectedItems(row);
+  const summary = foodSummary(rowItems);
+  const fcRange = selectedFoodCostRange(rowItems);
+  const fcMidpoint = fcRange.low != null && fcRange.high != null ? (fcRange.low + fcRange.high) / 2 : summary.fc;
+  const stationKeys = CAFE_STATION_CONFIG[row.cafe] || [];
+  const completedStations = stationKeys.filter((stationKey) => stationComplete(row, stationKey, row.cafe, row.week)).length;
+  const progressPct = stationKeys.length ? Math.round((completedStations / stationKeys.length) * 100) : 0;
   const locked = row.status === "Submitted";
-  const tone = !row.menu ? "border-slate-200 bg-white" : fcMidpoint == null ? "border-slate-300 bg-slate-50" : fcMidpoint > 0.34 ? "border-amber-300 bg-amber-50" : fcMidpoint <= 0.30 ? "border-emerald-300 bg-emerald-50" : "border-sky-200 bg-sky-50";
-  const statusTone = locked ? "bg-emerald-500 text-white border-emerald-500" : row.menu ? "bg-amber-100 text-amber-900 border-amber-200" : "bg-rose-100 text-rose-900 border-rose-200";
+  const menuLabel = rotationMenuLabel(row);
+  const tone = !menuLabel ? "border-slate-200 bg-white" : fcMidpoint == null ? "border-slate-300 bg-slate-50" : fcMidpoint > 0.34 ? "border-amber-300 bg-amber-50" : fcMidpoint <= 0.30 ? "border-emerald-300 bg-emerald-50" : "border-sky-200 bg-sky-50";
+  const statusTone = locked ? "bg-emerald-500 text-white border-emerald-500" : menuLabel ? "bg-amber-100 text-amber-900 border-amber-200" : "bg-rose-100 text-rose-900 border-rose-200";
 
   return (
     <div className={`rounded-3xl border-2 p-4 shadow-sm ${tone}`}>
@@ -3046,19 +3153,19 @@ function SummaryCard({ row, conflict, showDistrict = true, metrics = null }) {
         <div>
           {showDistrict && row.district && <p className="text-xs uppercase tracking-[0.16em] text-slate-400">{row.district}</p>}
           <div className="flex items-center gap-2">
-            <span className={`h-2.5 w-2.5 rounded-full ${locked ? "bg-emerald-500" : row.menu ? "bg-amber-500" : "bg-rose-500"}`} />
+            <span className={`h-2.5 w-2.5 rounded-full ${locked ? "bg-emerald-500" : menuLabel ? "bg-amber-500" : "bg-rose-500"}`} />
             <p className="font-bold text-slate-900">{row.cafe}</p>
           </div>
           {row.copiedFrom ? <p className="text-xs text-slate-500 mt-1">Copied from {row.copiedFrom}</p> : row.cafe === "Nitro" ? <p className="text-xs text-slate-500 mt-1">Frontier follows Nitro</p> : null}
-          <p className="text-sm text-slate-600 mt-1">{row.menu || "No menu declared"}</p>
+          <p className="text-base font-black text-slate-950 mt-1 leading-snug">{menuLabel || "No menu declared"}</p>
           {row.updatedAt && <p className="text-xs text-slate-500 mt-1">Updated {row.updatedAt}</p>}
           {row.submittedBy && <p className="text-xs text-slate-500 mt-1">By {row.submittedBy}</p>}
           {row.station && <p className="text-xs text-slate-500 mt-1">{row.station}</p>}
         </div>
         <div className="flex flex-col items-end gap-2">
-          <span className={`rounded-full border px-3 py-1 text-xs font-bold ${statusTone}`}>{locked ? "locked" : row.menu ? "draft" : "open"}</span>
+          <span className={`rounded-full border px-3 py-1 text-xs font-bold ${statusTone}`}>{locked ? "locked" : menuLabel ? "draft" : "open"}</span>
           <span className="rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-xs font-bold text-slate-700">{pctRange(fcRange)}</span>
-          {conflict ? <AlertTriangle className="text-amber-600" size={18} /> : row.menu ? <CheckCircle2 className="text-emerald-600" size={18} /> : null}
+          {conflict ? <AlertTriangle className="text-amber-600" size={18} /> : menuLabel ? <CheckCircle2 className="text-emerald-600" size={18} /> : null}
         </div>
       </div>
       <div className="mt-4">
@@ -3071,9 +3178,9 @@ function SummaryCard({ row, conflict, showDistrict = true, metrics = null }) {
         </div>
       </div>
       <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
-        {row.menu && <span className="rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-slate-600">{(row.entrees || []).filter(Boolean).length} entrees</span>}
-        {row.menu && <span className="rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-slate-600">{(row.sides || []).filter(Boolean).length} sides</span>}
-        {row.menu && <span className="rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-slate-600">{(row.subRecipes || []).filter(Boolean).length} sub recipes</span>}
+        {menuLabel && <span className="rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-slate-600">{(row.entrees || []).filter(Boolean).length} entrees</span>}
+        {menuLabel && <span className="rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-slate-600">{(row.sides || []).filter(Boolean).length} sides</span>}
+        {menuLabel && <span className="rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-slate-600">{(row.subRecipes || []).filter(Boolean).length} sub recipes</span>}
         {stationKeys.length > 0 && <span className="rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-slate-600">{completedStations}/{stationKeys.length} stations</span>}
         {conflict && <span className="rounded-full bg-amber-100 border border-amber-200 px-3 py-1 text-amber-800">duplicate</span>}
       </div>
@@ -3098,7 +3205,7 @@ function ResultsView({ rows, resultsDistrict, setResultsDistrict, resultsCafe, s
   const pricedRows = historyRows.map((row) => ({ ...row, summary: foodSummary(selectedItems(row)) })).filter((row) => row.summary.fc != null);
   const averageFc = pricedRows.length ? pricedRows.reduce((sum, row) => sum + row.summary.fc, 0) / pricedRows.length : null;
   const costRangeRows = historyRows.map((row) => ({ ...row, trueCostRange: selectedTrueCostRange(selectedItems(row)) })).filter((row) => row.trueCostRange.low != null);
-  const mostUsedMenus = Object.entries(historyRows.reduce((acc, row) => { if (row.menu) acc[row.menu] = (acc[row.menu] || 0) + 1; return acc; }, {})).sort((a, b) => b[1] - a[1]).slice(0, 3);
+  const mostUsedMenus = Object.entries(historyRows.reduce((acc, row) => { const menu = rotationMenuLabel(row); if (menu) acc[menu] = (acc[menu] || 0) + 1; return acc; }, {})).sort((a, b) => b[1] - a[1]).slice(0, 3);
   const allSelections = historyRows.flatMap((row) => selectedItems(row));
   const uniqueItems = new Set(allSelections.map((row) => normalizeItemName(getItemIdentity(row))).filter(Boolean));
   const selectedItemCounts = Object.entries(allSelections.reduce((acc, row) => {
@@ -3106,7 +3213,7 @@ function ResultsView({ rows, resultsDistrict, setResultsDistrict, resultsCafe, s
     if (name) acc[name] = (acc[name] || 0) + 1;
     return acc;
   }, {})).sort((a, b) => b[1] - a[1]);
-  const declaredRows = historyRows.filter((row) => row.menu);
+  const declaredRows = historyRows.filter(hasRotationMenu);
   const averageSelectedItems = historyRows.length ? allSelections.length / historyRows.length : 0;
   const highFoodCostRows = pricedRows.filter((row) => row.summary.fc > 0.34);
   const widestRange = costRangeRows
@@ -3188,7 +3295,7 @@ function ResultsView({ rows, resultsDistrict, setResultsDistrict, resultsCafe, s
                     <td className="px-4 py-3 whitespace-nowrap">{row.district}</td>
                     <td className="px-4 py-3 whitespace-nowrap font-semibold">{row.cafe}</td>
                     <td className="px-4 py-3 whitespace-nowrap"><span className={`rounded-full px-3 py-1 text-xs font-bold border ${row.status === "Submitted" ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-slate-100 border-slate-200 text-slate-600"}`}>{row.status || "Draft"}</span></td>
-                    <td className="px-4 py-3 min-w-[190px] font-semibold">{row.menu}</td>
+                    <td className="px-4 py-3 min-w-[190px] font-semibold">{rotationMenuLabel(row)}</td>
                     <td className="px-4 py-3 whitespace-nowrap"><span className={`rounded-full border px-3 py-1 text-xs font-bold ${fcTone}`}>{pctRange(foodCostRange)}</span></td>
                     <td className="px-4 py-3 whitespace-nowrap font-semibold text-slate-700">{moneyRange(trueCostRange)}</td>
                     <td className="px-4 py-3 min-w-[150px] text-slate-500">{row.updatedAt || "—"}{row.submittedBy ? <p className="text-xs">by {row.submittedBy}</p> : null}</td>

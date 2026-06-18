@@ -42,15 +42,17 @@ export default function PlatformSettings({ onRefresh, onOpenSmartsheetHealth, la
     setOpen(false);
     window.setTimeout(() => window.print(), 50);
   };
+  const iconOnly = React.isValidElement(label);
 
   return (
     <div ref={menuRef} className="relative print:hidden">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50"
+        aria-label="Settings"
+        className={`inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50 ${iconOnly ? "h-10 w-10 p-0" : "px-3 py-2"}`}
       >
-        <Settings size={17} />
+        {!iconOnly && <Settings size={17} />}
         {label}
       </button>
       {open && (

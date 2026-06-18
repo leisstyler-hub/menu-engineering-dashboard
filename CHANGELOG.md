@@ -1,26 +1,18 @@
 # Changelog
 
+## 2026-06-17
+
+- [Jun 17, 11:06 PM] Changed Neighborhood Rotations landing status to `Pilot in Place` and fixed the mobile Settings button so only one centered gear displays.
+- [Jun 17, 11:06 PM] Advanced the Re:Invent two-day rotation cycle alignment by one week and fixed Re:Invent global block save/load so submitted selections reload visibly.
+- [Jun 17, 11:06 PM] Added a submitted-rotation lock banner with an edit checkbox so locked choices can be viewed without accidental changes.
+- [Jun 17, 11:06 PM] Added Day 1 Noodle Station as a second Global-style selector and made block-based menus count in leadership, status, recap, and results views.
+- [Jun 17, 11:06 PM] Updated Nitro station structure by removing Salad LTOs, making Pizza / Flatbread three slots, and adding requested carvery protein options as pending-detail planner choices.
+- [Jun 17, 11:06 PM] Preserved station-specific rows before dedupe so Fish Market items like Steelhead Croquettes can appear, and made recap card global choices bolder.
+- [Jun 17, 11:06 PM] Changed the remote control print action to `View/Print`.
+- [Jun 17, 11:06 PM] Set visible app version to `2026.06.17.001-feature-rotation-stability-pass`.
+
 ## 2026-06-15
 
-- [Jun 15, 5:12 PM] Replaced Grill Regional Special with two Location Spotlight slots that use the shared Grill special-selection pool.
-- [Jun 15, 5:12 PM] Set visible app version to `2026.06.15.011-grill-location-spotlights`.
-- [Jun 15, 5:03 PM] Reduced Doppler planner slots to 1 Pizza LTO, 1 Salad LTO, and 1 Deli LTO while keeping 3 Fresh $5 options.
-- [Jun 15, 5:03 PM] Set visible app version to `2026.06.15.010-adjust-doppler-deli-slot`.
-- [Jun 15, 5:01 PM] Reduced Doppler planner slots to 1 Pizza LTO and 1 Salad LTO while keeping 3 Fresh $5 options.
-- [Jun 15, 5:01 PM] Set visible app version to `2026.06.15.009-adjust-doppler-lto-slots`.
-- [Jun 15, 4:57 PM] Added Fresh $5 to Doppler, Day 1, Nitro, and Re:Invent with 3 options each.
-- [Jun 15, 4:57 PM] Set visible app version to `2026.06.15.008-add-south-fresh-five-options`.
-- [Jun 15, 4:53 PM] Restored Neighborhood Rotations station cards to open by default while keeping the cafe-switch caching improvements.
-- [Jun 15, 4:53 PM] Set visible app version to `2026.06.15.007-restore-open-station-cards`.
-- [Jun 15, 1:05 PM] Cached Neighborhood Rotations station option pools and selected-cafe planner calculations to reduce lag when switching cafes.
-- [Jun 15, 1:05 PM] Made station cards lazy-collapsible so dropdown-heavy station bodies render only when opened on mobile.
-- [Jun 15, 1:05 PM] Set visible app version to `2026.06.15.006-fix-neighborhood-cafe-switch-lag`.
-- [Jun 15, 12:53 PM] Removed the extra Carvery hot side slot so Carvery returns to one hot side and two cold sides.
-- [Jun 15, 12:53 PM] Cached Neighborhood Rotations derived rows and Executive View card metrics to reduce mobile tab-switch lag before Executive View opens.
-- [Jun 15, 12:53 PM] Set visible app version to `2026.06.15.005-fix-carvery-hot-side-mobile-executive`.
-- [Jun 15, 8:44 AM] Scoped Carvery planner dropdowns so proteins, vegetables, starches, hot sides, and cold sides pull from Carvery-relevant MenuWorks rows instead of every matching side in the database.
-- [Jun 15, 8:44 AM] Added missing chef-flagged Carvery items for Caribbean Carrot Salad, Spinach Pecan Strawberry Salad with Balsamic, Red Bliss Mashed Potatoes, and Pineapple Glazed Ham.
-- [Jun 15, 8:44 AM] Set visible app version to `2026.06.15.004-fix-carvery-station-pools`.
 - [Jun 15, 7:27 AM] Made Chef Planner station pills clickable so they jump directly to the matching station section.
 - [Jun 15, 7:27 AM] Set visible app version to `2026.06.15.003-fix-station-pill-jump`.
 - [Jun 15, 7:21 AM] Kept LTO item details, costs, allergens, and Smartsheet records scoped to the selected station pool after an item is chosen.

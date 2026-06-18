@@ -183,7 +183,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
     },
     {
       title: "Neighborhood Rotations",
-      eyebrow: "In development",
+      eyebrow: "Pilot in Place",
       description: "Declare weekly global rotations, station LTOs, Fresh $5 selections, and district status.",
       action: "Open Rotations",
       onOpen: onOpenNeighborhoodRotations,
