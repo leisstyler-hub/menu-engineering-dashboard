@@ -299,7 +299,7 @@ function selectionDatabaseRecord({ parentId, district, cafe, week, rotation, sta
 function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
   if (!week || !district || !cafe) return [];
   const parentId = rotationRecordParentId(week, district, cafe);
-  const selected = selectedItems(rotation, cafe);
+  const selected = selectedItems(rotation, cafe, week);
   const costRange = selectedTrueCostRange(selected);
   const fcRange = selectedFoodCostRange(selected);
   const header = {
@@ -1318,6 +1318,31 @@ function menuBlockMeta(blockId) {
   return { label: titleCase(blockId), type: "Additional Global", days: "" };
 }
 
+function reInventBlockMeta(blockId, week = "") {
+  const activeBlock = reInventGlobalBlockLayout(week).find((block) => block.id === blockId);
+  const anyCycleBlock = [
+    ...reInventGlobalBlockLayout(makeWeekOption(ROTATION_CYCLE_START)),
+    ...reInventGlobalBlockLayout(makeWeekOption(addDays(ROTATION_CYCLE_START, 7)))
+  ].find((block) => block.id === blockId);
+  const block = activeBlock || anyCycleBlock;
+  if (!block) return { label: titleCase(blockId), type: "Re:Invent Global Block", days: "" };
+  return {
+    label: block.title,
+    type: block.readOnly ? "Carryover" : block.continuesNextWeek ? "Two-Day Carryover" : "Two-Day",
+    days: (block.days || []).join(", "),
+    readOnly: Boolean(block.readOnly),
+    continuesNextWeek: Boolean(block.continuesNextWeek),
+  };
+}
+
+function makeManualSelectionItem(name) {
+  return makePlanningOption(name, {
+    menu: "Chef Write-in Selection",
+    station: "Manual Selection",
+    category: "manual"
+  });
+}
+
 function blockComplete(block) {
   return Boolean(block?.menu && (block?.entrees || []).filter(Boolean).length >= 2);
 }
@@ -1599,7 +1624,7 @@ function rowsForSelectedNames(names = [], { unique = false, selectionGroup = "",
     if (unique && seen.has(key)) return;
     seen.add(key);
     selectedRows.push({
-      ...(findBestRowForName(name, candidateRows) || findBestRowForName(name) || makeUploadedItem(name)),
+      ...(findBestRowForName(name, candidateRows) || findBestRowForName(name) || makeManualSelectionItem(name)),
       __selectionGroup: selectionGroup
     });
   });
@@ -1678,7 +1703,7 @@ function globalSelectedRowsForCafe(rotation, cafe = "", options) {
   return globalSelectedRows(rotation, options);
 }
 
-function getStationSelectionRows(rotation, cafe) {
+function getStationSelectionRows(rotation, cafe, week = "") {
   const uploaded = rotation.uploadedLtos || {};
   const stationRows = [];
   const cafeStations = CAFE_STATION_CONFIG[cafe] || ["global"];
@@ -1692,11 +1717,23 @@ function getStationSelectionRows(rotation, cafe) {
         stationRows.push({ key: `global-${blockInfo.id}`, label: blockInfo.title, items: selectedRowsFromGlobalBlock(block, { unique: true }), note: block.menu ? block.menu : "not selected" });
       });
     } else if (cafe === "Re:Invent") {
-      const blocks = Object.entries(rotation.globalBlocks || {}).filter(([blockId, block]) => blockId !== "noodles" && (block?.menu || blockHasSelections(block)));
+      const savedBlocks = rotation.globalBlocks || {};
+      const activeLayout = reInventGlobalBlockLayout(week);
+      const activeIds = activeLayout.map((block) => block.id);
+      const extraIds = Object.keys(savedBlocks).filter((blockId) => blockId !== "noodles" && !activeIds.includes(blockId));
+      const blocks = [...activeIds, ...extraIds]
+        .map((blockId) => [blockId, savedBlocks[blockId]])
+        .filter(([, block]) => block?.menu || blockHasSelections(block));
       if (blocks.length) {
         blocks.forEach(([blockId, block]) => {
-          const meta = menuBlockMeta(blockId);
-          stationRows.push({ key: `global-${blockId}`, label: meta.label, items: selectedRowsFromGlobalBlock(block, { unique: true }), note: block.menu ? block.menu : "not selected" });
+          const meta = reInventBlockMeta(blockId, week);
+          const items = selectedRowsFromGlobalBlock(block, { unique: true });
+          const note = block.menu
+            ? `${block.menu}${meta.days ? ` - ${meta.days}` : ""}`
+            : items.length
+              ? `Menu name missing - ${meta.days || "saved selections"}`
+              : "No selections saved";
+          stationRows.push({ key: `global-${blockId}`, label: meta.label, items, note });
         });
       } else {
         const globalItems = globalSelectedRows(rotation, { unique: true });
@@ -1770,8 +1807,8 @@ function carverySelectedRows(rotation, options) {
   return rowsForSelectedNames(Object.values(rotation.carvery || {}), { ...options, candidateRows: carveryDetailRows() });
 }
 
-function selectedItems(rotation, cafe = rotation?.cafe || "") {
-  if (cafe) return getStationSelectionRows(rotation, cafe).flatMap((row) => row.items);
+function selectedItems(rotation, cafe = rotation?.cafe || "", week = rotation?.week || "") {
+  if (cafe) return getStationSelectionRows(rotation, cafe, week).flatMap((row) => row.items);
   return allLegacySelectedRows(rotation);
 }
 
@@ -1931,11 +1968,21 @@ function foodCostRangeNote(range) {
   return "plate range with sub recipes included";
 }
 
-function getStationCostOverview(rotation, cafe) {
-  return getStationSelectionRows(rotation, cafe).map((row) => {
+function getStationCostOverview(rotation, cafe, week = "") {
+  return getStationSelectionRows(rotation, cafe, week).map((row) => {
     const summary = foodSummary(row.items);
     return { ...row, summary, selectedCount: row.items.length };
   });
+}
+
+function submittedRecapMenuLabel(cafe, rotation, rows = []) {
+  const menuLabel = rotationMenuLabel(rotation);
+  if (menuLabel) return menuLabel;
+  if (cafe === "Re:Invent") {
+    const activeBlocks = rows.filter((row) => String(row.key || "").startsWith("global-") && row.selectedCount > 0);
+    if (activeBlocks.length) return "Re:Invent 2-day Global selections saved";
+  }
+  return "No Global menu saved";
 }
 
 function weekAtGlancePreview(fileName) {
@@ -2326,10 +2373,10 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
   const stationOptions = subConceptOptionsForMenu(rotation.menu);
   const menuItems = globalMenuRows(rotation.menu, rotation.station);
   const categorized = categorize(menuItems);
-  const items = selectedItems(rotation, cafe);
+  const items = selectedItems(rotation, cafe, week);
   const summary = foodSummary(items);
   const cafeStations = CAFE_STATION_CONFIG[cafe] || ["global"];
-  const stationCostOverview = getStationCostOverview(rotation, cafe);
+  const stationCostOverview = getStationCostOverview(rotation, cafe, week);
   const requirements = rotationRequirements(rotation, cafe, week);
   const submitIssues = rotationRequirementIssues(requirements, cafe, { menu: rotation.menu, duplicateMenuCount: menuConflictCount, conflictNote: menuConflictNote(district, cafe) });
   const canSubmitRotation = requirements.canSubmit && submitIssues.length === 0;
@@ -2527,16 +2574,16 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
 }
 
 function SubmittedRotationRecap({ cafe, week, rotation, rows, onEdit }) {
-  const menuLabel = rotationMenuLabel(rotation);
+  const menuLabel = submittedRecapMenuLabel(cafe, rotation, rows);
   const totalSelections = rows.reduce((sum, row) => sum + row.selectedCount, 0);
   return (
-    <section className="mt-5 rounded-[2rem] border-2 border-emerald-200 bg-emerald-50/60 p-5 shadow-sm">
+    <section className="mt-5 rounded-[1.5rem] border-2 border-emerald-200 bg-emerald-50/60 p-4 shadow-sm sm:rounded-[2rem] sm:p-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.18em] font-black text-emerald-700">Submitted Menu Recap</p>
-          <h3 className="mt-1 text-3xl font-black text-slate-950">{cafe}</h3>
+          <h3 className="mt-1 text-2xl font-black text-slate-950 sm:text-3xl">{cafe}</h3>
           <p className="mt-1 text-sm font-semibold text-slate-600">{week}</p>
-          <p className="mt-2 text-lg font-black text-slate-950">{menuLabel || "No Global menu saved"}</p>
+          <p className="mt-2 text-lg font-black text-slate-950">{menuLabel}</p>
           <p className="mt-1 text-sm font-semibold text-slate-600">{totalSelections} saved selection{totalSelections === 1 ? "" : "s"}{rotation.submittedAt ? ` - submitted ${rotation.submittedAt}` : ""}</p>
         </div>
         <label className="inline-flex items-center gap-3 self-start rounded-2xl border border-emerald-300 bg-white px-4 py-3 text-sm font-black text-emerald-900 shadow-sm">
@@ -2546,7 +2593,7 @@ function SubmittedRotationRecap({ cafe, week, rotation, rows, onEdit }) {
       </div>
       <div className="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-2">
         {rows.map((row) => (
-          <div key={row.key} className="rounded-3xl border border-white bg-white/90 p-4 shadow-sm">
+          <div key={row.key} className="rounded-2xl border border-white bg-white/90 p-3 shadow-sm sm:rounded-3xl sm:p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-xs uppercase tracking-[0.16em] font-black text-slate-400">{row.label}</p>
@@ -2578,6 +2625,17 @@ function SubmittedRotationRecap({ cafe, week, rotation, rows, onEdit }) {
         ))}
       </div>
     </section>
+  );
+}
+
+function ItemWriteInField({ value, onChange, placeholder = "Type item if not listed" }) {
+  return (
+    <input
+      value={value || ""}
+      onChange={(event) => onChange(event.target.value)}
+      placeholder={placeholder}
+      className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+    />
   );
 }
 
@@ -3799,11 +3857,15 @@ function PickerGroup({ title, limit, items, values, onChange }) {
       <p className="text-xs text-slate-500 mt-1 font-semibold">{limit}</p>
       <div className="mt-3 space-y-2">
         {values.map((value, index) => (
-          <select key={index} value={value} onChange={(e) => onChange(index, e.target.value)} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
-            <option value="">&lt;Select Item&gt;</option>
-            {value && !itemNames.has(normalizeItemName(value)) && <option value={value}>{titleCase(value)}</option>}
-            {items.map((row) => <option key={`${getItemIdentity(row)}-${index}`} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}
-          </select>
+          <div key={index}>
+            <select value={value} onChange={(e) => onChange(index, e.target.value)} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
+              <option value="">&lt;Select Item&gt;</option>
+              {value && !itemNames.has(normalizeItemName(value)) && <option value={value}>{titleCase(value)}</option>}
+              {items.map((row) => <option key={`${getItemIdentity(row)}-${index}`} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}
+              <option value="" disabled>Type item below if not listed</option>
+            </select>
+            <ItemWriteInField value={value} onChange={(nextValue) => onChange(index, nextValue)} />
+          </div>
         ))}
       </div>
     </div>
@@ -3856,7 +3918,19 @@ function GrillSection({ cafe, rotation, updateGrill }) {
 }
 
 function GrillSelect({ label, value, onChange, items }) {
-  return <div className="rounded-3xl border-2 border-sky-200 bg-sky-50/80 p-4 shadow-sm"><div className="flex items-center justify-between gap-2 mb-2"><label className="block text-sm font-bold text-slate-900">{label}</label><span className="rounded-full bg-white border border-sky-200 px-3 py-1 text-xs font-bold text-sky-700">choose here</span></div><select value={value} onChange={(e) => onChange(e.target.value)} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100"><option value="">&lt;Select Item&gt;</option>{items.map((row) => <option key={`${label}-${getItemIdentity(row)}`} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}</select></div>;
+  const itemNames = new Set(items.map((row) => normalizeItemName(getItemIdentity(row))));
+  return (
+    <div className="rounded-3xl border-2 border-sky-200 bg-sky-50/80 p-4 shadow-sm">
+      <div className="flex items-center justify-between gap-2 mb-2"><label className="block text-sm font-bold text-slate-900">{label}</label><span className="rounded-full bg-white border border-sky-200 px-3 py-1 text-xs font-bold text-sky-700">choose here</span></div>
+      <select value={value} onChange={(e) => onChange(e.target.value)} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
+        <option value="">&lt;Select Item&gt;</option>
+        {value && !itemNames.has(normalizeItemName(value)) && <option value={value}>{titleCase(value)}</option>}
+        {items.map((row) => <option key={`${label}-${getItemIdentity(row)}`} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}
+        <option value="" disabled>Type item below if not listed</option>
+      </select>
+      <ItemWriteInField value={value} onChange={onChange} />
+    </div>
+  );
 }
 
 function SimpleLTOSection({ stationKey, title, slots, values = [], uploaded = [], updateLto, complete }) {
@@ -3873,7 +3947,9 @@ function SimpleLTOSection({ stationKey, title, slots, values = [], uploaded = []
               <option value="">&lt;Select Item&gt;</option>
               {effectiveValues[index] && !poolNames.has(normalizeItemName(effectiveValues[index])) && <option value={effectiveValues[index]}>{titleCase(effectiveValues[index])}</option>}
               {pool.map((row) => <option key={`${stationKey}-${slot}-${getItemIdentity(row)}`} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}
+              <option value="" disabled>Type item below if not listed</option>
             </select>
+            <ItemWriteInField value={effectiveValues[index]} onChange={(nextValue) => updateLto(stationKey, index, nextValue)} />
           </div>
         ))}
       </div>
@@ -3919,6 +3995,7 @@ function CarverySection({ rotation, updateCarvery }) {
               <option value="">&lt;Select Item&gt;</option>
               {rotation.carvery?.[field] && !options.some((row) => normalizeItemName(getItemIdentity(row)) === normalizeItemName(rotation.carvery?.[field])) && <option value={rotation.carvery[field]}>{titleCase(rotation.carvery[field])}</option>}
               {options.map((row) => <option key={`${field}-${getItemIdentity(row)}`} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}
+              <option value="" disabled>Type item below if not listed</option>
             </select>
             <input
               value={rotation.carvery?.[field] || ""}

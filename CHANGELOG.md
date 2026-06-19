@@ -2,6 +2,10 @@
 
 ## 2026-06-19
 
+- [Jun 19, 12:30 AM] Fixed Re:Invent submitted recap rows so split-week Global blocks show readable day labels instead of raw block IDs.
+- [Jun 19, 12:30 AM] Changed Re:Invent submitted menu summary to recognize saved Global block selections even when the top-level Global menu name is blank.
+- [Jun 19, 12:30 AM] Added chef write-in fallback fields under item dropdown selectors so missing dropdown items can still be saved and reviewed.
+- [Jun 19, 12:30 AM] Set visible app version to `2026.06.19.002-reinvent-recap-writeins`.
 - [Jun 19, 12:00 AM] Imported source-of-truth item descriptions from the provided Google Drive workbook into existing bundled menu rows only; no new menus or menu items were created.
 - [Jun 19, 12:00 AM] Preserved all existing calorie values while using MRN/Webtrition-style numbers and context-aware name matching only for description/name alignment.
 - [Jun 19, 12:00 AM] Updated 1,013 existing descriptions, added 165 conservative fallback descriptions from existing ingredient data, and reduced missing descriptions from 396 to 134.
