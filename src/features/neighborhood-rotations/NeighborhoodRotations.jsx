@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
-import { ArrowLeft, AlertTriangle, CalendarDays, CheckCircle2, ChevronDown, ChevronUp, Clipboard, FileDown, Printer, Save, Send, Upload } from "lucide-react";
+import { ArrowLeft, AlertTriangle, CalendarDays, CheckCircle2, ChevronDown, ChevronUp, Clipboard, FileText, Printer, Save, Send, Upload, X } from "lucide-react";
 
 import MENUWORKS_ITEMS from "../../data/menuItems.json";
 import { loadRecordsFromSmartsheet, syncRecordsToSmartsheet } from "../../integrations/smartsheet/client.js";
@@ -14,7 +14,7 @@ import VersionStamp from "../../shared/ui/VersionStamp.jsx";
 const DISTRICTS = {
   South: ["Doppler", "Day 1", "Nitro", "Re:Invent"],
   North: ["Dawson", "Nessie", "Cricket", "Moby", "Commissary", "Atlas"],
-  East: ["Astra", "Bingo", "Sonic", "Blueshift", "Eclipse", "Grace"],
+  East: ["East Café 1", "East Café 2", "East Café 3"],
   LAX: ["LAX22", "LAX35", "LAX75", "LAX78", "SNA3"]
 };
 
@@ -33,13 +33,7 @@ const CAFE_STATION_CONFIG = {
   LAX35: ["global", "grill", "salad", "freshFive"],
   LAX75: ["global", "grill", "salad", "freshFive"],
   LAX78: ["global", "grill", "salad", "freshFive"],
-  SNA3: ["global", "grill", "salad", "freshFive"],
-  Astra: ["global", "grill", "freshFive"],
-  Bingo: ["global", "fishMarket", "grill", "grillFreshFive", "salad", "saladFreshFive", "commissaryEverest"],
-  Sonic: ["global", "grill", "freshFive", "salad", "deli"],
-  Blueshift: ["global", "lotusWp", "grill", "salad", "deli", "fishMarket", "freshFive"],
-  Eclipse: ["global", "stationTakeover", "freshFive"],
-  Grace: ["streetBeets", "global", "grill", "freshFive", "salad"]
+  SNA3: ["global", "grill", "salad", "freshFive"]
 };
 
 const MENU_CONFLICT_GROUPS = {
@@ -63,13 +57,7 @@ const STATION_LABELS = {
   fishMarket: "Fish Market LTO",
   carvery: "Carvery Station",
   freshFive: "Fresh $5",
-  grillFreshFive: "Grill Fresh $5",
-  saladFreshFive: "Salad Fresh $5",
-  soup: "Soup LTOs",
-  streetBeets: "Street Beets",
-  commissaryEverest: "Commissary to Everest",
-  lotusWp: "Lotus W&P",
-  stationTakeover: "Station Takeover"
+  soup: "Soup LTOs"
 };
 
 const formatDateKey = (date) => date.toISOString().slice(0, 10);
@@ -127,51 +115,6 @@ const previousRotationWeek = (weekLabel = "") => {
 const ROLLING_HISTORY_WEEK_COUNT = 26;
 const ROLLING_ROTATION_WEEKS = ROTATION_WEEKS.slice(0, ROLLING_HISTORY_WEEK_COUNT);
 
-function blankCustomStations() {
-  return {
-    streetBeets: {
-      entrees: ["", ""],
-      entreeCalories: ["", ""],
-      sides: ["", "", ""],
-      sideCalories: ["", "", ""],
-      subRecipes: ["", ""],
-      subRecipeCalories: ["", ""],
-      extensions: [""],
-      extensionCalories: [""]
-    },
-    commissaryEverest: {
-      menuName: "",
-      entrees: ["", ""],
-      hotSides: [""],
-      coldSides: ["", "", "", ""],
-      rice: [""]
-    },
-    stationTakeover: {
-      enabled: false,
-      menuName: "",
-      entrees: ["", ""],
-      sides: ["", "", "", ""],
-      subRecipes: ["", "", ""],
-      extensions: ["", ""]
-    }
-  };
-}
-
-function cloneArrayWithLength(values = [], length = 0) {
-  return Array.from({ length }, (_, index) => values[index] || "");
-}
-
-function cloneCustomStations(source = {}) {
-  const blank = blankCustomStations();
-  return Object.fromEntries(Object.entries(blank).map(([stationKey, station]) => [
-    stationKey,
-    Object.fromEntries(Object.entries(station).map(([field, value]) => [
-      field,
-      Array.isArray(value) ? cloneArrayWithLength(source?.[stationKey]?.[field] || value, value.length) : source?.[stationKey]?.[field] ?? value
-    ]))
-  ]));
-}
-
 const EMPTY_ROTATION = {
   menu: "",
   station: "",
@@ -186,11 +129,7 @@ const EMPTY_ROTATION = {
     deli: ["", ""],
     fishMarket: [""],
     freshFive: ["", "", "", "", ""],
-    grillFreshFive: [""],
-    saladFreshFive: [""],
     soup: ["", ""],
-    lotusEntrees: ["", "", "", ""],
-    lotusSides: ["", "", "", "", "", ""],
     noodles: [""],
     wokEntrees: ["", "", ""],
     wokSides: ["", ""],
@@ -209,9 +148,8 @@ const EMPTY_ROTATION = {
     coldSide2: ""
   },
   uploadedLtos: {},
-  promotionOverride: { enabled: false, name: "", days: [], returnDays: [], returnMode: "same", returnMenu: "" },
+  promotionOverride: { enabled: false, name: "", days: [], returnDays: [] },
   globalBlocks: {},
-  customStations: blankCustomStations(),
   status: "Draft",
   submittedBy: "",
   updatedAt: "",
@@ -223,26 +161,6 @@ const rotationRecordParentId = (week, district, cafe) => `rotation|${parseWeekSt
 const makeDatabaseRecordId = (...parts) => parts.filter(Boolean).join("|").replace(/\s+/g, " ").trim();
 const compactValues = (values = []) => values.filter((value) => String(value || "").trim());
 const selectedRowForName = (name, candidateRows = MENUWORKS_ITEMS) => findBestRowForName(name, candidateRows) || findBestRowForName(name) || makeUploadedItem(name);
-const parseCaloriesNote = (note = "") => {
-  const match = String(note || "").match(/Calories:\s*([0-9]+)/i);
-  return match ? match[1] : "";
-};
-const parsePromoRecoveryNotes = (note = "") => {
-  const text = String(note || "");
-  const returnMode = /Return mode:\s*new/i.test(text) ? "new" : "same";
-  const menuMatch = text.match(/Return menu:\s*([^;]+)/i);
-  return {
-    returnMode,
-    returnMenu: menuMatch ? menuMatch[1].trim() : ""
-  };
-};
-const promoRecoveryNotes = (promo = {}) => {
-  const mode = promo.returnMode === "new" ? "new" : "same";
-  const returnMenu = mode === "new" ? String(promo.returnMenu || "").trim() : "";
-  const parts = ["Promotion override is isolated to this cafe/week. Return-to-cycle days restore coverage without changing future weeks.", `Return mode: ${mode}`];
-  if (returnMenu) parts.push(`Return menu: ${returnMenu}`);
-  return parts.join("; ");
-};
 
 function baseDatabaseRecord({ parentId, recordId, recordType, status, district, cafe, week, stationKey, stationDisplayName, notes }) {
   return {
@@ -288,7 +206,6 @@ function selectionDatabaseRecord({ parentId, district, cafe, week, rotation, sta
     [SMARTSHEET_COLUMNS.menuItemSortOrder]: sortOrder,
     [SMARTSHEET_COLUMNS.price]: price ?? "",
     [SMARTSHEET_COLUMNS.trueCost]: trueCost ?? "",
-    [SMARTSHEET_COLUMNS.calories]: getCalories(row) ?? "",
     [SMARTSHEET_COLUMNS.foodCostPct]: foodCost == null ? "" : Number((foodCost * 100).toFixed(1)),
     [SMARTSHEET_COLUMNS.enticingDescription]: getDescription(row),
     [SMARTSHEET_COLUMNS.dietTags]: getDiet(row),
@@ -299,7 +216,7 @@ function selectionDatabaseRecord({ parentId, district, cafe, week, rotation, sta
 function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
   if (!week || !district || !cafe) return [];
   const parentId = rotationRecordParentId(week, district, cafe);
-  const selected = selectedItems(rotation, cafe, week);
+  const selected = selectedItems(rotation, cafe);
   const costRange = selectedTrueCostRange(selected);
   const fcRange = selectedFoodCostRange(selected);
   const header = {
@@ -355,7 +272,7 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
     [SMARTSHEET_COLUMNS.promotionDays]: (promo.days || []).join(", "),
     [SMARTSHEET_COLUMNS.returnToCycleDays]: (promo.returnDays || []).join(", "),
     [SMARTSHEET_COLUMNS.breaksNormalCycle]: Boolean(promo.enabled),
-    [SMARTSHEET_COLUMNS.cycleRecoveryNotes]: promo.enabled ? promoRecoveryNotes(promo) : "",
+    [SMARTSHEET_COLUMNS.cycleRecoveryNotes]: promo.enabled ? "Promotion override is isolated to this café/week. Return-to-cycle days restore the normal pattern without changing future weeks." : "",
   } : null;
 
   const selectionRows = [];
@@ -368,23 +285,6 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
       }
       selectionRows.push(rec);
     });
-  };
-  const pushCustomSelection = (stationKey, selectionType, itemName, slotNumber, sortOrder, notes = "", candidateRows = MENUWORKS_ITEMS) => {
-    if (!String(itemName || "").trim()) return;
-    const rec = selectionDatabaseRecord({ parentId, district, cafe, week, rotation, stationKey, selectionType, itemName, sortOrder, slotNumber, candidateRows });
-    if (notes) rec[SMARTSHEET_COLUMNS.notes] = notes;
-    selectionRows.push(rec);
-  };
-  const pushCustomerMenuEdit = ({ target, itemName, slotNumber, sortOrder }) => {
-    if (!String(itemName || "").trim()) return;
-    const rec = selectionDatabaseRecord({ parentId, district, cafe, week, rotation, stationKey: "customerMenu", selectionType: SMARTSHEET_SELECTION_TYPES.customerMenuReplacement, itemName, sortOrder, slotNumber });
-    rec[SMARTSHEET_COLUMNS.recordType] = SMARTSHEET_RECORD_TYPES.customerMenuEdit;
-    rec[SMARTSHEET_COLUMNS.station] = "Customer Menu";
-    rec[SMARTSHEET_COLUMNS.stationDisplayName] = "Bingo Customer Menu";
-    rec[SMARTSHEET_COLUMNS.menuBlockLabel] = "Bingo Grill PowerPoint";
-    rec[SMARTSHEET_COLUMNS.menuBlockType] = "PowerPoint Page 3";
-    rec[SMARTSHEET_COLUMNS.notes] = `${target}. PowerPoint page 3. Replace highlighted text only, keep text box, font, size, and formatting, then remove highlight.`;
-    selectionRows.push(rec);
   };
 
   const reInventBlockRows = [];
@@ -452,50 +352,22 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
   pushSelections("global", SMARTSHEET_SELECTION_TYPES.subRecipe, rotation.subRecipes || [], 200);
   pushSelections("global", SMARTSHEET_SELECTION_TYPES.extension, rotation.extensions || [], 300);
   }
-  pushSelections("grill", SMARTSHEET_SELECTION_TYPES.locationSpotlight, [rotation.grill?.regionalSpecial, rotation.grill?.locationSpotlight], 400);
+  pushSelections("grill", SMARTSHEET_SELECTION_TYPES.regionalSpecial, [rotation.grill?.regionalSpecial], 400);
+  pushSelections("grill", SMARTSHEET_SELECTION_TYPES.locationSpotlight, [rotation.grill?.locationSpotlight], 410);
   if (rotation.grill?.promoActive) {
     pushSelections("grill", SMARTSHEET_SELECTION_TYPES.grillPromo, [rotation.grill?.promoItem], 420);
   }
-  ["salad", "pizza", "deli", "fishMarket", "freshFive", "grillFreshFive", "saladFreshFive", "soup"].forEach((stationKey, stationIndex) => {
+  ["salad", "pizza", "deli", "fishMarket", "freshFive", "soup"].forEach((stationKey, stationIndex) => {
     pushSelections(stationKey, SMARTSHEET_SELECTION_TYPES.lto, rotation.ltos?.[stationKey] || [], 500 + stationIndex * 100, rotation, "", stationPool(stationKey));
   });
   pushSelections("wok", SMARTSHEET_SELECTION_TYPES.wokEntree, rotation.ltos?.wokEntrees || [], 1000, rotation, "", stationPool("wokEntrees"));
   pushSelections("wok", SMARTSHEET_SELECTION_TYPES.wokSide, rotation.ltos?.wokSides || [], 1100, rotation, "", stationPool("wokSides"));
   pushSelections("wok", SMARTSHEET_SELECTION_TYPES.wokBase, rotation.ltos?.wokBase || [], 1200, rotation, "", stationPool("wokBase"));
   pushSelections("wok", SMARTSHEET_SELECTION_TYPES.wokSubRecipe, rotation.ltos?.wokSubRecipes || [], 1300, rotation, "", stationPool("wokSubRecipes"));
-  pushSelections("lotusWp", SMARTSHEET_SELECTION_TYPES.entree, rotation.ltos?.lotusEntrees || [], 1320, rotation, "", stationPool("lotusAsianEntrees"));
-  pushSelections("lotusWp", SMARTSHEET_SELECTION_TYPES.side, rotation.ltos?.lotusSides || [], 1340, rotation, "", stationPool("lotusAsianSides"));
   Object.entries(rotation.carvery || {}).filter(([, value]) => value).forEach(([field, value], index) => {
     const type = field.includes("protein") ? SMARTSHEET_SELECTION_TYPES.carveryProtein : field.includes("vegetable") ? SMARTSHEET_SELECTION_TYPES.carveryVegetable : field.includes("starch") ? SMARTSHEET_SELECTION_TYPES.carveryStarch : field.includes("hot") ? SMARTSHEET_SELECTION_TYPES.carveryHotSide : SMARTSHEET_SELECTION_TYPES.carveryColdSide;
     selectionRows.push(selectionDatabaseRecord({ parentId, district, cafe, week, rotation, stationKey: "carvery", selectionType: type, itemName: value, sortOrder: 1400 + index, slotNumber: index + 1 }));
   });
-
-  const streetBeets = rotation.customStations?.streetBeets || blankCustomStations().streetBeets;
-  (streetBeets.entrees || []).forEach((value, index) => pushCustomSelection("streetBeets", SMARTSHEET_SELECTION_TYPES.entree, value, index + 1, 1500 + index, streetBeets.entreeCalories?.[index] ? `Calories: ${streetBeets.entreeCalories[index]}` : ""));
-  (streetBeets.sides || []).forEach((value, index) => pushCustomSelection("streetBeets", SMARTSHEET_SELECTION_TYPES.side, value, index + 1, 1510 + index, streetBeets.sideCalories?.[index] ? `Calories: ${streetBeets.sideCalories[index]}` : ""));
-  (streetBeets.subRecipes || []).forEach((value, index) => pushCustomSelection("streetBeets", SMARTSHEET_SELECTION_TYPES.subRecipe, value, index + 1, 1520 + index, streetBeets.subRecipeCalories?.[index] ? `Calories: ${streetBeets.subRecipeCalories[index]}` : ""));
-  (streetBeets.extensions || []).forEach((value, index) => pushCustomSelection("streetBeets", SMARTSHEET_SELECTION_TYPES.extension, value, index + 1, 1530 + index, streetBeets.extensionCalories?.[index] ? `Calories: ${streetBeets.extensionCalories[index]}` : ""));
-
-  const commissary = rotation.customStations?.commissaryEverest || blankCustomStations().commissaryEverest;
-  pushCustomSelection("commissaryEverest", SMARTSHEET_SELECTION_TYPES.menuName, commissary.menuName, 1, 1540);
-  (commissary.entrees || []).forEach((value, index) => pushCustomSelection("commissaryEverest", SMARTSHEET_SELECTION_TYPES.entree, value, index + 1, 1550 + index));
-  (commissary.hotSides || []).forEach((value, index) => pushCustomSelection("commissaryEverest", SMARTSHEET_SELECTION_TYPES.hotSide, value, index + 1, 1560 + index));
-  (commissary.coldSides || []).forEach((value, index) => pushCustomSelection("commissaryEverest", SMARTSHEET_SELECTION_TYPES.coldSide, value, index + 1, 1570 + index));
-  (commissary.rice || []).forEach((value, index) => pushCustomSelection("commissaryEverest", SMARTSHEET_SELECTION_TYPES.riceDish, value, index + 1, 1580 + index));
-
-  const takeover = rotation.customStations?.stationTakeover || blankCustomStations().stationTakeover;
-  if (takeover.enabled) {
-    pushCustomSelection("stationTakeover", SMARTSHEET_SELECTION_TYPES.menuName, takeover.menuName, 1, 1590);
-    (takeover.entrees || []).forEach((value, index) => pushCustomSelection("stationTakeover", SMARTSHEET_SELECTION_TYPES.entree, value, index + 1, 1600 + index));
-    (takeover.sides || []).forEach((value, index) => pushCustomSelection("stationTakeover", SMARTSHEET_SELECTION_TYPES.side, value, index + 1, 1610 + index));
-    (takeover.subRecipes || []).forEach((value, index) => pushCustomSelection("stationTakeover", SMARTSHEET_SELECTION_TYPES.subRecipe, value, index + 1, 1620 + index));
-    (takeover.extensions || []).forEach((value, index) => pushCustomSelection("stationTakeover", SMARTSHEET_SELECTION_TYPES.extension, value, index + 1, 1630 + index));
-  }
-
-  if (cafe === "Bingo") {
-    pushCustomerMenuEdit({ target: "Grill Location Spotlight edit area", itemName: rotation.grill?.regionalSpecial || rotation.grill?.locationSpotlight, slotNumber: 1, sortOrder: 1700 });
-    pushCustomerMenuEdit({ target: "Grill Fresh Five edit area", itemName: rotation.ltos?.grillFreshFive?.[0], slotNumber: 2, sortOrder: 1710 });
-  }
 
   const uploadRows = [];
   Object.entries(rotation.uploadedLtos || {}).forEach(([stationKey, items]) => {
@@ -553,8 +425,6 @@ function normalizeLoadedRotationRecord(record = {}) {
     promotionName: String(record[SMARTSHEET_COLUMNS.promotionName] || ""),
     promotionDays: String(record[SMARTSHEET_COLUMNS.promotionDays] || "").split(",").map((value) => value.trim()).filter(Boolean),
     returnToCycleDays: String(record[SMARTSHEET_COLUMNS.returnToCycleDays] || "").split(",").map((value) => value.trim()).filter(Boolean),
-    cycleRecoveryNotes: String(record[SMARTSHEET_COLUMNS.cycleRecoveryNotes] || ""),
-    notes: String(record[SMARTSHEET_COLUMNS.notes] || ""),
   };
 }
 
@@ -573,7 +443,6 @@ function recordsToRotations(records = []) {
         ltos: Object.fromEntries(Object.entries(EMPTY_ROTATION.ltos).map(([station, values]) => [station, [...values]])),
         carvery: { ...EMPTY_ROTATION.carvery },
         uploadedLtos: {},
-        customStations: blankCustomStations(),
       };
     }
     return grouped[key];
@@ -633,7 +502,6 @@ function recordsToRotations(records = []) {
         name: record.promotionName || "",
         days: record.promotionDays || [],
         returnDays: record.returnToCycleDays || [],
-        ...parsePromoRecoveryNotes(record.cycleRecoveryNotes),
       };
       return;
     }
@@ -668,10 +536,7 @@ function recordsToRotations(records = []) {
 
     if (record.stationKey === "grill") {
       if (record.selectionType === SMARTSHEET_SELECTION_TYPES.regionalSpecial) rotation.grill.regionalSpecial = record.itemName;
-      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.locationSpotlight) {
-        if (index === 0 && !rotation.grill.regionalSpecial) rotation.grill.regionalSpecial = record.itemName;
-        else rotation.grill.locationSpotlight = record.itemName;
-      }
+      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.locationSpotlight) rotation.grill.locationSpotlight = record.itemName;
       if (record.selectionType === SMARTSHEET_SELECTION_TYPES.grillPromo) {
         rotation.grill.promoActive = true;
         rotation.grill.promoItem = record.itemName;
@@ -701,52 +566,6 @@ function recordsToRotations(records = []) {
       return;
     }
 
-    if (record.stationKey === "streetBeets") {
-      const station = rotation.customStations.streetBeets;
-      const calories = parseCaloriesNote(record.notes);
-      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.entree) {
-        putSlot(station.entrees, index, record.itemName);
-        putSlot(station.entreeCalories, index, calories);
-      } else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.side) {
-        putSlot(station.sides, index, record.itemName);
-        putSlot(station.sideCalories, index, calories);
-      } else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.subRecipe) {
-        putSlot(station.subRecipes, index, record.itemName);
-        putSlot(station.subRecipeCalories, index, calories);
-      } else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.extension) {
-        putSlot(station.extensions, index, record.itemName);
-        putSlot(station.extensionCalories, index, calories);
-      }
-      return;
-    }
-
-    if (record.stationKey === "commissaryEverest") {
-      const station = rotation.customStations.commissaryEverest;
-      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.menuName) station.menuName = record.itemName;
-      else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.entree) putSlot(station.entrees, index, record.itemName);
-      else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.hotSide) putSlot(station.hotSides, index, record.itemName);
-      else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.coldSide) putSlot(station.coldSides, index, record.itemName);
-      else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.riceDish) putSlot(station.rice, index, record.itemName);
-      return;
-    }
-
-    if (record.stationKey === "stationTakeover") {
-      const station = rotation.customStations.stationTakeover;
-      station.enabled = true;
-      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.menuName) station.menuName = record.itemName;
-      else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.entree) putSlot(station.entrees, index, record.itemName);
-      else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.side) putSlot(station.sides, index, record.itemName);
-      else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.subRecipe) putSlot(station.subRecipes, index, record.itemName);
-      else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.extension) putSlot(station.extensions, index, record.itemName);
-      return;
-    }
-
-    if (record.stationKey === "lotusWp") {
-      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.entree) putSlot(rotation.ltos.lotusEntrees, index, record.itemName);
-      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.side) putSlot(rotation.ltos.lotusSides, index, record.itemName);
-      return;
-    }
-
     if (rotation.ltos[record.stationKey]) {
       putSlot(rotation.ltos[record.stationKey], index, record.itemName);
     }
@@ -756,18 +575,16 @@ function recordsToRotations(records = []) {
 }
 
 const getItemIdentity = (row) =>
-  row.displayName ||
-  row.shortName ||
   row.item ||
   row.recipeName ||
+  row.displayName ||
+  row.shortName ||
   row["Recipe Name"] ||
   row["Short Name"] ||
   "";
 
 const normalizeItemName = (value = "") => String(value || "").toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, " ").trim();
 const getItemAliases = (row) => [
-  ...(Array.isArray(row.legacyNames) ? row.legacyNames : []),
-  row.sourceTruthName,
   row.item,
   row.recipeName,
   row.displayName,
@@ -1034,56 +851,7 @@ function categorize(items) {
 }
 
 function textForRow(row) {
-  return `${getMenuName(row)} ${getStationName(row)} ${getItemIdentity(row)} ${row.enticingDescription || ""} ${row.description || ""} ${row.menuItemNotes || ""} ${row.recipeCategory || ""} ${row.recipeProductionArea || ""}`.toLowerCase();
-}
-
-function notesForRow(row) {
-  return `${row.menuItemNotes || ""} ${row.recipeCategory || ""} ${row.recipeProductionArea || ""}`.toLowerCase();
-}
-
-function isMenu(row, menuName) {
-  return getMenuName(row).toLowerCase() === String(menuName).toLowerCase();
-}
-
-function stationIncludes(row, pattern) {
-  return pattern.test(getStationName(row));
-}
-
-function carveryRows() {
-  return MENUWORKS_ITEMS.filter((row) => isMenu(row, "AMZ: Carvery"));
-}
-
-function isCarveryProteinOption(row) {
-  if (!isMenu(row, "AMZ: Carvery") || !isEntree(row)) return false;
-  const station = getStationName(row).toLowerCase();
-  const notes = notesForRow(row);
-  if (/sandwich|wrap|panini|reuben|a la carte/.test(station) || /sandwich served a la carte/.test(notes)) return false;
-  return station === "premium mains" || /carvery protein/.test(notes);
-}
-
-function isCarveryVegetableOption(row) {
-  if (!isMenu(row, "AMZ: Carvery")) return false;
-  const station = getStationName(row).toLowerCase();
-  const notes = notesForRow(row);
-  if (station !== "vegetarian mains") return false;
-  return /charred vegetable option/.test(notes) || (/vegetable/.test(notes) && !/entree served with two sides|entree and two sides/.test(notes));
-}
-
-function isCarverySideOption(row) {
-  if (!isMenu(row, "AMZ: Carvery")) return false;
-  const station = getStationName(row).toLowerCase();
-  const notes = notesForRow(row);
-  if (station !== "sides") return false;
-  return isSide(row) || /side choice|carvery cold side|carvery hot side|a la carte and side/.test(notes);
-}
-
-function carveryDetailRows() {
-  return uniqueOptionRows([
-    ...carveryRows().filter((row) => isCarveryProteinOption(row) || isCarveryVegetableOption(row) || isCarverySideOption(row)),
-    ...stationPool("carveryProtein"),
-    ...stationPool("carveryVegetable"),
-    ...stationPool("carverySide")
-  ]);
+  return `${getMenuName(row)} ${getStationName(row)} ${getItemIdentity(row)} ${row.enticingDescription || ""} ${row.description || ""}`.toLowerCase();
 }
 
 function stationPool(stationKey) {
@@ -1104,6 +872,9 @@ function stationPool(stationKey) {
     "Grilled Asparagus",
     "Roasted Brussels Sprouts"
   ].map((name) => makePlanningOption(name, { menu: "AMZ: Carvery", station: "Vegetable Carvery", category: "side" }));
+  const saladRequestedOptions = [
+    "Baja Crunch Salad"
+  ].map((name) => makePlanningOption(name, { menu: "AMZ: Fresh Five", station: "Salad LTOs", category: "entree" }));
   const all = MENUWORKS_ITEMS.filter(Boolean);
   const byMenu = (needle) => all.filter((row) => getMenuName(row).toLowerCase().includes(needle));
   const byStation = (needle) => all.filter((row) => getStationName(row).toLowerCase().includes(needle));
@@ -1111,33 +882,31 @@ function stationPool(stationKey) {
   const byStationPattern = (regex) => all.filter((row) => regex.test(getStationName(row)));
   const byText = (regex) => all.filter((row) => regex.test(textForRow(row)));
   const scoped = (strictRows, fallbackRows = []) => uniqueOptionRows(strictRows.length ? strictRows : fallbackRows);
-  const exactMenuRows = (menuName) => all.filter((row) => isMenu(row, menuName));
 
   const pools = {
-    salad: exactMenuRows("AMZ: Cafe Express Curated Salads").filter((row) => isEntree(row)),
-    pizza: exactMenuRows("AMZ: Pizzas & Flatbreads").filter((row) => isEntree(row)),
-    deli: exactMenuRows("AMZ: Cafe Express Curated Sandwiches").filter((row) => isEntree(row)),
-    fishMarket: exactMenuRows("AMZ: Fish Market")
+    salad: uniqueOptionRows([
+      ...scoped([...byMenuPattern(/\bsalad\b/i), ...byStationPattern(/\bsalad\b/i), ...byMenuPattern(/fresh (five|\$5|5)/i), ...byStationPattern(/fresh (five|\$5|5)/i)], byText(/salad|greens|slaw|fresh five|fresh \$5|fresh 5/)).filter((row) => isEntree(row)),
+      ...saladRequestedOptions
+    ]),
+    pizza: scoped([...byMenuPattern(/pizza|flatbread/i), ...byStationPattern(/pizza|flatbread/i)], byText(/pizza|flatbread/)).filter((row) => isEntree(row)),
+    deli: scoped([...byMenuPattern(/deli|sandwich/i), ...byStationPattern(/deli|sandwich/i)], byText(/sandwich|deli|wrap|naanwich|banh mi/)).filter((row) => isEntree(row)),
+    fishMarket: scoped([...byMenuPattern(/fish market/i), ...byStationPattern(/fish market/i)])
       .filter((row) => (getMenuName(row).toLowerCase().includes("fish market") || getStationName(row).toLowerCase().includes("fish market")) && isEntree(row)),
-    freshFive: exactMenuRows("AMZ: Fresh Five"),
-    grillFreshFive: exactMenuRows("AMZ: Fresh Five"),
-    saladFreshFive: exactMenuRows("AMZ: Fresh Five"),
-    soup: exactMenuRows("AMZ: Cafe Express Soup"),
-    wokEntrees: exactMenuRows("AMZ: Wok").filter((row) => isEntree(row)),
-    wokSides: exactMenuRows("AMZ: Wok").filter((row) => isSide(row)),
-    wokBase: exactMenuRows("AMZ: Wok").filter((row) => isSide(row) && /rice|noodle|lo mein|base/i.test(getItemIdentity(row))),
+    freshFive: scoped([...byMenuPattern(/fresh (five|\$5|5)/i), ...byStationPattern(/fresh (five|\$5|5)/i)], byText(/fresh five|fresh \$5|fresh 5/)),
+    soup: scoped([...byMenuPattern(/\bsoup\b/i), ...byStationPattern(/\bsoup\b/i)], byText(/soup|chili|bisque|chowder/)),
+    wokEntrees: scoped([...byMenu("wok"), ...byStation("wok")], byText(/wok|stir fry|stir-fry|orange peel|sweet and sour|huli huli/)).filter((row) => isEntree(row)),
+    wokSides: scoped([...byMenu("wok"), ...byStation("wok")], byText(/lo mein|fried rice|green beans|carrots|gai lan|slaw/)).filter((row) => isSide(row)),
+    wokBase: scoped([...byMenu("wok"), ...byStation("wok")], byText(/rice|noodle|lo mein|base/)).filter((row) => isSide(row) || /rice|noodle|base/i.test(getItemIdentity(row))),
     wokSubRecipes: uniqueOptionRows(all.filter((row) => isSubRecipe(row))),
-    lotusAsianEntrees: uniqueOptionRows(all.filter((row) => /^(AMZ\+RA: Q Bowl|AMZ\+RA: Sushi|AMZ: Atlas Noodle|AMZ: Bibimbowl|AMZ: Bowl Inc|AMZ: Lotus|AMZ: Pho|AMZ: Wok|AMZ: House of Teriyaki|AMZ: La Chino|AMZ: Lemongrass \+ Lime|AMZ: Poke Counter|AMZ: Yakisoba)$/.test(getMenuName(row)) && isEntree(row))),
-    lotusAsianSides: uniqueOptionRows(all.filter((row) => /^(AMZ\+RA: Q Bowl|AMZ\+RA: Sushi|AMZ: Atlas Noodle|AMZ: Bibimbowl|AMZ: Bowl Inc|AMZ: Lotus|AMZ: Pho|AMZ: Wok|AMZ: House of Teriyaki|AMZ: La Chino|AMZ: Lemongrass \+ Lime|AMZ: Poke Counter|AMZ: Yakisoba)$/.test(getMenuName(row)) && isSide(row))),
     carveryProtein: uniqueOptionRows([
-      ...carveryRows().filter(isCarveryProteinOption),
+      ...scoped([...byMenu("carvery"), ...byStation("carvery")], byText(/beef|chicken|pork|turkey|salmon|steelhead|trout|tofu|protein|pork belly|flank steak|char siu|char sui/)).filter((row) => isEntree(row)),
       ...carveryRequestedProteins
     ]),
     carveryVegetable: uniqueOptionRows([
-      ...carveryRows().filter(isCarveryVegetableOption),
+      ...byText(/broccoli|carrot|green bean|beans|vegetable|veg|cauliflower|brussels|squash|zucchini|asparagus/),
       ...carveryRequestedVegetables
     ]),
-    carverySide: uniqueOptionRows(carveryRows().filter(isCarverySideOption))
+    carverySide: uniqueOptionRows(all.filter((row) => isSide(row)))
   };
 
   const pool = pools[stationKey] || [];
@@ -1146,7 +915,7 @@ function stationPool(stationKey) {
     return pool;
   }
 
-  if (["freshFive", "grillFreshFive", "saladFreshFive", "salad", "pizza", "deli", "fishMarket", "soup"].includes(stationKey)) {
+  if (["freshFive", "salad", "pizza", "deli", "fishMarket", "soup"].includes(stationKey)) {
     const fallback = uniqueOptionRows(all.filter((row) => isEntree(row) || isSide(row)));
     STATION_POOL_CACHE.set(stationKey, fallback);
     return fallback;
@@ -1159,6 +928,7 @@ function stationPool(stationKey) {
 
 function stationSlots(cafe, stationKey) {
   const override = {
+    Doppler: { pizza: 2, deli: 1 },
     Dawson: { freshFive: 5 },
     Nessie: { freshFive: 5 },
     Cricket: { freshFive: 5 },
@@ -1166,13 +936,7 @@ function stationSlots(cafe, stationKey) {
     Commissary: { deli: 4, salad: 3, freshFive: 2, soup: 2 },
     Atlas: { freshFive: 2 },
     Frontier: { freshFive: 2 },
-    Nitro: { pizza: 3 },
-    Astra: { freshFive: 2 },
-    Grace: { freshFive: 2, salad: 2 },
-    Sonic: { freshFive: 2, salad: 5, deli: 4 },
-    Bingo: { fishMarket: 2, salad: 2, grillFreshFive: 1, saladFreshFive: 1 },
-    Blueshift: { salad: 5, deli: 4, fishMarket: 2, freshFive: 2 },
-    Eclipse: { freshFive: 2 }
+    Nitro: { pizza: 3 }
   }[cafe]?.[stationKey];
 
   if (override) return override;
@@ -1180,36 +944,6 @@ function stationSlots(cafe, stationKey) {
   if (["salad", "pizza", "deli", "soup"].includes(stationKey)) return 2;
   if (stationKey === "freshFive") return 5;
   return 1;
-}
-
-function stationRequiredCount(cafe, stationKey) {
-  const required = {
-    Astra: { grill: 0, freshFive: 2 },
-    Grace: { grill: 1, freshFive: 2, salad: 2 },
-    Sonic: { grill: 1, freshFive: 2, salad: 5, deli: 4 },
-    Bingo: { fishMarket: 2, grill: 1, grillFreshFive: 1, salad: 2, saladFreshFive: 1, commissaryEverest: 1 },
-    Blueshift: { lotusWp: 1, grill: 1, salad: 5, deli: 4, fishMarket: 2, freshFive: 2 },
-    Eclipse: { stationTakeover: 0, freshFive: 2 }
-  }[cafe]?.[stationKey];
-  if (required != null) return required;
-  return stationKey === "stationTakeover" ? 0 : 1;
-}
-
-function globalSlotConfig(cafe = "") {
-  const base = { entreeSlots: 3, entreeRequired: 2, sideSlots: 4, sideRequired: 0, subRecipeSlots: 4, extensionSlots: 2 };
-  const eastNormal = { entreeSlots: 3, entreeRequired: 2, sideSlots: 4, sideRequired: 2, subRecipeSlots: 3, extensionSlots: 2 };
-  return {
-    Astra: { entreeSlots: 2, entreeRequired: 2, sideSlots: 3, sideRequired: 2, subRecipeSlots: 2, extensionSlots: 1 },
-    Grace: eastNormal,
-    Sonic: eastNormal,
-    Bingo: eastNormal,
-    Blueshift: eastNormal,
-    Eclipse: { entreeSlots: 2, entreeRequired: 2, sideSlots: 4, sideRequired: 2, subRecipeSlots: 3, extensionSlots: 2 }
-  }[cafe] || base;
-}
-
-function sizedValues(values = [], length = 0) {
-  return Array.from({ length }, (_, index) => values[index] || "");
 }
 
 const GLOBAL_CYCLE_DAY_OPTIONS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Next Monday", "Next Tuesday"];
@@ -1304,6 +1038,10 @@ function reInventGlobalBlockLayout(week = "") {
       ];
 }
 
+function activeReInventBlockIds(week = "") {
+  return new Set(reInventGlobalBlockLayout(week).map((block) => block.id));
+}
+
 function nitroGlobalBlockLayout() {
   return [
     { id: "nitroMonTue", title: "Monday + Tuesday Proteins", days: ["Monday", "Tuesday"], help: "Select the Global item mix Nitro runs before the Wednesday protein change." },
@@ -1316,31 +1054,6 @@ function menuBlockMeta(blockId) {
   const nitroBlock = nitroGlobalBlockLayout().find((block) => block.id === blockId);
   if (nitroBlock) return { label: nitroBlock.title, type: "Nitro Same-Menu Split", days: nitroBlock.days.join(", ") };
   return { label: titleCase(blockId), type: "Additional Global", days: "" };
-}
-
-function reInventBlockMeta(blockId, week = "") {
-  const activeBlock = reInventGlobalBlockLayout(week).find((block) => block.id === blockId);
-  const anyCycleBlock = [
-    ...reInventGlobalBlockLayout(makeWeekOption(ROTATION_CYCLE_START)),
-    ...reInventGlobalBlockLayout(makeWeekOption(addDays(ROTATION_CYCLE_START, 7)))
-  ].find((block) => block.id === blockId);
-  const block = activeBlock || anyCycleBlock;
-  if (!block) return { label: titleCase(blockId), type: "Re:Invent Global Block", days: "" };
-  return {
-    label: block.title,
-    type: block.readOnly ? "Carryover" : block.continuesNextWeek ? "Two-Day Carryover" : "Two-Day",
-    days: (block.days || []).join(", "),
-    readOnly: Boolean(block.readOnly),
-    continuesNextWeek: Boolean(block.continuesNextWeek),
-  };
-}
-
-function makeManualSelectionItem(name) {
-  return makePlanningOption(name, {
-    menu: "Chef Write-in Selection",
-    station: "Manual Selection",
-    category: "manual"
-  });
 }
 
 function blockComplete(block) {
@@ -1395,19 +1108,23 @@ function carryoverGlobalBlock(rotation = {}, preferredBlockId = "") {
   return blankGlobalBlock();
 }
 
-function rotationMenuLabel(rotation = {}) {
+function rotationMenuLabel(rotation = {}, cafe = rotation?.cafe || "", week = rotation?.week || "") {
   if (rotation.menu) return rotation.menu;
-  const blockMenus = Object.values(rotation.globalBlocks || {}).map((block) => block?.menu).filter(Boolean);
+  const entries = Object.entries(rotation.globalBlocks || {});
+  const blockMenus = (cafe === "Re:Invent"
+    ? entries.filter(([blockId]) => activeReInventBlockIds(week).has(blockId))
+    : entries
+  ).map(([, block]) => block?.menu).filter(Boolean);
   return blockMenus.length ? Array.from(new Set(blockMenus)).join(" / ") : "";
 }
 
 function hasRotationMenu(rotation = {}) {
-  return Boolean(rotationMenuLabel(rotation));
+  return Boolean(rotationMenuLabel(rotation, rotation.cafe, rotation.week));
 }
 
 function potatoSides() {
   if (POTATO_SIDES_CACHE) return POTATO_SIDES_CACHE;
-  POTATO_SIDES_CACHE = uniqueRows(stationPool("carverySide").filter((row) => {
+  POTATO_SIDES_CACHE = uniqueRows(MENUWORKS_ITEMS.filter((row) => {
     const name = String(getItemIdentity(row)).toLowerCase();
     return isSide(row) && /potato|potatoes|fries|tots|hash brown|mashed|fingerling|yukon|russet|sweet potato/.test(name);
   }));
@@ -1448,9 +1165,8 @@ function blankRotation(menu = "", station = "") {
     ltos: Object.fromEntries(Object.entries(EMPTY_ROTATION.ltos).map(([key, values]) => [key, [...values]])),
     carvery: { ...EMPTY_ROTATION.carvery },
     uploadedLtos: {},
-    promotionOverride: { enabled: false, name: "", days: [], returnDays: [], returnMode: "same", returnMenu: "" },
+    promotionOverride: { enabled: false, name: "", days: [], returnDays: [] },
     globalBlocks: {},
-    customStations: blankCustomStations(),
     status: "Draft",
     submittedBy: "",
     updatedAt: "",
@@ -1462,32 +1178,6 @@ function nowStamp() {
   return new Date().toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 }
 
-function filledCount(values = []) {
-  return values.filter((value) => String(value || "").trim()).length;
-}
-
-function streetBeetsComplete(station = blankCustomStations().streetBeets) {
-  const allNamedFields = [
-    ["entrees", "entreeCalories"],
-    ["sides", "sideCalories"],
-    ["subRecipes", "subRecipeCalories"],
-    ["extensions", "extensionCalories"]
-  ];
-  const everyFilledNameHasCalories = allNamedFields.every(([nameKey, calorieKey]) =>
-    (station[nameKey] || []).every((value, index) => !String(value || "").trim() || String(station[calorieKey]?.[index] || "").trim())
-  );
-  return filledCount(station.entrees) >= 2 && filledCount(station.sides) >= 3 && everyFilledNameHasCalories;
-}
-
-function commissaryEverestComplete(station = blankCustomStations().commissaryEverest) {
-  return Boolean(String(station.menuName || "").trim() && filledCount(station.entrees) >= 2 && filledCount(station.coldSides) >= 4 && filledCount(station.rice) >= 1);
-}
-
-function stationTakeoverComplete(station = blankCustomStations().stationTakeover) {
-  if (!station.enabled) return true;
-  return Boolean(String(station.menuName || "").trim() && (filledCount(station.entrees) || filledCount(station.sides)));
-}
-
 function stationComplete(rotation, stationKey, cafe = "", week = "") {
   if (stationKey === "global" && cafe === "Re:Invent") {
     return reInventGlobalBlockLayout(week).filter((block) => !block.readOnly).every((block) => blockComplete(getRotationGlobalBlock(rotation, block.id)));
@@ -1496,26 +1186,13 @@ function stationComplete(rotation, stationKey, cafe = "", week = "") {
     if (!hasNitroSplitBlocks(rotation)) return Boolean(rotation.menu && (rotation.entrees || []).filter(Boolean).length >= 2);
     return Boolean(rotation.menu) && nitroGlobalBlockLayout().every((block) => blockComplete(hydrateNitroBlock(rotation, block.id)));
   }
-  if (stationKey === "global") {
-    const config = globalSlotConfig(cafe);
-    return Boolean(
-      rotation.menu &&
-      (rotation.entrees || []).filter(Boolean).length >= config.entreeRequired &&
-      (rotation.sides || []).filter(Boolean).length >= config.sideRequired
-    );
-  }
+  if (stationKey === "global") return Boolean(rotation.menu && (rotation.entrees || []).filter(Boolean).length >= 2);
   if (stationKey === "noodles") return blockComplete(getRotationGlobalBlock(rotation, "noodles"));
-  if (stationKey === "grill") return stationRequiredCount(cafe, stationKey) === 0 || Boolean(rotation.grill?.regionalSpecial || rotation.grill?.locationSpotlight || (rotation.grill?.promoActive && rotation.grill?.promoItem));
-  if (["salad", "pizza", "deli", "fishMarket", "freshFive", "grillFreshFive", "saladFreshFive", "soup"].includes(stationKey)) {
-    const required = stationRequiredCount(cafe, stationKey);
-    if (required === 0) return true;
-    return [...(rotation.ltos?.[stationKey] || []), ...(rotation.uploadedLtos?.[stationKey] || [])].filter(Boolean).length >= required;
+  if (stationKey === "grill") return Boolean(rotation.grill?.regionalSpecial || rotation.grill?.locationSpotlight || (rotation.grill?.promoActive && rotation.grill?.promoItem));
+  if (["salad", "pizza", "deli", "fishMarket", "freshFive", "soup"].includes(stationKey)) {
+    return Boolean((rotation.ltos?.[stationKey] || []).some(Boolean) || (rotation.uploadedLtos?.[stationKey] || []).some(Boolean));
   }
   if (stationKey === "wok") return Boolean((rotation.ltos?.wokEntrees || []).some(Boolean));
-  if (stationKey === "lotusWp") return (rotation.ltos?.lotusEntrees || []).filter(Boolean).length >= 2 && (rotation.ltos?.lotusSides || []).filter(Boolean).length >= 4;
-  if (stationKey === "streetBeets") return streetBeetsComplete(rotation.customStations?.streetBeets);
-  if (stationKey === "commissaryEverest") return commissaryEverestComplete(rotation.customStations?.commissaryEverest);
-  if (stationKey === "stationTakeover") return stationTakeoverComplete(rotation.customStations?.stationTakeover);
   if (stationKey === "carvery") return Boolean(Object.values(rotation.carvery || {}).some(Boolean));
   return false;
 }
@@ -1523,7 +1200,8 @@ function stationComplete(rotation, stationKey, cafe = "", week = "") {
 function rotationRequirements(rotation, cafe, week = "") {
   const stationKeys = CAFE_STATION_CONFIG[cafe] || ["global"];
   const globalReady = stationComplete(rotation, "global", cafe, week);
-  const incompleteStations = stationKeys.filter((stationKey) => stationKey !== "global" && stationRequiredCount(cafe, stationKey) > 0 && !stationComplete(rotation, stationKey, cafe, week));
+  const optionalStations = cafe === "Doppler" ? new Set(["pizza"]) : new Set();
+  const incompleteStations = stationKeys.filter((stationKey) => stationKey !== "global" && !optionalStations.has(stationKey) && !stationComplete(rotation, stationKey, cafe, week));
   return {
     globalReady,
     incompleteStations,
@@ -1540,7 +1218,8 @@ function conflictControlledRows(district, rows) {
 
 function menuConflictCounts(rows) {
   return rows.reduce((acc, row) => {
-    if (row.menu) acc[row.menu] = (acc[row.menu] || 0) + 1;
+    const menu = rotationMenuLabel(row, row.cafe, row.week) || row.menu;
+    if (menu) acc[menu] = (acc[menu] || 0) + 1;
     return acc;
   }, {});
 }
@@ -1557,15 +1236,16 @@ function cafeUsesMenuConflictRule(district, cafe, copiedFrom = "") {
 }
 
 function rowHasMenuConflict(row, conflictMenus) {
-  if (!row.menu || !cafeUsesMenuConflictRule(row.district, row.cafe, row.copiedFrom)) return false;
-  const count = conflictMenus[`${row.district}|${row.menu}`] ?? conflictMenus[row.menu] ?? 0;
+  const menu = rotationMenuLabel(row, row.cafe, row.week) || row.menu;
+  if (!menu || !cafeUsesMenuConflictRule(row.district, row.cafe, row.copiedFrom)) return false;
+  const count = conflictMenus[`${row.district}|${menu}`] ?? conflictMenus[menu] ?? 0;
   return count > 1;
 }
 
 function rotationRequirementIssues(requirements, cafe, { menu = "", duplicateMenuCount = 0, conflictNote = "" } = {}) {
   const issues = [];
   if (!requirements.globalReady) {
-    issues.push("Select a Global Menu and the required Global entrees/sides.");
+    issues.push("Select a Global Menu and at least two Global entrees.");
   }
   if (requirements.incompleteStations.length > 0) {
     issues.push(`Complete these station selections: ${requirements.incompleteStations.map((stationKey) => stationLabel(cafe, stationKey)).join(", ")}.`);
@@ -1624,7 +1304,7 @@ function rowsForSelectedNames(names = [], { unique = false, selectionGroup = "",
     if (unique && seen.has(key)) return;
     seen.add(key);
     selectedRows.push({
-      ...(findBestRowForName(name, candidateRows) || findBestRowForName(name) || makeManualSelectionItem(name)),
+      ...(findBestRowForName(name, candidateRows) || findBestRowForName(name) || makeUploadedItem(name)),
       __selectionGroup: selectionGroup
     });
   });
@@ -1653,27 +1333,6 @@ function selectedRowsFromGlobalBlock(block = {}, options) {
   return uniqueSelectionRows(rows, options);
 }
 
-function customStationRows(rotation, stationKey, options) {
-  const custom = rotation.customStations || blankCustomStations();
-  if (stationKey === "streetBeets") {
-    const station = custom.streetBeets || blankCustomStations().streetBeets;
-    return rowsForSelectedNames([...(station.entrees || []), ...(station.sides || []), ...(station.subRecipes || []), ...(station.extensions || [])], options);
-  }
-  if (stationKey === "commissaryEverest") {
-    const station = custom.commissaryEverest || blankCustomStations().commissaryEverest;
-    return rowsForSelectedNames([station.menuName, ...(station.entrees || []), ...(station.hotSides || []), ...(station.coldSides || []), ...(station.rice || [])], options);
-  }
-  if (stationKey === "stationTakeover") {
-    const station = custom.stationTakeover || blankCustomStations().stationTakeover;
-    if (!station.enabled) return [];
-    return rowsForSelectedNames([station.menuName, ...(station.entrees || []), ...(station.sides || []), ...(station.subRecipes || []), ...(station.extensions || [])], options);
-  }
-  if (stationKey === "lotusWp") {
-    return rowsForSelectedNames([...(rotation.ltos?.lotusEntrees || []), ...(rotation.ltos?.lotusSides || [])], { ...options, candidateRows: uniqueOptionRows([...stationPool("lotusAsianEntrees"), ...stationPool("lotusAsianSides")]) });
-  }
-  return [];
-}
-
 function globalSelectedRows(rotation, options) {
   const candidateRows = globalMenuRows(rotation.menu, rotation.station);
   const rows = [
@@ -1685,7 +1344,7 @@ function globalSelectedRows(rotation, options) {
   return uniqueSelectionRows(rows, options);
 }
 
-function globalSelectedRowsForCafe(rotation, cafe = "", options) {
+function globalSelectedRowsForCafe(rotation, cafe = "", options = {}, week = rotation?.week || "") {
   if (cafe === "Nitro") {
     const blocks = hasNitroSplitBlocks(rotation)
       ? nitroGlobalBlockLayout().map((block) => getRotationGlobalBlock(rotation, block.id))
@@ -1694,8 +1353,9 @@ function globalSelectedRowsForCafe(rotation, cafe = "", options) {
   }
 
   if (cafe === "Re:Invent") {
+    const activeBlockIds = activeReInventBlockIds(week || options.week || rotation.week || "");
     const blockRows = Object.entries(rotation.globalBlocks || {})
-      .filter(([blockId, block]) => blockId !== "noodles" && (block?.menu || blockHasSelections(block)))
+      .filter(([blockId, block]) => activeBlockIds.has(blockId) && blockId !== "noodles" && (block?.menu || blockHasSelections(block)))
       .flatMap(([, block]) => selectedRowsFromGlobalBlock(block, options));
     return uniqueSelectionRows(blockRows.length ? blockRows : globalSelectedRows(rotation, options), options);
   }
@@ -1703,7 +1363,7 @@ function globalSelectedRowsForCafe(rotation, cafe = "", options) {
   return globalSelectedRows(rotation, options);
 }
 
-function getStationSelectionRows(rotation, cafe, week = "") {
+function getStationSelectionRows(rotation, cafe, week = rotation?.week || "") {
   const uploaded = rotation.uploadedLtos || {};
   const stationRows = [];
   const cafeStations = CAFE_STATION_CONFIG[cafe] || ["global"];
@@ -1717,23 +1377,12 @@ function getStationSelectionRows(rotation, cafe, week = "") {
         stationRows.push({ key: `global-${blockInfo.id}`, label: blockInfo.title, items: selectedRowsFromGlobalBlock(block, { unique: true }), note: block.menu ? block.menu : "not selected" });
       });
     } else if (cafe === "Re:Invent") {
-      const savedBlocks = rotation.globalBlocks || {};
-      const activeLayout = reInventGlobalBlockLayout(week);
-      const activeIds = activeLayout.map((block) => block.id);
-      const extraIds = Object.keys(savedBlocks).filter((blockId) => blockId !== "noodles" && !activeIds.includes(blockId));
-      const blocks = [...activeIds, ...extraIds]
-        .map((blockId) => [blockId, savedBlocks[blockId]])
-        .filter(([, block]) => block?.menu || blockHasSelections(block));
+      const activeBlockIds = activeReInventBlockIds(week || rotation.week || "");
+      const blocks = Object.entries(rotation.globalBlocks || {}).filter(([blockId, block]) => activeBlockIds.has(blockId) && blockId !== "noodles" && (block?.menu || blockHasSelections(block)));
       if (blocks.length) {
         blocks.forEach(([blockId, block]) => {
-          const meta = reInventBlockMeta(blockId, week);
-          const items = selectedRowsFromGlobalBlock(block, { unique: true });
-          const note = block.menu
-            ? `${block.menu}${meta.days ? ` - ${meta.days}` : ""}`
-            : items.length
-              ? `Menu name missing - ${meta.days || "saved selections"}`
-              : "No selections saved";
-          stationRows.push({ key: `global-${blockId}`, label: meta.label, items, note });
+          const meta = menuBlockMeta(blockId);
+          stationRows.push({ key: `global-${blockId}`, label: meta.label, items: selectedRowsFromGlobalBlock(block, { unique: true }), note: block.menu ? block.menu : "not selected" });
         });
       } else {
         const globalItems = globalSelectedRows(rotation, { unique: true });
@@ -1755,7 +1404,7 @@ function getStationSelectionRows(rotation, cafe, week = "") {
     stationRows.push({ key: "grill", label: stationLabel(cafe, "grill"), items: grillItems, note: "regional + location spotlight" });
   }
 
-  ["salad", "pizza", "deli", "fishMarket", "freshFive", "grillFreshFive", "saladFreshFive", "soup"].forEach((key) => {
+  ["salad", "pizza", "deli", "fishMarket", "freshFive", "soup"].forEach((key) => {
     if (cafeStations.includes(key)) {
       const selected = ltoSelectedRows(rotation, key, { unique: true });
       const uploadedItems = (uploaded[key] || []).filter(Boolean).map(makeUploadedItem);
@@ -1765,12 +1414,6 @@ function getStationSelectionRows(rotation, cafe, week = "") {
 
   if (cafeStations.includes("wok")) stationRows.push({ key: "wok", label: "Wok Station", items: wokSelectedRows(rotation, { unique: true }), note: "wok selections" });
   if (cafeStations.includes("carvery")) stationRows.push({ key: "carvery", label: "Carvery Station", items: carverySelectedRows(rotation, { unique: true }), note: "carvery selections" });
-  ["streetBeets", "commissaryEverest", "lotusWp", "stationTakeover"].forEach((key) => {
-    if (cafeStations.includes(key)) {
-      const rows = customStationRows(rotation, key, { unique: true });
-      stationRows.push({ key, label: STATION_LABELS[key], items: rows, note: rows.length ? "selected" : key === "stationTakeover" ? "optional" : "not selected" });
-    }
-  });
 
   return stationRows;
 }
@@ -1781,10 +1424,9 @@ function allLegacySelectedRows(rotation) {
     ...globalSelectedRows(rotation),
     ...blockRows,
     ...grillSelectedRows(rotation),
-    ...["salad", "pizza", "deli", "fishMarket", "freshFive", "grillFreshFive", "saladFreshFive", "soup"].flatMap((stationKey) => ltoSelectedRows(rotation, stationKey)),
+    ...["salad", "pizza", "deli", "fishMarket", "freshFive", "soup"].flatMap((stationKey) => ltoSelectedRows(rotation, stationKey)),
     ...wokSelectedRows(rotation),
-    ...carverySelectedRows(rotation),
-    ...["streetBeets", "commissaryEverest", "lotusWp", "stationTakeover"].flatMap((stationKey) => customStationRows(rotation, stationKey))
+    ...carverySelectedRows(rotation)
   ];
 }
 
@@ -1804,59 +1446,12 @@ function wokSelectedRows(rotation, options) {
 }
 
 function carverySelectedRows(rotation, options) {
-  return rowsForSelectedNames(Object.values(rotation.carvery || {}), { ...options, candidateRows: carveryDetailRows() });
+  return rowsForSelectedNames(Object.values(rotation.carvery || {}), options);
 }
 
 function selectedItems(rotation, cafe = rotation?.cafe || "", week = rotation?.week || "") {
   if (cafe) return getStationSelectionRows(rotation, cafe, week).flatMap((row) => row.items);
   return allLegacySelectedRows(rotation);
-}
-
-function customerMenuPrice(row, fallback = "") {
-  const price = getSuggestedRetailPrice(row) ?? getPrice(row);
-  if (price == null || Number.isNaN(Number(price))) return fallback;
-  return Number(price).toFixed(2);
-}
-
-function buildBingoCustomerMenuPayload(rotation, week) {
-  const grillSelection = rotation.grill?.regionalSpecial || rotation.grill?.locationSpotlight || "";
-  const freshFiveSelection = rotation.ltos?.grillFreshFive?.[0] || "";
-  const grillRow = grillSelection ? selectedRowForName(grillSelection, stationPool("grill")) : null;
-  const freshFiveRow = freshFiveSelection ? selectedRowForName(freshFiveSelection, stationPool("grillFreshFive")) : null;
-  const makeItem = (row, fallbackTitle, fallbackPrice) => ({
-    title: row ? getDisplayName(row) : titleCase(fallbackTitle || ""),
-    calories: row ? getCalories(row) : null,
-    description: row ? getDescription(row) : "",
-    price: row ? customerMenuPrice(row, fallbackPrice) : fallbackPrice,
-    diet: row ? getDiet(row) : ""
-  });
-
-  return {
-    week,
-    grill: makeItem(grillRow, grillSelection, "11.75"),
-    freshFive: makeItem(freshFiveRow, freshFiveSelection, "5.00")
-  };
-}
-
-function bingoCustomerMenuMissing(payload) {
-  const missing = [];
-  [["Grill Location Spotlight", payload.grill], ["Grill Fresh $5", payload.freshFive]].forEach(([label, item]) => {
-    if (!String(item.title || "").trim()) missing.push(`${label} title`);
-    if (!item.calories) missing.push(`${label} calories`);
-    if (!String(item.description || "").trim()) missing.push(`${label} description`);
-  });
-  return missing;
-}
-
-function downloadBlob(blob, filename) {
-  const url = window.URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
 }
 
 function foodSummary(items) {
@@ -1968,21 +1563,11 @@ function foodCostRangeNote(range) {
   return "plate range with sub recipes included";
 }
 
-function getStationCostOverview(rotation, cafe, week = "") {
+function getStationCostOverview(rotation, cafe, week = rotation?.week || "") {
   return getStationSelectionRows(rotation, cafe, week).map((row) => {
     const summary = foodSummary(row.items);
     return { ...row, summary, selectedCount: row.items.length };
   });
-}
-
-function submittedRecapMenuLabel(cafe, rotation, rows = []) {
-  const menuLabel = rotationMenuLabel(rotation);
-  if (menuLabel) return menuLabel;
-  if (cafe === "Re:Invent") {
-    const activeBlocks = rows.filter((row) => String(row.key || "").startsWith("global-") && row.selectedCount > 0);
-    if (activeBlocks.length) return "Re:Invent 2-day Global selections saved";
-  }
-  return "No Global menu saved";
 }
 
 function weekAtGlancePreview(fileName) {
@@ -2090,12 +1675,12 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
     [rotationKey(week, district, selectedCafe)]: { ...(prev[rotationKey(week, district, selectedCafe)] || EMPTY_ROTATION), ...patch }
   }));
 
-  const districtWeekRows = cafes.map((cafe) => ({ district, cafe, ...(rotations[rotationKey(week, district, cafe)] || EMPTY_ROTATION) }));
+  const districtWeekRows = cafes.map((cafe) => ({ week, district, cafe, ...(rotations[rotationKey(week, district, cafe)] || EMPTY_ROTATION) }));
   const leadershipRows = district === "South" ? districtWeekRows.flatMap((row) => row.cafe === "Nitro" ? [row, { ...row, cafe: "Frontier", copiedFrom: "Nitro" }] : [row]) : districtWeekRows;
   const conflictMenus = menuConflictCounts(conflictControlledRows(district, districtWeekRows));
-  const allRows = Object.entries(DISTRICTS).flatMap(([dist, cafeList]) => cafeList.map((cafe) => ({ district: dist, cafe, ...(rotations[rotationKey(week, dist, cafe)] || EMPTY_ROTATION) })));
+  const allRows = Object.entries(DISTRICTS).flatMap(([dist, cafeList]) => cafeList.map((cafe) => ({ week, district: dist, cafe, ...(rotations[rotationKey(week, dist, cafe)] || EMPTY_ROTATION) })));
   const allConflictMenus = Object.entries(DISTRICTS).reduce((acc, [dist, cafeList]) => {
-    const rows = cafeList.map((cafe) => ({ district: dist, cafe, ...(rotations[rotationKey(week, dist, cafe)] || EMPTY_ROTATION) }));
+    const rows = cafeList.map((cafe) => ({ week, district: dist, cafe, ...(rotations[rotationKey(week, dist, cafe)] || EMPTY_ROTATION) }));
     Object.entries(menuConflictCounts(conflictControlledRows(dist, rows))).forEach(([menu, count]) => {
       acc[`${dist}|${menu}`] = count;
     });
@@ -2144,7 +1729,7 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
             </section>
             <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
               <div className="xl:col-span-2 space-y-6">
-                {district && selectedCafe ? <RotationPlannerCard cafe={selectedCafe} district={district} menuOptions={menus} rotation={currentRotation} previousRotation={previousRotation} previousWeek={carryoverWeek} updateRotation={updateRotation} week={week} printRows={allRows} persistRotationToDatabase={persistRotationToDatabase} databaseLoadStatus={databaseLoadStatus} databaseSyncStatus={databaseSyncStatus} onRefreshDatabase={refreshFromSmartsheet} isRefreshCoolingDown={smartsheetReadCooldown} menuConflictCount={currentRotation.menu && cafeUsesMenuConflictRule(district, selectedCafe) ? (conflictMenus[currentRotation.menu] || 0) : 0} /> : <SelectPlannerPrompt />}
+                {district && selectedCafe ? <RotationPlannerCard cafe={selectedCafe} district={district} menuOptions={menus} rotation={currentRotation} previousRotation={previousRotation} previousWeek={carryoverWeek} updateRotation={updateRotation} week={week} printRows={allRows} persistRotationToDatabase={persistRotationToDatabase} databaseLoadStatus={databaseLoadStatus} databaseSyncStatus={databaseSyncStatus} onRefreshDatabase={refreshFromSmartsheet} isRefreshCoolingDown={smartsheetReadCooldown} menuConflictCount={(rotationMenuLabel(currentRotation, selectedCafe, week) || currentRotation.menu) && cafeUsesMenuConflictRule(district, selectedCafe) ? (conflictMenus[rotationMenuLabel(currentRotation, selectedCafe, week) || currentRotation.menu] || 0) : 0} /> : <SelectPlannerPrompt />}
               </div>
               <LeadershipOverview district={district} week={week} rows={leadershipRows} conflictMenus={conflictMenus} />
             </section>
@@ -2361,9 +1946,6 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
   const [copiedRotation, setCopiedRotation] = useState(null);
   const [submitWarningOpen, setSubmitWarningOpen] = useState(false);
   const [editSubmitted, setEditSubmitted] = useState(false);
-  const [showCustomerMenuPanel, setShowCustomerMenuPanel] = useState(false);
-  const [customerMenuStatus, setCustomerMenuStatus] = useState(null);
-  const [customerMenuGenerating, setCustomerMenuGenerating] = useState(false);
   const lockedForEditing = rotation.status === "Submitted" && !editSubmitted;
   const guardedUpdateRotation = (patch) => {
     if (lockedForEditing) return;
@@ -2378,7 +1960,7 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
   const cafeStations = CAFE_STATION_CONFIG[cafe] || ["global"];
   const stationCostOverview = getStationCostOverview(rotation, cafe, week);
   const requirements = rotationRequirements(rotation, cafe, week);
-  const submitIssues = rotationRequirementIssues(requirements, cafe, { menu: rotation.menu, duplicateMenuCount: menuConflictCount, conflictNote: menuConflictNote(district, cafe) });
+  const submitIssues = rotationRequirementIssues(requirements, cafe, { menu: rotationMenuLabel(rotation, cafe, week) || rotation.menu, duplicateMenuCount: menuConflictCount, conflictNote: menuConflictNote(district, cafe) });
   const canSubmitRotation = requirements.canSubmit && submitIssues.length === 0;
 
   const updateSlot = (group, index, value) => {
@@ -2402,18 +1984,6 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
   const updateCarvery = (field, value) => {
     if (lockedForEditing) return;
     updateRotation({ carvery: { ...(rotation.carvery || EMPTY_ROTATION.carvery), [field]: value } });
-  };
-  const updateCustomStation = (stationKey, patch) => {
-    if (lockedForEditing) return;
-    const current = cloneCustomStations(rotation.customStations);
-    updateRotation({ customStations: { ...current, [stationKey]: { ...current[stationKey], ...patch } } });
-  };
-  const updateCustomStationArray = (stationKey, field, index, value) => {
-    if (lockedForEditing) return;
-    const current = cloneCustomStations(rotation.customStations);
-    const nextValues = [...(current[stationKey]?.[field] || [])];
-    nextValues[index] = value;
-    updateRotation({ customStations: { ...current, [stationKey]: { ...current[stationKey], [field]: nextValues } } });
   };
   const markDraft = () => {
     const nextRotation = { ...rotation, status: "Draft", updatedAt: nowStamp(), submittedBy: "Chef" };
@@ -2448,43 +2018,6 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
     persistRotationToDatabase?.(nextRotation);
     setPreview(null);
   };
-  const generateBingoCustomerMenu = async () => {
-    const payload = buildBingoCustomerMenuPayload(rotation, week);
-    const missing = bingoCustomerMenuMissing(payload);
-    setShowCustomerMenuPanel(true);
-    if (missing.length) {
-      setCustomerMenuStatus({ state: "error", message: `Cannot make menu yet. Missing: ${missing.join(", ")}.` });
-      return;
-    }
-
-    setCustomerMenuGenerating(true);
-    setCustomerMenuStatus({ state: "loading", message: "Making Bingo grill PowerPoint..." });
-    try {
-      const response = await fetch("/api/bingo/customer-menu", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      if (!response.ok) {
-        let message = "Bingo menu generation failed.";
-        try {
-          const errorPayload = await response.json();
-          message = errorPayload.message || message;
-        } catch {
-          message = await response.text();
-        }
-        throw new Error(message);
-      }
-      const blob = await response.blob();
-      const safeWeek = String(week || "week").replace(/[^a-z0-9-]+/gi, "-").replace(/^-|-$/g, "");
-      downloadBlob(blob, `bingo-grill-menu-${safeWeek || "week"}.pptx`);
-      setCustomerMenuStatus({ state: "success", message: "PowerPoint generated from the selected Bingo grill items." });
-    } catch (error) {
-      setCustomerMenuStatus({ state: "error", message: error.message || "Bingo menu generation failed." });
-    } finally {
-      setCustomerMenuGenerating(false);
-    }
-  };
 
   return (
     <div className="rounded-lg bg-white border border-slate-200 p-6 shadow-sm">
@@ -2497,6 +2030,8 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
         setPreview={setPreview}
         applyPreview={applyPreview}
         week={week}
+        previousWeek={previousWeek}
+        previousRotation={previousRotation}
         printRows={printRows}
         rotation={rotation}
         requirements={requirements}
@@ -2504,10 +2039,7 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
         canSubmit={canSubmitRotation}
         onSaveDraft={markDraft}
         onSubmit={submitRotation}
-        onGenerateMenu={cafe === "Bingo" ? generateBingoCustomerMenu : null}
-        generatingMenu={customerMenuGenerating}
       />
-      {cafe === "Bingo" && showCustomerMenuPanel && <BingoCustomerMenuPanel week={week} rotation={rotation} status={customerMenuStatus} onGenerate={generateBingoCustomerMenu} generating={customerMenuGenerating} />}
       {submitWarningOpen && (
         <SubmitBlockedModal
           cafe={cafe}
@@ -2528,9 +2060,15 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
       </div>
       {rotation.status === "Submitted" && (
         <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950">
-          <div>
-            <p className="font-black">Locked rotation selections are showing below.</p>
-            <p className="mt-1 font-semibold text-emerald-800">Use Edit and resubmit in the recap only when you need to revise this cafe/week.</p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-black">Locked rotation selections are showing below.</p>
+              <p className="mt-1 font-semibold text-emerald-800">Check edit mode only when you need to revise and resubmit this cafe/week.</p>
+            </div>
+            <label className="inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-white px-4 py-2 text-xs font-black text-emerald-900">
+              <input type="checkbox" checked={editSubmitted} onChange={(event) => setEditSubmitted(event.target.checked)} />
+              Edit locked rotation
+            </label>
           </div>
         </div>
       )}
@@ -2560,8 +2098,6 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
               updateGrill={updateGrill}
               updateLto={updateLto}
               updateCarvery={updateCarvery}
-              updateCustomStation={updateCustomStation}
-              updateCustomStationArray={updateCustomStationArray}
               summary={summary}
               selectedItems={items}
             />
@@ -2573,17 +2109,747 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
   );
 }
 
+function selectedCalorieRange(items) {
+  const entreeCalories = items.filter((row) => selectionRole(row) === "entree").map(getCalories).filter((value) => value != null).sort((a, b) => a - b);
+  const sideCalories = items.filter((row) => selectionRole(row) === "side").map(getCalories).filter((value) => value != null).sort((a, b) => a - b);
+  const subRecipeCalories = items.filter((row) => selectionRole(row) === "subRecipe").map(getCalories).filter((value) => value != null).reduce((sum, value) => sum + value, 0);
+  if (!entreeCalories.length) return { low: null, high: null };
+  const sideCount = Math.min(2, sideCalories.length);
+  const low = entreeCalories[0] + sideCalories.slice(0, sideCount).reduce((sum, value) => sum + value, 0) + subRecipeCalories;
+  const high = entreeCalories[entreeCalories.length - 1] + (sideCount ? sideCalories.slice(-sideCount) : []).reduce((sum, value) => sum + value, 0) + subRecipeCalories;
+  return { low, high };
+}
+
+function calorieRangeLabel(items) {
+  const range = selectedCalorieRange(items);
+  if (range.low == null || range.high == null) return "Calories pending";
+  if (range.low === range.high) return `${range.low} cal`;
+  return `${range.low}-${range.high} cal`;
+}
+
+function cleanMenuTitle(menu = "") {
+  return String(menu || "").replace(/^AMZ\+RA:\s*/i, "").replace(/^AMZ:\s*/i, "").trim() || "Menu pending";
+}
+
+function dietSuffix(row) {
+  const diet = getDiet(row);
+  if (diet === "Vegan") return " VN";
+  if (diet === "Vegetarian") return " V";
+  return "";
+}
+
+function customerMenuSummary(block = {}) {
+  const rows = selectedRowsFromGlobalBlock(block, { unique: true });
+  const entreeCount = rows.filter((row) => selectionRole(row) === "entree").length;
+  const sideCount = rows.filter((row) => selectionRole(row) === "side").length;
+  const subRecipeCount = rows.filter((row) => selectionRole(row) === "subRecipe").length;
+  if (!rows.length) return "Selections pending.";
+  const parts = [];
+  if (entreeCount) parts.push(`choice of ${entreeCount} protein${entreeCount === 1 ? "" : "s"}`);
+  if (sideCount) parts.push(`${sideCount} side${sideCount === 1 ? "" : "s"}`);
+  if (subRecipeCount) parts.push(`${subRecipeCount} sauce or composed component${subRecipeCount === 1 ? "" : "s"}`);
+  return parts.length ? `Featuring ${parts.join(", ")}.` : "Composed menu selections ready for service.";
+}
+
+function dopplerCurrentGlobalBlock(rotation = {}) {
+  return {
+    menu: rotation.menu || "",
+    station: rotation.station || "",
+    entrees: rotation.entrees || [],
+    sides: rotation.sides || [],
+    subRecipes: rotation.subRecipes || [],
+    extensions: rotation.extensions || [],
+  };
+}
+
+function buildDopplerMenuPacket({ rotation, previousRotation, week, previousWeek }) {
+  const carryoverBlock = carryoverGlobalBlock(previousRotation);
+  const currentBlock = dopplerCurrentGlobalBlock(rotation);
+  const promo = rotation.promotionOverride || EMPTY_ROTATION.promotionOverride;
+  const stationRows = (stationKey) => ltoSelectedRows(rotation, stationKey, { unique: true });
+  const sections = [
+    {
+      page: 2,
+      title: "Salt + Char",
+      subtitle: "Grill Fresh Five",
+      items: grillSelectedRows(rotation, { unique: true }).slice(0, 1),
+      note: "Rewrites the highlighted Fresh Five grill item."
+    },
+    {
+      page: 4,
+      title: cleanMenuTitle(carryoverBlock.menu),
+      subtitle: `Monday + Tuesday carryover${previousWeek ? ` from ${previousWeek}` : ""}`,
+      block: carryoverBlock,
+      items: selectedRowsFromGlobalBlock(carryoverBlock, { unique: true }),
+      summary: customerMenuSummary(carryoverBlock),
+      calories: calorieRangeLabel(selectedRowsFromGlobalBlock(carryoverBlock, { unique: true }))
+    },
+    ...(promo.enabled ? [{
+      page: "Marketing Insert",
+      title: "<Use 8.5x11 from Marketing>",
+      subtitle: promo.name || "Promotion override",
+      items: [],
+      note: "Insert the provided promotion menu page here."
+    }] : []),
+    {
+      page: 5,
+      title: cleanMenuTitle(currentBlock.menu),
+      subtitle: "Wednesday through Friday",
+      block: currentBlock,
+      items: selectedRowsFromGlobalBlock(currentBlock, { unique: true }),
+      summary: customerMenuSummary(currentBlock),
+      calories: calorieRangeLabel(selectedRowsFromGlobalBlock(currentBlock, { unique: true }))
+    },
+    {
+      page: 6,
+      title: "Pizza LTOs",
+      subtitle: "Pizza menu selections",
+      items: stationRows("pizza").slice(0, 2),
+      note: "Maps to the two changing pizza selections."
+    },
+    {
+      page: stationRows("salad").length > 1 ? "8 + 9" : 8,
+      title: "Zane's Salad",
+      subtitle: stationRows("salad").length > 1 ? "Two Fresh Five salads" : "Fresh Five salad",
+      items: stationRows("salad"),
+      note: "If only one salad is selected, generate one page."
+    },
+    {
+      page: 10,
+      title: "Paninoteca Deli",
+      subtitle: "Fresh Five deli selection",
+      items: stationRows("deli").slice(0, 1),
+      note: "Maps to the deli menu page."
+    }
+  ];
+  return { week, sections };
+}
+
+function packetSafeFileName(packet) {
+  return `Doppler-menu-packet-${String(packet.week || "week").replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "")}.html`;
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function generatedMenuPageHtml(section) {
+  const items = section.items || [];
+  const entrees = items.filter((row) => selectionRole(row) === "entree");
+  const sides = items.filter((row) => selectionRole(row) === "side");
+  const otherItems = items.filter((row) => !["entree", "side"].includes(selectionRole(row)));
+  const entreeHtml = entrees.map((item) => `
+    <div class="entree">
+      <h3>${escapeHtml(titleCase(getDisplayName(item) || getItemIdentity(item)))}${escapeHtml(dietSuffix(item))}</h3>
+      ${getDescription(item) ? `<p>${escapeHtml(getDescription(item))}</p>` : ""}
+    </div>
+  `).join("");
+  const sideHtml = sides.length ? `
+    <div class="sideBox">
+      <p class="sectionLabel">Sides 2.55</p>
+      <div class="chips">
+        ${sides.map((item) => `<span>${escapeHtml(titleCase(getDisplayName(item) || getItemIdentity(item)))}${escapeHtml(dietSuffix(item))}${getCalories(item) == null ? "" : ` - ${getCalories(item)} cal`}</span>`).join("")}
+      </div>
+    </div>
+  ` : "";
+  const otherHtml = otherItems.map((item) => `
+    <div class="other">
+      <h3>${escapeHtml(titleCase(getDisplayName(item) || getItemIdentity(item)))}${escapeHtml(dietSuffix(item))}</h3>
+      ${getDescription(item) ? `<p>${escapeHtml(getDescription(item))}</p>` : ""}
+    </div>
+  `).join("");
+  return `
+    <section class="menuPage">
+      <div class="pageTop">
+        <div>
+          <p class="eyebrow">Page ${escapeHtml(section.page)}</p>
+          <h2>${escapeHtml(section.title)}</h2>
+          <p class="subtitle">${escapeHtml(section.subtitle || "")}</p>
+        </div>
+        ${section.calories ? `<span class="caloriePill">${escapeHtml(section.calories)}</span>` : ""}
+      </div>
+      ${section.summary ? `<div class="summary">${escapeHtml(section.summary)}</div>` : ""}
+      ${section.note ? `<p class="note">${escapeHtml(section.note)}</p>` : ""}
+      ${items.length ? `<div class="items">${entreeHtml}${sideHtml}${otherHtml}</div>` : `<p class="pending">Selection pending.</p>`}
+    </section>
+  `;
+}
+
+function dopplerMenuPacketHtml(packet) {
+  return `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Doppler Generated Menu Packet</title>
+    <style>
+      body { margin: 0; background: #f6f7f9; color: #0f172a; font-family: Arial, sans-serif; }
+      main { max-width: 960px; margin: 0 auto; padding: 28px; }
+      .cover { background: #061020; color: white; border-radius: 28px; padding: 28px; margin-bottom: 18px; }
+      .cover p { color: #9fb2c7; font-weight: 700; margin: 8px 0 0; }
+      .menuPage { page-break-inside: avoid; background: #fff; border: 1px solid #dbe3ea; border-radius: 24px; padding: 28px; margin-bottom: 18px; box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08); }
+      .pageTop { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
+      .eyebrow, .sectionLabel { margin: 0; color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; font-weight: 900; }
+      h1 { margin: 0; font-size: 34px; }
+      h2 { margin: 8px 0 0; font-size: 30px; line-height: 1.08; }
+      h3 { margin: 0; font-size: 20px; }
+      .subtitle { margin: 8px 0 0; color: #64748b; font-weight: 800; }
+      .caloriePill { border-radius: 999px; border: 1px solid #cbd5e1; background: #fff; color: #334155; padding: 8px 12px; font-weight: 900; white-space: nowrap; }
+      .summary { margin-top: 18px; background: #fff; border: 1px solid #e2e8f0; border-left: 5px solid #b99b55; border-radius: 16px; padding: 14px; color: #334155; font-weight: 800; }
+      .note, .pending { margin-top: 18px; border: 1px solid #e2e8f0; border-radius: 16px; padding: 14px; color: #475569; font-weight: 800; background: #fff; }
+      .pending { border-color: #cbd5e1; background: #f8fafc; color: #475569; }
+      .items { margin-top: 18px; display: grid; gap: 12px; }
+      .entree { background: #fff; border: 1px solid #e2e8f0; border-left: 5px solid #0f172a; border-radius: 16px; padding: 14px; }
+      .entree p, .other p { margin: 6px 0 0; line-height: 1.45; font-weight: 700; color: #475569; }
+      .sideBox, .other { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 14px; }
+      .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+      .chips span { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 999px; padding: 7px 11px; font-weight: 900; }
+      @media print {
+        body { background: #fff; }
+        main { max-width: none; padding: 10mm; }
+        .cover, .menuPage { box-shadow: none; }
+        .menuPage { break-inside: avoid; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="cover">
+        <p class="eyebrow">Generated Menu Packet</p>
+        <h1>Doppler Cafe</h1>
+        <p>${escapeHtml(packet.week || "")}</p>
+      </section>
+      ${packet.sections.map(generatedMenuPageHtml).join("")}
+    </main>
+  </body>
+</html>`;
+}
+
+function downloadDopplerMenuPacket(packet) {
+  const blob = new Blob([dopplerMenuPacketHtml(packet)], { type: "text/html;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = packetSafeFileName(packet);
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function xmlEscape(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function pptText(value, maxLength = 160) {
+  const text = String(value ?? "").replace(/\s+/g, " ").trim();
+  if (text.length <= maxLength) return text;
+  return `${text.slice(0, maxLength - 1).trim()}...`;
+}
+
+function emu(value) {
+  return Math.round(value * 914400);
+}
+
+function pptColor(value = "#0f172a") {
+  return String(value).replace("#", "").toUpperCase();
+}
+
+function pptShapeText({ id, x, y, w, h, text, fontSize = 18, bold = false, italic = false, color = "#0f172a", align = "l", fill = null, line = null }) {
+  const paragraphs = String(text || " ")
+    .split("\n")
+    .map((line) => `
+      <a:p>
+        <a:pPr algn="${align}"/>
+        <a:r>
+          <a:rPr lang="en-US" sz="${Math.round(fontSize * 100)}"${bold ? ' b="1"' : ""}${italic ? ' i="1"' : ""}>
+            <a:solidFill><a:srgbClr val="${pptColor(color)}"/></a:solidFill>
+            <a:latin typeface="Aptos"/>
+          </a:rPr>
+          <a:t>${xmlEscape(line || " ")}</a:t>
+        </a:r>
+      </a:p>
+    `)
+    .join("");
+  return `
+    <p:sp>
+      <p:nvSpPr><p:cNvPr id="${id}" name="Text ${id}"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>
+      <p:spPr>
+        <a:xfrm><a:off x="${emu(x)}" y="${emu(y)}"/><a:ext cx="${emu(w)}" cy="${emu(h)}"/></a:xfrm>
+        <a:prstGeom prst="roundRect"><a:avLst/></a:prstGeom>
+        ${fill ? `<a:solidFill><a:srgbClr val="${pptColor(fill)}"/></a:solidFill>` : "<a:noFill/>"}
+        ${line ? `<a:ln w="9525"><a:solidFill><a:srgbClr val="${pptColor(line)}"/></a:solidFill></a:ln>` : "<a:ln><a:noFill/></a:ln>"}
+      </p:spPr>
+      <p:txBody><a:bodyPr wrap="square" anchor="mid" lIns="91440" rIns="91440" tIns="45720" bIns="45720"/><a:lstStyle/>${paragraphs}</p:txBody>
+    </p:sp>
+  `;
+}
+
+function pptRect({ id, x, y, w, h, fill = "#ffffff", line = "#dbeafe" }) {
+  return `
+    <p:sp>
+      <p:nvSpPr><p:cNvPr id="${id}" name="Card ${id}"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+      <p:spPr>
+        <a:xfrm><a:off x="${emu(x)}" y="${emu(y)}"/><a:ext cx="${emu(w)}" cy="${emu(h)}"/></a:xfrm>
+        <a:prstGeom prst="roundRect"><a:avLst/></a:prstGeom>
+        <a:solidFill><a:srgbClr val="${pptColor(fill)}"/></a:solidFill>
+        <a:ln w="12700"><a:solidFill><a:srgbClr val="${pptColor(line)}"/></a:solidFill></a:ln>
+      </p:spPr>
+    </p:sp>
+  `;
+}
+
+function pptSlideXml(shapes) {
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+    <p:cSld>
+      <p:bg><p:bgPr><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill><a:effectLst/></p:bgPr></p:bg>
+      <p:spTree>
+        <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
+        <p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${emu(8.5)}" cy="${emu(11)}"/><a:chOff x="0" y="0"/><a:chExt cx="${emu(8.5)}" cy="${emu(11)}"/></a:xfrm></p:grpSpPr>
+        ${shapes.join("")}
+      </p:spTree>
+    </p:cSld>
+    <p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>
+  </p:sld>`;
+}
+
+function pptItemText(item) {
+  const name = titleCase(getDisplayName(item) || getItemIdentity(item));
+  const calories = getCalories(item);
+  const retail = getSuggestedRetailPrice(item);
+  const meta = [
+    calories == null ? null : `${calories} cal`,
+    retail == null ? null : money(retail),
+  ].filter(Boolean).join(" / ");
+  const description = getDescription(item);
+  return `${name}${dietSuffix(item)}${meta ? ` - ${meta}` : ""}${description ? `\n${pptText(description, 132)}` : ""}`;
+}
+
+function pptSectionSlide(section, index) {
+  let shapeId = 2;
+  const shapes = [
+    pptShapeText({ id: shapeId++, x: 0.45, y: 0.35, w: 7.6, h: 0.28, text: "DOPPLER MENU GENERATOR", fontSize: 10, bold: true, color: "#64748b", align: "c" }),
+    pptShapeText({ id: shapeId++, x: 0.45, y: 0.65, w: 7.6, h: 0.55, text: section.title || "Menu", fontSize: 26, bold: true, color: "#071225", align: "c" }),
+    pptShapeText({ id: shapeId++, x: 0.65, y: 1.25, w: 7.2, h: 0.34, text: section.subtitle || "", fontSize: 12, bold: true, color: "#7c5f21", align: "c" }),
+    pptRect({ id: shapeId++, x: 0.55, y: 1.78, w: 7.4, h: 8.55, fill: "#f8fafc", line: "#d9c28b" }),
+  ];
+  if (section.calories) {
+    shapes.push(pptShapeText({ id: shapeId++, x: 5.95, y: 1.92, w: 1.65, h: 0.38, text: section.calories, fontSize: 11, bold: true, color: "#0f172a", align: "c", fill: "#ffffff", line: "#d9c28b" }));
+  }
+  if (section.summary) {
+    shapes.push(pptShapeText({ id: shapeId++, x: 0.9, y: 2.0, w: 6.7, h: 0.58, text: pptText(section.summary, 150), fontSize: 13, bold: true, italic: true, color: "#334155", align: "c" }));
+  }
+  const items = (section.items || []).slice(0, 8);
+  const startY = section.summary ? 2.75 : 2.25;
+  if (!items.length) {
+    shapes.push(pptShapeText({ id: shapeId++, x: 1.05, y: 3.0, w: 6.4, h: 0.7, text: section.note || "Selection pending.", fontSize: 18, bold: true, color: "#64748b", align: "c" }));
+  } else {
+    items.forEach((item, itemIndex) => {
+      const y = startY + itemIndex * 0.86;
+      shapes.push(pptRect({ id: shapeId++, x: 0.9, y, w: 6.7, h: 0.72, fill: "#ffffff", line: "#e2e8f0" }));
+      shapes.push(pptShapeText({ id: shapeId++, x: 1.05, y: y + 0.08, w: 6.4, h: 0.56, text: pptItemText(item), fontSize: 11, bold: itemIndex === 0, color: "#0f172a", align: "l" }));
+    });
+    if ((section.items || []).length > items.length) {
+      shapes.push(pptShapeText({ id: shapeId++, x: 1.05, y: startY + items.length * 0.86, w: 6.4, h: 0.4, text: `+ ${(section.items || []).length - items.length} more selected item(s)`, fontSize: 12, bold: true, color: "#64748b", align: "c" }));
+    }
+  }
+  shapes.push(pptShapeText({ id: shapeId++, x: 0.65, y: 10.35, w: 7.2, h: 0.22, text: `Page ${index + 1} - generated from Neighborhood Rotations`, fontSize: 8, color: "#64748b", align: "c" }));
+  return pptSlideXml(shapes);
+}
+
+function pptCoverSlide(packet) {
+  const shapes = [
+    pptRect({ id: 2, x: 0.5, y: 0.5, w: 7.5, h: 10, fill: "#071225", line: "#d9c28b" }),
+    pptShapeText({ id: 3, x: 0.85, y: 2.45, w: 6.8, h: 0.35, text: "DOPPLER CAFE", fontSize: 14, bold: true, color: "#d9c28b", align: "c" }),
+    pptShapeText({ id: 4, x: 0.85, y: 3.0, w: 6.8, h: 1.2, text: "Generated Menu Packet", fontSize: 34, bold: true, color: "#ffffff", align: "c" }),
+    pptShapeText({ id: 5, x: 1.1, y: 4.35, w: 6.3, h: 0.5, text: packet.week || "", fontSize: 18, bold: true, color: "#e2e8f0", align: "c" }),
+    pptShapeText({ id: 6, x: 1.25, y: 6.0, w: 6.0, h: 0.9, text: "Menus generated from the current Doppler selections.", fontSize: 18, color: "#cbd5e1", align: "c" }),
+  ];
+  return pptSlideXml(shapes);
+}
+
+function pptContentTypes(slideCount) {
+  const slideOverrides = Array.from({ length: slideCount }, (_, index) => `<Override PartName="/ppt/slides/slide${index + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>`).join("");
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+    <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+    <Default Extension="xml" ContentType="application/xml"/>
+    <Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/>
+    <Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
+    <Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
+    ${slideOverrides}
+  </Types>`;
+}
+
+function pptPresentationXml(slideCount) {
+  const slides = Array.from({ length: slideCount }, (_, index) => `<p:sldId id="${256 + index}" r:id="rId${index + 1}"/>`).join("");
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <p:presentation xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+    <p:sldIdLst>${slides}</p:sldIdLst>
+    <p:sldSz cx="${emu(8.5)}" cy="${emu(11)}" type="custom"/>
+    <p:notesSz cx="${emu(8.5)}" cy="${emu(11)}"/>
+  </p:presentation>`;
+}
+
+function pptPresentationRels(slideCount) {
+  const slideRels = Array.from({ length: slideCount }, (_, index) => `<Relationship Id="rId${index + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide${index + 1}.xml"/>`).join("");
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${slideRels}</Relationships>`;
+}
+
+function pptRootRels() {
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+    <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/>
+    <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>
+    <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>
+  </Relationships>`;
+}
+
+function pptCoreXml() {
+  const now = new Date().toISOString();
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <dc:title>Doppler Generated Menu Packet</dc:title>
+    <dc:creator>Culinary Tools Platform</dc:creator>
+    <cp:lastModifiedBy>Culinary Tools Platform</cp:lastModifiedBy>
+    <dcterms:created xsi:type="dcterms:W3CDTF">${now}</dcterms:created>
+    <dcterms:modified xsi:type="dcterms:W3CDTF">${now}</dcterms:modified>
+  </cp:coreProperties>`;
+}
+
+function pptAppXml(slideCount) {
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
+    <Application>Culinary Tools Platform</Application>
+    <PresentationFormat>Custom</PresentationFormat>
+    <Slides>${slideCount}</Slides>
+  </Properties>`;
+}
+
+const zipCrcTable = Array.from({ length: 256 }, (_, index) => {
+  let value = index;
+  for (let bit = 0; bit < 8; bit += 1) value = value & 1 ? 0xedb88320 ^ (value >>> 1) : value >>> 1;
+  return value >>> 0;
+});
+
+function crc32(bytes) {
+  let crc = 0xffffffff;
+  for (const byte of bytes) crc = zipCrcTable[(crc ^ byte) & 0xff] ^ (crc >>> 8);
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+function littleEndian(value, bytes) {
+  const out = new Uint8Array(bytes);
+  for (let index = 0; index < bytes; index += 1) out[index] = (value >>> (index * 8)) & 0xff;
+  return out;
+}
+
+function concatBytes(parts) {
+  const total = parts.reduce((sum, part) => sum + part.length, 0);
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const part of parts) {
+    out.set(part, offset);
+    offset += part.length;
+  }
+  return out;
+}
+
+function zipDateTime(date = new Date()) {
+  const time = (date.getHours() << 11) | (date.getMinutes() << 5) | Math.floor(date.getSeconds() / 2);
+  const day = date.getDate();
+  const month = date.getMonth() + 1;
+  const year = Math.max(date.getFullYear(), 1980) - 1980;
+  return { time, date: (year << 9) | (month << 5) | day };
+}
+
+function createZipBlob(files) {
+  const encoder = new TextEncoder();
+  const { time, date } = zipDateTime();
+  const localParts = [];
+  const centralParts = [];
+  let offset = 0;
+  files.forEach(([name, content]) => {
+    const nameBytes = encoder.encode(name);
+    const dataBytes = typeof content === "string" ? encoder.encode(content) : content;
+    const crc = crc32(dataBytes);
+    const localHeader = concatBytes([
+      littleEndian(0x04034b50, 4), littleEndian(20, 2), littleEndian(0x0800, 2), littleEndian(0, 2),
+      littleEndian(time, 2), littleEndian(date, 2), littleEndian(crc, 4), littleEndian(dataBytes.length, 4),
+      littleEndian(dataBytes.length, 4), littleEndian(nameBytes.length, 2), littleEndian(0, 2), nameBytes,
+    ]);
+    localParts.push(localHeader, dataBytes);
+    const centralHeader = concatBytes([
+      littleEndian(0x02014b50, 4), littleEndian(20, 2), littleEndian(20, 2), littleEndian(0x0800, 2),
+      littleEndian(0, 2), littleEndian(time, 2), littleEndian(date, 2), littleEndian(crc, 4),
+      littleEndian(dataBytes.length, 4), littleEndian(dataBytes.length, 4), littleEndian(nameBytes.length, 2),
+      littleEndian(0, 2), littleEndian(0, 2), littleEndian(0, 2), littleEndian(0, 2), littleEndian(0, 4),
+      littleEndian(offset, 4), nameBytes,
+    ]);
+    centralParts.push(centralHeader);
+    offset += localHeader.length + dataBytes.length;
+  });
+  const centralDirectory = concatBytes(centralParts);
+  const localFileData = concatBytes(localParts);
+  const end = concatBytes([
+    littleEndian(0x06054b50, 4), littleEndian(0, 2), littleEndian(0, 2), littleEndian(files.length, 2),
+    littleEndian(files.length, 2), littleEndian(centralDirectory.length, 4), littleEndian(localFileData.length, 4),
+    littleEndian(0, 2),
+  ]);
+  return new Blob([localFileData, centralDirectory, end], { type: "application/vnd.openxmlformats-officedocument.presentationml.presentation" });
+}
+
+function readUint16(view, offset) {
+  return view.getUint16(offset, true);
+}
+
+function readUint32(view, offset) {
+  return view.getUint32(offset, true);
+}
+
+async function inflateZipEntry(bytes) {
+  if (typeof DecompressionStream === "undefined") {
+    throw new Error("PowerPoint template generation needs browser decompression support.");
+  }
+  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+
+async function unzipPptxTemplate(arrayBuffer) {
+  const bytes = new Uint8Array(arrayBuffer);
+  const view = new DataView(arrayBuffer);
+  let eocdOffset = -1;
+  for (let index = bytes.length - 22; index >= 0; index -= 1) {
+    if (readUint32(view, index) === 0x06054b50) {
+      eocdOffset = index;
+      break;
+    }
+  }
+  if (eocdOffset < 0) throw new Error("Could not read PowerPoint template.");
+  const fileCount = readUint16(view, eocdOffset + 10);
+  let centralOffset = readUint32(view, eocdOffset + 16);
+  const decoder = new TextDecoder();
+  const entries = new Map();
+  for (let fileIndex = 0; fileIndex < fileCount; fileIndex += 1) {
+    if (readUint32(view, centralOffset) !== 0x02014b50) break;
+    const method = readUint16(view, centralOffset + 10);
+    const compressedSize = readUint32(view, centralOffset + 20);
+    const nameLength = readUint16(view, centralOffset + 28);
+    const extraLength = readUint16(view, centralOffset + 30);
+    const commentLength = readUint16(view, centralOffset + 32);
+    const localOffset = readUint32(view, centralOffset + 42);
+    const name = decoder.decode(bytes.slice(centralOffset + 46, centralOffset + 46 + nameLength));
+    const localNameLength = readUint16(view, localOffset + 26);
+    const localExtraLength = readUint16(view, localOffset + 28);
+    const dataStart = localOffset + 30 + localNameLength + localExtraLength;
+    const compressed = bytes.slice(dataStart, dataStart + compressedSize);
+    const data = method === 0 ? compressed : await inflateZipEntry(compressed);
+    entries.set(name, data);
+    centralOffset += 46 + nameLength + extraLength + commentLength;
+  }
+  return entries;
+}
+
+function bytesToText(bytes) {
+  return new TextDecoder().decode(bytes);
+}
+
+function textToBytes(text) {
+  return new TextEncoder().encode(text);
+}
+
+function removeXmlHighlights(doc) {
+  const highlights = Array.from(doc.getElementsByTagNameNS("http://schemas.openxmlformats.org/drawingml/2006/main", "highlight"));
+  highlights.forEach((node) => node.parentNode?.removeChild(node));
+}
+
+function shapeByPowerPointName(doc, shapeName) {
+  const props = Array.from(doc.getElementsByTagNameNS("http://schemas.openxmlformats.org/presentationml/2006/main", "cNvPr"));
+  const prop = props.find((node) => node.getAttribute("name") === shapeName);
+  return prop?.parentNode?.parentNode || null;
+}
+
+function setShapeLines(doc, shapeName, lines) {
+  const aNs = "http://schemas.openxmlformats.org/drawingml/2006/main";
+  const shape = shapeByPowerPointName(doc, shapeName);
+  const txBody = shape?.getElementsByTagNameNS("http://schemas.openxmlformats.org/presentationml/2006/main", "txBody")[0]
+    || shape?.getElementsByTagNameNS(aNs, "txBody")[0];
+  if (!shape || !txBody) return;
+  removeXmlHighlights(shape.ownerDocument);
+  const firstRunProperties = txBody.getElementsByTagNameNS(aNs, "rPr")[0]?.cloneNode(true);
+  Array.from(txBody.getElementsByTagNameNS(aNs, "p")).forEach((paragraph) => paragraph.parentNode?.removeChild(paragraph));
+  const cleanLines = (lines.length ? lines : [" "]).map((line) => String(line || " "));
+  cleanLines.forEach((line) => {
+    const paragraph = doc.createElementNS(aNs, "a:p");
+    const run = doc.createElementNS(aNs, "a:r");
+    if (firstRunProperties) run.appendChild(firstRunProperties.cloneNode(true));
+    const text = doc.createElementNS(aNs, "a:t");
+    text.textContent = line;
+    run.appendChild(text);
+    paragraph.appendChild(run);
+    txBody.appendChild(paragraph);
+  });
+}
+
+function replaceTemplateTextSequence(doc, needle, replacementLines) {
+  const aNs = "http://schemas.openxmlformats.org/drawingml/2006/main";
+  const nodes = Array.from(doc.getElementsByTagNameNS(aNs, "t"));
+  const index = nodes.findIndex((node) => String(node.textContent || "").includes(needle));
+  if (index < 0) return;
+  replacementLines.forEach((line, lineIndex) => {
+    if (nodes[index + lineIndex]) nodes[index + lineIndex].textContent = String(line || " ");
+  });
+}
+
+function templateItemLines(item) {
+  if (!item) return ["Selection pending", "", ""];
+  const name = `${titleCase(getDisplayName(item) || getItemIdentity(item))}${dietSuffix(item)}`;
+  const description = pptText(getDescription(item), 110);
+  const calories = getCalories(item);
+  const retail = getSuggestedRetailPrice(item);
+  const meta = [
+    calories == null ? "calories pending" : `${calories} cal`,
+    retail == null ? "price pending" : money(retail),
+  ].join(" / ");
+  return [name, description, meta];
+}
+
+function templateGlobalLines(block) {
+  const rows = selectedRowsFromGlobalBlock(block, { unique: true });
+  const entrees = rows.filter((row) => selectionRole(row) === "entree");
+  const sides = rows.filter((row) => selectionRole(row) === "side");
+  const lines = [];
+  entrees.slice(0, 4).forEach((item) => {
+    lines.push(`${titleCase(getDisplayName(item) || getItemIdentity(item))}${dietSuffix(item)} ${getSuggestedRetailPrice(item) == null ? "" : money(getSuggestedRetailPrice(item))}`.trim());
+    if (getDescription(item)) lines.push(pptText(getDescription(item), 92));
+  });
+  if (sides.length) {
+    lines.push("Sides | 2.55");
+    sides.slice(0, 6).forEach((item) => lines.push(`${titleCase(getDisplayName(item) || getItemIdentity(item))}${getCalories(item) == null ? "" : ` ${getCalories(item)} cal`}`));
+  }
+  return lines.length ? lines : ["Selections pending"];
+}
+
+function serializeXml(doc) {
+  return new XMLSerializer().serializeToString(doc);
+}
+
+function patchDopplerTemplateSlide(xml, patcher) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(xml, "application/xml");
+  removeXmlHighlights(doc);
+  patcher(doc);
+  return serializeXml(doc);
+}
+
+function patchDopplerTemplateEntries(entries, packet) {
+  const carryover = packet.sections.find((section) => String(section.subtitle || "").includes("carryover"));
+  const current = packet.sections.find((section) => String(section.subtitle || "").includes("Wednesday"));
+  const grill = packet.sections.find((section) => section.subtitle === "Grill Fresh Five");
+  const pizza = packet.sections.find((section) => section.title === "Pizza LTOs");
+  const salad = packet.sections.find((section) => section.title === "Zane's Salad");
+  const deli = packet.sections.find((section) => section.title === "Paninoteca Deli");
+  const patch = (path, patcher) => {
+    const xml = entries.get(path);
+    if (!xml) return;
+    entries.set(path, textToBytes(patchDopplerTemplateSlide(bytesToText(xml), patcher)));
+  };
+  patch("ppt/slides/slide2.xml", (doc) => {
+    replaceTemplateTextSequence(doc, "FRESH 5: BLACKENED", templateItemLines(grill?.items?.[0]));
+  });
+  patch("ppt/slides/slide4.xml", (doc) => {
+    setShapeLines(doc, "TextBox 16", [carryover?.title || "Menu pending", carryover?.calories || "calories pending"]);
+    setShapeLines(doc, "TextBox 26", [carryover?.summary || "Selections pending."]);
+    setShapeLines(doc, "TextBox 7", templateGlobalLines(carryover?.block || {}));
+  });
+  patch("ppt/slides/slide5.xml", (doc) => {
+    setShapeLines(doc, "TextBox 16", [current?.title || "Menu pending", current?.calories || "calories pending"]);
+    setShapeLines(doc, "TextBox 26", [current?.summary || "Selections pending."]);
+    setShapeLines(doc, "TextBox 7", templateGlobalLines(current?.block || {}));
+  });
+  patch("ppt/slides/slide6.xml", (doc) => {
+    const pizzaItems = pizza?.items || [];
+    replaceTemplateTextSequence(doc, "GARDEN PESTO", templateItemLines(pizzaItems[0]));
+    replaceTemplateTextSequence(doc, "CAPRESE FLATBREAD", templateItemLines(pizzaItems[1]));
+  });
+  patch("ppt/slides/slide8.xml", (doc) => {
+    replaceTemplateTextSequence(doc, "FRESH 5: MAPLE", templateItemLines(salad?.items?.[0]));
+  });
+  patch("ppt/slides/slide9.xml", (doc) => {
+    replaceTemplateTextSequence(doc, "FRESH 5 : CHICKEN", templateItemLines(salad?.items?.[0]));
+    replaceTemplateTextSequence(doc, "FRESH 5: GRILLED", templateItemLines(salad?.items?.[1]));
+  });
+  patch("ppt/slides/slide10.xml", (doc) => {
+    setShapeLines(doc, "TextBox 9", templateItemLines(deli?.items?.[0]));
+  });
+  return entries;
+}
+
+async function downloadDopplerTemplatePowerPoint(packet) {
+  const response = await fetch("/templates/Doppler%20Cafe%20All%20Menus.pptx");
+  if (!response.ok) throw new Error("Could not load Doppler PowerPoint template.");
+  const entries = await unzipPptxTemplate(await response.arrayBuffer());
+  patchDopplerTemplateEntries(entries, packet);
+  const files = Array.from(entries.entries()).map(([name, bytes]) => [name, bytes]);
+  const blob = createZipBlob(files);
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `Doppler-template-menu-${String(packet.week || "week").replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "")}.pptx`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function dopplerPptxBlob(packet) {
+  const contentSlides = (packet.sections || []).filter((section) => section.title !== "<Use 8.5x11 from Marketing>");
+  const slides = [pptCoverSlide(packet), ...contentSlides.map(pptSectionSlide)];
+  const files = [
+    ["[Content_Types].xml", pptContentTypes(slides.length)],
+    ["_rels/.rels", pptRootRels()],
+    ["docProps/core.xml", pptCoreXml()],
+    ["docProps/app.xml", pptAppXml(slides.length)],
+    ["ppt/presentation.xml", pptPresentationXml(slides.length)],
+    ["ppt/_rels/presentation.xml.rels", pptPresentationRels(slides.length)],
+    ...slides.map((slide, index) => [`ppt/slides/slide${index + 1}.xml`, slide]),
+  ];
+  return createZipBlob(files);
+}
+
+function downloadDopplerMenuPowerPoint(packet) {
+  const blob = dopplerPptxBlob(packet);
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `Doppler-menu-packet-${String(packet.week || "week").replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "")}.pptx`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 function SubmittedRotationRecap({ cafe, week, rotation, rows, onEdit }) {
-  const menuLabel = submittedRecapMenuLabel(cafe, rotation, rows);
+  const menuLabel = rotationMenuLabel(rotation, cafe, week);
   const totalSelections = rows.reduce((sum, row) => sum + row.selectedCount, 0);
   return (
-    <section className="mt-5 rounded-[1.5rem] border-2 border-emerald-200 bg-emerald-50/60 p-4 shadow-sm sm:rounded-[2rem] sm:p-5">
+    <section className="mt-5 rounded-[2rem] border-2 border-emerald-200 bg-emerald-50/60 p-5 shadow-sm">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.18em] font-black text-emerald-700">Submitted Menu Recap</p>
-          <h3 className="mt-1 text-2xl font-black text-slate-950 sm:text-3xl">{cafe}</h3>
+          <h3 className="mt-1 text-3xl font-black text-slate-950">{cafe}</h3>
           <p className="mt-1 text-sm font-semibold text-slate-600">{week}</p>
-          <p className="mt-2 text-lg font-black text-slate-950">{menuLabel}</p>
+          <p className="mt-2 text-lg font-black text-slate-950">{menuLabel || "No Global menu saved"}</p>
           <p className="mt-1 text-sm font-semibold text-slate-600">{totalSelections} saved selection{totalSelections === 1 ? "" : "s"}{rotation.submittedAt ? ` - submitted ${rotation.submittedAt}` : ""}</p>
         </div>
         <label className="inline-flex items-center gap-3 self-start rounded-2xl border border-emerald-300 bg-white px-4 py-3 text-sm font-black text-emerald-900 shadow-sm">
@@ -2593,7 +2859,7 @@ function SubmittedRotationRecap({ cafe, week, rotation, rows, onEdit }) {
       </div>
       <div className="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-2">
         {rows.map((row) => (
-          <div key={row.key} className="rounded-2xl border border-white bg-white/90 p-3 shadow-sm sm:rounded-3xl sm:p-4">
+          <div key={row.key} className="rounded-3xl border border-white bg-white/90 p-4 shadow-sm">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-xs uppercase tracking-[0.16em] font-black text-slate-400">{row.label}</p>
@@ -2625,17 +2891,6 @@ function SubmittedRotationRecap({ cafe, week, rotation, rows, onEdit }) {
         ))}
       </div>
     </section>
-  );
-}
-
-function ItemWriteInField({ value, onChange, placeholder = "Type item if not listed" }) {
-  return (
-    <input
-      value={value || ""}
-      onChange={(event) => onChange(event.target.value)}
-      placeholder={placeholder}
-      className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
-    />
   );
 }
 
@@ -2738,8 +2993,10 @@ function StationCostOverview({ rows }) {
 }
 
 
-function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, setPreview, applyPreview, week, printRows, rotation, requirements, submitIssues = [], canSubmit, onSaveDraft, onSubmit, onGenerateMenu, generatingMenu = false }) {
+function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, setPreview, applyPreview, week, previousWeek, previousRotation, printRows, rotation, requirements, submitIssues = [], canSubmit, onSaveDraft, onSubmit }) {
   const [showPrintPreview, setShowPrintPreview] = useState(false);
+  const [showMenuPacket, setShowMenuPacket] = useState(false);
+  const menuPacket = cafe === "Doppler" ? buildDopplerMenuPacket({ rotation, previousRotation, week, previousWeek }) : null;
   const copiedSummary = copiedRotation?.menu
     ? `${copiedRotation.menu}${copiedRotation.station ? ` • ${copiedRotation.station}` : ""}`
     : "No copy loaded";
@@ -2751,6 +3008,15 @@ function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, s
     event.target.value = "";
   };
   const submitHelp = submitIssues.length ? submitIssues.join(" ") : "Ready to submit.";
+  const generateMenu = async () => {
+    if (!menuPacket) return;
+    try {
+      await downloadDopplerTemplatePowerPoint(menuPacket);
+      setShowMenuPacket(true);
+    } catch (error) {
+      window.alert(error?.message || "Doppler PowerPoint generation failed.");
+    }
+  };
 
   return (
     <div className="mb-5 rounded-[1.75rem] border border-slate-300 bg-slate-950 p-3 shadow-lg print:hidden">
@@ -2769,8 +3035,8 @@ function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, s
             <RemoteButton icon={Clipboard} label="Copy" onClick={onCopy} />
             <RemoteButton icon={ChevronDown} label="Load" onClick={onLoad} disabled={!copiedRotation} />
             <RemoteUploadButton onChange={handleUpload} />
+            <RemoteButton icon={FileText} label="Generate Menu" onClick={generateMenu} blocked={cafe !== "Doppler"} title={cafe === "Doppler" ? "Download a Doppler PowerPoint from the live template." : "Menu generation is being built first for Doppler."} tone="light" />
             <RemoteButton icon={Printer} label={showPrintPreview ? "Hide View" : "View/Print"} onClick={() => setShowPrintPreview((value) => !value)} tone="light" />
-            {onGenerateMenu && <RemoteButton icon={FileDown} label={generatingMenu ? "Making Menu" : "Make Menu"} onClick={onGenerateMenu} disabled={generatingMenu} tone="light" />}
             <RemoteButton icon={Save} label="Save Draft" onClick={onSaveDraft} tone="light" />
             <RemoteButton icon={Send} label="Submit" onClick={onSubmit} blocked={!canSubmit} title={submitHelp} tone="go" />
           </div>
@@ -2795,6 +3061,7 @@ function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, s
       </div>
 
       {showPrintPreview && <WeeklyPrintPreview week={week} cafe={cafe} rows={printRows || []} />}
+      {showMenuPacket && menuPacket && <DopplerMenuPacketModal packet={menuPacket} onClose={() => setShowMenuPacket(false)} />}
 
       {preview && (
         <div className="mt-5 rounded-3xl border border-amber-200 bg-amber-50 p-5">
@@ -2954,6 +3221,110 @@ function WeeklyPrintPreview({ week, cafe, rows }) {
   );
 }
 
+function openMenuPacketPrintWindow() {
+  const printContent = document.getElementById("doppler-generated-menu-packet")?.innerHTML;
+  if (!printContent) return;
+  const printWindow = window.open("", "_blank", "width=980,height=760");
+  if (!printWindow) return;
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Doppler Generated Menu Packet</title>
+        <style>
+          body { font-family: Arial, sans-serif; color: #0f172a; margin: 24px; background: #f8fafc; }
+          .menu-page { page-break-inside: avoid; background: #fff; border: 1px solid #dbe3ea; border-radius: 18px; padding: 24px; margin-bottom: 18px; }
+          .eyebrow { color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; font-weight: 800; }
+          .menu-title { font-size: 28px; font-weight: 900; margin: 8px 0; }
+          .calories { display: inline-block; background: #fff; border: 1px solid #cbd5e1; border-radius: 999px; padding: 6px 12px; font-weight: 800; color: #334155; }
+          .summary { background: #fff; border: 1px solid #e2e8f0; border-left: 5px solid #b99b55; border-radius: 14px; padding: 12px; color: #334155; font-weight: 700; }
+          .entree { background: #fff; border: 1px solid #e2e8f0; border-left: 5px solid #0f172a; border-radius: 14px; padding: 12px; margin-top: 8px; }
+          .side { display: inline-block; border: 1px solid #e2e8f0; border-radius: 999px; padding: 6px 10px; margin: 4px; font-weight: 700; }
+          @media print { body { background: #fff; margin: 12px; } button { display: none; } }
+        </style>
+      </head>
+      <body>${printContent}</body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => printWindow.print(), 250);
+}
+
+function DopplerMenuPacketModal({ packet, onClose }) {
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/75 p-4 print:hidden" role="dialog" aria-modal="true" aria-labelledby="doppler-menu-title">
+      <div className="mx-auto max-w-5xl rounded-[2rem] border border-slate-200 bg-white p-5 shadow-2xl">
+        <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">Generated Menu Preview</p>
+            <h3 id="doppler-menu-title" className="mt-1 text-3xl font-black text-slate-950">Doppler Menu Packet</h3>
+            <p className="mt-1 text-sm font-semibold text-slate-500">{packet.week}</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => downloadDopplerTemplatePowerPoint(packet).catch((error) => window.alert(error?.message || "Doppler PowerPoint generation failed."))} className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-black text-emerald-900 hover:bg-emerald-100">Download PowerPoint</button>
+            <button type="button" onClick={openMenuPacketPrintWindow} className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white hover:bg-slate-800">Print Preview</button>
+            <button type="button" onClick={onClose} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-700 hover:bg-slate-50"><X size={18} /> Close</button>
+          </div>
+        </div>
+        <div id="doppler-generated-menu-packet" className="mt-5 space-y-4">
+          {packet.sections.map((section, index) => <DopplerGeneratedMenuPage key={`${section.page}-${section.title}-${index}`} section={section} />)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DopplerGeneratedMenuPage({ section }) {
+  const entrees = (section.items || []).filter((row) => selectionRole(row) === "entree");
+  const sides = (section.items || []).filter((row) => selectionRole(row) === "side");
+  const otherItems = (section.items || []).filter((row) => !["entree", "side"].includes(selectionRole(row)));
+  const hasGlobalBlock = Boolean(section.block);
+  return (
+    <section className="menu-page rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5 shadow-sm">
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div>
+          <p className="eyebrow text-xs font-black uppercase tracking-[0.18em] text-slate-500">Page {section.page}</p>
+          <h4 className="menu-title mt-2 text-2xl font-black text-slate-950">{section.title}</h4>
+          <p className="mt-2 text-sm font-bold text-slate-500">{section.subtitle}</p>
+        </div>
+        {section.calories && <span className="calories self-start rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-black text-slate-700">{section.calories}</span>}
+      </div>
+      {section.summary && <div className="summary mt-4 rounded-2xl border border-slate-200 border-l-[5px] border-l-[#b99b55] bg-white p-4 text-sm font-bold text-slate-700">{section.summary}</div>}
+      {section.note && <p className="mt-4 rounded-2xl border border-slate-200 bg-white p-3 text-sm font-bold text-slate-500">{section.note}</p>}
+      {section.items?.length ? (
+        <div className="mt-4 space-y-3">
+          {entrees.map((item) => (
+            <div key={`entree-${getItemIdentity(item)}`} className="entree rounded-2xl border border-slate-200 border-l-[5px] border-l-slate-950 bg-white p-4">
+              <p className="text-lg font-black text-slate-950">{titleCase(getDisplayName(item) || getItemIdentity(item))}{dietSuffix(item)}</p>
+              {getDescription(item) && <p className="mt-1 text-sm font-semibold leading-6 text-slate-600">{getDescription(item)}</p>}
+            </div>
+          ))}
+          {sides.length > 0 && (
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Sides 2.55</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {sides.map((item) => (
+                  <span key={`side-${getItemIdentity(item)}`} className="side rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-sm font-black text-slate-800">
+                    {titleCase(getDisplayName(item) || getItemIdentity(item))}{dietSuffix(item)}{getCalories(item) == null ? "" : ` - ${getCalories(item)} cal`}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {otherItems.map((item) => (
+            <div key={`other-${getItemIdentity(item)}`} className="rounded-2xl border border-slate-200 bg-white p-3">
+              <p className="font-black text-slate-900">{titleCase(getDisplayName(item) || getItemIdentity(item))}{dietSuffix(item)}</p>
+              {getDescription(item) && <p className="mt-1 text-sm font-semibold text-slate-500">{getDescription(item)}</p>}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-black text-amber-900">Selection pending.</p>
+      )}
+    </section>
+  );
+}
+
 function ExportCafeCard({ row }) {
   const items = selectedItems(row);
   const trueCostRange = selectedTrueCostRange(items);
@@ -2996,8 +3367,6 @@ function ExportStationBlock({ stationKey, cafe, row }) {
   if (stationKey === "grill") return <ExportLineCard title={stationLabel(cafe, stationKey)} values={[row.grill?.regionalSpecial, row.grill?.locationSpotlight, row.grill?.promoActive ? row.grill?.promoItem : ""]} />;
   if (stationKey === "carvery") return <ExportLineCard title={stationLabel(cafe, stationKey)} values={Object.values(row.carvery || {})} />;
   if (stationKey === "wok") return <ExportLineCard title={stationLabel(cafe, stationKey)} values={[...(row.ltos?.wokEntrees || []), ...(row.ltos?.wokSides || []), ...(row.ltos?.wokBase || []), ...(row.ltos?.wokSubRecipes || [])]} />;
-  if (stationKey === "lotusWp") return <ExportLineCard title={stationLabel(cafe, stationKey)} values={[...(row.ltos?.lotusEntrees || []), ...(row.ltos?.lotusSides || [])]} />;
-  if (["streetBeets", "commissaryEverest", "stationTakeover"].includes(stationKey)) return <ExportLineCard title={stationLabel(cafe, stationKey)} values={customStationRows(row, stationKey).map((item) => getDisplayName(item))} />;
   return <ExportLineCard title={stationLabel(cafe, stationKey)} values={row.ltos?.[stationKey] || []} />;
 }
 
@@ -3084,87 +3453,6 @@ function WeekAtGlanceUpload({ cafe, preview, setPreview, applyPreview }) {
   );
 }
 
-function BingoCustomerMenuPanel({ week, rotation, status, onGenerate, generating = false }) {
-  const grillItem = rotation.grill?.regionalSpecial || rotation.grill?.locationSpotlight || "";
-  const grillFreshFive = rotation.ltos?.grillFreshFive?.[0] || "";
-  const rows = [
-    {
-      target: "Grill Location Spotlight edit area",
-      item: grillItem,
-      slot: 1,
-      notes: "PowerPoint page 3. Replace highlighted text only, keep text box, font, size, and formatting, then remove highlight."
-    },
-    {
-      target: "Grill Fresh Five edit area",
-      item: grillFreshFive,
-      slot: 2,
-      notes: "PowerPoint page 3. Replace highlighted text only, keep text box, font, size, and formatting, then remove highlight."
-    }
-  ].map((row) => {
-    const itemRow = row.item ? selectedRowForName(row.item) : null;
-    return {
-      ...row,
-      title: itemRow ? getDisplayName(itemRow) : row.item,
-      calories: itemRow ? getCalories(itemRow) : "",
-      description: itemRow ? getDescription(itemRow) : "",
-      price: itemRow ? customerMenuPrice(itemRow, row.slot === 2 ? "5.00" : "11.75") : ""
-    };
-  });
-  const missing = bingoCustomerMenuMissing(buildBingoCustomerMenuPayload(rotation, week));
-  return (
-    <div className="mb-5 rounded-3xl border-2 border-emerald-200 bg-emerald-50 p-5 shadow-sm">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <p className="text-xs uppercase tracking-[0.18em] text-emerald-700 font-black">Bingo Customer Menu Generator</p>
-          <h3 className="mt-1 text-2xl font-black text-slate-950">Grill PowerPoint Page 3</h3>
-          <p className="mt-1 text-sm font-semibold text-emerald-900">Make Menu downloads the Bingo PowerPoint with the selected Grill Location Spotlight and Grill Fresh $5 written into the highlighted areas.</p>
-        </div>
-        <div className="flex flex-col gap-2 sm:items-end">
-          <span className="rounded-full border border-emerald-300 bg-white px-3 py-1 text-xs font-black text-emerald-800">{week}</span>
-          <button
-            type="button"
-            onClick={onGenerate}
-            disabled={generating}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-300 bg-white px-4 py-2 text-sm font-black text-emerald-900 shadow-sm transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <FileDown size={16} />
-            {generating ? "Making Menu" : "Make Menu"}
-          </button>
-        </div>
-      </div>
-      {status?.message && (
-        <div className={`mt-4 rounded-2xl border p-3 text-sm font-bold ${toneForState(status.state)}`}>
-          {status.message}
-        </div>
-      )}
-      {missing.length > 0 && (
-        <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-900">
-          Missing before menu can be made: {missing.join(", ")}.
-        </div>
-      )}
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-        {rows.map((row) => (
-          <div key={row.target} className={`rounded-2xl border p-4 ${row.item ? "border-emerald-300 bg-white" : "border-amber-200 bg-amber-50"}`}>
-            <p className="text-xs uppercase tracking-[0.16em] font-black text-slate-500">{row.target}</p>
-            <p className="mt-2 text-lg font-black text-slate-950">{row.title || "Select item before generating"}</p>
-            <div className="mt-3 space-y-1 text-xs font-semibold text-slate-600">
-              <p>Title: {row.title || "missing"}</p>
-              <p>Calories: {row.calories || "missing"}</p>
-              <p>Price: {row.price || "missing"}</p>
-              <p>Description: {row.description || "missing"}</p>
-              <p>Menu Block Type: PowerPoint Page 3</p>
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="mt-4 rounded-2xl border border-emerald-200 bg-white p-4 text-sm text-slate-700">
-        <p className="font-black text-slate-950">PowerPoint output</p>
-        <p className="mt-1">The server edits the Bingo grill template directly, keeps the original table font size, writes title, calories, price, and description, and removes the highlighted callout from those areas in the downloaded deck.</p>
-      </div>
-    </div>
-  );
-}
-
 function PreviewBox({ title, items }) {
   return <div className="rounded-2xl bg-white border border-amber-200 p-4"><p className="font-bold text-amber-950">{title}</p><ul className="mt-2 space-y-1 text-amber-900">{items.map((item) => <li key={item}>• {titleCase(item)}</li>)}</ul></div>;
 }
@@ -3192,25 +3480,19 @@ function StationPills({ cafe, stations }) {
 }
 
 function CafeStationSection(props) {
-  const { stationKey, cafe, week, rotation, previousRotation, previousWeek, menuOptions, stationOptions, categorized, updateRotation, updateSlot, updateGrill, updateLto, updateCarvery, updateCustomStation, updateCustomStationArray, summary, selectedItems } = props;
+  const { stationKey, cafe, week, rotation, previousRotation, previousWeek, menuOptions, stationOptions, categorized, updateRotation, updateSlot, updateGrill, updateLto, updateCarvery, summary, selectedItems } = props;
   let content = null;
   if (stationKey === "global") content = <GlobalSection cafe={cafe} week={week} rotation={rotation} previousRotation={previousRotation} previousWeek={previousWeek} menuOptions={menuOptions} stationOptions={stationOptions} categorized={categorized} updateRotation={updateRotation} updateSlot={updateSlot} summary={summary} selectedItems={selectedItems} />;
   if (stationKey === "grill") content = <GrillSection cafe={cafe} rotation={rotation} updateGrill={updateGrill} />;
-  if (stationKey === "salad") content = <SimpleLTOSection stationKey="salad" title="Salad LTOs" slots={Array.from({ length: stationSlots(cafe, "salad") }, (_, i) => `Salad LTO ${i + 1}`)} values={rotation.ltos?.salad || EMPTY_ROTATION.ltos.salad} uploaded={rotation.uploadedLtos?.salad || []} updateLto={updateLto} complete={stationComplete(rotation, "salad", cafe)} />;
-  if (stationKey === "pizza") content = <SimpleLTOSection stationKey="pizza" title="Pizza / Flatbread LTOs" slots={Array.from({ length: stationSlots(cafe, "pizza") }, (_, i) => `Pizza/Flatbread LTO ${i + 1}`)} values={rotation.ltos?.pizza || EMPTY_ROTATION.ltos.pizza} uploaded={rotation.uploadedLtos?.pizza || []} updateLto={updateLto} complete={stationComplete(rotation, "pizza", cafe)} />;
-  if (stationKey === "deli") content = <SimpleLTOSection stationKey="deli" title="Deli LTOs" slots={Array.from({ length: stationSlots(cafe, "deli") }, (_, i) => `Deli LTO ${i + 1}`)} values={rotation.ltos?.deli || EMPTY_ROTATION.ltos.deli} uploaded={rotation.uploadedLtos?.deli || []} updateLto={updateLto} complete={stationComplete(rotation, "deli", cafe)} />;
-  if (stationKey === "fishMarket") content = <SimpleLTOSection stationKey="fishMarket" title="Fish Market LTO" slots={Array.from({ length: stationSlots(cafe, "fishMarket") }, (_, i) => `Fish Market LTO ${i + 1}`)} values={rotation.ltos?.fishMarket || EMPTY_ROTATION.ltos.fishMarket} uploaded={rotation.uploadedLtos?.fishMarket || []} updateLto={updateLto} complete={stationComplete(rotation, "fishMarket", cafe)} />;
+  if (stationKey === "salad") content = <SimpleLTOSection stationKey="salad" title={cafe === "Doppler" ? "Zane's Salad" : "Salad LTOs"} slots={Array.from({ length: stationSlots(cafe, "salad") }, (_, i) => cafe === "Doppler" ? `Fresh Five Salad ${i + 1}` : `Salad LTO ${i + 1}`)} values={rotation.ltos?.salad || EMPTY_ROTATION.ltos.salad} uploaded={rotation.uploadedLtos?.salad || []} updateLto={updateLto} complete={stationComplete(rotation, "salad")} poolOverride={cafe === "Doppler" ? stationPool("salad") : null} />;
+  if (stationKey === "pizza") content = <SimpleLTOSection stationKey="pizza" title={cafe === "Doppler" ? "Pizza LTOs" : "Pizza / Flatbread LTOs"} slots={cafe === "Doppler" ? ["Pizza LTO 1", "Pizza LTO 2"] : Array.from({ length: stationSlots(cafe, "pizza") }, (_, i) => `Pizza/Flatbread LTO ${i + 1}`)} values={rotation.ltos?.pizza || EMPTY_ROTATION.ltos.pizza} uploaded={rotation.uploadedLtos?.pizza || []} updateLto={updateLto} complete={stationComplete(rotation, "pizza")} slotPoolOverrides={cafe === "Doppler" ? [stationPool("pizza"), stationPool("pizza")] : null} optional={cafe === "Doppler"} />;
+  if (stationKey === "deli") content = <SimpleLTOSection stationKey="deli" title={cafe === "Doppler" ? "Paninoteca Deli" : "Deli LTOs"} slots={Array.from({ length: stationSlots(cafe, "deli") }, (_, i) => cafe === "Doppler" ? "Fresh Five Deli Selection" : `Deli LTO ${i + 1}`)} values={rotation.ltos?.deli || EMPTY_ROTATION.ltos.deli} uploaded={rotation.uploadedLtos?.deli || []} updateLto={updateLto} complete={stationComplete(rotation, "deli")} poolOverride={cafe === "Doppler" ? stationPool("freshFive") : null} />;
+  if (stationKey === "fishMarket") content = <SimpleLTOSection stationKey="fishMarket" title="Fish Market LTO" slots={Array.from({ length: stationSlots(cafe, "fishMarket") }, (_, i) => `Fish Market LTO ${i + 1}`)} values={rotation.ltos?.fishMarket || EMPTY_ROTATION.ltos.fishMarket} uploaded={rotation.uploadedLtos?.fishMarket || []} updateLto={updateLto} complete={stationComplete(rotation, "fishMarket")} />;
   if (stationKey === "noodles") content = <SecondaryGlobalSection blockId="noodles" title="Noodle Station" eyebrow="Secondary Global" rotation={rotation} menuOptions={menuOptions} updateRotation={updateRotation} />;
-  if (stationKey === "freshFive") content = <SimpleLTOSection stationKey="freshFive" title="Fresh $5" slots={Array.from({ length: stationSlots(cafe, "freshFive") }, (_, i) => `Fresh $5 Option ${i + 1}`)} values={rotation.ltos?.freshFive || EMPTY_ROTATION.ltos.freshFive} uploaded={rotation.uploadedLtos?.freshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "freshFive", cafe)} />;
-  if (stationKey === "grillFreshFive") content = <SimpleLTOSection stationKey="grillFreshFive" title="Grill Fresh $5" slots={["Grill Fresh $5"]} values={rotation.ltos?.grillFreshFive || EMPTY_ROTATION.ltos.grillFreshFive} uploaded={rotation.uploadedLtos?.grillFreshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "grillFreshFive", cafe)} />;
-  if (stationKey === "saladFreshFive") content = <SimpleLTOSection stationKey="saladFreshFive" title="Salad Fresh $5" slots={["Salad Fresh $5"]} values={rotation.ltos?.saladFreshFive || EMPTY_ROTATION.ltos.saladFreshFive} uploaded={rotation.uploadedLtos?.saladFreshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "saladFreshFive", cafe)} />;
-  if (stationKey === "soup") content = <SimpleLTOSection stationKey="soup" title="Soup LTOs" slots={Array.from({ length: stationSlots(cafe, "soup") }, (_, i) => `Soup ${i + 1}`)} values={rotation.ltos?.soup || EMPTY_ROTATION.ltos.soup} uploaded={rotation.uploadedLtos?.soup || []} updateLto={updateLto} complete={stationComplete(rotation, "soup", cafe)} />;
+  if (stationKey === "freshFive") content = <SimpleLTOSection stationKey="freshFive" title="Fresh $5" slots={Array.from({ length: stationSlots(cafe, "freshFive") }, (_, i) => `Fresh $5 Option ${i + 1}`)} values={rotation.ltos?.freshFive || EMPTY_ROTATION.ltos.freshFive} uploaded={rotation.uploadedLtos?.freshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "freshFive")} />;
+  if (stationKey === "soup") content = <SimpleLTOSection stationKey="soup" title="Soup LTOs" slots={Array.from({ length: stationSlots(cafe, "soup") }, (_, i) => `Soup ${i + 1}`)} values={rotation.ltos?.soup || EMPTY_ROTATION.ltos.soup} uploaded={rotation.uploadedLtos?.soup || []} updateLto={updateLto} complete={stationComplete(rotation, "soup")} />;
   if (stationKey === "wok") content = <WokSection rotation={rotation} updateLto={updateLto} />;
   if (stationKey === "carvery") content = <CarverySection rotation={rotation} updateCarvery={updateCarvery} />;
-  if (stationKey === "streetBeets") content = <StreetBeetsSection rotation={rotation} updateCustomStationArray={updateCustomStationArray} />;
-  if (stationKey === "commissaryEverest") content = <CommissaryEverestSection rotation={rotation} updateCustomStation={updateCustomStation} updateCustomStationArray={updateCustomStationArray} />;
-  if (stationKey === "lotusWp") content = <LotusWpSection rotation={rotation} updateLto={updateLto} />;
-  if (stationKey === "stationTakeover") content = <StationTakeoverSection rotation={rotation} updateCustomStation={updateCustomStation} updateCustomStationArray={updateCustomStationArray} />;
   if (!content) return null;
   return <div id={stationAnchorId(stationKey)} className="scroll-mt-28">{content}</div>;
 }
@@ -3223,7 +3505,6 @@ function GlobalSection({ cafe, week, rotation, previousRotation, previousWeek, m
   const menuStationOptions = subConceptOptionsForMenu(rotation.menu);
   const menuCategorized = categorize(globalMenuRows(rotation.menu, rotation.station));
   const carryover = carryoverGlobalBlock(previousRotation);
-  const slotConfig = globalSlotConfig(cafe);
 
   const selectMenu = (menu) => {
     updateRotation({
@@ -3318,7 +3599,6 @@ function GlobalSection({ cafe, week, rotation, previousRotation, previousWeek, m
             <DayToggleGroup title="Promo Days" values={promo.days || []} onToggle={(day) => updatePromo({ days: updateArrayToggle(promo.days || [], day) })} tone="purple" />
             <DayToggleGroup title="Return-To-Cycle Days" values={promo.returnDays || []} onToggle={(day) => updatePromo({ returnDays: updateArrayToggle(promo.returnDays || [], day) })} tone="amber" />
           </div>
-          <PromotionReturnControls promo={promo} updatePromo={updatePromo} menuOptions={menuOptions} currentMenu={rotation.menu} />
         </div>
       )}
 
@@ -3342,10 +3622,10 @@ function GlobalSection({ cafe, week, rotation, previousRotation, previousWeek, m
       </div>
       {rotation.menu && <LiveAnalytics summary={summary} selectedItems={globalSelectedRows(rotation)} />}
       <div className="mt-5 grid grid-cols-1 xl:grid-cols-4 gap-5">
-        <PickerGroup title="Entrees" limit={`${slotConfig.entreeSlots} slots; ${slotConfig.entreeRequired} required`} items={menuCategorized.entrees} values={sizedValues(rotation.entrees, slotConfig.entreeSlots)} onChange={(index, value) => updateSlot("entrees", index, value)} />
-        <PickerGroup title="Sides" limit={`${slotConfig.sideSlots} slots; ${slotConfig.sideRequired} required`} items={menuCategorized.sides} values={sizedValues(rotation.sides, slotConfig.sideSlots)} onChange={(index, value) => updateSlot("sides", index, value)} />
-        <PickerGroup title="Sub Recipes" limit={`up to ${slotConfig.subRecipeSlots}`} items={menuCategorized.subRecipes} values={sizedValues(rotation.subRecipes, slotConfig.subRecipeSlots)} onChange={(index, value) => updateSlot("subRecipes", index, value)} />
-        <PickerGroup title="Extensions" limit={`up to ${slotConfig.extensionSlots}`} items={menuCategorized.extensions} values={sizedValues(rotation.extensions, slotConfig.extensionSlots)} onChange={(index, value) => updateSlot("extensions", index, value)} />
+        <PickerGroup title="Entrees" limit="up to 3" items={menuCategorized.entrees} values={rotation.entrees || ["", "", ""]} onChange={(index, value) => updateSlot("entrees", index, value)} />
+        <PickerGroup title="Sides" limit="up to 4" items={menuCategorized.sides} values={rotation.sides || ["", "", "", ""]} onChange={(index, value) => updateSlot("sides", index, value)} />
+        <PickerGroup title="Sub Recipes" limit="up to 4" items={menuCategorized.subRecipes} values={rotation.subRecipes || ["", "", "", ""]} onChange={(index, value) => updateSlot("subRecipes", index, value)} />
+        <PickerGroup title="Extensions" limit="up to 2" items={menuCategorized.extensions} values={rotation.extensions || ["", ""]} onChange={(index, value) => updateSlot("extensions", index, value)} />
       </div>
       <StationSelectedList title="Items Description" items={globalSelectedRows(rotation, { unique: true })} complete={stationComplete(rotation, "global")} />
     </CollapsibleStation>
@@ -3430,7 +3710,6 @@ function NitroGlobalSection({ rotation, menuOptions, updateRotation, promo, upda
             <DayToggleGroup title="Promo Days" values={promo.days || []} onToggle={(day) => updatePromo({ days: updateArrayToggle(promo.days || [], day) })} tone="purple" />
             <DayToggleGroup title="Return-To-Cycle Days" values={promo.returnDays || []} onToggle={(day) => updatePromo({ returnDays: updateArrayToggle(promo.returnDays || [], day) })} tone="amber" />
           </div>
-          <PromotionReturnControls promo={promo} updatePromo={updatePromo} menuOptions={menuOptions} currentMenu={rotation.menu} />
         </div>
       )}
 
@@ -3540,7 +3819,6 @@ function ReInventGlobalSection({ cafe, week, rotation, previousRotation, previou
             <DayToggleGroup title="Promo Days" values={promo.days || []} onToggle={(day) => updatePromo({ days: updateArrayToggle(promo.days || [], day) })} tone="purple" />
             <DayToggleGroup title="Return-To-Cycle Days" values={promo.returnDays || []} onToggle={(day) => updatePromo({ returnDays: updateArrayToggle(promo.returnDays || [], day) })} tone="amber" />
           </div>
-          <PromotionReturnControls promo={promo} updatePromo={updatePromo} menuOptions={menuOptions} currentMenu={rotation.menu} />
         </div>
       )}
 
@@ -3605,7 +3883,7 @@ function ReInventGlobalSection({ cafe, week, rotation, previousRotation, previou
           );
         })}
       </div>
-      <StationSelectedList title="Items Description" items={globalSelectedRows(rotation, { unique: true })} complete={stationComplete(rotation, "global", cafe, week)} />
+      <StationSelectedList title="Items Description" items={globalSelectedRowsForCafe(rotation, cafe, { unique: true, week }, week)} complete={stationComplete(rotation, "global", cafe, week)} />
     </CollapsibleStation>
   );
 }
@@ -3703,44 +3981,7 @@ function DayToggleGroup({ title, values = [], onToggle, tone = "sky" }) {
   );
 }
 
-function PromotionReturnControls({ promo, updatePromo, menuOptions = [], currentMenu = "" }) {
-  const weekdayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-  const short = { Monday: "M", Tuesday: "Tu", Wednesday: "W", Thursday: "Th", Friday: "F" };
-  const promoDays = new Set(promo.days || []);
-  const returnDays = new Set(promo.returnDays || []);
-  const returnMenu = promo.returnMode === "new" ? (promo.returnMenu || "") : (currentMenu || "Monday's cycle");
-  const chips = weekdayNames.map((day) => {
-    if (promoDays.has(day)) return `${short[day]}: Promotion ${promo.name || ""}`.trim();
-    if (returnDays.has(day)) return `${short[day]}: ${returnMenu || "Return menu needed"}`;
-    return `${short[day]}: ${currentMenu || "Cycle menu"}`;
-  });
-  return (
-    <div className="mt-4 rounded-2xl border border-purple-100 bg-white/80 p-4">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <p className="text-sm font-black text-purple-950">Return-to-cycle coverage</p>
-          <p className="mt-1 text-xs font-semibold text-purple-800">Choose whether return days use Monday's same cycle or a new menu for the rest of the week.</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={() => updatePromo({ returnMode: "same", returnMenu: "" })} className={`rounded-full border px-3 py-1 text-xs font-black ${promo.returnMode === "new" ? "border-slate-200 bg-white text-slate-600" : "border-purple-500 bg-purple-600 text-white"}`}>Same cycle</button>
-          <button type="button" onClick={() => updatePromo({ returnMode: "new" })} className={`rounded-full border px-3 py-1 text-xs font-black ${promo.returnMode === "new" ? "border-purple-500 bg-purple-600 text-white" : "border-slate-200 bg-white text-slate-600"}`}>New menu</button>
-        </div>
-      </div>
-      {promo.returnMode === "new" && (
-        <select value={promo.returnMenu || ""} onChange={(event) => updatePromo({ returnMenu: event.target.value })} className="mt-3 w-full rounded-xl border border-purple-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-100">
-          <option value="">Select return menu</option>
-          {menuOptions.map((menu) => <option key={menu} value={menu}>{menu}</option>)}
-        </select>
-      )}
-      <div className="mt-3 flex flex-wrap gap-2">
-        {chips.map((chip) => <span key={chip} className="rounded-full border border-purple-100 bg-purple-50 px-3 py-1 text-xs font-bold text-purple-900">{chip}</span>)}
-      </div>
-    </div>
-  );
-}
-
-function CollapsibleStation({ title, eyebrow, complete, children, defaultOpen = true }) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
+function CollapsibleStation({ title, eyebrow, complete, children }) {
   return (
     <div className={`mt-5 rounded-lg border-2 p-5 shadow-md ${complete ? "border-emerald-300 bg-emerald-50/20" : "border-slate-300 bg-white"}`}>
       <div className="flex items-start justify-between gap-4">
@@ -3748,14 +3989,9 @@ function CollapsibleStation({ title, eyebrow, complete, children, defaultOpen = 
           <p className="text-sm uppercase tracking-[0.18em] text-slate-400">{eyebrow}</p>
           <h3 className="text-2xl font-bold mt-1">{title}</h3>
         </div>
-        <div className="flex items-center gap-2">
-          <span className={`rounded-full px-3 py-1 text-xs font-bold border ${complete ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-amber-50 border-amber-200 text-amber-800"}`}>{complete ? "complete" : "needs selection"}</span>
-          <button type="button" onClick={() => setIsOpen((value) => !value)} className="rounded-full border border-slate-200 bg-white p-2 text-slate-600 hover:bg-slate-50" aria-label={`${isOpen ? "Collapse" : "Expand"} ${title}`}>
-            {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          </button>
-        </div>
+        <span className={`rounded-full px-3 py-1 text-xs font-bold border ${complete ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-amber-50 border-amber-200 text-amber-800"}`}>{complete ? "complete" : "needs selection"}</span>
       </div>
-      {isOpen && <div className="mt-4">{children}</div>}
+      <div className="mt-4">{children}</div>
     </div>
   );
 }
@@ -3850,22 +4086,16 @@ function Mini({ title, value, sub, tone = "neutral", emphasize = false }) {
 }
 
 function PickerGroup({ title, limit, items, values, onChange }) {
-  const itemNames = new Set(items.map((row) => normalizeItemName(getItemIdentity(row))));
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex items-center justify-between gap-2"><p className="font-bold text-slate-900">{title}</p><span className="rounded-full bg-slate-100 border border-slate-200 px-3 py-1 text-xs font-bold text-slate-600">select</span></div>
       <p className="text-xs text-slate-500 mt-1 font-semibold">{limit}</p>
       <div className="mt-3 space-y-2">
         {values.map((value, index) => (
-          <div key={index}>
-            <select value={value} onChange={(e) => onChange(index, e.target.value)} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
-              <option value="">&lt;Select Item&gt;</option>
-              {value && !itemNames.has(normalizeItemName(value)) && <option value={value}>{titleCase(value)}</option>}
-              {items.map((row) => <option key={`${getItemIdentity(row)}-${index}`} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}
-              <option value="" disabled>Type item below if not listed</option>
-            </select>
-            <ItemWriteInField value={value} onChange={(nextValue) => onChange(index, nextValue)} />
-          </div>
+          <select key={index} value={value} onChange={(e) => onChange(index, e.target.value)} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
+            <option value="">&lt;Select Item&gt;</option>
+            {items.map((row) => <option key={`${getItemIdentity(row)}-${index}`} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}
+          </select>
         ))}
       </div>
     </div>
@@ -3874,13 +4104,10 @@ function PickerGroup({ title, limit, items, values, onChange }) {
 
 function GrillSection({ cafe, rotation, updateGrill }) {
   const grillItems = categorize(MENUWORKS_ITEMS.filter((row) => getMenuName(row) === "AMZ: Grill Core" || getStationName(row).toLowerCase().includes("grill"))).entrees;
-  const grillTitle = cafe === "Day 1" ? "Adelaide's" : "Core Grill Additions";
-  const options = grillItems.length ? grillItems : stationPool("carveryProtein");
-  const complete = stationComplete(rotation, "grill", cafe);
+  const grillTitle = cafe === "Doppler" ? "Salt + Char" : cafe === "Day 1" ? "Adelaide's" : "Core Grill Additions";
+  const options = cafe === "Doppler" ? stationPool("freshFive") : grillItems.length ? grillItems : stationPool("carveryProtein");
+  const complete = stationComplete(rotation, "grill");
   const promoActive = Boolean(rotation.grill?.promoActive);
-  const locationSpotlightSlots = cafe === "Bingo"
-    ? [["Location Spotlight", "regionalSpecial"]]
-    : [["Location Spotlight 1", "regionalSpecial"], ["Location Spotlight 2", "locationSpotlight"]];
   return (
     <div className={`mt-6 rounded-3xl border-2 p-5 shadow-md ${complete ? "border-emerald-300 bg-emerald-50/20" : "border-slate-300 bg-slate-50"}`}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -3888,16 +4115,23 @@ function GrillSection({ cafe, rotation, updateGrill }) {
           <p className="text-sm uppercase tracking-[0.18em] text-slate-400">Grill Station</p>
           <h3 className="text-2xl font-bold mt-1">{grillTitle}</h3>
         </div>
-        <label className={`inline-flex items-center gap-2 self-start rounded-full border px-4 py-2 text-sm font-black transition ${promoActive ? "border-emerald-300 bg-emerald-50 text-emerald-900 shadow-sm" : "border-slate-300 bg-white text-slate-700"}`}>
-          <input type="checkbox" checked={promoActive} onChange={(event) => updateGrill("promoActive", event.target.checked)} />
-          Activate Grill Promo
-        </label>
+        {cafe !== "Doppler" && (
+          <label className={`inline-flex items-center gap-2 self-start rounded-full border px-4 py-2 text-sm font-black transition ${promoActive ? "border-emerald-300 bg-emerald-50 text-emerald-900 shadow-sm" : "border-slate-300 bg-white text-slate-700"}`}>
+            <input type="checkbox" checked={promoActive} onChange={(event) => updateGrill("promoActive", event.target.checked)} />
+            Activate Grill Promo
+          </label>
+        )}
       </div>
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-        {locationSpotlightSlots.map(([label, field]) => (
-          <GrillSelect key={field} label={label} value={rotation.grill?.[field] || ""} onChange={(value) => updateGrill(field, value)} items={options} />
-        ))}
-      </div>
+      {cafe === "Doppler" ? (
+        <div className="mt-4 grid grid-cols-1 gap-4">
+          <GrillSelect label="Grill Fresh Five" value={rotation.grill?.regionalSpecial || ""} onChange={(value) => updateGrill("regionalSpecial", value)} items={options} />
+        </div>
+      ) : (
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <GrillSelect label="Regional Special" value={rotation.grill?.regionalSpecial || ""} onChange={(value) => updateGrill("regionalSpecial", value)} items={options} />
+          <GrillSelect label="Location Spotlight" value={rotation.grill?.locationSpotlight || ""} onChange={(value) => updateGrill("locationSpotlight", value)} items={options} />
+        </div>
+      )}
       {promoActive && (
         <div className="mt-4 rounded-3xl border-2 border-emerald-200 bg-emerald-50/80 p-4 shadow-sm">
           <div className="flex items-center justify-between gap-2 mb-2">
@@ -3918,42 +4152,32 @@ function GrillSection({ cafe, rotation, updateGrill }) {
 }
 
 function GrillSelect({ label, value, onChange, items }) {
-  const itemNames = new Set(items.map((row) => normalizeItemName(getItemIdentity(row))));
-  return (
-    <div className="rounded-3xl border-2 border-sky-200 bg-sky-50/80 p-4 shadow-sm">
-      <div className="flex items-center justify-between gap-2 mb-2"><label className="block text-sm font-bold text-slate-900">{label}</label><span className="rounded-full bg-white border border-sky-200 px-3 py-1 text-xs font-bold text-sky-700">choose here</span></div>
-      <select value={value} onChange={(e) => onChange(e.target.value)} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
-        <option value="">&lt;Select Item&gt;</option>
-        {value && !itemNames.has(normalizeItemName(value)) && <option value={value}>{titleCase(value)}</option>}
-        {items.map((row) => <option key={`${label}-${getItemIdentity(row)}`} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}
-        <option value="" disabled>Type item below if not listed</option>
-      </select>
-      <ItemWriteInField value={value} onChange={onChange} />
-    </div>
-  );
+  return <div className="rounded-3xl border-2 border-sky-200 bg-sky-50/80 p-4 shadow-sm"><div className="flex items-center justify-between gap-2 mb-2"><label className="block text-sm font-bold text-slate-900">{label}</label><span className="rounded-full bg-white border border-sky-200 px-3 py-1 text-xs font-bold text-sky-700">choose here</span></div><select value={value} onChange={(e) => onChange(e.target.value)} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100"><option value="">&lt;Select Item&gt;</option>{items.map((row) => <option key={`${label}-${getItemIdentity(row)}`} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}</select></div>;
 }
 
-function SimpleLTOSection({ stationKey, title, slots, values = [], uploaded = [], updateLto, complete }) {
-  const pool = stationPool(stationKey);
+function SimpleLTOSection({ stationKey, title, slots, values = [], uploaded = [], updateLto, complete, poolOverride = null, slotPoolOverrides = null, optional = false }) {
+  const pool = poolOverride || stationPool(stationKey);
   const poolNames = new Set(pool.map((row) => normalizeItemName(getItemIdentity(row))));
-  const effectiveValues = slots.map((_, index) => values[index] || uploaded[index] || "");
   return (
     <CollapsibleStation title={title} eyebrow="Station Special" complete={complete}>
+      {optional && <p className="mb-3 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-500">Optional for submission, included in generated menus when selected.</p>}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {slots.map((slot, index) => (
-          <div key={slot} className="rounded-3xl border-2 border-sky-200 bg-sky-50/80 p-4 shadow-sm">
-            <div className="flex items-center justify-between gap-2 mb-2"><label className="block text-sm font-bold text-slate-900">{slot}</label><span className="rounded-full bg-white border border-sky-200 px-3 py-1 text-xs font-bold text-sky-700">choose here</span></div>
-            <select value={effectiveValues[index]} onChange={(e) => updateLto(stationKey, index, e.target.value)} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
-              <option value="">&lt;Select Item&gt;</option>
-              {effectiveValues[index] && !poolNames.has(normalizeItemName(effectiveValues[index])) && <option value={effectiveValues[index]}>{titleCase(effectiveValues[index])}</option>}
-              {pool.map((row) => <option key={`${stationKey}-${slot}-${getItemIdentity(row)}`} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}
-              <option value="" disabled>Type item below if not listed</option>
-            </select>
-            <ItemWriteInField value={effectiveValues[index]} onChange={(nextValue) => updateLto(stationKey, index, nextValue)} />
-          </div>
-        ))}
+        {slots.map((slot, index) => {
+          const slotPool = slotPoolOverrides?.[index] || pool;
+          const slotPoolNames = new Set(slotPool.map((row) => normalizeItemName(getItemIdentity(row))));
+          return (
+            <div key={slot} className="rounded-3xl border-2 border-sky-200 bg-sky-50/80 p-4 shadow-sm">
+              <div className="flex items-center justify-between gap-2 mb-2"><label className="block text-sm font-bold text-slate-900">{slot}</label><span className="rounded-full bg-white border border-sky-200 px-3 py-1 text-xs font-bold text-sky-700">choose here</span></div>
+              <select value={values[index] || uploaded[index] || ""} onChange={(e) => updateLto(stationKey, index, e.target.value)} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
+                <option value="">&lt;Select Item&gt;</option>
+                {uploaded[index] && !slotPoolNames.has(normalizeItemName(uploaded[index])) && <option value={uploaded[index]}>{titleCase(uploaded[index])}</option>}
+                {slotPool.map((row) => <option key={`${stationKey}-${slot}-${getItemIdentity(row)}`} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}
+              </select>
+            </div>
+          );
+        })}
       </div>
-      <StationSelectedList title="Items Description" items={rowsForSelectedNames(effectiveValues, { unique: true, candidateRows: pool })} complete={complete} />
+      <StationSelectedList title="Items Description" items={ltoSelectedRows({ ltos: { [stationKey]: values }, uploadedLtos: { [stationKey]: uploaded } }, stationKey, { unique: true })} complete={complete} />
     </CollapsibleStation>
   );
 }
@@ -3986,7 +4210,7 @@ function CarverySection({ rotation, updateCarvery }) {
   ];
   return (
     <CollapsibleStation title="Carvery Rotations" eyebrow="Carvery Station" complete={stationComplete(rotation, "carvery")}>
-      <p className="text-sm text-slate-500 mb-4">Dropdowns are filtered by the report station, production area, category, and menu item notes.</p>
+      <p className="text-sm text-slate-500 mb-4">Hot and cold side dropdowns are filtered by item naming cues from the database. Ambiguous sides remain available where review may be needed.</p>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {fields.map(([field, label, options]) => (
           <div key={field} className="rounded-3xl border-2 border-sky-200 bg-sky-50/80 p-4 shadow-sm">
@@ -3995,7 +4219,6 @@ function CarverySection({ rotation, updateCarvery }) {
               <option value="">&lt;Select Item&gt;</option>
               {rotation.carvery?.[field] && !options.some((row) => normalizeItemName(getItemIdentity(row)) === normalizeItemName(rotation.carvery?.[field])) && <option value={rotation.carvery[field]}>{titleCase(rotation.carvery[field])}</option>}
               {options.map((row) => <option key={`${field}-${getItemIdentity(row)}`} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}
-              <option value="" disabled>Type item below if not listed</option>
             </select>
             <input
               value={rotation.carvery?.[field] || ""}
@@ -4007,115 +4230,6 @@ function CarverySection({ rotation, updateCarvery }) {
         ))}
       </div>
       <StationSelectedList title="Items Description" items={carverySelectedRows(rotation, { unique: true })} complete={stationComplete(rotation, "carvery")} />
-    </CollapsibleStation>
-  );
-}
-
-function WriteInField({ label, value, onChange, calorieValue, onCaloriesChange, required = false }) {
-  return (
-    <div className="rounded-2xl border border-sky-200 bg-sky-50/80 p-3">
-      <label className="block text-sm font-bold text-slate-900">{label}{required ? " *" : ""}</label>
-      <input value={value || ""} onChange={(event) => onChange(event.target.value)} placeholder="Type item name" className="mt-2 w-full rounded-xl border border-sky-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100" />
-      {onCaloriesChange && value && (
-        <input value={calorieValue || ""} onChange={(event) => onCaloriesChange(event.target.value.replace(/[^0-9]/g, ""))} placeholder="Calories required" className="mt-2 w-full rounded-xl border border-amber-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-100" />
-      )}
-    </div>
-  );
-}
-
-function StreetBeetsSection({ rotation, updateCustomStationArray }) {
-  const station = cloneCustomStations(rotation.customStations).streetBeets;
-  const groups = [
-    ["Entrées", "entrees", "entreeCalories", 2],
-    ["Sides", "sides", "sideCalories", 3],
-    ["Sub Recipes", "subRecipes", "subRecipeCalories", 0],
-    ["Extensions", "extensions", "extensionCalories", 0]
-  ];
-  const complete = stationComplete(rotation, "streetBeets");
-  return (
-    <CollapsibleStation title="Street Beets" eyebrow="Write-In Station" complete={complete}>
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
-        {groups.map(([title, field, calorieField, requiredCount]) => (
-          <div key={field} className="space-y-3">
-            <div>
-              <p className="font-black text-slate-900">{title}</p>
-              <p className="text-xs font-semibold text-slate-500">{requiredCount ? `${requiredCount} required` : "optional"}; calories required when filled</p>
-            </div>
-            {(station[field] || []).map((value, index) => (
-              <WriteInField
-                key={`${field}-${index}`}
-                label={`${title.slice(0, -1)} ${index + 1}`}
-                value={value}
-                required={index < requiredCount}
-                onChange={(next) => updateCustomStationArray("streetBeets", field, index, next)}
-                calorieValue={station[calorieField]?.[index] || ""}
-                onCaloriesChange={(next) => updateCustomStationArray("streetBeets", calorieField, index, next)}
-              />
-            ))}
-          </div>
-        ))}
-      </div>
-      <StationSelectedList title="Items Description" items={customStationRows(rotation, "streetBeets", { unique: true })} complete={complete} />
-    </CollapsibleStation>
-  );
-}
-
-function CommissaryEverestSection({ rotation, updateCustomStation, updateCustomStationArray }) {
-  const station = cloneCustomStations(rotation.customStations).commissaryEverest;
-  const complete = stationComplete(rotation, "commissaryEverest");
-  return (
-    <CollapsibleStation title="Commissary to Everest" eyebrow="Write-In Production" complete={complete}>
-      <div className="rounded-2xl border border-slate-200 bg-white p-4">
-        <label className="block text-sm font-bold text-slate-900">Menu Name *</label>
-        <input value={station.menuName || ""} onChange={(event) => updateCustomStation("commissaryEverest", { menuName: event.target.value })} placeholder="Type commissary menu" className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100" />
-      </div>
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
-        {(station.entrees || []).map((value, index) => <WriteInField key={`entree-${index}`} label={`Entrée ${index + 1}`} value={value} required onChange={(next) => updateCustomStationArray("commissaryEverest", "entrees", index, next)} />)}
-        {(station.hotSides || []).map((value, index) => <WriteInField key={`hot-${index}`} label={`Hot Side ${index + 1}`} value={value} onChange={(next) => updateCustomStationArray("commissaryEverest", "hotSides", index, next)} />)}
-        {(station.coldSides || []).map((value, index) => <WriteInField key={`cold-${index}`} label={`Cold Side ${index + 1}`} value={value} required onChange={(next) => updateCustomStationArray("commissaryEverest", "coldSides", index, next)} />)}
-        {(station.rice || []).map((value, index) => <WriteInField key={`rice-${index}`} label={`Rice Dish ${index + 1}`} value={value} required onChange={(next) => updateCustomStationArray("commissaryEverest", "rice", index, next)} />)}
-      </div>
-      <StationSelectedList title="Items Description" items={customStationRows(rotation, "commissaryEverest", { unique: true })} complete={complete} />
-    </CollapsibleStation>
-  );
-}
-
-function LotusWpSection({ rotation, updateLto }) {
-  const complete = stationComplete(rotation, "lotusWp");
-  return (
-    <CollapsibleStation title="Lotus W&P" eyebrow="Asian Global Pool" complete={complete}>
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-        <PickerGroup title="Lotus Entrées" limit="4 slots; 2 required" items={stationPool("lotusAsianEntrees")} values={rotation.ltos?.lotusEntrees || EMPTY_ROTATION.ltos.lotusEntrees} onChange={(index, value) => updateLto("lotusEntrees", index, value)} />
-        <PickerGroup title="Lotus Sides" limit="6 slots; 4 required" items={stationPool("lotusAsianSides")} values={rotation.ltos?.lotusSides || EMPTY_ROTATION.ltos.lotusSides} onChange={(index, value) => updateLto("lotusSides", index, value)} />
-      </div>
-      <StationSelectedList title="Items Description" items={customStationRows(rotation, "lotusWp", { unique: true })} complete={complete} />
-    </CollapsibleStation>
-  );
-}
-
-function StationTakeoverSection({ rotation, updateCustomStation, updateCustomStationArray }) {
-  const station = cloneCustomStations(rotation.customStations).stationTakeover;
-  const complete = stationComplete(rotation, "stationTakeover");
-  return (
-    <CollapsibleStation title="Station Takeover" eyebrow="Optional Override" complete={complete}>
-      <label className="inline-flex items-center gap-3 rounded-2xl border border-purple-200 bg-purple-50 px-4 py-3 text-sm font-bold text-purple-900">
-        <input type="checkbox" checked={Boolean(station.enabled)} onChange={(event) => updateCustomStation("stationTakeover", { enabled: event.target.checked })} />
-        Activate station takeover
-      </label>
-      {station.enabled && (
-        <>
-          <div className="mt-4 rounded-2xl border border-purple-200 bg-white p-4">
-            <label className="block text-sm font-bold text-slate-900">Takeover Menu Name *</label>
-            <input value={station.menuName || ""} onChange={(event) => updateCustomStation("stationTakeover", { menuName: event.target.value })} placeholder="Type takeover menu" className="mt-2 w-full rounded-xl border border-purple-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-100" />
-          </div>
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-            {["entrees", "sides", "subRecipes", "extensions"].map((field) => (station[field] || []).map((value, index) => (
-              <WriteInField key={`${field}-${index}`} label={`${titleCase(field)} ${index + 1}`} value={value} onChange={(next) => updateCustomStationArray("stationTakeover", field, index, next)} />
-            )))}
-          </div>
-        </>
-      )}
-      <StationSelectedList title="Items Description" items={customStationRows(rotation, "stationTakeover", { unique: true })} complete={complete} />
     </CollapsibleStation>
   );
 }
