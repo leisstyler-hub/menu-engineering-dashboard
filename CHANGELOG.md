@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-06-19
+
+- [Jun 19, 12:00 AM] Imported source-of-truth item descriptions from the provided Google Drive workbook into existing bundled menu rows only; no new menus or menu items were created.
+- [Jun 19, 12:00 AM] Preserved all existing calorie values while using MRN/Webtrition-style numbers and context-aware name matching only for description/name alignment.
+- [Jun 19, 12:00 AM] Updated 1,013 existing descriptions, added 165 conservative fallback descriptions from existing ingredient data, and reduced missing descriptions from 396 to 134.
+- [Jun 19, 12:00 AM] Applied 657 source-truth display names with legacy aliases so saved/locked selections can still reload after re-edit.
+- [Jun 19, 12:00 AM] Set visible app version to `2026.06.19.001-source-description-import`.
+
 ## 2026-06-18
 
 - [Jun 18, 1:45 PM] Changed Bingo `Make Menu` from an instruction preview into a real PowerPoint generator that downloads the page 3 grill menu with selected chef items written into the highlighted areas.

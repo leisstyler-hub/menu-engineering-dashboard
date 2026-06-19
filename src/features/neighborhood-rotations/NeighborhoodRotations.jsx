@@ -756,16 +756,18 @@ function recordsToRotations(records = []) {
 }
 
 const getItemIdentity = (row) =>
-  row.item ||
-  row.recipeName ||
   row.displayName ||
   row.shortName ||
+  row.item ||
+  row.recipeName ||
   row["Recipe Name"] ||
   row["Short Name"] ||
   "";
 
 const normalizeItemName = (value = "") => String(value || "").toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, " ").trim();
 const getItemAliases = (row) => [
+  ...(Array.isArray(row.legacyNames) ? row.legacyNames : []),
+  row.sourceTruthName,
   row.item,
   row.recipeName,
   row.displayName,
