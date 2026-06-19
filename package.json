@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "verify": "vite build"
+    "verify": "node scripts/verify-rotation-integrity.mjs && vite build"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",

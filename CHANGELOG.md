@@ -2,6 +2,9 @@
 
 ## 2026-06-19
 
+- [Jun 19, 2:12 PM] Added rotation integrity verification for Re:Invent saved-menu reloads and station option-pool drift.
+- [Jun 19, 2:12 PM] Tightened station pools: Carvery proteins exclude sandwich/Reuben rows, Salad LTO uses Cafe Express Curated Salads, Deli LTO uses Cafe Express Curated Sandwiches, and Grill now presents two Location Spotlight slots from Grill Core spotlight rows.
+- [Jun 19, 2:12 PM] Set visible app version to `2026.06.19.006-rotation-integrity-pools`.
 - [Jun 19, 1:51 PM] Fixed Re:Invent saved-menu reload so Global selection rows restore their `Menu / Concept` back onto the Re:Invent blocks instead of showing a false `No menu declared`.
 - [Jun 19, 1:51 PM] Set visible app version to `2026.06.19.005-fix-reinvent-saved-menu-reload`.
 - [Jun 19, 1:38 PM] Fixed Re:Invent summary/menu labels so saved Re:Invent Global block menus still count when the active week cycle changes or legacy block keys are present.

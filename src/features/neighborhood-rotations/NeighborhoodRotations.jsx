@@ -358,7 +358,7 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
   pushSelections("global", SMARTSHEET_SELECTION_TYPES.subRecipe, rotation.subRecipes || [], 200);
   pushSelections("global", SMARTSHEET_SELECTION_TYPES.extension, rotation.extensions || [], 300);
   }
-  pushSelections("grill", SMARTSHEET_SELECTION_TYPES.regionalSpecial, [rotation.grill?.regionalSpecial], 400);
+  pushSelections("grill", SMARTSHEET_SELECTION_TYPES.locationSpotlight, [rotation.grill?.regionalSpecial], 400);
   pushSelections("grill", SMARTSHEET_SELECTION_TYPES.locationSpotlight, [rotation.grill?.locationSpotlight], 410);
   if (rotation.grill?.promoActive) {
     pushSelections("grill", SMARTSHEET_SELECTION_TYPES.grillPromo, [rotation.grill?.promoItem], 420);
@@ -546,7 +546,10 @@ function recordsToRotations(records = []) {
 
     if (record.stationKey === "grill") {
       if (record.selectionType === SMARTSHEET_SELECTION_TYPES.regionalSpecial) rotation.grill.regionalSpecial = record.itemName;
-      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.locationSpotlight) rotation.grill.locationSpotlight = record.itemName;
+      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.locationSpotlight) {
+        if (index === 0) rotation.grill.regionalSpecial = record.itemName;
+        else rotation.grill.locationSpotlight = record.itemName;
+      }
       if (record.selectionType === SMARTSHEET_SELECTION_TYPES.grillPromo) {
         rotation.grill.promoActive = true;
         rotation.grill.promoItem = record.itemName;
@@ -864,6 +867,20 @@ function textForRow(row) {
   return `${getMenuName(row)} ${getStationName(row)} ${getItemIdentity(row)} ${row.enticingDescription || ""} ${row.description || ""}`.toLowerCase();
 }
 
+function isCarveryMainRow(row) {
+  const menu = getMenuName(row).toLowerCase();
+  const station = getStationName(row).toLowerCase();
+  if (!menu.includes("carvery")) return false;
+  if (/sandwich|panini|wrap|deli/.test(station)) return false;
+  return /premium mains|vegetarian mains/.test(station);
+}
+
+function isGrillSpotlightRow(row) {
+  const menu = getMenuName(row).toLowerCase();
+  const station = getStationName(row).toLowerCase();
+  return menu === "amz: grill core" && /location spotlights|regional spotlights/.test(station);
+}
+
 function stationPool(stationKey) {
   if (STATION_POOL_CACHE.has(stationKey)) return STATION_POOL_CACHE.get(stationKey);
   const carveryRequestedProteins = [
@@ -892,16 +909,20 @@ function stationPool(stationKey) {
   const byStationPattern = (regex) => all.filter((row) => regex.test(getStationName(row)));
   const byText = (regex) => all.filter((row) => regex.test(textForRow(row)));
   const scoped = (strictRows, fallbackRows = []) => uniqueOptionRows(strictRows.length ? strictRows : fallbackRows);
+  const cafeExpressSalads = all.filter((row) => getMenuName(row) === "AMZ: Cafe Express Curated Salads" && /curated salads/i.test(getStationName(row)));
+  const cafeExpressSandwiches = all.filter((row) => getMenuName(row) === "AMZ: Cafe Express Curated Sandwiches" && /curated sandwiches/i.test(getStationName(row)));
+  const grillSpotlights = all.filter((row) => isGrillSpotlightRow(row) && isEntree(row));
 
   const pools = {
     salad: uniqueOptionRows([
-      ...scoped([...byMenuPattern(/\bsalad\b/i), ...byStationPattern(/\bsalad\b/i), ...byMenuPattern(/fresh (five|\$5|5)/i), ...byStationPattern(/fresh (five|\$5|5)/i)], byText(/salad|greens|slaw|fresh five|fresh \$5|fresh 5/)).filter((row) => isEntree(row)),
+      ...cafeExpressSalads.filter((row) => isEntree(row)),
       ...saladRequestedOptions
     ]),
     pizza: scoped([...byMenuPattern(/pizza|flatbread/i), ...byStationPattern(/pizza|flatbread/i)], byText(/pizza|flatbread/)).filter((row) => isEntree(row)),
-    deli: scoped([...byMenuPattern(/deli|sandwich/i), ...byStationPattern(/deli|sandwich/i)], byText(/sandwich|deli|wrap|naanwich|banh mi/)).filter((row) => isEntree(row)),
+    deli: scoped(cafeExpressSandwiches, byText(/sandwich|deli|wrap|naanwich|banh mi/)).filter((row) => isEntree(row)),
     fishMarket: scoped([...byMenuPattern(/fish market/i), ...byStationPattern(/fish market/i)])
       .filter((row) => (getMenuName(row).toLowerCase().includes("fish market") || getStationName(row).toLowerCase().includes("fish market")) && isEntree(row)),
+    grillSpotlight: scoped(grillSpotlights, byText(/burger|sandwich|wrap|hot dog|cod|salmon|steelhead/)).filter((row) => isEntree(row)),
     freshFive: scoped([...byMenuPattern(/fresh (five|\$5|5)/i), ...byStationPattern(/fresh (five|\$5|5)/i)], byText(/fresh five|fresh \$5|fresh 5/)),
     soup: scoped([...byMenuPattern(/\bsoup\b/i), ...byStationPattern(/\bsoup\b/i)], byText(/soup|chili|bisque|chowder/)),
     wokEntrees: scoped([...byMenu("wok"), ...byStation("wok")], byText(/wok|stir fry|stir-fry|orange peel|sweet and sour|huli huli/)).filter((row) => isEntree(row)),
@@ -909,7 +930,7 @@ function stationPool(stationKey) {
     wokBase: scoped([...byMenu("wok"), ...byStation("wok")], byText(/rice|noodle|lo mein|base/)).filter((row) => isSide(row) || /rice|noodle|base/i.test(getItemIdentity(row))),
     wokSubRecipes: uniqueOptionRows(all.filter((row) => isSubRecipe(row))),
     carveryProtein: uniqueOptionRows([
-      ...scoped([...byMenu("carvery"), ...byStation("carvery")], byText(/beef|chicken|pork|turkey|salmon|steelhead|trout|tofu|protein|pork belly|flank steak|char siu|char sui/)).filter((row) => isEntree(row)),
+      ...scoped(all.filter(isCarveryMainRow), byText(/beef|chicken|pork|turkey|salmon|steelhead|trout|tofu|protein|pork belly|flank steak|char siu|char sui/)).filter((row) => isEntree(row) && !/sandwich|reuben|panini|wrap/i.test(`${getItemIdentity(row)} ${getStationName(row)}`)),
       ...carveryRequestedProteins
     ]),
     carveryVegetable: uniqueOptionRows([
@@ -1426,7 +1447,7 @@ function getStationSelectionRows(rotation, cafe, week = rotation?.week || "") {
 
   if (cafeStations.includes("grill")) {
     const grillItems = grillSelectedRows(rotation, { unique: true });
-    stationRows.push({ key: "grill", label: stationLabel(cafe, "grill"), items: grillItems, note: "regional + location spotlight" });
+    stationRows.push({ key: "grill", label: stationLabel(cafe, "grill"), items: grillItems, note: cafe === "Doppler" ? "grill fresh five" : "location spotlights" });
   }
 
   ["salad", "pizza", "deli", "fishMarket", "freshFive", "soup"].forEach((key) => {
@@ -4197,7 +4218,7 @@ function PickerGroup({ title, limit, items, values, onChange }) {
 }
 
 function GrillSection({ cafe, rotation, updateGrill }) {
-  const grillItems = categorize(MENUWORKS_ITEMS.filter((row) => getMenuName(row) === "AMZ: Grill Core" || getStationName(row).toLowerCase().includes("grill"))).entrees;
+  const grillItems = stationPool("grillSpotlight");
   const grillTitle = cafe === "Doppler" ? "Salt + Char" : cafe === "Day 1" ? "Adelaide's" : "Core Grill Additions";
   const options = cafe === "Doppler" ? stationPool("freshFive") : grillItems.length ? grillItems : stationPool("carveryProtein");
   const complete = stationComplete(rotation, "grill");
@@ -4222,8 +4243,8 @@ function GrillSection({ cafe, rotation, updateGrill }) {
         </div>
       ) : (
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <GrillSelect label="Regional Special" value={rotation.grill?.regionalSpecial || ""} onChange={(value) => updateGrill("regionalSpecial", value)} items={options} />
-          <GrillSelect label="Location Spotlight" value={rotation.grill?.locationSpotlight || ""} onChange={(value) => updateGrill("locationSpotlight", value)} items={options} />
+          <GrillSelect label="Location Spotlight 1" value={rotation.grill?.regionalSpecial || ""} onChange={(value) => updateGrill("regionalSpecial", value)} items={options} />
+          <GrillSelect label="Location Spotlight 2" value={rotation.grill?.locationSpotlight || ""} onChange={(value) => updateGrill("locationSpotlight", value)} items={options} />
         </div>
       )}
       {promoActive && (
