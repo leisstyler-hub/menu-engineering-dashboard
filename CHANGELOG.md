@@ -2,6 +2,9 @@
 
 ## 2026-06-19
 
+- [Jun 19, 12:55 AM] Republished the current Neighborhood Rotations source with East District cafes restored live: Astra, Bingo, Sonic, Blueshift, Eclipse, and Grace.
+- [Jun 19, 12:55 AM] Preserved current rotation logic and saved-state behavior; this release only forces the live app back onto the source that contains East.
+- [Jun 19, 12:55 AM] Set visible app version to `2026.06.19.003-restore-east-cafes`.
 - [Jun 19, 12:30 AM] Fixed Re:Invent submitted recap rows so split-week Global blocks show readable day labels instead of raw block IDs.
 - [Jun 19, 12:30 AM] Changed Re:Invent submitted menu summary to recognize saved Global block selections even when the top-level Global menu name is blank.
 - [Jun 19, 12:30 AM] Added chef write-in fallback fields under item dropdown selectors so missing dropdown items can still be saved and reviewed.
