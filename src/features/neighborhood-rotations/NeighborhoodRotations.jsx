@@ -526,6 +526,8 @@ function recordsToRotations(records = []) {
       const blockId = blockIdFromRecord(record);
       if (blockId) {
         const block = rotation.globalBlocks[blockId] || blankGlobalBlock();
+        block.menu = record.menuConcept || block.menu || "";
+        block.station = record.stationSubConcept || block.station || "";
         if (record.selectionType === SMARTSHEET_SELECTION_TYPES.entree) putSlot(block.entrees, index, record.itemName);
         else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.side) putSlot(block.sides, index, record.itemName);
         else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.subRecipe) putSlot(block.subRecipes, index, record.itemName);
@@ -533,6 +535,8 @@ function recordsToRotations(records = []) {
         rotation.globalBlocks[blockId] = block;
         return;
       }
+      rotation.menu = record.menuConcept || rotation.menu || "";
+      rotation.station = record.stationSubConcept || rotation.station || "";
       if (record.selectionType === SMARTSHEET_SELECTION_TYPES.entree) putSlot(rotation.entrees, index, record.itemName);
       else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.side) putSlot(rotation.sides, index, record.itemName);
       else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.subRecipe) putSlot(rotation.subRecipes, index, record.itemName);

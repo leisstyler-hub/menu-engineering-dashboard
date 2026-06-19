@@ -2,6 +2,8 @@
 
 ## 2026-06-19
 
+- [Jun 19, 1:51 PM] Fixed Re:Invent saved-menu reload so Global selection rows restore their `Menu / Concept` back onto the Re:Invent blocks instead of showing a false `No menu declared`.
+- [Jun 19, 1:51 PM] Set visible app version to `2026.06.19.005-fix-reinvent-saved-menu-reload`.
 - [Jun 19, 1:38 PM] Fixed Re:Invent summary/menu labels so saved Re:Invent Global block menus still count when the active week cycle changes or legacy block keys are present.
 - [Jun 19, 1:38 PM] Set visible app version to `2026.06.19.004-fix-reinvent-menu-label`.
 - [Jun 19, 1:10 AM] Restored the East District cafe list on top of the latest Doppler PowerPoint work: Astra, Bingo, Sonic, Blueshift, Eclipse, and Grace.
