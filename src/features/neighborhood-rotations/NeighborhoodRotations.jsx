@@ -2353,7 +2353,8 @@ function xmlEscape(value) {
 function pptText(value, maxLength = 160) {
   const text = String(value ?? "").replace(/\s+/g, " ").trim();
   if (text.length <= maxLength) return text;
-  return `${text.slice(0, maxLength - 1).trim()}...`;
+  const cut = text.slice(0, maxLength).trim();
+  return cut.includes(" ") ? cut.slice(0, cut.lastIndexOf(" ")).trim() : cut;
 }
 
 function emu(value) {
@@ -2673,13 +2674,33 @@ function removeXmlHighlights(doc) {
   highlights.forEach((node) => node.parentNode?.removeChild(node));
 }
 
+function cleanRunStyleFromTextNode(textNode, { color = "000000", fontSize = null, bold = null } = {}) {
+  const aNs = "http://schemas.openxmlformats.org/drawingml/2006/main";
+  const run = textNode?.parentNode;
+  if (!run) return;
+  let rPr = Array.from(run.childNodes).find((node) => node.localName === "rPr");
+  if (!rPr) {
+    rPr = textNode.ownerDocument.createElementNS(aNs, "a:rPr");
+    run.insertBefore(rPr, run.firstChild);
+  }
+  Array.from(rPr.getElementsByTagNameNS(aNs, "highlight")).forEach((node) => node.parentNode?.removeChild(node));
+  Array.from(rPr.childNodes).filter((node) => node.localName === "solidFill").forEach((node) => node.parentNode?.removeChild(node));
+  const solidFill = textNode.ownerDocument.createElementNS(aNs, "a:solidFill");
+  const srgb = textNode.ownerDocument.createElementNS(aNs, "a:srgbClr");
+  srgb.setAttribute("val", color);
+  solidFill.appendChild(srgb);
+  rPr.appendChild(solidFill);
+  if (fontSize != null) rPr.setAttribute("sz", String(Math.round(fontSize * 100)));
+  if (bold != null) rPr.setAttribute("b", bold ? "1" : "0");
+}
+
 function shapeByPowerPointName(doc, shapeName) {
   const props = Array.from(doc.getElementsByTagNameNS("http://schemas.openxmlformats.org/presentationml/2006/main", "cNvPr"));
   const prop = props.find((node) => node.getAttribute("name") === shapeName);
   return prop?.parentNode?.parentNode || null;
 }
 
-function setShapeLines(doc, shapeName, lines) {
+function setShapeLines(doc, shapeName, lines, options = {}) {
   const aNs = "http://schemas.openxmlformats.org/drawingml/2006/main";
   const shape = shapeByPowerPointName(doc, shapeName);
   const txBody = shape?.getElementsByTagNameNS("http://schemas.openxmlformats.org/presentationml/2006/main", "txBody")[0]
@@ -2691,6 +2712,9 @@ function setShapeLines(doc, shapeName, lines) {
   const cleanLines = (lines.length ? lines : [" "]).map((line) => String(line || " "));
   cleanLines.forEach((line) => {
     const paragraph = doc.createElementNS(aNs, "a:p");
+    const paragraphProperties = doc.createElementNS(aNs, "a:pPr");
+    paragraphProperties.setAttribute("algn", options.align || "ctr");
+    paragraph.appendChild(paragraphProperties);
     const run = doc.createElementNS(aNs, "a:r");
     if (firstRunProperties) run.appendChild(firstRunProperties.cloneNode(true));
     const text = doc.createElementNS(aNs, "a:t");
@@ -2698,30 +2722,77 @@ function setShapeLines(doc, shapeName, lines) {
     run.appendChild(text);
     paragraph.appendChild(run);
     txBody.appendChild(paragraph);
+    cleanRunStyleFromTextNode(text, {
+      color: options.color || "000000",
+      fontSize: options.fontSize,
+      bold: options.bold,
+    });
   });
 }
 
-function replaceTemplateTextSequence(doc, needle, replacementLines) {
+function replaceTemplateTextSequence(doc, needle, replacementLines, options = {}) {
   const aNs = "http://schemas.openxmlformats.org/drawingml/2006/main";
   const nodes = Array.from(doc.getElementsByTagNameNS(aNs, "t"));
   const index = nodes.findIndex((node) => String(node.textContent || "").includes(needle));
   if (index < 0) return;
-  replacementLines.forEach((line, lineIndex) => {
-    if (nodes[index + lineIndex]) nodes[index + lineIndex].textContent = String(line || " ");
-  });
+  const clearCount = Math.max(options.clearCount || replacementLines.length, replacementLines.length);
+  for (let lineIndex = 0; lineIndex < clearCount; lineIndex += 1) {
+    const node = nodes[index + lineIndex];
+    if (!node) continue;
+    node.textContent = String(replacementLines[lineIndex] || " ");
+    cleanRunStyleFromTextNode(node, {
+      color: options.color || "000000",
+      fontSize: options.fontSize,
+      bold: options.bold,
+    });
+  }
 }
 
-function templateItemLines(item) {
-  if (!item) return ["Selection pending", "", ""];
-  const name = `${titleCase(getDisplayName(item) || getItemIdentity(item))}${dietSuffix(item)}`;
-  const description = pptText(getDescription(item), 110);
+function templateMenuName(item) {
+  return `${titleCase(getDisplayName(item) || getItemIdentity(item))}${dietSuffix(item)}`;
+}
+
+function templateItemMeta(item) {
+  if (!item) return "";
   const calories = getCalories(item);
   const retail = getSuggestedRetailPrice(item);
-  const meta = [
-    calories == null ? "calories pending" : `${calories} cal`,
-    retail == null ? "price pending" : money(retail),
-  ].join(" / ");
+  return [
+    calories == null ? null : `${calories} cal`,
+    retail == null ? null : money(retail),
+  ].filter(Boolean).join(" / ");
+}
+
+function templateItemLines(item, { includeDescription = false } = {}) {
+  if (!item) return [" ", " ", " "];
+  const name = templateMenuName(item);
+  const meta = templateItemMeta(item);
+  if (!includeDescription) return [name, meta, " "];
+  const description = pptText(getDescription(item), 80);
   return [name, description, meta];
+}
+
+function templateOneLineItem(item) {
+  if (!item) return " ";
+  const meta = templateItemMeta(item);
+  return `${templateMenuName(item)}${meta ? ` - ${meta}` : ""}`;
+}
+
+function templateFreshFiveLines(item) {
+  if (!item) return [" ", " ", " "];
+  const name = `${titleCase(getDisplayName(item) || getItemIdentity(item))}${dietSuffix(item)}`;
+  return [name, templateItemMeta(item), " "];
+}
+
+function templateTableRowCells(item) {
+  if (!item) return [" ", " ", " ", " "];
+  const retail = getSuggestedRetailPrice(item);
+  const calories = getCalories(item);
+  return [
+    templateMenuName(item),
+    " ",
+    calories == null ? " " : `${calories} cal`,
+    retail == null ? " " : money(retail),
+  ];
 }
 
 function templateGlobalLines(block) {
@@ -2729,11 +2800,9 @@ function templateGlobalLines(block) {
   const entrees = rows.filter((row) => selectionRole(row) === "entree");
   const sides = rows.filter((row) => selectionRole(row) === "side");
   const lines = [];
-  entrees.slice(0, 4).forEach((item) => {
-    lines.push(`${titleCase(getDisplayName(item) || getItemIdentity(item))}${dietSuffix(item)} ${getSuggestedRetailPrice(item) == null ? "" : money(getSuggestedRetailPrice(item))}`.trim());
-    if (getDescription(item)) lines.push(pptText(getDescription(item), 92));
-  });
+  entrees.slice(0, 5).forEach((item) => lines.push(templateOneLineItem(item)));
   if (sides.length) {
+    if (lines.length) lines.push(" ");
     lines.push("Sides | 2.55");
     sides.slice(0, 6).forEach((item) => lines.push(`${titleCase(getDisplayName(item) || getItemIdentity(item))}${getCalories(item) == null ? "" : ` ${getCalories(item)} cal`}`));
   }
@@ -2765,32 +2834,32 @@ function patchDopplerTemplateEntries(entries, packet) {
     entries.set(path, textToBytes(patchDopplerTemplateSlide(bytesToText(xml), patcher)));
   };
   patch("ppt/slides/slide2.xml", (doc) => {
-    replaceTemplateTextSequence(doc, "FRESH 5: BLACKENED", templateItemLines(grill?.items?.[0]));
+    replaceTemplateTextSequence(doc, "FRESH 5: BLACKENED", templateFreshFiveLines(grill?.items?.[0]), { clearCount: 6, fontSize: 13, color: "000000" });
   });
   patch("ppt/slides/slide4.xml", (doc) => {
-    setShapeLines(doc, "TextBox 16", [carryover?.title || "Menu pending", carryover?.calories || "calories pending"]);
-    setShapeLines(doc, "TextBox 26", [carryover?.summary || "Selections pending."]);
-    setShapeLines(doc, "TextBox 7", templateGlobalLines(carryover?.block || {}));
+    setShapeLines(doc, "TextBox 16", [carryover?.title || "Menu pending", carryover?.calories || "calories pending"], { fontSize: 30, bold: true, align: "ctr" });
+    setShapeLines(doc, "TextBox 26", [carryover?.summary || "Selections pending."], { fontSize: 17, italic: true, align: "ctr" });
+    setShapeLines(doc, "TextBox 7", templateGlobalLines(carryover?.block || {}), { fontSize: 17, bold: false, align: "ctr" });
   });
   patch("ppt/slides/slide5.xml", (doc) => {
-    setShapeLines(doc, "TextBox 16", [current?.title || "Menu pending", current?.calories || "calories pending"]);
-    setShapeLines(doc, "TextBox 26", [current?.summary || "Selections pending."]);
-    setShapeLines(doc, "TextBox 7", templateGlobalLines(current?.block || {}));
+    setShapeLines(doc, "TextBox 16", [current?.title || "Menu pending", current?.calories || "calories pending"], { fontSize: 30, bold: true, align: "ctr" });
+    setShapeLines(doc, "TextBox 26", [current?.summary || "Selections pending."], { fontSize: 17, italic: true, align: "ctr" });
+    setShapeLines(doc, "TextBox 7", templateGlobalLines(current?.block || {}), { fontSize: 17, bold: false, align: "ctr" });
   });
   patch("ppt/slides/slide6.xml", (doc) => {
     const pizzaItems = pizza?.items || [];
-    replaceTemplateTextSequence(doc, "GARDEN PESTO", templateItemLines(pizzaItems[0]));
-    replaceTemplateTextSequence(doc, "CAPRESE FLATBREAD", templateItemLines(pizzaItems[1]));
+    replaceTemplateTextSequence(doc, "GARDEN PESTO", templateTableRowCells(pizzaItems[0]), { clearCount: 4, fontSize: 12, color: "000000", bold: false });
+    replaceTemplateTextSequence(doc, "CAPRESE FLATBREAD", templateTableRowCells(pizzaItems[1]), { clearCount: 4, fontSize: 12, color: "000000", bold: false });
   });
   patch("ppt/slides/slide8.xml", (doc) => {
-    replaceTemplateTextSequence(doc, "FRESH 5: MAPLE", templateItemLines(salad?.items?.[0]));
+    replaceTemplateTextSequence(doc, "FRESH 5: MAPLE", templateFreshFiveLines(salad?.items?.[0]), { clearCount: 5, fontSize: 12, color: "000000" });
   });
   patch("ppt/slides/slide9.xml", (doc) => {
-    replaceTemplateTextSequence(doc, "FRESH 5 : CHICKEN", templateItemLines(salad?.items?.[0]));
-    replaceTemplateTextSequence(doc, "FRESH 5: GRILLED", templateItemLines(salad?.items?.[1]));
+    replaceTemplateTextSequence(doc, "FRESH 5 : CHICKEN", templateFreshFiveLines(salad?.items?.[0]), { clearCount: 4, fontSize: 11, color: "000000" });
+    replaceTemplateTextSequence(doc, "FRESH 5: GRILLED", templateFreshFiveLines(salad?.items?.[1]), { clearCount: 4, fontSize: 11, color: "000000" });
   });
   patch("ppt/slides/slide10.xml", (doc) => {
-    setShapeLines(doc, "TextBox 9", templateItemLines(deli?.items?.[0]));
+    setShapeLines(doc, "TextBox 9", templateFreshFiveLines(deli?.items?.[0]), { fontSize: 12, bold: true, align: "ctr" });
   });
   return entries;
 }

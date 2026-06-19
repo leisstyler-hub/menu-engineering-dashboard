@@ -2,6 +2,9 @@
 
 ## 2026-06-19
 
+- [Jun 19, 12:18 AM] Tightened Doppler PowerPoint template output so generated menu text avoids ellipses, inherited highlight colors, stale table prices, and cramped Global item spacing.
+- [Jun 19, 12:18 AM] Added one blank line between Global entrees and `Sides | 2.55` in generated Doppler menus.
+- [Jun 19, 12:18 AM] Set visible app version to `2026.06.19.002-fix-doppler-pptx-template-layout`.
 - [Jun 19, 12:00 AM] Changed Doppler Generate Menu from a temporary HTML packet to a PowerPoint download based on the Doppler Cafe template.
 - [Jun 19, 12:00 AM] Added the Doppler template file to the app and wired a browser-side template fill so selected planner items are inserted into that deck.
 - [Jun 19, 12:00 AM] Set visible app version to `2026.06.19.001-feature-doppler-pptx-download`.
