@@ -2,45 +2,20 @@
 
 ## 2026-06-19
 
-- [Jun 19, 12:55 AM] Republished the current Neighborhood Rotations source with East District cafes restored live: Astra, Bingo, Sonic, Blueshift, Eclipse, and Grace.
-- [Jun 19, 12:55 AM] Preserved current rotation logic and saved-state behavior; this release only forces the live app back onto the source that contains East.
-- [Jun 19, 12:55 AM] Set visible app version to `2026.06.19.003-restore-east-cafes`.
-- [Jun 19, 12:30 AM] Fixed Re:Invent submitted recap rows so split-week Global blocks show readable day labels instead of raw block IDs.
-- [Jun 19, 12:30 AM] Changed Re:Invent submitted menu summary to recognize saved Global block selections even when the top-level Global menu name is blank.
-- [Jun 19, 12:30 AM] Added chef write-in fallback fields under item dropdown selectors so missing dropdown items can still be saved and reviewed.
-- [Jun 19, 12:30 AM] Set visible app version to `2026.06.19.002-reinvent-recap-writeins`.
-- [Jun 19, 12:00 AM] Imported source-of-truth item descriptions from the provided Google Drive workbook into existing bundled menu rows only; no new menus or menu items were created.
-- [Jun 19, 12:00 AM] Preserved all existing calorie values while using MRN/Webtrition-style numbers and context-aware name matching only for description/name alignment.
-- [Jun 19, 12:00 AM] Updated 1,013 existing descriptions, added 165 conservative fallback descriptions from existing ingredient data, and reduced missing descriptions from 396 to 134.
-- [Jun 19, 12:00 AM] Applied 657 source-truth display names with legacy aliases so saved/locked selections can still reload after re-edit.
-- [Jun 19, 12:00 AM] Set visible app version to `2026.06.19.001-source-description-import`.
+- [Jun 19, 12:18 AM] Tightened Doppler PowerPoint template output so generated menu text avoids ellipses, inherited highlight colors, stale table prices, and cramped Global item spacing.
+- [Jun 19, 12:18 AM] Added one blank line between Global entrees and `Sides | 2.55` in generated Doppler menus.
+- [Jun 19, 12:18 AM] Set visible app version to `2026.06.19.002-fix-doppler-pptx-template-layout`.
+- [Jun 19, 12:00 AM] Changed Doppler Generate Menu from a temporary HTML packet to a PowerPoint download based on the Doppler Cafe template.
+- [Jun 19, 12:00 AM] Added the Doppler template file to the app and wired a browser-side template fill so selected planner items are inserted into that deck.
+- [Jun 19, 12:00 AM] Set visible app version to `2026.06.19.001-feature-doppler-pptx-download`.
 
 ## 2026-06-18
 
-- [Jun 18, 1:45 PM] Changed Bingo `Make Menu` from an instruction preview into a real PowerPoint generator that downloads the page 3 grill menu with selected chef items written into the highlighted areas.
-- [Jun 18, 1:45 PM] Added a server-side Bingo PPT template edit route so title, calories, price, and description are written into the existing PowerPoint table while preserving the original `sz="1000"` font sizing and removing yellow highlight tags.
-- [Jun 18, 1:45 PM] Set visible app version to `2026.06.18.010-bingo-ppt-download`.
-- [Jun 18, 12:55 PM] Split Bingo Fresh $5 into one Grill Fresh $5 slot and one Salad Fresh $5 slot so customer-facing menu generation can target the correct PowerPoint areas.
-- [Jun 18, 12:55 PM] Limited Bingo Grill to one Location Spotlight selector and added a Bingo-only Generate Menu button for the Grill PowerPoint page 3 test.
-- [Jun 18, 12:55 PM] Added Customer Menu Edit records with customer title, calories, description, and PowerPoint target notes for Bingo grill menu editing.
-- [Jun 18, 12:55 PM] Added `Calories` to the Smartsheet contract so customer-facing menu rows can carry title, calorie, and description fields separately.
-- [Jun 18, 12:55 PM] Set visible app version to `2026.06.18.009-bingo-menu-generator`.
-- [Jun 18, 12:30 PM] Fixed Neighborhood Rotation re-edit dropdown hydration so saved LTO selections display in the selector and Items Description count from the same effective values.
-- [Jun 18, 12:30 PM] Scoped Salad LTO dropdowns to `AMZ: Cafe Express Curated Salads` only so burgers, flatbreads, and unrelated Fresh Five items cannot leak into Salad LTO selections.
-- [Jun 18, 12:30 PM] Added East District cafes Astra, Bingo, Sonic, Blueshift, Eclipse, and Grace with their requested Global, Fresh Five, Grill, Salad, Deli, Fish Market, Street Beets, Lotus W&P, Commissary, and Takeover station requirements.
-- [Jun 18, 12:30 PM] Added promotion return-cycle controls for Global overrides so return days can be marked as Monday's same cycle or a new menu while showing Mon-Fri coverage chips.
-- [Jun 18, 12:30 PM] Changed Grill planning to two Location Spotlight slots while preserving the optional Grill Promo activation/write-in field across grill stations.
-- [Jun 18, 12:30 PM] Set visible app version to `2026.06.18.008-east-district-promo-reedit-fix`.
-- [Jun 18, 10:05 AM] Tightened station dropdown pool logic so LTO and Carvery selectors use explicit report menu/station/category/notes instead of broad text matches.
-- [Jun 18, 10:05 AM] Removed Carvery Sandwiches, including Reuben-style sandwiches, from Carvery protein options by limiting proteins to Premium Mains or explicit Carvery Protein notes.
-- [Jun 18, 10:05 AM] Scoped Carvery sides, cold sides, hot sides, vegetables, and starches to Carvery rows so unrelated database sides cannot leak into Carvery selectors.
-- [Jun 18, 10:05 AM] Set visible app version to `2026.06.18.007-tighten-station-pool-logic`.
-- [Jun 18, 9:56 AM] Imported the calorie report into bundled menu data, raising the app data file from 1,329 to 1,648 rows with 1,641 calorie values loaded.
-- [Jun 18, 9:56 AM] Filled 263 missing item descriptions plus missing ingredient/common-ingredient fields from the calorie report while preserving existing display names and locked-selection keys.
-- [Jun 18, 9:56 AM] Added report-only menu rows for new RA/BYO programs and known station buckets, with audit checks for duplicate IDs, duplicate dropdown keys, and source-row coverage.
-- [Jun 18, 9:56 AM] Set visible app version to `2026.06.18.006-import-calorie-report-data`.
-- [Jun 18, 9:13 AM] Removed the redundant submitted-rotation edit checkbox from the lock banner so desktop and mobile show one edit/resubmit control.
-- [Jun 18, 9:13 AM] Set visible app version to `2026.06.18.005-remove-redundant-edit-checkbox`.
+- [Jun 18, 9:19 PM] Updated the landing Operational Read to reflect current platform progress and removed the redundant Smart Read card.
+- [Jun 18, 9:19 PM] Fixed Re:Invent Global recap/status logic so only the active three two-day cycle blocks count for the selected week.
+- [Jun 18, 9:19 PM] Made Doppler Pizza LTOs optional for submission and changed Doppler station controls to Salt + Char Fresh Five, two Pizza LTOs, Zane's Salad, and Paninoteca Deli.
+- [Jun 18, 9:19 PM] Added a guarded Doppler Generate Menu remote button that primes a downloadable print-ready HTML packet and opens an in-app preview without navigating away.
+- [Jun 18, 9:19 PM] Set visible app version to `2026.06.18.005-feature-doppler-menu-generator`.
 - [Jun 18, 12:55 AM] Added a `calories` field to all 1,325 bundled menu items so item calories have a consistent update location.
 - [Jun 18, 12:55 AM] Fixed submitted recap counting across all cafes so totals come from visible station selections instead of broad Global block rollups.
 - [Jun 18, 12:55 AM] Added item descriptions directly into submitted recap item rows.
