@@ -2,6 +2,8 @@
 
 ## 2026-06-19
 
+- [Jun 19, 1:38 PM] Fixed Re:Invent summary/menu labels so saved Re:Invent Global block menus still count when the active week cycle changes or legacy block keys are present.
+- [Jun 19, 1:38 PM] Set visible app version to `2026.06.19.004-fix-reinvent-menu-label`.
 - [Jun 19, 1:10 AM] Restored the East District cafe list on top of the latest Doppler PowerPoint work: Astra, Bingo, Sonic, Blueshift, Eclipse, and Grace.
 - [Jun 19, 1:10 AM] Restored East slot counts compatible with the current branch while preserving the PC-pushed Doppler template generator commits.
 - [Jun 19, 1:10 AM] Set visible app version to `2026.06.19.003-restore-east-cafes`.

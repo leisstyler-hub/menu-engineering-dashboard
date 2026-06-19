@@ -1080,6 +1080,17 @@ function blockHasSelections(block = {}) {
   return ["entrees", "sides", "subRecipes", "extensions"].some((key) => (block?.[key] || []).some(Boolean));
 }
 
+const REINVENT_GLOBAL_BLOCK_IDS = new Set(["monTue", "wedThu", "friCarry", "monCarry", "tueWed", "thuFri"]);
+
+function reInventMenuLabel(rotation = {}, week = "") {
+  const entries = Object.entries(rotation.globalBlocks || {}).filter(([blockId, block]) => REINVENT_GLOBAL_BLOCK_IDS.has(blockId) && block?.menu);
+  const activeBlockIds = activeReInventBlockIds(week);
+  const activeMenus = entries.filter(([blockId]) => activeBlockIds.has(blockId)).map(([, block]) => block.menu).filter(Boolean);
+  if (activeMenus.length) return Array.from(new Set(activeMenus)).join(" / ");
+  const savedMenus = entries.map(([, block]) => block.menu).filter(Boolean);
+  return savedMenus.length ? Array.from(new Set(savedMenus)).join(" / ") : "";
+}
+
 function hasNitroSplitBlocks(rotation = {}) {
   return nitroGlobalBlockLayout().some((block) => {
     const value = getRotationGlobalBlock(rotation, block.id);
@@ -1122,11 +1133,9 @@ function carryoverGlobalBlock(rotation = {}, preferredBlockId = "") {
 
 function rotationMenuLabel(rotation = {}, cafe = rotation?.cafe || "", week = rotation?.week || "") {
   if (rotation.menu) return rotation.menu;
+  if (cafe === "Re:Invent") return reInventMenuLabel(rotation, week);
   const entries = Object.entries(rotation.globalBlocks || {});
-  const blockMenus = (cafe === "Re:Invent"
-    ? entries.filter(([blockId]) => activeReInventBlockIds(week).has(blockId))
-    : entries
-  ).map(([, block]) => block?.menu).filter(Boolean);
+  const blockMenus = entries.map(([, block]) => block?.menu).filter(Boolean);
   return blockMenus.length ? Array.from(new Set(blockMenus)).join(" / ") : "";
 }
 
