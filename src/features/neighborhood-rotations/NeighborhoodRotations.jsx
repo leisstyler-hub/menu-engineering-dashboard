@@ -14,7 +14,7 @@ import VersionStamp from "../../shared/ui/VersionStamp.jsx";
 const DISTRICTS = {
   South: ["Doppler", "Day 1", "Nitro", "Re:Invent"],
   North: ["Dawson", "Nessie", "Cricket", "Moby", "Commissary", "Atlas"],
-  East: ["East Café 1", "East Café 2", "East Café 3"],
+  East: ["Astra", "Bingo", "Sonic", "Blueshift", "Eclipse", "Grace"],
   LAX: ["LAX22", "LAX35", "LAX75", "LAX78", "SNA3"]
 };
 
@@ -33,7 +33,13 @@ const CAFE_STATION_CONFIG = {
   LAX35: ["global", "grill", "salad", "freshFive"],
   LAX75: ["global", "grill", "salad", "freshFive"],
   LAX78: ["global", "grill", "salad", "freshFive"],
-  SNA3: ["global", "grill", "salad", "freshFive"]
+  SNA3: ["global", "grill", "salad", "freshFive"],
+  Astra: ["global", "grill", "freshFive"],
+  Bingo: ["global", "fishMarket", "grill", "salad", "freshFive"],
+  Sonic: ["global", "grill", "freshFive", "salad", "deli"],
+  Blueshift: ["global", "grill", "salad", "deli", "fishMarket", "freshFive"],
+  Eclipse: ["global", "freshFive"],
+  Grace: ["global", "grill", "freshFive", "salad"]
 };
 
 const MENU_CONFLICT_GROUPS = {
@@ -936,7 +942,13 @@ function stationSlots(cafe, stationKey) {
     Commissary: { deli: 4, salad: 3, freshFive: 2, soup: 2 },
     Atlas: { freshFive: 2 },
     Frontier: { freshFive: 2 },
-    Nitro: { pizza: 3 }
+    Nitro: { pizza: 3 },
+    Astra: { freshFive: 2 },
+    Grace: { freshFive: 2, salad: 2 },
+    Sonic: { freshFive: 2, salad: 5, deli: 4 },
+    Bingo: { fishMarket: 2, salad: 2, freshFive: 2 },
+    Blueshift: { salad: 5, deli: 4, fishMarket: 2, freshFive: 2 },
+    Eclipse: { freshFive: 2 }
   }[cafe]?.[stationKey];
 
   if (override) return override;

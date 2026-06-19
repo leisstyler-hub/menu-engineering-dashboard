@@ -2,6 +2,9 @@
 
 ## 2026-06-19
 
+- [Jun 19, 1:10 AM] Restored the East District cafe list on top of the latest Doppler PowerPoint work: Astra, Bingo, Sonic, Blueshift, Eclipse, and Grace.
+- [Jun 19, 1:10 AM] Restored East slot counts compatible with the current branch while preserving the PC-pushed Doppler template generator commits.
+- [Jun 19, 1:10 AM] Set visible app version to `2026.06.19.003-restore-east-cafes`.
 - [Jun 19, 12:18 AM] Tightened Doppler PowerPoint template output so generated menu text avoids ellipses, inherited highlight colors, stale table prices, and cramped Global item spacing.
 - [Jun 19, 12:18 AM] Added one blank line between Global entrees and `Sides | 2.55` in generated Doppler menus.
 - [Jun 19, 12:18 AM] Set visible app version to `2026.06.19.002-fix-doppler-pptx-template-layout`.
