@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-06-21
+
+- [Jun 21, 9:19 AM] Safely republished dashboard-only polish after the rollback: wider desktop canvas, cleaner Weekly Traffic line chart, dark-mode chart styling, and no redundant desktop Smart Read block.
+- [Jun 21, 9:19 AM] Refreshed the Operational Read card wording without changing Neighborhood Rotations logic.
+- [Jun 21, 9:19 AM] Set visible app version to `2026.06.21.002-dashboard-traffic-safe`.
+
 ## 2026-06-20
 
 - [Jun 20, 8:24 PM] Added visible value labels to each Weekly Traffic line-graph point so traffic spikes show their visitor count directly on the graph.

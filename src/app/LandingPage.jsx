@@ -240,7 +240,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
         onOpenSmartsheetHealth={onOpenSmartsheetHealth}
       />
 
-      <div className="mx-auto hidden max-w-7xl flex-col gap-5 px-4 py-5 md:flex md:px-6">
+      <div className="mx-auto hidden w-full max-w-[96rem] flex-col gap-5 px-5 py-5 md:flex md:px-8">
         <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
             <div>
@@ -254,7 +254,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
           </div>
         </header>
 
-        <main className="grid grid-cols-1 gap-5 xl:grid-cols-[340px_1fr]">
+        <main className="grid grid-cols-1 gap-5 xl:grid-cols-[380px_minmax(0,1fr)]">
           <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Operations Console</p>
             <h2 className="mt-2 text-3xl font-bold">Plan, price, and audit menus from one workspace.</h2>
@@ -274,15 +274,6 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
               </div>
               <p className="mt-2 text-sm text-slate-600">
                 Item details, pricing, allergens, and review warnings are surfaced where they affect selections.
-              </p>
-            </div>
-            <div className="mt-5 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-              <div className="flex items-center gap-2 text-sm font-bold text-emerald-950">
-                <Sparkles size={16} />
-                Smart read
-              </div>
-              <p className="mt-2 text-sm leading-6 text-emerald-900">
-                {allergenCoverage}% allergen coverage, {detailCoverage}% description coverage, and average priced item food cost at {pct(avgFoodCost)}.
               </p>
             </div>
           </aside>
@@ -308,7 +299,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
               <WeeklyTrafficChart days={WEEKLY_TRAFFIC_DAYS} />
             </DashboardPanel>
 
-            <section className="grid grid-cols-1 gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+            <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)]">
               <DashboardPanel icon={Database} eyebrow="Trust Layer" title="Data Confidence">
                 <ConfidenceBars
                   rows={[
@@ -336,15 +327,15 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
               <DashboardPanel icon={Sparkles} eyebrow="Executive Signal" title="Operational Read">
                 <SignalStack
                   rows={[
-                    { label: "Menu truth is the strongest data layer", value: costCoverage, tone: "emerald", detail: "Menu Engineering can carry the most credible story right now." },
-                    { label: "Rotation planning is ready for workflow adoption", value: 72, tone: "sky", detail: "Submission health, cost ranges, and station completion are now visible." },
-                    { label: "Lean result history is becoming auditable", value: 64, tone: "lime", detail: "Stored results, Smartsheet sync, and void controls are in place." },
+                    { label: "Menu data trust is actively tracked", value: costCoverage, tone: "emerald", detail: "Trust coverage separates complimentary rows from protein price gaps." },
+                    { label: "Rotation planning has leadership visibility", value: 72, tone: "sky", detail: "Submission health, cost ranges, and station completion are now visible." },
+                    { label: "Lean results are ready for leader review", value: 70, tone: "lime", detail: "Stored results, filters, email reporting, and void controls are in place." },
                   ]}
                 />
               </DashboardPanel>
             </section>
 
-            <section className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_1fr]">
+            <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(420px,0.75fr)]">
               <DashboardPanel icon={ListChecks} eyebrow="Newest Data Signal" title="Recently Added Items">
                 <div className="space-y-2">
                   {recentItems.map((item) => (
