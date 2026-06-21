@@ -2,6 +2,9 @@
 
 ## 2026-06-21
 
+- [Jun 21, 9:32 AM] Fixed Neighborhood Rotations Executive View so draft rows no longer count as declared menus, duplicate flags, selected items, or food-cost signals.
+- [Jun 21, 9:32 AM] Increased Neighborhood Rotations readability with a wider canvas and larger control/card text.
+- [Jun 21, 9:32 AM] Set visible app version to `2026.06.21.003-rotation-exec-trust`.
 - [Jun 21, 9:19 AM] Safely republished dashboard-only polish after the rollback: wider desktop canvas, cleaner Weekly Traffic line chart, dark-mode chart styling, and no redundant desktop Smart Read block.
 - [Jun 21, 9:19 AM] Refreshed the Operational Read card wording without changing Neighborhood Rotations logic.
 - [Jun 21, 9:19 AM] Set visible app version to `2026.06.21.002-dashboard-traffic-safe`.

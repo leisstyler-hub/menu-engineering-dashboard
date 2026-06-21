@@ -1357,8 +1357,20 @@ function rotationMenuLabel(rotation = {}, cafe = rotation?.cafe || "", week = ro
   return blockMenus.length ? Array.from(new Set(blockMenus)).join(" / ") : "";
 }
 
+function isSubmittedRotation(rotation = {}) {
+  return String(rotation.status || "").toLowerCase() === "submitted";
+}
+
 function hasRotationMenu(rotation = {}) {
   return Boolean(rotationMenuLabel(rotation, rotation.cafe, rotation.week));
+}
+
+function hasSubmittedRotationMenu(rotation = {}) {
+  return isSubmittedRotation(rotation) && hasRotationMenu(rotation);
+}
+
+function submittedSelectedItems(rotation = {}) {
+  return isSubmittedRotation(rotation) ? selectedItems(rotation) : [];
 }
 
 function potatoSides() {
@@ -1474,6 +1486,7 @@ function conflictControlledRows(district, rows) {
 
 function menuConflictCounts(rows) {
   return rows.reduce((acc, row) => {
+    if (!isSubmittedRotation(row)) return acc;
     const menu = rotationMenuLabel(row, row.cafe, row.week) || row.menu;
     if (menu) acc[menu] = (acc[menu] || 0) + 1;
     return acc;
@@ -1492,10 +1505,20 @@ function cafeUsesMenuConflictRule(district, cafe, copiedFrom = "") {
 }
 
 function rowHasMenuConflict(row, conflictMenus) {
+  if (!isSubmittedRotation(row)) return false;
   const menu = rotationMenuLabel(row, row.cafe, row.week) || row.menu;
   if (!menu || !cafeUsesMenuConflictRule(row.district, row.cafe, row.copiedFrom)) return false;
   const count = conflictMenus[`${row.district}|${menu}`] ?? conflictMenus[menu] ?? 0;
   return count > 1;
+}
+
+function menuConflictCountForCandidate(district, rows, candidateCafe, candidateMenu) {
+  if (!candidateMenu || !cafeUsesMenuConflictRule(district, candidateCafe)) return 0;
+  const submittedMatches = conflictControlledRows(district, rows).filter((row) => {
+    if (!isSubmittedRotation(row) || row.cafe === candidateCafe) return false;
+    return (rotationMenuLabel(row, row.cafe, row.week) || row.menu) === candidateMenu;
+  }).length;
+  return submittedMatches + 1;
 }
 
 function rotationRequirementIssues(requirements, cafe, { menu = "", duplicateMenuCount = 0, conflictNote = "" } = {}) {
@@ -1515,8 +1538,8 @@ function rotationRequirementIssues(requirements, cafe, { menu = "", duplicateMen
 }
 
 function leadershipRead(rows, conflictMenus) {
-  const declared = rows.filter(hasRotationMenu).length;
-  const missing = rows.filter((row) => !hasRotationMenu(row)).map((row) => row.cafe);
+  const declared = rows.filter(hasSubmittedRotationMenu).length;
+  const missing = rows.filter((row) => !hasSubmittedRotationMenu(row)).map((row) => row.cafe);
   const conflicts = rows.filter((row) => rowHasMenuConflict(row, conflictMenus));
   const parts = [`${declared} of ${rows.length} cafés have a Global declaration.`];
   if (missing.length) parts.push(`${missing.join(", ")} still need to submit.`);
@@ -1990,7 +2013,7 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
     });
     return acc;
   }, {});
-  const resultRows = ROLLING_ROTATION_WEEKS.flatMap((wk) => Object.entries(DISTRICTS).flatMap(([dist, cafeList]) => cafeList.map((cafe) => ({ week: wk, district: dist, cafe, ...(rotations[rotationKey(wk, dist, cafe)] || EMPTY_ROTATION) })))).filter(hasRotationMenu);
+  const resultRows = ROLLING_ROTATION_WEEKS.flatMap((wk) => Object.entries(DISTRICTS).flatMap(([dist, cafeList]) => cafeList.map((cafe) => ({ week: wk, district: dist, cafe, ...(rotations[rotationKey(wk, dist, cafe)] || EMPTY_ROTATION) })))).filter(hasSubmittedRotationMenu);
   const filteredResults = resultRows.filter((row) => (resultsDistrict === "All" || row.district === resultsDistrict) && (resultsCafe === "All" || row.cafe === resultsCafe)).reverse();
   const persistRotationToDatabase = async (nextRotation) => {
     if (!week || !district || !selectedCafe) return;
@@ -2015,8 +2038,8 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
   };
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#f6f7f9_0%,#eef7f2_100%)] text-slate-950 p-4 md:p-6">
-      <div className="max-w-7xl mx-auto space-y-5">
+    <div className="neighborhood-rotations-shell min-h-screen bg-[linear-gradient(180deg,#f6f7f9_0%,#eef7f2_100%)] text-slate-950 p-4 md:p-8">
+      <div className="max-w-[90rem] mx-auto space-y-5">
         <NeighborhoodHeader onBackToPlatform={onBackToPlatform} onOpenSmartsheetHealth={onOpenSmartsheetHealth} district={district} />
         <section className="inline-flex flex-wrap gap-1 rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
           <RotationTab label="Chef Planner" value="planner" active={rotationView} setActive={setRotationView} />
@@ -2029,11 +2052,11 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
               <ChoiceCard label="District" value={district} setValue={setDistrict} options={Object.keys(DISTRICTS)} />
               <ChoiceCard label="Cafe" value={selectedCafe} setValue={setSelectedCafe} options={cafes} disabled={!district} />
               <ControlCard label="Week" value={week} setValue={setWeek} options={ROTATION_WEEKS} />
-              <StatusCard ready={Boolean(district && selectedCafe)} conflicts={Object.values(conflictMenus).filter((count) => count > 1).length} completed={districtWeekRows.filter(hasRotationMenu).length} total={cafes.length} />
+              <StatusCard ready={Boolean(district && selectedCafe)} conflicts={Object.values(conflictMenus).filter((count) => count > 1).length} completed={districtWeekRows.filter(hasSubmittedRotationMenu).length} total={cafes.length} />
             </section>
             <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
               <div className="xl:col-span-2 space-y-6">
-                {district && selectedCafe ? <RotationPlannerCard cafe={selectedCafe} district={district} menuOptions={menus} rotation={currentRotation} previousRotation={previousRotation} previousWeek={carryoverWeek} updateRotation={updateRotation} week={week} printRows={allRows} persistRotationToDatabase={persistRotationToDatabase} databaseLoadStatus={databaseLoadStatus} databaseSyncStatus={databaseSyncStatus} onRefreshDatabase={refreshFromSmartsheet} isRefreshCoolingDown={smartsheetReadCooldown} menuConflictCount={(rotationMenuLabel(currentRotation, selectedCafe, week) || currentRotation.menu) && cafeUsesMenuConflictRule(district, selectedCafe) ? (conflictMenus[rotationMenuLabel(currentRotation, selectedCafe, week) || currentRotation.menu] || 0) : 0} /> : <SelectPlannerPrompt />}
+                {district && selectedCafe ? <RotationPlannerCard cafe={selectedCafe} district={district} menuOptions={menus} rotation={currentRotation} previousRotation={previousRotation} previousWeek={carryoverWeek} updateRotation={updateRotation} week={week} printRows={allRows} persistRotationToDatabase={persistRotationToDatabase} databaseLoadStatus={databaseLoadStatus} databaseSyncStatus={databaseSyncStatus} onRefreshDatabase={refreshFromSmartsheet} isRefreshCoolingDown={smartsheetReadCooldown} menuConflictCount={menuConflictCountForCandidate(district, districtWeekRows, selectedCafe, rotationMenuLabel(currentRotation, selectedCafe, week) || currentRotation.menu)} /> : <SelectPlannerPrompt />}
               </div>
               <LeadershipOverview district={district} week={week} rows={leadershipRows} conflictMenus={conflictMenus} />
             </section>
@@ -4826,30 +4849,30 @@ function LeadershipOverview({ district, week, rows, conflictMenus }) {
 }
 
 function ExecutiveView({ week, setWeek, rows, conflictMenus }) {
-  const locked = rows.filter((row) => row.status === "Submitted").length;
-  const declared = rows.filter(hasRotationMenu).length;
+  const locked = rows.filter(isSubmittedRotation).length;
+  const declared = rows.filter(hasSubmittedRotationMenu).length;
   const conflicts = rows.filter((row) => rowHasMenuConflict(row, conflictMenus)).length;
-  const globalRows = rows.filter(hasRotationMenu);
-  const globalSummaries = globalRows.map((row) => ({ ...row, summary: foodSummary(selectedItems(row)) }));
+  const globalRows = rows.filter(hasSubmittedRotationMenu);
+  const globalSummaries = globalRows.map((row) => ({ ...row, summary: foodSummary(submittedSelectedItems(row)) }));
   const pricedGlobalSummaries = globalSummaries.filter((row) => row.summary.fc != null);
   const averageGlobalFc = pricedGlobalSummaries.length
     ? pricedGlobalSummaries.reduce((sum, row) => {
-      const range = selectedFoodCostRange(selectedItems(row));
+      const range = selectedFoodCostRange(submittedSelectedItems(row));
       const midpoint = range.low != null && range.high != null ? (range.low + range.high) / 2 : row.summary.fc;
       return sum + midpoint;
     }, 0) / pricedGlobalSummaries.length
     : null;
 
   const districtNames = Object.keys(DISTRICTS);
-  const selectedCount = rows.reduce((sum, row) => sum + selectedItems(row).length, 0);
+  const selectedCount = rows.reduce((sum, row) => sum + submittedSelectedItems(row).length, 0);
   const districtSignals = districtNames.map((districtName) => {
     const districtRows = rows.filter((row) => row.district === districtName);
-    const districtLocked = districtRows.filter((row) => row.status === "Submitted").length;
-    const districtDeclared = districtRows.filter(hasRotationMenu).length;
+    const districtLocked = districtRows.filter(isSubmittedRotation).length;
+    const districtDeclared = districtRows.filter(hasSubmittedRotationMenu).length;
     const districtConflicts = districtRows.filter((row) => rowHasMenuConflict(row, conflictMenus)).length;
     const pricedRows = districtRows
       .map((row) => {
-        const range = selectedFoodCostRange(selectedItems(row));
+        const range = selectedFoodCostRange(submittedSelectedItems(row));
         const midpoint = range.low != null && range.high != null ? (range.low + range.high) / 2 : null;
         return { row, midpoint };
       })
@@ -4885,8 +4908,8 @@ function ExecutiveView({ week, setWeek, rows, conflictMenus }) {
         <div className="mt-5 space-y-6">
           {districtNames.map((districtName) => {
             const districtRows = rows.filter((row) => row.district === districtName);
-            const districtLocked = districtRows.filter((row) => row.status === "Submitted").length;
-            const districtSelected = districtRows.reduce((sum, row) => sum + selectedItems(row).length, 0);
+            const districtLocked = districtRows.filter(isSubmittedRotation).length;
+            const districtSelected = districtRows.reduce((sum, row) => sum + submittedSelectedItems(row).length, 0);
             return (
               <div key={districtName} className="rounded-3xl border border-slate-200 bg-slate-50/70 p-4">
                 <div className="flex items-center justify-between gap-3">
@@ -4895,7 +4918,7 @@ function ExecutiveView({ week, setWeek, rows, conflictMenus }) {
                     <p className="text-xs font-semibold text-slate-500 mt-1">{districtLocked}/{districtRows.length} locked - {districtSelected} selected items</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <p className="rounded-full bg-slate-100 border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600">{districtRows.filter(hasRotationMenu).length}/{districtRows.length} declared</p>
+                    <p className="rounded-full bg-slate-100 border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600">{districtRows.filter(hasSubmittedRotationMenu).length}/{districtRows.length} declared</p>
                     <p className="rounded-full bg-emerald-50 border border-emerald-200 px-3 py-2 text-xs font-semibold text-emerald-800">≤30% favorable</p>
                     <p className="rounded-full bg-slate-100 border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700">30–34% monitor</p>
                     <p className="rounded-full bg-amber-100 border border-amber-200 px-3 py-2 text-xs font-semibold text-amber-800">&gt;34% watch</p>
@@ -4916,7 +4939,7 @@ function ExecutiveView({ week, setWeek, rows, conflictMenus }) {
 }
 
 function LeadershipStatusBoard({ rows }) {
-  const locked = rows.filter((row) => row.status === "Submitted").length;
+  const locked = rows.filter(isSubmittedRotation).length;
   return (
     <section className="rounded-[2rem] bg-white border-2 border-emerald-200 p-6 shadow-2xl text-slate-950">
       <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
@@ -4931,7 +4954,7 @@ function LeadershipStatusBoard({ rows }) {
       </div>
       <div className="mt-5 flex flex-wrap gap-3">
         {rows.map((row) => {
-          const isLocked = row.status === "Submitted";
+          const isLocked = isSubmittedRotation(row);
           return (
             <span key={`${row.district}-${row.cafe}`} className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-bold shadow-sm ${isLocked ? "border-emerald-300 bg-emerald-100 text-emerald-900" : "border-rose-300 bg-rose-100 text-rose-900"}`}>
               <span className={`h-2.5 w-2.5 rounded-full ${isLocked ? "bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.18)]" : "bg-rose-500 shadow-[0_0_0_3px_rgba(244,63,94,0.18)]"}`} />
@@ -4945,11 +4968,11 @@ function LeadershipStatusBoard({ rows }) {
 }
 
 function LeadershipPulsePanel({ signals, rows, conflictMenus }) {
-  const openRows = rows.filter((row) => row.status !== "Submitted");
-  const missingMenuRows = rows.filter((row) => !hasRotationMenu(row));
+  const openRows = rows.filter((row) => !isSubmittedRotation(row));
+  const missingMenuRows = rows.filter((row) => !hasSubmittedRotationMenu(row));
   const duplicateRows = rows.filter((row) => rowHasMenuConflict(row, conflictMenus));
   const highCostRows = rows.filter((row) => {
-    const range = selectedFoodCostRange(selectedItems(row));
+    const range = selectedFoodCostRange(submittedSelectedItems(row));
     const midpoint = range.low != null && range.high != null ? (range.low + range.high) / 2 : null;
     return midpoint != null && midpoint > 0.34;
   });
@@ -5028,17 +5051,17 @@ function ExecutiveMetric({ title, value, sub, tone = "neutral" }) {
 }
 
 function SummaryCard({ row, conflict, showDistrict = true }) {
-  const rowItems = selectedItems(row);
+  const locked = isSubmittedRotation(row);
+  const rowItems = submittedSelectedItems(row);
   const summary = foodSummary(rowItems);
   const fcRange = selectedFoodCostRange(rowItems);
   const fcMidpoint = fcRange.low != null && fcRange.high != null ? (fcRange.low + fcRange.high) / 2 : summary.fc;
   const stationKeys = CAFE_STATION_CONFIG[row.cafe] || [];
-  const completedStations = stationKeys.filter((stationKey) => stationComplete(row, stationKey, row.cafe, row.week)).length;
+  const completedStations = locked ? stationKeys.filter((stationKey) => stationComplete(row, stationKey, row.cafe, row.week)).length : 0;
   const progressPct = stationKeys.length ? Math.round((completedStations / stationKeys.length) * 100) : 0;
-  const locked = row.status === "Submitted";
-  const menuLabel = rotationMenuLabel(row);
+  const menuLabel = locked ? rotationMenuLabel(row) : "";
   const tone = !menuLabel ? "border-slate-200 bg-white" : fcMidpoint == null ? "border-slate-300 bg-slate-50" : fcMidpoint > 0.34 ? "border-amber-300 bg-amber-50" : fcMidpoint <= 0.30 ? "border-emerald-300 bg-emerald-50" : "border-sky-200 bg-sky-50";
-  const statusTone = locked ? "bg-emerald-500 text-white border-emerald-500" : menuLabel ? "bg-amber-100 text-amber-900 border-amber-200" : "bg-rose-100 text-rose-900 border-rose-200";
+  const statusTone = locked ? "bg-emerald-500 text-white border-emerald-500" : "bg-rose-100 text-rose-900 border-rose-200";
 
   return (
     <div className={`rounded-3xl border-2 p-4 shadow-sm ${tone}`}>
@@ -5050,14 +5073,14 @@ function SummaryCard({ row, conflict, showDistrict = true }) {
             <p className="font-bold text-slate-900">{row.cafe}</p>
           </div>
           {row.copiedFrom ? <p className="text-xs text-slate-500 mt-1">Copied from {row.copiedFrom}</p> : row.cafe === "Nitro" ? <p className="text-xs text-slate-500 mt-1">Frontier follows Nitro</p> : null}
-          <p className="text-base font-black text-slate-950 mt-1 leading-snug">{menuLabel || "No menu declared"}</p>
-          {row.updatedAt && <p className="text-xs text-slate-500 mt-1">Updated {row.updatedAt}</p>}
-          {row.submittedBy && <p className="text-xs text-slate-500 mt-1">By {row.submittedBy}</p>}
-          {row.station && <p className="text-xs text-slate-500 mt-1">{row.station}</p>}
+          <p className="text-base font-black text-slate-950 mt-1 leading-snug">{menuLabel || "No locked menu"}</p>
+          {locked && row.updatedAt && <p className="text-xs text-slate-500 mt-1">Updated {row.updatedAt}</p>}
+          {locked && row.submittedBy && <p className="text-xs text-slate-500 mt-1">By {row.submittedBy}</p>}
+          {locked && row.station && <p className="text-xs text-slate-500 mt-1">{row.station}</p>}
         </div>
         <div className="flex flex-col items-end gap-2">
-          <span className={`rounded-full border px-3 py-1 text-xs font-bold ${statusTone}`}>{locked ? "locked" : menuLabel ? "draft" : "open"}</span>
-          <span className="rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-xs font-bold text-slate-700">{pctRange(fcRange)}</span>
+          <span className={`rounded-full border px-3 py-1 text-xs font-bold ${statusTone}`}>{locked ? "locked" : "open"}</span>
+          {locked && <span className="rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-xs font-bold text-slate-700">{pctRange(fcRange)}</span>}
           {conflict ? <AlertTriangle className="text-amber-600" size={18} /> : menuLabel ? <CheckCircle2 className="text-emerald-600" size={18} /> : null}
         </div>
       </div>

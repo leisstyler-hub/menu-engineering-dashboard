@@ -201,6 +201,31 @@
     backdrop-filter: blur(18px);
   }
 
+  .neighborhood-rotations-shell {
+    font-size: 18px;
+  }
+
+  .neighborhood-rotations-shell .text-xs {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+
+  .neighborhood-rotations-shell .text-sm {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+
+  .neighborhood-rotations-shell .text-base {
+    font-size: 1.125rem;
+    line-height: 1.625rem;
+  }
+
+  .neighborhood-rotations-shell button,
+  .neighborhood-rotations-shell input,
+  .neighborhood-rotations-shell select {
+    font-size: 1rem;
+  }
+
   .global-mobile-tool-nav {
     position: fixed;
     right: 14px;
