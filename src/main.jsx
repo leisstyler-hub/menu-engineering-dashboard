@@ -2,6 +2,7 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import { Analytics } from "@vercel/analytics/react";
 import App from "./App.jsx";
+import "./app/weeklyTrafficEnhancer.js";
 import "./index.css";
 import "./leanMobileFlow.css";
 

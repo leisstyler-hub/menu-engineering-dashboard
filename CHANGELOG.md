@@ -2,6 +2,9 @@
 
 ## 2026-06-20
 
+- [Jun 20, 8:05 PM] Installed a secure weekly traffic endpoint that records anonymous daily visitors server-side and feeds the dashboard traffic trend from Smartsheet.
+- [Jun 20, 8:05 PM] Redesigned Weekly Traffic as a cleaner line graph instead of the prior placeholder bar visual.
+- [Jun 20, 8:05 PM] Set visible app version to `2026.06.20.003-secure-traffic-endpoint`.
 - [Jun 20, 7:35 PM] Added a Weekly Traffic dashboard card with a seven-day visitor bar chart and honest analytics-pending state until a secure Vercel Analytics read endpoint is connected.
 - [Jun 20, 7:35 PM] Set visible app version to `2026.06.20.002-publish-weekly-traffic`.
 
