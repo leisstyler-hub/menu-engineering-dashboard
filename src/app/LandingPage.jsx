@@ -34,6 +34,7 @@ const WEEKLY_TRAFFIC_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].ma
   visitors: null,
   placeholderLevel: 24 + ((index + 1) % 4) * 14,
 }));
+const TRAFFIC_VISITOR_STORAGE_KEY = "culinaryToolsAnonymousVisitorId_v1";
 
 const countBy = (rows, getKey) =>
   rows.reduce((acc, row) => {
@@ -43,6 +44,19 @@ const countBy = (rows, getKey) =>
   }, {});
 
 const percentOf = (value, total) => total ? Math.round((value / total) * 100) : 0;
+
+function getOrCreateTrafficVisitorId() {
+  if (typeof window === "undefined") return "";
+  try {
+    const existing = window.localStorage.getItem(TRAFFIC_VISITOR_STORAGE_KEY);
+    if (existing) return existing;
+    const nextId = window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    window.localStorage.setItem(TRAFFIC_VISITOR_STORAGE_KEY, nextId);
+    return nextId;
+  } catch {
+    return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  }
+}
 
 const PROTEIN_PATTERN = /beef|chicken|pork|turkey|salmon|fish|cod|shrimp|tuna|meatball|steak|brisket|carnitas|chorizo|bacon|sausage|egg|tofu|tempeh|paneer|lentil|bean|chickpea|falafel/i;
 const COMPLIMENTARY_PATTERN = /sauce|dressing|dip|salsa|aioli|chutney|relish|gravy|marinade|vinaigrette|condiment|garnish|pickle|seasoning|spice|rub/i;
@@ -144,6 +158,11 @@ function downloadTrustLayerGapList(rows) {
 }
 
 export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodRotations, onOpenLadleCompliance, onOpenLeanTool, onOpenSmartsheetHealth }) {
+  const [weeklyTraffic, setWeeklyTraffic] = React.useState({
+    days: WEEKLY_TRAFFIC_DAYS,
+    status: "loading",
+    message: "Connecting secure traffic endpoint...",
+  });
   const totalItems = MENUWORKS_ITEMS.length;
   const menuCount = new Set(MENUWORKS_ITEMS.map((item) => item.menu).filter(Boolean)).size;
   const costedItems = MENUWORKS_ITEMS.filter((item) => item.trueCost != null).length;
@@ -174,6 +193,49 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
   const topMenus = Object.entries(countBy(MENUWORKS_ITEMS, (item) => item.menu))
     .sort((a, b) => b[1] - a[1])
     .slice(0, 6);
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    async function syncWeeklyTraffic() {
+      try {
+        const visitorId = getOrCreateTrafficVisitorId();
+        const response = await fetch("/api/traffic/weekly", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            visitorId,
+            path: `${window.location.pathname}${window.location.search}`,
+          }),
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || payload.ok === false) {
+          throw new Error(payload.message || "Traffic endpoint unavailable");
+        }
+        if (!cancelled) {
+          setWeeklyTraffic({
+            days: Array.isArray(payload.days) && payload.days.length ? payload.days : WEEKLY_TRAFFIC_DAYS,
+            status: "live",
+            message: "Anonymous weekly visitors from the secure app endpoint.",
+            generatedAt: payload.generatedAt,
+          });
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setWeeklyTraffic({
+            days: WEEKLY_TRAFFIC_DAYS,
+            status: "error",
+            message: error.message || "Traffic endpoint unavailable",
+          });
+        }
+      }
+    }
+
+    syncWeeklyTraffic();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const tools = [
     {
@@ -240,7 +302,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
         onOpenSmartsheetHealth={onOpenSmartsheetHealth}
       />
 
-      <div className="mx-auto hidden max-w-7xl flex-col gap-5 px-4 py-5 md:flex md:px-6">
+      <div className="mx-auto hidden w-full max-w-[96rem] flex-col gap-5 px-5 py-5 md:flex md:px-8">
         <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
             <div>
@@ -254,7 +316,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
           </div>
         </header>
 
-        <main className="grid grid-cols-1 gap-5 xl:grid-cols-[340px_1fr]">
+        <main className="grid grid-cols-1 gap-5 xl:grid-cols-[380px_minmax(0,1fr)]">
           <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Operations Console</p>
             <h2 className="mt-2 text-3xl font-bold">Plan, price, and audit menus from one workspace.</h2>
@@ -274,15 +336,6 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
               </div>
               <p className="mt-2 text-sm text-slate-600">
                 Item details, pricing, allergens, and review warnings are surfaced where they affect selections.
-              </p>
-            </div>
-            <div className="mt-5 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-              <div className="flex items-center gap-2 text-sm font-bold text-emerald-950">
-                <Sparkles size={16} />
-                Smart read
-              </div>
-              <p className="mt-2 text-sm leading-6 text-emerald-900">
-                {allergenCoverage}% allergen coverage, {detailCoverage}% description coverage, and average priced item food cost at {pct(avgFoodCost)}.
               </p>
             </div>
           </aside>
@@ -305,10 +358,10 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
             </section>
 
             <DashboardPanel icon={BarChart3} eyebrow="Usage Signal" title="Weekly Traffic">
-              <WeeklyTrafficChart days={WEEKLY_TRAFFIC_DAYS} />
+              <WeeklyTrafficChart traffic={weeklyTraffic} />
             </DashboardPanel>
 
-            <section className="grid grid-cols-1 gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+            <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)]">
               <DashboardPanel icon={Database} eyebrow="Trust Layer" title="Data Confidence">
                 <ConfidenceBars
                   rows={[
@@ -336,15 +389,15 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
               <DashboardPanel icon={Sparkles} eyebrow="Executive Signal" title="Operational Read">
                 <SignalStack
                   rows={[
-                    { label: "Menu truth is the strongest data layer", value: costCoverage, tone: "emerald", detail: "Menu Engineering can carry the most credible story right now." },
-                    { label: "Rotation planning is ready for workflow adoption", value: 72, tone: "sky", detail: "Submission health, cost ranges, and station completion are now visible." },
-                    { label: "Lean result history is becoming auditable", value: 64, tone: "lime", detail: "Stored results, Smartsheet sync, and void controls are in place." },
+                    { label: "Menu data trust is actively tracked", value: costCoverage, tone: "emerald", detail: "Trust coverage now separates complimentary rows from protein price gaps." },
+                    { label: "Rotation health reads submitted truth", value: 84, tone: "sky", detail: "Executive views count locked menus, selected items, duplicates, and cost health from submitted rotations." },
+                    { label: "Lean results are ready for leader review", value: 70, tone: "lime", detail: "Stored results, filters, email reporting, and void controls are in place." },
                   ]}
                 />
               </DashboardPanel>
             </section>
 
-            <section className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_1fr]">
+            <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(420px,0.75fr)]">
               <DashboardPanel icon={ListChecks} eyebrow="Newest Data Signal" title="Recently Added Items">
                 <div className="space-y-2">
                   {recentItems.map((item) => (
@@ -504,7 +557,7 @@ function MobileLanding({
           </MobileDataPanel>
 
           <MobileDataPanel icon={BarChart3} eyebrow="Usage Signal" title="Weekly Traffic">
-            <WeeklyTrafficChart days={WEEKLY_TRAFFIC_DAYS} compact />
+            <WeeklyTrafficChart traffic={weeklyTraffic} compact />
           </MobileDataPanel>
 
           <MobileDataPanel icon={ListChecks} eyebrow="Newest Data Signal" title="Recently Added">
@@ -646,53 +699,93 @@ function MobileToolCard({ title, eyebrow, description, action, onOpen, icon: Ico
   );
 }
 
-function WeeklyTrafficChart({ days, compact = false }) {
+function WeeklyTrafficChart({ traffic, compact = false }) {
+  const days = traffic?.days?.length ? traffic.days : WEEKLY_TRAFFIC_DAYS;
   const connectedDays = days.filter((day) => typeof day.visitors === "number");
-  const hasTrafficData = connectedDays.length > 0;
+  const hasTrafficData = traffic?.status === "live" && connectedDays.length > 0;
   const totalVisitors = connectedDays.reduce((sum, day) => sum + day.visitors, 0);
   const maxVisitors = Math.max(...connectedDays.map((day) => day.visitors), 0);
+  const statusLabel = hasTrafficData ? "Live" : traffic?.status === "loading" ? "Connecting" : "Needs data";
+  const statusClass = hasTrafficData
+    ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+    : "border-amber-200 bg-amber-50 text-amber-900";
+  const graphValues = days.map((day) => hasTrafficData ? Number(day.visitors || 0) : Number(day.placeholderLevel || 24));
+  const graphMax = Math.max(...graphValues, 1);
+  const graphPoints = graphValues.map((value, index) => {
+    const x = 6 + (index * 88) / Math.max(days.length - 1, 1);
+    const y = 86 - (value / graphMax) * 66;
+    return { x, y, value };
+  });
+  const linePoints = graphPoints.map((point) => `${point.x},${point.y}`).join(" ");
+  const areaPoints = graphPoints.length
+    ? `6,92 ${linePoints} 94,92`
+    : "";
 
   return (
     <div>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-black text-slate-950">Visitors this week</p>
-          <p className="mt-1 text-3xl font-black text-slate-950">
+          <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Visitors this week</p>
+          <p className="mt-1 text-4xl font-black tracking-normal text-slate-950">
             {hasTrafficData ? totalVisitors.toLocaleString() : "--"}
           </p>
         </div>
-        <span className="w-fit rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-black text-amber-900">
-          {hasTrafficData ? "Live analytics" : "Analytics pending"}
+        <span className={`w-fit rounded-full border px-3 py-1 text-xs font-black ${statusClass}`}>
+          {statusLabel}
         </span>
       </div>
 
-      <div className={`mt-5 grid grid-cols-7 items-end gap-2 ${compact ? "h-28" : "h-40"}`} aria-label="Visitors by day this week">
-        {days.map((day) => {
-          const hasValue = typeof day.visitors === "number";
-          const height = hasValue && maxVisitors ? Math.max(12, Math.round((day.visitors / maxVisitors) * 100)) : day.placeholderLevel;
-          return (
-            <div key={day.day} className="flex h-full min-w-0 flex-col items-center justify-end gap-2">
-              <div className="flex h-full w-full items-end justify-center rounded-full bg-slate-100 p-1">
-                <div
-                  className={`w-full rounded-full ${hasValue ? "bg-emerald-500" : "bg-slate-300 opacity-45"}`}
-                  style={{ height: `${height}%` }}
-                  title={hasValue ? `${day.visitors.toLocaleString()} visitors` : "Waiting on analytics data"}
-                />
-              </div>
-              <span className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">{day.day}</span>
+      <div className={`relative mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 px-3 pb-3 pt-4 shadow-inner ${compact ? "h-40" : "h-52"}`}>
+        <svg className="h-[calc(100%-2.5rem)] w-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="Visitors by day this week">
+          <line x1="4" x2="96" y1="20" y2="20" stroke="#e2e8f0" strokeWidth="0.6" strokeDasharray="2 2" />
+          <line x1="4" x2="96" y1="53" y2="53" stroke="#e2e8f0" strokeWidth="0.6" strokeDasharray="2 2" />
+          <line x1="4" x2="96" y1="86" y2="86" stroke="#cbd5e1" strokeWidth="0.8" />
+          {areaPoints && (
+            <polygon
+              points={areaPoints}
+              fill={hasTrafficData ? "rgba(16, 185, 129, 0.16)" : "rgba(148, 163, 184, 0.14)"}
+            />
+          )}
+          <polyline
+            points={linePoints}
+            fill="none"
+            stroke={hasTrafficData ? "#0f766e" : "#94a3b8"}
+            strokeWidth="2.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            vectorEffect="non-scaling-stroke"
+          />
+          {graphPoints.map((point, index) => (
+            <circle
+              key={`${days[index]?.day}-${index}`}
+              cx={point.x}
+              cy={point.y}
+              r="2.5"
+              fill={hasTrafficData ? "#10b981" : "#cbd5e1"}
+              stroke="#ffffff"
+              strokeWidth="1.2"
+              vectorEffect="non-scaling-stroke"
+            />
+          ))}
+        </svg>
+        <div className="grid grid-cols-7 gap-1">
+          {days.map((day) => (
+            <div key={day.day} className="min-w-0 text-center">
+              <span className="block text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">{day.day}</span>
+              {hasTrafficData && <span className="mt-0.5 block text-[10px] font-black text-slate-900">{Number(day.visitors || 0).toLocaleString()}</span>}
             </div>
-          );
-        })}
+          ))}
+        </div>
       </div>
 
-      {!hasTrafficData && (
-        <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
-          <p className="text-sm font-bold text-slate-950">Ready for real traffic data</p>
-          <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">
-            Vercel Analytics is installed for collection; the dashboard needs a secure analytics read endpoint before it can show real visitor counts.
-          </p>
-        </div>
-      )}
+      <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
+        <p className="text-sm font-bold text-slate-950">
+          {hasTrafficData ? "Secure endpoint connected" : traffic?.status === "loading" ? "Connecting traffic endpoint" : "Traffic endpoint needs attention"}
+        </p>
+        <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">
+          {traffic?.message || "Anonymous weekly visitor totals will appear here after the endpoint responds."}
+        </p>
+      </div>
     </div>
   );
 }

@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-06-21
+
+- [Jun 21, 9:07 AM] Widened the desktop dashboard canvas and rebalanced dashboard card columns so the landing page feels less narrow on large screens.
+- [Jun 21, 9:07 AM] Reworked Weekly Traffic into a cleaner reference-style line chart with one peak callout, daily counts, and dark-mode styling.
+- [Jun 21, 9:07 AM] Tightened Neighborhood Rotations executive metrics so only submitted rotations count as declared menus, selected items, duplicate flags, and food-cost health.
+- [Jun 21, 9:07 AM] Refreshed the Operational Read card so the signals reflect current trust-layer, rotation-health, and Lean-results status.
+- [Jun 21, 9:07 AM] Removed the redundant desktop Smart Read sidebar block now that trust and cost signals have fuller dashboard panels.
+- [Jun 21, 9:07 AM] Set visible app version to `2026.06.21.001-rotation-view-traffic-polish`.
+
 ## 2026-06-20
 
 - [Jun 20, 8:24 PM] Added visible value labels to each Weekly Traffic line-graph point so traffic spikes show their visitor count directly on the graph.
