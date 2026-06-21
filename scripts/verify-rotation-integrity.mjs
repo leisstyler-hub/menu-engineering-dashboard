@@ -95,6 +95,22 @@ if (grillSpotlights.some((row) => !/location spotlights|regional spotlights/i.te
   fail("Grill Location Spotlight pool contains non-spotlight grill core rows.");
 }
 
+const requiredEastMarkers = [
+  'Bingo: ["global", "fishMarket", "grill", "grillFreshFive", "salad", "saladFreshFive", "commissaryEverest"]',
+  'Grace: ["streetBeets", "global", "grill", "freshFive", "salad"]',
+  'Blueshift: ["global", "lotusWp", "grill", "salad", "deli", "fishMarket", "freshFive"]',
+  'Eclipse: ["global", "stationTakeover", "freshFive"]',
+  'customStations: cloneCustomStations()',
+  'function StreetBeetsSection',
+  'function CommissaryEverestSection',
+  'function LotusWpSection',
+  'function StationTakeoverSection'
+];
+
+for (const marker of requiredEastMarkers) {
+  if (!source.includes(marker)) fail(`East custom station marker missing: ${marker}`);
+}
+
 if (!process.exitCode) {
   console.log(`Rotation integrity checks passed: ${carveryProteins.length} carvery proteins, ${saladPool.length} salads, ${deliPool.length} deli items, ${grillSpotlights.length} grill spotlights.`);
 }

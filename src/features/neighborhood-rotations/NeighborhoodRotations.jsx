@@ -35,11 +35,11 @@ const CAFE_STATION_CONFIG = {
   LAX78: ["global", "grill", "salad", "freshFive"],
   SNA3: ["global", "grill", "salad", "freshFive"],
   Astra: ["global", "grill", "freshFive"],
-  Bingo: ["global", "fishMarket", "grill", "salad", "freshFive"],
+  Bingo: ["global", "fishMarket", "grill", "grillFreshFive", "salad", "saladFreshFive", "commissaryEverest"],
   Sonic: ["global", "grill", "freshFive", "salad", "deli"],
-  Blueshift: ["global", "grill", "salad", "deli", "fishMarket", "freshFive"],
-  Eclipse: ["global", "freshFive"],
-  Grace: ["global", "grill", "freshFive", "salad"]
+  Blueshift: ["global", "lotusWp", "grill", "salad", "deli", "fishMarket", "freshFive"],
+  Eclipse: ["global", "stationTakeover", "freshFive"],
+  Grace: ["streetBeets", "global", "grill", "freshFive", "salad"]
 };
 
 const MENU_CONFLICT_GROUPS = {
@@ -63,7 +63,13 @@ const STATION_LABELS = {
   fishMarket: "Fish Market LTO",
   carvery: "Carvery Station",
   freshFive: "Fresh $5",
-  soup: "Soup LTOs"
+  grillFreshFive: "Grill Fresh $5",
+  saladFreshFive: "Salad Fresh $5",
+  soup: "Soup LTOs",
+  streetBeets: "Street Beets",
+  commissaryEverest: "Everest Commissary",
+  lotusWp: "Lotus W&P",
+  stationTakeover: "Station Takeover"
 };
 
 const formatDateKey = (date) => date.toISOString().slice(0, 10);
@@ -121,6 +127,82 @@ const previousRotationWeek = (weekLabel = "") => {
 const ROLLING_HISTORY_WEEK_COUNT = 26;
 const ROLLING_ROTATION_WEEKS = ROTATION_WEEKS.slice(0, ROLLING_HISTORY_WEEK_COUNT);
 
+function blankCustomStations() {
+  const calories4 = ["", "", "", ""];
+  return {
+    streetBeets: {
+      entrees: ["", ""],
+      sides: ["", "", ""],
+      subRecipes: ["", ""],
+      extensions: [""],
+      calories: { entrees: ["", ""], sides: ["", "", ""], subRecipes: ["", ""], extensions: [""] }
+    },
+    commissaryEverest: {
+      menu: "",
+      entrees: ["", ""],
+      hotSides: [""],
+      coldSides: ["", "", "", ""],
+      riceDishes: [""]
+    },
+    lotusWp: {
+      entrees: ["", "", "", ""],
+      sides: ["", "", "", "", "", ""]
+    },
+    stationTakeover: {
+      active: false,
+      menu: "",
+      entrees: ["", ""],
+      sides: [...calories4],
+      subRecipes: ["", "", ""],
+      extensions: ["", ""]
+    }
+  };
+}
+
+function cloneCustomStations(source = {}) {
+  const blank = blankCustomStations();
+  return {
+    streetBeets: {
+      ...blank.streetBeets,
+      ...(source.streetBeets || {}),
+      entrees: [...(source.streetBeets?.entrees || blank.streetBeets.entrees)],
+      sides: [...(source.streetBeets?.sides || blank.streetBeets.sides)],
+      subRecipes: [...(source.streetBeets?.subRecipes || blank.streetBeets.subRecipes)],
+      extensions: [...(source.streetBeets?.extensions || blank.streetBeets.extensions)],
+      calories: {
+        ...blank.streetBeets.calories,
+        ...(source.streetBeets?.calories || {}),
+        entrees: [...(source.streetBeets?.calories?.entrees || blank.streetBeets.calories.entrees)],
+        sides: [...(source.streetBeets?.calories?.sides || blank.streetBeets.calories.sides)],
+        subRecipes: [...(source.streetBeets?.calories?.subRecipes || blank.streetBeets.calories.subRecipes)],
+        extensions: [...(source.streetBeets?.calories?.extensions || blank.streetBeets.calories.extensions)]
+      }
+    },
+    commissaryEverest: {
+      ...blank.commissaryEverest,
+      ...(source.commissaryEverest || {}),
+      entrees: [...(source.commissaryEverest?.entrees || blank.commissaryEverest.entrees)],
+      hotSides: [...(source.commissaryEverest?.hotSides || blank.commissaryEverest.hotSides)],
+      coldSides: [...(source.commissaryEverest?.coldSides || blank.commissaryEverest.coldSides)],
+      riceDishes: [...(source.commissaryEverest?.riceDishes || blank.commissaryEverest.riceDishes)]
+    },
+    lotusWp: {
+      ...blank.lotusWp,
+      ...(source.lotusWp || {}),
+      entrees: [...(source.lotusWp?.entrees || blank.lotusWp.entrees)],
+      sides: [...(source.lotusWp?.sides || blank.lotusWp.sides)]
+    },
+    stationTakeover: {
+      ...blank.stationTakeover,
+      ...(source.stationTakeover || {}),
+      entrees: [...(source.stationTakeover?.entrees || blank.stationTakeover.entrees)],
+      sides: [...(source.stationTakeover?.sides || blank.stationTakeover.sides)],
+      subRecipes: [...(source.stationTakeover?.subRecipes || blank.stationTakeover.subRecipes)],
+      extensions: [...(source.stationTakeover?.extensions || blank.stationTakeover.extensions)]
+    }
+  };
+}
+
 const EMPTY_ROTATION = {
   menu: "",
   station: "",
@@ -135,6 +217,8 @@ const EMPTY_ROTATION = {
     deli: ["", ""],
     fishMarket: [""],
     freshFive: ["", "", "", "", ""],
+    grillFreshFive: [""],
+    saladFreshFive: [""],
     soup: ["", ""],
     noodles: [""],
     wokEntrees: ["", "", ""],
@@ -153,6 +237,7 @@ const EMPTY_ROTATION = {
     coldSide1: "",
     coldSide2: ""
   },
+  customStations: blankCustomStations(),
   uploadedLtos: {},
   promotionOverride: { enabled: false, name: "", days: [], returnDays: [] },
   globalBlocks: {},
@@ -186,11 +271,12 @@ function baseDatabaseRecord({ parentId, recordId, recordType, status, district, 
   };
 }
 
-function selectionDatabaseRecord({ parentId, district, cafe, week, rotation, stationKey, selectionType, itemName, sortOrder, slotNumber, candidateRows }) {
+function selectionDatabaseRecord({ parentId, district, cafe, week, rotation, stationKey, selectionType, itemName, sortOrder, slotNumber, candidateRows, calories }) {
   const row = selectedRowForName(itemName, candidateRows);
   const price = getPrice(row);
   const trueCost = getTrueCost(row);
   const foodCost = price ? Number(trueCost || 0) / Number(price) : null;
+  const calorieValue = calories || getCalories(row) || "";
   return {
     ...baseDatabaseRecord({
       parentId,
@@ -212,6 +298,7 @@ function selectionDatabaseRecord({ parentId, district, cafe, week, rotation, sta
     [SMARTSHEET_COLUMNS.menuItemSortOrder]: sortOrder,
     [SMARTSHEET_COLUMNS.price]: price ?? "",
     [SMARTSHEET_COLUMNS.trueCost]: trueCost ?? "",
+    [SMARTSHEET_COLUMNS.calories]: calorieValue,
     [SMARTSHEET_COLUMNS.foodCostPct]: foodCost == null ? "" : Number((foodCost * 100).toFixed(1)),
     [SMARTSHEET_COLUMNS.enticingDescription]: getDescription(row),
     [SMARTSHEET_COLUMNS.dietTags]: getDiet(row),
@@ -292,6 +379,24 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
       selectionRows.push(rec);
     });
   };
+  const pushCustomSelections = (stationKey, selectionType, values, offset = 0, calories = []) => {
+    compactValues(values).forEach((itemName, index) => {
+      selectionRows.push(selectionDatabaseRecord({
+        parentId,
+        district,
+        cafe,
+        week,
+        rotation,
+        stationKey,
+        selectionType,
+        itemName,
+        sortOrder: offset + index + 1,
+        slotNumber: index + 1,
+        candidateRows: MENUWORKS_ITEMS,
+        calories: calories[index] || ""
+      }));
+    });
+  };
 
   const reInventBlockRows = [];
   if (cafe === "Re:Invent") {
@@ -363,7 +468,7 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
   if (rotation.grill?.promoActive) {
     pushSelections("grill", SMARTSHEET_SELECTION_TYPES.grillPromo, [rotation.grill?.promoItem], 420);
   }
-  ["salad", "pizza", "deli", "fishMarket", "freshFive", "soup"].forEach((stationKey, stationIndex) => {
+  ["salad", "pizza", "deli", "fishMarket", "freshFive", "grillFreshFive", "saladFreshFive", "soup"].forEach((stationKey, stationIndex) => {
     pushSelections(stationKey, SMARTSHEET_SELECTION_TYPES.lto, rotation.ltos?.[stationKey] || [], 500 + stationIndex * 100, rotation, "", stationPool(stationKey));
   });
   pushSelections("wok", SMARTSHEET_SELECTION_TYPES.wokEntree, rotation.ltos?.wokEntrees || [], 1000, rotation, "", stationPool("wokEntrees"));
@@ -374,6 +479,26 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
     const type = field.includes("protein") ? SMARTSHEET_SELECTION_TYPES.carveryProtein : field.includes("vegetable") ? SMARTSHEET_SELECTION_TYPES.carveryVegetable : field.includes("starch") ? SMARTSHEET_SELECTION_TYPES.carveryStarch : field.includes("hot") ? SMARTSHEET_SELECTION_TYPES.carveryHotSide : SMARTSHEET_SELECTION_TYPES.carveryColdSide;
     selectionRows.push(selectionDatabaseRecord({ parentId, district, cafe, week, rotation, stationKey: "carvery", selectionType: type, itemName: value, sortOrder: 1400 + index, slotNumber: index + 1 }));
   });
+
+  const custom = cloneCustomStations(rotation.customStations);
+  pushCustomSelections("streetBeets", SMARTSHEET_SELECTION_TYPES.entree, custom.streetBeets.entrees, 1500, custom.streetBeets.calories.entrees);
+  pushCustomSelections("streetBeets", SMARTSHEET_SELECTION_TYPES.side, custom.streetBeets.sides, 1530, custom.streetBeets.calories.sides);
+  pushCustomSelections("streetBeets", SMARTSHEET_SELECTION_TYPES.subRecipe, custom.streetBeets.subRecipes, 1560, custom.streetBeets.calories.subRecipes);
+  pushCustomSelections("streetBeets", SMARTSHEET_SELECTION_TYPES.extension, custom.streetBeets.extensions, 1590, custom.streetBeets.calories.extensions);
+  pushCustomSelections("commissaryEverest", SMARTSHEET_SELECTION_TYPES.menuName, [custom.commissaryEverest.menu], 1620);
+  pushCustomSelections("commissaryEverest", SMARTSHEET_SELECTION_TYPES.entree, custom.commissaryEverest.entrees, 1630);
+  pushCustomSelections("commissaryEverest", SMARTSHEET_SELECTION_TYPES.hotSide, custom.commissaryEverest.hotSides, 1660);
+  pushCustomSelections("commissaryEverest", SMARTSHEET_SELECTION_TYPES.coldSide, custom.commissaryEverest.coldSides, 1670);
+  pushCustomSelections("commissaryEverest", SMARTSHEET_SELECTION_TYPES.riceDish, custom.commissaryEverest.riceDishes, 1710);
+  pushCustomSelections("lotusWp", SMARTSHEET_SELECTION_TYPES.entree, custom.lotusWp.entrees, 1740);
+  pushCustomSelections("lotusWp", SMARTSHEET_SELECTION_TYPES.side, custom.lotusWp.sides, 1780);
+  if (custom.stationTakeover.active || custom.stationTakeover.menu || compactValues([...custom.stationTakeover.entrees, ...custom.stationTakeover.sides, ...custom.stationTakeover.subRecipes, ...custom.stationTakeover.extensions]).length) {
+    pushCustomSelections("stationTakeover", SMARTSHEET_SELECTION_TYPES.menuName, [custom.stationTakeover.menu || "Station Takeover"], 1850);
+    pushCustomSelections("stationTakeover", SMARTSHEET_SELECTION_TYPES.entree, custom.stationTakeover.entrees, 1860);
+    pushCustomSelections("stationTakeover", SMARTSHEET_SELECTION_TYPES.side, custom.stationTakeover.sides, 1880);
+    pushCustomSelections("stationTakeover", SMARTSHEET_SELECTION_TYPES.subRecipe, custom.stationTakeover.subRecipes, 1920);
+    pushCustomSelections("stationTakeover", SMARTSHEET_SELECTION_TYPES.extension, custom.stationTakeover.extensions, 1950);
+  }
 
   const uploadRows = [];
   Object.entries(rotation.uploadedLtos || {}).forEach(([stationKey, items]) => {
@@ -427,6 +552,7 @@ function normalizeLoadedRotationRecord(record = {}) {
     submittedBy: String(record[SMARTSHEET_COLUMNS.submittedBy] || ""),
     submittedAt: String(record[SMARTSHEET_COLUMNS.submittedAt] || ""),
     updatedAt: String(record[SMARTSHEET_COLUMNS.updatedAt] || ""),
+    calories: String(record[SMARTSHEET_COLUMNS.calories] || ""),
     promotionOverrideEnabled: String(record[SMARTSHEET_COLUMNS.promotionOverrideEnabled] || "").toLowerCase() === "true" || record[SMARTSHEET_COLUMNS.promotionOverrideEnabled] === true,
     promotionName: String(record[SMARTSHEET_COLUMNS.promotionName] || ""),
     promotionDays: String(record[SMARTSHEET_COLUMNS.promotionDays] || "").split(",").map((value) => value.trim()).filter(Boolean),
@@ -448,6 +574,7 @@ function recordsToRotations(records = []) {
         grill: { ...EMPTY_ROTATION.grill },
         ltos: Object.fromEntries(Object.entries(EMPTY_ROTATION.ltos).map(([station, values]) => [station, [...values]])),
         carvery: { ...EMPTY_ROTATION.carvery },
+        customStations: cloneCustomStations(),
         uploadedLtos: {},
       };
     }
@@ -576,6 +703,49 @@ function recordsToRotations(records = []) {
       const fields = carveryFieldByType[record.selectionType] || [];
       const field = fields[Math.min(index, fields.length - 1)];
       if (field) rotation.carvery[field] = record.itemName;
+      return;
+    }
+
+    if (["streetBeets", "commissaryEverest", "lotusWp", "stationTakeover"].includes(record.stationKey)) {
+      const custom = cloneCustomStations(rotation.customStations);
+      const setCustomSlot = (stationKey, field, targetIndex = index) => {
+        const values = [...(custom[stationKey]?.[field] || [])];
+        if (targetIndex >= 0 && targetIndex < values.length) values[targetIndex] = record.itemName;
+        custom[stationKey] = { ...custom[stationKey], [field]: values };
+      };
+      const setStreetBeetsSlot = (field) => {
+        const values = [...(custom.streetBeets[field] || [])];
+        if (index >= 0 && index < values.length) values[index] = record.itemName;
+        const calorieValues = [...(custom.streetBeets.calories?.[field] || [])];
+        if (record.calories && index >= 0 && index < calorieValues.length) calorieValues[index] = record.calories;
+        custom.streetBeets = { ...custom.streetBeets, [field]: values, calories: { ...custom.streetBeets.calories, [field]: calorieValues } };
+      };
+      if (record.stationKey === "streetBeets") {
+        if (record.selectionType === SMARTSHEET_SELECTION_TYPES.entree) setStreetBeetsSlot("entrees");
+        if (record.selectionType === SMARTSHEET_SELECTION_TYPES.side) setStreetBeetsSlot("sides");
+        if (record.selectionType === SMARTSHEET_SELECTION_TYPES.subRecipe) setStreetBeetsSlot("subRecipes");
+        if (record.selectionType === SMARTSHEET_SELECTION_TYPES.extension) setStreetBeetsSlot("extensions");
+      }
+      if (record.stationKey === "commissaryEverest") {
+        if (record.selectionType === SMARTSHEET_SELECTION_TYPES.menuName) custom.commissaryEverest.menu = record.itemName;
+        if (record.selectionType === SMARTSHEET_SELECTION_TYPES.entree) setCustomSlot("commissaryEverest", "entrees");
+        if (record.selectionType === SMARTSHEET_SELECTION_TYPES.hotSide) setCustomSlot("commissaryEverest", "hotSides");
+        if (record.selectionType === SMARTSHEET_SELECTION_TYPES.coldSide) setCustomSlot("commissaryEverest", "coldSides");
+        if (record.selectionType === SMARTSHEET_SELECTION_TYPES.riceDish) setCustomSlot("commissaryEverest", "riceDishes");
+      }
+      if (record.stationKey === "lotusWp") {
+        if (record.selectionType === SMARTSHEET_SELECTION_TYPES.entree) setCustomSlot("lotusWp", "entrees");
+        if (record.selectionType === SMARTSHEET_SELECTION_TYPES.side) setCustomSlot("lotusWp", "sides");
+      }
+      if (record.stationKey === "stationTakeover") {
+        custom.stationTakeover.active = true;
+        if (record.selectionType === SMARTSHEET_SELECTION_TYPES.menuName) custom.stationTakeover.menu = record.itemName;
+        if (record.selectionType === SMARTSHEET_SELECTION_TYPES.entree) setCustomSlot("stationTakeover", "entrees");
+        if (record.selectionType === SMARTSHEET_SELECTION_TYPES.side) setCustomSlot("stationTakeover", "sides");
+        if (record.selectionType === SMARTSHEET_SELECTION_TYPES.subRecipe) setCustomSlot("stationTakeover", "subRecipes");
+        if (record.selectionType === SMARTSHEET_SELECTION_TYPES.extension) setCustomSlot("stationTakeover", "extensions");
+      }
+      rotation.customStations = custom;
       return;
     }
 
@@ -835,6 +1005,17 @@ function makeUploadedItem(name) {
   };
 }
 
+function makeCustomStationItem(name, { station = "Custom Station", category = "custom", calories = "", selectionGroup = "" } = {}) {
+  return {
+    ...makeUploadedItem(name),
+    station,
+    category,
+    calories,
+    __selectionGroup: selectionGroup,
+    enticingDescription: "Chef-entered rotation item. Use the typed name and calories for operational coverage, then match to source detail when available."
+  };
+}
+
 function makePlanningOption(name, { menu = "Planner Requested Item", station = "Manual Option", category = "entree" } = {}) {
   return {
     id: `planner-${String(name).toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
@@ -912,6 +1093,13 @@ function stationPool(stationKey) {
   const cafeExpressSalads = all.filter((row) => getMenuName(row) === "AMZ: Cafe Express Curated Salads" && /curated salads/i.test(getStationName(row)));
   const cafeExpressSandwiches = all.filter((row) => getMenuName(row) === "AMZ: Cafe Express Curated Sandwiches" && /curated sandwiches/i.test(getStationName(row)));
   const grillSpotlights = all.filter((row) => isGrillSpotlightRow(row) && isEntree(row));
+  const asianGlobalRows = scoped(
+    [
+      ...byMenuPattern(/asia|asian|bibimb|korean|japanese|thai|wok|lotus|pho|ramen|teriyaki|curry|indian|tikka|gochujang|xahn/i),
+      ...byStationPattern(/asia|asian|bibimb|korean|japanese|thai|wok|lotus|pho|ramen|teriyaki|curry|indian|tikka|gochujang|xahn/i)
+    ],
+    byText(/bibimb|gochujang|korean|japanese|thai|wok|lotus|pho|ramen|teriyaki|curry|tikka|noodle|rice/)
+  );
 
   const pools = {
     salad: uniqueOptionRows([
@@ -924,11 +1112,15 @@ function stationPool(stationKey) {
       .filter((row) => (getMenuName(row).toLowerCase().includes("fish market") || getStationName(row).toLowerCase().includes("fish market")) && isEntree(row)),
     grillSpotlight: scoped(grillSpotlights, byText(/burger|sandwich|wrap|hot dog|cod|salmon|steelhead/)).filter((row) => isEntree(row)),
     freshFive: scoped([...byMenuPattern(/fresh (five|\$5|5)/i), ...byStationPattern(/fresh (five|\$5|5)/i)], byText(/fresh five|fresh \$5|fresh 5/)),
+    grillFreshFive: scoped([...byMenuPattern(/fresh (five|\$5|5)/i), ...byStationPattern(/fresh (five|\$5|5)/i)], byText(/fresh five|fresh \$5|fresh 5/)),
+    saladFreshFive: scoped([...byMenuPattern(/fresh (five|\$5|5)/i), ...byStationPattern(/fresh (five|\$5|5)/i)], byText(/fresh five|fresh \$5|fresh 5/)),
     soup: scoped([...byMenuPattern(/\bsoup\b/i), ...byStationPattern(/\bsoup\b/i)], byText(/soup|chili|bisque|chowder/)),
     wokEntrees: scoped([...byMenu("wok"), ...byStation("wok")], byText(/wok|stir fry|stir-fry|orange peel|sweet and sour|huli huli/)).filter((row) => isEntree(row)),
     wokSides: scoped([...byMenu("wok"), ...byStation("wok")], byText(/lo mein|fried rice|green beans|carrots|gai lan|slaw/)).filter((row) => isSide(row)),
     wokBase: scoped([...byMenu("wok"), ...byStation("wok")], byText(/rice|noodle|lo mein|base/)).filter((row) => isSide(row) || /rice|noodle|base/i.test(getItemIdentity(row))),
     wokSubRecipes: uniqueOptionRows(all.filter((row) => isSubRecipe(row))),
+    lotusEntrees: uniqueOptionRows(asianGlobalRows.filter((row) => isEntree(row))),
+    lotusSides: uniqueOptionRows(asianGlobalRows.filter((row) => isSide(row))),
     carveryProtein: uniqueOptionRows([
       ...scoped(all.filter(isCarveryMainRow), byText(/beef|chicken|pork|turkey|salmon|steelhead|trout|tofu|protein|pork belly|flank steak|char siu|char sui/)).filter((row) => isEntree(row) && !/sandwich|reuben|panini|wrap/i.test(`${getItemIdentity(row)} ${getStationName(row)}`)),
       ...carveryRequestedProteins
@@ -946,7 +1138,7 @@ function stationPool(stationKey) {
     return pool;
   }
 
-  if (["freshFive", "salad", "pizza", "deli", "fishMarket", "soup"].includes(stationKey)) {
+  if (["freshFive", "grillFreshFive", "saladFreshFive", "salad", "pizza", "deli", "fishMarket", "soup"].includes(stationKey)) {
     const fallback = uniqueOptionRows(all.filter((row) => isEntree(row) || isSide(row)));
     STATION_POOL_CACHE.set(stationKey, fallback);
     return fallback;
@@ -971,7 +1163,7 @@ function stationSlots(cafe, stationKey) {
     Astra: { freshFive: 2 },
     Grace: { freshFive: 2, salad: 2 },
     Sonic: { freshFive: 2, salad: 5, deli: 4 },
-    Bingo: { fishMarket: 2, salad: 2, freshFive: 2 },
+    Bingo: { fishMarket: 2, salad: 2, grillFreshFive: 1, saladFreshFive: 1 },
     Blueshift: { salad: 5, deli: 4, fishMarket: 2, freshFive: 2 },
     Eclipse: { freshFive: 2 }
   }[cafe]?.[stationKey];
@@ -979,6 +1171,7 @@ function stationSlots(cafe, stationKey) {
   if (override) return override;
   if (stationKey === "fishMarket") return 1;
   if (["salad", "pizza", "deli", "soup"].includes(stationKey)) return 2;
+  if (["grillFreshFive", "saladFreshFive"].includes(stationKey)) return 1;
   if (stationKey === "freshFive") return 5;
   return 1;
 }
@@ -1210,6 +1403,7 @@ function blankRotation(menu = "", station = "") {
     grill: { regionalSpecial: "", locationSpotlight: "", promoActive: false, promoItem: "" },
     ltos: Object.fromEntries(Object.entries(EMPTY_ROTATION.ltos).map(([key, values]) => [key, [...values]])),
     carvery: { ...EMPTY_ROTATION.carvery },
+    customStations: cloneCustomStations(),
     uploadedLtos: {},
     promotionOverride: { enabled: false, name: "", days: [], returnDays: [] },
     globalBlocks: {},
@@ -1232,11 +1426,27 @@ function stationComplete(rotation, stationKey, cafe = "", week = "") {
     if (!hasNitroSplitBlocks(rotation)) return Boolean(rotation.menu && (rotation.entrees || []).filter(Boolean).length >= 2);
     return Boolean(rotation.menu) && nitroGlobalBlockLayout().every((block) => blockComplete(hydrateNitroBlock(rotation, block.id)));
   }
-  if (stationKey === "global") return Boolean(rotation.menu && (rotation.entrees || []).filter(Boolean).length >= 2);
+  if (stationKey === "global") {
+    const eastRequiresSides = ["Astra", "Bingo", "Sonic", "Blueshift", "Eclipse", "Grace"].includes(cafe);
+    return Boolean(rotation.menu && (rotation.entrees || []).filter(Boolean).length >= 2 && (!eastRequiresSides || (rotation.sides || []).filter(Boolean).length >= 2));
+  }
   if (stationKey === "noodles") return blockComplete(getRotationGlobalBlock(rotation, "noodles"));
   if (stationKey === "grill") return Boolean(rotation.grill?.regionalSpecial || rotation.grill?.locationSpotlight || (rotation.grill?.promoActive && rotation.grill?.promoItem));
-  if (["salad", "pizza", "deli", "fishMarket", "freshFive", "soup"].includes(stationKey)) {
+  if (["salad", "pizza", "deli", "fishMarket", "freshFive", "grillFreshFive", "saladFreshFive", "soup"].includes(stationKey)) {
     return Boolean((rotation.ltos?.[stationKey] || []).some(Boolean) || (rotation.uploadedLtos?.[stationKey] || []).some(Boolean));
+  }
+  const custom = cloneCustomStations(rotation.customStations);
+  if (stationKey === "streetBeets") {
+    const filledCaloriesValid = ["entrees", "sides", "subRecipes", "extensions"].every((group) => (custom.streetBeets[group] || []).every((name, index) => !name || Boolean(custom.streetBeets.calories?.[group]?.[index])));
+    return custom.streetBeets.entrees.filter(Boolean).length >= 2 && custom.streetBeets.sides.filter(Boolean).length >= 3 && filledCaloriesValid;
+  }
+  if (stationKey === "commissaryEverest") {
+    return Boolean(custom.commissaryEverest.menu && custom.commissaryEverest.entrees.filter(Boolean).length >= 2 && custom.commissaryEverest.coldSides.filter(Boolean).length >= 4 && custom.commissaryEverest.riceDishes.filter(Boolean).length >= 1);
+  }
+  if (stationKey === "lotusWp") return custom.lotusWp.entrees.filter(Boolean).length >= 2 && custom.lotusWp.sides.filter(Boolean).length >= 4;
+  if (stationKey === "stationTakeover") {
+    if (!custom.stationTakeover.active && !custom.stationTakeover.menu && !compactValues([...custom.stationTakeover.entrees, ...custom.stationTakeover.sides, ...custom.stationTakeover.subRecipes, ...custom.stationTakeover.extensions]).length) return true;
+    return Boolean(custom.stationTakeover.menu && custom.stationTakeover.entrees.filter(Boolean).length >= 2 && custom.stationTakeover.sides.filter(Boolean).length >= 2);
   }
   if (stationKey === "wok") return Boolean((rotation.ltos?.wokEntrees || []).some(Boolean));
   if (stationKey === "carvery") return Boolean(Object.values(rotation.carvery || {}).some(Boolean));
@@ -1246,7 +1456,7 @@ function stationComplete(rotation, stationKey, cafe = "", week = "") {
 function rotationRequirements(rotation, cafe, week = "") {
   const stationKeys = CAFE_STATION_CONFIG[cafe] || ["global"];
   const globalReady = stationComplete(rotation, "global", cafe, week);
-  const optionalStations = cafe === "Doppler" ? new Set(["pizza"]) : new Set();
+  const optionalStations = cafe === "Doppler" ? new Set(["pizza"]) : cafe === "Astra" ? new Set(["grill"]) : new Set();
   const incompleteStations = stationKeys.filter((stationKey) => stationKey !== "global" && !optionalStations.has(stationKey) && !stationComplete(rotation, stationKey, cafe, week));
   return {
     globalReady,
@@ -1291,7 +1501,8 @@ function rowHasMenuConflict(row, conflictMenus) {
 function rotationRequirementIssues(requirements, cafe, { menu = "", duplicateMenuCount = 0, conflictNote = "" } = {}) {
   const issues = [];
   if (!requirements.globalReady) {
-    issues.push("Select a Global Menu and at least two Global entrees.");
+    const needsSides = ["Astra", "Bingo", "Sonic", "Blueshift", "Eclipse", "Grace"].includes(cafe);
+    issues.push(needsSides ? "Select a Global Menu, at least two Global entrees, and at least two Global sides." : "Select a Global Menu and at least two Global entrees.");
   }
   if (requirements.incompleteStations.length > 0) {
     issues.push(`Complete these station selections: ${requirements.incompleteStations.map((stationKey) => stationLabel(cafe, stationKey)).join(", ")}.`);
@@ -1450,11 +1661,18 @@ function getStationSelectionRows(rotation, cafe, week = rotation?.week || "") {
     stationRows.push({ key: "grill", label: stationLabel(cafe, "grill"), items: grillItems, note: cafe === "Doppler" ? "grill fresh five" : "location spotlights" });
   }
 
-  ["salad", "pizza", "deli", "fishMarket", "freshFive", "soup"].forEach((key) => {
+  ["salad", "pizza", "deli", "fishMarket", "freshFive", "grillFreshFive", "saladFreshFive", "soup"].forEach((key) => {
     if (cafeStations.includes(key)) {
       const selected = ltoSelectedRows(rotation, key, { unique: true });
       const uploadedItems = (uploaded[key] || []).filter(Boolean).map(makeUploadedItem);
       stationRows.push({ key, label: STATION_LABELS[key], items: selected.length ? selected : uploadedItems, note: selected.length ? "selected" : uploadedItems.length ? "from upload preview" : "not selected" });
+    }
+  });
+
+  ["streetBeets", "commissaryEverest", "lotusWp", "stationTakeover"].forEach((key) => {
+    if (cafeStations.includes(key)) {
+      const selected = customStationSelectedRows(rotation, key, { unique: true });
+      stationRows.push({ key, label: STATION_LABELS[key], items: selected, note: selected.length ? "selected" : "not selected" });
     }
   });
 
@@ -1470,7 +1688,8 @@ function allLegacySelectedRows(rotation) {
     ...globalSelectedRows(rotation),
     ...blockRows,
     ...grillSelectedRows(rotation),
-    ...["salad", "pizza", "deli", "fishMarket", "freshFive", "soup"].flatMap((stationKey) => ltoSelectedRows(rotation, stationKey)),
+    ...["salad", "pizza", "deli", "fishMarket", "freshFive", "grillFreshFive", "saladFreshFive", "soup"].flatMap((stationKey) => ltoSelectedRows(rotation, stationKey)),
+    ...["streetBeets", "commissaryEverest", "lotusWp", "stationTakeover"].flatMap((stationKey) => customStationSelectedRows(rotation, stationKey)),
     ...wokSelectedRows(rotation),
     ...carverySelectedRows(rotation)
   ];
@@ -1493,6 +1712,45 @@ function wokSelectedRows(rotation, options) {
 
 function carverySelectedRows(rotation, options) {
   return rowsForSelectedNames(Object.values(rotation.carvery || {}), options);
+}
+
+function customStationSelectedRows(rotation, stationKey, options = {}) {
+  const custom = cloneCustomStations(rotation.customStations);
+  const rowsFromNames = (names = [], group = "", station = STATION_LABELS[stationKey], calories = [], candidateRows = MENUWORKS_ITEMS) => uniqueSelectionRows(names.filter(Boolean).map((name, index) => {
+    const matched = findBestRowForName(name, candidateRows) || findBestRowForName(name);
+    return matched ? { ...matched, __selectionGroup: group } : makeCustomStationItem(name, { station, category: group || "custom", calories: calories[index] || "", selectionGroup: group });
+  }), options);
+  if (stationKey === "streetBeets") {
+    return uniqueSelectionRows([
+      ...rowsFromNames(custom.streetBeets.entrees, "entrees", "Street Beets", custom.streetBeets.calories.entrees),
+      ...rowsFromNames(custom.streetBeets.sides, "sides", "Street Beets", custom.streetBeets.calories.sides),
+      ...rowsFromNames(custom.streetBeets.subRecipes, "subRecipes", "Street Beets", custom.streetBeets.calories.subRecipes),
+      ...rowsFromNames(custom.streetBeets.extensions, "extensions", "Street Beets", custom.streetBeets.calories.extensions)
+    ], options);
+  }
+  if (stationKey === "commissaryEverest") {
+    return uniqueSelectionRows([
+      ...rowsFromNames(custom.commissaryEverest.entrees, "entrees", "Everest Commissary"),
+      ...rowsFromNames(custom.commissaryEverest.hotSides, "sides", "Everest Commissary"),
+      ...rowsFromNames(custom.commissaryEverest.coldSides, "sides", "Everest Commissary"),
+      ...rowsFromNames(custom.commissaryEverest.riceDishes, "sides", "Everest Commissary")
+    ], options);
+  }
+  if (stationKey === "lotusWp") {
+    return uniqueSelectionRows([
+      ...rowsFromNames(custom.lotusWp.entrees, "entrees", "Lotus W&P", [], stationPool("lotusEntrees")),
+      ...rowsFromNames(custom.lotusWp.sides, "sides", "Lotus W&P", [], stationPool("lotusSides"))
+    ], options);
+  }
+  if (stationKey === "stationTakeover") {
+    return uniqueSelectionRows([
+      ...rowsFromNames(custom.stationTakeover.entrees, "entrees", "Station Takeover"),
+      ...rowsFromNames(custom.stationTakeover.sides, "sides", "Station Takeover"),
+      ...rowsFromNames(custom.stationTakeover.subRecipes, "subRecipes", "Station Takeover"),
+      ...rowsFromNames(custom.stationTakeover.extensions, "extensions", "Station Takeover")
+    ], options);
+  }
+  return [];
 }
 
 function selectedItems(rotation, cafe = rotation?.cafe || "", week = rotation?.week || "") {
@@ -2031,6 +2289,11 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
     if (lockedForEditing) return;
     updateRotation({ carvery: { ...(rotation.carvery || EMPTY_ROTATION.carvery), [field]: value } });
   };
+  const updateCustomStation = (stationKey, patch) => {
+    if (lockedForEditing) return;
+    const current = cloneCustomStations(rotation.customStations);
+    updateRotation({ customStations: { ...current, [stationKey]: { ...current[stationKey], ...patch } } });
+  };
   const markDraft = () => {
     const nextRotation = { ...rotation, status: "Draft", updatedAt: nowStamp(), submittedBy: "Chef" };
     updateRotation(nextRotation);
@@ -2144,6 +2407,7 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
               updateGrill={updateGrill}
               updateLto={updateLto}
               updateCarvery={updateCarvery}
+              updateCustomStation={updateCustomStation}
               summary={summary}
               selectedItems={items}
             />
@@ -3595,7 +3859,7 @@ function StationPills({ cafe, stations }) {
 }
 
 function CafeStationSection(props) {
-  const { stationKey, cafe, week, rotation, previousRotation, previousWeek, menuOptions, stationOptions, categorized, updateRotation, updateSlot, updateGrill, updateLto, updateCarvery, summary, selectedItems } = props;
+  const { stationKey, cafe, week, rotation, previousRotation, previousWeek, menuOptions, stationOptions, categorized, updateRotation, updateSlot, updateGrill, updateLto, updateCarvery, updateCustomStation, summary, selectedItems } = props;
   let content = null;
   if (stationKey === "global") content = <GlobalSection cafe={cafe} week={week} rotation={rotation} previousRotation={previousRotation} previousWeek={previousWeek} menuOptions={menuOptions} stationOptions={stationOptions} categorized={categorized} updateRotation={updateRotation} updateSlot={updateSlot} summary={summary} selectedItems={selectedItems} />;
   if (stationKey === "grill") content = <GrillSection cafe={cafe} rotation={rotation} updateGrill={updateGrill} />;
@@ -3605,9 +3869,15 @@ function CafeStationSection(props) {
   if (stationKey === "fishMarket") content = <SimpleLTOSection stationKey="fishMarket" title="Fish Market LTO" slots={Array.from({ length: stationSlots(cafe, "fishMarket") }, (_, i) => `Fish Market LTO ${i + 1}`)} values={rotation.ltos?.fishMarket || EMPTY_ROTATION.ltos.fishMarket} uploaded={rotation.uploadedLtos?.fishMarket || []} updateLto={updateLto} complete={stationComplete(rotation, "fishMarket")} />;
   if (stationKey === "noodles") content = <SecondaryGlobalSection blockId="noodles" title="Noodle Station" eyebrow="Secondary Global" rotation={rotation} menuOptions={menuOptions} updateRotation={updateRotation} />;
   if (stationKey === "freshFive") content = <SimpleLTOSection stationKey="freshFive" title="Fresh $5" slots={Array.from({ length: stationSlots(cafe, "freshFive") }, (_, i) => `Fresh $5 Option ${i + 1}`)} values={rotation.ltos?.freshFive || EMPTY_ROTATION.ltos.freshFive} uploaded={rotation.uploadedLtos?.freshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "freshFive")} />;
+  if (stationKey === "grillFreshFive") content = <SimpleLTOSection stationKey="grillFreshFive" title="Grill Fresh $5" slots={["Grill Fresh $5"]} values={rotation.ltos?.grillFreshFive || EMPTY_ROTATION.ltos.grillFreshFive} uploaded={rotation.uploadedLtos?.grillFreshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "grillFreshFive")} poolOverride={stationPool("freshFive")} />;
+  if (stationKey === "saladFreshFive") content = <SimpleLTOSection stationKey="saladFreshFive" title="Salad Fresh $5" slots={["Salad Fresh $5"]} values={rotation.ltos?.saladFreshFive || EMPTY_ROTATION.ltos.saladFreshFive} uploaded={rotation.uploadedLtos?.saladFreshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "saladFreshFive")} poolOverride={stationPool("freshFive")} />;
   if (stationKey === "soup") content = <SimpleLTOSection stationKey="soup" title="Soup LTOs" slots={Array.from({ length: stationSlots(cafe, "soup") }, (_, i) => `Soup ${i + 1}`)} values={rotation.ltos?.soup || EMPTY_ROTATION.ltos.soup} uploaded={rotation.uploadedLtos?.soup || []} updateLto={updateLto} complete={stationComplete(rotation, "soup")} />;
   if (stationKey === "wok") content = <WokSection rotation={rotation} updateLto={updateLto} />;
   if (stationKey === "carvery") content = <CarverySection rotation={rotation} updateCarvery={updateCarvery} />;
+  if (stationKey === "streetBeets") content = <StreetBeetsSection rotation={rotation} updateCustomStation={updateCustomStation} />;
+  if (stationKey === "commissaryEverest") content = <CommissaryEverestSection rotation={rotation} updateCustomStation={updateCustomStation} />;
+  if (stationKey === "lotusWp") content = <LotusWpSection rotation={rotation} updateCustomStation={updateCustomStation} />;
+  if (stationKey === "stationTakeover") content = <StationTakeoverSection rotation={rotation} updateCustomStation={updateCustomStation} />;
   if (!content) return null;
   return <div id={stationAnchorId(stationKey)} className="scroll-mt-28">{content}</div>;
 }
@@ -3663,7 +3933,7 @@ function GlobalSection({ cafe, week, rotation, previousRotation, previousWeek, m
   }
 
   return (
-    <CollapsibleStation title={globalTitle} eyebrow="Global Rotation" complete={stationComplete(rotation, "global")} defaultOpen={!stationComplete(rotation, "global")}>
+    <CollapsibleStation title={globalTitle} eyebrow="Global Rotation" complete={stationComplete(rotation, "global", cafe, week)} defaultOpen={!stationComplete(rotation, "global", cafe, week)}>
       <div className="rounded-3xl border border-slate-200 bg-white p-4">
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
           <div>
@@ -3742,7 +4012,7 @@ function GlobalSection({ cafe, week, rotation, previousRotation, previousWeek, m
         <PickerGroup title="Sub Recipes" limit="up to 4" items={menuCategorized.subRecipes} values={rotation.subRecipes || ["", "", "", ""]} onChange={(index, value) => updateSlot("subRecipes", index, value)} />
         <PickerGroup title="Extensions" limit="up to 2" items={menuCategorized.extensions} values={rotation.extensions || ["", ""]} onChange={(index, value) => updateSlot("extensions", index, value)} />
       </div>
-      <StationSelectedList title="Items Description" items={globalSelectedRows(rotation, { unique: true })} complete={stationComplete(rotation, "global")} />
+      <StationSelectedList title="Items Description" items={globalSelectedRows(rotation, { unique: true })} complete={stationComplete(rotation, "global", cafe, week)} />
     </CollapsibleStation>
   );
 }
@@ -4207,10 +4477,19 @@ function PickerGroup({ title, limit, items, values, onChange }) {
       <p className="text-xs text-slate-500 mt-1 font-semibold">{limit}</p>
       <div className="mt-3 space-y-2">
         {values.map((value, index) => (
-          <select key={index} value={value} onChange={(e) => onChange(index, e.target.value)} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
-            <option value="">&lt;Select Item&gt;</option>
-            {items.map((row) => <option key={`${getItemIdentity(row)}-${index}`} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}
-          </select>
+          <div key={index} className="space-y-2">
+            <select value={value} onChange={(e) => onChange(index, e.target.value)} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
+              <option value="">&lt;Select Item&gt;</option>
+              {value && !items.some((row) => normalizeItemName(getItemIdentity(row)) === normalizeItemName(value)) && <option value={value}>{titleCase(value)}</option>}
+              {items.map((row) => <option key={`${getItemIdentity(row)}-${index}`} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}
+            </select>
+            <input
+              value={value || ""}
+              onChange={(event) => onChange(index, event.target.value)}
+              placeholder="Type if not listed"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+            />
+          </div>
         ))}
       </div>
     </div>
@@ -4237,9 +4516,9 @@ function GrillSection({ cafe, rotation, updateGrill }) {
           </label>
         )}
       </div>
-      {cafe === "Doppler" ? (
+      {cafe === "Doppler" || cafe === "Bingo" ? (
         <div className="mt-4 grid grid-cols-1 gap-4">
-          <GrillSelect label="Grill Fresh Five" value={rotation.grill?.regionalSpecial || ""} onChange={(value) => updateGrill("regionalSpecial", value)} items={options} />
+          <GrillSelect label={cafe === "Doppler" ? "Grill Fresh Five" : "Location Spotlight"} value={rotation.grill?.regionalSpecial || ""} onChange={(value) => updateGrill("regionalSpecial", value)} items={options} />
         </div>
       ) : (
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -4267,7 +4546,7 @@ function GrillSection({ cafe, rotation, updateGrill }) {
 }
 
 function GrillSelect({ label, value, onChange, items }) {
-  return <div className="rounded-3xl border-2 border-sky-200 bg-sky-50/80 p-4 shadow-sm"><div className="flex items-center justify-between gap-2 mb-2"><label className="block text-sm font-bold text-slate-900">{label}</label><span className="rounded-full bg-white border border-sky-200 px-3 py-1 text-xs font-bold text-sky-700">choose here</span></div><select value={value} onChange={(e) => onChange(e.target.value)} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100"><option value="">&lt;Select Item&gt;</option>{items.map((row) => <option key={`${label}-${getItemIdentity(row)}`} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}</select></div>;
+  return <div className="rounded-3xl border-2 border-sky-200 bg-sky-50/80 p-4 shadow-sm"><div className="flex items-center justify-between gap-2 mb-2"><label className="block text-sm font-bold text-slate-900">{label}</label><span className="rounded-full bg-white border border-sky-200 px-3 py-1 text-xs font-bold text-sky-700">choose here</span></div><select value={value} onChange={(e) => onChange(e.target.value)} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100"><option value="">&lt;Select Item&gt;</option>{value && !items.some((row) => normalizeItemName(getItemIdentity(row)) === normalizeItemName(value)) && <option value={value}>{titleCase(value)}</option>}{items.map((row) => <option key={`${label}-${getItemIdentity(row)}`} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}</select><input value={value || ""} onChange={(event) => onChange(event.target.value)} placeholder="Type if not listed" className="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100" /></div>;
 }
 
 function SimpleLTOSection({ stationKey, title, slots, values = [], uploaded = [], updateLto, complete, poolOverride = null, slotPoolOverrides = null, optional = false }) {
@@ -4286,8 +4565,15 @@ function SimpleLTOSection({ stationKey, title, slots, values = [], uploaded = []
               <select value={values[index] || uploaded[index] || ""} onChange={(e) => updateLto(stationKey, index, e.target.value)} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
                 <option value="">&lt;Select Item&gt;</option>
                 {uploaded[index] && !slotPoolNames.has(normalizeItemName(uploaded[index])) && <option value={uploaded[index]}>{titleCase(uploaded[index])}</option>}
+                {values[index] && !slotPoolNames.has(normalizeItemName(values[index])) && <option value={values[index]}>{titleCase(values[index])}</option>}
                 {slotPool.map((row) => <option key={`${stationKey}-${slot}-${getItemIdentity(row)}`} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}
               </select>
+              <input
+                value={values[index] || uploaded[index] || ""}
+                onChange={(event) => updateLto(stationKey, index, event.target.value)}
+                placeholder="Type if not listed"
+                className="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+              />
             </div>
           );
         })}
@@ -4345,6 +4631,167 @@ function CarverySection({ rotation, updateCarvery }) {
         ))}
       </div>
       <StationSelectedList title="Items Description" items={carverySelectedRows(rotation, { unique: true })} complete={stationComplete(rotation, "carvery")} />
+    </CollapsibleStation>
+  );
+}
+
+function TextSlotGrid({ title, slots, values = [], onChange, calories = [], onCalorieChange = null, placeholder = "Type item name" }) {
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <p className="font-bold text-slate-900">{title}</p>
+      <div className="mt-3 space-y-2">
+        {slots.map((slot, index) => (
+          <div key={`${title}-${slot}`} className="grid grid-cols-1 sm:grid-cols-[1fr_8rem] gap-2">
+            <input
+              value={values[index] || ""}
+              onChange={(event) => onChange(index, event.target.value)}
+              placeholder={`${slot} - ${placeholder}`}
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+            />
+            {onCalorieChange && (
+              <input
+                value={calories[index] || ""}
+                onChange={(event) => onCalorieChange(index, event.target.value)}
+                placeholder="cal"
+                inputMode="numeric"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold outline-none shadow-sm focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+              />
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SelectSlotGrid({ title, slots, values = [], items, onChange, writeInPlaceholder = "Type if not listed" }) {
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <p className="font-bold text-slate-900">{title}</p>
+      <div className="mt-3 space-y-3">
+        {slots.map((slot, index) => (
+          <div key={`${title}-${slot}`} className="rounded-2xl border border-sky-100 bg-sky-50/60 p-3">
+            <label className="block text-xs font-bold text-slate-600 mb-2">{slot}</label>
+            <select value={values[index] || ""} onChange={(event) => onChange(index, event.target.value)} className="w-full rounded-lg border border-sky-200 bg-white px-3 py-2 text-sm font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
+              <option value="">&lt;Select Item&gt;</option>
+              {values[index] && !items.some((row) => normalizeItemName(getItemIdentity(row)) === normalizeItemName(values[index])) && <option value={values[index]}>{titleCase(values[index])}</option>}
+              {items.map((row) => <option key={`${title}-${slot}-${getItemIdentity(row)}`} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}
+            </select>
+            <input
+              value={values[index] || ""}
+              onChange={(event) => onChange(index, event.target.value)}
+              placeholder={writeInPlaceholder}
+              className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function StreetBeetsSection({ rotation, updateCustomStation }) {
+  const custom = cloneCustomStations(rotation.customStations);
+  const station = custom.streetBeets;
+  const updateValues = (field, index, value) => {
+    const next = [...station[field]];
+    next[index] = value;
+    updateCustomStation("streetBeets", { [field]: next });
+  };
+  const updateCalories = (field, index, value) => {
+    const next = [...station.calories[field]];
+    next[index] = value;
+    updateCustomStation("streetBeets", { calories: { ...station.calories, [field]: next } });
+  };
+  const complete = stationComplete(rotation, "streetBeets");
+  return (
+    <CollapsibleStation title="Street Beets" eyebrow="Grace Write-In Station" complete={complete}>
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-5">
+        <TextSlotGrid title="Entrees" slots={["Entree 1", "Entree 2"]} values={station.entrees} calories={station.calories.entrees} onChange={(index, value) => updateValues("entrees", index, value)} onCalorieChange={(index, value) => updateCalories("entrees", index, value)} />
+        <TextSlotGrid title="Sides" slots={["Side 1", "Side 2", "Side 3"]} values={station.sides} calories={station.calories.sides} onChange={(index, value) => updateValues("sides", index, value)} onCalorieChange={(index, value) => updateCalories("sides", index, value)} />
+        <TextSlotGrid title="Sub Recipes" slots={["Sub Recipe 1", "Sub Recipe 2"]} values={station.subRecipes} calories={station.calories.subRecipes} onChange={(index, value) => updateValues("subRecipes", index, value)} onCalorieChange={(index, value) => updateCalories("subRecipes", index, value)} />
+        <TextSlotGrid title="Extensions" slots={["Extension 1"]} values={station.extensions} calories={station.calories.extensions} onChange={(index, value) => updateValues("extensions", index, value)} onCalorieChange={(index, value) => updateCalories("extensions", index, value)} />
+      </div>
+      <StationSelectedList title="Items Description" items={customStationSelectedRows(rotation, "streetBeets", { unique: true })} complete={complete} />
+    </CollapsibleStation>
+  );
+}
+
+function CommissaryEverestSection({ rotation, updateCustomStation }) {
+  const custom = cloneCustomStations(rotation.customStations);
+  const station = custom.commissaryEverest;
+  const updateValues = (field, index, value) => {
+    const next = [...station[field]];
+    next[index] = value;
+    updateCustomStation("commissaryEverest", { [field]: next });
+  };
+  const complete = stationComplete(rotation, "commissaryEverest");
+  return (
+    <CollapsibleStation title="Everest Commissary" eyebrow="Bingo Commissary Station" complete={complete}>
+      <div className="mb-5 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+        <label className="block text-sm font-bold text-slate-900 mb-2">Commissary Menu Name</label>
+        <input value={station.menu || ""} onChange={(event) => updateCustomStation("commissaryEverest", { menu: event.target.value })} placeholder="Type menu name" className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100" />
+      </div>
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-5">
+        <TextSlotGrid title="Entrees" slots={["Entree 1", "Entree 2"]} values={station.entrees} onChange={(index, value) => updateValues("entrees", index, value)} />
+        <TextSlotGrid title="Hot Side" slots={["Optional Hot Side"]} values={station.hotSides} onChange={(index, value) => updateValues("hotSides", index, value)} />
+        <TextSlotGrid title="Cold Sides" slots={["Cold Side 1", "Cold Side 2", "Cold Side 3", "Cold Side 4"]} values={station.coldSides} onChange={(index, value) => updateValues("coldSides", index, value)} />
+        <TextSlotGrid title="Rice Dish" slots={["Rice Dish"]} values={station.riceDishes} onChange={(index, value) => updateValues("riceDishes", index, value)} />
+      </div>
+      <StationSelectedList title="Items Description" items={customStationSelectedRows(rotation, "commissaryEverest", { unique: true })} complete={complete} />
+    </CollapsibleStation>
+  );
+}
+
+function LotusWpSection({ rotation, updateCustomStation }) {
+  const custom = cloneCustomStations(rotation.customStations);
+  const station = custom.lotusWp;
+  const updateValues = (field, index, value) => {
+    const next = [...station[field]];
+    next[index] = value;
+    updateCustomStation("lotusWp", { [field]: next });
+  };
+  const complete = stationComplete(rotation, "lotusWp");
+  return (
+    <CollapsibleStation title="Lotus W&P" eyebrow="Blueshift Asian Global Rotation" complete={complete}>
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+        <SelectSlotGrid title="Entrees" slots={["Entree 1", "Entree 2", "Entree 3", "Entree 4"]} values={station.entrees} items={stationPool("lotusEntrees")} onChange={(index, value) => updateValues("entrees", index, value)} />
+        <SelectSlotGrid title="Sides" slots={["Side 1", "Side 2", "Side 3", "Side 4", "Side 5", "Side 6"]} values={station.sides} items={stationPool("lotusSides")} onChange={(index, value) => updateValues("sides", index, value)} />
+      </div>
+      <StationSelectedList title="Items Description" items={customStationSelectedRows(rotation, "lotusWp", { unique: true })} complete={complete} />
+    </CollapsibleStation>
+  );
+}
+
+function StationTakeoverSection({ rotation, updateCustomStation }) {
+  const custom = cloneCustomStations(rotation.customStations);
+  const station = custom.stationTakeover;
+  const updateValues = (field, index, value) => {
+    const next = [...station[field]];
+    next[index] = value;
+    updateCustomStation("stationTakeover", { [field]: next, active: station.active || Boolean(value) });
+  };
+  const complete = stationComplete(rotation, "stationTakeover");
+  return (
+    <CollapsibleStation title="Station Takeover" eyebrow="Eclipse Optional Override" complete={complete}>
+      <div className="mb-5 rounded-lg border border-purple-200 bg-purple-50/80 p-4 shadow-sm">
+        <label className="inline-flex items-center gap-3 text-sm font-bold text-purple-950">
+          <input type="checkbox" checked={Boolean(station.active)} onChange={(event) => updateCustomStation("stationTakeover", { active: event.target.checked })} />
+          Activate station takeover
+        </label>
+        {(station.active || station.menu) && (
+          <input value={station.menu || ""} onChange={(event) => updateCustomStation("stationTakeover", { menu: event.target.value, active: true })} placeholder="Takeover menu name" className="mt-3 w-full rounded-lg border border-purple-200 bg-white px-3 py-2 text-sm font-semibold outline-none shadow-sm focus:border-purple-500 focus:ring-4 focus:ring-purple-100" />
+        )}
+      </div>
+      {(station.active || station.menu || compactValues([...station.entrees, ...station.sides, ...station.subRecipes, ...station.extensions]).length > 0) && (
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-5">
+          <TextSlotGrid title="Entrees" slots={["Entree 1", "Entree 2"]} values={station.entrees} onChange={(index, value) => updateValues("entrees", index, value)} />
+          <TextSlotGrid title="Sides" slots={["Side 1", "Side 2", "Side 3", "Side 4"]} values={station.sides} onChange={(index, value) => updateValues("sides", index, value)} />
+          <TextSlotGrid title="Sub Recipes" slots={["Sub Recipe 1", "Sub Recipe 2", "Sub Recipe 3"]} values={station.subRecipes} onChange={(index, value) => updateValues("subRecipes", index, value)} />
+          <TextSlotGrid title="Extensions" slots={["Extension 1", "Extension 2"]} values={station.extensions} onChange={(index, value) => updateValues("extensions", index, value)} />
+        </div>
+      )}
+      <StationSelectedList title="Items Description" items={customStationSelectedRows(rotation, "stationTakeover", { unique: true })} complete={complete} />
     </CollapsibleStation>
   );
 }
