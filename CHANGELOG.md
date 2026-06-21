@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-06-20
+
+- [Jun 20, 7:35 PM] Added a Weekly Traffic dashboard card with a seven-day visitor bar chart and honest analytics-pending state until a secure Vercel Analytics read endpoint is connected.
+- [Jun 20, 7:35 PM] Set visible app version to `2026.06.20.001-feature-weekly-traffic`.
+
 ## 2026-06-19
 
 - [Jun 19, 2:45 PM] Restored East custom station workflows for Street Beets, Everest Commissary, Lotus W&P, Eclipse station takeover, and Bingo split Grill/Salad Fresh $5 selections.
