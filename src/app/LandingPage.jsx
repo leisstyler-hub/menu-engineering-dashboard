@@ -29,6 +29,11 @@ const CHANGELOG_ENTRIES = (() => {
 })();
 
 const firstTenChangelogItems = CHANGELOG_ENTRIES.slice(0, 10);
+const WEEKLY_TRAFFIC_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, index) => ({
+  day,
+  visitors: null,
+  placeholderLevel: 24 + ((index + 1) % 4) * 14,
+}));
 
 const countBy = (rows, getKey) =>
   rows.reduce((acc, row) => {
@@ -299,6 +304,10 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
               </DashboardPanel>
             </section>
 
+            <DashboardPanel icon={BarChart3} eyebrow="Usage Signal" title="Weekly Traffic">
+              <WeeklyTrafficChart days={WEEKLY_TRAFFIC_DAYS} />
+            </DashboardPanel>
+
             <section className="grid grid-cols-1 gap-4 xl:grid-cols-[0.9fr_1.1fr]">
               <DashboardPanel icon={Database} eyebrow="Trust Layer" title="Data Confidence">
                 <ConfidenceBars
@@ -494,6 +503,10 @@ function MobileLanding({
             </div>
           </MobileDataPanel>
 
+          <MobileDataPanel icon={BarChart3} eyebrow="Usage Signal" title="Weekly Traffic">
+            <WeeklyTrafficChart days={WEEKLY_TRAFFIC_DAYS} compact />
+          </MobileDataPanel>
+
           <MobileDataPanel icon={ListChecks} eyebrow="Newest Data Signal" title="Recently Added">
             <div className="space-y-2">
               {recentItems.slice(0, 4).map((item) => (
@@ -630,6 +643,57 @@ function MobileToolCard({ title, eyebrow, description, action, onOpen, icon: Ico
         </div>
       </div>
     </button>
+  );
+}
+
+function WeeklyTrafficChart({ days, compact = false }) {
+  const connectedDays = days.filter((day) => typeof day.visitors === "number");
+  const hasTrafficData = connectedDays.length > 0;
+  const totalVisitors = connectedDays.reduce((sum, day) => sum + day.visitors, 0);
+  const maxVisitors = Math.max(...connectedDays.map((day) => day.visitors), 0);
+
+  return (
+    <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-sm font-black text-slate-950">Visitors this week</p>
+          <p className="mt-1 text-3xl font-black text-slate-950">
+            {hasTrafficData ? totalVisitors.toLocaleString() : "--"}
+          </p>
+        </div>
+        <span className="w-fit rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-black text-amber-900">
+          {hasTrafficData ? "Live analytics" : "Analytics pending"}
+        </span>
+      </div>
+
+      <div className={`mt-5 grid grid-cols-7 items-end gap-2 ${compact ? "h-28" : "h-40"}`} aria-label="Visitors by day this week">
+        {days.map((day) => {
+          const hasValue = typeof day.visitors === "number";
+          const height = hasValue && maxVisitors ? Math.max(12, Math.round((day.visitors / maxVisitors) * 100)) : day.placeholderLevel;
+          return (
+            <div key={day.day} className="flex h-full min-w-0 flex-col items-center justify-end gap-2">
+              <div className="flex h-full w-full items-end justify-center rounded-full bg-slate-100 p-1">
+                <div
+                  className={`w-full rounded-full ${hasValue ? "bg-emerald-500" : "bg-slate-300 opacity-45"}`}
+                  style={{ height: `${height}%` }}
+                  title={hasValue ? `${day.visitors.toLocaleString()} visitors` : "Waiting on analytics data"}
+                />
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">{day.day}</span>
+            </div>
+          );
+        })}
+      </div>
+
+      {!hasTrafficData && (
+        <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
+          <p className="text-sm font-bold text-slate-950">Ready for real traffic data</p>
+          <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">
+            Vercel Analytics is installed for collection; the dashboard needs a secure analytics read endpoint before it can show real visitor counts.
+          </p>
+        </div>
+      )}
+    </div>
   );
 }
 
