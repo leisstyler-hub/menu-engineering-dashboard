@@ -1,1 +1,1 @@
-export const APP_VERSION_STAMP = "2026.06.19.007-east-custom-stations";
+export const APP_VERSION_STAMP = "2026.06.20.001-feature-weekly-traffic";
