@@ -3,7 +3,7 @@
 ## 2026-06-20
 
 - [Jun 20, 7:35 PM] Added a Weekly Traffic dashboard card with a seven-day visitor bar chart and honest analytics-pending state until a secure Vercel Analytics read endpoint is connected.
-- [Jun 20, 7:35 PM] Set visible app version to `2026.06.20.001-feature-weekly-traffic`.
+- [Jun 20, 7:35 PM] Set visible app version to `2026.06.20.002-publish-weekly-traffic`.
 
 ## 2026-06-19
 
