@@ -2,6 +2,8 @@
 
 ## 2026-06-20
 
+- [Jun 20, 8:24 PM] Added visible value labels to each Weekly Traffic line-graph point so traffic spikes show their visitor count directly on the graph.
+- [Jun 20, 8:24 PM] Set visible app version to `2026.06.20.004-traffic-line-labels`.
 - [Jun 20, 8:05 PM] Installed a secure weekly traffic endpoint that records anonymous daily visitors server-side and feeds the dashboard traffic trend from Smartsheet.
 - [Jun 20, 8:05 PM] Redesigned Weekly Traffic as a cleaner line graph instead of the prior placeholder bar visual.
 - [Jun 20, 8:05 PM] Set visible app version to `2026.06.20.003-secure-traffic-endpoint`.

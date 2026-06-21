@@ -17,8 +17,8 @@ function ensureTrafficStyles() {
     .traffic-line-total { margin: 4px 0 0; color: #020617; font-size: 40px; line-height: 1; font-weight: 900; }
     .traffic-line-chip { border: 1px solid #fcd34d; background: #fffbeb; color: #78350f; border-radius: 999px; padding: 4px 12px; font-size: 12px; font-weight: 900; }
     .traffic-line-chip.live { border-color: #a7f3d0; background: #ecfdf5; color: #065f46; }
-    .traffic-line-graph { position: relative; height: 208px; margin-top: 20px; overflow: hidden; border: 1px solid #e2e8f0; border-radius: 18px; background: linear-gradient(180deg, #fff 0%, #f8fafc 100%); padding: 16px 12px 12px; box-shadow: inset 0 1px 14px rgba(15, 23, 42, .04); }
-    .traffic-line-svg { width: 100%; height: calc(100% - 42px); overflow: visible; display: block; }
+    .traffic-line-graph { position: relative; height: 220px; margin-top: 20px; overflow: hidden; border: 1px solid #e2e8f0; border-radius: 18px; background: linear-gradient(180deg, #fff 0%, #f8fafc 100%); padding: 14px 12px 12px; box-shadow: inset 0 1px 14px rgba(15, 23, 42, .04); }
+    .traffic-line-svg { width: 100%; height: calc(100% - 40px); overflow: visible; display: block; }
     .traffic-line-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
     .traffic-line-day { min-width: 0; text-align: center; }
     .traffic-line-day-label { display: block; color: #64748b; font-size: 10px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
@@ -28,7 +28,7 @@ function ensureTrafficStyles() {
     .traffic-line-note-body { margin: 4px 0 0; color: #64748b; font-size: 12px; line-height: 1.55; font-weight: 700; }
     @media (max-width: 767px) {
       .traffic-line-total { font-size: 34px; }
-      .traffic-line-graph { height: 160px; border-radius: 16px; }
+      .traffic-line-graph { height: 180px; border-radius: 16px; padding-left: 8px; padding-right: 8px; }
     }
   `;
   document.head.appendChild(style);
@@ -51,8 +51,9 @@ function buildGraph(days, isLive) {
   const max = Math.max(...values, 1);
   const points = values.map((value, index) => {
     const x = 6 + (index * 88) / Math.max(days.length - 1, 1);
-    const y = 86 - (value / max) * 66;
-    return { x, y };
+    const y = 80 - (value / max) * 54;
+    const labelY = Math.max(10, y - 10);
+    return { x, y, value, labelY };
   });
   const line = points.map((point) => `${point.x},${point.y}`).join(" ");
   const area = points.length ? `6,92 ${line} 94,92` : "";
@@ -67,7 +68,14 @@ function buildGraph(days, isLive) {
       <line x1="4" x2="96" y1="86" y2="86" stroke="#cbd5e1" stroke-width="0.8"></line>
       ${area ? `<polygon points="${area}" fill="${fill}"></polygon>` : ""}
       <polyline points="${line}" fill="none" stroke="${stroke}" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"></polyline>
-      ${points.map((point) => `<circle cx="${point.x}" cy="${point.y}" r="2.5" fill="${dot}" stroke="#ffffff" stroke-width="1.2" vector-effect="non-scaling-stroke"></circle>`).join("")}
+      ${points.map((point) => `
+        <g>
+          <rect x="${point.x - 4.6}" y="${point.labelY - 5}" width="9.2" height="8" rx="3.5" fill="${isLive ? "#ecfdf5" : "#f8fafc"}" stroke="${isLive ? "#a7f3d0" : "#cbd5e1"}" stroke-width="0.6" vector-effect="non-scaling-stroke"></rect>
+          <text x="${point.x}" y="${point.labelY + 0.9}" text-anchor="middle" font-size="5.2" font-weight="900" fill="${isLive ? "#065f46" : "#475569"}" style="font-family: system-ui, -apple-system, Segoe UI, sans-serif;">${isLive ? point.value.toLocaleString() : ""}</text>
+          <line x1="${point.x}" x2="${point.x}" y1="${point.labelY + 4}" y2="${point.y - 3.2}" stroke="${isLive ? "#a7f3d0" : "#cbd5e1"}" stroke-width="0.5" stroke-dasharray="1.2 1.2" vector-effect="non-scaling-stroke"></line>
+          <circle cx="${point.x}" cy="${point.y}" r="2.8" fill="${dot}" stroke="#ffffff" stroke-width="1.4" vector-effect="non-scaling-stroke"></circle>
+        </g>
+      `).join("")}
     </svg>
   `;
 }
