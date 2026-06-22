@@ -10,6 +10,7 @@
     "verify": "node scripts/verify-rotation-integrity.mjs && vite build"
   },
   "dependencies": {
+    "@sentry/react": "^10.59.0",
     "@vercel/analytics": "^2.0.1",
     "jszip": "3.10.1",
     "lucide-react": "^0.511.0",

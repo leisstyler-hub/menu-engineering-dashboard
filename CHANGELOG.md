@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-06-22
+
+- [Jun 22, 7:09 AM] Added Recipe Database as the fifth platform tool, organized by menu with item properties, costs, calories, allergens, descriptions, portions, and CSV export.
+- [Jun 22, 7:09 AM] Added Sentry client monitoring with app-level error protection, release/version tags, active-tool context, navigation breadcrumbs, tracing, and replay-on-error support when a Sentry DSN is configured.
+- [Jun 22, 7:09 AM] Set visible app version to `2026.06.22.001-recipe-database-sentry`.
+
 ## 2026-06-21
 
 - [Jun 21, 9:32 AM] Fixed Neighborhood Rotations Executive View so draft rows no longer count as declared menus, duplicate flags, selected items, or food-cost signals.

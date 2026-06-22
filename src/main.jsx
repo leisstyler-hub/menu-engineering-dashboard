@@ -5,10 +5,15 @@ import App from "./App.jsx";
 import "./app/weeklyTrafficEnhancer.js";
 import "./index.css";
 import "./leanMobileFlow.css";
+import { initSentry, PlatformErrorBoundary } from "./shared/monitoring/sentry.jsx";
+
+initSentry();
 
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <App />
+    <PlatformErrorBoundary>
+      <App />
+    </PlatformErrorBoundary>
     <Analytics />
   </React.StrictMode>
 );

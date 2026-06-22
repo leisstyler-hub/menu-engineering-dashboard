@@ -191,7 +191,7 @@
     left: 14px;
     z-index: 40;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 6px;
     border: 1px solid rgb(226 232 240 / 0.85);
     border-radius: 26px;
@@ -233,7 +233,7 @@
     left: 14px;
     z-index: 40;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 6px;
     border: 1px solid rgb(226 232 240 / 0.85);
     border-radius: 26px;

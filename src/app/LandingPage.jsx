@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowRight, BarChart3, CalendarRange, ClipboardCheck, Database, Home, ListChecks, PieChart, Settings, ShieldCheck, Smartphone, Sparkles, TrendingUp, Utensils, Wrench } from "lucide-react";
+import { ArrowRight, BarChart3, BookOpen, CalendarRange, ClipboardCheck, Database, Home, ListChecks, PieChart, Settings, ShieldCheck, Smartphone, Sparkles, TrendingUp, Utensils, Wrench } from "lucide-react";
 
 import CHANGELOG_TEXT from "../../CHANGELOG.md?raw";
 import MENUWORKS_ITEMS from "../data/menuItems.json";
@@ -143,7 +143,7 @@ function downloadTrustLayerGapList(rows) {
   URL.revokeObjectURL(url);
 }
 
-export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodRotations, onOpenLadleCompliance, onOpenLeanTool, onOpenSmartsheetHealth }) {
+export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodRotations, onOpenRecipeDatabase, onOpenLadleCompliance, onOpenLeanTool, onOpenSmartsheetHealth }) {
   const totalItems = MENUWORKS_ITEMS.length;
   const menuCount = new Set(MENUWORKS_ITEMS.map((item) => item.menu).filter(Boolean)).size;
   const costedItems = MENUWORKS_ITEMS.filter((item) => item.trueCost != null).length;
@@ -197,6 +197,16 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
       meta: "Chef planner"
     },
     {
+      title: "Recipe Database",
+      eyebrow: "New",
+      description: "Browse menus and the items inside them with item properties, costs, calories, allergens, and descriptions.",
+      action: "Open Recipes",
+      onOpen: onOpenRecipeDatabase,
+      icon: BookOpen,
+      tone: "indigo",
+      meta: "Menu library"
+    },
+    {
       title: "Ladle Compliance",
       eyebrow: "Test concept",
       description: "Track compliance by district, cafe, and week with executive summaries and follow-up cues.",
@@ -235,6 +245,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
         recentItems={recentItems}
         onOpenMenuEngineering={onOpenMenuEngineering}
         onOpenNeighborhoodRotations={onOpenNeighborhoodRotations}
+        onOpenRecipeDatabase={onOpenRecipeDatabase}
         onOpenLadleCompliance={onOpenLadleCompliance}
         onOpenLeanTool={onOpenLeanTool}
         onOpenSmartsheetHealth={onOpenSmartsheetHealth}
@@ -262,7 +273,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
               Built for quick chef decisions: choose the workstream, check status, and move straight into the active tool.
             </p>
             <div className="mt-5 grid grid-cols-2 gap-3">
-              <Metric label="Tools" value="4" />
+              <Metric label="Tools" value="5" />
               <Metric label="Menu items" value={totalItems.toLocaleString()} />
               <Metric label="Menus" value={menuCount} />
               <Metric label="Costed items" value={costedItems.toLocaleString()} />
@@ -279,7 +290,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
           </aside>
 
           <section className="space-y-5">
-            <section className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-4">
+            <section className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-5">
               {tools.map((tool) => (
                 <ToolCard key={tool.title} {...tool} />
               ))}
@@ -414,12 +425,13 @@ function MobileLanding({
   recentItems,
   onOpenMenuEngineering,
   onOpenNeighborhoodRotations,
+  onOpenRecipeDatabase,
   onOpenLadleCompliance,
   onOpenLeanTool,
   onOpenSmartsheetHealth,
 }) {
   const metricTiles = [
-    { label: "Tools", value: "4", icon: Wrench, tone: "bg-[#fff7e7] text-[#8a621b]" },
+    { label: "Tools", value: "5", icon: Wrench, tone: "bg-[#fff7e7] text-[#8a621b]" },
     { label: "Menu Items", value: totalItems.toLocaleString(), icon: Utensils, tone: "bg-[#eaf8f2] text-emerald-700" },
     { label: "Menus", value: menuCount, icon: ListChecks, tone: "bg-[#edf5ff] text-sky-700" },
     { label: "Costed Items", value: costedItems.toLocaleString(), icon: Database, tone: "bg-[#f0eefb] text-indigo-700" },
@@ -428,6 +440,7 @@ function MobileLanding({
   const navItems = [
     { label: "Home", icon: Home, onOpen: null, active: true },
     { label: "Engineering", icon: BarChart3, onOpen: onOpenMenuEngineering },
+    { label: "Recipes", icon: BookOpen, onOpen: onOpenRecipeDatabase },
     { label: "Rotations", icon: CalendarRange, onOpen: onOpenNeighborhoodRotations },
     { label: "Compliance", icon: ShieldCheck, onOpen: onOpenLadleCompliance },
   ];
@@ -605,11 +618,13 @@ function MobileToolCard({ title, eyebrow, description, action, onOpen, icon: Ico
     emerald: "bg-emerald-50 text-emerald-700 border-emerald-100",
     sky: "bg-sky-50 text-sky-700 border-sky-100",
     amber: "bg-amber-50 text-amber-700 border-amber-100",
+    indigo: "bg-indigo-50 text-indigo-700 border-indigo-100",
     lime: "bg-lime-50 text-lime-700 border-lime-100",
   };
   const chipLabels = {
     "Menu Engineering": "Live",
     "Neighborhood Rotations": "Live",
+    "Recipe Database": "New",
     "Ladle Compliance": "Test concept",
     "Lean Tool": "New",
   };
