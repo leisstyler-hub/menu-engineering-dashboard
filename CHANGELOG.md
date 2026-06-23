@@ -2,6 +2,9 @@
 
 ## 2026-06-22
 
+- [Jun 22, 8:18 AM] Routed Neighborhood Rotation and Lean Tool saves through a secure Supabase-first storage backbone while keeping Smartsheet as the mirror/fallback.
+- [Jun 22, 8:18 AM] Added a shared app-record Supabase schema with indexed tool/district/cafe/week fields, full record snapshots, and a two-year cleanup function.
+- [Jun 22, 8:18 AM] Set visible app version to `2026.06.22.003-storage-backbone-live`.
 - [Jun 22, 7:42 AM] Added a Supabase backbone connection layer and Data Health card so the app can verify the primary database bridge while Smartsheet remains the mirror/fallback.
 - [Jun 22, 7:42 AM] Added the Lean Results Supabase schema for future observation sessions, timestamp marks, sync events, void controls, and two-year retention planning.
 - [Jun 22, 7:42 AM] Set visible app version to `2026.06.22.002-supabase-backbone`.

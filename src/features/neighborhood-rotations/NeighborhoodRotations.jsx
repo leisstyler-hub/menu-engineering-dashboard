@@ -3,8 +3,8 @@ import * as XLSX from "xlsx";
 import { ArrowLeft, AlertTriangle, CalendarDays, CheckCircle2, ChevronDown, ChevronUp, Clipboard, FileText, Printer, Save, Send, Upload, X } from "lucide-react";
 
 import MENUWORKS_ITEMS from "../../data/menuItems.json";
-import { loadRecordsFromSmartsheet, syncRecordsToSmartsheet } from "../../integrations/smartsheet/client.js";
 import { NEIGHBORHOOD_ROTATIONS_STORAGE_KEY, SMARTSHEET_COLUMNS, SMARTSHEET_DATABASE_STORAGE_KEY, SMARTSHEET_RECORD_TYPES, SMARTSHEET_SELECTION_TYPES, STATION_SMARTSHEET_LABELS } from "../../integrations/smartsheet/contract.js";
+import { loadRecordsFromBackbone, syncRecordsToBackbone } from "../../integrations/storage/backboneClient.js";
 import { APP_VERSION_STAMP } from "../../shared/appConfig.js";
 import { money, pct, titleCase } from "../../shared/formatting.js";
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
@@ -1950,14 +1950,14 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
   const [databaseRecords, setDatabaseRecords] = useState(() => {
     try { return JSON.parse(localStorage.getItem(SMARTSHEET_DATABASE_STORAGE_KEY) || "[]"); } catch { return []; }
   });
-  const [databaseLoadStatus, setDatabaseLoadStatus] = useState({ state: "idle", message: "Using local saved data until Smartsheet is loaded.", loadedAt: "" });
-  const [databaseSyncStatus, setDatabaseSyncStatus] = useState({ state: "idle", message: "No Smartsheet sync attempted yet.", syncedAt: "" });
+  const [databaseLoadStatus, setDatabaseLoadStatus] = useState({ state: "idle", message: "Using local saved data until the shared database is loaded.", loadedAt: "" });
+  const [databaseSyncStatus, setDatabaseSyncStatus] = useState({ state: "idle", message: "No database sync attempted yet.", syncedAt: "" });
   const [smartsheetReadCooldown, setSmartsheetReadCooldown] = useState(false);
 
   useEffect(() => { localStorage.setItem(NEIGHBORHOOD_ROTATIONS_STORAGE_KEY, JSON.stringify(rotations)); }, [rotations]);
   useEffect(() => { localStorage.setItem(SMARTSHEET_DATABASE_STORAGE_KEY, JSON.stringify(databaseRecords)); }, [databaseRecords]);
 
-  const refreshFromSmartsheet = async () => {
+  const refreshFromDatabase = async () => {
     if (databaseLoadStatus.state === "loading" || smartsheetReadCooldown) {
       setDatabaseLoadStatus((prev) => ({
         ...prev,
@@ -1966,21 +1966,22 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
       return;
     }
     setSmartsheetReadCooldown(true);
-    setDatabaseLoadStatus({ state: "loading", message: "Loading saved rotations from Smartsheet...", loadedAt: "" });
+    setDatabaseLoadStatus({ state: "loading", message: "Loading saved rotations from database...", loadedAt: "" });
     try {
-      const records = await loadRecordsFromSmartsheet();
+      const payload = await loadRecordsFromBackbone({ tool: "rotation" });
+      const records = payload.records || [];
       const loadedRotations = recordsToRotations(records);
       setDatabaseRecords(records);
       setRotations((prev) => ({ ...prev, ...loadedRotations }));
       setDatabaseLoadStatus({
-        state: "synced",
-        message: `Loaded ${records.length} Smartsheet row${records.length === 1 ? "" : "s"}. Executive View is using database-loaded rotations when available.`,
+        state: payload.state === "fallback" ? "fallback" : "synced",
+        message: payload.message || `Loaded ${records.length} database row${records.length === 1 ? "" : "s"}. Executive View is using shared rotations when available.`,
         loadedAt: nowStamp(),
       });
     } catch (error) {
       setDatabaseLoadStatus({
         state: "fallback",
-        message: error.message || "Could not load Smartsheet records. Using local fallback records.",
+        message: error.message || "Could not load shared database records. Using local fallback records.",
         loadedAt: nowStamp(),
       });
     } finally {
@@ -1988,7 +1989,7 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
     }
   };
 
-  useEffect(() => { refreshFromSmartsheet(); }, []);
+  useEffect(() => { refreshFromDatabase(); }, []);
 
   const cafes = DISTRICTS[district] || [];
   useEffect(() => { if (district && selectedCafe && !cafes.includes(selectedCafe)) setSelectedCafe(""); }, [district, cafes, selectedCafe]);
@@ -2019,15 +2020,15 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
     if (!week || !district || !selectedCafe) return;
     const nextRecords = buildDatabaseRecordsForRotation({ week, district, cafe: selectedCafe, rotation: nextRotation });
     setDatabaseRecords((prev) => upsertDatabaseRecords(prev, nextRecords));
-    setDatabaseSyncStatus({ state: "syncing", message: `Syncing ${nextRecords.length} row${nextRecords.length === 1 ? "" : "s"} to Smartsheet...`, syncedAt: "" });
+    setDatabaseSyncStatus({ state: "syncing", message: `Saving ${nextRecords.length} row${nextRecords.length === 1 ? "" : "s"} to database...`, syncedAt: "" });
     try {
-      const result = await syncRecordsToSmartsheet(nextRecords, { week, district, cafe: selectedCafe, status: nextRotation.status || "Draft", replaceParentRecordIds: [rotationRecordParentId(week, district, selectedCafe)] });
-      setDatabaseSyncStatus({ state: "synced", message: result.message || `Synced ${nextRecords.length} row${nextRecords.length === 1 ? "" : "s"} to Smartsheet.`, syncedAt: nowStamp() });
+      const result = await syncRecordsToBackbone(nextRecords, { tool: "Neighborhood Rotations", week, district, cafe: selectedCafe, status: nextRotation.status || "Draft", replaceParentRecordIds: [rotationRecordParentId(week, district, selectedCafe)] });
+      setDatabaseSyncStatus({ state: result.state === "fallback" ? "fallback" : "synced", message: result.message || `Saved ${nextRecords.length} row${nextRecords.length === 1 ? "" : "s"} to database.`, syncedAt: nowStamp() });
     } catch (error) {
       const missingColumns = error?.payload?.missingColumns || [];
       const missingMessage = missingColumns.length
-        ? `Smartsheet is missing ${missingColumns.length} required column${missingColumns.length === 1 ? "" : "s"}: ${missingColumns.join(", ")}`
-        : error.message || "Smartsheet sync failed. Local fallback saved.";
+        ? `Fallback sheet is missing ${missingColumns.length} required column${missingColumns.length === 1 ? "" : "s"}: ${missingColumns.join(", ")}`
+        : error.message || "Database sync failed. Local fallback saved.";
       setDatabaseSyncStatus({
         state: "fallback",
         message: missingMessage,
@@ -2056,7 +2057,7 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
             </section>
             <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
               <div className="xl:col-span-2 space-y-6">
-                {district && selectedCafe ? <RotationPlannerCard cafe={selectedCafe} district={district} menuOptions={menus} rotation={currentRotation} previousRotation={previousRotation} previousWeek={carryoverWeek} updateRotation={updateRotation} week={week} printRows={allRows} persistRotationToDatabase={persistRotationToDatabase} databaseLoadStatus={databaseLoadStatus} databaseSyncStatus={databaseSyncStatus} onRefreshDatabase={refreshFromSmartsheet} isRefreshCoolingDown={smartsheetReadCooldown} menuConflictCount={menuConflictCountForCandidate(district, districtWeekRows, selectedCafe, rotationMenuLabel(currentRotation, selectedCafe, week) || currentRotation.menu)} /> : <SelectPlannerPrompt />}
+                {district && selectedCafe ? <RotationPlannerCard cafe={selectedCafe} district={district} menuOptions={menus} rotation={currentRotation} previousRotation={previousRotation} previousWeek={carryoverWeek} updateRotation={updateRotation} week={week} printRows={allRows} persistRotationToDatabase={persistRotationToDatabase} databaseLoadStatus={databaseLoadStatus} databaseSyncStatus={databaseSyncStatus} onRefreshDatabase={refreshFromDatabase} isRefreshCoolingDown={smartsheetReadCooldown} menuConflictCount={menuConflictCountForCandidate(district, districtWeekRows, selectedCafe, rotationMenuLabel(currentRotation, selectedCafe, week) || currentRotation.menu)} /> : <SelectPlannerPrompt />}
               </div>
               <LeadershipOverview district={district} week={week} rows={leadershipRows} conflictMenus={conflictMenus} />
             </section>
@@ -2185,7 +2186,7 @@ function DatabaseAlignmentNotice({ district, cafe, week, rotation }) {
   const records = buildDatabaseRecordsForRotation({ week, district, cafe, rotation });
   return (
     <div className="mt-4 rounded-3xl border border-emerald-200 bg-emerald-50/70 p-4 text-sm text-emerald-900">
-      <p className="font-bold">Smartsheet database alignment</p>
+      <p className="font-bold">Database alignment</p>
       <p className="mt-1">Save Draft and Submit Rotation now generate database-ready records using the master column labels. Current record preview: <span className="font-bold">{records.length}</span> row{records.length === 1 ? "" : "s"} for this café/week.</p>
     </div>
   );
@@ -2213,7 +2214,7 @@ function CompactSystemStatusPanel({ district, cafe, week, rotation, loadStatus, 
       </div>
       {syncStatus?.state === "fallback" && (
         <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-amber-900">
-          <p className="font-bold">Smartsheet write needs attention</p>
+          <p className="font-bold">Fallback write needs attention</p>
           <p className="mt-1">{syncStatus.message}</p>
           {syncStatus?.missingColumns?.length > 0 && <p className="mt-1 text-xs">Missing: {syncStatus.missingColumns.join(", ")}</p>}
         </div>
@@ -2235,8 +2236,8 @@ function SmartsheetDatabaseStatusPanel({ loadStatus, syncStatus, onRefreshDataba
     <div className="mt-4 rounded-3xl border border-slate-200 bg-white p-4 text-sm shadow-sm">
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
         <div>
-          <p className="font-bold text-slate-900">Smartsheet live database</p>
-          <p className="mt-1 text-slate-500">The planner writes to Smartsheet and reloads saved database rows for Executive View.</p>
+          <p className="font-bold text-slate-900">Shared live database</p>
+          <p className="mt-1 text-slate-500">The planner writes through Supabase first, with Smartsheet kept as the fallback and mirror.</p>
         </div>
         <button type="button" onClick={onRefreshDatabase} disabled={isReading} className="rounded-2xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50">
           Sync Latest

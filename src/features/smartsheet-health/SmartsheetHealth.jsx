@@ -3,7 +3,7 @@ import { Activity, AlertTriangle, ArrowLeft, CheckCircle2, Cloud, Columns3, Data
 
 import { ensureSmartsheetColumns, loadSmartsheetHealth } from "../../integrations/smartsheet/client.js";
 import { SMARTSHEET_COLUMNS, SMARTSHEET_RECORD_TYPES } from "../../integrations/smartsheet/contract.js";
-import { loadSupabaseHealth } from "../../integrations/supabase/client.js";
+import { loadSupabaseHealth, loadSupabaseStorageHealth } from "../../integrations/supabase/client.js";
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
 import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
@@ -110,8 +110,12 @@ export default function SmartsheetHealth({ onBackToPlatform }) {
   const refreshSupabase = async () => {
     setSupabaseHealth({ state: "loading", data: null, message: "Checking Supabase..." });
     try {
-      const payload = await loadSupabaseHealth();
-      setSupabaseHealth({ state: payload.ok ? "connected" : "error", data: payload, message: payload.message });
+      const [project, storage] = await Promise.all([
+        loadSupabaseHealth(),
+        loadSupabaseStorageHealth(),
+      ]);
+      const payload = { ...project, storage };
+      setSupabaseHealth({ state: project.ok && storage.ok ? "connected" : "error", data: payload, message: storage.ok ? project.message : storage.message });
     } catch (error) {
       setSupabaseHealth({ state: "error", data: null, message: error.message || "Supabase check failed." });
     }
@@ -215,7 +219,7 @@ export default function SmartsheetHealth({ onBackToPlatform }) {
             <div>
               <p className="text-sm font-black text-emerald-950">Private key stays hidden</p>
               <p className="mt-1 text-sm leading-6 text-emerald-900">
-                This page checks the connection through the app's server. It does not display the Smartsheet access token.
+                This page checks connections through the app's server. It does not display private Smartsheet or Supabase service keys.
               </p>
             </div>
           </div>
@@ -244,7 +248,7 @@ function SupabaseHealthCard({ health, onRefresh }) {
           </p>
           <h2 className="mt-1 text-2xl font-black text-slate-950">Primary App Database</h2>
           <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-slate-600">
-            Supabase is being introduced as the app's structured memory. Smartsheet remains the readable mirror and fallback while we migrate tools in controlled stages.
+            Supabase is now the primary structured memory for Rotation and Lean records. Smartsheet remains the readable mirror and fallback during the migration.
           </p>
         </div>
         <button onClick={onRefresh} className="inline-flex w-fit items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-black text-slate-700 hover:bg-white">
@@ -257,7 +261,7 @@ function SupabaseHealthCard({ health, onRefresh }) {
         <HealthMetric icon={Cloud} label="State" value={stateLabel} detail={health.message || "Waiting for check"} tone={connected ? "green" : error ? "amber" : "neutral"} />
         <HealthMetric icon={Database} label="Project" value={projectLabel} detail="Supabase project ref" />
         <HealthMetric icon={Activity} label="Response" value={latency} detail={data.statusCode ? `HTTP ${data.statusCode}` : "not checked"} />
-        <HealthMetric icon={ShieldCheck} label="Storage Role" value="Primary" detail="Smartsheet remains mirror/fallback" tone="green" />
+        <HealthMetric icon={ShieldCheck} label="Secure Writes" value={data.storage?.ok ? "Ready" : "Needs key"} detail={data.storage?.message || "server endpoint check"} tone={data.storage?.ok ? "green" : "amber"} />
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-3">
@@ -266,8 +270,8 @@ function SupabaseHealthCard({ health, onRefresh }) {
           <p className="mt-1 text-sm font-semibold leading-6 text-slate-600">{configSource}</p>
         </div>
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-          <p className="text-sm font-black text-emerald-950">First Migration Target</p>
-          <p className="mt-1 text-sm font-semibold leading-6 text-emerald-900">Lean results, marks, void controls, and audit history.</p>
+          <p className="text-sm font-black text-emerald-950">Active Storage Scope</p>
+          <p className="mt-1 text-sm font-semibold leading-6 text-emerald-900">Neighborhood Rotation rows and Lean result rows now route through Supabase first.</p>
         </div>
         <div className="rounded-lg border border-sky-200 bg-sky-50 p-4">
           <p className="text-sm font-black text-sky-950">Retention Plan</p>

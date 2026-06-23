@@ -1,8 +1,37 @@
--- Culinary Tools Platform - Lean Results Backbone
--- Run this in Supabase SQL Editor when we are ready to turn Lean Tool saves into database records.
--- The app currently treats Supabase as the primary future source of truth and Smartsheet as the mirror.
+-- Culinary Tools Platform - Supabase Storage Backbone
+-- Run this in Supabase SQL Editor to activate structured app storage.
+-- Supabase becomes the primary data layer; Smartsheet remains the readable mirror/fallback.
 
 create extension if not exists pgcrypto;
+
+create table if not exists public.app_records (
+  record_id text primary key,
+  parent_record_id text not null default '',
+  tool text not null check (tool in ('rotation', 'lean')),
+  record_type text not null default '',
+  status text not null default '',
+  district text not null default '',
+  cafe_unit text not null default '',
+  date_range_label text not null default '',
+  station_key text not null default '',
+  submitted_at_text text not null default '',
+  updated_at_text text not null default '',
+  source_system text not null default 'culinary-tools-app',
+  visible_in_dashboard boolean not null default true,
+  is_test_record boolean not null default false,
+  record_payload jsonb not null default '{}'::jsonb,
+  retain_until timestamptz not null default (now() + interval '2 years'),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.app_retention_events (
+  id uuid primary key default gen_random_uuid(),
+  cleanup_name text not null,
+  deleted_record_count integer not null default 0,
+  retention_cutoff timestamptz not null,
+  created_at timestamptz not null default now()
+);
 
 create table if not exists public.lean_observations (
   id uuid primary key default gen_random_uuid(),
@@ -54,6 +83,18 @@ create table if not exists public.app_sync_events (
   created_at timestamptz not null default now()
 );
 
+create index if not exists app_records_tool_scope_idx
+  on public.app_records (tool, district, cafe_unit, date_range_label);
+
+create index if not exists app_records_parent_idx
+  on public.app_records (parent_record_id);
+
+create index if not exists app_records_retention_idx
+  on public.app_records (retain_until);
+
+create index if not exists app_records_payload_idx
+  on public.app_records using gin (record_payload);
+
 create index if not exists lean_observations_scope_idx
   on public.lean_observations (district, cafe_unit, business_date desc);
 
@@ -66,9 +107,49 @@ create index if not exists lean_marks_observation_idx
 create index if not exists app_sync_events_entity_idx
   on public.app_sync_events (entity_type, entity_id, created_at desc);
 
+create or replace function public.touch_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists app_records_touch_updated_at on public.app_records;
+create trigger app_records_touch_updated_at
+before update on public.app_records
+for each row
+execute function public.touch_updated_at();
+
+create or replace function public.cleanup_expired_app_records()
+returns table(deleted_record_count integer, retention_cutoff timestamptz)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  cutoff timestamptz := now();
+  deleted_count integer := 0;
+begin
+  delete from public.app_records
+  where retain_until < cutoff;
+
+  get diagnostics deleted_count = row_count;
+
+  insert into public.app_retention_events (cleanup_name, deleted_record_count, retention_cutoff)
+  values ('two_year_app_record_retention', deleted_count, cutoff);
+
+  return query select deleted_count, cutoff;
+end;
+$$;
+
+alter table public.app_records enable row level security;
+alter table public.app_retention_events enable row level security;
 alter table public.lean_observations enable row level security;
 alter table public.lean_observation_marks enable row level security;
 alter table public.app_sync_events enable row level security;
 
 -- No public policies are created in this first backbone step.
--- We will add app-specific write/read policies when authentication or server-side API routes are ready.
+-- Browser writes go through Vercel API routes that use the service role key server-side.

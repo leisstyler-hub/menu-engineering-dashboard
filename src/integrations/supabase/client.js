@@ -64,3 +64,25 @@ export async function loadSupabaseHealth() {
     message: "Supabase backbone is reachable.",
   };
 }
+
+export async function loadSupabaseStorageHealth() {
+  const response = await fetch("/api/storage/records?tool=rotation&health=1");
+  const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok || payload.ok === false) {
+    return {
+      ok: false,
+      state: payload.fallbackRecommended ? "fallback-not-configured" : "error",
+      statusCode: response.status,
+      message: payload.message || "Supabase secure storage endpoint is not ready.",
+      details: payload.details || null,
+    };
+  }
+
+  return {
+    ok: true,
+    state: "server-storage-ready",
+    statusCode: response.status,
+    message: payload.message || "Supabase secure storage endpoint is ready.",
+  };
+}

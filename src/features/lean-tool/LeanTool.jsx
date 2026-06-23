@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, BarChart3, CheckCircle2, ClipboardList, Clock3, Mail, Play, RotateCcw, Send, Smartphone, Timer, Trash2, UserCheck } from "lucide-react";
 
-import { loadRecordsFromSmartsheet, syncRecordsToSmartsheet } from "../../integrations/smartsheet/client.js";
 import { SMARTSHEET_COLUMNS, SMARTSHEET_RECORD_TYPES } from "../../integrations/smartsheet/contract.js";
+import { loadRecordsFromBackbone, syncRecordsToBackbone } from "../../integrations/storage/backboneClient.js";
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
 import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
@@ -369,7 +369,7 @@ export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const [resultsDistrict, setResultsDistrict] = useState("All");
   const [resultsCafe, setResultsCafe] = useState("All");
   const [resultsArea, setResultsArea] = useState("All");
-  const [leanSyncStatus, setLeanSyncStatus] = useState({ state: "idle", message: "Smartsheet ready" });
+  const [leanSyncStatus, setLeanSyncStatus] = useState({ state: "idle", message: "Database ready" });
   const [leanLoadStatus, setLeanLoadStatus] = useState({ state: "idle", message: "Local results loaded" });
   const [voidTarget, setVoidTarget] = useState(null);
   const [voidReason, setVoidReason] = useState("Test record");
@@ -390,11 +390,11 @@ export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const activeRows = sessionId ? sessionObservations : scopedObservations;
   const summary = useMemo(() => summarizeRows(activeRows), [activeRows]);
 
-  const syncLeanResultToSmartsheet = async (result) => {
+  const syncLeanResultToDatabase = async (result) => {
     const records = buildLeanSmartsheetRecords(result);
-    setLeanSyncStatus({ state: "syncing", message: "Syncing Lean result to Smartsheet..." });
+    setLeanSyncStatus({ state: "syncing", message: "Saving Lean result to database..." });
     try {
-      const payload = await syncRecordsToSmartsheet(records, {
+      const payload = await syncRecordsToBackbone(records, {
         tool: "Lean Tool",
         recordType: SMARTSHEET_RECORD_TYPES.leanObservationResult,
         district: result.district,
@@ -404,16 +404,17 @@ export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
         autoCreateMissingColumns: true,
       });
       const created = payload.autoCreatedColumns?.length ? ` Added ${payload.autoCreatedColumns.length} Lean column${payload.autoCreatedColumns.length === 1 ? "" : "s"}.` : "";
-      setLeanSyncStatus({ state: "synced", message: `${payload.message || "Lean result synced to Smartsheet."}${created}` });
+      setLeanSyncStatus({ state: payload.state === "fallback" ? "fallback" : "synced", message: `${payload.message || "Lean result saved."}${created}` });
     } catch (error) {
-      setLeanSyncStatus({ state: "error", message: error?.payload?.message || error.message || "Lean Smartsheet sync failed." });
+      setLeanSyncStatus({ state: "error", message: error?.payload?.message || error.message || "Lean database save failed." });
     }
   };
 
-  const refreshLeanResultsFromSmartsheet = async () => {
-    setLeanLoadStatus({ state: "loading", message: "Loading Lean results from Smartsheet..." });
+  const refreshLeanResultsFromDatabase = async () => {
+    setLeanLoadStatus({ state: "loading", message: "Loading Lean results from database..." });
     try {
-      const records = await loadRecordsFromSmartsheet({ tool: "lean" });
+      const payload = await loadRecordsFromBackbone({ tool: "lean" });
+      const records = payload.records || [];
       const sharedResults = parseLeanResultsFromSmartsheet(records);
       const merged = [
         ...sharedResults,
@@ -421,9 +422,9 @@ export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
       ].map(normalizeResult).slice(0, 100);
       setResults(merged);
       localStorage.setItem(RESULTS_STORAGE_KEY, JSON.stringify(merged));
-      setLeanLoadStatus({ state: "loaded", message: `Loaded ${sharedResults.length} shared Lean result${sharedResults.length === 1 ? "" : "s"} from Smartsheet.` });
+      setLeanLoadStatus({ state: "loaded", message: payload.message || `Loaded ${sharedResults.length} shared Lean result${sharedResults.length === 1 ? "" : "s"}.` });
     } catch (error) {
-      setLeanLoadStatus({ state: "error", message: error?.payload?.message || error.message || "Could not load Lean results from Smartsheet." });
+      setLeanLoadStatus({ state: "error", message: error?.payload?.message || error.message || "Could not load Lean results." });
     }
   };
 
@@ -572,7 +573,7 @@ export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
       recommendation: getRecommendation(finalSummary),
     };
     setResults((prev) => saveLeanResult(completedResult, prev));
-    syncLeanResultToSmartsheet(completedResult);
+    syncLeanResultToDatabase(completedResult);
     setRunning(false);
     setCompletedAt(stamp);
     setCompletedSummary(finalSummary);
@@ -632,7 +633,7 @@ export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
       isTestRecord: isTestVoidReason(voidReason),
     });
     setResults((prev) => saveLeanResult(voidedResult, prev));
-    syncLeanResultToSmartsheet(voidedResult);
+    syncLeanResultToDatabase(voidedResult);
     cancelVoidResult();
   };
 
@@ -700,8 +701,8 @@ export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
               <p className="mt-2 text-sm text-emerald-900">{district} / {cafe} / {area}</p>
               <p className="text-xs text-emerald-800">{observationDate}</p>
             </div>
-            <div className={`mt-3 rounded-2xl border p-3 text-sm font-bold sm:text-xs ${leanSyncStatus.state === "synced" ? "border-emerald-200 bg-emerald-50 text-emerald-900" : leanSyncStatus.state === "error" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-slate-200 bg-slate-50 text-slate-600"}`}>
-              Smartsheet: {leanSyncStatus.message}
+            <div className={`mt-3 rounded-2xl border p-3 text-sm font-bold sm:text-xs ${leanSyncStatus.state === "synced" ? "border-emerald-200 bg-emerald-50 text-emerald-900" : leanSyncStatus.state === "fallback" || leanSyncStatus.state === "error" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-slate-200 bg-slate-50 text-slate-600"}`}>
+              Storage: {leanSyncStatus.message}
             </div>
           </aside>
 
@@ -873,7 +874,7 @@ export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
             setResultsArea={setResultsArea}
             leanLoadStatus={leanLoadStatus}
             leanSyncStatus={leanSyncStatus}
-            onRefreshSmartsheet={refreshLeanResultsFromSmartsheet}
+            onRefreshSmartsheet={refreshLeanResultsFromDatabase}
             onRequestVoid={requestVoidResult}
           />
         )}
@@ -975,7 +976,7 @@ function LeanResultsView({ results, resultsDistrict, setResultsDistrict, results
             <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-900">Shared audience: {LEAN_AUDIENCE_ROLES.join(", ")}</span>
             <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-black text-amber-900">{voidedCount} voided record{voidedCount === 1 ? "" : "s"} / {voidedRowCount} row{voidedRowCount === 1 ? "" : "s"} hidden</span>
             <span className={`rounded-full border px-3 py-1 text-xs font-black ${leanLoadStatus.state === "loaded" ? "border-emerald-200 bg-emerald-50 text-emerald-900" : leanLoadStatus.state === "error" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-slate-200 bg-slate-50 text-slate-600"}`}>{leanLoadStatus.message}</span>
-            <span className={`rounded-full border px-3 py-1 text-xs font-black ${leanSyncStatus.state === "synced" ? "border-emerald-200 bg-emerald-50 text-emerald-900" : leanSyncStatus.state === "error" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-slate-200 bg-slate-50 text-slate-600"}`}>Sync: {leanSyncStatus.message}</span>
+            <span className={`rounded-full border px-3 py-1 text-xs font-black ${leanSyncStatus.state === "synced" ? "border-emerald-200 bg-emerald-50 text-emerald-900" : leanSyncStatus.state === "fallback" || leanSyncStatus.state === "error" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-slate-200 bg-slate-50 text-slate-600"}`}>Sync: {leanSyncStatus.message}</span>
           </div>
         </div>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
@@ -983,7 +984,7 @@ function LeanResultsView({ results, resultsDistrict, setResultsDistrict, results
           <ResultFilter label="Cafe" value={resultsCafe} setValue={setResultsCafe} options={["All", ...cafeOptions]} />
           <ResultFilter label="Station" value={resultsArea} setValue={setResultsArea} options={["All", ...areaOptions]} />
           <button onClick={onRefreshSmartsheet} className="rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-900 hover:bg-emerald-100 sm:col-span-3">
-            Sync Latest From Smartsheet
+            Sync Latest Results
           </button>
           <button onClick={() => setShowVoided((value) => !value)} className={`rounded-2xl border px-4 py-3 text-sm font-black sm:col-span-3 ${showVoided ? "border-amber-300 bg-amber-50 text-amber-900" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}>
             {showVoided ? "Hide Voided Records" : "Show Voided Records"}
@@ -1036,7 +1037,7 @@ function LeanResultsView({ results, resultsDistrict, setResultsDistrict, results
           ) : (
             <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center">
               <p className="text-lg font-black text-slate-900">Complete a Lean observation to create a result.</p>
-              <p className="mt-2 text-sm text-slate-500">Results save in this app first. Smartsheet can become the shared source once we add the sheet or columns.</p>
+              <p className="mt-2 text-sm text-slate-500">Results save in this app first, then sync through the shared database layer.</p>
             </div>
           )}
         </div>
