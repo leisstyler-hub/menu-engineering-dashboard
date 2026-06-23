@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Activity, AlertTriangle, ArrowLeft, CheckCircle2, Columns3, Database, RefreshCcw, ShieldCheck, Table2 } from "lucide-react";
+import { Activity, AlertTriangle, ArrowLeft, CheckCircle2, Cloud, Columns3, Database, RefreshCcw, ShieldCheck, Table2 } from "lucide-react";
 
 import { ensureSmartsheetColumns, loadSmartsheetHealth } from "../../integrations/smartsheet/client.js";
 import { SMARTSHEET_COLUMNS, SMARTSHEET_RECORD_TYPES } from "../../integrations/smartsheet/contract.js";
+import { loadSupabaseHealth } from "../../integrations/supabase/client.js";
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
 import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
@@ -93,6 +94,7 @@ function scopedRecords(records = [], scope = "all", search = "") {
 export default function SmartsheetHealth({ onBackToPlatform }) {
   const [mainHealth, setMainHealth] = useState({ state: "idle", data: null, message: "Not checked yet" });
   const [leanHealth, setLeanHealth] = useState({ state: "idle", data: null, message: "Not checked yet" });
+  const [supabaseHealth, setSupabaseHealth] = useState({ state: "idle", data: null, message: "Not checked yet" });
   const [lastChecked, setLastChecked] = useState("");
 
   const refreshOne = async (setter, context = {}) => {
@@ -105,10 +107,21 @@ export default function SmartsheetHealth({ onBackToPlatform }) {
     }
   };
 
+  const refreshSupabase = async () => {
+    setSupabaseHealth({ state: "loading", data: null, message: "Checking Supabase..." });
+    try {
+      const payload = await loadSupabaseHealth();
+      setSupabaseHealth({ state: payload.ok ? "connected" : "error", data: payload, message: payload.message });
+    } catch (error) {
+      setSupabaseHealth({ state: "error", data: null, message: error.message || "Supabase check failed." });
+    }
+  };
+
   const refreshAll = async () => {
     await Promise.all([
       refreshOne(setMainHealth),
       refreshOne(setLeanHealth, { tool: "lean" }),
+      refreshSupabase(),
     ]);
     setLastChecked(nowStamp());
   };
@@ -155,9 +168,9 @@ export default function SmartsheetHealth({ onBackToPlatform }) {
           <div className="mt-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-600">System Settings</p>
-              <h1 className="mt-2 text-4xl font-black tracking-normal">Smartsheet Health</h1>
+              <h1 className="mt-2 text-4xl font-black tracking-normal">Data Health</h1>
               <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-                A safe read of the app's Smartsheet connection, sheet structure, record counts, and sync readiness.
+                A safe read of the app's Supabase backbone, Smartsheet mirror, sheet structure, record counts, and sync readiness.
               </p>
             </div>
             <div className="flex flex-col gap-2 lg:items-end">
@@ -168,6 +181,8 @@ export default function SmartsheetHealth({ onBackToPlatform }) {
             </div>
           </div>
         </header>
+
+        <SupabaseHealthCard health={supabaseHealth} onRefresh={refreshSupabase} />
 
         <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           <SheetHealthCard
@@ -207,6 +222,59 @@ export default function SmartsheetHealth({ onBackToPlatform }) {
         </section>
       </div>
     </div>
+  );
+}
+
+function SupabaseHealthCard({ health, onRefresh }) {
+  const data = health.data || {};
+  const connected = health.state === "connected";
+  const error = health.state === "error";
+  const checking = health.state === "loading";
+  const stateLabel = connected ? "Connected" : error ? "Needs Attention" : checking ? "Checking" : "Not Checked";
+  const projectLabel = data.projectRef || "pending";
+  const latency = typeof data.latencyMs === "number" ? `${data.latencyMs} ms` : "-";
+  const configSource = data.usingFallbackConfig ? "App fallback config" : "Vercel environment";
+
+  return (
+    <section className={`rounded-lg border bg-white p-5 shadow-sm ${connected ? "border-emerald-200" : error ? "border-amber-200" : "border-slate-200"}`}>
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div>
+          <p className={`text-xs font-black uppercase tracking-[0.18em] ${connected ? "text-emerald-600" : error ? "text-amber-600" : "text-slate-500"}`}>
+            Supabase Backbone
+          </p>
+          <h2 className="mt-1 text-2xl font-black text-slate-950">Primary App Database</h2>
+          <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-slate-600">
+            Supabase is being introduced as the app's structured memory. Smartsheet remains the readable mirror and fallback while we migrate tools in controlled stages.
+          </p>
+        </div>
+        <button onClick={onRefresh} className="inline-flex w-fit items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-black text-slate-700 hover:bg-white">
+          <RefreshCcw size={16} />
+          Refresh
+        </button>
+      </div>
+
+      <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <HealthMetric icon={Cloud} label="State" value={stateLabel} detail={health.message || "Waiting for check"} tone={connected ? "green" : error ? "amber" : "neutral"} />
+        <HealthMetric icon={Database} label="Project" value={projectLabel} detail="Supabase project ref" />
+        <HealthMetric icon={Activity} label="Response" value={latency} detail={data.statusCode ? `HTTP ${data.statusCode}` : "not checked"} />
+        <HealthMetric icon={ShieldCheck} label="Storage Role" value="Primary" detail="Smartsheet remains mirror/fallback" tone="green" />
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-3">
+        <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+          <p className="text-sm font-black text-slate-950">Connection Source</p>
+          <p className="mt-1 text-sm font-semibold leading-6 text-slate-600">{configSource}</p>
+        </div>
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+          <p className="text-sm font-black text-emerald-950">First Migration Target</p>
+          <p className="mt-1 text-sm font-semibold leading-6 text-emerald-900">Lean results, marks, void controls, and audit history.</p>
+        </div>
+        <div className="rounded-lg border border-sky-200 bg-sky-50 p-4">
+          <p className="text-sm font-black text-sky-950">Retention Plan</p>
+          <p className="mt-1 text-sm font-semibold leading-6 text-sky-900">Keep records for two years; store files selectively and regenerate menus from saved selections.</p>
+        </div>
+      </div>
+    </section>
   );
 }
 

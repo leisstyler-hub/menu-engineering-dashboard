@@ -2,6 +2,9 @@
 
 ## 2026-06-22
 
+- [Jun 22, 7:42 AM] Added a Supabase backbone connection layer and Data Health card so the app can verify the primary database bridge while Smartsheet remains the mirror/fallback.
+- [Jun 22, 7:42 AM] Added the Lean Results Supabase schema for future observation sessions, timestamp marks, sync events, void controls, and two-year retention planning.
+- [Jun 22, 7:42 AM] Set visible app version to `2026.06.22.002-supabase-backbone`.
 - [Jun 22, 7:09 AM] Added Recipe Database as the fifth platform tool, organized by menu with item properties, costs, calories, allergens, descriptions, portions, and CSV export.
 - [Jun 22, 7:09 AM] Added Sentry client monitoring with app-level error protection, release/version tags, active-tool context, navigation breadcrumbs, tracing, and replay-on-error support when a Sentry DSN is configured.
 - [Jun 22, 7:09 AM] Set visible app version to `2026.06.22.001-recipe-database-sentry`.

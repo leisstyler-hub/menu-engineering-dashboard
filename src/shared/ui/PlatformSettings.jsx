@@ -93,7 +93,7 @@ export default function PlatformSettings({ onRefresh, onOpenSmartsheetHealth, la
                 className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-left text-sm font-bold text-slate-700 hover:bg-slate-50"
               >
                 <Database size={17} />
-                Smartsheet Health
+                Data Health
               </button>
             )}
             <button
