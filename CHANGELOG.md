@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-06-23
+
+- [Jun 23, 7:18 AM] Updated Data Health so the Supabase headline follows the secure server write endpoint instead of the secondary public read probe.
+- [Jun 23, 7:18 AM] Added a note when the public Supabase probe returns a warning while secure writes are still ready.
+- [Jun 23, 7:18 AM] Set visible app version to `2026.06.23.001-storage-health-ready`.
+
 ## 2026-06-22
 
 - [Jun 22, 8:18 AM] Routed Neighborhood Rotation and Lean Tool saves through a secure Supabase-first storage backbone while keeping Smartsheet as the mirror/fallback.

@@ -4,6 +4,7 @@ import { Activity, AlertTriangle, ArrowLeft, CheckCircle2, Cloud, Columns3, Data
 import { ensureSmartsheetColumns, loadSmartsheetHealth } from "../../integrations/smartsheet/client.js";
 import { SMARTSHEET_COLUMNS, SMARTSHEET_RECORD_TYPES } from "../../integrations/smartsheet/contract.js";
 import { loadSupabaseHealth, loadSupabaseStorageHealth } from "../../integrations/supabase/client.js";
+import { summarizeSupabaseHealth } from "../../integrations/supabase/healthStatus.js";
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
 import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
@@ -114,8 +115,8 @@ export default function SmartsheetHealth({ onBackToPlatform }) {
         loadSupabaseHealth(),
         loadSupabaseStorageHealth(),
       ]);
-      const payload = { ...project, storage };
-      setSupabaseHealth({ state: project.ok && storage.ok ? "connected" : "error", data: payload, message: storage.ok ? project.message : storage.message });
+      const summary = summarizeSupabaseHealth({ project, storage });
+      setSupabaseHealth(summary);
     } catch (error) {
       setSupabaseHealth({ state: "error", data: null, message: error.message || "Supabase check failed." });
     }
@@ -263,6 +264,12 @@ function SupabaseHealthCard({ health, onRefresh }) {
         <HealthMetric icon={Activity} label="Response" value={latency} detail={data.statusCode ? `HTTP ${data.statusCode}` : "not checked"} />
         <HealthMetric icon={ShieldCheck} label="Secure Writes" value={data.storage?.ok ? "Ready" : "Needs key"} detail={data.storage?.message || "server endpoint check"} tone={data.storage?.ok ? "green" : "amber"} />
       </div>
+
+      {data.publicProbeWarning && (
+        <div className="mt-4 rounded-lg border border-sky-200 bg-sky-50 p-4 text-sm font-semibold text-sky-950">
+          Public read probe note: {data.publicProbeWarning} Secure server writes are still ready.
+        </div>
+      )}
 
       <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-3">
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
