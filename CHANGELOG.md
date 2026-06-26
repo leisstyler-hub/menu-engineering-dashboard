@@ -2,6 +2,9 @@
 
 ## 2026-06-23
 
+- [Jun 23, 7:35 AM] Backfilled Smartsheet Rotation and Lean history into Supabase, deduping repeated Record IDs so Supabase can act as the current structured source.
+- [Jun 23, 7:35 AM] Added a hidden-row audit option to the secure Supabase records endpoint so voided/test history can be verified without showing as active app results.
+- [Jun 23, 7:35 AM] Set visible app version to `2026.06.23.002-supabase-backfill-audit`.
 - [Jun 23, 7:18 AM] Updated Data Health so the Supabase headline follows the secure server write endpoint instead of the secondary public read probe.
 - [Jun 23, 7:18 AM] Added a note when the public Supabase probe returns a warning while secure writes are still ready.
 - [Jun 23, 7:18 AM] Set visible app version to `2026.06.23.001-storage-health-ready`.

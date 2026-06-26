@@ -96,10 +96,11 @@ async function deleteStaleRows(parentRecordIds = [], nextRecordIds = []) {
 async function loadRecords(req, res) {
   const tool = getBackboneToolFromContext({ tool: req.query?.tool || "" });
   const healthOnly = String(req.query?.health || "") === "1";
+  const includeHidden = String(req.query?.includeHidden || "") === "1";
   const params = queryString({
     select: "record_id,updated_at,retain_until,record_payload",
     tool: `eq.${tool}`,
-    visible_in_dashboard: "eq.true",
+    visible_in_dashboard: includeHidden ? undefined : "eq.true",
     order: "updated_at.desc",
     limit: healthOnly ? "1" : "5000",
   });
@@ -110,6 +111,7 @@ async function loadRecords(req, res) {
     ok: true,
     source: "supabase",
     healthOnly,
+    includeHidden,
     tool,
     records,
     count: records.length,
