@@ -63,6 +63,18 @@ if (!/if \(index === 0\) rotation\.grill\.regionalSpecial = record\.itemName;/.t
   fail("Two-slot grill Location Spotlight reload mapping is missing.");
 }
 
+if (!/pushSelections\("grill", SMARTSHEET_SELECTION_TYPES\.locationSpotlight, \[rotation\.grill\?\.regionalSpecial, rotation\.grill\?\.locationSpotlight\], 400\)/.test(source)) {
+  fail("Two-slot grill saves must write regionalSpecial as slot 1 and locationSpotlight as slot 2.");
+}
+
+if (!/const submittedRotation = isSubmittedRotation\(rotation\);/.test(source) || !/const lockedForEditing = submittedRotation && !editSubmitted;/.test(source)) {
+  fail("Submitted rotation locking must use the shared submitted-status helper.");
+}
+
+if (!/function ItemPickerSlot/.test(source) || !/Item not listed\?/.test(source)) {
+  fail("Write-in picker mode is missing; dropdown and manual entry should not stack together.");
+}
+
 if (carveryProteins.some((row) => /reuben|sandwich|panini|wrap/i.test(`${name(row)} ${station(row)}`))) {
   fail("Carvery protein pool contains sandwich/Reuben items.");
 }

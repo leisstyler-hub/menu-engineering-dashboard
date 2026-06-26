@@ -71,26 +71,38 @@ function queryString(params) {
   return search.toString();
 }
 
-async function deleteStaleRows(parentRecordIds = [], nextRecordIds = []) {
+async function findStaleRowIds(parentRecordIds = [], nextRecordIds = []) {
   const nextIds = new Set(nextRecordIds.map(String));
   const staleIds = [];
 
   for (const parentId of parentRecordIds.map(String).filter(Boolean)) {
-    const params = queryString({
+    const directParams = queryString({
       select: "record_id",
-      or: `(record_id.eq.${parentId},parent_record_id.eq.${parentId})`,
+      record_id: `eq.${parentId}`,
     });
-    const rows = await supabaseFetch(`app_records?${params}`);
+    const childParams = queryString({
+      select: "record_id",
+      parent_record_id: `eq.${parentId}`,
+    });
+    const rows = [
+      ...((await supabaseFetch(`app_records?${directParams}`)) || []),
+      ...((await supabaseFetch(`app_records?${childParams}`)) || []),
+    ];
     for (const row of rows || []) {
       if (row.record_id && !nextIds.has(String(row.record_id))) staleIds.push(String(row.record_id));
     }
   }
 
-  for (const staleId of staleIds) {
-    await supabaseFetch(`app_records?record_id=eq.${encodeURIComponent(staleId)}`, { method: "DELETE" });
-  }
+  return Array.from(new Set(staleIds));
+}
 
-  return staleIds.length;
+async function deleteRecordIds(recordIds = []) {
+  let deleted = 0;
+  for (const recordId of recordIds.map(String).filter(Boolean)) {
+    await supabaseFetch(`app_records?${queryString({ record_id: `eq.${recordId}` })}`, { method: "DELETE" });
+    deleted += 1;
+  }
+  return deleted;
 }
 
 async function loadRecords(req, res) {
@@ -133,9 +145,9 @@ async function upsertRecords(req, res) {
   }
 
   const replaceParentRecordIds = Array.isArray(context.replaceParentRecordIds) ? context.replaceParentRecordIds : [];
-  const deletedStale = replaceParentRecordIds.length
-    ? await deleteStaleRows(replaceParentRecordIds, rows.map((row) => row.record_id))
-    : 0;
+  const staleRowIds = replaceParentRecordIds.length
+    ? await findStaleRowIds(replaceParentRecordIds, rows.map((row) => row.record_id))
+    : [];
 
   await supabaseFetch("app_records?on_conflict=record_id", {
     method: "POST",
@@ -144,6 +156,8 @@ async function upsertRecords(req, res) {
     },
     body: JSON.stringify(rows),
   });
+
+  const deletedStale = await deleteRecordIds(staleRowIds);
 
   return res.status(200).json({
     ok: true,

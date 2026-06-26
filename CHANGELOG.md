@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-06-26
+
+- [Jun 26, 7:10 AM] Hardened Neighborhood Rotation locking so submitted cafe/week records stay locked even when older draft child rows are still present during database reload.
+- [Jun 26, 7:10 AM] Fixed two-slot grill saves so the first and second grill selections persist as separate slots instead of both saving as slot one.
+- [Jun 26, 7:10 AM] Reworked item write-ins so each picker switches between list mode and write-in mode instead of stacking a dropdown and text field together.
+- [Jun 26, 7:10 AM] Set visible app version to `2026.06.26.001-rotation-lock-sweep`.
+
 ## 2026-06-23
 
 - [Jun 23, 7:35 AM] Backfilled Smartsheet Rotation and Lean history into Supabase, deduping repeated Record IDs so Supabase can act as the current structured source.

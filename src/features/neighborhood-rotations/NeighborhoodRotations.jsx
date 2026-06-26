@@ -463,8 +463,7 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
   pushSelections("global", SMARTSHEET_SELECTION_TYPES.subRecipe, rotation.subRecipes || [], 200);
   pushSelections("global", SMARTSHEET_SELECTION_TYPES.extension, rotation.extensions || [], 300);
   }
-  pushSelections("grill", SMARTSHEET_SELECTION_TYPES.locationSpotlight, [rotation.grill?.regionalSpecial], 400);
-  pushSelections("grill", SMARTSHEET_SELECTION_TYPES.locationSpotlight, [rotation.grill?.locationSpotlight], 410);
+  pushSelections("grill", SMARTSHEET_SELECTION_TYPES.locationSpotlight, [rotation.grill?.regionalSpecial, rotation.grill?.locationSpotlight], 400);
   if (rotation.grill?.promoActive) {
     pushSelections("grill", SMARTSHEET_SELECTION_TYPES.grillPromo, [rotation.grill?.promoItem], 420);
   }
@@ -602,6 +601,12 @@ function recordsToRotations(records = []) {
     if (!Array.isArray(values) || index < 0 || index >= values.length) return;
     values[index] = itemName;
   };
+  const mergeStatus = (current = "Draft", incoming = "") => {
+    const currentText = String(current || "").trim();
+    const incomingText = String(incoming || "").trim();
+    if (currentText.toLowerCase() === "submitted" || incomingText.toLowerCase() === "submitted") return "Submitted";
+    return incomingText || currentText || "Draft";
+  };
 
   records.map(normalizeLoadedRotationRecord).forEach((record) => {
     if (!record.week || !record.district || !record.cafe) return;
@@ -609,7 +614,7 @@ function recordsToRotations(records = []) {
     const rotation = ensureRotation(key);
 
     if (record.recordType === SMARTSHEET_RECORD_TYPES.rotationHeader) {
-      rotation.status = record.status || rotation.status || "Draft";
+      rotation.status = mergeStatus(rotation.status, record.status);
       rotation.submittedBy = record.submittedBy || rotation.submittedBy || "";
       rotation.submittedAt = record.submittedAt || rotation.submittedAt || "";
       rotation.updatedAt = record.updatedAt || rotation.updatedAt || "";
@@ -629,7 +634,7 @@ function recordsToRotations(records = []) {
       rotation.menu = record.menuConcept || rotation.menu || "";
       rotation.station = record.stationSubConcept || rotation.station || "";
       }
-      rotation.status = record.status || rotation.status || "Draft";
+      rotation.status = mergeStatus(rotation.status, record.status);
       rotation.promotionOverride = {
         enabled: Boolean(record.promotionOverrideEnabled),
         name: record.promotionName || "",
@@ -2274,7 +2279,8 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
   const [copiedRotation, setCopiedRotation] = useState(null);
   const [submitWarningOpen, setSubmitWarningOpen] = useState(false);
   const [editSubmitted, setEditSubmitted] = useState(false);
-  const lockedForEditing = rotation.status === "Submitted" && !editSubmitted;
+  const submittedRotation = isSubmittedRotation(rotation);
+  const lockedForEditing = submittedRotation && !editSubmitted;
   const guardedUpdateRotation = (patch) => {
     if (lockedForEditing) return;
     updateRotation(patch);
@@ -2387,11 +2393,11 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
           <h2 className="text-3xl font-bold mt-1">{cafe}</h2>
           {cafe === "Nitro" && <p className="text-sm text-slate-500 mt-1">Frontier follows Nitro for tracking.</p>}
         </div>
-        <span className={`rounded-full border px-3 py-1 text-xs font-bold ${rotation.status === "Submitted" ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-amber-50 border-amber-200 text-amber-800"}`}>
+        <span className={`rounded-full border px-3 py-1 text-xs font-bold ${submittedRotation ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-amber-50 border-amber-200 text-amber-800"}`}>
           {rotation.status || "Draft"}
         </span>
       </div>
-      {rotation.status === "Submitted" && (
+      {submittedRotation && (
         <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -4494,6 +4500,61 @@ function Mini({ title, value, sub, tone = "neutral", emphasize = false }) {
   return <div className={`rounded-2xl border p-4 ${cls}`}><p className="text-xs font-semibold opacity-75">{title}</p><p className={`${emphasize ? "text-4xl" : "text-2xl"} font-bold mt-1`}>{value}</p><p className="text-xs opacity-70 mt-1">{sub}</p></div>;
 }
 
+function isValueFromItems(value = "", items = []) {
+  const normalized = normalizeItemName(value);
+  if (!normalized) return false;
+  return items.some((row) => normalizeItemName(getItemIdentity(row)) === normalized);
+}
+
+function ItemPickerSlot({ value = "", items = [], onChange, selectClassName, inputClassName, placeholder = "Type item name" }) {
+  const [writeInOpen, setWriteInOpen] = useState(false);
+  const isKnownValue = isValueFromItems(value, items);
+  const isWriteIn = writeInOpen || Boolean(value && !isKnownValue);
+
+  if (isWriteIn) {
+    return (
+      <div className="space-y-2">
+        <input
+          value={value || ""}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+          className={inputClassName}
+          autoFocus={!value}
+        />
+        <div className="flex items-center justify-between gap-2">
+          <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-black text-emerald-800">Write-in item</span>
+          <button
+            type="button"
+            onClick={() => {
+              setWriteInOpen(false);
+              if (!isKnownValue) onChange("");
+            }}
+            className="text-xs font-black text-sky-700 hover:text-sky-950"
+          >
+            Use list
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <select value={value || ""} onChange={(event) => onChange(event.target.value)} className={selectClassName}>
+        <option value="">&lt;Select Item&gt;</option>
+        {items.map((row) => <option key={getItemIdentity(row)} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}
+      </select>
+      <button
+        type="button"
+        onClick={() => setWriteInOpen(true)}
+        className="w-full rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-black text-slate-600 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800"
+      >
+        Item not listed?
+      </button>
+    </div>
+  );
+}
+
 function PickerGroup({ title, limit, items, values, onChange }) {
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
@@ -4501,19 +4562,14 @@ function PickerGroup({ title, limit, items, values, onChange }) {
       <p className="text-xs text-slate-500 mt-1 font-semibold">{limit}</p>
       <div className="mt-3 space-y-2">
         {values.map((value, index) => (
-          <div key={index} className="space-y-2">
-            <select value={value} onChange={(e) => onChange(index, e.target.value)} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
-              <option value="">&lt;Select Item&gt;</option>
-              {value && !items.some((row) => normalizeItemName(getItemIdentity(row)) === normalizeItemName(value)) && <option value={value}>{titleCase(value)}</option>}
-              {items.map((row) => <option key={`${getItemIdentity(row)}-${index}`} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}
-            </select>
-            <input
-              value={value || ""}
-              onChange={(event) => onChange(index, event.target.value)}
-              placeholder="Type if not listed"
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
-            />
-          </div>
+          <ItemPickerSlot
+            key={index}
+            value={value}
+            items={items}
+            onChange={(nextValue) => onChange(index, nextValue)}
+            selectClassName="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+            inputClassName="w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+          />
         ))}
       </div>
     </div>
@@ -4570,33 +4626,37 @@ function GrillSection({ cafe, rotation, updateGrill }) {
 }
 
 function GrillSelect({ label, value, onChange, items }) {
-  return <div className="rounded-3xl border-2 border-sky-200 bg-sky-50/80 p-4 shadow-sm"><div className="flex items-center justify-between gap-2 mb-2"><label className="block text-sm font-bold text-slate-900">{label}</label><span className="rounded-full bg-white border border-sky-200 px-3 py-1 text-xs font-bold text-sky-700">choose here</span></div><select value={value} onChange={(e) => onChange(e.target.value)} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100"><option value="">&lt;Select Item&gt;</option>{value && !items.some((row) => normalizeItemName(getItemIdentity(row)) === normalizeItemName(value)) && <option value={value}>{titleCase(value)}</option>}{items.map((row) => <option key={`${label}-${getItemIdentity(row)}`} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}</select><input value={value || ""} onChange={(event) => onChange(event.target.value)} placeholder="Type if not listed" className="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100" /></div>;
+  return (
+    <div className="rounded-3xl border-2 border-sky-200 bg-sky-50/80 p-4 shadow-sm">
+      <div className="flex items-center justify-between gap-2 mb-2"><label className="block text-sm font-bold text-slate-900">{label}</label><span className="rounded-full bg-white border border-sky-200 px-3 py-1 text-xs font-bold text-sky-700">select</span></div>
+      <ItemPickerSlot
+        value={value}
+        items={items}
+        onChange={onChange}
+        selectClassName="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+        inputClassName="w-full rounded-2xl border-2 border-emerald-200 bg-white px-4 py-3 font-semibold outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+      />
+    </div>
+  );
 }
 
 function SimpleLTOSection({ stationKey, title, slots, values = [], uploaded = [], updateLto, complete, poolOverride = null, slotPoolOverrides = null, optional = false }) {
   const pool = poolOverride || stationPool(stationKey);
-  const poolNames = new Set(pool.map((row) => normalizeItemName(getItemIdentity(row))));
   return (
     <CollapsibleStation title={title} eyebrow="Station Special" complete={complete}>
       {optional && <p className="mb-3 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-500">Optional for submission, included in generated menus when selected.</p>}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {slots.map((slot, index) => {
           const slotPool = slotPoolOverrides?.[index] || pool;
-          const slotPoolNames = new Set(slotPool.map((row) => normalizeItemName(getItemIdentity(row))));
           return (
             <div key={slot} className="rounded-3xl border-2 border-sky-200 bg-sky-50/80 p-4 shadow-sm">
               <div className="flex items-center justify-between gap-2 mb-2"><label className="block text-sm font-bold text-slate-900">{slot}</label><span className="rounded-full bg-white border border-sky-200 px-3 py-1 text-xs font-bold text-sky-700">choose here</span></div>
-              <select value={values[index] || uploaded[index] || ""} onChange={(e) => updateLto(stationKey, index, e.target.value)} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
-                <option value="">&lt;Select Item&gt;</option>
-                {uploaded[index] && !slotPoolNames.has(normalizeItemName(uploaded[index])) && <option value={uploaded[index]}>{titleCase(uploaded[index])}</option>}
-                {values[index] && !slotPoolNames.has(normalizeItemName(values[index])) && <option value={values[index]}>{titleCase(values[index])}</option>}
-                {slotPool.map((row) => <option key={`${stationKey}-${slot}-${getItemIdentity(row)}`} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}
-              </select>
-              <input
+              <ItemPickerSlot
                 value={values[index] || uploaded[index] || ""}
-                onChange={(event) => updateLto(stationKey, index, event.target.value)}
-                placeholder="Type if not listed"
-                className="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+                items={slotPool}
+                onChange={(nextValue) => updateLto(stationKey, index, nextValue)}
+                selectClassName="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                inputClassName="w-full rounded-2xl border-2 border-emerald-200 bg-white px-4 py-3 font-semibold outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
               />
             </div>
           );
@@ -4696,16 +4756,13 @@ function SelectSlotGrid({ title, slots, values = [], items, onChange, writeInPla
         {slots.map((slot, index) => (
           <div key={`${title}-${slot}`} className="rounded-2xl border border-sky-100 bg-sky-50/60 p-3">
             <label className="block text-xs font-bold text-slate-600 mb-2">{slot}</label>
-            <select value={values[index] || ""} onChange={(event) => onChange(index, event.target.value)} className="w-full rounded-lg border border-sky-200 bg-white px-3 py-2 text-sm font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
-              <option value="">&lt;Select Item&gt;</option>
-              {values[index] && !items.some((row) => normalizeItemName(getItemIdentity(row)) === normalizeItemName(values[index])) && <option value={values[index]}>{titleCase(values[index])}</option>}
-              {items.map((row) => <option key={`${title}-${slot}-${getItemIdentity(row)}`} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}
-            </select>
-            <input
+            <ItemPickerSlot
               value={values[index] || ""}
-              onChange={(event) => onChange(index, event.target.value)}
+              items={items}
+              onChange={(nextValue) => onChange(index, nextValue)}
               placeholder={writeInPlaceholder}
-              className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+              selectClassName="w-full rounded-lg border border-sky-200 bg-white px-3 py-2 text-sm font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+              inputClassName="w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
             />
           </div>
         ))}
@@ -5117,7 +5174,7 @@ function SummaryBucket({ title, value, details, empty, tone = "neutral" }) {
 
 function ResultsView({ rows, resultsDistrict, setResultsDistrict, resultsCafe, setResultsCafe }) {
   const allCafeOptions = Array.from(new Set(Object.values(DISTRICTS).flat())).sort();
-  const submittedRows = rows.filter((row) => row.status === "Submitted");
+  const submittedRows = rows.filter(isSubmittedRotation);
   const historyRows = submittedRows;
   const pricedRows = historyRows.map((row) => ({ ...row, summary: foodSummary(selectedItems(row)) })).filter((row) => row.summary.fc != null);
   const averageFc = pricedRows.length ? pricedRows.reduce((sum, row) => sum + row.summary.fc, 0) / pricedRows.length : null;
@@ -5211,7 +5268,7 @@ function ResultsView({ rows, resultsDistrict, setResultsDistrict, resultsCafe, s
                     <td className="px-4 py-3 font-semibold whitespace-nowrap">{row.week}</td>
                     <td className="px-4 py-3 whitespace-nowrap">{row.district}</td>
                     <td className="px-4 py-3 whitespace-nowrap font-semibold">{row.cafe}</td>
-                    <td className="px-4 py-3 whitespace-nowrap"><span className={`rounded-full px-3 py-1 text-xs font-bold border ${row.status === "Submitted" ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-slate-100 border-slate-200 text-slate-600"}`}>{row.status || "Draft"}</span></td>
+                    <td className="px-4 py-3 whitespace-nowrap"><span className={`rounded-full px-3 py-1 text-xs font-bold border ${isSubmittedRotation(row) ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-slate-100 border-slate-200 text-slate-600"}`}>{row.status || "Draft"}</span></td>
                     <td className="px-4 py-3 min-w-[190px] font-semibold">{rotationMenuLabel(row)}</td>
                     <td className="px-4 py-3 whitespace-nowrap"><span className={`rounded-full border px-3 py-1 text-xs font-bold ${fcTone}`}>{pctRange(foodCostRange)}</span></td>
                     <td className="px-4 py-3 whitespace-nowrap font-semibold text-slate-700">{moneyRange(trueCostRange)}</td>
