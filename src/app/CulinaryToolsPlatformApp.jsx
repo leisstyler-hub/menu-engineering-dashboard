@@ -90,7 +90,7 @@ function MobileToolNav({ activeTool, setActiveTool }) {
   const items = [
     { key: "home", label: "Home", icon: Home },
     { key: "menuEngineering", label: "Engineering", icon: BarChart3 },
-    { key: "recipeDatabase", label: "Recipes", icon: BookOpen },
+    { key: "recipeDatabase", label: "Library", icon: BookOpen },
     { key: "neighborhoodRotations", label: "Rotations", icon: CalendarRange },
     { key: "ladleCompliance", label: "Compliance", icon: ShieldCheck },
   ];

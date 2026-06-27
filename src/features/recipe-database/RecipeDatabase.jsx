@@ -1,13 +1,21 @@
 import React, { useMemo, useState } from "react";
-import { ArrowLeft, ChefHat, Database, DollarSign, FileDown, Flame, ListChecks, Search, ShieldCheck, Sparkles, Utensils } from "lucide-react";
+import { Activity, ArrowLeft, Camera, ChefHat, Database, DollarSign, FileDown, FileText, Flame, Image as ImageIcon, ListChecks, Pencil, Save, Search, ShieldCheck, Sparkles, Utensils, X } from "lucide-react";
 
 import MENUWORKS_ITEMS from "../../data/menuItems.json";
 import { money, pct, priceLabel, titleCase } from "../../shared/formatting.js";
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
 import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
-
-const MENU_ENGINEERING_OVERRIDE_STORAGE_KEY = "culinaryToolsMenuEngineeringItems_v2";
+import {
+  MENU_ENGINEERING_OVERRIDE_STORAGE_KEY,
+  applyRecipeLibraryEdit,
+  caloriesLabel,
+  itemDescription,
+  itemName,
+  normalizeRecipeLibraryItem,
+  proteinLabel,
+  textValue,
+} from "./recipeLibraryModel.js";
 
 function readMenuRows() {
   if (typeof window === "undefined") return MENUWORKS_ITEMS;
@@ -17,22 +25,6 @@ function readMenuRows() {
   } catch {
     return MENUWORKS_ITEMS;
   }
-}
-
-function textValue(row, ...keys) {
-  for (const key of keys) {
-    const value = row?.[key];
-    if (value !== null && value !== undefined && String(value).trim()) return String(value).trim();
-  }
-  return "";
-}
-
-function itemName(row) {
-  return textValue(row, "displayName", "item", "shortName", "recipeName") || "Unnamed item";
-}
-
-function itemDescription(row) {
-  return textValue(row, "enticingDescription", "ingredientsCommonName", "ingredients") || "No description loaded yet.";
 }
 
 function dietLabel(row) {
@@ -53,12 +45,6 @@ function dietFilterLabel(row) {
 function allergenLabel(row) {
   if (Array.isArray(row.allergens) && row.allergens.length) return row.allergens.join(", ");
   return textValue(row, "allergenSummary") || "No allergens listed";
-}
-
-function caloriesLabel(value) {
-  if (value === null || value === undefined || value === "") return "Calories not loaded";
-  const rounded = Math.round(Number(value) / 5) * 5;
-  return Number.isFinite(rounded) ? `${rounded.toLocaleString()} cal` : "Calories not loaded";
 }
 
 function categoryLabel(row) {
@@ -137,7 +123,7 @@ function downloadMenuCsv(menu, rows) {
 }
 
 export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealth }) {
-  const [rows] = useState(() => readMenuRows());
+  const [rows, setRows] = useState(() => readMenuRows());
   const menus = useMemo(() => {
     const grouped = Object.entries(countBy(rows, (row) => row.menu || "No menu assigned"))
       .map(([menu, count]) => ({ menu, count }))
@@ -149,6 +135,7 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
   const [itemSearch, setItemSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [dietFilter, setDietFilter] = useState("All");
+  const [selectedItemKey, setSelectedItemKey] = useState("");
 
   const selectedRows = useMemo(() => rows.filter((row) => (row.menu || "No menu assigned") === selectedMenu), [rows, selectedMenu]);
   const filteredMenuList = menus.filter((entry) => entry.menu.toLowerCase().includes(menuSearch.toLowerCase()));
@@ -175,9 +162,23 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
   const avgFc = pricedRows.length ? pricedRows.reduce((sum, row) => sum + foodCost(row), 0) / pricedRows.length : null;
   const allergenCoverage = selectedRows.length ? Math.round((selectedRows.filter((row) => allergenLabel(row) !== "No allergens listed").length / selectedRows.length) * 100) : 0;
   const descriptionCoverage = selectedRows.length ? Math.round((selectedRows.filter((row) => itemDescription(row) !== "No description loaded yet.").length / selectedRows.length) * 100) : 0;
+  const selectedLibraryItem = useMemo(() => {
+    if (!selectedItemKey) return null;
+    const row = rows.find((candidate) => normalizeRecipeLibraryItem(candidate).item_key === selectedItemKey);
+    return row ? normalizeRecipeLibraryItem(row) : null;
+  }, [rows, selectedItemKey]);
+
+  const saveLibraryItem = (patch) => {
+    if (!selectedLibraryItem) return;
+    const nextRows = applyRecipeLibraryEdit(rows, selectedLibraryItem, patch);
+    setRows(nextRows);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(MENU_ENGINEERING_OVERRIDE_STORAGE_KEY, JSON.stringify(nextRows));
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#f6f7f9_0%,#eef7f2_100%)] p-4 text-slate-950 md:p-8">
+    <div className="recipe-library-page min-h-screen bg-[linear-gradient(180deg,#f6f7f9_0%,#eef7f2_100%)] p-4 text-slate-950 md:p-8">
       <div className="mx-auto max-w-[96rem] space-y-5">
         <header className="rounded-[2rem] border border-sky-200 bg-white p-5 shadow-xl md:p-7">
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -187,10 +188,10 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
                 Back to Platform
               </button>
               <div className="mt-5">
-                <p className="text-xs font-black uppercase tracking-[0.24em] text-emerald-600">Recipe Database</p>
-                <h1 className="mt-2 text-4xl font-black tracking-normal md:text-5xl">Recipe Database</h1>
+                <p className="text-xs font-black uppercase tracking-[0.24em] text-emerald-600">Recipe Library</p>
+                <h1 className="mt-2 text-4xl font-black tracking-normal md:text-5xl">Recipe Library</h1>
                 <p className="mt-2 max-w-3xl text-base font-semibold leading-7 text-slate-600">
-                  Browse menus and the items inside them with pricing, cost, calories, allergens, descriptions, portions, and item signals. Recipe instructions are not loaded yet.
+                  Browse menu item library cards with pricing, cost, calories, protein, allergens, descriptions, portions, and future file slots for recipes, photos, and plating guides.
                 </p>
               </div>
             </div>
@@ -207,7 +208,7 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
           <MetricCard icon={Utensils} label="Menu Items" value={rows.length.toLocaleString()} detail="item property rows" />
           <MetricCard icon={ListChecks} label="Selected Menu" value={selectedRows.length.toLocaleString()} detail="items in view" />
           <MetricCard icon={ShieldCheck} label="Allergen Coverage" value={`${allergenCoverage}%`} detail="selected menu" />
-          <MetricCard icon={ChefHat} label="Recipe Instructions" value="0" detail="not loaded yet" tone="amber" />
+          <MetricCard icon={ChefHat} label="File Slots" value="4" detail="per item library card" tone="amber" />
         </section>
 
         <main className="grid grid-cols-1 gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
@@ -273,7 +274,7 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
             <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
               <ReadoutCard icon={Sparkles} title="Data Read" value={`${descriptionCoverage}%`} detail="description coverage for this menu" tone="emerald" />
               <ReadoutCard icon={ShieldCheck} title="Safety Signal" value={`${allergenCoverage}%`} detail="allergen coverage for this menu" tone="sky" />
-              <ReadoutCard icon={ChefHat} title="Recipe Status" value="Item data only" detail="instructions will show once recipes are loaded" tone="amber" />
+              <ReadoutCard icon={ChefHat} title="Recipe Status" value="Slots ready" detail="recipes attach when source files are loaded" tone="amber" />
             </section>
 
             {Object.keys(groupedRows).length === 0 ? (
@@ -285,12 +286,19 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
               Object.entries(groupedRows)
                 .sort(([a], [b]) => categoryRank(a) - categoryRank(b) || a.localeCompare(b))
                 .map(([category, items]) => (
-                  <MenuSection key={category} category={category} items={items} />
+                  <MenuSection key={category} category={category} items={items} onOpenItem={(row) => setSelectedItemKey(normalizeRecipeLibraryItem(row).item_key)} />
                 ))
             )}
           </section>
         </main>
       </div>
+      {selectedLibraryItem && (
+        <LibraryCardDrawer
+          item={selectedLibraryItem}
+          onClose={() => setSelectedItemKey("")}
+          onSave={saveLibraryItem}
+        />
+      )}
     </div>
   );
 }
@@ -333,7 +341,7 @@ function ReadoutCard({ icon: Icon, title, value, detail, tone }) {
   );
 }
 
-function MenuSection({ category, items }) {
+function MenuSection({ category, items, onOpenItem }) {
   return (
     <section className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-xl">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -345,18 +353,19 @@ function MenuSection({ category, items }) {
       </div>
       <div className="mt-4 grid grid-cols-1 gap-3 xl:grid-cols-2">
         {items.map((row, index) => (
-          <ItemCard key={`${row.id || row.mrn || itemName(row)}-${index}`} row={row} />
+          <ItemCard key={`${row.id || row.mrn || itemName(row)}-${index}`} row={row} onOpen={() => onOpenItem(row)} />
         ))}
       </div>
     </section>
   );
 }
 
-function ItemCard({ row }) {
+function ItemCard({ row, onOpen }) {
   const diet = dietLabel(row);
   const fc = foodCost(row);
+  const libraryItem = normalizeRecipeLibraryItem(row);
   return (
-    <article className="rounded-3xl border border-slate-200 bg-slate-50/80 p-4">
+    <button type="button" onClick={onOpen} className="recipe-library-card w-full rounded-3xl border border-slate-200 bg-slate-50/80 p-4 text-left transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-lg active:translate-y-0">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -368,14 +377,15 @@ function ItemCard({ row }) {
         <div className="flex shrink-0 flex-row gap-2 sm:flex-col sm:items-end">
           <InfoPill icon={DollarSign} label={priceLabel(row.price)} tone="green" />
           <InfoPill icon={Flame} label={caloriesLabel(row.calories)} tone="amber" />
+          <InfoPill icon={Activity} label={proteinLabel(libraryItem)} tone="sky" />
         </div>
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-2 text-xs font-bold text-slate-600 md:grid-cols-4">
         <Property label="True cost" value={row.trueCost == null ? "Not loaded" : money(row.trueCost)} />
         <Property label="Food cost" value={pct(fc)} />
+        <Property label="Protein" value={proteinLabel(libraryItem)} />
         <Property label="Portion" value={row.portion || row.Portion || "Not loaded" } />
-        <Property label="MRN" value={row.mrn || row.MRN || "Not loaded"} />
       </div>
 
       <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-3">
@@ -385,7 +395,180 @@ function ItemCard({ row }) {
       <div className="mt-3 flex flex-wrap gap-2">
         <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-black text-slate-600">{row.station || "No station"}</span>
         <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-black text-slate-600">{row.recipeCategory || "No recipe category"}</span>
-        <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-black text-amber-900">Recipe instructions not loaded</span>
+        <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-black text-amber-900">Recipe instructions not attached yet</span>
+      </div>
+    </button>
+  );
+}
+
+function LibraryCardDrawer({ item, onClose, onSave }) {
+  const [activeTab, setActiveTab] = useState("overview");
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState(() => ({
+    display_name: item.display_name || "",
+    description: item.description || "",
+    allergen_summary: item.allergen_summary || allergenLabel(item.raw),
+    calories: item.calories ?? "",
+    protein_g: item.protein_g ?? "",
+    price: item.price ?? "",
+    true_cost: item.true_cost ?? "",
+  }));
+
+  const save = () => {
+    onSave(draft);
+    setIsEditing(false);
+  };
+
+  const nutritionRows = [
+    ["Calories", caloriesLabel(item.calories)],
+    ["Protein", proteinLabel(item)],
+    ["Sodium", item.sodium_mg == null ? "Stored when loaded" : `${item.sodium_mg} mg`],
+    ["Carbs", item.carbs_g == null ? "Stored when loaded" : `${item.carbs_g} g`],
+    ["Fiber", item.fiber_g == null ? "Stored when loaded" : `${item.fiber_g} g`],
+    ["Sugars", item.sugars_g == null ? "Stored when loaded" : `${item.sugars_g} g`],
+    ["Saturated fat", item.saturated_fat_g == null ? "Stored when loaded" : `${item.saturated_fat_g} g`],
+    ["Trans fat", item.trans_fat_g == null ? "Stored when loaded" : `${item.trans_fat_g} g`],
+    ["Cholesterol", item.cholesterol_mg == null ? "Stored when loaded" : `${item.cholesterol_mg} mg`],
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-950/40 p-3 backdrop-blur-sm md:p-8" role="dialog" aria-modal="true">
+      <section className="recipe-library-drawer ml-auto flex max-h-[calc(100vh-1.5rem)] w-full max-w-3xl flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-2xl md:max-h-[calc(100vh-4rem)]">
+        <div className="border-b border-slate-200 bg-slate-50 p-4 md:p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-600">Recipe Library Card</p>
+              <h2 className="mt-2 text-2xl font-black leading-tight text-slate-950 md:text-3xl">{item.display_name}</h2>
+              <p className="mt-2 text-sm font-bold text-slate-500">{item.menu || "No menu"} / {item.station || "No station"} / {item.category || "No category"}</p>
+            </div>
+            <button type="button" onClick={onClose} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-100" aria-label="Close library card">
+              <X size={19} />
+            </button>
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <InfoPill icon={Flame} label={caloriesLabel(item.calories)} tone="amber" />
+            <InfoPill icon={Activity} label={proteinLabel(item)} tone="sky" />
+            <InfoPill icon={DollarSign} label={priceLabel(item.price)} tone="green" />
+            <InfoPill icon={Database} label={item.mrn ? `MRN ${item.mrn}` : "MRN not loaded"} tone="slate" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2 border-b border-slate-200 bg-white p-3">
+          {["overview", "nutrition", "files"].map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              className={`rounded-2xl px-3 py-2 text-sm font-black capitalize ${activeTab === tab ? "bg-slate-950 text-white" : "bg-slate-50 text-slate-600 hover:bg-slate-100"}`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex-1 overflow-auto p-4 md:p-5">
+          {activeTab === "overview" && (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Chef-Facing Details</p>
+                <button type="button" onClick={() => (isEditing ? save() : setIsEditing(true))} className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-black text-emerald-800 hover:bg-emerald-100">
+                  {isEditing ? <Save size={16} /> : <Pencil size={16} />}
+                  {isEditing ? "Save card" : "Edit card"}
+                </button>
+              </div>
+
+              {isEditing ? (
+                <div className="grid gap-3">
+                  <LibraryInput label="Item name" value={draft.display_name} onChange={(value) => setDraft((next) => ({ ...next, display_name: value }))} />
+                  <LibraryTextArea label="Description" value={draft.description} onChange={(value) => setDraft((next) => ({ ...next, description: value }))} />
+                  <LibraryInput label="Allergen summary" value={draft.allergen_summary} onChange={(value) => setDraft((next) => ({ ...next, allergen_summary: value }))} />
+                  <div className="grid grid-cols-2 gap-3">
+                    <LibraryInput label="Calories" value={draft.calories} onChange={(value) => setDraft((next) => ({ ...next, calories: value }))} inputMode="decimal" />
+                    <LibraryInput label="Protein g" value={draft.protein_g} onChange={(value) => setDraft((next) => ({ ...next, protein_g: value }))} inputMode="decimal" />
+                    <LibraryInput label="Retail price" value={draft.price} onChange={(value) => setDraft((next) => ({ ...next, price: value }))} inputMode="decimal" />
+                    <LibraryInput label="True cost" value={draft.true_cost} onChange={(value) => setDraft((next) => ({ ...next, true_cost: value }))} inputMode="decimal" />
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                    <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Description</p>
+                    <p className="mt-2 text-base font-semibold leading-7 text-slate-700">{item.description}</p>
+                  </div>
+                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                    <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Allergens</p>
+                    <p className="mt-2 text-base font-black leading-7 text-slate-800">{item.allergen_summary || allergenLabel(item.raw)}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Property label="Portion" value={item.portion || "Not loaded"} />
+                    <Property label="Recipe category" value={item.recipe_category || "Not loaded"} />
+                    <Property label="True cost" value={item.true_cost == null ? "Not loaded" : money(item.true_cost)} />
+                    <Property label="Food cost" value={item.price && item.true_cost ? pct(item.true_cost / item.price) : "Not loaded"} />
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {activeTab === "nutrition" && (
+            <div className="space-y-4">
+              <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-4">
+                <p className="text-sm font-black text-emerald-900">Nutrition is stored deeper than we display.</p>
+                <p className="mt-1 text-sm font-semibold leading-6 text-emerald-800">Calories and protein stay visible now. Sodium, carbs, fats, sugars, cholesterol, and serving data are reserved for recipe building and future reporting.</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+                {nutritionRows.map(([label, value]) => (
+                  <Property key={label} label={label} value={value} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === "files" && (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {item.file_slots.map((slot) => (
+                <FileSlot key={slot.type} slot={slot} />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function LibraryInput({ label, value, onChange, inputMode = "text" }) {
+  return (
+    <label className="block rounded-2xl border border-slate-200 bg-slate-50 p-3">
+      <span className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">{label}</span>
+      <input value={value} onChange={(event) => onChange(event.target.value)} inputMode={inputMode} className="mt-2 w-full border-0 bg-transparent text-base font-bold text-slate-900 outline-none" />
+    </label>
+  );
+}
+
+function LibraryTextArea({ label, value, onChange }) {
+  return (
+    <label className="block rounded-2xl border border-slate-200 bg-slate-50 p-3">
+      <span className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">{label}</span>
+      <textarea value={value} onChange={(event) => onChange(event.target.value)} rows={4} className="mt-2 w-full resize-none border-0 bg-transparent text-base font-bold leading-7 text-slate-900 outline-none" />
+    </label>
+  );
+}
+
+function FileSlot({ slot }) {
+  const Icon = slot.type === "item-photo" ? ImageIcon : slot.type === "plating-guide" ? Camera : FileText;
+  return (
+    <article className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+      <div className="flex items-start gap-3">
+        <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-700">
+          <Icon size={20} />
+        </div>
+        <div className="min-w-0">
+          <p className="text-base font-black text-slate-950">{slot.label}</p>
+          <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">{slot.emptyText}</p>
+          <p className="mt-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-black text-slate-500">Bucket: {slot.bucket}</p>
+        </div>
       </div>
     </article>
   );
@@ -401,7 +584,12 @@ function Property({ label, value }) {
 }
 
 function InfoPill({ icon: Icon, label, tone }) {
-  const toneClass = tone === "amber" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-emerald-200 bg-emerald-50 text-emerald-900";
+  const toneClass = {
+    amber: "border-amber-200 bg-amber-50 text-amber-900",
+    sky: "border-sky-200 bg-sky-50 text-sky-900",
+    slate: "border-slate-200 bg-white text-slate-700",
+    green: "border-emerald-200 bg-emerald-50 text-emerald-900",
+  }[tone] || "border-emerald-200 bg-emerald-50 text-emerald-900";
   return (
     <span className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-black ${toneClass}`}>
       <Icon size={13} />

@@ -197,14 +197,14 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
       meta: "Chef planner"
     },
     {
-      title: "Recipe Database",
+      title: "Recipe Library",
       eyebrow: "New",
-      description: "Browse menus and the items inside them with item properties, costs, calories, allergens, and descriptions.",
-      action: "Open Recipes",
+      description: "Open menu item library cards with costs, calories, protein, allergens, descriptions, and future recipe files.",
+      action: "Open Library",
       onOpen: onOpenRecipeDatabase,
       icon: BookOpen,
       tone: "indigo",
-      meta: "Menu library"
+      meta: "Item library"
     },
     {
       title: "Ladle Compliance",
@@ -440,7 +440,7 @@ function MobileLanding({
   const navItems = [
     { label: "Home", icon: Home, onOpen: null, active: true },
     { label: "Engineering", icon: BarChart3, onOpen: onOpenMenuEngineering },
-    { label: "Recipes", icon: BookOpen, onOpen: onOpenRecipeDatabase },
+    { label: "Library", icon: BookOpen, onOpen: onOpenRecipeDatabase },
     { label: "Rotations", icon: CalendarRange, onOpen: onOpenNeighborhoodRotations },
     { label: "Compliance", icon: ShieldCheck, onOpen: onOpenLadleCompliance },
   ];
@@ -624,7 +624,7 @@ function MobileToolCard({ title, eyebrow, description, action, onOpen, icon: Ico
   const chipLabels = {
     "Menu Engineering": "Live",
     "Neighborhood Rotations": "Live",
-    "Recipe Database": "New",
+    "Recipe Library": "New",
     "Ladle Compliance": "Test concept",
     "Lean Tool": "New",
   };
