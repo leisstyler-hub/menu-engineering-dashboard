@@ -1,4 +1,4 @@
-export const MENU_ENGINEERING_OVERRIDE_STORAGE_KEY = "culinaryToolsMenuEngineeringItems_v2";
+export const MENU_ENGINEERING_OVERRIDE_STORAGE_KEY = "culinaryToolsMenuEngineeringItems_v3";
 
 export const RECIPE_DOCUMENT_SLOTS = [
   {
@@ -95,6 +95,9 @@ export function normalizeRecipeLibraryItem(row) {
     saturated_fat_g: numberValue(row, "saturated_fat_g", "saturatedFatG", "satFat"),
     trans_fat_g: numberValue(row, "trans_fat_g", "transFatG", "transFat"),
     cholesterol_mg: numberValue(row, "cholesterol_mg", "cholesterolMg", "cholesterol"),
+    potassium_mg: numberValue(row, "potassium_mg", "potassiumMg", "potassium"),
+    calcium_mg: numberValue(row, "calcium_mg", "calciumMg", "calcium"),
+    iron_mg: numberValue(row, "iron_mg", "ironMg", "iron"),
     serving_size: textValue(row, "servingSize", "serving_size", "portion"),
     allergens: Array.isArray(row?.allergens) ? row.allergens : [],
     allergen_summary: textValue(row, "allergenSummary"),
@@ -104,7 +107,16 @@ export function normalizeRecipeLibraryItem(row) {
     compass_fit: textValue(row, "compassFit"),
     ghg_emissions: textValue(row, "ghgEmissions"),
     source_system: textValue(row, "dataSource", "recipeSource") || "menuworks",
+    source_data_version: textValue(row, "sourceDataVersion"),
+    source_file_name: textValue(row, "sourceFileName"),
     source_truth_name: textValue(row, "sourceTruthName"),
+    menuworks_description: textValue(row, "menuWorksDescription", "secondaryDescription"),
+    primary_description_source: textValue(row, "primaryDescriptionSource"),
+    effective_date: textValue(row, "effectiveDate"),
+    effective_note: textValue(row, "effectiveNote"),
+    station_status: textValue(row, "stationStatus"),
+    nutrition_payload: row?.nutrition || {},
+    menuworks_raw: row?.menuWorksRaw || {},
     file_slots: RECIPE_DOCUMENT_SLOTS,
     raw: row || {},
   };

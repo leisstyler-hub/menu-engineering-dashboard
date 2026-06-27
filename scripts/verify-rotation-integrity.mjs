@@ -51,7 +51,7 @@ const deliPool = uniqueByName(rows.filter((row) =>
 
 const grillSpotlights = uniqueByName(rows.filter((row) =>
   menu(row) === "AMZ: Grill Core" &&
-  /location spotlights|regional spotlights/i.test(station(row)) &&
+  /location spotlights|regional spotlights|^spotlights$/i.test(station(row)) &&
   isEntree(row)
 ));
 
@@ -103,7 +103,7 @@ if (!grillSpotlights.length) {
   fail("Grill Location Spotlight pool is empty.");
 }
 
-if (grillSpotlights.some((row) => !/location spotlights|regional spotlights/i.test(station(row)))) {
+if (grillSpotlights.some((row) => !/location spotlights|regional spotlights|^spotlights$/i.test(station(row)))) {
   fail("Grill Location Spotlight pool contains non-spotlight grill core rows.");
 }
 

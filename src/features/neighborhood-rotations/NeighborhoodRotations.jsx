@@ -1064,7 +1064,7 @@ function isCarveryMainRow(row) {
 function isGrillSpotlightRow(row) {
   const menu = getMenuName(row).toLowerCase();
   const station = getStationName(row).toLowerCase();
-  return menu === "amz: grill core" && /location spotlights|regional spotlights/.test(station);
+  return menu === "amz: grill core" && /location spotlights|regional spotlights|^spotlights$/.test(station);
 }
 
 function stationPool(stationKey) {

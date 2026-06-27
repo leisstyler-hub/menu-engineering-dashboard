@@ -2,6 +2,11 @@
 
 ## 2026-06-26
 
+- [Jun 26, 9:57 PM] Imported the new MenuWorks item export into the Recipe Library data set with 1,507 current rows across 53 menus.
+- [Jun 26, 9:57 PM] Preserved trusted chef-facing descriptions as primary copy while storing incoming MenuWorks descriptions as secondary reference copy.
+- [Jun 26, 9:57 PM] Expanded item storage for protein, sodium, carbs, fats, sugars, potassium, calcium, iron, source metadata, raw MenuWorks details, and Aug 1 Fresh Five Hibernate effective-date notes.
+- [Jun 26, 9:57 PM] Reset the Recipe Library local override cache key so old browser edits cannot hide the newly imported MenuWorks library.
+- [Jun 26, 9:57 PM] Set visible app version to `2026.06.26.004-menuworks-nutrition-import`.
 - [Jun 26, 8:06 PM] Corrected the current changelog timestamp periods so evening release work shows PM instead of AM.
 - [Jun 26, 8:06 PM] Added a changelog timestamp verification check for the current release block.
 - [Jun 26, 8:06 PM] Set visible app version to `2026.06.26.003-changelog-timestamps`.
