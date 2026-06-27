@@ -2,6 +2,9 @@
 
 ## 2026-06-27
 
+- [Jun 27, 9:25 AM] Added a repeatable release workflow with `release:health`, `release:live`, GitHub source-sync fallback, live bundle verification, and no-secret auth diagnostics.
+- [Jun 27, 9:25 AM] Added release workflow verification to the normal app verification chain so the publishing backbone cannot silently drift.
+- [Jun 27, 9:25 AM] Set visible app version to `2026.06.27.002-release-workflow`.
 - [Jun 27, 8:58 AM] Centered Recipe Library item detail cards so selected recipes open over the library instead of sliding to the far-right edge on wide screens.
 - [Jun 27, 8:58 AM] Set visible app version to `2026.06.27.001-fix-recipe-card-modal`.
 
