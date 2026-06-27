@@ -2,6 +2,10 @@
 
 ## 2026-06-27
 
+- [Jun 27, 2:28 PM] Tightened the MenuWorks classifier so unpriced non-entree support items become complimentary sub-recipes instead of side choices across all menus.
+- [Jun 27, 2:28 PM] Moved Balti chutneys, Carvery sauces, dressings, aiolis, preserves, and other no-price sauce/support rows out of side groups.
+- [Jun 27, 2:28 PM] Added a classification guard proving there are zero unpriced side rows before release.
+- [Jun 27, 2:28 PM] Set visible app version to `2026.06.27.006-complimentary-support-classifier`.
 - [Jun 27, 2:15 PM] Rebuilt menu item data from `Menus.csv` so current MenuWorks short names, stations, prices, notes, and nutrition drive Recipe Library and Neighborhood Rotation pickers.
 - [Jun 27, 2:15 PM] Reworked menu classification to use Menu Item Notes, recipe category, and side-price signals so entree-priced Grill Core sandwiches no longer appear in side groups.
 - [Jun 27, 2:15 PM] Scoped Fresh Five picker pools by exact station, including Grill, Salad, Deli, Soup, and Sides, so Salt + Char no longer shows soups, salads, or unrelated Fresh Five items.

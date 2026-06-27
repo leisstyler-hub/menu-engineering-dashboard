@@ -238,6 +238,8 @@ function deriveMenuItemSemantics(row) {
     /main entree|sandwich\/wrap|pizza\/calzone\/flatbread|breakfast\s*>\s*sandwich|fish entree|chicken entree|beef entree|pork entree|meatless entree/.test(recipeCategory);
   const sideCategory = /starch|grain|vegetable|side salad|legume|potato|deep fried food|accompany|snacks\/appetizers/.test(recipeCategory);
   const subRecipeCategory = /sauce|condiment|spread|dip|salsa|dressing|broth/.test(recipeCategory) || /\bsauce\b|\bdressing\b|\baioli\b|\bsalsa\b|\bspread\b|\bdip\b/.test(text);
+  const complimentarySupport = price === null && !mainCategory && !explicitEntree;
+  const sauceSupport = subRecipeCategory || /sauce choice|sauce option|dressing option|choice of salsa|complimentary sauce|chutney|condiment|topper|topping|bagel spread|oatmeal topper|substitution base/.test(menuItemNotes);
   const extensionCategory = /beverage|dessert|cookie|cake|chips/.test(recipeCategory) || /extension|beverage|dessert|cookie|cake|chips/.test(text);
   const sidePrice = price !== null && price <= 3.75;
   const entreePrice = price !== null && price >= 8.75;
@@ -248,15 +250,13 @@ function deriveMenuItemSemantics(row) {
     category = "extension";
   } else if (mainCategory || explicitEntree || entreePrice) {
     category = "entree";
+  } else if (complimentarySupport || sauceSupport || subRecipeCategory) {
+    category = "subRecipe";
   } else if (explicitSideChoice || sideCategory || sidePrice) {
     category = "side";
-  } else if (subRecipeCategory) {
-    category = "subRecipe";
-  } else if (price === null) {
-    category = "subRecipe";
   }
 
-  if (explicitSideChoice && sideCategory && !mainCategory) {
+  if (explicitSideChoice && sideCategory && !mainCategory && price !== null && !sauceSupport) {
     category = "side";
   }
 
@@ -266,10 +266,10 @@ function deriveMenuItemSemantics(row) {
 
   return {
     category,
-    menuItemRole: explicitEntree ? "entree-with-side-choice" : explicitNoSide ? "entree-no-side-choice" : explicitSideChoice ? "side-choice" : explicitAlaCarte ? "a-la-carte" : category,
-    selectionBehavior: explicitNoSide ? "entree-no-sides-required" : explicitEntree ? "entree-requires-side-selection" : explicitSideChoice ? "side-choice" : category,
+    menuItemRole: category === "subRecipe" && sauceSupport ? "complimentary-sauce" : category === "subRecipe" && complimentarySupport ? "complimentary-support" : explicitEntree ? "entree-with-side-choice" : explicitNoSide ? "entree-no-side-choice" : category === "side" && explicitSideChoice ? "side-choice" : explicitAlaCarte ? "a-la-carte" : category,
+    selectionBehavior: category === "subRecipe" && sauceSupport ? "complimentary-sauce" : category === "subRecipe" && complimentarySupport ? "complimentary-support" : explicitNoSide ? "entree-no-sides-required" : explicitEntree ? "entree-requires-side-selection" : category === "side" && explicitSideChoice ? "side-choice" : category,
     requiresSides: category === "entree" && explicitEntree && !explicitNoSide,
-    canBeSideChoice: explicitSideChoice || (category === "side" && sidePrice),
+    canBeSideChoice: category === "side" && (explicitSideChoice || sidePrice),
     isALaCarte: explicitAlaCarte,
   };
 }

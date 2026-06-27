@@ -56,6 +56,25 @@ assert(
   "Neighborhood Fresh Five UI selectors must use station-specific pools instead of the broad Fresh Five pool."
 );
 
+const sauceSignal = /sauce choice|sauce option for protein|sauce|dressing|condiment|spread|dip|salsa|chutney|preserve|preserves|vinaigrette|aioli|mustard|mayonnaise|mayo|hummus|gravy|jus/i;
+const carveryRows = menuRows("AMZ: Carvery");
+const carverySauceRows = carveryRows.filter((row) => row.price == null && sauceSignal.test(`${name(row)} ${row.recipeName || ""} ${row.recipeCategory || ""} ${row.menuItemNotes || ""}`));
+const carverySideRows = carveryRows.filter((row) => row.category === "side");
+assert(carverySauceRows.length >= 15, `Expected to detect Carvery sauce/condiment rows, found ${carverySauceRows.length}.`);
+assert(
+  carverySauceRows.every((row) => row.category === "subRecipe" && row.canBeSideChoice !== true),
+  `Carvery complimentary sauces/chutneys/dressings are leaking into sides: ${carverySauceRows.filter((row) => row.category !== "subRecipe" || row.canBeSideChoice === true).map(name).join(", ")}`
+);
+assert(
+  !carverySideRows.some((row) => row.price == null && sauceSignal.test(`${name(row)} ${row.recipeName || ""} ${row.recipeCategory || ""} ${row.menuItemNotes || ""}`)),
+  `Carvery side group contains sauce/condiment rows: ${carverySideRows.filter((row) => row.price == null && sauceSignal.test(`${name(row)} ${row.recipeName || ""} ${row.recipeCategory || ""} ${row.menuItemNotes || ""}`)).map(name).join(", ")}`
+);
+const unpricedSides = rows.filter((row) => row.category === "side" && row.price == null);
+assert(
+  unpricedSides.length === 0,
+  `Unpriced complimentary/support rows are leaking into side groups: ${unpricedSides.slice(0, 25).map((row) => `${row.menu} / ${name(row)}`).join(", ")}`
+);
+
 const staleLoadedFries = grillRows.filter((row) => /regular cut fries|waffle fries/i.test(row.recipeName || "") && /loaded fries/i.test(`${row.item} ${row.displayName}`));
 assert(!staleLoadedFries.length, "Importer is preserving stale Loaded Fries names over current Menus.csv short names.");
 
