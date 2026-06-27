@@ -2,6 +2,11 @@
 
 ## 2026-06-27
 
+- [Jun 27, 2:15 PM] Rebuilt menu item data from `Menus.csv` so current MenuWorks short names, stations, prices, notes, and nutrition drive Recipe Library and Neighborhood Rotation pickers.
+- [Jun 27, 2:15 PM] Reworked menu classification to use Menu Item Notes, recipe category, and side-price signals so entree-priced Grill Core sandwiches no longer appear in side groups.
+- [Jun 27, 2:15 PM] Scoped Fresh Five picker pools by exact station, including Grill, Salad, Deli, Soup, and Sides, so Salt + Char no longer shows soups, salads, or unrelated Fresh Five items.
+- [Jun 27, 2:15 PM] Added menu classification verification to the release checks so stale category/name drift gets caught before publishing.
+- [Jun 27, 2:15 PM] Set visible app version to `2026.06.27.005-menu-classification-truth`.
 - [Jun 27, 10:03 AM] Updated release health to read GitHub source through the GitHub API so source-version checks do not get fooled by raw-file caching after a sync.
 - [Jun 27, 10:03 AM] Set visible app version to `2026.06.27.004-smooth-release-health`.
 - [Jun 27, 9:48 AM] Added a production release source guard so local changes must sync to GitHub before Vercel deploys them live.

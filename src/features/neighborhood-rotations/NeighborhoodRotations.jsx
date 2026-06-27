@@ -960,18 +960,19 @@ function isPriced(row) {
 function isEntree(row) {
   const price = Number(getPrice(row));
   const category = getCategory(row);
-  return category.includes("entree") || category.includes("entrée") || category.includes("plate") || category.includes("main") || price >= 9;
+  return category.includes("entree") || category.includes("entrée") || category.includes("plate") || category.includes("main") || row?.requiresSides === true || price >= 8.75;
 }
 
 function isSide(row) {
   const price = Number(getPrice(row));
   const category = getCategory(row);
-  return category.includes("side") || (!category.includes("extension") && isPriced(row) && price < 9);
+  return category.includes("side") || (row?.canBeSideChoice === true && !isEntree(row)) || (!category.includes("extension") && !isEntree(row) && isPriced(row) && price <= 3.75);
 }
 
 function isSubRecipe(row) {
   const category = getCategory(row);
-  return category.includes("sub") || getPrice(row) == null;
+  const text = `${getItemIdentity(row)} ${getStationName(row)} ${row?.recipeCategory || ""}`.toLowerCase();
+  return category.includes("sub") || (getPrice(row) == null && /sauce|dressing|aioli|salsa|spread|dip|broth|condiment/.test(text));
 }
 
 function isExtension(row) {
@@ -1098,6 +1099,16 @@ function stationPool(stationKey) {
   const cafeExpressSalads = all.filter((row) => getMenuName(row) === "AMZ: Cafe Express Curated Salads" && /curated salads/i.test(getStationName(row)));
   const cafeExpressSandwiches = all.filter((row) => getMenuName(row) === "AMZ: Cafe Express Curated Sandwiches" && /curated sandwiches/i.test(getStationName(row)));
   const grillSpotlights = all.filter((row) => isGrillSpotlightRow(row) && isEntree(row));
+  const freshFiveRows = all.filter((row) => getMenuName(row) === "AMZ: Fresh Five");
+  const freshFiveStationRows = (stationName) => freshFiveRows.filter((row) => getStationName(row).toLowerCase() === stationName.toLowerCase());
+  const freshFiveEntrees = uniqueOptionRows([
+    ...freshFiveStationRows("Deli").filter((row) => isEntree(row)),
+    ...freshFiveStationRows("Grill").filter((row) => isEntree(row)),
+    ...freshFiveStationRows("Salad").filter((row) => isEntree(row)),
+    ...freshFiveStationRows("Hibernate").filter((row) => isEntree(row))
+  ]);
+  const freshFiveSides = uniqueOptionRows(freshFiveStationRows("Sides").filter((row) => isSide(row)));
+  const freshFiveSoups = uniqueOptionRows(freshFiveStationRows("Soup"));
   const asianGlobalRows = scoped(
     [
       ...byMenuPattern(/asia|asian|bibimb|korean|japanese|thai|wok|lotus|pho|ramen|teriyaki|curry|indian|tikka|gochujang|xahn/i),
@@ -1116,10 +1127,15 @@ function stationPool(stationKey) {
     fishMarket: scoped([...byMenuPattern(/fish market/i), ...byStationPattern(/fish market/i)])
       .filter((row) => (getMenuName(row).toLowerCase().includes("fish market") || getStationName(row).toLowerCase().includes("fish market")) && isEntree(row)),
     grillSpotlight: scoped(grillSpotlights, byText(/burger|sandwich|wrap|hot dog|cod|salmon|steelhead/)).filter((row) => isEntree(row)),
-    freshFive: scoped([...byMenuPattern(/fresh (five|\$5|5)/i), ...byStationPattern(/fresh (five|\$5|5)/i)], byText(/fresh five|fresh \$5|fresh 5/)),
-    grillFreshFive: scoped([...byMenuPattern(/fresh (five|\$5|5)/i), ...byStationPattern(/fresh (five|\$5|5)/i)], byText(/fresh five|fresh \$5|fresh 5/)),
-    saladFreshFive: scoped([...byMenuPattern(/fresh (five|\$5|5)/i), ...byStationPattern(/fresh (five|\$5|5)/i)], byText(/fresh five|fresh \$5|fresh 5/)),
-    soup: scoped([...byMenuPattern(/\bsoup\b/i), ...byStationPattern(/\bsoup\b/i)], byText(/soup|chili|bisque|chowder/)),
+    freshFive: freshFiveEntrees,
+    freshFiveSides,
+    deliFreshFive: uniqueOptionRows(freshFiveStationRows("Deli").filter((row) => isEntree(row))),
+    grillFreshFive: uniqueOptionRows(freshFiveStationRows("Grill").filter((row) => isEntree(row))),
+    saladFreshFive: uniqueOptionRows([
+      ...freshFiveStationRows("Salad").filter((row) => isEntree(row)),
+      ...saladRequestedOptions
+    ]),
+    soup: freshFiveSoups.length ? freshFiveSoups : scoped([...byMenuPattern(/\bsoup\b/i), ...byStationPattern(/\bsoup\b/i)], byText(/soup|chili|bisque|chowder/)),
     wokEntrees: scoped([...byMenu("wok"), ...byStation("wok")], byText(/wok|stir fry|stir-fry|orange peel|sweet and sour|huli huli/)).filter((row) => isEntree(row)),
     wokSides: scoped([...byMenu("wok"), ...byStation("wok")], byText(/lo mein|fried rice|green beans|carrots|gai lan|slaw/)).filter((row) => isSide(row)),
     wokBase: scoped([...byMenu("wok"), ...byStation("wok")], byText(/rice|noodle|lo mein|base/)).filter((row) => isSide(row) || /rice|noodle|base/i.test(getItemIdentity(row))),
@@ -3893,14 +3909,14 @@ function CafeStationSection(props) {
   let content = null;
   if (stationKey === "global") content = <GlobalSection cafe={cafe} week={week} rotation={rotation} previousRotation={previousRotation} previousWeek={previousWeek} menuOptions={menuOptions} stationOptions={stationOptions} categorized={categorized} updateRotation={updateRotation} updateSlot={updateSlot} summary={summary} selectedItems={selectedItems} />;
   if (stationKey === "grill") content = <GrillSection cafe={cafe} rotation={rotation} updateGrill={updateGrill} />;
-  if (stationKey === "salad") content = <SimpleLTOSection stationKey="salad" title={cafe === "Doppler" ? "Zane's Salad" : "Salad LTOs"} slots={Array.from({ length: stationSlots(cafe, "salad") }, (_, i) => cafe === "Doppler" ? `Fresh Five Salad ${i + 1}` : `Salad LTO ${i + 1}`)} values={rotation.ltos?.salad || EMPTY_ROTATION.ltos.salad} uploaded={rotation.uploadedLtos?.salad || []} updateLto={updateLto} complete={stationComplete(rotation, "salad")} poolOverride={cafe === "Doppler" ? stationPool("salad") : null} />;
+  if (stationKey === "salad") content = <SimpleLTOSection stationKey="salad" title={cafe === "Doppler" ? "Zane's Salad" : "Salad LTOs"} slots={Array.from({ length: stationSlots(cafe, "salad") }, (_, i) => cafe === "Doppler" ? `Fresh Five Salad ${i + 1}` : `Salad LTO ${i + 1}`)} values={rotation.ltos?.salad || EMPTY_ROTATION.ltos.salad} uploaded={rotation.uploadedLtos?.salad || []} updateLto={updateLto} complete={stationComplete(rotation, "salad")} poolOverride={cafe === "Doppler" ? stationPool("saladFreshFive") : null} />;
   if (stationKey === "pizza") content = <SimpleLTOSection stationKey="pizza" title={cafe === "Doppler" ? "Pizza LTOs" : "Pizza / Flatbread LTOs"} slots={cafe === "Doppler" ? ["Pizza LTO 1", "Pizza LTO 2"] : Array.from({ length: stationSlots(cafe, "pizza") }, (_, i) => `Pizza/Flatbread LTO ${i + 1}`)} values={rotation.ltos?.pizza || EMPTY_ROTATION.ltos.pizza} uploaded={rotation.uploadedLtos?.pizza || []} updateLto={updateLto} complete={stationComplete(rotation, "pizza")} slotPoolOverrides={cafe === "Doppler" ? [stationPool("pizza"), stationPool("pizza")] : null} optional={cafe === "Doppler"} />;
-  if (stationKey === "deli") content = <SimpleLTOSection stationKey="deli" title={cafe === "Doppler" ? "Paninoteca Deli" : "Deli LTOs"} slots={Array.from({ length: stationSlots(cafe, "deli") }, (_, i) => cafe === "Doppler" ? "Fresh Five Deli Selection" : `Deli LTO ${i + 1}`)} values={rotation.ltos?.deli || EMPTY_ROTATION.ltos.deli} uploaded={rotation.uploadedLtos?.deli || []} updateLto={updateLto} complete={stationComplete(rotation, "deli")} poolOverride={cafe === "Doppler" ? stationPool("freshFive") : null} />;
+  if (stationKey === "deli") content = <SimpleLTOSection stationKey="deli" title={cafe === "Doppler" ? "Paninoteca Deli" : "Deli LTOs"} slots={Array.from({ length: stationSlots(cafe, "deli") }, (_, i) => cafe === "Doppler" ? "Fresh Five Deli Selection" : `Deli LTO ${i + 1}`)} values={rotation.ltos?.deli || EMPTY_ROTATION.ltos.deli} uploaded={rotation.uploadedLtos?.deli || []} updateLto={updateLto} complete={stationComplete(rotation, "deli")} poolOverride={cafe === "Doppler" ? stationPool("deliFreshFive") : null} />;
   if (stationKey === "fishMarket") content = <SimpleLTOSection stationKey="fishMarket" title="Fish Market LTO" slots={Array.from({ length: stationSlots(cafe, "fishMarket") }, (_, i) => `Fish Market LTO ${i + 1}`)} values={rotation.ltos?.fishMarket || EMPTY_ROTATION.ltos.fishMarket} uploaded={rotation.uploadedLtos?.fishMarket || []} updateLto={updateLto} complete={stationComplete(rotation, "fishMarket")} />;
   if (stationKey === "noodles") content = <SecondaryGlobalSection blockId="noodles" title="Noodle Station" eyebrow="Secondary Global" rotation={rotation} menuOptions={menuOptions} updateRotation={updateRotation} />;
   if (stationKey === "freshFive") content = <SimpleLTOSection stationKey="freshFive" title="Fresh $5" slots={Array.from({ length: stationSlots(cafe, "freshFive") }, (_, i) => `Fresh $5 Option ${i + 1}`)} values={rotation.ltos?.freshFive || EMPTY_ROTATION.ltos.freshFive} uploaded={rotation.uploadedLtos?.freshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "freshFive")} />;
-  if (stationKey === "grillFreshFive") content = <SimpleLTOSection stationKey="grillFreshFive" title="Grill Fresh $5" slots={["Grill Fresh $5"]} values={rotation.ltos?.grillFreshFive || EMPTY_ROTATION.ltos.grillFreshFive} uploaded={rotation.uploadedLtos?.grillFreshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "grillFreshFive")} poolOverride={stationPool("freshFive")} />;
-  if (stationKey === "saladFreshFive") content = <SimpleLTOSection stationKey="saladFreshFive" title="Salad Fresh $5" slots={["Salad Fresh $5"]} values={rotation.ltos?.saladFreshFive || EMPTY_ROTATION.ltos.saladFreshFive} uploaded={rotation.uploadedLtos?.saladFreshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "saladFreshFive")} poolOverride={stationPool("freshFive")} />;
+  if (stationKey === "grillFreshFive") content = <SimpleLTOSection stationKey="grillFreshFive" title="Grill Fresh $5" slots={["Grill Fresh $5"]} values={rotation.ltos?.grillFreshFive || EMPTY_ROTATION.ltos.grillFreshFive} uploaded={rotation.uploadedLtos?.grillFreshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "grillFreshFive")} poolOverride={stationPool("grillFreshFive")} />;
+  if (stationKey === "saladFreshFive") content = <SimpleLTOSection stationKey="saladFreshFive" title="Salad Fresh $5" slots={["Salad Fresh $5"]} values={rotation.ltos?.saladFreshFive || EMPTY_ROTATION.ltos.saladFreshFive} uploaded={rotation.uploadedLtos?.saladFreshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "saladFreshFive")} poolOverride={stationPool("saladFreshFive")} />;
   if (stationKey === "soup") content = <SimpleLTOSection stationKey="soup" title="Soup LTOs" slots={Array.from({ length: stationSlots(cafe, "soup") }, (_, i) => `Soup ${i + 1}`)} values={rotation.ltos?.soup || EMPTY_ROTATION.ltos.soup} uploaded={rotation.uploadedLtos?.soup || []} updateLto={updateLto} complete={stationComplete(rotation, "soup")} />;
   if (stationKey === "wok") content = <WokSection rotation={rotation} updateLto={updateLto} />;
   if (stationKey === "carvery") content = <CarverySection rotation={rotation} updateCarvery={updateCarvery} />;
@@ -4579,7 +4595,7 @@ function PickerGroup({ title, limit, items, values, onChange }) {
 function GrillSection({ cafe, rotation, updateGrill }) {
   const grillItems = stationPool("grillSpotlight");
   const grillTitle = cafe === "Doppler" ? "Salt + Char" : cafe === "Day 1" ? "Adelaide's" : "Core Grill Additions";
-  const options = cafe === "Doppler" ? stationPool("freshFive") : grillItems.length ? grillItems : stationPool("carveryProtein");
+  const options = cafe === "Doppler" ? stationPool("grillFreshFive") : grillItems.length ? grillItems : stationPool("carveryProtein");
   const complete = stationComplete(rotation, "grill");
   const promoActive = Boolean(rotation.grill?.promoActive);
   return (

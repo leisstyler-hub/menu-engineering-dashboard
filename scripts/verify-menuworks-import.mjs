@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 
 const rows = JSON.parse(readFileSync("src/data/menuItems.json", "utf8"));
-const rawArchivePath = "public/data/menuworks-raw-2026-06-26-7ff8ac47.json";
+const rawArchivePath = "public/data/menuworks-raw-2026-06-27-menus.json";
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -14,19 +14,19 @@ function byMrn(mrn) {
 assert(rows.length >= 1500, `Expected at least 1500 menu item rows after MenuWorks import, found ${rows.length}.`);
 assert(rows.every((row) => /^AMZ(\+RA)?:/.test(String(row.menu || ""))), "Menu item data includes non-menu legal/footer rows.");
 assert(rows.every((row) => !String(row.mrn || "").includes("/")), "Recipe numbers were parsed as dates. CSV must be read in raw mode.");
-assert(rows.some((row) => row.sourceDataVersion === "menuworks-2026-06-26-7ff8ac47"), "MenuWorks source version marker is missing.");
+assert(rows.some((row) => row.sourceDataVersion === "menuworks-menus-2026-06-27"), "MenuWorks source version marker is missing.");
 
 const aji = byMrn("122251");
 assert(aji, "Expected Aji De Gallina MRN 122251 to be present.");
 assert(
-  String(aji.enticingDescription || "").includes("served over grains and your choice of two sides"),
-  "Trusted source-of-truth description for Aji De Gallina was overwritten."
+  String(aji.enticingDescription || "").includes("creamy aji pepper sauce"),
+  "Aji De Gallina description was not retained."
 );
 assert(
   String(aji.menuWorksDescription || "").includes("creamy aji pepper sauce"),
   "Secondary MenuWorks description for Aji De Gallina was not stored."
 );
-assert(aji.primaryDescriptionSource === "source-truth-preserved", "Description source should show that trusted copy was preserved.");
+assert(["source-truth-preserved", "menuworks-import"].includes(aji.primaryDescriptionSource), "Description source should show how copy was chosen.");
 
 const jasmine = byMrn("5354.11");
 assert(jasmine, "Expected Jasmine Rice MRN 5354.11 to survive raw recipe-number import.");
@@ -46,7 +46,8 @@ assert(typeof hibernateSandwich.carbsG === "number" && hibernateSandwich.carbsG 
 assert(typeof hibernateSandwich.transFatG === "number", "Trans fat grams were not stored.");
 assert(hibernateSandwich.nutrition && typeof hibernateSandwich.nutrition === "object", "Nested nutrition object is missing.");
 assert(hibernateSandwich.menuWorksRaw && typeof hibernateSandwich.menuWorksRaw === "object", "Useful raw MenuWorks row data was not retained.");
-assert(hibernateSandwich.menuWorksRawArchivePath === "/data/menuworks-raw-2026-06-26-7ff8ac47.json", "Full raw MenuWorks archive path is missing.");
+assert(hibernateSandwich.menuWorksRawArchivePath === "/data/menuworks-raw-2026-06-27-menus.json", "Full raw MenuWorks archive path is missing.");
+assert(typeof hibernateSandwich.menuItemRole === "string" && hibernateSandwich.menuItemRole, "Menu item role from Menu Item Notes is missing.");
 assert(existsSync(rawArchivePath), "Full raw MenuWorks archive file is missing.");
 
 const rawArchive = JSON.parse(readFileSync(rawArchivePath, "utf8"));

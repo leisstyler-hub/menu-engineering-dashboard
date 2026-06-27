@@ -4,12 +4,12 @@ import xlsx from "xlsx";
 
 const SOURCE_FILE =
   process.argv[2] ||
-  "C:/Users/leiss/Downloads/MenuWorks_Menu_Item_7ff8ac47-2d46-4000-80f0-0564db85892a.csv";
+  "C:/Users/leiss/OneDrive/Desktop/Menus.csv";
 const OUTPUT_FILE = "src/data/menuItems.json";
 const BASELINE_FILE = process.argv[3] || process.env.MENUWORKS_BASELINE_FILE || OUTPUT_FILE;
-const SOURCE_VERSION = "menuworks-2026-06-26-7ff8ac47";
-const RAW_ARCHIVE_FILE = "public/data/menuworks-raw-2026-06-26-7ff8ac47.json";
-const RAW_ARCHIVE_PUBLIC_PATH = "/data/menuworks-raw-2026-06-26-7ff8ac47.json";
+const SOURCE_VERSION = "menuworks-menus-2026-06-27";
+const RAW_ARCHIVE_FILE = "public/data/menuworks-raw-2026-06-27-menus.json";
+const RAW_ARCHIVE_PUBLIC_PATH = "/data/menuworks-raw-2026-06-27-menus.json";
 const HIBERNATE_EFFECTIVE_DATE = "2026-08-01";
 
 const ALLERGEN_COLUMNS = [
@@ -86,7 +86,10 @@ function readJson(path) {
 function numberValue(value) {
   const text = cleanText(value);
   if (!text || text === "-") return null;
-  const numeric = Number(text.replace(/[,+$%]/g, "").replace(/\s+/g, ""));
+  const normalized = text.replace(/,/g, "");
+  const firstNumeric = normalized.match(/-?\d+(?:\.\d+)?/);
+  if (!firstNumeric) return null;
+  const numeric = Number(firstNumeric[0]);
   return Number.isFinite(numeric) ? numeric : null;
 }
 
@@ -174,8 +177,16 @@ function compactRaw(row) {
   return Object.fromEntries(keys.map((key) => [key, cleanText(row[key])]).filter(([, value]) => value));
 }
 
-function trustedDescription(row) {
+function trustedDescription(row, currentName = "") {
   if (!row) return "";
+  const currentKey = normalizeKey(currentName);
+  const rowNameKeys = [
+    row.sourceTruthName,
+    row.displayName,
+    row.item,
+    row.shortName,
+  ].map(normalizeKey).filter(Boolean);
+  if (currentKey && rowNameKeys.length && !rowNameKeys.includes(currentKey)) return "";
   const description = cleanText(row.enticingDescription);
   if (!description) return "";
   if (row.primaryDescriptionSource === "source-truth-preserved") return description;
@@ -211,49 +222,56 @@ function findExisting(row, lookup) {
   return lookup.byMrn.get(mrn) || lookup.byRecipe.get(recipeKey) || lookup.byName.get(shortKey) || null;
 }
 
-function deriveCategory(row, existing) {
-  if (existing?.category) return existing.category;
+function deriveMenuItemSemantics(row) {
   const recipeCategory = cleanText(row["Recipe Category."]).toLowerCase();
   const menuItemNotes = cleanText(row["Menu Item Notes"]).toLowerCase();
   const station = cleanText(row["Station"]).toLowerCase();
+  const itemName = cleanText(row["Short Name"] || row["Recipe Name"]).toLowerCase();
   const price = numberValue(row["Sell Price"]);
+  const text = `${recipeCategory} ${menuItemNotes} ${station} ${itemName}`;
+  const explicitSideChoice = /a la carte\s*&\s*side choice|side pairing|\bside choice\b/.test(menuItemNotes);
+  const explicitAlaCarte = /a la carte/.test(menuItemNotes);
+  const explicitEntree =
+    /entree served with one side|grill duo|tier\s*\d+\s*-\s*choice of side|choice of side|entree\s*-\s*no side|composed entree|entree only|just a entree|just an entree/.test(menuItemNotes);
+  const explicitNoSide = /no side|composed entree|entree only/.test(menuItemNotes);
+  const mainCategory =
+    /main entree|sandwich\/wrap|pizza\/calzone\/flatbread|breakfast\s*>\s*sandwich|fish entree|chicken entree|beef entree|pork entree|meatless entree/.test(recipeCategory);
+  const sideCategory = /starch|grain|vegetable|side salad|legume|potato|deep fried food|accompany|snacks\/appetizers/.test(recipeCategory);
+  const subRecipeCategory = /sauce|condiment|spread|dip|salsa|dressing|broth/.test(recipeCategory) || /\bsauce\b|\bdressing\b|\baioli\b|\bsalsa\b|\bspread\b|\bdip\b/.test(text);
+  const extensionCategory = /beverage|dessert|cookie|cake|chips/.test(recipeCategory) || /extension|beverage|dessert|cookie|cake|chips/.test(text);
+  const sidePrice = price !== null && price <= 3.75;
+  const entreePrice = price !== null && price >= 8.75;
 
-  if (
-    recipeCategory.includes("sauce") ||
-    recipeCategory.includes("condiment") ||
-    recipeCategory.includes("spread") ||
-    recipeCategory.includes("dip") ||
-    recipeCategory.includes("salsa") ||
-    recipeCategory.includes("beverage") ||
-    recipeCategory.includes("dessert") ||
-    station.includes("extension")
-  ) {
-    return "extension";
+  let category = "entree";
+
+  if (extensionCategory && !mainCategory && !explicitSideChoice) {
+    category = "extension";
+  } else if (mainCategory || explicitEntree || entreePrice) {
+    category = "entree";
+  } else if (explicitSideChoice || sideCategory || sidePrice) {
+    category = "side";
+  } else if (subRecipeCategory) {
+    category = "subRecipe";
+  } else if (price === null) {
+    category = "subRecipe";
   }
 
-  if (
-    recipeCategory.includes("starch") ||
-    recipeCategory.includes("grain") ||
-    recipeCategory.includes("vegetable") ||
-    recipeCategory.includes("side") ||
-    recipeCategory.includes("legume") ||
-    menuItemNotes.includes("side")
-  ) {
-    return "side";
+  if (explicitSideChoice && sideCategory && !mainCategory) {
+    category = "side";
   }
 
-  if (
-    recipeCategory.includes("main entree") ||
-    recipeCategory.includes("sandwich") ||
-    recipeCategory.includes("wrap") ||
-    recipeCategory.includes("pizza") ||
-    recipeCategory.includes("flatbread") ||
-    menuItemNotes.includes("entree")
-  ) {
-    return "entree";
+  if (mainCategory && !subRecipeCategory) {
+    category = "entree";
   }
 
-  return price === null ? "subRecipe" : "entree";
+  return {
+    category,
+    menuItemRole: explicitEntree ? "entree-with-side-choice" : explicitNoSide ? "entree-no-side-choice" : explicitSideChoice ? "side-choice" : explicitAlaCarte ? "a-la-carte" : category,
+    selectionBehavior: explicitNoSide ? "entree-no-sides-required" : explicitEntree ? "entree-requires-side-selection" : explicitSideChoice ? "side-choice" : category,
+    requiresSides: category === "entree" && explicitEntree && !explicitNoSide,
+    canBeSideChoice: explicitSideChoice || (category === "side" && sidePrice),
+    isALaCarte: explicitAlaCarte,
+  };
 }
 
 function allergenDetails(row) {
@@ -307,17 +325,20 @@ const importedRows = incomingRows.map((row, index) => {
   const existing = findExisting(row, lookup);
   const menu = normalizeMenuName(row["Menu Name"]);
   const { menuPrefix, menuBaseName } = splitMenu(menu);
-  const menuWorksDescription = cleanText(row["Enticing Description"]);
-  const preservedDescription = trustedDescription(existing);
-  const primaryDescription = preservedDescription || menuWorksDescription;
   const itemCost = numberValue(row["Menu Item Cost"]);
   const wastePct = percentValue(row["Waste %"]);
   const currentNutrition = nutrition(row);
   const currentAllergenDetails = allergenDetails(row);
   const station = cleanText(row["Station"]);
   const isFreshFiveHibernate = menu === "AMZ: Fresh Five" && station === "Hibernate";
-  const sourceTruthName = cleanText(existing?.sourceTruthName);
   const shortName = titleCase(row["Short Name"]);
+  const currentDisplayName = shortName || titleCase(row["Recipe Name"]);
+  const menuWorksDescription = cleanText(row["Enticing Description"]);
+  const preservedDescription = trustedDescription(existing, currentDisplayName);
+  const primaryDescription = preservedDescription || menuWorksDescription;
+  const existingSourceTruthName = cleanText(existing?.sourceTruthName);
+  const preservedSourceTruthName = normalizeKey(existingSourceTruthName) === normalizeKey(currentDisplayName) ? existingSourceTruthName : "";
+  const menuSemantics = deriveMenuItemSemantics(row);
 
   return {
     id: index + 1,
@@ -328,7 +349,7 @@ const importedRows = incomingRows.map((row, index) => {
     meal: cleanText(row["Meal Period"]) || cleanText(row["Meal Category"]),
     mealCategory: cleanText(row["Meal Category"]),
     station,
-    item: sourceTruthName || cleanText(existing?.item) || shortName,
+    item: currentDisplayName,
     mrn: cleanText(row["Recipe Number"]),
     portion: cleanText(row["Menu Portion Size"]),
     price: numberValue(row["Sell Price"]),
@@ -341,11 +362,16 @@ const importedRows = incomingRows.map((row, index) => {
     recipeName: cleanText(row["Recipe Name"]),
     recipePrefix: cleanText(row["Recipe Name"]).split(":")[0] || "",
     recipeSource: cleanText(row["Recipe Source."]),
-    displayName: sourceTruthName || cleanText(existing?.displayName) || shortName,
+    displayName: currentDisplayName,
     shortName,
     portionGrams: numberValue(row["Menu Portion Weight(g)"]),
     portionOz: numberValue(row["Menu Portion Weight(oz)"]),
-    category: deriveCategory(row, existing),
+    category: menuSemantics.category,
+    menuItemRole: menuSemantics.menuItemRole,
+    selectionBehavior: menuSemantics.selectionBehavior,
+    requiresSides: menuSemantics.requiresSides,
+    canBeSideChoice: menuSemantics.canBeSideChoice,
+    isALaCarte: menuSemantics.isALaCarte,
     enticingDescription: primaryDescription,
     menuWorksDescription,
     secondaryDescription: menuWorksDescription,
@@ -418,8 +444,8 @@ const importedRows = incomingRows.map((row, index) => {
     calciumMg: currentNutrition.calciumMg ?? null,
     ironMg: currentNutrition.ironMg ?? null,
     nutrition: currentNutrition,
-    legacyNames: [...new Set([...(existing?.legacyNames || []), cleanText(existing?.item), shortName].filter(Boolean))],
-    sourceTruthName: sourceTruthName || undefined,
+    legacyNames: [...new Set([...(existing?.legacyNames || []), cleanText(existing?.item), cleanText(existing?.displayName), existingSourceTruthName, shortName].filter(Boolean))],
+    sourceTruthName: preservedSourceTruthName || undefined,
     ...(isFreshFiveHibernate
       ? {
           effectiveDate: HIBERNATE_EFFECTIVE_DATE,
