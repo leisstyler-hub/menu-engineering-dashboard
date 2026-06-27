@@ -56,10 +56,16 @@ if (gitStatus.available) {
 }
 
 async function githubSourceHasVersion(version) {
-  const url = "https://raw.githubusercontent.com/leisstyler-hub/menu-engineering-dashboard/main/src/shared/appConfig.js";
-  const response = await fetch(url);
+  const url = "https://api.github.com/repos/leisstyler-hub/menu-engineering-dashboard/contents/src/shared/appConfig.js?ref=main";
+  const response = await fetch(url, {
+    headers: {
+      Accept: "application/vnd.github+json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
   if (!response.ok) return { ok: false, detail: `HTTP ${response.status}` };
-  const text = await response.text();
+  const json = await response.json();
+  const text = Buffer.from(json.content || "", json.encoding || "base64").toString("utf8");
   return { ok: text.includes(version), detail: text.includes(version) ? version : "GitHub main has a different app version" };
 }
 

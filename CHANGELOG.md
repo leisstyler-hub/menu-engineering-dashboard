@@ -2,6 +2,8 @@
 
 ## 2026-06-27
 
+- [Jun 27, 10:03 AM] Updated release health to read GitHub source through the GitHub API so source-version checks do not get fooled by raw-file caching after a sync.
+- [Jun 27, 10:03 AM] Set visible app version to `2026.06.27.004-smooth-release-health`.
 - [Jun 27, 9:48 AM] Added a production release source guard so local changes must sync to GitHub before Vercel deploys them live.
 - [Jun 27, 9:48 AM] Expanded release health checks to show dirty working files, branch drift, GitHub source version, and live app version before publishing.
 - [Jun 27, 9:48 AM] Set visible app version to `2026.06.27.003-smooth-release-guard`.
