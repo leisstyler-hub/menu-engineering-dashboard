@@ -21,7 +21,7 @@ function assertNotIncludes(file, unexpected) {
   }
 }
 
-assertIncludes("src/shared/appConfig.js", "2026.06.26.002-recipe-library-backbone");
+assertIncludes("src/shared/appConfig.js", "2026.06.26.003-changelog-timestamps");
 assertIncludes("src/app/LandingPage.jsx", "Recipe Library");
 assertNotIncludes("src/app/LandingPage.jsx", "Recipe Database");
 
