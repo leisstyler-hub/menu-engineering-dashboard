@@ -47,6 +47,14 @@ assert(
     source.includes('freshFiveStationRows("Deli")'),
   "Neighborhood Fresh Five picker pools must be scoped by exact Fresh Five station."
 );
+assert(
+  source.includes('const options = cafe === "Doppler" ? stationPool("grillFreshFive")') &&
+    source.includes('poolOverride={cafe === "Doppler" ? stationPool("saladFreshFive") : null}') &&
+    source.includes('poolOverride={cafe === "Doppler" ? stationPool("deliFreshFive") : null}') &&
+    source.includes('poolOverride={stationPool("grillFreshFive")}') &&
+    source.includes('poolOverride={stationPool("saladFreshFive")}'),
+  "Neighborhood Fresh Five UI selectors must use station-specific pools instead of the broad Fresh Five pool."
+);
 
 const staleLoadedFries = grillRows.filter((row) => /regular cut fries|waffle fries/i.test(row.recipeName || "") && /loaded fries/i.test(`${row.item} ${row.displayName}`));
 assert(!staleLoadedFries.length, "Importer is preserving stale Loaded Fries names over current Menus.csv short names.");
