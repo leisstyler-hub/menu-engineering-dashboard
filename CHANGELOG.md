@@ -2,6 +2,10 @@
 
 ## 2026-06-27
 
+- [Jun 27, 2:47 PM] Mapped Carvery rotating vegetable selectors directly to `Charred Vegetable Option` MenuWorks notes.
+- [Jun 27, 2:47 PM] Split Carvery side selectors by exact notes: hot sides use `Hot A La Carte and Side Choice`, while cold sides use `A la carte and side choice` plus `Cold A La Carte and Side Choice`.
+- [Jun 27, 2:47 PM] Scoped Carvery protein, vegetable, hot side, cold side, and starch lookups to Carvery rows so unrelated menu items cannot leak into those dropdowns or saved recaps.
+- [Jun 27, 2:47 PM] Set visible app version to `2026.06.27.007-carvery-note-mapped-selectors`.
 - [Jun 27, 2:28 PM] Tightened the MenuWorks classifier so unpriced non-entree support items become complimentary sub-recipes instead of side choices across all menus.
 - [Jun 27, 2:28 PM] Moved Balti chutneys, Carvery sauces, dressings, aiolis, preserves, and other no-price sauce/support rows out of side groups.
 - [Jun 27, 2:28 PM] Added a classification guard proving there are zero unpriced side rows before release.

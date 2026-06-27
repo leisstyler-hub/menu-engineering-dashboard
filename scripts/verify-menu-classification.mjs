@@ -58,8 +58,32 @@ assert(
 
 const sauceSignal = /sauce choice|sauce option for protein|sauce|dressing|condiment|spread|dip|salsa|chutney|preserve|preserves|vinaigrette|aioli|mustard|mayonnaise|mayo|hummus|gravy|jus/i;
 const carveryRows = menuRows("AMZ: Carvery");
+const carveryNote = (row) => text(row.menuItemNotes).replace(/\s+/g, " ").trim();
+const charredVegetableRows = carveryRows.filter((row) => /^charred vegetable option/.test(carveryNote(row)));
+const hotSideChoiceRows = carveryRows.filter((row) => carveryNote(row) === "hot a la carte and side choice");
+const coldSideChoiceRows = carveryRows.filter((row) => ["a la carte and side choice", "cold a la carte and side choice"].includes(carveryNote(row)));
 const carverySauceRows = carveryRows.filter((row) => row.price == null && sauceSignal.test(`${name(row)} ${row.recipeName || ""} ${row.recipeCategory || ""} ${row.menuItemNotes || ""}`));
 const carverySideRows = carveryRows.filter((row) => row.category === "side");
+assert(carveryRows.length >= 100, `Expected AMZ: Carvery rows to be loaded, found ${carveryRows.length}.`);
+assert(charredVegetableRows.length >= 9, `Expected Carvery charred vegetable options from Menu Item Notes, found ${charredVegetableRows.length}.`);
+assert(hotSideChoiceRows.length >= 10, `Expected Carvery hot side choices from Menu Item Notes, found ${hotSideChoiceRows.length}.`);
+assert(coldSideChoiceRows.length >= 20, `Expected Carvery cold/generic side choices from Menu Item Notes, found ${coldSideChoiceRows.length}.`);
+assert(
+  charredVegetableRows.every((row) => row.plannerSelectorGroup === "carvery-rotating-vegetable" && row.canBeSideChoice !== true),
+  `Carvery rotating vegetables must map from Charred Vegetable Option notes only: ${charredVegetableRows.filter((row) => row.plannerSelectorGroup !== "carvery-rotating-vegetable" || row.canBeSideChoice === true).map(name).join(", ")}`
+);
+assert(
+  hotSideChoiceRows.every((row) => row.plannerSelectorGroup === "carvery-hot-side" && row.canBeSideChoice === true),
+  `Carvery hot sides must map from Hot A La Carte and Side Choice notes only: ${hotSideChoiceRows.filter((row) => row.plannerSelectorGroup !== "carvery-hot-side" || row.canBeSideChoice !== true).map(name).join(", ")}`
+);
+assert(
+  coldSideChoiceRows.every((row) => row.plannerSelectorGroup === "carvery-cold-side" && row.canBeSideChoice === true),
+  `Carvery cold sides must map from A la carte/Cold A La Carte side choice notes only: ${coldSideChoiceRows.filter((row) => row.plannerSelectorGroup !== "carvery-cold-side" || row.canBeSideChoice !== true).map(name).join(", ")}`
+);
+assert(
+  !source.includes("Hot and cold side dropdowns are filtered by item naming cues"),
+  "Carvery UI must not describe note-driven selectors as naming-cue filters."
+);
 assert(carverySauceRows.length >= 15, `Expected to detect Carvery sauce/condiment rows, found ${carverySauceRows.length}.`);
 assert(
   carverySauceRows.every((row) => row.category === "subRecipe" && row.canBeSideChoice !== true),
@@ -86,7 +110,7 @@ assert(
 );
 
 assert(
-  !rows.some((row) => row.category === "side" && /main entree|sandwich\/wrap|pizza\/calzone\/flatbread/i.test(text(row.recipeCategory)) && !/side pairing|a la carte & side choice/i.test(text(row.menuItemNotes))),
+  !rows.some((row) => row.category === "side" && /main entree|sandwich\/wrap|pizza\/calzone\/flatbread/i.test(text(row.recipeCategory)) && !/side pairing|a la carte\s*(?:&|and)\s*side choice/i.test(text(row.menuItemNotes))),
   "Main entree recipe-category rows are leaking into side unless explicitly marked side pairing."
 );
 

@@ -223,12 +223,28 @@ function findExisting(row, lookup) {
 }
 
 function deriveMenuItemSemantics(row) {
+  const menu = normalizeMenuName(row["Menu Name"]).toLowerCase();
   const recipeCategory = cleanText(row["Recipe Category."]).toLowerCase();
   const menuItemNotes = cleanText(row["Menu Item Notes"]).toLowerCase();
+  const normalizedMenuItemNotes = menuItemNotes.replace(/\s+/g, " ").trim();
   const station = cleanText(row["Station"]).toLowerCase();
   const itemName = cleanText(row["Short Name"] || row["Recipe Name"]).toLowerCase();
   const price = numberValue(row["Sell Price"]);
   const text = `${recipeCategory} ${menuItemNotes} ${station} ${itemName}`;
+  const isCarvery = menu === "amz: carvery";
+  const carveryRotatingVegetable = isCarvery && /^charred vegetable option/.test(normalizedMenuItemNotes);
+  const carveryHotSide = isCarvery && normalizedMenuItemNotes === "hot a la carte and side choice";
+  const carveryColdSide =
+    isCarvery &&
+    ["a la carte and side choice", "cold a la carte and side choice"].includes(normalizedMenuItemNotes);
+  const plannerSelectorGroup = carveryRotatingVegetable
+    ? "carvery-rotating-vegetable"
+    : carveryHotSide
+      ? "carvery-hot-side"
+      : carveryColdSide
+        ? "carvery-cold-side"
+        : "";
+  const carverySideChoice = carveryHotSide || carveryColdSide;
   const explicitSideChoice = /a la carte\s*&\s*side choice|side pairing|\bside choice\b/.test(menuItemNotes);
   const explicitAlaCarte = /a la carte/.test(menuItemNotes);
   const explicitEntree =
@@ -246,7 +262,11 @@ function deriveMenuItemSemantics(row) {
 
   let category = "entree";
 
-  if (extensionCategory && !mainCategory && !explicitSideChoice) {
+  if (carveryRotatingVegetable) {
+    category = "subRecipe";
+  } else if (carverySideChoice) {
+    category = "side";
+  } else if (extensionCategory && !mainCategory && !explicitSideChoice) {
     category = "extension";
   } else if (mainCategory || explicitEntree || entreePrice) {
     category = "entree";
@@ -260,14 +280,18 @@ function deriveMenuItemSemantics(row) {
     category = "side";
   }
 
-  if (mainCategory && !subRecipeCategory) {
+  if (mainCategory && !subRecipeCategory && !carveryRotatingVegetable && !carverySideChoice) {
     category = "entree";
   }
 
+  const role = plannerSelectorGroup ||
+    (category === "subRecipe" && sauceSupport ? "complimentary-sauce" : category === "subRecipe" && complimentarySupport ? "complimentary-support" : explicitEntree ? "entree-with-side-choice" : explicitNoSide ? "entree-no-side-choice" : category === "side" && explicitSideChoice ? "side-choice" : explicitAlaCarte ? "a-la-carte" : category);
+
   return {
     category,
-    menuItemRole: category === "subRecipe" && sauceSupport ? "complimentary-sauce" : category === "subRecipe" && complimentarySupport ? "complimentary-support" : explicitEntree ? "entree-with-side-choice" : explicitNoSide ? "entree-no-side-choice" : category === "side" && explicitSideChoice ? "side-choice" : explicitAlaCarte ? "a-la-carte" : category,
-    selectionBehavior: category === "subRecipe" && sauceSupport ? "complimentary-sauce" : category === "subRecipe" && complimentarySupport ? "complimentary-support" : explicitNoSide ? "entree-no-sides-required" : explicitEntree ? "entree-requires-side-selection" : category === "side" && explicitSideChoice ? "side-choice" : category,
+    plannerSelectorGroup,
+    menuItemRole: role,
+    selectionBehavior: plannerSelectorGroup || (category === "subRecipe" && sauceSupport ? "complimentary-sauce" : category === "subRecipe" && complimentarySupport ? "complimentary-support" : explicitNoSide ? "entree-no-sides-required" : explicitEntree ? "entree-requires-side-selection" : category === "side" && explicitSideChoice ? "side-choice" : category),
     requiresSides: category === "entree" && explicitEntree && !explicitNoSide,
     canBeSideChoice: category === "side" && (explicitSideChoice || sidePrice),
     isALaCarte: explicitAlaCarte,
@@ -367,6 +391,7 @@ const importedRows = incomingRows.map((row, index) => {
     portionGrams: numberValue(row["Menu Portion Weight(g)"]),
     portionOz: numberValue(row["Menu Portion Weight(oz)"]),
     category: menuSemantics.category,
+    plannerSelectorGroup: menuSemantics.plannerSelectorGroup,
     menuItemRole: menuSemantics.menuItemRole,
     selectionBehavior: menuSemantics.selectionBehavior,
     requiresSides: menuSemantics.requiresSides,

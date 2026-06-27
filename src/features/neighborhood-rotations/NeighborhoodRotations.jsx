@@ -476,7 +476,7 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
   pushSelections("wok", SMARTSHEET_SELECTION_TYPES.wokSubRecipe, rotation.ltos?.wokSubRecipes || [], 1300, rotation, "", stationPool("wokSubRecipes"));
   Object.entries(rotation.carvery || {}).filter(([, value]) => value).forEach(([field, value], index) => {
     const type = field.includes("protein") ? SMARTSHEET_SELECTION_TYPES.carveryProtein : field.includes("vegetable") ? SMARTSHEET_SELECTION_TYPES.carveryVegetable : field.includes("starch") ? SMARTSHEET_SELECTION_TYPES.carveryStarch : field.includes("hot") ? SMARTSHEET_SELECTION_TYPES.carveryHotSide : SMARTSHEET_SELECTION_TYPES.carveryColdSide;
-    selectionRows.push(selectionDatabaseRecord({ parentId, district, cafe, week, rotation, stationKey: "carvery", selectionType: type, itemName: value, sortOrder: 1400 + index, slotNumber: index + 1 }));
+    selectionRows.push(selectionDatabaseRecord({ parentId, district, cafe, week, rotation, stationKey: "carvery", selectionType: type, itemName: value, sortOrder: 1400 + index, slotNumber: index + 1, candidateRows: carveryCandidateRowsForField(field) }));
   });
 
   const custom = cloneCustomStations(rotation.customStations);
@@ -821,6 +821,7 @@ const getSuggestedRetailPrice = (row) => {
   return Number.isFinite(value) && value > 0 ? value : null;
 };
 const getCategory = (row) => String(row.category || row.itemType || row["Item Type"] || row.classification || "").toLowerCase();
+const getPlannerSelectorGroup = (row) => String(row.plannerSelectorGroup || row.selectorGroup || "").toLowerCase();
 const isGlobalMenuOption = (menu = "") =>
   /^AMZ\+RA:/i.test(menu) ||
   !/Cafe Express|Carvery|Fish Market|Fresh Five|Grill Core|Pizzas? & Flatbreads?|Soup/i.test(menu);
@@ -1090,6 +1091,8 @@ function stationPool(stationKey) {
     "Baja Crunch Salad"
   ].map((name) => makePlanningOption(name, { menu: "AMZ: Fresh Five", station: "Salad LTOs", category: "entree" }));
   const all = MENUWORKS_ITEMS.filter(Boolean);
+  const carveryRows = all.filter((row) => getMenuName(row) === "AMZ: Carvery");
+  const carverySelectorRows = (group) => carveryRows.filter((row) => getPlannerSelectorGroup(row) === group);
   const byMenu = (needle) => all.filter((row) => getMenuName(row).toLowerCase().includes(needle));
   const byStation = (needle) => all.filter((row) => getStationName(row).toLowerCase().includes(needle));
   const byMenuPattern = (regex) => all.filter((row) => regex.test(getMenuName(row)));
@@ -1143,14 +1146,13 @@ function stationPool(stationKey) {
     lotusEntrees: uniqueOptionRows(asianGlobalRows.filter((row) => isEntree(row))),
     lotusSides: uniqueOptionRows(asianGlobalRows.filter((row) => isSide(row))),
     carveryProtein: uniqueOptionRows([
-      ...scoped(all.filter(isCarveryMainRow), byText(/beef|chicken|pork|turkey|salmon|steelhead|trout|tofu|protein|pork belly|flank steak|char siu|char sui/)).filter((row) => isEntree(row) && !/sandwich|reuben|panini|wrap/i.test(`${getItemIdentity(row)} ${getStationName(row)}`)),
+      ...scoped(carveryRows.filter(isCarveryMainRow), byText(/beef|chicken|pork|turkey|salmon|steelhead|trout|tofu|protein|pork belly|flank steak|char siu|char sui/)).filter((row) => isEntree(row) && !/sandwich|reuben|panini|wrap/i.test(`${getItemIdentity(row)} ${getStationName(row)}`)),
       ...carveryRequestedProteins
     ]),
-    carveryVegetable: uniqueOptionRows([
-      ...byText(/broccoli|carrot|green bean|beans|vegetable|veg|cauliflower|brussels|squash|zucchini|asparagus/),
-      ...carveryRequestedVegetables
-    ]),
-    carverySide: uniqueOptionRows(all.filter((row) => isSide(row)))
+    carveryVegetable: uniqueOptionRows(carverySelectorRows("carvery-rotating-vegetable").length ? carverySelectorRows("carvery-rotating-vegetable") : carveryRequestedVegetables),
+    carveryHotSide: uniqueOptionRows(carverySelectorRows("carvery-hot-side")),
+    carveryColdSide: uniqueOptionRows(carverySelectorRows("carvery-cold-side")),
+    carverySide: uniqueOptionRows(carveryRows.filter((row) => isSide(row)))
   };
 
   const pool = pools[stationKey] || [];
@@ -1398,7 +1400,7 @@ function potatoSides() {
   if (POTATO_SIDES_CACHE) return POTATO_SIDES_CACHE;
   POTATO_SIDES_CACHE = uniqueRows(MENUWORKS_ITEMS.filter((row) => {
     const name = String(getItemIdentity(row)).toLowerCase();
-    return isSide(row) && /potato|potatoes|fries|tots|hash brown|mashed|fingerling|yukon|russet|sweet potato/.test(name);
+    return getMenuName(row) === "AMZ: Carvery" && isSide(row) && /potato|potatoes|fries|tots|hash brown|mashed|fingerling|yukon|russet|sweet potato/.test(name);
   }));
   return POTATO_SIDES_CACHE;
 }
@@ -1412,15 +1414,13 @@ function carverySideTemperature(row) {
 
 function carveryHotSides() {
   if (CARVERY_HOT_SIDES_CACHE) return CARVERY_HOT_SIDES_CACHE;
-  const sides = stationPool("carverySide").filter((row) => carverySideTemperature(row) !== "cold");
-  CARVERY_HOT_SIDES_CACHE = sides.length ? uniqueRows(sides) : stationPool("carverySide");
+  CARVERY_HOT_SIDES_CACHE = stationPool("carveryHotSide");
   return CARVERY_HOT_SIDES_CACHE;
 }
 
 function carveryColdSides() {
   if (CARVERY_COLD_SIDES_CACHE) return CARVERY_COLD_SIDES_CACHE;
-  const sides = stationPool("carverySide").filter((row) => carverySideTemperature(row) !== "hot");
-  CARVERY_COLD_SIDES_CACHE = sides.length ? uniqueRows(sides) : stationPool("carverySide");
+  CARVERY_COLD_SIDES_CACHE = stationPool("carveryColdSide");
   return CARVERY_COLD_SIDES_CACHE;
 }
 
@@ -1754,8 +1754,28 @@ function wokSelectedRows(rotation, options) {
   return rowsForSelectedNames([...(rotation.ltos?.wokEntrees || []), ...(rotation.ltos?.wokSides || []), ...(rotation.ltos?.wokBase || []), ...(rotation.ltos?.wokSubRecipes || [])], options);
 }
 
+function carveryCandidateRowsForField(field = "") {
+  if (field.includes("protein")) return stationPool("carveryProtein");
+  if (field.includes("vegetable")) return stationPool("carveryVegetable");
+  if (field.includes("starch")) return potatoSides().length ? potatoSides() : stationPool("carverySide");
+  if (field.includes("hot")) return carveryHotSides();
+  if (field.includes("cold")) return carveryColdSides();
+  return stationPool("carverySide");
+}
+
+function carverySelectionGroupForField(field = "") {
+  return field.includes("protein") ? "entrees" : "sides";
+}
+
 function carverySelectedRows(rotation, options) {
-  return rowsForSelectedNames(Object.values(rotation.carvery || {}), options);
+  const rows = Object.entries(rotation.carvery || {}).flatMap(([field, value]) =>
+    rowsForSelectedNames([value], {
+      ...options,
+      candidateRows: carveryCandidateRowsForField(field),
+      selectionGroup: carverySelectionGroupForField(field)
+    })
+  );
+  return uniqueSelectionRows(rows, options);
 }
 
 function customStationSelectedRows(rotation, stationKey, options = {}) {
@@ -4711,7 +4731,7 @@ function CarverySection({ rotation, updateCarvery }) {
   ];
   return (
     <CollapsibleStation title="Carvery Rotations" eyebrow="Carvery Station" complete={stationComplete(rotation, "carvery")}>
-      <p className="text-sm text-slate-500 mb-4">Hot and cold side dropdowns are filtered by item naming cues from the database. Ambiguous sides remain available where review may be needed.</p>
+      <p className="text-sm text-slate-500 mb-4">Carvery dropdowns follow MenuWorks notes: charred vegetable options, hot side choices, and cold side choices.</p>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {fields.map(([field, label, options]) => (
           <div key={field} className="rounded-3xl border-2 border-sky-200 bg-sky-50/80 p-4 shadow-sm">
