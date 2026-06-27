@@ -2,14 +2,17 @@
 
 ## 2026-06-26
 
-- [Jun 26, 7:44 AM] Renamed Recipe Database to Recipe Library across the platform and mobile navigation.
-- [Jun 26, 7:44 AM] Added Recipe Library item cards with calories, protein, editable chef-facing details, and future file slots for photos, plating guides, recipes, and source documents.
-- [Jun 26, 7:44 AM] Added a Supabase Recipe Library schema for structured item nutrition fields, item document metadata, and private storage buckets.
-- [Jun 26, 7:44 AM] Set visible app version to `2026.06.26.002-recipe-library-backbone`.
-- [Jun 26, 7:10 AM] Hardened Neighborhood Rotation locking so submitted cafe/week records stay locked even when older draft child rows are still present during database reload.
-- [Jun 26, 7:10 AM] Fixed two-slot grill saves so the first and second grill selections persist as separate slots instead of both saving as slot one.
-- [Jun 26, 7:10 AM] Reworked item write-ins so each picker switches between list mode and write-in mode instead of stacking a dropdown and text field together.
-- [Jun 26, 7:10 AM] Set visible app version to `2026.06.26.001-rotation-lock-sweep`.
+- [Jun 26, 8:06 PM] Corrected the current changelog timestamp periods so evening release work shows PM instead of AM.
+- [Jun 26, 8:06 PM] Added a changelog timestamp verification check for the current release block.
+- [Jun 26, 8:06 PM] Set visible app version to `2026.06.26.003-changelog-timestamps`.
+- [Jun 26, 7:44 PM] Renamed Recipe Database to Recipe Library across the platform and mobile navigation.
+- [Jun 26, 7:44 PM] Added Recipe Library item cards with calories, protein, editable chef-facing details, and future file slots for photos, plating guides, recipes, and source documents.
+- [Jun 26, 7:44 PM] Added a Supabase Recipe Library schema for structured item nutrition fields, item document metadata, and private storage buckets.
+- [Jun 26, 7:44 PM] Set visible app version to `2026.06.26.002-recipe-library-backbone`.
+- [Jun 26, 7:10 PM] Hardened Neighborhood Rotation locking so submitted cafe/week records stay locked even when older draft child rows are still present during database reload.
+- [Jun 26, 7:10 PM] Fixed two-slot grill saves so the first and second grill selections persist as separate slots instead of both saving as slot one.
+- [Jun 26, 7:10 PM] Reworked item write-ins so each picker switches between list mode and write-in mode instead of stacking a dropdown and text field together.
+- [Jun 26, 7:10 PM] Set visible app version to `2026.06.26.001-rotation-lock-sweep`.
 
 ## 2026-06-23
 
