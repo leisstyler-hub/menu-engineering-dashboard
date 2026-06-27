@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-06-27
+
+- [Jun 27, 8:58 AM] Centered Recipe Library item detail cards so selected recipes open over the library instead of sliding to the far-right edge on wide screens.
+- [Jun 27, 8:58 AM] Set visible app version to `2026.06.27.001-fix-recipe-card-modal`.
+
 ## 2026-06-26
 
 - [Jun 26, 9:57 PM] Imported the new MenuWorks item export into the Recipe Library data set with 1,507 current rows across 53 menus.

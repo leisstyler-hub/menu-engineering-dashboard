@@ -21,14 +21,17 @@ function assertNotIncludes(file, unexpected) {
   }
 }
 
-assertIncludes("src/shared/appConfig.js", "2026.06.26.004-menuworks-nutrition-import");
 assertIncludes("src/app/LandingPage.jsx", "Recipe Library");
 assertNotIncludes("src/app/LandingPage.jsx", "Recipe Database");
 
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Recipe Library");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "LibraryCardDrawer");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "justify-center");
+assertNotIncludes("src/features/recipe-database/RecipeDatabase.jsx", "recipe-library-drawer ml-auto");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "proteinLabel");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Recipe instructions not attached yet");
+
+assertIncludes("src/shared/appConfig.js", "2026.06.27.001-fix-recipe-card-modal");
 
 assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "normalizeRecipeLibraryItem");
 assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "culinaryToolsMenuEngineeringItems_v3");

@@ -432,8 +432,8 @@ function LibraryCardDrawer({ item, onClose, onSave }) {
   ];
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/40 p-3 backdrop-blur-sm md:p-8" role="dialog" aria-modal="true">
-      <section className="recipe-library-drawer ml-auto flex max-h-[calc(100vh-1.5rem)] w-full max-w-3xl flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-2xl md:max-h-[calc(100vh-4rem)]">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/40 p-3 backdrop-blur-sm md:p-8" role="dialog" aria-modal="true">
+      <section className="recipe-library-drawer mx-auto flex max-h-[calc(100vh-1.5rem)] w-full max-w-3xl flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-2xl md:mt-4 md:max-h-[calc(100vh-4rem)]">
         <div className="border-b border-slate-200 bg-slate-50 p-4 md:p-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
