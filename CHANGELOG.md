@@ -2,6 +2,9 @@
 
 ## 2026-06-27
 
+- [Jun 27, 9:48 AM] Added a production release source guard so local changes must sync to GitHub before Vercel deploys them live.
+- [Jun 27, 9:48 AM] Expanded release health checks to show dirty working files, branch drift, GitHub source version, and live app version before publishing.
+- [Jun 27, 9:48 AM] Set visible app version to `2026.06.27.003-smooth-release-guard`.
 - [Jun 27, 9:25 AM] Added a repeatable release workflow with `release:health`, `release:live`, GitHub source-sync fallback, live bundle verification, and no-secret auth diagnostics.
 - [Jun 27, 9:25 AM] Added release workflow verification to the normal app verification chain so the publishing backbone cannot silently drift.
 - [Jun 27, 9:25 AM] Set visible app version to `2026.06.27.002-release-workflow`.

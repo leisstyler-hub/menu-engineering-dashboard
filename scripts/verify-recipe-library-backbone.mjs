@@ -31,7 +31,7 @@ assertNotIncludes("src/features/recipe-database/RecipeDatabase.jsx", "recipe-lib
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "proteinLabel");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Recipe instructions not attached yet");
 
-assertIncludes("src/shared/appConfig.js", "2026.06.27.002-release-workflow");
+assertIncludes("src/shared/appConfig.js", "2026.06.27.003-smooth-release-guard");
 
 assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "normalizeRecipeLibraryItem");
 assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "culinaryToolsMenuEngineeringItems_v3");

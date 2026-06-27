@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "verify": "node scripts/verify-rotation-integrity.mjs && node scripts/verify-changelog-timestamps.mjs && node scripts/verify-recipe-library-backbone.mjs && node scripts/verify-menuworks-import.mjs && node scripts/verify-release-workflow.mjs && vite build",
     "verify:release": "node scripts/verify-release-workflow.mjs",
+    "release:check": "node scripts/release-health.mjs",
     "release:health": "node scripts/release-health.mjs",
     "release:live": "node scripts/release-live.mjs"
   },

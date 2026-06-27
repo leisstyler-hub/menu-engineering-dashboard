@@ -2,9 +2,11 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   getAppVersion,
+  getGitStatus,
   getGhToken,
   getToolPaths,
   getVercelProject,
+  isReleaseSyncCandidate,
   root,
   run,
   runChecked,
@@ -14,6 +16,8 @@ const args = new Set(process.argv.slice(2));
 const dryRun = args.has("--dry-run");
 const skipDeploy = args.has("--skip-vercel");
 const skipGitHub = args.has("--skip-github");
+const allowPartialSourceSync = args.has("--allow-partial-source-sync");
+const allowLiveOnly = args.has("--allow-live-only");
 
 function argValue(name) {
   const prefix = `${name}=`;
@@ -22,6 +26,7 @@ function argValue(name) {
 }
 
 function releaseFilesFromArgs() {
+  if (args.has("--sync-all")) return [];
   const explicit = argValue("--github-files") || process.env.RELEASE_SYNC_FILES || "";
   if (explicit.trim()) {
     return explicit.split(",").map((item) => item.trim()).filter(Boolean);
@@ -54,7 +59,7 @@ async function deployToVercel(tools) {
   if (result.stderr) process.stderr.write(result.stderr);
   const aliasMatch = result.stdout.match(/Aliased\s+(https:\/\/[^\s]+)/);
   const productionMatch = result.stdout.match(/Production\s+(https:\/\/[^\s]+)/);
-  return aliasMatch?.[1] || "https://project-d8v25.vercel.app" || productionMatch?.[1] || null;
+  return aliasMatch?.[1] || productionMatch?.[1] || "https://project-d8v25.vercel.app";
 }
 
 async function githubApi(token, method, endpoint, body) {
@@ -77,20 +82,51 @@ async function githubApi(token, method, endpoint, body) {
 }
 
 async function changedTextFilesFromGit(tools) {
-  if (!tools.git) return [];
-  const result = await run(tools.git, ["status", "--porcelain"], { capture: true });
-  if (result.code !== 0) return [];
-  return result.stdout
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => line.replace(/^.. /, ""))
-    .filter((path) => path && !path.endsWith("/") && existsSync(join(root, path)))
-    .filter((path) => !path.startsWith("dist/") && !path.startsWith("node_modules/") && !path.startsWith(".git/"))
-    .filter((path) => /\.(js|jsx|mjs|json|md|css|html|sql|yml|yaml|txt|csv)$/i.test(path));
+  const status = await getGitStatus(tools);
+  if (!status.available) return [];
+  return status.changedFiles
+    .map((entry) => entry.path)
+    .filter(isReleaseSyncCandidate);
 }
 
-async function syncSourceToGitHub(tools) {
+function formatFileList(files) {
+  const preview = files.slice(0, 12).join(", ");
+  return files.length > 12 ? `${preview}, and ${files.length - 12} more` : preview;
+}
+
+async function preflightReleaseSource(tools) {
+  const explicitFiles = releaseFilesFromArgs();
+  const changedFiles = await changedTextFilesFromGit(tools);
+  const filesToSync = explicitFiles.length ? explicitFiles : changedFiles;
+
+  if (skipGitHub && !skipDeploy && changedFiles.length && !allowLiveOnly) {
+    throw new Error(
+      `Release source guard stopped publish: ${changedFiles.length} changed file(s) would deploy without syncing to GitHub. ` +
+      "Remove --skip-github, commit/sync the source first, or pass --allow-live-only for a deliberate emergency deploy."
+    );
+  }
+
+  if (explicitFiles.length && changedFiles.length && !allowPartialSourceSync) {
+    const explicitSet = new Set(explicitFiles.map((file) => file.replace(/\\/g, "/")));
+    const omitted = changedFiles.filter((file) => !explicitSet.has(file.replace(/\\/g, "/")));
+    if (omitted.length) {
+      throw new Error(
+        `Release source guard stopped publish: ${omitted.length} changed file(s) would deploy but not sync to GitHub: ${formatFileList(omitted)}. ` +
+        "Use --sync-all, add every changed app file to --github-files, or pass --allow-partial-source-sync only for an intentional source-only patch."
+      );
+    }
+  }
+
+  if (filesToSync.length) {
+    console.log(`[info] Release source guard will sync ${filesToSync.length} changed file(s) before deploying.`);
+  } else {
+    console.log("[info] Release source guard found no changed source files to sync.");
+  }
+
+  return filesToSync;
+}
+
+async function syncSourceToGitHub(tools, guardedFiles = null) {
   if (skipGitHub) {
     console.log("[skip] GitHub source sync skipped by --skip-github");
     return null;
@@ -99,8 +135,7 @@ async function syncSourceToGitHub(tools) {
   const token = await getGhToken(tools.gh);
   if (!token) throw new Error("GitHub source sync is not authenticated. Run gh auth login or set GH_TOKEN.");
 
-  const explicitFiles = releaseFilesFromArgs();
-  const files = explicitFiles.length ? explicitFiles : await changedTextFilesFromGit(tools);
+  const files = guardedFiles || await changedTextFilesFromGit(tools);
   if (!files.length) {
     console.log("[info] No local source changes detected for GitHub sync.");
     return null;
@@ -119,7 +154,10 @@ async function syncSourceToGitHub(tools) {
 
   for (const path of files) {
     const absolute = join(root, path);
-    if (!existsSync(absolute)) continue;
+    if (!existsSync(absolute)) {
+      tree.push({ path, mode: "100644", type: "blob", sha: null });
+      continue;
+    }
     const content = readFileSync(absolute, "utf8");
     const blob = await githubApi(token, "POST", `repos/${repo}/git/blobs`, { content, encoding: "utf-8" });
     tree.push({ path, mode: "100644", type: "blob", sha: blob.sha });
@@ -171,8 +209,9 @@ async function main() {
   if (project?.projectId) console.log(`Vercel project: ${project.projectName || project.projectId}`);
 
   await runPackageScript("verify")(tools);
+  const guardedFiles = await preflightReleaseSource(tools);
+  await syncSourceToGitHub(tools, guardedFiles);
   const liveUrl = await deployToVercel(tools);
-  await syncSourceToGitHub(tools);
   await verifyLiveBundle(liveUrl || "https://project-d8v25.vercel.app", version);
 
   console.log("Release complete");

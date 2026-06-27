@@ -19,6 +19,13 @@ export function getVercelProject() {
   return JSON.parse(readFileSync(path, "utf8"));
 }
 
+function parsePorcelainLine(line) {
+  const status = line.slice(0, 2);
+  const rawPath = line.slice(3).trim();
+  const path = rawPath.includes(" -> ") ? rawPath.split(" -> ").pop() : rawPath;
+  return { status, path };
+}
+
 export function commandExists(command) {
   const paths = String(process.env.PATH || "").split(process.platform === "win32" ? ";" : ":");
   const names = process.platform === "win32" && !/\.(exe|cmd|bat)$/i.test(command)
@@ -161,6 +168,51 @@ export async function getGhToken(ghPath) {
   if (!ghPath) return null;
   const result = await run(ghPath, ["auth", "token", "--hostname", "github.com"], { capture: true });
   return result.code === 0 ? result.stdout.trim() : null;
+}
+
+export async function getGitStatus(tools = getToolPaths()) {
+  if (!tools.git) {
+    return { available: false, branchLine: "", changedFiles: [], dirtyCount: 0, ahead: false, behind: false };
+  }
+
+  const branch = await run(tools.git, ["status", "--short", "--branch"], { capture: true });
+  const porcelain = await run(tools.git, ["status", "--porcelain=v1", "--untracked-files=all"], { capture: true });
+  if (branch.code !== 0 || porcelain.code !== 0) {
+    return { available: false, branchLine: "", changedFiles: [], dirtyCount: 0, ahead: false, behind: false };
+  }
+
+  const branchLine = branch.stdout.split(/\r?\n/).find(Boolean) || "";
+  const changedFiles = porcelain.stdout
+    .split(/\r?\n/)
+    .filter(Boolean)
+    .map(parsePorcelainLine)
+    .filter((entry) => entry.path);
+
+  return {
+    available: true,
+    branchLine,
+    changedFiles,
+    dirtyCount: changedFiles.length,
+    ahead: /\bahead\s+\d+/.test(branchLine),
+    behind: /\bbehind\s+\d+/.test(branchLine),
+  };
+}
+
+export function isReleaseSyncCandidate(path) {
+  const normalized = path.replace(/\\/g, "/");
+  if (!normalized) return false;
+  if (
+    normalized.startsWith("dist/") ||
+    normalized.startsWith("node_modules/") ||
+    normalized.startsWith(".git/") ||
+    normalized.startsWith(".vercel/") ||
+    normalized.startsWith("work/") ||
+    normalized.startsWith("outputs/") ||
+    normalized === "live-home.html"
+  ) {
+    return false;
+  }
+  return /\.(js|jsx|mjs|json|md|css|html|sql|yml|yaml|txt|csv)$/i.test(normalized);
 }
 
 export function releaseEnv() {
