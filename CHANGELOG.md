@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-06-28
+
+- [Jun 28, 9:36 AM] Hardened Neighborhood Rotation reloads so submitted selection rows can keep a cafe locked even if the header row is missing or delayed.
+- [Jun 28, 9:36 AM] Added Recipe Library Data Confidence flags for price gaps, category review, missing true cost, and support-item checks.
+- [Jun 28, 9:36 AM] Added visible Needs Review, Watch, and Trusted labels to Recipe Library item cards and detail drawers.
+- [Jun 28, 9:36 AM] Added a Recipe Library trust verification guard to prevent eggplant/sauce false positives and preserve real protein price-gap alerts.
+- [Jun 28, 9:36 AM] Set visible app version to `2026.06.28.001-rotation-trust-audit`.
+
 ## 2026-06-27
 
 - [Jun 27, 7:53 PM] Moved MenuWorks truth uploads out of Menu Engineering and into Recipe Library so one shared library source drives item rows.

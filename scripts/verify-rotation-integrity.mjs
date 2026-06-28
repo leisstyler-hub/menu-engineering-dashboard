@@ -71,6 +71,10 @@ if (!/const submittedRotation = isSubmittedRotation\(rotation\);/.test(source) |
   fail("Submitted rotation locking must use the shared submitted-status helper.");
 }
 
+if (!/selection rows can restore submitted state when the header row is missing/i.test(source) || !/record\.recordType === SMARTSHEET_RECORD_TYPES\.globalSelection \|\| record\.recordType === SMARTSHEET_RECORD_TYPES\.stationSelection/.test(source)) {
+  fail("Submitted selection rows must also restore Submitted state when a header/global block row is missing or delayed.");
+}
+
 if (!/function ItemPickerSlot/.test(source) || !/Item not listed\?/.test(source)) {
   fail("Write-in picker mode is missing; dropdown and manual entry should not stack together.");
 }

@@ -53,6 +53,90 @@ export function itemDescription(row) {
   return textValue(row, "enticingDescription", "ingredientsCommonName", "ingredients") || "No description loaded yet.";
 }
 
+const PROTEIN_SIGNAL = /\b(beef|chicken|pork|turkey|salmon|fish|cod|shrimp|tuna|meatballs?|steak|brisket|carnitas|chorizo|bacon|sausage|eggs?|tofu|tempeh|paneer|lentils?|beans?|chickpeas?|falafel|poultry|ham|lamb)\b/i;
+const SUPPORT_SIGNAL = /sauce|dressing|dip|salsa|aioli|chutney|relish|gravy|marinade|vinaigrette|condiment|garnish|pickle|seasoning|spice|rub|spread|preserve|preserves/i;
+const SIDE_CHOICE_SIGNAL = /side choice|side pairing|a la carte\s*(?:&|and)\s*side choice|hot a la carte|cold a la carte/i;
+const ENTREE_CATEGORY_SIGNAL = /main entree|sandwich\/wrap|pizza\/calzone\/flatbread|breakfast|premium mains|vegetarian mains/i;
+
+function itemTrustText(row, { includeIngredients = true } = {}) {
+  const values = [
+    itemName(row),
+    textValue(row, "recipeName"),
+    textValue(row, "recipeCategory"),
+    textValue(row, "category"),
+    textValue(row, "menuItemNotes"),
+    textValue(row, "station"),
+  ];
+  if (includeIngredients) values.push(textValue(row, "ingredientsCommonName"));
+  return values.filter(Boolean).join(" ");
+}
+
+export function itemTrustFlags(row = {}) {
+  const flags = [];
+  const category = textValue(row, "category").toLowerCase();
+  const recipeCategory = textValue(row, "recipeCategory").toLowerCase();
+  const notes = textValue(row, "menuItemNotes");
+  const lowerNotes = notes.toLowerCase();
+  const text = itemTrustText(row);
+  const supportText = itemTrustText(row, { includeIngredients: false });
+  const price = numberValue(row, "price");
+  const trueCost = numberValue(row, "trueCost", "itemCost");
+  const calories = numberValue(row, "calories", "calories_kcal", "kcal");
+  const allergens = Array.isArray(row?.allergens) ? row.allergens : [];
+  const hasAllergenSignal = Boolean(allergens.length || textValue(row, "allergenSummary") || Object.values(row?.allergenDetails || {}).some(Boolean));
+  const hasDescription = itemDescription(row) !== "No description loaded yet.";
+  const hasProtein = PROTEIN_SIGNAL.test(text);
+  const isSupport = SUPPORT_SIGNAL.test(supportText);
+  const isSideChoice = SIDE_CHOICE_SIGNAL.test(lowerNotes);
+
+  if ((price == null || price <= 0) && hasProtein && !isSupport) {
+    flags.push({
+      level: "review",
+      label: "Protein price gap",
+      detail: /protein choice/i.test(notes) ? "Protein choice has no direct price; confirm whether price is inherited from the composed menu." : "Protein-bearing item has no positive selling price.",
+    });
+  } else if ((price == null || price <= 0) && !isSupport && !["subrecipe", "extension"].includes(category)) {
+    flags.push({
+      level: "review",
+      label: "Price review",
+      detail: "Item is not marked as complimentary support but has no positive selling price.",
+    });
+  }
+
+  if (trueCost == null) {
+    flags.push({ level: "review", label: "Missing true cost", detail: "Food cost and margin reads need true cost." });
+  }
+
+  if (category === "side" && (price >= 5 || ENTREE_CATEGORY_SIGNAL.test(recipeCategory)) && !isSideChoice) {
+    flags.push({ level: "review", label: "Category review", detail: "Side row has entree-style price or recipe category without side-choice notes." });
+  }
+
+  if (category === "side" && isSupport && !isSideChoice) {
+    flags.push({ level: "watch", label: "Support item check", detail: "Sauce, condiment, or support-style row is currently grouped as a side." });
+  }
+
+  if (!hasAllergenSignal) {
+    flags.push({ level: "watch", label: "Allergens not listed", detail: "Chef-facing allergen details are missing or blank." });
+  }
+
+  if (!hasDescription) {
+    flags.push({ level: "watch", label: "Description missing", detail: "Chef-facing item description is missing." });
+  }
+
+  if (calories == null) {
+    flags.push({ level: "watch", label: "Calories missing", detail: "Nutrition display cannot show calories yet." });
+  }
+
+  return flags;
+}
+
+export function itemTrustStatus(row = {}) {
+  const flags = itemTrustFlags(row);
+  if (flags.some((flag) => flag.level === "review")) return "Needs Review";
+  if (flags.some((flag) => flag.level === "watch")) return "Watch";
+  return "Trusted";
+}
+
 export function recipeLibraryItemKey(row) {
   const mrn = textValue(row, "mrn", "MRN");
   if (mrn) return `mrn:${mrn}`;
@@ -118,6 +202,8 @@ export function normalizeRecipeLibraryItem(row) {
     nutrition_payload: row?.nutrition || {},
     menuworks_raw: row?.menuWorksRaw || {},
     file_slots: RECIPE_DOCUMENT_SLOTS,
+    trust_flags: itemTrustFlags(row),
+    trust_status: itemTrustStatus(row),
     raw: row || {},
   };
 }

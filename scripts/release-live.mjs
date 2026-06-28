@@ -81,6 +81,27 @@ async function githubApi(token, method, endpoint, body) {
   return json;
 }
 
+function githubContentPath(path) {
+  return path.replace(/\\/g, "/").split("/").map(encodeURIComponent).join("/");
+}
+
+async function githubContentExists(token, repo, path, ref) {
+  const response = await fetch(`https://api.github.com/repos/${repo}/contents/${githubContentPath(path)}?ref=${encodeURIComponent(ref)}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28",
+    },
+  });
+  if (response.status === 404) return false;
+  if (!response.ok) {
+    const text = await response.text();
+    const json = text ? JSON.parse(text) : {};
+    throw new Error(`GitHub API GET contents/${path} failed: ${response.status} ${json.message || text}`);
+  }
+  return true;
+}
+
 async function changedTextFilesFromGit(tools) {
   const status = await getGitStatus(tools);
   if (!status.available) return [];
@@ -155,6 +176,11 @@ async function syncSourceToGitHub(tools, guardedFiles = null) {
   for (const path of files) {
     const absolute = join(root, path);
     if (!existsSync(absolute)) {
+      const remoteExists = await githubContentExists(token, repo, path, baseSha);
+      if (!remoteExists) {
+        console.log(`[info] GitHub source already deleted: ${path}`);
+        continue;
+      }
       tree.push({ path, mode: "100644", type: "blob", sha: null });
       continue;
     }

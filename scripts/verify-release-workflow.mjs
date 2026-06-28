@@ -32,6 +32,7 @@ assertIncludes("scripts/release-live.mjs", "syncSourceToGitHub");
 assertIncludes("scripts/release-live.mjs", "verifyLiveBundle");
 assertIncludes("scripts/release-live.mjs", "preflightReleaseSource");
 assertIncludes("scripts/release-live.mjs", "Release source guard");
+assertIncludes("scripts/release-live.mjs", "GitHub source already deleted");
 assertIncludes("scripts/release-live.mjs", "Release complete");
 
 console.log("Release workflow verification passed.");

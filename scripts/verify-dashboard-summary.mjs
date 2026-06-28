@@ -5,7 +5,7 @@ const root = process.cwd();
 const sourcePath = join(root, "src", "data", "menuItems.json");
 const summaryPath = join(root, "src", "data", "dashboardSummary.json");
 
-const PROTEIN_PATTERN = /beef|chicken|pork|turkey|salmon|fish|cod|shrimp|tuna|meatball|steak|brisket|carnitas|chorizo|bacon|sausage|egg|tofu|tempeh|paneer|lentil|bean|chickpea|falafel/i;
+const PROTEIN_PATTERN = /\b(beef|chicken|pork|turkey|salmon|fish|cod|shrimp|tuna|meatballs?|steak|brisket|carnitas|chorizo|bacon|sausage|eggs?|tofu|tempeh|paneer|lentils?|beans?|chickpeas?|falafel|poultry|ham|lamb)\b/i;
 const COMPLIMENTARY_PATTERN = /sauce|dressing|dip|salsa|aioli|chutney|relish|gravy|marinade|vinaigrette|condiment|garnish|pickle|seasoning|spice|rub/i;
 
 function countBy(rows, getKey) {

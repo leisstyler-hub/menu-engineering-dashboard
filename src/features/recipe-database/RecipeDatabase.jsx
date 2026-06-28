@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Activity, ArrowLeft, Camera, ChefHat, Database, DollarSign, FileDown, FileText, Flame, Image as ImageIcon, ListChecks, Pencil, Save, Search, ShieldCheck, Sparkles, Utensils, X } from "lucide-react";
+import { Activity, AlertTriangle, ArrowLeft, Camera, ChefHat, Database, DollarSign, FileDown, FileText, Flame, Image as ImageIcon, ListChecks, Pencil, Save, Search, ShieldCheck, Sparkles, Utensils, X } from "lucide-react";
 
 import MENUWORKS_ITEMS from "../../data/menuItems.json";
 import { money, pct, priceLabel, titleCase } from "../../shared/formatting.js";
@@ -16,6 +16,8 @@ import {
   MENU_ENGINEERING_OVERRIDE_STORAGE_KEY,
   applyRecipeLibraryEdit,
   caloriesLabel,
+  itemTrustFlags,
+  itemTrustStatus,
   itemDescription,
   itemName,
   normalizeRecipeLibraryItem,
@@ -171,6 +173,8 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
   const avgFc = pricedRows.length ? pricedRows.reduce((sum, row) => sum + foodCost(row), 0) / pricedRows.length : null;
   const allergenCoverage = selectedRows.length ? Math.round((selectedRows.filter((row) => allergenLabel(row) !== "No allergens listed").length / selectedRows.length) * 100) : 0;
   const descriptionCoverage = selectedRows.length ? Math.round((selectedRows.filter((row) => itemDescription(row) !== "No description loaded yet.").length / selectedRows.length) * 100) : 0;
+  const reviewRows = useMemo(() => selectedRows.filter((row) => itemTrustStatus(row) === "Needs Review"), [selectedRows]);
+  const watchRows = useMemo(() => selectedRows.filter((row) => itemTrustStatus(row) === "Watch"), [selectedRows]);
   const dataQuality = useMemo(() => getMenuDataQuality(rows), [rows]);
   const selectedMenuDataQuality = useMemo(() => getMenuDataQuality(selectedRows), [selectedRows]);
   const selectedLibraryItem = useMemo(() => {
@@ -331,9 +335,10 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
               </div>
             </section>
 
-            <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <section className="grid grid-cols-1 gap-4 lg:grid-cols-4">
               <ReadoutCard icon={Sparkles} title="Data Read" value={`${descriptionCoverage}%`} detail="description coverage for this menu" tone="emerald" />
               <ReadoutCard icon={ShieldCheck} title="Safety Signal" value={`${allergenCoverage}%`} detail="allergen coverage for this menu" tone="sky" />
+              <ReadoutCard icon={AlertTriangle} title="Data Confidence" value={`${reviewRows.length}`} detail={`${watchRows.length} watch rows; Needs Review rows are flagged on cards`} tone="amber" />
               <ReadoutCard icon={ChefHat} title="Recipe Status" value="Slots ready" detail="recipes attach when source files are loaded" tone="amber" />
             </section>
 
@@ -601,6 +606,8 @@ function ItemCard({ row, onOpen }) {
   const diet = dietLabel(row);
   const fc = foodCost(row);
   const libraryItem = normalizeRecipeLibraryItem(row);
+  const trustFlags = itemTrustFlags(row);
+  const trustStatus = itemTrustStatus(row);
   return (
     <button type="button" onClick={onOpen} className="recipe-library-card w-full rounded-3xl border border-slate-200 bg-slate-50/80 p-4 text-left transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-lg active:translate-y-0">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -608,6 +615,7 @@ function ItemCard({ row, onOpen }) {
           <div className="flex flex-wrap items-center gap-2">
             <h4 className="text-lg font-black leading-6 text-slate-950">{itemName(row)}</h4>
             {diet && <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-black text-emerald-800">{diet}</span>}
+            <TrustBadge status={trustStatus} />
           </div>
           <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">{itemDescription(row)}</p>
         </div>
@@ -629,6 +637,21 @@ function ItemCard({ row, onOpen }) {
         <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Allergens</p>
         <p className="mt-1 text-sm font-bold leading-6 text-slate-700">{allergenLabel(row)}</p>
       </div>
+      {trustFlags.length > 0 && (
+        <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 p-3">
+          <p className="text-xs font-black uppercase tracking-[0.14em] text-amber-800">Data Confidence</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {trustFlags.slice(0, 3).map((flag) => (
+              <span key={`${flag.label}-${flag.detail}`} className="rounded-full border border-white bg-white/80 px-3 py-1 text-xs font-black text-amber-900" title={flag.detail}>
+                {flag.label}
+              </span>
+            ))}
+            {trustFlags.length > 3 && (
+              <span className="rounded-full border border-white bg-white/80 px-3 py-1 text-xs font-black text-amber-900">+{trustFlags.length - 3} more</span>
+            )}
+          </div>
+        </div>
+      )}
       <div className="mt-3 flex flex-wrap gap-2">
         <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-black text-slate-600">{row.station || "No station"}</span>
         <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-black text-slate-600">{row.recipeCategory || "No recipe category"}</span>
@@ -729,6 +752,24 @@ function LibraryCardDrawer({ item, onClose, onSave }) {
                 </div>
               ) : (
                 <>
+                  <div className="rounded-3xl border border-amber-200 bg-amber-50 p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <p className="text-xs font-black uppercase tracking-[0.14em] text-amber-800">Data Confidence</p>
+                      <TrustBadge status={item.trust_status || "Trusted"} />
+                    </div>
+                    {item.trust_flags?.length ? (
+                      <div className="mt-3 space-y-2">
+                        {item.trust_flags.map((flag) => (
+                          <div key={`${flag.label}-${flag.detail}`} className="rounded-2xl border border-white bg-white/80 px-3 py-2">
+                            <p className="text-sm font-black text-slate-950">{flag.label}</p>
+                            <p className="mt-1 text-xs font-semibold leading-5 text-slate-600">{flag.detail}</p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-sm font-bold text-emerald-800">No pricing, category, allergen, description, or nutrition review flags.</p>
+                    )}
+                  </div>
                   <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
                     <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Description</p>
                     <p className="mt-2 text-base font-semibold leading-7 text-slate-700">{item.description}</p>
@@ -831,6 +872,19 @@ function InfoPill({ icon: Icon, label, tone }) {
     <span className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-black ${toneClass}`}>
       <Icon size={13} />
       {label}
+    </span>
+  );
+}
+
+function TrustBadge({ status }) {
+  const styles = {
+    "Needs Review": "border-amber-200 bg-amber-50 text-amber-900",
+    Watch: "border-sky-200 bg-sky-50 text-sky-900",
+    Trusted: "border-emerald-200 bg-emerald-50 text-emerald-800",
+  };
+  return (
+    <span className={`rounded-full border px-2 py-1 text-xs font-black ${styles[status] || styles.Trusted}`}>
+      {status}
     </span>
   );
 }

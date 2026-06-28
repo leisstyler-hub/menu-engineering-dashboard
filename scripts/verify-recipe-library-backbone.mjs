@@ -41,7 +41,7 @@ assertNotIncludes("src/main.jsx", "weeklyTrafficEnhancer");
 assertIncludes("src/app/LandingPage.jsx", "/api/traffic/weekly");
 assertNotIncludes("src/app/LandingPage.jsx", "Smart Read");
 
-assertIncludes("src/shared/appConfig.js", "2026.06.27.008-cleanup-trust-refresh");
+assertIncludes("src/shared/appConfig.js", "2026.06.28.001-rotation-trust-audit");
 
 assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "normalizeRecipeLibraryItem");
 assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "culinaryToolsMenuEngineeringItems_v3");
@@ -51,6 +51,9 @@ assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "potassium_
 assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "nutrition_payload");
 assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "menuworks_description");
 assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "effective_date");
+assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "itemTrustFlags");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Data Confidence");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Needs Review");
 assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "item-photo");
 assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "plating-guide");
 assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "recipe-file");

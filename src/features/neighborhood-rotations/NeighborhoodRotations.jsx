@@ -651,6 +651,14 @@ function recordsToRotations(records = []) {
       return;
     }
 
+    if (record.recordType === SMARTSHEET_RECORD_TYPES.globalSelection || record.recordType === SMARTSHEET_RECORD_TYPES.stationSelection) {
+      // Selection rows can restore submitted state when the header row is missing or delayed.
+      rotation.status = mergeStatus(rotation.status, record.status);
+      rotation.submittedBy = record.submittedBy || rotation.submittedBy || "";
+      rotation.submittedAt = record.submittedAt || rotation.submittedAt || "";
+      rotation.updatedAt = record.updatedAt || rotation.updatedAt || "";
+    }
+
     if (!record.itemName) return;
     const index = Math.max(0, (record.slotNumber || 1) - 1);
 
