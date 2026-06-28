@@ -2,6 +2,13 @@
 
 ## 2026-06-27
 
+- [Jun 27, 7:53 PM] Moved MenuWorks truth uploads out of Menu Engineering and into Recipe Library so one shared library source drives item rows.
+- [Jun 27, 7:53 PM] Replaced hard-coded Operational Read signals with live dataset coverage for cost, price-required rows, descriptions, and allergens.
+- [Jun 27, 7:53 PM] Rebuilt Weekly Traffic as a React line chart from the secure endpoint and removed the old DOM enhancer layer.
+- [Jun 27, 7:53 PM] Removed the redundant mobile Smart Read card and trimmed orphaned mobile dark-mode styles.
+- [Jun 27, 7:53 PM] Split heavy tool pages so the home dashboard loads first and individual tools load only when opened.
+- [Jun 27, 7:53 PM] Added a generated dashboard summary guard so home metrics stay refreshed without loading the full MenuWorks item file on first paint.
+- [Jun 27, 7:53 PM] Set visible app version to `2026.06.27.008-cleanup-trust-refresh`.
 - [Jun 27, 2:47 PM] Mapped Carvery rotating vegetable selectors directly to `Charred Vegetable Option` MenuWorks notes.
 - [Jun 27, 2:47 PM] Split Carvery side selectors by exact notes: hot sides use `Hot A La Carte and Side Choice`, while cold sides use `A la carte and side choice` plus `Cold A La Carte and Side Choice`.
 - [Jun 27, 2:47 PM] Scoped Carvery protein, vegetable, hot side, cold side, and starch lookups to Carvery rows so unrelated menu items cannot leak into those dropdowns or saved recaps.

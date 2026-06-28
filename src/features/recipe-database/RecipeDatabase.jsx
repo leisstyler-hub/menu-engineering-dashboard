@@ -7,6 +7,12 @@ import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
 import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
 import {
+  MENUWORKS_IMPORT_CODE_HINT,
+  MENUWORKS_IMPORT_INITIATION_CODE,
+  buildMenuWorksImportReview,
+  getMenuDataQuality,
+} from "./menuWorksImport.js";
+import {
   MENU_ENGINEERING_OVERRIDE_STORAGE_KEY,
   applyRecipeLibraryEdit,
   caloriesLabel,
@@ -136,6 +142,9 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [dietFilter, setDietFilter] = useState("All");
   const [selectedItemKey, setSelectedItemKey] = useState("");
+  const [pendingImport, setPendingImport] = useState(null);
+  const [uploadInitiationCode, setUploadInitiationCode] = useState("");
+  const [uploadStatus, setUploadStatus] = useState("");
 
   const selectedRows = useMemo(() => rows.filter((row) => (row.menu || "No menu assigned") === selectedMenu), [rows, selectedMenu]);
   const filteredMenuList = menus.filter((entry) => entry.menu.toLowerCase().includes(menuSearch.toLowerCase()));
@@ -162,6 +171,8 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
   const avgFc = pricedRows.length ? pricedRows.reduce((sum, row) => sum + foodCost(row), 0) / pricedRows.length : null;
   const allergenCoverage = selectedRows.length ? Math.round((selectedRows.filter((row) => allergenLabel(row) !== "No allergens listed").length / selectedRows.length) * 100) : 0;
   const descriptionCoverage = selectedRows.length ? Math.round((selectedRows.filter((row) => itemDescription(row) !== "No description loaded yet.").length / selectedRows.length) * 100) : 0;
+  const dataQuality = useMemo(() => getMenuDataQuality(rows), [rows]);
+  const selectedMenuDataQuality = useMemo(() => getMenuDataQuality(selectedRows), [selectedRows]);
   const selectedLibraryItem = useMemo(() => {
     if (!selectedItemKey) return null;
     const row = rows.find((candidate) => normalizeRecipeLibraryItem(candidate).item_key === selectedItemKey);
@@ -175,6 +186,44 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
     if (typeof window !== "undefined") {
       window.localStorage.setItem(MENU_ENGINEERING_OVERRIDE_STORAGE_KEY, JSON.stringify(nextRows));
     }
+  };
+
+  const parseMenuWorksFile = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (uploadInitiationCode.trim() !== MENUWORKS_IMPORT_INITIATION_CODE) {
+      setUploadStatus(`Enter initiation code ${MENUWORKS_IMPORT_CODE_HINT} before uploading a MenuWorks truth file.`);
+      event.target.value = "";
+      return;
+    }
+
+    try {
+      setUploadStatus("Reading MenuWorks truth file...");
+      const review = await buildMenuWorksImportReview(file, rows);
+      setPendingImport(review);
+      setUploadStatus(`${review.importedRows.length.toLocaleString()} rows are ready for review from ${review.importedMenuNames.length.toLocaleString()} menus.`);
+    } catch (error) {
+      setUploadStatus(error instanceof Error ? error.message : "Unable to read this MenuWorks file.");
+    } finally {
+      event.target.value = "";
+    }
+  };
+
+  const acceptImport = () => {
+    if (!pendingImport || uploadInitiationCode.trim() !== MENUWORKS_IMPORT_INITIATION_CODE) return;
+    const importScope = new Set(pendingImport.importedMenuNames);
+    const retainedRows = rows.filter((row) => !importScope.has(row.menu));
+    const nextRows = [...retainedRows, ...pendingImport.importedRows].map((row, index) => ({ ...row, id: index }));
+    setRows(nextRows);
+    setSelectedMenu(pendingImport.importedMenuNames[0] || selectedMenu);
+    setSelectedItemKey("");
+    setCategoryFilter("All");
+    setDietFilter("All");
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(MENU_ENGINEERING_OVERRIDE_STORAGE_KEY, JSON.stringify(nextRows));
+    }
+    setUploadStatus(`Accepted ${pendingImport.importedRows.length.toLocaleString()} MenuWorks rows into Recipe Library.`);
+    setPendingImport(null);
   };
 
   return (
@@ -210,6 +259,17 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
           <MetricCard icon={ShieldCheck} label="Allergen Coverage" value={`${allergenCoverage}%`} detail="selected menu" />
           <MetricCard icon={ChefHat} label="File Slots" value="4" detail="per item library card" tone="amber" />
         </section>
+
+        <MenuWorksRefreshPanel
+          dataQuality={dataQuality}
+          selectedMenuDataQuality={selectedMenuDataQuality}
+          pendingImport={pendingImport}
+          uploadInitiationCode={uploadInitiationCode}
+          uploadStatus={uploadStatus}
+          onCodeChange={setUploadInitiationCode}
+          onFileChange={parseMenuWorksFile}
+          onOpenReview={() => setPendingImport((current) => current)}
+        />
 
         <main className="grid grid-cols-1 gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
           <aside className="rounded-[2rem] border border-slate-200 bg-white p-4 shadow-xl">
@@ -299,6 +359,13 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
           onSave={saveLibraryItem}
         />
       )}
+      {pendingImport && (
+        <MenuWorksImportReviewModal
+          review={pendingImport}
+          onCancel={() => setPendingImport(null)}
+          onAccept={acceptImport}
+        />
+      )}
     </div>
   );
 }
@@ -338,6 +405,176 @@ function ReadoutCard({ icon: Icon, title, value, detail, tone }) {
         <Icon size={20} />
       </div>
     </article>
+  );
+}
+
+function MenuWorksRefreshPanel({
+  dataQuality,
+  selectedMenuDataQuality,
+  pendingImport,
+  uploadInitiationCode,
+  uploadStatus,
+  onCodeChange,
+  onFileChange,
+}) {
+  const unlocked = uploadInitiationCode.trim() === MENUWORKS_IMPORT_INITIATION_CODE;
+  return (
+    <section className="rounded-[2rem] border border-sky-200 bg-white p-5 shadow-xl">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-center">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600">Library Refresh</p>
+          <h2 className="mt-1 text-2xl font-black">MenuWorks Truth Upload</h2>
+          <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-slate-600">
+            This is the only place to update MenuWorks item rows. Accepted uploads replace matching menus across Recipe Library, Menu Engineering, and menu selectors.
+          </p>
+          {uploadStatus && (
+            <p className="mt-3 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-black text-sky-900">{uploadStatus}</p>
+          )}
+        </div>
+
+        <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+          <label className="block text-xs font-black uppercase tracking-[0.14em] text-slate-400">Initiate upload</label>
+          <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-[132px_minmax(0,1fr)]">
+            <input
+              type="password"
+              inputMode="numeric"
+              maxLength={6}
+              value={uploadInitiationCode}
+              onChange={(event) => onCodeChange(event.target.value)}
+              placeholder={MENUWORKS_IMPORT_CODE_HINT}
+              className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-900 outline-none focus:border-emerald-300"
+            />
+            <input
+              disabled={!unlocked}
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              onChange={onFileChange}
+              className="block w-full text-sm font-bold text-slate-600 file:mr-3 file:rounded-2xl file:border-0 file:bg-slate-950 file:px-4 file:py-3 file:text-sm file:font-black file:text-white hover:file:bg-slate-800 disabled:opacity-50"
+            />
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <QualityMini label="All data" value={dataQuality.costCoverage} detail={`${dataQuality.costed}/${dataQuality.total} costed`} />
+            <QualityMini label="This menu" value={selectedMenuDataQuality.descriptionCoverage} detail={`${selectedMenuDataQuality.described}/${selectedMenuDataQuality.total} detailed`} />
+          </div>
+          {pendingImport && (
+            <p className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-black text-amber-900">
+              Review is open for {pendingImport.importedRows.length.toLocaleString()} rows from {pendingImport.fileName}.
+            </p>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function QualityMini({ label, value, detail }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-3">
+      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">{label}</p>
+      <div className="mt-1 flex items-end justify-between gap-3">
+        <p className="text-xl font-black text-slate-950">{value}%</p>
+        <span className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
+          <span className="block h-full rounded-full bg-emerald-500" style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
+        </span>
+      </div>
+      <p className="mt-1 text-xs font-semibold text-slate-500">{detail}</p>
+    </div>
+  );
+}
+
+function importPercentLabel(value) {
+  if (value == null || !Number.isFinite(value)) return "No comparable cost history";
+  const sign = value > 0 ? "+" : "";
+  return `${sign}${value.toFixed(1)}%`;
+}
+
+function MenuWorksImportReviewModal({ review, onCancel, onAccept }) {
+  return (
+    <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-slate-950/50 p-3 backdrop-blur-sm md:p-8" role="dialog" aria-modal="true">
+      <section className="mx-auto w-full max-w-5xl rounded-[2rem] border border-slate-200 bg-white shadow-2xl">
+        <div className="flex flex-col gap-4 border-b border-slate-200 p-5 md:flex-row md:items-start md:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600">MenuWorks Review</p>
+            <h2 className="mt-1 text-3xl font-black text-slate-950">Accept library refresh?</h2>
+            <p className="mt-2 text-sm font-semibold text-slate-600">
+              {review.fileName} has {review.importedRows.length.toLocaleString()} rows across {review.importedMenuNames.length.toLocaleString()} menus.
+            </p>
+          </div>
+          <button type="button" onClick={onCancel} className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100" aria-label="Close import review">
+            <X size={19} />
+          </button>
+        </div>
+
+        <div className="grid gap-4 p-5 lg:grid-cols-4">
+          <ImportMetric label="New items" value={review.newItems.length} tone="emerald" />
+          <ImportMetric label="Changed items" value={review.changedItems.length} tone="sky" />
+          <ImportMetric label="Removed items" value={review.removedItems.length} tone="amber" />
+          <ImportMetric label="Cost movement" value={importPercentLabel(review.totalCostChangePct)} tone="slate" />
+        </div>
+
+        <div className="grid gap-4 px-5 pb-5 lg:grid-cols-2">
+          <ImportChangeList title="Cost increases" items={review.costIncreases} getLabel={(change) => `${itemName(change.after)} - ${money(change.before.trueCost)} to ${money(change.after.trueCost)}`} />
+          <ImportChangeList title="Price changes" items={review.priceChanges} getLabel={(change) => `${itemName(change.after)} - ${priceLabel(change.before.price)} to ${priceLabel(change.after.price)}`} />
+          <ImportChangeList title="New menu items" items={review.newItems} getLabel={(row) => `${row.menu} - ${itemName(row)}`} />
+          <ImportChangeList title="Removed from refreshed menus" items={review.removedItems} getLabel={(row) => `${row.menu} - ${itemName(row)}`} />
+        </div>
+
+        <div className="flex flex-col gap-3 border-t border-slate-200 p-5 md:flex-row md:items-center md:justify-between">
+          <p className="text-sm font-semibold leading-6 text-slate-600">
+            Accepting replaces only the menus included in this upload and keeps all other menus in place.
+          </p>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <button type="button" onClick={onCancel} className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-700 hover:bg-slate-50">
+              Cancel
+            </button>
+            <button type="button" onClick={onAccept} className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white hover:bg-slate-800">
+              Accept Update + Replace Library Data
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function ImportMetric({ label, value, tone }) {
+  const toneClass = {
+    emerald: "border-emerald-200 bg-emerald-50 text-emerald-900",
+    sky: "border-sky-200 bg-sky-50 text-sky-900",
+    amber: "border-amber-200 bg-amber-50 text-amber-900",
+    slate: "border-slate-200 bg-slate-50 text-slate-900",
+  }[tone];
+  return (
+    <article className={`rounded-3xl border p-4 ${toneClass}`}>
+      <p className="text-xs font-black uppercase tracking-[0.14em] opacity-70">{label}</p>
+      <p className="mt-2 text-2xl font-black">{typeof value === "number" ? value.toLocaleString() : value}</p>
+    </article>
+  );
+}
+
+function ImportChangeList({ title, items, getLabel }) {
+  const visible = items.slice(0, 6);
+  return (
+    <section className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-base font-black text-slate-950">{title}</h3>
+        <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-black text-slate-600">{items.length.toLocaleString()}</span>
+      </div>
+      {visible.length ? (
+        <div className="mt-3 space-y-2">
+          {visible.map((item, index) => (
+            <p key={`${title}-${index}`} className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold leading-5 text-slate-700">
+              {getLabel(item)}
+            </p>
+          ))}
+          {items.length > visible.length && (
+            <p className="px-1 text-xs font-black uppercase tracking-[0.12em] text-slate-400">+{items.length - visible.length} more</p>
+          )}
+        </div>
+      ) : (
+        <p className="mt-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-500">No changes in this group.</p>
+      )}
+    </section>
   );
 }
 

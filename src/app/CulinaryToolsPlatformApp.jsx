@@ -1,13 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { Suspense, lazy, useEffect, useState } from "react";
 import { BarChart3, BookOpen, CalendarRange, Home, ShieldCheck } from "lucide-react";
 import LandingPage from "./LandingPage.jsx";
-import MenuEngineeringDashboard from "../features/menu-engineering/MenuEngineeringDashboard.jsx";
-import NeighborhoodRotations from "../features/neighborhood-rotations/NeighborhoodRotations.jsx";
-import LadleComplianceDashboard from "../features/ladle-compliance/LadleComplianceDashboard.jsx";
-import LeanTool from "../features/lean-tool/LeanTool.jsx";
-import RecipeDatabase from "../features/recipe-database/RecipeDatabase.jsx";
-import SmartsheetHealth from "../features/smartsheet-health/SmartsheetHealth.jsx";
 import { addToolBreadcrumb, setActiveToolContext } from "../shared/monitoring/sentry.jsx";
+
+const MenuEngineeringDashboard = lazy(() => import("../features/menu-engineering/MenuEngineeringDashboard.jsx"));
+const NeighborhoodRotations = lazy(() => import("../features/neighborhood-rotations/NeighborhoodRotations.jsx"));
+const LadleComplianceDashboard = lazy(() => import("../features/ladle-compliance/LadleComplianceDashboard.jsx"));
+const LeanTool = lazy(() => import("../features/lean-tool/LeanTool.jsx"));
+const RecipeDatabase = lazy(() => import("../features/recipe-database/RecipeDatabase.jsx"));
+const SmartsheetHealth = lazy(() => import("../features/smartsheet-health/SmartsheetHealth.jsx"));
 
 export default function CulinaryToolsPlatformApp() {
   const [activeTool, setActiveTool] = useState("home");
@@ -24,7 +25,9 @@ export default function CulinaryToolsPlatformApp() {
   if (activeTool === "menuEngineering") {
     return (
       <>
-        <MenuEngineeringDashboard onBackToPlatform={() => setActiveTool("home")} onOpenSmartsheetHealth={openSmartsheetHealth} />
+        <Suspense fallback={<ToolLoading title="Opening Menu Engineering" />}>
+          <MenuEngineeringDashboard onBackToPlatform={() => setActiveTool("home")} onOpenSmartsheetHealth={openSmartsheetHealth} />
+        </Suspense>
         <MobileToolNav activeTool={activeTool} setActiveTool={setActiveTool} />
       </>
     );
@@ -33,7 +36,9 @@ export default function CulinaryToolsPlatformApp() {
   if (activeTool === "neighborhoodRotations") {
     return (
       <>
-        <NeighborhoodRotations onBackToPlatform={() => setActiveTool("home")} onOpenSmartsheetHealth={openSmartsheetHealth} />
+        <Suspense fallback={<ToolLoading title="Opening Neighborhood Rotations" />}>
+          <NeighborhoodRotations onBackToPlatform={() => setActiveTool("home")} onOpenSmartsheetHealth={openSmartsheetHealth} />
+        </Suspense>
         <MobileToolNav activeTool={activeTool} setActiveTool={setActiveTool} />
       </>
     );
@@ -42,7 +47,9 @@ export default function CulinaryToolsPlatformApp() {
   if (activeTool === "recipeDatabase") {
     return (
       <>
-        <RecipeDatabase onBackToPlatform={() => setActiveTool("home")} onOpenSmartsheetHealth={openSmartsheetHealth} />
+        <Suspense fallback={<ToolLoading title="Opening Recipe Library" />}>
+          <RecipeDatabase onBackToPlatform={() => setActiveTool("home")} onOpenSmartsheetHealth={openSmartsheetHealth} />
+        </Suspense>
         <MobileToolNav activeTool={activeTool} setActiveTool={setActiveTool} />
       </>
     );
@@ -51,7 +58,9 @@ export default function CulinaryToolsPlatformApp() {
   if (activeTool === "ladleCompliance") {
     return (
       <>
-        <LadleComplianceDashboard onBackToPlatform={() => setActiveTool("home")} onOpenSmartsheetHealth={openSmartsheetHealth} />
+        <Suspense fallback={<ToolLoading title="Opening Ladle Compliance" />}>
+          <LadleComplianceDashboard onBackToPlatform={() => setActiveTool("home")} onOpenSmartsheetHealth={openSmartsheetHealth} />
+        </Suspense>
         <MobileToolNav activeTool={activeTool} setActiveTool={setActiveTool} />
       </>
     );
@@ -60,7 +69,9 @@ export default function CulinaryToolsPlatformApp() {
   if (activeTool === "leanTool") {
     return (
       <>
-        <LeanTool onBackToPlatform={() => setActiveTool("home")} onOpenSmartsheetHealth={openSmartsheetHealth} />
+        <Suspense fallback={<ToolLoading title="Opening Lean Tool" />}>
+          <LeanTool onBackToPlatform={() => setActiveTool("home")} onOpenSmartsheetHealth={openSmartsheetHealth} />
+        </Suspense>
       </>
     );
   }
@@ -68,7 +79,9 @@ export default function CulinaryToolsPlatformApp() {
   if (activeTool === "smartsheetHealth") {
     return (
       <>
-        <SmartsheetHealth onBackToPlatform={() => setActiveTool("home")} />
+        <Suspense fallback={<ToolLoading title="Opening Data Health" />}>
+          <SmartsheetHealth onBackToPlatform={() => setActiveTool("home")} />
+        </Suspense>
         <MobileToolNav activeTool={activeTool} setActiveTool={setActiveTool} />
       </>
     );
@@ -83,6 +96,20 @@ export default function CulinaryToolsPlatformApp() {
       onOpenLeanTool={() => setActiveTool("leanTool")}
       onOpenSmartsheetHealth={openSmartsheetHealth}
     />
+  );
+}
+
+function ToolLoading({ title }) {
+  return (
+    <div className="min-h-screen bg-slate-50 p-6 text-slate-950">
+      <div className="mx-auto flex min-h-[360px] max-w-4xl items-center justify-center">
+        <div className="rounded-[2rem] border border-sky-200 bg-white p-8 text-center shadow-xl">
+          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-emerald-500" />
+          <p className="mt-5 text-xs font-black uppercase tracking-[0.18em] text-emerald-600">Loading</p>
+          <h1 className="mt-2 text-2xl font-black">{title}</h1>
+        </div>
+      </div>
+    </div>
   );
 }
 

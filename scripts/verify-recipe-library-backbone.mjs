@@ -30,8 +30,18 @@ assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "justify-cente
 assertNotIncludes("src/features/recipe-database/RecipeDatabase.jsx", "recipe-library-drawer ml-auto");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "proteinLabel");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Recipe instructions not attached yet");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "MenuWorks Truth Upload");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Accept Update + Replace Library Data");
 
-assertIncludes("src/shared/appConfig.js", "2026.06.27.007-carvery-note-mapped-selectors");
+assertNotIncludes("src/features/menu-engineering/MenuEngineeringDashboard.jsx", "Initiate MenuWorks Upload");
+assertNotIncludes("src/features/menu-engineering/MenuEngineeringDashboard.jsx", "parseMenuWorksFile");
+assertNotIncludes("src/features/menu-engineering/MenuEngineeringDashboard.jsx", "MENUWORKS_IMPORT_INITIATION_CODE");
+assertNotIncludes("src/features/menu-engineering/MenuEngineeringDashboard.jsx", "culinaryToolsMenuEngineeringItems_v2");
+assertNotIncludes("src/main.jsx", "weeklyTrafficEnhancer");
+assertIncludes("src/app/LandingPage.jsx", "/api/traffic/weekly");
+assertNotIncludes("src/app/LandingPage.jsx", "Smart Read");
+
+assertIncludes("src/shared/appConfig.js", "2026.06.27.008-cleanup-trust-refresh");
 
 assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "normalizeRecipeLibraryItem");
 assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "culinaryToolsMenuEngineeringItems_v3");

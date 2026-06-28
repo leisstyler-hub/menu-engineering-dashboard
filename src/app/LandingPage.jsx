@@ -1,20 +1,12 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { ArrowRight, BarChart3, BookOpen, CalendarRange, ClipboardCheck, Database, Home, ListChecks, PieChart, Settings, ShieldCheck, Smartphone, Sparkles, TrendingUp, Utensils, Wrench } from "lucide-react";
 
 import CHANGELOG_TEXT from "../../CHANGELOG.md?raw";
-import MENUWORKS_ITEMS from "../data/menuItems.json";
+import DASHBOARD_SUMMARY from "../data/dashboardSummary.json";
 import CompassOneLogo from "../shared/ui/CompassOneLogo.jsx";
 import PlatformSettings from "../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../shared/ui/VersionStamp.jsx";
-import { money, pct } from "../shared/formatting.js";
-
-const getDietType = (item) => {
-  const vegan = String(item.veganTag || item.dietTags || "").toLowerCase().includes("vegan");
-  const vegetarian = String(item.vegetarianTag || item.dietTags || "").toLowerCase().includes("vegetarian");
-  if (vegan) return "Vegan";
-  if (vegetarian) return "Vegetarian";
-  return "Regular";
-};
+import { money } from "../shared/formatting.js";
 
 const CHANGELOG_ENTRIES = (() => {
   let currentDate = "";
@@ -35,12 +27,16 @@ const WEEKLY_TRAFFIC_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].ma
   placeholderLevel: 24 + ((index + 1) % 4) * 14,
 }));
 
-const countBy = (rows, getKey) =>
-  rows.reduce((acc, row) => {
-    const key = getKey(row) || "Unknown";
-    acc[key] = (acc[key] || 0) + 1;
-    return acc;
-  }, {});
+const VISITOR_STORAGE_KEY = "culinaryToolsAnonymousVisitorId";
+
+function getAnonymousVisitorId() {
+  if (typeof window === "undefined") return "server-render";
+  const existing = window.localStorage.getItem(VISITOR_STORAGE_KEY);
+  if (existing) return existing;
+  const generated = `visitor-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  window.localStorage.setItem(VISITOR_STORAGE_KEY, generated);
+  return generated;
+}
 
 const percentOf = (value, total) => total ? Math.round((value / total) * 100) : 0;
 
@@ -107,6 +103,20 @@ function trustGapInstruction(gapType) {
   };
 }
 
+function buildTrustGapRows(items) {
+  const priceRequiredItems = items.filter((item) => !isComplimentaryItem(item));
+  const priceGapRows = priceRequiredItems
+    .filter((item) => !(item.price != null && item.price > 0))
+    .map((item) => ({ ...item, gapType: hasProteinSignal(item) ? "Protein price gap" : "Price-required gap" }));
+
+  return [
+    ...priceGapRows,
+    ...items.filter((item) => item.trueCost == null).map((item) => ({ ...item, gapType: "Missing true cost" })),
+    ...items.filter((item) => !(item.allergens?.length || item.allergenSummary)).map((item) => ({ ...item, gapType: "Missing allergen detail" })),
+    ...items.filter((item) => !(item.enticingDescription || item.ingredientsCommonName)).map((item) => ({ ...item, gapType: "Missing description" })),
+  ];
+}
+
 function downloadTrustLayerGapList(rows) {
   const headers = ["REVIEW STATUS", "WHY THIS ROW IS LISTED", "FIELD TO FILL IN", "ENTER VALUE HERE", "ACCEPTABLE INPUT", "WHERE TO PUT IT", "GAP TYPE", "PRIORITY", "ITEM", "MENU", "STATION", "CATEGORY", "MRN", "RECIPE CATEGORY", "CURRENT PRICE", "TRUE COST", "CURRENT NOTES"];
   const body = rows.map((row) => {
@@ -144,36 +154,28 @@ function downloadTrustLayerGapList(rows) {
 }
 
 export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodRotations, onOpenRecipeDatabase, onOpenLadleCompliance, onOpenLeanTool, onOpenSmartsheetHealth }) {
-  const totalItems = MENUWORKS_ITEMS.length;
-  const menuCount = new Set(MENUWORKS_ITEMS.map((item) => item.menu).filter(Boolean)).size;
-  const costedItems = MENUWORKS_ITEMS.filter((item) => item.trueCost != null).length;
-  const foodCostRows = MENUWORKS_ITEMS.filter((item) => item.price != null && item.price > 0 && item.trueCost != null);
-  const complimentaryItems = MENUWORKS_ITEMS.filter(isComplimentaryItem);
-  const priceRequiredItems = MENUWORKS_ITEMS.filter((item) => !isComplimentaryItem(item));
-  const pricedRequiredItems = priceRequiredItems.filter((item) => item.price != null && item.price > 0);
-  const proteinPriceGaps = priceRequiredItems.filter((item) => hasProteinSignal(item) && !(item.price != null && item.price > 0));
-  const priceGapRows = priceRequiredItems
-    .filter((item) => !(item.price != null && item.price > 0))
-    .map((item) => ({ ...item, gapType: hasProteinSignal(item) ? "Protein price gap" : "Price-required gap" }));
-  const trustGapRows = [
-    ...priceGapRows,
-    ...MENUWORKS_ITEMS.filter((item) => item.trueCost == null).map((item) => ({ ...item, gapType: "Missing true cost" })),
-    ...MENUWORKS_ITEMS.filter((item) => !(item.allergens?.length || item.allergenSummary)).map((item) => ({ ...item, gapType: "Missing allergen detail" })),
-    ...MENUWORKS_ITEMS.filter((item) => !(item.enticingDescription || item.ingredientsCommonName)).map((item) => ({ ...item, gapType: "Missing description" })),
-  ];
-  const avgFoodCost = foodCostRows.length
-    ? foodCostRows.reduce((sum, item) => sum + (item.trueCost / item.price), 0) / foodCostRows.length
-    : null;
-  const dietCounts = countBy(MENUWORKS_ITEMS, getDietType);
-  const categoryCounts = countBy(MENUWORKS_ITEMS, (item) => item.category || "Unclassified");
-  const allergenCoverage = percentOf(MENUWORKS_ITEMS.filter((item) => item.allergens?.length || item.allergenSummary).length, totalItems);
-  const detailCoverage = percentOf(MENUWORKS_ITEMS.filter((item) => item.enticingDescription || item.ingredientsCommonName).length, totalItems);
-  const costCoverage = percentOf(MENUWORKS_ITEMS.filter((item) => item.trueCost != null).length, totalItems);
-  const priceCoverage = percentOf(pricedRequiredItems.length, priceRequiredItems.length);
-  const recentItems = [...MENUWORKS_ITEMS].sort((a, b) => Number(b.id || 0) - Number(a.id || 0)).slice(0, 10);
-  const topMenus = Object.entries(countBy(MENUWORKS_ITEMS, (item) => item.menu))
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 6);
+  const {
+    totalItems,
+    menuCount,
+    costedItems,
+    complimentaryItems: complimentaryItemCount,
+    priceRequiredItems: priceRequiredItemCount,
+    pricedRequiredItems: pricedRequiredItemCount,
+    proteinPriceGaps: proteinPriceGapCount,
+    allergenCoverage,
+    detailCoverage,
+    costCoverage,
+    priceCoverage,
+    dietCounts,
+    categoryCounts,
+    recentItems,
+    topMenus,
+  } = DASHBOARD_SUMMARY;
+
+  const handleDownloadTrustLayerGapList = async () => {
+    const module = await import("../data/menuItems.json");
+    downloadTrustLayerGapList(buildTrustGapRows(module.default || module));
+  };
 
   const tools = [
     {
@@ -239,7 +241,6 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
         detailCoverage={detailCoverage}
         costCoverage={costCoverage}
         priceCoverage={priceCoverage}
-        avgFoodCost={avgFoodCost}
         dietCounts={dietCounts}
         categoryCounts={categoryCounts}
         recentItems={recentItems}
@@ -315,7 +316,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
                 <ConfidenceBars
                   rows={[
                     ["Recipe cost coverage", costCoverage, `${costedItems.toLocaleString()} rows with true cost`],
-                    ["Price-required coverage", priceCoverage, `${pricedRequiredItems.length.toLocaleString()} of ${priceRequiredItems.length.toLocaleString()} required items priced`],
+                    ["Price-required coverage", priceCoverage, `${pricedRequiredItemCount.toLocaleString()} of ${priceRequiredItemCount.toLocaleString()} required items priced`],
                     ["Allergen coverage", allergenCoverage, "item safety detail signal"],
                     ["Description coverage", detailCoverage, "chef-facing detail signal"],
                   ]}
@@ -326,10 +327,10 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
                     Complimentary sauces/sub recipes are excluded from price-required coverage. Protein-bearing items without a positive price are treated as gaps.
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold text-slate-600">
-                    <span className="rounded-full border border-slate-200 bg-white px-3 py-1">{complimentaryItems.length.toLocaleString()} complimentary rows</span>
-                    <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-amber-900">{proteinPriceGaps.length.toLocaleString()} protein price gaps</span>
+                    <span className="rounded-full border border-slate-200 bg-white px-3 py-1">{complimentaryItemCount.toLocaleString()} complimentary rows</span>
+                    <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-amber-900">{proteinPriceGapCount.toLocaleString()} protein price gaps</span>
                   </div>
-                  <button onClick={() => downloadTrustLayerGapList(trustGapRows)} className="mt-3 w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-black text-slate-800 hover:bg-slate-100">
+                  <button onClick={handleDownloadTrustLayerGapList} className="mt-3 w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-black text-slate-800 hover:bg-slate-100">
                     Download trust action CSV
                   </button>
                 </div>
@@ -338,9 +339,9 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
               <DashboardPanel icon={Sparkles} eyebrow="Executive Signal" title="Operational Read">
                 <SignalStack
                   rows={[
-                    { label: "Menu data trust is actively tracked", value: costCoverage, tone: "emerald", detail: "Trust coverage separates complimentary rows from protein price gaps." },
-                    { label: "Rotation planning has leadership visibility", value: 72, tone: "sky", detail: "Submission health, cost ranges, and station completion are now visible." },
-                    { label: "Lean results are ready for leader review", value: 70, tone: "lime", detail: "Stored results, filters, email reporting, and void controls are in place." },
+                    { label: "Menu data trust is actively tracked", value: costCoverage, tone: "emerald", detail: `${costedItems.toLocaleString()} of ${totalItems.toLocaleString()} item rows have true cost.` },
+                    { label: "Price-required items are separated", value: priceCoverage, tone: "sky", detail: `${pricedRequiredItemCount.toLocaleString()} of ${priceRequiredItemCount.toLocaleString()} required rows have a positive price.` },
+                    { label: "Chef-facing detail is loaded", value: Math.round((detailCoverage + allergenCoverage) / 2), tone: "lime", detail: `${detailCoverage}% descriptions and ${allergenCoverage}% allergen coverage.` },
                   ]}
                 />
               </DashboardPanel>
@@ -419,7 +420,6 @@ function MobileLanding({
   detailCoverage,
   costCoverage,
   priceCoverage,
-  avgFoodCost,
   dietCounts,
   categoryCounts,
   recentItems,
@@ -466,20 +466,6 @@ function MobileLanding({
           {metricTiles.map((tile) => (
             <MobileMetricTile key={tile.label} {...tile} />
           ))}
-        </section>
-
-        <section className="mobile-smart-read">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-emerald-700">Smart Read</p>
-              <p className="mt-2 text-sm font-semibold leading-6 text-slate-700">
-                {allergenCoverage}% allergen coverage, {detailCoverage}% description coverage, average priced item food cost at {pct(avgFoodCost)}.
-              </p>
-            </div>
-            <div className="mobile-smart-icon">
-              <Sparkles size={19} />
-            </div>
-          </div>
         </section>
 
         <section className="space-y-3" aria-label="Tools">
@@ -653,52 +639,142 @@ function MobileToolCard({ title, eyebrow, description, action, onOpen, icon: Ico
 }
 
 function WeeklyTrafficChart({ days, compact = false }) {
-  const connectedDays = days.filter((day) => typeof day.visitors === "number");
-  const hasTrafficData = connectedDays.length > 0;
-  const totalVisitors = connectedDays.reduce((sum, day) => sum + day.visitors, 0);
-  const maxVisitors = Math.max(...connectedDays.map((day) => day.visitors), 0);
+  const [traffic, setTraffic] = useState({
+    status: "loading",
+    days,
+    totalVisitors: null,
+    message: "Connecting to secure endpoint...",
+  });
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const loadTraffic = async () => {
+      try {
+        const response = await fetch("/api/traffic/weekly", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            visitorId: getAnonymousVisitorId(),
+            path: typeof window === "undefined" ? "/" : `${window.location.pathname}${window.location.search}`,
+          }),
+          signal: controller.signal,
+        });
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) throw new Error(payload.message || "Traffic endpoint unavailable");
+        const endpointDays = Array.isArray(payload.days) && payload.days.length ? payload.days : days;
+        setTraffic({
+          status: "live",
+          days: endpointDays,
+          totalVisitors: Number(payload.totalVisitors ?? endpointDays.reduce((sum, day) => sum + (Number(day.visitors) || 0), 0)),
+          message: "Secure endpoint connected",
+        });
+      } catch (error) {
+        if (error.name === "AbortError") return;
+        setTraffic({
+          status: "error",
+          days,
+          totalVisitors: null,
+          message: error instanceof Error ? error.message : "Traffic endpoint unavailable",
+        });
+      }
+    };
+
+    loadTraffic();
+    return () => controller.abort();
+  }, [days]);
+
+  const chart = useMemo(() => {
+    const chartDays = traffic.days.map((day, index) => ({
+      ...day,
+      day: day.day || WEEKLY_TRAFFIC_DAYS[index]?.day || "",
+      visitors: typeof day.visitors === "number" ? day.visitors : null,
+    }));
+    const connectedDays = chartDays.filter((day) => typeof day.visitors === "number");
+    const hasTrafficData = connectedDays.length > 0;
+    const totalVisitors = traffic.totalVisitors ?? connectedDays.reduce((sum, day) => sum + day.visitors, 0);
+    const maxVisitors = Math.max(1, ...connectedDays.map((day) => day.visitors || 0));
+    const width = 720;
+    const height = compact ? 168 : 220;
+    const left = 42;
+    const right = 26;
+    const top = 30;
+    const bottom = 46;
+    const plotWidth = width - left - right;
+    const plotHeight = height - top - bottom;
+    const points = chartDays.map((day, index) => {
+      const x = left + (plotWidth / Math.max(1, chartDays.length - 1)) * index;
+      const value = typeof day.visitors === "number" ? day.visitors : 0;
+      const y = top + (1 - value / maxVisitors) * plotHeight;
+      return { ...day, x, y, value };
+    });
+    const linePoints = points.map((point) => `${point.x},${point.y}`).join(" ");
+    const areaPoints = `${points[0]?.x || left},${height - bottom} ${linePoints} ${points[points.length - 1]?.x || width - right},${height - bottom}`;
+
+    return { chartDays, hasTrafficData, totalVisitors, width, height, left, right, top, bottom, points, linePoints, areaPoints };
+  }, [compact, traffic]);
+
+  const statusLabel = traffic.status === "live" ? "Live" : traffic.status === "loading" ? "Connecting" : "Needs data";
+  const statusClass = traffic.status === "live"
+    ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-200"
+    : traffic.status === "loading"
+      ? "border-sky-200 bg-sky-50 text-sky-800 dark:border-sky-500/40 dark:bg-sky-500/10 dark:text-sky-200"
+      : "border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200";
 
   return (
     <div>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-black text-slate-950">Visitors this week</p>
-          <p className="mt-1 text-3xl font-black text-slate-950">
-            {hasTrafficData ? totalVisitors.toLocaleString() : "--"}
+          <p className="text-sm font-black text-slate-500 dark:text-slate-300">Visitors this week</p>
+          <p className="mt-1 text-4xl font-black text-slate-950 dark:text-white">
+            {chart.hasTrafficData ? chart.totalVisitors.toLocaleString() : "--"}
           </p>
         </div>
-        <span className="w-fit rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-black text-amber-900">
-          {hasTrafficData ? "Live analytics" : "Analytics pending"}
+        <span className={`w-fit rounded-full border px-3 py-1 text-xs font-black ${statusClass}`}>
+          {statusLabel}
         </span>
       </div>
 
-      <div className={`mt-5 grid grid-cols-7 items-end gap-2 ${compact ? "h-28" : "h-40"}`} aria-label="Visitors by day this week">
-        {days.map((day) => {
-          const hasValue = typeof day.visitors === "number";
-          const height = hasValue && maxVisitors ? Math.max(12, Math.round((day.visitors / maxVisitors) * 100)) : day.placeholderLevel;
-          return (
-            <div key={day.day} className="flex h-full min-w-0 flex-col items-center justify-end gap-2">
-              <div className="flex h-full w-full items-end justify-center rounded-full bg-slate-100 p-1">
-                <div
-                  className={`w-full rounded-full ${hasValue ? "bg-emerald-500" : "bg-slate-300 opacity-45"}`}
-                  style={{ height: `${height}%` }}
-                  title={hasValue ? `${day.visitors.toLocaleString()} visitors` : "Waiting on analytics data"}
-                />
-              </div>
-              <span className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-500">{day.day}</span>
-            </div>
-          );
-        })}
+      <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-inner dark:border-slate-700 dark:bg-slate-950/50">
+        <svg viewBox={`0 0 ${chart.width} ${chart.height}`} className="h-auto w-full" role="img" aria-label="Weekly visitor line chart">
+          {[0.25, 0.5, 0.75].map((ratio) => {
+            const y = chart.top + (chart.height - chart.top - chart.bottom) * ratio;
+            return <line key={ratio} x1={chart.left} x2={chart.width - chart.right} y1={y} y2={y} stroke="currentColor" strokeDasharray="12 18" className="text-slate-200 dark:text-slate-700" />;
+          })}
+          <line x1={chart.left} x2={chart.width - chart.right} y1={chart.height - chart.bottom} y2={chart.height - chart.bottom} stroke="currentColor" className="text-slate-200 dark:text-slate-700" />
+          {chart.hasTrafficData && (
+            <>
+              <polygon points={chart.areaPoints} fill="url(#trafficGradient)" />
+              <polyline points={chart.linePoints} fill="none" stroke="#0f8f7f" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+            </>
+          )}
+          <defs>
+            <linearGradient id="trafficGradient" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor="#10b981" stopOpacity="0.24" />
+              <stop offset="100%" stopColor="#10b981" stopOpacity="0.04" />
+            </linearGradient>
+          </defs>
+          {chart.points.map((point) => (
+            <g key={point.day}>
+              <circle cx={point.x} cy={point.y} r="8" fill="#10b981" stroke="white" strokeWidth="4" className="dark:stroke-slate-950" />
+              {point.value > 0 && (
+                <g>
+                  <rect x={point.x - 25} y={Math.max(2, point.y - 36)} width="50" height="24" rx="12" fill="#ecfdf5" stroke="#99f6e4" className="dark:fill-emerald-500/15 dark:stroke-emerald-400/40" />
+                  <text x={point.x} y={Math.max(18, point.y - 19)} textAnchor="middle" className="fill-slate-950 text-[16px] font-black dark:fill-white">{point.value.toLocaleString()}</text>
+                </g>
+              )}
+              <text x={point.x} y={chart.height - 18} textAnchor="middle" className="fill-slate-500 text-[12px] font-black uppercase tracking-wide dark:fill-slate-300">{point.day}</text>
+              <text x={point.x} y={chart.height - 3} textAnchor="middle" className="fill-slate-950 text-[12px] font-black dark:fill-white">{point.value.toLocaleString()}</text>
+            </g>
+          ))}
+        </svg>
       </div>
 
-      {!hasTrafficData && (
-        <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
-          <p className="text-sm font-bold text-slate-950">Ready for real traffic data</p>
-          <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">
-            Vercel Analytics is installed for collection; the dashboard needs a secure analytics read endpoint before it can show real visitor counts.
-          </p>
-        </div>
-      )}
+      <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">
+        <p className="text-sm font-bold text-slate-950 dark:text-white">{traffic.message}</p>
+        <p className="mt-1 text-xs font-semibold leading-5 text-slate-500 dark:text-slate-300">
+          Anonymous weekly visitors are counted through the secure app endpoint.
+        </p>
+      </div>
     </div>
   );
 }

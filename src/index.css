@@ -82,8 +82,7 @@
   }
 
   .mobile-kpi-icon,
-  .mobile-tool-icon,
-  .mobile-smart-icon {
+  .mobile-tool-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -95,23 +94,6 @@
     height: 40px;
     width: 40px;
     border-color: rgb(255 255 255 / 0.5);
-  }
-
-  .mobile-smart-read {
-    border: 1px solid #cce9dc;
-    border-radius: 26px;
-    background: linear-gradient(135deg, #ffffff 0%, #effaf3 100%);
-    padding: 16px;
-    box-shadow: 0 14px 34px rgb(16 185 129 / 0.12);
-  }
-
-  .mobile-smart-icon {
-    height: 42px;
-    width: 42px;
-    flex: 0 0 auto;
-    border-color: #b7e7d0;
-    background: #e9fbf2;
-    color: #059669;
   }
 
   .mobile-tool-card {
@@ -886,7 +868,6 @@
 
     .mobile-app-header,
     .mobile-kpi-tile,
-    .mobile-smart-read,
     .mobile-tool-card {
       border-radius: 22px;
     }
@@ -1147,12 +1128,6 @@
     color: #f8fafc;
   }
 
-  html.dark .mobile-smart-read {
-    border-color: #115e59;
-    background: linear-gradient(135deg, #0f172a 0%, #0b332d 100%);
-    box-shadow: 0 16px 44px rgb(0 0 0 / 0.26);
-  }
-
   html.dark .mobile-data-panel {
     border-color: #334155;
     background: rgb(15 23 42 / 0.94);
@@ -1160,12 +1135,6 @@
   }
 
   html.dark .mobile-data-icon {
-    border-color: #0f766e;
-    background: #0b3b34;
-    color: #5eead4;
-  }
-
-  html.dark .mobile-smart-icon {
     border-color: #0f766e;
     background: #0b3b34;
     color: #5eead4;

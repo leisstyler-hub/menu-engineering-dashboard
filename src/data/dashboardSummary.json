@@ -1,0 +1,123 @@
+{
+  "generatedFrom": "src/data/menuItems.json",
+  "totalItems": 1507,
+  "menuCount": 53,
+  "costedItems": 1448,
+  "complimentaryItems": 1028,
+  "priceRequiredItems": 479,
+  "pricedRequiredItems": 449,
+  "proteinPriceGaps": 23,
+  "allergenCoverage": 92,
+  "detailCoverage": 100,
+  "costCoverage": 96,
+  "priceCoverage": 94,
+  "dietCounts": {
+    "Vegan": 438,
+    "Vegetarian": 457,
+    "Regular": 612
+  },
+  "categoryCounts": {
+    "entree": 815,
+    "extension": 104,
+    "side": 291,
+    "subRecipe": 297
+  },
+  "recentItems": [
+    {
+      "id": 1507,
+      "item": "Turmeric Mango Smoothie",
+      "menu": "AMZ+RA: Smoothies",
+      "station": "Smoothies",
+      "price": 6
+    },
+    {
+      "id": 1506,
+      "item": "Stress Down Smoothie, Almond Milk, Tropical Fruits",
+      "menu": "AMZ+RA: Smoothies",
+      "station": "Smoothies",
+      "price": 6
+    },
+    {
+      "id": 1505,
+      "item": "Matcha Almond Milk Smoothie",
+      "menu": "AMZ+RA: Smoothies",
+      "station": "Smoothies",
+      "price": 6
+    },
+    {
+      "id": 1504,
+      "item": "Coffee Cinnamon Smoothie",
+      "menu": "AMZ+RA: Smoothies",
+      "station": "Smoothies",
+      "price": 6
+    },
+    {
+      "id": 1503,
+      "item": "Tropical Green Smoothie",
+      "menu": "AMZ+RA: Smoothies",
+      "station": "Smoothies",
+      "price": 6
+    },
+    {
+      "id": 1502,
+      "item": "Blueberry Spinach Smoothie",
+      "menu": "AMZ+RA: Smoothies",
+      "station": "Smoothies",
+      "price": 6
+    },
+    {
+      "id": 1501,
+      "item": "Brain Power Smoothie",
+      "menu": "AMZ+RA: Smoothies",
+      "station": "Smoothies",
+      "price": 6
+    },
+    {
+      "id": 1500,
+      "item": "Berry Chia Seed Smoothie",
+      "menu": "AMZ+RA: Smoothies",
+      "station": "Smoothies",
+      "price": 6
+    },
+    {
+      "id": 1499,
+      "item": "Almond Butter & Banana Smoothie",
+      "menu": "AMZ+RA: Smoothies",
+      "station": "Smoothies",
+      "price": 6
+    },
+    {
+      "id": 1498,
+      "item": "Almond Bliss Smoothie, Coconut, Cacao",
+      "menu": "AMZ+RA: Smoothies",
+      "station": "Smoothies",
+      "price": 6
+    }
+  ],
+  "topMenus": [
+    [
+      "AMZ: Carvery",
+      122
+    ],
+    [
+      "AMZ: Fresh Five",
+      98
+    ],
+    [
+      "AMZ: Breakfast",
+      94
+    ],
+    [
+      "AMZ: Wok",
+      87
+    ],
+    [
+      "AMZ: Cafe Express Soup",
+      70
+    ],
+    [
+      "AMZ: Cafe Express Curated Sandwiches",
+      62
+    ]
+  ]
+}

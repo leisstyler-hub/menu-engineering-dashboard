@@ -1,11 +1,11 @@
-import React, { useMemo, useState } from "react";
-import * as XLSX from "xlsx";
+﻿import React, { useMemo, useState } from "react";
 import { Search, Star, TrendingUp, HelpCircle, Dog, SlidersHorizontal, ChefHat, DollarSign } from "lucide-react";
 
 import MENUWORKS_ITEMS from "../../data/menuItems.json";
 import { money, pct, priceLabel, smartMenuEngineeringSort, titleCase } from "../../shared/formatting.js";
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
 import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
+import { MENU_ENGINEERING_OVERRIDE_STORAGE_KEY } from "../recipe-database/recipeLibraryModel.js";
 
 function classify(marginHigh, volumeHigh) {
   if (marginHigh && volumeHigh) return "STAR";
@@ -52,39 +52,6 @@ const classConfig = {
   },
 };
 
-const MENU_ENGINEERING_OVERRIDE_STORAGE_KEY = "culinaryToolsMenuEngineeringItems_v2";
-const MENUWORKS_IMPORT_INITIATION_CODE = "410410";
-const MENUWORKS_IMPORT_CODE_HINT = "<Six Digits>";
-const MENUWORKS_ALLERGEN_COLUMNS = [
-  "Egg",
-  "Fish",
-  "Milk",
-  "Peanuts",
-  "Sesame",
-  "Shellfish - Crustacean",
-  "Soy",
-  "Tree Nuts",
-  "Wheat",
-  "Alcohol",
-  "Beef",
-  "Buckwheat",
-  "Celery",
-  "Garlic",
-  "Gluten",
-  "Lupin",
-  "MSG",
-  "Mushroom",
-  "Mustard",
-  "Onion",
-  "Orange",
-  "Pork",
-  "Poultry",
-  "Shellfish - Mollusk",
-  "Strawberry",
-  "Sulphites",
-  "Tomato",
-];
-
 function readStoredMenuItems() {
   if (typeof window === "undefined") return MENUWORKS_ITEMS;
   try {
@@ -120,134 +87,6 @@ function getMenuDataQuality(rows = []) {
     descriptionCoverage: coveragePct(described, total),
     allergenCoverage: coveragePct(allergenRows, total),
     uploadedCoverage: coveragePct(uploaded, total),
-  };
-}
-
-function textValue(row, ...keys) {
-  for (const key of keys) {
-    const value = row?.[key];
-    if (value !== null && value !== undefined && String(value).trim()) return String(value).trim();
-  }
-  return "";
-}
-
-function stripRecipePrefix(value = "") {
-  return String(value).replace(/^(AMZ|EUR|RA|AMZ\+RA):\s*/i, "").trim();
-}
-
-function cleanMrn(value = "") {
-  return String(value || "").replace(/^'/, "").trim();
-}
-
-function normalizeWastePct(value) {
-  if (value == null) return null;
-  return value > 1 ? value / 100 : value;
-}
-
-function cleanNumber(value) {
-  if (value === null || value === undefined || value === "") return null;
-  const number = Number(String(value).replace(/[$,%]/g, ""));
-  return Number.isFinite(number) ? number : null;
-}
-
-function menuBaseName(menu = "") {
-  return stripRecipePrefix(menu);
-}
-
-function menuPrefix(menu = "") {
-  const match = String(menu || "").match(/^([^:]+):/);
-  return match ? match[1] : "";
-}
-
-function inferImportedCategory(row, price) {
-  const notes = textValue(row, "Menu Item Notes").toLowerCase();
-  const recipeCategory = textValue(row, "Recipe Category.", "Recipe Category").toLowerCase();
-  const productionArea = textValue(row, "Recipe Production Area.", "Recipe Production Area").toLowerCase();
-  const station = textValue(row, "Station", "Station.").toLowerCase();
-  const itemText = `${textValue(row, "Recipe Name")} ${textValue(row, "Short Name")} ${recipeCategory}`.toLowerCase();
-
-  if (price == null) return "subRecipe";
-  if (/extension/.test(notes) || /cookie|cake|dessert|pastry|beverage|smoothie|chips|salsa|guacamole|queso/.test(itemText)) return "extension";
-  if (/a la carte|side choice/.test(notes) || /hot side/.test(productionArea) || /starch\/grain|vegetable/.test(recipeCategory)) return "side";
-  if (/entree/.test(notes) || /main entree|breakfast|sandwich\/wrap/.test(recipeCategory) || price >= 9) return "entree";
-  if (/side/.test(station)) return "side";
-  return price >= 5 ? "entree" : "side";
-}
-
-function parseAllergenDetails(row) {
-  const allergenDetails = {};
-  const allergens = [];
-  MENUWORKS_ALLERGEN_COLUMNS.forEach((allergen) => {
-    const value = textValue(row, allergen);
-    if (!value || value.toLowerCase() === "no") return;
-    allergenDetails[allergen] = value;
-    allergens.push(value.toLowerCase().includes("at risk") ? `${allergen} (At Risk)` : allergen);
-  });
-
-  const summary = textValue(row, "Allergens.", "Allergens");
-  if (summary && !allergens.length) {
-    summary.split(",").map((value) => value.replace(/^contains\s+/i, "").trim()).filter(Boolean).forEach((allergen) => {
-      allergenDetails[allergen] = "Yes";
-      allergens.push(allergen);
-    });
-  }
-
-  return { allergenSummary: summary || null, allergenDetails, allergens };
-}
-
-function parseImportedMenuWorksRow(row, index) {
-  const menu = textValue(row, "Menu Name");
-  const recipeName = textValue(row, "Recipe Name", "Menu Item");
-  if (!menu || !recipeName || !/^(AMZ|AMZ\+RA|EUR|RA):/i.test(menu)) return null;
-
-  const price = cleanNumber(textValue(row, "Sell Price", "Price"));
-  const itemCost = cleanNumber(textValue(row, "Menu Item Cost", "Item Cost"));
-  const wastePct = normalizeWastePct(cleanNumber(textValue(row, "Waste %", "Waste")));
-  const trueCost = cleanNumber(textValue(row, "Item + Waste Cost", "True Cost")) ?? (itemCost == null ? null : Number((itemCost * (1 + (wastePct || 0))).toFixed(4)));
-  const displayName = titleCase(textValue(row, "Short Name") || stripRecipePrefix(recipeName));
-  const { allergens, allergenDetails, allergenSummary } = parseAllergenDetails(row);
-
-  return {
-    id: index,
-    menu,
-    meal: textValue(row, "Meal", "Meal Period"),
-    station: textValue(row, "Station", "Station.") || menuBaseName(menu),
-    item: displayName,
-    mrn: cleanMrn(textValue(row, "Recipe Number", "MRN")),
-    portion: textValue(row, "Menu Portion Size", "Portion"),
-    price,
-    itemCost,
-    wastePct,
-    trueCost,
-    forecast: 0,
-    menuPrefix: menuPrefix(menu),
-    menuBaseName: menuBaseName(menu),
-    recipeName,
-    recipePrefix: menuPrefix(recipeName),
-    recipeSource: textValue(row, "Recipe Source."),
-    displayName,
-    shortName: displayName,
-    portionOz: cleanNumber(textValue(row, "Menu Portion Weight(oz)")),
-    category: inferImportedCategory(row, price),
-    enticingDescription: textValue(row, "Enticing Description"),
-    dietDescription: textValue(row, "Diet Description"),
-    dietTags: [textValue(row, "Diet"), textValue(row, "Vegan Tag."), textValue(row, "Vegetarian Tag."), textValue(row, "Compass Fit.")].filter(Boolean).join(", "),
-    ingredients: textValue(row, "Ingredients"),
-    ingredientsCommonName: textValue(row, "Ingredients Common Name"),
-    recipeCategory: textValue(row, "Recipe Category."),
-    recipeProductionArea: textValue(row, "Recipe Production Area."),
-    productionArea: textValue(row, "Production Area"),
-    menuItemNotes: textValue(row, "Menu Item Notes"),
-    allergenSummary,
-    allergens,
-    allergenDetails,
-    compassFit: textValue(row, "Compass Fit.") || null,
-    exceedsSodiumLimit: textValue(row, "Exceeds Sodium Limit.") || null,
-    ghgEmissions: textValue(row, "GHG Emissions.") || null,
-    madeFromSingleSource: textValue(row, "Made from Single Source.") || null,
-    veganTag: textValue(row, "Vegan Tag.") || null,
-    vegetarianTag: textValue(row, "Vegetarian Tag.") || null,
-    dataSource: "menuworks-user-upload",
   };
 }
 
@@ -321,11 +160,8 @@ function calculateMenuHealth({ avgFoodCost, grossProfitPct, stars, cashCows, puz
 
 
 export default function MenuEngineeringDashboard({ onBackToPlatform, onOpenSmartsheetHealth }) {
-  const [menuItems, setMenuItems] = useState(readStoredMenuItems);
+  const [menuItems] = useState(readStoredMenuItems);
   const [selectedMenu, setSelectedMenu] = useState(MENUWORKS_ITEMS[0]?.menu || "");
-  const [pendingImport, setPendingImport] = useState(null);
-  const [uploadInitiationCode, setUploadInitiationCode] = useState("");
-  const [uploadStatus, setUploadStatus] = useState("");
   const [globalSearch, setGlobalSearch] = useState("");
   const [fillUnitsValue, setFillUnitsValue] = useState(5);
   const [viewMode, setViewMode] = useState("operations");
@@ -344,7 +180,7 @@ export default function MenuEngineeringDashboard({ onBackToPlatform, onOpenSmart
     const allMenuNames = Array.from(new Set(menuItems.map((item) => item.menu).filter(Boolean))).sort();
     return allMenuNames.map((menuName) => {
       const rows = menuItems.filter((item) => item.menu === menuName);
-      const stationSet = new Set(rows.map((item) => item.station || "—"));
+      const stationSet = new Set(rows.map((item) => item.station || "â€”"));
       return {
         menu: menuName,
         count: rows.length,
@@ -406,8 +242,8 @@ export default function MenuEngineeringDashboard({ onBackToPlatform, onOpenSmart
           return {
             ...row,
             engineering: "COMPLIMENTARY",
-            marginRank: "—",
-            volumeRank: "—",
+            marginRank: "â€”",
+            volumeRank: "â€”",
           };
         }
 
@@ -589,192 +425,8 @@ export default function MenuEngineeringDashboard({ onBackToPlatform, onOpenSmart
     });
   };
 
-  const baseRowKey = (row) => String([row.menu, row.station, row.mrn, row.item, row.portion].join("|")).toLowerCase();
-
-  const buildComparableMap = (rows) => {
-    const counts = new Map();
-    const result = new Map();
-    rows.forEach((row) => {
-      const base = baseRowKey(row);
-      const occurrence = counts.get(base) || 0;
-      counts.set(base, occurrence + 1);
-      result.set(`${base}|occurrence:${occurrence}`, row);
-    });
-    return result;
-  };
-
-  const parseMenuWorksFile = async (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    if (uploadInitiationCode.trim() !== MENUWORKS_IMPORT_INITIATION_CODE) {
-      setUploadStatus(`Enter initiation code ${MENUWORKS_IMPORT_CODE_HINT} before uploading a MenuWorks truth file.`);
-      event.target.value = "";
-      return;
-    }
-
-    const buffer = await file.arrayBuffer();
-    const workbook = XLSX.read(buffer, { type: "array" });
-    const sheet = workbook.Sheets.Report || workbook.Sheets[workbook.SheetNames[0]];
-    const rawRows = XLSX.utils.sheet_to_json(sheet, { defval: null });
-    const importedRows = rawRows.map((row, index) => parseImportedMenuWorksRow(row, index)).filter(Boolean);
-
-    if (!importedRows.length) {
-      setUploadStatus("No MenuWorks menu item rows were detected. Use the Menu Item Index or MenuWorks export format.");
-      event.target.value = "";
-      return;
-    }
-    setUploadStatus("");
-
-    const importedMenuNames = Array.from(new Set(importedRows.map((row) => row.menu).filter(Boolean)));
-    const currentRowsInScope = menuItems.filter((row) => importedMenuNames.includes(row.menu));
-
-    const currentByKey = buildComparableMap(currentRowsInScope);
-    const importedByKey = buildComparableMap(importedRows);
-    const newItems = [];
-    const removedItems = [];
-    const changedItems = [];
-    const costIncreases = [];
-    const costDecreases = [];
-    const priceChanges = [];
-
-    importedByKey.forEach((row, key) => {
-      const current = currentByKey.get(key);
-      if (!current) {
-        newItems.push(row);
-        return;
-      }
-      const priceChanged = current.price !== row.price;
-      const costChanged = current.trueCost !== row.trueCost;
-      const itemCostChanged = current.itemCost !== row.itemCost;
-      const portionChanged = current.portion !== row.portion;
-      const detailChanged =
-        current.item !== row.item ||
-        current.station !== row.station ||
-        current.category !== row.category ||
-        current.enticingDescription !== row.enticingDescription ||
-        current.ingredientsCommonName !== row.ingredientsCommonName ||
-        JSON.stringify(current.allergenDetails || {}) !== JSON.stringify(row.allergenDetails || {});
-      if (priceChanged || costChanged || itemCostChanged || portionChanged || detailChanged) {
-        const change = { before: current, after: row };
-        changedItems.push(change);
-        if (costChanged && row.trueCost > current.trueCost) costIncreases.push(change);
-        if (costChanged && row.trueCost < current.trueCost) costDecreases.push(change);
-        if (priceChanged) priceChanges.push(change);
-      }
-    });
-
-    currentByKey.forEach((row, key) => {
-      if (!importedByKey.has(key)) removedItems.push(row);
-    });
-
-    const currentMenus = new Set(menuItems.map((row) => row.menu));
-    const newMenus = Array.from(new Set(importedRows.map((row) => row.menu))).filter((menu) => !currentMenus.has(menu));
-
-    const comparableBeforeCost = changedItems.reduce((sum, change) => sum + (change.before.trueCost || 0), 0);
-    const comparableAfterCost = changedItems.reduce((sum, change) => sum + (change.after.trueCost || 0), 0);
-    const comparableCostChangePct = comparableBeforeCost ? ((comparableAfterCost - comparableBeforeCost) / comparableBeforeCost) * 100 : null;
-
-    const currentTotalCost = currentRowsInScope.reduce((sum, row) => sum + (row.trueCost || 0), 0);
-    const importedTotalCost = importedRows.reduce((sum, row) => sum + (row.trueCost || 0), 0);
-    const totalCostChangePct = currentTotalCost ? ((importedTotalCost - currentTotalCost) / currentTotalCost) * 100 : null;
-
-    setPendingImport({
-      importedRows,
-      importedMenuNames,
-      newItems,
-      removedItems,
-      changedItems,
-      costIncreases,
-      costDecreases,
-      priceChanges,
-      newMenus,
-      fileName: file.name,
-      comparableCostChangePct,
-      totalCostChangePct,
-      importQuality: getMenuDataQuality(importedRows),
-    });
-    event.target.value = "";
-  };
-
-  const acceptImport = () => {
-    if (!pendingImport || uploadInitiationCode.trim() !== MENUWORKS_IMPORT_INITIATION_CODE) {
-      setUploadStatus(`Enter initiation code ${MENUWORKS_IMPORT_CODE_HINT} before accepting an import.`);
-      return;
-    }
-    const importedMenuNames = pendingImport.importedMenuNames || Array.from(new Set(pendingImport.importedRows.map((row) => row.menu).filter(Boolean)));
-    const retainedRows = menuItems.filter((row) => !importedMenuNames.includes(row.menu));
-    const nextRows = [...retainedRows, ...pendingImport.importedRows].map((row, index) => ({ ...row, id: index }));
-    setMenuItems(nextRows);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(MENU_ENGINEERING_OVERRIDE_STORAGE_KEY, JSON.stringify(nextRows));
-    }
-    setUnitsById({});
-    setSelectedMenu(pendingImport.importedRows[0]?.menu || retainedRows[0]?.menu || "");
-    setPendingImport(null);
-    setUploadStatus(`Accepted ${pendingImport.importedRows.length} MenuWorks row${pendingImport.importedRows.length === 1 ? "" : "s"} from ${pendingImport.fileName}.`);
-  };
-
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 p-6">
-      {pendingImport && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="max-w-5xl w-full rounded-3xl bg-white border border-slate-200 shadow-2xl p-6 space-y-5">
-            <div>
-              <p className="text-sm uppercase tracking-[0.2em] text-slate-500">Review MenuWorks update</p>
-              <h2 className="text-3xl font-bold mt-1">Import changes from {pendingImport.fileName}</h2>
-              <p className="text-slate-600 mt-2">Review these changes before replacing the stored menu data. Nothing changes unless you click Accept Update.</p>
-              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-                <p className="font-semibold text-slate-900">Change summary</p>
-                <ul className="mt-2 space-y-1">
-                  <li>This upload will add <strong>{pendingImport.newMenus.length}</strong> new menu{pendingImport.newMenus.length === 1 ? "" : "s"}.</li>
-                  <li>This upload will add <strong>{pendingImport.newItems.length}</strong> item{pendingImport.newItems.length === 1 ? "" : "s"}.</li>
-                  <li>This upload will update <strong>{pendingImport.changedItems.length}</strong> existing item{pendingImport.changedItems.length === 1 ? "" : "s"}.</li>
-                  <li>This upload will remove <strong>{pendingImport.removedItems.length}</strong> item{pendingImport.removedItems.length === 1 ? "" : "s"}.</li>
-                  <li>Comparable item cost change: <strong>{pendingImport.comparableCostChangePct == null ? "n/a" : `${pendingImport.comparableCostChangePct >= 0 ? "+" : ""}${pendingImport.comparableCostChangePct.toFixed(1)}%`}</strong>.</li>
-                  <li>Total stored cost change: <strong>{pendingImport.totalCostChangePct == null ? "n/a" : `${pendingImport.totalCostChangePct >= 0 ? "+" : ""}${pendingImport.totalCostChangePct.toFixed(1)}%`}</strong> — this can be impacted by new or removed items.</li>
-                </ul>
-              </div>
-              {pendingImport.removedItems.length > 0 && (
-                <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
-                  <strong>Removal warning:</strong> {pendingImport.removedItems.length} item{pendingImport.removedItems.length === 1 ? "" : "s"} will be removed from the stored dashboard data if accepted.
-                </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-              <Metric title="New menus" value={pendingImport.newMenus.length} sub="added to dropdown" />
-              <Metric title="New items" value={pendingImport.newItems.length} sub="not in current data" />
-              <Metric title="Updated items" value={pendingImport.changedItems.length} sub="details, allergens, price, or cost changed" />
-              <Metric title="Cost increases" value={pendingImport.costIncreases?.length || 0} sub="true cost went up" />
-              <Metric title="Removed items" value={pendingImport.removedItems.length} sub="missing from upload" />
-            </div>
-
-            <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-4">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-700">Import Data Confidence</p>
-              <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
-                <QualityMini label="Price" value={pendingImport.importQuality.priceCoverage} detail={`${pendingImport.importQuality.priced}/${pendingImport.importQuality.total}`} />
-                <QualityMini label="Cost" value={pendingImport.importQuality.costCoverage} detail={`${pendingImport.importQuality.costed}/${pendingImport.importQuality.total}`} />
-                <QualityMini label="Details" value={pendingImport.importQuality.descriptionCoverage} detail={`${pendingImport.importQuality.described}/${pendingImport.importQuality.total}`} />
-                <QualityMini label="Allergens" value={pendingImport.importQuality.allergenCoverage} detail={`${pendingImport.importQuality.allergenRows}/${pendingImport.importQuality.total}`} />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-3 max-h-80 overflow-auto">
-              <ChangeList title="New menus" items={pendingImport.newMenus} empty="No new menus." />
-              <ChangeList title="New items" items={pendingImport.newItems.slice(0, 25).map((row) => titleCase(row.menu) + " • " + titleCase(row.item))} empty="No new items." />
-              <ChangeList title="Updated items" items={pendingImport.changedItems.slice(0, 25).map((change) => titleCase(change.after.item) + " — " + priceLabel(change.before.price) + " → " + priceLabel(change.after.price) + ", " + money(change.before.trueCost) + " → " + money(change.after.trueCost))} empty="No updates." />
-              <ChangeList title="Cost increases" items={(pendingImport.costIncreases || []).slice(0, 25).map((change) => titleCase(change.after.item) + " — " + money(change.before.trueCost) + " → " + money(change.after.trueCost))} empty="No cost increases." />
-              <ChangeList title="Removed items" items={pendingImport.removedItems.slice(0, 25).map((row) => titleCase(row.menu) + " • " + titleCase(row.item))} empty="No removed items." />
-            </div>
-
-            <div className="flex justify-end gap-3 pt-2">
-              <button onClick={() => setPendingImport(null)} className="rounded-2xl bg-slate-100 border border-slate-200 px-5 py-3 font-semibold hover:bg-slate-200">Cancel</button>
-              <button onClick={acceptImport} className="rounded-2xl bg-slate-900 text-white px-5 py-3 font-semibold hover:bg-slate-700">Accept Update + Replace Data</button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className="max-w-7xl mx-auto space-y-6">
         <header className="rounded-[2rem] bg-white border border-slate-200 p-6 md:p-8 shadow-2xl">
           <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -782,7 +434,7 @@ export default function MenuEngineeringDashboard({ onBackToPlatform, onOpenSmart
               onClick={onBackToPlatform}
               className="rounded-2xl bg-slate-100 border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200"
             >
-              ← Back to Culinary Tools Platform
+              â† Back to Culinary Tools Platform
             </button>
             <div className="flex flex-wrap items-center gap-2">
               <PlatformSettings onOpenSmartsheetHealth={onOpenSmartsheetHealth} />
@@ -797,14 +449,12 @@ export default function MenuEngineeringDashboard({ onBackToPlatform, onOpenSmart
             </div>
 
             <div className="rounded-3xl bg-slate-100 border border-slate-200 p-4 min-w-[320px] space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-slate-500 mb-2">Initiate MenuWorks Upload</label>
-                <div className="grid grid-cols-1 sm:grid-cols-[120px_1fr] gap-2">
-                  <input type="password" inputMode="numeric" maxLength={6} value={uploadInitiationCode} onChange={(e) => setUploadInitiationCode(e.target.value)} placeholder={MENUWORKS_IMPORT_CODE_HINT} className="rounded-2xl bg-white border border-slate-300 px-3 py-3 text-sm font-semibold outline-none focus:border-slate-500" />
-                  <input disabled={uploadInitiationCode.trim() !== MENUWORKS_IMPORT_INITIATION_CODE} type="file" accept=".xlsx,.xls,.csv" onChange={parseMenuWorksFile} className="block w-full text-sm text-slate-700 file:mr-3 file:rounded-xl file:border-0 file:bg-slate-900 file:px-4 file:py-2 file:text-white hover:file:bg-slate-700 disabled:opacity-50" />
-                </div>
-                <p className="mt-2 text-xs text-slate-500">Enter the initiation code, upload a MenuWorks truth file, review changes, then accept.</p>
-                {uploadStatus && <p className="mt-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-semibold text-sky-900">{uploadStatus}</p>}
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">MenuWorks Source</p>
+                <h2 className="mt-1 text-xl font-black text-slate-950">Managed in Recipe Library</h2>
+                <p className="mt-2 text-sm font-semibold leading-5 text-slate-600">
+                  Uploads and truth-file updates now live in Recipe Library so pricing, nutrition, allergens, and item cards stay in one shared source.
+                </p>
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <QualityMini label="All data" value={dataQuality.costCoverage} detail={`${dataQuality.costed}/${dataQuality.total} costed`} />
                   <QualityMini label="This view" value={selectedMenuDataQuality.descriptionCoverage} detail={`${selectedMenuDataQuality.described}/${selectedMenuDataQuality.total} detailed`} />
@@ -824,7 +474,7 @@ export default function MenuEngineeringDashboard({ onBackToPlatform, onOpenSmart
                 <select value={activeSelectedMenu} onChange={(e) => { setSelectedMenu(e.target.value); setCategory("All"); }} className="w-full rounded-2xl bg-white border border-slate-300 px-4 py-3 text-lg outline-none focus:border-slate-500">
                   {menus.map((menu) => (
                     <option key={menu.menu} value={menu.menu}>
-                      {menu.menu} — {menu.count} items
+                      {menu.menu} â€” {menu.count} items
                     </option>
                   ))}
                 </select>
@@ -839,7 +489,7 @@ export default function MenuEngineeringDashboard({ onBackToPlatform, onOpenSmart
             <div>
               <p className="text-sm uppercase tracking-[0.18em] text-slate-400">Current menu</p>
               <h2 className="text-3xl font-bold mt-1">{globalSearch.trim() ? "Search Results" : activeSelectedMenu}</h2>
-              <p className="text-slate-500 mt-2">{globalSearch.trim() ? `${menuRows.length} matching items across all menus` : `${selectedMenuInfo?.count || 0} items • ${selectedMenuInfo?.priced || 0} with price and cost • ${selectedMenuInfo?.stations || "No station listed"}`}</p>
+              <p className="text-slate-500 mt-2">{globalSearch.trim() ? `${menuRows.length} matching items across all menus` : `${selectedMenuInfo?.count || 0} items â€¢ ${selectedMenuInfo?.priced || 0} with price and cost â€¢ ${selectedMenuInfo?.stations || "No station listed"}`}</p>
             </div>
           </div>
         </section>
@@ -872,8 +522,8 @@ export default function MenuEngineeringDashboard({ onBackToPlatform, onOpenSmart
         {viewMode === "operations" && (
           <>
             <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
-              <Metric icon={DollarSign} title="Revenue" value={money(totals.revenue)} sub="price × units sold" />
-              <Metric title="True cost" value={money(totals.cost)} sub="MenuWorks cost × units" />
+              <Metric icon={DollarSign} title="Revenue" value={money(totals.revenue)} sub="price Ã— units sold" />
+              <Metric title="True cost" value={money(totals.cost)} sub="MenuWorks cost Ã— units" />
               <Metric title="Profit" value={money(totals.profit)} sub="revenue - true cost" />
               <Metric title="Avg food cost" value={pct(avgFoodCost)} sub="total cost / revenue" />
               <Metric title="Gross profit" value={pct(grossProfitPct)} sub="profit / revenue" />
@@ -896,7 +546,7 @@ export default function MenuEngineeringDashboard({ onBackToPlatform, onOpenSmart
                   {["All", "STAR", "CASH COW", "PUZZLE", "DOG", "COMPLIMENTARY"].map((c) => <option key={c}>{c}</option>)}
                 </select>
                 <select value={sort} onChange={(e) => setSort(e.target.value)} className="rounded-2xl bg-white border border-slate-300 px-3 py-3 outline-none focus:border-slate-500">
-                  <option value="source">Smart order: Entrées, Sides, Extensions, No Price</option>
+                  <option value="source">Smart order: EntrÃ©es, Sides, Extensions, No Price</option>
                   <option value="name">Name A-Z</option>
                   <option value="priceDesc">Price high to low</option>
                   <option value="costDesc">Cost high to low</option>
@@ -1001,11 +651,11 @@ function HealthCard({ viewMode, menuHealth, menuHealthDetails, portfolioHealth, 
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <p className="text-slate-500">Actual Food Cost %</p>
-                <p className="text-lg font-bold text-slate-900">{menuHealthDetails.actualFcPct == null ? "—" : `${menuHealthDetails.actualFcPct.toFixed(1)}%`}</p>
+                <p className="text-lg font-bold text-slate-900">{menuHealthDetails.actualFcPct == null ? "â€”" : `${menuHealthDetails.actualFcPct.toFixed(1)}%`}</p>
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <p className="text-slate-500">Actual Gross Margin %</p>
-                <p className="text-lg font-bold text-slate-900">{menuHealthDetails.actualMarginPct == null ? "—" : `${menuHealthDetails.actualMarginPct.toFixed(1)}%`}</p>
+                <p className="text-lg font-bold text-slate-900">{menuHealthDetails.actualMarginPct == null ? "â€”" : `${menuHealthDetails.actualMarginPct.toFixed(1)}%`}</p>
               </div>
             </div>
           )}
@@ -1024,11 +674,11 @@ function HealthCard({ viewMode, menuHealth, menuHealthDetails, portfolioHealth, 
               <li><strong className="text-slate-900">Risk Balance:</strong> 15% of score. Penalizes high DOG concentration and too many low-margin high-volume items.</li>
             </ul>
             <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-              <div className="rounded-xl bg-slate-50 border border-slate-200 p-2">Financial Fit: <strong>{detailSource.financialFitScore ?? "—"}/100</strong></div>
-              <div className="rounded-xl bg-slate-50 border border-slate-200 p-2">FC Score: <strong>{detailSource.foodCostScore ?? "—"}/100</strong></div>
-              <div className="rounded-xl bg-slate-50 border border-slate-200 p-2">Margin Score: <strong>{detailSource.marginScore ?? "—"}/100</strong></div>
-              <div className="rounded-xl bg-slate-50 border border-slate-200 p-2">Mix Score: <strong>{detailSource.engineeringMixScore ?? "—"}/100</strong></div>
-              <div className="rounded-xl bg-slate-50 border border-slate-200 p-2">Risk Score: <strong>{detailSource.riskBalanceScore ?? "—"}/100</strong></div>
+              <div className="rounded-xl bg-slate-50 border border-slate-200 p-2">Financial Fit: <strong>{detailSource.financialFitScore ?? "â€”"}/100</strong></div>
+              <div className="rounded-xl bg-slate-50 border border-slate-200 p-2">FC Score: <strong>{detailSource.foodCostScore ?? "â€”"}/100</strong></div>
+              <div className="rounded-xl bg-slate-50 border border-slate-200 p-2">Margin Score: <strong>{detailSource.marginScore ?? "â€”"}/100</strong></div>
+              <div className="rounded-xl bg-slate-50 border border-slate-200 p-2">Mix Score: <strong>{detailSource.engineeringMixScore ?? "â€”"}/100</strong></div>
+              <div className="rounded-xl bg-slate-50 border border-slate-200 p-2">Risk Score: <strong>{detailSource.riskBalanceScore ?? "â€”"}/100</strong></div>
             </div>
             <p className="mt-3 text-slate-500">The score is capped between 0 and 100 and is intended as a quick executive benchmark rather than a financial statement.</p>
           </div>
@@ -1120,8 +770,8 @@ function ItemRow({ row, updateUnits, parsedTargetFoodCost }) {
 
   return (
     <tr className={`hover:bg-slate-50 align-top ${heatClass}`}>
-      <td className="px-4 py-3 min-w-[280px]"><p className="font-semibold text-slate-900 capitalize">{titleCase(row.item)}</p><p className="text-xs text-slate-400">MRN {row.mrn || "—"} • {row.portion || "—"}</p></td>
-      <td className="px-4 py-3 min-w-[140px]">{row.station || "—"}</td>
+      <td className="px-4 py-3 min-w-[280px]"><p className="font-semibold text-slate-900 capitalize">{titleCase(row.item)}</p><p className="text-xs text-slate-400">MRN {row.mrn || "â€”"} â€¢ {row.portion || "â€”"}</p></td>
+      <td className="px-4 py-3 min-w-[140px]">{row.station || "â€”"}</td>
       <td className="px-4 py-3 whitespace-nowrap">{priceLabel(row.price)}</td>
       <td className="px-4 py-3 whitespace-nowrap">{money(row.trueCost)}</td>
       <td className="px-4 py-3 whitespace-nowrap">{pct(row.foodCost)}</td>
@@ -1167,7 +817,7 @@ function PortfolioTable({ rows, parsedTargetFoodCost, parsedTargetMarginPct }) {
                     <p><strong className="text-rose-700">{row.dogs}</strong> high-risk items reduced the score.</p>
                     <p>Financial Fit is <strong>{row.healthDetails.financialFitScore}/100</strong>.</p>
                     <p>Actual Food Cost % is <strong>{pct(row.avgFc)}</strong> against the {parsedTargetFoodCost ?? "disabled"}% food cost benchmark.</p>
-                    <p>Actual Gross Margin % is <strong>{row.healthDetails.actualMarginPct == null ? "—" : `${row.healthDetails.actualMarginPct.toFixed(1)}%`}</strong> against the {parsedTargetMarginPct ?? "disabled"}% gross margin benchmark.</p>
+                    <p>Actual Gross Margin % is <strong>{row.healthDetails.actualMarginPct == null ? "â€”" : `${row.healthDetails.actualMarginPct.toFixed(1)}%`}</strong> against the {parsedTargetMarginPct ?? "disabled"}% gross margin benchmark.</p>
                     <p>Risk state: <strong>{row.risk}</strong>.</p>
                   </div>
                 </td>
@@ -1176,9 +826,9 @@ function PortfolioTable({ rows, parsedTargetFoodCost, parsedTargetMarginPct }) {
                 <td className="px-4 py-3 text-red-700 font-semibold">{row.dogs}</td>
                 <td className="px-4 py-3 font-semibold">{row.healthDetails.financialFitScore}/100</td>
                 <td className="px-4 py-3">{pct(row.avgFc)}</td>
-                <td className="px-4 py-3">{row.healthDetails.actualMarginPct == null ? "—" : `${row.healthDetails.actualMarginPct.toFixed(1)}%`}</td>
+                <td className="px-4 py-3">{row.healthDetails.actualMarginPct == null ? "â€”" : `${row.healthDetails.actualMarginPct.toFixed(1)}%`}</td>
                 <td className="px-4 py-3"><span className={`rounded-full px-3 py-1 text-xs font-bold ${row.risk === "CRITICAL" ? "bg-red-100 text-red-800" : row.risk === "WARNING" ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"}`}>{row.risk}</span></td>
-                <td className="px-4 py-3 min-w-[280px]"><ul className="space-y-1 text-xs text-slate-600">{row.riskNotes.map((note, index) => <li key={index}>• {note}</li>)}</ul></td>
+                <td className="px-4 py-3 min-w-[280px]"><ul className="space-y-1 text-xs text-slate-600">{row.riskNotes.map((note, index) => <li key={index}>â€¢ {note}</li>)}</ul></td>
               </tr>
             ))}
           </tbody>

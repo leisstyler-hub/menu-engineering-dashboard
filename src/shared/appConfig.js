@@ -1,1 +1,1 @@
-export const APP_VERSION_STAMP = "2026.06.27.007-carvery-note-mapped-selectors";
+export const APP_VERSION_STAMP = "2026.06.27.008-cleanup-trust-refresh";
