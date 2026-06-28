@@ -79,6 +79,18 @@ if (!/function ItemPickerSlot/.test(source) || !/Item not listed\?/.test(source)
   fail("Write-in picker mode is missing; dropdown and manual entry should not stack together.");
 }
 
+if (!/function reInventSummaryBlockLabels/.test(source) || !/carryoverGlobalBlock\(rotation\.previousRotation/.test(source)) {
+  fail("Re:Invent summary cards must show all three schedule blocks, including prior-Friday Monday carryover.");
+}
+
+if (!/<SubmittedRotationRecap[^>]*previousRotation=\{previousRotation\}/.test(source) || !/cafe === "Re:Invent" \? reInventSummaryBlockLabels\(\{ \.\.\.rotation, previousRotation \}, week\)/.test(source)) {
+  fail("Re:Invent submitted recap must show all three schedule blocks, including prior-Friday Monday carryover.");
+}
+
+if (!/handleOpenPlannerFromSummary = \(row\)/.test(source) || !/onOpenPlanner=\{handleOpenPlannerFromSummary\}/.test(source) || !/onOpenPlanner \? \(\) => onOpenPlanner\(row\)/.test(source)) {
+  fail("Executive and leadership summary cards must jump directly into that cafe's planner.");
+}
+
 if (carveryProteins.some((row) => /reuben|sandwich|panini|wrap/i.test(`${name(row)} ${station(row)}`))) {
   fail("Carvery protein pool contains sandwich/Reuben items.");
 }

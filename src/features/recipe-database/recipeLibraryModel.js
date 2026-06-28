@@ -58,6 +58,20 @@ const SUPPORT_SIGNAL = /sauce|dressing|dip|salsa|aioli|chutney|relish|gravy|mari
 const SIDE_CHOICE_SIGNAL = /side choice|side pairing|a la carte\s*(?:&|and)\s*side choice|hot a la carte|cold a la carte/i;
 const ENTREE_CATEGORY_SIGNAL = /main entree|sandwich\/wrap|pizza\/calzone\/flatbread|breakfast|premium mains|vegetarian mains/i;
 
+export function recipeLibraryCategoryGroup(row = {}) {
+  const menu = textValue(row, "menu");
+  const notes = textValue(row, "menuItemNotes");
+  const selectorGroup = textValue(row, "plannerSelectorGroup", "selectorGroup");
+  const role = textValue(row, "menuItemRole", "selectionBehavior");
+  if (
+    menu === "AMZ: Carvery" &&
+    (/charred vegetable option/i.test(notes) || /carvery-rotating-vegetable/i.test(`${selectorGroup} ${role}`))
+  ) {
+    return "Vegetable Carvery";
+  }
+  return textValue(row, "category") || "Unclassified";
+}
+
 function itemTrustText(row, { includeIngredients = true } = {}) {
   const values = [
     itemName(row),
@@ -156,6 +170,7 @@ export function normalizeRecipeLibraryItem(row) {
     station: textValue(row, "station"),
     meal: textValue(row, "meal"),
     category: textValue(row, "category"),
+    category_group: recipeLibraryCategoryGroup(row),
     recipe_category: textValue(row, "recipeCategory"),
     recipe_name: textValue(row, "recipeName"),
     display_name: itemName(row),

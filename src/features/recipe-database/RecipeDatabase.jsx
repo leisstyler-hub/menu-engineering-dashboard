@@ -22,6 +22,7 @@ import {
   itemName,
   normalizeRecipeLibraryItem,
   proteinLabel,
+  recipeLibraryCategoryGroup,
   textValue,
 } from "./recipeLibraryModel.js";
 
@@ -56,15 +57,16 @@ function allergenLabel(row) {
 }
 
 function categoryLabel(row) {
-  return titleCase(String(row.category || "Unclassified"));
+  return titleCase(recipeLibraryCategoryGroup(row));
 }
 
 function categoryRank(category = "") {
   const normalized = String(category).toLowerCase();
   if (normalized.includes("entree")) return 1;
-  if (normalized.includes("side")) return 2;
-  if (normalized.includes("sub")) return 3;
-  if (normalized.includes("extension")) return 4;
+  if (normalized.includes("vegetable carvery")) return 2;
+  if (normalized.includes("side")) return 3;
+  if (normalized.includes("sub")) return 4;
+  if (normalized.includes("extension")) return 5;
   return 5;
 }
 
@@ -153,12 +155,12 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
   const categoryOptions = ["All", ...Array.from(new Set(selectedRows.map(categoryLabel))).sort((a, b) => categoryRank(a) - categoryRank(b) || a.localeCompare(b))];
   const filteredRows = selectedRows
     .filter((row) => {
-      const haystack = [itemName(row), row.recipeName, row.station, row.category, itemDescription(row), allergenLabel(row)].join(" ").toLowerCase();
+      const haystack = [itemName(row), row.recipeName, row.station, categoryLabel(row), row.category, itemDescription(row), allergenLabel(row)].join(" ").toLowerCase();
       return !itemSearch || haystack.includes(itemSearch.toLowerCase());
     })
     .filter((row) => categoryFilter === "All" || categoryLabel(row) === categoryFilter)
     .filter((row) => dietFilter === "All" || dietFilterLabel(row) === dietFilter)
-    .sort((a, b) => categoryRank(a.category) - categoryRank(b.category) || itemName(a).localeCompare(itemName(b)));
+    .sort((a, b) => categoryRank(categoryLabel(a)) - categoryRank(categoryLabel(b)) || itemName(a).localeCompare(itemName(b)));
 
   const groupedRows = useMemo(() => {
     return filteredRows.reduce((acc, row) => {
@@ -699,7 +701,7 @@ function LibraryCardDrawer({ item, onClose, onSave }) {
             <div className="min-w-0">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-600">Recipe Library Card</p>
               <h2 className="mt-2 text-2xl font-black leading-tight text-slate-950 md:text-3xl">{item.display_name}</h2>
-              <p className="mt-2 text-sm font-bold text-slate-500">{item.menu || "No menu"} / {item.station || "No station"} / {item.category || "No category"}</p>
+              <p className="mt-2 text-sm font-bold text-slate-500">{item.menu || "No menu"} / {item.station || "No station"} / {item.category_group || item.category || "No category"}</p>
             </div>
             <button type="button" onClick={onClose} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-100" aria-label="Close library card">
               <X size={19} />

@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { itemTrustFlags, itemTrustStatus } from "../src/features/recipe-database/recipeLibraryModel.js";
+import { itemTrustFlags, itemTrustStatus, recipeLibraryCategoryGroup } from "../src/features/recipe-database/recipeLibraryModel.js";
 
 const rows = JSON.parse(readFileSync("src/data/menuItems.json", "utf8"));
 const name = (row) => row.item || row.displayName || row.shortName || row.recipeName || "";
@@ -14,16 +14,19 @@ const eggplant = findRow(/Roam BBQ/i, /Kombu Miso Eggplant/i);
 const sweetSourSauce = findRow(/Lotus/i, /Sweet and Sour Sauce/i);
 const tacoProtein = findRow(/Taco Total/i, /Beef Barbacoa/i);
 const freshVegetableLasagna = findRow(/Piccola Italia/i, /Fresh Vegetable Lasagna/i);
+const carveryVegetable = rows.find((row) => row.menu === "AMZ: Carvery" && /Charred Vegetable Option/i.test(row.menuItemNotes || ""));
 
 assert(eggplant, "Expected Kombu Miso Eggplant to exist for trust false-positive coverage.");
 assert(sweetSourSauce, "Expected Sweet and Sour Sauce to exist for support-item trust coverage.");
 assert(tacoProtein, "Expected Beef Barbacoa to exist for protein price-gap coverage.");
 assert(freshVegetableLasagna, "Expected Fresh Vegetable Lasagna to exist for missing-cost coverage.");
+assert(carveryVegetable, "Expected AMZ: Carvery charred vegetable option to exist.");
 
 assert(!flagsFor(eggplant).includes("Protein price gap"), "Eggplant must not be flagged as protein because of the word egg.");
 assert(!flagsFor(sweetSourSauce).includes("Protein price gap"), "Support sauces must not become protein price gaps because ingredients mention steak sauce.");
 assert(flagsFor(tacoProtein).includes("Protein price gap"), "Unpriced Taco Total protein choices should stay visible as protein price gaps.");
 assert(flagsFor(freshVegetableLasagna).includes("Missing true cost"), "Rows missing true cost should stay visible for trust review.");
+assert(recipeLibraryCategoryGroup(carveryVegetable) === "Vegetable Carvery", "Carvery charred vegetable options should group under Vegetable Carvery.");
 
 const statusCounts = rows.reduce((acc, row) => {
   const status = itemTrustStatus(row);

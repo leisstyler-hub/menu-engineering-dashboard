@@ -2,6 +2,10 @@
 
 ## 2026-06-28
 
+- [Jun 28, 3:43 PM] Added a Vegetable Carvery Recipe Library group for AMZ: Carvery charred vegetable options.
+- [Jun 28, 3:43 PM] Made Leadership Overview and Executive Rotation Health cafe cards open directly into that cafe's Chef Planner.
+- [Jun 28, 3:43 PM] Reworked Re:Invent submitted and executive cards to show the three schedule blocks, including prior-Friday Monday carryover.
+- [Jun 28, 3:43 PM] Set visible app version to `2026.06.28.002-reinvent-carvery-jump`.
 - [Jun 28, 9:36 AM] Hardened Neighborhood Rotation reloads so submitted selection rows can keep a cafe locked even if the header row is missing or delayed.
 - [Jun 28, 9:36 AM] Added Recipe Library Data Confidence flags for price gaps, category review, missing true cost, and support-item checks.
 - [Jun 28, 9:36 AM] Added visible Needs Review, Watch, and Trusted labels to Recipe Library item cards and detail drawers.

@@ -1340,6 +1340,22 @@ function reInventMenuLabel(rotation = {}, week = "") {
   return savedMenus.length ? Array.from(new Set(savedMenus)).join(" / ") : "";
 }
 
+function reInventSummaryBlockLabels(rotation = {}, week = rotation?.week || "") {
+  return reInventGlobalBlockLayout(week).map((blockInfo) => {
+    const block = blockInfo.readOnly
+      ? carryoverGlobalBlock(rotation.previousRotation || {}, "friCarry")
+      : getRotationGlobalBlock(rotation, blockInfo.id);
+    const menu = block?.menu || (blockInfo.readOnly ? "Carryover pending" : "Not selected");
+    return {
+      id: blockInfo.id,
+      title: blockInfo.title,
+      menu,
+      isPending: !block?.menu,
+      isCarryover: Boolean(blockInfo.readOnly || blockInfo.continuesNextWeek),
+    };
+  });
+}
+
 function hasNitroSplitBlocks(rotation = {}) {
   return nitroGlobalBlockLayout().some((block) => {
     const value = getRotationGlobalBlock(rotation, block.id);
@@ -2052,18 +2068,40 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
     [rotationKey(week, district, selectedCafe)]: { ...(prev[rotationKey(week, district, selectedCafe)] || EMPTY_ROTATION), ...patch }
   }));
 
-  const districtWeekRows = cafes.map((cafe) => ({ week, district, cafe, ...(rotations[rotationKey(week, district, cafe)] || EMPTY_ROTATION) }));
+  const rowForCafe = (wk, dist, cafe) => {
+    const priorWeek = previousRotationWeek(wk);
+    return {
+      week: wk,
+      district: dist,
+      cafe,
+      previousRotation: priorWeek ? (rotations[rotationKey(priorWeek, dist, cafe)] || EMPTY_ROTATION) : EMPTY_ROTATION,
+      ...(rotations[rotationKey(wk, dist, cafe)] || EMPTY_ROTATION)
+    };
+  };
+  const handleOpenPlannerFromSummary = (row) => {
+    const targetCafe = row?.copiedFrom || row?.cafe || "";
+    if (!row?.district || !targetCafe) return;
+    setWeek(row.week || week);
+    setDistrict(row.district);
+    setSelectedCafe(targetCafe);
+    setRotationView("planner");
+    if (typeof window !== "undefined") {
+      window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
+    }
+  };
+
+  const districtWeekRows = cafes.map((cafe) => rowForCafe(week, district, cafe));
   const leadershipRows = district === "South" ? districtWeekRows.flatMap((row) => row.cafe === "Nitro" ? [row, { ...row, cafe: "Frontier", copiedFrom: "Nitro" }] : [row]) : districtWeekRows;
   const conflictMenus = menuConflictCounts(conflictControlledRows(district, districtWeekRows));
-  const allRows = Object.entries(DISTRICTS).flatMap(([dist, cafeList]) => cafeList.map((cafe) => ({ week, district: dist, cafe, ...(rotations[rotationKey(week, dist, cafe)] || EMPTY_ROTATION) })));
+  const allRows = Object.entries(DISTRICTS).flatMap(([dist, cafeList]) => cafeList.map((cafe) => rowForCafe(week, dist, cafe)));
   const allConflictMenus = Object.entries(DISTRICTS).reduce((acc, [dist, cafeList]) => {
-    const rows = cafeList.map((cafe) => ({ week, district: dist, cafe, ...(rotations[rotationKey(week, dist, cafe)] || EMPTY_ROTATION) }));
+    const rows = cafeList.map((cafe) => rowForCafe(week, dist, cafe));
     Object.entries(menuConflictCounts(conflictControlledRows(dist, rows))).forEach(([menu, count]) => {
       acc[`${dist}|${menu}`] = count;
     });
     return acc;
   }, {});
-  const resultRows = ROLLING_ROTATION_WEEKS.flatMap((wk) => Object.entries(DISTRICTS).flatMap(([dist, cafeList]) => cafeList.map((cafe) => ({ week: wk, district: dist, cafe, ...(rotations[rotationKey(wk, dist, cafe)] || EMPTY_ROTATION) })))).filter(hasSubmittedRotationMenu);
+  const resultRows = ROLLING_ROTATION_WEEKS.flatMap((wk) => Object.entries(DISTRICTS).flatMap(([dist, cafeList]) => cafeList.map((cafe) => rowForCafe(wk, dist, cafe)))).filter(hasSubmittedRotationMenu);
   const filteredResults = resultRows.filter((row) => (resultsDistrict === "All" || row.district === resultsDistrict) && (resultsCafe === "All" || row.cafe === resultsCafe)).reverse();
   const persistRotationToDatabase = async (nextRotation) => {
     if (!week || !district || !selectedCafe) return;
@@ -2108,11 +2146,11 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
               <div className="xl:col-span-2 space-y-6">
                 {district && selectedCafe ? <RotationPlannerCard cafe={selectedCafe} district={district} menuOptions={menus} rotation={currentRotation} previousRotation={previousRotation} previousWeek={carryoverWeek} updateRotation={updateRotation} week={week} printRows={allRows} persistRotationToDatabase={persistRotationToDatabase} databaseLoadStatus={databaseLoadStatus} databaseSyncStatus={databaseSyncStatus} onRefreshDatabase={refreshFromDatabase} isRefreshCoolingDown={smartsheetReadCooldown} menuConflictCount={menuConflictCountForCandidate(district, districtWeekRows, selectedCafe, rotationMenuLabel(currentRotation, selectedCafe, week) || currentRotation.menu)} /> : <SelectPlannerPrompt />}
               </div>
-              <LeadershipOverview district={district} week={week} rows={leadershipRows} conflictMenus={conflictMenus} />
+              <LeadershipOverview district={district} week={week} rows={leadershipRows} conflictMenus={conflictMenus} onOpenPlanner={handleOpenPlannerFromSummary} />
             </section>
           </>
         )}
-        {rotationView === "executive" && <ExecutiveView week={week} setWeek={setWeek} rows={allRows} conflictMenus={allConflictMenus} />}
+        {rotationView === "executive" && <ExecutiveView week={week} setWeek={setWeek} rows={allRows} conflictMenus={allConflictMenus} onOpenPlanner={handleOpenPlannerFromSummary} />}
         {rotationView === "results" && <ResultsView rows={filteredResults} resultsDistrict={resultsDistrict} setResultsDistrict={setResultsDistrict} resultsCafe={resultsCafe} setResultsCafe={setResultsCafe} />}
       </div>
     </div>
@@ -2457,7 +2495,7 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
       )}
 
       {lockedForEditing ? (
-        <SubmittedRotationRecap cafe={cafe} week={week} rotation={rotation} rows={stationCostOverview} onEdit={() => setEditSubmitted(true)} />
+        <SubmittedRotationRecap cafe={cafe} week={week} rotation={rotation} previousRotation={previousRotation} rows={stationCostOverview} onEdit={() => setEditSubmitted(true)} />
       ) : (
         <>
           <StationPills cafe={cafe} stations={cafeStations} />
@@ -3292,8 +3330,9 @@ function downloadDopplerMenuPowerPoint(packet) {
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-function SubmittedRotationRecap({ cafe, week, rotation, rows, onEdit }) {
+function SubmittedRotationRecap({ cafe, week, rotation, previousRotation = EMPTY_ROTATION, rows, onEdit }) {
   const menuLabel = rotationMenuLabel(rotation, cafe, week);
+  const reInventBlocks = cafe === "Re:Invent" ? reInventSummaryBlockLabels({ ...rotation, previousRotation }, week) : [];
   const totalSelections = rows.reduce((sum, row) => sum + row.selectedCount, 0);
   return (
     <section className="mt-5 rounded-[2rem] border-2 border-emerald-200 bg-emerald-50/60 p-5 shadow-sm">
@@ -3302,7 +3341,18 @@ function SubmittedRotationRecap({ cafe, week, rotation, rows, onEdit }) {
           <p className="text-xs uppercase tracking-[0.18em] font-black text-emerald-700">Submitted Menu Recap</p>
           <h3 className="mt-1 text-3xl font-black text-slate-950">{cafe}</h3>
           <p className="mt-1 text-sm font-semibold text-slate-600">{week}</p>
-          <p className="mt-2 text-lg font-black text-slate-950">{menuLabel || "No Global menu saved"}</p>
+          {reInventBlocks.length ? (
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+              {reInventBlocks.map((block) => (
+                <div key={block.id} className={`rounded-2xl border px-3 py-2 ${block.isPending ? "border-amber-200 bg-amber-50 text-amber-900" : "border-white bg-white text-slate-950"}`}>
+                  <p className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-slate-500">{block.title}</p>
+                  <p className="mt-1 text-sm font-black leading-snug">{block.menu}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-2 text-lg font-black text-slate-950">{menuLabel || "No Global menu saved"}</p>
+          )}
           <p className="mt-1 text-sm font-semibold text-slate-600">{totalSelections} saved selection{totalSelections === 1 ? "" : "s"}{rotation.submittedAt ? ` - submitted ${rotation.submittedAt}` : ""}</p>
         </div>
         <label className="inline-flex items-center gap-3 self-start rounded-2xl border border-emerald-300 bg-white px-4 py-3 text-sm font-black text-emerald-900 shadow-sm">
@@ -4941,16 +4991,16 @@ function SubmitBar({ rotation, cafe, requirements, canSubmit, onSaveDraft, onSub
   );
 }
 
-function LeadershipOverview({ district, week, rows, conflictMenus }) {
+function LeadershipOverview({ district, week, rows, conflictMenus, onOpenPlanner }) {
   return (
     <div className="rounded-[2rem] bg-white border border-slate-200 p-6 shadow-2xl">
       <div className="flex items-start gap-3"><CalendarDays className="text-slate-400" /><div><p className="text-sm uppercase tracking-[0.2em] text-slate-400">Leadership Overview</p><h2 className="text-2xl font-bold mt-1">District At Large</h2><p className="mt-1 text-sm font-semibold text-slate-500">{district || "Select district"} • {week}</p></div></div>
-      <div className="mt-5 space-y-3">{rows.map((row) => <SummaryCard key={row.cafe} row={row} conflict={rowHasMenuConflict(row, conflictMenus)} />)}</div>
+      <div className="mt-5 space-y-3">{rows.map((row) => <SummaryCard key={row.cafe} row={row} conflict={rowHasMenuConflict(row, conflictMenus)} onOpenPlanner={onOpenPlanner} />)}</div>
     </div>
   );
 }
 
-function ExecutiveView({ week, setWeek, rows, conflictMenus }) {
+function ExecutiveView({ week, setWeek, rows, conflictMenus, onOpenPlanner }) {
   const locked = rows.filter(isSubmittedRotation).length;
   const declared = rows.filter(hasSubmittedRotationMenu).length;
   const conflicts = rows.filter((row) => rowHasMenuConflict(row, conflictMenus)).length;
@@ -5028,7 +5078,7 @@ function ExecutiveView({ week, setWeek, rows, conflictMenus }) {
                 </div>
                 <div className="mt-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                   {districtRows.map((row) => (
-                    <SummaryCard key={`${row.district}-${row.cafe}`} row={row} conflict={rowHasMenuConflict(row, conflictMenus)} showDistrict={false} />
+                    <SummaryCard key={`${row.district}-${row.cafe}`} row={row} conflict={rowHasMenuConflict(row, conflictMenus)} showDistrict={false} onOpenPlanner={onOpenPlanner} />
                   ))}
                 </div>
               </div>
@@ -5152,7 +5202,7 @@ function ExecutiveMetric({ title, value, sub, tone = "neutral" }) {
   );
 }
 
-function SummaryCard({ row, conflict, showDistrict = true }) {
+function SummaryCard({ row, conflict, showDistrict = true, onOpenPlanner = null }) {
   const locked = isSubmittedRotation(row);
   const rowItems = submittedSelectedItems(row);
   const summary = foodSummary(rowItems);
@@ -5162,11 +5212,18 @@ function SummaryCard({ row, conflict, showDistrict = true }) {
   const completedStations = locked ? stationKeys.filter((stationKey) => stationComplete(row, stationKey, row.cafe, row.week)).length : 0;
   const progressPct = stationKeys.length ? Math.round((completedStations / stationKeys.length) * 100) : 0;
   const menuLabel = locked ? rotationMenuLabel(row) : "";
+  const reInventBlocks = locked && row.cafe === "Re:Invent" ? reInventSummaryBlockLabels(row, row.week) : [];
   const tone = !menuLabel ? "border-slate-200 bg-white" : fcMidpoint == null ? "border-slate-300 bg-slate-50" : fcMidpoint > 0.34 ? "border-amber-300 bg-amber-50" : fcMidpoint <= 0.30 ? "border-emerald-300 bg-emerald-50" : "border-sky-200 bg-sky-50";
   const statusTone = locked ? "bg-emerald-500 text-white border-emerald-500" : "bg-rose-100 text-rose-900 border-rose-200";
+  const CardShell = onOpenPlanner ? "button" : "div";
 
   return (
-    <div className={`rounded-3xl border-2 p-4 shadow-sm ${tone}`}>
+    <CardShell
+      type={onOpenPlanner ? "button" : undefined}
+      onClick={onOpenPlanner ? () => onOpenPlanner(row) : undefined}
+      aria-label={onOpenPlanner ? `Open ${row.cafe} planner` : undefined}
+      className={`w-full rounded-3xl border-2 p-4 text-left shadow-sm ${tone} ${onOpenPlanner ? "cursor-pointer transition hover:-translate-y-0.5 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-sky-100" : ""}`}
+    >
       <div className="flex items-start justify-between gap-3">
         <div>
           {showDistrict && row.district && <p className="text-xs uppercase tracking-[0.16em] text-slate-400">{row.district}</p>}
@@ -5175,7 +5232,18 @@ function SummaryCard({ row, conflict, showDistrict = true }) {
             <p className="font-bold text-slate-900">{row.cafe}</p>
           </div>
           {row.copiedFrom ? <p className="text-xs text-slate-500 mt-1">Copied from {row.copiedFrom}</p> : row.cafe === "Nitro" ? <p className="text-xs text-slate-500 mt-1">Frontier follows Nitro</p> : null}
-          <p className="text-base font-black text-slate-950 mt-1 leading-snug">{menuLabel || "No locked menu"}</p>
+          {reInventBlocks.length ? (
+            <div className="mt-2 space-y-1">
+              {reInventBlocks.map((block) => (
+                <p key={block.id} className={`rounded-2xl border px-3 py-2 text-sm font-black leading-snug ${block.isPending ? "border-amber-200 bg-amber-50 text-amber-900" : "border-white bg-white/80 text-slate-950"}`}>
+                  <span className="text-xs uppercase tracking-[0.12em] text-slate-500">{block.title}</span>
+                  <span className="block">{block.menu}</span>
+                </p>
+              ))}
+            </div>
+          ) : (
+            <p className="text-base font-black text-slate-950 mt-1 leading-snug">{menuLabel || "No locked menu"}</p>
+          )}
           {locked && row.updatedAt && <p className="text-xs text-slate-500 mt-1">Updated {row.updatedAt}</p>}
           {locked && row.submittedBy && <p className="text-xs text-slate-500 mt-1">By {row.submittedBy}</p>}
           {locked && row.station && <p className="text-xs text-slate-500 mt-1">{row.station}</p>}
@@ -5202,7 +5270,7 @@ function SummaryCard({ row, conflict, showDistrict = true }) {
         {stationKeys.length > 0 && <span className="rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-slate-600">{completedStations}/{stationKeys.length} stations</span>}
         {conflict && <span className="rounded-full bg-amber-100 border border-amber-200 px-3 py-1 text-amber-800">duplicate</span>}
       </div>
-    </div>
+    </CardShell>
   );
 }
 
