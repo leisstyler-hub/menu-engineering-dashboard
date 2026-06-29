@@ -2,6 +2,9 @@
 
 ## 2026-06-28
 
+- [Jun 28, 8:00 PM] Added Cafe Rotation Readiness in Data Health for Doppler, Re:Invent, Nitro, and Day 1 lock/selectability checks.
+- [Jun 28, 8:00 PM] Added Recipe Mapping Trust in Data Health for Grill Core, Carvery, Fresh Five, and Global Menu selector alignment.
+- [Jun 28, 8:00 PM] Added operational readiness verification to the release checks and set visible app version to `2026.06.28.006-operational-readiness`.
 - [Jun 28, 7:45 PM] Added a Data Health Rotation Trust Audit for duplicate IDs, submitted-week status drift, orphan child rows, week mismatches, and Re:Invent block drift.
 - [Jun 28, 7:45 PM] Added a safe status-drift repair action that only updates child rows when the parent rotation header is already Submitted.
 - [Jun 28, 7:45 PM] Added rotation audit verification to the release checks and set visible app version to `2026.06.28.005-rotation-record-audit`.

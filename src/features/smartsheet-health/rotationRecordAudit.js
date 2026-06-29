@@ -14,6 +14,17 @@ const REINVENT_BLOCK_LABELS = new Map([
   ["thursday + friday", "thuFri"],
 ]);
 
+const CAFE_STATION_CONFIG = {
+  Nitro: ["global", "carvery", "grill", "pizza"],
+  Doppler: ["global", "salad", "grill", "pizza", "deli"],
+  "Day 1": ["global", "noodles", "grill", "salad", "fishMarket", "deli"],
+  "Re:Invent": ["fishMarket", "global", "deli", "grill"],
+};
+
+const OPTIONAL_STATIONS = {
+  Doppler: new Set(["pizza"]),
+};
+
 function asText(value) {
   return String(value ?? "").trim();
 }
@@ -200,4 +211,91 @@ export function buildStatusDriftRepairRecords(statusDriftRows = []) {
       "Status drift repaired from Data Health audit.",
     ].filter(Boolean).join(" "),
   }));
+}
+
+export function buildCafeRotationReadiness(records = [], options = {}) {
+  const audit = buildRotationRecordAudit(records);
+  const focusWeekStartDate = asText(options.focusWeekStartDate) || records
+    .map((record) => asText(record[SMARTSHEET_COLUMNS.weekStartDate]))
+    .filter(Boolean)
+    .sort()
+    .at(-1) || "";
+  const focusCafes = options.focusCafes || ["Doppler", "Re:Invent", "Nitro", "Day 1"];
+  const focusRecords = records.filter((record) => asText(record[SMARTSHEET_COLUMNS.weekStartDate]) === focusWeekStartDate);
+  const rowsByParent = new Map();
+  const headersByCafe = new Map();
+
+  focusRecords.forEach((record) => {
+    const recordId = asText(record[SMARTSHEET_COLUMNS.recordId]);
+    const parentId = asText(record[SMARTSHEET_COLUMNS.parentRecordId]);
+    const recordType = asText(record[SMARTSHEET_COLUMNS.recordType]);
+    const cafe = asText(record[SMARTSHEET_COLUMNS.cafeUnit]);
+    if (recordType === SMARTSHEET_RECORD_TYPES.rotationHeader) {
+      headersByCafe.set(cafe, record);
+      if (!rowsByParent.has(recordId)) rowsByParent.set(recordId, []);
+      rowsByParent.get(recordId).push(record);
+      return;
+    }
+    if (!parentId) return;
+    if (!rowsByParent.has(parentId)) rowsByParent.set(parentId, []);
+    rowsByParent.get(parentId).push(record);
+  });
+
+  const cafes = focusCafes.map((cafe) => {
+    const header = headersByCafe.get(cafe) || null;
+    const parentId = header ? asText(header[SMARTSHEET_COLUMNS.recordId]) : "";
+    const rows = parentId ? rowsByParent.get(parentId) || [] : [];
+    const stationKeys = new Set(rows.map((record) => asText(record[SMARTSHEET_COLUMNS.stationKey])).filter(Boolean));
+    const expectedStations = CAFE_STATION_CONFIG[cafe] || [];
+    const optionalStations = OPTIONAL_STATIONS[cafe] || new Set();
+    const requiredStations = expectedStations.filter((station) => !optionalStations.has(station));
+    const missingStations = requiredStations.filter((station) => !stationKeys.has(station));
+    const statusDrift = audit.statusDriftRows.filter((issue) => issue.parentRecordId === parentId);
+    const duplicateRecords = audit.duplicateRecordIds.filter((issue) => issue.recordId === parentId || rows.some((record) => asText(record[SMARTSHEET_COLUMNS.recordId]) === issue.recordId));
+    const reInventIssues = cafe === "Re:Invent"
+      ? [
+        ...audit.reInventBlockIssues.filter((issue) => issue.parentRecordId === parentId),
+        ...audit.reInventMissingBlocks.filter((issue) => issue.parentRecordId === parentId),
+      ]
+      : [];
+    const submitted = header ? isSubmitted(header[SMARTSHEET_COLUMNS.status]) : false;
+    const blockers = [];
+    const warnings = [];
+
+    if (!header) blockers.push("No saved rotation header for this week.");
+    if (header && !submitted) blockers.push("Rotation is not submitted/locked.");
+    if (missingStations.length) blockers.push(`Missing required stations: ${missingStations.join(", ")}.`);
+    if (reInventIssues.length) blockers.push("Re:Invent cycle blocks do not match the selected week pattern.");
+    if (statusDrift.length) warnings.push(`${statusDrift.length} child row${statusDrift.length === 1 ? "" : "s"} still show draft under submitted header.`);
+    if (duplicateRecords.length) warnings.push(`${duplicateRecords.length} duplicate record ID group${duplicateRecords.length === 1 ? "" : "s"} detected.`);
+
+    const status = blockers.length ? "needs_review" : warnings.length ? "watch" : "ready";
+    return {
+      cafe,
+      district: header ? asText(header[SMARTSHEET_COLUMNS.district]) : "South",
+      weekStartDate: focusWeekStartDate,
+      dateRangeLabel: header ? asText(header[SMARTSHEET_COLUMNS.dateRangeLabel]) : "",
+      status,
+      statusLabel: status === "ready" ? "Ready" : status === "watch" ? "Watch" : "Needs Review",
+      submitted,
+      expectedStations,
+      requiredStations,
+      completedStations: requiredStations.filter((station) => stationKeys.has(station)),
+      optionalStations: Array.from(optionalStations),
+      missingStations,
+      blockers,
+      warnings,
+      rowCount: rows.length,
+    };
+  });
+
+  const summary = {
+    weekStartDate: focusWeekStartDate,
+    ready: cafes.filter((row) => row.status === "ready").length,
+    watch: cafes.filter((row) => row.status === "watch").length,
+    needsReview: cafes.filter((row) => row.status === "needs_review").length,
+    total: cafes.length,
+  };
+
+  return { summary, cafes };
 }
