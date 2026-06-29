@@ -2,6 +2,9 @@
 
 ## 2026-06-28
 
+- [Jun 28, 7:45 PM] Added a Data Health Rotation Trust Audit for duplicate IDs, submitted-week status drift, orphan child rows, week mismatches, and Re:Invent block drift.
+- [Jun 28, 7:45 PM] Added a safe status-drift repair action that only updates child rows when the parent rotation header is already Submitted.
+- [Jun 28, 7:45 PM] Added rotation audit verification to the release checks and set visible app version to `2026.06.28.005-rotation-record-audit`.
 - [Jun 28, 7:22 PM] Aligned live Re:Invent Jun 29 data so Monday carries AMZ: Ohana from the prior Friday, Tuesday-Wednesday runs AMZ: Lemongrass + Lime, and Thursday-Friday runs AMZ: Cypress.
 - [Jun 28, 7:22 PM] Removed stale Re:Invent Jun 29 Piccola Italia/Ciudad records from Supabase and the Smartsheet mirror.
 - [Jun 28, 7:22 PM] Set visible app version to `2026.06.28.004-reinvent-jun29-alignment`.

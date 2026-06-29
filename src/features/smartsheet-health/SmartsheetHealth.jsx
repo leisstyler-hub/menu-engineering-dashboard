@@ -3,11 +3,13 @@ import { Activity, AlertTriangle, ArrowLeft, CheckCircle2, Cloud, Columns3, Data
 
 import { ensureSmartsheetColumns, loadSmartsheetHealth } from "../../integrations/smartsheet/client.js";
 import { SMARTSHEET_COLUMNS, SMARTSHEET_RECORD_TYPES } from "../../integrations/smartsheet/contract.js";
+import { syncRecordsToBackbone } from "../../integrations/storage/backboneClient.js";
 import { loadSupabaseHealth, loadSupabaseStorageHealth } from "../../integrations/supabase/client.js";
 import { summarizeSupabaseHealth } from "../../integrations/supabase/healthStatus.js";
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
 import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
+import { buildRotationRecordAudit, buildStatusDriftRepairRecords } from "./rotationRecordAudit.js";
 
 const nowStamp = () => new Date().toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 const MENU_SELECTION_RECORD_TYPES = new Set([
@@ -96,6 +98,7 @@ export default function SmartsheetHealth({ onBackToPlatform }) {
   const [mainHealth, setMainHealth] = useState({ state: "idle", data: null, message: "Not checked yet" });
   const [leanHealth, setLeanHealth] = useState({ state: "idle", data: null, message: "Not checked yet" });
   const [supabaseHealth, setSupabaseHealth] = useState({ state: "idle", data: null, message: "Not checked yet" });
+  const [auditRepairStatus, setAuditRepairStatus] = useState({ state: "idle", message: "" });
   const [lastChecked, setLastChecked] = useState("");
 
   const refreshOne = async (setter, context = {}) => {
@@ -152,9 +155,31 @@ export default function SmartsheetHealth({ onBackToPlatform }) {
     ...scopedRecords(mainHealth.data?.records || [], "menuSelection"),
     ...scopedRecords(leanHealth.data?.records || [], "lean"),
   ], [mainHealth.data, leanHealth.data]);
+  const rotationAudit = useMemo(() => buildRotationRecordAudit(scopedRecords(mainHealth.data?.records || [], "menuSelection")), [mainHealth.data]);
   const recordTypeRows = countBy(combinedRecords, SMARTSHEET_COLUMNS.recordType).slice(0, 8);
   const statusRows = countBy(combinedRecords, SMARTSHEET_COLUMNS.status).slice(0, 6);
   const districtRows = countBy(combinedRecords, SMARTSHEET_COLUMNS.district).filter(([name]) => name !== "Unclassified").slice(0, 6);
+
+  const repairRotationStatusDrift = async () => {
+    const records = buildStatusDriftRepairRecords(rotationAudit.statusDriftRows);
+    if (!records.length) return;
+    setAuditRepairStatus({ state: "loading", message: `Repairing ${records.length} status drift row${records.length === 1 ? "" : "s"}...` });
+    try {
+      const result = await syncRecordsToBackbone(records, {
+        tool: "Neighborhood Rotations",
+        source: "Data Health Rotation Record Audit",
+        status: "Submitted",
+      });
+      await refreshOne(setMainHealth);
+      setAuditRepairStatus({
+        state: result.state === "fallback" ? "fallback" : "synced",
+        message: result.message || `Repaired ${records.length} status drift row${records.length === 1 ? "" : "s"}.`,
+      });
+      setLastChecked(nowStamp());
+    } catch (error) {
+      setAuditRepairStatus({ state: "error", message: error.message || "Status drift repair failed." });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#f6f7f9] text-slate-950">
@@ -207,6 +232,12 @@ export default function SmartsheetHealth({ onBackToPlatform }) {
             onRepairMissing={(missingColumns) => repairOne(setLeanHealth, missingColumns, { tool: "lean" })}
           />
         </section>
+
+        <RotationRecordAuditCard
+          audit={rotationAudit}
+          repairStatus={auditRepairStatus}
+          onRepairStatusDrift={repairRotationStatusDrift}
+        />
 
         <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <SummaryPanel icon={Activity} title="Record Types" rows={recordTypeRows} empty="No records loaded yet." />
@@ -360,6 +391,124 @@ function SheetHealthCard({ title, health, onRefresh, onRepairMissing, scope = "a
         </div>
       )}
     </section>
+  );
+}
+
+function RotationRecordAuditCard({ audit, repairStatus, onRepairStatusDrift }) {
+  const summary = audit.summary || {};
+  const issueTotal = summary.duplicateRecordIds + summary.statusDriftRows + summary.orphanChildRows + summary.weekMismatchRows + summary.reInventBlockIssues + summary.reInventMissingBlocks;
+  const repairable = summary.repairableRows || 0;
+  const healthy = issueTotal === 0;
+  const repairBusy = repairStatus.state === "loading";
+  const topIssues = [
+    ...audit.statusDriftRows.map((issue) => ({ ...issue, kind: "Status drift", tone: "amber", detail: `${issue.status || "Draft"} child under Submitted parent` })),
+    ...audit.reInventBlockIssues.map((issue) => ({ ...issue, kind: "Re:Invent block", tone: "rose", detail: `Expected ${issue.expectedBlocks.join(", ")}` })),
+    ...audit.orphanChildRows.map((issue) => ({ ...issue, kind: "Orphan child", tone: "rose", detail: "Parent rotation header not found" })),
+    ...audit.weekMismatchRows.map((issue) => ({ ...issue, kind: "Week mismatch", tone: "amber", detail: `Record ID week ${issue.idWeek}` })),
+  ].slice(0, 8);
+
+  return (
+    <section className={`rounded-lg border bg-white p-5 shadow-sm ${healthy ? "border-emerald-200" : "border-amber-200"}`}>
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className={`text-xs font-black uppercase tracking-[0.18em] ${healthy ? "text-emerald-600" : "text-amber-600"}`}>
+            Rotation Trust Audit
+          </p>
+          <h2 className="mt-1 text-2xl font-black text-slate-950">Saved Rotation Record Quality</h2>
+          <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-slate-600">
+            Checks saved rotation rows for duplicate IDs, submitted weeks with draft child rows, missing parents, week mismatches, and Re:Invent block drift.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onRepairStatusDrift}
+          disabled={!repairable || repairBusy}
+          className="inline-flex w-fit items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-black text-emerald-900 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400"
+        >
+          <ShieldCheck size={16} />
+          {repairBusy ? "Repairing..." : repairable ? `Repair ${repairable} status row${repairable === 1 ? "" : "s"}` : "No safe repairs"}
+        </button>
+      </div>
+
+      <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
+        <AuditMetric label="Headers" value={summary.rotationHeaders || 0} tone="neutral" />
+        <AuditMetric label="Duplicates" value={summary.duplicateRecordIds || 0} tone={summary.duplicateRecordIds ? "amber" : "green"} />
+        <AuditMetric label="Status Drift" value={summary.statusDriftRows || 0} tone={summary.statusDriftRows ? "amber" : "green"} />
+        <AuditMetric label="Orphans" value={summary.orphanChildRows || 0} tone={summary.orphanChildRows ? "rose" : "green"} />
+        <AuditMetric label="Week Drift" value={summary.weekMismatchRows || 0} tone={summary.weekMismatchRows ? "amber" : "green"} />
+        <AuditMetric label="Re:Invent" value={(summary.reInventBlockIssues || 0) + (summary.reInventMissingBlocks || 0)} tone={(summary.reInventBlockIssues || summary.reInventMissingBlocks) ? "amber" : "green"} />
+      </div>
+
+      {repairStatus.message && (
+        <div className={`mt-4 rounded-lg border p-4 text-sm font-semibold ${repairStatus.state === "error" ? "border-rose-200 bg-rose-50 text-rose-900" : repairStatus.state === "fallback" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-emerald-200 bg-emerald-50 text-emerald-900"}`}>
+          {repairStatus.message}
+        </div>
+      )}
+
+      <div className="mt-5 grid grid-cols-1 gap-4 xl:grid-cols-[1.25fr_0.75fr]">
+        <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-black text-slate-950">Actionable Rows</p>
+            <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-black text-slate-600">{issueTotal} total issue{issueTotal === 1 ? "" : "s"}</span>
+          </div>
+          <div className="mt-3 space-y-2">
+            {topIssues.length ? topIssues.map((issue) => (
+              <AuditIssueRow key={`${issue.kind}-${issue.recordId}-${issue.blockId}`} issue={issue} />
+            )) : (
+              <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-900">
+                No rotation record issues detected in the loaded Smartsheet scope.
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-sky-200 bg-sky-50 p-4">
+          <p className="text-sm font-black text-sky-950">Safe Repair Rule</p>
+          <p className="mt-2 text-sm font-semibold leading-6 text-sky-900">
+            The repair button only updates child row status/timestamps when the parent rotation header is already Submitted. It does not delete duplicate rows or rewrite menus.
+          </p>
+          <div className="mt-3 rounded-lg border border-white/80 bg-white/70 p-3">
+            <p className="text-xs font-black uppercase tracking-[0.12em] text-sky-700">Manual review required</p>
+            <p className="mt-1 text-sm font-semibold leading-6 text-sky-950">
+              Duplicate IDs, orphan rows, week mismatches, and Re:Invent block issues are shown for review before any destructive cleanup.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function AuditMetric({ label, value, tone = "neutral" }) {
+  const toneClass = tone === "green"
+    ? "border-emerald-200 bg-emerald-50 text-emerald-950"
+    : tone === "amber"
+      ? "border-amber-200 bg-amber-50 text-amber-950"
+      : tone === "rose"
+        ? "border-rose-200 bg-rose-50 text-rose-950"
+        : "border-slate-200 bg-slate-50 text-slate-950";
+  return (
+    <div className={`rounded-lg border p-3 ${toneClass}`}>
+      <p className="text-xs font-black uppercase tracking-[0.12em] opacity-70">{label}</p>
+      <p className="mt-2 text-2xl font-black">{Number(value || 0).toLocaleString()}</p>
+    </div>
+  );
+}
+
+function AuditIssueRow({ issue }) {
+  const toneClass = issue.tone === "rose" ? "border-rose-200 bg-white text-rose-950" : "border-amber-200 bg-white text-amber-950";
+  return (
+    <div className={`rounded-lg border p-3 ${toneClass}`}>
+      <div className="flex flex-col gap-1 md:flex-row md:items-start md:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-black uppercase tracking-[0.12em] opacity-70">{issue.kind}</p>
+          <p className="mt-1 break-words text-sm font-black text-slate-950">{issue.cafe || "Unknown cafe"} · {issue.dateRangeLabel || issue.weekStartDate || "Unknown week"}</p>
+          <p className="mt-1 break-words text-xs font-semibold text-slate-600">{issue.menu || issue.item || issue.recordType || issue.recordId}</p>
+        </div>
+        <span className="w-fit rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-black text-slate-600">{issue.blockId || issue.stationKey || "record"}</span>
+      </div>
+      <p className="mt-2 text-xs font-semibold leading-5 text-slate-500">{issue.detail}</p>
+    </div>
   );
 }
 
