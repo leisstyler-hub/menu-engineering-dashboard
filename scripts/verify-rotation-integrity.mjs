@@ -83,6 +83,10 @@ if (!/function reInventSummaryBlockLabels/.test(source) || !/carryoverGlobalBloc
   fail("Re:Invent summary cards must show all three schedule blocks, including prior-Friday Monday carryover.");
 }
 
+if (!/const isReInventFridayMondayWeek = \(weekLabel = ""\) => weekIndexFromLabel\(weekLabel\) % 2 === 0;/.test(source)) {
+  fail("Re:Invent cycle parity must be shifted back one week so Jun 29, 2026 is Monday carryover / Tue-Wed / Thu-Fri and Jul 6, 2026 is Friday-to-Monday carryover.");
+}
+
 if (!/<SubmittedRotationRecap[^>]*previousRotation=\{previousRotation\}/.test(source) || !/cafe === "Re:Invent" \? reInventSummaryBlockLabels\(\{ \.\.\.rotation, previousRotation \}, week\)/.test(source)) {
   fail("Re:Invent submitted recap must show all three schedule blocks, including prior-Friday Monday carryover.");
 }

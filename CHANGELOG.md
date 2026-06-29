@@ -2,6 +2,9 @@
 
 ## 2026-06-28
 
+- [Jun 28, 7:05 PM] Shifted the Re:Invent two-day Global cycle back one week so Jun 29, 2026 uses Monday carryover, Tuesday-Wednesday, and Thursday-Friday blocks.
+- [Jun 28, 7:05 PM] Added a rotation integrity guard for the Jun 29 / Jul 6 Re:Invent parity so the 2-day pattern cannot drift back.
+- [Jun 28, 7:05 PM] Set visible app version to `2026.06.28.003-reinvent-cycle-backshift`.
 - [Jun 28, 3:43 PM] Added a Vegetable Carvery Recipe Library group for AMZ: Carvery charred vegetable options.
 - [Jun 28, 3:43 PM] Made Leadership Overview and Executive Rotation Health cafe cards open directly into that cafe's Chef Planner.
 - [Jun 28, 3:43 PM] Reworked Re:Invent submitted and executive cards to show the three schedule blocks, including prior-Friday Monday carryover.

@@ -113,7 +113,7 @@ const weekIndexFromLabel = (weekLabel = "") => {
   if (Number.isNaN(weekStart.getTime())) return 0;
   return Math.max(0, Math.round((weekStart - ROTATION_CYCLE_START) / (7 * 24 * 60 * 60 * 1000)));
 };
-const isReInventFridayMondayWeek = (weekLabel = "") => (weekIndexFromLabel(weekLabel) + 1) % 2 === 0;
+const isReInventFridayMondayWeek = (weekLabel = "") => weekIndexFromLabel(weekLabel) % 2 === 0;
 const ROTATION_WEEKS = Array.from({ length: 160 }, (_, index) => makeWeekOption(addDays(ROTATION_CYCLE_START, index * 7)));
 const DEFAULT_ROTATION_WEEK = makeWeekOption(getMonday(new Date()));
 const previousRotationWeek = (weekLabel = "") => {
