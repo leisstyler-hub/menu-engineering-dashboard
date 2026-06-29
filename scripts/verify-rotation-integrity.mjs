@@ -75,8 +75,8 @@ if (!/selection rows can restore submitted state when the header row is missing/
   fail("Submitted selection rows must also restore Submitted state when a header/global block row is missing or delayed.");
 }
 
-if (!/function ItemPickerSlot/.test(source) || !/Item not listed\?/.test(source)) {
-  fail("Write-in picker mode is missing; dropdown and manual entry should not stack together.");
+if (!/function ItemPickerSlot/.test(source) || !source.includes("<option value={WRITE_IN_SENTINEL}>Type if not listed</option>")) {
+  fail("Write-in picker mode is missing; dropdowns should open manual entry through the Type if not listed option.");
 }
 
 if (!/function reInventSummaryBlockLabels/.test(source) || !/carryoverGlobalBlock\(rotation\.previousRotation/.test(source)) {
@@ -141,6 +141,18 @@ const requiredEastMarkers = [
 
 for (const marker of requiredEastMarkers) {
   if (!source.includes(marker)) fail(`East custom station marker missing: ${marker}`);
+}
+
+if (!source.includes('const WRITE_IN_SENTINEL = "__write_in__";')) {
+  fail("Item picker write-in behavior must use a dropdown sentinel instead of a second always-visible field.");
+}
+
+if (!source.includes('<option value={WRITE_IN_SENTINEL}>Type if not listed</option>')) {
+  fail("Item picker dropdowns must include a Type if not listed option.");
+}
+
+if (/placeholder="Type if not listed"\s+className="mt-3 w-full rounded-2xl border border-slate-200/.test(source)) {
+  fail("Carvery selectors must not render an always-visible duplicate write-in input below the dropdown.");
 }
 
 if (!process.exitCode) {

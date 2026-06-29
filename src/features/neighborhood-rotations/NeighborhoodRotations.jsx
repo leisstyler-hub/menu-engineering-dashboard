@@ -4600,6 +4600,8 @@ function isValueFromItems(value = "", items = []) {
   return items.some((row) => normalizeItemName(getItemIdentity(row)) === normalized);
 }
 
+const WRITE_IN_SENTINEL = "__write_in__";
+
 function ItemPickerSlot({ value = "", items = [], onChange, selectClassName, inputClassName, placeholder = "Type item name" }) {
   const [writeInOpen, setWriteInOpen] = useState(false);
   const isKnownValue = isValueFromItems(value, items);
@@ -4634,17 +4636,23 @@ function ItemPickerSlot({ value = "", items = [], onChange, selectClassName, inp
 
   return (
     <div className="space-y-2">
-      <select value={value || ""} onChange={(event) => onChange(event.target.value)} className={selectClassName}>
+      <select
+        value={value || ""}
+        onChange={(event) => {
+          if (event.target.value === WRITE_IN_SENTINEL) {
+            setWriteInOpen(true);
+            onChange("");
+            return;
+          }
+          setWriteInOpen(false);
+          onChange(event.target.value);
+        }}
+        className={selectClassName}
+      >
         <option value="">&lt;Select Item&gt;</option>
+        <option value={WRITE_IN_SENTINEL}>Type if not listed</option>
         {items.map((row) => <option key={getItemIdentity(row)} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}
       </select>
-      <button
-        type="button"
-        onClick={() => setWriteInOpen(true)}
-        className="w-full rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-black text-slate-600 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800"
-      >
-        Item not listed?
-      </button>
     </div>
   );
 }
@@ -4794,16 +4802,13 @@ function CarverySection({ rotation, updateCarvery }) {
         {fields.map(([field, label, options]) => (
           <div key={field} className="rounded-3xl border-2 border-sky-200 bg-sky-50/80 p-4 shadow-sm">
             <div className="flex items-center justify-between gap-2 mb-2"><label className="block text-sm font-bold text-slate-900">{label}</label><span className="rounded-full bg-white border border-sky-200 px-3 py-1 text-xs font-bold text-sky-700">choose here</span></div>
-            <select value={rotation.carvery?.[field] || ""} onChange={(e) => updateCarvery(field, e.target.value)} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
-              <option value="">&lt;Select Item&gt;</option>
-              {rotation.carvery?.[field] && !options.some((row) => normalizeItemName(getItemIdentity(row)) === normalizeItemName(rotation.carvery?.[field])) && <option value={rotation.carvery[field]}>{titleCase(rotation.carvery[field])}</option>}
-              {options.map((row) => <option key={`${field}-${getItemIdentity(row)}`} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}
-            </select>
-            <input
+            <ItemPickerSlot
               value={rotation.carvery?.[field] || ""}
-              onChange={(e) => updateCarvery(field, e.target.value)}
+              items={options}
+              onChange={(nextValue) => updateCarvery(field, nextValue)}
               placeholder="Type if not listed"
-              className="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+              selectClassName="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+              inputClassName="w-full rounded-2xl border-2 border-emerald-200 bg-white px-4 py-3 font-semibold outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
             />
           </div>
         ))}

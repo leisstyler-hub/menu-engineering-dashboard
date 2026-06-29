@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-06-29
+
+- [Jun 29, 6:57 AM] Moved Neighborhood Rotation write-in entry into the dropdown as `Type if not listed` so selected items no longer appear as duplicate stacked fields.
+- [Jun 29, 6:57 AM] Reused the clean write-in selector for Carvery fields and added a rotation integrity guard against always-visible duplicate write-in inputs.
+- [Jun 29, 6:57 AM] Set visible app version to `2026.06.29.001-clean-write-in-selectors`.
+
 ## 2026-06-28
 
 - [Jun 28, 8:45 PM] Removed Cafe Rotation Readiness from Settings because cafe-specific readiness does not belong in the system settings view.
