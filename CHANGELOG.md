@@ -2,6 +2,9 @@
 
 ## 2026-06-28
 
+- [Jun 28, 7:22 PM] Aligned live Re:Invent Jun 29 data so Monday carries AMZ: Ohana from the prior Friday, Tuesday-Wednesday runs AMZ: Lemongrass + Lime, and Thursday-Friday runs AMZ: Cypress.
+- [Jun 28, 7:22 PM] Removed stale Re:Invent Jun 29 Piccola Italia/Ciudad records from Supabase and the Smartsheet mirror.
+- [Jun 28, 7:22 PM] Set visible app version to `2026.06.28.004-reinvent-jun29-alignment`.
 - [Jun 28, 7:05 PM] Shifted the Re:Invent two-day Global cycle back one week so Jun 29, 2026 uses Monday carryover, Tuesday-Wednesday, and Thursday-Friday blocks.
 - [Jun 28, 7:05 PM] Added a rotation integrity guard for the Jun 29 / Jul 6 Re:Invent parity so the 2-day pattern cannot drift back.
 - [Jun 28, 7:05 PM] Set visible app version to `2026.06.28.003-reinvent-cycle-backshift`.
