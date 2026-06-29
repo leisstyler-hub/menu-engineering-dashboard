@@ -2,6 +2,7 @@ import rows from "../src/data/menuItems.json" with { type: "json" };
 import { buildCafeRotationReadiness } from "../src/features/smartsheet-health/rotationRecordAudit.js";
 import { buildRecipeMappingAudit } from "../src/features/smartsheet-health/recipeMappingAudit.js";
 import { SMARTSHEET_COLUMNS, SMARTSHEET_RECORD_TYPES } from "../src/integrations/smartsheet/contract.js";
+import { readFileSync } from "node:fs";
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -78,5 +79,11 @@ assert(carvery && carvery.metrics.charredVegetables >= 9, "Carvery mapping shoul
 assert(freshFive && freshFive.metrics.stationCount >= 5, "Fresh Five mapping should report station coverage.");
 assert(globalMenus && globalMenus.metrics.menuCount >= 15, "Global menu mapping should report loaded AMZ global menu count.");
 assert(mapping.summary.reviewRows >= 0 && mapping.summary.watchRows >= 0, "Recipe mapping audit should include trust review/watch counts.");
+assert(mapping.summary.menuCount >= 40, "Recipe mapping audit should report all loaded menu count, not just focus menus.");
+assert(mapping.summary.categoryCount >= 4, "Recipe mapping audit should report broad selector category coverage.");
+
+const smartsheetHealthSource = readFileSync("src/features/smartsheet-health/SmartsheetHealth.jsx", "utf8");
+assert(!smartsheetHealthSource.includes("CafeRotationReadinessCard"), "Settings should not show cafe readiness; cafe-specific workflow checks belong outside Settings.");
+assert(smartsheetHealthSource.includes("All Menu Selector Alignment"), "Settings recipe mapping card should describe all-menu selector alignment.");
 
 console.log("Operational readiness verification passed.");

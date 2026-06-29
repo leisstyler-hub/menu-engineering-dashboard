@@ -11,7 +11,7 @@ import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
 import MENUWORKS_ITEMS from "../../data/menuItems.json";
 import { buildRecipeMappingAudit } from "./recipeMappingAudit.js";
-import { buildCafeRotationReadiness, buildRotationRecordAudit, buildStatusDriftRepairRecords } from "./rotationRecordAudit.js";
+import { buildRotationRecordAudit, buildStatusDriftRepairRecords } from "./rotationRecordAudit.js";
 
 const nowStamp = () => new Date().toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 const MENU_SELECTION_RECORD_TYPES = new Set([
@@ -159,7 +159,6 @@ export default function SmartsheetHealth({ onBackToPlatform }) {
   ], [mainHealth.data, leanHealth.data]);
   const rotationRecords = useMemo(() => scopedRecords(mainHealth.data?.records || [], "menuSelection"), [mainHealth.data]);
   const rotationAudit = useMemo(() => buildRotationRecordAudit(rotationRecords), [rotationRecords]);
-  const rotationReadiness = useMemo(() => buildCafeRotationReadiness(rotationRecords), [rotationRecords]);
   const recipeMappingAudit = useMemo(() => buildRecipeMappingAudit(MENUWORKS_ITEMS), []);
   const recordTypeRows = countBy(combinedRecords, SMARTSHEET_COLUMNS.recordType).slice(0, 8);
   const statusRows = countBy(combinedRecords, SMARTSHEET_COLUMNS.status).slice(0, 6);
@@ -244,10 +243,7 @@ export default function SmartsheetHealth({ onBackToPlatform }) {
           onRepairStatusDrift={repairRotationStatusDrift}
         />
 
-        <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-          <CafeRotationReadinessCard readiness={rotationReadiness} />
-          <RecipeMappingTrustCard audit={recipeMappingAudit} />
-        </section>
+        <RecipeMappingTrustCard audit={recipeMappingAudit} />
 
         <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <SummaryPanel icon={Activity} title="Record Types" rows={recordTypeRows} empty="No records loaded yet." />
@@ -518,78 +514,6 @@ function StatusPill({ status }) {
   );
 }
 
-function CafeRotationReadinessCard({ readiness }) {
-  const summary = readiness.summary || {};
-  const cafes = readiness.cafes || [];
-  return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-        <div>
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-600">Cafe Readiness</p>
-          <h2 className="mt-1 text-2xl font-black text-slate-950">Rotation Lock Checklist</h2>
-          <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-slate-600">
-            Focuses on Doppler, Re:Invent, Nitro, and Day 1 so the most important cafes have a clear lock and selection signal.
-          </p>
-        </div>
-        <span className="w-fit rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-black text-slate-600">
-          {summary.focusWeekStartDate || "latest week"}
-        </span>
-      </div>
-
-      <div className="mt-4 grid grid-cols-3 gap-2">
-        <AuditMetric label="Ready" value={summary.ready || 0} tone="green" />
-        <AuditMetric label="Watch" value={summary.watch || 0} tone="amber" />
-        <AuditMetric label="Review" value={summary.needsReview || 0} tone="rose" />
-      </div>
-
-      <div className="mt-4 space-y-3">
-        {cafes.length ? cafes.map((cafe) => {
-          const required = cafe.requiredStations || [];
-          const missing = cafe.missingRequiredStations || [];
-          const blockers = [
-            ...(cafe.hasHeader ? [] : ["No saved rotation header"]),
-            ...missing.map((station) => `Missing ${station}`),
-            ...(cafe.statusDrift ? [`${cafe.statusDrift} status drift row${cafe.statusDrift === 1 ? "" : "s"}`] : []),
-            ...(cafe.duplicateGroups ? [`${cafe.duplicateGroups} duplicate group${cafe.duplicateGroups === 1 ? "" : "s"}`] : []),
-            ...(cafe.reInventBlockIssues ? ["Re:Invent block drift"] : []),
-            ...(cafe.reInventMissingBlocks ? ["Re:Invent missing split block"] : []),
-          ];
-          return (
-            <div key={cafe.cafe} className={`rounded-lg border p-4 ${toneClasses(statusTone(cafe.status))}`}>
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="break-words text-lg font-black text-slate-950">{cafe.cafe}</p>
-                  <p className="mt-1 text-xs font-semibold text-slate-600">
-                    {cafe.completedRequiredStations || 0}/{required.length} required stations complete
-                  </p>
-                </div>
-                <StatusPill status={cafe.status} />
-              </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {required.map((station) => {
-                  const complete = !(missing || []).includes(station);
-                  return (
-                    <span key={station} className={`rounded-full border px-2 py-1 text-xs font-black ${complete ? "border-emerald-200 bg-white text-emerald-800" : "border-amber-200 bg-white text-amber-900"}`}>
-                      {station}
-                    </span>
-                  );
-                })}
-              </div>
-              <p className="mt-3 text-xs font-semibold leading-5 text-slate-600">
-                {blockers.length ? blockers.slice(0, 4).join("; ") : "Ready for weekly lock review."}
-              </p>
-            </div>
-          );
-        }) : (
-          <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-500">
-            No rotation rows loaded yet.
-          </p>
-        )}
-      </div>
-    </section>
-  );
-}
-
 function RecipeMappingTrustCard({ audit }) {
   const summary = audit.summary || {};
   const families = audit.families || [];
@@ -598,9 +522,9 @@ function RecipeMappingTrustCard({ audit }) {
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-600">Recipe Mapping Trust</p>
-          <h2 className="mt-1 text-2xl font-black text-slate-950">Menu Selector Alignment</h2>
+          <h2 className="mt-1 text-2xl font-black text-slate-950">All Menu Selector Alignment</h2>
           <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-slate-600">
-            Checks the places where wrong item grouping hurts the app most: Grill Core, Carvery, Fresh Five, and Global Menus.
+            Reviews the full Recipe Library menu set for selector coverage, item grouping risk, category spread, and the highest-risk menu families.
           </p>
         </div>
         <span className="w-fit rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-black text-slate-600">
@@ -609,10 +533,16 @@ function RecipeMappingTrustCard({ audit }) {
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4">
-        <AuditMetric label="Ready" value={summary.readyFamilies || 0} tone="green" />
-        <AuditMetric label="Watch" value={summary.watchFamilies || 0} tone="amber" />
-        <AuditMetric label="Review" value={summary.reviewFamilies || 0} tone="rose" />
+        <AuditMetric label="Menus" value={summary.menuCount || 0} tone="green" />
+        <AuditMetric label="Categories" value={summary.categoryCount || 0} tone="sky" />
+        <AuditMetric label="Stations" value={summary.stationCount || 0} tone="sky" />
         <AuditMetric label="Flagged Rows" value={(summary.reviewRows || 0) + (summary.watchRows || 0)} tone="sky" />
+      </div>
+
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        <AuditMetric label="Ready Families" value={summary.readyFamilies || 0} tone="green" />
+        <AuditMetric label="Watch Families" value={summary.watchFamilies || 0} tone="amber" />
+        <AuditMetric label="Review Families" value={summary.reviewFamilies || 0} tone="rose" />
       </div>
 
       <div className="mt-4 space-y-3">

@@ -2,6 +2,9 @@
 
 ## 2026-06-28
 
+- [Jun 28, 8:45 PM] Removed Cafe Rotation Readiness from Settings because cafe-specific readiness does not belong in the system settings view.
+- [Jun 28, 8:45 PM] Reworked Recipe Mapping Trust into an all-menu selector alignment read with menu, category, station, and flagged-row coverage.
+- [Jun 28, 8:45 PM] Added a guard so Settings stays clear of cafe readiness and set visible app version to `2026.06.28.007-settings-menu-scope`.
 - [Jun 28, 8:00 PM] Added Cafe Rotation Readiness in Data Health for Doppler, Re:Invent, Nitro, and Day 1 lock/selectability checks.
 - [Jun 28, 8:00 PM] Added Recipe Mapping Trust in Data Health for Grill Core, Carvery, Fresh Five, and Global Menu selector alignment.
 - [Jun 28, 8:00 PM] Added operational readiness verification to the release checks and set visible app version to `2026.06.28.006-operational-readiness`.

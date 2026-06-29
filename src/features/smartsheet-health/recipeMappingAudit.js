@@ -37,6 +37,9 @@ function issue(row, reason) {
 }
 
 export function buildRecipeMappingAudit(rows = []) {
+  const allMenus = new Set(rows.map((row) => asText(row.menu)).filter(Boolean));
+  const allCategories = new Set(rows.map((row) => asText(row.category)).filter(Boolean));
+  const allStations = new Set(rows.map((row) => asText(row.station)).filter(Boolean));
   const grillRows = menuRows(rows, "AMZ: Grill Core");
   const grillSideLeaks = grillRows
     .filter((row) => row.category === "side")
@@ -115,6 +118,9 @@ export function buildRecipeMappingAudit(rows = []) {
   return {
     summary: {
       rows: rows.length,
+      menuCount: allMenus.size,
+      categoryCount: allCategories.size,
+      stationCount: allStations.size,
       readyFamilies: families.filter((family) => family.status === "ready").length,
       watchFamilies: families.filter((family) => family.status === "watch").length,
       reviewFamilies: families.filter((family) => family.status === "needs_review").length,
