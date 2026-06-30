@@ -2,6 +2,10 @@
 
 ## 2026-06-30
 
+- [Jun 30, 12:32 AM] Realigned Re:Invent so the week of Jun 29, 2026 starts with Monday-Tuesday, then Wednesday-Thursday, then Friday carrying into next Monday.
+- [Jun 30, 12:32 AM] Split Re:Invent and Blueshift cycle anchors so Re:Invent can start Mon+Tue this week while Blueshift still starts Mon+Tue the week of Jul 6, 2026.
+- [Jun 30, 12:32 AM] Added a rotation integrity guard that reads each split-global cafe anchor and verifies the expected Mon+Tue start weeks.
+- [Jun 30, 12:32 AM] Set visible app version to `2026.06.30.002-reinvent-cycle-anchor`.
 - [Jun 30, 12:08 AM] Hardened Neighborhood Rotation submit so a cafe does not show as locked until primary live storage confirms the submission.
 - [Jun 30, 12:08 AM] Added a visible submit-save failure modal so chefs retry immediately instead of thinking a failed background save went live.
 - [Jun 30, 12:08 AM] Moved Blueshift Global to the shared 2/2/2 split-cycle pattern with Monday-Tuesday, Wednesday-Thursday, and Friday carryover into Monday.

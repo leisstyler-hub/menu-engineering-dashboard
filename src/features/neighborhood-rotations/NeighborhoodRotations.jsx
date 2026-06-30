@@ -113,9 +113,22 @@ const weekIndexFromLabel = (weekLabel = "") => {
   if (Number.isNaN(weekStart.getTime())) return 0;
   return Math.max(0, Math.round((weekStart - ROTATION_CYCLE_START) / (7 * 24 * 60 * 60 * 1000)));
 };
-const isReInventFridayMondayWeek = (weekLabel = "") => weekIndexFromLabel(weekLabel) % 2 === 0;
 const SPLIT_GLOBAL_CAFES = new Set(["Re:Invent", "Blueshift"]);
 const isSplitGlobalCafe = (cafe = "") => SPLIT_GLOBAL_CAFES.has(cafe);
+const SPLIT_GLOBAL_CAFE_CYCLE_STARTS = {
+  "Re:Invent": "2026-06-29",
+  Blueshift: "2026-07-06"
+};
+const weekIndexFromStartDate = (weekLabel = "", startDateKey = "") => {
+  const start = parseWeekStart(weekLabel);
+  if (!start || !startDateKey) return 0;
+  const weekStart = new Date(`${start}T00:00:00`);
+  const cycleStart = new Date(`${startDateKey}T00:00:00`);
+  if (Number.isNaN(weekStart.getTime()) || Number.isNaN(cycleStart.getTime())) return 0;
+  return Math.max(0, Math.round((weekStart - cycleStart) / (7 * 24 * 60 * 60 * 1000)));
+};
+const splitGlobalFridayCarriesToNextMonday = (cafe, weekLabel = "") => weekIndexFromStartDate(weekLabel, SPLIT_GLOBAL_CAFE_CYCLE_STARTS[cafe] || SPLIT_GLOBAL_CAFE_CYCLE_STARTS["Re:Invent"]) % 2 === 0;
+const isReInventFridayMondayWeek = (weekLabel = "") => splitGlobalFridayCarriesToNextMonday("Re:Invent", weekLabel);
 const ROTATION_WEEKS = Array.from({ length: 160 }, (_, index) => makeWeekOption(addDays(ROTATION_CYCLE_START, index * 7)));
 const DEFAULT_ROTATION_WEEK = makeWeekOption(getMonday(new Date()));
 const previousRotationWeek = (weekLabel = "") => {
@@ -1228,7 +1241,7 @@ function globalCycleConfig(cafe, week = "") {
     };
   }
   if (isSplitGlobalCafe(cafe)) {
-    const fridayConnectsToMonday = isReInventFridayMondayWeek(week);
+    const fridayConnectsToMonday = splitGlobalFridayCarriesToNextMonday(cafe, week);
     const cafeName = cafe || "This cafe";
     return fridayConnectsToMonday
       ? {
@@ -1293,7 +1306,7 @@ function reInventGlobalBlockLayout(week = "") {
 
 function splitGlobalBlockLayout(cafe, week = "") {
   const cafeName = cafe || "This cafe";
-  const fridayCarriesToNextMonday = isReInventFridayMondayWeek(week);
+  const fridayCarriesToNextMonday = splitGlobalFridayCarriesToNextMonday(cafe, week);
   return fridayCarriesToNextMonday
     ? [
         { id: "monTue", title: "Monday + Tuesday", days: ["Monday", "Tuesday"], readOnly: false, help: `Select the ${cafeName} Global menu for Monday and Tuesday.` },
@@ -1324,7 +1337,7 @@ function nitroGlobalBlockLayout() {
 
 function menuBlockMeta(blockId) {
   if (blockId === "noodles") return { label: "Noodle Station", type: "Secondary Global", days: "Monday, Tuesday, Wednesday, Thursday, Friday" };
-  const splitBlock = splitGlobalBlockLayout("Re:Invent").find((block) => block.id === blockId) || splitGlobalBlockLayout("Re:Invent", "Jan 12, 2026 - Jan 16, 2026").find((block) => block.id === blockId);
+  const splitBlock = splitGlobalBlockLayout("Re:Invent", "Jun 29, 2026 - Jul 3, 2026").find((block) => block.id === blockId) || splitGlobalBlockLayout("Re:Invent", "Jul 6, 2026 - Jul 10, 2026").find((block) => block.id === blockId);
   if (splitBlock) return { label: splitBlock.title, type: splitBlock.continuesNextWeek ? "Two-Day Carryover" : "Two-Day", days: splitBlock.days.join(", ") };
   const nitroBlock = nitroGlobalBlockLayout().find((block) => block.id === blockId);
   if (nitroBlock) return { label: nitroBlock.title, type: "Nitro Same-Menu Split", days: nitroBlock.days.join(", ") };

@@ -20,6 +20,25 @@ const category = (row) => String(row.category || row.itemType || row["Item Type"
 const price = (row) => row.price ?? row.sellPrice ?? row["Sell Price"] ?? null;
 const isEntree = (row) => category(row).includes("entree") || category(row).includes("entrée") || category(row).includes("plate") || category(row).includes("main") || Number(price(row)) >= 9;
 
+const splitCycleStart = (cafe) => {
+  const escaped = cafe.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const quoted = source.match(new RegExp(`"${escaped}"\\s*:\\s*"([^"]+)"`));
+  if (quoted) return quoted[1];
+  const unquoted = source.match(new RegExp(`${escaped}\\s*:\\s*"([^"]+)"`));
+  return unquoted?.[1] || "";
+};
+const verifyWeekStart = (weekLabel) => {
+  const parsed = new Date(String(weekLabel || "").split(" - ")[0]);
+  return Number.isNaN(parsed.getTime()) ? "" : parsed.toISOString().slice(0, 10);
+};
+const firstSplitBlockId = (cafe, weekLabel) => {
+  const weekStart = verifyWeekStart(weekLabel);
+  const anchor = splitCycleStart(cafe);
+  if (!weekStart || !anchor) return "";
+  const diff = Math.max(0, Math.round((new Date(`${weekStart}T00:00:00`) - new Date(`${anchor}T00:00:00`)) / (7 * 24 * 60 * 60 * 1000)));
+  return diff % 2 === 0 ? "monTue" : "monCarry";
+};
+
 const uniqueByName = (items) => {
   const seen = new Set();
   return items.filter((row) => {
@@ -103,8 +122,20 @@ if (!/locked && isSplitGlobalCafe\(row\.cafe\) \? splitGlobalSummaryBlockLabels\
   fail("Executive summary cards must show all scheduled split-global blocks for every split cafe.");
 }
 
-if (!/const isReInventFridayMondayWeek = \(weekLabel = ""\) => weekIndexFromLabel\(weekLabel\) % 2 === 0;/.test(source)) {
-  fail("Re:Invent cycle parity must be shifted back one week so Jun 29, 2026 is Monday carryover / Tue-Wed / Thu-Fri and Jul 6, 2026 is Friday-to-Monday carryover.");
+if (!/const SPLIT_GLOBAL_CAFE_CYCLE_STARTS = \{\s*"Re:Invent": "2026-06-29",\s*Blueshift: "2026-07-06"\s*\};/.test(source)) {
+  fail("Split-global cafes need separate cycle anchors: Re:Invent starts Mon+Tue on Jun 29, 2026; Blueshift starts Mon+Tue on Jul 6, 2026.");
+}
+
+if (!/const splitGlobalFridayCarriesToNextMonday = \(cafe, weekLabel = ""\) =>/.test(source) || !/splitGlobalFridayCarriesToNextMonday\("Re:Invent", weekLabel\)/.test(source)) {
+  fail("Re:Invent and Blueshift split-global parity must be calculated per cafe, not from one shared week index.");
+}
+
+if (firstSplitBlockId("Re:Invent", "Jun 29, 2026 - Jul 3, 2026") !== "monTue") {
+  fail("Re:Invent Jun 29, 2026 must start with the Monday + Tuesday block.");
+}
+
+if (firstSplitBlockId("Blueshift", "Jul 6, 2026 - Jul 10, 2026") !== "monTue") {
+  fail("Blueshift Jul 6, 2026 must start with the Monday + Tuesday block.");
 }
 
 if (!/<SubmittedRotationRecap[^>]*previousRotation=\{previousRotation\}/.test(source) || !/isSplitGlobalCafe\(cafe\) \? splitGlobalSummaryBlockLabels\(\{ \.\.\.rotation, previousRotation \}, cafe, week\)/.test(source)) {
