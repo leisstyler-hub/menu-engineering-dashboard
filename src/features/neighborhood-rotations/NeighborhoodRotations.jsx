@@ -2146,7 +2146,7 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
     if (optimistic) setDatabaseRecords((prev) => upsertDatabaseRecords(prev, nextRecords));
     setDatabaseSyncStatus({ state: "syncing", message: `Saving ${nextRecords.length} row${nextRecords.length === 1 ? "" : "s"} to database...`, syncedAt: "" });
     try {
-      const result = await syncRecordsToBackbone(nextRecords, { tool: "Neighborhood Rotations", week, district, cafe: selectedCafe, status: nextRotation.status || "Draft", replaceParentRecordIds: [rotationRecordParentId(week, district, selectedCafe)] });
+      const result = await syncRecordsToBackbone(nextRecords, { tool: "Neighborhood Rotations", week, district, cafe: selectedCafe, status: nextRotation.status || "Draft", replaceParentRecordIds: [rotationRecordParentId(week, district, selectedCafe)], autoCreateMissingColumns: true });
       if (requirePrimary && result.source === "smartsheet-fallback") {
         const error = new Error("The fallback sheet saved, but the live database did not confirm the submission. Please try Submit again so the locked rotation is visible to everyone.");
         error.payload = result;

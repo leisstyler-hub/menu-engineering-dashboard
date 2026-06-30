@@ -146,6 +146,10 @@ if (!/const submitRotation = async \(\)/.test(source) || !/await persistRotation
   fail("Submit must wait for the database write before showing a locked submitted state.");
 }
 
+if (!/replaceParentRecordIds: \[rotationRecordParentId\(week, district, selectedCafe\)\], autoCreateMissingColumns: true/.test(source)) {
+  fail("Rotation submit sync must ask the Smartsheet mirror to auto-repair missing used columns.");
+}
+
 if (!/function selectionDatabaseRecord\(\{[\s\S]*blockId = ""[\s\S]*recordId: makeDatabaseRecordId\(parentId, stationKey, blockId \|\| "base", selectionType, slotNumber, itemName\)/.test(source)) {
   fail("Selection record IDs must include the global block ID so split menus can resubmit repeated items without Supabase row conflicts.");
 }

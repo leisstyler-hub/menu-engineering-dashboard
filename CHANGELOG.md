@@ -2,6 +2,9 @@
 
 ## 2026-06-30
 
+- [Jun 30, 1:36 PM] Enabled rotation submit syncs to auto-repair missing Smartsheet mirror columns when a used submission field is absent.
+- [Jun 30, 1:36 PM] Added a rotation integrity guard so future submit paths keep the Smartsheet column-repair option active.
+- [Jun 30, 1:36 PM] Set visible app version to `2026.06.30.004-resubmit-storage-repair`.
 - [Jun 30, 1:36 PM] Added the split/global block ID into saved selection row IDs so Nitro, Re:Invent, and Blueshift can resubmit repeated items without Supabase row conflicts.
 - [Jun 30, 1:36 PM] Added a rotation integrity guard that blocks releases if split-block selections can collide during submit.
 - [Jun 30, 1:36 PM] Set visible app version to `2026.06.30.003-resubmit-row-ids`.
