@@ -2,6 +2,9 @@
 
 ## 2026-06-30
 
+- [Jun 30, 1:36 PM] Added the split/global block ID into saved selection row IDs so Nitro, Re:Invent, and Blueshift can resubmit repeated items without Supabase row conflicts.
+- [Jun 30, 1:36 PM] Added a rotation integrity guard that blocks releases if split-block selections can collide during submit.
+- [Jun 30, 1:36 PM] Set visible app version to `2026.06.30.003-resubmit-row-ids`.
 - [Jun 30, 12:32 AM] Realigned Re:Invent so the week of Jun 29, 2026 starts with Monday-Tuesday, then Wednesday-Thursday, then Friday carrying into next Monday.
 - [Jun 30, 12:32 AM] Split Re:Invent and Blueshift cycle anchors so Re:Invent can start Mon+Tue this week while Blueshift still starts Mon+Tue the week of Jul 6, 2026.
 - [Jun 30, 12:32 AM] Added a rotation integrity guard that reads each split-global cafe anchor and verifies the expected Mon+Tue start weeks.

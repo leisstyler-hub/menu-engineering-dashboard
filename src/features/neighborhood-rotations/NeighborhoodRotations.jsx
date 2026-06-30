@@ -286,7 +286,7 @@ function baseDatabaseRecord({ parentId, recordId, recordType, status, district, 
   };
 }
 
-function selectionDatabaseRecord({ parentId, district, cafe, week, rotation, stationKey, selectionType, itemName, sortOrder, slotNumber, candidateRows, calories }) {
+function selectionDatabaseRecord({ parentId, district, cafe, week, rotation, stationKey, selectionType, itemName, sortOrder, slotNumber, blockId = "", candidateRows, calories }) {
   const row = selectedRowForName(itemName, candidateRows);
   const price = getPrice(row);
   const trueCost = getTrueCost(row);
@@ -295,7 +295,7 @@ function selectionDatabaseRecord({ parentId, district, cafe, week, rotation, sta
   return {
     ...baseDatabaseRecord({
       parentId,
-      recordId: makeDatabaseRecordId(parentId, stationKey, selectionType, slotNumber, itemName),
+      recordId: makeDatabaseRecordId(parentId, stationKey, blockId || "base", selectionType, slotNumber, itemName),
       recordType: stationKey === "global" ? SMARTSHEET_RECORD_TYPES.globalSelection : SMARTSHEET_RECORD_TYPES.stationSelection,
       status: rotation.status || "Draft",
       district,
@@ -386,7 +386,7 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
   const selectionRows = [];
   const pushSelections = (stationKey, selectionType, values, offset = 0, sourceRotation = rotation, blockId = "", candidateRows = MENUWORKS_ITEMS) => {
     compactValues(values).forEach((itemName, index) => {
-      const rec = selectionDatabaseRecord({ parentId, district, cafe, week, rotation: sourceRotation, stationKey, selectionType, itemName, sortOrder: offset + index + 1, slotNumber: index + 1, candidateRows });
+      const rec = selectionDatabaseRecord({ parentId, district, cafe, week, rotation: sourceRotation, stationKey, selectionType, itemName, sortOrder: offset + index + 1, slotNumber: index + 1, blockId, candidateRows });
       if (blockId) {
         rec[SMARTSHEET_COLUMNS.globalBlockId] = makeDatabaseRecordId(parentId, "global", blockId);
         rec[SMARTSHEET_COLUMNS.menuBlockLabel] = blockId;

@@ -146,6 +146,14 @@ if (!/const submitRotation = async \(\)/.test(source) || !/await persistRotation
   fail("Submit must wait for the database write before showing a locked submitted state.");
 }
 
+if (!/function selectionDatabaseRecord\(\{[\s\S]*blockId = ""[\s\S]*recordId: makeDatabaseRecordId\(parentId, stationKey, blockId \|\| "base", selectionType, slotNumber, itemName\)/.test(source)) {
+  fail("Selection record IDs must include the global block ID so split menus can resubmit repeated items without Supabase row conflicts.");
+}
+
+if (!/selectionDatabaseRecord\(\{ parentId, district, cafe, week, rotation: sourceRotation, stationKey, selectionType, itemName, sortOrder: offset \+ index \+ 1, slotNumber: index \+ 1, blockId, candidateRows \}\)/.test(source)) {
+  fail("Split/global block saves must pass blockId into selection row identity.");
+}
+
 if (/const submitRotation = \(\) => \{[\s\S]*updateRotation\(nextRotation\);\s*persistRotationToDatabase\?\.\(nextRotation\);/.test(source)) {
   fail("Submit still marks the UI submitted before the backend save completes.");
 }
