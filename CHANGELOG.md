@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-06-30
+
+- [Jun 30, 12:08 AM] Hardened Neighborhood Rotation submit so a cafe does not show as locked until primary live storage confirms the submission.
+- [Jun 30, 12:08 AM] Added a visible submit-save failure modal so chefs retry immediately instead of thinking a failed background save went live.
+- [Jun 30, 12:08 AM] Moved Blueshift Global to the shared 2/2/2 split-cycle pattern with Monday-Tuesday, Wednesday-Thursday, and Friday carryover into Monday.
+- [Jun 30, 12:08 AM] Expanded rotation integrity checks so split-global save rows, summary cards, submitted recaps, and submit confirmation cannot drift back to Re:Invent-only behavior.
+- [Jun 30, 12:08 AM] Set visible app version to `2026.06.30.001-nitro-submit-blueshift-cycle`.
+
 ## 2026-06-29
 
 - [Jun 29, 6:57 AM] Moved Neighborhood Rotation write-in entry into the dropdown as `Type if not listed` so selected items no longer appear as duplicate stacked fields.

@@ -83,12 +83,44 @@ if (!/function reInventSummaryBlockLabels/.test(source) || !/carryoverGlobalBloc
   fail("Re:Invent summary cards must show all three schedule blocks, including prior-Friday Monday carryover.");
 }
 
+if (!/const SPLIT_GLOBAL_CAFES = new Set\(\["Re:Invent", "Blueshift"\]\);/.test(source)) {
+  fail("Split global cafes must explicitly include Re:Invent and Blueshift.");
+}
+
+if (!/function splitGlobalBlockLayout\(cafe, week = ""\)/.test(source) || !/function splitGlobalSummaryBlockLabels/.test(source)) {
+  fail("Split global 2/2/2 behavior must be shared through splitGlobalBlockLayout and splitGlobalSummaryBlockLabels.");
+}
+
+if (!/if \(isSplitGlobalCafe\(cafe\)\) \{/.test(source) || !/<SplitGlobalSection/.test(source)) {
+  fail("The planner must route both Re:Invent and Blueshift to the shared split-global UI.");
+}
+
+if (!/if \(isSplitGlobalCafe\(cafe\)\) \{[\s\S]*splitGlobalBlockLayout\(cafe, week\)/.test(source)) {
+  fail("Database records must save all active split-global blocks, not only Re:Invent blocks.");
+}
+
+if (!/locked && isSplitGlobalCafe\(row\.cafe\) \? splitGlobalSummaryBlockLabels\(row, row\.cafe, row\.week\) : \[\]/.test(source)) {
+  fail("Executive summary cards must show all scheduled split-global blocks for every split cafe.");
+}
+
 if (!/const isReInventFridayMondayWeek = \(weekLabel = ""\) => weekIndexFromLabel\(weekLabel\) % 2 === 0;/.test(source)) {
   fail("Re:Invent cycle parity must be shifted back one week so Jun 29, 2026 is Monday carryover / Tue-Wed / Thu-Fri and Jul 6, 2026 is Friday-to-Monday carryover.");
 }
 
-if (!/<SubmittedRotationRecap[^>]*previousRotation=\{previousRotation\}/.test(source) || !/cafe === "Re:Invent" \? reInventSummaryBlockLabels\(\{ \.\.\.rotation, previousRotation \}, week\)/.test(source)) {
-  fail("Re:Invent submitted recap must show all three schedule blocks, including prior-Friday Monday carryover.");
+if (!/<SubmittedRotationRecap[^>]*previousRotation=\{previousRotation\}/.test(source) || !/isSplitGlobalCafe\(cafe\) \? splitGlobalSummaryBlockLabels\(\{ \.\.\.rotation, previousRotation \}, cafe, week\)/.test(source)) {
+  fail("Split-global submitted recap must show all three schedule blocks, including prior-Friday Monday carryover.");
+}
+
+if (!/const submitRotation = async \(\)/.test(source) || !/await persistRotationToDatabase\?\.\(nextRotation, \{ optimistic: false, requirePrimary: true \}\)/.test(source)) {
+  fail("Submit must wait for the database write before showing a locked submitted state.");
+}
+
+if (/const submitRotation = \(\) => \{[\s\S]*updateRotation\(nextRotation\);\s*persistRotationToDatabase\?\.\(nextRotation\);/.test(source)) {
+  fail("Submit still marks the UI submitted before the backend save completes.");
+}
+
+if (!/setSubmitPersistError/.test(source) || !/SubmitSaveFailedModal/.test(source)) {
+  fail("Submit failures need a visible blocking modal instead of a silent background fallback.");
 }
 
 if (!/handleOpenPlannerFromSummary = \(row\)/.test(source) || !/onOpenPlanner=\{handleOpenPlannerFromSummary\}/.test(source) || !/onOpenPlanner \? \(\) => onOpenPlanner\(row\)/.test(source)) {

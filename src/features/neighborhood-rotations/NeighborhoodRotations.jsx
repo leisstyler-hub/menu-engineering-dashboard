@@ -114,6 +114,8 @@ const weekIndexFromLabel = (weekLabel = "") => {
   return Math.max(0, Math.round((weekStart - ROTATION_CYCLE_START) / (7 * 24 * 60 * 60 * 1000)));
 };
 const isReInventFridayMondayWeek = (weekLabel = "") => weekIndexFromLabel(weekLabel) % 2 === 0;
+const SPLIT_GLOBAL_CAFES = new Set(["Re:Invent", "Blueshift"]);
+const isSplitGlobalCafe = (cafe = "") => SPLIT_GLOBAL_CAFES.has(cafe);
 const ROTATION_WEEKS = Array.from({ length: 160 }, (_, index) => makeWeekOption(addDays(ROTATION_CYCLE_START, index * 7)));
 const DEFAULT_ROTATION_WEEK = makeWeekOption(getMonday(new Date()));
 const previousRotationWeek = (weekLabel = "") => {
@@ -398,13 +400,13 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
     });
   };
 
-  const reInventBlockRows = [];
-  if (cafe === "Re:Invent") {
-    reInventGlobalBlockLayout(week).filter((blockInfo) => !blockInfo.readOnly).forEach((blockInfo, blockIndex) => {
+  const splitGlobalBlockRows = [];
+  if (isSplitGlobalCafe(cafe)) {
+    splitGlobalBlockLayout(cafe, week).filter((blockInfo) => !blockInfo.readOnly).forEach((blockInfo, blockIndex) => {
       const block = getRotationGlobalBlock(rotation, blockInfo.id);
       if (!block.menu) return;
       const blockRecordId = makeDatabaseRecordId(parentId, "global", blockInfo.id);
-      reInventBlockRows.push({
+      splitGlobalBlockRows.push({
         ...baseDatabaseRecord({ parentId, recordId: blockRecordId, recordType: SMARTSHEET_RECORD_TYPES.globalBlock, status: rotation.status || "Draft", district, cafe, week, stationKey: "global" }),
         [SMARTSHEET_COLUMNS.menuConcept]: block.menu || "",
         [SMARTSHEET_COLUMNS.stationSubConcept]: block.station || "",
@@ -431,7 +433,7 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
   }
 
   const extraGlobalBlockRows = [];
-  if (cafe !== "Re:Invent") {
+  if (!isSplitGlobalCafe(cafe)) {
     const blocksForSave = cafe === "Nitro" && !hasNitroSplitBlocks(rotation) && rotation.menu
       ? Object.fromEntries(nitroGlobalBlockLayout().map((block) => [block.id, hydrateNitroBlock(rotation, block.id)]))
       : (rotation.globalBlocks || {});
@@ -457,11 +459,11 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
     });
   }
 
-  if (cafe !== "Re:Invent" && cafe !== "Nitro") {
-  pushSelections("global", SMARTSHEET_SELECTION_TYPES.entree, rotation.entrees || [], 0);
-  pushSelections("global", SMARTSHEET_SELECTION_TYPES.side, rotation.sides || [], 100);
-  pushSelections("global", SMARTSHEET_SELECTION_TYPES.subRecipe, rotation.subRecipes || [], 200);
-  pushSelections("global", SMARTSHEET_SELECTION_TYPES.extension, rotation.extensions || [], 300);
+  if (!isSplitGlobalCafe(cafe) && cafe !== "Nitro") {
+    pushSelections("global", SMARTSHEET_SELECTION_TYPES.entree, rotation.entrees || [], 0);
+    pushSelections("global", SMARTSHEET_SELECTION_TYPES.side, rotation.sides || [], 100);
+    pushSelections("global", SMARTSHEET_SELECTION_TYPES.subRecipe, rotation.subRecipes || [], 200);
+    pushSelections("global", SMARTSHEET_SELECTION_TYPES.extension, rotation.extensions || [], 300);
   }
   pushSelections("grill", SMARTSHEET_SELECTION_TYPES.locationSpotlight, [rotation.grill?.regionalSpecial, rotation.grill?.locationSpotlight], 400);
   if (rotation.grill?.promoActive) {
@@ -512,7 +514,7 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
     });
   });
 
-  return [header, ...(globalBlock ? [globalBlock] : []), ...reInventBlockRows, ...extraGlobalBlockRows, ...selectionRows, ...uploadRows];
+  return [header, ...(globalBlock ? [globalBlock] : []), ...splitGlobalBlockRows, ...extraGlobalBlockRows, ...selectionRows, ...uploadRows];
 }
 
 function upsertDatabaseRecords(existingRecords = [], nextRecords = []) {
@@ -1225,12 +1227,13 @@ function globalCycleConfig(cafe, week = "") {
       nextWeekCarryoverDays: "Next Monday, Next Tuesday",
     };
   }
-  if (cafe === "Re:Invent") {
+  if (isSplitGlobalCafe(cafe)) {
     const fridayConnectsToMonday = isReInventFridayMondayWeek(week);
+    const cafeName = cafe || "This cafe";
     return fridayConnectsToMonday
       ? {
-          title: "Re:Invent 2-Day Global Cycle",
-          summary: "Re:Invent changes Global every two business days. This is the alternating week where Friday connects to the following Monday.",
+          title: `${cafeName} 2-Day Global Cycle`,
+          summary: `${cafeName} changes Global every two business days. This is the alternating week where Friday connects to the following Monday.`,
           chips: [
             { label: "Mon + Tue", note: "block 1", tone: "sky" },
             { label: "Wed + Thu", note: "block 2", tone: "sky" },
@@ -1243,8 +1246,8 @@ function globalCycleConfig(cafe, week = "") {
           nextWeekCarryoverDays: "Next Monday",
         }
       : {
-          title: "Re:Invent 2-Day Global Cycle",
-          summary: "Re:Invent changes Global every two business days. This is the alternating recovery week: Monday carries from last Friday, then Tuesday–Wednesday and Thursday–Friday are the selectable blocks.",
+          title: `${cafeName} 2-Day Global Cycle`,
+          summary: `${cafeName} changes Global every two business days. This is the alternating recovery week: Monday carries from last Friday, then Tuesday-Wednesday and Thursday-Friday are the selectable blocks.`,
           chips: [
             { label: "Mon", note: "carryover", tone: "indigo" },
             { label: "Tue + Wed", note: "block 1", tone: "sky" },
@@ -1285,22 +1288,31 @@ function blankGlobalBlock(menu = "", station = "") {
 }
 
 function reInventGlobalBlockLayout(week = "") {
+  return splitGlobalBlockLayout("Re:Invent", week);
+}
+
+function splitGlobalBlockLayout(cafe, week = "") {
+  const cafeName = cafe || "This cafe";
   const fridayCarriesToNextMonday = isReInventFridayMondayWeek(week);
   return fridayCarriesToNextMonday
     ? [
-        { id: "monTue", title: "Monday + Tuesday", days: ["Monday", "Tuesday"], readOnly: false, help: "Select the Global menu for Monday and Tuesday." },
-        { id: "wedThu", title: "Wednesday + Thursday", days: ["Wednesday", "Thursday"], readOnly: false, help: "Select the Global menu for Wednesday and Thursday." },
-        { id: "friCarry", title: "Friday", days: ["Friday", "Next Monday"], readOnly: false, continuesNextWeek: true, help: "Select Friday's Global. This carries into the following Monday." },
+        { id: "monTue", title: "Monday + Tuesday", days: ["Monday", "Tuesday"], readOnly: false, help: `Select the ${cafeName} Global menu for Monday and Tuesday.` },
+        { id: "wedThu", title: "Wednesday + Thursday", days: ["Wednesday", "Thursday"], readOnly: false, help: `Select the ${cafeName} Global menu for Wednesday and Thursday.` },
+        { id: "friCarry", title: "Friday", days: ["Friday", "Next Monday"], readOnly: false, continuesNextWeek: true, help: `Select Friday's ${cafeName} Global. This carries into the following Monday.` },
       ]
     : [
-        { id: "monCarry", title: "Monday", days: ["Monday"], readOnly: true, startedPreviousWeek: true, help: "Information only. Monday continues from the prior Friday Global once Smartsheet data is loaded." },
-        { id: "tueWed", title: "Tuesday + Wednesday", days: ["Tuesday", "Wednesday"], readOnly: false, help: "Select the Global menu for Tuesday and Wednesday." },
-        { id: "thuFri", title: "Thursday + Friday", days: ["Thursday", "Friday"], readOnly: false, help: "Select the Global menu for Thursday and Friday." },
+        { id: "monCarry", title: "Monday", days: ["Monday"], readOnly: true, startedPreviousWeek: true, help: `Information only. Monday continues from the prior Friday ${cafeName} Global once data is loaded.` },
+        { id: "tueWed", title: "Tuesday + Wednesday", days: ["Tuesday", "Wednesday"], readOnly: false, help: `Select the ${cafeName} Global menu for Tuesday and Wednesday.` },
+        { id: "thuFri", title: "Thursday + Friday", days: ["Thursday", "Friday"], readOnly: false, help: `Select the ${cafeName} Global menu for Thursday and Friday.` },
       ];
 }
 
 function activeReInventBlockIds(week = "") {
-  return new Set(reInventGlobalBlockLayout(week).map((block) => block.id));
+  return activeSplitGlobalBlockIds("Re:Invent", week);
+}
+
+function activeSplitGlobalBlockIds(cafe, week = "") {
+  return new Set(splitGlobalBlockLayout(cafe, week).map((block) => block.id));
 }
 
 function nitroGlobalBlockLayout() {
@@ -1312,6 +1324,8 @@ function nitroGlobalBlockLayout() {
 
 function menuBlockMeta(blockId) {
   if (blockId === "noodles") return { label: "Noodle Station", type: "Secondary Global", days: "Monday, Tuesday, Wednesday, Thursday, Friday" };
+  const splitBlock = splitGlobalBlockLayout("Re:Invent").find((block) => block.id === blockId) || splitGlobalBlockLayout("Re:Invent", "Jan 12, 2026 - Jan 16, 2026").find((block) => block.id === blockId);
+  if (splitBlock) return { label: splitBlock.title, type: splitBlock.continuesNextWeek ? "Two-Day Carryover" : "Two-Day", days: splitBlock.days.join(", ") };
   const nitroBlock = nitroGlobalBlockLayout().find((block) => block.id === blockId);
   if (nitroBlock) return { label: nitroBlock.title, type: "Nitro Same-Menu Split", days: nitroBlock.days.join(", ") };
   return { label: titleCase(blockId), type: "Additional Global", days: "" };
@@ -1329,11 +1343,16 @@ function blockHasSelections(block = {}) {
   return ["entrees", "sides", "subRecipes", "extensions"].some((key) => (block?.[key] || []).some(Boolean));
 }
 
-const REINVENT_GLOBAL_BLOCK_IDS = new Set(["monTue", "wedThu", "friCarry", "monCarry", "tueWed", "thuFri"]);
+const SPLIT_GLOBAL_BLOCK_IDS = new Set(["monTue", "wedThu", "friCarry", "monCarry", "tueWed", "thuFri"]);
+const REINVENT_GLOBAL_BLOCK_IDS = SPLIT_GLOBAL_BLOCK_IDS;
 
 function reInventMenuLabel(rotation = {}, week = "") {
-  const entries = Object.entries(rotation.globalBlocks || {}).filter(([blockId, block]) => REINVENT_GLOBAL_BLOCK_IDS.has(blockId) && block?.menu);
-  const activeBlockIds = activeReInventBlockIds(week);
+  return splitGlobalMenuLabel(rotation, "Re:Invent", week);
+}
+
+function splitGlobalMenuLabel(rotation = {}, cafe = "", week = "") {
+  const entries = Object.entries(rotation.globalBlocks || {}).filter(([blockId, block]) => SPLIT_GLOBAL_BLOCK_IDS.has(blockId) && block?.menu);
+  const activeBlockIds = activeSplitGlobalBlockIds(cafe, week);
   const activeMenus = entries.filter(([blockId]) => activeBlockIds.has(blockId)).map(([, block]) => block.menu).filter(Boolean);
   if (activeMenus.length) return Array.from(new Set(activeMenus)).join(" / ");
   const savedMenus = entries.map(([, block]) => block.menu).filter(Boolean);
@@ -1341,7 +1360,11 @@ function reInventMenuLabel(rotation = {}, week = "") {
 }
 
 function reInventSummaryBlockLabels(rotation = {}, week = rotation?.week || "") {
-  return reInventGlobalBlockLayout(week).map((blockInfo) => {
+  return splitGlobalSummaryBlockLabels(rotation, "Re:Invent", week);
+}
+
+function splitGlobalSummaryBlockLabels(rotation = {}, cafe = "", week = rotation?.week || "") {
+  return splitGlobalBlockLayout(cafe, week).map((blockInfo) => {
     const block = blockInfo.readOnly
       ? carryoverGlobalBlock(rotation.previousRotation || {}, "friCarry")
       : getRotationGlobalBlock(rotation, blockInfo.id);
@@ -1398,7 +1421,7 @@ function carryoverGlobalBlock(rotation = {}, preferredBlockId = "") {
 
 function rotationMenuLabel(rotation = {}, cafe = rotation?.cafe || "", week = rotation?.week || "") {
   if (rotation.menu) return rotation.menu;
-  if (cafe === "Re:Invent") return reInventMenuLabel(rotation, week);
+  if (isSplitGlobalCafe(cafe)) return splitGlobalMenuLabel(rotation, cafe, week);
   const entries = Object.entries(rotation.globalBlocks || {});
   const blockMenus = entries.map(([, block]) => block?.menu).filter(Boolean);
   return blockMenus.length ? Array.from(new Set(blockMenus)).join(" / ") : "";
@@ -1476,8 +1499,8 @@ function nowStamp() {
 }
 
 function stationComplete(rotation, stationKey, cafe = "", week = "") {
-  if (stationKey === "global" && cafe === "Re:Invent") {
-    return reInventGlobalBlockLayout(week).filter((block) => !block.readOnly).every((block) => blockComplete(getRotationGlobalBlock(rotation, block.id)));
+  if (stationKey === "global" && isSplitGlobalCafe(cafe)) {
+    return splitGlobalBlockLayout(cafe, week).filter((block) => !block.readOnly).every((block) => blockComplete(getRotationGlobalBlock(rotation, block.id)));
   }
   if (stationKey === "global" && cafe === "Nitro") {
     if (!hasNitroSplitBlocks(rotation)) return Boolean(rotation.menu && (rotation.entrees || []).filter(Boolean).length >= 2);
@@ -1677,8 +1700,8 @@ function globalSelectedRowsForCafe(rotation, cafe = "", options = {}, week = rot
     return uniqueSelectionRows(blocks.flatMap((block) => selectedRowsFromGlobalBlock(block, options)), options);
   }
 
-  if (cafe === "Re:Invent") {
-    const activeBlockIds = activeReInventBlockIds(week || options.week || rotation.week || "");
+  if (isSplitGlobalCafe(cafe)) {
+    const activeBlockIds = activeSplitGlobalBlockIds(cafe, week || options.week || rotation.week || "");
     const blockRows = Object.entries(rotation.globalBlocks || {})
       .filter(([blockId, block]) => activeBlockIds.has(blockId) && blockId !== "noodles" && (block?.menu || blockHasSelections(block)))
       .flatMap(([, block]) => selectedRowsFromGlobalBlock(block, options));
@@ -1701,8 +1724,8 @@ function getStationSelectionRows(rotation, cafe, week = rotation?.week || "") {
         const block = hasSplit ? getRotationGlobalBlock(rotation, blockInfo.id) : hydrateNitroBlock(rotation, blockInfo.id);
         stationRows.push({ key: `global-${blockInfo.id}`, label: blockInfo.title, items: selectedRowsFromGlobalBlock(block, { unique: true }), note: block.menu ? block.menu : "not selected" });
       });
-    } else if (cafe === "Re:Invent") {
-      const activeBlockIds = activeReInventBlockIds(week || rotation.week || "");
+    } else if (isSplitGlobalCafe(cafe)) {
+      const activeBlockIds = activeSplitGlobalBlockIds(cafe, week || rotation.week || "");
       const blocks = Object.entries(rotation.globalBlocks || {}).filter(([blockId, block]) => activeBlockIds.has(blockId) && blockId !== "noodles" && (block?.menu || blockHasSelections(block)));
       if (blocks.length) {
         blocks.forEach(([blockId, block]) => {
@@ -2103,14 +2126,22 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
   }, {});
   const resultRows = ROLLING_ROTATION_WEEKS.flatMap((wk) => Object.entries(DISTRICTS).flatMap(([dist, cafeList]) => cafeList.map((cafe) => rowForCafe(wk, dist, cafe)))).filter(hasSubmittedRotationMenu);
   const filteredResults = resultRows.filter((row) => (resultsDistrict === "All" || row.district === resultsDistrict) && (resultsCafe === "All" || row.cafe === resultsCafe)).reverse();
-  const persistRotationToDatabase = async (nextRotation) => {
+  const persistRotationToDatabase = async (nextRotation, options = {}) => {
     if (!week || !district || !selectedCafe) return;
+    const { optimistic = true, requirePrimary = false, throwOnFailure = requirePrimary } = options;
     const nextRecords = buildDatabaseRecordsForRotation({ week, district, cafe: selectedCafe, rotation: nextRotation });
-    setDatabaseRecords((prev) => upsertDatabaseRecords(prev, nextRecords));
+    if (optimistic) setDatabaseRecords((prev) => upsertDatabaseRecords(prev, nextRecords));
     setDatabaseSyncStatus({ state: "syncing", message: `Saving ${nextRecords.length} row${nextRecords.length === 1 ? "" : "s"} to database...`, syncedAt: "" });
     try {
       const result = await syncRecordsToBackbone(nextRecords, { tool: "Neighborhood Rotations", week, district, cafe: selectedCafe, status: nextRotation.status || "Draft", replaceParentRecordIds: [rotationRecordParentId(week, district, selectedCafe)] });
+      if (requirePrimary && result.source === "smartsheet-fallback") {
+        const error = new Error("The fallback sheet saved, but the live database did not confirm the submission. Please try Submit again so the locked rotation is visible to everyone.");
+        error.payload = result;
+        throw error;
+      }
+      if (!optimistic) setDatabaseRecords((prev) => upsertDatabaseRecords(prev, nextRecords));
       setDatabaseSyncStatus({ state: result.state === "fallback" ? "fallback" : "synced", message: result.message || `Saved ${nextRecords.length} row${nextRecords.length === 1 ? "" : "s"} to database.`, syncedAt: nowStamp() });
+      return result;
     } catch (error) {
       const missingColumns = error?.payload?.missingColumns || [];
       const missingMessage = missingColumns.length
@@ -2122,6 +2153,8 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
         missingColumns,
         syncedAt: nowStamp(),
       });
+      if (throwOnFailure) throw error;
+      return { ok: false, state: "fallback", message: missingMessage, error };
     }
   };
 
@@ -2360,6 +2393,8 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
   const [preview, setPreview] = useState(null);
   const [copiedRotation, setCopiedRotation] = useState(null);
   const [submitWarningOpen, setSubmitWarningOpen] = useState(false);
+  const [submitPersistError, setSubmitPersistError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [editSubmitted, setEditSubmitted] = useState(false);
   const submittedRotation = isSubmittedRotation(rotation);
   const lockedForEditing = submittedRotation && !editSubmitted;
@@ -2411,16 +2446,25 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
     updateRotation(nextRotation);
     persistRotationToDatabase?.(nextRotation);
   };
-  const submitRotation = () => {
+  const submitRotation = async () => {
     if (!canSubmitRotation) {
       setSubmitWarningOpen(true);
       return;
     }
     const stamp = nowStamp();
     const nextRotation = { ...rotation, status: "Submitted", updatedAt: stamp, submittedAt: stamp, submittedBy: "Chef" };
-    updateRotation(nextRotation);
-    persistRotationToDatabase?.(nextRotation);
-    setSubmitWarningOpen(false);
+    setIsSubmitting(true);
+    setSubmitPersistError("");
+    try {
+      await persistRotationToDatabase?.(nextRotation, { optimistic: false, requirePrimary: true });
+      updateRotation(nextRotation);
+      setSubmitWarningOpen(false);
+    } catch (error) {
+      setSubmitPersistError(error?.message || "The app could not confirm this submission in the live database. Please try again.");
+      setSubmitWarningOpen(false);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   const copyCurrentRotation = () => {
     const copy = { ...rotation, status: "Draft", updatedAt: "", submittedAt: "", submittedBy: "" };
@@ -2457,7 +2501,8 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
         rotation={rotation}
         requirements={requirements}
         submitIssues={submitIssues}
-        canSubmit={canSubmitRotation}
+        canSubmit={canSubmitRotation && !isSubmitting}
+        isSubmitting={isSubmitting}
         onSaveDraft={markDraft}
         onSubmit={submitRotation}
       />
@@ -2467,6 +2512,12 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
           menu={rotation.menu}
           issues={submitIssues}
           onClose={() => setSubmitWarningOpen(false)}
+        />
+      )}
+      {submitPersistError && (
+        <SubmitSaveFailedModal
+          message={submitPersistError}
+          onClose={() => setSubmitPersistError("")}
         />
       )}
       <div className="flex items-start justify-between gap-3">
@@ -3332,7 +3383,7 @@ function downloadDopplerMenuPowerPoint(packet) {
 
 function SubmittedRotationRecap({ cafe, week, rotation, previousRotation = EMPTY_ROTATION, rows, onEdit }) {
   const menuLabel = rotationMenuLabel(rotation, cafe, week);
-  const reInventBlocks = cafe === "Re:Invent" ? reInventSummaryBlockLabels({ ...rotation, previousRotation }, week) : [];
+  const splitGlobalBlocks = isSplitGlobalCafe(cafe) ? splitGlobalSummaryBlockLabels({ ...rotation, previousRotation }, cafe, week) : [];
   const totalSelections = rows.reduce((sum, row) => sum + row.selectedCount, 0);
   return (
     <section className="mt-5 rounded-[2rem] border-2 border-emerald-200 bg-emerald-50/60 p-5 shadow-sm">
@@ -3341,9 +3392,9 @@ function SubmittedRotationRecap({ cafe, week, rotation, previousRotation = EMPTY
           <p className="text-xs uppercase tracking-[0.18em] font-black text-emerald-700">Submitted Menu Recap</p>
           <h3 className="mt-1 text-3xl font-black text-slate-950">{cafe}</h3>
           <p className="mt-1 text-sm font-semibold text-slate-600">{week}</p>
-          {reInventBlocks.length ? (
+          {splitGlobalBlocks.length ? (
             <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
-              {reInventBlocks.map((block) => (
+              {splitGlobalBlocks.map((block) => (
                 <div key={block.id} className={`rounded-2xl border px-3 py-2 ${block.isPending ? "border-amber-200 bg-amber-50 text-amber-900" : "border-white bg-white text-slate-950"}`}>
                   <p className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-slate-500">{block.title}</p>
                   <p className="mt-1 text-sm font-black leading-snug">{block.menu}</p>
@@ -3496,7 +3547,7 @@ function StationCostOverview({ rows }) {
 }
 
 
-function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, setPreview, applyPreview, week, previousWeek, previousRotation, printRows, rotation, requirements, submitIssues = [], canSubmit, onSaveDraft, onSubmit }) {
+function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, setPreview, applyPreview, week, previousWeek, previousRotation, printRows, rotation, requirements, submitIssues = [], canSubmit, isSubmitting = false, onSaveDraft, onSubmit }) {
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [showMenuPacket, setShowMenuPacket] = useState(false);
   const menuPacket = cafe === "Doppler" ? buildDopplerMenuPacket({ rotation, previousRotation, week, previousWeek }) : null;
@@ -3541,7 +3592,7 @@ function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, s
             <RemoteButton icon={FileText} label="Generate Menu" onClick={generateMenu} blocked={cafe !== "Doppler"} title={cafe === "Doppler" ? "Download a Doppler PowerPoint from the live template." : "Menu generation is being built first for Doppler."} tone="light" />
             <RemoteButton icon={Printer} label={showPrintPreview ? "Hide View" : "View/Print"} onClick={() => setShowPrintPreview((value) => !value)} tone="light" />
             <RemoteButton icon={Save} label="Save Draft" onClick={onSaveDraft} tone="light" />
-            <RemoteButton icon={Send} label="Submit" onClick={onSubmit} blocked={!canSubmit} title={submitHelp} tone="go" />
+          <RemoteButton icon={Send} label={isSubmitting ? "Saving" : "Submit"} onClick={onSubmit} disabled={isSubmitting} blocked={!canSubmit} title={isSubmitting ? "Saving to live database..." : submitHelp} tone="go" />
           </div>
         </div>
         {!canSubmit && (
@@ -3610,6 +3661,31 @@ function SubmitBlockedModal({ cafe, menu, issues, onClose }) {
           <ul className="list-disc space-y-2 pl-5">
             {issues.map((issue) => <li key={issue}>{issue}</li>)}
           </ul>
+        </div>
+        <div className="mt-5 flex justify-end">
+          <button type="button" onClick={onClose} className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white hover:bg-slate-800">OK</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SubmitSaveFailedModal({ message, onClose }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4 print:hidden" role="dialog" aria-modal="true" aria-labelledby="submit-save-failed-title">
+      <div className="w-full max-w-xl rounded-[1.75rem] border border-amber-300 bg-white p-6 text-slate-950 shadow-2xl">
+        <div className="flex items-start gap-3">
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-amber-700">
+            <AlertTriangle size={28} />
+          </div>
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-700">Submission not live yet</p>
+            <h3 id="submit-save-failed-title" className="mt-1 text-2xl font-black">Try submitting again</h3>
+            <p className="mt-2 text-sm font-semibold text-slate-600">The app did not lock this rotation because live storage did not confirm the save.</p>
+          </div>
+        </div>
+        <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-950">
+          {message}
         </div>
         <div className="mt-5 flex justify-end">
           <button type="button" onClick={onClose} className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white hover:bg-slate-800">OK</button>
@@ -4048,8 +4124,8 @@ function GlobalSection({ cafe, week, rotation, previousRotation, previousWeek, m
     });
   };
 
-  if (cafe === "Re:Invent") {
-    return <ReInventGlobalSection cafe={cafe} week={week} rotation={rotation} previousRotation={previousRotation} previousWeek={previousWeek} menuOptions={menuOptions} stationOptions={stationOptions} categorized={categorized} updateRotation={updateRotation} updateSlot={updateSlot} summary={summary} selectedItems={selectedItems} promo={promo} updatePromo={updatePromo} />;
+  if (isSplitGlobalCafe(cafe)) {
+    return <SplitGlobalSection cafe={cafe} week={week} rotation={rotation} previousRotation={previousRotation} previousWeek={previousWeek} menuOptions={menuOptions} stationOptions={stationOptions} categorized={categorized} updateRotation={updateRotation} updateSlot={updateSlot} summary={summary} selectedItems={selectedItems} promo={promo} updatePromo={updatePromo} />;
   }
 
   if (cafe === "Nitro") {
@@ -4275,9 +4351,9 @@ function NitroGlobalSection({ rotation, menuOptions, updateRotation, promo, upda
 }
 
 
-function ReInventGlobalSection({ cafe, week, rotation, previousRotation, previousWeek, menuOptions, stationOptions, categorized, updateRotation, selectedItems, promo, updatePromo }) {
+function SplitGlobalSection({ cafe, week, rotation, previousRotation, previousWeek, menuOptions, stationOptions, categorized, updateRotation, selectedItems, promo, updatePromo }) {
   const cycle = globalCycleConfig(cafe, week);
-  const layout = reInventGlobalBlockLayout(week);
+  const layout = splitGlobalBlockLayout(cafe, week);
   const updateBlock = (blockId, patch) => {
     const current = getRotationGlobalBlock(rotation, blockId);
     updateRotation({ globalBlocks: { ...(rotation.globalBlocks || {}), [blockId]: { ...current, ...patch } } });
@@ -4290,13 +4366,13 @@ function ReInventGlobalSection({ cafe, week, rotation, previousRotation, previou
   };
 
   return (
-    <CollapsibleStation title="Global Station" eyebrow="Re:Invent Global Rotation" complete={stationComplete(rotation, "global", cafe, week)} defaultOpen={!stationComplete(rotation, "global", cafe, week)}>
+    <CollapsibleStation title="Global Station" eyebrow={`${cafe} Global Rotation`} complete={stationComplete(rotation, "global", cafe, week)} defaultOpen={!stationComplete(rotation, "global", cafe, week)}>
       <div className="rounded-3xl border border-slate-200 bg-white p-4">
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.18em] text-slate-400 font-bold">Cycle Pattern</p>
             <h4 className="text-xl font-bold mt-1">{cycle.title}</h4>
-            <p className="mt-1 text-sm text-slate-500 max-w-3xl">ReInvent uses multiple Global selections in one week. Monday may be carryover information from last week, and selectable blocks change based on the alternating cycle.</p>
+            <p className="mt-1 text-sm text-slate-500 max-w-3xl">{cafe} uses multiple Global selections in one week. Monday may be carryover information from last week, and selectable blocks change based on the alternating cycle.</p>
             <div className="mt-3 flex flex-wrap gap-2">
               {layout.map((block) => (
                 <span key={block.id} className={`rounded-full border px-3 py-1 text-xs font-bold ${cycleChipClass(block.readOnly ? "indigo" : block.continuesNextWeek ? "amber" : "sky")}`}>{block.title}{block.readOnly ? " · carryover" : block.continuesNextWeek ? " · carries to next Monday" : " · select"}</span>
@@ -4315,7 +4391,7 @@ function ReInventGlobalSection({ cafe, week, rotation, previousRotation, previou
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
             <div>
               <p className="text-xs uppercase tracking-[0.18em] text-purple-700 font-bold">Promotion Override Active</p>
-              <h4 className="text-xl font-bold text-purple-950 mt-1">Break the normal ReInvent cycle for this week only</h4>
+              <h4 className="text-xl font-bold text-purple-950 mt-1">Break the normal {cafe} cycle for this week only</h4>
               <p className="text-sm text-purple-900 mt-1">Use this for Global takeovers, promos, or one-off concepts. Return-to-cycle days restore normalcy without changing future weeks.</p>
             </div>
             <button type="button" onClick={() => updatePromo({ enabled: false, name: "", days: [], returnDays: [] })} className="rounded-2xl bg-white border border-purple-200 px-4 py-2 text-sm font-bold text-purple-900 hover:bg-purple-100">Clear Override</button>
@@ -5217,7 +5293,7 @@ function SummaryCard({ row, conflict, showDistrict = true, onOpenPlanner = null 
   const completedStations = locked ? stationKeys.filter((stationKey) => stationComplete(row, stationKey, row.cafe, row.week)).length : 0;
   const progressPct = stationKeys.length ? Math.round((completedStations / stationKeys.length) * 100) : 0;
   const menuLabel = locked ? rotationMenuLabel(row) : "";
-  const reInventBlocks = locked && row.cafe === "Re:Invent" ? reInventSummaryBlockLabels(row, row.week) : [];
+  const splitGlobalBlocks = locked && isSplitGlobalCafe(row.cafe) ? splitGlobalSummaryBlockLabels(row, row.cafe, row.week) : [];
   const tone = !menuLabel ? "border-slate-200 bg-white" : fcMidpoint == null ? "border-slate-300 bg-slate-50" : fcMidpoint > 0.34 ? "border-amber-300 bg-amber-50" : fcMidpoint <= 0.30 ? "border-emerald-300 bg-emerald-50" : "border-sky-200 bg-sky-50";
   const statusTone = locked ? "bg-emerald-500 text-white border-emerald-500" : "bg-rose-100 text-rose-900 border-rose-200";
   const CardShell = onOpenPlanner ? "button" : "div";
@@ -5237,9 +5313,9 @@ function SummaryCard({ row, conflict, showDistrict = true, onOpenPlanner = null 
             <p className="font-bold text-slate-900">{row.cafe}</p>
           </div>
           {row.copiedFrom ? <p className="text-xs text-slate-500 mt-1">Copied from {row.copiedFrom}</p> : row.cafe === "Nitro" ? <p className="text-xs text-slate-500 mt-1">Frontier follows Nitro</p> : null}
-          {reInventBlocks.length ? (
+          {splitGlobalBlocks.length ? (
             <div className="mt-2 space-y-1">
-              {reInventBlocks.map((block) => (
+              {splitGlobalBlocks.map((block) => (
                 <p key={block.id} className={`rounded-2xl border px-3 py-2 text-sm font-black leading-snug ${block.isPending ? "border-amber-200 bg-amber-50 text-amber-900" : "border-white bg-white/80 text-slate-950"}`}>
                   <span className="text-xs uppercase tracking-[0.12em] text-slate-500">{block.title}</span>
                   <span className="block">{block.menu}</span>
