@@ -2,6 +2,10 @@
 
 ## 2026-07-01
 
+- [Jul 1, 9:04 AM] Fixed Re:Invent and Blueshift split-global selectors so a Global Menu selected in one block is removed from the other split-block dropdowns.
+- [Jul 1, 9:04 AM] Added split-global duplicate submit blocking so old or imported bad data explains exactly which menu/block combination needs correction.
+- [Jul 1, 9:04 AM] Added a submitted-recap warning when saved split-global data contains a duplicate, so invalid Ohana/Lotus/Ohana-style records no longer look approved.
+- [Jul 1, 9:04 AM] Set visible app version to `2026.07.01.004-split-global-unique`.
 - [Jul 1, 8:18 AM] Removed the duplicate top-level `Edit locked rotation` checkbox so submitted rotations are edited only from the recap card.
 - [Jul 1, 8:18 AM] Relaxed Neighborhood Rotation submission rules: Global needs a menu plus one entree, and each required station needs one selected item.
 - [Jul 1, 8:18 AM] Updated submit-blocked messaging so chefs see the exact missing Global or station requirement instead of a blank warning.

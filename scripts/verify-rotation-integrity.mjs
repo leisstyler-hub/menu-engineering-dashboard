@@ -186,6 +186,10 @@ if (!/Select a Global Menu and at least one Global entree/.test(source) || !/Add
   fail("Submit blocked messaging must explain the relaxed one-selection requirements clearly.");
 }
 
+if (!/function splitGlobalMenuOptionsForBlock/.test(source) || !/function duplicateSplitGlobalMenuIssues/.test(source) || !/splitGlobalMenuOptionsForBlock\(menuOptions, rotation, layout, blockInfo\.id\)/.test(source)) {
+  fail("Split-global menu blocks must remove menus already selected in other blocks and report duplicate menus before submit.");
+}
+
 if (/canSubmit=\{canSubmitRotation && !isSubmitting\}/.test(source)) {
   fail("The remote must not treat the temporary saving state as submit-blocked; saving should only disable the button.");
 }

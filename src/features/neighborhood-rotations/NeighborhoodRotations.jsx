@@ -1375,6 +1375,53 @@ function getRotationGlobalBlock(rotation, blockId) {
   return rotation.globalBlocks?.[blockId] || blankGlobalBlock();
 }
 
+function splitGlobalEditableBlocks(layout = []) {
+  return layout.filter((block) => !block.readOnly && !block.closed);
+}
+
+function splitGlobalMenuOptionsForBlock(menuOptions = [], rotation = {}, layout = [], blockId = "") {
+  const currentMenu = getRotationGlobalBlock(rotation, blockId).menu || "";
+  const currentKey = normalizeItemName(currentMenu);
+  const usedByOtherBlocks = new Set(
+    splitGlobalEditableBlocks(layout)
+      .filter((block) => block.id !== blockId)
+      .map((block) => normalizeItemName(getRotationGlobalBlock(rotation, block.id).menu))
+      .filter(Boolean)
+  );
+  return menuOptions.filter((menu) => {
+    const key = normalizeItemName(menu);
+    return !key || key === currentKey || !usedByOtherBlocks.has(key);
+  });
+}
+
+function clearDuplicateSplitGlobalMenus(globalBlocks = {}, layout = [], changedBlockId = "", selectedMenu = "") {
+  const selectedKey = normalizeItemName(selectedMenu);
+  if (!selectedKey) return globalBlocks;
+  const editableIds = new Set(splitGlobalEditableBlocks(layout).map((block) => block.id));
+  return Object.fromEntries(Object.entries(globalBlocks || {}).map(([blockId, block]) => {
+    if (blockId === changedBlockId || !editableIds.has(blockId) || normalizeItemName(block?.menu) !== selectedKey) {
+      return [blockId, block];
+    }
+    return [blockId, blankGlobalBlock()];
+  }));
+}
+
+function duplicateSplitGlobalMenuIssues(rotation = {}, cafe = "", week = "") {
+  if (!isSplitGlobalCafe(cafe)) return [];
+  const seen = new Map();
+  splitGlobalEditableBlocks(splitGlobalBlockLayout(cafe, week)).forEach((blockInfo) => {
+    const block = getRotationGlobalBlock(rotation, blockInfo.id);
+    const key = normalizeItemName(block.menu);
+    if (!key) return;
+    const entry = seen.get(key) || { menu: block.menu, labels: [] };
+    entry.labels.push(blockInfo.title);
+    seen.set(key, entry);
+  });
+  return Array.from(seen.values())
+    .filter((entry) => entry.labels.length > 1)
+    .map((entry) => `${entry.menu} in ${entry.labels.join(" and ")}`);
+}
+
 function blockHasSelections(block = {}) {
   return ["entrees", "sides", "subRecipes", "extensions"].some((key) => (block?.[key] || []).some(Boolean));
 }
@@ -1624,7 +1671,7 @@ function menuConflictCountForCandidate(district, rows, candidateCafe, candidateM
   return submittedMatches + 1;
 }
 
-function rotationRequirementIssues(requirements, cafe, { menu = "", duplicateMenuCount = 0, conflictNote = "" } = {}) {
+function rotationRequirementIssues(requirements, cafe, { menu = "", duplicateMenuCount = 0, conflictNote = "", rotation = {}, week = "" } = {}) {
   const issues = [];
   if (!requirements.globalReady) {
     issues.push("Select a Global Menu and at least one Global entree.");
@@ -1635,6 +1682,10 @@ function rotationRequirementIssues(requirements, cafe, { menu = "", duplicateMen
   if (menu && duplicateMenuCount > 1) {
     const otherCount = duplicateMenuCount - 1;
     issues.push(`${menu} is already selected by ${otherCount} other cafe${otherCount === 1 ? "" : "s"}. ${conflictNote} Choose a different Global Menu or clear the duplicate before submitting.`);
+  }
+  const duplicateSplitMenus = duplicateSplitGlobalMenuIssues(rotation, cafe, week);
+  if (duplicateSplitMenus.length) {
+    issues.push(`Choose a different Global Menu for each ${cafe} split block. Duplicate: ${duplicateSplitMenus.join("; ")}.`);
   }
   return issues;
 }
@@ -2445,7 +2496,7 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
   const cafeStations = CAFE_STATION_CONFIG[cafe] || ["global"];
   const stationCostOverview = getStationCostOverview(rotation, cafe, week);
   const requirements = rotationRequirements(rotation, cafe, week);
-  const submitIssues = rotationRequirementIssues(requirements, cafe, { menu: rotationMenuLabel(rotation, cafe, week) || rotation.menu, duplicateMenuCount: menuConflictCount, conflictNote: menuConflictNote(district, cafe) });
+  const submitIssues = rotationRequirementIssues(requirements, cafe, { menu: rotationMenuLabel(rotation, cafe, week) || rotation.menu, duplicateMenuCount: menuConflictCount, conflictNote: menuConflictNote(district, cafe), rotation, week });
   const canSubmitRotation = requirements.canSubmit && submitIssues.length === 0;
 
   const updateSlot = (group, index, value) => {
@@ -3404,6 +3455,7 @@ function downloadDopplerMenuPowerPoint(packet) {
 function SubmittedRotationRecap({ cafe, week, rotation, previousRotation = EMPTY_ROTATION, rows, onEdit }) {
   const menuLabel = rotationMenuLabel(rotation, cafe, week);
   const splitGlobalBlocks = isSplitGlobalCafe(cafe) ? splitGlobalSummaryBlockLabels({ ...rotation, previousRotation }, cafe, week) : [];
+  const duplicateSplitMenus = duplicateSplitGlobalMenuIssues(rotation, cafe, week);
   const totalSelections = rows.reduce((sum, row) => sum + row.selectedCount, 0);
   return (
     <section className="mt-5 rounded-[2rem] border-2 border-emerald-200 bg-emerald-50/60 p-5 shadow-sm">
@@ -3424,6 +3476,11 @@ function SubmittedRotationRecap({ cafe, week, rotation, previousRotation = EMPTY
           ) : (
             <p className="mt-2 text-lg font-black text-slate-950">{menuLabel || "No Global menu saved"}</p>
           )}
+          {duplicateSplitMenus.length ? (
+            <div className="mt-3 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-black text-amber-950">
+              Split Global duplicate needs review: {duplicateSplitMenus.join("; ")}. Use Edit and resubmit to choose a different Global Menu for each block.
+            </div>
+          ) : null}
           <p className="mt-1 text-sm font-semibold text-slate-600">{totalSelections} saved selection{totalSelections === 1 ? "" : "s"}{rotation.submittedAt ? ` - submitted ${rotation.submittedAt}` : ""}</p>
         </div>
         <label className="inline-flex items-center gap-3 self-start rounded-2xl border border-emerald-300 bg-white px-4 py-3 text-sm font-black text-emerald-900 shadow-sm">
@@ -4378,7 +4435,13 @@ function SplitGlobalSection({ cafe, week, rotation, previousRotation, previousWe
   const layout = splitGlobalBlockLayout(cafe, week);
   const updateBlock = (blockId, patch) => {
     const current = getRotationGlobalBlock(rotation, blockId);
-    updateRotation({ globalBlocks: { ...(rotation.globalBlocks || {}), [blockId]: { ...current, ...patch } } });
+    const nextBlock = { ...current, ...patch };
+    const nextBlocks = { ...(rotation.globalBlocks || {}), [blockId]: nextBlock };
+    updateRotation({
+      globalBlocks: Object.prototype.hasOwnProperty.call(patch, "menu")
+        ? clearDuplicateSplitGlobalMenus(nextBlocks, layout, blockId, patch.menu)
+        : nextBlocks
+    });
   };
   const updateBlockSlot = (blockId, key, index, value) => {
     const current = getRotationGlobalBlock(rotation, blockId);
@@ -4477,7 +4540,7 @@ function SplitGlobalSection({ cafe, week, rotation, previousRotation, previousWe
                   <label className="block text-sm font-semibold text-slate-500 mb-2">Global Menu</label>
                   <select value={block.menu || ""} onChange={(e) => updateBlock(blockInfo.id, { ...blankGlobalBlock(e.target.value, "") })} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
                     <option value="">Select Menu</option>
-                    {menuOptions.map((menu) => <option key={menu} value={menu}>{menu}</option>)}
+                    {splitGlobalMenuOptionsForBlock(menuOptions, rotation, layout, blockInfo.id).map((menu) => <option key={menu} value={menu}>{menu}</option>)}
                   </select>
                 </div>
                 {block.menu && blockStationOptions.length > 1 && (
