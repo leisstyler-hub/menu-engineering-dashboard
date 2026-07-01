@@ -41,7 +41,7 @@ assertNotIncludes("src/main.jsx", "weeklyTrafficEnhancer");
 assertIncludes("src/app/LandingPage.jsx", "/api/traffic/weekly");
 assertNotIncludes("src/app/LandingPage.jsx", "Smart Read");
 
-assertIncludes("src/shared/appConfig.js", "2026.07.01.002-submission-lean-results");
+assertIncludes("src/shared/appConfig.js", "2026.07.01.003-submit-rules-resubmit");
 
 assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "normalizeRecipeLibraryItem");
 assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "culinaryToolsMenuEngineeringItems_v3");

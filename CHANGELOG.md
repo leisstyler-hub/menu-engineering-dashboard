@@ -2,6 +2,11 @@
 
 ## 2026-07-01
 
+- [Jul 1, 8:18 AM] Removed the duplicate top-level `Edit locked rotation` checkbox so submitted rotations are edited only from the recap card.
+- [Jul 1, 8:18 AM] Relaxed Neighborhood Rotation submission rules: Global needs a menu plus one entree, and each required station needs one selected item.
+- [Jul 1, 8:18 AM] Updated submit-blocked messaging so chefs see the exact missing Global or station requirement instead of a blank warning.
+- [Jul 1, 8:18 AM] Rechecked the saved-record overwrite path so resubmitted cafe/week rotations replace prior child rows instead of building useless history.
+- [Jul 1, 8:18 AM] Set visible app version to `2026.07.01.003-submit-rules-resubmit`.
 - [Jul 1, 7:38 AM] Added a submission-health release guard that checks confirmed-storage locking, stale row cleanup, Supabase primary, and Smartsheet fallback behavior.
 - [Jul 1, 7:38 AM] Reworked Lean Results into a cleaner row-history table with compact summary cards and click-to-open saved observation details.
 - [Jul 1, 7:38 AM] Added a row-level Delete Record action for Lean Results that uses the controlled void/audit flow instead of hard-erasing records.

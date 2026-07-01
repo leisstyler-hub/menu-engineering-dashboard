@@ -1368,7 +1368,7 @@ function menuBlockMeta(blockId) {
 }
 
 function blockComplete(block) {
-  return Boolean(block?.menu && (block?.entrees || []).filter(Boolean).length >= 2);
+  return Boolean(block?.menu && (block?.entrees || []).filter(Boolean).length >= 1);
 }
 
 function getRotationGlobalBlock(rotation, blockId) {
@@ -1549,33 +1549,22 @@ function stationComplete(rotation, stationKey, cafe = "", week = "") {
     return splitGlobalBlockLayout(cafe, week).filter((block) => !block.readOnly).every((block) => blockComplete(getRotationGlobalBlock(rotation, block.id)));
   }
   if (stationKey === "global" && cafe === "Nitro") {
-    if (!hasNitroSplitBlocks(rotation)) return Boolean(rotation.menu && (rotation.entrees || []).filter(Boolean).length >= 2);
+    if (!hasNitroSplitBlocks(rotation)) return Boolean(rotation.menu && (rotation.entrees || []).filter(Boolean).length >= 1);
     return Boolean(rotation.menu) && nitroGlobalBlockLayout().every((block) => blockComplete(hydrateNitroBlock(rotation, block.id)));
   }
   if (stationKey === "global") {
-    const eastRequiresSides = ["Astra", "Bingo", "Sonic", "Blueshift", "Eclipse", "Grace"].includes(cafe);
-    return Boolean(rotation.menu && (rotation.entrees || []).filter(Boolean).length >= 2 && (!eastRequiresSides || (rotation.sides || []).filter(Boolean).length >= 2));
+    return Boolean(rotation.menu && (rotation.entrees || []).filter(Boolean).length >= 1);
   }
+  return stationHasAnySelection(rotation, stationKey);
+}
+
+function stationHasAnySelection(rotation, stationKey) {
   if (stationKey === "noodles") return blockComplete(getRotationGlobalBlock(rotation, "noodles"));
-  if (stationKey === "grill") return Boolean(rotation.grill?.regionalSpecial || rotation.grill?.locationSpotlight || (rotation.grill?.promoActive && rotation.grill?.promoItem));
-  if (["salad", "pizza", "deli", "fishMarket", "freshFive", "grillFreshFive", "saladFreshFive", "soup"].includes(stationKey)) {
-    return Boolean((rotation.ltos?.[stationKey] || []).some(Boolean) || (rotation.uploadedLtos?.[stationKey] || []).some(Boolean));
-  }
-  const custom = cloneCustomStations(rotation.customStations);
-  if (stationKey === "streetBeets") {
-    const filledCaloriesValid = ["entrees", "sides", "subRecipes", "extensions"].every((group) => (custom.streetBeets[group] || []).every((name, index) => !name || Boolean(custom.streetBeets.calories?.[group]?.[index])));
-    return custom.streetBeets.entrees.filter(Boolean).length >= 2 && custom.streetBeets.sides.filter(Boolean).length >= 3 && filledCaloriesValid;
-  }
-  if (stationKey === "commissaryEverest") {
-    return Boolean(custom.commissaryEverest.menu && custom.commissaryEverest.entrees.filter(Boolean).length >= 2 && custom.commissaryEverest.coldSides.filter(Boolean).length >= 4 && custom.commissaryEverest.riceDishes.filter(Boolean).length >= 1);
-  }
-  if (stationKey === "lotusWp") return custom.lotusWp.entrees.filter(Boolean).length >= 2 && custom.lotusWp.sides.filter(Boolean).length >= 4;
-  if (stationKey === "stationTakeover") {
-    if (!custom.stationTakeover.active && !custom.stationTakeover.menu && !compactValues([...custom.stationTakeover.entrees, ...custom.stationTakeover.sides, ...custom.stationTakeover.subRecipes, ...custom.stationTakeover.extensions]).length) return true;
-    return Boolean(custom.stationTakeover.menu && custom.stationTakeover.entrees.filter(Boolean).length >= 2 && custom.stationTakeover.sides.filter(Boolean).length >= 2);
-  }
-  if (stationKey === "wok") return Boolean((rotation.ltos?.wokEntrees || []).some(Boolean));
-  if (stationKey === "carvery") return Boolean(Object.values(rotation.carvery || {}).some(Boolean));
+  if (stationKey === "grill") return grillSelectedRows(rotation, { unique: true }).length > 0;
+  if (["salad", "pizza", "deli", "fishMarket", "freshFive", "grillFreshFive", "saladFreshFive", "soup"].includes(stationKey)) return ltoSelectedRows(rotation, stationKey, { unique: true }).length > 0;
+  if (["streetBeets", "commissaryEverest", "lotusWp", "stationTakeover"].includes(stationKey)) return customStationSelectedRows(rotation, stationKey, { unique: true }).length > 0;
+  if (stationKey === "wok") return wokSelectedRows(rotation, { unique: true }).length > 0;
+  if (stationKey === "carvery") return carverySelectedRows(rotation, { unique: true }).length > 0;
   return false;
 }
 
@@ -1638,11 +1627,10 @@ function menuConflictCountForCandidate(district, rows, candidateCafe, candidateM
 function rotationRequirementIssues(requirements, cafe, { menu = "", duplicateMenuCount = 0, conflictNote = "" } = {}) {
   const issues = [];
   if (!requirements.globalReady) {
-    const needsSides = ["Astra", "Bingo", "Sonic", "Blueshift", "Eclipse", "Grace"].includes(cafe);
-    issues.push(needsSides ? "Select a Global Menu, at least two Global entrees, and at least two Global sides." : "Select a Global Menu and at least two Global entrees.");
+    issues.push("Select a Global Menu and at least one Global entree.");
   }
   if (requirements.incompleteStations.length > 0) {
-    issues.push(`Complete these station selections: ${requirements.incompleteStations.map((stationKey) => stationLabel(cafe, stationKey)).join(", ")}.`);
+    issues.push(`Add at least one item for each required station: ${requirements.incompleteStations.map((stationKey) => stationLabel(cafe, stationKey)).join(", ")}.`);
   }
   if (menu && duplicateMenuCount > 1) {
     const otherCount = duplicateMenuCount - 1;
@@ -2576,20 +2564,6 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
           {rotation.status || "Draft"}
         </span>
       </div>
-      {submittedRotation && (
-        <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="font-black">Locked rotation selections are showing below.</p>
-              <p className="mt-1 font-semibold text-emerald-800">Check edit mode only when you need to revise and resubmit this cafe/week.</p>
-            </div>
-            <label className="inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-white px-4 py-2 text-xs font-black text-emerald-900">
-              <input type="checkbox" checked={editSubmitted} onChange={(event) => setEditSubmitted(event.target.checked)} />
-              Edit locked rotation
-            </label>
-          </div>
-        </div>
-      )}
 
       {lockedForEditing ? (
         <SubmittedRotationRecap cafe={cafe} week={week} rotation={rotation} previousRotation={previousRotation} rows={stationCostOverview} onEdit={() => setEditSubmitted(true)} />
@@ -3600,6 +3574,7 @@ function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, s
   const copiedSummary = copiedRotation?.menu
     ? `${copiedRotation.menu}${copiedRotation.station ? ` • ${copiedRotation.station}` : ""}`
     : "No copy loaded";
+  const visibleSubmitIssues = submitIssues.length ? submitIssues : ["Select a Global Menu with at least one entree and add one item to each required station."];
 
   const handleUpload = (event) => {
     const file = event.target.files?.[0];
@@ -3607,7 +3582,7 @@ function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, s
     setPreview(weekAtGlancePreview(file.name));
     event.target.value = "";
   };
-  const submitHelp = submitIssues.length ? submitIssues.join(" ") : "Ready to submit.";
+  const submitHelp = submitIssues.length ? submitIssues.join(" ") : canSubmit ? "Ready to submit." : visibleSubmitIssues.join(" ");
   const generateMenu = async () => {
     if (!menuPacket) return;
     try {
@@ -3648,7 +3623,7 @@ function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, s
               <div>
                 <p className="font-black">Submit is blocked until these are fixed:</p>
                 <ul className="mt-2 list-disc space-y-1 pl-5">
-                  {submitIssues.map((issue) => <li key={issue}>{issue}</li>)}
+                  {visibleSubmitIssues.map((issue) => <li key={issue}>{issue}</li>)}
                 </ul>
               </div>
             </div>
@@ -3689,7 +3664,8 @@ function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, s
   );
 }
 
-function SubmitBlockedModal({ cafe, menu, issues, onClose }) {
+function SubmitBlockedModal({ cafe, menu, issues = [], onClose }) {
+  const visibleIssues = issues.length ? issues : ["Select a Global Menu with at least one entree and add one item to each required station."];
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4 print:hidden" role="dialog" aria-modal="true" aria-labelledby="submit-blocked-title">
       <div className="w-full max-w-xl rounded-[1.75rem] border border-rose-300 bg-white p-6 text-slate-950 shadow-2xl">
@@ -3705,7 +3681,7 @@ function SubmitBlockedModal({ cafe, menu, issues, onClose }) {
         </div>
         <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-950">
           <ul className="list-disc space-y-2 pl-5">
-            {issues.map((issue) => <li key={issue}>{issue}</li>)}
+            {visibleIssues.map((issue) => <li key={issue}>{issue}</li>)}
           </ul>
         </div>
         <div className="mt-5 flex justify-end">
@@ -5118,8 +5094,8 @@ function SubmitBar({ rotation, cafe, requirements, canSubmit, onSaveDraft, onSub
         <h3 className="text-2xl font-bold mt-1">{rotation.status || "Draft"}</h3>
         <p className="text-sm text-slate-500 mt-1">{rotation.updatedAt ? `Updated ${rotation.updatedAt} by ${rotation.submittedBy || "Chef"}` : "Not saved yet"}</p>
         {rotation.submittedAt && <p className="text-sm text-slate-500 mt-1">Submitted {rotation.submittedAt}</p>}
-        {!canSubmit && <p className="text-sm text-amber-700 mt-2">Submit requires a Global Menu, at least two Global entrées, and at least one selection for each assigned station.</p>}
-        {!requirements.globalReady && <p className="text-xs text-amber-700 mt-1">Missing: Global Menu or two Global entrées.</p>}
+        {!canSubmit && <p className="text-sm text-amber-700 mt-2">Submit requires a Global Menu, at least one Global entree, and at least one selection for each assigned station.</p>}
+        {!requirements.globalReady && <p className="text-xs text-amber-700 mt-1">Missing: Global Menu or one Global entree.</p>}
         {requirements.incompleteStations.length > 0 && <p className="text-xs text-amber-700 mt-1">Missing station selection: {requirements.incompleteStations.map((stationKey) => stationLabel(cafe, stationKey)).join(", ")}.</p>}
       </div>
       <div className="flex flex-wrap gap-2">

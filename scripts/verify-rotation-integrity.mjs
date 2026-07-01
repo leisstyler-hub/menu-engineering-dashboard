@@ -174,6 +174,22 @@ if (!/setSubmitPersistError/.test(source) || !/SubmitSaveFailedModal/.test(sourc
   fail("Submit failures need a visible blocking modal instead of a silent background fallback.");
 }
 
+if (!/function blockComplete\(block\) \{\s*return Boolean\(block\?\.menu && \(block\?\.entrees \|\| \[\]\)\.filter\(Boolean\)\.length >= 1\);\s*\}/.test(source)) {
+  fail("Global and split-global blocks should require a menu and at least one entree, not sides or multiple entrees.");
+}
+
+if (!/function stationHasAnySelection/.test(source) || !/return stationHasAnySelection\(rotation, stationKey\);/.test(source)) {
+  fail("Required non-global stations should submit with one selected item instead of strict station-specific counts.");
+}
+
+if (!/Select a Global Menu and at least one Global entree/.test(source) || !/Add at least one item for each required station/.test(source)) {
+  fail("Submit blocked messaging must explain the relaxed one-selection requirements clearly.");
+}
+
+if (/Edit locked rotation/.test(source)) {
+  fail("The duplicate top Edit locked rotation checkbox must be removed; edit should live on the submitted recap card.");
+}
+
 if (!/handleOpenPlannerFromSummary = \(row\)/.test(source) || !/onOpenPlanner=\{handleOpenPlannerFromSummary\}/.test(source) || !/onOpenPlanner \? \(\) => onOpenPlanner\(row\)/.test(source)) {
   fail("Executive and leadership summary cards must jump directly into that cafe's planner.");
 }
