@@ -186,6 +186,10 @@ if (!/Select a Global Menu and at least one Global entree/.test(source) || !/Add
   fail("Submit blocked messaging must explain the relaxed one-selection requirements clearly.");
 }
 
+if (/canSubmit=\{canSubmitRotation && !isSubmitting\}/.test(source)) {
+  fail("The remote must not treat the temporary saving state as submit-blocked; saving should only disable the button.");
+}
+
 if (/Edit locked rotation/.test(source)) {
   fail("The duplicate top Edit locked rotation checkbox must be removed; edit should live on the submitted recap card.");
 }

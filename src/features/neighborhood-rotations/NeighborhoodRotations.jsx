@@ -2535,7 +2535,7 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
         rotation={rotation}
         requirements={requirements}
         submitIssues={submitIssues}
-        canSubmit={canSubmitRotation && !isSubmitting}
+        canSubmit={canSubmitRotation}
         isSubmitting={isSubmitting}
         onSaveDraft={markDraft}
         onSubmit={submitRotation}
