@@ -1,0 +1,55 @@
+import fs from "node:fs";
+import path from "node:path";
+
+const root = process.cwd();
+const rotationSource = fs.readFileSync(path.join(root, "src", "features", "neighborhood-rotations", "NeighborhoodRotations.jsx"), "utf8");
+const leanSource = fs.readFileSync(path.join(root, "src", "features", "lean-tool", "LeanTool.jsx"), "utf8");
+const backboneClient = fs.readFileSync(path.join(root, "src", "integrations", "storage", "backboneClient.js"), "utf8");
+const storageEndpoint = fs.readFileSync(path.join(root, "api", "storage", "records.js"), "utf8");
+
+function fail(message) {
+  console.error(`Submission health check failed: ${message}`);
+  process.exitCode = 1;
+}
+
+if (!/await persistRotationToDatabase\?\.\(nextRotation, \{ optimistic: false, requirePrimary: true \}\)/.test(rotationSource)) {
+  fail("rotation submit must wait for confirmed primary storage before locking the UI");
+}
+
+const submitFunction = rotationSource.match(/const submitRotation = async \(\) => \{[\s\S]*?\n  \};/)?.[0] || "";
+
+if (/status: "Submitted"/.test(submitFunction) && /updateRotation\(nextRotation\);\s*persistRotationToDatabase\?\.\(nextRotation\)/.test(submitFunction)) {
+  fail("rotation submit still has an optimistic submitted-state save path");
+}
+
+if (!/replaceParentRecordIds: \[rotationRecordParentId\(week, district, selectedCafe\)\]/.test(rotationSource)) {
+  fail("rotation submits must replace stale child rows for the same cafe/week");
+}
+
+if (!/findStaleRowIds/.test(storageEndpoint) || !/deleteRecordIds\(staleRowIds\)/.test(storageEndpoint)) {
+  fail("Supabase storage endpoint must remove stale child rows during resubmission");
+}
+
+if (!/syncRecordsToSupabase/.test(backboneClient) || !/syncRecordsToSmartsheet/.test(backboneClient) || !/smartsheet-fallback/.test(backboneClient)) {
+  fail("shared storage client must keep Supabase primary and Smartsheet fallback behavior");
+}
+
+if (!/if \(requirePrimary && result\.source === "smartsheet-fallback"\)/.test(rotationSource)) {
+  fail("submitted rotations must reject fallback-only saves so users retry instead of seeing a false lock");
+}
+
+if (!/SubmitSaveFailedModal/.test(rotationSource) || !/The app did not lock this rotation/.test(rotationSource)) {
+  fail("failed submit confirmation must show a visible modal");
+}
+
+if (!/buildLeanSmartsheetRecords/.test(leanSource) || !/syncLeanResultToDatabase/.test(leanSource)) {
+  fail("Lean completed results must still route through the shared storage layer");
+}
+
+if (!/visibleInDashboard: false/.test(leanSource) || !/VoidResultModal/.test(leanSource)) {
+  fail("Lean result deletion must be controlled as a void/hide action with an audit modal");
+}
+
+if (!process.exitCode) {
+  console.log("Submission health checks passed.");
+}

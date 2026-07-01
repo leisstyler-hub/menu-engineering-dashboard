@@ -915,17 +915,17 @@ export default function LeanTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
 function LeanResultsView({ results, resultsDistrict, setResultsDistrict, resultsCafe, setResultsCafe, resultsArea, setResultsArea, leanLoadStatus, leanSyncStatus, onRefreshSmartsheet, onRequestVoid }) {
   const [showVoided, setShowVoided] = useState(false);
   const normalizedResults = useMemo(() => results.map(normalizeResult).sort((a, b) => String(b.completedTimestamp || "").localeCompare(String(a.completedTimestamp || ""))), [results]);
-  const dashboardResults = showVoided ? normalizedResults : normalizedResults.filter((result) => !isVoidedResult(result) && result.visibleInDashboard !== false);
+  const dashboardResults = useMemo(() => showVoided ? normalizedResults : normalizedResults.filter((result) => !isVoidedResult(result) && result.visibleInDashboard !== false), [normalizedResults, showVoided]);
   const voidedResults = normalizedResults.filter((result) => isVoidedResult(result) || result.visibleInDashboard === false);
   const voidedCount = voidedResults.length;
   const voidedRowCount = voidedResults.reduce((sum, result) => sum + 1 + (result.observations || []).length, 0);
   const cafeOptions = Array.from(new Set(dashboardResults.map((result) => result.cafe).filter(Boolean))).sort();
   const areaOptions = Array.from(new Set(dashboardResults.map((result) => result.area).filter(Boolean))).sort();
-  const filteredResults = dashboardResults.filter((result) =>
+  const filteredResults = useMemo(() => dashboardResults.filter((result) =>
     (resultsDistrict === "All" || result.district === resultsDistrict) &&
     (resultsCafe === "All" || result.cafe === resultsCafe) &&
     (resultsArea === "All" || result.area === resultsArea)
-  );
+  ), [dashboardResults, resultsDistrict, resultsCafe, resultsArea]);
   const [selectedResultId, setSelectedResultId] = useState("");
 
   useEffect(() => {
@@ -941,39 +941,16 @@ function LeanResultsView({ results, resultsDistrict, setResultsDistrict, results
   const selectedResult = filteredResults.find((result) => result.id === selectedResultId) || filteredResults[0] || null;
   const totalObservedSeconds = filteredResults.reduce((sum, result) => sum + Number(result.observedSeconds || 0), 0);
   const totalMarks = filteredResults.reduce((sum, result) => sum + Number(result.totalMarks || 0), 0);
-  const trendRows = filteredResults.flatMap((result) => result.observations || []);
-  const wasteTrendRows = tallySeconds(trendRows, "waste").slice(0, 5);
-  const activityTrendRows = tallySeconds(trendRows, "activity").slice(0, 5);
   const topWaste = tallySeconds(filteredResults.map((result) => ({ waste: result.topWaste || "Unclassified", seconds: result.observedSeconds || 0 })), "waste")[0];
-  const cafeStationRows = filteredResults.reduce((acc, result) => {
-    const key = `${result.district}|${result.cafe}|${result.area}`;
-    if (!acc[key]) {
-      acc[key] = {
-        key,
-        district: result.district,
-        cafe: result.cafe,
-        area: result.area,
-        count: 0,
-        seconds: 0,
-        topWasteSeconds: {},
-      };
-    }
-    acc[key].count += 1;
-    acc[key].seconds += Number(result.observedSeconds || 0);
-    acc[key].topWasteSeconds[result.topWaste || "Unclassified"] = (acc[key].topWasteSeconds[result.topWaste || "Unclassified"] || 0) + Number(result.observedSeconds || 0);
-    return acc;
-  }, {});
-  const stationRows = Object.values(cafeStationRows).sort((a, b) => b.seconds - a.seconds);
 
   return (
     <section className="rounded-[2rem] border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600">Lean Results</p>
-          <h2 className="mt-2 text-4xl font-black tracking-normal">Observation history</h2>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Filter by district, cafe, and station. Click a cafe/station result to open the completed observation report.</p>
+          <h2 className="mt-2 text-4xl font-black tracking-normal">Observation Results</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Filter the saved records, click a row to open the saved observation, or use Delete Record to hide test and accident rows with an audit trail.</p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-900">Shared audience: {LEAN_AUDIENCE_ROLES.join(", ")}</span>
             <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-black text-amber-900">{voidedCount} voided record{voidedCount === 1 ? "" : "s"} / {voidedRowCount} row{voidedRowCount === 1 ? "" : "s"} hidden</span>
             <span className={`rounded-full border px-3 py-1 text-xs font-black ${leanLoadStatus.state === "loaded" ? "border-emerald-200 bg-emerald-50 text-emerald-900" : leanLoadStatus.state === "error" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-slate-200 bg-slate-50 text-slate-600"}`}>{leanLoadStatus.message}</span>
             <span className={`rounded-full border px-3 py-1 text-xs font-black ${leanSyncStatus.state === "synced" ? "border-emerald-200 bg-emerald-50 text-emerald-900" : leanSyncStatus.state === "fallback" || leanSyncStatus.state === "error" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-slate-200 bg-slate-50 text-slate-600"}`}>Sync: {leanSyncStatus.message}</span>
@@ -992,45 +969,22 @@ function LeanResultsView({ results, resultsDistrict, setResultsDistrict, results
         </div>
       </div>
 
-      <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
-        <MiniMetric icon={ClipboardList} label="Visible Results" value={filteredResults.length} />
-        <MiniMetric icon={Timer} label="Observed" value={formatSeconds(totalObservedSeconds)} />
-        <MiniMetric icon={CheckCircle2} label="Marks" value={totalMarks} />
-        <MiniMetric icon={Trash2} label="Voided Rows" value={voidedRowCount} />
-        <MiniMetric icon={BarChart3} label="Top Waste" value={topWaste?.[0] || "-"} />
-      </div>
+      <LeanResultsSummary
+        activeCount={filteredResults.length}
+        totalObservedSeconds={totalObservedSeconds}
+        totalMarks={totalMarks}
+        voidedRowCount={voidedRowCount}
+        topWaste={topWaste?.[0] || "-"}
+      />
 
-      <LeanTrendPanel results={filteredResults} wasteRows={wasteTrendRows} activityRows={activityTrendRows} stationRows={stationRows} totalSeconds={totalObservedSeconds} />
+      <LeanResultHistoryTable
+        results={filteredResults}
+        selectedResultId={selectedResultId}
+        onSelectResult={setSelectedResultId}
+        onRequestVoid={onRequestVoid}
+      />
 
-      <div className="mt-5 grid grid-cols-1 gap-4 xl:grid-cols-[420px_1fr]">
-        <div className="rounded-[2rem] border border-slate-200 bg-slate-50 p-4">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Cafe / Station List</p>
-          <div className="mt-3 space-y-3">
-            {stationRows.length ? stationRows.map((row) => {
-              const stationTopWaste = Object.entries(row.topWasteSeconds).sort((a, b) => b[1] - a[1])[0];
-              const firstResult = filteredResults.find((result) => result.district === row.district && result.cafe === row.cafe && result.area === row.area);
-              const active = firstResult && selectedResult?.district === row.district && selectedResult?.cafe === row.cafe && selectedResult?.area === row.area;
-              const rowVoided = firstResult && isVoidedResult(firstResult);
-              return (
-                <button key={row.key} onClick={() => firstResult && setSelectedResultId(firstResult.id)} className={`w-full rounded-3xl border-2 p-4 text-left transition ${active ? "border-emerald-400 bg-emerald-50 shadow-[0_0_0_4px_rgba(16,185,129,0.14)]" : rowVoided ? "border-amber-200 bg-amber-50 hover:border-amber-300" : "border-slate-200 bg-white hover:border-emerald-200"}`}>
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">{row.district}</p>
-                      <h3 className="mt-1 text-xl font-black text-slate-950">{row.cafe}</h3>
-                      <p className="mt-1 text-sm font-bold text-slate-600">{row.area}</p>
-                    </div>
-                    <span className={`rounded-full border px-3 py-1 text-xs font-black ${rowVoided ? "border-amber-300 bg-white text-amber-900" : "border-slate-200 bg-white text-slate-600"}`}>{rowVoided ? "Voided" : `${row.count} result${row.count === 1 ? "" : "s"}`}</span>
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold text-slate-600">
-                    <span className="rounded-full bg-slate-100 px-3 py-1">{formatSeconds(row.seconds)}</span>
-                    <span className="rounded-full bg-slate-100 px-3 py-1">Top: {stationTopWaste?.[0] || "-"}</span>
-                  </div>
-                </button>
-              );
-            }) : <p className="rounded-3xl border border-dashed border-slate-200 bg-white p-5 text-sm font-semibold text-slate-500">No completed Lean results match these filters yet.</p>}
-          </div>
-        </div>
-
+      <div className="mt-5">
         <div className="rounded-[2rem] border border-slate-200 bg-white p-4 shadow-sm">
           {selectedResult ? (
             <LeanResultDetail result={selectedResult} sameScopeResults={filteredResults.filter((result) => result.district === selectedResult.district && result.cafe === selectedResult.cafe && result.area === selectedResult.area)} setSelectedResultId={setSelectedResultId} onRequestVoid={onRequestVoid} />
@@ -1046,67 +1000,92 @@ function LeanResultsView({ results, resultsDistrict, setResultsDistrict, results
   );
 }
 
-function LeanTrendPanel({ results, wasteRows, activityRows, stationRows, totalSeconds }) {
-  const latestResult = results[0] || null;
-  const repeatStations = stationRows.filter((row) => row.count > 1).length;
-  const opportunity = wasteRows[0]?.[0] || "No trend yet";
+function LeanResultsSummary({ activeCount, totalObservedSeconds, totalMarks, voidedRowCount, topWaste }) {
   return (
-    <section className="mt-5 rounded-[2rem] border-2 border-emerald-200 bg-white p-4 shadow-sm">
-      <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600">Lean Trend Read</p>
-          <h3 className="mt-1 text-2xl font-black text-slate-950">Waste, activity, and follow-up signal</h3>
-        </div>
-        <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-black text-slate-600">{results.length} visible result{results.length === 1 ? "" : "s"}</span>
+    <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <MiniMetric icon={ClipboardList} label="Active Results" value={activeCount} />
+      <MiniMetric icon={Timer} label="Observed Time" value={formatSeconds(totalObservedSeconds)} />
+      <MiniMetric icon={CheckCircle2} label="Total Marks" value={totalMarks} />
+      <MiniMetric icon={BarChart3} label="Top Waste" value={topWaste} />
+      <MiniMetric icon={Trash2} label="Hidden / Deleted" value={voidedRowCount} />
+    </div>
+  );
+}
+
+function LeanResultHistoryTable({ results, selectedResultId, onSelectResult, onRequestVoid }) {
+  return (
+    <section className="mt-5 overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm">
+      <div className="border-b border-slate-200 bg-slate-50 px-5 py-4">
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Saved Observation Rows</p>
+        <p className="mt-1 text-sm font-semibold text-slate-600">Click a row to open the saved observation. Delete Record hides the row from normal dashboards and keeps the audit trail.</p>
       </div>
-      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[1fr_1fr_360px]">
-        <TrendBars title="Waste Trend" rows={wasteRows} totalSeconds={totalSeconds} tone="emerald" />
-        <TrendBars title="Activity Trend" rows={activityRows} totalSeconds={totalSeconds} tone="sky" />
-        <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Leader Follow-Up</p>
-          <div className="mt-3 space-y-3">
-            <TrendSignal label="Top opportunity" value={opportunity} detail={wasteRows[0] ? `${formatSeconds(wasteRows[0][1])} observed` : "complete observations to generate signal"} />
-            <TrendSignal label="Repeat stations" value={repeatStations} detail="stations with more than one visible result" />
-            <TrendSignal label="Latest result" value={latestResult ? latestResult.cafe : "-"} detail={latestResult ? `${latestResult.area} - ${latestResult.observationDate}` : "no result selected"} />
-          </div>
-        </div>
+      <div className="overflow-x-auto">
+        <table className="min-w-full text-left text-sm">
+          <thead className="bg-white text-xs font-black uppercase tracking-[0.14em] text-slate-500">
+            <tr>
+              <th className="px-4 py-3">Date</th>
+              <th className="px-4 py-3">Cafe</th>
+              <th className="px-4 py-3">Station</th>
+              <th className="px-4 py-3">Observer</th>
+              <th className="px-4 py-3">Observed</th>
+              <th className="px-4 py-3">Marks</th>
+              <th className="px-4 py-3">Top Waste</th>
+              <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {results.length ? results.map((result) => {
+              const voided = isVoidedResult(result) || result.visibleInDashboard === false;
+              const selected = result.id === selectedResultId;
+              return (
+                <tr
+                  key={result.id}
+                  onClick={() => onSelectResult(result.id)}
+                  className={`cursor-pointer align-top transition ${selected ? "bg-emerald-50" : voided ? "bg-amber-50/60 hover:bg-amber-50" : "hover:bg-slate-50"}`}
+                >
+                  <td className="px-4 py-3 font-bold text-slate-900">{result.observationDate || "-"}</td>
+                  <td className="px-4 py-3">
+                    <p className="font-black text-slate-950">{result.cafe || "-"}</p>
+                    <p className="text-xs font-bold text-slate-500">{result.district || "-"}</p>
+                  </td>
+                  <td className="px-4 py-3 font-bold text-slate-700">{result.area || "-"}</td>
+                  <td className="px-4 py-3 font-bold text-slate-700">{result.observer || "-"}</td>
+                  <td className="px-4 py-3 font-mono font-black text-slate-950">{formatSeconds(result.observedSeconds)}</td>
+                  <td className="px-4 py-3 font-mono font-black text-slate-950">{result.totalMarks || 0}</td>
+                  <td className="px-4 py-3 font-bold text-slate-700">{result.topWaste || "-"}</td>
+                  <td className="px-4 py-3">
+                    <span className={`rounded-full border px-3 py-1 text-xs font-black ${voided ? "border-amber-300 bg-white text-amber-900" : "border-emerald-200 bg-emerald-50 text-emerald-900"}`}>
+                      {voided ? "Hidden" : "Active"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    {!voided ? (
+                      <button
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onRequestVoid(result);
+                        }}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-black text-rose-900 hover:bg-rose-100"
+                      >
+                        <Trash2 size={14} />
+                        Delete Record
+                      </button>
+                    ) : (
+                      <span className="text-xs font-bold text-slate-500">Audit kept</span>
+                    )}
+                  </td>
+                </tr>
+              );
+            }) : (
+              <tr>
+                <td colSpan="9" className="px-4 py-10 text-center text-sm font-semibold text-slate-500">No completed Lean results match these filters yet.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
     </section>
-  );
-}
-
-function TrendBars({ title, rows, totalSeconds, tone }) {
-  const fill = tone === "sky" ? "bg-sky-500" : "bg-emerald-500";
-  return (
-    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-      <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">{title}</p>
-      <div className="mt-3 space-y-3">
-        {rows.length ? rows.map(([name, seconds]) => {
-          const percent = totalSeconds ? Math.round((seconds / totalSeconds) * 100) : 0;
-          return (
-            <div key={name}>
-              <div className="flex items-center justify-between gap-3 text-sm">
-                <p className="font-black text-slate-900">{name || "Unclassified"}</p>
-                <p className="font-mono font-black text-slate-600">{percent}%</p>
-              </div>
-              <div className="mt-2 h-2 overflow-hidden rounded-full bg-white">
-                <div className={`h-full rounded-full ${fill}`} style={{ width: `${Math.max(4, percent)}%` }} />
-              </div>
-            </div>
-          );
-        }) : <p className="rounded-2xl border border-dashed border-slate-200 bg-white p-4 text-sm font-semibold text-slate-500">No trend data yet.</p>}
-      </div>
-    </div>
-  );
-}
-
-function TrendSignal({ label, value, detail }) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-3">
-      <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">{label}</p>
-      <p className="mt-1 break-words text-lg font-black leading-6 text-slate-950">{value}</p>
-      <p className="mt-1 break-words text-xs font-semibold leading-5 text-slate-500">{detail}</p>
-    </div>
   );
 }
 

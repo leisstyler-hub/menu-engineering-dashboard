@@ -2,6 +2,11 @@
 
 ## 2026-07-01
 
+- [Jul 1, 7:38 AM] Added a submission-health release guard that checks confirmed-storage locking, stale row cleanup, Supabase primary, and Smartsheet fallback behavior.
+- [Jul 1, 7:38 AM] Reworked Lean Results into a cleaner row-history table with compact summary cards and click-to-open saved observation details.
+- [Jul 1, 7:38 AM] Added a row-level Delete Record action for Lean Results that uses the controlled void/audit flow instead of hard-erasing records.
+- [Jul 1, 7:38 AM] Added a Lean Results release guard so the tab stays focused on history rows, detail view, and controlled deletion.
+- [Jul 1, 7:38 AM] Set visible app version to `2026.07.01.002-submission-lean-results`.
 - [Jul 1, 7:10 AM] Programmed Re:Invent's Jun 29 holiday week as Monday-Tuesday, Wednesday-Thursday, and Friday Closed with no Friday menu required.
 - [Jul 1, 7:10 AM] Reset Re:Invent's normal 2/2/2 split-global cycle to restart Monday-Tuesday on Jul 6, 2026.
 - [Jul 1, 7:10 AM] Limited Neighborhood Rotation week selectors to the current week, future weeks, and five prior weeks.
