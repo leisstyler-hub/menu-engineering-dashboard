@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-07-01
+
+- [Jul 1, 7:10 AM] Programmed Re:Invent's Jun 29 holiday week as Monday-Tuesday, Wednesday-Thursday, and Friday Closed with no Friday menu required.
+- [Jul 1, 7:10 AM] Reset Re:Invent's normal 2/2/2 split-global cycle to restart Monday-Tuesday on Jul 6, 2026.
+- [Jul 1, 7:10 AM] Limited Neighborhood Rotation week selectors to the current week, future weeks, and five prior weeks.
+- [Jul 1, 7:10 AM] Added clickable Results history rows that open saved selection detail by cafe, station, item, description, allergens, calories, and retail.
+- [Jul 1, 7:10 AM] Set visible app version to `2026.07.01.001-reinvent-results-detail`.
+
 ## 2026-06-30
 
 - [Jun 30, 1:36 PM] Enabled rotation submit syncs to auto-repair missing Smartsheet mirror columns when a used submission field is absent.

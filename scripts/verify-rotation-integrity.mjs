@@ -122,16 +122,24 @@ if (!/locked && isSplitGlobalCafe\(row\.cafe\) \? splitGlobalSummaryBlockLabels\
   fail("Executive summary cards must show all scheduled split-global blocks for every split cafe.");
 }
 
-if (!/const SPLIT_GLOBAL_CAFE_CYCLE_STARTS = \{\s*"Re:Invent": "2026-06-29",\s*Blueshift: "2026-07-06"\s*\};/.test(source)) {
-  fail("Split-global cafes need separate cycle anchors: Re:Invent starts Mon+Tue on Jun 29, 2026; Blueshift starts Mon+Tue on Jul 6, 2026.");
+if (!/const SPLIT_GLOBAL_CAFE_CYCLE_STARTS = \{\s*"Re:Invent": "2026-07-06",\s*Blueshift: "2026-07-06"\s*\};/.test(source)) {
+  fail("Split-global cafes need separate cycle anchors: Re:Invent and Blueshift both restart Mon+Tue on Jul 6, 2026.");
+}
+
+if (!/const REINVENT_CLOSED_WEEK_STARTS = new Set\(\["2026-06-29"\]\);/.test(source) || !/function isReInventHolidayClosedWeek\(cafe, week = ""\)/.test(source)) {
+  fail("Re:Invent Jun 29, 2026 holiday week must be explicitly modeled as a Friday-closed week.");
+}
+
+if (!/id: "friClosed"[\s\S]*title: "Friday Closed"[\s\S]*closed: true/.test(source)) {
+  fail("Re:Invent holiday week must show Friday Closed instead of requiring a Friday menu block.");
 }
 
 if (!/const splitGlobalFridayCarriesToNextMonday = \(cafe, weekLabel = ""\) =>/.test(source) || !/splitGlobalFridayCarriesToNextMonday\("Re:Invent", weekLabel\)/.test(source)) {
   fail("Re:Invent and Blueshift split-global parity must be calculated per cafe, not from one shared week index.");
 }
 
-if (firstSplitBlockId("Re:Invent", "Jun 29, 2026 - Jul 3, 2026") !== "monTue") {
-  fail("Re:Invent Jun 29, 2026 must start with the Monday + Tuesday block.");
+if (firstSplitBlockId("Re:Invent", "Jul 6, 2026 - Jul 10, 2026") !== "monTue") {
+  fail("Re:Invent Jul 6, 2026 must restart with the Monday + Tuesday block.");
 }
 
 if (firstSplitBlockId("Blueshift", "Jul 6, 2026 - Jul 10, 2026") !== "monTue") {
@@ -168,6 +176,18 @@ if (!/setSubmitPersistError/.test(source) || !/SubmitSaveFailedModal/.test(sourc
 
 if (!/handleOpenPlannerFromSummary = \(row\)/.test(source) || !/onOpenPlanner=\{handleOpenPlannerFromSummary\}/.test(source) || !/onOpenPlanner \? \(\) => onOpenPlanner\(row\)/.test(source)) {
   fail("Executive and leadership summary cards must jump directly into that cafe's planner.");
+}
+
+if (!/const VISIBLE_ROTATION_WEEKS = ROTATION_WEEKS\.filter/.test(source) || !/const WEEK_SELECTOR_LOOKBACK_COUNT = 5/.test(source)) {
+  fail("Neighborhood week selectors must only offer the current week, future weeks, and five prior weeks.");
+}
+
+if (!/ControlCard label="Week" value=\{week\} setValue=\{setWeek\} options=\{VISIBLE_ROTATION_WEEKS\}/.test(source) || !/ControlCard label="Leadership Week View" value=\{week\} setValue=\{setWeek\} options=\{VISIBLE_ROTATION_WEEKS\}/.test(source)) {
+  fail("Planner and Executive week dropdowns must use the five-week selector window.");
+}
+
+if (!/const \[selectedResultRow, setSelectedResultRow\] = useState\(null\);/.test(source) || !/function ResultsSelectionDetail/.test(source) || !/onClick=\{\(\) => setSelectedResultRow\(row\)\}/.test(source)) {
+  fail("Results history rows must open a saved-selection detail panel when clicked.");
 }
 
 if (carveryProteins.some((row) => /reuben|sandwich|panini|wrap/i.test(`${name(row)} ${station(row)}`))) {

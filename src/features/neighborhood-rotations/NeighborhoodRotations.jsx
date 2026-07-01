@@ -116,9 +116,13 @@ const weekIndexFromLabel = (weekLabel = "") => {
 const SPLIT_GLOBAL_CAFES = new Set(["Re:Invent", "Blueshift"]);
 const isSplitGlobalCafe = (cafe = "") => SPLIT_GLOBAL_CAFES.has(cafe);
 const SPLIT_GLOBAL_CAFE_CYCLE_STARTS = {
-  "Re:Invent": "2026-06-29",
+  "Re:Invent": "2026-07-06",
   Blueshift: "2026-07-06"
 };
+const REINVENT_CLOSED_WEEK_STARTS = new Set(["2026-06-29"]);
+function isReInventHolidayClosedWeek(cafe, week = "") {
+  return cafe === "Re:Invent" && REINVENT_CLOSED_WEEK_STARTS.has(parseWeekStart(week));
+}
 const weekIndexFromStartDate = (weekLabel = "", startDateKey = "") => {
   const start = parseWeekStart(weekLabel);
   if (!start || !startDateKey) return 0;
@@ -130,7 +134,14 @@ const weekIndexFromStartDate = (weekLabel = "", startDateKey = "") => {
 const splitGlobalFridayCarriesToNextMonday = (cafe, weekLabel = "") => weekIndexFromStartDate(weekLabel, SPLIT_GLOBAL_CAFE_CYCLE_STARTS[cafe] || SPLIT_GLOBAL_CAFE_CYCLE_STARTS["Re:Invent"]) % 2 === 0;
 const isReInventFridayMondayWeek = (weekLabel = "") => splitGlobalFridayCarriesToNextMonday("Re:Invent", weekLabel);
 const ROTATION_WEEKS = Array.from({ length: 160 }, (_, index) => makeWeekOption(addDays(ROTATION_CYCLE_START, index * 7)));
-const DEFAULT_ROTATION_WEEK = makeWeekOption(getMonday(new Date()));
+const CURRENT_ROTATION_WEEK_START = getMonday(new Date());
+const DEFAULT_ROTATION_WEEK = makeWeekOption(CURRENT_ROTATION_WEEK_START);
+const WEEK_SELECTOR_LOOKBACK_COUNT = 5;
+const WEEK_SELECTOR_MIN_START = formatDateKey(addDays(CURRENT_ROTATION_WEEK_START, -7 * WEEK_SELECTOR_LOOKBACK_COUNT));
+const VISIBLE_ROTATION_WEEKS = ROTATION_WEEKS.filter((weekLabel) => {
+  const start = parseWeekStart(weekLabel);
+  return start && start >= WEEK_SELECTOR_MIN_START;
+});
 const previousRotationWeek = (weekLabel = "") => {
   const index = ROTATION_WEEKS.indexOf(weekLabel);
   if (index > 0) return ROTATION_WEEKS[index - 1];
@@ -140,7 +151,12 @@ const previousRotationWeek = (weekLabel = "") => {
 };
 
 const ROLLING_HISTORY_WEEK_COUNT = 26;
-const ROLLING_ROTATION_WEEKS = ROTATION_WEEKS.slice(0, ROLLING_HISTORY_WEEK_COUNT);
+const ROLLING_HISTORY_MIN_START = formatDateKey(addDays(CURRENT_ROTATION_WEEK_START, -7 * (ROLLING_HISTORY_WEEK_COUNT - 1)));
+const ROLLING_HISTORY_MAX_START = formatDateKey(addDays(CURRENT_ROTATION_WEEK_START, 7 * 12));
+const ROLLING_ROTATION_WEEKS = ROTATION_WEEKS.filter((weekLabel) => {
+  const start = parseWeekStart(weekLabel);
+  return start && start >= ROLLING_HISTORY_MIN_START && start <= ROLLING_HISTORY_MAX_START;
+});
 
 function blankCustomStations() {
   const calories4 = ["", "", "", ""];
@@ -1306,6 +1322,13 @@ function reInventGlobalBlockLayout(week = "") {
 
 function splitGlobalBlockLayout(cafe, week = "") {
   const cafeName = cafe || "This cafe";
+  if (isReInventHolidayClosedWeek(cafe, week)) {
+    return [
+      { id: "monTue", title: "Monday + Tuesday", days: ["Monday", "Tuesday"], readOnly: false, help: `Select the ${cafeName} Global menu for Monday and Tuesday.` },
+      { id: "wedThu", title: "Wednesday + Thursday", days: ["Wednesday", "Thursday"], readOnly: false, help: `Select the ${cafeName} Global menu for Wednesday and Thursday.` },
+      { id: "friClosed", title: "Friday Closed", days: ["Friday"], readOnly: true, closed: true, help: "Closed for the observed July 4 holiday. No Friday menu selection is required." },
+    ];
+  }
   const fridayCarriesToNextMonday = splitGlobalFridayCarriesToNextMonday(cafe, week);
   return fridayCarriesToNextMonday
     ? [
@@ -1356,7 +1379,7 @@ function blockHasSelections(block = {}) {
   return ["entrees", "sides", "subRecipes", "extensions"].some((key) => (block?.[key] || []).some(Boolean));
 }
 
-const SPLIT_GLOBAL_BLOCK_IDS = new Set(["monTue", "wedThu", "friCarry", "monCarry", "tueWed", "thuFri"]);
+const SPLIT_GLOBAL_BLOCK_IDS = new Set(["monTue", "wedThu", "friCarry", "monCarry", "tueWed", "thuFri", "friClosed"]);
 const REINVENT_GLOBAL_BLOCK_IDS = SPLIT_GLOBAL_BLOCK_IDS;
 
 function reInventMenuLabel(rotation = {}, week = "") {
@@ -1378,6 +1401,16 @@ function reInventSummaryBlockLabels(rotation = {}, week = rotation?.week || "") 
 
 function splitGlobalSummaryBlockLabels(rotation = {}, cafe = "", week = rotation?.week || "") {
   return splitGlobalBlockLayout(cafe, week).map((blockInfo) => {
+    if (blockInfo.closed) {
+      return {
+        id: blockInfo.id,
+        title: blockInfo.title,
+        menu: "Closed for July 4 observance",
+        isPending: false,
+        isCarryover: false,
+        isClosed: true,
+      };
+    }
     const block = blockInfo.readOnly
       ? carryoverGlobalBlock(rotation.previousRotation || {}, "friCarry")
       : getRotationGlobalBlock(rotation, blockInfo.id);
@@ -2185,7 +2218,7 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
             <section className="grid grid-cols-1 lg:grid-cols-4 gap-4">
               <ChoiceCard label="District" value={district} setValue={setDistrict} options={Object.keys(DISTRICTS)} />
               <ChoiceCard label="Cafe" value={selectedCafe} setValue={setSelectedCafe} options={cafes} disabled={!district} />
-              <ControlCard label="Week" value={week} setValue={setWeek} options={ROTATION_WEEKS} />
+              <ControlCard label="Week" value={week} setValue={setWeek} options={VISIBLE_ROTATION_WEEKS} />
               <StatusCard ready={Boolean(district && selectedCafe)} conflicts={Object.values(conflictMenus).filter((count) => count > 1).length} completed={districtWeekRows.filter(hasSubmittedRotationMenu).length} total={cafes.length} />
             </section>
             <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -4425,6 +4458,18 @@ function SplitGlobalSection({ cafe, week, rotation, previousRotation, previousWe
           const block = getRotationGlobalBlock(rotation, blockInfo.id);
           const blockStationOptions = subConceptOptionsForMenu(block.menu);
           const blockCategorized = categorize(globalMenuRows(block.menu, block.station));
+          if (blockInfo.closed) {
+            return (
+              <div key={blockInfo.id} className="rounded-3xl border border-amber-200 bg-amber-50 p-5">
+                <p className="text-xs uppercase tracking-[0.18em] text-amber-700 font-bold">Holiday Closure</p>
+                <h4 className="text-2xl font-bold text-amber-950 mt-1">{blockInfo.title}</h4>
+                <p className="text-sm text-amber-900 mt-1">{blockInfo.help}</p>
+                <div className="mt-3 rounded-2xl border border-amber-200 bg-white px-4 py-3 text-sm font-bold text-amber-900">
+                  No Friday Global menu is required for this week.
+                </div>
+              </div>
+            );
+          }
           if (blockInfo.readOnly) {
             const carryover = carryoverGlobalBlock(previousRotation, "friCarry");
             return (
@@ -5134,7 +5179,7 @@ function ExecutiveView({ week, setWeek, rows, conflictMenus, onOpenPlanner }) {
     <div className="space-y-5">
       <LeadershipStatusBoard rows={rows} />
       <section className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-4">
-        <ControlCard label="Leadership Week View" value={week} setValue={setWeek} options={ROTATION_WEEKS} />
+        <ControlCard label="Leadership Week View" value={week} setValue={setWeek} options={VISIBLE_ROTATION_WEEKS} />
         <ExecutiveMetric title="Locked In" value={`${locked}/${rows.length}`} sub="submitted rotations" tone={locked === rows.length ? "green" : "amber"} />
         <ExecutiveMetric title="Menu Items" value={selectedCount} sub="selected this week" />
         <ExecutiveMetric title="Declared" value={`${declared}/${rows.length}`} sub="cafés submitted" />
@@ -5379,6 +5424,7 @@ function SummaryBucket({ title, value, details, empty, tone = "neutral" }) {
 }
 
 function ResultsView({ rows, resultsDistrict, setResultsDistrict, resultsCafe, setResultsCafe }) {
+  const [selectedResultRow, setSelectedResultRow] = useState(null);
   const allCafeOptions = Array.from(new Set(Object.values(DISTRICTS).flat())).sort();
   const submittedRows = rows.filter(isSubmittedRotation);
   const historyRows = submittedRows;
@@ -5407,6 +5453,11 @@ function ResultsView({ rows, resultsDistrict, setResultsDistrict, resultsCafe, s
   const selectedDetailPct = allSelections.length ? Math.round((describedSelections / allSelections.length) * 100) : 0;
   const selectedAllergenPct = allSelections.length ? Math.round((allergenSelections / allSelections.length) * 100) : 0;
   const selectedCostPct = allSelections.length ? Math.round((costedSelections / allSelections.length) * 100) : 0;
+  useEffect(() => {
+    if (selectedResultRow && !historyRows.some((row) => resultRowKey(row) === resultRowKey(selectedResultRow))) {
+      setSelectedResultRow(null);
+    }
+  }, [historyRows, selectedResultRow]);
 
   return (
     <div className="space-y-5">
@@ -5436,12 +5487,13 @@ function ResultsView({ rows, resultsDistrict, setResultsDistrict, resultsCafe, s
           <SummaryBucket title="Data Confidence" value={`${selectedDetailPct}%`} details={[`${selectedDetailPct}% description coverage`, `${selectedAllergenPct}% allergen signal`, `${selectedCostPct}% cost coverage`]} empty="no selected item data yet" tone={selectedDetailPct >= 80 && selectedCostPct >= 80 ? "green" : "amber"} />
         </div>
       </section>
+      {selectedResultRow && <ResultsSelectionDetail row={selectedResultRow} onClose={() => setSelectedResultRow(null)} />}
       <section className="overflow-hidden rounded-[2rem] bg-white border border-slate-200 shadow-2xl">
         <div className="p-5 border-b border-slate-200 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
           <div>
             <p className="text-sm uppercase tracking-[0.18em] text-slate-400">Rolling 6 Month Results</p>
             <h2 className="text-3xl font-bold mt-1">Rotation History</h2>
-            <p className="text-sm text-slate-500 mt-1">Shows submitted rotations only, with global declarations, food cost signal, and timestamps.</p>
+            <p className="text-sm text-slate-500 mt-1">Shows submitted rotations only. Click a row to open its saved selections.</p>
           </div>
         </div>
         <div className="overflow-auto max-h-[680px]">
@@ -5470,7 +5522,7 @@ function ResultsView({ rows, resultsDistrict, setResultsDistrict, resultsCafe, s
                 const fcMidpoint = foodCostRange.low != null && foodCostRange.high != null ? (foodCostRange.low + foodCostRange.high) / 2 : summary.fc;
                 const fcTone = fcMidpoint == null ? "bg-slate-100 text-slate-600 border-slate-200" : fcMidpoint > 0.34 ? "bg-amber-100 text-amber-800 border-amber-200" : fcMidpoint <= 0.30 ? "bg-emerald-100 text-emerald-800 border-emerald-200" : "bg-white text-slate-700 border-slate-200";
                 return (
-                  <tr key={`${row.week}-${row.district}-${row.cafe}-${index}`} className="hover:bg-slate-50 align-top">
+                  <tr key={`${row.week}-${row.district}-${row.cafe}-${index}`} onClick={() => setSelectedResultRow(row)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") setSelectedResultRow(row); }} tabIndex={0} role="button" className={`cursor-pointer align-top transition ${selectedResultRow && resultRowKey(row) === resultRowKey(selectedResultRow) ? "bg-emerald-50" : "hover:bg-slate-50"}`}>
                     <td className="px-4 py-3 font-semibold whitespace-nowrap">{row.week}</td>
                     <td className="px-4 py-3 whitespace-nowrap">{row.district}</td>
                     <td className="px-4 py-3 whitespace-nowrap font-semibold">{row.cafe}</td>
@@ -5487,6 +5539,106 @@ function ResultsView({ rows, resultsDistrict, setResultsDistrict, resultsCafe, s
           </table>
         </div>
       </section>
+    </div>
+  );
+}
+
+function resultRowKey(row = {}) {
+  return `${row.week || ""}|${row.district || ""}|${row.cafe || ""}`;
+}
+
+function ResultsSelectionDetail({ row, onClose }) {
+  const stationRows = getStationSelectionRows(row, row.cafe, row.week).filter((stationRow) => stationRow.items.length);
+  const rowItems = stationRows.flatMap((stationRow) => stationRow.items);
+  const trueCostRange = selectedTrueCostRange(rowItems);
+  const foodCostRange = selectedFoodCostRange(rowItems);
+  const splitBlocks = isSplitGlobalCafe(row.cafe) ? splitGlobalSummaryBlockLabels(row, row.cafe, row.week) : [];
+  return (
+    <section className="rounded-[2rem] border-2 border-emerald-200 bg-emerald-50/70 p-5 shadow-xl">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-sm uppercase tracking-[0.18em] text-emerald-700 font-black">Saved Selection Detail</p>
+          <h3 className="mt-1 text-2xl font-black text-slate-950">{row.cafe} - {row.week}</h3>
+          <p className="mt-1 text-sm font-semibold text-slate-600">{row.district} / {row.status || "Submitted"}{row.submittedAt ? ` / submitted ${row.submittedAt}` : ""}</p>
+        </div>
+        <button type="button" onClick={onClose} className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 shadow-sm hover:bg-slate-50">
+          <X size={16} /> Close
+        </button>
+      </div>
+      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4">
+        <div className="rounded-2xl border border-emerald-200 bg-white p-3">
+          <p className="text-xs uppercase tracking-[0.14em] text-slate-400 font-black">Global Menu</p>
+          <p className="mt-1 text-lg font-black text-slate-950">{rotationMenuLabel(row) || "Not listed"}</p>
+        </div>
+        <div className="rounded-2xl border border-emerald-200 bg-white p-3">
+          <p className="text-xs uppercase tracking-[0.14em] text-slate-400 font-black">Selections</p>
+          <p className="mt-1 text-lg font-black text-slate-950">{rowItems.length}</p>
+        </div>
+        <div className="rounded-2xl border border-emerald-200 bg-white p-3">
+          <p className="text-xs uppercase tracking-[0.14em] text-slate-400 font-black">Cost Range</p>
+          <p className="mt-1 text-lg font-black text-slate-950">{moneyRange(trueCostRange)}</p>
+        </div>
+        <div className="rounded-2xl border border-emerald-200 bg-white p-3">
+          <p className="text-xs uppercase tracking-[0.14em] text-slate-400 font-black">Food Cost</p>
+          <p className="mt-1 text-lg font-black text-slate-950">{pctRange(foodCostRange)}</p>
+        </div>
+      </div>
+      {splitBlocks.length > 0 && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {splitBlocks.map((block) => (
+            <span key={block.id} className={`rounded-full border px-3 py-1 text-xs font-black ${block.isClosed ? "border-amber-200 bg-amber-50 text-amber-800" : block.isPending ? "border-slate-200 bg-white text-slate-500" : "border-emerald-200 bg-white text-emerald-800"}`}>
+              {block.title}: {block.menu}
+            </span>
+          ))}
+        </div>
+      )}
+      <div className="mt-5 space-y-4">
+        {stationRows.length === 0 ? (
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm font-semibold text-slate-500">No saved selections were found for this row.</div>
+        ) : stationRows.map((stationRow) => (
+          <div key={stationRow.key} className="rounded-2xl border border-slate-200 bg-white p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="text-xs uppercase tracking-[0.16em] text-slate-400 font-black">Station</p>
+                <h4 className="text-xl font-black text-slate-950">{stationRow.label}</h4>
+                <p className="text-xs font-semibold text-slate-500">{stationRow.note}</p>
+              </div>
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-black text-slate-600">{stationRow.items.length} item{stationRow.items.length === 1 ? "" : "s"}</span>
+            </div>
+            <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
+              {stationRow.items.map((item, index) => (
+                <ResultSelectionItemCard key={`${stationRow.key}-${getItemIdentity(item)}-${index}`} item={item} />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ResultSelectionItemCard({ item }) {
+  const diet = getDiet(item);
+  const allergens = String(getAllergens(item) || "").split(",").map((value) => value.trim()).filter(Boolean);
+  const description = getDescription(item) || "Description missing in source data.";
+  const allergenDataMissing = isAllergenDataMissing(item);
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <p className="font-black text-slate-950">{getDisplayName(item)}</p>
+          <div className="mt-2"><ItemBuildMeta item={item} /></div>
+        </div>
+        {diet && <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-black text-emerald-800">{diet}</span>}
+      </div>
+      <p className="mt-2 text-sm font-semibold text-slate-600">{description}</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {allergens.length ? allergens.map((allergen) => (
+          <span key={allergen} className="rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-black text-rose-800">{titleCase(allergen)}</span>
+        )) : allergenDataMissing
+          ? <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-black text-amber-800">Allergen Data Missing</span>
+          : <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-black text-slate-500">No Allergens Listed</span>}
+      </div>
     </div>
   );
 }
