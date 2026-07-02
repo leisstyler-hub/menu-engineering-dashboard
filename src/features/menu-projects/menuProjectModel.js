@@ -346,6 +346,8 @@ export function createProject(input) {
   const createdDate = input.createdDate || todayIso();
   const launchDate = input.launchDate || addBusinessDays(createdDate, 35);
   const timeline = buildStages(input.menuType, launchDate, createdDate);
+  const projectOwners = normalizePeopleList(input.projectOwners || input.projectOwner);
+  const projectOwner = input.projectOwner || projectOwners[0] || { name: "", email: "" };
   const project = {
     id: compactId("menu-project"),
     menuName: input.menuName || "Untitled Menu Project",
@@ -357,8 +359,8 @@ export function createProject(input) {
     currentStage: timeline.stages[0].id,
     status: timeline.compressedTimeline ? "Compressed Timeline" : "On Track",
     compressedTimeline: timeline.compressedTimeline,
-    projectOwner: input.projectOwner || { name: "", email: "" },
-    projectOwners: normalizePeopleList(input.projectOwners || input.projectOwner),
+    projectOwner,
+    projectOwners,
     districtChefOwner: input.districtChefOwner || { name: "", email: "" },
     experienceTeamEmails: input.experienceTeamEmails || [],
     directorOfCulinaryEmail: input.directorOfCulinaryEmail || "chandon.clenard@compass-usa.com",

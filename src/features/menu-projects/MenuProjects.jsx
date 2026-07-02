@@ -66,6 +66,15 @@ const TEAM_PRESETS = [
   { name: "Summer Hinshaw", email: "summer.hinshaw@compass-usa.com" },
 ];
 
+const DEFAULT_PROJECT_OWNERS = [
+  { name: "Tyler Leiss", email: "tyler.leiss@compass-usa.com" },
+  { name: "Alex Neuse", email: "alex.neuse@compass-usa.com" },
+];
+
+function defaultProjectOwners() {
+  return DEFAULT_PROJECT_OWNERS.map((person) => ({ ...person }));
+}
+
 const DIRECTOR_OF_CULINARY = { name: "Chandon Clenard", email: "chandon.clenard@compass-usa.com" };
 const MENU_PROJECT_BACKBONE_TOOL = "menuProjects";
 const MAX_ATTACHMENT_BYTES = 1_800_000;
@@ -1436,27 +1445,31 @@ function CreateProjectModal({ onClose, onCreate }) {
     menuName: "",
     menuType: MENU_TYPES.PROMOTIONAL,
     launchDate: "",
-    createdBy: "",
+    projectOwners: defaultProjectOwners(),
   });
 
   const submit = () => {
-    const projectOwners = form.createdBy
-      .split(",")
-      .map((name) => name.trim())
-      .filter(Boolean)
-      .map((name) => ({ name, email: "" }));
+    const projectOwners = form.projectOwners
+      .map((person) => ({
+        name: (person.name || "").trim(),
+        email: (person.email || "").trim(),
+      }))
+      .filter((person) => person.name || person.email);
+    const resolvedOwners = projectOwners.length ? projectOwners : defaultProjectOwners();
     onCreate({
       ...form,
       launchDate: form.launchDate || "2026-08-14",
       createdDate: todayIso(),
-      projectOwners,
-      projectOwner: projectOwners[0] || { name: "", email: "" },
+      createdBy: resolvedOwners.map((person) => person.name || person.email).join(", "),
+      projectOwners: resolvedOwners,
+      projectOwner: resolvedOwners[0] || { name: "", email: "" },
+      districtChefOwner: { name: "", email: "" },
     });
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4">
-      <div className="w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl">
+      <div className="w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-600">New Project</p>
@@ -1474,7 +1487,14 @@ function CreateProjectModal({ onClose, onCreate }) {
             <input value={form.launchDate} onChange={(event) => setForm({ ...form, launchDate: event.target.value })} type="date" className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm font-bold" />
             <span className="mt-1 block text-xs font-bold text-slate-500">This is the guest-facing launch date. IT / Centric is planned to finish 5 business days before launch.</span>
           </label>
-          <input value={form.createdBy} onChange={(event) => setForm({ ...form, createdBy: event.target.value })} className="w-full rounded-lg border border-slate-200 px-3 py-3 text-sm font-bold" placeholder="Project owner(s) / chef(s), comma separated" />
+          <div>
+            <PeopleListEditor
+              label="Project Owner / Chef"
+              people={form.projectOwners}
+              onChange={(projectOwners) => setForm({ ...form, projectOwners })}
+            />
+            <p className="mt-2 text-xs font-bold text-slate-500">Tyler and Alex start as project owners. Add or remove owners before creating the project.</p>
+          </div>
           <button type="button" onClick={submit} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 py-3 text-sm font-black text-white">
             Create Project
             <ArrowRight size={17} />

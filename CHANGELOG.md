@@ -2,6 +2,10 @@
 
 ## 2026-07-02
 
+- [Jul 2, 3:21 PM] Reworked Menu Projects creation so project owners are entered as full name/email records instead of a comma-separated name-only field.
+- [Jul 2, 3:21 PM] Defaulted new Menu Projects to Tyler Leiss and Alex Neuse as project owners while keeping District Chef / SSMT Owner separate for assignment.
+- [Jul 2, 3:21 PM] Added release guards so the old owner field cannot return and the Tyler/Alex owner defaults stay intact.
+- [Jul 2, 3:21 PM] Set visible app version to `2026.07.02.008-menu-project-owner-defaults`.
 - [Jul 2, 11:06 AM] Connected Menu Projects to the Supabase-first storage backbone with Smartsheet fallback rows for project and attachment records.
 - [Jul 2, 11:06 AM] Added downloadable, versioned Menu Project attachments so repeated uploads become v2/v3 instead of overwriting saved artifacts.
 - [Jul 2, 11:06 AM] Added per-file delete controls that remove accidental attachments from the project and the next database sync.

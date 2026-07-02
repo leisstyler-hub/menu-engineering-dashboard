@@ -74,9 +74,17 @@ const backbone = readFileSync(join(root, "src/integrations/storage/backboneRecor
   "Menu project file deleted",
   "Upcoming Due Dates",
   "Upcoming Tastings",
+  "DEFAULT_PROJECT_OWNERS",
+  "Alex Neuse",
+  "alex.neuse@compass-usa.com",
+  "tyler.leiss@compass-usa.com",
 ].forEach((needle) => {
   if (!ui.includes(needle)) throw new Error(`Menu Projects UI is missing ${needle}`);
 });
+
+if (ui.includes("Project owner(s) / chef(s), comma separated")) {
+  throw new Error("Menu Projects create flow still uses the old name-only owner field.");
+}
 
 if (!backbone.includes("menuProjects")) {
   throw new Error("Backbone tool routing is missing the Menu Projects storage scope.");
