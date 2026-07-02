@@ -28,6 +28,7 @@ const landing = readFileSync(join(root, "src/app/LandingPage.jsx"), "utf8");
   "IT / Centric Programming",
   "businessDaysBetween",
   "Compressed Timeline",
+  "projectOwners",
 ].forEach((needle) => {
   if (!model.includes(needle) && !ui.includes(needle)) {
     throw new Error(`Menu Projects workflow is missing ${needle}`);
@@ -45,6 +46,8 @@ const landing = readFileSync(join(root, "src/app/LandingPage.jsx"), "utf8");
   "Menus in the Works",
   "TrashProjectModal",
   "Trash Project",
+  "PeopleListEditor",
+  "Add owner",
 ].forEach((needle) => {
   if (!ui.includes(needle)) throw new Error(`Menu Projects UI is missing ${needle}`);
 });

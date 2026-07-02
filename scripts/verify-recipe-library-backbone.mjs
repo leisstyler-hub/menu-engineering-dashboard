@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const root = process.cwd();
@@ -57,6 +57,24 @@ assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Needs Review"
 assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "item-photo");
 assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "plating-guide");
 assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "recipe-file");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "MENU_HEADER_ASSETS");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "getRecipeLibraryPhoto");
+assertIncludes("src/data/recipeLibraryAssets.js", "AMZ: Andes");
+assertIncludes("src/data/recipeLibraryAssets.js", "andes-group.jpg");
+assertIncludes("src/data/recipeLibraryAssets.js", "peruvian-stewed-chicken.jpg");
+
+[
+  "public/assets/recipe-library/andes/andes-group.jpg",
+  "public/assets/recipe-library/andes/arroz-chaufa.jpg",
+  "public/assets/recipe-library/andes/lomo-saltado.jpg",
+  "public/assets/recipe-library/andes/peruvian-stewed-chicken.jpg",
+  "public/assets/recipe-library/andes/peruvian-shrimp.jpg",
+  "public/assets/recipe-library/andes/pollo-a-la-brasa.jpg",
+].forEach((assetPath) => {
+  if (!existsSync(join(root, assetPath))) {
+    throw new Error(`Recipe Library Andes asset missing: ${assetPath}`);
+  }
+});
 
 assertIncludes("supabase/recipe-library-schema.sql", "recipe_items");
 assertIncludes("supabase/recipe-library-schema.sql", "recipe_item_documents");

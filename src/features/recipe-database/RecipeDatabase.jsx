@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { Activity, AlertTriangle, ArrowLeft, Camera, ChefHat, Database, DollarSign, FileDown, FileText, Flame, Image as ImageIcon, ListChecks, Pencil, Save, Search, ShieldCheck, Sparkles, Utensils, X } from "lucide-react";
 
 import MENUWORKS_ITEMS from "../../data/menuItems.json";
+import { MENU_HEADER_ASSETS, getRecipeLibraryPhoto } from "../../data/recipeLibraryAssets.js";
 import { money, pct, priceLabel, titleCase } from "../../shared/formatting.js";
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
 import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
@@ -179,6 +180,7 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
   const watchRows = useMemo(() => selectedRows.filter((row) => itemTrustStatus(row) === "Watch"), [selectedRows]);
   const dataQuality = useMemo(() => getMenuDataQuality(rows), [rows]);
   const selectedMenuDataQuality = useMemo(() => getMenuDataQuality(selectedRows), [selectedRows]);
+  const selectedMenuHeaderAsset = MENU_HEADER_ASSETS[selectedMenu] || null;
   const selectedLibraryItem = useMemo(() => {
     if (!selectedItemKey) return null;
     const row = rows.find((candidate) => normalizeRecipeLibraryItem(candidate).item_key === selectedItemKey);
@@ -309,6 +311,11 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
 
           <section className="space-y-5">
             <section className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-xl">
+              {selectedMenuHeaderAsset && (
+                <div className="mb-5 overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-100">
+                  <img src={selectedMenuHeaderAsset.src} alt={selectedMenuHeaderAsset.alt} className="h-52 w-full object-cover md:h-64" loading="lazy" />
+                </div>
+              )}
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-600">Menu Detail</p>
@@ -608,10 +615,16 @@ function ItemCard({ row, onOpen }) {
   const diet = dietLabel(row);
   const fc = foodCost(row);
   const libraryItem = normalizeRecipeLibraryItem(row);
+  const photo = getRecipeLibraryPhoto(row);
   const trustFlags = itemTrustFlags(row);
   const trustStatus = itemTrustStatus(row);
   return (
     <button type="button" onClick={onOpen} className="recipe-library-card w-full rounded-3xl border border-slate-200 bg-slate-50/80 p-4 text-left transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-lg active:translate-y-0">
+      {photo && (
+        <div className="mb-4 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          <img src={photo.src} alt={photo.alt} className="h-40 w-full object-cover" loading="lazy" />
+        </div>
+      )}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -666,6 +679,7 @@ function ItemCard({ row, onOpen }) {
 function LibraryCardDrawer({ item, onClose, onSave }) {
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditing, setIsEditing] = useState(false);
+  const photo = getRecipeLibraryPhoto(item);
   const [draft, setDraft] = useState(() => ({
     display_name: item.display_name || "",
     description: item.description || "",
@@ -697,6 +711,11 @@ function LibraryCardDrawer({ item, onClose, onSave }) {
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/40 p-3 backdrop-blur-sm md:p-8" role="dialog" aria-modal="true">
       <section className="recipe-library-drawer mx-auto flex max-h-[calc(100vh-1.5rem)] w-full max-w-3xl flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-2xl md:mt-4 md:max-h-[calc(100vh-4rem)]">
         <div className="border-b border-slate-200 bg-slate-50 p-4 md:p-5">
+          {photo && (
+            <div className="mb-4 overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white">
+              <img src={photo.src} alt={photo.alt} className="h-60 w-full object-cover md:h-72" />
+            </div>
+          )}
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-600">Recipe Library Card</p>
@@ -808,7 +827,7 @@ function LibraryCardDrawer({ item, onClose, onSave }) {
           {activeTab === "files" && (
             <div className="grid gap-3 sm:grid-cols-2">
               {item.file_slots.map((slot) => (
-                <FileSlot key={slot.type} slot={slot} />
+                <FileSlot key={slot.type} slot={slot} photo={slot.type === "item-photo" ? photo : null} />
               ))}
             </div>
           )}
@@ -836,17 +855,22 @@ function LibraryTextArea({ label, value, onChange }) {
   );
 }
 
-function FileSlot({ slot }) {
+function FileSlot({ slot, photo }) {
   const Icon = slot.type === "item-photo" ? ImageIcon : slot.type === "plating-guide" ? Camera : FileText;
   return (
     <article className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+      {photo && (
+        <div className="mb-3 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          <img src={photo.src} alt={photo.alt} className="h-36 w-full object-cover" loading="lazy" />
+        </div>
+      )}
       <div className="flex items-start gap-3">
         <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-700">
           <Icon size={20} />
         </div>
         <div className="min-w-0">
           <p className="text-base font-black text-slate-950">{slot.label}</p>
-          <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">{slot.emptyText}</p>
+          <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">{photo ? "Photo attached from Andes menu photography." : slot.emptyText}</p>
           <p className="mt-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-black text-slate-500">Bucket: {slot.bucket}</p>
         </div>
       </div>

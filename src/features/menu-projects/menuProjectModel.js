@@ -289,6 +289,12 @@ export function makeNotification(project, requiredAction, comments = "") {
   };
 }
 
+function normalizePeopleList(value) {
+  if (Array.isArray(value)) return value.filter((person) => person?.name || person?.email);
+  if (value?.name || value?.email) return [value];
+  return [];
+}
+
 export function createProject(input) {
   const createdDate = input.createdDate || todayIso();
   const timeline = buildStages(input.menuType, input.launchDate, createdDate);
@@ -303,6 +309,7 @@ export function createProject(input) {
     status: timeline.compressedTimeline ? "Compressed Timeline" : "On Track",
     compressedTimeline: timeline.compressedTimeline,
     projectOwner: input.projectOwner || { name: "", email: "" },
+    projectOwners: normalizePeopleList(input.projectOwners || input.projectOwner),
     districtChefOwner: input.districtChefOwner || { name: "", email: "" },
     experienceTeamEmails: input.experienceTeamEmails || [],
     directorOfCulinaryEmail: input.directorOfCulinaryEmail || "chandon.clenard@compass-usa.com",

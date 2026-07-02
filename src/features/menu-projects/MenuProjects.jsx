@@ -483,6 +483,7 @@ function ProjectDetail({ project, onUpdate, onTrash }) {
   const [approval, setApproval] = useState({ reviewerName: "", reviewerEmail: "", decision: "Approve", comments: "" });
   const [blocker, setBlocker] = useState({ title: "", description: "", owner: "" });
   const [newPerson, setNewPerson] = useState({ name: "", email: "" });
+  const projectOwners = project.projectOwners?.length ? project.projectOwners : [project.projectOwner].filter((person) => person?.name || person?.email);
   const stage = getCurrentStage(project);
   const completion = currentStageCanComplete(project);
 
@@ -498,7 +499,7 @@ function ProjectDetail({ project, onUpdate, onTrash }) {
             projectId: current.id,
             fileName: file.name,
             fileCategory: category,
-            uploadedBy: current.projectOwner.name || "Project Owner",
+            uploadedBy: current.projectOwners?.[0]?.name || current.projectOwner.name || "Project Owner",
             uploadedDate: new Date().toISOString(),
             required,
             status: "Uploaded",
@@ -628,7 +629,11 @@ function ProjectDetail({ project, onUpdate, onTrash }) {
       <section className="mt-5 rounded-lg border border-slate-200 bg-white p-4">
         <SectionTitle icon={Users} title="People and Team Assignment" />
         <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
-          <PersonEditor label="Project Owner / Chef" person={project.projectOwner} onChange={(person) => onUpdate((current) => ({ ...current, projectOwner: person }))} />
+          <PeopleListEditor
+            label="Project Owner / Chef"
+            people={projectOwners}
+            onChange={(people) => onUpdate((current) => ({ ...current, projectOwners: people, projectOwner: people[0] || { name: "", email: "" } }))}
+          />
           <PersonEditor label="District Chef / SSMT Owner" person={project.districtChefOwner} onChange={(person) => onUpdate((current) => ({ ...current, districtChefOwner: person }))} />
         </div>
         <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
@@ -806,6 +811,40 @@ function FileUploadRow({ label, required = false, onChange }) {
   );
 }
 
+function PeopleListEditor({ label, people, onChange }) {
+  const list = people.length ? people : [{ name: "", email: "" }];
+  const updatePerson = (index, patch) => {
+    const next = list.map((person, personIndex) => personIndex === index ? { ...person, ...patch } : person);
+    onChange(next.filter((person, personIndex) => personIndex === index || person.name || person.email));
+  };
+  const addPerson = () => onChange([...people, { name: "", email: "" }]);
+  const removePerson = (index) => onChange(list.filter((_, personIndex) => personIndex !== index));
+
+  return (
+    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">{label}</p>
+        <button type="button" onClick={addPerson} className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-800">
+          Add owner
+        </button>
+      </div>
+      <div className="mt-2 space-y-2">
+        {list.map((person, index) => (
+          <div key={`${index}-${person.email || person.name}`} className="rounded-lg border border-slate-200 bg-white p-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_auto]">
+              <input value={person.name || ""} onChange={(event) => updatePerson(index, { name: event.target.value })} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold" placeholder="Name" />
+              <input value={person.email || ""} onChange={(event) => updatePerson(index, { email: event.target.value })} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold" placeholder="Email" />
+              <button type="button" onClick={() => removePerson(index)} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-black text-slate-600 hover:bg-rose-50 hover:text-rose-700">
+                Remove
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function PersonEditor({ label, person, onChange }) {
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
@@ -890,11 +929,17 @@ function CreateProjectModal({ onClose, onCreate }) {
   });
 
   const submit = () => {
+    const projectOwners = form.createdBy
+      .split(",")
+      .map((name) => name.trim())
+      .filter(Boolean)
+      .map((name) => ({ name, email: "" }));
     onCreate({
       ...form,
       launchDate: form.launchDate || "2026-08-14",
       createdDate: todayIso(),
-      projectOwner: { name: form.createdBy || "", email: "" },
+      projectOwners,
+      projectOwner: projectOwners[0] || { name: "", email: "" },
     });
   };
 
@@ -914,7 +959,7 @@ function CreateProjectModal({ onClose, onCreate }) {
             {Object.values(MENU_TYPES).map((type) => <option key={type}>{type}</option>)}
           </select>
           <input value={form.launchDate} onChange={(event) => setForm({ ...form, launchDate: event.target.value })} type="date" className="w-full rounded-lg border border-slate-200 px-3 py-3 text-sm font-bold" />
-          <input value={form.createdBy} onChange={(event) => setForm({ ...form, createdBy: event.target.value })} className="w-full rounded-lg border border-slate-200 px-3 py-3 text-sm font-bold" placeholder="Project owner / chef" />
+          <input value={form.createdBy} onChange={(event) => setForm({ ...form, createdBy: event.target.value })} className="w-full rounded-lg border border-slate-200 px-3 py-3 text-sm font-bold" placeholder="Project owner(s) / chef(s), comma separated" />
           <button type="button" onClick={submit} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 py-3 text-sm font-black text-white">
             Create Project
             <ArrowRight size={17} />

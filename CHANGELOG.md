@@ -2,6 +2,11 @@
 
 ## 2026-07-02
 
+- [Jul 2, 10:18 AM] Added multi-owner support for Menu Projects so project owner / chef assignments can include more than one person.
+- [Jul 2, 10:18 AM] Added Andes Recipe Library photography with one optimized dish photo per item and the requested Andes group shot as the menu header.
+- [Jul 2, 10:18 AM] Added dynamic Recipe Library photo display on item cards, opened library cards, and the item photo file slot.
+- [Jul 2, 10:18 AM] Added release guards for Andes photo assets and Menu Projects multi-owner behavior.
+- [Jul 2, 10:18 AM] Set visible app version to `2026.07.02.004-andes-photos-multi-owner`.
 - [Jul 2, 9:42 AM] Reworked Menu Projects into a wider dashboard v2 with menu type mix, stage workload, action queue, and a clearer menus-in-the-works list.
 - [Jul 2, 9:42 AM] Added a trash-project confirmation flow so test or accidental menu projects can be removed intentionally.
 - [Jul 2, 9:42 AM] Removed auto-filled assignment people from Menu Projects defaults so owner and team fields stay blank until entered.
