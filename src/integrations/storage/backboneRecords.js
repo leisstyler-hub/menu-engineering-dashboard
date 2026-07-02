@@ -44,6 +44,7 @@ export function getBackboneToolFromContext(context = {}) {
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
+  if (text.includes("menuproject") || text.includes("menu project")) return "menuProjects";
   if (text.includes("lean")) return "lean";
   return "rotation";
 }

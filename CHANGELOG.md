@@ -2,6 +2,12 @@
 
 ## 2026-07-02
 
+- [Jul 2, 11:06 AM] Connected Menu Projects to the Supabase-first storage backbone with Smartsheet fallback rows for project and attachment records.
+- [Jul 2, 11:06 AM] Added downloadable, versioned Menu Project attachments so repeated uploads become v2/v3 instead of overwriting saved artifacts.
+- [Jul 2, 11:06 AM] Added per-file delete controls that remove accidental attachments from the project and the next database sync.
+- [Jul 2, 11:06 AM] Expanded the Menu Projects dashboard with upcoming due dates, upcoming tastings, and database sync status.
+- [Jul 2, 11:06 AM] Added release guards for Menu Projects storage sync, attachment versioning, file download/delete controls, and dashboard action panels.
+- [Jul 2, 11:06 AM] Set visible app version to `2026.07.02.007-menu-project-storage-dashboard`.
 - [Jul 2, 10:43 AM] Added stale-bundle protection so missing dynamically imported tool files trigger a clean refresh instead of leaving users on a broken view.
 - [Jul 2, 10:43 AM] Cleaned up the Menu Projects header so Settings and Compass One sit together while the version stamp moves below.
 - [Jul 2, 10:43 AM] Strengthened Menu Projects inlay borders and nested card borders so project detail sections read more clearly.

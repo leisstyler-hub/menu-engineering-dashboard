@@ -18,6 +18,7 @@ const model = readFileSync(join(root, "src/features/menu-projects/menuProjectMod
 const ui = readFileSync(join(root, "src/features/menu-projects/MenuProjects.jsx"), "utf8");
 const app = readFileSync(join(root, "src/app/CulinaryToolsPlatformApp.jsx"), "utf8");
 const landing = readFileSync(join(root, "src/app/LandingPage.jsx"), "utf8");
+const backbone = readFileSync(join(root, "src/integrations/storage/backboneRecords.js"), "utf8");
 
 [
   "Promotional Menu",
@@ -65,9 +66,21 @@ const landing = readFileSync(join(root, "src/app/LandingPage.jsx"), "utf8");
   "Concept brief uploaded; Director of Culinary review ready",
   "Email Draft",
   "VersionStamp compact",
+  "syncMenuProjectsToBackbone",
+  "loadRecordsFromBackbone",
+  "Menu Projects Database",
+  "downloadStoredFile",
+  "nextFileVersion",
+  "Menu project file deleted",
+  "Upcoming Due Dates",
+  "Upcoming Tastings",
 ].forEach((needle) => {
   if (!ui.includes(needle)) throw new Error(`Menu Projects UI is missing ${needle}`);
 });
+
+if (!backbone.includes("menuProjects")) {
+  throw new Error("Backbone tool routing is missing the Menu Projects storage scope.");
+}
 
 if (!app.includes("MenuProjects") || !landing.includes("onOpenMenuProjects")) {
   throw new Error("Menu Projects is not wired into the platform shell and landing page.");

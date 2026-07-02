@@ -26,6 +26,7 @@ import {
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
 import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
+import { loadRecordsFromBackbone, syncRecordsToBackbone } from "../../integrations/storage/backboneClient.js";
 import {
   MENU_PROJECT_STORAGE_KEY,
   MENU_TYPES,
@@ -66,6 +67,8 @@ const TEAM_PRESETS = [
 ];
 
 const DIRECTOR_OF_CULINARY = { name: "Chandon Clenard", email: "chandon.clenard@compass-usa.com" };
+const MENU_PROJECT_BACKBONE_TOOL = "menuProjects";
+const MAX_ATTACHMENT_BYTES = 1_800_000;
 
 const statusTone = {
   "On Track": "border-emerald-200 bg-emerald-50 text-emerald-800",
@@ -209,9 +212,158 @@ function notificationMailto(note) {
   return `mailto:${recipients.join(",")}?subject=${subject}&body=${body}`;
 }
 
+function makeProjectRecordId(projectId) {
+  return `menuProject|${projectId}`;
+}
+
+function makeProjectFileRecordId(projectId, fileId) {
+  return `menuProjectFile|${projectId}|${fileId}`;
+}
+
+function projectOwnersText(project) {
+  const owners = project.projectOwners?.length ? project.projectOwners : [project.projectOwner].filter(Boolean);
+  return owners.map((person) => person?.name || person?.email).filter(Boolean).join(", ");
+}
+
+function upcomingTasting(project) {
+  const deliverables = project.stages.find((stage) => stage.id === "microconcept-deliverables");
+  const tasting = deliverables?.requiredTasks?.find((task) => task.name === "Schedule Tasting");
+  return tasting?.fields?.tastingDate || "";
+}
+
+function cleanProjectForStorage(project) {
+  return {
+    ...project,
+    files: (project.files || []).map(({ dataUrl, ...file }) => file),
+  };
+}
+
+function projectToBackboneRecords(project) {
+  const stage = getCurrentStage(project);
+  const updatedAt = project.updatedAt || project.createdDate || new Date().toISOString();
+  const projectRecord = {
+    "Record ID": makeProjectRecordId(project.id),
+    "Parent Record ID": "",
+    "Record Type": "Menu Project",
+    "Status": project.status || getProjectStatus(project),
+    "Menu Project ID": project.id,
+    "Menu Name": project.menuName,
+    "Menu Type": project.menuType,
+    "Launch Date": project.launchDate,
+    "Current Stage": stage?.name || "",
+    "Current Owner Team": stage?.ownerTeam || "",
+    "Current Due Date": stage?.dueDate || "",
+    "Centric Complete By": project.centricCompleteBy || "",
+    "Project Owner(s)": projectOwnersText(project),
+    "File Count": String(project.files?.length || 0),
+    "Open Blockers": String((project.blockers || []).filter((blocker) => blocker.status === "Open").length),
+    "Upcoming Tasting Date": upcomingTasting(project),
+    "Updated At": updatedAt,
+    "Visible In Dashboard": "true",
+    "__project": cleanProjectForStorage(project),
+  };
+
+  const fileRecords = (project.files || []).map((file) => ({
+    "Record ID": makeProjectFileRecordId(project.id, file.id),
+    "Parent Record ID": makeProjectRecordId(project.id),
+    "Record Type": "Menu Project File",
+    "Status": file.status || "Uploaded",
+    "Menu Project ID": project.id,
+    "Menu Name": project.menuName,
+    "File Name": file.fileName,
+    "Original File Name": file.originalFileName || file.fileName,
+    "File Category": file.fileCategory,
+    "File Version": String(file.version || 1),
+    "Uploaded By": file.uploadedBy || "",
+    "Uploaded At": file.uploadedDate || "",
+    "Required": file.required ? "true" : "false",
+    "File Size": file.size ? String(file.size) : "",
+    "File Type": file.type || "",
+    "Updated At": updatedAt,
+    "Visible In Dashboard": "true",
+    "__fileDataUrl": file.dataUrl || "",
+  }));
+
+  return [projectRecord, ...fileRecords];
+}
+
+function recordsToProjects(records = []) {
+  return records
+    .filter((record) => String(record["Record Type"] || "") === "Menu Project" && record.__project)
+    .map((record) => ({
+      ...record.__project,
+      __storageUpdatedAt: record.__supabaseUpdatedAt || record["Updated At"] || "",
+    }));
+}
+
+function mergeProjectsByNewest(localProjects = [], remoteProjects = []) {
+  const map = new Map();
+  [...localProjects, ...remoteProjects].forEach((project) => {
+    if (!project?.id) return;
+    const existing = map.get(project.id);
+    const existingStamp = existing?.updatedAt || existing?.__storageUpdatedAt || existing?.createdDate || "";
+    const nextStamp = project.updatedAt || project.__storageUpdatedAt || project.createdDate || "";
+    if (!existing || nextStamp >= existingStamp) map.set(project.id, normalizeMenuProject(project));
+  });
+  return Array.from(map.values()).sort((a, b) => String(b.updatedAt || b.createdDate || "").localeCompare(String(a.updatedAt || a.createdDate || "")));
+}
+
+async function syncMenuProjectsToBackbone(projects) {
+  const records = projects.flatMap(projectToBackboneRecords);
+  if (!records.length) return null;
+  return syncRecordsToBackbone(records, {
+    tool: MENU_PROJECT_BACKBONE_TOOL,
+    source: "menu-projects",
+    autoCreateMissingColumns: true,
+    replaceParentRecordIds: projects.map((project) => makeProjectRecordId(project.id)),
+  });
+}
+
+function fileBaseName(name = "") {
+  const lastDot = name.lastIndexOf(".");
+  return lastDot > 0 ? name.slice(0, lastDot) : name;
+}
+
+function fileExtension(name = "") {
+  const lastDot = name.lastIndexOf(".");
+  return lastDot > 0 ? name.slice(lastDot) : "";
+}
+
+function versionedFileName(originalName, version) {
+  if (version <= 1) return originalName;
+  return `${fileBaseName(originalName)} v${version}${fileExtension(originalName)}`;
+}
+
+function nextFileVersion(files = [], category, originalName) {
+  const base = fileBaseName(originalName).toLowerCase();
+  const matching = files.filter((file) => file.fileCategory === category && fileBaseName(file.originalFileName || file.fileName).toLowerCase() === base);
+  return matching.reduce((max, file) => Math.max(max, Number(file.version) || 1), 0) + 1;
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(reader.error || new Error("Unable to read file."));
+    reader.readAsDataURL(file);
+  });
+}
+
+function downloadStoredFile(file) {
+  if (!file?.dataUrl) return;
+  const anchor = document.createElement("a");
+  anchor.href = file.dataUrl;
+  anchor.download = file.fileName || file.originalFileName || "menu-project-file";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+}
+
 export default function MenuProjects({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const [projects, setProjects] = useState(loadProjects);
   const [selectedId, setSelectedId] = useState(() => projects[0]?.id || "");
+  const [backboneReady, setBackboneReady] = useState(false);
+  const [storageStatus, setStorageStatus] = useState({ state: "loading", message: "Loading Menu Projects database..." });
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -219,7 +371,52 @@ export default function MenuProjects({ onBackToPlatform, onOpenSmartsheetHealth 
   const [showCreate, setShowCreate] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
+  useEffect(() => {
+    let active = true;
+    loadRecordsFromBackbone({ tool: MENU_PROJECT_BACKBONE_TOOL, fallbackOnEmpty: false })
+      .then((payload) => {
+        if (!active) return;
+        const remoteProjects = recordsToProjects(payload.records || []);
+        if (remoteProjects.length) {
+          setProjects((current) => mergeProjectsByNewest(current, remoteProjects));
+        }
+        setStorageStatus({
+          state: payload.source || "loaded",
+          message: remoteProjects.length
+            ? `Loaded ${remoteProjects.length} Menu Project record${remoteProjects.length === 1 ? "" : "s"} from ${payload.source || "database"}.`
+            : "Menu Projects database connected. No saved project records found yet.",
+        });
+      })
+      .catch((error) => {
+        if (!active) return;
+        setStorageStatus({ state: "local", message: `Using local project records. Database load needs attention: ${error.message}` });
+      })
+      .finally(() => {
+        if (active) setBackboneReady(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   useEffect(() => saveProjects(projects), [projects]);
+
+  useEffect(() => {
+    if (!backboneReady) return undefined;
+    const timer = window.setTimeout(() => {
+      setStorageStatus((current) => ({ ...current, state: "saving", message: "Saving Menu Projects to Supabase and Smartsheet..." }));
+      syncMenuProjectsToBackbone(projects)
+        .then((payload) => setStorageStatus({
+          state: payload?.source || "synced",
+          message: payload?.message || "Menu Projects saved to the database backbone.",
+        }))
+        .catch((error) => setStorageStatus({
+          state: "error",
+          message: `Menu Projects database sync needs attention: ${error.message}`,
+        }));
+    }, 900);
+    return () => window.clearTimeout(timer);
+  }, [projects, backboneReady]);
 
   const scoredProjects = useMemo(() => projects.map((project) => ({
     ...project,
@@ -242,12 +439,12 @@ export default function MenuProjects({ onBackToPlatform, onOpenSmartsheetHealth 
     setProjects((current) => current.map((project) => {
       if (project.id !== projectId) return project;
       const next = typeof updater === "function" ? updater(project) : updater;
-      return { ...next, status: getProjectStatus(next) };
+      return { ...next, updatedAt: new Date().toISOString(), status: getProjectStatus(next) };
     }));
   };
 
   const addProject = (input) => {
-    const project = createProject(input);
+    const project = { ...createProject(input), updatedAt: new Date().toISOString() };
     setProjects((current) => [project, ...current]);
     setSelectedId(project.id);
     setShowCreate(false);
@@ -323,6 +520,7 @@ export default function MenuProjects({ onBackToPlatform, onOpenSmartsheetHealth 
         </section>
 
         <ProjectDashboardCharts dashboard={dashboard} visibleCount={filteredProjects.length} />
+        <StorageStatusBanner status={storageStatus} />
 
         <main className="grid grid-cols-1 gap-5 2xl:grid-cols-[minmax(0,1.2fr)_minmax(520px,0.8fr)]">
           <ProjectTable
@@ -374,6 +572,23 @@ function SummaryCard({ icon: Icon, label, value }) {
   );
 }
 
+function StorageStatusBanner({ status }) {
+  const tone = status.state === "error"
+    ? "border-amber-200 bg-amber-50 text-amber-900"
+    : status.state === "saving"
+      ? "border-sky-200 bg-sky-50 text-sky-900"
+      : "border-emerald-200 bg-emerald-50 text-emerald-900";
+  return (
+    <section className={`rounded-lg border p-3 text-sm font-bold shadow-sm ${tone}`}>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <span>Menu Projects Database</span>
+        <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-black">{status.state}</span>
+      </div>
+      <p className="mt-1 leading-6">{status.message}</p>
+    </section>
+  );
+}
+
 function Select({ label, value, onChange, options }) {
   return (
     <label>
@@ -396,6 +611,35 @@ function buildProjectDashboard(projects) {
   const byStatus = countBy((project) => project.status);
   const lateOrRisk = projects.filter((project) => ["Late", "At Risk", "Compressed Timeline", "Blocked"].includes(project.status)).length;
   const complete = projects.filter((project) => project.status === "Complete").length;
+  const upcomingDueDates = projects
+    .flatMap((project) => project.stages
+      .filter((stage) => stage.status !== "Complete" && stage.dueDate)
+      .map((stage) => ({
+        projectId: project.id,
+        menuName: project.menuName,
+        menuType: project.menuType,
+        stageName: stage.name,
+        ownerTeam: stage.ownerTeam,
+        dueDate: stage.dueDate,
+        status: project.status,
+      })))
+    .sort((a, b) => String(a.dueDate).localeCompare(String(b.dueDate)))
+    .slice(0, 8);
+  const upcomingTastings = projects
+    .flatMap((project) => {
+      const deliverables = project.stages.find((stage) => stage.id === "microconcept-deliverables");
+      const tasting = deliverables?.requiredTasks?.find((task) => task.name === "Schedule Tasting");
+      if (!tasting?.fields?.tastingDate) return [];
+      return [{
+        projectId: project.id,
+        menuName: project.menuName,
+        tastingDate: tasting.fields.tastingDate,
+        tastingLocation: tasting.fields.tastingLocation || "Location not set",
+        status: tasting.status,
+      }];
+    })
+    .sort((a, b) => String(a.tastingDate).localeCompare(String(b.tastingDate)))
+    .slice(0, 6);
   return {
     total: projects.length,
     byType,
@@ -403,6 +647,8 @@ function buildProjectDashboard(projects) {
     byStatus,
     lateOrRisk,
     complete,
+    upcomingDueDates,
+    upcomingTastings,
   };
 }
 
@@ -500,6 +746,50 @@ function ProjectDashboardCharts({ dashboard, visibleCount }) {
           ))}
         </div>
       </article>
+
+      <article className="rounded-lg border border-sky-200 bg-white p-5 shadow-sm xl:col-span-2">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-600">Deadline Watch</p>
+            <h2 className="mt-1 text-2xl font-black">Upcoming Due Dates</h2>
+          </div>
+          <span className="rounded-lg border border-sky-200 bg-sky-50 p-2 text-sky-700"><CalendarDays size={20} /></span>
+        </div>
+        <div className="mt-4 grid grid-cols-1 gap-2 lg:grid-cols-2">
+          {dashboard.upcomingDueDates.map((item) => (
+            <div key={`${item.projectId}-${item.stageName}-${item.dueDate}`} className="rounded-lg border border-slate-300 bg-slate-50 p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-black text-slate-950">{item.menuName}</p>
+                  <p className="mt-1 text-xs font-bold text-slate-500">{item.stageName} / {item.ownerTeam}</p>
+                </div>
+                <p className="shrink-0 text-sm font-black text-slate-900">{formatDate(item.dueDate)}</p>
+              </div>
+            </div>
+          ))}
+          {!dashboard.upcomingDueDates.length && <p className="rounded-lg border border-dashed border-slate-200 p-4 text-sm font-bold text-slate-500">No upcoming due dates.</p>}
+        </div>
+      </article>
+
+      <article className="rounded-lg border border-sky-200 bg-white p-5 shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-600">Microconcept Pulse</p>
+            <h2 className="mt-1 text-2xl font-black">Upcoming Tastings</h2>
+          </div>
+          <span className="rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-emerald-700"><CheckCircle2 size={20} /></span>
+        </div>
+        <div className="mt-4 space-y-2">
+          {dashboard.upcomingTastings.map((item) => (
+            <div key={`${item.projectId}-${item.tastingDate}`} className="rounded-lg border border-slate-300 bg-slate-50 p-3">
+              <p className="text-sm font-black text-slate-950">{item.menuName}</p>
+              <p className="mt-1 text-xs font-bold text-slate-500">{formatDate(item.tastingDate)} / {item.tastingLocation}</p>
+              <span className="mt-2 inline-flex rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-black text-emerald-800">{item.status}</span>
+            </div>
+          ))}
+          {!dashboard.upcomingTastings.length && <p className="rounded-lg border border-dashed border-slate-200 p-4 text-sm font-bold text-slate-500">No tastings scheduled yet.</p>}
+        </div>
+      </article>
     </section>
   );
 }
@@ -594,22 +884,30 @@ function ProjectDetail({ project, onUpdate, onTrash }) {
     setDelayForm((current) => ({ ...current, launchDate: project.launchDate }));
   }, [project.id, project.currentStage, project.launchDate]);
 
-  const addFile = (event, category, required = false) => {
+  const addFile = async (event, category, required = false) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    const dataUrl = file.size <= MAX_ATTACHMENT_BYTES ? await readFileAsDataUrl(file) : "";
     onUpdate((current) => {
+      const version = nextFileVersion(current.files || [], category, file.name);
+      const storedFileName = versionedFileName(file.name, version);
       const next = {
         ...current,
         files: [
           {
             id: `file-${Date.now()}`,
             projectId: current.id,
-            fileName: file.name,
+            fileName: storedFileName,
+            originalFileName: file.name,
             fileCategory: category,
             uploadedBy: current.projectOwners?.[0]?.name || current.projectOwner.name || "Project Owner",
             uploadedDate: new Date().toISOString(),
             required,
-            status: "Uploaded",
+            status: dataUrl ? "Uploaded" : "Metadata Only",
+            version,
+            size: file.size,
+            type: file.type || "",
+            dataUrl,
             url: "",
           },
           ...current.files,
@@ -618,10 +916,32 @@ function ProjectDetail({ project, onUpdate, onTrash }) {
       const recipients = notificationRecipientsForUpload(next, category);
       return {
         ...next,
-        notifications: [makeNotification(next, uploadNotificationAction(next, category), file.name, recipients), ...current.notifications],
+        notifications: [
+          makeNotification(
+            next,
+            uploadNotificationAction(next, category),
+            dataUrl ? storedFileName : `${storedFileName} stored as metadata only because the file is too large for browser-side storage.`,
+            recipients
+          ),
+          ...current.notifications,
+        ],
       };
     });
     event.target.value = "";
+  };
+
+  const deleteFile = (fileId) => {
+    onUpdate((current) => {
+      const file = current.files.find((item) => item.id === fileId);
+      const next = {
+        ...current,
+        files: current.files.filter((item) => item.id !== fileId),
+      };
+      return {
+        ...next,
+        notifications: [makeNotification(next, "Menu project file deleted", file?.fileName || "File removed"), ...current.notifications],
+      };
+    });
   };
 
   const markStageComplete = () => {
@@ -800,12 +1120,27 @@ function ProjectDetail({ project, onUpdate, onTrash }) {
         </div>
         <div className="mt-4 space-y-2">
           {project.files.length ? project.files.map((file) => (
-            <div key={file.id} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <div key={file.id} className="rounded-lg border border-slate-300 bg-slate-50 p-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-black text-slate-950">{file.fileName}</p>
-                <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-black">{file.required ? "Required" : "Optional"}</span>
+                <div>
+                  <p className="text-sm font-black text-slate-950">{file.fileName}</p>
+                  <p className="mt-1 text-xs font-bold text-slate-500">
+                    {file.fileCategory} / Version {file.version || 1} / Uploaded by {file.uploadedBy} / {formatDateTime(file.uploadedDate)}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-black">{file.required ? "Required" : "Optional"}</span>
+                  <button type="button" disabled={!file.dataUrl} onClick={() => downloadStoredFile(file)} className="inline-flex items-center gap-1 rounded-lg border border-sky-200 bg-white px-3 py-2 text-xs font-black text-sky-800 disabled:cursor-not-allowed disabled:text-slate-400">
+                    <Download size={14} />
+                    Download
+                  </button>
+                  <button type="button" onClick={() => deleteFile(file.id)} className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-black text-rose-700 hover:bg-rose-100">
+                    <Trash2 size={14} />
+                    Delete
+                  </button>
+                </div>
               </div>
-              <p className="mt-1 text-xs font-bold text-slate-500">{file.fileCategory} / Uploaded by {file.uploadedBy} / {formatDateTime(file.uploadedDate)}</p>
+              {!file.dataUrl && <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-900">Download not available for this file because it was larger than the browser-side storage limit.</p>}
             </div>
           )) : <p className="rounded-lg border border-dashed border-slate-200 p-4 text-sm font-bold text-slate-500">No files uploaded yet.</p>}
         </div>
