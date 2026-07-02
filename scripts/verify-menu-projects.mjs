@@ -41,6 +41,10 @@ const landing = readFileSync(join(root, "src/app/LandingPage.jsx"), "utf8");
   "Submit Review Decision",
   "Snags / Blockers",
   "Notification Log",
+  "Menu Type Buckets",
+  "Menus in the Works",
+  "TrashProjectModal",
+  "Trash Project",
 ].forEach((needle) => {
   if (!ui.includes(needle)) throw new Error(`Menu Projects UI is missing ${needle}`);
 });

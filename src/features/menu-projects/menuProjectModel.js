@@ -1,4 +1,4 @@
-export const MENU_PROJECT_STORAGE_KEY = "culinaryToolsMenuProjects.v1";
+export const MENU_PROJECT_STORAGE_KEY = "culinaryToolsMenuProjects.v2";
 
 export const MENU_TYPES = {
   PROMOTIONAL: "Promotional Menu",
@@ -298,15 +298,15 @@ export function createProject(input) {
     menuType: input.menuType || MENU_TYPES.PROMOTIONAL,
     launchDate: input.launchDate || addBusinessDays(createdDate, 30),
     createdDate,
-    createdBy: input.createdBy || "Project Owner",
+    createdBy: input.createdBy || "",
     currentStage: timeline.stages[0].id,
     status: timeline.compressedTimeline ? "Compressed Timeline" : "On Track",
     compressedTimeline: timeline.compressedTimeline,
-    projectOwner: input.projectOwner || { name: input.createdBy || "Project Owner", email: "" },
-    districtChefOwner: input.districtChefOwner || { name: "District Chef", email: "" },
-    experienceTeamEmails: input.experienceTeamEmails || ["experience.team@compass-usa.com"],
+    projectOwner: input.projectOwner || { name: "", email: "" },
+    districtChefOwner: input.districtChefOwner || { name: "", email: "" },
+    experienceTeamEmails: input.experienceTeamEmails || [],
     directorOfCulinaryEmail: input.directorOfCulinaryEmail || "chandon.clenard@compass-usa.com",
-    itTeamEmails: input.itTeamEmails || ["it.support@compass-usa.com"],
+    itTeamEmails: input.itTeamEmails || [],
     peopleToInform: input.peopleToInform || [],
     stages: timeline.stages,
     files: [],
@@ -392,10 +392,7 @@ export function sampleProjects() {
     menuType: MENU_TYPES.PROMOTIONAL,
     launchDate: "2026-08-14",
     createdDate: "2026-07-01",
-    createdBy: "Tyler Leiss",
-    projectOwner: { name: "Tyler Leiss", email: "tyler.leiss@compass-usa.com" },
-    districtChefOwner: { name: "Shane James", email: "shane.james@compass-usa.com" },
-    peopleToInform: [{ name: "Lynn Wu", email: "lynn-wu@compass-usa.com" }],
+    createdBy: "",
   });
 
   const micro = advanceProject(createProject({
@@ -403,9 +400,7 @@ export function sampleProjects() {
     menuType: MENU_TYPES.MICROCONCEPT,
     launchDate: "2026-08-28",
     createdDate: "2026-06-29",
-    createdBy: "Alex Neuse",
-    projectOwner: { name: "Alex Neuse", email: "alex.neuse@compass-usa.com" },
-    districtChefOwner: { name: "Jeremy Slagle", email: "jeremy.slagle@compass-usa.com" },
+    createdBy: "",
   }), "Ready for Director review");
 
   const unit = advanceProject(advanceProject(createProject({
@@ -413,10 +408,7 @@ export function sampleProjects() {
     menuType: MENU_TYPES.NEW_UNIT,
     launchDate: "2026-07-24",
     createdDate: "2026-06-26",
-    createdBy: "DJ Bauer",
-    projectOwner: { name: "DJ Bauer", email: "dj.bauer@compass-usa.com" },
-    districtChefOwner: { name: "Bil Smith", email: "bil.smith@compass-usa.com" },
-    peopleToInform: [{ name: "Summer Hinshaw", email: "summer.hinshaw@compass-usa.com" }],
+    createdBy: "",
   }), "Ready for Experience review"), "Ready for SSMT programming");
 
   return [promo, micro, unit].map((project) => ({

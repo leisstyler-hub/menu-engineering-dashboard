@@ -263,7 +263,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
         onOpenSmartsheetHealth={onOpenSmartsheetHealth}
       />
 
-      <div className="mx-auto hidden w-full max-w-[96rem] flex-col gap-5 px-5 py-5 md:flex md:px-8">
+      <div className="mx-auto hidden w-full max-w-[110rem] flex-col gap-5 px-5 py-5 md:flex md:px-8">
         <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
             <div>
@@ -277,7 +277,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
           </div>
         </header>
 
-        <main className="grid grid-cols-1 gap-5 xl:grid-cols-[380px_minmax(0,1fr)]">
+        <main className="grid grid-cols-1 gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
           <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Operations Console</p>
             <h2 className="mt-2 text-3xl font-bold">Plan, price, and audit menus from one workspace.</h2>
@@ -302,7 +302,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
           </aside>
 
           <section className="space-y-5">
-            <section className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-5">
+            <section className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
               {tools.map((tool) => (
                 <ToolCard key={tool.title} {...tool} />
               ))}
@@ -952,7 +952,7 @@ function ToolCard({ title, eyebrow, description, action, onOpen, icon: Icon, ton
   };
 
   return (
-    <article className="flex min-h-[360px] flex-col justify-between rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <article className="flex min-h-[292px] flex-col justify-between rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <div>
         <div className="flex items-start justify-between gap-3">
           <div className={`flex h-11 w-11 items-center justify-center rounded-lg border ${tones[tone]}`}>

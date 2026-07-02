@@ -2,6 +2,11 @@
 
 ## 2026-07-02
 
+- [Jul 2, 9:42 AM] Reworked Menu Projects into a wider dashboard v2 with menu type mix, stage workload, action queue, and a clearer menus-in-the-works list.
+- [Jul 2, 9:42 AM] Added a trash-project confirmation flow so test or accidental menu projects can be removed intentionally.
+- [Jul 2, 9:42 AM] Removed auto-filled assignment people from Menu Projects defaults so owner and team fields stay blank until entered.
+- [Jul 2, 9:42 AM] Rebalanced the landing page tool grid so the six tools display as an intentional shelf instead of leaving an awkward empty gap.
+- [Jul 2, 9:42 AM] Set visible app version to `2026.07.02.003-menu-project-dashboard-v2`.
 - [Jul 2, 8:52 AM] Added Menu Projects as a new launch pipeline tool for Promotional Menu, Microconcept, and New Unit Opening workflows.
 - [Jul 2, 8:52 AM] Added real downloadable Excel templates for New Menu Concept Brief and New Menu Multi Station Concept Brief with menu-title download names.
 - [Jul 2, 8:52 AM] Added project stages, business-day deadline logic, compressed timeline flags, assignments, file uploads, approvals, blockers, and notification logs.

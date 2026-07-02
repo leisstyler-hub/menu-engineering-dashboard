@@ -3,6 +3,7 @@ import {
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
+  BarChart3,
   Bell,
   CalendarDays,
   CheckCircle2,
@@ -12,9 +13,11 @@ import {
   FolderKanban,
   Mail,
   Paperclip,
+  PieChart,
   Plus,
   Search,
   ShieldAlert,
+  Trash2,
   Upload,
   Users,
   X,
@@ -122,6 +125,7 @@ export default function MenuProjects({ onBackToPlatform, onOpenSmartsheetHealth 
   const [statusFilter, setStatusFilter] = useState("All");
   const [ownerFilter, setOwnerFilter] = useState("All");
   const [showCreate, setShowCreate] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   useEffect(() => saveProjects(projects), [projects]);
 
@@ -164,9 +168,20 @@ export default function MenuProjects({ onBackToPlatform, onOpenSmartsheetHealth 
     blocked: scoredProjects.filter((project) => project.blockers.some((blocker) => blocker.status === "Open")).length,
   };
 
+  const dashboard = useMemo(() => buildProjectDashboard(scoredProjects), [scoredProjects]);
+
+  const trashProject = (projectId) => {
+    setProjects((current) => {
+      const next = current.filter((project) => project.id !== projectId);
+      if (selectedId === projectId) setSelectedId(next[0]?.id || "");
+      return next;
+    });
+    setDeleteTarget(null);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 pb-20 text-slate-950">
-      <div className="mx-auto flex w-full max-w-[96rem] flex-col gap-5 px-4 py-5 md:px-8">
+      <div className="mx-auto flex w-full max-w-[110rem] flex-col gap-5 px-4 py-5 md:px-8">
         <header className="rounded-lg border border-sky-200 bg-white p-4 shadow-sm md:p-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
@@ -213,16 +228,21 @@ export default function MenuProjects({ onBackToPlatform, onOpenSmartsheetHealth 
           </div>
         </section>
 
-        <main className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)]">
-          <section className="space-y-5">
-            <PipelineBoard projects={filteredProjects} selectedId={selectedProject?.id} onSelect={setSelectedId} />
-            <ProjectTable projects={filteredProjects} selectedId={selectedProject?.id} onSelect={setSelectedId} />
-          </section>
+        <ProjectDashboardCharts dashboard={dashboard} visibleCount={filteredProjects.length} />
+
+        <main className="grid grid-cols-1 gap-5 2xl:grid-cols-[minmax(0,1.2fr)_minmax(520px,0.8fr)]">
+          <ProjectTable
+            projects={filteredProjects}
+            selectedId={selectedProject?.id}
+            onSelect={setSelectedId}
+            onTrash={setDeleteTarget}
+          />
 
           {selectedProject && (
             <ProjectDetail
               project={selectedProject}
               onUpdate={(updater) => updateProject(selectedProject.id, updater)}
+              onTrash={() => setDeleteTarget(selectedProject)}
             />
           )}
         </main>
@@ -232,6 +252,14 @@ export default function MenuProjects({ onBackToPlatform, onOpenSmartsheetHealth 
         <CreateProjectModal
           onClose={() => setShowCreate(false)}
           onCreate={addProject}
+        />
+      )}
+
+      {deleteTarget && (
+        <TrashProjectModal
+          project={deleteTarget}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={() => trashProject(deleteTarget.id)}
         />
       )}
     </div>
@@ -263,71 +291,195 @@ function Select({ label, value, onChange, options }) {
   );
 }
 
-function PipelineBoard({ projects, selectedId, onSelect }) {
-  const stages = ["Concept Brief", "Director of Culinary Review", "Experience Review", "Microconcept Deliverables", "SSMT Programming", "IT / Centric Programming"];
+function buildProjectDashboard(projects) {
+  const countBy = (getter) => projects.reduce((acc, project) => {
+    const key = getter(project) || "Unassigned";
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+  const byType = countBy((project) => project.menuType);
+  const byStage = countBy((project) => getCurrentStage(project)?.name);
+  const byStatus = countBy((project) => project.status);
+  const lateOrRisk = projects.filter((project) => ["Late", "At Risk", "Compressed Timeline", "Blocked"].includes(project.status)).length;
+  const complete = projects.filter((project) => project.status === "Complete").length;
+  return {
+    total: projects.length,
+    byType,
+    byStage,
+    byStatus,
+    lateOrRisk,
+    complete,
+  };
+}
+
+function ProjectDashboardCharts({ dashboard, visibleCount }) {
+  const typeRows = Object.entries(dashboard.byType);
+  const stageRows = Object.entries(dashboard.byStage).sort((a, b) => b[1] - a[1]);
+  const statusRows = Object.entries(dashboard.byStatus).sort((a, b) => b[1] - a[1]);
+  const total = Math.max(1, dashboard.total);
+
   return (
-    <section className="rounded-lg border border-sky-200 bg-white p-4 shadow-sm">
+    <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(360px,0.85fr)_minmax(0,1.15fr)_minmax(320px,0.8fr)]">
+      <article className="rounded-lg border border-sky-200 bg-white p-5 shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-600">Portfolio Mix</p>
+            <h2 className="mt-1 text-2xl font-black">Menu Type Buckets</h2>
+          </div>
+          <span className="rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-emerald-700"><PieChart size={20} /></span>
+        </div>
+        <div className="mt-5 grid grid-cols-[150px_minmax(0,1fr)] items-center gap-4">
+          <div
+            className="relative h-[150px] w-[150px] rounded-full"
+            style={{ background: makeDonutGradient(typeRows, total) }}
+            aria-label="Menu type mix chart"
+          >
+            <div className="absolute inset-8 flex flex-col items-center justify-center rounded-full bg-white text-center shadow-inner">
+              <p className="text-3xl font-black">{dashboard.total}</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">menus</p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            {typeRows.map(([type, count], index) => (
+              <div key={type} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className={`h-3 w-3 shrink-0 rounded-full ${DONUT_COLORS[index % DONUT_COLORS.length].dot}`} />
+                    <p className="truncate text-sm font-black text-slate-950">{type}</p>
+                  </div>
+                  <p className="text-sm font-black text-slate-950">{count}</p>
+                </div>
+                <p className="mt-1 text-xs font-bold text-slate-500">{Math.round((count / total) * 100)}% of active records</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </article>
+
+      <article className="rounded-lg border border-sky-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-600">Stage Workload</p>
+            <h2 className="mt-1 text-2xl font-black">Where Projects Sit</h2>
+          </div>
+          <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-black text-slate-600">{visibleCount} visible</span>
+        </div>
+        <div className="mt-5 space-y-3">
+          {stageRows.map(([stage, count]) => (
+            <div key={stage}>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-black text-slate-800">{stage}</p>
+                <p className="text-sm font-black text-slate-950">{count}</p>
+              </div>
+              <div className="mt-2 h-3 overflow-hidden rounded-full bg-slate-100">
+                <div className="h-full rounded-full bg-sky-400" style={{ width: `${Math.max(7, (count / total) * 100)}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </article>
+
+      <article className="rounded-lg border border-sky-200 bg-white p-5 shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-600">Health Read</p>
+            <h2 className="mt-1 text-2xl font-black">Action Queue</h2>
+          </div>
+          <span className="rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-emerald-700"><BarChart3 size={20} /></span>
+        </div>
+        <div className="mt-5 grid grid-cols-2 gap-3">
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+            <p className="text-xs font-black uppercase tracking-[0.12em] text-amber-800">Needs Eyes</p>
+            <p className="mt-2 text-3xl font-black text-amber-950">{dashboard.lateOrRisk}</p>
+          </div>
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+            <p className="text-xs font-black uppercase tracking-[0.12em] text-emerald-800">Complete</p>
+            <p className="mt-2 text-3xl font-black text-emerald-950">{dashboard.complete}</p>
+          </div>
+        </div>
+        <div className="mt-4 space-y-2">
+          {statusRows.map(([status, count]) => (
+            <div key={status} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <StatusBadge status={status} />
+              <p className="text-sm font-black text-slate-950">{count}</p>
+            </div>
+          ))}
+        </div>
+      </article>
+    </section>
+  );
+}
+
+const DONUT_COLORS = [
+  { stop: "#10b981", dot: "bg-emerald-500" },
+  { stop: "#38bdf8", dot: "bg-sky-400" },
+  { stop: "#f59e0b", dot: "bg-amber-500" },
+  { stop: "#8b5cf6", dot: "bg-violet-500" },
+];
+
+function makeDonutGradient(rows, total) {
+  if (!rows.length) return "conic-gradient(#e2e8f0 0deg 360deg)";
+  let cursor = 0;
+  const stops = rows.map(([, count], index) => {
+    const start = cursor;
+    const end = cursor + (count / total) * 360;
+    cursor = end;
+    return `${DONUT_COLORS[index % DONUT_COLORS.length].stop} ${start}deg ${end}deg`;
+  });
+  return `conic-gradient(${stops.join(", ")})`;
+}
+
+function ProjectTable({ projects, selectedId, onSelect, onTrash }) {
+  return (
+    <section className="rounded-lg border border-sky-200 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-600">Pipeline</p>
-          <h2 className="mt-1 text-2xl font-black">Menu launch board</h2>
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Project List</p>
+          <h2 className="mt-1 text-2xl font-black">Menus in the Works</h2>
         </div>
-        <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-black text-slate-600">{projects.length} visible projects</span>
+        <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-black text-slate-600">{projects.length} records</span>
       </div>
-      <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-3 2xl:grid-cols-6">
-        {stages.map((stageName) => {
-          const columnProjects = projects.filter((project) => getCurrentStage(project)?.name === stageName);
+      <div className="mt-4 overflow-hidden rounded-lg border border-slate-200">
+        {projects.map((project) => {
+          const stage = getCurrentStage(project);
           return (
-            <div key={stageName} className="min-h-[210px] rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="text-sm font-black text-slate-950">{stageName}</h3>
-                <span className="rounded-full bg-white px-2 py-1 text-xs font-black text-slate-500">{columnProjects.length}</span>
+            <div key={project.id} className={`grid grid-cols-1 gap-3 border-b border-slate-200 p-4 last:border-b-0 lg:grid-cols-[minmax(220px,1.3fr)_minmax(180px,0.9fr)_minmax(150px,0.7fr)_minmax(160px,0.7fr)_auto] lg:items-center ${selectedId === project.id ? "bg-emerald-50" : "bg-white"}`}>
+              <button type="button" onClick={() => onSelect(project.id)} className="min-w-0 text-left">
+                <p className="truncate text-lg font-black text-slate-950">{project.menuName}</p>
+                <p className="mt-1 text-sm font-bold text-slate-500">{project.menuType}</p>
+              </button>
+              <button type="button" onClick={() => onSelect(project.id)} className="text-left">
+                <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">Current Stage</p>
+                <p className="mt-1 text-sm font-black text-slate-800">{stage?.name}</p>
+              </button>
+              <button type="button" onClick={() => onSelect(project.id)} className="text-left">
+                <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">Due</p>
+                <p className="mt-1 text-sm font-black text-slate-800">{formatDate(stage?.dueDate)}</p>
+              </button>
+              <div>
+                <StatusBadge status={project.status} />
               </div>
-              <div className="mt-3 space-y-2">
-                {columnProjects.map((project) => (
-                  <button key={project.id} type="button" onClick={() => onSelect(project.id)} className={`w-full rounded-lg border p-3 text-left transition hover:-translate-y-0.5 hover:shadow-md ${selectedId === project.id ? "border-emerald-300 bg-emerald-50" : "border-slate-200 bg-white"}`}>
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-black text-slate-950">{project.menuName}</p>
-                      <StatusBadge status={project.status} />
-                    </div>
-                    <p className="mt-2 text-xs font-bold text-slate-500">{project.menuType}</p>
-                    <p className="mt-1 text-xs font-bold text-slate-600">Launch {formatDate(project.launchDate)}</p>
-                  </button>
-                ))}
+              <div className="flex items-center gap-2 lg:justify-end">
+                <button type="button" onClick={() => onSelect(project.id)} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-800 hover:bg-slate-50">Open</button>
+                <button type="button" onClick={() => onTrash(project)} className="rounded-lg border border-rose-200 bg-rose-50 p-2 text-rose-700 hover:bg-rose-100" aria-label={`Trash ${project.menuName}`}>
+                  <Trash2 size={18} />
+                </button>
               </div>
             </div>
           );
         })}
+        {!projects.length && (
+          <div className="p-8 text-center">
+            <p className="text-lg font-black text-slate-950">No projects match this view.</p>
+            <p className="mt-2 text-sm font-semibold text-slate-500">Clear a filter or create a new project to start the workflow.</p>
+          </div>
+        )}
       </div>
     </section>
   );
 }
 
-function ProjectTable({ projects, selectedId, onSelect }) {
-  return (
-    <section className="rounded-lg border border-sky-200 bg-white p-4 shadow-sm">
-      <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Project List</p>
-      <div className="mt-3 overflow-hidden rounded-lg border border-slate-200">
-        {projects.map((project) => {
-          const stage = getCurrentStage(project);
-          return (
-            <button key={project.id} type="button" onClick={() => onSelect(project.id)} className={`grid w-full grid-cols-1 gap-2 border-b border-slate-200 p-4 text-left last:border-b-0 md:grid-cols-[1.2fr_0.9fr_0.8fr_0.7fr] ${selectedId === project.id ? "bg-emerald-50" : "bg-white hover:bg-slate-50"}`}>
-              <div>
-                <p className="text-base font-black text-slate-950">{project.menuName}</p>
-                <p className="text-xs font-bold text-slate-500">{project.menuType}</p>
-              </div>
-              <p className="text-sm font-bold text-slate-700">{stage?.name}</p>
-              <p className="text-sm font-bold text-slate-700">Due {formatDate(stage?.dueDate)}</p>
-              <StatusBadge status={project.status} />
-            </button>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
-function ProjectDetail({ project, onUpdate }) {
+function ProjectDetail({ project, onUpdate, onTrash }) {
   const [approval, setApproval] = useState({ reviewerName: "", reviewerEmail: "", decision: "Approve", comments: "" });
   const [blocker, setBlocker] = useState({ title: "", description: "", owner: "" });
   const [newPerson, setNewPerson] = useState({ name: "", email: "" });
@@ -425,14 +577,20 @@ function ProjectDetail({ project, onUpdate }) {
   };
 
   return (
-    <aside id={`menu-project-${project.id}`} className="rounded-lg border border-sky-200 bg-white p-4 shadow-sm xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-auto">
+    <aside id={`menu-project-${project.id}`} className="rounded-lg border border-sky-200 bg-white p-5 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-600">Project Record</p>
           <h2 className="mt-1 text-3xl font-black">{project.menuName}</h2>
           <p className="mt-1 text-sm font-bold text-slate-500">{project.menuType} / Launch {formatDate(project.launchDate)}</p>
         </div>
-        <StatusBadge status={project.status} />
+        <div className="flex flex-col items-end gap-2">
+          <StatusBadge status={project.status} />
+          <button type="button" onClick={onTrash} className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-black text-rose-700 hover:bg-rose-100">
+            <Trash2 size={16} />
+            Trash Project
+          </button>
+        </div>
       </div>
 
       {project.compressedTimeline && (
@@ -691,6 +849,38 @@ function StatusBadge({ status }) {
   return <span className={`w-fit rounded-full border px-3 py-1 text-xs font-black ${statusTone[status] || statusTone["On Track"]}`}>{status}</span>;
 }
 
+function TrashProjectModal({ project, onClose, onConfirm }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4">
+      <div className="w-full max-w-lg rounded-2xl border border-rose-200 bg-white p-5 shadow-2xl">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-rose-600">Confirm Trash</p>
+            <h2 className="mt-1 text-2xl font-black text-slate-950">Trash this menu project?</h2>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-full border border-slate-200 p-2 text-slate-600 hover:bg-slate-50"><X size={18} /></button>
+        </div>
+        <div className="mt-5 rounded-lg border border-rose-100 bg-rose-50 p-4">
+          <p className="text-lg font-black text-rose-950">{project.menuName}</p>
+          <p className="mt-1 text-sm font-bold text-rose-800">{project.menuType} / Launch {formatDate(project.launchDate)}</p>
+        </div>
+        <p className="mt-4 text-sm font-semibold leading-6 text-slate-600">
+          This removes the project from this dashboard view. Use this for test records, accidental starts, or duplicate projects.
+        </p>
+        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <button type="button" onClick={onClose} className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-800 hover:bg-slate-50">
+            Keep Project
+          </button>
+          <button type="button" onClick={onConfirm} className="inline-flex items-center justify-center gap-2 rounded-lg bg-rose-600 px-4 py-3 text-sm font-black text-white hover:bg-rose-700">
+            <Trash2 size={17} />
+            Trash Project
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CreateProjectModal({ onClose, onCreate }) {
   const [form, setForm] = useState({
     menuName: "",
@@ -704,7 +894,7 @@ function CreateProjectModal({ onClose, onCreate }) {
       ...form,
       launchDate: form.launchDate || "2026-08-14",
       createdDate: todayIso(),
-      projectOwner: { name: form.createdBy || "Project Owner", email: "" },
+      projectOwner: { name: form.createdBy || "", email: "" },
     });
   };
 
