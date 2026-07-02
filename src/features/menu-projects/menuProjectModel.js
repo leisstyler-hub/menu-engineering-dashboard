@@ -74,6 +74,16 @@ export function addBusinessDays(startIso, days) {
   return toIsoDate(date);
 }
 
+export function subtractBusinessDays(endIso, days) {
+  const date = new Date(`${endIso}T12:00:00`);
+  let remaining = Math.max(0, Math.round(days));
+  while (remaining > 0) {
+    date.setDate(date.getDate() - 1);
+    if (!isWeekend(date)) remaining -= 1;
+  }
+  return toIsoDate(date);
+}
+
 export function businessDaysBetween(startIso, endIso) {
   const start = new Date(`${startIso}T12:00:00`);
   const end = new Date(`${endIso}T12:00:00`);
@@ -121,8 +131,8 @@ export function stageBlueprints(menuType) {
         name: "Microconcept Deliverables",
         ownerTeam: "District Chef",
         standardDays: 5,
-        requiredFiles: ["Station Handbook"],
-        requiredTasks: ["Scheduled Tasting", "Station Handbook", "Webtrition Recipe Entry / MRNs"],
+        requiredFiles: ["Manager's Guide"],
+        requiredTasks: ["Schedule Tasting", "Manager's Guide", "Photography Scheduled", "Webtrition Entry"],
       },
       {
         id: "ssmt-programming",
@@ -205,16 +215,43 @@ export function stageBlueprints(menuType) {
   ];
 }
 
+function allocateCompressedStageDays(blueprints, availableDays, standardTotal) {
+  const weighted = blueprints.map((stage, index) => {
+    const raw = (stage.standardDays / standardTotal) * availableDays;
+    return {
+      index,
+      days: Math.max(1, Math.floor(raw)),
+      remainder: raw - Math.floor(raw),
+    };
+  });
+
+  let remaining = availableDays - weighted.reduce((sum, stage) => sum + stage.days, 0);
+  const byRemainder = [...weighted].sort((a, b) => b.remainder - a.remainder || a.index - b.index);
+  let cursor = 0;
+  while (remaining > 0) {
+    weighted[byRemainder[cursor % byRemainder.length].index].days += 1;
+    remaining -= 1;
+    cursor += 1;
+  }
+
+  return weighted.sort((a, b) => a.index - b.index).map((stage) => stage.days);
+}
+
 export function buildStages(menuType, launchDate, createdDate = todayIso()) {
   const blueprints = stageBlueprints(menuType);
   const standardTotal = blueprints.reduce((sum, stage) => sum + stage.standardDays, 0);
-  const availableDays = Math.max(blueprints.length, businessDaysBetween(createdDate, launchDate));
-  const compressed = availableDays < standardTotal;
-  const scale = compressed ? availableDays / standardTotal : 1;
+  const menuLaunchDate = launchDate || addBusinessDays(createdDate, standardTotal + 5);
+  const centricCompleteBy = subtractBusinessDays(menuLaunchDate, 5);
+  const availableToCentric = businessDaysBetween(createdDate, centricCompleteBy);
+  const availableDays = Math.max(blueprints.length, availableToCentric);
+  const compressed = availableToCentric < standardTotal;
+  const stageDays = compressed
+    ? allocateCompressedStageDays(blueprints, availableDays, standardTotal)
+    : blueprints.map((stage, index) => stage.standardDays + (index === 0 ? availableDays - standardTotal : 0));
   let cursor = createdDate;
 
   const stages = blueprints.map((stage, index) => {
-    const calculatedDays = compressed ? Math.max(1, Math.floor(stage.standardDays * scale)) : stage.standardDays;
+    const calculatedDays = stageDays[index];
     const dueDate = addBusinessDays(cursor, calculatedDays);
     const built = {
       ...stage,
@@ -231,10 +268,12 @@ export function buildStages(menuType, launchDate, createdDate = todayIso()) {
         id: compactId("task"),
         name: taskName,
         status: "Not Started",
-        fields: taskName === "Scheduled Tasting"
+        fields: taskName === "Schedule Tasting"
           ? { tastingDate: "", tastingLocation: "", attendees: "", notes: "" }
-          : taskName === "Webtrition Recipe Entry / MRNs"
+          : taskName === "Webtrition Entry"
             ? { recipeName: "", mrn: "", notes: "" }
+            : taskName === "Photography Scheduled"
+              ? { shootDate: "", photographer: "", notes: "" }
             : { notes: "" },
       })),
     };
@@ -242,7 +281,14 @@ export function buildStages(menuType, launchDate, createdDate = todayIso()) {
     return built;
   });
 
-  return { stages, compressedTimeline: compressed, standardTotal, availableDays };
+  return {
+    stages,
+    compressedTimeline: compressed,
+    standardTotal,
+    availableDays,
+    centricCompleteBy,
+    menuLaunchDate,
+  };
 }
 
 export function getCurrentStage(project) {
@@ -297,12 +343,14 @@ function normalizePeopleList(value) {
 
 export function createProject(input) {
   const createdDate = input.createdDate || todayIso();
-  const timeline = buildStages(input.menuType, input.launchDate, createdDate);
+  const launchDate = input.launchDate || addBusinessDays(createdDate, 35);
+  const timeline = buildStages(input.menuType, launchDate, createdDate);
   const project = {
     id: compactId("menu-project"),
     menuName: input.menuName || "Untitled Menu Project",
     menuType: input.menuType || MENU_TYPES.PROMOTIONAL,
-    launchDate: input.launchDate || addBusinessDays(createdDate, 30),
+    launchDate,
+    centricCompleteBy: timeline.centricCompleteBy,
     createdDate,
     createdBy: input.createdBy || "",
     currentStage: timeline.stages[0].id,
@@ -332,14 +380,45 @@ export function requiredFileUploaded(project, requiredFileName) {
   return project.files.some((file) => file.required && file.status === "Uploaded" && file.fileCategory === requiredFileName);
 }
 
-export function currentStageCanComplete(project) {
-  const stage = getCurrentStage(project);
+export function currentStageCanComplete(project, stageId = project.currentStage) {
+  const stage = project.stages.find((item) => item.id === stageId) || getCurrentStage(project);
   if (!stage) return { ok: false, reason: "No active stage found." };
   const missingFiles = stage.requiredFiles.filter((fileName) => !requiredFileUploaded(project, fileName));
   if (missingFiles.length) return { ok: false, reason: `Missing required file: ${missingFiles.join(", ")}` };
   const incompleteTasks = (stage.requiredTasks || []).filter((task) => task.status !== "Complete");
   if (incompleteTasks.length) return { ok: false, reason: `Incomplete task: ${incompleteTasks.map((task) => task.name).join(", ")}` };
   return { ok: true, reason: "" };
+}
+
+export function delayProject(project, nextLaunchDate, reason = "") {
+  const timeline = buildStages(project.menuType, nextLaunchDate, project.createdDate);
+  const stages = timeline.stages.map((freshStage) => {
+    const existing = project.stages.find((stage) => stage.id === freshStage.id);
+    if (!existing) return freshStage;
+    return {
+      ...freshStage,
+      status: existing.status,
+      completedDate: existing.completedDate,
+      assignedTo: existing.assignedTo || [],
+      comments: existing.comments || [],
+      requiredTasks: existing.requiredTasks?.length ? existing.requiredTasks : freshStage.requiredTasks,
+    };
+  });
+  const updated = {
+    ...project,
+    launchDate: nextLaunchDate,
+    centricCompleteBy: timeline.centricCompleteBy,
+    compressedTimeline: timeline.compressedTimeline,
+    stages,
+    status: timeline.compressedTimeline ? "Compressed Timeline" : getProjectStatus({ ...project, stages, status: "On Track" }),
+  };
+  return {
+    ...updated,
+    notifications: [
+      makeNotification(updated, "Project delayed", reason || `Menu launch moved to ${formatDate(nextLaunchDate)}`),
+      ...project.notifications,
+    ],
+  };
 }
 
 export function advanceProject(project, actionLabel = "Stage complete") {

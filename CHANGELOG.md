@@ -2,6 +2,14 @@
 
 ## 2026-07-02
 
+- [Jul 2, 10:31 AM] Clarified Menu Projects date entry as `Menu Launch Date` so users know the date is the guest-facing launch.
+- [Jul 2, 10:31 AM] Reworked Menu Projects stage scheduling so IT / Centric is targeted to complete 5 business days before the menu launch date.
+- [Jul 2, 10:31 AM] Expanded Microconcept deliverables to Schedule Tasting, Manager's Guide, Photography Scheduled, and Webtrition Entry.
+- [Jul 2, 10:31 AM] Added controlled work-ahead access to Microconcept deliverables after Director approval while keeping Experience review as the active gate.
+- [Jul 2, 10:31 AM] Added a Delay Project action that recalculates open dates while preserving the 5-business-day Centric buffer.
+- [Jul 2, 10:31 AM] Cleaned up the multi-owner assignment card so owner name and email fields no longer feel crowded.
+- [Jul 2, 10:31 AM] Added release guards for the launch-date label, Centric completion buffer, work-ahead deliverables, and delay control.
+- [Jul 2, 10:31 AM] Set visible app version to `2026.07.02.005-menu-project-timeline-workahead`.
 - [Jul 2, 10:18 AM] Added multi-owner support for Menu Projects so project owner / chef assignments can include more than one person.
 - [Jul 2, 10:18 AM] Added Andes Recipe Library photography with one optimized dish photo per item and the requested Andes group shot as the menu header.
 - [Jul 2, 10:18 AM] Added dynamic Recipe Library photo display on item cards, opened library cards, and the item photo file slot.

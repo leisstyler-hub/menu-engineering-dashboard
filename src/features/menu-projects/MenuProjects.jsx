@@ -33,6 +33,7 @@ import {
   advanceProject,
   createProject,
   currentStageCanComplete,
+  delayProject,
   formatDate,
   formatDateTime,
   getCurrentStage,
@@ -47,7 +48,7 @@ const FILE_CATEGORIES = [
   "Completed New Menu Concept Brief",
   "Completed New Menu Multi Station Concept Brief",
   "Completed SSMT file",
-  "Station Handbook",
+  "Manager's Guide",
   "Tasting Notes",
   "Webtrition / MRN support",
   "Other Attachments",
@@ -78,13 +79,53 @@ const statusTone = {
   Blocked: "border-red-200 bg-red-50 text-red-800",
 };
 
+const MICROCONCEPT_DELIVERABLE_NAMES = ["Schedule Tasting", "Manager's Guide", "Photography Scheduled", "Webtrition Entry"];
+
+function normalizeDeliverableTask(existingTasks, name) {
+  const aliases = {
+    "Schedule Tasting": ["Schedule Tasting", "Scheduled Tasting"],
+    "Manager's Guide": ["Manager's Guide", "Station Handbook"],
+    "Photography Scheduled": ["Photography Scheduled"],
+    "Webtrition Entry": ["Webtrition Entry", "Webtrition Recipe Entry / MRNs"],
+  };
+  const found = existingTasks.find((task) => (aliases[name] || [name]).includes(task.name));
+  const defaultFields = name === "Schedule Tasting"
+    ? { tastingDate: "", tastingLocation: "", attendees: "", notes: "" }
+    : name === "Photography Scheduled"
+      ? { shootDate: "", photographer: "", notes: "" }
+      : name === "Webtrition Entry"
+        ? { recipeName: "", mrn: "", notes: "" }
+        : { notes: "" };
+  return {
+    id: found?.id || `task-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+    name,
+    status: found?.status || "Not Started",
+    fields: { ...defaultFields, ...(found?.fields || {}) },
+  };
+}
+
+function normalizeMenuProject(project) {
+  if (project.menuType !== MENU_TYPES.MICROCONCEPT) return project;
+  return {
+    ...project,
+    stages: project.stages.map((stage) => {
+      if (stage.id !== "microconcept-deliverables") return stage;
+      return {
+        ...stage,
+        requiredFiles: ["Manager's Guide"],
+        requiredTasks: MICROCONCEPT_DELIVERABLE_NAMES.map((name) => normalizeDeliverableTask(stage.requiredTasks || [], name)),
+      };
+    }),
+  };
+}
+
 function loadProjects() {
   if (typeof window === "undefined") return sampleProjects();
   try {
     const stored = window.localStorage.getItem(MENU_PROJECT_STORAGE_KEY);
     if (!stored) return sampleProjects();
     const parsed = JSON.parse(stored);
-    return Array.isArray(parsed) && parsed.length ? parsed : sampleProjects();
+    return Array.isArray(parsed) && parsed.length ? parsed.map(normalizeMenuProject) : sampleProjects();
   } catch {
     return sampleProjects();
   }
@@ -483,9 +524,22 @@ function ProjectDetail({ project, onUpdate, onTrash }) {
   const [approval, setApproval] = useState({ reviewerName: "", reviewerEmail: "", decision: "Approve", comments: "" });
   const [blocker, setBlocker] = useState({ title: "", description: "", owner: "" });
   const [newPerson, setNewPerson] = useState({ name: "", email: "" });
+  const [activeStageId, setActiveStageId] = useState(project.currentStage);
+  const [delayForm, setDelayForm] = useState({ open: false, launchDate: project.launchDate, reason: "" });
   const projectOwners = project.projectOwners?.length ? project.projectOwners : [project.projectOwner].filter((person) => person?.name || person?.email);
-  const stage = getCurrentStage(project);
-  const completion = currentStageCanComplete(project);
+  const currentStage = getCurrentStage(project);
+  const directorComplete = project.stages.some((item) => item.id === "director-review" && item.status === "Complete");
+  const canOpenStage = (item) => item.id === project.currentStage
+    || (project.menuType === MENU_TYPES.MICROCONCEPT && item.id === "microconcept-deliverables" && directorComplete);
+  const requestedStage = project.stages.find((item) => item.id === activeStageId);
+  const stage = requestedStage && canOpenStage(requestedStage) ? requestedStage : currentStage;
+  const isWorkingAhead = stage.id !== project.currentStage;
+  const completion = currentStageCanComplete(project, stage.id);
+
+  useEffect(() => {
+    setActiveStageId(project.currentStage);
+    setDelayForm((current) => ({ ...current, launchDate: project.launchDate }));
+  }, [project.id, project.currentStage, project.launchDate]);
 
   const addFile = (event, category, required = false) => {
     const file = event.target.files?.[0];
@@ -517,8 +571,15 @@ function ProjectDetail({ project, onUpdate, onTrash }) {
   };
 
   const markStageComplete = () => {
+    if (isWorkingAhead) return;
     if (!completion.ok) return;
     onUpdate((current) => advanceProject(current, nextActionLabel(current)));
+  };
+
+  const submitDelay = () => {
+    if (!delayForm.launchDate) return;
+    onUpdate((current) => delayProject(current, delayForm.launchDate, delayForm.reason));
+    setDelayForm({ open: false, launchDate: delayForm.launchDate, reason: "" });
   };
 
   const submitApproval = () => {
@@ -583,7 +644,7 @@ function ProjectDetail({ project, onUpdate, onTrash }) {
         <div>
           <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-600">Project Record</p>
           <h2 className="mt-1 text-3xl font-black">{project.menuName}</h2>
-          <p className="mt-1 text-sm font-bold text-slate-500">{project.menuType} / Launch {formatDate(project.launchDate)}</p>
+          <p className="mt-1 text-sm font-bold text-slate-500">{project.menuType} / Menu launch {formatDate(project.launchDate)}</p>
         </div>
         <div className="flex flex-col items-end gap-2">
           <StatusBadge status={project.status} />
@@ -591,12 +652,35 @@ function ProjectDetail({ project, onUpdate, onTrash }) {
             <Trash2 size={16} />
             Trash Project
           </button>
+          <button type="button" onClick={() => setDelayForm({ open: !delayForm.open, launchDate: project.launchDate, reason: "" })} className="inline-flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-black text-amber-800 hover:bg-amber-100">
+            <Clock size={16} />
+            Delay Project
+          </button>
         </div>
       </div>
 
+      {delayForm.open && (
+        <section className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_2fr_auto]">
+            <label className="block">
+              <span className="text-xs font-black uppercase tracking-[0.14em] text-amber-800">New Menu Launch Date</span>
+              <input value={delayForm.launchDate} onChange={(event) => setDelayForm({ ...delayForm, launchDate: event.target.value })} type="date" className="mt-1 w-full rounded-lg border border-amber-200 bg-white px-3 py-2.5 text-sm font-bold" />
+            </label>
+            <label className="block">
+              <span className="text-xs font-black uppercase tracking-[0.14em] text-amber-800">Delay Reason</span>
+              <input value={delayForm.reason} onChange={(event) => setDelayForm({ ...delayForm, reason: event.target.value })} className="mt-1 w-full rounded-lg border border-amber-200 bg-white px-3 py-2.5 text-sm font-bold" placeholder="Reason for delay" />
+            </label>
+            <button type="button" onClick={submitDelay} className="self-end rounded-lg bg-slate-950 px-4 py-3 text-sm font-black text-white">
+              Update Dates
+            </button>
+          </div>
+          <p className="mt-2 text-xs font-bold text-amber-900">Recalculates open stage dates and keeps IT / Centric targeted 5 business days before the new launch date.</p>
+        </section>
+      )}
+
       {project.compressedTimeline && (
         <div className="mt-4 rounded-lg border border-orange-200 bg-orange-50 p-3 text-sm font-bold text-orange-900">
-          Compressed Timeline: this launch date is under standard lead time, so due dates are shortened proportionally.
+          Compressed Timeline: this menu launch date is under standard lead time, so due dates are shortened proportionally while IT / Centric stays targeted ahead of launch.
         </div>
       )}
 
@@ -606,6 +690,7 @@ function ProjectDetail({ project, onUpdate, onTrash }) {
             <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Current Stage</p>
             <h3 className="mt-1 text-xl font-black">{stage.name}</h3>
             <p className="mt-1 text-sm font-bold text-slate-500">{stage.ownerTeam} / Due {formatDate(stage.dueDate)}</p>
+            {isWorkingAhead && <p className="mt-1 text-xs font-black uppercase tracking-[0.14em] text-emerald-700">Work-ahead view / current gate remains {currentStage.name}</p>}
           </div>
           <CalendarDays className="text-emerald-600" size={28} />
         </div>
@@ -616,15 +701,15 @@ function ProjectDetail({ project, onUpdate, onTrash }) {
               Download {TEMPLATE_FILES[stage.templateKey].label}
             </button>
           )}
-          <button type="button" disabled={!completion.ok} onClick={markStageComplete} className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300">
+          <button type="button" disabled={isWorkingAhead || !completion.ok} onClick={markStageComplete} className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300">
             <CheckCircle2 size={17} />
-            Mark Stage Complete
+            {isWorkingAhead ? "Current gate must advance first" : "Mark Stage Complete"}
           </button>
         </div>
         {!completion.ok && <p className="mt-3 text-sm font-bold text-amber-800">{completion.reason}</p>}
       </section>
 
-      <StageTimeline project={project} />
+      <StageTimeline project={project} activeStageId={stage.id} onSelectStage={setActiveStageId} canOpenStage={canOpenStage} />
 
       <section className="mt-5 rounded-lg border border-slate-200 bg-white p-4">
         <SectionTitle icon={Users} title="People and Team Assignment" />
@@ -767,20 +852,36 @@ function nextActionLabel(project) {
   return "Stage complete";
 }
 
-function StageTimeline({ project }) {
+function StageTimeline({ project, activeStageId, onSelectStage, canOpenStage }) {
+  const centricTarget = project.centricCompleteBy || project.stages.at(-1)?.dueDate || project.launchDate;
   return (
     <section className="mt-5 rounded-lg border border-slate-200 bg-white p-4">
       <SectionTitle icon={Clock} title="Timeline" />
+      <div className="mt-3 rounded-lg border border-sky-200 bg-sky-50 p-3 text-sm font-bold text-slate-700">
+        <span className="text-slate-950">Menu Launch Date:</span> {formatDate(project.launchDate)}
+        <span className="mx-2 text-slate-400">/</span>
+        <span className="text-slate-950">IT / Centric complete by:</span> {formatDate(centricTarget)}
+        <span className="ml-2 text-slate-500">(5 business days before launch)</span>
+      </div>
       <div className="mt-3 space-y-2">
-        {project.stages.map((stage) => (
-          <div key={stage.id} className={`rounded-lg border p-3 ${stage.id === project.currentStage ? "border-emerald-200 bg-emerald-50" : "border-slate-200 bg-slate-50"}`}>
+        {project.stages.map((stage) => {
+          const open = canOpenStage?.(stage);
+          const active = stage.id === activeStageId;
+          return (
+          <button type="button" key={stage.id} disabled={!open} onClick={() => open && onSelectStage(stage.id)} className={`w-full rounded-lg border p-3 text-left transition ${active ? "border-emerald-300 bg-emerald-50 shadow-sm" : stage.id === project.currentStage ? "border-emerald-200 bg-emerald-50" : "border-slate-200 bg-slate-50"} ${open ? "cursor-pointer hover:border-sky-300 hover:bg-white" : "cursor-default opacity-90"}`}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm font-black">{stage.order}. {stage.name}</p>
-              <span className="rounded-full bg-white px-3 py-1 text-xs font-black">{stage.status}</span>
+              <div className="flex flex-wrap items-center gap-2">
+                {stage.id === "microconcept-deliverables" && open && stage.id !== project.currentStage && (
+                  <span className="rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-black text-emerald-700">Work ahead</span>
+                )}
+                <span className="rounded-full bg-white px-3 py-1 text-xs font-black">{stage.status}</span>
+              </div>
             </div>
             <p className="mt-1 text-xs font-bold text-slate-500">{stage.ownerTeam} / {formatDate(stage.startDate)} to {formatDate(stage.dueDate)}</p>
-          </div>
-        ))}
+          </button>
+        );
+        })}
       </div>
     </section>
   );
@@ -821,23 +922,26 @@ function PeopleListEditor({ label, people, onChange }) {
   const removePerson = (index) => onChange(list.filter((_, personIndex) => personIndex !== index));
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">{label}</p>
-        <button type="button" onClick={addPerson} className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-800">
+    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="max-w-[70%] text-xs font-black uppercase tracking-[0.12em] text-slate-500">{label}</p>
+        <button type="button" onClick={addPerson} className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-800">
           Add owner
         </button>
       </div>
-      <div className="mt-2 space-y-2">
+      <div className="mt-3 space-y-3">
         {list.map((person, index) => (
-          <div key={`${index}-${person.email || person.name}`} className="rounded-lg border border-slate-200 bg-white p-2">
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_auto]">
-              <input value={person.name || ""} onChange={(event) => updatePerson(index, { name: event.target.value })} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold" placeholder="Name" />
-              <input value={person.email || ""} onChange={(event) => updatePerson(index, { email: event.target.value })} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold" placeholder="Email" />
-              <button type="button" onClick={() => removePerson(index)} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-black text-slate-600 hover:bg-rose-50 hover:text-rose-700">
-                Remove
-              </button>
+          <div key={`${index}-${person.email || person.name}`} className="rounded-lg border border-slate-200 bg-white p-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">Owner {index + 1}</p>
+              {list.length > 1 && (
+                <button type="button" onClick={() => removePerson(index)} className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-black text-slate-600 hover:bg-rose-50 hover:text-rose-700">
+                  Remove
+                </button>
+              )}
             </div>
+            <input value={person.name || ""} onChange={(event) => updatePerson(index, { name: event.target.value })} className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold" placeholder="Name" />
+            <input value={person.email || ""} onChange={(event) => updatePerson(index, { email: event.target.value })} className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold" placeholder="Email" />
           </div>
         ))}
       </div>
@@ -866,17 +970,23 @@ function TaskCard({ task, onChange }) {
           <option>Complete</option>
         </select>
       </div>
-      {task.name === "Scheduled Tasting" && (
+      {task.name === "Schedule Tasting" && (
         <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
           <input value={task.fields.tastingDate} onChange={(event) => onChange({ fields: { tastingDate: event.target.value } })} type="date" className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold" />
           <input value={task.fields.tastingLocation} onChange={(event) => onChange({ fields: { tastingLocation: event.target.value } })} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold" placeholder="Tasting location" />
           <input value={task.fields.attendees} onChange={(event) => onChange({ fields: { attendees: event.target.value } })} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold md:col-span-2" placeholder="Attendees" />
         </div>
       )}
-      {task.name === "Webtrition Recipe Entry / MRNs" && (
+      {task.name === "Photography Scheduled" && (
+        <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+          <input value={task.fields.shootDate || ""} onChange={(event) => onChange({ fields: { shootDate: event.target.value } })} type="date" className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold" />
+          <input value={task.fields.photographer || ""} onChange={(event) => onChange({ fields: { photographer: event.target.value } })} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold" placeholder="Photographer / owner" />
+        </div>
+      )}
+      {task.name === "Webtrition Entry" && (
         <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
           <input value={task.fields.recipeName} onChange={(event) => onChange({ fields: { recipeName: event.target.value } })} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold" placeholder="Recipe name" />
-          <input value={task.fields.mrn} onChange={(event) => onChange({ fields: { mrn: event.target.value } })} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold" placeholder="Webtrition number / MRN" />
+          <input value={task.fields.mrn} onChange={(event) => onChange({ fields: { mrn: event.target.value } })} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold" placeholder="Webtrition number" />
         </div>
       )}
       <textarea value={task.fields.notes || ""} onChange={(event) => onChange({ fields: { notes: event.target.value } })} className="mt-2 min-h-[70px] w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold" placeholder="Notes" />
@@ -958,7 +1068,11 @@ function CreateProjectModal({ onClose, onCreate }) {
           <select value={form.menuType} onChange={(event) => setForm({ ...form, menuType: event.target.value })} className="w-full rounded-lg border border-slate-200 px-3 py-3 text-sm font-bold">
             {Object.values(MENU_TYPES).map((type) => <option key={type}>{type}</option>)}
           </select>
-          <input value={form.launchDate} onChange={(event) => setForm({ ...form, launchDate: event.target.value })} type="date" className="w-full rounded-lg border border-slate-200 px-3 py-3 text-sm font-bold" />
+          <label className="block">
+            <span className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Menu Launch Date</span>
+            <input value={form.launchDate} onChange={(event) => setForm({ ...form, launchDate: event.target.value })} type="date" className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm font-bold" />
+            <span className="mt-1 block text-xs font-bold text-slate-500">This is the guest-facing launch date. IT / Centric is planned to finish 5 business days before launch.</span>
+          </label>
           <input value={form.createdBy} onChange={(event) => setForm({ ...form, createdBy: event.target.value })} className="w-full rounded-lg border border-slate-200 px-3 py-3 text-sm font-bold" placeholder="Project owner(s) / chef(s), comma separated" />
           <button type="button" onClick={submit} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 py-3 text-sm font-black text-white">
             Create Project
