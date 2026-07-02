@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-07-02
+
+- [Jul 2, 7:22 AM] Fixed Re:Invent submitted recap rebuilds so newest saved split-global blocks stay authoritative and old child rows cannot revert menus.
+- [Jul 2, 7:22 AM] Added saved-row timestamping across rotation child records so resubmitted cafe/week rotations have a cleaner newest-save signal.
+- [Jul 2, 7:22 AM] Strengthened the rotation integrity guard to catch stale split-global overwrite behavior before release.
+- [Jul 2, 7:22 AM] Set visible app version to `2026.07.02.001-reinvent-save-integrity`.
+
 ## 2026-07-01
 
 - [Jul 1, 9:04 AM] Fixed Re:Invent and Blueshift split-global selectors so a Global Menu selected in one block is removed from the other split-block dropdowns.

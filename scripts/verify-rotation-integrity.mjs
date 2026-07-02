@@ -74,8 +74,20 @@ const grillSpotlights = uniqueByName(rows.filter((row) =>
   isEntree(row)
 ));
 
-if (!/block\.menu = record\.menuConcept \|\| block\.menu \|\| ""/.test(source)) {
-  fail("Re:Invent/global block item reload no longer restores Menu / Concept onto the block.");
+if (!/newestRecordsById\(records\)\.map\(normalizeLoadedRotationRecord\)\.forEach/.test(source)) {
+  fail("Rotation reload must dedupe and process newest saved rows first before rebuilding cafe selections.");
+}
+
+if (!/menu: currentBlock\.menu \|\| record\.menuConcept \|\| ""/.test(source)) {
+  fail("Re:Invent/global block reload must keep the newest authoritative block menu instead of letting older rows overwrite it.");
+}
+
+if (!/block\.menu = block\.menu \|\| record\.menuConcept \|\| ""/.test(source)) {
+  fail("Global block item rows must not overwrite an already restored block Menu / Concept.");
+}
+
+if (!/const withRotationRecordTimestamps = \(record\) => \(\{[\s\S]*SMARTSHEET_COLUMNS\.updatedAt\]: record\[SMARTSHEET_COLUMNS\.updatedAt\] \|\| rotation\.updatedAt \|\| rotation\.submittedAt \|\| ""/.test(source)) {
+  fail("Saved rotation child rows must carry submitted/updated timestamps so reloads can choose the newest save.");
 }
 
 if (!/if \(index === 0\) rotation\.grill\.regionalSpecial = record\.itemName;/.test(source)) {

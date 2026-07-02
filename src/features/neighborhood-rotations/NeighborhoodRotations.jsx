@@ -543,7 +543,15 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
     });
   });
 
-  return [header, ...(globalBlock ? [globalBlock] : []), ...splitGlobalBlockRows, ...extraGlobalBlockRows, ...selectionRows, ...uploadRows];
+  const withRotationRecordTimestamps = (record) => ({
+    ...record,
+    [SMARTSHEET_COLUMNS.submittedBy]: record[SMARTSHEET_COLUMNS.submittedBy] || rotation.submittedBy || "",
+    [SMARTSHEET_COLUMNS.submittedAt]: record[SMARTSHEET_COLUMNS.submittedAt] || rotation.submittedAt || "",
+    [SMARTSHEET_COLUMNS.updatedBy]: record[SMARTSHEET_COLUMNS.updatedBy] || rotation.submittedBy || "",
+    [SMARTSHEET_COLUMNS.updatedAt]: record[SMARTSHEET_COLUMNS.updatedAt] || rotation.updatedAt || rotation.submittedAt || "",
+  });
+
+  return [header, ...(globalBlock ? [globalBlock] : []), ...splitGlobalBlockRows, ...extraGlobalBlockRows, ...selectionRows, ...uploadRows].map(withRotationRecordTimestamps);
 }
 
 function upsertDatabaseRecords(existingRecords = [], nextRecords = []) {
@@ -588,6 +596,37 @@ function normalizeLoadedRotationRecord(record = {}) {
     promotionDays: String(record[SMARTSHEET_COLUMNS.promotionDays] || "").split(",").map((value) => value.trim()).filter(Boolean),
     returnToCycleDays: String(record[SMARTSHEET_COLUMNS.returnToCycleDays] || "").split(",").map((value) => value.trim()).filter(Boolean),
   };
+}
+
+function loadedRecordFreshness(record = {}, index = 0) {
+  const candidates = [
+    record.__supabaseUpdatedAt,
+    record[SMARTSHEET_COLUMNS.updatedAt],
+    record[SMARTSHEET_COLUMNS.submittedAt],
+  ];
+  const parsed = candidates
+    .map((value) => Date.parse(String(value || "")))
+    .find((value) => Number.isFinite(value));
+  return Number.isFinite(parsed) ? parsed : -index;
+}
+
+function newestRecordsById(records = []) {
+  const byId = new Map();
+  records.forEach((record, index) => {
+    const recordId = String(record[SMARTSHEET_COLUMNS.recordId] || record.__supabaseRecordId || "").trim();
+    const freshness = loadedRecordFreshness(record, index);
+    if (!recordId) {
+      byId.set(`__no_id_${index}`, { record, freshness, index });
+      return;
+    }
+    const current = byId.get(recordId);
+    if (!current || freshness > current.freshness) {
+      byId.set(recordId, { record, freshness, index });
+    }
+  });
+  return Array.from(byId.values())
+    .sort((a, b) => b.freshness - a.freshness || a.index - b.index)
+    .map((entry) => entry.record);
 }
 
 function recordsToRotations(records = []) {
@@ -639,7 +678,7 @@ function recordsToRotations(records = []) {
     return incomingText || currentText || "Draft";
   };
 
-  records.map(normalizeLoadedRotationRecord).forEach((record) => {
+  newestRecordsById(records).map(normalizeLoadedRotationRecord).forEach((record) => {
     if (!record.week || !record.district || !record.cafe) return;
     const key = rotationKey(record.week, record.district, record.cafe);
     const rotation = ensureRotation(key);
@@ -658,12 +697,12 @@ function recordsToRotations(records = []) {
         const currentBlock = rotation.globalBlocks[blockId] || blankGlobalBlock();
         rotation.globalBlocks[blockId] = {
           ...currentBlock,
-          menu: record.menuConcept || currentBlock.menu || "",
-          station: record.stationSubConcept || currentBlock.station || ""
+          menu: currentBlock.menu || record.menuConcept || "",
+          station: currentBlock.station || record.stationSubConcept || ""
         };
       } else {
-      rotation.menu = record.menuConcept || rotation.menu || "";
-      rotation.station = record.stationSubConcept || rotation.station || "";
+        rotation.menu = rotation.menu || record.menuConcept || "";
+        rotation.station = rotation.station || record.stationSubConcept || "";
       }
       rotation.status = mergeStatus(rotation.status, record.status);
       rotation.promotionOverride = {
@@ -697,8 +736,8 @@ function recordsToRotations(records = []) {
       const blockId = blockIdFromRecord(record);
       if (blockId) {
         const block = rotation.globalBlocks[blockId] || blankGlobalBlock();
-        block.menu = record.menuConcept || block.menu || "";
-        block.station = record.stationSubConcept || block.station || "";
+        block.menu = block.menu || record.menuConcept || "";
+        block.station = block.station || record.stationSubConcept || "";
         if (record.selectionType === SMARTSHEET_SELECTION_TYPES.entree) putSlot(block.entrees, index, record.itemName);
         else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.side) putSlot(block.sides, index, record.itemName);
         else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.subRecipe) putSlot(block.subRecipes, index, record.itemName);
@@ -706,8 +745,8 @@ function recordsToRotations(records = []) {
         rotation.globalBlocks[blockId] = block;
         return;
       }
-      rotation.menu = record.menuConcept || rotation.menu || "";
-      rotation.station = record.stationSubConcept || rotation.station || "";
+      rotation.menu = rotation.menu || record.menuConcept || "";
+      rotation.station = rotation.station || record.stationSubConcept || "";
       if (record.selectionType === SMARTSHEET_SELECTION_TYPES.entree) putSlot(rotation.entrees, index, record.itemName);
       else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.side) putSlot(rotation.sides, index, record.itemName);
       else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.subRecipe) putSlot(rotation.subRecipes, index, record.itemName);
