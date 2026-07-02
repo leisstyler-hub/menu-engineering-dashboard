@@ -2,6 +2,10 @@
 
 ## 2026-07-02
 
+- [Jul 2, 8:52 AM] Added Menu Projects as a new launch pipeline tool for Promotional Menu, Microconcept, and New Unit Opening workflows.
+- [Jul 2, 8:52 AM] Added real downloadable Excel templates for New Menu Concept Brief and New Menu Multi Station Concept Brief with menu-title download names.
+- [Jul 2, 8:52 AM] Added project stages, business-day deadline logic, compressed timeline flags, assignments, file uploads, approvals, blockers, and notification logs.
+- [Jul 2, 8:52 AM] Added a Menu Projects release guard and set visible app version to `2026.07.02.002-menu-project-pipeline`.
 - [Jul 2, 7:22 AM] Fixed Re:Invent submitted recap rebuilds so newest saved split-global blocks stay authoritative and old child rows cannot revert menus.
 - [Jul 2, 7:22 AM] Added saved-row timestamping across rotation child records so resubmitted cafe/week rotations have a cleaner newest-save signal.
 - [Jul 2, 7:22 AM] Strengthened the rotation integrity guard to catch stale split-global overwrite behavior before release.

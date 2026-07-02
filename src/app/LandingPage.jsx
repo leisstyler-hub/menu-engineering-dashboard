@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ArrowRight, BarChart3, BookOpen, CalendarRange, ClipboardCheck, Database, Home, ListChecks, PieChart, Settings, ShieldCheck, Smartphone, Sparkles, TrendingUp, Utensils, Wrench } from "lucide-react";
+import { ArrowRight, BarChart3, BookOpen, CalendarRange, ClipboardCheck, Database, FolderKanban, Home, ListChecks, PieChart, Settings, ShieldCheck, Smartphone, Sparkles, TrendingUp, Utensils, Wrench } from "lucide-react";
 
 import CHANGELOG_TEXT from "../../CHANGELOG.md?raw";
 import DASHBOARD_SUMMARY from "../data/dashboardSummary.json";
@@ -153,7 +153,7 @@ function downloadTrustLayerGapList(rows) {
   URL.revokeObjectURL(url);
 }
 
-export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodRotations, onOpenRecipeDatabase, onOpenLadleCompliance, onOpenLeanTool, onOpenSmartsheetHealth }) {
+export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodRotations, onOpenRecipeDatabase, onOpenMenuProjects, onOpenLadleCompliance, onOpenLeanTool, onOpenSmartsheetHealth }) {
   const {
     totalItems,
     menuCount,
@@ -209,6 +209,16 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
       meta: "Item library"
     },
     {
+      title: "Menu Projects",
+      eyebrow: "New",
+      description: "Track concept briefs, approvals, files, SSMT programming, Centric handoffs, blockers, and launch deadlines.",
+      action: "Open Projects",
+      onOpen: onOpenMenuProjects,
+      icon: FolderKanban,
+      tone: "violet",
+      meta: "Launch pipeline"
+    },
+    {
       title: "Ladle Compliance",
       eyebrow: "Test concept",
       description: "Track compliance by district, cafe, and week with executive summaries and follow-up cues.",
@@ -247,6 +257,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
         onOpenMenuEngineering={onOpenMenuEngineering}
         onOpenNeighborhoodRotations={onOpenNeighborhoodRotations}
         onOpenRecipeDatabase={onOpenRecipeDatabase}
+        onOpenMenuProjects={onOpenMenuProjects}
         onOpenLadleCompliance={onOpenLadleCompliance}
         onOpenLeanTool={onOpenLeanTool}
         onOpenSmartsheetHealth={onOpenSmartsheetHealth}
@@ -274,7 +285,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
               Built for quick chef decisions: choose the workstream, check status, and move straight into the active tool.
             </p>
             <div className="mt-5 grid grid-cols-2 gap-3">
-              <Metric label="Tools" value="5" />
+              <Metric label="Tools" value="6" />
               <Metric label="Menu items" value={totalItems.toLocaleString()} />
               <Metric label="Menus" value={menuCount} />
               <Metric label="Costed items" value={costedItems.toLocaleString()} />
@@ -426,12 +437,13 @@ function MobileLanding({
   onOpenMenuEngineering,
   onOpenNeighborhoodRotations,
   onOpenRecipeDatabase,
+  onOpenMenuProjects,
   onOpenLadleCompliance,
   onOpenLeanTool,
   onOpenSmartsheetHealth,
 }) {
   const metricTiles = [
-    { label: "Tools", value: "5", icon: Wrench, tone: "bg-[#fff7e7] text-[#8a621b]" },
+    { label: "Tools", value: "6", icon: Wrench, tone: "bg-[#fff7e7] text-[#8a621b]" },
     { label: "Menu Items", value: totalItems.toLocaleString(), icon: Utensils, tone: "bg-[#eaf8f2] text-emerald-700" },
     { label: "Menus", value: menuCount, icon: ListChecks, tone: "bg-[#edf5ff] text-sky-700" },
     { label: "Costed Items", value: costedItems.toLocaleString(), icon: Database, tone: "bg-[#f0eefb] text-indigo-700" },
@@ -441,8 +453,8 @@ function MobileLanding({
     { label: "Home", icon: Home, onOpen: null, active: true },
     { label: "Engineering", icon: BarChart3, onOpen: onOpenMenuEngineering },
     { label: "Library", icon: BookOpen, onOpen: onOpenRecipeDatabase },
+    { label: "Projects", icon: FolderKanban, onOpen: onOpenMenuProjects },
     { label: "Rotations", icon: CalendarRange, onOpen: onOpenNeighborhoodRotations },
-    { label: "Compliance", icon: ShieldCheck, onOpen: onOpenLadleCompliance },
   ];
 
   return (
@@ -605,12 +617,14 @@ function MobileToolCard({ title, eyebrow, description, action, onOpen, icon: Ico
     sky: "bg-sky-50 text-sky-700 border-sky-100",
     amber: "bg-amber-50 text-amber-700 border-amber-100",
     indigo: "bg-indigo-50 text-indigo-700 border-indigo-100",
+    violet: "bg-violet-50 text-violet-700 border-violet-100",
     lime: "bg-lime-50 text-lime-700 border-lime-100",
   };
   const chipLabels = {
     "Menu Engineering": "Live",
     "Neighborhood Rotations": "Live",
     "Recipe Library": "New",
+    "Menu Projects": "New",
     "Ladle Compliance": "Test concept",
     "Lean Tool": "New",
   };
@@ -932,6 +946,8 @@ function ToolCard({ title, eyebrow, description, action, onOpen, icon: Icon, ton
     emerald: "bg-emerald-50 text-emerald-800 border-emerald-200",
     sky: "bg-sky-50 text-sky-800 border-sky-200",
     amber: "bg-amber-50 text-amber-900 border-amber-200",
+    indigo: "bg-indigo-50 text-indigo-800 border-indigo-200",
+    violet: "bg-violet-50 text-violet-800 border-violet-200",
     lime: "bg-lime-50 text-lime-900 border-lime-200"
   };
 
