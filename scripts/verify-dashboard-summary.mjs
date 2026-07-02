@@ -90,13 +90,14 @@ function buildSummary(items) {
 
 const items = JSON.parse(readFileSync(sourcePath, "utf8"));
 const expected = `${JSON.stringify(buildSummary(items), null, 2)}\n`;
+const normalizeNewlines = (value) => value.replace(/\r\n/g, "\n");
 
 if (process.argv.includes("--write")) {
   writeFileSync(summaryPath, expected);
   console.log("Dashboard summary refreshed.");
 } else {
   const actual = readFileSync(summaryPath, "utf8");
-  if (actual !== expected) {
+  if (normalizeNewlines(actual) !== expected) {
     throw new Error("Dashboard summary is stale. Run node scripts/verify-dashboard-summary.mjs --write.");
   }
   console.log("Dashboard summary verification passed.");
