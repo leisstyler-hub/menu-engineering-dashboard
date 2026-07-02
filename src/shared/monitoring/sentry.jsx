@@ -79,13 +79,20 @@ export function PlatformErrorBoundary({ children }) {
 }
 
 function CrashFallback({ error, onReset }) {
+  const message = String(error?.message || "");
+  const isStaleBundle = message.includes("Failed to fetch dynamically imported module")
+    || message.includes("Importing a module script failed")
+    || message.includes("Loading chunk");
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 p-6 text-slate-950">
       <section className="w-full max-w-xl rounded-[2rem] border border-rose-200 bg-white p-6 shadow-2xl">
         <p className="text-xs font-black uppercase tracking-[0.18em] text-rose-600">App protection</p>
-        <h1 className="mt-2 text-3xl font-black">Something broke in this view.</h1>
+        <h1 className="mt-2 text-3xl font-black">{isStaleBundle ? "Refreshing to the newest app version." : "Something broke in this view."}</h1>
         <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
-          The issue was captured for review if Sentry is configured. You can try reloading the view without losing the whole platform.
+          {isStaleBundle
+            ? "This usually happens right after a publish when the browser is holding an old app file. Reloading will pull the current version."
+            : "The issue was captured for review if Sentry is configured. You can try reloading the view without losing the whole platform."}
         </p>
         <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3">
           <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Error</p>
@@ -96,7 +103,7 @@ function CrashFallback({ error, onReset }) {
             Try again
           </button>
           <button type="button" onClick={() => window.location.reload()} className="rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-800 hover:bg-slate-100">
-            Reload app
+            {isStaleBundle ? "Refresh latest app" : "Reload app"}
           </button>
         </div>
       </section>

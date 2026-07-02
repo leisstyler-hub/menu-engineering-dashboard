@@ -3,13 +3,39 @@ import { BarChart3, BookOpen, CalendarRange, FolderKanban, Home, ShieldCheck } f
 import LandingPage from "./LandingPage.jsx";
 import { addToolBreadcrumb, setActiveToolContext } from "../shared/monitoring/sentry.jsx";
 
-const MenuEngineeringDashboard = lazy(() => import("../features/menu-engineering/MenuEngineeringDashboard.jsx"));
-const NeighborhoodRotations = lazy(() => import("../features/neighborhood-rotations/NeighborhoodRotations.jsx"));
-const LadleComplianceDashboard = lazy(() => import("../features/ladle-compliance/LadleComplianceDashboard.jsx"));
-const LeanTool = lazy(() => import("../features/lean-tool/LeanTool.jsx"));
-const RecipeDatabase = lazy(() => import("../features/recipe-database/RecipeDatabase.jsx"));
-const MenuProjects = lazy(() => import("../features/menu-projects/MenuProjects.jsx"));
-const SmartsheetHealth = lazy(() => import("../features/smartsheet-health/SmartsheetHealth.jsx"));
+const CHUNK_RELOAD_KEY = "culinaryToolsChunkReloaded";
+
+function isMissingChunkError(error) {
+  const message = String(error?.message || error || "");
+  return message.includes("Failed to fetch dynamically imported module")
+    || message.includes("Importing a module script failed")
+    || message.includes("Loading chunk")
+    || message.includes("dynamically imported module");
+}
+
+function lazyWithStaleBundleReload(factory) {
+  return lazy(async () => {
+    try {
+      const loaded = await factory();
+      if (typeof window !== "undefined") window.sessionStorage.removeItem(CHUNK_RELOAD_KEY);
+      return loaded;
+    } catch (error) {
+      if (typeof window !== "undefined" && isMissingChunkError(error) && window.sessionStorage.getItem(CHUNK_RELOAD_KEY) !== "true") {
+        window.sessionStorage.setItem(CHUNK_RELOAD_KEY, "true");
+        window.location.reload();
+      }
+      throw error;
+    }
+  });
+}
+
+const MenuEngineeringDashboard = lazyWithStaleBundleReload(() => import("../features/menu-engineering/MenuEngineeringDashboard.jsx"));
+const NeighborhoodRotations = lazyWithStaleBundleReload(() => import("../features/neighborhood-rotations/NeighborhoodRotations.jsx"));
+const LadleComplianceDashboard = lazyWithStaleBundleReload(() => import("../features/ladle-compliance/LadleComplianceDashboard.jsx"));
+const LeanTool = lazyWithStaleBundleReload(() => import("../features/lean-tool/LeanTool.jsx"));
+const RecipeDatabase = lazyWithStaleBundleReload(() => import("../features/recipe-database/RecipeDatabase.jsx"));
+const MenuProjects = lazyWithStaleBundleReload(() => import("../features/menu-projects/MenuProjects.jsx"));
+const SmartsheetHealth = lazyWithStaleBundleReload(() => import("../features/smartsheet-health/SmartsheetHealth.jsx"));
 
 export default function CulinaryToolsPlatformApp() {
   const [activeTool, setActiveTool] = useState("home");

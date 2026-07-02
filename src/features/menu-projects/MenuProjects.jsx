@@ -65,6 +65,8 @@ const TEAM_PRESETS = [
   { name: "Summer Hinshaw", email: "summer.hinshaw@compass-usa.com" },
 ];
 
+const DIRECTOR_OF_CULINARY = { name: "Chandon Clenard", email: "chandon.clenard@compass-usa.com" };
+
 const statusTone = {
   "On Track": "border-emerald-200 bg-emerald-50 text-emerald-800",
   "At Risk": "border-amber-200 bg-amber-50 text-amber-900",
@@ -158,6 +160,55 @@ async function downloadTemplate(templateKey, menuName) {
   URL.revokeObjectURL(url);
 }
 
+function notificationRecipientsForUpload(project, category) {
+  const informList = project.peopleToInform || [];
+  if (project.menuType === MENU_TYPES.MICROCONCEPT && category === "Completed New Menu Concept Brief") {
+    return [DIRECTOR_OF_CULINARY, ...informList];
+  }
+  if (category === "Completed New Menu Concept Brief" || category === "Completed New Menu Multi Station Concept Brief") {
+    return [
+      { name: "Experience Team", email: "" },
+      project.districtChefOwner,
+      ...informList,
+    ].filter((person) => person?.name || person?.email);
+  }
+  if (category === "Completed SSMT file") {
+    return [
+      { name: "IT / Centric Team", email: "" },
+      ...informList,
+    ].filter((person) => person?.name || person?.email);
+  }
+  return informList;
+}
+
+function uploadNotificationAction(project, category) {
+  if (project.menuType === MENU_TYPES.MICROCONCEPT && category === "Completed New Menu Concept Brief") {
+    return "Concept brief uploaded; Director of Culinary review ready";
+  }
+  if (category === "Completed New Menu Concept Brief" || category === "Completed New Menu Multi Station Concept Brief") {
+    return "Concept brief uploaded; Experience review ready";
+  }
+  if (category === "Completed SSMT file") return "SSMT uploaded; IT / Centric programming ready";
+  return `${category} uploaded`;
+}
+
+function notificationMailto(note) {
+  const recipients = (note.recipients || []).map((person) => person.email).filter(Boolean);
+  if (!recipients.length) return "";
+  const subject = encodeURIComponent(`${note.menuName}: ${note.requiredAction}`);
+  const body = encodeURIComponent([
+    `Menu: ${note.menuName}`,
+    `Type: ${note.menuType}`,
+    `Current stage: ${note.currentStage}`,
+    `Required action: ${note.requiredAction}`,
+    `Due date: ${formatDate(note.dueDate)}`,
+    note.comments ? `Comments: ${note.comments}` : "",
+    "",
+    "Open the Culinary Tools Platform and review the Menu Projects record.",
+  ].filter(Boolean).join("\n"));
+  return `mailto:${recipients.join(",")}?subject=${subject}&body=${body}`;
+}
+
 export default function MenuProjects({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const [projects, setProjects] = useState(loadProjects);
   const [selectedId, setSelectedId] = useState(() => projects[0]?.id || "");
@@ -236,10 +287,12 @@ export default function MenuProjects({ onBackToPlatform, onOpenSmartsheetHealth 
                 Central project record for concept briefs, approvals, files, handoffs, and Centric programming.
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <PlatformSettings onOpenSmartsheetHealth={onOpenSmartsheetHealth} />
-              <CompassOneLogo compact />
-              <VersionStamp />
+            <div className="flex flex-col items-start gap-2 md:items-end">
+              <div className="flex items-center gap-3">
+                <PlatformSettings onOpenSmartsheetHealth={onOpenSmartsheetHealth} />
+                <CompassOneLogo compact />
+              </div>
+              <VersionStamp compact />
             </div>
           </div>
         </header>
@@ -562,9 +615,10 @@ function ProjectDetail({ project, onUpdate, onTrash }) {
           ...current.files,
         ],
       };
+      const recipients = notificationRecipientsForUpload(next, category);
       return {
         ...next,
-        notifications: [makeNotification(next, `${category} uploaded`, file.name), ...current.notifications],
+        notifications: [makeNotification(next, uploadNotificationAction(next, category), file.name, recipients), ...current.notifications],
       };
     });
     event.target.value = "";
@@ -684,7 +738,7 @@ function ProjectDetail({ project, onUpdate, onTrash }) {
         </div>
       )}
 
-      <section className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <section className="mt-5 rounded-lg border border-sky-200 bg-slate-50 p-4 shadow-sm">
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Current Stage</p>
@@ -711,7 +765,7 @@ function ProjectDetail({ project, onUpdate, onTrash }) {
 
       <StageTimeline project={project} activeStageId={stage.id} onSelectStage={setActiveStageId} canOpenStage={canOpenStage} />
 
-      <section className="mt-5 rounded-lg border border-slate-200 bg-white p-4">
+      <section className="mt-5 rounded-lg border border-sky-200 bg-white p-4 shadow-sm">
         <SectionTitle icon={Users} title="People and Team Assignment" />
         <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
           <PeopleListEditor
@@ -721,7 +775,7 @@ function ProjectDetail({ project, onUpdate, onTrash }) {
           />
           <PersonEditor label="District Chef / SSMT Owner" person={project.districtChefOwner} onChange={(person) => onUpdate((current) => ({ ...current, districtChefOwner: person }))} />
         </div>
-        <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+        <div className="mt-3 rounded-lg border border-slate-300 bg-slate-50 p-3">
           <p className="text-sm font-black">People to Inform</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {[...project.peopleToInform, ...TEAM_PRESETS.slice(0, 0)].map((person, index) => (
@@ -736,7 +790,7 @@ function ProjectDetail({ project, onUpdate, onTrash }) {
         </div>
       </section>
 
-      <section className="mt-5 rounded-lg border border-slate-200 bg-white p-4">
+      <section className="mt-5 rounded-lg border border-sky-200 bg-white p-4 shadow-sm">
         <SectionTitle icon={Paperclip} title="Central File Area" />
         <div className="mt-3 grid grid-cols-1 gap-3">
           {stage.requiredFiles.map((fileName) => (
@@ -758,7 +812,7 @@ function ProjectDetail({ project, onUpdate, onTrash }) {
       </section>
 
       {(stage.requiredApprovals.length > 0 || stage.ownerTeam === "IT Team") && (
-        <section className="mt-5 rounded-lg border border-slate-200 bg-white p-4">
+        <section className="mt-5 rounded-lg border border-sky-200 bg-white p-4 shadow-sm">
           <SectionTitle icon={CheckCircle2} title={stage.ownerTeam === "IT Team" ? "IT / Centric Status" : "Approval Actions"} />
           {stage.ownerTeam === "IT Team" ? (
             <div className="mt-3 grid grid-cols-2 gap-2">
@@ -787,7 +841,7 @@ function ProjectDetail({ project, onUpdate, onTrash }) {
       )}
 
       {stage.requiredTasks?.length > 0 && (
-        <section className="mt-5 rounded-lg border border-slate-200 bg-white p-4">
+        <section className="mt-5 rounded-lg border border-sky-200 bg-white p-4 shadow-sm">
           <SectionTitle icon={FileSpreadsheet} title="Microconcept Deliverables" />
           <div className="mt-3 space-y-3">
             {stage.requiredTasks.map((task) => (
@@ -797,7 +851,7 @@ function ProjectDetail({ project, onUpdate, onTrash }) {
         </section>
       )}
 
-      <section className="mt-5 rounded-lg border border-slate-200 bg-white p-4">
+      <section className="mt-5 rounded-lg border border-sky-200 bg-white p-4 shadow-sm">
         <SectionTitle icon={ShieldAlert} title="Snags / Blockers" />
         <div className="mt-3 grid grid-cols-1 gap-2">
           <input value={blocker.title} onChange={(event) => setBlocker({ ...blocker, title: event.target.value })} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold" placeholder="Blocker title" />
@@ -821,18 +875,30 @@ function ProjectDetail({ project, onUpdate, onTrash }) {
         </div>
       </section>
 
-      <section className="mt-5 rounded-lg border border-slate-200 bg-white p-4">
+      <section className="mt-5 rounded-lg border border-sky-200 bg-white p-4 shadow-sm">
         <SectionTitle icon={Bell} title="Notification Log" />
         <div className="mt-3 space-y-2">
           {project.notifications.slice(0, 8).map((note) => (
             <div key={note.id} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <div className="flex items-start gap-2">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-2">
                 <Mail className="mt-0.5 text-emerald-600" size={16} />
                 <div>
                   <p className="text-sm font-black">{note.requiredAction}</p>
                   <p className="mt-1 text-xs font-bold text-slate-500">{note.currentStage} / Due {formatDate(note.dueDate)} / {formatDateTime(note.createdDate)}</p>
+                  {note.recipients?.length > 0 && (
+                    <p className="mt-1 text-xs font-bold text-emerald-700">
+                      Notify: {note.recipients.map((person) => person.name || person.email).join(", ")}
+                    </p>
+                  )}
                   {note.comments && <p className="mt-1 text-xs font-semibold text-slate-600">{note.comments}</p>}
                 </div>
+                </div>
+                {notificationMailto(note) && (
+                  <a href={notificationMailto(note)} className="shrink-0 rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-black text-emerald-800 hover:bg-emerald-50">
+                    Email Draft
+                  </a>
+                )}
               </div>
             </div>
           ))}
@@ -855,7 +921,7 @@ function nextActionLabel(project) {
 function StageTimeline({ project, activeStageId, onSelectStage, canOpenStage }) {
   const centricTarget = project.centricCompleteBy || project.stages.at(-1)?.dueDate || project.launchDate;
   return (
-    <section className="mt-5 rounded-lg border border-slate-200 bg-white p-4">
+    <section className="mt-5 rounded-lg border border-sky-200 bg-white p-4 shadow-sm">
       <SectionTitle icon={Clock} title="Timeline" />
       <div className="mt-3 rounded-lg border border-sky-200 bg-sky-50 p-3 text-sm font-bold text-slate-700">
         <span className="text-slate-950">Menu Launch Date:</span> {formatDate(project.launchDate)}
@@ -868,7 +934,7 @@ function StageTimeline({ project, activeStageId, onSelectStage, canOpenStage }) 
           const open = canOpenStage?.(stage);
           const active = stage.id === activeStageId;
           return (
-          <button type="button" key={stage.id} disabled={!open} onClick={() => open && onSelectStage(stage.id)} className={`w-full rounded-lg border p-3 text-left transition ${active ? "border-emerald-300 bg-emerald-50 shadow-sm" : stage.id === project.currentStage ? "border-emerald-200 bg-emerald-50" : "border-slate-200 bg-slate-50"} ${open ? "cursor-pointer hover:border-sky-300 hover:bg-white" : "cursor-default opacity-90"}`}>
+          <button type="button" key={stage.id} disabled={!open} onClick={() => open && onSelectStage(stage.id)} className={`w-full rounded-lg border p-3 text-left transition ${active ? "border-emerald-300 bg-emerald-50 shadow-sm" : stage.id === project.currentStage ? "border-emerald-300 bg-emerald-50" : "border-slate-300 bg-slate-50"} ${open ? "cursor-pointer hover:border-sky-400 hover:bg-white" : "cursor-default opacity-90"}`}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm font-black">{stage.order}. {stage.name}</p>
               <div className="flex flex-wrap items-center gap-2">
@@ -922,7 +988,7 @@ function PeopleListEditor({ label, people, onChange }) {
   const removePerson = (index) => onChange(list.filter((_, personIndex) => personIndex !== index));
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+    <div className="rounded-lg border border-sky-200 bg-slate-50 p-4 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="max-w-[70%] text-xs font-black uppercase tracking-[0.12em] text-slate-500">{label}</p>
         <button type="button" onClick={addPerson} className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-800">
@@ -931,7 +997,7 @@ function PeopleListEditor({ label, people, onChange }) {
       </div>
       <div className="mt-3 space-y-3">
         {list.map((person, index) => (
-          <div key={`${index}-${person.email || person.name}`} className="rounded-lg border border-slate-200 bg-white p-3">
+          <div key={`${index}-${person.email || person.name}`} className="rounded-lg border border-slate-300 bg-white p-3">
             <div className="flex items-center justify-between gap-3">
               <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">Owner {index + 1}</p>
               {list.length > 1 && (
@@ -951,7 +1017,7 @@ function PeopleListEditor({ label, people, onChange }) {
 
 function PersonEditor({ label, person, onChange }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+    <div className="rounded-lg border border-sky-200 bg-slate-50 p-3 shadow-sm">
       <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">{label}</p>
       <input value={person.name} onChange={(event) => onChange({ ...person, name: event.target.value })} className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold" placeholder="Name" />
       <input value={person.email} onChange={(event) => onChange({ ...person, email: event.target.value })} className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold" placeholder="Email" />
@@ -961,7 +1027,7 @@ function PersonEditor({ label, person, onChange }) {
 
 function TaskCard({ task, onChange }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+    <div className="rounded-lg border border-sky-200 bg-slate-50 p-3 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-black">{task.name}</p>
         <select value={task.status} onChange={(event) => onChange({ status: event.target.value })} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-black">

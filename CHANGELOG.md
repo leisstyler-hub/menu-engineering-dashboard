@@ -2,6 +2,12 @@
 
 ## 2026-07-02
 
+- [Jul 2, 10:43 AM] Added stale-bundle protection so missing dynamically imported tool files trigger a clean refresh instead of leaving users on a broken view.
+- [Jul 2, 10:43 AM] Cleaned up the Menu Projects header so Settings and Compass One sit together while the version stamp moves below.
+- [Jul 2, 10:43 AM] Strengthened Menu Projects inlay borders and nested card borders so project detail sections read more clearly.
+- [Jul 2, 10:43 AM] Added Menu Projects notification recipients and email draft links, including Chandon for uploaded Microconcept concept briefs.
+- [Jul 2, 10:43 AM] Added release guards for stale-bundle recovery and Menu Projects email cue behavior.
+- [Jul 2, 10:43 AM] Set visible app version to `2026.07.02.006-stale-bundle-email-cues`.
 - [Jul 2, 10:31 AM] Clarified Menu Projects date entry as `Menu Launch Date` so users know the date is the guest-facing launch.
 - [Jul 2, 10:31 AM] Reworked Menu Projects stage scheduling so IT / Centric is targeted to complete 5 business days before the menu launch date.
 - [Jul 2, 10:31 AM] Expanded Microconcept deliverables to Schedule Tasting, Manager's Guide, Photography Scheduled, and Webtrition Entry.

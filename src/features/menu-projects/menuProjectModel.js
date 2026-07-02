@@ -320,7 +320,7 @@ export function getProjectStatus(project) {
   return "On Track";
 }
 
-export function makeNotification(project, requiredAction, comments = "") {
+export function makeNotification(project, requiredAction, comments = "", recipients = []) {
   const stage = getCurrentStage(project);
   return {
     id: compactId("note"),
@@ -331,6 +331,7 @@ export function makeNotification(project, requiredAction, comments = "") {
     dueDate: stage?.dueDate || project.launchDate,
     projectLink: `#menu-project-${project.id}`,
     comments,
+    recipients,
     createdDate: new Date().toISOString(),
   };
 }

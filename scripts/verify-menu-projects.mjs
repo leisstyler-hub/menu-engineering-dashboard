@@ -61,6 +61,10 @@ const landing = readFileSync(join(root, "src/app/LandingPage.jsx"), "utf8");
   "Delay Project",
   "Work ahead",
   "Current gate must advance first",
+  "notificationRecipientsForUpload",
+  "Concept brief uploaded; Director of Culinary review ready",
+  "Email Draft",
+  "VersionStamp compact",
 ].forEach((needle) => {
   if (!ui.includes(needle)) throw new Error(`Menu Projects UI is missing ${needle}`);
 });
@@ -68,6 +72,14 @@ const landing = readFileSync(join(root, "src/app/LandingPage.jsx"), "utf8");
 if (!app.includes("MenuProjects") || !landing.includes("onOpenMenuProjects")) {
   throw new Error("Menu Projects is not wired into the platform shell and landing page.");
 }
+
+[
+  "lazyWithStaleBundleReload",
+  "Failed to fetch dynamically imported module",
+  "culinaryToolsChunkReloaded",
+].forEach((needle) => {
+  if (!app.includes(needle)) throw new Error(`Platform lazy loading is missing stale bundle protection: ${needle}`);
+});
 
 console.log("Menu Projects verification passed.");
 
