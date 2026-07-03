@@ -7,7 +7,7 @@ create extension if not exists pgcrypto;
 create table if not exists public.app_records (
   record_id text primary key,
   parent_record_id text not null default '',
-  tool text not null check (tool in ('rotation', 'lean')),
+  tool text not null check (tool in ('rotation', 'lean', 'menuProjects')),
   record_type text not null default '',
   status text not null default '',
   district text not null default '',
@@ -24,6 +24,14 @@ create table if not exists public.app_records (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+do $$
+begin
+  alter table public.app_records drop constraint if exists app_records_tool_check;
+  alter table public.app_records
+    add constraint app_records_tool_check check (tool in ('rotation', 'lean', 'menuProjects'));
+end
+$$;
 
 create table if not exists public.app_retention_events (
   id uuid primary key default gen_random_uuid(),

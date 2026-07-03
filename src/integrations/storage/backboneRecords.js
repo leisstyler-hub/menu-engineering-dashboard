@@ -49,10 +49,19 @@ export function getBackboneToolFromContext(context = {}) {
   return "rotation";
 }
 
+export function getBackboneDatabaseToolFromContext(context = {}) {
+  const tool = getBackboneToolFromContext(context);
+  // The first Supabase backbone schema allowed only rotation + lean. Menu
+  // Projects still use app_records, but route through the compatible database
+  // bucket and are scoped back to Menu Projects by Record Type on read.
+  if (tool === "menuProjects") return "rotation";
+  return tool;
+}
+
 export function buildBackboneRows(records = [], context = {}, options = {}) {
   const now = options.now || new Date();
   const retainUntil = retentionDateFor(now).toISOString();
-  const tool = getBackboneToolFromContext(context);
+  const tool = getBackboneDatabaseToolFromContext(context);
 
   return records
     .filter((record) => asText(firstValue(record, COLUMNS.recordId)))

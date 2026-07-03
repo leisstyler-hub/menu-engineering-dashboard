@@ -1,5 +1,6 @@
 import {
   buildBackboneRows,
+  getBackboneDatabaseToolFromContext,
   getBackboneToolFromContext,
   normalizeBackboneRows,
 } from "../../src/integrations/storage/backboneRecords.js";
@@ -107,17 +108,21 @@ async function deleteRecordIds(recordIds = []) {
 
 async function loadRecords(req, res) {
   const tool = getBackboneToolFromContext({ tool: req.query?.tool || "" });
+  const databaseTool = getBackboneDatabaseToolFromContext({ tool });
   const healthOnly = String(req.query?.health || "") === "1";
   const includeHidden = String(req.query?.includeHidden || "") === "1";
   const params = queryString({
     select: "record_id,updated_at,retain_until,record_payload",
-    tool: `eq.${tool}`,
+    tool: `eq.${databaseTool}`,
     visible_in_dashboard: includeHidden ? undefined : "eq.true",
     order: "updated_at.desc",
     limit: healthOnly ? "1" : "5000",
   });
   const rows = await supabaseFetch(`app_records?${params}`);
-  const records = normalizeBackboneRows(rows || []);
+  const records = normalizeBackboneRows(rows || []).filter((record) => {
+    if (tool !== "menuProjects") return true;
+    return String(record["Record Type"] || "") === "Menu Project" || String(record["Record ID"] || "").startsWith("menuProject|");
+  });
 
   return res.status(200).json({
     ok: true,
@@ -125,11 +130,12 @@ async function loadRecords(req, res) {
     healthOnly,
     includeHidden,
     tool,
+    databaseTool,
     records,
     count: records.length,
     message: healthOnly
       ? "Supabase secure storage endpoint is ready."
-      : `Loaded ${records.length} ${tool === "lean" ? "Lean" : "rotation"} record${records.length === 1 ? "" : "s"} from Supabase.`,
+      : `Loaded ${records.length} ${tool === "lean" ? "Lean" : tool === "menuProjects" ? "Menu Project" : "rotation"} record${records.length === 1 ? "" : "s"} from Supabase.`,
   });
 }
 

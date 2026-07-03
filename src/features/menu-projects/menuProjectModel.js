@@ -502,6 +502,7 @@ export function sampleProjects() {
 
   return [promo, micro, unit].map((project) => ({
     ...project,
+    __sampleProject: true,
     status: getProjectStatus(project),
   }));
 }

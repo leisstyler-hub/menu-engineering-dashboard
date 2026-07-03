@@ -234,6 +234,21 @@ function projectOwnersText(project) {
   return owners.map((person) => person?.name || person?.email).filter(Boolean).join(", ");
 }
 
+const SAMPLE_PROJECT_NAMES = new Set([
+  "Summer Street Tacos",
+  "Korean Noodle Lab",
+  "Atlas Cafe Opening",
+]);
+
+function isSampleProject(project) {
+  if (project?.__sampleProject) return true;
+  return SAMPLE_PROJECT_NAMES.has(project?.menuName) && ["2026-07-01", "2026-06-29", "2026-06-26"].includes(project?.createdDate);
+}
+
+function savableMenuProjects(projects = []) {
+  return projects.filter((project) => project?.id && !isSampleProject(project));
+}
+
 function upcomingTasting(project) {
   const deliverables = project.stages.find((stage) => stage.id === "microconcept-deliverables");
   const tasting = deliverables?.requiredTasks?.find((task) => task.name === "Schedule Tasting");
@@ -241,9 +256,10 @@ function upcomingTasting(project) {
 }
 
 function cleanProjectForStorage(project) {
+  const { __sampleProject, __storageUpdatedAt, ...cleanProject } = project;
   return {
-    ...project,
-    files: (project.files || []).map(({ dataUrl, ...file }) => file),
+    ...cleanProject,
+    files: (cleanProject.files || []).map(({ dataUrl, ...file }) => file),
   };
 }
 
@@ -302,7 +318,9 @@ function recordsToProjects(records = []) {
     .map((record) => ({
       ...record.__project,
       __storageUpdatedAt: record.__supabaseUpdatedAt || record["Updated At"] || "",
-    }));
+    }))
+    .filter((project) => !isSampleProject(project))
+    .map(normalizeMenuProject);
 }
 
 function mergeProjectsByNewest(localProjects = [], remoteProjects = []) {
@@ -318,13 +336,21 @@ function mergeProjectsByNewest(localProjects = [], remoteProjects = []) {
 }
 
 async function syncMenuProjectsToBackbone(projects) {
-  const records = projects.flatMap(projectToBackboneRecords);
-  if (!records.length) return null;
+  const projectsToSave = savableMenuProjects(projects);
+  const records = projectsToSave.flatMap(projectToBackboneRecords);
+  if (!records.length) {
+    return {
+      ok: true,
+      source: "local-demo",
+      state: "local-demo",
+      message: "Sample Menu Projects are local only. Create a real project to save it across phone and desktop.",
+    };
+  }
   return syncRecordsToBackbone(records, {
     tool: MENU_PROJECT_BACKBONE_TOOL,
     source: "menu-projects",
     autoCreateMissingColumns: true,
-    replaceParentRecordIds: projects.map((project) => makeProjectRecordId(project.id)),
+    replaceParentRecordIds: projectsToSave.map((project) => makeProjectRecordId(project.id)),
   });
 }
 
@@ -387,7 +413,8 @@ export default function MenuProjects({ onBackToPlatform, onOpenSmartsheetHealth 
         if (!active) return;
         const remoteProjects = recordsToProjects(payload.records || []);
         if (remoteProjects.length) {
-          setProjects((current) => mergeProjectsByNewest(current, remoteProjects));
+          setProjects(remoteProjects.map(normalizeMenuProject));
+          setSelectedId((currentId) => remoteProjects.some((project) => project.id === currentId) ? currentId : remoteProjects[0]?.id || "");
         }
         setStorageStatus({
           state: payload.source || "loaded",
@@ -454,7 +481,7 @@ export default function MenuProjects({ onBackToPlatform, onOpenSmartsheetHealth 
 
   const addProject = (input) => {
     const project = { ...createProject(input), updatedAt: new Date().toISOString() };
-    setProjects((current) => [project, ...current]);
+    setProjects((current) => [project, ...current.filter((existingProject) => !isSampleProject(existingProject))]);
     setSelectedId(project.id);
     setShowCreate(false);
   };
@@ -531,7 +558,7 @@ export default function MenuProjects({ onBackToPlatform, onOpenSmartsheetHealth 
         <ProjectDashboardCharts dashboard={dashboard} visibleCount={filteredProjects.length} />
         <StorageStatusBanner status={storageStatus} />
 
-        <main className="grid grid-cols-1 gap-5 2xl:grid-cols-[minmax(0,1.2fr)_minmax(520px,0.8fr)]">
+        <main className="grid grid-cols-1 gap-5">
           <ProjectTable
             projects={filteredProjects}
             selectedId={selectedProject?.id}
@@ -836,7 +863,7 @@ function ProjectTable({ projects, selectedId, onSelect, onTrash }) {
         {projects.map((project) => {
           const stage = getCurrentStage(project);
           return (
-            <div key={project.id} className={`grid grid-cols-1 gap-3 border-b border-slate-200 p-4 last:border-b-0 lg:grid-cols-[minmax(220px,1.3fr)_minmax(180px,0.9fr)_minmax(150px,0.7fr)_minmax(160px,0.7fr)_auto] lg:items-center ${selectedId === project.id ? "bg-emerald-50" : "bg-white"}`}>
+            <div key={project.id} className={`grid grid-cols-1 gap-3 border-b border-slate-200 p-4 last:border-b-0 lg:grid-cols-[minmax(260px,1.4fr)_minmax(220px,1fr)_minmax(150px,0.6fr)_minmax(160px,0.6fr)_auto] lg:items-center ${selectedId === project.id ? "bg-emerald-50" : "bg-white"}`}>
               <button type="button" onClick={() => onSelect(project.id)} className="min-w-0 text-left">
                 <p className="truncate text-lg font-black text-slate-950">{project.menuName}</p>
                 <p className="mt-1 text-sm font-bold text-slate-500">{project.menuType}</p>

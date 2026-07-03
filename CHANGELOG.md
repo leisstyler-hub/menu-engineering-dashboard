@@ -2,6 +2,12 @@
 
 ## 2026-07-02
 
+- [Jul 2, 7:54 PM] Made Supabase the authoritative Menu Projects source on load so phone and desktop stop merging different browser-local project lists.
+- [Jul 2, 7:54 PM] Kept sample Menu Projects local-only so demo records do not get written into the shared Supabase/Smartsheet project data.
+- [Jul 2, 7:54 PM] Added a Supabase compatibility route for Menu Projects records so the current `app_records` tool constraint no longer forces Smartsheet fallback.
+- [Jul 2, 7:54 PM] Moved Menus in the Works above the Project Record and gave the selected project detail full width for clearer stage and next-step work.
+- [Jul 2, 7:54 PM] Added release guards for Menu Projects cross-device source behavior, sample-record blocking, Supabase tool compatibility, and the wider project layout.
+- [Jul 2, 7:54 PM] Set visible app version to `2026.07.02.009-menu-project-supabase-source`.
 - [Jul 2, 3:21 PM] Reworked Menu Projects creation so project owners are entered as full name/email records instead of a comma-separated name-only field.
 - [Jul 2, 3:21 PM] Defaulted new Menu Projects to Tyler Leiss and Alex Neuse as project owners while keeping District Chef / SSMT Owner separate for assignment.
 - [Jul 2, 3:21 PM] Added release guards so the old owner field cannot return and the Tyler/Alex owner defaults stay intact.
