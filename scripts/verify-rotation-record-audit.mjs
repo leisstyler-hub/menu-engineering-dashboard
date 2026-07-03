@@ -72,7 +72,10 @@ assert(audit.summary.reInventBlockIssues === 1, "Audit should count Re:Invent bl
 assert(audit.statusDriftRows.some((issue) => issue.recordId === staleChild[SMARTSHEET_COLUMNS.recordId]), "Status drift issues should include the stale child row.");
 
 const repairs = buildStatusDriftRepairRecords(audit.statusDriftRows);
-assert(repairs.length === 3, "Repair payload should include every status drift row.");
+assert(repairs.length === 2, "Repair payload should include one safe update per unique status drift Record ID.");
+assert(new Set(repairs.map((row) => row[SMARTSHEET_COLUMNS.recordId])).size === repairs.length, "Repair payload must not contain duplicate Record IDs.");
+assert(audit.summary.repairableRows === 2, "Audit repairable count should be unique by Record ID.");
+assert(audit.summary.repairDuplicateRows === 1, "Audit should count duplicate repair row instances skipped by the safe repair.");
 assert(repairs.every((row) => row[SMARTSHEET_COLUMNS.status] === "Submitted"), "Repair records should inherit submitted status.");
 assert(repairs.every((row) => row[SMARTSHEET_COLUMNS.submittedAt] === "Jun 28, 7:30 PM"), "Repair records should inherit submitted time when blank.");
 

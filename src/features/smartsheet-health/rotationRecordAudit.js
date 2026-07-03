@@ -80,6 +80,16 @@ function issueBase(record = {}) {
   };
 }
 
+function dedupeIssuesByRecordId(issues = []) {
+  const byRecordId = new Map();
+  issues.forEach((issue) => {
+    const recordId = asText(issue.recordId || issue.record?.[SMARTSHEET_COLUMNS.recordId]);
+    if (!recordId) return;
+    byRecordId.set(recordId, issue);
+  });
+  return Array.from(byRecordId.values());
+}
+
 export function buildRotationRecordAudit(records = []) {
   const rotationRecords = records.filter((record) => {
     const recordId = asText(record[SMARTSHEET_COLUMNS.recordId]);
@@ -185,7 +195,8 @@ export function buildRotationRecordAudit(records = []) {
     weekMismatchRows: weekMismatchRows.length,
     reInventBlockIssues: reInventBlockIssues.length,
     reInventMissingBlocks: reInventMissingBlocks.length,
-    repairableRows: statusDriftRows.length,
+    repairableRows: dedupeIssuesByRecordId(statusDriftRows).length,
+    repairDuplicateRows: statusDriftRows.length - dedupeIssuesByRecordId(statusDriftRows).length,
   };
 
   return {
@@ -201,7 +212,7 @@ export function buildRotationRecordAudit(records = []) {
 }
 
 export function buildStatusDriftRepairRecords(statusDriftRows = []) {
-  return statusDriftRows.map((issue) => ({
+  return dedupeIssuesByRecordId(statusDriftRows).map((issue) => ({
     ...issue.record,
     [SMARTSHEET_COLUMNS.status]: issue.targetStatus || "Submitted",
     [SMARTSHEET_COLUMNS.submittedAt]: issue.record[SMARTSHEET_COLUMNS.submittedAt] || issue.targetSubmittedAt || "",

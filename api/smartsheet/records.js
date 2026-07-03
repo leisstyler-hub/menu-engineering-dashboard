@@ -139,6 +139,16 @@ function usedColumnsFromRecords(records = [], recordIdColumn = "Record ID") {
   return Array.from(used);
 }
 
+function dedupeRecordsByRecordId(records = [], recordIdColumn = "Record ID") {
+  const byRecordId = new Map();
+  for (const record of records) {
+    const recordId = String(record?.[recordIdColumn] || "").trim();
+    if (!recordId) continue;
+    byRecordId.set(recordId, record);
+  }
+  return Array.from(byRecordId.values());
+}
+
 export default async function handler(req, res) {
   const requestedTool = req.query?.tool || req.body?.context?.tool || "";
   const useLeanSheet = String(requestedTool).toLowerCase().includes("lean") && process.env.SMARTSHEET_LEAN_SHEET_ID;
@@ -237,9 +247,15 @@ export default async function handler(req, res) {
       return res.status(400).json({ ok: false, message: "No records supplied" });
     }
 
+    const uniqueRecords = dedupeRecordsByRecordId(records, recordIdColumn);
+    if (!uniqueRecords.length) {
+      return res.status(400).json({ ok: false, message: "No records supplied with a Record ID" });
+    }
+    const duplicateRowsSkipped = records.length - uniqueRecords.length;
+
     const requiredForThisPayload = requiredColumns.length
       ? requiredColumns
-      : usedColumnsFromRecords(records, recordIdColumn);
+      : usedColumnsFromRecords(uniqueRecords, recordIdColumn);
 
     const missingColumns = requiredForThisPayload.filter((columnName) => !columnMap.has(columnName));
     if (missingColumns.length) {
@@ -274,7 +290,7 @@ export default async function handler(req, res) {
       if (recordId) existingByRecordId.set(String(recordId), row.id);
     }
 
-    const nextRecordIds = new Set(records.map((record) => String(record[recordIdColumn] || "")).filter(Boolean));
+    const nextRecordIds = new Set(uniqueRecords.map((record) => String(record[recordIdColumn] || "")).filter(Boolean));
     const replaceParentRecordIds = new Set((Array.isArray(context.replaceParentRecordIds) ? context.replaceParentRecordIds : []).map(String).filter(Boolean));
     const parentRecordIdColumnId = columnMap.get("Parent Record ID");
     const rowsToDelete = [];
@@ -301,7 +317,7 @@ export default async function handler(req, res) {
     const toUpdate = [];
     const toAdd = [];
 
-    for (const record of records) {
+    for (const record of uniqueRecords) {
       const recordId = String(record[recordIdColumn] || "");
       if (!recordId) continue;
 
@@ -340,8 +356,9 @@ export default async function handler(req, res) {
       synced: toUpdate.length + toAdd.length,
       updated: toUpdate.length,
       added: toAdd.length,
+      duplicateRowsSkipped,
       deletedStale: rowsToDelete.length,
-      message: `Synced ${toUpdate.length + toAdd.length} row${toUpdate.length + toAdd.length === 1 ? "" : "s"} to Smartsheet${rowsToDelete.length ? ` and removed ${rowsToDelete.length} stale row${rowsToDelete.length === 1 ? "" : "s"}` : ""}.`,
+      message: `Synced ${toUpdate.length + toAdd.length} row${toUpdate.length + toAdd.length === 1 ? "" : "s"} to Smartsheet${duplicateRowsSkipped ? ` after skipping ${duplicateRowsSkipped} duplicate row instance${duplicateRowsSkipped === 1 ? "" : "s"}` : ""}${rowsToDelete.length ? ` and removed ${rowsToDelete.length} stale row${rowsToDelete.length === 1 ? "" : "s"}` : ""}.`,
     });
   } catch (error) {
     return res.status(error.statusCode || 500).json({

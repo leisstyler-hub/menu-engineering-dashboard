@@ -1,4 +1,5 @@
 import { loadRecordsFromSmartsheet, syncRecordsToSmartsheet } from "../smartsheet/client.js";
+import { SMARTSHEET_COLUMNS } from "../smartsheet/contract.js";
 
 async function readJson(response) {
   return response.json().catch(() => ({}));
@@ -34,6 +35,35 @@ async function loadRecordsFromSupabase(context = {}) {
     throw error;
   }
   return payload;
+}
+
+function recordTimestampScore(record = {}) {
+  const candidates = [
+    record[SMARTSHEET_COLUMNS.updatedAt],
+    record[SMARTSHEET_COLUMNS.submittedAt],
+    record[SMARTSHEET_COLUMNS.createdAt],
+  ];
+  for (const value of candidates) {
+    const parsed = Date.parse(String(value || ""));
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return 0;
+}
+
+function mergeRecordsById(primaryRecords = [], mirrorRecords = []) {
+  const byRecordId = new Map();
+  const addRecord = (record, sourcePriority) => {
+    const recordId = String(record?.[SMARTSHEET_COLUMNS.recordId] || "").trim();
+    if (!recordId) return;
+    const next = { record, score: recordTimestampScore(record), sourcePriority };
+    const current = byRecordId.get(recordId);
+    if (!current || next.score > current.score || (next.score === current.score && next.sourcePriority > current.sourcePriority)) {
+      byRecordId.set(recordId, next);
+    }
+  };
+  mirrorRecords.forEach((record) => addRecord(record, 1));
+  primaryRecords.forEach((record) => addRecord(record, 2));
+  return Array.from(byRecordId.values()).map((entry) => entry.record);
 }
 
 export async function syncRecordsToBackbone(records = [], context = {}) {
@@ -93,6 +123,30 @@ export async function syncRecordsToBackbone(records = [], context = {}) {
 export async function loadRecordsFromBackbone(context = {}) {
   try {
     const primary = await loadRecordsFromSupabase(context);
+    if ((primary.records || []).length && context.mergeFallback) {
+      try {
+        const mirror = await loadRecordsFromSmartsheet(context);
+        const mergedRecords = mergeRecordsById(primary.records || [], mirror || []);
+        return {
+          ...primary,
+          state: "synced",
+          source: "supabase+smartsheet-read",
+          records: mergedRecords,
+          count: mergedRecords.length,
+          primaryCount: primary.records?.length || 0,
+          mirrorCount: mirror.length,
+          message: `Loaded ${mergedRecords.length} merged rotation row${mergedRecords.length === 1 ? "" : "s"} from Supabase and Smartsheet mirror.`,
+        };
+      } catch (mirrorError) {
+        return {
+          ...primary,
+          state: "synced",
+          source: "supabase",
+          mirrorError: mirrorError?.payload || { message: mirrorError?.message },
+          message: `${primary.message || "Loaded Supabase records."} Smartsheet mirror read needs attention: ${mirrorError?.message || "mirror load failed"}`,
+        };
+      }
+    }
     if ((primary.records || []).length || context.fallbackOnEmpty === false) {
       return {
         ...primary,

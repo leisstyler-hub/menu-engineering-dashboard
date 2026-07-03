@@ -167,7 +167,11 @@ export default function SmartsheetHealth({ onBackToPlatform }) {
   const repairRotationStatusDrift = async () => {
     const records = buildStatusDriftRepairRecords(rotationAudit.statusDriftRows);
     if (!records.length) return;
-    setAuditRepairStatus({ state: "loading", message: `Repairing ${records.length} status drift row${records.length === 1 ? "" : "s"}...` });
+    const skippedDuplicates = rotationAudit.summary?.repairDuplicateRows || 0;
+    setAuditRepairStatus({
+      state: "loading",
+      message: `Repairing ${records.length} unique status drift row${records.length === 1 ? "" : "s"}${skippedDuplicates ? `; skipping ${skippedDuplicates} duplicate row instance${skippedDuplicates === 1 ? "" : "s"}` : ""}...`,
+    });
     try {
       const result = await syncRecordsToBackbone(records, {
         tool: "Neighborhood Rotations",
@@ -177,7 +181,7 @@ export default function SmartsheetHealth({ onBackToPlatform }) {
       await refreshOne(setMainHealth);
       setAuditRepairStatus({
         state: result.state === "fallback" ? "fallback" : "synced",
-        message: result.message || `Repaired ${records.length} status drift row${records.length === 1 ? "" : "s"}.`,
+        message: result.message || `Repaired ${records.length} unique status drift row${records.length === 1 ? "" : "s"}.`,
       });
       setLastChecked(nowStamp());
     } catch (error) {
@@ -404,6 +408,7 @@ function RotationRecordAuditCard({ audit, repairStatus, onRepairStatusDrift }) {
   const summary = audit.summary || {};
   const issueTotal = summary.duplicateRecordIds + summary.statusDriftRows + summary.orphanChildRows + summary.weekMismatchRows + summary.reInventBlockIssues + summary.reInventMissingBlocks;
   const repairable = summary.repairableRows || 0;
+  const repairDuplicateRows = summary.repairDuplicateRows || 0;
   const healthy = issueTotal === 0;
   const repairBusy = repairStatus.state === "loading";
   const topIssues = [
@@ -435,6 +440,11 @@ function RotationRecordAuditCard({ audit, repairStatus, onRepairStatusDrift }) {
           {repairBusy ? "Repairing..." : repairable ? `Repair ${repairable} status row${repairable === 1 ? "" : "s"}` : "No safe repairs"}
         </button>
       </div>
+      {repairDuplicateRows > 0 && (
+        <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-bold text-amber-900">
+          {repairDuplicateRows} duplicate status row instance{repairDuplicateRows === 1 ? "" : "s"} will be skipped so the repair can save cleanly.
+        </p>
+      )}
 
       <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
         <AuditMetric label="Headers" value={summary.rotationHeaders || 0} tone="neutral" />
@@ -458,8 +468,8 @@ function RotationRecordAuditCard({ audit, repairStatus, onRepairStatusDrift }) {
             <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-black text-slate-600">{issueTotal} total issue{issueTotal === 1 ? "" : "s"}</span>
           </div>
           <div className="mt-3 space-y-2">
-            {topIssues.length ? topIssues.map((issue) => (
-              <AuditIssueRow key={`${issue.kind}-${issue.recordId}-${issue.blockId}`} issue={issue} />
+            {topIssues.length ? topIssues.map((issue, index) => (
+              <AuditIssueRow key={`${issue.kind}-${issue.recordId}-${issue.blockId}-${index}`} issue={issue} />
             )) : (
               <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-900">
                 No rotation record issues detected in the loaded Smartsheet scope.

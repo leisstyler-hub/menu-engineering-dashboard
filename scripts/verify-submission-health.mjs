@@ -6,6 +6,7 @@ const rotationSource = fs.readFileSync(path.join(root, "src", "features", "neigh
 const leanSource = fs.readFileSync(path.join(root, "src", "features", "lean-tool", "LeanTool.jsx"), "utf8");
 const backboneClient = fs.readFileSync(path.join(root, "src", "integrations", "storage", "backboneClient.js"), "utf8");
 const storageEndpoint = fs.readFileSync(path.join(root, "api", "storage", "records.js"), "utf8");
+const smartsheetEndpoint = fs.readFileSync(path.join(root, "api", "smartsheet", "records.js"), "utf8");
 
 function fail(message) {
   console.error(`Submission health check failed: ${message}`);
@@ -30,8 +31,24 @@ if (!/findStaleRowIds/.test(storageEndpoint) || !/deleteRecordIds\(staleRowIds\)
   fail("Supabase storage endpoint must remove stale child rows during resubmission");
 }
 
+if (!/dedupeRowsByRecordId/.test(storageEndpoint) || !/duplicateRowsSkipped/.test(storageEndpoint)) {
+  fail("Supabase storage endpoint must dedupe duplicate Record IDs before upsert");
+}
+
+if (!/dedupeRecordsByRecordId/.test(smartsheetEndpoint) || !/duplicateRowsSkipped/.test(smartsheetEndpoint)) {
+  fail("Smartsheet storage endpoint must dedupe duplicate Record IDs before row updates");
+}
+
 if (!/syncRecordsToSupabase/.test(backboneClient) || !/syncRecordsToSmartsheet/.test(backboneClient) || !/smartsheet-fallback/.test(backboneClient)) {
   fail("shared storage client must keep Supabase primary and Smartsheet fallback behavior");
+}
+
+if (!/mergeRecordsById/.test(backboneClient) || !/supabase\+smartsheet-read/.test(backboneClient)) {
+  fail("rotation reads must support merged Supabase and Smartsheet mirror recall");
+}
+
+if (!/loadRecordsFromBackbone\(\{ tool: "rotation", mergeFallback: true \}\)/.test(rotationSource)) {
+  fail("Neighborhood Rotations must load merged Supabase and Smartsheet records");
 }
 
 if (!/if \(requirePrimary && result\.source === "smartsheet-fallback"\)/.test(rotationSource)) {

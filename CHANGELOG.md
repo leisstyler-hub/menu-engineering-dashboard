@@ -2,6 +2,11 @@
 
 ## 2026-07-02
 
+- [Jul 2, 8:34 PM] Fixed Data Health status drift repair so duplicate saved row IDs are skipped instead of breaking Supabase and Smartsheet saves.
+- [Jul 2, 8:34 PM] Added duplicate-write defenses to both Supabase and Smartsheet storage endpoints so one bad batch cannot fail with duplicate row update errors.
+- [Jul 2, 8:34 PM] Updated Neighborhood Rotations recall to merge Supabase and Smartsheet mirror rows so partially backfilled primary storage cannot hide locked rotations.
+- [Jul 2, 8:34 PM] Added release guards for unique repair payloads, backend duplicate defenses, and merged rotation reads.
+- [Jul 2, 8:34 PM] Set visible app version to `2026.07.02.010-rotation-storage-recall`.
 - [Jul 2, 7:54 PM] Made Supabase the authoritative Menu Projects source on load so phone and desktop stop merging different browser-local project lists.
 - [Jul 2, 7:54 PM] Kept sample Menu Projects local-only so demo records do not get written into the shared Supabase/Smartsheet project data.
 - [Jul 2, 7:54 PM] Added a Supabase compatibility route for Menu Projects records so the current `app_records` tool constraint no longer forces Smartsheet fallback.

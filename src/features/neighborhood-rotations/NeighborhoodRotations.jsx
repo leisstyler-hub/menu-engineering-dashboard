@@ -2180,7 +2180,7 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
     setSmartsheetReadCooldown(true);
     setDatabaseLoadStatus({ state: "loading", message: "Loading saved rotations from database...", loadedAt: "" });
     try {
-      const payload = await loadRecordsFromBackbone({ tool: "rotation" });
+      const payload = await loadRecordsFromBackbone({ tool: "rotation", mergeFallback: true });
       const records = payload.records || [];
       const loadedRotations = recordsToRotations(records);
       setDatabaseRecords(records);

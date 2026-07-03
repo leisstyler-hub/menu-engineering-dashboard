@@ -106,6 +106,16 @@ async function deleteRecordIds(recordIds = []) {
   return deleted;
 }
 
+function dedupeRowsByRecordId(rows = []) {
+  const byRecordId = new Map();
+  rows.forEach((row) => {
+    const recordId = String(row?.record_id || "").trim();
+    if (!recordId) return;
+    byRecordId.set(recordId, row);
+  });
+  return Array.from(byRecordId.values());
+}
+
 async function loadRecords(req, res) {
   const tool = getBackboneToolFromContext({ tool: req.query?.tool || "" });
   const databaseTool = getBackboneDatabaseToolFromContext({ tool });
@@ -145,7 +155,8 @@ async function upsertRecords(req, res) {
     return res.status(400).json({ ok: false, message: "No records supplied." });
   }
 
-  const rows = buildBackboneRows(records, context);
+  const rawRows = buildBackboneRows(records, context);
+  const rows = dedupeRowsByRecordId(rawRows);
   if (!rows.length) {
     return res.status(400).json({ ok: false, message: "No records had a Record ID." });
   }
@@ -170,8 +181,9 @@ async function upsertRecords(req, res) {
     source: "supabase",
     tool: rows[0]?.tool || "records",
     synced: rows.length,
+    duplicateRowsSkipped: rawRows.length - rows.length,
     deletedStale,
-    message: `Saved ${rows.length} row${rows.length === 1 ? "" : "s"} to Supabase${deletedStale ? ` and removed ${deletedStale} stale row${deletedStale === 1 ? "" : "s"}` : ""}.`,
+    message: `Saved ${rows.length} row${rows.length === 1 ? "" : "s"} to Supabase${rawRows.length - rows.length ? ` after skipping ${rawRows.length - rows.length} duplicate row instance${rawRows.length - rows.length === 1 ? "" : "s"}` : ""}${deletedStale ? ` and removed ${deletedStale} stale row${deletedStale === 1 ? "" : "s"}` : ""}.`,
   });
 }
 
