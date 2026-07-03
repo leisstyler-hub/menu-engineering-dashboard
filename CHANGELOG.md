@@ -2,6 +2,12 @@
 
 ## 2026-07-02
 
+- [Jul 2, 9:07 PM] Changed Menu Projects creation so Project Owner / Chef no longer auto-fills Tyler and Alex.
+- [Jul 2, 9:07 PM] Defaulted District Chef / SSMT Owner to Tyler Leiss on new and normalized Menu Projects.
+- [Jul 2, 9:07 PM] Added a concept-brief upload email handoff prompt for Chandon with an attachment reminder and attachment download button.
+- [Jul 2, 9:07 PM] Made required file deletion return projects to Concept Brief when the missing file invalidates a later stage.
+- [Jul 2, 9:07 PM] Added a manual Return to Concept Brief control for unusual workflow resets.
+- [Jul 2, 9:07 PM] Set visible app version to `2026.07.02.011-menu-project-handoff-reset`.
 - [Jul 2, 8:34 PM] Fixed Data Health status drift repair so duplicate saved row IDs are skipped instead of breaking Supabase and Smartsheet saves.
 - [Jul 2, 8:34 PM] Added duplicate-write defenses to both Supabase and Smartsheet storage endpoints so one bad batch cannot fail with duplicate row update errors.
 - [Jul 2, 8:34 PM] Updated Neighborhood Rotations recall to merge Supabase and Smartsheet mirror rows so partially backfilled primary storage cannot hide locked rotations.

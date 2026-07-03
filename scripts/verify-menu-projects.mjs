@@ -40,6 +40,11 @@ const supabaseSchema = readFileSync(join(root, "supabase/lean-results-schema.sql
   "Manager's Guide",
   "Photography Scheduled",
   "Webtrition Entry",
+  "DEFAULT_SSMT_OWNER",
+  "defaultSsmtOwner",
+  "forceReturnToFirstStage",
+  "reconcileProjectAfterFileDelete",
+  "Menu project file deleted",
 ].forEach((needle) => {
   if (!model.includes(needle) && !ui.includes(needle)) {
     throw new Error(`Menu Projects workflow is missing ${needle}`);
@@ -65,7 +70,7 @@ const supabaseSchema = readFileSync(join(root, "supabase/lean-results-schema.sql
   "Work ahead",
   "Current gate must advance first",
   "notificationRecipientsForUpload",
-  "Concept brief uploaded; Director of Culinary review ready",
+  "Concept brief uploaded; Chandon final approval ready",
   "Email Draft",
   "VersionStamp compact",
   "syncMenuProjectsToBackbone",
@@ -73,12 +78,11 @@ const supabaseSchema = readFileSync(join(root, "supabase/lean-results-schema.sql
   "Menu Projects Database",
   "downloadStoredFile",
   "nextFileVersion",
-  "Menu project file deleted",
+  "EmailHandoffModal",
+  "Attach file before sending",
+  "Return to Concept Brief",
   "Upcoming Due Dates",
   "Upcoming Tastings",
-  "DEFAULT_PROJECT_OWNERS",
-  "Alex Neuse",
-  "alex.neuse@compass-usa.com",
   "tyler.leiss@compass-usa.com",
   "SAMPLE_PROJECT_NAMES",
   "savableMenuProjects",
@@ -91,6 +95,18 @@ const supabaseSchema = readFileSync(join(root, "supabase/lean-results-schema.sql
 
 if (ui.includes("Project owner(s) / chef(s), comma separated")) {
   throw new Error("Menu Projects create flow still uses the old name-only owner field.");
+}
+
+if (ui.includes("const DEFAULT_PROJECT_OWNERS") || ui.includes("defaultProjectOwners()")) {
+  throw new Error("Menu Projects create flow still auto-fills Project Owner / Chef names.");
+}
+
+if (ui.includes("Tyler and Alex start as project owners")) {
+  throw new Error("Menu Projects still tells users Tyler and Alex start as project owners.");
+}
+
+if (!ui.includes("districtChefOwner: defaultSsmtOwner()")) {
+  throw new Error("Menu Projects create flow must default SSMT owner to Tyler.");
 }
 
 if (ui.includes("mergeProjectsByNewest(current, remoteProjects)")) {

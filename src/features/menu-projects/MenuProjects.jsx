@@ -34,12 +34,15 @@ import {
   advanceProject,
   createProject,
   currentStageCanComplete,
+  defaultSsmtOwner,
   delayProject,
   formatDate,
   formatDateTime,
+  forceReturnToFirstStage,
   getCurrentStage,
   getProjectStatus,
   makeNotification,
+  reconcileProjectAfterFileDelete,
   sampleProjects,
   sendBackForRevision,
   todayIso,
@@ -65,15 +68,6 @@ const TEAM_PRESETS = [
   { name: "Bil Smith", email: "bil.smith@compass-usa.com" },
   { name: "Summer Hinshaw", email: "summer.hinshaw@compass-usa.com" },
 ];
-
-const DEFAULT_PROJECT_OWNERS = [
-  { name: "Tyler Leiss", email: "tyler.leiss@compass-usa.com" },
-  { name: "Alex Neuse", email: "alex.neuse@compass-usa.com" },
-];
-
-function defaultProjectOwners() {
-  return DEFAULT_PROJECT_OWNERS.map((person) => ({ ...person }));
-}
 
 const DIRECTOR_OF_CULINARY = { name: "Chandon Clenard", email: "chandon.clenard@compass-usa.com" };
 const MENU_PROJECT_BACKBONE_TOOL = "menuProjects";
@@ -119,9 +113,15 @@ function normalizeDeliverableTask(existingTasks, name) {
 }
 
 function normalizeMenuProject(project) {
-  if (project.menuType !== MENU_TYPES.MICROCONCEPT) return project;
-  return {
+  const normalizedProject = {
     ...project,
+    districtChefOwner: project.districtChefOwner?.name || project.districtChefOwner?.email
+      ? project.districtChefOwner
+      : defaultSsmtOwner(),
+  };
+  if (normalizedProject.menuType !== MENU_TYPES.MICROCONCEPT) return normalizedProject;
+  return {
+    ...normalizedProject,
     stages: project.stages.map((stage) => {
       if (stage.id !== "microconcept-deliverables") return stage;
       return {
@@ -174,10 +174,10 @@ async function downloadTemplate(templateKey, menuName) {
 
 function notificationRecipientsForUpload(project, category) {
   const informList = project.peopleToInform || [];
-  if (project.menuType === MENU_TYPES.MICROCONCEPT && category === "Completed New Menu Concept Brief") {
+  if (category === "Completed New Menu Concept Brief") {
     return [DIRECTOR_OF_CULINARY, ...informList];
   }
-  if (category === "Completed New Menu Concept Brief" || category === "Completed New Menu Multi Station Concept Brief") {
+  if (category === "Completed New Menu Multi Station Concept Brief") {
     return [
       { name: "Experience Team", email: "" },
       project.districtChefOwner,
@@ -194,17 +194,17 @@ function notificationRecipientsForUpload(project, category) {
 }
 
 function uploadNotificationAction(project, category) {
-  if (project.menuType === MENU_TYPES.MICROCONCEPT && category === "Completed New Menu Concept Brief") {
-    return "Concept brief uploaded; Director of Culinary review ready";
+  if (category === "Completed New Menu Concept Brief") {
+    return "Concept brief uploaded; Chandon final approval ready";
   }
-  if (category === "Completed New Menu Concept Brief" || category === "Completed New Menu Multi Station Concept Brief") {
+  if (category === "Completed New Menu Multi Station Concept Brief") {
     return "Concept brief uploaded; Experience review ready";
   }
   if (category === "Completed SSMT file") return "SSMT uploaded; IT / Centric programming ready";
   return `${category} uploaded`;
 }
 
-function notificationMailto(note) {
+function notificationMailto(note, file = null) {
   const recipients = (note.recipients || []).map((person) => person.email).filter(Boolean);
   if (!recipients.length) return "";
   const subject = encodeURIComponent(`${note.menuName}: ${note.requiredAction}`);
@@ -214,8 +214,10 @@ function notificationMailto(note) {
     `Current stage: ${note.currentStage}`,
     `Required action: ${note.requiredAction}`,
     `Due date: ${formatDate(note.dueDate)}`,
+    file?.fileName ? `Attachment to include: ${file.fileName}` : "",
     note.comments ? `Comments: ${note.comments}` : "",
     "",
+    file?.fileName ? "Please attach the uploaded concept brief before sending." : "",
     "Open the Culinary Tools Platform and review the Menu Projects record.",
   ].filter(Boolean).join("\n"));
   return `mailto:${recipients.join(",")}?subject=${subject}&body=${body}`;
@@ -905,6 +907,8 @@ function ProjectDetail({ project, onUpdate, onTrash }) {
   const [newPerson, setNewPerson] = useState({ name: "", email: "" });
   const [activeStageId, setActiveStageId] = useState(project.currentStage);
   const [delayForm, setDelayForm] = useState({ open: false, launchDate: project.launchDate, reason: "" });
+  const [editingOwners, setEditingOwners] = useState(false);
+  const [emailPrompt, setEmailPrompt] = useState(null);
   const projectOwners = project.projectOwners?.length ? project.projectOwners : [project.projectOwner].filter((person) => person?.name || person?.email);
   const currentStage = getCurrentStage(project);
   const directorComplete = project.stages.some((item) => item.id === "director-review" && item.status === "Complete");
@@ -924,45 +928,54 @@ function ProjectDetail({ project, onUpdate, onTrash }) {
     const file = event.target.files?.[0];
     if (!file) return;
     const dataUrl = file.size <= MAX_ATTACHMENT_BYTES ? await readFileAsDataUrl(file) : "";
+    let nextPrompt = null;
     onUpdate((current) => {
       const version = nextFileVersion(current.files || [], category, file.name);
       const storedFileName = versionedFileName(file.name, version);
+      const uploadedFile = {
+        id: `file-${Date.now()}`,
+        projectId: current.id,
+        fileName: storedFileName,
+        originalFileName: file.name,
+        fileCategory: category,
+        uploadedBy: current.projectOwners?.[0]?.name || current.projectOwner.name || "Project Owner",
+        uploadedDate: new Date().toISOString(),
+        required,
+        status: dataUrl ? "Uploaded" : "Metadata Only",
+        version,
+        size: file.size,
+        type: file.type || "",
+        dataUrl,
+        url: "",
+      };
       const next = {
         ...current,
         files: [
-          {
-            id: `file-${Date.now()}`,
-            projectId: current.id,
-            fileName: storedFileName,
-            originalFileName: file.name,
-            fileCategory: category,
-            uploadedBy: current.projectOwners?.[0]?.name || current.projectOwner.name || "Project Owner",
-            uploadedDate: new Date().toISOString(),
-            required,
-            status: dataUrl ? "Uploaded" : "Metadata Only",
-            version,
-            size: file.size,
-            type: file.type || "",
-            dataUrl,
-            url: "",
-          },
+          uploadedFile,
           ...current.files,
         ],
       };
       const recipients = notificationRecipientsForUpload(next, category);
+      const notification = makeNotification(
+        next,
+        uploadNotificationAction(next, category),
+        dataUrl ? storedFileName : `${storedFileName} stored as metadata only because the file is too large for browser-side storage.`,
+        recipients
+      );
+      if (category === "Completed New Menu Concept Brief") {
+        nextPrompt = { project: next, note: notification, file: uploadedFile };
+      }
       return {
         ...next,
         notifications: [
-          makeNotification(
-            next,
-            uploadNotificationAction(next, category),
-            dataUrl ? storedFileName : `${storedFileName} stored as metadata only because the file is too large for browser-side storage.`,
-            recipients
-          ),
+          notification,
           ...current.notifications,
         ],
       };
     });
+    window.setTimeout(() => {
+      if (nextPrompt) setEmailPrompt(nextPrompt);
+    }, 0);
     event.target.value = "";
   };
 
@@ -973,10 +986,7 @@ function ProjectDetail({ project, onUpdate, onTrash }) {
         ...current,
         files: current.files.filter((item) => item.id !== fileId),
       };
-      return {
-        ...next,
-        notifications: [makeNotification(next, "Menu project file deleted", file?.fileName || "File removed"), ...current.notifications],
-      };
+      return reconcileProjectAfterFileDelete(next, file?.fileName || "File removed");
     });
   };
 
@@ -1048,6 +1058,10 @@ function ProjectDetail({ project, onUpdate, onTrash }) {
     setNewPerson({ name: "", email: "" });
   };
 
+  const returnToConceptBrief = () => {
+    onUpdate((current) => forceReturnToFirstStage(current, "Manual reset requested from Menu Projects."));
+  };
+
   return (
     <aside id={`menu-project-${project.id}`} className="rounded-lg border border-sky-200 bg-white p-5 shadow-sm">
       <div className="flex items-start justify-between gap-3">
@@ -1065,6 +1079,10 @@ function ProjectDetail({ project, onUpdate, onTrash }) {
           <button type="button" onClick={() => setDelayForm({ open: !delayForm.open, launchDate: project.launchDate, reason: "" })} className="inline-flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-black text-amber-800 hover:bg-amber-100">
             <Clock size={16} />
             Delay Project
+          </button>
+          <button type="button" onClick={returnToConceptBrief} className="inline-flex items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-black text-sky-800 hover:bg-sky-100">
+            <ArrowLeft size={16} />
+            Return to Concept Brief
           </button>
         </div>
       </div>
@@ -1124,11 +1142,20 @@ function ProjectDetail({ project, onUpdate, onTrash }) {
       <section className="mt-5 rounded-lg border border-sky-200 bg-white p-4 shadow-sm">
         <SectionTitle icon={Users} title="People and Team Assignment" />
         <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
-          <PeopleListEditor
-            label="Project Owner / Chef"
-            people={projectOwners}
-            onChange={(people) => onUpdate((current) => ({ ...current, projectOwners: people, projectOwner: people[0] || { name: "", email: "" } }))}
-          />
+          {editingOwners || !projectOwners.length ? (
+            <PeopleListEditor
+              label="Project Owner / Chef"
+              people={projectOwners}
+              onChange={(people) => onUpdate((current) => ({ ...current, projectOwners: people, projectOwner: people[0] || { name: "", email: "" } }))}
+              onDone={() => setEditingOwners(false)}
+            />
+          ) : (
+            <PeopleSummaryCard
+              label="Project Owner / Chef"
+              people={projectOwners}
+              onEdit={() => setEditingOwners(true)}
+            />
+          )}
           <PersonEditor label="District Chef / SSMT Owner" person={project.districtChefOwner} onChange={(person) => onUpdate((current) => ({ ...current, districtChefOwner: person }))} />
         </div>
         <div className="mt-3 rounded-lg border border-slate-300 bg-slate-50 p-3">
@@ -1275,7 +1302,61 @@ function ProjectDetail({ project, onUpdate, onTrash }) {
           ))}
         </div>
       </section>
+
+      {emailPrompt && (
+        <EmailHandoffModal
+          prompt={emailPrompt}
+          onClose={() => setEmailPrompt(null)}
+        />
+      )}
     </aside>
+  );
+}
+
+function EmailHandoffModal({ prompt, onClose }) {
+  const { note, file } = prompt;
+  const href = notificationMailto(note, file);
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4">
+      <div className="w-full max-w-xl rounded-2xl border border-emerald-200 bg-white p-5 shadow-2xl">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-600">Email Handoff</p>
+            <h2 className="mt-1 text-2xl font-black text-slate-950">Send final approval email</h2>
+            <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
+              Chandon should be notified that this menu is ready for final approval.
+            </p>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-full border border-slate-200 p-2 text-slate-600 hover:bg-slate-50"><X size={18} /></button>
+        </div>
+        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
+          <p className="text-sm font-black text-amber-950">Attach file before sending</p>
+          <p className="mt-1 text-sm font-semibold text-amber-900">
+            Browser email drafts cannot attach files automatically. Open the draft, then attach {file.fileName}.
+          </p>
+        </div>
+        <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+          <p className="text-sm font-black text-slate-950">{file.fileName}</p>
+          <p className="mt-1 text-xs font-bold text-slate-500">{file.fileCategory} / Uploaded {formatDateTime(file.uploadedDate)}</p>
+        </div>
+        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <button type="button" disabled={!file.dataUrl} onClick={() => downloadStoredFile(file)} className="inline-flex items-center justify-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-black text-sky-800 disabled:cursor-not-allowed disabled:text-slate-400">
+            <Download size={17} />
+            Download Attachment
+          </button>
+          {href ? (
+            <a href={href} onClick={onClose} className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 py-3 text-sm font-black text-white">
+              <Mail size={17} />
+              Email Draft
+            </a>
+          ) : (
+            <button type="button" disabled className="rounded-lg bg-slate-300 px-4 py-3 text-sm font-black text-white">
+              Missing Email Recipient
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -1349,7 +1430,28 @@ function FileUploadRow({ label, required = false, onChange }) {
   );
 }
 
-function PeopleListEditor({ label, people, onChange }) {
+function PeopleSummaryCard({ label, people, onEdit }) {
+  return (
+    <div className="rounded-lg border border-sky-200 bg-slate-50 p-4 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">{label}</p>
+        <button type="button" onClick={onEdit} className="rounded-full border border-sky-200 bg-white px-3 py-1.5 text-xs font-black text-sky-800">
+          Edit owners
+        </button>
+      </div>
+      <div className="mt-3 space-y-2">
+        {people.map((person, index) => (
+          <div key={`${person.email || person.name}-${index}`} className="rounded-lg border border-slate-300 bg-white px-3 py-2">
+            <p className="text-sm font-black text-slate-950">{person.name || "Unnamed owner"}</p>
+            <p className="mt-0.5 text-xs font-bold text-slate-500">{person.email || "No email entered"}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PeopleListEditor({ label, people, onChange, onDone = null }) {
   const list = people.length ? people : [{ name: "", email: "" }];
   const updatePerson = (index, patch) => {
     const next = list.map((person, personIndex) => personIndex === index ? { ...person, ...patch } : person);
@@ -1362,9 +1464,16 @@ function PeopleListEditor({ label, people, onChange }) {
     <div className="rounded-lg border border-sky-200 bg-slate-50 p-4 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="max-w-[70%] text-xs font-black uppercase tracking-[0.12em] text-slate-500">{label}</p>
-        <button type="button" onClick={addPerson} className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-800">
-          Add owner
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {onDone && (
+            <button type="button" onClick={onDone} className="rounded-full border border-sky-200 bg-white px-3 py-1.5 text-xs font-black text-sky-800">
+              Done
+            </button>
+          )}
+          <button type="button" onClick={addPerson} className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-800">
+            Add owner
+          </button>
+        </div>
       </div>
       <div className="mt-3 space-y-3">
         {list.map((person, index) => (
@@ -1472,7 +1581,8 @@ function CreateProjectModal({ onClose, onCreate }) {
     menuName: "",
     menuType: MENU_TYPES.PROMOTIONAL,
     launchDate: "",
-    projectOwners: defaultProjectOwners(),
+    projectOwners: [],
+    districtChefOwner: defaultSsmtOwner(),
   });
 
   const submit = () => {
@@ -1482,15 +1592,14 @@ function CreateProjectModal({ onClose, onCreate }) {
         email: (person.email || "").trim(),
       }))
       .filter((person) => person.name || person.email);
-    const resolvedOwners = projectOwners.length ? projectOwners : defaultProjectOwners();
     onCreate({
       ...form,
       launchDate: form.launchDate || "2026-08-14",
       createdDate: todayIso(),
-      createdBy: resolvedOwners.map((person) => person.name || person.email).join(", "),
-      projectOwners: resolvedOwners,
-      projectOwner: resolvedOwners[0] || { name: "", email: "" },
-      districtChefOwner: { name: "", email: "" },
+      createdBy: projectOwners.map((person) => person.name || person.email).join(", "),
+      projectOwners,
+      projectOwner: projectOwners[0] || { name: "", email: "" },
+      districtChefOwner: form.districtChefOwner,
     });
   };
 
@@ -1520,8 +1629,13 @@ function CreateProjectModal({ onClose, onCreate }) {
               people={form.projectOwners}
               onChange={(projectOwners) => setForm({ ...form, projectOwners })}
             />
-            <p className="mt-2 text-xs font-bold text-slate-500">Tyler and Alex start as project owners. Add or remove owners before creating the project.</p>
+            <p className="mt-2 text-xs font-bold text-slate-500">Add a project owner when you know who owns the brief. District Chef / SSMT Owner starts with Tyler.</p>
           </div>
+          <PersonEditor
+            label="District Chef / SSMT Owner"
+            person={form.districtChefOwner}
+            onChange={(districtChefOwner) => setForm({ ...form, districtChefOwner })}
+          />
           <button type="button" onClick={submit} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 py-3 text-sm font-black text-white">
             Create Project
             <ArrowRight size={17} />

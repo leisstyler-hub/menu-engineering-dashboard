@@ -6,6 +6,12 @@ export const MENU_TYPES = {
   NEW_UNIT: "New Unit Opening",
 };
 
+export const DEFAULT_SSMT_OWNER = { name: "Tyler Leiss", email: "tyler.leiss@compass-usa.com" };
+
+export function defaultSsmtOwner() {
+  return { ...DEFAULT_SSMT_OWNER };
+}
+
 export const TEMPLATE_FILES = {
   conceptBrief: {
     label: "New Menu Concept Brief",
@@ -361,7 +367,7 @@ export function createProject(input) {
     compressedTimeline: timeline.compressedTimeline,
     projectOwner,
     projectOwners,
-    districtChefOwner: input.districtChefOwner || { name: "", email: "" },
+    districtChefOwner: input.districtChefOwner || defaultSsmtOwner(),
     experienceTeamEmails: input.experienceTeamEmails || [],
     directorOfCulinaryEmail: input.directorOfCulinaryEmail || "chandon.clenard@compass-usa.com",
     itTeamEmails: input.itTeamEmails || [],
@@ -446,6 +452,48 @@ export function advanceProject(project, actionLabel = "Stage complete") {
       makeNotification(updated, done ? "IT marked the project complete" : actionLabel),
       ...project.notifications,
     ],
+  };
+}
+
+export function forceReturnToFirstStage(project, reason = "Project returned to Concept Brief") {
+  const firstStage = project.stages[0];
+  const stages = project.stages.map((stage, index) => ({
+    ...stage,
+    status: index === 0 ? "In Progress" : "Not Started",
+    completedDate: "",
+    startDate: index === 0 ? todayIso() : stage.startDate,
+  }));
+  const updated = {
+    ...project,
+    stages,
+    currentStage: firstStage.id,
+    status: "Needs Revision",
+    deliverablesUnlocked: false,
+  };
+  return {
+    ...updated,
+    notifications: [makeNotification(updated, "Returned to Concept Brief", reason), ...project.notifications],
+  };
+}
+
+export function reconcileProjectAfterFileDelete(project, deletedFileName = "") {
+  const currentIndex = getStageIndex(project);
+  const missingRequiredStageIndex = project.stages.findIndex((stage) => (
+    stage.requiredFiles || []
+  ).some((fileName) => !requiredFileUploaded(project, fileName)));
+
+  if (missingRequiredStageIndex >= 0 && missingRequiredStageIndex <= currentIndex) {
+    return forceReturnToFirstStage(
+      project,
+      deletedFileName
+        ? `Required file removed: ${deletedFileName}. Upload a fresh concept brief before continuing.`
+        : "A required file is missing. Upload a fresh concept brief before continuing."
+    );
+  }
+
+  return {
+    ...project,
+    notifications: [makeNotification(project, "Menu project file deleted", deletedFileName || "File removed"), ...project.notifications],
   };
 }
 
