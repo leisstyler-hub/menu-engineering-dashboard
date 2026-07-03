@@ -6,10 +6,19 @@ export const MENU_TYPES = {
   NEW_UNIT: "New Unit Opening",
 };
 
-export const DEFAULT_SSMT_OWNER = { name: "Tyler Leiss", email: "tyler.leiss@compass-usa.com" };
+export const DEFAULT_SSMT_OWNERS = [
+  { name: "Tyler Leiss", email: "tyler.leiss@compass-usa.com" },
+  { name: "Alex Neuse", email: "alex.neuse@compass-usa.com" },
+];
+
+export const DEFAULT_SSMT_OWNER = DEFAULT_SSMT_OWNERS[0];
 
 export function defaultSsmtOwner() {
   return { ...DEFAULT_SSMT_OWNER };
+}
+
+export function defaultSsmtOwners() {
+  return DEFAULT_SSMT_OWNERS.map((owner) => ({ ...owner }));
 }
 
 export const TEMPLATE_FILES = {
@@ -354,6 +363,8 @@ export function createProject(input) {
   const timeline = buildStages(input.menuType, launchDate, createdDate);
   const projectOwners = normalizePeopleList(input.projectOwners || input.projectOwner);
   const projectOwner = input.projectOwner || projectOwners[0] || { name: "", email: "" };
+  const districtChefOwners = normalizePeopleList(input.districtChefOwners || input.districtChefOwner);
+  const ssmtOwners = districtChefOwners.length ? districtChefOwners : defaultSsmtOwners();
   const project = {
     id: compactId("menu-project"),
     menuName: input.menuName || "Untitled Menu Project",
@@ -367,7 +378,8 @@ export function createProject(input) {
     compressedTimeline: timeline.compressedTimeline,
     projectOwner,
     projectOwners,
-    districtChefOwner: input.districtChefOwner || defaultSsmtOwner(),
+    districtChefOwner: ssmtOwners[0] || defaultSsmtOwner(),
+    districtChefOwners: ssmtOwners,
     experienceTeamEmails: input.experienceTeamEmails || [],
     directorOfCulinaryEmail: input.directorOfCulinaryEmail || "chandon.clenard@compass-usa.com",
     itTeamEmails: input.itTeamEmails || [],

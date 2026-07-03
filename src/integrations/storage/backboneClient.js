@@ -1,4 +1,4 @@
-import { loadRecordsFromSmartsheet, syncRecordsToSmartsheet } from "../smartsheet/client.js";
+import { deleteRecordsFromSmartsheet, loadRecordsFromSmartsheet, syncRecordsToSmartsheet } from "../smartsheet/client.js";
 import { SMARTSHEET_COLUMNS } from "../smartsheet/contract.js";
 
 async function readJson(response) {
@@ -31,6 +31,25 @@ async function loadRecordsFromSupabase(context = {}) {
   const payload = await readJson(response);
   if (!response.ok || payload.ok === false) {
     const error = new Error(payload.message || "Supabase load failed.");
+    error.payload = payload;
+    throw error;
+  }
+  return payload;
+}
+
+async function deleteRecordsFromSupabase(recordIds = [], context = {}) {
+  const response = await fetch("/api/storage/records", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "deleteRecords",
+      recordIds,
+      context,
+    }),
+  });
+  const payload = await readJson(response);
+  if (!response.ok || payload.ok === false) {
+    const error = new Error(payload.message || "Supabase delete failed.");
     error.payload = payload;
     throw error;
   }
@@ -112,6 +131,58 @@ export async function syncRecordsToBackbone(records = [], context = {}) {
     }
 
     const error = new Error(`Supabase and Smartsheet saves both failed. Supabase: ${primaryError?.message || "unknown"}. Smartsheet: ${mirrorError?.message || "unknown"}.`);
+    error.payload = {
+      primary: primaryError?.payload || { message: primaryError?.message },
+      mirror: mirrorError?.payload || { message: mirrorError?.message },
+    };
+    throw error;
+  }
+}
+
+export async function deleteRecordsFromBackbone(recordIds = [], context = {}) {
+  let primary = null;
+  let primaryError = null;
+
+  try {
+    primary = await deleteRecordsFromSupabase(recordIds, context);
+  } catch (error) {
+    primaryError = error;
+  }
+
+  try {
+    const mirror = await deleteRecordsFromSmartsheet(recordIds, context);
+    if (primary) {
+      return {
+        ok: true,
+        state: "deleted",
+        source: "supabase+smartsheet",
+        primary,
+        mirror,
+        message: `${primary.message || "Deleted from Supabase."} Smartsheet mirror: ${mirror.message || "deleted."}`,
+      };
+    }
+
+    return {
+      ok: true,
+      state: "fallback-delete",
+      source: "smartsheet-fallback",
+      primaryError: primaryError?.payload || { message: primaryError?.message },
+      mirror,
+      message: `${mirror.message || "Deleted from Smartsheet fallback."} Supabase primary needs attention: ${primaryError?.message || "not configured"}`,
+    };
+  } catch (mirrorError) {
+    if (primary) {
+      return {
+        ok: true,
+        state: "deleted",
+        source: "supabase",
+        primary,
+        mirrorError: mirrorError?.payload || { message: mirrorError?.message },
+        message: `${primary.message || "Deleted from Supabase."} Smartsheet mirror delete needs attention: ${mirrorError?.message || "mirror failed"}`,
+      };
+    }
+
+    const error = new Error(`Supabase and Smartsheet deletes both failed. Supabase: ${primaryError?.message || "unknown"}. Smartsheet: ${mirrorError?.message || "unknown"}.`);
     error.payload = {
       primary: primaryError?.payload || { message: primaryError?.message },
       mirror: mirrorError?.payload || { message: mirrorError?.message },

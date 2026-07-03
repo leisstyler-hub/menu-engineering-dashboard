@@ -149,6 +149,38 @@ function dedupeRecordsByRecordId(records = [], recordIdColumn = "Record ID") {
   return Array.from(byRecordId.values());
 }
 
+async function deleteRowsByRecordFamily(sheetId, sheet, recordIds = [], recordIdColumn = "Record ID") {
+  const columnMap = columnMapByTitle(sheet);
+  const recordIdColumnId = columnMap.get(recordIdColumn);
+  if (!recordIdColumnId) {
+    const error = new Error(`Missing required Record ID column: ${recordIdColumn}`);
+    error.statusCode = 400;
+    error.payload = { missingColumns: [recordIdColumn] };
+    throw error;
+  }
+
+  const parentRecordIdColumnId = columnMap.get("Parent Record ID");
+  const requestedIds = new Set(recordIds.map(String).filter(Boolean));
+  const rowsToDelete = [];
+
+  for (const row of sheet.rows || []) {
+    const recordId = String(getCellValue(row, recordIdColumnId) || "");
+    const parentId = parentRecordIdColumnId ? String(getCellValue(row, parentRecordIdColumnId) || "") : "";
+    if (requestedIds.has(recordId) || requestedIds.has(parentId)) {
+      rowsToDelete.push(row.id);
+    }
+  }
+
+  for (let index = 0; index < rowsToDelete.length; index += 400) {
+    const chunk = rowsToDelete.slice(index, index + 400);
+    await smartsheetFetch(`/sheets/${sheetId}/rows?ids=${chunk.join(",")}`, {
+      method: "DELETE",
+    });
+  }
+
+  return rowsToDelete.length;
+}
+
 export default async function handler(req, res) {
   const requestedTool = req.query?.tool || req.body?.context?.tool || "";
   const useLeanSheet = String(requestedTool).toLowerCase().includes("lean") && process.env.SMARTSHEET_LEAN_SHEET_ID;
@@ -236,6 +268,25 @@ export default async function handler(req, res) {
         message: cleanup.deletedColumns.length
           ? `Deleted ${cleanup.deletedColumns.length} empty Smartsheet column${cleanup.deletedColumns.length === 1 ? "" : "s"}.`
           : "No empty Smartsheet columns were deleted.",
+      });
+    }
+
+    if (action === "deleteRecords") {
+      const recordIds = Array.isArray(req.body?.recordIds) ? req.body.recordIds.map(String).filter(Boolean) : [];
+      if (!recordIds.length) {
+        return res.status(400).json({ ok: false, message: "No record IDs supplied for delete" });
+      }
+
+      const deleted = await deleteRowsByRecordFamily(sheetId, sheet, recordIds, recordIdColumn);
+      return res.status(200).json({
+        ok: true,
+        action,
+        context,
+        sheetId,
+        sheetName: sheet.name || "",
+        requested: recordIds.length,
+        deleted,
+        message: `Deleted ${deleted} Smartsheet row${deleted === 1 ? "" : "s"} for ${recordIds.length} requested record${recordIds.length === 1 ? "" : "s"}.`,
       });
     }
 

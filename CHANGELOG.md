@@ -2,6 +2,11 @@
 
 ## 2026-07-02
 
+- [Jul 2, 8:38 PM] Fixed Menu Projects trash behavior so deleted projects create a local tombstone, delete from Supabase, and delete from the Smartsheet mirror instead of reappearing after leaving the tool.
+- [Jul 2, 8:38 PM] Added Menu Projects reload filtering for recently deleted project IDs so stale saved records cannot repopulate the dashboard on the same device.
+- [Jul 2, 8:38 PM] Hard-wired District Chef / SSMT Owners to Tyler Leiss and Alex Neuse while keeping Project Owner / Chef blank until entered.
+- [Jul 2, 8:38 PM] Added release guards for Menu Projects delete persistence, Supabase/Smartsheet project-family deletes, and Tyler/Alex SSMT ownership.
+- [Jul 2, 8:38 PM] Set visible app version to `2026.07.02.012-menu-project-delete-sync`.
 - [Jul 2, 9:07 PM] Changed Menu Projects creation so Project Owner / Chef no longer auto-fills Tyler and Alex.
 - [Jul 2, 9:07 PM] Defaulted District Chef / SSMT Owner to Tyler Leiss on new and normalized Menu Projects.
 - [Jul 2, 9:07 PM] Added a concept-brief upload email handoff prompt for Chandon with an attachment reminder and attachment download button.

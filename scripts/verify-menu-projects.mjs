@@ -20,6 +20,8 @@ const app = readFileSync(join(root, "src/app/CulinaryToolsPlatformApp.jsx"), "ut
 const landing = readFileSync(join(root, "src/app/LandingPage.jsx"), "utf8");
 const backbone = readFileSync(join(root, "src/integrations/storage/backboneRecords.js"), "utf8");
 const storageApi = readFileSync(join(root, "api/storage/records.js"), "utf8");
+const smartsheetApi = readFileSync(join(root, "api/smartsheet/records.js"), "utf8");
+const backboneClient = readFileSync(join(root, "src/integrations/storage/backboneClient.js"), "utf8");
 const supabaseSchema = readFileSync(join(root, "supabase/lean-results-schema.sql"), "utf8");
 
 [
@@ -41,7 +43,10 @@ const supabaseSchema = readFileSync(join(root, "supabase/lean-results-schema.sql
   "Photography Scheduled",
   "Webtrition Entry",
   "DEFAULT_SSMT_OWNER",
+  "DEFAULT_SSMT_OWNERS",
   "defaultSsmtOwner",
+  "defaultSsmtOwners",
+  "Alex Neuse",
   "forceReturnToFirstStage",
   "reconcileProjectAfterFileDelete",
   "Menu project file deleted",
@@ -76,6 +81,10 @@ const supabaseSchema = readFileSync(join(root, "supabase/lean-results-schema.sql
   "syncMenuProjectsToBackbone",
   "loadRecordsFromBackbone",
   "Menu Projects Database",
+  "MENU_PROJECT_DELETED_IDS_KEY",
+  "rememberDeletedMenuProject",
+  "filterDeletedMenuProjects",
+  "deleteRecordsFromBackbone",
   "downloadStoredFile",
   "nextFileVersion",
   "EmailHandoffModal",
@@ -84,6 +93,9 @@ const supabaseSchema = readFileSync(join(root, "supabase/lean-results-schema.sql
   "Upcoming Due Dates",
   "Upcoming Tastings",
   "tyler.leiss@compass-usa.com",
+  "alex.neuse@compass-usa.com",
+  "District Chef / SSMT Owners are hard-wired to Tyler and Alex",
+  "Hard wired",
   "SAMPLE_PROJECT_NAMES",
   "savableMenuProjects",
   "Sample Menu Projects are local only",
@@ -105,8 +117,12 @@ if (ui.includes("Tyler and Alex start as project owners")) {
   throw new Error("Menu Projects still tells users Tyler and Alex start as project owners.");
 }
 
-if (!ui.includes("districtChefOwner: defaultSsmtOwner()")) {
-  throw new Error("Menu Projects create flow must default SSMT owner to Tyler.");
+if (!model.includes("districtChefOwner: ssmtOwners[0] || defaultSsmtOwner()") || !ui.includes("project.districtChefOwner || defaultSsmtOwner()")) {
+  throw new Error("Menu Projects must keep the legacy single SSMT owner field compatible.");
+}
+
+if (!ui.includes("districtChefOwners: defaultSsmtOwners()")) {
+  throw new Error("Menu Projects create flow must default SSMT owners to Tyler and Alex.");
 }
 
 if (ui.includes("mergeProjectsByNewest(current, remoteProjects)")) {
@@ -130,9 +146,28 @@ if (!model.includes("__sampleProject: true")) {
 
 [
   "databaseTool",
+  "findRecordFamilyIds",
+  "deleteRecords",
+  "action === \"deleteRecords\"",
   "Loaded ${records.length} ${tool === \"lean\" ? \"Lean\" : tool === \"menuProjects\" ? \"Menu Project\" : \"rotation\"}",
 ].forEach((needle) => {
   if (!storageApi.includes(needle)) throw new Error(`Storage API Menu Projects source handling is missing ${needle}`);
+});
+
+[
+  "deleteRecordsFromBackbone",
+  "deleteRecordsFromSupabase",
+  "deleteRecordsFromSmartsheet",
+].forEach((needle) => {
+  if (!backboneClient.includes(needle)) throw new Error(`Backbone delete handling is missing ${needle}`);
+});
+
+[
+  "deleteRowsByRecordFamily",
+  "action === \"deleteRecords\"",
+  "Deleted ${deleted} Smartsheet row",
+].forEach((needle) => {
+  if (!smartsheetApi.includes(needle)) throw new Error(`Smartsheet delete handling is missing ${needle}`);
 });
 
 if (!supabaseSchema.includes("'menuProjects'")) {

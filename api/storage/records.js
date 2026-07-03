@@ -97,6 +97,28 @@ async function findStaleRowIds(parentRecordIds = [], nextRecordIds = []) {
   return Array.from(new Set(staleIds));
 }
 
+async function findRecordFamilyIds(recordIds = []) {
+  const ids = [];
+  for (const recordId of recordIds.map(String).filter(Boolean)) {
+    const directParams = queryString({
+      select: "record_id",
+      record_id: `eq.${recordId}`,
+    });
+    const childParams = queryString({
+      select: "record_id",
+      parent_record_id: `eq.${recordId}`,
+    });
+    const rows = [
+      ...((await supabaseFetch(`app_records?${directParams}`)) || []),
+      ...((await supabaseFetch(`app_records?${childParams}`)) || []),
+    ];
+    rows.forEach((row) => {
+      if (row.record_id) ids.push(String(row.record_id));
+    });
+  }
+  return Array.from(new Set(ids));
+}
+
 async function deleteRecordIds(recordIds = []) {
   let deleted = 0;
   for (const recordId of recordIds.map(String).filter(Boolean)) {
@@ -187,6 +209,26 @@ async function upsertRecords(req, res) {
   });
 }
 
+async function deleteRecords(req, res) {
+  const requestedIds = Array.isArray(req.body?.recordIds) ? req.body.recordIds.map(String).filter(Boolean) : [];
+  if (!requestedIds.length) {
+    return res.status(400).json({ ok: false, message: "No record IDs supplied for delete." });
+  }
+
+  const recordFamilyIds = await findRecordFamilyIds(requestedIds);
+  const deleted = await deleteRecordIds(recordFamilyIds.length ? recordFamilyIds : requestedIds);
+
+  return res.status(200).json({
+    ok: true,
+    source: "supabase",
+    action: "deleteRecords",
+    requested: requestedIds.length,
+    deleted,
+    recordIds: recordFamilyIds,
+    message: `Deleted ${deleted} Supabase row${deleted === 1 ? "" : "s"} for ${requestedIds.length} requested record${requestedIds.length === 1 ? "" : "s"}.`,
+  });
+}
+
 async function cleanupExpiredRecords(res) {
   const payload = await supabaseFetch("rpc/cleanup_expired_app_records", {
     method: "POST",
@@ -209,6 +251,7 @@ export default async function handler(req, res) {
     }
 
     if (req.body?.action === "cleanupExpiredRecords") return await cleanupExpiredRecords(res);
+    if (req.body?.action === "deleteRecords") return await deleteRecords(req, res);
     if (req.body?.action !== "upsertRecords") {
       return res.status(400).json({ ok: false, message: "Unsupported action." });
     }

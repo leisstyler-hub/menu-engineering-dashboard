@@ -26,7 +26,7 @@ import {
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
 import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
-import { loadRecordsFromBackbone, syncRecordsToBackbone } from "../../integrations/storage/backboneClient.js";
+import { deleteRecordsFromBackbone, loadRecordsFromBackbone, syncRecordsToBackbone } from "../../integrations/storage/backboneClient.js";
 import {
   MENU_PROJECT_STORAGE_KEY,
   MENU_TYPES,
@@ -35,6 +35,7 @@ import {
   createProject,
   currentStageCanComplete,
   defaultSsmtOwner,
+  defaultSsmtOwners,
   delayProject,
   formatDate,
   formatDateTime,
@@ -72,6 +73,8 @@ const TEAM_PRESETS = [
 const DIRECTOR_OF_CULINARY = { name: "Chandon Clenard", email: "chandon.clenard@compass-usa.com" };
 const MENU_PROJECT_BACKBONE_TOOL = "menuProjects";
 const MAX_ATTACHMENT_BYTES = 1_800_000;
+const MENU_PROJECT_DELETED_IDS_KEY = "culinaryToolsMenuProjects.deleted.v1";
+const DELETED_PROJECT_RETENTION_DAYS = 90;
 
 const statusTone = {
   "On Track": "border-emerald-200 bg-emerald-50 text-emerald-800",
@@ -113,11 +116,16 @@ function normalizeDeliverableTask(existingTasks, name) {
 }
 
 function normalizeMenuProject(project) {
+  const existingSsmtOwners = Array.isArray(project.districtChefOwners)
+    ? project.districtChefOwners.filter((person) => person?.name || person?.email)
+    : [];
+  const districtChefOwners = existingSsmtOwners.length
+    ? existingSsmtOwners
+    : defaultSsmtOwners();
   const normalizedProject = {
     ...project,
-    districtChefOwner: project.districtChefOwner?.name || project.districtChefOwner?.email
-      ? project.districtChefOwner
-      : defaultSsmtOwner(),
+    districtChefOwner: districtChefOwners[0] || project.districtChefOwner || defaultSsmtOwner(),
+    districtChefOwners,
   };
   if (normalizedProject.menuType !== MENU_TYPES.MICROCONCEPT) return normalizedProject;
   return {
@@ -137,11 +145,11 @@ function loadProjects() {
   if (typeof window === "undefined") return sampleProjects();
   try {
     const stored = window.localStorage.getItem(MENU_PROJECT_STORAGE_KEY);
-    if (!stored) return sampleProjects();
+    if (!stored) return filterDeletedMenuProjects(sampleProjects());
     const parsed = JSON.parse(stored);
-    return Array.isArray(parsed) && parsed.length ? parsed.map(normalizeMenuProject) : sampleProjects();
+    return filterDeletedMenuProjects(Array.isArray(parsed) && parsed.length ? parsed.map(normalizeMenuProject) : sampleProjects());
   } catch {
-    return sampleProjects();
+    return filterDeletedMenuProjects(sampleProjects());
   }
 }
 
@@ -180,7 +188,7 @@ function notificationRecipientsForUpload(project, category) {
   if (category === "Completed New Menu Multi Station Concept Brief") {
     return [
       { name: "Experience Team", email: "" },
-      project.districtChefOwner,
+      ...(project.districtChefOwners?.length ? project.districtChefOwners : [project.districtChefOwner]),
       ...informList,
     ].filter((person) => person?.name || person?.email);
   }
@@ -236,6 +244,41 @@ function projectOwnersText(project) {
   return owners.map((person) => person?.name || person?.email).filter(Boolean).join(", ");
 }
 
+function ssmtOwnersText(project) {
+  const owners = project.districtChefOwners?.length ? project.districtChefOwners : [project.districtChefOwner].filter(Boolean);
+  return owners.map((person) => person?.name || person?.email).filter(Boolean).join(", ");
+}
+
+function loadDeletedMenuProjectMap() {
+  if (typeof window === "undefined") return {};
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(MENU_PROJECT_DELETED_IDS_KEY) || "{}");
+    const cutoff = Date.now() - DELETED_PROJECT_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+    return Object.fromEntries(Object.entries(parsed || {}).filter(([, value]) => {
+      const stamp = Date.parse(String(value || ""));
+      return Number.isFinite(stamp) && stamp >= cutoff;
+    }));
+  } catch {
+    return {};
+  }
+}
+
+function rememberDeletedMenuProject(projectId) {
+  if (typeof window === "undefined" || !projectId) return;
+  const deleted = loadDeletedMenuProjectMap();
+  deleted[projectId] = new Date().toISOString();
+  window.localStorage.setItem(MENU_PROJECT_DELETED_IDS_KEY, JSON.stringify(deleted));
+}
+
+function isDeletedMenuProjectId(projectId) {
+  return Boolean(projectId && loadDeletedMenuProjectMap()[projectId]);
+}
+
+function filterDeletedMenuProjects(projects = []) {
+  const deleted = loadDeletedMenuProjectMap();
+  return projects.filter((project) => !deleted[project.id]);
+}
+
 const SAMPLE_PROJECT_NAMES = new Set([
   "Summer Street Tacos",
   "Korean Noodle Lab",
@@ -282,6 +325,7 @@ function projectToBackboneRecords(project) {
     "Current Due Date": stage?.dueDate || "",
     "Centric Complete By": project.centricCompleteBy || "",
     "Project Owner(s)": projectOwnersText(project),
+    "SSMT Owner(s)": ssmtOwnersText(project),
     "File Count": String(project.files?.length || 0),
     "Open Blockers": String((project.blockers || []).filter((blocker) => blocker.status === "Open").length),
     "Upcoming Tasting Date": upcomingTasting(project),
@@ -322,6 +366,7 @@ function recordsToProjects(records = []) {
       __storageUpdatedAt: record.__supabaseUpdatedAt || record["Updated At"] || "",
     }))
     .filter((project) => !isSampleProject(project))
+    .filter((project) => !isDeletedMenuProjectId(project.id))
     .map(normalizeMenuProject);
 }
 
@@ -498,12 +543,27 @@ export default function MenuProjects({ onBackToPlatform, onOpenSmartsheetHealth 
   const dashboard = useMemo(() => buildProjectDashboard(scoredProjects), [scoredProjects]);
 
   const trashProject = (projectId) => {
+    rememberDeletedMenuProject(projectId);
+    const recordId = makeProjectRecordId(projectId);
     setProjects((current) => {
       const next = current.filter((project) => project.id !== projectId);
       if (selectedId === projectId) setSelectedId(next[0]?.id || "");
       return next;
     });
     setDeleteTarget(null);
+    setStorageStatus({ state: "deleting", message: "Trashing Menu Project from Supabase and Smartsheet..." });
+    deleteRecordsFromBackbone([recordId], {
+      tool: MENU_PROJECT_BACKBONE_TOOL,
+      source: "menu-projects-trash",
+    })
+      .then((payload) => setStorageStatus({
+        state: payload?.source || "deleted",
+        message: payload?.message || "Menu Project trashed from the database backbone.",
+      }))
+      .catch((error) => setStorageStatus({
+        state: "error",
+        message: `Menu Project is hidden on this device, but database trash needs attention: ${error.message}`,
+      }));
   };
 
   return (
@@ -1156,7 +1216,11 @@ function ProjectDetail({ project, onUpdate, onTrash }) {
               onEdit={() => setEditingOwners(true)}
             />
           )}
-          <PersonEditor label="District Chef / SSMT Owner" person={project.districtChefOwner} onChange={(person) => onUpdate((current) => ({ ...current, districtChefOwner: person }))} />
+          <PeopleSummaryCard
+            label="District Chef / SSMT Owners"
+            people={project.districtChefOwners?.length ? project.districtChefOwners : defaultSsmtOwners()}
+            locked
+          />
         </div>
         <div className="mt-3 rounded-lg border border-slate-300 bg-slate-50 p-3">
           <p className="text-sm font-black">People to Inform</p>
@@ -1430,14 +1494,18 @@ function FileUploadRow({ label, required = false, onChange }) {
   );
 }
 
-function PeopleSummaryCard({ label, people, onEdit }) {
+function PeopleSummaryCard({ label, people, onEdit = null, locked = false }) {
   return (
     <div className="rounded-lg border border-sky-200 bg-slate-50 p-4 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">{label}</p>
-        <button type="button" onClick={onEdit} className="rounded-full border border-sky-200 bg-white px-3 py-1.5 text-xs font-black text-sky-800">
-          Edit owners
-        </button>
+        {locked ? (
+          <span className="rounded-full border border-emerald-200 bg-white px-3 py-1.5 text-xs font-black text-emerald-800">Hard wired</span>
+        ) : (
+          <button type="button" onClick={onEdit} className="rounded-full border border-sky-200 bg-white px-3 py-1.5 text-xs font-black text-sky-800">
+            Edit owners
+          </button>
+        )}
       </div>
       <div className="mt-3 space-y-2">
         {people.map((person, index) => (
@@ -1491,16 +1559,6 @@ function PeopleListEditor({ label, people, onChange, onDone = null }) {
           </div>
         ))}
       </div>
-    </div>
-  );
-}
-
-function PersonEditor({ label, person, onChange }) {
-  return (
-    <div className="rounded-lg border border-sky-200 bg-slate-50 p-3 shadow-sm">
-      <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">{label}</p>
-      <input value={person.name} onChange={(event) => onChange({ ...person, name: event.target.value })} className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold" placeholder="Name" />
-      <input value={person.email} onChange={(event) => onChange({ ...person, email: event.target.value })} className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold" placeholder="Email" />
     </div>
   );
 }
@@ -1582,7 +1640,7 @@ function CreateProjectModal({ onClose, onCreate }) {
     menuType: MENU_TYPES.PROMOTIONAL,
     launchDate: "",
     projectOwners: [],
-    districtChefOwner: defaultSsmtOwner(),
+    districtChefOwners: defaultSsmtOwners(),
   });
 
   const submit = () => {
@@ -1599,7 +1657,7 @@ function CreateProjectModal({ onClose, onCreate }) {
       createdBy: projectOwners.map((person) => person.name || person.email).join(", "),
       projectOwners,
       projectOwner: projectOwners[0] || { name: "", email: "" },
-      districtChefOwner: form.districtChefOwner,
+      districtChefOwners: form.districtChefOwners,
     });
   };
 
@@ -1629,12 +1687,12 @@ function CreateProjectModal({ onClose, onCreate }) {
               people={form.projectOwners}
               onChange={(projectOwners) => setForm({ ...form, projectOwners })}
             />
-            <p className="mt-2 text-xs font-bold text-slate-500">Add a project owner when you know who owns the brief. District Chef / SSMT Owner starts with Tyler.</p>
+            <p className="mt-2 text-xs font-bold text-slate-500">Add a project owner when you know who owns the brief. District Chef / SSMT Owners are hard-wired to Tyler and Alex.</p>
           </div>
-          <PersonEditor
-            label="District Chef / SSMT Owner"
-            person={form.districtChefOwner}
-            onChange={(districtChefOwner) => setForm({ ...form, districtChefOwner })}
+          <PeopleSummaryCard
+            label="District Chef / SSMT Owners"
+            people={form.districtChefOwners}
+            locked
           />
           <button type="button" onClick={submit} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 py-3 text-sm font-black text-white">
             Create Project
