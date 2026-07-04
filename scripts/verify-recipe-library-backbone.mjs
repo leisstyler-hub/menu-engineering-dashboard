@@ -36,6 +36,10 @@ assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "object-contai
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "md:text-5xl");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Review signal for pricing, categories, allergens, descriptions, and nutrition.");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "lg:grid-cols-4");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "loadDefaultMenuRows");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Photo Signal");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "[\"plating-guide\", \"recipe-file\"].includes(slot.type)");
+assertNotIncludes("src/features/recipe-database/RecipeDatabase.jsx", "slot.type === \"item-photo\" ? photo : null");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "proteinLabel");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Recipe instructions not attached yet");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "MenuWorks Truth Upload");
@@ -69,6 +73,9 @@ assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "recipe-fil
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "MENU_HEADER_ASSETS");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "getRecipeLibraryPhoto");
 assertIncludes("src/data/recipeLibraryAssets.js", "AMZ: Andes");
+assertIncludes("src/data/recipeLibraryAssets.js", "PHOTO_FIELD_KEYS");
+assertIncludes("src/data/recipeLibraryAssets.js", "photoUrl");
+assertIncludes("src/data/recipeLibraryAssets.js", "uploadedPhotoSource");
 assertIncludes("src/data/recipeLibraryAssets.js", "andes-group.jpg");
 assertIncludes("src/data/recipeLibraryAssets.js", "peruvian-stewed-chicken.jpg");
 

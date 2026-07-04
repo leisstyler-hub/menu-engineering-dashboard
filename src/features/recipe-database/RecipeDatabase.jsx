@@ -1,7 +1,6 @@
-import React, { useMemo, useState } from "react";
-import { Activity, AlertTriangle, ArrowLeft, Camera, ChefHat, Database, DollarSign, FileDown, FileText, Flame, Image as ImageIcon, ListChecks, Pencil, Save, Search, ShieldCheck, Sparkles, Utensils, X } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { Activity, AlertTriangle, ArrowLeft, Camera, Database, DollarSign, FileDown, FileText, Flame, ListChecks, Pencil, Save, Search, ShieldCheck, Sparkles, Utensils, X } from "lucide-react";
 
-import MENUWORKS_ITEMS from "../../data/menuItems.json";
 import { MENU_HEADER_ASSETS, getRecipeLibraryPhoto } from "../../data/recipeLibraryAssets.js";
 import { money, pct, priceLabel, titleCase } from "../../shared/formatting.js";
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
@@ -27,14 +26,19 @@ import {
   textValue,
 } from "./recipeLibraryModel.js";
 
-function readMenuRows() {
-  if (typeof window === "undefined") return MENUWORKS_ITEMS;
+function readStoredMenuRows() {
+  if (typeof window === "undefined") return null;
   try {
     const stored = JSON.parse(window.localStorage.getItem(MENU_ENGINEERING_OVERRIDE_STORAGE_KEY) || "null");
-    return Array.isArray(stored) && stored.length ? stored : MENUWORKS_ITEMS;
+    return Array.isArray(stored) && stored.length ? stored : null;
   } catch {
-    return MENUWORKS_ITEMS;
+    return null;
   }
+}
+
+async function loadDefaultMenuRows() {
+  const module = await import("../../data/menuItems.json");
+  return module.default || module;
 }
 
 function dietLabel(row) {
@@ -133,8 +137,82 @@ function downloadMenuCsv(menu, rows) {
   URL.revokeObjectURL(url);
 }
 
+function RecipeLibraryStatus({ title, detail, onBackToPlatform, onOpenSmartsheetHealth, tone = "loading" }) {
+  return (
+    <div className="recipe-library-page min-h-screen bg-[linear-gradient(180deg,#f6f7f9_0%,#eef7f2_100%)] p-4 text-slate-950 md:p-8">
+      <div className="mx-auto max-w-5xl space-y-5">
+        <header className="rounded-[2rem] border border-sky-200 bg-white p-5 shadow-xl md:p-7">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div>
+              <button type="button" onClick={onBackToPlatform} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-100">
+                <ArrowLeft size={16} />
+                Back to Platform
+              </button>
+              <div className="mt-5">
+                <p className="text-xs font-black uppercase tracking-[0.24em] text-emerald-600">Recipe Library</p>
+                <h1 className="mt-2 text-4xl font-black tracking-normal md:text-5xl">Recipe Library</h1>
+                <p className="mt-2 max-w-3xl text-base font-semibold leading-7 text-slate-600">{detail}</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <PlatformSettings onOpenSmartsheetHealth={onOpenSmartsheetHealth} />
+              <CompassOneLogo compact />
+              <VersionStamp />
+            </div>
+          </div>
+        </header>
+        <section className="rounded-[2rem] border border-sky-200 bg-white p-8 text-center shadow-xl">
+          {tone === "error" ? (
+            <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-amber-200 bg-amber-50 text-amber-800">
+              <AlertTriangle size={24} />
+            </div>
+          ) : (
+            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-emerald-500" />
+          )}
+          <p className="mt-5 text-xs font-black uppercase tracking-[0.18em] text-emerald-600">Library status</p>
+          <h2 className="mt-2 text-2xl font-black">{title}</h2>
+        </section>
+      </div>
+    </div>
+  );
+}
+
 export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealth }) {
-  const [rows, setRows] = useState(() => readMenuRows());
+  const [rowState, setRowState] = useState(() => {
+    const storedRows = readStoredMenuRows();
+    return {
+      rows: storedRows || [],
+      isMenuRowsLoading: !storedRows,
+    };
+  });
+  const [menuRowsLoadError, setMenuRowsLoadError] = useState("");
+  const { rows, isMenuRowsLoading } = rowState;
+  const setRows = (nextRows) => {
+    setRowState((current) => ({
+      rows: typeof nextRows === "function" ? nextRows(current.rows) : nextRows,
+      isMenuRowsLoading: false,
+    }));
+  };
+
+  useEffect(() => {
+    if (!isMenuRowsLoading) return undefined;
+    let isActive = true;
+    loadDefaultMenuRows()
+      .then((loadedRows) => {
+        if (!isActive) return;
+        setMenuRowsLoadError("");
+        setRowState({ rows: loadedRows, isMenuRowsLoading: false });
+      })
+      .catch((error) => {
+        if (!isActive) return;
+        setMenuRowsLoadError(error instanceof Error ? error.message : "Unable to load the MenuWorks item library.");
+        setRowState({ rows: [], isMenuRowsLoading: false });
+      });
+    return () => {
+      isActive = false;
+    };
+  }, [isMenuRowsLoading]);
+
   const menus = useMemo(() => {
     const grouped = Object.entries(countBy(rows, (row) => row.menu || "No menu assigned"))
       .map(([menu, count]) => ({ menu, count }))
@@ -176,6 +254,10 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
   const avgFc = pricedRows.length ? pricedRows.reduce((sum, row) => sum + foodCost(row), 0) / pricedRows.length : null;
   const allergenCoverage = selectedRows.length ? Math.round((selectedRows.filter((row) => allergenLabel(row) !== "No allergens listed").length / selectedRows.length) * 100) : 0;
   const descriptionCoverage = selectedRows.length ? Math.round((selectedRows.filter((row) => itemDescription(row) !== "No description loaded yet.").length / selectedRows.length) * 100) : 0;
+  const allPhotoRows = useMemo(() => rows.filter((row) => getRecipeLibraryPhoto(row)), [rows]);
+  const missingPhotoRows = Math.max(0, rows.length - allPhotoRows.length);
+  const selectedPhotoRows = useMemo(() => selectedRows.filter((row) => getRecipeLibraryPhoto(row)), [selectedRows]);
+  const selectedMissingPhotoRows = Math.max(0, selectedRows.length - selectedPhotoRows.length);
   const reviewRows = useMemo(() => selectedRows.filter((row) => itemTrustStatus(row) === "Needs Review"), [selectedRows]);
   const watchRows = useMemo(() => selectedRows.filter((row) => itemTrustStatus(row) === "Watch"), [selectedRows]);
   const dataQuality = useMemo(() => getMenuDataQuality(rows), [rows]);
@@ -186,6 +268,10 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
     const row = rows.find((candidate) => normalizeRecipeLibraryItem(candidate).item_key === selectedItemKey);
     return row ? normalizeRecipeLibraryItem(row) : null;
   }, [rows, selectedItemKey]);
+
+  useEffect(() => {
+    if (!selectedMenu && menus[0]?.menu) setSelectedMenu(menus[0].menu);
+  }, [menus, selectedMenu]);
 
   const saveLibraryItem = (patch) => {
     if (!selectedLibraryItem) return;
@@ -234,6 +320,14 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
     setPendingImport(null);
   };
 
+  if (isMenuRowsLoading) {
+    return <RecipeLibraryStatus title="Loading Recipe Library" detail="Opening the MenuWorks item library on demand so the platform home screen stays lighter." onBackToPlatform={onBackToPlatform} onOpenSmartsheetHealth={onOpenSmartsheetHealth} />;
+  }
+
+  if (menuRowsLoadError) {
+    return <RecipeLibraryStatus title="Recipe Library could not load" detail={menuRowsLoadError} onBackToPlatform={onBackToPlatform} onOpenSmartsheetHealth={onOpenSmartsheetHealth} tone="error" />;
+  }
+
   return (
     <div className="recipe-library-page min-h-screen bg-[linear-gradient(180deg,#f6f7f9_0%,#eef7f2_100%)] p-4 text-slate-950 md:p-8">
       <div className="mx-auto max-w-[96rem] space-y-5">
@@ -265,7 +359,7 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
           <MetricCard icon={Utensils} label="Menu Items" value={rows.length.toLocaleString()} detail="item property rows" />
           <MetricCard icon={ListChecks} label="Selected Menu" value={selectedRows.length.toLocaleString()} detail="items in view" />
           <MetricCard icon={ShieldCheck} label="Allergen Coverage" value={`${allergenCoverage}%`} detail="selected menu" />
-          <MetricCard icon={ChefHat} label="File Slots" value="4" detail="per item library card" tone="amber" />
+          <MetricCard icon={Camera} label="Photos" value={allPhotoRows.length.toLocaleString()} detail={`${missingPhotoRows.toLocaleString()} missing photos`} tone={missingPhotoRows ? "amber" : "green"} />
         </section>
 
         <MenuWorksRefreshPanel
@@ -348,7 +442,7 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
               <ReadoutCard icon={Sparkles} title="Data Read" value={`${descriptionCoverage}%`} detail="description coverage for this menu" tone="emerald" />
               <ReadoutCard icon={ShieldCheck} title="Safety Signal" value={`${allergenCoverage}%`} detail="allergen coverage for this menu" tone="sky" />
               <ReadoutCard icon={AlertTriangle} title="Data Confidence" value={`${reviewRows.length}`} detail={`${watchRows.length} watch rows; Needs Review rows are flagged on cards`} tone="amber" />
-              <ReadoutCard icon={ChefHat} title="Recipe Status" value="Slots ready" detail="recipes attach when source files are loaded" tone="amber" />
+              <ReadoutCard icon={Camera} title="Photo Signal" value={`${selectedPhotoRows.length}/${selectedRows.length}`} detail={`${selectedMissingPhotoRows} missing photos in this menu`} tone={selectedMissingPhotoRows ? "amber" : "emerald"} />
             </section>
 
             {Object.keys(groupedRows).length === 0 ? (
@@ -835,8 +929,8 @@ function LibraryCardDrawer({ item, onClose, onSave }) {
 
           {activeTab === "files" && (
             <div className="grid gap-3 sm:grid-cols-2">
-              {item.file_slots.map((slot) => (
-                <FileSlot key={slot.type} slot={slot} photo={slot.type === "item-photo" ? photo : null} />
+              {item.file_slots.filter((slot) => ["plating-guide", "recipe-file"].includes(slot.type)).map((slot) => (
+                <FileSlot key={slot.type} slot={slot} />
               ))}
             </div>
           )}
@@ -864,22 +958,17 @@ function LibraryTextArea({ label, value, onChange }) {
   );
 }
 
-function FileSlot({ slot, photo }) {
-  const Icon = slot.type === "item-photo" ? ImageIcon : slot.type === "plating-guide" ? Camera : FileText;
+function FileSlot({ slot }) {
+  const Icon = slot.type === "plating-guide" ? Camera : FileText;
   return (
     <article className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-      {photo && (
-        <div className="mb-3 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-          <img src={photo.src} alt={photo.alt} className="h-36 w-full object-cover" loading="lazy" />
-        </div>
-      )}
       <div className="flex items-start gap-3">
         <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-700">
           <Icon size={20} />
         </div>
         <div className="min-w-0">
           <p className="text-base font-black text-slate-950">{slot.label}</p>
-          <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">{photo ? "Photo attached from Andes menu photography." : slot.emptyText}</p>
+          <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">{slot.emptyText}</p>
           <p className="mt-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-black text-slate-500">Bucket: {slot.bucket}</p>
         </div>
       </div>

@@ -2,6 +2,11 @@
 
 ## 2026-07-04
 
+- [Jul 4, 1:07 PM] Added Recipe Library photo coverage signals for total attached photos and missing photo gaps by selected menu.
+- [Jul 4, 1:07 PM] Expanded Recipe Library photo lookup to support future uploaded photo fields and file attachment records beyond the current Andes assets.
+- [Jul 4, 1:07 PM] Changed Recipe Library to load the heavy MenuWorks item bundle on demand instead of importing it directly into the tool shell.
+- [Jul 4, 1:07 PM] Cleaned the item Files tab down to only Plating Guide and Recipe so duplicate Photo and obsolete Source Document tiles no longer render.
+- [Jul 4, 1:07 PM] Set visible app version to `2026.07.04.004-recipe-library-photo-signal`.
 - [Jul 4, 12:52 PM] Fixed Recipe Library card opening so shared MRNs no longer open the wrong menu row and lose the attached item photo.
 - [Jul 4, 12:52 PM] Added a Recipe Library photo integrity audit so every catalog card with a photo must open a drawer with the same photo.
 - [Jul 4, 12:52 PM] Set visible app version to `2026.07.04.003-recipe-library-photo-integrity`.

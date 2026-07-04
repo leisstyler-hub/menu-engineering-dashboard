@@ -26,6 +26,21 @@ const ANDES_ITEM_PHOTOS = {
   "yucca fries": "yucca-fries.jpg",
 };
 
+const PHOTO_FIELD_KEYS = [
+  "photoUrl",
+  "photoURL",
+  "photo_url",
+  "itemPhotoUrl",
+  "item_photo_url",
+  "itemPhotoPath",
+  "photoPath",
+  "imageUrl",
+  "image_url",
+  "imagePath",
+  "photo",
+  "image",
+];
+
 function normalizeAssetText(value) {
   return String(value || "")
     .toLowerCase()
@@ -35,7 +50,44 @@ function normalizeAssetText(value) {
     .trim();
 }
 
+function photoString(value) {
+  if (!value) return "";
+  if (typeof value === "string") return value.trim();
+  if (typeof value === "object") {
+    return photoString(value.src || value.url || value.path || value.href || value.publicUrl || value.public_url);
+  }
+  return "";
+}
+
+function uploadedPhotoSource(rowOrItem = {}) {
+  for (const key of PHOTO_FIELD_KEYS) {
+    const src = photoString(rowOrItem[key]);
+    if (src) return src;
+  }
+
+  const documentRows = [
+    ...(Array.isArray(rowOrItem.documents) ? rowOrItem.documents : []),
+    ...(Array.isArray(rowOrItem.files) ? rowOrItem.files : []),
+    ...(Array.isArray(rowOrItem.file_attachments) ? rowOrItem.file_attachments : []),
+  ];
+  const photoDocument = documentRows.find((file) => {
+    const typeText = normalizeAssetText([file?.type, file?.category, file?.fileCategory, file?.label, file?.name].filter(Boolean).join(" "));
+    return typeText.includes("photo") || typeText.includes("image");
+  });
+  return photoString(photoDocument);
+}
+
 export function getRecipeLibraryPhoto(rowOrItem = {}) {
+  const uploadedSrc = uploadedPhotoSource(rowOrItem);
+  if (uploadedSrc) {
+    return {
+      src: uploadedSrc,
+      alt: `${rowOrItem.display_name || rowOrItem.displayName || rowOrItem.item || rowOrItem.recipe_name || "Recipe item"} photo`,
+      label: "Photo attached",
+      source: "uploaded",
+    };
+  }
+
   const menu = rowOrItem.menu || "";
   if (menu !== "AMZ: Andes") return null;
   const searchable = normalizeAssetText([
@@ -55,5 +107,6 @@ export function getRecipeLibraryPhoto(rowOrItem = {}) {
     src: `${ANDES_ASSET_BASE}/${fileName}`,
     alt: `${dishName} photo`,
     label: "Photo attached",
+    source: "curated",
   };
 }
