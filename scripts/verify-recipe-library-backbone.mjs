@@ -28,6 +28,11 @@ assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Recipe Librar
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "LibraryCardDrawer");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "justify-center");
 assertNotIncludes("src/features/recipe-database/RecipeDatabase.jsx", "recipe-library-drawer ml-auto");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "max-w-5xl");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "object-contain");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "md:text-5xl");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Review signal for pricing, categories, allergens, descriptions, and nutrition.");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "lg:grid-cols-4");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "proteinLabel");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Recipe instructions not attached yet");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "MenuWorks Truth Upload");

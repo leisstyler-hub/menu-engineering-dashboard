@@ -312,9 +312,9 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
           <section className="space-y-5">
             <section className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-xl">
               {selectedMenuHeaderAsset && (
-                <div className="mb-5 overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-100">
-                  <img src={selectedMenuHeaderAsset.src} alt={selectedMenuHeaderAsset.alt} className="h-52 w-full object-cover md:h-64" loading="lazy" />
-                </div>
+              <div className="mb-5 overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-100">
+                <img src={selectedMenuHeaderAsset.src} alt={selectedMenuHeaderAsset.alt} className="h-56 w-full object-contain md:h-80" loading="lazy" />
+              </div>
               )}
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div>
@@ -709,52 +709,56 @@ function LibraryCardDrawer({ item, onClose, onSave }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/40 p-3 backdrop-blur-sm md:p-8" role="dialog" aria-modal="true">
-      <section className="recipe-library-drawer mx-auto flex max-h-[calc(100vh-1.5rem)] w-full max-w-3xl flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-2xl md:mt-4 md:max-h-[calc(100vh-4rem)]">
-        <div className="border-b border-slate-200 bg-slate-50 p-4 md:p-5">
-          {photo && (
-            <div className="mb-4 overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white">
-              <img src={photo.src} alt={photo.alt} className="h-60 w-full object-cover md:h-72" />
-            </div>
-          )}
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-600">Recipe Library Card</p>
-              <h2 className="mt-2 text-2xl font-black leading-tight text-slate-950 md:text-3xl">{item.display_name}</h2>
-              <p className="mt-2 text-sm font-bold text-slate-500">{item.menu || "No menu"} / {item.station || "No station"} / {item.category_group || item.category || "No category"}</p>
-            </div>
-            <button type="button" onClick={onClose} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-100" aria-label="Close library card">
-              <X size={19} />
-            </button>
-          </div>
+      <section className="recipe-library-drawer mx-auto flex max-h-[calc(100vh-1.5rem)] w-full max-w-5xl flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-2xl md:mt-4 md:max-h-[calc(100vh-4rem)]">
+        <div className="border-b border-slate-200 bg-slate-50 p-5 md:p-6">
+          <div className={`grid gap-5 ${photo ? "lg:grid-cols-[minmax(0,1.15fr)_minmax(21rem,0.85fr)]" : ""}`}>
+            {photo && (
+              <div className="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-sm">
+                <img src={photo.src} alt={photo.alt} className="max-h-[30rem] min-h-72 w-full object-contain md:min-h-96" />
+              </div>
+            )}
+            <div className="flex min-w-0 flex-col justify-between gap-5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-600">Recipe Library Card</p>
+                  <h2 className="mt-2 text-3xl font-black leading-tight text-slate-950 md:text-5xl">{item.display_name}</h2>
+                  <p className="mt-3 text-base font-bold leading-7 text-slate-500">{item.menu || "No menu"} / {item.station || "No station"} / {item.category_group || item.category || "No category"}</p>
+                </div>
+                <button type="button" onClick={onClose} className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-100" aria-label="Close library card">
+                  <X size={21} />
+                </button>
+              </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <InfoPill icon={Flame} label={caloriesLabel(item.calories)} tone="amber" />
-            <InfoPill icon={Activity} label={proteinLabel(item)} tone="sky" />
-            <InfoPill icon={DollarSign} label={priceLabel(item.price)} tone="green" />
-            <InfoPill icon={Database} label={item.mrn ? `MRN ${item.mrn}` : "MRN not loaded"} tone="slate" />
+              <div className="grid grid-cols-2 gap-3">
+                <InfoPill icon={Flame} label={caloriesLabel(item.calories)} tone="amber" />
+                <InfoPill icon={Activity} label={proteinLabel(item)} tone="sky" />
+                <InfoPill icon={DollarSign} label={priceLabel(item.price)} tone="green" />
+                <InfoPill icon={Database} label={item.mrn ? `MRN ${item.mrn}` : "MRN not loaded"} tone="slate" />
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 border-b border-slate-200 bg-white p-3">
+        <div className="grid grid-cols-3 gap-3 border-b border-slate-200 bg-white p-4">
           {["overview", "nutrition", "files"].map((tab) => (
             <button
               key={tab}
               type="button"
               onClick={() => setActiveTab(tab)}
-              className={`rounded-2xl px-3 py-2 text-sm font-black capitalize ${activeTab === tab ? "bg-slate-950 text-white" : "bg-slate-50 text-slate-600 hover:bg-slate-100"}`}
+              className={`rounded-2xl px-4 py-3 text-base font-black capitalize ${activeTab === tab ? "bg-slate-950 text-white" : "bg-slate-50 text-slate-600 hover:bg-slate-100"}`}
             >
               {tab}
             </button>
           ))}
         </div>
 
-        <div className="flex-1 overflow-auto p-4 md:p-5">
+        <div className="flex-1 overflow-auto p-5 md:p-6">
           {activeTab === "overview" && (
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Chef-Facing Details</p>
-                <button type="button" onClick={() => (isEditing ? save() : setIsEditing(true))} className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-black text-emerald-800 hover:bg-emerald-100">
-                  {isEditing ? <Save size={16} /> : <Pencil size={16} />}
+                <p className="text-sm font-black uppercase tracking-[0.18em] text-slate-400">Chef-Facing Details</p>
+                <button type="button" onClick={() => (isEditing ? save() : setIsEditing(true))} className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-base font-black text-emerald-800 hover:bg-emerald-100">
+                  {isEditing ? <Save size={18} /> : <Pencil size={18} />}
                   {isEditing ? "Save card" : "Edit card"}
                 </button>
               </div>
@@ -773,37 +777,42 @@ function LibraryCardDrawer({ item, onClose, onSave }) {
                 </div>
               ) : (
                 <>
-                  <div className="rounded-3xl border border-amber-200 bg-amber-50 p-4">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <p className="text-xs font-black uppercase tracking-[0.14em] text-amber-800">Data Confidence</p>
-                      <TrustBadge status={item.trust_status || "Trusted"} />
+                  <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5 md:p-6">
+                      <p className="text-sm font-black uppercase tracking-[0.14em] text-slate-400">Description</p>
+                      <p className="mt-3 text-lg font-semibold leading-8 text-slate-700">{item.description}</p>
                     </div>
-                    {item.trust_flags?.length ? (
-                      <div className="mt-3 space-y-2">
-                        {item.trust_flags.map((flag) => (
-                          <div key={`${flag.label}-${flag.detail}`} className="rounded-2xl border border-white bg-white/80 px-3 py-2">
-                            <p className="text-sm font-black text-slate-950">{flag.label}</p>
-                            <p className="mt-1 text-xs font-semibold leading-5 text-slate-600">{flag.detail}</p>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="mt-2 text-sm font-bold text-emerald-800">No pricing, category, allergen, description, or nutrition review flags.</p>
-                    )}
+                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5 md:p-6">
+                      <p className="text-sm font-black uppercase tracking-[0.14em] text-slate-400">Allergens</p>
+                      <p className="mt-3 break-words text-lg font-black leading-8 text-slate-800">{item.allergen_summary || allergenLabel(item.raw)}</p>
+                    </div>
                   </div>
-                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                    <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Description</p>
-                    <p className="mt-2 text-base font-semibold leading-7 text-slate-700">{item.description}</p>
-                  </div>
-                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                    <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Allergens</p>
-                    <p className="mt-2 text-base font-black leading-7 text-slate-800">{item.allergen_summary || allergenLabel(item.raw)}</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                     <Property label="Portion" value={item.portion || "Not loaded"} />
                     <Property label="Recipe category" value={item.recipe_category || "Not loaded"} />
                     <Property label="True cost" value={item.true_cost == null ? "Not loaded" : money(item.true_cost)} />
                     <Property label="Food cost" value={item.price && item.true_cost ? pct(item.true_cost / item.price) : "Not loaded"} />
+                  </div>
+                  <div className="rounded-3xl border border-amber-200 bg-amber-50 p-5 md:p-6">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-black uppercase tracking-[0.14em] text-amber-800">Data Confidence</p>
+                        <p className="mt-1 text-base font-bold text-amber-900">Review signal for pricing, categories, allergens, descriptions, and nutrition.</p>
+                      </div>
+                      <TrustBadge status={item.trust_status || "Trusted"} />
+                    </div>
+                    {item.trust_flags?.length ? (
+                      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+                        {item.trust_flags.map((flag) => (
+                          <div key={`${flag.label}-${flag.detail}`} className="rounded-2xl border border-white bg-white/80 px-4 py-3">
+                            <p className="text-base font-black text-slate-950">{flag.label}</p>
+                            <p className="mt-1 text-sm font-semibold leading-6 text-slate-600">{flag.detail}</p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-4 rounded-2xl border border-emerald-200 bg-white/80 px-4 py-3 text-base font-black text-emerald-800">No pricing, category, allergen, description, or nutrition review flags.</p>
+                    )}
                   </div>
                 </>
               )}
@@ -812,11 +821,11 @@ function LibraryCardDrawer({ item, onClose, onSave }) {
 
           {activeTab === "nutrition" && (
             <div className="space-y-4">
-              <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-4">
-                <p className="text-sm font-black text-emerald-900">Nutrition is stored deeper than we display.</p>
-                <p className="mt-1 text-sm font-semibold leading-6 text-emerald-800">Calories and protein stay visible now. Sodium, carbs, fats, sugars, cholesterol, and serving data are reserved for recipe building and future reporting.</p>
+              <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-5">
+                <p className="text-base font-black text-emerald-900">Nutrition is stored deeper than we display.</p>
+                <p className="mt-2 text-base font-semibold leading-7 text-emerald-800">Calories and protein stay visible now. Sodium, carbs, fats, sugars, cholesterol, and serving data are reserved for recipe building and future reporting.</p>
               </div>
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
                 {nutritionRows.map(([label, value]) => (
                   <Property key={label} label={label} value={value} />
                 ))}
@@ -880,9 +889,9 @@ function FileSlot({ slot, photo }) {
 
 function Property({ label, value }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-3">
-      <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">{label}</p>
-      <p className="mt-1 text-sm font-black text-slate-900">{value}</p>
+    <div className="rounded-2xl border border-slate-200 bg-white p-4">
+      <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">{label}</p>
+      <p className="mt-2 break-words text-base font-black text-slate-900">{value}</p>
     </div>
   );
 }
@@ -895,8 +904,8 @@ function InfoPill({ icon: Icon, label, tone }) {
     green: "border-emerald-200 bg-emerald-50 text-emerald-900",
   }[tone] || "border-emerald-200 bg-emerald-50 text-emerald-900";
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-black ${toneClass}`}>
-      <Icon size={13} />
+    <span className={`inline-flex items-center justify-center gap-2 rounded-2xl border px-4 py-2 text-sm font-black ${toneClass}`}>
+      <Icon size={16} />
       {label}
     </span>
   );

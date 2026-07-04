@@ -2,6 +2,11 @@
 
 ## 2026-07-04
 
+- [Jul 4, 12:36 PM] Reworked the Recipe Library item detail card into a wider, more readable drawer with larger title, tabs, metrics, descriptions, and allergen text.
+- [Jul 4, 12:36 PM] Made Recipe Library food photos and menu banner photos more viewable by giving them more room and reducing tight crop behavior.
+- [Jul 4, 12:36 PM] Moved item Data Confidence into a bottom review panel after the chef-facing details so the primary item information reads first.
+- [Jul 4, 12:36 PM] Added release guards for the wider Recipe Library card layout, larger type scale, and expanded photo display.
+- [Jul 4, 12:36 PM] Set visible app version to `2026.07.04.002-recipe-library-card-layout`.
 - [Jul 4, 12:27 PM] Fixed Menu Projects empty state so deleting every project stays empty instead of repopulating the three original sample projects.
 - [Jul 4, 12:27 PM] Removed automatic sample-project loading from the live Menu Projects screen while keeping the real database load and create-project flow intact.
 - [Jul 4, 12:27 PM] Added a release guard so Menu Projects cannot treat an empty saved list as a reason to reload examples.
