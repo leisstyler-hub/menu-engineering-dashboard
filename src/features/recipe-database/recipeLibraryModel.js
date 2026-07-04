@@ -163,6 +163,9 @@ export function recipeLibraryItemKey(row) {
 }
 
 export function normalizeRecipeLibraryItem(row) {
+  const recipeDocuments = Array.isArray(row?.recipeDocuments)
+    ? row.recipeDocuments.filter((document) => document?.is_active !== false)
+    : [];
   return {
     item_key: recipeLibraryItemKey(row),
     source_row_id: row?.id ?? null,
@@ -217,7 +220,19 @@ export function normalizeRecipeLibraryItem(row) {
     station_status: textValue(row, "stationStatus"),
     nutrition_payload: row?.nutrition || {},
     menuworks_raw: row?.menuWorksRaw || {},
-    file_slots: RECIPE_DOCUMENT_SLOTS,
+    recipe_documents: recipeDocuments,
+    file_slots: RECIPE_DOCUMENT_SLOTS.map((slot) => {
+      const document = recipeDocuments.find((entry) => entry.document_type === slot.type);
+      return {
+        ...slot,
+        document: document || null,
+        attached: Boolean(document),
+        fileName: document?.file_name || "",
+        versionLabel: document?.version_label || "",
+        signedUrl: document?.signed_url || "",
+        uploadedAt: document?.uploaded_at || "",
+      };
+    }),
     trust_flags: itemTrustFlags(row),
     trust_status: itemTrustStatus(row),
     raw: row || {},

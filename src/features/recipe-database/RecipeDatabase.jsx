@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Activity, AlertTriangle, ArrowLeft, Camera, Database, DollarSign, FileDown, FileText, Flame, ListChecks, Pencil, Save, Search, ShieldCheck, Sparkles, Utensils, X } from "lucide-react";
+import { Activity, AlertTriangle, ArrowLeft, Camera, Database, DollarSign, FileDown, FileText, Flame, ListChecks, Pencil, Save, Search, ShieldCheck, Sparkles, Upload, Utensils, X } from "lucide-react";
 
 import { MENU_HEADER_ASSETS, getRecipeLibraryPhoto } from "../../data/recipeLibraryAssets.js";
 import { money, pct, priceLabel, titleCase } from "../../shared/formatting.js";
@@ -22,6 +22,7 @@ import {
   itemName,
   normalizeRecipeLibraryItem,
   proteinLabel,
+  recipeLibraryItemKey,
   recipeLibraryCategoryGroup,
   textValue,
 } from "./recipeLibraryModel.js";
@@ -44,6 +45,76 @@ async function fetchRecipeLibraryPayload(scope, params = {}) {
     throw new Error(payload?.message || "Unable to load Recipe Library data.");
   }
   return payload;
+}
+
+async function postRecipeLibraryAction(action, body = {}) {
+  const response = await fetch("/api/recipe-library", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action, ...body }),
+  });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !payload?.ok) {
+    throw new Error(payload?.message || "Recipe Library update failed.");
+  }
+  return payload;
+}
+
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("Unable to read the selected file."));
+    reader.readAsDataURL(file);
+  });
+}
+
+function activeDocument(rowOrItem, type) {
+  const documents = rowOrItem?.recipe_documents || rowOrItem?.recipeDocuments || rowOrItem?.raw?.recipeDocuments || [];
+  return Array.isArray(documents) ? documents.find((document) => document?.document_type === type && document?.is_active !== false) : null;
+}
+
+function recipePhoto(rowOrItem) {
+  const photoDocument = activeDocument(rowOrItem, "item-photo");
+  if (photoDocument?.signed_url) {
+    return {
+      src: photoDocument.signed_url,
+      alt: photoDocument.file_name || `${itemName(rowOrItem?.raw || rowOrItem)} photo`,
+      source: "supabase",
+    };
+  }
+  const localPhoto = getRecipeLibraryPhoto(rowOrItem?.raw || rowOrItem);
+  return localPhoto ? { ...localPhoto, source: "asset" } : null;
+}
+
+function hasRecipePhoto(rowOrItem) {
+  return Boolean(recipePhoto(rowOrItem));
+}
+
+function recipeLibrarySourceLabel(source = "", usesLocalRows = false) {
+  if (usesLocalRows || source === "local-override") return "Local override";
+  if (source === "supabase-recipe-items") return "Supabase";
+  if (source === "server-menuworks-json") return "Server fallback";
+  return "Database checking";
+}
+
+function replaceRowByItemKey(rows = [], updatedRow) {
+  if (!updatedRow) return rows;
+  const updatedKey = recipeLibraryItemKey(updatedRow);
+  return rows.map((row) => (recipeLibraryItemKey(row) === updatedKey ? { ...row, ...updatedRow } : row));
+}
+
+function attachDocumentToRows(rows = [], itemKey, document) {
+  if (!itemKey || !document) return rows;
+  return rows.map((row) => {
+    if (recipeLibraryItemKey(row) !== itemKey) return row;
+    const currentDocuments = Array.isArray(row.recipeDocuments) ? row.recipeDocuments : [];
+    const nextDocuments = [
+      document,
+      ...currentDocuments.filter((entry) => entry.document_type !== document.document_type),
+    ];
+    return { ...row, recipeDocuments: nextDocuments };
+  });
 }
 
 function dietLabel(row) {
@@ -168,6 +239,7 @@ function RecipeLibraryStatus({ title, detail, onBackToPlatform, onOpenSmartsheet
             <div className="flex flex-wrap items-center gap-2">
               <PlatformSettings onOpenSmartsheetHealth={onOpenSmartsheetHealth} />
               <CompassOneLogo compact />
+              <DatabaseSourceChip source={databaseSource} usesLocalRows={usesLocalRows} />
               <VersionStamp />
             </div>
           </div>
@@ -196,12 +268,13 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
       menuSummaries: storedRows ? deriveMenuEntries(storedRows) : [],
       librarySummary: storedRows ? getMenuDataQuality(storedRows) : null,
       usesLocalRows: Boolean(storedRows),
+      source: storedRows ? "local-override" : "",
       isMenuRowsLoading: !storedRows,
       isSelectedMenuLoading: false,
     };
   });
   const [menuRowsLoadError, setMenuRowsLoadError] = useState("");
-  const { rows, menuSummaries, librarySummary, usesLocalRows, isMenuRowsLoading, isSelectedMenuLoading } = rowState;
+  const { rows, menuSummaries, librarySummary, usesLocalRows, source: databaseSource, isMenuRowsLoading, isSelectedMenuLoading } = rowState;
   const setRows = (nextRows) => {
     setRowState((current) => {
       const resolvedRows = typeof nextRows === "function" ? nextRows(current.rows) : nextRows;
@@ -211,6 +284,7 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
         menuSummaries: deriveMenuEntries(resolvedRows),
         librarySummary: getMenuDataQuality(resolvedRows),
         usesLocalRows: true,
+        source: "local-override",
         isMenuRowsLoading: false,
         isSelectedMenuLoading: false,
       };
@@ -229,6 +303,7 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
           menuSummaries: payload.menus || [],
           librarySummary: payload.summary || null,
           usesLocalRows: false,
+          source: payload.source || "server-menuworks-json",
           isMenuRowsLoading: false,
           isSelectedMenuLoading: false,
         });
@@ -241,6 +316,7 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
           menuSummaries: [],
           librarySummary: null,
           usesLocalRows: false,
+          source: "error",
           isMenuRowsLoading: false,
           isSelectedMenuLoading: false,
         });
@@ -289,9 +365,9 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
   const avgFc = pricedRows.length ? pricedRows.reduce((sum, row) => sum + foodCost(row), 0) / pricedRows.length : null;
   const allergenCoverage = selectedRows.length ? Math.round((selectedRows.filter((row) => allergenLabel(row) !== "No allergens listed").length / selectedRows.length) * 100) : 0;
   const descriptionCoverage = selectedRows.length ? Math.round((selectedRows.filter((row) => itemDescription(row) !== "No description loaded yet.").length / selectedRows.length) * 100) : 0;
-  const allPhotoRows = useMemo(() => rows.filter((row) => getRecipeLibraryPhoto(row)), [rows]);
+  const allPhotoRows = useMemo(() => rows.filter(hasRecipePhoto), [rows]);
   const missingPhotoRows = Math.max(0, (librarySummary?.total ?? rows.length) - (librarySummary?.photoRows ?? allPhotoRows.length));
-  const selectedPhotoRows = useMemo(() => selectedRows.filter((row) => getRecipeLibraryPhoto(row)), [selectedRows]);
+  const selectedPhotoRows = useMemo(() => selectedRows.filter(hasRecipePhoto), [selectedRows]);
   const selectedMissingPhotoRows = Math.max(0, selectedRows.length - selectedPhotoRows.length);
   const reviewRows = useMemo(() => selectedRows.filter((row) => itemTrustStatus(row) === "Needs Review"), [selectedRows]);
   const watchRows = useMemo(() => selectedRows.filter((row) => itemTrustStatus(row) === "Watch"), [selectedRows]);
@@ -323,6 +399,7 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
           menuSummaries: payload.menus || current.menuSummaries,
           librarySummary: payload.summary || current.librarySummary,
           usesLocalRows: false,
+          source: payload.source || current.source || "server-menuworks-json",
           isMenuRowsLoading: false,
           isSelectedMenuLoading: false,
         }));
@@ -348,12 +425,49 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
 
   const saveLibraryItem = async (patch) => {
     if (!selectedLibraryItem) return;
+    if (!usesLocalRows) {
+      const payload = await postRecipeLibraryAction("updateRecipeItem", {
+        itemKey: selectedLibraryItem.item_key,
+        patch,
+      });
+      if (payload.row) {
+        setRowState((current) => ({
+          ...current,
+          rows: replaceRowByItemKey(current.rows, payload.row),
+          source: payload.source || current.source || "supabase-recipe-items",
+          usesLocalRows: false,
+        }));
+      }
+      return payload;
+    }
     const currentRows = await ensureFullRecipeRows();
     const nextRows = applyRecipeLibraryEdit(currentRows, selectedLibraryItem, patch);
     setRows(nextRows);
     if (typeof window !== "undefined") {
       window.localStorage.setItem(MENU_ENGINEERING_OVERRIDE_STORAGE_KEY, JSON.stringify(nextRows));
     }
+    return { ok: true, source: "local-override", message: "Saved to this browser's local Recipe Library override." };
+  };
+
+  const uploadRecipeDocument = async ({ item, documentType, file }) => {
+    if (!item?.item_key || !file) return null;
+    const fileBase64 = await readFileAsBase64(file);
+    const payload = await postRecipeLibraryAction("uploadRecipeDocument", {
+      itemKey: item.item_key,
+      documentType,
+      fileName: file.name,
+      mimeType: file.type || "application/octet-stream",
+      fileBase64,
+      uploadedBy: "Recipe Library",
+    });
+    if (payload.document) {
+      setRowState((current) => ({
+        ...current,
+        rows: attachDocumentToRows(current.rows, item.item_key, payload.document),
+        source: current.source === "local-override" ? current.source : "supabase-recipe-items",
+      }));
+    }
+    return payload;
   };
 
   const parseMenuWorksFile = async (event) => {
@@ -546,6 +660,7 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
           item={selectedLibraryItem}
           onClose={() => setSelectedItemKey("")}
           onSave={saveLibraryItem}
+          onUploadDocument={uploadRecipeDocument}
         />
       )}
       {pendingImport && (
@@ -574,6 +689,21 @@ function MetricCard({ icon: Icon, label, value, detail, tone = "green" }) {
         </div>
       </div>
     </article>
+  );
+}
+
+function DatabaseSourceChip({ source, usesLocalRows }) {
+  const label = recipeLibrarySourceLabel(source, usesLocalRows);
+  const toneClass = label === "Supabase"
+    ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+    : label === "Local override"
+      ? "border-amber-200 bg-amber-50 text-amber-900"
+      : "border-sky-200 bg-sky-50 text-sky-900";
+  return (
+    <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-black ${toneClass}`}>
+      <Database size={14} />
+      {label}
+    </span>
   );
 }
 
@@ -790,7 +920,7 @@ function ItemCard({ row, onOpen }) {
   const diet = dietLabel(row);
   const fc = foodCost(row);
   const libraryItem = normalizeRecipeLibraryItem(row);
-  const photo = getRecipeLibraryPhoto(row);
+  const photo = recipePhoto(row);
   const trustFlags = itemTrustFlags(row);
   const trustStatus = itemTrustStatus(row);
   return (
@@ -851,11 +981,13 @@ function ItemCard({ row, onOpen }) {
   );
 }
 
-function LibraryCardDrawer({ item, onClose, onSave }) {
+function LibraryCardDrawer({ item, onClose, onSave, onUploadDocument }) {
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const photo = getRecipeLibraryPhoto(item);
+  const [saveStatus, setSaveStatus] = useState("");
+  const photo = recipePhoto(item);
+  const photoSlot = item.file_slots.find((slot) => slot.type === "item-photo");
   const [draft, setDraft] = useState(() => ({
     display_name: item.display_name || "",
     description: item.description || "",
@@ -868,9 +1000,13 @@ function LibraryCardDrawer({ item, onClose, onSave }) {
 
   const save = async () => {
     setIsSaving(true);
+    setSaveStatus("");
     try {
-      await onSave(draft);
+      const payload = await onSave(draft);
       setIsEditing(false);
+      setSaveStatus(payload?.message || "Recipe Library card saved.");
+    } catch (error) {
+      setSaveStatus(error instanceof Error ? error.message : "Recipe Library card could not save.");
     } finally {
       setIsSaving(false);
     }
@@ -916,6 +1052,13 @@ function LibraryCardDrawer({ item, onClose, onSave }) {
                 <InfoPill icon={DollarSign} label={priceLabel(item.price)} tone="green" />
                 <InfoPill icon={Database} label={item.mrn ? `MRN ${item.mrn}` : "MRN not loaded"} tone="slate" />
               </div>
+              <InlineDocumentUpload
+                item={item}
+                slot={photoSlot}
+                documentType="item-photo"
+                label={photo ? "Replace food photo" : "Upload food photo"}
+                onUploadDocument={onUploadDocument}
+              />
             </div>
           </div>
         </div>
@@ -943,6 +1086,9 @@ function LibraryCardDrawer({ item, onClose, onSave }) {
                   {isSaving ? "Saving..." : isEditing ? "Save card" : "Edit card"}
                 </button>
               </div>
+              {saveStatus && (
+                <p className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-black text-sky-900">{saveStatus}</p>
+              )}
 
               {isEditing ? (
                 <div className="grid gap-3">
@@ -1017,7 +1163,7 @@ function LibraryCardDrawer({ item, onClose, onSave }) {
           {activeTab === "files" && (
             <div className="grid gap-3 sm:grid-cols-2">
               {item.file_slots.filter((slot) => ["plating-guide", "recipe-file"].includes(slot.type)).map((slot) => (
-                <FileSlot key={slot.type} slot={slot} />
+                <FileSlot key={slot.type} item={item} slot={slot} onUploadDocument={onUploadDocument} />
               ))}
             </div>
           )}
@@ -1045,18 +1191,87 @@ function LibraryTextArea({ label, value, onChange }) {
   );
 }
 
-function FileSlot({ slot }) {
+function InlineDocumentUpload({ item, slot, documentType, label, onUploadDocument }) {
+  const [status, setStatus] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const upload = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setIsUploading(true);
+    setStatus("");
+    try {
+      const payload = await onUploadDocument({ item, documentType, file });
+      setStatus(payload?.message || "Saved to Supabase Storage.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Upload failed.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  return (
+    <label className="inline-flex cursor-pointer flex-col gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-700 hover:bg-slate-50">
+      <span className="inline-flex items-center gap-2">
+        <Upload size={16} />
+        {isUploading ? "Uploading..." : label}
+      </span>
+      {slot?.attached && (
+        <span className="text-xs font-bold text-emerald-700">{slot.fileName || "Photo attached"} {slot.versionLabel ? `(${slot.versionLabel})` : ""}</span>
+      )}
+      {status && <span className="text-xs font-bold text-sky-700">{status}</span>}
+      <input type="file" accept="image/png,image/jpeg,image/webp" onChange={upload} disabled={isUploading} className="hidden" />
+    </label>
+  );
+}
+
+function FileSlot({ item, slot, onUploadDocument }) {
   const Icon = slot.type === "plating-guide" ? Camera : FileText;
+  const [status, setStatus] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const accept = slot.type === "plating-guide" ? ".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx" : ".pdf,.doc,.docx,.xlsx,.xls";
+  const upload = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setIsUploading(true);
+    setStatus("");
+    try {
+      const payload = await onUploadDocument({ item, documentType: slot.type, file });
+      setStatus(payload?.message || "Saved to Supabase Storage.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Upload failed.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
     <article className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
       <div className="flex items-start gap-3">
         <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-700">
           <Icon size={20} />
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="text-base font-black text-slate-950">{slot.label}</p>
-          <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">{slot.emptyText}</p>
-          <p className="mt-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-black text-slate-500">Bucket: {slot.bucket}</p>
+          <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">
+            {slot.attached ? `${slot.fileName || "File attached"} ${slot.versionLabel ? `(${slot.versionLabel})` : ""}` : slot.emptyText}
+          </p>
+          <p className="mt-2 w-fit rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-black text-slate-500">Bucket: {slot.bucket}</p>
+          {status && <p className="mt-2 rounded-2xl border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-black text-sky-900">{status}</p>}
+          <div className="mt-3 flex flex-wrap gap-2">
+            <label className="inline-flex cursor-pointer items-center gap-2 rounded-2xl bg-slate-950 px-4 py-2 text-sm font-black text-white hover:bg-slate-800">
+              <Upload size={16} />
+              {isUploading ? "Uploading..." : slot.attached ? "Replace" : "Upload"}
+              <input type="file" accept={accept} onChange={upload} disabled={isUploading} className="hidden" />
+            </label>
+            {slot.signedUrl && (
+              <a href={slot.signedUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 hover:bg-slate-100">
+                <FileDown size={16} />
+                Download
+              </a>
+            )}
+          </div>
         </div>
       </div>
     </article>

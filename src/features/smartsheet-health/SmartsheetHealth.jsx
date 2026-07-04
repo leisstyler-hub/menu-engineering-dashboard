@@ -106,6 +106,7 @@ export default function SmartsheetHealth({ onBackToPlatform }) {
   const [menuWorksItems, setMenuWorksItems] = useState(storedMenuWorksItems);
   const [menuWorksLoadStatus, setMenuWorksLoadStatus] = useState(() => ({
     state: storedMenuWorksItems.length ? "ready" : "loading",
+    source: storedMenuWorksItems.length ? "local-override" : "",
     message: storedMenuWorksItems.length ? "Using local MenuWorks override." : "Loading Recipe Library audit rows...",
   }));
 
@@ -168,6 +169,7 @@ export default function SmartsheetHealth({ onBackToPlatform }) {
         setMenuWorksItems(rows);
         setMenuWorksLoadStatus({
           state: "ready",
+          source,
           message: source === "local-override" ? "Using local MenuWorks override." : "Recipe Library audit rows loaded.",
         });
       })
@@ -175,6 +177,7 @@ export default function SmartsheetHealth({ onBackToPlatform }) {
         if (!isActive) return;
         setMenuWorksLoadStatus({
           state: "error",
+          source: "error",
           message: error instanceof Error ? error.message : "Unable to load Recipe Library audit rows.",
         });
       });
@@ -569,9 +572,12 @@ function RecipeMappingTrustCard({ audit, loadStatus }) {
             Reviews the full Recipe Library menu set for selector coverage, item grouping risk, category spread, and the highest-risk menu families.
           </p>
         </div>
-        <span className="w-fit rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-black text-slate-600">
-          {Number(summary.rows || 0).toLocaleString()} items
-        </span>
+        <div className="flex flex-wrap gap-2">
+          <RecipeSourcePill source={loadStatus?.source} />
+          <span className="w-fit rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-black text-slate-600">
+            {Number(summary.rows || 0).toLocaleString()} items
+          </span>
+        </div>
       </div>
 
       {(isLoading || hasError) && (
@@ -607,6 +613,29 @@ function RecipeMappingTrustCard({ audit, loadStatus }) {
         ))}
       </div>
     </section>
+  );
+}
+
+function RecipeSourcePill({ source = "" }) {
+  const label = source === "supabase-recipe-items"
+    ? "Supabase"
+    : source === "local-override"
+      ? "Local override"
+      : source === "server-menuworks-json"
+        ? "Server fallback"
+        : source === "error"
+          ? "Source error"
+          : "Checking source";
+  const tone = label === "Supabase"
+    ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+    : label === "Local override" || label === "Source error"
+      ? "border-amber-200 bg-amber-50 text-amber-900"
+      : "border-sky-200 bg-sky-50 text-sky-900";
+  return (
+    <span className={`inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-xs font-black ${tone}`}>
+      <Database size={14} />
+      {label}
+    </span>
   );
 }
 

@@ -2,6 +2,10 @@
 
 ## 2026-07-04
 
+- [Jul 4, 2:21 PM] Added shared Recipe Library card saves so item edits write back to Supabase instead of only the current browser.
+- [Jul 4, 2:21 PM] Wired Recipe Library photo, plating guide, and recipe file uploads through Supabase Storage with versioned document records and download links.
+- [Jul 4, 2:21 PM] Added Supabase/fallback source chips to Recipe Library and Data Health so the active database source is visible.
+- [Jul 4, 2:21 PM] Set visible app version to `2026.07.04.009-recipe-library-shared-writes`.
 - [Jul 4, 2:15 PM] Added paged Supabase Recipe Library reads so the app pulls all `recipe_items` rows instead of stopping at Supabase's first 1,000-row response.
 - [Jul 4, 2:15 PM] Set visible app version to `2026.07.04.008-recipe-library-supabase-pages`.
 - [Jul 4, 2:08 PM] Hardened Recipe Library Supabase backfill so decimal calorie values are rounded before writing to the integer `recipe_items.calories` column.

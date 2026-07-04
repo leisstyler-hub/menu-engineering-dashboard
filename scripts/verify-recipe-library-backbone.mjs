@@ -47,6 +47,12 @@ assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "proteinLabel"
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Recipe instructions not attached yet");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "MenuWorks Truth Upload");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Accept Update + Replace Library Data");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "postRecipeLibraryAction");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "updateRecipeItem");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "uploadRecipeDocument");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Upload food photo");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "DatabaseSourceChip");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Supabase");
 
 assertNotIncludes("src/features/menu-engineering/MenuEngineeringDashboard.jsx", "Initiate MenuWorks Upload");
 assertNotIncludes("src/features/menu-engineering/MenuEngineeringDashboard.jsx", "parseMenuWorksFile");
@@ -58,6 +64,8 @@ assertIncludes("src/features/neighborhood-rotations/NeighborhoodRotations.jsx", 
 assertNotIncludes("src/features/neighborhood-rotations/NeighborhoodRotations.jsx", "../../data/menuItems.json");
 assertIncludes("src/features/smartsheet-health/SmartsheetHealth.jsx", "loadMenuWorksItemsFromApi");
 assertNotIncludes("src/features/smartsheet-health/SmartsheetHealth.jsx", "../../data/menuItems.json");
+assertIncludes("src/features/smartsheet-health/SmartsheetHealth.jsx", "RecipeSourcePill");
+assertIncludes("src/features/smartsheet-health/SmartsheetHealth.jsx", "supabase-recipe-items");
 assertNotIncludes("src/main.jsx", "weeklyTrafficEnhancer");
 assertIncludes("src/app/LandingPage.jsx", "/api/traffic/weekly");
 assertIncludes("src/app/LandingPage.jsx", "/api/recipe-library?scope=all");
@@ -93,6 +101,10 @@ assertIncludes("api/recipe-library.js", "scope === \"menu\"");
 assertIncludes("api/recipe-library.js", "scope === \"all\"");
 assertIncludes("api/recipe-library.js", "server-menuworks-json");
 assertIncludes("api/recipe-library.js", "backfillRecipeItems");
+assertIncludes("api/recipe-library.js", "updateRecipeItem");
+assertIncludes("api/recipe-library.js", "uploadRecipeDocument");
+assertIncludes("api/recipe-library.js", "recipe_item_documents");
+assertIncludes("api/recipe-library.js", "supabaseStorageFetch");
 assertIncludes("api/recipe-library.js", "recipe_items?on_conflict=item_key");
 assertIncludes("api/recipe-library.js", "supabase-recipe-items");
 
