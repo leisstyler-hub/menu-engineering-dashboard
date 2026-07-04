@@ -98,12 +98,16 @@ const supabaseSchema = readFileSync(join(root, "supabase/lean-results-schema.sql
   "Hard wired",
   "SAMPLE_PROJECT_NAMES",
   "savableMenuProjects",
-  "Sample Menu Projects are local only",
+  "No Menu Projects are currently saved.",
   "setProjects(remoteProjects.map(normalizeMenuProject))",
   "<main className=\"grid grid-cols-1 gap-5\">",
 ].forEach((needle) => {
   if (!ui.includes(needle)) throw new Error(`Menu Projects UI is missing ${needle}`);
 });
+
+if (ui.includes("filterDeletedMenuProjects(sampleProjects())") || ui.includes("return sampleProjects()")) {
+  throw new Error("Menu Projects still repopulates sample projects when no saved project records exist.");
+}
 
 if (ui.includes("Project owner(s) / chef(s), comma separated")) {
   throw new Error("Menu Projects create flow still uses the old name-only owner field.");

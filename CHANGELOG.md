@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-07-04
+
+- [Jul 4, 12:27 PM] Fixed Menu Projects empty state so deleting every project stays empty instead of repopulating the three original sample projects.
+- [Jul 4, 12:27 PM] Removed automatic sample-project loading from the live Menu Projects screen while keeping the real database load and create-project flow intact.
+- [Jul 4, 12:27 PM] Added a release guard so Menu Projects cannot treat an empty saved list as a reason to reload examples.
+- [Jul 4, 12:27 PM] Set visible app version to `2026.07.04.001-menu-project-empty-state`.
+
 ## 2026-07-02
 
 - [Jul 2, 8:38 PM] Fixed Menu Projects trash behavior so deleted projects create a local tombstone, delete from Supabase, and delete from the Smartsheet mirror instead of reappearing after leaving the tool.

@@ -44,7 +44,6 @@ import {
   getProjectStatus,
   makeNotification,
   reconcileProjectAfterFileDelete,
-  sampleProjects,
   sendBackForRevision,
   todayIso,
 } from "./menuProjectModel.js";
@@ -142,14 +141,14 @@ function normalizeMenuProject(project) {
 }
 
 function loadProjects() {
-  if (typeof window === "undefined") return sampleProjects();
+  if (typeof window === "undefined") return [];
   try {
     const stored = window.localStorage.getItem(MENU_PROJECT_STORAGE_KEY);
-    if (!stored) return filterDeletedMenuProjects(sampleProjects());
+    if (!stored) return [];
     const parsed = JSON.parse(stored);
-    return filterDeletedMenuProjects(Array.isArray(parsed) && parsed.length ? parsed.map(normalizeMenuProject) : sampleProjects());
+    return Array.isArray(parsed) ? filterDeletedMenuProjects(parsed.map(normalizeMenuProject)) : [];
   } catch {
-    return filterDeletedMenuProjects(sampleProjects());
+    return [];
   }
 }
 
@@ -388,9 +387,9 @@ async function syncMenuProjectsToBackbone(projects) {
   if (!records.length) {
     return {
       ok: true,
-      source: "local-demo",
-      state: "local-demo",
-      message: "Sample Menu Projects are local only. Create a real project to save it across phone and desktop.",
+      source: "empty",
+      state: "empty",
+      message: "No Menu Projects are currently saved.",
     };
   }
   return syncRecordsToBackbone(records, {
