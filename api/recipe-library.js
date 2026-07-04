@@ -4,6 +4,7 @@ import { itemDescription, normalizeRecipeLibraryItem, recipeLibraryCategoryGroup
 
 const DEFAULT_SUPABASE_URL = "https://pzilyzqhatthctgsjwtt.supabase.co";
 const SUPABASE_BATCH_SIZE = 250;
+const SUPABASE_READ_PAGE_SIZE = 1000;
 
 function cleanUrl(value = "") {
   return String(value || "").trim().replace(/\/+$/, "");
@@ -198,14 +199,24 @@ function recipeItemPayload(row = {}) {
 
 async function loadSupabaseRecipeRows() {
   try {
-    const params = new URLSearchParams({
-      select: "*",
-      visible_in_library: "eq.true",
-      order: "menu.asc,station.asc,display_name.asc",
-      limit: "20000",
-    });
-    const rows = await supabaseFetch(`recipe_items?${params.toString()}`);
-    return { ok: true, rows: Array.isArray(rows) ? rows.map(recipeItemToRow) : [], source: "supabase-recipe-items" };
+    const rows = [];
+    for (let offset = 0; offset < 50000; offset += SUPABASE_READ_PAGE_SIZE) {
+      const params = new URLSearchParams({
+        select: "*",
+        visible_in_library: "eq.true",
+        order: "menu.asc,station.asc,display_name.asc",
+      });
+      const page = await supabaseFetch(`recipe_items?${params.toString()}`, {
+        headers: {
+          "Range-Unit": "items",
+          Range: `${offset}-${offset + SUPABASE_READ_PAGE_SIZE - 1}`,
+        },
+      });
+      const pageRows = Array.isArray(page) ? page : [];
+      rows.push(...pageRows);
+      if (pageRows.length < SUPABASE_READ_PAGE_SIZE) break;
+    }
+    return { ok: true, rows: rows.map(recipeItemToRow), source: "supabase-recipe-items" };
   } catch (error) {
     return { ok: false, rows: [], source: "server-menuworks-json", message: error.message || "Supabase Recipe Library unavailable." };
   }

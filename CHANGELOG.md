@@ -2,6 +2,8 @@
 
 ## 2026-07-04
 
+- [Jul 4, 2:15 PM] Added paged Supabase Recipe Library reads so the app pulls all `recipe_items` rows instead of stopping at Supabase's first 1,000-row response.
+- [Jul 4, 2:15 PM] Set visible app version to `2026.07.04.008-recipe-library-supabase-pages`.
 - [Jul 4, 2:08 PM] Hardened Recipe Library Supabase backfill so decimal calorie values are rounded before writing to the integer `recipe_items.calories` column.
 - [Jul 4, 2:08 PM] Set visible app version to `2026.07.04.007-recipe-library-backfill-cast`.
 - [Jul 4, 1:52 PM] Added Supabase-first Recipe Library reads with a protected Recipe Library backfill action for the `recipe_items` table.
