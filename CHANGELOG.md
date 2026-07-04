@@ -2,6 +2,9 @@
 
 ## 2026-07-04
 
+- [Jul 4, 12:52 PM] Fixed Recipe Library card opening so shared MRNs no longer open the wrong menu row and lose the attached item photo.
+- [Jul 4, 12:52 PM] Added a Recipe Library photo integrity audit so every catalog card with a photo must open a drawer with the same photo.
+- [Jul 4, 12:52 PM] Set visible app version to `2026.07.04.003-recipe-library-photo-integrity`.
 - [Jul 4, 12:36 PM] Reworked the Recipe Library item detail card into a wider, more readable drawer with larger title, tabs, metrics, descriptions, and allergen text.
 - [Jul 4, 12:36 PM] Made Recipe Library food photos and menu banner photos more viewable by giving them more room and reducing tight crop behavior.
 - [Jul 4, 12:36 PM] Moved item Data Confidence into a bottom review panel after the chef-facing details so the primary item information reads first.

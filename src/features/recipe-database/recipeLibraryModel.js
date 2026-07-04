@@ -152,12 +152,13 @@ export function itemTrustStatus(row = {}) {
 }
 
 export function recipeLibraryItemKey(row) {
+  if (row?.id != null && row?.id !== "") return `row:${row.id}`;
   const mrn = textValue(row, "mrn", "MRN");
-  if (mrn) return `mrn:${mrn}`;
-  const recipeName = textValue(row, "recipeName");
-  if (recipeName) return `recipe:${recipeName.toLowerCase()}`;
-  const name = itemName(row).toLowerCase();
   const menu = textValue(row, "menu").toLowerCase();
+  if (mrn) return `mrn:${menu}:${mrn}`;
+  const recipeName = textValue(row, "recipeName");
+  if (recipeName) return `recipe:${menu}:${recipeName.toLowerCase()}`;
+  const name = itemName(row).toLowerCase();
   return `item:${menu}:${name}`;
 }
 

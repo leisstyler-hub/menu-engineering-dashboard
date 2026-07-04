@@ -1,5 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import MENUWORKS_ITEMS from "../src/data/menuItems.json" with { type: "json" };
+import { getRecipeLibraryPhoto } from "../src/data/recipeLibraryAssets.js";
+import { normalizeRecipeLibraryItem } from "../src/features/recipe-database/recipeLibraryModel.js";
 
 const root = process.cwd();
 
@@ -49,6 +52,7 @@ assertNotIncludes("src/app/LandingPage.jsx", "Smart Read");
 assertIncludes("src/shared/appConfig.js", "APP_VERSION_STAMP");
 
 assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "normalizeRecipeLibraryItem");
+assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "row:${row.id}");
 assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "culinaryToolsMenuEngineeringItems_v3");
 assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "protein_g");
 assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "sodium_mg");
@@ -80,6 +84,17 @@ assertIncludes("src/data/recipeLibraryAssets.js", "peruvian-stewed-chicken.jpg")
     throw new Error(`Recipe Library Andes asset missing: ${assetPath}`);
   }
 });
+
+const photoRows = MENUWORKS_ITEMS.filter((row) => getRecipeLibraryPhoto(row));
+const mismatchedPhotoRows = photoRows.filter((row) => {
+  const itemKey = normalizeRecipeLibraryItem(row).item_key;
+  const openedRow = MENUWORKS_ITEMS.find((candidate) => normalizeRecipeLibraryItem(candidate).item_key === itemKey);
+  return getRecipeLibraryPhoto(row)?.src !== getRecipeLibraryPhoto(openedRow || {})?.src;
+});
+
+if (mismatchedPhotoRows.length) {
+  throw new Error(`Recipe Library photo integrity failed for ${mismatchedPhotoRows.length} row(s): ${mismatchedPhotoRows.map((row) => `${row.menu} / ${row.item}`).join(", ")}`);
+}
 
 assertIncludes("supabase/recipe-library-schema.sql", "recipe_items");
 assertIncludes("supabase/recipe-library-schema.sql", "recipe_item_documents");
