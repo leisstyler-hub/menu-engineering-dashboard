@@ -66,6 +66,11 @@ function menuName(row) {
   return textValue(row, "menu") || "No menu assigned";
 }
 
+function nullableInteger(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.round(number) : null;
+}
+
 function recipeItemToRow(row = {}) {
   if (row.source_payload && typeof row.source_payload === "object" && Object.keys(row.source_payload).length) {
     return {
@@ -152,7 +157,7 @@ function recipeItemPayload(row = {}) {
     portion_oz: item.portion_oz,
     price: item.price,
     true_cost: item.true_cost,
-    calories: item.calories,
+    calories: nullableInteger(item.calories),
     protein_g: item.protein_g,
     sodium_mg: item.sodium_mg,
     carbs_g: item.carbs_g,

@@ -2,6 +2,8 @@
 
 ## 2026-07-04
 
+- [Jul 4, 2:08 PM] Hardened Recipe Library Supabase backfill so decimal calorie values are rounded before writing to the integer `recipe_items.calories` column.
+- [Jul 4, 2:08 PM] Set visible app version to `2026.07.04.007-recipe-library-backfill-cast`.
 - [Jul 4, 1:52 PM] Added Supabase-first Recipe Library reads with a protected Recipe Library backfill action for the `recipe_items` table.
 - [Jul 4, 1:52 PM] Moved Menu Engineering, Neighborhood Rotations, Data Health, Recipe Library, and dashboard trust CSV reads onto the shared MenuWorks API loader.
 - [Jul 4, 1:52 PM] Kept the local MenuWorks override path intact so accepted upload reviews and edited recipe cards still work while live reads come from Supabase/server fallback.
