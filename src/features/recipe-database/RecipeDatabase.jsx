@@ -36,9 +36,14 @@ function readStoredMenuRows() {
   }
 }
 
-async function loadDefaultMenuRows() {
-  const module = await import("../../data/menuItems.json");
-  return module.default || module;
+async function fetchRecipeLibraryPayload(scope, params = {}) {
+  const query = new URLSearchParams({ scope, ...params });
+  const response = await fetch(`/api/recipe-library?${query.toString()}`);
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !payload?.ok) {
+    throw new Error(payload?.message || "Unable to load Recipe Library data.");
+  }
+  return payload;
 }
 
 function dietLabel(row) {
@@ -86,6 +91,12 @@ function countBy(rows, getKey) {
     acc[key] = (acc[key] || 0) + 1;
     return acc;
   }, {});
+}
+
+function deriveMenuEntries(rows = []) {
+  return Object.entries(countBy(rows, (row) => row.menu || "No menu assigned"))
+    .map(([menu, count]) => ({ menu, count }))
+    .sort((a, b) => a.menu.localeCompare(b.menu));
 }
 
 function csvEscape(value) {
@@ -182,43 +193,64 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
     const storedRows = readStoredMenuRows();
     return {
       rows: storedRows || [],
+      menuSummaries: storedRows ? deriveMenuEntries(storedRows) : [],
+      librarySummary: storedRows ? getMenuDataQuality(storedRows) : null,
+      usesLocalRows: Boolean(storedRows),
       isMenuRowsLoading: !storedRows,
+      isSelectedMenuLoading: false,
     };
   });
   const [menuRowsLoadError, setMenuRowsLoadError] = useState("");
-  const { rows, isMenuRowsLoading } = rowState;
+  const { rows, menuSummaries, librarySummary, usesLocalRows, isMenuRowsLoading, isSelectedMenuLoading } = rowState;
   const setRows = (nextRows) => {
-    setRowState((current) => ({
-      rows: typeof nextRows === "function" ? nextRows(current.rows) : nextRows,
-      isMenuRowsLoading: false,
-    }));
+    setRowState((current) => {
+      const resolvedRows = typeof nextRows === "function" ? nextRows(current.rows) : nextRows;
+      return {
+        ...current,
+        rows: resolvedRows,
+        menuSummaries: deriveMenuEntries(resolvedRows),
+        librarySummary: getMenuDataQuality(resolvedRows),
+        usesLocalRows: true,
+        isMenuRowsLoading: false,
+        isSelectedMenuLoading: false,
+      };
+    });
   };
 
   useEffect(() => {
     if (!isMenuRowsLoading) return undefined;
     let isActive = true;
-    loadDefaultMenuRows()
-      .then((loadedRows) => {
+    fetchRecipeLibraryPayload("summary")
+      .then((payload) => {
         if (!isActive) return;
         setMenuRowsLoadError("");
-        setRowState({ rows: loadedRows, isMenuRowsLoading: false });
+        setRowState({
+          rows: [],
+          menuSummaries: payload.menus || [],
+          librarySummary: payload.summary || null,
+          usesLocalRows: false,
+          isMenuRowsLoading: false,
+          isSelectedMenuLoading: false,
+        });
       })
       .catch((error) => {
         if (!isActive) return;
         setMenuRowsLoadError(error instanceof Error ? error.message : "Unable to load the MenuWorks item library.");
-        setRowState({ rows: [], isMenuRowsLoading: false });
+        setRowState({
+          rows: [],
+          menuSummaries: [],
+          librarySummary: null,
+          usesLocalRows: false,
+          isMenuRowsLoading: false,
+          isSelectedMenuLoading: false,
+        });
       });
     return () => {
       isActive = false;
     };
   }, [isMenuRowsLoading]);
 
-  const menus = useMemo(() => {
-    const grouped = Object.entries(countBy(rows, (row) => row.menu || "No menu assigned"))
-      .map(([menu, count]) => ({ menu, count }))
-      .sort((a, b) => a.menu.localeCompare(b.menu));
-    return grouped;
-  }, [rows]);
+  const menus = useMemo(() => (menuSummaries?.length ? menuSummaries : deriveMenuEntries(rows)), [menuSummaries, rows]);
   const [selectedMenu, setSelectedMenu] = useState(() => menus[0]?.menu || "");
   const [menuSearch, setMenuSearch] = useState("");
   const [itemSearch, setItemSearch] = useState("");
@@ -229,7 +261,10 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
   const [uploadInitiationCode, setUploadInitiationCode] = useState("");
   const [uploadStatus, setUploadStatus] = useState("");
 
-  const selectedRows = useMemo(() => rows.filter((row) => (row.menu || "No menu assigned") === selectedMenu), [rows, selectedMenu]);
+  const selectedRows = useMemo(() => {
+    if (!usesLocalRows) return rows;
+    return rows.filter((row) => (row.menu || "No menu assigned") === selectedMenu);
+  }, [rows, selectedMenu, usesLocalRows]);
   const filteredMenuList = menus.filter((entry) => entry.menu.toLowerCase().includes(menuSearch.toLowerCase()));
   const categoryOptions = ["All", ...Array.from(new Set(selectedRows.map(categoryLabel))).sort((a, b) => categoryRank(a) - categoryRank(b) || a.localeCompare(b))];
   const filteredRows = selectedRows
@@ -255,12 +290,12 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
   const allergenCoverage = selectedRows.length ? Math.round((selectedRows.filter((row) => allergenLabel(row) !== "No allergens listed").length / selectedRows.length) * 100) : 0;
   const descriptionCoverage = selectedRows.length ? Math.round((selectedRows.filter((row) => itemDescription(row) !== "No description loaded yet.").length / selectedRows.length) * 100) : 0;
   const allPhotoRows = useMemo(() => rows.filter((row) => getRecipeLibraryPhoto(row)), [rows]);
-  const missingPhotoRows = Math.max(0, rows.length - allPhotoRows.length);
+  const missingPhotoRows = Math.max(0, (librarySummary?.total ?? rows.length) - (librarySummary?.photoRows ?? allPhotoRows.length));
   const selectedPhotoRows = useMemo(() => selectedRows.filter((row) => getRecipeLibraryPhoto(row)), [selectedRows]);
   const selectedMissingPhotoRows = Math.max(0, selectedRows.length - selectedPhotoRows.length);
   const reviewRows = useMemo(() => selectedRows.filter((row) => itemTrustStatus(row) === "Needs Review"), [selectedRows]);
   const watchRows = useMemo(() => selectedRows.filter((row) => itemTrustStatus(row) === "Watch"), [selectedRows]);
-  const dataQuality = useMemo(() => getMenuDataQuality(rows), [rows]);
+  const dataQuality = useMemo(() => librarySummary || getMenuDataQuality(rows), [librarySummary, rows]);
   const selectedMenuDataQuality = useMemo(() => getMenuDataQuality(selectedRows), [selectedRows]);
   const selectedMenuHeaderAsset = MENU_HEADER_ASSETS[selectedMenu] || null;
   const selectedLibraryItem = useMemo(() => {
@@ -273,9 +308,48 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
     if (!selectedMenu && menus[0]?.menu) setSelectedMenu(menus[0].menu);
   }, [menus, selectedMenu]);
 
-  const saveLibraryItem = (patch) => {
+  useEffect(() => {
+    if (usesLocalRows || isMenuRowsLoading || !selectedMenu) return undefined;
+    let isActive = true;
+    setSelectedItemKey("");
+    setRowState((current) => ({ ...current, rows: [], isSelectedMenuLoading: true }));
+    fetchRecipeLibraryPayload("menu", { menu: selectedMenu })
+      .then((payload) => {
+        if (!isActive) return;
+        setMenuRowsLoadError("");
+        setRowState((current) => ({
+          ...current,
+          rows: payload.rows || [],
+          menuSummaries: payload.menus || current.menuSummaries,
+          librarySummary: payload.summary || current.librarySummary,
+          usesLocalRows: false,
+          isMenuRowsLoading: false,
+          isSelectedMenuLoading: false,
+        }));
+        setSelectedItemKey("");
+        setCategoryFilter("All");
+        setDietFilter("All");
+      })
+      .catch((error) => {
+        if (!isActive) return;
+        setMenuRowsLoadError(error instanceof Error ? error.message : "Unable to load this menu.");
+        setRowState((current) => ({ ...current, rows: [], isSelectedMenuLoading: false }));
+      });
+    return () => {
+      isActive = false;
+    };
+  }, [selectedMenu, usesLocalRows, isMenuRowsLoading]);
+
+  const ensureFullRecipeRows = async () => {
+    if (usesLocalRows) return rows;
+    const payload = await fetchRecipeLibraryPayload("all");
+    return payload.rows || [];
+  };
+
+  const saveLibraryItem = async (patch) => {
     if (!selectedLibraryItem) return;
-    const nextRows = applyRecipeLibraryEdit(rows, selectedLibraryItem, patch);
+    const currentRows = await ensureFullRecipeRows();
+    const nextRows = applyRecipeLibraryEdit(currentRows, selectedLibraryItem, patch);
     setRows(nextRows);
     if (typeof window !== "undefined") {
       window.localStorage.setItem(MENU_ENGINEERING_OVERRIDE_STORAGE_KEY, JSON.stringify(nextRows));
@@ -293,8 +367,9 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
 
     try {
       setUploadStatus("Reading MenuWorks truth file...");
-      const review = await buildMenuWorksImportReview(file, rows);
-      setPendingImport(review);
+      const currentRows = await ensureFullRecipeRows();
+      const review = await buildMenuWorksImportReview(file, currentRows);
+      setPendingImport({ ...review, currentRows });
       setUploadStatus(`${review.importedRows.length.toLocaleString()} rows are ready for review from ${review.importedMenuNames.length.toLocaleString()} menus.`);
     } catch (error) {
       setUploadStatus(error instanceof Error ? error.message : "Unable to read this MenuWorks file.");
@@ -306,7 +381,7 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
   const acceptImport = () => {
     if (!pendingImport || uploadInitiationCode.trim() !== MENUWORKS_IMPORT_INITIATION_CODE) return;
     const importScope = new Set(pendingImport.importedMenuNames);
-    const retainedRows = rows.filter((row) => !importScope.has(row.menu));
+    const retainedRows = (pendingImport.currentRows || rows).filter((row) => !importScope.has(row.menu));
     const nextRows = [...retainedRows, ...pendingImport.importedRows].map((row, index) => ({ ...row, id: index }));
     setRows(nextRows);
     setSelectedMenu(pendingImport.importedMenuNames[0] || selectedMenu);
@@ -356,10 +431,10 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
 
         <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
           <MetricCard icon={Database} label="Menus" value={menus.length.toLocaleString()} detail="indexed menu groups" />
-          <MetricCard icon={Utensils} label="Menu Items" value={rows.length.toLocaleString()} detail="item property rows" />
+          <MetricCard icon={Utensils} label="Menu Items" value={(librarySummary?.total ?? rows.length).toLocaleString()} detail={usesLocalRows ? "local item property rows" : "server-indexed rows"} />
           <MetricCard icon={ListChecks} label="Selected Menu" value={selectedRows.length.toLocaleString()} detail="items in view" />
           <MetricCard icon={ShieldCheck} label="Allergen Coverage" value={`${allergenCoverage}%`} detail="selected menu" />
-          <MetricCard icon={Camera} label="Photos" value={allPhotoRows.length.toLocaleString()} detail={`${missingPhotoRows.toLocaleString()} missing photos`} tone={missingPhotoRows ? "amber" : "green"} />
+          <MetricCard icon={Camera} label="Photos" value={(librarySummary?.photoRows ?? allPhotoRows.length).toLocaleString()} detail={`${missingPhotoRows.toLocaleString()} missing photos`} tone={missingPhotoRows ? "amber" : "green"} />
         </section>
 
         <MenuWorksRefreshPanel
@@ -445,7 +520,13 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
               <ReadoutCard icon={Camera} title="Photo Signal" value={`${selectedPhotoRows.length}/${selectedRows.length}`} detail={`${selectedMissingPhotoRows} missing photos in this menu`} tone={selectedMissingPhotoRows ? "amber" : "emerald"} />
             </section>
 
-            {Object.keys(groupedRows).length === 0 ? (
+            {isSelectedMenuLoading ? (
+              <section className="rounded-[2rem] border border-slate-200 bg-white p-8 text-center shadow-xl">
+                <div className="mx-auto h-9 w-9 animate-spin rounded-full border-4 border-slate-200 border-t-emerald-500" />
+                <p className="mt-4 text-xl font-black text-slate-950">Loading selected menu</p>
+                <p className="mt-2 text-sm font-semibold text-slate-500">Pulling only the rows needed for this menu.</p>
+              </section>
+            ) : Object.keys(groupedRows).length === 0 ? (
               <section className="rounded-[2rem] border border-slate-200 bg-white p-8 text-center shadow-xl">
                 <p className="text-xl font-black text-slate-950">No items match this filter.</p>
                 <p className="mt-2 text-sm font-semibold text-slate-500">Clear search or filters to widen the view.</p>
@@ -773,6 +854,7 @@ function ItemCard({ row, onOpen }) {
 function LibraryCardDrawer({ item, onClose, onSave }) {
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const photo = getRecipeLibraryPhoto(item);
   const [draft, setDraft] = useState(() => ({
     display_name: item.display_name || "",
@@ -784,9 +866,14 @@ function LibraryCardDrawer({ item, onClose, onSave }) {
     true_cost: item.true_cost ?? "",
   }));
 
-  const save = () => {
-    onSave(draft);
-    setIsEditing(false);
+  const save = async () => {
+    setIsSaving(true);
+    try {
+      await onSave(draft);
+      setIsEditing(false);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const nutritionRows = [
@@ -851,9 +938,9 @@ function LibraryCardDrawer({ item, onClose, onSave }) {
             <div className="space-y-5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-sm font-black uppercase tracking-[0.18em] text-slate-400">Chef-Facing Details</p>
-                <button type="button" onClick={() => (isEditing ? save() : setIsEditing(true))} className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-base font-black text-emerald-800 hover:bg-emerald-100">
+                <button type="button" disabled={isSaving} onClick={() => (isEditing ? save() : setIsEditing(true))} className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-base font-black text-emerald-800 hover:bg-emerald-100 disabled:opacity-60">
                   {isEditing ? <Save size={18} /> : <Pencil size={18} />}
-                  {isEditing ? "Save card" : "Edit card"}
+                  {isSaving ? "Saving..." : isEditing ? "Save card" : "Edit card"}
                 </button>
               </div>
 

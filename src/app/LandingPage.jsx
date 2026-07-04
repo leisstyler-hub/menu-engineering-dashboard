@@ -173,8 +173,12 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
   } = DASHBOARD_SUMMARY;
 
   const handleDownloadTrustLayerGapList = async () => {
-    const module = await import("../data/menuItems.json");
-    downloadTrustLayerGapList(buildTrustGapRows(module.default || module));
+    const response = await fetch("/api/recipe-library?scope=all");
+    const payload = await response.json().catch(() => null);
+    if (!response.ok || !payload?.ok) {
+      throw new Error(payload?.message || "Unable to load Recipe Library rows for the trust action CSV.");
+    }
+    downloadTrustLayerGapList(buildTrustGapRows(payload.rows || []));
   };
 
   const tools = [

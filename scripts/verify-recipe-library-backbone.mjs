@@ -36,7 +36,10 @@ assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "object-contai
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "md:text-5xl");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Review signal for pricing, categories, allergens, descriptions, and nutrition.");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "lg:grid-cols-4");
-assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "loadDefaultMenuRows");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "/api/recipe-library");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "ensureFullRecipeRows");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "usesLocalRows");
+assertNotIncludes("src/features/recipe-database/RecipeDatabase.jsx", "import(\"../../data/menuItems.json\")");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Photo Signal");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "[\"plating-guide\", \"recipe-file\"].includes(slot.type)");
 assertNotIncludes("src/features/recipe-database/RecipeDatabase.jsx", "slot.type === \"item-photo\" ? photo : null");
@@ -49,8 +52,16 @@ assertNotIncludes("src/features/menu-engineering/MenuEngineeringDashboard.jsx", 
 assertNotIncludes("src/features/menu-engineering/MenuEngineeringDashboard.jsx", "parseMenuWorksFile");
 assertNotIncludes("src/features/menu-engineering/MenuEngineeringDashboard.jsx", "MENUWORKS_IMPORT_INITIATION_CODE");
 assertNotIncludes("src/features/menu-engineering/MenuEngineeringDashboard.jsx", "culinaryToolsMenuEngineeringItems_v2");
+assertIncludes("src/features/menu-engineering/MenuEngineeringDashboard.jsx", "loadMenuWorksItemsFromApi");
+assertNotIncludes("src/features/menu-engineering/MenuEngineeringDashboard.jsx", "../../data/menuItems.json");
+assertIncludes("src/features/neighborhood-rotations/NeighborhoodRotations.jsx", "loadMenuWorksItemsFromApi");
+assertNotIncludes("src/features/neighborhood-rotations/NeighborhoodRotations.jsx", "../../data/menuItems.json");
+assertIncludes("src/features/smartsheet-health/SmartsheetHealth.jsx", "loadMenuWorksItemsFromApi");
+assertNotIncludes("src/features/smartsheet-health/SmartsheetHealth.jsx", "../../data/menuItems.json");
 assertNotIncludes("src/main.jsx", "weeklyTrafficEnhancer");
 assertIncludes("src/app/LandingPage.jsx", "/api/traffic/weekly");
+assertIncludes("src/app/LandingPage.jsx", "/api/recipe-library?scope=all");
+assertNotIncludes("src/app/LandingPage.jsx", "import(\"../data/menuItems.json\")");
 assertNotIncludes("src/app/LandingPage.jsx", "Smart Read");
 
 assertIncludes("src/shared/appConfig.js", "APP_VERSION_STAMP");
@@ -78,6 +89,12 @@ assertIncludes("src/data/recipeLibraryAssets.js", "photoUrl");
 assertIncludes("src/data/recipeLibraryAssets.js", "uploadedPhotoSource");
 assertIncludes("src/data/recipeLibraryAssets.js", "andes-group.jpg");
 assertIncludes("src/data/recipeLibraryAssets.js", "peruvian-stewed-chicken.jpg");
+assertIncludes("api/recipe-library.js", "scope === \"menu\"");
+assertIncludes("api/recipe-library.js", "scope === \"all\"");
+assertIncludes("api/recipe-library.js", "server-menuworks-json");
+assertIncludes("api/recipe-library.js", "backfillRecipeItems");
+assertIncludes("api/recipe-library.js", "recipe_items?on_conflict=item_key");
+assertIncludes("api/recipe-library.js", "supabase-recipe-items");
 
 [
   "public/assets/recipe-library/andes/andes-group.jpg",

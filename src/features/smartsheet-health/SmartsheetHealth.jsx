@@ -6,10 +6,10 @@ import { SMARTSHEET_COLUMNS, SMARTSHEET_RECORD_TYPES } from "../../integrations/
 import { syncRecordsToBackbone } from "../../integrations/storage/backboneClient.js";
 import { loadSupabaseHealth, loadSupabaseStorageHealth } from "../../integrations/supabase/client.js";
 import { summarizeSupabaseHealth } from "../../integrations/supabase/healthStatus.js";
+import { loadMenuWorksItemsFromApi, readStoredMenuWorksItems } from "../../data/menuWorksClient.js";
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
 import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
-import MENUWORKS_ITEMS from "../../data/menuItems.json";
 import { buildRecipeMappingAudit } from "./recipeMappingAudit.js";
 import { buildRotationRecordAudit, buildStatusDriftRepairRecords } from "./rotationRecordAudit.js";
 
@@ -102,6 +102,12 @@ export default function SmartsheetHealth({ onBackToPlatform }) {
   const [supabaseHealth, setSupabaseHealth] = useState({ state: "idle", data: null, message: "Not checked yet" });
   const [auditRepairStatus, setAuditRepairStatus] = useState({ state: "idle", message: "" });
   const [lastChecked, setLastChecked] = useState("");
+  const storedMenuWorksItems = readStoredMenuWorksItems() || [];
+  const [menuWorksItems, setMenuWorksItems] = useState(storedMenuWorksItems);
+  const [menuWorksLoadStatus, setMenuWorksLoadStatus] = useState(() => ({
+    state: storedMenuWorksItems.length ? "ready" : "loading",
+    message: storedMenuWorksItems.length ? "Using local MenuWorks override." : "Loading Recipe Library audit rows...",
+  }));
 
   const refreshOne = async (setter, context = {}) => {
     setter({ state: "loading", data: null, message: "Checking Smartsheet..." });
@@ -153,13 +159,37 @@ export default function SmartsheetHealth({ onBackToPlatform }) {
     refreshAll();
   }, []);
 
+  useEffect(() => {
+    if (menuWorksItems.length) return undefined;
+    let isActive = true;
+    loadMenuWorksItemsFromApi()
+      .then(({ rows, source }) => {
+        if (!isActive) return;
+        setMenuWorksItems(rows);
+        setMenuWorksLoadStatus({
+          state: "ready",
+          message: source === "local-override" ? "Using local MenuWorks override." : "Recipe Library audit rows loaded.",
+        });
+      })
+      .catch((error) => {
+        if (!isActive) return;
+        setMenuWorksLoadStatus({
+          state: "error",
+          message: error instanceof Error ? error.message : "Unable to load Recipe Library audit rows.",
+        });
+      });
+    return () => {
+      isActive = false;
+    };
+  }, [menuWorksItems.length]);
+
   const combinedRecords = useMemo(() => [
     ...scopedRecords(mainHealth.data?.records || [], "menuSelection"),
     ...scopedRecords(leanHealth.data?.records || [], "lean"),
   ], [mainHealth.data, leanHealth.data]);
   const rotationRecords = useMemo(() => scopedRecords(mainHealth.data?.records || [], "menuSelection"), [mainHealth.data]);
   const rotationAudit = useMemo(() => buildRotationRecordAudit(rotationRecords), [rotationRecords]);
-  const recipeMappingAudit = useMemo(() => buildRecipeMappingAudit(MENUWORKS_ITEMS), []);
+  const recipeMappingAudit = useMemo(() => buildRecipeMappingAudit(menuWorksItems), [menuWorksItems]);
   const recordTypeRows = countBy(combinedRecords, SMARTSHEET_COLUMNS.recordType).slice(0, 8);
   const statusRows = countBy(combinedRecords, SMARTSHEET_COLUMNS.status).slice(0, 6);
   const districtRows = countBy(combinedRecords, SMARTSHEET_COLUMNS.district).filter(([name]) => name !== "Unclassified").slice(0, 6);
@@ -247,7 +277,7 @@ export default function SmartsheetHealth({ onBackToPlatform }) {
           onRepairStatusDrift={repairRotationStatusDrift}
         />
 
-        <RecipeMappingTrustCard audit={recipeMappingAudit} />
+        <RecipeMappingTrustCard audit={recipeMappingAudit} loadStatus={menuWorksLoadStatus} />
 
         <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <SummaryPanel icon={Activity} title="Record Types" rows={recordTypeRows} empty="No records loaded yet." />
@@ -524,9 +554,11 @@ function StatusPill({ status }) {
   );
 }
 
-function RecipeMappingTrustCard({ audit }) {
+function RecipeMappingTrustCard({ audit, loadStatus }) {
   const summary = audit.summary || {};
   const families = audit.families || [];
+  const isLoading = loadStatus?.state === "loading";
+  const hasError = loadStatus?.state === "error";
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -541,6 +573,12 @@ function RecipeMappingTrustCard({ audit }) {
           {Number(summary.rows || 0).toLocaleString()} items
         </span>
       </div>
+
+      {(isLoading || hasError) && (
+        <div className={`mt-4 rounded-lg border px-4 py-3 text-sm font-bold ${hasError ? "border-amber-200 bg-amber-50 text-amber-900" : "border-sky-200 bg-sky-50 text-sky-900"}`}>
+          {loadStatus?.message || "Loading Recipe Library audit rows..."}
+        </div>
+      )}
 
       <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4">
         <AuditMetric label="Menus" value={summary.menuCount || 0} tone="green" />

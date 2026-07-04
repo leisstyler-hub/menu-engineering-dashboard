@@ -2,6 +2,16 @@
 
 ## 2026-07-04
 
+- [Jul 4, 1:52 PM] Added Supabase-first Recipe Library reads with a protected Recipe Library backfill action for the `recipe_items` table.
+- [Jul 4, 1:52 PM] Moved Menu Engineering, Neighborhood Rotations, Data Health, Recipe Library, and dashboard trust CSV reads onto the shared MenuWorks API loader.
+- [Jul 4, 1:52 PM] Kept the local MenuWorks override path intact so accepted upload reviews and edited recipe cards still work while live reads come from Supabase/server fallback.
+- [Jul 4, 1:52 PM] Added release guards to prevent user-facing tools from reintroducing direct browser imports of the heavy `menuItems.json` asset.
+- [Jul 4, 1:52 PM] Set visible app version to `2026.07.04.006-menuworks-supabase-loader`.
+- [Jul 4, 1:27 PM] Added a secure Recipe Library API read endpoint with summary, selected-menu, and deliberate full-library scopes.
+- [Jul 4, 1:27 PM] Moved Recipe Library browsing and the dashboard trust action CSV off direct browser imports of the MenuWorks item file.
+- [Jul 4, 1:27 PM] Preserved MenuWorks upload and recipe-card edit integrity by fetching full rows only for those write/review actions.
+- [Jul 4, 1:27 PM] Added release guards so Recipe Library and the trust CSV cannot accidentally reintroduce direct client imports of `menuItems.json`.
+- [Jul 4, 1:27 PM] Set visible app version to `2026.07.04.005-recipe-library-api-read`.
 - [Jul 4, 1:07 PM] Added Recipe Library photo coverage signals for total attached photos and missing photo gaps by selected menu.
 - [Jul 4, 1:07 PM] Expanded Recipe Library photo lookup to support future uploaded photo fields and file attachment records beyond the current Andes assets.
 - [Jul 4, 1:07 PM] Changed Recipe Library to load the heavy MenuWorks item bundle on demand instead of importing it directly into the tool shell.

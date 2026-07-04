@@ -1,11 +1,10 @@
-﻿import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Search, Star, TrendingUp, HelpCircle, Dog, SlidersHorizontal, ChefHat, DollarSign } from "lucide-react";
 
-import MENUWORKS_ITEMS from "../../data/menuItems.json";
+import { loadMenuWorksItemsFromApi, readStoredMenuWorksItems } from "../../data/menuWorksClient.js";
 import { money, pct, priceLabel, smartMenuEngineeringSort, titleCase } from "../../shared/formatting.js";
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
 import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
-import { MENU_ENGINEERING_OVERRIDE_STORAGE_KEY } from "../recipe-database/recipeLibraryModel.js";
 
 function classify(marginHigh, volumeHigh) {
   if (marginHigh && volumeHigh) return "STAR";
@@ -53,13 +52,7 @@ const classConfig = {
 };
 
 function readStoredMenuItems() {
-  if (typeof window === "undefined") return MENUWORKS_ITEMS;
-  try {
-    const parsed = JSON.parse(window.localStorage.getItem(MENU_ENGINEERING_OVERRIDE_STORAGE_KEY) || "null");
-    return Array.isArray(parsed) && parsed.length ? parsed : MENUWORKS_ITEMS;
-  } catch {
-    return MENUWORKS_ITEMS;
-  }
+  return readStoredMenuWorksItems() || [];
 }
 
 function coveragePct(value, total) {
@@ -160,8 +153,13 @@ function calculateMenuHealth({ avgFoodCost, grossProfitPct, stars, cashCows, puz
 
 
 export default function MenuEngineeringDashboard({ onBackToPlatform, onOpenSmartsheetHealth }) {
-  const [menuItems] = useState(readStoredMenuItems);
-  const [selectedMenu, setSelectedMenu] = useState(MENUWORKS_ITEMS[0]?.menu || "");
+  const storedMenuItems = readStoredMenuItems();
+  const [menuItems, setMenuItems] = useState(storedMenuItems);
+  const [menuItemsLoad, setMenuItemsLoad] = useState(() => ({
+    state: storedMenuItems.length ? "ready" : "loading",
+    message: storedMenuItems.length ? "Using local MenuWorks override." : "Loading MenuWorks item data...",
+  }));
+  const [selectedMenu, setSelectedMenu] = useState("");
   const [globalSearch, setGlobalSearch] = useState("");
   const [fillUnitsValue, setFillUnitsValue] = useState(5);
   const [viewMode, setViewMode] = useState("operations");
@@ -172,6 +170,24 @@ export default function MenuEngineeringDashboard({ onBackToPlatform, onOpenSmart
   const [unitsById, setUnitsById] = useState({});
   const [manualMargin] = useState(5);
 
+  useEffect(() => {
+    if (menuItems.length) return undefined;
+    let isActive = true;
+    loadMenuWorksItemsFromApi()
+      .then(({ rows, source }) => {
+        if (!isActive) return;
+        setMenuItems(rows);
+        setMenuItemsLoad({ state: "ready", message: source === "local-override" ? "Using local MenuWorks override." : "Loaded MenuWorks items from server." });
+      })
+      .catch((error) => {
+        if (!isActive) return;
+        setMenuItemsLoad({ state: "error", message: error instanceof Error ? error.message : "Unable to load MenuWorks items." });
+      });
+    return () => {
+      isActive = false;
+    };
+  }, [menuItems.length]);
+
   const parsedTargetValue = targetFoodCost === "" ? null : Number(targetFoodCost);
   const parsedTargetFoodCost = parsedTargetValue == null ? null : targetMode === "foodCost" ? parsedTargetValue : 100 - parsedTargetValue;
   const parsedTargetMarginPct = parsedTargetValue == null ? null : targetMode === "grossMargin" ? parsedTargetValue : 100 - parsedTargetValue;
@@ -180,7 +196,7 @@ export default function MenuEngineeringDashboard({ onBackToPlatform, onOpenSmart
     const allMenuNames = Array.from(new Set(menuItems.map((item) => item.menu).filter(Boolean))).sort();
     return allMenuNames.map((menuName) => {
       const rows = menuItems.filter((item) => item.menu === menuName);
-      const stationSet = new Set(rows.map((item) => item.station || "â€”"));
+      const stationSet = new Set(rows.map((item) => item.station || "—"));
       return {
         menu: menuName,
         count: rows.length,
@@ -192,6 +208,10 @@ export default function MenuEngineeringDashboard({ onBackToPlatform, onOpenSmart
 
   const activeSelectedMenu = menus.some((m) => m.menu === selectedMenu) ? selectedMenu : menus[0]?.menu || "";
   const selectedMenuInfo = menus.find((m) => m.menu === activeSelectedMenu);
+
+  useEffect(() => {
+    if (!selectedMenu && menus[0]?.menu) setSelectedMenu(menus[0].menu);
+  }, [menus, selectedMenu]);
 
   const menuRows = useMemo(() => {
     const search = globalSearch.trim().toLowerCase();
@@ -242,8 +262,8 @@ export default function MenuEngineeringDashboard({ onBackToPlatform, onOpenSmart
           return {
             ...row,
             engineering: "COMPLIMENTARY",
-            marginRank: "â€”",
-            volumeRank: "â€”",
+            marginRank: "—",
+            volumeRank: "—",
           };
         }
 
@@ -434,7 +454,7 @@ export default function MenuEngineeringDashboard({ onBackToPlatform, onOpenSmart
               onClick={onBackToPlatform}
               className="rounded-2xl bg-slate-100 border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200"
             >
-              â† Back to Culinary Tools Platform
+              ← Back to Culinary Tools Platform
             </button>
             <div className="flex flex-wrap items-center gap-2">
               <PlatformSettings onOpenSmartsheetHealth={onOpenSmartsheetHealth} />
@@ -474,7 +494,7 @@ export default function MenuEngineeringDashboard({ onBackToPlatform, onOpenSmart
                 <select value={activeSelectedMenu} onChange={(e) => { setSelectedMenu(e.target.value); setCategory("All"); }} className="w-full rounded-2xl bg-white border border-slate-300 px-4 py-3 text-lg outline-none focus:border-slate-500">
                   {menus.map((menu) => (
                     <option key={menu.menu} value={menu.menu}>
-                      {menu.menu} â€” {menu.count} items
+                      {menu.menu} — {menu.count} items
                     </option>
                   ))}
                 </select>
@@ -483,13 +503,19 @@ export default function MenuEngineeringDashboard({ onBackToPlatform, onOpenSmart
           </div>
         </header>
 
+        {menuItemsLoad.state !== "ready" && (
+          <section className={`rounded-3xl border p-5 text-sm font-bold shadow-xl ${menuItemsLoad.state === "error" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-sky-200 bg-sky-50 text-sky-900"}`}>
+            {menuItemsLoad.message}
+          </section>
+        )}
+
         <section className="rounded-3xl bg-white border border-slate-200 p-5 shadow-xl">
           <div className="flex items-start gap-3">
             <div className="rounded-2xl bg-slate-100 border border-slate-200 p-3"><ChefHat size={22} /></div>
             <div>
               <p className="text-sm uppercase tracking-[0.18em] text-slate-400">Current menu</p>
               <h2 className="text-3xl font-bold mt-1">{globalSearch.trim() ? "Search Results" : activeSelectedMenu}</h2>
-              <p className="text-slate-500 mt-2">{globalSearch.trim() ? `${menuRows.length} matching items across all menus` : `${selectedMenuInfo?.count || 0} items â€¢ ${selectedMenuInfo?.priced || 0} with price and cost â€¢ ${selectedMenuInfo?.stations || "No station listed"}`}</p>
+              <p className="text-slate-500 mt-2">{globalSearch.trim() ? `${menuRows.length} matching items across all menus` : `${selectedMenuInfo?.count || 0} items • ${selectedMenuInfo?.priced || 0} with price and cost • ${selectedMenuInfo?.stations || "No station listed"}`}</p>
             </div>
           </div>
         </section>
@@ -522,8 +548,8 @@ export default function MenuEngineeringDashboard({ onBackToPlatform, onOpenSmart
         {viewMode === "operations" && (
           <>
             <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
-              <Metric icon={DollarSign} title="Revenue" value={money(totals.revenue)} sub="price Ã— units sold" />
-              <Metric title="True cost" value={money(totals.cost)} sub="MenuWorks cost Ã— units" />
+              <Metric icon={DollarSign} title="Revenue" value={money(totals.revenue)} sub="price × units sold" />
+              <Metric title="True cost" value={money(totals.cost)} sub="MenuWorks cost × units" />
               <Metric title="Profit" value={money(totals.profit)} sub="revenue - true cost" />
               <Metric title="Avg food cost" value={pct(avgFoodCost)} sub="total cost / revenue" />
               <Metric title="Gross profit" value={pct(grossProfitPct)} sub="profit / revenue" />
@@ -546,7 +572,7 @@ export default function MenuEngineeringDashboard({ onBackToPlatform, onOpenSmart
                   {["All", "STAR", "CASH COW", "PUZZLE", "DOG", "COMPLIMENTARY"].map((c) => <option key={c}>{c}</option>)}
                 </select>
                 <select value={sort} onChange={(e) => setSort(e.target.value)} className="rounded-2xl bg-white border border-slate-300 px-3 py-3 outline-none focus:border-slate-500">
-                  <option value="source">Smart order: EntrÃ©es, Sides, Extensions, No Price</option>
+                  <option value="source">Smart order: Entrées, Sides, Extensions, No Price</option>
                   <option value="name">Name A-Z</option>
                   <option value="priceDesc">Price high to low</option>
                   <option value="costDesc">Cost high to low</option>
@@ -651,11 +677,11 @@ function HealthCard({ viewMode, menuHealth, menuHealthDetails, portfolioHealth, 
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <p className="text-slate-500">Actual Food Cost %</p>
-                <p className="text-lg font-bold text-slate-900">{menuHealthDetails.actualFcPct == null ? "â€”" : `${menuHealthDetails.actualFcPct.toFixed(1)}%`}</p>
+                <p className="text-lg font-bold text-slate-900">{menuHealthDetails.actualFcPct == null ? "—" : `${menuHealthDetails.actualFcPct.toFixed(1)}%`}</p>
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <p className="text-slate-500">Actual Gross Margin %</p>
-                <p className="text-lg font-bold text-slate-900">{menuHealthDetails.actualMarginPct == null ? "â€”" : `${menuHealthDetails.actualMarginPct.toFixed(1)}%`}</p>
+                <p className="text-lg font-bold text-slate-900">{menuHealthDetails.actualMarginPct == null ? "—" : `${menuHealthDetails.actualMarginPct.toFixed(1)}%`}</p>
               </div>
             </div>
           )}
@@ -674,11 +700,11 @@ function HealthCard({ viewMode, menuHealth, menuHealthDetails, portfolioHealth, 
               <li><strong className="text-slate-900">Risk Balance:</strong> 15% of score. Penalizes high DOG concentration and too many low-margin high-volume items.</li>
             </ul>
             <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-              <div className="rounded-xl bg-slate-50 border border-slate-200 p-2">Financial Fit: <strong>{detailSource.financialFitScore ?? "â€”"}/100</strong></div>
-              <div className="rounded-xl bg-slate-50 border border-slate-200 p-2">FC Score: <strong>{detailSource.foodCostScore ?? "â€”"}/100</strong></div>
-              <div className="rounded-xl bg-slate-50 border border-slate-200 p-2">Margin Score: <strong>{detailSource.marginScore ?? "â€”"}/100</strong></div>
-              <div className="rounded-xl bg-slate-50 border border-slate-200 p-2">Mix Score: <strong>{detailSource.engineeringMixScore ?? "â€”"}/100</strong></div>
-              <div className="rounded-xl bg-slate-50 border border-slate-200 p-2">Risk Score: <strong>{detailSource.riskBalanceScore ?? "â€”"}/100</strong></div>
+              <div className="rounded-xl bg-slate-50 border border-slate-200 p-2">Financial Fit: <strong>{detailSource.financialFitScore ?? "—"}/100</strong></div>
+              <div className="rounded-xl bg-slate-50 border border-slate-200 p-2">FC Score: <strong>{detailSource.foodCostScore ?? "—"}/100</strong></div>
+              <div className="rounded-xl bg-slate-50 border border-slate-200 p-2">Margin Score: <strong>{detailSource.marginScore ?? "—"}/100</strong></div>
+              <div className="rounded-xl bg-slate-50 border border-slate-200 p-2">Mix Score: <strong>{detailSource.engineeringMixScore ?? "—"}/100</strong></div>
+              <div className="rounded-xl bg-slate-50 border border-slate-200 p-2">Risk Score: <strong>{detailSource.riskBalanceScore ?? "—"}/100</strong></div>
             </div>
             <p className="mt-3 text-slate-500">The score is capped between 0 and 100 and is intended as a quick executive benchmark rather than a financial statement.</p>
           </div>
@@ -770,8 +796,8 @@ function ItemRow({ row, updateUnits, parsedTargetFoodCost }) {
 
   return (
     <tr className={`hover:bg-slate-50 align-top ${heatClass}`}>
-      <td className="px-4 py-3 min-w-[280px]"><p className="font-semibold text-slate-900 capitalize">{titleCase(row.item)}</p><p className="text-xs text-slate-400">MRN {row.mrn || "â€”"} â€¢ {row.portion || "â€”"}</p></td>
-      <td className="px-4 py-3 min-w-[140px]">{row.station || "â€”"}</td>
+      <td className="px-4 py-3 min-w-[280px]"><p className="font-semibold text-slate-900 capitalize">{titleCase(row.item)}</p><p className="text-xs text-slate-400">MRN {row.mrn || "—"} • {row.portion || "—"}</p></td>
+      <td className="px-4 py-3 min-w-[140px]">{row.station || "—"}</td>
       <td className="px-4 py-3 whitespace-nowrap">{priceLabel(row.price)}</td>
       <td className="px-4 py-3 whitespace-nowrap">{money(row.trueCost)}</td>
       <td className="px-4 py-3 whitespace-nowrap">{pct(row.foodCost)}</td>
@@ -817,7 +843,7 @@ function PortfolioTable({ rows, parsedTargetFoodCost, parsedTargetMarginPct }) {
                     <p><strong className="text-rose-700">{row.dogs}</strong> high-risk items reduced the score.</p>
                     <p>Financial Fit is <strong>{row.healthDetails.financialFitScore}/100</strong>.</p>
                     <p>Actual Food Cost % is <strong>{pct(row.avgFc)}</strong> against the {parsedTargetFoodCost ?? "disabled"}% food cost benchmark.</p>
-                    <p>Actual Gross Margin % is <strong>{row.healthDetails.actualMarginPct == null ? "â€”" : `${row.healthDetails.actualMarginPct.toFixed(1)}%`}</strong> against the {parsedTargetMarginPct ?? "disabled"}% gross margin benchmark.</p>
+                    <p>Actual Gross Margin % is <strong>{row.healthDetails.actualMarginPct == null ? "—" : `${row.healthDetails.actualMarginPct.toFixed(1)}%`}</strong> against the {parsedTargetMarginPct ?? "disabled"}% gross margin benchmark.</p>
                     <p>Risk state: <strong>{row.risk}</strong>.</p>
                   </div>
                 </td>
@@ -826,9 +852,9 @@ function PortfolioTable({ rows, parsedTargetFoodCost, parsedTargetMarginPct }) {
                 <td className="px-4 py-3 text-red-700 font-semibold">{row.dogs}</td>
                 <td className="px-4 py-3 font-semibold">{row.healthDetails.financialFitScore}/100</td>
                 <td className="px-4 py-3">{pct(row.avgFc)}</td>
-                <td className="px-4 py-3">{row.healthDetails.actualMarginPct == null ? "â€”" : `${row.healthDetails.actualMarginPct.toFixed(1)}%`}</td>
+                <td className="px-4 py-3">{row.healthDetails.actualMarginPct == null ? "—" : `${row.healthDetails.actualMarginPct.toFixed(1)}%`}</td>
                 <td className="px-4 py-3"><span className={`rounded-full px-3 py-1 text-xs font-bold ${row.risk === "CRITICAL" ? "bg-red-100 text-red-800" : row.risk === "WARNING" ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"}`}>{row.risk}</span></td>
-                <td className="px-4 py-3 min-w-[280px]"><ul className="space-y-1 text-xs text-slate-600">{row.riskNotes.map((note, index) => <li key={index}>â€¢ {note}</li>)}</ul></td>
+                <td className="px-4 py-3 min-w-[280px]"><ul className="space-y-1 text-xs text-slate-600">{row.riskNotes.map((note, index) => <li key={index}>• {note}</li>)}</ul></td>
               </tr>
             ))}
           </tbody>

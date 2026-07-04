@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 import { ArrowLeft, AlertTriangle, CalendarDays, CheckCircle2, ChevronDown, ChevronUp, Clipboard, FileText, Printer, Save, Send, Upload, X } from "lucide-react";
 
-import MENUWORKS_ITEMS from "../../data/menuItems.json";
+import { loadMenuWorksItemsFromApi, readStoredMenuWorksItems } from "../../data/menuWorksClient.js";
 import { NEIGHBORHOOD_ROTATIONS_STORAGE_KEY, SMARTSHEET_COLUMNS, SMARTSHEET_DATABASE_STORAGE_KEY, SMARTSHEET_RECORD_TYPES, SMARTSHEET_SELECTION_TYPES, STATION_SMARTSHEET_LABELS } from "../../integrations/smartsheet/contract.js";
 import { loadRecordsFromBackbone, syncRecordsToBackbone } from "../../integrations/storage/backboneClient.js";
 import { APP_VERSION_STAMP } from "../../shared/appConfig.js";
@@ -909,6 +909,18 @@ const GLOBAL_MENU_ROWS_CACHE = new Map();
 const SUB_CONCEPT_OPTIONS_CACHE = new Map();
 const STATION_POOL_CACHE = new Map();
 const BEST_ROW_BY_NAME_CACHE = new Map();
+let MENUWORKS_ITEMS = readStoredMenuWorksItems() || [];
+
+function resetMenuWorksCaches(rows = []) {
+  MENUWORKS_ITEMS = Array.isArray(rows) ? rows : [];
+  GLOBAL_MENU_ROWS_CACHE.clear();
+  SUB_CONCEPT_OPTIONS_CACHE.clear();
+  STATION_POOL_CACHE.clear();
+  BEST_ROW_BY_NAME_CACHE.clear();
+  POTATO_SIDES_CACHE = null;
+  CARVERY_HOT_SIDES_CACHE = null;
+  CARVERY_COLD_SIDES_CACHE = null;
+}
 let POTATO_SIDES_CACHE = null;
 let CARVERY_HOT_SIDES_CACHE = null;
 let CARVERY_COLD_SIDES_CACHE = null;
@@ -2150,6 +2162,11 @@ function weekAtGlancePreview(fileName) {
 }
 
 export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartsheetHealth }) {
+  const [menuWorksItemsVersion, setMenuWorksItemsVersion] = useState(MENUWORKS_ITEMS.length ? 1 : 0);
+  const [menuWorksLoadStatus, setMenuWorksLoadStatus] = useState(() => ({
+    state: MENUWORKS_ITEMS.length ? "ready" : "loading",
+    message: MENUWORKS_ITEMS.length ? "MenuWorks items ready." : "Loading MenuWorks selector data...",
+  }));
   const [district, setDistrict] = useState("");
   const [week, setWeek] = useState(DEFAULT_ROTATION_WEEK);
   const [selectedCafe, setSelectedCafe] = useState("");
@@ -2168,6 +2185,25 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
 
   useEffect(() => { localStorage.setItem(NEIGHBORHOOD_ROTATIONS_STORAGE_KEY, JSON.stringify(rotations)); }, [rotations]);
   useEffect(() => { localStorage.setItem(SMARTSHEET_DATABASE_STORAGE_KEY, JSON.stringify(databaseRecords)); }, [databaseRecords]);
+
+  useEffect(() => {
+    if (MENUWORKS_ITEMS.length) return undefined;
+    let isActive = true;
+    loadMenuWorksItemsFromApi()
+      .then(({ rows }) => {
+        if (!isActive) return;
+        resetMenuWorksCaches(rows);
+        setMenuWorksItemsVersion((version) => version + 1);
+        setMenuWorksLoadStatus({ state: "ready", message: "MenuWorks selector data loaded." });
+      })
+      .catch((error) => {
+        if (!isActive) return;
+        setMenuWorksLoadStatus({ state: "error", message: error instanceof Error ? error.message : "Unable to load MenuWorks selector data." });
+      });
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   const refreshFromDatabase = async () => {
     if (databaseLoadStatus.state === "loading" || smartsheetReadCooldown) {
@@ -2209,7 +2245,7 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
   const currentRotation = selectedCafe ? (rotations[rotationKey(week, district, selectedCafe)] || EMPTY_ROTATION) : EMPTY_ROTATION;
   const carryoverWeek = previousRotationWeek(week);
   const previousRotation = selectedCafe && carryoverWeek ? (rotations[rotationKey(carryoverWeek, district, selectedCafe)] || EMPTY_ROTATION) : EMPTY_ROTATION;
-  const menus = useMemo(() => Array.from(new Set(MENUWORKS_ITEMS.map((row) => getMenuName(row)).filter(Boolean).filter(isGlobalMenuOption))).sort(), []);
+  const menus = useMemo(() => Array.from(new Set(MENUWORKS_ITEMS.map((row) => getMenuName(row)).filter(Boolean).filter(isGlobalMenuOption))).sort(), [menuWorksItemsVersion]);
   const updateRotation = (patch) => setRotations((prev) => ({
     ...prev,
     [rotationKey(week, district, selectedCafe)]: { ...(prev[rotationKey(week, district, selectedCafe)] || EMPTY_ROTATION), ...patch }
@@ -2286,6 +2322,11 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
     <div className="neighborhood-rotations-shell min-h-screen bg-[linear-gradient(180deg,#f6f7f9_0%,#eef7f2_100%)] text-slate-950 p-4 md:p-8">
       <div className="max-w-[90rem] mx-auto space-y-5">
         <NeighborhoodHeader onBackToPlatform={onBackToPlatform} onOpenSmartsheetHealth={onOpenSmartsheetHealth} district={district} />
+        {menuWorksLoadStatus.state !== "ready" && (
+          <section className={`rounded-lg border px-4 py-3 text-sm font-bold shadow-sm ${menuWorksLoadStatus.state === "error" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-sky-200 bg-sky-50 text-sky-900"}`}>
+            {menuWorksLoadStatus.message}
+          </section>
+        )}
         <section className="inline-flex flex-wrap gap-1 rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
           <RotationTab label="Chef Planner" value="planner" active={rotationView} setActive={setRotationView} />
           <RotationTab label="Executive View" value="executive" active={rotationView} setActive={setRotationView} />
