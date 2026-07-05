@@ -2,6 +2,10 @@
 
 ## 2026-07-05
 
+- [Jul 5, 12:04 PM] Installed a Playwright browser verification layer for project click-through checks.
+- [Jul 5, 12:04 PM] Added a Recipe Library browser smoke test that catches app-protection crashes and the `databaseSource is not defined` regression before publish.
+- [Jul 5, 12:04 PM] Added project-local browser install/run commands and release guards for the browser smoke-test files.
+- [Jul 5, 12:04 PM] Set visible app version to `2026.07.05.002-browser-smoke-check`.
 - [Jul 5, 11:33 AM] Fixed Recipe Library loading/error view so it no longer references the main RecipeDatabase database source state before that state exists.
 - [Jul 5, 11:33 AM] Added a Recipe Library release guard that blocks scoped-state references inside the status shell.
 - [Jul 5, 11:33 AM] Set visible app version to `2026.07.05.001-recipe-library-status-hotfix`.
