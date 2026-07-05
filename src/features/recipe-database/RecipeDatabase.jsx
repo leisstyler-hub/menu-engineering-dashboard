@@ -239,7 +239,6 @@ function RecipeLibraryStatus({ title, detail, onBackToPlatform, onOpenSmartsheet
             <div className="flex flex-wrap items-center gap-2">
               <PlatformSettings onOpenSmartsheetHealth={onOpenSmartsheetHealth} />
               <CompassOneLogo compact />
-              <DatabaseSourceChip source={databaseSource} usesLocalRows={usesLocalRows} />
               <VersionStamp />
             </div>
           </div>
@@ -538,6 +537,7 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
             <div className="flex flex-wrap items-center gap-2">
               <PlatformSettings onOpenSmartsheetHealth={onOpenSmartsheetHealth} />
               <CompassOneLogo compact />
+              <DatabaseSourceChip source={databaseSource} usesLocalRows={usesLocalRows} />
               <VersionStamp />
             </div>
           </div>

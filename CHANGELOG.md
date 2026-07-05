@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-07-05
+
+- [Jul 5, 11:33 AM] Fixed Recipe Library loading/error view so it no longer references the main RecipeDatabase database source state before that state exists.
+- [Jul 5, 11:33 AM] Added a Recipe Library release guard that blocks scoped-state references inside the status shell.
+- [Jul 5, 11:33 AM] Set visible app version to `2026.07.05.001-recipe-library-status-hotfix`.
+
 ## 2026-07-04
 
 - [Jul 4, 2:21 PM] Added shared Recipe Library card saves so item edits write back to Supabase instead of only the current browser.

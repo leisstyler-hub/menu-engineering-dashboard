@@ -54,6 +54,14 @@ assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Upload food p
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "DatabaseSourceChip");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Supabase");
 
+const recipeDatabaseText = read("src/features/recipe-database/RecipeDatabase.jsx");
+const statusStart = recipeDatabaseText.indexOf("function RecipeLibraryStatus");
+const statusEnd = recipeDatabaseText.indexOf("export default function RecipeDatabase");
+const statusBlock = recipeDatabaseText.slice(statusStart, statusEnd);
+if (statusBlock.includes("databaseSource") || statusBlock.includes("usesLocalRows")) {
+  throw new Error("RecipeLibraryStatus must not reference RecipeDatabase scoped state.");
+}
+
 assertNotIncludes("src/features/menu-engineering/MenuEngineeringDashboard.jsx", "Initiate MenuWorks Upload");
 assertNotIncludes("src/features/menu-engineering/MenuEngineeringDashboard.jsx", "parseMenuWorksFile");
 assertNotIncludes("src/features/menu-engineering/MenuEngineeringDashboard.jsx", "MENUWORKS_IMPORT_INITIATION_CODE");
