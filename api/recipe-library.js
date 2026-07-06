@@ -1,5 +1,4 @@
 import { Buffer } from "node:buffer";
-import MENUWORKS_ITEMS from "../src/data/menuItems.json" with { type: "json" };
 import { getRecipeLibraryPhoto } from "../src/data/recipeLibraryAssets.js";
 import { itemDescription, normalizeRecipeLibraryItem, recipeLibraryCategoryGroup, textValue } from "../src/features/recipe-database/recipeLibraryModel.js";
 
@@ -11,6 +10,15 @@ const DOCUMENT_BUCKETS = {
   "plating-guide": "plating-guides",
   "recipe-file": "recipe-files",
 };
+let menuWorksFallbackRowsPromise = null;
+
+async function loadMenuWorksFallbackRows() {
+  if (!menuWorksFallbackRowsPromise) {
+    menuWorksFallbackRowsPromise = import("../src/data/menuItems.json", { with: { type: "json" } })
+      .then((module) => (Array.isArray(module.default) ? module.default : []));
+  }
+  return menuWorksFallbackRowsPromise;
+}
 
 function cleanUrl(value = "") {
   return String(value || "").trim().replace(/\/+$/, "");
@@ -417,9 +425,9 @@ export default async function handler(req, res) {
 
 async function handleGet(req, res) {
   const supabaseRead = await loadSupabaseRecipeRows();
-  const fallbackRows = Array.isArray(MENUWORKS_ITEMS) ? MENUWORKS_ITEMS : [];
-  const rows = supabaseRead.ok && supabaseRead.rows.length ? supabaseRead.rows : fallbackRows;
-  const source = supabaseRead.ok && supabaseRead.rows.length ? supabaseRead.source : "server-menuworks-json";
+  const usesSupabaseRows = supabaseRead.ok && supabaseRead.rows.length;
+  const rows = usesSupabaseRows ? supabaseRead.rows : await loadMenuWorksFallbackRows();
+  const source = usesSupabaseRows ? supabaseRead.source : "server-menuworks-json";
   const scope = String(req.query.scope || "summary").toLowerCase();
   const menus = buildMenuSummaries(rows);
   const summary = buildQuality(rows);
@@ -495,7 +503,7 @@ async function handlePost(req, res) {
   }
 
   try {
-    const sourceRows = Array.isArray(body?.rows) && body.rows.length ? body.rows : MENUWORKS_ITEMS;
+    const sourceRows = Array.isArray(body?.rows) && body.rows.length ? body.rows : await loadMenuWorksFallbackRows();
     const rows = sourceRows.map(recipeItemPayload);
     for (let index = 0; index < rows.length; index += SUPABASE_BATCH_SIZE) {
       const batch = rows.slice(index, index + SUPABASE_BATCH_SIZE);

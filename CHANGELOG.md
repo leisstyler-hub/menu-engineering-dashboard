@@ -2,6 +2,11 @@
 
 ## 2026-07-05
 
+- [Jul 5, 9:35 PM] Added Re:Invent split-global smoke coverage so saved Monday/Tuesday, Wednesday/Thursday, and Friday menus must recall as submitted instead of reverting to duplicate fallback menus.
+- [Jul 5, 9:35 PM] Added Recipe Library smoke coverage for editing a recipe card and saving through the Supabase API path.
+- [Jul 5, 9:35 PM] Changed the Recipe Library API to lazy-load the heavy MenuWorks JSON only when Supabase is unavailable or a protected backfill needs fallback data.
+- [Jul 5, 9:35 PM] Expanded release guards so the heavy MenuWorks fallback cannot be reintroduced as a top-level Recipe Library API import.
+- [Jul 5, 9:35 PM] Set visible app version to `2026.07.05.004-reinvent-recipe-smoke-speed`.
 - [Jul 5, 12:38 PM] Added browser smoke tests for Lean Tool mobile, Neighborhood Rotations submit guarding, and Menu Projects create/trash flow.
 - [Jul 5, 12:38 PM] Fixed the Menu Projects create-project modal so its action button stays reachable inside a scrollable app-style dialog.
 - [Jul 5, 12:38 PM] Expanded release guards so the workflow smoke tests cannot be removed silently.
