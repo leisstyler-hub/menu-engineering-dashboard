@@ -31,6 +31,10 @@ assertIncludes("scripts/start-playwright-preview-server.mjs", "createServer");
 assertIncludes("scripts/start-playwright-preview-server.mjs", "4174");
 assertIncludes("tests/browser/recipe-library.spec.js", "databaseSource is not defined");
 assertIncludes("tests/browser/recipe-library.spec.js", "Something broke in this view");
+assertIncludes("tests/browser/smoke-helpers.js", "expectNoAppProtection");
+assertIncludes("tests/browser/lean-tool-mobile.spec.js", "Fast DOWNTIME observation tracker");
+assertIncludes("tests/browser/neighborhood-rotations.spec.js", "Submit blocked");
+assertIncludes("tests/browser/menu-projects.spec.js", "Menu Projects Database");
 
 assertIncludes("scripts/release-health.mjs", "Release Health");
 assertIncludes("scripts/release-health.mjs", "GitHub source sync");

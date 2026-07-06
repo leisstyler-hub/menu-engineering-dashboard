@@ -1661,16 +1661,16 @@ function CreateProjectModal({ onClose, onCreate }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4">
-      <div className="w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl">
-        <div className="flex items-start justify-between gap-3">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/60 p-4 sm:items-center">
+      <div className="flex max-h-[calc(100vh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+        <div className="flex items-start justify-between gap-3 border-b border-slate-200 p-5">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-600">New Project</p>
             <h2 className="mt-1 text-2xl font-black">Create menu project</h2>
           </div>
           <button type="button" onClick={onClose} className="rounded-full border border-slate-200 p-2"><X size={18} /></button>
         </div>
-        <div className="mt-5 space-y-3">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-5">
           <input value={form.menuName} onChange={(event) => setForm({ ...form, menuName: event.target.value })} className="w-full rounded-lg border border-slate-200 px-3 py-3 text-sm font-bold" placeholder="Menu name" />
           <select value={form.menuType} onChange={(event) => setForm({ ...form, menuType: event.target.value })} className="w-full rounded-lg border border-slate-200 px-3 py-3 text-sm font-bold">
             {Object.values(MENU_TYPES).map((type) => <option key={type}>{type}</option>)}
@@ -1693,6 +1693,8 @@ function CreateProjectModal({ onClose, onCreate }) {
             people={form.districtChefOwners}
             locked
           />
+        </div>
+        <div className="border-t border-slate-200 bg-white p-5">
           <button type="button" onClick={submit} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 py-3 text-sm font-black text-white">
             Create Project
             <ArrowRight size={17} />

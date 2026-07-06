@@ -2,6 +2,10 @@
 
 ## 2026-07-05
 
+- [Jul 5, 12:38 PM] Added browser smoke tests for Lean Tool mobile, Neighborhood Rotations submit guarding, and Menu Projects create/trash flow.
+- [Jul 5, 12:38 PM] Fixed the Menu Projects create-project modal so its action button stays reachable inside a scrollable app-style dialog.
+- [Jul 5, 12:38 PM] Expanded release guards so the workflow smoke tests cannot be removed silently.
+- [Jul 5, 12:38 PM] Set visible app version to `2026.07.05.003-workflow-smoke-tests`.
 - [Jul 5, 12:04 PM] Installed a Playwright browser verification layer for project click-through checks.
 - [Jul 5, 12:04 PM] Added a Recipe Library browser smoke test that catches app-protection crashes and the `databaseSource is not defined` regression before publish.
 - [Jul 5, 12:04 PM] Added project-local browser install/run commands and release guards for the browser smoke-test files.
