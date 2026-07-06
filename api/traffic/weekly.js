@@ -141,6 +141,11 @@ function hashVisitorId(visitorId) {
   return createHash("sha256").update(`${salt}:${visitorId}`).digest("hex").slice(0, 24);
 }
 
+function isSmokeTestRequest(req, body = {}) {
+  const headerValue = String(req.headers["x-culinary-smoke-test"] || "").toLowerCase();
+  return headerValue === "true" || body.isSmokeTest === true;
+}
+
 async function loadTrafficSheet() {
   const sheetId = getSheetId();
   if (!sheetId) {
@@ -155,6 +160,9 @@ async function loadTrafficSheet() {
 
 async function recordDailyVisitor(req) {
   const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : (req.body || {});
+  if (isSmokeTestRequest(req, body)) {
+    return { recorded: false, reason: "smoke test traffic ignored" };
+  }
   const visitorId = String(body.visitorId || "").trim();
   if (!visitorId || visitorId.length < 12) {
     return { recorded: false, reason: "missing visitor id" };

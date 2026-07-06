@@ -13,6 +13,9 @@ export default defineConfig({
   },
   use: {
     baseURL: externalBaseUrl || localBaseUrl,
+    extraHTTPHeaders: {
+      "x-culinary-smoke-test": "true",
+    },
     trace: "on-first-retry",
     screenshot: "only-on-failure",
   },

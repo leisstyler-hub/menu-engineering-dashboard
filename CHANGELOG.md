@@ -2,6 +2,10 @@
 
 ## 2026-07-05
 
+- [Jul 5, 10:02 PM] Excluded browser smoke-test visits from the Weekly Traffic write path so production verification no longer inflates visitor counts.
+- [Jul 5, 10:02 PM] Added a browser smoke guard that verifies analytics requests carry the smoke-test marker before release.
+- [Jul 5, 10:02 PM] Added a release guard so the traffic endpoint must keep ignoring marked smoke-test traffic.
+- [Jul 5, 10:02 PM] Set visible app version to `2026.07.05.005-smoke-traffic-safe`.
 - [Jul 5, 9:35 PM] Added Re:Invent split-global smoke coverage so saved Monday/Tuesday, Wednesday/Thursday, and Friday menus must recall as submitted instead of reverting to duplicate fallback menus.
 - [Jul 5, 9:35 PM] Added Recipe Library smoke coverage for editing a recipe card and saving through the Supabase API path.
 - [Jul 5, 9:35 PM] Changed the Recipe Library API to lazy-load the heavy MenuWorks JSON only when Supabase is unavailable or a protected backfill needs fallback data.
