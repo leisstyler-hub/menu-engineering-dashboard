@@ -2,6 +2,8 @@
 
 ## 2026-07-05
 
+- [Jul 5, 10:09 PM] Added a Weekly Traffic read filter so old automation rows from HeadlessChrome/browser smoke checks no longer count in dashboard visitor totals.
+- [Jul 5, 10:09 PM] Set visible app version to `2026.07.05.006-traffic-smoke-clean`.
 - [Jul 5, 10:02 PM] Excluded browser smoke-test visits from the Weekly Traffic write path so production verification no longer inflates visitor counts.
 - [Jul 5, 10:02 PM] Added a browser smoke guard that verifies analytics requests carry the smoke-test marker before release.
 - [Jul 5, 10:02 PM] Added a release guard so the traffic endpoint must keep ignoring marked smoke-test traffic.

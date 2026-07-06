@@ -48,6 +48,8 @@ assertIncludes("tests/browser/menu-projects.spec.js", "Menu Projects Database");
 assertNotIncludes("api/recipe-library.js", "import MENUWORKS_ITEMS from \"../src/data/menuItems.json\"");
 assertIncludes("api/recipe-library.js", "loadMenuWorksFallbackRows");
 assertIncludes("api/traffic/weekly.js", "isSmokeTestRequest");
+assertIncludes("api/traffic/weekly.js", "isAutomatedTrafficRow");
+assertIncludes("api/traffic/weekly.js", "HeadlessChrome");
 assertIncludes("api/traffic/weekly.js", "smoke test traffic ignored");
 assertIncludes("playwright.config.js", "x-culinary-smoke-test");
 

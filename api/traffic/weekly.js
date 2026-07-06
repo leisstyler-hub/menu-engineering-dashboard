@@ -146,6 +146,12 @@ function isSmokeTestRequest(req, body = {}) {
   return headerValue === "true" || body.isSmokeTest === true;
 }
 
+function isAutomatedTrafficRow(row, columnMap) {
+  const notesColumnId = columnMap.get(TRAFFIC_COLUMNS.notes);
+  const notes = String(getCellValue(row, notesColumnId));
+  return /HeadlessChrome|Playwright|browser-smoke|smoke-test/i.test(notes);
+}
+
 async function loadTrafficSheet() {
   const sheetId = getSheetId();
   if (!sheetId) {
@@ -223,6 +229,7 @@ async function getWeeklyTraffic() {
     if (String(getCellValue(row, recordTypeColumnId)) !== TRAFFIC_RECORD_TYPE) continue;
     if (String(getCellValue(row, visibleColumnId)).toUpperCase() === "FALSE") continue;
     if (String(getCellValue(row, testColumnId)).toUpperCase() === "TRUE") continue;
+    if (isAutomatedTrafficRow(row, columnMap)) continue;
 
     const businessDate = String(getCellValue(row, businessDateColumnId)).slice(0, 10);
     if (!weekDates.has(businessDate)) continue;

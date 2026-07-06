@@ -1,1 +1,1 @@
-export const APP_VERSION_STAMP = "2026.07.05.005-smoke-traffic-safe";
+export const APP_VERSION_STAMP = "2026.07.05.006-traffic-smoke-clean";
