@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-07-07
+
+- [Jul 7, 9:42 AM] Added the Menu Audit Tool as the seventh platform tool with source upload cards, freshness tracking, menu/brand filters, summary cards, exact MRN columns, and CSV export.
+- [Jul 7, 9:42 AM] Built text-safe audit parsers for Master App Data, active SSMT workbooks, and Centric Brand Reports so MRNs like `165741.11`, `182206.25`, and `107142.156` are preserved as text instead of rounded.
+- [Jul 7, 9:42 AM] Corrected Brand Report modifier parsing to use modifier item names and detected MRN columns from the workbook header instead of assuming group names or unsafe column positions.
+- [Jul 7, 9:42 AM] Ignored SSMT modifier rows marked `remove` so removed modifiers do not inflate audit mismatch counts.
+- [Jul 7, 9:42 AM] Kept Recipe Library Files focused on Plating Guide and Recipe by removing duplicate Photo and obsolete Source Document file tiles.
+- [Jul 7, 9:42 AM] Added Menu Audit release verification for exact MRN preservation, modifier item-name parsing, and SSMT remove-row filtering.
+- [Jul 7, 9:42 AM] Set visible app version to `2026.07.07.001-menu-audit-mrn-text`.
+
 ## 2026-07-05
 
 - [Jul 5, 10:09 PM] Added a Weekly Traffic read filter so old automation rows from HeadlessChrome/browser smoke checks no longer count in dashboard visitor totals.

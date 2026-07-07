@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect, useState } from "react";
-import { BarChart3, BookOpen, CalendarRange, FolderKanban, Home, ShieldCheck } from "lucide-react";
+import { BarChart3, BookOpen, CalendarRange, ClipboardCheck, FolderKanban, Home, ShieldCheck } from "lucide-react";
 import LandingPage from "./LandingPage.jsx";
 import { addToolBreadcrumb, setActiveToolContext } from "../shared/monitoring/sentry.jsx";
 
@@ -35,6 +35,7 @@ const LadleComplianceDashboard = lazyWithStaleBundleReload(() => import("../feat
 const LeanTool = lazyWithStaleBundleReload(() => import("../features/lean-tool/LeanTool.jsx"));
 const RecipeDatabase = lazyWithStaleBundleReload(() => import("../features/recipe-database/RecipeDatabase.jsx"));
 const MenuProjects = lazyWithStaleBundleReload(() => import("../features/menu-projects/MenuProjects.jsx"));
+const MenuAuditTool = lazyWithStaleBundleReload(() => import("../features/menu-audit/MenuAuditTool.jsx"));
 const SmartsheetHealth = lazyWithStaleBundleReload(() => import("../features/smartsheet-health/SmartsheetHealth.jsx"));
 
 export default function CulinaryToolsPlatformApp() {
@@ -93,6 +94,17 @@ export default function CulinaryToolsPlatformApp() {
     );
   }
 
+  if (activeTool === "menuAuditTool") {
+    return (
+      <>
+        <Suspense fallback={<ToolLoading title="Opening Menu Audit Tool" />}>
+          <MenuAuditTool onBackToPlatform={() => setActiveTool("home")} onOpenSmartsheetHealth={openSmartsheetHealth} />
+        </Suspense>
+        <MobileToolNav activeTool={activeTool} setActiveTool={setActiveTool} />
+      </>
+    );
+  }
+
   if (activeTool === "ladleCompliance") {
     return (
       <>
@@ -131,6 +143,7 @@ export default function CulinaryToolsPlatformApp() {
       onOpenNeighborhoodRotations={() => setActiveTool("neighborhoodRotations")}
       onOpenRecipeDatabase={() => setActiveTool("recipeDatabase")}
       onOpenMenuProjects={() => setActiveTool("menuProjects")}
+      onOpenMenuAuditTool={() => setActiveTool("menuAuditTool")}
       onOpenLadleCompliance={() => setActiveTool("ladleCompliance")}
       onOpenLeanTool={() => setActiveTool("leanTool")}
       onOpenSmartsheetHealth={openSmartsheetHealth}
@@ -158,6 +171,7 @@ function MobileToolNav({ activeTool, setActiveTool }) {
     { key: "menuEngineering", label: "Engineering", icon: BarChart3 },
     { key: "recipeDatabase", label: "Library", icon: BookOpen },
     { key: "menuProjects", label: "Projects", icon: FolderKanban },
+    { key: "menuAuditTool", label: "Audit", icon: ClipboardCheck },
     { key: "neighborhoodRotations", label: "Rotations", icon: CalendarRange },
     { key: "ladleCompliance", label: "Compliance", icon: ShieldCheck },
   ];

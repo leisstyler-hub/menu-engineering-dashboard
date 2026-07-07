@@ -2,12 +2,6 @@ export const MENU_ENGINEERING_OVERRIDE_STORAGE_KEY = "culinaryToolsMenuEngineeri
 
 export const RECIPE_DOCUMENT_SLOTS = [
   {
-    type: "item-photo",
-    label: "Photo",
-    bucket: "item-photos",
-    emptyText: "Photo not attached yet",
-  },
-  {
     type: "plating-guide",
     label: "Plating Guide",
     bucket: "plating-guides",
@@ -18,12 +12,6 @@ export const RECIPE_DOCUMENT_SLOTS = [
     label: "Recipe",
     bucket: "recipe-files",
     emptyText: "Recipe instructions not attached yet",
-  },
-  {
-    type: "source-document",
-    label: "Source Document",
-    bucket: "source-documents",
-    emptyText: "Source document not attached yet",
   },
 ];
 

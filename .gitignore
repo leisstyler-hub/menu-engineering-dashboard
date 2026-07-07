@@ -1,9 +1,13 @@
 node_modules/
 dist/
+.pnpm-store/
 .vercel/output/
 .env
 .env.*
 work/
 outputs/
+.playwright-browsers/
+playwright-report/
+test-results/
 
 .vercel

@@ -7,9 +7,9 @@ const SOURCE_FILE =
   "C:/Users/leiss/OneDrive/Desktop/Menus.csv";
 const OUTPUT_FILE = "src/data/menuItems.json";
 const BASELINE_FILE = process.argv[3] || process.env.MENUWORKS_BASELINE_FILE || OUTPUT_FILE;
-const SOURCE_VERSION = "menuworks-menus-2026-06-27";
-const RAW_ARCHIVE_FILE = "public/data/menuworks-raw-2026-06-27-menus.json";
-const RAW_ARCHIVE_PUBLIC_PATH = "/data/menuworks-raw-2026-06-27-menus.json";
+const SOURCE_VERSION = "menuworks-menus-2026-07-07";
+const RAW_ARCHIVE_FILE = "public/data/menuworks-raw-2026-07-07-menus.json";
+const RAW_ARCHIVE_PUBLIC_PATH = "/data/menuworks-raw-2026-07-07-menus.json";
 const HIBERNATE_EFFECTIVE_DATE = "2026-08-01";
 
 const ALLERGEN_COLUMNS = [
@@ -197,29 +197,113 @@ function trustedDescription(row, currentName = "") {
 }
 
 function existingLookup(rows) {
+  const byMenuStationRecipe = new Map();
+  const byMenuRecipe = new Map();
+  const byMenuStationName = new Map();
+  const byMenuName = new Map();
   const byMrn = new Map();
   const byRecipe = new Map();
   const byName = new Map();
 
   for (const row of rows) {
+    const menu = normalizeMenuName(row.menu);
+    const station = cleanText(row.station);
     const mrn = cleanText(row.mrn || row.MRN);
     if (mrn && !byMrn.has(mrn)) byMrn.set(mrn, row);
 
     const recipeKey = normalizeKey(row.recipeName);
+    const menuStationRecipeKey = [menu, station, recipeKey].map(normalizeKey).join("|");
+    const menuRecipeKey = [menu, recipeKey].map(normalizeKey).join("|");
+    if (recipeKey && !byMenuStationRecipe.has(menuStationRecipeKey)) byMenuStationRecipe.set(menuStationRecipeKey, row);
+    if (recipeKey && !byMenuRecipe.has(menuRecipeKey)) byMenuRecipe.set(menuRecipeKey, row);
     if (recipeKey && !byRecipe.has(recipeKey)) byRecipe.set(recipeKey, row);
 
     const nameKey = normalizeKey(row.sourceTruthName || row.displayName || row.item || row.shortName);
+    const menuStationNameKey = [menu, station, nameKey].map(normalizeKey).join("|");
+    const menuNameKey = [menu, nameKey].map(normalizeKey).join("|");
+    if (nameKey && !byMenuStationName.has(menuStationNameKey)) byMenuStationName.set(menuStationNameKey, row);
+    if (nameKey && !byMenuName.has(menuNameKey)) byMenuName.set(menuNameKey, row);
     if (nameKey && !byName.has(nameKey)) byName.set(nameKey, row);
   }
 
-  return { byMrn, byRecipe, byName };
+  return { byMenuStationRecipe, byMenuRecipe, byMenuStationName, byMenuName, byMrn, byRecipe, byName };
 }
 
 function findExisting(row, lookup) {
+  const menu = normalizeMenuName(row["Menu Name"]);
+  const station = cleanText(row["Station"]);
   const mrn = cleanText(row["Recipe Number"]);
   const recipeKey = normalizeKey(row["Recipe Name"]);
   const shortKey = normalizeKey(row["Short Name"]);
-  return lookup.byMrn.get(mrn) || lookup.byRecipe.get(recipeKey) || lookup.byName.get(shortKey) || null;
+  const menuStationRecipeKey = [menu, station, recipeKey].map(normalizeKey).join("|");
+  const menuRecipeKey = [menu, recipeKey].map(normalizeKey).join("|");
+  const menuStationNameKey = [menu, station, shortKey].map(normalizeKey).join("|");
+  const menuNameKey = [menu, shortKey].map(normalizeKey).join("|");
+  return (
+    lookup.byMenuStationRecipe.get(menuStationRecipeKey) ||
+    lookup.byMenuRecipe.get(menuRecipeKey) ||
+    lookup.byMenuStationName.get(menuStationNameKey) ||
+    lookup.byMenuName.get(menuNameKey) ||
+    lookup.byMrn.get(mrn) ||
+    lookup.byRecipe.get(recipeKey) ||
+    lookup.byName.get(shortKey) ||
+    null
+  );
+}
+
+function rowMergeKeys(row) {
+  const menu = normalizeMenuName(row.menu);
+  const station = cleanText(row.station);
+  const recipeKey = normalizeKey(row.recipeName);
+  const nameKey = normalizeKey(row.sourceTruthName || row.displayName || row.item || row.shortName);
+  const mrn = cleanText(row.mrn || row.MRN);
+  return [
+    recipeKey && [menu, station, recipeKey].map(normalizeKey).join("|"),
+    recipeKey && [menu, recipeKey].map(normalizeKey).join("|"),
+    nameKey && [menu, station, nameKey].map(normalizeKey).join("|"),
+    nameKey && [menu, nameKey].map(normalizeKey).join("|"),
+    mrn && `mrn:${mrn}`,
+  ].filter(Boolean);
+}
+
+function mergeImportedRows(existingRows, sourceRows) {
+  const mergedRows = existingRows.map((row) => ({ ...row }));
+  const index = new Map();
+  for (let rowIndex = 0; rowIndex < mergedRows.length; rowIndex += 1) {
+    for (const key of rowMergeKeys(mergedRows[rowIndex])) {
+      if (!index.has(key)) index.set(key, rowIndex);
+    }
+  }
+
+  let nextId = Math.max(0, ...mergedRows.map((row) => Number(row.id) || 0)) + 1;
+  let updated = 0;
+  let added = 0;
+
+  for (const sourceRow of sourceRows) {
+    const matchIndex = rowMergeKeys(sourceRow)
+      .map((key) => index.get(key))
+      .find((value) => Number.isInteger(value));
+
+    if (Number.isInteger(matchIndex)) {
+      const id = mergedRows[matchIndex].id;
+      mergedRows[matchIndex] = { ...mergedRows[matchIndex], ...sourceRow, id };
+      updated += 1;
+      for (const key of rowMergeKeys(mergedRows[matchIndex])) {
+        if (!index.has(key)) index.set(key, matchIndex);
+      }
+    } else {
+      const newRow = { ...sourceRow, id: nextId };
+      nextId += 1;
+      const newIndex = mergedRows.length;
+      mergedRows.push(newRow);
+      added += 1;
+      for (const key of rowMergeKeys(newRow)) {
+        if (!index.has(key)) index.set(key, newIndex);
+      }
+    }
+  }
+
+  return { rows: mergedRows, updated, added };
 }
 
 function deriveMenuItemSemantics(row) {
@@ -345,7 +429,7 @@ const workbook = xlsx.readFile(SOURCE_FILE, { raw: true });
 const sheet = workbook.Sheets[workbook.SheetNames[0]];
 const incomingRows = xlsx.utils.sheet_to_json(sheet, { defval: "" }).filter(isValidMenuRow);
 
-const importedRows = incomingRows.map((row, index) => {
+const incomingImportedRows = incomingRows.map((row, index) => {
   const existing = findExisting(row, lookup);
   const menu = normalizeMenuName(row["Menu Name"]);
   const { menuPrefix, menuBaseName } = splitMenu(menu);
@@ -365,7 +449,7 @@ const importedRows = incomingRows.map((row, index) => {
   const menuSemantics = deriveMenuItemSemantics(row);
 
   return {
-    id: index + 1,
+    id: existing?.id ?? index + 1,
     menu,
     menuType: cleanText(row["Menu Type"]),
     week: cleanText(row["Week"]),
@@ -483,6 +567,9 @@ const importedRows = incomingRows.map((row, index) => {
   };
 });
 
+const mergeResult = mergeImportedRows(existingRows, incomingImportedRows);
+const importedRows = mergeResult.rows;
+
 writeFileSync(OUTPUT_FILE, `${JSON.stringify(importedRows, null, 2)}\n`);
 mkdirSync(dirname(RAW_ARCHIVE_FILE), { recursive: true });
 writeFileSync(
@@ -510,6 +597,9 @@ console.log(
       sourceFile: SOURCE_FILE,
       baselineFile: BASELINE_FILE,
       rows: importedRows.length,
+      importedRows: incomingImportedRows.length,
+      updatedRows: mergeResult.updated,
+      addedRows: mergeResult.added,
       menus: menuCount,
       preservedDescriptions,
       freshFiveHibernateRows: hibernateCount,

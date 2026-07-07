@@ -153,7 +153,7 @@ function downloadTrustLayerGapList(rows) {
   URL.revokeObjectURL(url);
 }
 
-export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodRotations, onOpenRecipeDatabase, onOpenMenuProjects, onOpenLadleCompliance, onOpenLeanTool, onOpenSmartsheetHealth }) {
+export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodRotations, onOpenRecipeDatabase, onOpenMenuProjects, onOpenMenuAuditTool, onOpenLadleCompliance, onOpenLeanTool, onOpenSmartsheetHealth }) {
   const {
     totalItems,
     menuCount,
@@ -223,6 +223,16 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
       meta: "Launch pipeline"
     },
     {
+      title: "Menu Audit Tool",
+      eyebrow: "Phase 1",
+      description: "Compare Master App Data, SSMT rows, and Centric Brand Reports with exact MRN preservation.",
+      action: "Open Audit",
+      onOpen: onOpenMenuAuditTool,
+      icon: ClipboardCheck,
+      tone: "sky",
+      meta: "IT menu audit"
+    },
+    {
       title: "Ladle Compliance",
       eyebrow: "Test concept",
       description: "Track compliance by district, cafe, and week with executive summaries and follow-up cues.",
@@ -262,6 +272,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
         onOpenNeighborhoodRotations={onOpenNeighborhoodRotations}
         onOpenRecipeDatabase={onOpenRecipeDatabase}
         onOpenMenuProjects={onOpenMenuProjects}
+        onOpenMenuAuditTool={onOpenMenuAuditTool}
         onOpenLadleCompliance={onOpenLadleCompliance}
         onOpenLeanTool={onOpenLeanTool}
         onOpenSmartsheetHealth={onOpenSmartsheetHealth}
@@ -289,7 +300,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
               Built for quick chef decisions: choose the workstream, check status, and move straight into the active tool.
             </p>
             <div className="mt-5 grid grid-cols-2 gap-3">
-              <Metric label="Tools" value="6" />
+              <Metric label="Tools" value="7" />
               <Metric label="Menu items" value={totalItems.toLocaleString()} />
               <Metric label="Menus" value={menuCount} />
               <Metric label="Costed items" value={costedItems.toLocaleString()} />
@@ -442,12 +453,13 @@ function MobileLanding({
   onOpenNeighborhoodRotations,
   onOpenRecipeDatabase,
   onOpenMenuProjects,
+  onOpenMenuAuditTool,
   onOpenLadleCompliance,
   onOpenLeanTool,
   onOpenSmartsheetHealth,
 }) {
   const metricTiles = [
-    { label: "Tools", value: "6", icon: Wrench, tone: "bg-[#fff7e7] text-[#8a621b]" },
+    { label: "Tools", value: "7", icon: Wrench, tone: "bg-[#fff7e7] text-[#8a621b]" },
     { label: "Menu Items", value: totalItems.toLocaleString(), icon: Utensils, tone: "bg-[#eaf8f2] text-emerald-700" },
     { label: "Menus", value: menuCount, icon: ListChecks, tone: "bg-[#edf5ff] text-sky-700" },
     { label: "Costed Items", value: costedItems.toLocaleString(), icon: Database, tone: "bg-[#f0eefb] text-indigo-700" },
@@ -629,6 +641,7 @@ function MobileToolCard({ title, eyebrow, description, action, onOpen, icon: Ico
     "Neighborhood Rotations": "Live",
     "Recipe Library": "New",
     "Menu Projects": "New",
+    "Menu Audit Tool": "Phase 1",
     "Ladle Compliance": "Test concept",
     "Lean Tool": "New",
   };

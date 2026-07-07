@@ -94,9 +94,11 @@ assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "effective_
 assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "itemTrustFlags");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Data Confidence");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Needs Review");
-assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "item-photo");
+assertNotIncludes("src/features/recipe-database/recipeLibraryModel.js", "type: \"item-photo\"");
+assertNotIncludes("src/features/recipe-database/recipeLibraryModel.js", "type: \"source-document\"");
 assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "plating-guide");
 assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "recipe-file");
+assertIncludes("api/recipe-library.js", "\"item-photo\": \"item-photos\"");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "MENU_HEADER_ASSETS");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "getRecipeLibraryPhoto");
 assertIncludes("src/data/recipeLibraryAssets.js", "AMZ: Andes");
