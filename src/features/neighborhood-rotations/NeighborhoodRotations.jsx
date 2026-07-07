@@ -2607,9 +2607,16 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
     updateRotation({ customStations: { ...current, [stationKey]: { ...current[stationKey], ...patch } } });
   };
   const markDraft = () => {
-    const nextRotation = { ...rotation, status: "Draft", updatedAt: nowStamp(), submittedBy: "Chef" };
+    const wasSubmitted = isSubmittedRotation(rotation);
+    const nextRotation = {
+      ...rotation,
+      status: wasSubmitted ? "Submitted" : "Draft",
+      updatedAt: nowStamp(),
+      submittedAt: wasSubmitted ? rotation.submittedAt || nowStamp() : "",
+      submittedBy: rotation.submittedBy || "Chef",
+    };
     updateRotation(nextRotation);
-    persistRotationToDatabase?.(nextRotation);
+    persistRotationToDatabase?.(nextRotation, { requirePrimary: wasSubmitted });
   };
   const submitRotation = async () => {
     if (!canSubmitRotation) {

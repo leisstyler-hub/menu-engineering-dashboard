@@ -55,6 +55,10 @@ if (!/if \(requirePrimary && result\.source === "smartsheet-fallback"\)/.test(ro
   fail("submitted rotations must reject fallback-only saves so users retry instead of seeing a false lock");
 }
 
+if (!/const wasSubmitted = isSubmittedRotation\(rotation\)/.test(rotationSource) || !/status: wasSubmitted \? "Submitted" : "Draft"/.test(rotationSource)) {
+  fail("save draft must not downgrade an already submitted shared rotation back to Draft");
+}
+
 if (!/SubmitSaveFailedModal/.test(rotationSource) || !/The app did not lock this rotation/.test(rotationSource)) {
   fail("failed submit confirmation must show a visible modal");
 }

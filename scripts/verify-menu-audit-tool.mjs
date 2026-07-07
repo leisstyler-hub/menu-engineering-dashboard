@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { parseCentricBrandWorkbook, parseMenuWorksCsvText, parseSsmtWorkbook, preserveSpreadsheetText } from "../src/features/menu-audit/menuAuditModel.js";
+import { buildAuditComparison, parseCentricBrandWorkbook, parseMenuWorksCsvText, parseSsmtWorkbook, preserveSpreadsheetText } from "../src/features/menu-audit/menuAuditModel.js";
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -88,8 +88,20 @@ const ssmt = parseSsmtWorkbook(ssmtWorkbook, { originalFileName: "SEA Standard M
 assert(!ssmt.records.some((row) => row.name.includes("spicy cilantro")), "SSMT remove modifier rows should be ignored.");
 assert(ssmt.records.some((row) => row.name === "chana masala (vn)" && row.mrn === "165741.24"), "SSMT modifier item name and MRN were not parsed.");
 
+const ssmtVsAppRows = buildAuditComparison([
+  { source: "master_app", recordType: "item", menuName: "AMZ: Andes", displayName: "Aji De Gallina", name: "Aji De Gallina", mrn: "122251" },
+  { source: "ssmt", recordType: "item", menuName: "AMZ: Andes", displayName: "Aji De Gallina", name: "Aji De Gallina", mrn: "122251" },
+], { expectedSources: ["master_app", "ssmt"] });
+assert(ssmtVsAppRows[0]?.status === "Match", "SSMT vs App comparison must not require a Brand Report upload.");
+
 assertIncludes("src/app/LandingPage.jsx", "Menu Audit Tool");
 assertIncludes("src/app/CulinaryToolsPlatformApp.jsx", "menuAuditTool");
 assertIncludes("src/features/menu-audit/MenuAuditTool.jsx", "Master App Data");
+assertIncludes("src/features/menu-audit/MenuAuditTool.jsx", "SSMT vs App Data");
+assertIncludes("src/features/menu-audit/MenuAuditTool.jsx", "setComparisonMode");
+
+const menuAuditSource = readFileSync("src/features/menu-audit/MenuAuditTool.jsx", "utf8");
+assert(!menuAuditSource.includes("brandReports.forEach((report) => values.add(report.brandName))"), "Brand uploads must not be added to the menu scope dropdown.");
+assert(!menuAuditSource.includes("setSelectedMenu(parsed.brandName)"), "Brand uploads must not hijack the selected menu dropdown.");
 
 console.log("Menu Audit Tool verification passed.");

@@ -367,7 +367,8 @@ function severityFor(status) {
   return "Clear";
 }
 
-export function buildAuditComparison(records = []) {
+export function buildAuditComparison(records = [], { expectedSources = ["master_app", "ssmt", "centric_brand"] } = {}) {
+  const expected = new Set(expectedSources);
   const grouped = new Map();
   records.forEach((record) => {
     const key = compareKey(record);
@@ -378,11 +379,15 @@ export function buildAuditComparison(records = []) {
     const master = sources.master_app || null;
     const ssmt = sources.ssmt || null;
     const brand = sources.centric_brand || null;
-    const present = [master, ssmt, brand].filter(Boolean);
+    const present = [
+      expected.has("master_app") ? master : null,
+      expected.has("ssmt") ? ssmt : null,
+      expected.has("centric_brand") ? brand : null,
+    ].filter(Boolean);
     let status = "Match";
-    if (!ssmt) status = "Missing from SSMT";
-    else if (!brand) status = "Missing from Brand Report";
-    else if (!master) status = "Missing from Master App Data";
+    if (expected.has("ssmt") && !ssmt) status = "Missing from SSMT";
+    else if (expected.has("centric_brand") && !brand) status = "Missing from Brand Report";
+    else if (expected.has("master_app") && !master) status = "Missing from Master App Data";
     else if (new Set(present.map((row) => preserveSpreadsheetText(row.mrn)).filter(Boolean)).size > 1) status = "MRN Mismatch";
     else if (new Set(present.map((row) => preserveSpreadsheetText(row.category).toLowerCase()).filter(Boolean)).size > 1) status = "Category Mismatch";
     else if (new Set(present.map((row) => preserveSpreadsheetText(row.description).toLowerCase()).filter(Boolean)).size > 1) status = "Description Mismatch";

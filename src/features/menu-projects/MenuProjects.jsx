@@ -1544,7 +1544,7 @@ function PeopleListEditor({ label, people, onChange, onDone = null }) {
       </div>
       <div className="mt-3 space-y-3">
         {list.map((person, index) => (
-          <div key={`${index}-${person.email || person.name}`} className="rounded-lg border border-slate-300 bg-white p-3">
+          <div key={index} className="rounded-lg border border-slate-300 bg-white p-3">
             <div className="flex items-center justify-between gap-3">
               <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">Owner {index + 1}</p>
               {list.length > 1 && (

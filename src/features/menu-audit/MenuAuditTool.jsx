@@ -55,6 +55,7 @@ export default function MenuAuditTool({ onBackToPlatform, onOpenSmartsheetHealth
   const [ssmtRecords, setSsmtRecords] = useState([]);
   const [brandReports, setBrandReports] = useState([]);
   const [files, setFiles] = useState(() => (typeof window === "undefined" ? [] : loadMetadata()));
+  const [comparisonMode, setComparisonMode] = useState("brand");
   const [selectedMenu, setSelectedMenu] = useState("All menus");
   const [recordType, setRecordType] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -112,7 +113,7 @@ export default function MenuAuditTool({ onBackToPlatform, onOpenSmartsheetHealth
       const parsed = parseCentricBrandWorkbook(workbook, { originalFileName: file.name, uploadedAt });
       setBrandReports((current) => [parsed, ...current.filter((entry) => entry.brandName !== parsed.brandName)]);
       setFiles((current) => [parsed.uploadedFile, ...current.filter((entry) => !(entry.sourceType === "centric_brand" && entry.brandName === parsed.brandName))]);
-      setSelectedMenu(parsed.brandName);
+      setComparisonMode("brand");
       setMessage(`${parsed.uploadedFile.displayFileName} loaded with ${parsed.records.length.toLocaleString()} item and modifier rows.`);
     } catch (error) {
       setMessage(error.message || "Brand Report upload could not be parsed.");
@@ -130,27 +131,27 @@ export default function MenuAuditTool({ onBackToPlatform, onOpenSmartsheetHealth
     active: true,
   }), []);
 
-  const allRecords = useMemo(() => [
-    ...masterRows,
-    ...ssmtRecords,
-    ...brandReports.flatMap((report) => report.records),
-  ], [brandReports, masterRows, ssmtRecords]);
+  const activeComparisonRecords = useMemo(() => {
+    const baseRecords = [...masterRows, ...ssmtRecords];
+    if (comparisonMode === "ssmt") return baseRecords;
+    return [...baseRecords, ...brandReports.flatMap((report) => report.records)];
+  }, [brandReports, comparisonMode, masterRows, ssmtRecords]);
 
   const menus = useMemo(() => {
     const values = new Set(["All menus"]);
-    brandReports.forEach((report) => values.add(report.brandName));
-    masterRows.slice(0, 4000).forEach((row) => {
+    [...masterRows, ...ssmtRecords].slice(0, 6000).forEach((row) => {
       if (row.menuName) values.add(row.menuName);
     });
     return [...values].sort((a, b) => (a === "All menus" ? -1 : b === "All menus" ? 1 : a.localeCompare(b)));
-  }, [brandReports, masterRows]);
+  }, [masterRows, ssmtRecords]);
 
   const comparisonRows = useMemo(() => {
-    const selected = selectedMenu === "All menus" ? allRecords : allRecords.filter((row) => {
+    const selected = selectedMenu === "All menus" ? activeComparisonRecords : activeComparisonRecords.filter((row) => {
       const haystack = `${row.menuName || ""} ${row.brandName || ""} ${row.sourceTab || ""}`.toLowerCase();
       return haystack.includes(selectedMenu.toLowerCase());
     });
-    return buildAuditComparison(selected).filter((row) => {
+    const expectedSources = comparisonMode === "ssmt" ? ["master_app", "ssmt"] : ["master_app", "ssmt", "centric_brand"];
+    return buildAuditComparison(selected, { expectedSources }).filter((row) => {
       if (recordType !== "all" && row.recordType !== recordType) return false;
       if (statusFilter !== "all" && row.status !== statusFilter) return false;
       if (search) {
@@ -159,7 +160,7 @@ export default function MenuAuditTool({ onBackToPlatform, onOpenSmartsheetHealth
       }
       return true;
     });
-  }, [allRecords, recordType, search, selectedMenu, statusFilter]);
+  }, [activeComparisonRecords, comparisonMode, recordType, search, selectedMenu, statusFilter]);
 
   const summary = auditSummary(comparisonRows);
   const activeFiles = [masterFile, ...files].slice(0, 12);
@@ -240,6 +241,22 @@ export default function MenuAuditTool({ onBackToPlatform, onOpenSmartsheetHealth
         </section>
 
         <section className="rounded-lg border border-sky-200 bg-white p-5 shadow-sm">
+          <div className="mb-4 grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2 md:grid-cols-2">
+            {[
+              { key: "brand", label: "Brand vs App + SSMT", detail: "Compare latest Brand uploads against held app and SSMT data." },
+              { key: "ssmt", label: "SSMT vs App Data", detail: "View differences between SSMT and the app's MRN data only." },
+            ].map((mode) => (
+              <button
+                key={mode.key}
+                type="button"
+                onClick={() => setComparisonMode(mode.key)}
+                className={`rounded-lg border px-4 py-3 text-left transition ${comparisonMode === mode.key ? "border-emerald-300 bg-emerald-50 text-emerald-950 shadow-sm" : "border-slate-200 bg-white text-slate-700 hover:border-sky-300"}`}
+              >
+                <span className="block text-sm font-black">{mode.label}</span>
+                <span className="mt-1 block text-xs font-semibold leading-5 opacity-75">{mode.detail}</span>
+              </button>
+            ))}
+          </div>
           <div className="grid gap-3 lg:grid-cols-[1.2fr_1fr_1fr_1fr_auto]">
             <label className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -255,7 +272,16 @@ export default function MenuAuditTool({ onBackToPlatform, onOpenSmartsheetHealth
             </select>
             <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="rounded-lg border border-slate-300 bg-white px-3 py-3 text-sm font-bold">
               <option value="all">All statuses</option>
-              {["Match", "Missing from SSMT", "Missing from Master App Data", "Missing from Brand Report", "MRN Mismatch", "Category Mismatch", "Description Mismatch", "Name Difference Only"].map((status) => <option key={status}>{status}</option>)}
+              {[
+                "Match",
+                "Missing from SSMT",
+                "Missing from Master App Data",
+                ...(comparisonMode === "brand" ? ["Missing from Brand Report"] : []),
+                "MRN Mismatch",
+                "Category Mismatch",
+                "Description Mismatch",
+                "Name Difference Only",
+              ].map((status) => <option key={status}>{status}</option>)}
             </select>
             <button onClick={exportCsv} className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 py-3 text-sm font-black text-white hover:bg-slate-800">
               <Download size={18} /> Export

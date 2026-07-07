@@ -46,3 +46,36 @@ test("Menu Projects can create and trash a project without app protection", asyn
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
+
+test("Menu Projects new-project text fields keep focus while typing", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await stubMenuProjectBackbone(page);
+  await page.addInitScript(() => {
+    window.localStorage.removeItem("culinaryToolsMenuProjects.v2");
+    window.localStorage.removeItem("culinaryToolsMenuProjects.deleted.v1");
+  });
+
+  await openTool(page, /open projects/i, /^Menu Projects$/);
+  await page.getByRole("button", { name: /New Menu Project/i }).click();
+  await expect(page.getByRole("heading", { name: /Create menu project/i })).toBeVisible();
+
+  const menuName = page.getByPlaceholder("Menu name");
+  await menuName.pressSequentially("Focus Test Menu");
+  await expect(menuName).toHaveValue("Focus Test Menu");
+  await expect(menuName).toBeFocused();
+
+  const ownerName = page.locator('input[placeholder="Name"]').first();
+  await ownerName.click();
+  await ownerName.pressSequentially("Owner Test");
+  await expect(ownerName).toHaveValue("Owner Test");
+  await expect(ownerName).toBeFocused();
+
+  const ownerEmail = page.locator('input[placeholder="Email"]').first();
+  await ownerEmail.click();
+  await ownerEmail.pressSequentially("owner.test@compass-usa.com");
+  await expect(ownerEmail).toHaveValue("owner.test@compass-usa.com");
+  await expect(ownerEmail).toBeFocused();
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
