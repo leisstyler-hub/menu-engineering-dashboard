@@ -2,6 +2,12 @@
 
 ## 2026-07-07
 
+- [Jul 7, 7:34 PM] Reworked Menu Audit Brand vs App + SSMT mode so Centric comparisons only run against uploaded brand reports instead of creating false missing-brand rows for every menu.
+- [Jul 7, 7:34 PM] Added clear Menu Audit guidance when the selected menu does not have a Centric Brand Report uploaded yet, while keeping SSMT vs Culinary App reconciliation always available.
+- [Jul 7, 7:34 PM] Preserved Brand Report price, calories, primary reporting category, and secondary reporting category fields in audit records.
+- [Jul 7, 7:34 PM] Marked Centric-only rows as `Remove from Centric Brand`, SSMT/app rows missing from Centric as `Needs Centric Programming`, and SSMT-vs-app gaps as `Missing from Culinary App` or `Missing from SSMT`.
+- [Jul 7, 7:34 PM] Treated SSMT and Centric modifier rows as modifier reconciliation records so missing Culinary App modifier MRNs do not create false failures.
+- [Jul 7, 7:34 PM] Set visible app version to `2026.07.07.004-menu-audit-brand-scope`.
 - [Jul 7, 6:07 PM] Paged the Neighborhood Rotations Supabase read path so future saved rotations do not disappear after the first 1,000 database rows.
 - [Jul 7, 6:07 PM] Added a browser audit that opens every district/cafe planner for future weeks and verifies Re:Invent/Blueshift split-global selectors remove already-used menus.
 - [Jul 7, 6:07 PM] Added a live rotation audit script for future records, split block issues, duplicate record IDs, and South next-week submission visibility.
