@@ -9,6 +9,7 @@ import {
   auditSummary,
   buildAuditComparison,
   exportAuditRowsToCsv,
+  filterRecordsForBrandAudit,
   masterAppRowsToAuditRecords,
   parseCentricBrandWorkbook,
   parseSsmtWorkbook,
@@ -23,7 +24,8 @@ function dateLabel(value) {
 
 function statusTone(status) {
   if (status === "Match") return "border-emerald-200 bg-emerald-50 text-emerald-900";
-  if (/Missing|MRN/.test(status)) return "border-red-200 bg-red-50 text-red-800";
+  if (/Remove|Missing|MRN/.test(status)) return "border-red-200 bg-red-50 text-red-800";
+  if (/Programming/.test(status)) return "border-sky-200 bg-sky-50 text-sky-900";
   if (/Category|Description/.test(status)) return "border-amber-200 bg-amber-50 text-amber-900";
   return "border-sky-200 bg-sky-50 text-sky-800";
 }
@@ -134,8 +136,13 @@ export default function MenuAuditTool({ onBackToPlatform, onOpenSmartsheetHealth
   const activeComparisonRecords = useMemo(() => {
     const baseRecords = [...masterRows, ...ssmtRecords];
     if (comparisonMode === "ssmt") return baseRecords;
-    return [...baseRecords, ...brandReports.flatMap((report) => report.records)];
-  }, [brandReports, comparisonMode, masterRows, ssmtRecords]);
+    return filterRecordsForBrandAudit({ baseRecords, brandReports, selectedMenu }).records;
+  }, [brandReports, comparisonMode, masterRows, selectedMenu, ssmtRecords]);
+
+  const brandAuditScope = useMemo(() => {
+    if (comparisonMode !== "brand") return null;
+    return filterRecordsForBrandAudit({ baseRecords: [...masterRows, ...ssmtRecords], brandReports, selectedMenu });
+  }, [brandReports, comparisonMode, masterRows, selectedMenu, ssmtRecords]);
 
   const menus = useMemo(() => {
     const values = new Set(["All menus"]);
@@ -146,7 +153,7 @@ export default function MenuAuditTool({ onBackToPlatform, onOpenSmartsheetHealth
   }, [masterRows, ssmtRecords]);
 
   const comparisonRows = useMemo(() => {
-    const selected = selectedMenu === "All menus" ? activeComparisonRecords : activeComparisonRecords.filter((row) => {
+    const selected = selectedMenu === "All menus" || comparisonMode === "brand" ? activeComparisonRecords : activeComparisonRecords.filter((row) => {
       const haystack = `${row.menuName || ""} ${row.brandName || ""} ${row.sourceTab || ""}`.toLowerCase();
       return haystack.includes(selectedMenu.toLowerCase());
     });
@@ -236,7 +243,7 @@ export default function MenuAuditTool({ onBackToPlatform, onOpenSmartsheetHealth
           <Metric label="Total audited" value={summary.total} icon={Database} />
           <Metric label="Matches" value={summary.matches} icon={ShieldCheck} tone="emerald" />
           <Metric label="Mismatches" value={summary.mismatches} icon={AlertTriangle} tone="amber" />
-          <Metric label="Missing SSMT" value={summary.missingSsmt} icon={FileSpreadsheet} tone="red" />
+          <Metric label="Centric cleanup" value={summary.removeFromBrand} icon={FileSpreadsheet} tone="red" />
           <Metric label="MRN mismatch" value={summary.mrnMismatches} icon={ClipboardCheck} tone="red" />
         </section>
 
@@ -274,8 +281,9 @@ export default function MenuAuditTool({ onBackToPlatform, onOpenSmartsheetHealth
               <option value="all">All statuses</option>
               {[
                 "Match",
+                ...(comparisonMode === "brand" ? ["Remove from Centric Brand", "Needs Centric Programming"] : []),
                 "Missing from SSMT",
-                "Missing from Master App Data",
+                "Missing from Culinary App",
                 ...(comparisonMode === "brand" ? ["Missing from Brand Report"] : []),
                 "MRN Mismatch",
                 "Category Mismatch",
@@ -287,6 +295,18 @@ export default function MenuAuditTool({ onBackToPlatform, onOpenSmartsheetHealth
               <Download size={18} /> Export
             </button>
           </div>
+          {comparisonMode === "brand" && brandAuditScope && !brandAuditScope.hasUploadedBrandForScope && (
+            <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm font-bold leading-6 text-amber-900">
+              {selectedMenu === "All menus"
+                ? "Upload a Centric Brand Report to begin Brand vs App + SSMT review. Until a brand is uploaded, this view stays clean instead of showing false missing-brand issues."
+                : `${selectedMenu} does not have a Centric Brand Report uploaded yet. Upload that brand report to audit it here, or switch to SSMT vs App Data to reconcile the Culinary App against the SSMT.`}
+            </div>
+          )}
+          {comparisonMode === "brand" && brandAuditScope?.hasUploadedBrandForScope && (
+            <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold leading-6 text-emerald-900">
+              Auditing uploaded brand scope: {brandAuditScope.matchingBrandNames.join(", ")}.
+            </div>
+          )}
         </section>
 
         <section className="overflow-hidden rounded-lg border border-sky-200 bg-white shadow-sm">
@@ -301,7 +321,7 @@ export default function MenuAuditTool({ onBackToPlatform, onOpenSmartsheetHealth
             <table className="min-w-[1300px] w-full border-collapse text-left text-sm">
               <thead className="bg-slate-50 text-xs font-black uppercase tracking-[0.12em] text-slate-500">
                 <tr>
-                  {["Status", "Type", "Menu", "Master App Name", "SSMT Name", "Brand Report Name", "Master MRN", "SSMT MRN", "Brand MRN", "Category"].map((header) => (
+                  {["Status", "Type", "Menu", "Master App Name", "SSMT Name", "Brand Report Name", "Master MRN", "SSMT MRN", "Brand MRN", "Price / Cal", "Category"].map((header) => (
                     <th key={header} className="border-b border-slate-200 px-4 py-3">{header}</th>
                   ))}
                 </tr>
@@ -319,9 +339,14 @@ export default function MenuAuditTool({ onBackToPlatform, onOpenSmartsheetHealth
                     <MrnCell value={row.ssmt?.mrn} />
                     <MrnCell value={row.brand?.mrn} />
                     <td className="border-b border-slate-100 px-4 py-3 text-xs font-bold text-slate-600">
-                      <SourceLine label="Master" value={row.master?.category} />
-                      <SourceLine label="SSMT" value={row.ssmt?.category} />
-                      <SourceLine label="Brand" value={row.brand?.category} />
+                      <SourceLine label="Master" value={priceCalLabel(row.master)} />
+                      <SourceLine label="SSMT" value={priceCalLabel(row.ssmt)} />
+                      <SourceLine label="Brand" value={priceCalLabel(row.brand)} />
+                    </td>
+                    <td className="border-b border-slate-100 px-4 py-3 text-xs font-bold text-slate-600">
+                      <SourceLine label="Master" value={categoryLabel(row.master)} />
+                      <SourceLine label="SSMT" value={categoryLabel(row.ssmt)} />
+                      <SourceLine label="Brand" value={categoryLabel(row.brand)} />
                     </td>
                   </tr>
                 ))}
@@ -412,4 +437,20 @@ function MrnCell({ value }) {
 
 function SourceLine({ label, value }) {
   return <p><span className="text-slate-400">{label}:</span> {value || "Missing"}</p>;
+}
+
+function priceCalLabel(source) {
+  if (!source) return "";
+  const pieces = [];
+  if (source.price) pieces.push(`$${String(source.price).replace(/^\$/, "")}`);
+  if (source.calories) pieces.push(`${source.calories} cal`);
+  return pieces.join(" / ");
+}
+
+function categoryLabel(source) {
+  if (!source) return "";
+  const primary = source.reportingCategoryPrimary || source.category;
+  const secondary = source.reportingCategorySecondary;
+  if (primary && secondary && primary !== secondary) return `${primary} / ${secondary}`;
+  return primary || secondary || source.category;
 }
