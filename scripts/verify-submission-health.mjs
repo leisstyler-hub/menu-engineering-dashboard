@@ -31,6 +31,10 @@ if (!/findStaleRowIds/.test(storageEndpoint) || !/deleteRecordIds\(staleRowIds\)
   fail("Supabase storage endpoint must remove stale child rows during resubmission");
 }
 
+if (!/loadAllSupabaseRows/.test(storageEndpoint) || !/offset \+= pageSize/.test(storageEndpoint)) {
+  fail("Supabase storage endpoint must page through all matching rows instead of stopping at the 1,000-row REST cap");
+}
+
 if (!/dedupeRowsByRecordId/.test(storageEndpoint) || !/duplicateRowsSkipped/.test(storageEndpoint)) {
   fail("Supabase storage endpoint must dedupe duplicate Record IDs before upsert");
 }

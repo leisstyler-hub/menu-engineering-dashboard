@@ -2,6 +2,10 @@
 
 ## 2026-07-07
 
+- [Jul 7, 6:07 PM] Paged the Neighborhood Rotations Supabase read path so future saved rotations do not disappear after the first 1,000 database rows.
+- [Jul 7, 6:07 PM] Added a browser audit that opens every district/cafe planner for future weeks and verifies Re:Invent/Blueshift split-global selectors remove already-used menus.
+- [Jul 7, 6:07 PM] Added a live rotation audit script for future records, split block issues, duplicate record IDs, and South next-week submission visibility.
+- [Jul 7, 6:07 PM] Set visible app version to `2026.07.07.003-rotation-audit-pagination`.
 - [Jul 7, 9:42 AM] Added the Menu Audit Tool as the seventh platform tool with source upload cards, freshness tracking, menu/brand filters, summary cards, exact MRN columns, and CSV export.
 - [Jul 7, 9:42 AM] Built text-safe audit parsers for Master App Data, active SSMT workbooks, and Centric Brand Reports so MRNs like `165741.11`, `182206.25`, and `107142.156` are preserved as text instead of rounded.
 - [Jul 7, 9:42 AM] Corrected Brand Report modifier parsing to use modifier item names and detected MRN columns from the workbook header instead of assuming group names or unsafe column positions.

@@ -138,19 +138,38 @@ function dedupeRowsByRecordId(rows = []) {
   return Array.from(byRecordId.values());
 }
 
+async function loadAllSupabaseRows(basePath, params = {}, { pageSize = 1000, maxRows = 25000 } = {}) {
+  const rows = [];
+  let offset = 0;
+
+  while (offset < maxRows) {
+    const page = await supabaseFetch(`${basePath}?${queryString({
+      ...params,
+      limit: pageSize,
+      offset,
+    })}`);
+    rows.push(...(page || []));
+    if (!Array.isArray(page) || page.length < pageSize) break;
+    offset += pageSize;
+  }
+
+  return rows;
+}
+
 async function loadRecords(req, res) {
   const tool = getBackboneToolFromContext({ tool: req.query?.tool || "" });
   const databaseTool = getBackboneDatabaseToolFromContext({ tool });
   const healthOnly = String(req.query?.health || "") === "1";
   const includeHidden = String(req.query?.includeHidden || "") === "1";
-  const params = queryString({
+  const params = {
     select: "record_id,updated_at,retain_until,record_payload",
     tool: `eq.${databaseTool}`,
     visible_in_dashboard: includeHidden ? undefined : "eq.true",
     order: "updated_at.desc",
-    limit: healthOnly ? "1" : "5000",
-  });
-  const rows = await supabaseFetch(`app_records?${params}`);
+  };
+  const rows = healthOnly
+    ? await supabaseFetch(`app_records?${queryString({ ...params, limit: "1" })}`)
+    : await loadAllSupabaseRows("app_records", params);
   const records = normalizeBackboneRows(rows || []).filter((record) => {
     if (tool !== "menuProjects") return true;
     return String(record["Record Type"] || "") === "Menu Project" || String(record["Record ID"] || "").startsWith("menuProject|");
