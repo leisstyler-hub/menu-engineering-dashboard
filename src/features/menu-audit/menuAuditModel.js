@@ -71,6 +71,11 @@ function makeRawFields(sheet, row, headerRow = 1) {
   return rawFields;
 }
 
+function rowField(sheet, row, headerRow, candidates = [], fallbackColumn = null) {
+  const column = findHeaderColumn(sheet, headerRow, candidates) || fallbackColumn;
+  return column ? rowCell(sheet, row, column) : "";
+}
+
 function fileDisplayDate(uploadedAt) {
   const date = uploadedAt ? new Date(uploadedAt) : new Date();
   if (Number.isNaN(date.getTime())) return new Date().toISOString().slice(0, 10);
@@ -118,12 +123,18 @@ function parseCentricItems(sheet, brandName, uploadedFile) {
   const nameCol = findHeaderColumn(sheet, 1, ["name"]) || columnLetterToNumber("D");
   const labelCol = findHeaderColumn(sheet, 1, ["label"]) || columnLetterToNumber("E");
   const descriptionCol = findHeaderColumn(sheet, 1, ["description"]) || columnLetterToNumber("I");
-  const categoryCol = findHeaderColumn(sheet, 1, ["reporting_category_secondary", "line_route", "reporting_category_primary"]) || columnLetterToNumber("R");
+  const reportingPrimaryCol = findHeaderColumn(sheet, 1, ["reporting_category_primary"]);
+  const reportingSecondaryCol = findHeaderColumn(sheet, 1, ["reporting_category_secondary", "line_route"]);
+  const categoryCol = reportingPrimaryCol || reportingSecondaryCol || columnLetterToNumber("R");
+  const priceCol = findHeaderColumn(sheet, 1, ["price", "base_price", "retail_price"]);
+  const caloriesCol = findHeaderColumn(sheet, 1, ["calories", "kcal", "cal"]);
   const rows = [];
   for (let row = 2; row <= range.end.row; row += 1) {
     const name = rowCell(sheet, row, nameCol) || rowCell(sheet, row, labelCol);
     const mrn = rowCell(sheet, row, mrnCol);
     if (!name && !mrn) continue;
+    const reportingCategoryPrimary = reportingPrimaryCol ? rowCell(sheet, row, reportingPrimaryCol) : "";
+    const reportingCategorySecondary = reportingSecondaryCol ? rowCell(sheet, row, reportingSecondaryCol) : "";
     rows.push({
       id: `${uploadedFile.id}:item:${row}`,
       source: "centric_brand",
@@ -134,6 +145,10 @@ function parseCentricItems(sheet, brandName, uploadedFile) {
       displayName: cleanName(name || rowCell(sheet, row, labelCol)),
       mrn,
       category: rowCell(sheet, row, categoryCol),
+      reportingCategoryPrimary,
+      reportingCategorySecondary,
+      price: priceCol ? rowCell(sheet, row, priceCol) : "",
+      calories: caloriesCol ? rowCell(sheet, row, caloriesCol) : "",
       description: rowCell(sheet, row, descriptionCol),
       sourceTab: "Items",
       sourceRowNumber: row,
@@ -153,12 +168,18 @@ function parseCentricModifiers(sheet, brandName, uploadedFile) {
   const nameCol = findHeaderColumn(sheet, 1, ["name"]) || columnLetterToNumber("D");
   const labelCol = findHeaderColumn(sheet, 1, ["label"]) || columnLetterToNumber("E");
   const descriptionCol = findHeaderColumn(sheet, 1, ["description"]) || columnLetterToNumber("I");
-  const categoryCol = findHeaderColumn(sheet, 1, ["reporting_category_secondary", "reporting_category_primary"]) || columnLetterToNumber("R");
+  const reportingPrimaryCol = findHeaderColumn(sheet, 1, ["reporting_category_primary"]);
+  const reportingSecondaryCol = findHeaderColumn(sheet, 1, ["reporting_category_secondary"]);
+  const categoryCol = reportingPrimaryCol || reportingSecondaryCol || columnLetterToNumber("R");
+  const priceCol = findHeaderColumn(sheet, 1, ["price", "base_price", "retail_price"]);
+  const caloriesCol = findHeaderColumn(sheet, 1, ["calories", "kcal", "cal"]);
   const rows = [];
   for (let row = 2; row <= range.end.row; row += 1) {
     const name = rowCell(sheet, row, nameCol) || rowCell(sheet, row, labelCol);
     const mrn = rowCell(sheet, row, mrnCol);
     if (!name && !mrn) continue;
+    const reportingCategoryPrimary = reportingPrimaryCol ? rowCell(sheet, row, reportingPrimaryCol) : "";
+    const reportingCategorySecondary = reportingSecondaryCol ? rowCell(sheet, row, reportingSecondaryCol) : "";
     rows.push({
       id: `${uploadedFile.id}:modifier:${row}`,
       source: "centric_brand",
@@ -168,7 +189,11 @@ function parseCentricModifiers(sheet, brandName, uploadedFile) {
       name: preserveSpreadsheetText(name),
       displayName: cleanName(name || rowCell(sheet, row, labelCol)),
       mrn,
-      category: rowCell(sheet, row, categoryCol) || "Modifier",
+      category: "Modifier",
+      reportingCategoryPrimary,
+      reportingCategorySecondary,
+      price: priceCol ? rowCell(sheet, row, priceCol) : "",
+      calories: caloriesCol ? rowCell(sheet, row, caloriesCol) : "",
       description: rowCell(sheet, row, descriptionCol),
       sourceTab: "Modifiers",
       sourceRowNumber: row,
@@ -211,6 +236,10 @@ function parseSsmtItemSheet(sheet, sheetName, uploadedFile) {
   const descriptionCol = findHeaderColumn(sheet, 1, ["description"]) || 3;
   const brandCol = findHeaderColumn(sheet, 1, ["brand (menu)"]) || 15;
   const categoryCol = findHeaderColumn(sheet, 1, ["category"]) || 16;
+  const reportingPrimaryCol = findHeaderColumn(sheet, 1, ["reporting_category_primary"]);
+  const reportingSecondaryCol = findHeaderColumn(sheet, 1, ["reporting_category_secondary"]);
+  const priceCol = findHeaderColumn(sheet, 1, ["price"]);
+  const caloriesCol = findHeaderColumn(sheet, 1, ["calories", "kcal", "cal"]);
   for (let row = 2; row <= range.end.row; row += 1) {
     const name = rowCell(sheet, row, nameCol) || rowCell(sheet, row, labelCol);
     const mrn = rowCell(sheet, row, mrnCol);
@@ -226,7 +255,11 @@ function parseSsmtItemSheet(sheet, sheetName, uploadedFile) {
       name,
       displayName: cleanName(name),
       mrn,
-      category: rowCell(sheet, row, categoryCol),
+      category: rowField(sheet, row, 1, ["reporting_category_primary"], categoryCol),
+      reportingCategoryPrimary: reportingPrimaryCol ? rowCell(sheet, row, reportingPrimaryCol) : "",
+      reportingCategorySecondary: reportingSecondaryCol ? rowCell(sheet, row, reportingSecondaryCol) : "",
+      price: priceCol ? rowCell(sheet, row, priceCol) : "",
+      calories: caloriesCol ? rowCell(sheet, row, caloriesCol) : "",
       description: rowCell(sheet, row, descriptionCol),
       sourceTab: sheetName,
       sourceRowNumber: row,
@@ -261,6 +294,10 @@ function parseSsmtModifierSheet(sheet, sheetName, uploadedFile) {
       displayName: cleanName(name),
       mrn,
       category: "Modifier",
+      reportingCategoryPrimary: "",
+      reportingCategorySecondary: "Modifier",
+      price: rowCell(sheet, row, 9),
+      calories: "",
       description: rowCell(sheet, row, 8),
       sourceTab: sheetName,
       sourceRowNumber: row,
@@ -327,6 +364,10 @@ export function parseMenuWorksCsvText(csvText, { uploadedAt = new Date().toISOSt
     displayName: cleanName(value(row, "Short Name") || value(row, "Recipe Name")),
     mrn: value(row, "Recipe Number"),
     category: value(row, "Recipe Category.") || value(row, "Menu Item Notes"),
+    reportingCategoryPrimary: value(row, "Reporting Category Primary") || value(row, "Reporting Category") || "",
+    reportingCategorySecondary: value(row, "Reporting Category Secondary") || "",
+    price: value(row, "Sell Price"),
+    calories: value(row, "KCAL") || value(row, "Calories"),
     description: value(row, "Enticing Description"),
     sourceTab: "Master App Data",
     sourceRowNumber: index + 2,
@@ -347,6 +388,10 @@ export function masterAppRowsToAuditRecords(rows = []) {
     displayName: cleanName(row.displayName || row.item || row.recipeName || row.shortName),
     mrn: preserveSpreadsheetText(row.mrn || row.MRN),
     category: row.category || row.recipeCategory,
+    reportingCategoryPrimary: row.reportingCategoryPrimary || row.rawFields?.reporting_category_primary || row.rawFields?.["Reporting Category Primary"] || "",
+    reportingCategorySecondary: row.reportingCategorySecondary || row.rawFields?.reporting_category_secondary || row.rawFields?.["Reporting Category Secondary"] || "",
+    price: preserveSpreadsheetText(row.suggestedRetailPrice || row.sellPrice || row.price),
+    calories: preserveSpreadsheetText(row.calories),
     description: row.enticingDescription || row.menuWorksDescription || row.ingredientsCommonName,
     sourceTab: "Master App Data",
     sourceRowNumber: row.id || index + 1,
@@ -360,11 +405,82 @@ function compareKey(record) {
   return `${record.recordType}:name:${preserveSpreadsheetText(record.displayName || record.name).toLowerCase()}`;
 }
 
+export function normalizeMenuScope(value) {
+  return preserveSpreadsheetText(value)
+    .replace(/^(AMZ|RA|EURNA|EUR):\s*/i, "")
+    .replace(/\bamazon\b/gi, "")
+    .replace(/\(v\d+\)/gi, "")
+    .replace(/[^a-z0-9]+/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+export function menuScopeMatches(menuValue, brandValue) {
+  const menu = normalizeMenuScope(menuValue);
+  const brand = normalizeMenuScope(brandValue);
+  if (!menu || !brand) return false;
+  if (menu === brand || menu.includes(brand) || brand.includes(menu)) return true;
+  const menuTokens = new Set(menu.split(" ").filter((token) => token.length > 2));
+  const brandTokens = brand.split(" ").filter((token) => token.length > 2);
+  if (!brandTokens.length) return false;
+  const overlap = brandTokens.filter((token) => menuTokens.has(token)).length;
+  return overlap >= Math.min(2, brandTokens.length);
+}
+
+function recordMatchesBrandScope(record, brandName) {
+  return [
+    record?.menuName,
+    record?.brandName,
+    record?.sourceTab,
+  ].some((value) => menuScopeMatches(value, brandName));
+}
+
+export function filterRecordsForBrandAudit({ baseRecords = [], brandReports = [], selectedMenu = "All menus" } = {}) {
+  const selected = selectedMenu || "All menus";
+  const selectedReports = selected === "All menus"
+    ? brandReports
+    : brandReports.filter((report) => menuScopeMatches(selected, report.brandName));
+  const selectedBrandRecords = selectedReports.flatMap((report) => report.records || []);
+  const selectedBrandKeys = new Set(selectedBrandRecords.map((record) => compareKey(record)));
+  const matchingBrandNames = selectedReports.map((report) => report.brandName);
+  const scopedBaseRecords = baseRecords.filter((record) => {
+    if (selectedBrandKeys.has(compareKey(record))) return true;
+    return matchingBrandNames.some((brandName) => recordMatchesBrandScope(record, brandName));
+  });
+  return {
+    records: selectedReports.length ? [...scopedBaseRecords, ...selectedBrandRecords] : [],
+    hasUploadedBrandForScope: selectedReports.length > 0,
+    uploadedBrandNames: brandReports.map((report) => report.brandName),
+    matchingBrandNames,
+  };
+}
+
 function severityFor(status) {
-  if (/Missing|MRN/.test(status)) return "High";
+  if (/Missing|MRN|Remove|Programming/.test(status)) return "High";
   if (/Category|Description/.test(status)) return "Medium";
   if (/Name/.test(status)) return "Low";
   return "Clear";
+}
+
+function comparableCategory(row) {
+  if (row?.recordType === "modifier") return preserveSpreadsheetText(row?.category || "Modifier").toLowerCase();
+  return preserveSpreadsheetText(row?.reportingCategoryPrimary || row?.category).toLowerCase();
+}
+
+function statusForSources({ expected, master, ssmt, brand, recordType }) {
+  if (recordType === "modifier") {
+    if (expected.has("centric_brand") && brand && !ssmt) return "Remove from Centric Brand";
+    if (expected.has("centric_brand") && ssmt && !brand) return "Needs Centric Programming";
+    if (expected.has("ssmt") && !ssmt) return "Missing from SSMT";
+    return "Match";
+  }
+  if (expected.has("centric_brand") && brand && !master && !ssmt) return "Remove from Centric Brand";
+  if (expected.has("centric_brand") && (master || ssmt) && !brand) return "Needs Centric Programming";
+  if (expected.has("ssmt") && !ssmt) return "Missing from SSMT";
+  if (expected.has("master_app") && !master) return "Missing from Culinary App";
+  if (expected.has("centric_brand") && !brand) return "Missing from Brand Report";
+  return "Match";
 }
 
 export function buildAuditComparison(records = [], { expectedSources = ["master_app", "ssmt", "centric_brand"] } = {}) {
@@ -384,19 +500,29 @@ export function buildAuditComparison(records = [], { expectedSources = ["master_
       expected.has("ssmt") ? ssmt : null,
       expected.has("centric_brand") ? brand : null,
     ].filter(Boolean);
-    let status = "Match";
-    if (expected.has("ssmt") && !ssmt) status = "Missing from SSMT";
-    else if (expected.has("centric_brand") && !brand) status = "Missing from Brand Report";
-    else if (expected.has("master_app") && !master) status = "Missing from Master App Data";
+    const recordType = present[0]?.recordType || master?.recordType || ssmt?.recordType || brand?.recordType || "item";
+    let status = statusForSources({ expected, master, ssmt, brand, recordType });
+    if (status !== "Match") {
+      return {
+        id: `audit:${index}`,
+        status,
+        severity: severityFor(status),
+        recordType,
+        menuName: brand?.menuName || ssmt?.menuName || master?.menuName || "",
+        master,
+        ssmt,
+        brand,
+      };
+    }
     else if (new Set(present.map((row) => preserveSpreadsheetText(row.mrn)).filter(Boolean)).size > 1) status = "MRN Mismatch";
-    else if (new Set(present.map((row) => preserveSpreadsheetText(row.category).toLowerCase()).filter(Boolean)).size > 1) status = "Category Mismatch";
+    else if (new Set(present.map((row) => comparableCategory(row)).filter(Boolean)).size > 1) status = "Category Mismatch";
     else if (new Set(present.map((row) => preserveSpreadsheetText(row.description).toLowerCase()).filter(Boolean)).size > 1) status = "Description Mismatch";
     else if (new Set(present.map((row) => preserveSpreadsheetText(row.displayName || row.name).toLowerCase()).filter(Boolean)).size > 1) status = "Name Difference Only";
     return {
       id: `audit:${index}`,
       status,
       severity: severityFor(status),
-      recordType: present[0]?.recordType || "item",
+      recordType,
       menuName: brand?.menuName || ssmt?.menuName || master?.menuName || "",
       master,
       ssmt,
@@ -412,8 +538,10 @@ export function auditSummary(rows = []) {
     matches: count("Match"),
     mismatches: rows.filter((row) => row.status !== "Match").length,
     missingSsmt: count("Missing from SSMT"),
-    missingMaster: count("Missing from Master App Data"),
+    missingMaster: count("Missing from Culinary App"),
     missingBrand: count("Missing from Brand Report"),
+    removeFromBrand: count("Remove from Centric Brand"),
+    needsCentricProgramming: count("Needs Centric Programming"),
     mrnMismatches: count("MRN Mismatch"),
     categoryMismatches: count("Category Mismatch"),
     descriptionMismatches: count("Description Mismatch"),
@@ -436,6 +564,12 @@ export function exportAuditRowsToCsv(rows = []) {
     "Master App Category",
     "SSMT Category",
     "Brand Report Category",
+    "Master App Price",
+    "SSMT Price",
+    "Brand Report Price",
+    "Master App Calories",
+    "SSMT Calories",
+    "Brand Report Calories",
     "Master App Description",
     "SSMT Description",
     "Brand Report Description",
@@ -455,6 +589,12 @@ export function exportAuditRowsToCsv(rows = []) {
     row.master?.category,
     row.ssmt?.category,
     row.brand?.category,
+    row.master?.price,
+    row.ssmt?.price,
+    row.brand?.price,
+    row.master?.calories,
+    row.ssmt?.calories,
+    row.brand?.calories,
     row.master?.description,
     row.ssmt?.description,
     row.brand?.description,
