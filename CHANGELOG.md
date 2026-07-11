@@ -2,6 +2,11 @@
 
 ## 2026-07-11
 
+- [Jul 11, 9:21 AM] Formalized the AI handoff protocol so every future code pass starts by reading `AI_HANDOFF.md` and ends by updating handoff, changelog, and version state.
+- [Jul 11, 9:21 AM] Added a visible Neighborhood Rotations `Submitting...` state with a live status banner telling chefs to keep the tab open while Supabase and Smartsheet confirm the save.
+- [Jul 11, 9:21 AM] Renamed user-facing Recipe Library labels to `Menu Library`.
+- [Jul 11, 9:21 AM] Added Webtrition oz weight display to Menu Library item cards, item drawer overview, and nutrition detail for audit visibility.
+- [Jul 11, 9:21 AM] Set visible app version to `2026.07.11.002-handoff-submit-menu-library`.
 - [Jul 11, 8:46 AM] Added a guarded browser-storage path for Neighborhood Rotations so oversized Smartsheet-ready record caches no longer crash the tool when opening South/Re:Invent.
 - [Jul 11, 8:46 AM] Added a browser smoke test that simulates a localStorage quota failure on `culinaryToolsSmartsheetReadyRecords_v1` and verifies Re:Invent still opens.
 - [Jul 11, 8:46 AM] Set visible app version to `2026.07.11.001-rotation-storage-quota-guard`.
