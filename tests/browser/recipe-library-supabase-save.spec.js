@@ -62,6 +62,7 @@ function smokeRow(description = "Original smoke description.") {
     allergenSummary: "Milk",
     allergens: ["Milk"],
     portion: "8 ounce",
+    portionOz: 8,
     price: 11.75,
     trueCost: 3.25,
     calories: 410,
@@ -71,7 +72,7 @@ function smokeRow(description = "Original smoke description.") {
   };
 }
 
-test("Recipe Library edit saves through the Supabase API path", async ({ page }) => {
+test("Menu Library edit saves through the Supabase API path", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   const posts = [];
 
@@ -100,14 +101,15 @@ test("Recipe Library edit saves through the Supabase API path", async ({ page })
       json: {
         ok: true,
         source: "supabase-recipe-items",
-        message: "Recipe Library card saved to Supabase.",
+        message: "Menu Library card saved to Supabase.",
         row: smokeRow(body.patch.description),
       },
     });
   });
 
-  await openTool(page, /open library/i, /^Recipe Library$/);
+  await openTool(page, /open library/i, /^Menu Library$/);
   await expect(page.getByText("Supabase")).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText(/8 oz/i)).toBeVisible({ timeout: 20_000 });
   await page.getByRole("button", { name: /Smoke Test Chicken/i }).click();
   const drawer = page.getByRole("dialog");
   await expect(drawer.getByRole("heading", { name: /Smoke Test Chicken/i })).toBeVisible();
@@ -115,7 +117,7 @@ test("Recipe Library edit saves through the Supabase API path", async ({ page })
   await drawer.getByLabel("Description").fill(savedDescription);
   await page.getByRole("button", { name: /Save card/i }).click();
 
-  await expect(page.getByText("Recipe Library card saved to Supabase.")).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText("Menu Library card saved to Supabase.")).toBeVisible({ timeout: 20_000 });
   expect(posts).toHaveLength(1);
   expect(posts[0]).toMatchObject({
     action: "updateRecipeItem",
