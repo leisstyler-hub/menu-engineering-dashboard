@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-07-11
+
+- [Jul 11, 8:46 AM] Added a guarded browser-storage path for Neighborhood Rotations so oversized Smartsheet-ready record caches no longer crash the tool when opening South/Re:Invent.
+- [Jul 11, 8:46 AM] Added a browser smoke test that simulates a localStorage quota failure on `culinaryToolsSmartsheetReadyRecords_v1` and verifies Re:Invent still opens.
+- [Jul 11, 8:46 AM] Set visible app version to `2026.07.11.001-rotation-storage-quota-guard`.
+
 ## 2026-07-07
 
 - [Jul 7, 7:34 PM] Reworked Menu Audit Brand vs App + SSMT mode so Centric comparisons only run against uploaded brand reports instead of creating false missing-brand rows for every menu.
