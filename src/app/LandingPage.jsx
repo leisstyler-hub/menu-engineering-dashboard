@@ -176,7 +176,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
     const response = await fetch("/api/recipe-library?scope=all");
     const payload = await response.json().catch(() => null);
     if (!response.ok || !payload?.ok) {
-      throw new Error(payload?.message || "Unable to load Recipe Library rows for the trust action CSV.");
+      throw new Error(payload?.message || "Unable to load Menu Library rows for the trust action CSV.");
     }
     downloadTrustLayerGapList(buildTrustGapRows(payload.rows || []));
   };
@@ -203,9 +203,9 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
       meta: "Chef planner"
     },
     {
-      title: "Recipe Library",
+      title: "Menu Library",
       eyebrow: "New",
-      description: "Open menu item library cards with costs, calories, protein, allergens, descriptions, and future recipe files.",
+      description: "Open menu item library cards with costs, calories, protein, Webtrition weights, allergens, descriptions, and future recipe files.",
       action: "Open Library",
       onOpen: onOpenRecipeDatabase,
       icon: BookOpen,
@@ -639,7 +639,7 @@ function MobileToolCard({ title, eyebrow, description, action, onOpen, icon: Ico
   const chipLabels = {
     "Menu Engineering": "Live",
     "Neighborhood Rotations": "Live",
-    "Recipe Library": "New",
+    "Menu Library": "New",
     "Menu Projects": "New",
     "Menu Audit Tool": "Phase 1",
     "Ladle Compliance": "Test concept",
