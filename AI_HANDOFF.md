@@ -2,11 +2,18 @@
 
 Last updated: July 11, 2026
 
-Current live version: `2026.07.11.001-rotation-storage-quota-guard`
+Current live version: `2026.07.11.002-handoff-submit-menu-library`
 
 ## First Rule
 
 Read this file before changing code. After every meaningful change, update this file, `CHANGELOG.md`, and the visible version stamp when the live app changes.
+
+Handoff protocol:
+
+1. Start every code pass by reading this file, `CHANGELOG.md`, `src/shared/appConfig.js`, and the working tree/source sync status.
+2. Treat GitHub/Vercel/Supabase/live app as the shared truth, not just the local checkout.
+3. When a change is meaningful, update this handoff with the new version, current state, verification, and any risks that the next Codex/co-worker must know.
+4. Never leave a release with the handoff pointing to an older version than the visible app.
 
 This project is actively developed by more than one person and may be touched from phone, PC, GitHub, Vercel, and multiple Codex sessions. Do not trust local state alone.
 
@@ -76,7 +83,7 @@ Purpose: Price, cost, category, trust, and portfolio analysis.
 
 Watch-outs:
 
-- MenuWorks upload should not live here long term; recipe/menu truth uploads belong in Recipe Library.
+- MenuWorks upload should not live here long term; recipe/menu truth uploads belong in Menu Library.
 - Trust layer must separate complimentary rows from true pricing gaps.
 
 ### Neighborhood Rotations
@@ -117,7 +124,7 @@ Watch-outs:
 - Results should be clean, filterable, and support delete/void controls.
 - Smartsheet/Supabase records should be auditable by leadership roles.
 
-### Recipe Library
+### Menu Library
 
 File area: `src/features/recipe-database/`
 
@@ -125,7 +132,8 @@ Purpose: Menu and item library organized by menus, with cards, detail drawer, nu
 
 Watch-outs:
 
-- It is called Recipe Library, not Recipe Database in user-facing UI.
+- It is called Menu Library in user-facing UI. Internal file paths still use `recipe-database`.
+- Item cards show Webtrition weight in oz when available from MenuWorks/Supabase for audit visibility.
 - Item photos may exist in app assets/local mappings while file upload/storage wiring continues to mature.
 - Detail drawer should be roomy, professional, and show food photos clearly.
 - Edit/save should write to Supabase when possible.
@@ -178,7 +186,7 @@ Supabase is the intended primary shared data backbone.
 Known areas:
 
 - `app_records` style storage for rotations, lean, menu projects, analytics, etc.
-- `recipe_items` and recipe document/file structures for Recipe Library.
+- `recipe_items` and recipe document/file structures for Menu Library.
 - Storage buckets have been prepared conceptually for recipe files, plating guides, and item photos.
 
 ### Smartsheet
@@ -206,7 +214,7 @@ Do not use it as the only source of shared truth. Any large cache write must be 
 - The repo may show local commits ahead of `origin/main` because publishing has happened file-by-file through GitHub API.
 - Historical rotation status drift exists and should be cleaned carefully, not destructively.
 - Menu Audit Tool still needs deeper SSMT parsing literacy and durable uploaded file/source handling.
-- Recipe/photo uploads are not fully complete across Supabase Storage for all future file types.
+- Menu Library photo/recipe/plating-guide uploads are not fully complete across Supabase Storage for all future file types.
 - Large menu item data has been improved but still deserves a client-side selector/data-loading speed pass.
 - Multiple Codex sessions may diverge if they do not check GitHub/Vercel/live state first.
 
@@ -232,7 +240,7 @@ PLAYWRIGHT_BASE_URL=https://project-d8v25.vercel.app node scripts/run-playwright
 PLAYWRIGHT_BASE_URL=https://project-d8v25.vercel.app node scripts/run-playwright.mjs reinvent-submit-recall
 ```
 
-For Menu Projects, Recipe Library, Menu Audit, or Lean changes, run their matching Playwright specs and release guards. If no matching test exists, add one before claiming the change is safe.
+For Menu Projects, Menu Library, Menu Audit, or Lean changes, run their matching Playwright specs and release guards. If no matching test exists, add one before claiming the change is safe.
 
 ## Publish Protocol
 
