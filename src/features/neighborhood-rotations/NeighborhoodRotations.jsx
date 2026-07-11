@@ -7,6 +7,7 @@ import { NEIGHBORHOOD_ROTATIONS_STORAGE_KEY, SMARTSHEET_COLUMNS, SMARTSHEET_DATA
 import { loadRecordsFromBackbone, syncRecordsToBackbone } from "../../integrations/storage/backboneClient.js";
 import { APP_VERSION_STAMP } from "../../shared/appConfig.js";
 import { money, pct, titleCase } from "../../shared/formatting.js";
+import { readLocalStorageJson, writeLocalStorageJson } from "../../shared/safeStorage.js";
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
 import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
@@ -2173,18 +2174,14 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
   const [rotationView, setRotationView] = useState("planner");
   const [resultsDistrict, setResultsDistrict] = useState("All");
   const [resultsCafe, setResultsCafe] = useState("All");
-  const [rotations, setRotations] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(NEIGHBORHOOD_ROTATIONS_STORAGE_KEY) || "{}"); } catch { return {}; }
-  });
-  const [databaseRecords, setDatabaseRecords] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(SMARTSHEET_DATABASE_STORAGE_KEY) || "[]"); } catch { return []; }
-  });
+  const [rotations, setRotations] = useState(() => readLocalStorageJson(NEIGHBORHOOD_ROTATIONS_STORAGE_KEY, {}));
+  const [databaseRecords, setDatabaseRecords] = useState(() => readLocalStorageJson(SMARTSHEET_DATABASE_STORAGE_KEY, []));
   const [databaseLoadStatus, setDatabaseLoadStatus] = useState({ state: "idle", message: "Using local saved data until the shared database is loaded.", loadedAt: "" });
   const [databaseSyncStatus, setDatabaseSyncStatus] = useState({ state: "idle", message: "No database sync attempted yet.", syncedAt: "" });
   const [smartsheetReadCooldown, setSmartsheetReadCooldown] = useState(false);
 
-  useEffect(() => { localStorage.setItem(NEIGHBORHOOD_ROTATIONS_STORAGE_KEY, JSON.stringify(rotations)); }, [rotations]);
-  useEffect(() => { localStorage.setItem(SMARTSHEET_DATABASE_STORAGE_KEY, JSON.stringify(databaseRecords)); }, [databaseRecords]);
+  useEffect(() => { writeLocalStorageJson(NEIGHBORHOOD_ROTATIONS_STORAGE_KEY, rotations, { clearOnQuota: true }); }, [rotations]);
+  useEffect(() => { writeLocalStorageJson(SMARTSHEET_DATABASE_STORAGE_KEY, databaseRecords, { clearOnQuota: true }); }, [databaseRecords]);
 
   useEffect(() => {
     if (MENUWORKS_ITEMS.length) return undefined;
