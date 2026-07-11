@@ -75,7 +75,7 @@ export default function CulinaryToolsPlatformApp() {
   if (activeTool === "recipeDatabase") {
     return (
       <>
-        <Suspense fallback={<ToolLoading title="Opening Recipe Library" />}>
+        <Suspense fallback={<ToolLoading title="Opening Menu Library" />}>
           <RecipeDatabase onBackToPlatform={() => setActiveTool("home")} onOpenSmartsheetHealth={openSmartsheetHealth} />
         </Suspense>
         <MobileToolNav activeTool={activeTool} setActiveTool={setActiveTool} />
