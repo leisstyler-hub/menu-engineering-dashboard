@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { collectUnexpectedPageErrors, expectNoAppProtection, expectNoUnexpectedPageErrors, openTool } from "./smoke-helpers.js";
+import { SMARTSHEET_DATABASE_STORAGE_KEY } from "../../src/integrations/smartsheet/contract.js";
 
 const districts = {
   South: ["Doppler", "Day 1", "Nitro", "Re:Invent"],
@@ -108,6 +109,29 @@ test("Neighborhood Rotations opens every cafe selector for future weeks", async 
     }
   }
 
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("Neighborhood Rotations opens Re:Invent when browser storage cannot cache Smartsheet records", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await stubEmptyRotationBackbone(page);
+  await page.addInitScript((storageKey) => {
+    const originalSetItem = window.localStorage.setItem.bind(window.localStorage);
+    window.localStorage.setItem = (key, value) => {
+      if (key === storageKey) {
+        throw new DOMException("The quota has been exceeded.", "QuotaExceededError");
+      }
+      return originalSetItem(key, value);
+    };
+  }, SMARTSHEET_DATABASE_STORAGE_KEY);
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: exactName("South") }).click();
+  await page.getByRole("button", { name: exactName("Re:Invent") }).click();
+
+  await expect(page.getByRole("heading", { name: /^Re:Invent$/ })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText(/Planner Remote Control/i)).toBeVisible();
+  await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
