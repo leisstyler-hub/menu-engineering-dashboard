@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("Recipe Library opens without app protection or scoped-state crashes", async ({ page }) => {
+test("Menu Library opens without app protection or scoped-state crashes and shows Webtrition weight", async ({ page }) => {
   const pageErrors = [];
 
   page.on("pageerror", (error) => {
@@ -15,14 +15,15 @@ test("Recipe Library opens without app protection or scoped-state crashes", asyn
         id: "browser-smoke-recipe",
         mrn: "SMOKE-1",
         menu: "Browser Smoke Menu",
-        station: "Recipe Library",
+        station: "Menu Library",
         category: "Main Entree",
         recipeName: "Smoke Test Chicken",
         displayName: "Smoke Test Chicken",
         item: "Smoke Test Chicken",
-        enticingDescription: "Browser smoke row used to verify the Recipe Library opens.",
+        enticingDescription: "Browser smoke row used to verify the Menu Library opens.",
         allergens: ["Milk"],
         portion: "1 each",
+        portionOz: 8,
         price: 11.75,
         trueCost: 2.57,
         calories: 375,
@@ -35,8 +36,9 @@ test("Recipe Library opens without app protection or scoped-state crashes", asyn
   await expect(page.getByRole("button", { name: /open library/i })).toBeVisible();
   await page.getByRole("button", { name: /open library/i }).click();
 
-  await expect(page.getByRole("heading", { name: /^Recipe Library$/ })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole("heading", { name: /^Menu Library$/ })).toBeVisible({ timeout: 20_000 });
   await expect(page.getByText(/Menu Index/i)).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText(/8 oz/i)).toBeVisible({ timeout: 20_000 });
   await expect(page.getByText(/Supabase|Server fallback|Local override/i)).toBeVisible({ timeout: 20_000 });
   await expect(page.getByText(/Something broke in this view/i)).toHaveCount(0);
   await expect(page.getByText(/databaseSource is not defined/i)).toHaveCount(0);
