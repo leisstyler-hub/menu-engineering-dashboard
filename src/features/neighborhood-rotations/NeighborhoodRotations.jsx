@@ -3735,7 +3735,7 @@ function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, s
   };
 
   return (
-    <div className="mb-5 rounded-[1.75rem] border border-slate-300 bg-slate-950 p-3 shadow-lg print:hidden">
+    <div className="mb-5 rounded-[1.75rem] border border-slate-300 bg-slate-950 p-3 shadow-lg print:hidden" aria-busy={isSubmitting ? "true" : "false"}>
       <div className="rounded-[1.35rem] border border-slate-700 bg-slate-900 p-4">
         <div className="space-y-4">
           <div>
@@ -3743,7 +3743,7 @@ function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, s
             <h3 className="text-2xl font-bold mt-1 text-white">{rotation?.status || "Draft"}</h3>
             <div className="mt-2 flex flex-wrap gap-2 text-xs">
               <span className="rounded-full border border-slate-600 bg-slate-800 px-3 py-1 font-semibold text-slate-300">{copiedSummary}</span>
-              <span title={submitHelp} className={`rounded-full border px-3 py-1 font-semibold ${canSubmit ? "border-emerald-400 bg-emerald-500/15 text-emerald-200" : "border-rose-400 bg-rose-500/15 text-rose-100"}`}>{canSubmit ? "Ready to submit" : "Submit blocked"}</span>
+              <span title={isSubmitting ? "Submitting to live storage. Keep this tab open." : submitHelp} className={`rounded-full border px-3 py-1 font-semibold ${isSubmitting ? "border-sky-300 bg-sky-400/20 text-sky-100" : canSubmit ? "border-emerald-400 bg-emerald-500/15 text-emerald-200" : "border-rose-400 bg-rose-500/15 text-rose-100"}`}>{isSubmitting ? "Submitting..." : canSubmit ? "Ready to submit" : "Submit blocked"}</span>
               {rotation?.updatedAt && <span className="rounded-full border border-slate-600 bg-slate-800 px-3 py-1 font-semibold text-slate-300">Updated {rotation.updatedAt}</span>}
             </div>
           </div>
@@ -3754,9 +3754,20 @@ function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, s
             <RemoteButton icon={FileText} label="Generate Menu" onClick={generateMenu} blocked={cafe !== "Doppler"} title={cafe === "Doppler" ? "Download a Doppler PowerPoint from the live template." : "Menu generation is being built first for Doppler."} tone="light" />
             <RemoteButton icon={Printer} label={showPrintPreview ? "Hide View" : "View/Print"} onClick={() => setShowPrintPreview((value) => !value)} tone="light" />
             <RemoteButton icon={Save} label="Save Draft" onClick={onSaveDraft} tone="light" />
-          <RemoteButton icon={Send} label={isSubmitting ? "Saving" : "Submit"} onClick={onSubmit} disabled={isSubmitting} blocked={!canSubmit} title={isSubmitting ? "Saving to live database..." : submitHelp} tone="go" />
+          <RemoteButton icon={Send} label={isSubmitting ? "Submitting..." : "Submit"} onClick={onSubmit} disabled={isSubmitting} blocked={!canSubmit} title={isSubmitting ? "Submitting to live database. Keep this tab open until this finishes." : submitHelp} tone="go" />
           </div>
         </div>
+        {isSubmitting && (
+          <div className="mt-3 rounded-2xl border border-sky-300/70 bg-sky-400/15 px-4 py-3 text-sm font-semibold text-sky-50 shadow-[0_0_0_1px_rgba(125,211,252,0.18)]" role="status" aria-live="assertive">
+            <div className="flex items-start gap-3">
+              <span className="mt-1 inline-flex h-3 w-3 shrink-0 animate-pulse rounded-full bg-sky-300 shadow-[0_0_0_6px_rgba(125,211,252,0.15)]" aria-hidden="true" />
+              <div>
+                <p className="font-black">Submitting rotation...</p>
+                <p className="mt-1 text-sky-100">Keep this tab open while Supabase and the Smartsheet mirror confirm the save.</p>
+              </div>
+            </div>
+          </div>
+        )}
         {!canSubmit && (
           <div className="mt-3 rounded-2xl border border-rose-400/60 bg-rose-500/15 px-4 py-3 text-sm font-semibold text-rose-50 shadow-[0_0_0_1px_rgba(251,113,133,0.18)]">
             <div className="flex items-start gap-2">
