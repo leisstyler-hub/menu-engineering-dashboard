@@ -42,7 +42,7 @@ async function fetchRecipeLibraryPayload(scope, params = {}) {
   const response = await fetch(`/api/recipe-library?${query.toString()}`);
   const payload = await response.json().catch(() => null);
   if (!response.ok || !payload?.ok) {
-    throw new Error(payload?.message || "Unable to load Recipe Library data.");
+    throw new Error(payload?.message || "Unable to load Menu Library data.");
   }
   return payload;
 }
@@ -55,7 +55,7 @@ async function postRecipeLibraryAction(action, body = {}) {
   });
   const payload = await response.json().catch(() => null);
   if (!response.ok || !payload?.ok) {
-    throw new Error(payload?.message || "Recipe Library update failed.");
+    throw new Error(payload?.message || "Menu Library update failed.");
   }
   return payload;
 }
@@ -96,6 +96,14 @@ function recipeLibrarySourceLabel(source = "", usesLocalRows = false) {
   if (source === "supabase-recipe-items") return "Supabase";
   if (source === "server-menuworks-json") return "Server fallback";
   return "Database checking";
+}
+
+function webtritionWeightOzLabel(rowOrItem) {
+  const value = rowOrItem?.portion_oz ?? rowOrItem?.portionOz ?? rowOrItem?.raw?.portionOz ?? rowOrItem?.raw?.portion_oz;
+  const number = Number(value);
+  if (!Number.isFinite(number) || number <= 0) return "Weight oz not loaded";
+  const formatted = Number.isInteger(number) ? String(number) : number.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+  return `${formatted} oz`;
 }
 
 function replaceRowByItemKey(rows = [], updatedRow) {
@@ -231,8 +239,8 @@ function RecipeLibraryStatus({ title, detail, onBackToPlatform, onOpenSmartsheet
                 Back to Platform
               </button>
               <div className="mt-5">
-                <p className="text-xs font-black uppercase tracking-[0.24em] text-emerald-600">Recipe Library</p>
-                <h1 className="mt-2 text-4xl font-black tracking-normal md:text-5xl">Recipe Library</h1>
+                <p className="text-xs font-black uppercase tracking-[0.24em] text-emerald-600">Menu Library</p>
+                <h1 className="mt-2 text-4xl font-black tracking-normal md:text-5xl">Menu Library</h1>
                 <p className="mt-2 max-w-3xl text-base font-semibold leading-7 text-slate-600">{detail}</p>
               </div>
             </div>
@@ -445,7 +453,7 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
     if (typeof window !== "undefined") {
       window.localStorage.setItem(MENU_ENGINEERING_OVERRIDE_STORAGE_KEY, JSON.stringify(nextRows));
     }
-    return { ok: true, source: "local-override", message: "Saved to this browser's local Recipe Library override." };
+    return { ok: true, source: "local-override", message: "Saved to this browser's local Menu Library override." };
   };
 
   const uploadRecipeDocument = async ({ item, documentType, file }) => {
@@ -457,7 +465,7 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
       fileName: file.name,
       mimeType: file.type || "application/octet-stream",
       fileBase64,
-      uploadedBy: "Recipe Library",
+      uploadedBy: "Menu Library",
     });
     if (payload.document) {
       setRowState((current) => ({
@@ -504,16 +512,16 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
     if (typeof window !== "undefined") {
       window.localStorage.setItem(MENU_ENGINEERING_OVERRIDE_STORAGE_KEY, JSON.stringify(nextRows));
     }
-    setUploadStatus(`Accepted ${pendingImport.importedRows.length.toLocaleString()} MenuWorks rows into Recipe Library.`);
+    setUploadStatus(`Accepted ${pendingImport.importedRows.length.toLocaleString()} MenuWorks rows into Menu Library.`);
     setPendingImport(null);
   };
 
   if (isMenuRowsLoading) {
-    return <RecipeLibraryStatus title="Loading Recipe Library" detail="Opening the MenuWorks item library on demand so the platform home screen stays lighter." onBackToPlatform={onBackToPlatform} onOpenSmartsheetHealth={onOpenSmartsheetHealth} />;
+    return <RecipeLibraryStatus title="Loading Menu Library" detail="Opening the MenuWorks item library on demand so the platform home screen stays lighter." onBackToPlatform={onBackToPlatform} onOpenSmartsheetHealth={onOpenSmartsheetHealth} />;
   }
 
   if (menuRowsLoadError) {
-    return <RecipeLibraryStatus title="Recipe Library could not load" detail={menuRowsLoadError} onBackToPlatform={onBackToPlatform} onOpenSmartsheetHealth={onOpenSmartsheetHealth} tone="error" />;
+    return <RecipeLibraryStatus title="Menu Library could not load" detail={menuRowsLoadError} onBackToPlatform={onBackToPlatform} onOpenSmartsheetHealth={onOpenSmartsheetHealth} tone="error" />;
   }
 
   return (
@@ -527,8 +535,8 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
                 Back to Platform
               </button>
               <div className="mt-5">
-                <p className="text-xs font-black uppercase tracking-[0.24em] text-emerald-600">Recipe Library</p>
-                <h1 className="mt-2 text-4xl font-black tracking-normal md:text-5xl">Recipe Library</h1>
+                <p className="text-xs font-black uppercase tracking-[0.24em] text-emerald-600">Menu Library</p>
+                <h1 className="mt-2 text-4xl font-black tracking-normal md:text-5xl">Menu Library</h1>
                 <p className="mt-2 max-w-3xl text-base font-semibold leading-7 text-slate-600">
                   Browse menu item library cards with pricing, cost, calories, protein, allergens, descriptions, portions, and future file slots for recipes, photos, and plating guides.
                 </p>
@@ -744,7 +752,7 @@ function MenuWorksRefreshPanel({
           <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600">Library Refresh</p>
           <h2 className="mt-1 text-2xl font-black">MenuWorks Truth Upload</h2>
           <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-slate-600">
-            This is the only place to update MenuWorks item rows. Accepted uploads replace matching menus across Recipe Library, Menu Engineering, and menu selectors.
+              This is the only place to update MenuWorks item rows. Accepted uploads replace matching menus across Menu Library, Menu Engineering, and menu selectors.
           </p>
           {uploadStatus && (
             <p className="mt-3 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-black text-sky-900">{uploadStatus}</p>
@@ -946,11 +954,12 @@ function ItemCard({ row, onOpen }) {
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-2 text-xs font-bold text-slate-600 md:grid-cols-4">
+      <div className="mt-4 grid grid-cols-2 gap-2 text-xs font-bold text-slate-600 md:grid-cols-5">
         <Property label="True cost" value={row.trueCost == null ? "Not loaded" : money(row.trueCost)} />
         <Property label="Food cost" value={pct(fc)} />
         <Property label="Protein" value={proteinLabel(libraryItem)} />
         <Property label="Portion" value={row.portion || row.Portion || "Not loaded" } />
+        <Property label="Webtrition oz" value={webtritionWeightOzLabel(libraryItem)} />
       </div>
 
       <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-3">
@@ -1004,9 +1013,9 @@ function LibraryCardDrawer({ item, onClose, onSave, onUploadDocument }) {
     try {
       const payload = await onSave(draft);
       setIsEditing(false);
-      setSaveStatus(payload?.message || "Recipe Library card saved.");
+      setSaveStatus(payload?.message || "Menu Library card saved.");
     } catch (error) {
-      setSaveStatus(error instanceof Error ? error.message : "Recipe Library card could not save.");
+      setSaveStatus(error instanceof Error ? error.message : "Menu Library card could not save.");
     } finally {
       setIsSaving(false);
     }
@@ -1015,6 +1024,7 @@ function LibraryCardDrawer({ item, onClose, onSave, onUploadDocument }) {
   const nutritionRows = [
     ["Calories", caloriesLabel(item.calories)],
     ["Protein", proteinLabel(item)],
+    ["Webtrition weight", webtritionWeightOzLabel(item)],
     ["Sodium", item.sodium_mg == null ? "Stored when loaded" : `${item.sodium_mg} mg`],
     ["Carbs", item.carbs_g == null ? "Stored when loaded" : `${item.carbs_g} g`],
     ["Fiber", item.fiber_g == null ? "Stored when loaded" : `${item.fiber_g} g`],
@@ -1037,7 +1047,7 @@ function LibraryCardDrawer({ item, onClose, onSave, onUploadDocument }) {
             <div className="flex min-w-0 flex-col justify-between gap-5">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-600">Recipe Library Card</p>
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-600">Menu Library Card</p>
                   <h2 className="mt-2 text-3xl font-black leading-tight text-slate-950 md:text-5xl">{item.display_name}</h2>
                   <p className="mt-3 text-base font-bold leading-7 text-slate-500">{item.menu || "No menu"} / {item.station || "No station"} / {item.category_group || item.category || "No category"}</p>
                 </div>
@@ -1051,6 +1061,7 @@ function LibraryCardDrawer({ item, onClose, onSave, onUploadDocument }) {
                 <InfoPill icon={Activity} label={proteinLabel(item)} tone="sky" />
                 <InfoPill icon={DollarSign} label={priceLabel(item.price)} tone="green" />
                 <InfoPill icon={Database} label={item.mrn ? `MRN ${item.mrn}` : "MRN not loaded"} tone="slate" />
+                <InfoPill icon={Utensils} label={webtritionWeightOzLabel(item)} tone="slate" />
               </div>
               <InlineDocumentUpload
                 item={item}
@@ -1114,8 +1125,9 @@ function LibraryCardDrawer({ item, onClose, onSave, onUploadDocument }) {
                       <p className="mt-3 break-words text-lg font-black leading-8 text-slate-800">{item.allergen_summary || allergenLabel(item.raw)}</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
                     <Property label="Portion" value={item.portion || "Not loaded"} />
+                    <Property label="Webtrition oz" value={webtritionWeightOzLabel(item)} />
                     <Property label="Recipe category" value={item.recipe_category || "Not loaded"} />
                     <Property label="True cost" value={item.true_cost == null ? "Not loaded" : money(item.true_cost)} />
                     <Property label="Food cost" value={item.price && item.true_cost ? pct(item.true_cost / item.price) : "Not loaded"} />
