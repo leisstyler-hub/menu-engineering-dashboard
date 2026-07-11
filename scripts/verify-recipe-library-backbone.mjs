@@ -24,10 +24,10 @@ function assertNotIncludes(file, unexpected) {
   }
 }
 
-assertIncludes("src/app/LandingPage.jsx", "Recipe Library");
+assertIncludes("src/app/LandingPage.jsx", "Menu Library");
 assertNotIncludes("src/app/LandingPage.jsx", "Recipe Database");
 
-assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Recipe Library");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Menu Library");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "LibraryCardDrawer");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "justify-center");
 assertNotIncludes("src/features/recipe-database/RecipeDatabase.jsx", "recipe-library-drawer ml-auto");
@@ -127,7 +127,7 @@ assertIncludes("api/recipe-library.js", "supabase-recipe-items");
   "public/assets/recipe-library/andes/pollo-a-la-brasa.jpg",
 ].forEach((assetPath) => {
   if (!existsSync(join(root, assetPath))) {
-    throw new Error(`Recipe Library Andes asset missing: ${assetPath}`);
+    throw new Error(`Menu Library Andes asset missing: ${assetPath}`);
   }
 });
 
@@ -139,7 +139,7 @@ const mismatchedPhotoRows = photoRows.filter((row) => {
 });
 
 if (mismatchedPhotoRows.length) {
-  throw new Error(`Recipe Library photo integrity failed for ${mismatchedPhotoRows.length} row(s): ${mismatchedPhotoRows.map((row) => `${row.menu} / ${row.item}`).join(", ")}`);
+  throw new Error(`Menu Library photo integrity failed for ${mismatchedPhotoRows.length} row(s): ${mismatchedPhotoRows.map((row) => `${row.menu} / ${row.item}`).join(", ")}`);
 }
 
 assertIncludes("supabase/recipe-library-schema.sql", "recipe_items");
@@ -154,4 +154,4 @@ assertIncludes("supabase/recipe-library-schema.sql", "recipe-files");
 assertIncludes("supabase/recipe-library-schema.sql", "plating-guides");
 assertIncludes("supabase/recipe-library-schema.sql", "item-photos");
 
-console.log("Recipe Library backbone verification passed.");
+console.log("Menu Library backbone verification passed.");
