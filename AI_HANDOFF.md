@@ -2,7 +2,7 @@
 
 Last updated: July 11, 2026
 
-Current live version: `2026.07.11.002-handoff-submit-menu-library`
+Current live version: `2026.07.11.003-hide-ladle-compliance`
 
 ## First Rule
 
@@ -123,6 +123,15 @@ Watch-outs:
 - Mobile interaction must avoid constant up/down scrolling during active observation.
 - Results should be clean, filterable, and support delete/void controls.
 - Smartsheet/Supabase records should be auditable by leadership roles.
+
+### Ladle Compliance
+
+File area: `src/features/ladle-compliance/`
+
+Current status:
+
+- Hidden from the platform home screen and mobile tool navigation as of `2026.07.11.003-hide-ladle-compliance`.
+- The underlying code remains in the repo for a future rebuild, but users should not be routed into it from normal navigation while it is unfinished/non-working.
 
 ### Menu Library
 

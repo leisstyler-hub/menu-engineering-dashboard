@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ArrowRight, BarChart3, BookOpen, CalendarRange, ClipboardCheck, Database, FolderKanban, Home, ListChecks, PieChart, Settings, ShieldCheck, Smartphone, Sparkles, TrendingUp, Utensils, Wrench } from "lucide-react";
+import { ArrowRight, BarChart3, BookOpen, CalendarRange, ClipboardCheck, Database, FolderKanban, Home, ListChecks, PieChart, Settings, Smartphone, Sparkles, TrendingUp, Utensils, Wrench } from "lucide-react";
 
 import CHANGELOG_TEXT from "../../CHANGELOG.md?raw";
 import DASHBOARD_SUMMARY from "../data/dashboardSummary.json";
@@ -153,7 +153,7 @@ function downloadTrustLayerGapList(rows) {
   URL.revokeObjectURL(url);
 }
 
-export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodRotations, onOpenRecipeDatabase, onOpenMenuProjects, onOpenMenuAuditTool, onOpenLadleCompliance, onOpenLeanTool, onOpenSmartsheetHealth }) {
+export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodRotations, onOpenRecipeDatabase, onOpenMenuProjects, onOpenMenuAuditTool, onOpenLeanTool, onOpenSmartsheetHealth }) {
   const {
     totalItems,
     menuCount,
@@ -233,16 +233,6 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
       meta: "IT menu audit"
     },
     {
-      title: "Ladle Compliance",
-      eyebrow: "Test concept",
-      description: "Track compliance by district, cafe, and week with executive summaries and follow-up cues.",
-      action: "Open Compliance",
-      onOpen: onOpenLadleCompliance,
-      icon: ClipboardCheck,
-      tone: "amber",
-      meta: "Prototype"
-    },
-    {
       title: "Lean Tool",
       eyebrow: "New",
       description: "Run fast phone or tablet observations using DOWNTIME waste categories, live marks, and report-out email.",
@@ -273,7 +263,6 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
         onOpenRecipeDatabase={onOpenRecipeDatabase}
         onOpenMenuProjects={onOpenMenuProjects}
         onOpenMenuAuditTool={onOpenMenuAuditTool}
-        onOpenLadleCompliance={onOpenLadleCompliance}
         onOpenLeanTool={onOpenLeanTool}
         onOpenSmartsheetHealth={onOpenSmartsheetHealth}
       />
@@ -300,7 +289,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
               Built for quick chef decisions: choose the workstream, check status, and move straight into the active tool.
             </p>
             <div className="mt-5 grid grid-cols-2 gap-3">
-              <Metric label="Tools" value="7" />
+              <Metric label="Tools" value="6" />
               <Metric label="Menu items" value={totalItems.toLocaleString()} />
               <Metric label="Menus" value={menuCount} />
               <Metric label="Costed items" value={costedItems.toLocaleString()} />
@@ -454,12 +443,11 @@ function MobileLanding({
   onOpenRecipeDatabase,
   onOpenMenuProjects,
   onOpenMenuAuditTool,
-  onOpenLadleCompliance,
   onOpenLeanTool,
   onOpenSmartsheetHealth,
 }) {
   const metricTiles = [
-    { label: "Tools", value: "7", icon: Wrench, tone: "bg-[#fff7e7] text-[#8a621b]" },
+    { label: "Tools", value: "6", icon: Wrench, tone: "bg-[#fff7e7] text-[#8a621b]" },
     { label: "Menu Items", value: totalItems.toLocaleString(), icon: Utensils, tone: "bg-[#eaf8f2] text-emerald-700" },
     { label: "Menus", value: menuCount, icon: ListChecks, tone: "bg-[#edf5ff] text-sky-700" },
     { label: "Costed Items", value: costedItems.toLocaleString(), icon: Database, tone: "bg-[#f0eefb] text-indigo-700" },
@@ -642,7 +630,6 @@ function MobileToolCard({ title, eyebrow, description, action, onOpen, icon: Ico
     "Menu Library": "New",
     "Menu Projects": "New",
     "Menu Audit Tool": "Phase 1",
-    "Ladle Compliance": "Test concept",
     "Lean Tool": "New",
   };
 

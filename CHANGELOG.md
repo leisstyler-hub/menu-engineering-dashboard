@@ -2,6 +2,8 @@
 
 ## 2026-07-11
 
+- [Jul 11, 10:05 AM] Hid the unfinished Ladle Compliance tool from the platform home tool cards and mobile tool navigation while leaving the underlying code dormant for future rebuild.
+- [Jul 11, 10:05 AM] Updated the visible platform tool count to 6 and set visible app version to `2026.07.11.003-hide-ladle-compliance`.
 - [Jul 11, 9:21 AM] Formalized the AI handoff protocol so every future code pass starts by reading `AI_HANDOFF.md` and ends by updating handoff, changelog, and version state.
 - [Jul 11, 9:21 AM] Added a visible Neighborhood Rotations `Submitting...` state with a live status banner telling chefs to keep the tab open while Supabase and Smartsheet confirm the save.
 - [Jul 11, 9:21 AM] Renamed user-facing Recipe Library labels to `Menu Library`.

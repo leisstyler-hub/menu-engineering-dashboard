@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect, useState } from "react";
-import { BarChart3, BookOpen, CalendarRange, ClipboardCheck, FolderKanban, Home, ShieldCheck } from "lucide-react";
+import { BarChart3, BookOpen, CalendarRange, ClipboardCheck, FolderKanban, Home } from "lucide-react";
 import LandingPage from "./LandingPage.jsx";
 import { addToolBreadcrumb, setActiveToolContext } from "../shared/monitoring/sentry.jsx";
 
@@ -144,7 +144,6 @@ export default function CulinaryToolsPlatformApp() {
       onOpenRecipeDatabase={() => setActiveTool("recipeDatabase")}
       onOpenMenuProjects={() => setActiveTool("menuProjects")}
       onOpenMenuAuditTool={() => setActiveTool("menuAuditTool")}
-      onOpenLadleCompliance={() => setActiveTool("ladleCompliance")}
       onOpenLeanTool={() => setActiveTool("leanTool")}
       onOpenSmartsheetHealth={openSmartsheetHealth}
     />
@@ -173,7 +172,6 @@ function MobileToolNav({ activeTool, setActiveTool }) {
     { key: "menuProjects", label: "Projects", icon: FolderKanban },
     { key: "menuAuditTool", label: "Audit", icon: ClipboardCheck },
     { key: "neighborhoodRotations", label: "Rotations", icon: CalendarRange },
-    { key: "ladleCompliance", label: "Compliance", icon: ShieldCheck },
   ];
 
   return (
