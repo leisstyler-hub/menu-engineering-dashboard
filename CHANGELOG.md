@@ -2,6 +2,10 @@
 
 ## 2026-07-12
 
+- [Jul 12, 8:43 AM] Repointed Doppler/Zane's Salad selectors to the full Menu Library salad pool instead of the tiny Fresh Five salad override.
+- [Jul 12, 8:43 AM] Updated station selector release guards so Fresh Five controls stay station-specific while Zane's Salad pulls the full salad library set.
+- [Jul 12, 8:43 AM] Shortened Menu Library Webtrition weight labels to `WebT OZ` and tightened wrapping so the label stays inside its property card.
+- [Jul 12, 8:43 AM] Set visible app version to `2026.07.12.002-selector-library-scope`.
 - [Jul 12, 10:05 AM] Added a desktop-only density pass so the app loads with a calmer, more zoomed-out feel on large screens without forcing browser zoom or shrinking mobile tap targets.
 - [Jul 12, 10:05 AM] Widened the Neighborhood Rotations desktop workspace and reduced its oversized desktop shell text overrides while preserving the larger mobile/tablet controls.
 - [Jul 12, 10:05 AM] Set visible app version to `2026.07.12.001-desktop-density`.

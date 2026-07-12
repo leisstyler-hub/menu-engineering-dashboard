@@ -2,7 +2,7 @@
 
 Last updated: July 12, 2026
 
-Current live version: `2026.07.12.001-desktop-density`
+Current live version: `2026.07.12.002-selector-library-scope`
 
 ## First Rule
 
@@ -103,6 +103,7 @@ Critical integrity rules:
 
 Recent critical fix:
 
+- `2026.07.12.002-selector-library-scope` restored Doppler/Zane's Salad selectors to the full Menu Library salad pool (37 scoped Cafe Express Curated Salad rows) instead of the tiny `saladFreshFive` override. Release guards now fail if that stale override returns.
 - `2026.07.12.001-desktop-density` reduced the desktop-only density of the page and widened the rotations workspace so large monitors feel closer to the user's preferred 75% browser zoom without forcing actual browser zoom. Mobile/tablet sizing is intentionally preserved.
 - `2026.07.11.001-rotation-storage-quota-guard` added `src/shared/safeStorage.js` and changed Neighborhood Rotations to treat `culinaryToolsSmartsheetReadyRecords_v1` as optional browser cache. Oversized localStorage writes must not crash the tool.
 
@@ -144,6 +145,7 @@ Watch-outs:
 
 - It is called Menu Library in user-facing UI. Internal file paths still use `recipe-database`.
 - Item cards show Webtrition weight in oz when available from MenuWorks/Supabase for audit visibility.
+- Keep compact card labels short; `WebT OZ` is intentional so the Webtrition weight label does not overflow narrow property cards.
 - Item photos may exist in app assets/local mappings while file upload/storage wiring continues to mature.
 - Detail drawer should be roomy, professional, and show food photos clearly.
 - Edit/save should write to Supabase when possible.

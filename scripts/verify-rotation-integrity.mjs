@@ -226,6 +226,10 @@ if (!/const \[selectedResultRow, setSelectedResultRow\] = useState\(null\);/.tes
   fail("Results history rows must open a saved-selection detail panel when clicked.");
 }
 
+if (/stationKey="salad"[\s\S]{0,700}poolOverride=\{cafe === "Doppler" \? stationPool\("saladFreshFive"\) : null\}/.test(source)) {
+  fail("Doppler/Zane's Salad must use the full Menu Library salad pool, not the tiny Fresh Five salad override.");
+}
+
 if (carveryProteins.some((row) => /reuben|sandwich|panini|wrap/i.test(`${name(row)} ${station(row)}`))) {
   fail("Carvery protein pool contains sandwich/Reuben items.");
 }
@@ -234,8 +238,8 @@ if (!carveryProteins.length) {
   fail("Carvery protein pool is empty.");
 }
 
-if (!saladPool.length || saladPool.some((row) => menu(row) !== "AMZ: Cafe Express Curated Salads")) {
-  fail("Salad LTO pool is not constrained to AMZ: Cafe Express Curated Salads.");
+if (saladPool.length < 30 || saladPool.some((row) => menu(row) !== "AMZ: Cafe Express Curated Salads")) {
+  fail("Salad LTO pool must expose the full Menu Library salad set from AMZ: Cafe Express Curated Salads.");
 }
 
 if (saladPool.some((row) => /burger|flatbread|sandwich|wrap/i.test(name(row)))) {

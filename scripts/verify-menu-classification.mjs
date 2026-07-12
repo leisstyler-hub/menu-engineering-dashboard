@@ -49,11 +49,11 @@ assert(
 );
 assert(
   source.includes('const options = cafe === "Doppler" ? stationPool("grillFreshFive")') &&
-    source.includes('poolOverride={cafe === "Doppler" ? stationPool("saladFreshFive") : null}') &&
     source.includes('poolOverride={cafe === "Doppler" ? stationPool("deliFreshFive") : null}') &&
     source.includes('poolOverride={stationPool("grillFreshFive")}') &&
-    source.includes('poolOverride={stationPool("saladFreshFive")}'),
-  "Neighborhood Fresh Five UI selectors must use station-specific pools instead of the broad Fresh Five pool."
+    source.includes('poolOverride={stationPool("saladFreshFive")}') &&
+    !/stationKey="salad"[\s\S]{0,700}poolOverride=\{cafe === "Doppler" \? stationPool\("saladFreshFive"\) : null\}/.test(source),
+  "Neighborhood selectors must keep Fresh Five pools station-specific while Zane's Salad uses the full salad library pool."
 );
 
 const sauceSignal = /sauce choice|sauce option for protein|sauce|dressing|condiment|spread|dip|salsa|chutney|preserve|preserves|vinaigrette|aioli|mustard|mayonnaise|mayo|hummus|gravy|jus/i;

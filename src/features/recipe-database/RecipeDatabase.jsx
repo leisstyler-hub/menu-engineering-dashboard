@@ -959,7 +959,7 @@ function ItemCard({ row, onOpen }) {
         <Property label="Food cost" value={pct(fc)} />
         <Property label="Protein" value={proteinLabel(libraryItem)} />
         <Property label="Portion" value={row.portion || row.Portion || "Not loaded" } />
-        <Property label="Webtrition oz" value={webtritionWeightOzLabel(libraryItem)} />
+        <Property label="WebT OZ" value={webtritionWeightOzLabel(libraryItem)} />
       </div>
 
       <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-3">
@@ -1024,7 +1024,7 @@ function LibraryCardDrawer({ item, onClose, onSave, onUploadDocument }) {
   const nutritionRows = [
     ["Calories", caloriesLabel(item.calories)],
     ["Protein", proteinLabel(item)],
-    ["Webtrition weight", webtritionWeightOzLabel(item)],
+    ["WebT weight", webtritionWeightOzLabel(item)],
     ["Sodium", item.sodium_mg == null ? "Stored when loaded" : `${item.sodium_mg} mg`],
     ["Carbs", item.carbs_g == null ? "Stored when loaded" : `${item.carbs_g} g`],
     ["Fiber", item.fiber_g == null ? "Stored when loaded" : `${item.fiber_g} g`],
@@ -1127,7 +1127,7 @@ function LibraryCardDrawer({ item, onClose, onSave, onUploadDocument }) {
                   </div>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
                     <Property label="Portion" value={item.portion || "Not loaded"} />
-                    <Property label="Webtrition oz" value={webtritionWeightOzLabel(item)} />
+                    <Property label="WebT OZ" value={webtritionWeightOzLabel(item)} />
                     <Property label="Recipe category" value={item.recipe_category || "Not loaded"} />
                     <Property label="True cost" value={item.true_cost == null ? "Not loaded" : money(item.true_cost)} />
                     <Property label="Food cost" value={item.price && item.true_cost ? pct(item.true_cost / item.price) : "Not loaded"} />
@@ -1292,8 +1292,8 @@ function FileSlot({ item, slot, onUploadDocument }) {
 
 function Property({ label, value }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4">
-      <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">{label}</p>
+    <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4">
+      <p className="max-w-full break-words text-xs font-black uppercase tracking-[0.08em] text-slate-400">{label}</p>
       <p className="mt-2 break-words text-base font-black text-slate-900">{value}</p>
     </div>
   );
