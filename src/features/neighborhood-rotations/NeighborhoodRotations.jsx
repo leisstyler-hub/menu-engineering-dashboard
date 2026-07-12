@@ -2317,7 +2317,7 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
 
   return (
     <div className="neighborhood-rotations-shell min-h-screen bg-[linear-gradient(180deg,#f6f7f9_0%,#eef7f2_100%)] text-slate-950 p-4 md:p-8">
-      <div className="max-w-[90rem] mx-auto space-y-5">
+      <div className="max-w-[106rem] mx-auto space-y-5">
         <NeighborhoodHeader onBackToPlatform={onBackToPlatform} onOpenSmartsheetHealth={onOpenSmartsheetHealth} district={district} />
         {menuWorksLoadStatus.state !== "ready" && (
           <section className={`rounded-lg border px-4 py-3 text-sm font-bold shadow-sm ${menuWorksLoadStatus.state === "error" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-sky-200 bg-sky-50 text-sky-900"}`}>

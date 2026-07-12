@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-07-12
+
+- [Jul 12, 10:05 AM] Added a desktop-only density pass so the app loads with a calmer, more zoomed-out feel on large screens without forcing browser zoom or shrinking mobile tap targets.
+- [Jul 12, 10:05 AM] Widened the Neighborhood Rotations desktop workspace and reduced its oversized desktop shell text overrides while preserving the larger mobile/tablet controls.
+- [Jul 12, 10:05 AM] Set visible app version to `2026.07.12.001-desktop-density`.
+
 ## 2026-07-11
 
 - [Jul 11, 10:05 AM] Hid the unfinished Ladle Compliance tool from the platform home tool cards and mobile tool navigation while leaving the underlying code dormant for future rebuild.

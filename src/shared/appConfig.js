@@ -1,1 +1,1 @@
-export const APP_VERSION_STAMP = "2026.07.11.003-hide-ladle-compliance";
+export const APP_VERSION_STAMP = "2026.07.12.001-desktop-density";

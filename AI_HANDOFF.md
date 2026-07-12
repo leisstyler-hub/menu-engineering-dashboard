@@ -1,8 +1,8 @@
 # AI Handoff
 
-Last updated: July 11, 2026
+Last updated: July 12, 2026
 
-Current live version: `2026.07.11.003-hide-ladle-compliance`
+Current live version: `2026.07.12.001-desktop-density`
 
 ## First Rule
 
@@ -103,6 +103,7 @@ Critical integrity rules:
 
 Recent critical fix:
 
+- `2026.07.12.001-desktop-density` reduced the desktop-only density of the page and widened the rotations workspace so large monitors feel closer to the user's preferred 75% browser zoom without forcing actual browser zoom. Mobile/tablet sizing is intentionally preserved.
 - `2026.07.11.001-rotation-storage-quota-guard` added `src/shared/safeStorage.js` and changed Neighborhood Rotations to treat `culinaryToolsSmartsheetReadyRecords_v1` as optional browser cache. Oversized localStorage writes must not crash the tool.
 
 Important tests:
