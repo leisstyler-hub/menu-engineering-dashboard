@@ -300,6 +300,51 @@ async function loadSupabaseRecipeRows() {
   }
 }
 
+function postgrestQuotedList(values = []) {
+  return values
+    .map((value) => `"${String(value).replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`)
+    .join(",");
+}
+
+async function loadSupabaseRecipeItemKeys() {
+  const keys = [];
+  for (let offset = 0; offset < 50000; offset += SUPABASE_READ_PAGE_SIZE) {
+    const params = new URLSearchParams({
+      select: "item_key",
+      visible_in_library: "eq.true",
+    });
+    const page = await supabaseFetch(`recipe_items?${params.toString()}`, {
+      headers: {
+        "Range-Unit": "items",
+        Range: `${offset}-${offset + SUPABASE_READ_PAGE_SIZE - 1}`,
+      },
+    });
+    const pageRows = Array.isArray(page) ? page : [];
+    pageRows.forEach((row) => {
+      if (row?.item_key) keys.push(row.item_key);
+    });
+    if (pageRows.length < SUPABASE_READ_PAGE_SIZE) break;
+  }
+  return keys;
+}
+
+async function hideStaleSupabaseRecipeItems(activeItemKeys = new Set()) {
+  const currentKeys = await loadSupabaseRecipeItemKeys();
+  const staleKeys = currentKeys.filter((key) => !activeItemKeys.has(key));
+  for (let index = 0; index < staleKeys.length; index += 100) {
+    const batch = staleKeys.slice(index, index + 100);
+    await supabaseFetch(`recipe_items?item_key=in.(${postgrestQuotedList(batch)})`, {
+      method: "PATCH",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify({
+        visible_in_library: false,
+        last_verified_at: new Date().toISOString(),
+      }),
+    });
+  }
+  return staleKeys.length;
+}
+
 function attachDocumentsToRows(rows = [], documents = []) {
   const documentsByKey = new Map();
   documents.forEach((document) => {
@@ -505,6 +550,7 @@ async function handlePost(req, res) {
   try {
     const sourceRows = Array.isArray(body?.rows) && body.rows.length ? body.rows : await loadMenuWorksFallbackRows();
     const rows = sourceRows.map(recipeItemPayload);
+    const activeItemKeys = new Set(rows.map((row) => row.item_key).filter(Boolean));
     for (let index = 0; index < rows.length; index += SUPABASE_BATCH_SIZE) {
       const batch = rows.slice(index, index + SUPABASE_BATCH_SIZE);
       await supabaseFetch("recipe_items?on_conflict=item_key", {
@@ -513,12 +559,14 @@ async function handlePost(req, res) {
         body: JSON.stringify(batch),
       });
     }
+    const rowsHidden = await hideStaleSupabaseRecipeItems(activeItemKeys);
 
     sendJson(res, 200, {
       ok: true,
       source: "supabase-recipe-items",
-      message: `Backfilled ${rows.length.toLocaleString()} Recipe Library rows to Supabase.`,
+      message: `Backfilled ${rows.length.toLocaleString()} Recipe Library rows to Supabase and hid ${rowsHidden.toLocaleString()} stale rows.`,
       rowsWritten: rows.length,
+      rowsHidden,
       menus: buildMenuSummaries(sourceRows).length,
     });
   } catch (error) {

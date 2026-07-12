@@ -1,97 +1,97 @@
 {
   "generatedFrom": "src/data/menuItems.json",
-  "totalItems": 1507,
+  "totalItems": 1550,
   "menuCount": 53,
-  "costedItems": 1448,
-  "complimentaryItems": 1028,
-  "priceRequiredItems": 479,
-  "pricedRequiredItems": 449,
-  "proteinPriceGaps": 23,
+  "costedItems": 1493,
+  "complimentaryItems": 1069,
+  "priceRequiredItems": 481,
+  "pricedRequiredItems": 451,
+  "proteinPriceGaps": 24,
   "allergenCoverage": 92,
   "detailCoverage": 100,
   "costCoverage": 96,
   "priceCoverage": 94,
   "dietCounts": {
-    "Vegan": 442,
-    "Vegetarian": 453,
-    "Regular": 612
+    "Vegan": 471,
+    "Vegetarian": 449,
+    "Regular": 630
   },
   "categoryCounts": {
-    "entree": 815,
-    "extension": 104,
-    "side": 291,
+    "entree": 860,
+    "extension": 105,
+    "side": 288,
     "subRecipe": 297
   },
   "recentItems": [
     {
-      "id": 1507,
-      "item": "Turmeric Mango Smoothie",
-      "menu": "AMZ+RA: Smoothies",
-      "station": "Smoothies",
-      "price": 6
+      "id": 1607,
+      "item": "Tuna Avocado Roll, Sesame",
+      "menu": "AMZ+RA: Sushi",
+      "station": "Sushi",
+      "price": null
     },
     {
-      "id": 1506,
-      "item": "Stress Down Smoothie, Almond Milk, Tropical Fruits",
-      "menu": "AMZ+RA: Smoothies",
-      "station": "Smoothies",
-      "price": 6
+      "id": 1606,
+      "item": "Falafel Kale Salad",
+      "menu": "AMZ: Fresh Five",
+      "station": "Salad",
+      "price": 5
     },
     {
-      "id": 1505,
-      "item": "Matcha Almond Milk Smoothie",
-      "menu": "AMZ+RA: Smoothies",
-      "station": "Smoothies",
-      "price": 6
+      "id": 1605,
+      "item": "Strawberry Farro Salad",
+      "menu": "AMZ: Fresh Five",
+      "station": "Salad",
+      "price": 5
     },
     {
-      "id": 1504,
-      "item": "Coffee Cinnamon Smoothie",
-      "menu": "AMZ+RA: Smoothies",
-      "station": "Smoothies",
-      "price": 6
+      "id": 1604,
+      "item": "Yam Barley Pecan Salad",
+      "menu": "AMZ: Fresh Five",
+      "station": "Hibernate",
+      "price": 5
     },
     {
-      "id": 1503,
-      "item": "Tropical Green Smoothie",
-      "menu": "AMZ+RA: Smoothies",
-      "station": "Smoothies",
-      "price": 6
+      "id": 1603,
+      "item": "Quinoa and Roasted Beet Salad",
+      "menu": "AMZ: Fresh Five",
+      "station": "Hibernate",
+      "price": 2.55
     },
     {
-      "id": 1502,
-      "item": "Blueberry Spinach Smoothie",
-      "menu": "AMZ+RA: Smoothies",
-      "station": "Smoothies",
-      "price": 6
+      "id": 1602,
+      "item": "Peanut Butter Jelly and Banana Sandwich",
+      "menu": "AMZ: Fresh Five",
+      "station": "Deli",
+      "price": 5
     },
     {
-      "id": 1501,
-      "item": "Brain Power Smoothie",
-      "menu": "AMZ+RA: Smoothies",
-      "station": "Smoothies",
-      "price": 6
+      "id": 1601,
+      "item": "Mushroom Bacon Bean and Pea Salad",
+      "menu": "AMZ: Fresh Five",
+      "station": "Hibernate",
+      "price": 5
     },
     {
-      "id": 1500,
-      "item": "Berry Chia Seed Smoothie",
-      "menu": "AMZ+RA: Smoothies",
-      "station": "Smoothies",
-      "price": 6
+      "id": 1600,
+      "item": "Maple Tofu Barley Pecan Salad",
+      "menu": "AMZ: Fresh Five",
+      "station": "Hibernate",
+      "price": 5
     },
     {
-      "id": 1499,
-      "item": "Almond Butter & Banana Smoothie",
-      "menu": "AMZ+RA: Smoothies",
-      "station": "Smoothies",
-      "price": 6
+      "id": 1599,
+      "item": "Edamame Cucumber Sandwich",
+      "menu": "AMZ: Fresh Five",
+      "station": "Deli",
+      "price": 5
     },
     {
-      "id": 1498,
-      "item": "Almond Bliss Smoothie, Coconut, Cacao",
-      "menu": "AMZ+RA: Smoothies",
-      "station": "Smoothies",
-      "price": 6
+      "id": 1598,
+      "item": "Yakisoba Crunch Salad",
+      "menu": "AMZ: Fresh Five",
+      "station": "Salad",
+      "price": 5
     }
   ],
   "topMenus": [
@@ -100,16 +100,16 @@
       122
     ],
     [
-      "AMZ: Fresh Five",
-      98
+      "AMZ: Wok",
+      95
     ],
     [
       "AMZ: Breakfast",
       94
     ],
     [
-      "AMZ: Wok",
-      87
+      "AMZ: Fresh Five",
+      81
     ],
     [
       "AMZ: Cafe Express Soup",
@@ -117,7 +117,7 @@
     ],
     [
       "AMZ: Cafe Express Curated Sandwiches",
-      62
+      59
     ]
   ]
 }

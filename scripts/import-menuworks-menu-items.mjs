@@ -7,9 +7,9 @@ const SOURCE_FILE =
   "C:/Users/leiss/OneDrive/Desktop/Menus.csv";
 const OUTPUT_FILE = "src/data/menuItems.json";
 const BASELINE_FILE = process.argv[3] || process.env.MENUWORKS_BASELINE_FILE || OUTPUT_FILE;
-const SOURCE_VERSION = "menuworks-menus-2026-07-07";
-const RAW_ARCHIVE_FILE = "public/data/menuworks-raw-2026-07-07-menus.json";
-const RAW_ARCHIVE_PUBLIC_PATH = "/data/menuworks-raw-2026-07-07-menus.json";
+const SOURCE_VERSION = "master-menus-2026-07-12";
+const RAW_ARCHIVE_FILE = "public/data/master-menus-raw-2026-07-12.json";
+const RAW_ARCHIVE_PUBLIC_PATH = "/data/master-menus-raw-2026-07-12.json";
 const HIBERNATE_EFFECTIVE_DATE = "2026-08-01";
 
 const ALLERGEN_COLUMNS = [
@@ -60,6 +60,7 @@ const NUTRITION_MAP = {
   "Fe (mg)": "ironMg",
   "Vit D (mcg)": "vitaminDMcg",
   "Vit B12 (ug)": "vitaminB12Mcg",
+  "Vit B12 (µg)": "vitaminB12Mcg",
   "Vit C (mg)": "vitaminCMg",
   "Caffeine (mg)": "caffeineMg",
   "% Cal Fat": "percentCaloriesFat",
@@ -306,6 +307,35 @@ function mergeImportedRows(existingRows, sourceRows) {
   return { rows: mergedRows, updated, added };
 }
 
+function sourceOnlyImportedRows(existingRows, sourceRows) {
+  const usedIds = new Set();
+  const retainedExistingIds = new Set();
+  let nextId = Math.max(0, ...existingRows.map((row) => Number(row.id) || 0)) + 1;
+
+  const rows = sourceRows.map((sourceRow) => {
+    const desiredId = Number(sourceRow.id) || 0;
+    let id = desiredId && !usedIds.has(desiredId) ? desiredId : 0;
+    const retainedExistingId = Boolean(id);
+    if (!id) {
+      while (usedIds.has(nextId)) nextId += 1;
+      id = nextId;
+      nextId += 1;
+    }
+    usedIds.add(id);
+    if (retainedExistingId) retainedExistingIds.add(id);
+    return { ...sourceRow, id };
+  });
+
+  const updated = retainedExistingIds.size;
+  const added = Math.max(0, rows.length - updated);
+  return {
+    rows,
+    updated,
+    added,
+    deleted: Math.max(0, existingRows.length - updated),
+  };
+}
+
 function deriveMenuItemSemantics(row) {
   const menu = normalizeMenuName(row["Menu Name"]).toLowerCase();
   const recipeCategory = cleanText(row["Recipe Category."]).toLowerCase();
@@ -417,6 +447,16 @@ function nutrition(row) {
   return output;
 }
 
+function numericFieldMap(row, predicate) {
+  const output = {};
+  for (const key of Object.keys(row)) {
+    if (!predicate(key)) continue;
+    const value = numberValue(row[key]);
+    if (value !== null) output[key] = value;
+  }
+  return output;
+}
+
 function isValidMenuRow(row) {
   const menu = normalizeMenuName(row["Menu Name"]);
   return /^AMZ(\+RA)?:/.test(menu) && cleanText(row["Recipe Number"]);
@@ -436,6 +476,11 @@ const incomingImportedRows = incomingRows.map((row, index) => {
   const itemCost = numberValue(row["Menu Item Cost"]);
   const wastePct = percentValue(row["Waste %"]);
   const currentNutrition = nutrition(row);
+  const nutritionDailyValues = numericFieldMap(row, (key) => key.includes("(% Of DV)") || key.includes("(% of Canadian DV)"));
+  const mealPatternContributions = numericFieldMap(
+    row,
+    (key) => /\((?:Oz Eq|Cup)\)$/.test(key) || key === "Weekly BPL (Cup)"
+  );
   const currentAllergenDetails = allergenDetails(row);
   const station = cleanText(row["Station"]);
   const isFreshFiveHibernate = menu === "AMZ: Fresh Five" && station === "Hibernate";
@@ -449,7 +494,7 @@ const incomingImportedRows = incomingRows.map((row, index) => {
   const menuSemantics = deriveMenuItemSemantics(row);
 
   return {
-    id: existing?.id ?? index + 1,
+    id: existing?.id ?? null,
     menu,
     menuType: cleanText(row["Menu Type"]),
     week: cleanText(row["Week"]),
@@ -553,6 +598,8 @@ const incomingImportedRows = incomingRows.map((row, index) => {
     calciumMg: currentNutrition.calciumMg ?? null,
     ironMg: currentNutrition.ironMg ?? null,
     nutrition: currentNutrition,
+    nutritionDailyValues,
+    mealPatternContributions,
     legacyNames: [...new Set([...(existing?.legacyNames || []), cleanText(existing?.item), cleanText(existing?.displayName), existingSourceTruthName, shortName].filter(Boolean))],
     sourceTruthName: preservedSourceTruthName || undefined,
     ...(isFreshFiveHibernate
@@ -567,7 +614,7 @@ const incomingImportedRows = incomingRows.map((row, index) => {
   };
 });
 
-const mergeResult = mergeImportedRows(existingRows, incomingImportedRows);
+const mergeResult = sourceOnlyImportedRows(existingRows, incomingImportedRows);
 const importedRows = mergeResult.rows;
 
 writeFileSync(OUTPUT_FILE, `${JSON.stringify(importedRows, null, 2)}\n`);
@@ -600,6 +647,7 @@ console.log(
       importedRows: incomingImportedRows.length,
       updatedRows: mergeResult.updated,
       addedRows: mergeResult.added,
+      deletedRows: mergeResult.deleted,
       menus: menuCount,
       preservedDescriptions,
       freshFiveHibernateRows: hibernateCount,

@@ -2,7 +2,7 @@
 
 Last updated: July 12, 2026
 
-Current live version: `2026.07.12.002-selector-library-scope`
+Current live version: `2026.07.12.003-master-menus-sync`
 
 ## First Rule
 
@@ -144,6 +144,9 @@ Purpose: Menu and item library organized by menus, with cards, detail drawer, nu
 Watch-outs:
 
 - It is called Menu Library in user-facing UI. Internal file paths still use `recipe-database`.
+- `2026.07.12.003-master-menus-sync` rebuilt `src/data/menuItems.json` from `Master Menus 7-12-26.csv`: 1,550 Master rows, 53 menus, 100 new/rekeyed rows, and 57 stale generated rows removed compared with the previous app dataset.
+- The current raw source archive is `public/data/master-menus-raw-2026-07-12.json`. Older raw MenuWorks archives were removed from the deployable app.
+- Recipe Library Supabase backfill now upserts the current Master rows and marks visible Supabase recipe rows absent from the Master as `visible_in_library: false`; do not reintroduce append-only backfill behavior.
 - Item cards show Webtrition weight in oz when available from MenuWorks/Supabase for audit visibility.
 - Keep compact card labels short; `WebT OZ` is intentional so the Webtrition weight label does not overflow narrow property cards.
 - Item photos may exist in app assets/local mappings while file upload/storage wiring continues to mature.

@@ -2,6 +2,12 @@
 
 ## 2026-07-12
 
+- [Jul 12, 1:12 PM] Rebuilt the Culinary App menu item dataset from `Master Menus 7-12-26.csv` as the Webtrition Master source of truth.
+- [Jul 12, 1:12 PM] Updated Menu Library data to 1,550 Master rows across 53 menus, added 100 new/rekeyed rows, and removed 57 stale app rows from the generated dataset.
+- [Jul 12, 1:12 PM] Expanded stored item detail with nutrition daily value fields and meal-pattern contribution fields from Webtrition, while preserving curated/source-truth descriptions.
+- [Jul 12, 1:12 PM] Changed Recipe Library Supabase backfill to hide stale Supabase recipe rows that are no longer present in the Master dataset.
+- [Jul 12, 1:12 PM] Removed obsolete raw MenuWorks archive files and replaced them with the current July 12 Master Menus raw archive.
+- [Jul 12, 1:12 PM] Refreshed landing dashboard summary counts from the Master dataset and set visible app version to `2026.07.12.003-master-menus-sync`.
 - [Jul 12, 8:43 AM] Repointed Doppler/Zane's Salad selectors to the full Menu Library salad pool instead of the tiny Fresh Five salad override.
 - [Jul 12, 8:43 AM] Updated station selector release guards so Fresh Five controls stay station-specific while Zane's Salad pulls the full salad library set.
 - [Jul 12, 8:43 AM] Shortened Menu Library Webtrition weight labels to `WebT OZ` and tightened wrapping so the label stays inside its property card.

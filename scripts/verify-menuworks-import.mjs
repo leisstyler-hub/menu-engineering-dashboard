@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 
 const rows = JSON.parse(readFileSync("src/data/menuItems.json", "utf8"));
-const rawArchivePath = "public/data/menuworks-raw-2026-07-07-menus.json";
+const rawArchivePath = "public/data/master-menus-raw-2026-07-12.json";
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -22,11 +22,12 @@ function assertNameMrn(name, expectedMrn) {
   assert(String(row.mrn) === expectedMrn, `Expected ${name} MRN ${expectedMrn}, found ${row.mrn}.`);
 }
 
-assert(rows.length >= 1500, `Expected at least 1500 menu item rows after MenuWorks import, found ${rows.length}.`);
+assert(rows.length === 1550, `Expected 1550 Master Menus rows after the July 12 import, found ${rows.length}.`);
 assert(rows.every((row) => /^AMZ(\+RA)?:/.test(String(row.menu || ""))), "Menu item data includes non-menu legal/footer rows.");
 assert(rows.every((row) => !String(row.mrn || "").includes("/")), "Recipe numbers were parsed as dates. CSV must be read in raw mode.");
 assert(rows.every((row) => !String(row.mrn || "").startsWith("'")), "Recipe numbers should not retain the MenuWorks leading apostrophe.");
-assert(rows.some((row) => row.sourceDataVersion === "menuworks-menus-2026-07-07"), "MenuWorks source version marker is missing.");
+assert(rows.every((row) => row.sourceDataVersion === "master-menus-2026-07-12"), "Master Menus source version marker is missing or mixed.");
+assert(rows.every((row) => row.sourceFileName === "Master Menus 7-12-26.csv"), "Master Menus source file marker is missing.");
 
 assertNameMrn("Kachumbar Salad", "165741.11");
 assertNameMrn("Mango Sticky Rice", "182206.25");
@@ -66,8 +67,11 @@ assert(typeof hibernateSandwich.sodiumMg === "number" && hibernateSandwich.sodiu
 assert(typeof hibernateSandwich.carbsG === "number" && hibernateSandwich.carbsG > 0, "Carb grams were not stored.");
 assert(typeof hibernateSandwich.transFatG === "number", "Trans fat grams were not stored.");
 assert(hibernateSandwich.nutrition && typeof hibernateSandwich.nutrition === "object", "Nested nutrition object is missing.");
+assert(hibernateSandwich.nutritionDailyValues && typeof hibernateSandwich.nutritionDailyValues === "object", "Nutrition daily value details were not stored.");
+assert(hibernateSandwich.mealPatternContributions && typeof hibernateSandwich.mealPatternContributions === "object", "Meal pattern contribution details were not stored.");
 assert(hibernateSandwich.menuWorksRaw && typeof hibernateSandwich.menuWorksRaw === "object", "Useful raw MenuWorks row data was not retained.");
 assert(typeof hibernateSandwich.menuWorksRawArchivePath === "string" && hibernateSandwich.menuWorksRawArchivePath, "Full raw MenuWorks archive path is missing.");
+assert(hibernateSandwich.menuWorksRawArchivePath === "/data/master-menus-raw-2026-07-12.json", "Full raw Master Menus archive path is not current.");
 assert(typeof hibernateSandwich.menuItemRole === "string" && hibernateSandwich.menuItemRole, "Menu item role from Menu Item Notes is missing.");
 assert(existsSync(rawArchivePath), "Full raw MenuWorks archive file is missing.");
 
