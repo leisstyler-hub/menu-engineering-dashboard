@@ -681,10 +681,10 @@ function WeeklyTrafficChart({ days, compact = false }) {
         if (!response.ok || !payload.ok) throw new Error(payload.message || "Traffic endpoint unavailable");
         const endpointDays = Array.isArray(payload.days) && payload.days.length ? payload.days : days;
         setTraffic({
-          status: "live",
+          status: payload.status === "degraded" ? "degraded" : "live",
           days: endpointDays,
           totalVisitors: Number(payload.totalVisitors ?? endpointDays.reduce((sum, day) => sum + (Number(day.visitors) || 0), 0)),
-          message: "Secure endpoint connected",
+          message: payload.message || "Secure endpoint connected",
         });
       } catch (error) {
         if (error.name === "AbortError") return;
@@ -692,7 +692,7 @@ function WeeklyTrafficChart({ days, compact = false }) {
           status: "error",
           days,
           totalVisitors: null,
-          message: error instanceof Error ? error.message : "Traffic endpoint unavailable",
+          message: "Traffic storage is temporarily unavailable.",
         });
       }
     };
@@ -731,7 +731,7 @@ function WeeklyTrafficChart({ days, compact = false }) {
     return { chartDays, hasTrafficData, totalVisitors, width, height, left, right, top, bottom, points, linePoints, areaPoints };
   }, [compact, traffic]);
 
-  const statusLabel = traffic.status === "live" ? "Live" : traffic.status === "loading" ? "Connecting" : "Needs data";
+  const statusLabel = traffic.status === "live" ? "Live" : traffic.status === "loading" ? "Connecting" : traffic.status === "degraded" ? "Fallback" : "Needs data";
   const statusClass = traffic.status === "live"
     ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-200"
     : traffic.status === "loading"

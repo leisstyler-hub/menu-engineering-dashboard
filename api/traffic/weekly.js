@@ -1,8 +1,11 @@
 import { createHash } from "crypto";
 
-const SMARTSHEET_API_BASE = "https://api.smartsheet.com/2.0";
+const DEFAULT_SUPABASE_URL = "https://pzilyzqhatthctgsjwtt.supabase.co";
 const TRAFFIC_RECORD_TYPE = "Traffic Daily Visitor";
+const TRAFFIC_DATABASE_TOOL = "rotation";
+const TRAFFIC_SOURCE_SYSTEM = "culinary-tools-traffic";
 const TRAFFIC_TIME_ZONE = "America/Los_Angeles";
+const TRAFFIC_RETENTION_YEARS = 2;
 const TRAFFIC_COLUMNS = {
   recordId: "Record ID",
   recordType: "Record Type",
@@ -16,33 +19,54 @@ const TRAFFIC_COLUMNS = {
   notes: "Notes",
 };
 
-async function smartsheetFetch(path, options = {}) {
-  const token = process.env.SMARTSHEET_ACCESS_TOKEN;
-  if (!token) {
-    const error = new Error("Missing SMARTSHEET_ACCESS_TOKEN environment variable");
-    error.statusCode = 500;
+function cleanUrl(value = "") {
+  return String(value || "").trim().replace(/\/+$/, "");
+}
+
+function getSupabaseServerConfig() {
+  const url = cleanUrl(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL);
+  const serviceKey = String(
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.SUPABASE_SECRET_KEY ||
+    process.env.SUPABASE_SERVICE_KEY ||
+    ""
+  ).trim();
+
+  return {
+    url,
+    serviceKey,
+    configured: Boolean(url && serviceKey),
+  };
+}
+
+async function supabaseFetch(path, options = {}) {
+  const config = getSupabaseServerConfig();
+  if (!config.configured) {
+    const error = new Error("Supabase server key is not configured yet.");
+    error.statusCode = 503;
     throw error;
   }
 
-  const response = await fetch(`${SMARTSHEET_API_BASE}${path}`, {
+  const response = await fetch(`${config.url}/rest/v1/${path}`, {
     ...options,
     headers: {
-      Authorization: `Bearer ${token}`,
+      apikey: config.serviceKey,
+      Authorization: `Bearer ${config.serviceKey}`,
       "Content-Type": "application/json",
       ...(options.headers || {}),
     },
   });
 
   const text = await response.text();
-  let payload = {};
+  let payload = null;
   try {
-    payload = text ? JSON.parse(text) : {};
+    payload = text ? JSON.parse(text) : null;
   } catch {
     payload = { raw: text };
   }
 
   if (!response.ok) {
-    const error = new Error(payload.message || payload.error || `Smartsheet API error ${response.status}`);
+    const error = new Error(payload?.message || payload?.error || `Supabase API error ${response.status}`);
     error.statusCode = response.status;
     error.payload = payload;
     throw error;
@@ -51,38 +75,12 @@ async function smartsheetFetch(path, options = {}) {
   return payload;
 }
 
-function getSheetId() {
-  return process.env.SMARTSHEET_TRAFFIC_SHEET_ID || process.env.SMARTSHEET_SHEET_ID;
-}
-
-function columnMapByTitle(sheet) {
-  return new Map((sheet.columns || []).map((column) => [column.title, column.id]));
-}
-
-function getCellValue(row, columnId) {
-  const cell = (row.cells || []).find((entry) => String(entry.columnId) === String(columnId));
-  return cell?.displayValue ?? cell?.value ?? "";
-}
-
-async function ensureTrafficColumns(sheetId, sheet) {
-  let latestSheet = sheet;
-  let columnMap = columnMapByTitle(latestSheet);
-  const missingColumns = Object.values(TRAFFIC_COLUMNS).filter((title) => !columnMap.has(title));
-
-  for (const title of missingColumns) {
-    await smartsheetFetch(`/sheets/${sheetId}/columns`, {
-      method: "POST",
-      body: JSON.stringify([{
-        title,
-        type: title === TRAFFIC_COLUMNS.businessDate ? "DATE" : "TEXT_NUMBER",
-        index: (latestSheet.columns || []).length,
-      }]),
-    });
-    latestSheet = await smartsheetFetch(`/sheets/${sheetId}`);
-    columnMap = columnMapByTitle(latestSheet);
-  }
-
-  return { sheet: latestSheet, columnMap, missingColumns };
+function queryString(params) {
+  const search = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") search.set(key, value);
+  });
+  return search.toString();
 }
 
 function zonedDateParts(date = new Date()) {
@@ -126,16 +124,6 @@ function getWeekDays(todayString) {
   }));
 }
 
-function buildCells(record, columnMap) {
-  return Object.entries(record)
-    .filter(([title]) => columnMap.has(title))
-    .map(([title, value]) => ({
-      columnId: columnMap.get(title),
-      value: value === undefined || value === null ? "" : value,
-      strict: false,
-    }));
-}
-
 function hashVisitorId(visitorId) {
   const salt = process.env.ANALYTICS_HASH_SALT || process.env.VERCEL_GIT_COMMIT_SHA || "culinary-tools-platform";
   return createHash("sha256").update(`${salt}:${visitorId}`).digest("hex").slice(0, 24);
@@ -146,22 +134,64 @@ function isSmokeTestRequest(req, body = {}) {
   return headerValue === "true" || body.isSmokeTest === true;
 }
 
-function isAutomatedTrafficRow(row, columnMap) {
-  const notesColumnId = columnMap.get(TRAFFIC_COLUMNS.notes);
-  const notes = String(getCellValue(row, notesColumnId));
+function isAutomatedTrafficRow(payload = {}) {
+  const notes = String(payload[TRAFFIC_COLUMNS.notes] || payload.notes || "");
   return /HeadlessChrome|Playwright|browser-smoke|smoke-test/i.test(notes);
 }
 
-async function loadTrafficSheet() {
-  const sheetId = getSheetId();
-  if (!sheetId) {
-    const error = new Error("Missing SMARTSHEET_TRAFFIC_SHEET_ID or SMARTSHEET_SHEET_ID environment variable");
-    error.statusCode = 500;
-    throw error;
-  }
+function trafficRetainUntil(date = new Date()) {
+  const retained = new Date(date);
+  retained.setUTCFullYear(retained.getUTCFullYear() + TRAFFIC_RETENTION_YEARS);
+  return retained.toISOString();
+}
 
-  const sheet = await smartsheetFetch(`/sheets/${sheetId}`);
-  return { sheetId, ...(await ensureTrafficColumns(sheetId, sheet)) };
+function buildTrafficRecordRow(record) {
+  return {
+    record_id: String(record[TRAFFIC_COLUMNS.recordId] || "").trim(),
+    parent_record_id: "",
+    tool: TRAFFIC_DATABASE_TOOL,
+    record_type: TRAFFIC_RECORD_TYPE,
+    status: String(record[TRAFFIC_COLUMNS.status] || "Active"),
+    district: "",
+    cafe_unit: "",
+    date_range_label: String(record[TRAFFIC_COLUMNS.businessDate] || ""),
+    station_key: "weekly-traffic",
+    submitted_at_text: String(record[TRAFFIC_COLUMNS.submittedAt] || ""),
+    updated_at_text: String(record[TRAFFIC_COLUMNS.updatedAt] || ""),
+    visible_in_dashboard: String(record[TRAFFIC_COLUMNS.visibleInDashboard] || "TRUE").toUpperCase() !== "FALSE",
+    is_test_record: String(record[TRAFFIC_COLUMNS.isTestRecord] || "FALSE").toUpperCase() === "TRUE",
+    source_system: TRAFFIC_SOURCE_SYSTEM,
+    retain_until: trafficRetainUntil(),
+    record_payload: record,
+  };
+}
+
+function normalizeTrafficRow(row = {}) {
+  return {
+    ...(row.record_payload || {}),
+    [TRAFFIC_COLUMNS.recordId]: row.record_id || row.record_payload?.[TRAFFIC_COLUMNS.recordId] || "",
+    [TRAFFIC_COLUMNS.businessDate]: row.date_range_label || row.record_payload?.[TRAFFIC_COLUMNS.businessDate] || "",
+    [TRAFFIC_COLUMNS.visibleInDashboard]: row.visible_in_dashboard === false ? "FALSE" : "TRUE",
+    [TRAFFIC_COLUMNS.isTestRecord]: row.is_test_record === true ? "TRUE" : "FALSE",
+  };
+}
+
+async function loadAllTrafficRows() {
+  const rows = [];
+  const pageSize = 1000;
+  for (let offset = 0; offset < 25000; offset += pageSize) {
+    const page = await supabaseFetch(`app_records?${queryString({
+      select: "record_id,date_range_label,visible_in_dashboard,is_test_record,record_payload,updated_at",
+      tool: `eq.${TRAFFIC_DATABASE_TOOL}`,
+      record_type: `eq.${TRAFFIC_RECORD_TYPE}`,
+      order: "updated_at.desc",
+      limit: pageSize,
+      offset,
+    })}`);
+    rows.push(...(page || []));
+    if (!Array.isArray(page) || page.length < pageSize) break;
+  }
+  return rows.map(normalizeTrafficRow);
 }
 
 async function recordDailyVisitor(req) {
@@ -174,68 +204,60 @@ async function recordDailyVisitor(req) {
     return { recorded: false, reason: "missing visitor id" };
   }
 
-  const { sheetId, sheet, columnMap } = await loadTrafficSheet();
   const { date, dayOfWeek } = zonedDateParts();
   const visitorHash = hashVisitorId(visitorId);
   const recordId = `traffic|daily-visitor|${date}|${visitorHash}`;
-  const recordIdColumnId = columnMap.get(TRAFFIC_COLUMNS.recordId);
   const now = new Date().toISOString();
   const safePath = String(body.path || "/").slice(0, 180);
   const userAgent = String(req.headers["user-agent"] || "").slice(0, 140);
-
-  const existingRow = (sheet.rows || []).find((row) => String(getCellValue(row, recordIdColumnId)) === recordId);
+  const existingRows = await supabaseFetch(`app_records?${queryString({
+    select: "record_id,record_payload",
+    record_id: `eq.${recordId}`,
+    limit: "1",
+  })}`);
+  const existingRecord = Array.isArray(existingRows) && existingRows[0]?.record_payload ? existingRows[0].record_payload : null;
   const record = {
     [TRAFFIC_COLUMNS.recordId]: recordId,
     [TRAFFIC_COLUMNS.recordType]: TRAFFIC_RECORD_TYPE,
     [TRAFFIC_COLUMNS.status]: "Active",
     [TRAFFIC_COLUMNS.businessDate]: date,
     [TRAFFIC_COLUMNS.dayOfWeek]: dayOfWeek,
-    [TRAFFIC_COLUMNS.submittedAt]: existingRow ? getCellValue(existingRow, columnMap.get(TRAFFIC_COLUMNS.submittedAt)) || now : now,
+    [TRAFFIC_COLUMNS.submittedAt]: existingRecord?.[TRAFFIC_COLUMNS.submittedAt] || now,
     [TRAFFIC_COLUMNS.updatedAt]: now,
     [TRAFFIC_COLUMNS.visibleInDashboard]: "TRUE",
     [TRAFFIC_COLUMNS.isTestRecord]: "FALSE",
     [TRAFFIC_COLUMNS.notes]: `Path: ${safePath}; Browser: ${userAgent}`,
   };
 
-  const row = { cells: buildCells(record, columnMap) };
-  if (existingRow) {
-    await smartsheetFetch(`/sheets/${sheetId}/rows`, {
-      method: "PUT",
-      body: JSON.stringify([{ ...row, id: existingRow.id }]),
-    });
-  } else {
-    await smartsheetFetch(`/sheets/${sheetId}/rows`, {
-      method: "POST",
-      body: JSON.stringify([{ ...row, toBottom: true }]),
-    });
-  }
+  await supabaseFetch("app_records?on_conflict=record_id", {
+    method: "POST",
+    headers: {
+      Prefer: "resolution=merge-duplicates,return=minimal",
+    },
+    body: JSON.stringify([buildTrafficRecordRow(record)]),
+  });
 
   return { recorded: true, date };
 }
 
 async function getWeeklyTraffic() {
-  const { sheet, columnMap } = await loadTrafficSheet();
   const { date: today } = zonedDateParts();
   const weekDays = getWeekDays(today);
   const weekDates = new Set(weekDays.map((day) => day.date));
   const countsByDate = new Map(weekDays.map((day) => [day.date, new Set()]));
-  const recordTypeColumnId = columnMap.get(TRAFFIC_COLUMNS.recordType);
-  const recordIdColumnId = columnMap.get(TRAFFIC_COLUMNS.recordId);
-  const businessDateColumnId = columnMap.get(TRAFFIC_COLUMNS.businessDate);
-  const visibleColumnId = columnMap.get(TRAFFIC_COLUMNS.visibleInDashboard);
-  const testColumnId = columnMap.get(TRAFFIC_COLUMNS.isTestRecord);
 
-  for (const row of sheet.rows || []) {
-    if (String(getCellValue(row, recordTypeColumnId)) !== TRAFFIC_RECORD_TYPE) continue;
-    if (String(getCellValue(row, visibleColumnId)).toUpperCase() === "FALSE") continue;
-    if (String(getCellValue(row, testColumnId)).toUpperCase() === "TRUE") continue;
-    if (isAutomatedTrafficRow(row, columnMap)) continue;
+  const rows = await loadAllTrafficRows();
+  for (const row of rows) {
+    if (String(row[TRAFFIC_COLUMNS.recordType]) !== TRAFFIC_RECORD_TYPE) continue;
+    if (String(row[TRAFFIC_COLUMNS.visibleInDashboard]).toUpperCase() === "FALSE") continue;
+    if (String(row[TRAFFIC_COLUMNS.isTestRecord]).toUpperCase() === "TRUE") continue;
+    if (isAutomatedTrafficRow(row)) continue;
 
-    const businessDate = String(getCellValue(row, businessDateColumnId)).slice(0, 10);
+    const businessDate = String(row[TRAFFIC_COLUMNS.businessDate]).slice(0, 10);
     if (!weekDates.has(businessDate)) continue;
 
-    const recordId = String(getCellValue(row, recordIdColumnId) || row.id);
-    countsByDate.get(businessDate)?.add(recordId);
+    const recordId = String(row[TRAFFIC_COLUMNS.recordId] || "");
+    if (recordId) countsByDate.get(businessDate)?.add(recordId);
   }
 
   const days = weekDays.map((day) => ({
@@ -246,10 +268,27 @@ async function getWeeklyTraffic() {
   return {
     ok: true,
     status: "live",
-    source: "smartsheet-secure-endpoint",
+    source: "supabase-secure-endpoint",
     timeZone: TRAFFIC_TIME_ZONE,
     days,
     totalVisitors: days.reduce((sum, day) => sum + day.visitors, 0),
+    message: "Secure endpoint connected",
+    generatedAt: new Date().toISOString(),
+  };
+}
+
+function fallbackWeeklyTraffic(error) {
+  const { date: today } = zonedDateParts();
+  const days = getWeekDays(today);
+  return {
+    ok: true,
+    status: "degraded",
+    source: "traffic-safe-fallback",
+    timeZone: TRAFFIC_TIME_ZONE,
+    days,
+    totalVisitors: 0,
+    message: "Traffic storage is temporarily unavailable; showing a safe zero baseline.",
+    storageError: error?.message || "",
     generatedAt: new Date().toISOString(),
   };
 }
@@ -262,13 +301,13 @@ export default async function handler(req, res) {
     if (req.method === "POST") {
       const recorded = await recordDailyVisitor(req);
       const weekly = await getWeeklyTraffic();
-      console.log(JSON.stringify({ level: "info", msg: "done", route: "/api/traffic/weekly", action: "record", ms: Date.now() - start }));
+      console.log(JSON.stringify({ level: "info", msg: "done", route: "/api/traffic/weekly", action: "record", source: weekly.source, ms: Date.now() - start }));
       return res.status(200).json({ ...weekly, recorded });
     }
 
     if (req.method === "GET") {
       const weekly = await getWeeklyTraffic();
-      console.log(JSON.stringify({ level: "info", msg: "done", route: "/api/traffic/weekly", action: "read", ms: Date.now() - start }));
+      console.log(JSON.stringify({ level: "info", msg: "done", route: "/api/traffic/weekly", action: "read", source: weekly.source, ms: Date.now() - start }));
       return res.status(200).json(weekly);
     }
 
@@ -276,10 +315,17 @@ export default async function handler(req, res) {
     return res.status(405).json({ ok: false, message: "Method not allowed" });
   } catch (error) {
     console.error(JSON.stringify({ level: "error", msg: "failed", route: "/api/traffic/weekly", error: error.message, ms: Date.now() - start }));
+    if (req.method === "GET" || req.method === "POST") {
+      const weekly = fallbackWeeklyTraffic(error);
+      return res.status(200).json({
+        ...weekly,
+        recorded: req.method === "POST" ? { recorded: false, reason: "traffic storage unavailable" } : undefined,
+      });
+    }
     return res.status(error.statusCode || 500).json({
       ok: false,
       status: "error",
-      message: error.message || "Weekly traffic endpoint failed",
+      message: "Weekly traffic endpoint failed",
       details: error.payload || null,
     });
   }

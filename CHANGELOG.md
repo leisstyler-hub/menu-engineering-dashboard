@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-07-14
+
+- [Jul 14, 3:16 PM] Moved the Weekly Traffic endpoint off Smartsheet writes and reads so Smartsheet cell-limit errors no longer break the landing dashboard.
+- [Jul 14, 3:16 PM] Weekly Traffic now records anonymous daily visitor rows in Supabase `app_records`, keeps smoke-test traffic excluded, and returns a safe zero baseline if storage is temporarily unavailable.
+- [Jul 14, 3:16 PM] Updated the Weekly Traffic UI so backend storage errors are not shown raw to users and set visible app version to `2026.07.14.001-traffic-supabase-safe`.
+
 ## 2026-07-12
 
 - [Jul 12, 1:12 PM] Rebuilt the Culinary App menu item dataset from `Master Menus 7-12-26.csv` as the Webtrition Master source of truth.

@@ -1,8 +1,8 @@
 # AI Handoff
 
-Last updated: July 12, 2026
+Last updated: July 14, 2026
 
-Current live version: `2026.07.12.003-master-menus-sync`
+Current live version: `2026.07.14.001-traffic-supabase-safe`
 
 ## First Rule
 
@@ -73,6 +73,7 @@ Watch-outs:
 
 - Mobile layout should feel like a real mobile app, not a squeezed desktop page.
 - Weekly Traffic must exclude browser smoke/automation traffic.
+- Weekly Traffic must not depend on Smartsheet writes/reads; Smartsheet hit the 500,000-cell limit on July 14, 2026. The traffic endpoint is now Supabase-first through `app_records` and should return a safe fallback instead of exposing raw storage errors.
 - Tool cards should be visually balanced and not leave awkward empty space.
 
 ### Menu Engineering
