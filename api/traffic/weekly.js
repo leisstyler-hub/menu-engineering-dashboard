@@ -136,7 +136,7 @@ function isSmokeTestRequest(req, body = {}) {
 
 function isAutomatedTrafficRow(payload = {}) {
   const notes = String(payload[TRAFFIC_COLUMNS.notes] || payload.notes || "");
-  return /HeadlessChrome|Playwright|browser-smoke|smoke-test/i.test(notes);
+  return /HeadlessChrome|Playwright|browser-smoke|smoke-test|codex-live-traffic-check|codex-release-verify/i.test(notes);
 }
 
 function trafficRetainUntil(date = new Date()) {
