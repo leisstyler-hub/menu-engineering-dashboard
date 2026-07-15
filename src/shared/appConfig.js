@@ -1,1 +1,1 @@
-export const APP_VERSION_STAMP = "2026.07.14.003-rotation-recall-integrity";
+export const APP_VERSION_STAMP = "2026.07.14.004-rotation-full-week-cards";

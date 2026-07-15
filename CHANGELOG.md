@@ -2,6 +2,9 @@
 
 ## 2026-07-14
 
+- [Jul 14, 11:37 PM] Fixed locked leadership cards so Re:Invent split-global weeks render the full calendar sequence instead of saved-record insertion order.
+- [Jul 14, 11:37 PM] Added Doppler full-week leadership card labels for Monday + Tuesday carryover and Wednesday-Friday current menu, including regression coverage for stale Cypress recall.
+- [Jul 14, 11:37 PM] Set visible app version to `2026.07.14.004-rotation-full-week-cards`.
 - [Jul 14, 6:25 PM] Fixed Neighborhood Rotations recall so submitted global selection rows outrank stale/default Global Block rows when saved menus disagree.
 - [Jul 14, 6:25 PM] Fixed split-global submitted recap and station rows to show persisted submitted blocks when Re:Invent saved block IDs differ from the currently computed week layout.
 - [Jul 14, 6:25 PM] Added browser regression coverage for Re:Invent AMZ+RA split-menu recall and Doppler stale-Cypress recall, and set visible app version to `2026.07.14.003-rotation-recall-integrity`.

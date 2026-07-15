@@ -6,8 +6,12 @@ const week = "Jul 6, 2026 - Jul 10, 2026";
 const parentId = `rotation|2026-07-06|South|Re:Invent`;
 const augustWeek = "Aug 10, 2026 - Aug 14, 2026";
 const augustParentId = `rotation|2026-08-10|South|Re:Invent`;
+const recoveryWeek = "Jul 13, 2026 - Jul 17, 2026";
+const recoveryParentId = `rotation|2026-07-13|South|Re:Invent`;
 const dopplerWeek = "Aug 10, 2026 - Aug 14, 2026";
 const dopplerParentId = `rotation|2026-08-10|South|Doppler`;
+const dopplerPreviousWeek = "Aug 3, 2026 - Aug 7, 2026";
+const dopplerPreviousParentId = `rotation|2026-08-03|South|Doppler`;
 
 function baseRecord(recordId, recordType, status = "Submitted", overrides = {}) {
   const activeParentId = overrides.parentId || parentId;
@@ -100,6 +104,30 @@ function savedReInventRecordsWithWrongBlockMenus() {
   ];
 }
 
+function savedReInventRecoveryWeekOutOfOrderRecords() {
+  const overrides = {
+    parentId: recoveryParentId,
+    week: recoveryWeek,
+    cafe: "Re:Invent",
+    weekStartDate: "2026-07-13",
+    weekEndDate: "2026-07-17",
+  };
+  return [
+    ...savedReInventRecords(),
+    {
+      ...baseRecord(recoveryParentId, SMARTSHEET_RECORD_TYPES.rotationHeader, "Submitted", overrides),
+      [SMARTSHEET_COLUMNS.savedEntryCount]: 4,
+      [SMARTSHEET_COLUMNS.historyInclude]: true,
+    },
+    globalBlock("thuFri", "Thursday + Friday", "AMZ: Cypress", 2, overrides),
+    selection("thuFri", "AMZ: Cypress", "Chicken Souvlaki Gyro", 1, overrides),
+    selection("thuFri", "AMZ: Cypress", "Spiced Jasmine Rice", 2, overrides),
+    globalBlock("tueWed", "Tuesday + Wednesday", "AMZ: Lemongrass + Lime", 1, overrides),
+    selection("tueWed", "AMZ: Lemongrass + Lime", "Lemongrass Chicken", 1, overrides),
+    selection("tueWed", "AMZ: Lemongrass + Lime", "Thai Sweet + Sour Slaw", 2, overrides),
+  ];
+}
+
 function savedDopplerRecordsWithWrongGlobalBlockMenu() {
   const overrides = {
     parentId: dopplerParentId,
@@ -121,6 +149,31 @@ function savedDopplerRecordsWithWrongGlobalBlockMenu() {
     },
     selection("base", "AMZ+RA: Andes", "Aji De Gallina", 1, overrides),
     selection("base", "AMZ+RA: Andes", "Peruvian Roasted Potatoes", 2, overrides),
+  ];
+}
+
+function savedDopplerFullWeekRecords() {
+  const previousOverrides = {
+    parentId: dopplerPreviousParentId,
+    week: dopplerPreviousWeek,
+    cafe: "Doppler",
+    weekStartDate: "2026-08-03",
+    weekEndDate: "2026-08-07",
+  };
+  return [
+    {
+      ...baseRecord(dopplerPreviousParentId, SMARTSHEET_RECORD_TYPES.rotationHeader, "Submitted", previousOverrides),
+      [SMARTSHEET_COLUMNS.savedEntryCount]: 2,
+      [SMARTSHEET_COLUMNS.historyInclude]: true,
+    },
+    {
+      ...globalBlock("base", "Global", "AMZ: Cypress", 1, previousOverrides),
+      [SMARTSHEET_COLUMNS.globalBlockId]: "",
+      [SMARTSHEET_COLUMNS.menuBlockLabel]: "",
+    },
+    selection("base", "AMZ: Cypress", "Chicken Souvlaki Gyro", 1, previousOverrides),
+    selection("base", "AMZ: Cypress", "Spiced Jasmine Rice", 2, previousOverrides),
+    ...savedDopplerRecordsWithWrongGlobalBlockMenu(),
   ];
 }
 
@@ -191,6 +244,22 @@ test("Re:Invent recall prefers the chef-selected split menu rows over stale bloc
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
+test("Re:Invent leadership card shows the full recovery week in calendar order", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await stubRotationReads(page, savedReInventRecoveryWeekOutOfOrderRecords());
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: /South/i }).click();
+  await page.getByRole("combobox").first().selectOption({ label: recoveryWeek });
+  await page.getByRole("button", { name: /^Re:Invent$/i }).click();
+
+  const card = page.getByRole("button", { name: /Open Re:Invent planner/i }).first();
+  await expect(card).toBeVisible({ timeout: 20_000 });
+  await expect(card).toContainText(/Monday[\s\S]*AMZ: Saffron[\s\S]*Tuesday \+ Wednesday[\s\S]*AMZ: Lemongrass \+ Lime[\s\S]*Thursday \+ Friday[\s\S]*AMZ: Cypress/);
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
 test("Doppler recall prefers submitted global selections over a stale Cypress block row", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   await stubRotationReads(page, savedDopplerRecordsWithWrongGlobalBlockMenu());
@@ -204,6 +273,22 @@ test("Doppler recall prefers submitted global selections over a stale Cypress bl
   await expect(recap).toBeVisible({ timeout: 20_000 });
   await expect(recap.getByText("AMZ+RA: Andes").first()).toBeVisible();
   await expect(recap.getByText("AMZ: Cypress")).toHaveCount(0);
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("Doppler leadership card shows Monday-Tuesday carryover and Wednesday-Friday current menu", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await stubRotationReads(page, savedDopplerFullWeekRecords());
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: /South/i }).click();
+  await page.getByRole("combobox").first().selectOption({ label: dopplerWeek });
+  await page.getByRole("button", { name: /^Doppler$/i }).click();
+
+  const card = page.getByRole("button", { name: /Open Doppler planner/i }).first();
+  await expect(card).toBeVisible({ timeout: 20_000 });
+  await expect(card).toContainText(/Monday \+ Tuesday[\s\S]*AMZ: Cypress[\s\S]*Wednesday-Friday[\s\S]*AMZ\+RA: Andes/);
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });

@@ -1506,6 +1506,7 @@ function blockHasSelections(block = {}) {
 
 const SPLIT_GLOBAL_BLOCK_IDS = new Set(["monTue", "wedThu", "friCarry", "monCarry", "tueWed", "thuFri", "friClosed"]);
 const REINVENT_GLOBAL_BLOCK_IDS = SPLIT_GLOBAL_BLOCK_IDS;
+const SPLIT_GLOBAL_DISPLAY_ORDER = ["monCarry", "monTue", "tueWed", "wedThu", "thuFri", "friCarry", "friClosed"];
 
 function reInventMenuLabel(rotation = {}, week = "") {
   return splitGlobalMenuLabel(rotation, "Re:Invent", week);
@@ -1524,22 +1525,21 @@ function reInventSummaryBlockLabels(rotation = {}, week = rotation?.week || "") 
   return splitGlobalSummaryBlockLabels(rotation, "Re:Invent", week);
 }
 
+function summaryBlockFromSaved(blockId, block, title = "") {
+  const meta = menuBlockMeta(blockId);
+  return {
+    id: blockId,
+    title: title || meta.label,
+    menu: block?.menu || "Not selected",
+    isPending: !block?.menu,
+    isCarryover: Boolean(blockId === "friCarry" || blockId === "monCarry" || blockId === "thuFri"),
+  };
+}
+
 function splitGlobalSummaryBlockLabels(rotation = {}, cafe = "", week = rotation?.week || "") {
   const persistedBlocks = persistedSplitGlobalBlocks(rotation, cafe, week);
-  const persistedSelectionBlocks = persistedBlocks.filter(([, block]) => blockHasSelections(block));
-  if (persistedSelectionBlocks.length) {
-    return persistedSelectionBlocks.map(([blockId, block]) => {
-      const meta = menuBlockMeta(blockId);
-      return {
-        id: blockId,
-        title: meta.label,
-        menu: block?.menu || "Not selected",
-        isPending: !block?.menu,
-        isCarryover: Boolean(blockId === "friCarry" || blockId === "monCarry" || blockId === "thuFri"),
-      };
-    });
-  }
-  return splitGlobalBlockLayout(cafe, week).map((blockInfo) => {
+  const persistedById = new Map(persistedBlocks);
+  const layoutBlocks = splitGlobalBlockLayout(cafe, week).map((blockInfo) => {
     if (blockInfo.closed) {
       return {
         id: blockInfo.id,
@@ -1552,7 +1552,9 @@ function splitGlobalSummaryBlockLabels(rotation = {}, cafe = "", week = rotation
     }
     const block = blockInfo.readOnly
       ? carryoverGlobalBlock(rotation.previousRotation || {}, "friCarry")
-      : getRotationGlobalBlock(rotation, blockInfo.id);
+      : (blockHasSelections(getRotationGlobalBlock(rotation, blockInfo.id)) || getRotationGlobalBlock(rotation, blockInfo.id)?.menu
+        ? getRotationGlobalBlock(rotation, blockInfo.id)
+        : persistedById.get(blockInfo.id) || getRotationGlobalBlock(rotation, blockInfo.id));
     const menu = block?.menu || (blockInfo.readOnly ? "Carryover pending" : "Not selected");
     return {
       id: blockInfo.id,
@@ -1562,6 +1564,11 @@ function splitGlobalSummaryBlockLabels(rotation = {}, cafe = "", week = rotation
       isCarryover: Boolean(blockInfo.readOnly || blockInfo.continuesNextWeek),
     };
   });
+  if (layoutBlocks.some((block) => !block.isPending || block.isClosed)) return layoutBlocks;
+  return persistedBlocks
+    .slice()
+    .sort(([a], [b]) => SPLIT_GLOBAL_DISPLAY_ORDER.indexOf(a) - SPLIT_GLOBAL_DISPLAY_ORDER.indexOf(b))
+    .map(([blockId, block]) => summaryBlockFromSaved(blockId, block));
 }
 
 function persistedSplitGlobalBlocks(rotation = {}, cafe = "", week = rotation?.week || "") {
@@ -1574,6 +1581,33 @@ function persistedSplitGlobalBlocks(rotation = {}, cafe = "", week = rotation?.w
   const savedWithSelections = entries.filter(([, block]) => blockHasSelections(block));
   if (savedWithSelections.length) return savedWithSelections;
   return activeEntries.length ? activeEntries : entries;
+}
+
+function dopplerSummaryBlockLabels(rotation = {}, previousRotation = EMPTY_ROTATION) {
+  const carryover = carryoverGlobalBlock(previousRotation);
+  const currentBlock = dopplerCurrentGlobalBlock(rotation);
+  return [
+    {
+      id: "dopplerMonTue",
+      title: "Monday + Tuesday",
+      menu: carryover?.menu || "Carryover pending",
+      isPending: !carryover?.menu,
+      isCarryover: true,
+    },
+    {
+      id: "dopplerWedFri",
+      title: "Wednesday-Friday",
+      menu: currentBlock?.menu || "Not selected",
+      isPending: !currentBlock?.menu,
+      isCarryover: false,
+    },
+  ];
+}
+
+function rotationSummaryBlockLabels(rotation = {}, cafe = rotation?.cafe || "", week = rotation?.week || "", previousRotation = rotation?.previousRotation || EMPTY_ROTATION) {
+  if (isSplitGlobalCafe(cafe)) return splitGlobalSummaryBlockLabels({ ...rotation, previousRotation }, cafe, week);
+  if (cafe === "Doppler") return dopplerSummaryBlockLabels(rotation, previousRotation);
+  return [];
 }
 
 function hasNitroSplitBlocks(rotation = {}) {
@@ -3589,7 +3623,7 @@ function downloadDopplerMenuPowerPoint(packet) {
 
 function SubmittedRotationRecap({ cafe, week, rotation, previousRotation = EMPTY_ROTATION, rows, onEdit }) {
   const menuLabel = rotationMenuLabel(rotation, cafe, week);
-  const splitGlobalBlocks = isSplitGlobalCafe(cafe) ? splitGlobalSummaryBlockLabels({ ...rotation, previousRotation }, cafe, week) : [];
+  const summaryBlocks = rotationSummaryBlockLabels(rotation, cafe, week, previousRotation);
   const duplicateSplitMenus = duplicateSplitGlobalMenuIssues(rotation, cafe, week);
   const totalSelections = rows.reduce((sum, row) => sum + row.selectedCount, 0);
   return (
@@ -3599,9 +3633,9 @@ function SubmittedRotationRecap({ cafe, week, rotation, previousRotation = EMPTY
           <p className="text-xs uppercase tracking-[0.18em] font-black text-emerald-700">Submitted Menu Recap</p>
           <h3 className="mt-1 text-3xl font-black text-slate-950">{cafe}</h3>
           <p className="mt-1 text-sm font-semibold text-slate-600">{week}</p>
-          {splitGlobalBlocks.length ? (
+          {summaryBlocks.length ? (
             <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
-              {splitGlobalBlocks.map((block) => (
+              {summaryBlocks.map((block) => (
                 <div key={block.id} className={`rounded-2xl border px-3 py-2 ${block.isPending ? "border-amber-200 bg-amber-50 text-amber-900" : "border-white bg-white text-slate-950"}`}>
                   <p className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-slate-500">{block.title}</p>
                   <p className="mt-1 text-sm font-black leading-snug">{block.menu}</p>
@@ -5536,7 +5570,7 @@ function SummaryCard({ row, conflict, showDistrict = true, onOpenPlanner = null 
   const completedStations = locked ? stationKeys.filter((stationKey) => stationComplete(row, stationKey, row.cafe, row.week)).length : 0;
   const progressPct = stationKeys.length ? Math.round((completedStations / stationKeys.length) * 100) : 0;
   const menuLabel = locked ? rotationMenuLabel(row) : "";
-  const splitGlobalBlocks = locked && isSplitGlobalCafe(row.cafe) ? splitGlobalSummaryBlockLabels(row, row.cafe, row.week) : [];
+  const summaryBlocks = locked ? rotationSummaryBlockLabels(row, row.cafe, row.week, row.previousRotation || EMPTY_ROTATION) : [];
   const tone = !menuLabel ? "border-slate-200 bg-white" : fcMidpoint == null ? "border-slate-300 bg-slate-50" : fcMidpoint > 0.34 ? "border-amber-300 bg-amber-50" : fcMidpoint <= 0.30 ? "border-emerald-300 bg-emerald-50" : "border-sky-200 bg-sky-50";
   const statusTone = locked ? "bg-emerald-500 text-white border-emerald-500" : "bg-rose-100 text-rose-900 border-rose-200";
   const CardShell = onOpenPlanner ? "button" : "div";
@@ -5556,9 +5590,9 @@ function SummaryCard({ row, conflict, showDistrict = true, onOpenPlanner = null 
             <p className="font-bold text-slate-900">{row.cafe}</p>
           </div>
           {row.copiedFrom ? <p className="text-xs text-slate-500 mt-1">Copied from {row.copiedFrom}</p> : row.cafe === "Nitro" ? <p className="text-xs text-slate-500 mt-1">Frontier follows Nitro</p> : null}
-          {splitGlobalBlocks.length ? (
+          {summaryBlocks.length ? (
             <div className="mt-2 space-y-1">
-              {splitGlobalBlocks.map((block) => (
+              {summaryBlocks.map((block) => (
                 <p key={block.id} className={`rounded-2xl border px-3 py-2 text-sm font-black leading-snug ${block.isPending ? "border-amber-200 bg-amber-50 text-amber-900" : "border-white bg-white/80 text-slate-950"}`}>
                   <span className="text-xs uppercase tracking-[0.12em] text-slate-500">{block.title}</span>
                   <span className="block">{block.menu}</span>
@@ -5737,7 +5771,7 @@ function ResultsSelectionDetail({ row, onClose }) {
   const rowItems = stationRows.flatMap((stationRow) => stationRow.items);
   const trueCostRange = selectedTrueCostRange(rowItems);
   const foodCostRange = selectedFoodCostRange(rowItems);
-  const splitBlocks = isSplitGlobalCafe(row.cafe) ? splitGlobalSummaryBlockLabels(row, row.cafe, row.week) : [];
+  const summaryBlocks = rotationSummaryBlockLabels(row, row.cafe, row.week, row.previousRotation || EMPTY_ROTATION);
   return (
     <section className="rounded-[2rem] border-2 border-emerald-200 bg-emerald-50/70 p-5 shadow-xl">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -5768,9 +5802,9 @@ function ResultsSelectionDetail({ row, onClose }) {
           <p className="mt-1 text-lg font-black text-slate-950">{pctRange(foodCostRange)}</p>
         </div>
       </div>
-      {splitBlocks.length > 0 && (
+      {summaryBlocks.length > 0 && (
         <div className="mt-4 flex flex-wrap gap-2">
-          {splitBlocks.map((block) => (
+          {summaryBlocks.map((block) => (
             <span key={block.id} className={`rounded-full border px-3 py-1 text-xs font-black ${block.isClosed ? "border-amber-200 bg-amber-50 text-amber-800" : block.isPending ? "border-slate-200 bg-white text-slate-500" : "border-emerald-200 bg-white text-emerald-800"}`}>
               {block.title}: {block.menu}
             </span>
