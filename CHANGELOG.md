@@ -2,6 +2,8 @@
 
 ## 2026-07-14
 
+- [Jul 14, 3:42 PM] Tightened Weekly Traffic retention so Supabase keeps only the current Monday-Sunday visitor week and prunes older traffic rows on every traffic read/write.
+- [Jul 14, 3:42 PM] Clarified that Weekly Traffic is not a historical archive and set visible app version to `2026.07.14.002-weekly-traffic-prune`.
 - [Jul 14, 3:16 PM] Moved the Weekly Traffic endpoint off Smartsheet writes and reads so Smartsheet cell-limit errors no longer break the landing dashboard.
 - [Jul 14, 3:16 PM] Weekly Traffic now records anonymous daily visitor rows in Supabase `app_records`, keeps smoke-test traffic excluded, and returns a safe zero baseline if storage is temporarily unavailable.
 - [Jul 14, 3:16 PM] Updated the Weekly Traffic UI so backend storage errors are not shown raw to users and set visible app version to `2026.07.14.001-traffic-supabase-safe`.

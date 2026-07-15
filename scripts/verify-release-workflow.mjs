@@ -54,7 +54,10 @@ assertIncludes("api/traffic/weekly.js", "HeadlessChrome");
 assertIncludes("api/traffic/weekly.js", "smoke test traffic ignored");
 assertIncludes("api/traffic/weekly.js", "supabase-secure-endpoint");
 assertIncludes("api/traffic/weekly.js", "traffic-safe-fallback");
+assertIncludes("api/traffic/weekly.js", "pruneTrafficOutsideWeek");
+assertIncludes("api/traffic/weekly.js", "trafficRetainUntilForWeek");
 assertNotIncludes("api/traffic/weekly.js", "api.smartsheet.com");
+assertNotIncludes("api/traffic/weekly.js", "TRAFFIC_RETENTION_YEARS");
 assertIncludes("playwright.config.js", "x-culinary-smoke-test");
 
 assertIncludes("scripts/release-health.mjs", "Release Health");

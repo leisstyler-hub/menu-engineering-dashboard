@@ -5,7 +5,6 @@ const TRAFFIC_RECORD_TYPE = "Traffic Daily Visitor";
 const TRAFFIC_DATABASE_TOOL = "rotation";
 const TRAFFIC_SOURCE_SYSTEM = "culinary-tools-traffic";
 const TRAFFIC_TIME_ZONE = "America/Los_Angeles";
-const TRAFFIC_RETENTION_YEARS = 2;
 const TRAFFIC_COLUMNS = {
   recordId: "Record ID",
   recordType: "Record Type",
@@ -139,13 +138,14 @@ function isAutomatedTrafficRow(payload = {}) {
   return /HeadlessChrome|Playwright|browser-smoke|smoke-test|codex-live-traffic-check|codex-release-verify/i.test(notes);
 }
 
-function trafficRetainUntil(date = new Date()) {
-  const retained = new Date(date);
-  retained.setUTCFullYear(retained.getUTCFullYear() + TRAFFIC_RETENTION_YEARS);
-  return retained.toISOString();
+function trafficRetainUntilForWeek(businessDate) {
+  const weekDays = getWeekDays(businessDate);
+  const mondayAfterWeek = addDays(weekDays[6].date, 1);
+  return `${mondayAfterWeek}T00:00:00.000Z`;
 }
 
 function buildTrafficRecordRow(record) {
+  const businessDate = String(record[TRAFFIC_COLUMNS.businessDate] || "");
   return {
     record_id: String(record[TRAFFIC_COLUMNS.recordId] || "").trim(),
     parent_record_id: "",
@@ -161,7 +161,7 @@ function buildTrafficRecordRow(record) {
     visible_in_dashboard: String(record[TRAFFIC_COLUMNS.visibleInDashboard] || "TRUE").toUpperCase() !== "FALSE",
     is_test_record: String(record[TRAFFIC_COLUMNS.isTestRecord] || "FALSE").toUpperCase() === "TRUE",
     source_system: TRAFFIC_SOURCE_SYSTEM,
-    retain_until: trafficRetainUntil(),
+    retain_until: trafficRetainUntilForWeek(businessDate),
     record_payload: record,
   };
 }
@@ -192,6 +192,24 @@ async function loadAllTrafficRows() {
     if (!Array.isArray(page) || page.length < pageSize) break;
   }
   return rows.map(normalizeTrafficRow);
+}
+
+async function pruneTrafficOutsideWeek(weekDates) {
+  const keepDates = Array.from(weekDates);
+  if (!keepDates.length) return { pruned: false };
+
+  await supabaseFetch(`app_records?${queryString({
+    tool: `eq.${TRAFFIC_DATABASE_TOOL}`,
+    record_type: `eq.${TRAFFIC_RECORD_TYPE}`,
+    date_range_label: `not.in.(${keepDates.join(",")})`,
+  })}`, {
+    method: "DELETE",
+    headers: {
+      Prefer: "return=minimal",
+    },
+  });
+
+  return { pruned: true, keepDates };
 }
 
 async function recordDailyVisitor(req) {
@@ -246,6 +264,7 @@ async function getWeeklyTraffic() {
   const weekDates = new Set(weekDays.map((day) => day.date));
   const countsByDate = new Map(weekDays.map((day) => [day.date, new Set()]));
 
+  await pruneTrafficOutsideWeek(weekDates);
   const rows = await loadAllTrafficRows();
   for (const row of rows) {
     if (String(row[TRAFFIC_COLUMNS.recordType]) !== TRAFFIC_RECORD_TYPE) continue;

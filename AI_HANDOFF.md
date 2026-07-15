@@ -2,7 +2,7 @@
 
 Last updated: July 14, 2026
 
-Current live version: `2026.07.14.001-traffic-supabase-safe`
+Current live version: `2026.07.14.002-weekly-traffic-prune`
 
 ## First Rule
 
@@ -74,6 +74,7 @@ Watch-outs:
 - Mobile layout should feel like a real mobile app, not a squeezed desktop page.
 - Weekly Traffic must exclude browser smoke/automation traffic.
 - Weekly Traffic must not depend on Smartsheet writes/reads; Smartsheet hit the 500,000-cell limit on July 14, 2026. The traffic endpoint is now Supabase-first through `app_records` and should return a safe fallback instead of exposing raw storage errors.
+- Weekly Traffic is not a historical archive. It should keep only the current Monday-Sunday visitor week and prune older `Traffic Daily Visitor` rows from Supabase on traffic reads/writes.
 - Tool cards should be visually balanced and not leave awkward empty space.
 
 ### Menu Engineering
