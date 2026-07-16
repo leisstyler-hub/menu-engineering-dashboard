@@ -2,6 +2,9 @@
 
 ## 2026-07-15
 
+- [Jul 15, 10:43 PM] Made Supabase the authoritative Neighborhood Rotations read whenever live rows are available; Smartsheet now participates only as the fallback instead of merging stale child selections into current submitted rotations.
+- [Jul 15, 10:43 PM] Changed submission requirements to follow each cafe's assigned station configuration, removing the impossible Global Menu requirement from Atlas and Commissary while preserving Global requirements for cafes that operate that station.
+- [Jul 15, 10:43 PM] Added regression coverage for Nitro Anisa recall against stale Ciudad mirror rows and audited all currently configured cafes without Global stations; set visible app version to `2026.07.15.003-rotation-source-integrity`.
 - [Jul 15, 9:01 PM] Added curated Menu Library photography for Atlas Noodle, Anisa, Bibimbowl, Balti, Breakfast, and Carvery with one explicit photo per matched dish and no fuzzy runtime guessing.
 - [Jul 15, 9:01 PM] Added group-photo banners for Atlas Noodle, Anisa, Breakfast, and Carvery; Bibimbowl and Balti remain intentionally banner-free because their source folders do not contain a true group shot.
 - [Jul 15, 9:01 PM] Added release integrity checks for 110 matched dishes, all mapped photo files, all menu banners, and card-to-detail photo consistency; set visible app version to `2026.07.15.002-menu-library-photo-expansion`.

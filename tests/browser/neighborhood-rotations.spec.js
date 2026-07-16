@@ -160,3 +160,22 @@ test("Split-global future week selectors remove menus already chosen in another 
 
   expectNoUnexpectedPageErrors(pageErrors);
 });
+
+test("Cafes without a Global station are never blocked by Global requirements", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await stubEmptyRotationBackbone(page);
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: exactName("North") }).click();
+
+  for (const cafe of ["Commissary", "Atlas"]) {
+    await page.getByRole("button", { name: exactName(cafe) }).click();
+    await expect(page.getByRole("heading", { name: exactName(cafe) })).toBeVisible({ timeout: 20_000 });
+    const blocker = page.getByText(/Submit is blocked until these are fixed/i).locator("xpath=..", { hasText: /Add at least one item/i });
+    await expect(blocker).toBeVisible();
+    await expect(blocker).not.toContainText(/Global Menu|Global entree/i);
+  }
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});

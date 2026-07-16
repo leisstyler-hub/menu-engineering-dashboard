@@ -1,8 +1,8 @@
 # AI Handoff
 
-Last updated: July 14, 2026
+Last updated: July 15, 2026
 
-Current live version: `2026.07.15.002-menu-library-photo-expansion`
+Current release version: `2026.07.15.003-rotation-source-integrity`
 
 ## First Rule
 
@@ -105,6 +105,7 @@ Critical integrity rules:
 
 Recent critical fix:
 
+- `2026.07.15.003-rotation-source-integrity` stopped Neighborhood Rotations from merging stale Smartsheet child rows into current Supabase submissions. Supabase records are authoritative whenever available and Smartsheet is used only as fallback. Submission readiness now derives from `CAFE_STATION_CONFIG`, so cafes without Global stations, currently Atlas and Commissary, are not blocked by impossible Global Menu requirements. Browser regressions cover Nitro Anisa recall against stale Ciudad mirror rows and both no-Global cafes.
 - `2026.07.14.004-rotation-full-week-cards` fixed locked leadership cards so Re:Invent uses the computed calendar block layout for the selected week, including Monday carryover/recovery blocks, and renders saved block data in calendar order instead of insertion order. Doppler cards now show Monday + Tuesday carryover plus Wednesday-Friday current menu so the leadership view reads as a full week.
 - `2026.07.14.003-rotation-recall-integrity` fixed Re:Invent/Doppler recall corruption where stale/default Global Block rows could display Cypress or the wrong menu even though submitted selection rows carried the chef's actual choices. `recordsToRotations` now scores saved menu evidence so `Global Selection` rows with selected items outrank stale `Global Block` rows. Split-global recap/station rows now prefer persisted submitted blocks when saved block IDs do not match the recomputed week layout.
 - `2026.07.12.002-selector-library-scope` restored Doppler/Zane's Salad selectors to the full Menu Library salad pool (37 scoped Cafe Express Curated Salad rows) instead of the tiny `saladFreshFive` override. Release guards now fail if that stale override returns.

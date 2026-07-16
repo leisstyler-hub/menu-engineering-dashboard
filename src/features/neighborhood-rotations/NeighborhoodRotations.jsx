@@ -1755,10 +1755,12 @@ function stationHasAnySelection(rotation, stationKey) {
 
 function rotationRequirements(rotation, cafe, week = "") {
   const stationKeys = CAFE_STATION_CONFIG[cafe] || ["global"];
-  const globalReady = stationComplete(rotation, "global", cafe, week);
+  const requiresGlobal = stationKeys.includes("global");
+  const globalReady = !requiresGlobal || stationComplete(rotation, "global", cafe, week);
   const optionalStations = cafe === "Doppler" ? new Set(["pizza"]) : cafe === "Astra" ? new Set(["grill"]) : new Set();
   const incompleteStations = stationKeys.filter((stationKey) => stationKey !== "global" && !optionalStations.has(stationKey) && !stationComplete(rotation, stationKey, cafe, week));
   return {
+    requiresGlobal,
     globalReady,
     incompleteStations,
     canSubmit: globalReady && incompleteStations.length === 0
@@ -2298,7 +2300,7 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
     setSmartsheetReadCooldown(true);
     setDatabaseLoadStatus({ state: "loading", message: "Loading saved rotations from database...", loadedAt: "" });
     try {
-      const payload = await loadRecordsFromBackbone({ tool: "rotation", mergeFallback: true });
+      const payload = await loadRecordsFromBackbone({ tool: "rotation" });
       const records = payload.records || [];
       const loadedRotations = recordsToRotations(records);
       setDatabaseRecords(records);
@@ -5337,8 +5339,8 @@ function SubmitBar({ rotation, cafe, requirements, canSubmit, onSaveDraft, onSub
         <h3 className="text-2xl font-bold mt-1">{rotation.status || "Draft"}</h3>
         <p className="text-sm text-slate-500 mt-1">{rotation.updatedAt ? `Updated ${rotation.updatedAt} by ${rotation.submittedBy || "Chef"}` : "Not saved yet"}</p>
         {rotation.submittedAt && <p className="text-sm text-slate-500 mt-1">Submitted {rotation.submittedAt}</p>}
-        {!canSubmit && <p className="text-sm text-amber-700 mt-2">Submit requires a Global Menu, at least one Global entree, and at least one selection for each assigned station.</p>}
-        {!requirements.globalReady && <p className="text-xs text-amber-700 mt-1">Missing: Global Menu or one Global entree.</p>}
+        {!canSubmit && <p className="text-sm text-amber-700 mt-2">Submit requires at least one selection for each assigned station{requirements.requiresGlobal ? ", including a Global Menu and Global entree" : ""}.</p>}
+        {requirements.requiresGlobal && !requirements.globalReady && <p className="text-xs text-amber-700 mt-1">Missing: Global Menu or one Global entree.</p>}
         {requirements.incompleteStations.length > 0 && <p className="text-xs text-amber-700 mt-1">Missing station selection: {requirements.incompleteStations.map((stationKey) => stationLabel(cafe, stationKey)).join(", ")}.</p>}
       </div>
       <div className="flex flex-wrap gap-2">

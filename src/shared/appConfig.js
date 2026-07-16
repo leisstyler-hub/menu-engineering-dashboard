@@ -1,1 +1,1 @@
-export const APP_VERSION_STAMP = "2026.07.15.002-menu-library-photo-expansion";
+export const APP_VERSION_STAMP = "2026.07.15.003-rotation-source-integrity";

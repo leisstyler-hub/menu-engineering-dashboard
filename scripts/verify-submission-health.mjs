@@ -51,8 +51,8 @@ if (!/mergeRecordsById/.test(backboneClient) || !/supabase\+smartsheet-read/.tes
   fail("rotation reads must support merged Supabase and Smartsheet mirror recall");
 }
 
-if (!/loadRecordsFromBackbone\(\{ tool: "rotation", mergeFallback: true \}\)/.test(rotationSource)) {
-  fail("Neighborhood Rotations must load merged Supabase and Smartsheet records");
+if (!/loadRecordsFromBackbone\(\{ tool: "rotation" \}\)/.test(rotationSource) || /loadRecordsFromBackbone\(\{ tool: "rotation", mergeFallback: true \}\)/.test(rotationSource)) {
+  fail("Neighborhood Rotations must treat Supabase as authoritative and use Smartsheet only as fallback");
 }
 
 if (!/if \(requirePrimary && result\.source === "smartsheet-fallback"\)/.test(rotationSource)) {

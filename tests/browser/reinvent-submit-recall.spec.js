@@ -12,6 +12,8 @@ const dopplerWeek = "Aug 10, 2026 - Aug 14, 2026";
 const dopplerParentId = `rotation|2026-08-10|South|Doppler`;
 const dopplerPreviousWeek = "Aug 3, 2026 - Aug 7, 2026";
 const dopplerPreviousParentId = `rotation|2026-08-03|South|Doppler`;
+const nitroWeek = "Oct 12, 2026 - Oct 16, 2026";
+const nitroParentId = `rotation|2026-10-12|South|Nitro`;
 
 function baseRecord(recordId, recordType, status = "Submitted", overrides = {}) {
   const activeParentId = overrides.parentId || parentId;
@@ -177,7 +179,7 @@ function savedDopplerFullWeekRecords() {
   ];
 }
 
-async function stubRotationReads(page, records = []) {
+async function stubRotationReads(page, records = [], mirrorRecords = []) {
   await page.route("**/api/storage/records**", async (route) => {
     if (route.request().method() === "GET") {
       await route.fulfill({
@@ -196,11 +198,42 @@ async function stubRotationReads(page, records = []) {
   });
   await page.route("**/api/smartsheet/records**", async (route) => {
     if (route.request().method() === "GET") {
-      await route.fulfill({ json: { ok: true, records: [] } });
+      await route.fulfill({ json: { ok: true, records: mirrorRecords } });
       return;
     }
     await route.fulfill({ json: { ok: true, message: "Smartsheet smoke stub." } });
   });
+}
+
+function savedNitroRecords(menu, itemPrefix, count, source = "primary") {
+  const overrides = {
+    parentId: nitroParentId,
+    week: nitroWeek,
+    cafe: "Nitro",
+    weekStartDate: "2026-10-12",
+    weekEndDate: "2026-10-16",
+  };
+  const blocks = [
+    ["nitroMonTue", "Monday + Tuesday Proteins"],
+    ["nitroWedFri", "Wednesday + Friday Proteins"],
+  ];
+  return [
+    {
+      ...baseRecord(nitroParentId, SMARTSHEET_RECORD_TYPES.rotationHeader, "Submitted", overrides),
+      [SMARTSHEET_COLUMNS.savedEntryCount]: count * blocks.length,
+      [SMARTSHEET_COLUMNS.historyInclude]: true,
+    },
+    ...blocks.flatMap(([blockId, title], blockIndex) => [
+      globalBlock(blockId, title, menu, blockIndex + 1, overrides),
+      ...Array.from({ length: count }, (_, itemIndex) => selection(
+        blockId,
+        menu,
+        `${itemPrefix} ${source} ${blockIndex + 1}-${itemIndex + 1}`,
+        itemIndex + 1,
+        overrides,
+      )),
+    ]),
+  ];
 }
 
 test("Re:Invent saved split global blocks recall as the submitted menus", async ({ page }) => {
@@ -289,6 +322,27 @@ test("Doppler leadership card shows Monday-Tuesday carryover and Wednesday-Frida
   const card = page.getByRole("button", { name: /Open Doppler planner/i }).first();
   await expect(card).toBeVisible({ timeout: 20_000 });
   await expect(card).toContainText(/Monday \+ Tuesday[\s\S]*AMZ: Cypress[\s\S]*Wednesday-Friday[\s\S]*AMZ\+RA: Andes/);
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("Nitro recall uses current Supabase rows instead of stale Smartsheet child rows", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const currentRows = savedNitroRecords("AMZ: Anisa", "Anisa item", 2, "current");
+  const staleMirrorRows = savedNitroRecords("AMZ: Ciudad", "Ciudad item", 6, "stale");
+  await stubRotationReads(page, currentRows, staleMirrorRows);
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: /South/i }).click();
+  await page.getByRole("combobox").first().selectOption({ label: nitroWeek });
+  await page.getByRole("button", { name: /^Nitro$/i }).click();
+
+  const recap = page.getByText("Submitted Menu Recap").locator("xpath=ancestor::section[1]");
+  await expect(recap).toBeVisible({ timeout: 20_000 });
+  await expect(recap.getByText("AMZ: Anisa")).toHaveCount(3);
+  await expect(recap.getByText("AMZ: Ciudad")).toHaveCount(0);
+  await expect(recap.getByText(/Anisa item current/i)).toHaveCount(4);
+  await expect(recap.getByText(/Ciudad item stale/i)).toHaveCount(0);
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
