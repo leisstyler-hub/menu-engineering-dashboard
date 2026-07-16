@@ -59,6 +59,10 @@ if (!/parentsWithSubmittedChildren/.test(rotationSource) || !/submittedParentIds
   fail("submitted rotation recall must exclude stale Draft children when confirmed Submitted children exist");
 }
 
+if (!/alignNitroBlockToMenu/.test(rotationSource) || !/nitroRotationKeys/.test(rotationSource)) {
+  fail("Nitro recall and resubmission must keep both protein blocks aligned to the saved weekly Global Menu");
+}
+
 if (!/if \(requirePrimary && result\.source === "smartsheet-fallback"\)/.test(rotationSource)) {
   fail("submitted rotations must reject fallback-only saves so users retry instead of seeing a false lock");
 }

@@ -2,6 +2,8 @@
 
 ## 2026-07-15
 
+- [Jul 15, 11:38 PM] Made Nitro's saved weekly Global Menu canonical across both protein blocks, removing mismatched child-menu labels and selections instead of recalling false menu details.
+- [Jul 15, 11:38 PM] Added exact parent/child mismatch regression coverage and canonicalized Nitro block writes so resubmission cannot preserve a different menu under the weekly selection; set visible app version to `2026.07.15.005-nitro-canonical-menu-integrity`.
 - [Jul 15, 11:08 PM] Added submitted-family recall protection so confirmed submitted child rows outrank stale Draft children stored under the same submitted rotation header, while legacy families with no submitted children remain readable.
 - [Jul 15, 11:08 PM] Reproduced the live Nitro October data shape in browser coverage and verified Anisa selections no longer revert to stale Ciudad details; set visible app version to `2026.07.15.004-rotation-submitted-family-integrity`.
 - [Jul 15, 10:43 PM] Made Supabase the authoritative Neighborhood Rotations read whenever live rows are available; Smartsheet now participates only as the fallback instead of merging stale child selections into current submitted rotations.

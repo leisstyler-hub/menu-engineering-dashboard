@@ -236,6 +236,24 @@ function savedNitroRecords(menu, itemPrefix, count, source = "primary") {
   ];
 }
 
+function savedNitroRecordsWithMismatchedCanonicalMenu() {
+  const overrides = {
+    parentId: nitroParentId,
+    week: nitroWeek,
+    cafe: "Nitro",
+    weekStartDate: "2026-10-12",
+    weekEndDate: "2026-10-16",
+  };
+  return [
+    ...savedNitroRecords("AMZ: Ciudad", "Ciudad item", 2, "mismatched"),
+    {
+      ...globalBlock("base", "Global", "AMZ: Anisa", 1, overrides),
+      [SMARTSHEET_COLUMNS.globalBlockId]: "",
+      [SMARTSHEET_COLUMNS.menuBlockLabel]: "",
+    },
+  ];
+}
+
 test("Re:Invent saved split global blocks recall as the submitted menus", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   await stubRotationReads(page, savedReInventRecords());
@@ -371,6 +389,24 @@ test("Nitro submitted recall ignores stale Draft children mixed into the Supabas
   await expect(recap.getByText("AMZ: Ciudad")).toHaveCount(0);
   await expect(recap.getByText(/Anisa item current/i)).toHaveCount(4);
   await expect(recap.getByText(/Ciudad item stale/i)).toHaveCount(0);
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("Nitro recall rejects child blocks that conflict with the saved weekly menu", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await stubRotationReads(page, savedNitroRecordsWithMismatchedCanonicalMenu());
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: /South/i }).click();
+  await page.getByRole("combobox").first().selectOption({ label: nitroWeek });
+  await page.getByRole("button", { name: /^Nitro$/i }).click();
+
+  const recap = page.getByText("Submitted Menu Recap").locator("xpath=ancestor::section[1]");
+  await expect(recap).toBeVisible({ timeout: 20_000 });
+  await expect(recap.getByText("AMZ: Anisa")).toHaveCount(3);
+  await expect(recap.getByText("AMZ: Ciudad")).toHaveCount(0);
+  await expect(recap.getByText(/Ciudad item mismatched/i)).toHaveCount(0);
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });

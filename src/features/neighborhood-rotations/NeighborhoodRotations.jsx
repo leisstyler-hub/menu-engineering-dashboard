@@ -464,8 +464,8 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
 
   const extraGlobalBlockRows = [];
   if (!isSplitGlobalCafe(cafe)) {
-    const blocksForSave = cafe === "Nitro" && !hasNitroSplitBlocks(rotation) && rotation.menu
-      ? Object.fromEntries(nitroGlobalBlockLayout().map((block) => [block.id, hydrateNitroBlock(rotation, block.id)]))
+    const blocksForSave = cafe === "Nitro" && rotation.menu
+      ? Object.fromEntries(nitroGlobalBlockLayout().map((block) => [block.id, alignNitroBlockToMenu(hydrateNitroBlock(rotation, block.id), rotation.menu, rotation.station)]))
       : (rotation.globalBlocks || {});
     Object.entries(blocksForSave || {}).forEach(([blockId, block], blockIndex) => {
       if (!block?.menu) return;
@@ -884,6 +884,21 @@ function recordsToRotations(records = []) {
     if (rotation.ltos[record.stationKey]) {
       putSlot(rotation.ltos[record.stationKey], index, record.itemName);
     }
+  });
+
+  const nitroRotationKeys = new Set(
+    normalizedRecords
+      .filter((record) => record.cafe === "Nitro")
+      .map((record) => rotationKey(record.week, record.district, record.cafe))
+  );
+  nitroRotationKeys.forEach((key) => {
+    const rotation = grouped[key];
+    if (!rotation?.menu) return;
+    nitroGlobalBlockLayout().forEach(({ id }) => {
+      const block = getRotationGlobalBlock(rotation, id);
+      if (!block.menu && !blockHasSelections(block)) return;
+      rotation.globalBlocks[id] = alignNitroBlockToMenu(block, rotation.menu, rotation.station);
+    });
   });
 
   return grouped;
@@ -1641,7 +1656,7 @@ function hasNitroSplitBlocks(rotation = {}) {
 
 function hydrateNitroBlock(rotation = {}, blockId = "") {
   const block = getRotationGlobalBlock(rotation, blockId);
-  if (block.menu || blockHasSelections(block)) return block;
+  if (block.menu || blockHasSelections(block)) return alignNitroBlockToMenu(block, rotation.menu, rotation.station);
   if (!rotation.menu && !blockHasSelections(rotation)) return blankGlobalBlock();
   return {
     menu: rotation.menu || "",
@@ -1650,6 +1665,21 @@ function hydrateNitroBlock(rotation = {}, blockId = "") {
     sides: rotation.sides || [...EMPTY_ROTATION.sides],
     subRecipes: rotation.subRecipes || [...EMPTY_ROTATION.subRecipes],
     extensions: rotation.extensions || [...EMPTY_ROTATION.extensions],
+  };
+}
+
+function alignNitroBlockToMenu(block = {}, menu = "", station = "") {
+  if (!menu || !block?.menu || normalizeItemName(block.menu) === normalizeItemName(menu)) return block;
+  const validItemNames = new Set(globalMenuRows(menu, station).flatMap((row) => getItemAliases(row)));
+  const keepValidValues = (values = []) => values.map((value) => validItemNames.has(normalizeItemName(value)) ? value : "");
+  return {
+    ...block,
+    menu,
+    station: station || "",
+    entrees: keepValidValues(block.entrees),
+    sides: keepValidValues(block.sides),
+    subRecipes: keepValidValues(block.subRecipes),
+    extensions: keepValidValues(block.extensions),
   };
 }
 
@@ -1942,7 +1972,7 @@ function globalSelectedRows(rotation, options) {
 function globalSelectedRowsForCafe(rotation, cafe = "", options = {}, week = rotation?.week || "") {
   if (cafe === "Nitro") {
     const blocks = hasNitroSplitBlocks(rotation)
-      ? nitroGlobalBlockLayout().map((block) => getRotationGlobalBlock(rotation, block.id))
+      ? nitroGlobalBlockLayout().map((block) => hydrateNitroBlock(rotation, block.id))
       : [hydrateNitroBlock(rotation, "nitroMonTue")];
     return uniqueSelectionRows(blocks.flatMap((block) => selectedRowsFromGlobalBlock(block, options)), options);
   }
@@ -1968,7 +1998,7 @@ function getStationSelectionRows(rotation, cafe, week = rotation?.week || "") {
       const hasSplit = hasNitroSplitBlocks(rotation);
       const blockLayout = hasSplit ? nitroGlobalBlockLayout() : [{ id: "nitroMonTue", title: "Weekly Global Selection" }];
       blockLayout.forEach((blockInfo) => {
-        const block = hasSplit ? getRotationGlobalBlock(rotation, blockInfo.id) : hydrateNitroBlock(rotation, blockInfo.id);
+        const block = hydrateNitroBlock(rotation, blockInfo.id);
         stationRows.push({ key: `global-${blockInfo.id}`, label: blockInfo.title, items: selectedRowsFromGlobalBlock(block, { unique: true }), note: block.menu ? block.menu : "not selected" });
       });
     } else if (isSplitGlobalCafe(cafe)) {

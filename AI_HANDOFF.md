@@ -2,7 +2,7 @@
 
 Last updated: July 15, 2026
 
-Current release version: `2026.07.15.004-rotation-submitted-family-integrity`
+Current release version: `2026.07.15.005-nitro-canonical-menu-integrity`
 
 ## First Rule
 
@@ -105,6 +105,7 @@ Critical integrity rules:
 
 Recent critical fix:
 
+- `2026.07.15.005-nitro-canonical-menu-integrity` enforces Nitro's weekly Global Menu as the canonical menu for both protein blocks. If persisted child blocks disagree with the weekly menu, recall relabels the blocks to the weekly menu and retains only selected items that actually belong to that menu. Canonical blocks are also written on resubmit. The exact live failure shape, Anisa weekly parent with Ciudad child blocks, has regression coverage.
 - `2026.07.15.004-rotation-submitted-family-integrity` protects submitted recalls from mixed-status Supabase families. When a Submitted parent has confirmed Submitted child rows, older Draft children in that family are excluded from reconstruction. If a legacy Submitted family has no Submitted children, its Draft children remain readable as a compatibility fallback. This specifically covers the live Nitro October pattern where Anisa header/current rows coexisted with stale Ciudad child selections.
 - `2026.07.15.003-rotation-source-integrity` stopped Neighborhood Rotations from merging stale Smartsheet child rows into current Supabase submissions. Supabase records are authoritative whenever available and Smartsheet is used only as fallback. Submission readiness now derives from `CAFE_STATION_CONFIG`, so cafes without Global stations, currently Atlas and Commissary, are not blocked by impossible Global Menu requirements. Browser regressions cover Nitro Anisa recall against stale Ciudad mirror rows and both no-Global cafes.
 - `2026.07.14.004-rotation-full-week-cards` fixed locked leadership cards so Re:Invent uses the computed calendar block layout for the selected week, including Monday carryover/recovery blocks, and renders saved block data in calendar order instead of insertion order. Doppler cards now show Monday + Tuesday carryover plus Wednesday-Friday current menu so the leadership view reads as a full week.
@@ -120,7 +121,7 @@ Important tests:
 - `scripts/verify-submission-health.mjs`
 - `scripts/verify-rotation-record-audit.mjs`
 
-Do not remove the Re:Invent/Doppler stale-block regression cases in `tests/browser/reinvent-submit-recall.spec.js`. They protect the rule that actual submitted selection rows are stronger recall evidence than stale/default Global Block rows.
+Do not remove the Re:Invent/Doppler stale-block or Nitro canonical-menu regression cases in `tests/browser/reinvent-submit-recall.spec.js`. They protect the rules that actual submitted selection rows are stronger recall evidence than stale/default Global Block rows and that Nitro child blocks cannot contradict the saved weekly menu.
 
 ### Lean Tool
 
