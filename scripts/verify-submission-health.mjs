@@ -55,6 +55,10 @@ if (!/loadRecordsFromBackbone\(\{ tool: "rotation" \}\)/.test(rotationSource) ||
   fail("Neighborhood Rotations must treat Supabase as authoritative and use Smartsheet only as fallback");
 }
 
+if (!/parentsWithSubmittedChildren/.test(rotationSource) || !/submittedParentIds/.test(rotationSource)) {
+  fail("submitted rotation recall must exclude stale Draft children when confirmed Submitted children exist");
+}
+
 if (!/if \(requirePrimary && result\.source === "smartsheet-fallback"\)/.test(rotationSource)) {
   fail("submitted rotations must reject fallback-only saves so users retry instead of seeing a false lock");
 }

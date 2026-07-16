@@ -2,6 +2,8 @@
 
 ## 2026-07-15
 
+- [Jul 15, 11:08 PM] Added submitted-family recall protection so confirmed submitted child rows outrank stale Draft children stored under the same submitted rotation header, while legacy families with no submitted children remain readable.
+- [Jul 15, 11:08 PM] Reproduced the live Nitro October data shape in browser coverage and verified Anisa selections no longer revert to stale Ciudad details; set visible app version to `2026.07.15.004-rotation-submitted-family-integrity`.
 - [Jul 15, 10:43 PM] Made Supabase the authoritative Neighborhood Rotations read whenever live rows are available; Smartsheet now participates only as the fallback instead of merging stale child selections into current submitted rotations.
 - [Jul 15, 10:43 PM] Changed submission requirements to follow each cafe's assigned station configuration, removing the impossible Global Menu requirement from Atlas and Commissary while preserving Global requirements for cafes that operate that station.
 - [Jul 15, 10:43 PM] Added regression coverage for Nitro Anisa recall against stale Ciudad mirror rows and audited all currently configured cafes without Global stations; set visible app version to `2026.07.15.003-rotation-source-integrity`.

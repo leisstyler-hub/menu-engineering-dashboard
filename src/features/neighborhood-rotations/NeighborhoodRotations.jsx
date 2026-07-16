@@ -679,7 +679,29 @@ function recordsToRotations(records = []) {
     return incomingText || currentText || "Draft";
   };
 
-  const normalizedRecords = newestRecordsById(records).map(normalizeLoadedRotationRecord);
+  const normalizedRecordCandidates = newestRecordsById(records).map(normalizeLoadedRotationRecord);
+  const parentIdForLoadedRecord = (record) => {
+    if (record.parentRecordId) return record.parentRecordId;
+    const recordIdParts = String(record.recordId || "").split("|");
+    return recordIdParts[0] === "rotation" && recordIdParts.length >= 4 ? recordIdParts.slice(0, 4).join("|") : "";
+  };
+  const submittedParentIds = new Set(
+    normalizedRecordCandidates
+      .filter((record) => record.recordType === SMARTSHEET_RECORD_TYPES.rotationHeader && String(record.status || "").toLowerCase() === "submitted")
+      .map((record) => record.recordId)
+  );
+  const parentsWithSubmittedChildren = new Set(
+    normalizedRecordCandidates
+      .filter((record) => record.recordType !== SMARTSHEET_RECORD_TYPES.rotationHeader && String(record.status || "").toLowerCase() === "submitted")
+      .map(parentIdForLoadedRecord)
+      .filter(Boolean)
+  );
+  const normalizedRecords = normalizedRecordCandidates.filter((record) => {
+    if (record.recordType === SMARTSHEET_RECORD_TYPES.rotationHeader) return true;
+    const parentId = parentIdForLoadedRecord(record);
+    if (!submittedParentIds.has(parentId) || !parentsWithSubmittedChildren.has(parentId)) return true;
+    return String(record.status || "").toLowerCase() === "submitted";
+  });
   const menuEvidence = new Map();
   const evidenceKey = (record, blockId = "") => `${rotationKey(record.week, record.district, record.cafe)}|${blockId || "__base"}`;
   const addMenuEvidence = (record) => {

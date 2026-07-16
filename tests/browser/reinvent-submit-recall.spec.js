@@ -346,3 +346,31 @@ test("Nitro recall uses current Supabase rows instead of stale Smartsheet child 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
+
+test("Nitro submitted recall ignores stale Draft children mixed into the Supabase family", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const currentRows = savedNitroRecords("AMZ: Anisa", "Anisa item", 2, "current");
+  const staleDraftChildren = savedNitroRecords("AMZ: Ciudad", "Ciudad item", 6, "stale")
+    .filter((record) => record[SMARTSHEET_COLUMNS.recordType] === SMARTSHEET_RECORD_TYPES.globalSelection)
+    .map((record) => ({
+      ...record,
+      [SMARTSHEET_COLUMNS.status]: "Draft",
+      [SMARTSHEET_COLUMNS.updatedAt]: "Jul 1, 8:00 AM",
+      [SMARTSHEET_COLUMNS.submittedAt]: "",
+    }));
+  await stubRotationReads(page, [...currentRows, ...staleDraftChildren]);
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: /South/i }).click();
+  await page.getByRole("combobox").first().selectOption({ label: nitroWeek });
+  await page.getByRole("button", { name: /^Nitro$/i }).click();
+
+  const recap = page.getByText("Submitted Menu Recap").locator("xpath=ancestor::section[1]");
+  await expect(recap).toBeVisible({ timeout: 20_000 });
+  await expect(recap.getByText("AMZ: Anisa")).toHaveCount(3);
+  await expect(recap.getByText("AMZ: Ciudad")).toHaveCount(0);
+  await expect(recap.getByText(/Anisa item current/i)).toHaveCount(4);
+  await expect(recap.getByText(/Ciudad item stale/i)).toHaveCount(0);
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});

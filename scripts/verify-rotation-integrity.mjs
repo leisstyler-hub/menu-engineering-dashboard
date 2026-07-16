@@ -74,7 +74,7 @@ const grillSpotlights = uniqueByName(rows.filter((row) =>
   isEntree(row)
 ));
 
-if (!/const normalizedRecords = newestRecordsById\(records\)\.map\(normalizeLoadedRotationRecord\);/.test(source)) {
+if (!/const normalizedRecordCandidates = newestRecordsById\(records\)\.map\(normalizeLoadedRotationRecord\);/.test(source) || !/const normalizedRecords = normalizedRecordCandidates\.filter/.test(source)) {
   fail("Rotation reload must dedupe newest saved rows before rebuilding cafe selections.");
 }
 
