@@ -11,7 +11,7 @@ export const RECIPE_DOCUMENT_SLOTS = [
     type: "recipe-file",
     label: "Recipe",
     bucket: "recipe-files",
-    emptyText: "Recipe instructions not attached yet",
+    emptyText: "No recipe uploaded",
   },
 ];
 

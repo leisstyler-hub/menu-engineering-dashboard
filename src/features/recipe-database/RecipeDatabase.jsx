@@ -954,7 +954,7 @@ function ItemCard({ row, onOpen }) {
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-2 text-xs font-bold text-slate-600 md:grid-cols-5">
+      <div className="mt-4 grid grid-cols-[repeat(auto-fit,minmax(7rem,1fr))] gap-2 text-xs font-bold text-slate-600">
         <Property label="True cost" value={row.trueCost == null ? "Not loaded" : money(row.trueCost)} />
         <Property label="Food cost" value={pct(fc)} />
         <Property label="Protein" value={proteinLabel(libraryItem)} />
@@ -984,7 +984,6 @@ function ItemCard({ row, onOpen }) {
       <div className="mt-3 flex flex-wrap gap-2">
         <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-black text-slate-600">{row.station || "No station"}</span>
         <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-black text-slate-600">{row.recipeCategory || "No recipe category"}</span>
-        <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-black text-amber-900">Recipe instructions not attached yet</span>
       </div>
     </button>
   );
@@ -1292,8 +1291,8 @@ function FileSlot({ item, slot, onUploadDocument }) {
 
 function Property({ label, value }) {
   return (
-    <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4">
-      <p className="max-w-full break-words text-xs font-black uppercase tracking-[0.08em] text-slate-400">{label}</p>
+    <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-3 sm:p-4">
+      <p data-library-property-label className="max-w-full whitespace-normal text-xs font-black uppercase tracking-[0.04em] text-slate-400 [overflow-wrap:normal] [word-break:normal]">{label}</p>
       <p className="mt-2 break-words text-base font-black text-slate-900">{value}</p>
     </div>
   );

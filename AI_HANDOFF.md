@@ -2,7 +2,7 @@
 
 Last updated: July 14, 2026
 
-Current live version: `2026.07.14.004-rotation-full-week-cards`
+Current live version: `2026.07.15.002-menu-library-photo-expansion`
 
 ## First Rule
 
@@ -155,6 +155,9 @@ Watch-outs:
 - Recipe Library Supabase backfill now upserts the current Master rows and marks visible Supabase recipe rows absent from the Master as `visible_in_library: false`; do not reintroduce append-only backfill behavior.
 - Item cards show Webtrition weight in oz when available from MenuWorks/Supabase for audit visibility.
 - Keep compact card labels short; `WebT OZ` is intentional so the Webtrition weight label does not overflow narrow property cards.
+- Curated app assets now provide one exact, normalized-name photo for 110 matched dishes across Atlas Noodle, Anisa, Bibimbowl, Balti, Breakfast, and Carvery. Do not replace this with fuzzy runtime matching.
+- Atlas Noodle, Anisa, Breakfast, and Carvery have verified group-photo banners. Bibimbowl and Balti intentionally remain banner-free because their supplied folders did not contain a true group shot.
+- Unmatched dishes intentionally remain blank; never force a photo onto an item without a confident source match.
 - Item photos may exist in app assets/local mappings while file upload/storage wiring continues to mature.
 - Detail drawer should be roomy, professional, and show food photos clearly.
 - Edit/save should write to Supabase when possible.

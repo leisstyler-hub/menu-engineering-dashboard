@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import MENUWORKS_ITEMS from "../src/data/menuItems.json" with { type: "json" };
-import { getRecipeLibraryPhoto } from "../src/data/recipeLibraryAssets.js";
+import { MENU_HEADER_ASSETS, getRecipeLibraryPhoto } from "../src/data/recipeLibraryAssets.js";
 import { normalizeRecipeLibraryItem } from "../src/features/recipe-database/recipeLibraryModel.js";
 
 const root = process.cwd();
@@ -44,7 +44,10 @@ assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Photo Signal"
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "[\"plating-guide\", \"recipe-file\"].includes(slot.type)");
 assertNotIncludes("src/features/recipe-database/RecipeDatabase.jsx", "slot.type === \"item-photo\" ? photo : null");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "proteinLabel");
-assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Recipe instructions not attached yet");
+assertNotIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Recipe instructions not attached yet");
+assertNotIncludes("src/features/recipe-database/recipeLibraryModel.js", "Recipe instructions not attached yet");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "grid-cols-[repeat(auto-fit,minmax(7rem,1fr))]");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "data-library-property-label");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "MenuWorks Truth Upload");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Accept Update + Replace Library Data");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "postRecipeLibraryAction");
@@ -107,6 +110,12 @@ assertIncludes("src/data/recipeLibraryAssets.js", "photoUrl");
 assertIncludes("src/data/recipeLibraryAssets.js", "uploadedPhotoSource");
 assertIncludes("src/data/recipeLibraryAssets.js", "andes-group.jpg");
 assertIncludes("src/data/recipeLibraryAssets.js", "peruvian-stewed-chicken.jpg");
+assertIncludes("src/data/recipeLibraryAssets.js", "AMZ: Atlas Noodle");
+assertIncludes("src/data/recipeLibraryAssets.js", "AMZ: Anisa");
+assertIncludes("src/data/recipeLibraryAssets.js", "AMZ: Bibimbowl");
+assertIncludes("src/data/recipeLibraryAssets.js", "AMZ: Balti");
+assertIncludes("src/data/recipeLibraryAssets.js", "AMZ: Breakfast");
+assertIncludes("src/data/recipeLibraryAssets.js", "AMZ: Carvery");
 assertIncludes("api/recipe-library.js", "scope === \"menu\"");
 assertIncludes("api/recipe-library.js", "scope === \"all\"");
 assertIncludes("api/recipe-library.js", "server-menuworks-json");
@@ -132,6 +141,38 @@ assertIncludes("api/recipe-library.js", "supabase-recipe-items");
 });
 
 const photoRows = MENUWORKS_ITEMS.filter((row) => getRecipeLibraryPhoto(row));
+const expectedCuratedPhotoCounts = {
+  "AMZ: Atlas Noodle": 7,
+  "AMZ: Anisa": 17,
+  "AMZ: Bibimbowl": 6,
+  "AMZ: Balti": 10,
+  "AMZ: Breakfast": 31,
+  "AMZ: Carvery": 39,
+};
+
+Object.entries(expectedCuratedPhotoCounts).forEach(([menu, expectedCount]) => {
+  const matchedNames = new Set(
+    photoRows
+      .filter((row) => row.menu === menu)
+      .map((row) => normalizeRecipeLibraryItem(row).display_name),
+  );
+  if (matchedNames.size !== expectedCount) {
+    throw new Error(`Menu Library ${menu} photo mapping expected ${expectedCount} dishes, received ${matchedNames.size}.`);
+  }
+});
+
+photoRows.forEach((row) => {
+  const photo = getRecipeLibraryPhoto(row);
+  if (photo?.src?.startsWith("/") && !existsSync(join(root, "public", photo.src))) {
+    throw new Error(`Menu Library mapped photo is missing: ${row.menu} / ${row.item} -> ${photo.src}`);
+  }
+});
+
+Object.entries(MENU_HEADER_ASSETS).forEach(([menu, asset]) => {
+  if (!existsSync(join(root, "public", asset.src))) {
+    throw new Error(`Menu Library header photo is missing: ${menu} -> ${asset.src}`);
+  }
+});
 const mismatchedPhotoRows = photoRows.filter((row) => {
   const itemKey = normalizeRecipeLibraryItem(row).item_key;
   const openedRow = MENUWORKS_ITEMS.find((candidate) => normalizeRecipeLibraryItem(candidate).item_key === itemKey);

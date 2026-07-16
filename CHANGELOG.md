@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-07-15
+
+- [Jul 15, 9:01 PM] Added curated Menu Library photography for Atlas Noodle, Anisa, Bibimbowl, Balti, Breakfast, and Carvery with one explicit photo per matched dish and no fuzzy runtime guessing.
+- [Jul 15, 9:01 PM] Added group-photo banners for Atlas Noodle, Anisa, Breakfast, and Carvery; Bibimbowl and Balti remain intentionally banner-free because their source folders do not contain a true group shot.
+- [Jul 15, 9:01 PM] Added release integrity checks for 110 matched dishes, all mapped photo files, all menu banners, and card-to-detail photo consistency; set visible app version to `2026.07.15.002-menu-library-photo-expansion`.
+- [Jul 15, 7:23 AM] Reflowed Menu Library item metrics into width-aware tiles so labels remain whole and readable instead of splitting words inside narrow cards.
+- [Jul 15, 7:23 AM] Removed the redundant `Recipe instructions not attached yet` item-card badge and shortened the empty Recipe file state to `No recipe uploaded`.
+- [Jul 15, 7:23 AM] Added Menu Library browser and release regression coverage and set visible app version to `2026.07.15.001-menu-library-card-cleanup`.
+
 ## 2026-07-14
 
 - [Jul 14, 11:37 PM] Fixed locked leadership cards so Re:Invent split-global weeks render the full calendar sequence instead of saved-record insertion order.
