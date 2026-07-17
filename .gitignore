@@ -11,3 +11,6 @@ playwright-report/
 test-results/
 
 .vercel
+.gh-config-codex/
+.tmp-gh-publish/
+.tmp-gh-publish-repair/

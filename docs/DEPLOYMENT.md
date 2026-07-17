@@ -1,0 +1,70 @@
+# Deployment Notes
+
+This repo is deployed to Vercel through GitHub. The fastest reliable path in the
+current Windows/Codex workspace is to push to GitHub with the repo-local publish
+script and let the Vercel Git integration build production.
+
+## Preferred Command
+
+From the repo root:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/publish-live.ps1 -CommitMessage "Describe the change"
+```
+
+Or through npm:
+
+```powershell
+pnpm run publish:live -- -CommitMessage "Describe the change"
+```
+
+The script:
+
+- Reads the visible app version from `src/shared/appConfig.js`.
+- Uses the portable GitHub CLI token without printing it.
+- Commits dirty work only when a commit message is provided.
+- Runs `pnpm run verify` by default.
+- Fetches `origin/main` through tokenized HTTPS using the portable Git executable
+  and OpenSSL.
+- Refuses to publish if local work is behind GitHub unless `-AllowBehind` is
+  explicitly provided.
+- Pushes `HEAD` to `main`.
+- Polls the live app for the current version stamp so Vercel deployment status is
+  obvious.
+
+## Fast Docs-Only Publish
+
+For documentation or handoff-only changes where the app bundle should not change:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/publish-live.ps1 `
+  -CommitMessage "Update deployment notes" `
+  -SkipVerify `
+  -SkipVercelWait
+```
+
+Do not use `-SkipVerify` for app behavior, data integrity, storage, or UI changes.
+
+## Why This Exists
+
+Normal `git push` has been unreliable in this Windows workspace because the shell
+can hit missing or locked Git credentials. GitHub API writes have also been slow
+or blocked in prior sessions. The proven stable path is:
+
+1. Get a token from the GitHub CLI.
+2. Use the portable Git executable.
+3. Force `http.sslBackend=openssl`.
+4. Disable credential helper prompts.
+5. Push to a tokenized GitHub HTTPS URL.
+
+The script codifies that path so future Codex sessions and collaborators do not
+need to rediscover it.
+
+## If It Fails
+
+- If authentication fails, reconnect GitHub or run `gh auth login`.
+- If the branch is behind, fetch/rebase or review the GitHub changes before
+  using `-AllowBehind`.
+- If verification fails, fix the app before publishing.
+- If live polling times out, check the Vercel dashboard; the push may still have
+  started a deployment.

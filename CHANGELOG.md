@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-07-16
+
+- [Jul 16, 12:00 PM] Added a repo-local `scripts/publish-live.ps1` fast publish path that uses the GitHub CLI token with portable Git/OpenSSL so releases do not depend on flaky Windows credential prompts.
+- [Jul 16, 12:00 PM] Added `pnpm run publish:live` and deployment notes documenting the safe verified path, docs-only fast path, and failure recovery steps.
+
 ## 2026-07-15
 
 - [Jul 15, 11:38 PM] Made Nitro's saved weekly Global Menu canonical across both protein blocks, removing mismatched child-menu labels and selections instead of recalling false menu details.

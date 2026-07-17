@@ -13,7 +13,8 @@
     "verify:release": "node scripts/verify-release-workflow.mjs",
     "release:check": "node scripts/release-health.mjs",
     "release:health": "node scripts/release-health.mjs",
-    "release:live": "node scripts/release-live.mjs"
+    "release:live": "node scripts/release-live.mjs",
+    "publish:live": "powershell -ExecutionPolicy Bypass -File scripts/publish-live.ps1"
   },
   "dependencies": {
     "@sentry/react": "^10.59.0",

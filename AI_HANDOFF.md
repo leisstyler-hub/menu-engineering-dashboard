@@ -4,6 +4,8 @@ Last updated: July 15, 2026
 
 Current release version: `2026.07.15.005-nitro-canonical-menu-integrity`
 
+Latest process update: July 16, 2026 added `scripts/publish-live.ps1`, `pnpm run publish:live`, and `docs/DEPLOYMENT.md` to standardize the proven GitHub CLI token + portable Git/OpenSSL publish path. This is a docs/process change and does not bump the visible app version.
+
 ## First Rule
 
 Read this file before changing code. After every meaningful change, update this file, `CHANGELOG.md`, and the visible version stamp when the live app changes.
@@ -284,6 +286,20 @@ Preferred:
 9. Confirm Vercel production deployment is READY.
 10. Confirm live bundle contains the new version stamp.
 11. Run live smoke tests for the affected tool.
+
+Fast repo publish path:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/publish-live.ps1 -CommitMessage "Describe the change"
+```
+
+For docs/handoff-only changes:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/publish-live.ps1 -CommitMessage "Update docs" -SkipVerify -SkipVercelWait
+```
+
+The script uses the known-working GitHub CLI token plus portable Git/OpenSSL path and redacts the token from output. Prefer this over ad hoc `git push` when the Windows shell reports `SEC_E_NO_CREDENTIALS`, `git-remote-https` issues, or credential-helper hangs.
 
 If normal `git push` fails, use GitHub Contents API or the GitHub connector, but make sure all intended files are published. New files require create-file handling, not update-only handling.
 
