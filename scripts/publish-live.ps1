@@ -38,12 +38,18 @@ function Resolve-FirstExistingPath($Paths) {
 function Invoke-Checked($FilePath, $Arguments, $SecretToRedact = "") {
   $previousErrorActionPreference = $ErrorActionPreference
   $ErrorActionPreference = "Continue"
+  $stdoutPath = [System.IO.Path]::GetTempFileName()
+  $stderrPath = [System.IO.Path]::GetTempFileName()
   try {
-    $output = & $FilePath @Arguments 2>&1
+    & $FilePath @Arguments 1>$stdoutPath 2>$stderrPath
     $exitCode = $LASTEXITCODE
   } finally {
     $ErrorActionPreference = $previousErrorActionPreference
   }
+  $output = @()
+  if (Test-Path -LiteralPath $stdoutPath) { $output += Get-Content -LiteralPath $stdoutPath }
+  if (Test-Path -LiteralPath $stderrPath) { $output += Get-Content -LiteralPath $stderrPath }
+  Remove-Item -LiteralPath $stdoutPath, $stderrPath -Force -ErrorAction SilentlyContinue
   if ($SecretToRedact) {
     $output = $output | ForEach-Object { $_.ToString() -replace [regex]::Escape($SecretToRedact), "***TOKEN***" }
   }
