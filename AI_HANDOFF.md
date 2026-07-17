@@ -1,8 +1,8 @@
 # AI Handoff
 
-Last updated: July 15, 2026
+Last updated: July 17, 2026
 
-Current release version: `2026.07.15.005-nitro-canonical-menu-integrity`
+Current release version: `2026.07.17.001-promo-override-global-card-integrity`
 
 Latest process update: July 16, 2026 added `scripts/publish-live.ps1`, `pnpm run publish:live`, and `docs/DEPLOYMENT.md` to standardize the proven GitHub CLI token + portable Git/OpenSSL publish path. This is a docs/process change and does not bump the visible app version.
 
@@ -107,6 +107,7 @@ Critical integrity rules:
 
 Recent critical fix:
 
+- `2026.07.17.001-promo-override-global-card-integrity` removes fake Global/AMZ labels from no-Global cafe recaps/cards/exports, currently Atlas and Commissary, while still showing locked state, updated time, and station progress. Promotion override is now treated as a week-only takeover with Monday-Friday coverage, optional promo entree/side/extension memory slots, and submission logic that does not require normal Global rows when a promo covers the full week.
 - `2026.07.15.005-nitro-canonical-menu-integrity` enforces Nitro's weekly Global Menu as the canonical menu for both protein blocks. If persisted child blocks disagree with the weekly menu, recall relabels the blocks to the weekly menu and retains only selected items that actually belong to that menu. Canonical blocks are also written on resubmit. The exact live failure shape, Anisa weekly parent with Ciudad child blocks, has regression coverage.
 - `2026.07.15.004-rotation-submitted-family-integrity` protects submitted recalls from mixed-status Supabase families. When a Submitted parent has confirmed Submitted child rows, older Draft children in that family are excluded from reconstruction. If a legacy Submitted family has no Submitted children, its Draft children remain readable as a compatibility fallback. This specifically covers the live Nitro October pattern where Anisa header/current rows coexisted with stale Ciudad child selections.
 - `2026.07.15.003-rotation-source-integrity` stopped Neighborhood Rotations from merging stale Smartsheet child rows into current Supabase submissions. Supabase records are authoritative whenever available and Smartsheet is used only as fallback. Submission readiness now derives from `CAFE_STATION_CONFIG`, so cafes without Global stations, currently Atlas and Commissary, are not blocked by impossible Global Menu requirements. Browser regressions cover Nitro Anisa recall against stale Ciudad mirror rows and both no-Global cafes.

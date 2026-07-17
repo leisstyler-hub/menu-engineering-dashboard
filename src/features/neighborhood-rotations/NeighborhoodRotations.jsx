@@ -271,7 +271,7 @@ const EMPTY_ROTATION = {
   },
   customStations: blankCustomStations(),
   uploadedLtos: {},
-  promotionOverride: { enabled: false, name: "", days: [], returnDays: [] },
+  promotionOverride: { enabled: false, name: "", days: [], selections: defaultPromotionSelections() },
   globalBlocks: {},
   status: "Draft",
   submittedBy: "",
@@ -344,6 +344,7 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
   const selected = selectedItems(rotation, cafe);
   const costRange = selectedTrueCostRange(selected);
   const fcRange = selectedFoodCostRange(selected);
+  const hasGlobalStation = cafeHasGlobalStation(cafe);
   const header = {
     ...baseDatabaseRecord({
       parentId: "",
@@ -368,8 +369,8 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
   };
 
   const cycleConfig = globalCycleConfig(cafe, week);
-  const promo = rotation.promotionOverride || EMPTY_ROTATION.promotionOverride;
-  const globalBlock = rotation.menu || promo.enabled ? {
+  const promo = normalizePromotionOverride(rotation.promotionOverride || EMPTY_ROTATION.promotionOverride);
+  const globalBlock = hasGlobalStation && (rotation.menu || promo.enabled) ? {
     ...baseDatabaseRecord({
       parentId,
       recordId: makeDatabaseRecordId(parentId, "global-block", rotation.menu || promo.name || "promotion-override"),
@@ -395,9 +396,9 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
     [SMARTSHEET_COLUMNS.promotionOverrideEnabled]: Boolean(promo.enabled),
     [SMARTSHEET_COLUMNS.promotionName]: promo.name || "",
     [SMARTSHEET_COLUMNS.promotionDays]: (promo.days || []).join(", "),
-    [SMARTSHEET_COLUMNS.returnToCycleDays]: (promo.returnDays || []).join(", "),
+    [SMARTSHEET_COLUMNS.returnToCycleDays]: "",
     [SMARTSHEET_COLUMNS.breaksNormalCycle]: Boolean(promo.enabled),
-    [SMARTSHEET_COLUMNS.cycleRecoveryNotes]: promo.enabled ? "Promotion override is isolated to this café/week. Return-to-cycle days restore the normal pattern without changing future weeks." : "",
+    [SMARTSHEET_COLUMNS.cycleRecoveryNotes]: promo.enabled ? "Promotion override is isolated to this cafe/week only." : "",
   } : null;
 
   const selectionRows = [];
@@ -431,10 +432,11 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
   };
 
   const splitGlobalBlockRows = [];
-  if (isSplitGlobalCafe(cafe)) {
-    splitGlobalBlockLayout(cafe, week).filter((blockInfo) => !blockInfo.readOnly).forEach((blockInfo, blockIndex) => {
+  if (hasGlobalStation && isSplitGlobalCafe(cafe)) {
+    splitGlobalBlockLayout(cafe, week).filter((blockInfo) => !blockInfo.readOnly && !promotionCoversBlock(promo, blockInfo)).forEach((blockInfo, blockIndex) => {
       const block = getRotationGlobalBlock(rotation, blockInfo.id);
       if (!block.menu) return;
+      const activeDays = remainingBlockWeekdays(blockInfo, promo);
       const blockRecordId = makeDatabaseRecordId(parentId, "global", blockInfo.id);
       splitGlobalBlockRows.push({
         ...baseDatabaseRecord({ parentId, recordId: blockRecordId, recordType: SMARTSHEET_RECORD_TYPES.globalBlock, status: rotation.status || "Draft", district, cafe, week, stationKey: "global" }),
@@ -444,7 +446,7 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
         [SMARTSHEET_COLUMNS.menuBlockType]: blockInfo.continuesNextWeek ? "Two-Day Carryover" : "Two-Day",
         [SMARTSHEET_COLUMNS.globalBlockId]: blockRecordId,
         [SMARTSHEET_COLUMNS.globalBlockIndex]: blockIndex + 1,
-        [SMARTSHEET_COLUMNS.globalBlockDays]: blockInfo.days.join(", "),
+        [SMARTSHEET_COLUMNS.globalBlockDays]: (activeDays.length ? activeDays : blockInfo.days).join(", "),
         [SMARTSHEET_COLUMNS.isReadOnly]: false,
         [SMARTSHEET_COLUMNS.startedPreviousWeek]: Boolean(blockInfo.startedPreviousWeek),
         [SMARTSHEET_COLUMNS.continuesNextWeek]: Boolean(blockInfo.continuesNextWeek),
@@ -452,7 +454,7 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
         [SMARTSHEET_COLUMNS.promotionOverrideEnabled]: Boolean(promo.enabled),
         [SMARTSHEET_COLUMNS.promotionName]: promo.name || "",
         [SMARTSHEET_COLUMNS.promotionDays]: (promo.days || []).join(", "),
-        [SMARTSHEET_COLUMNS.returnToCycleDays]: (promo.returnDays || []).join(", "),
+        [SMARTSHEET_COLUMNS.returnToCycleDays]: "",
         [SMARTSHEET_COLUMNS.breaksNormalCycle]: Boolean(promo.enabled),
       });
       pushSelections("global", SMARTSHEET_SELECTION_TYPES.entree, block.entrees || [], blockIndex * 1000, block, blockInfo.id);
@@ -463,14 +465,16 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
   }
 
   const extraGlobalBlockRows = [];
-  if (!isSplitGlobalCafe(cafe)) {
+  if (hasGlobalStation && !isSplitGlobalCafe(cafe)) {
     const blocksForSave = cafe === "Nitro" && rotation.menu
       ? Object.fromEntries(nitroGlobalBlockLayout().map((block) => [block.id, alignNitroBlockToMenu(hydrateNitroBlock(rotation, block.id), rotation.menu, rotation.station)]))
       : (rotation.globalBlocks || {});
     Object.entries(blocksForSave || {}).forEach(([blockId, block], blockIndex) => {
       if (!block?.menu) return;
-      const blockRecordId = makeDatabaseRecordId(parentId, "global", blockId);
       const meta = menuBlockMeta(blockId);
+      const blockDays = String(meta.days || "").split(",").map((day) => day.trim()).filter(Boolean);
+      if (blockDays.length && promotionCoversBlock(promo, { days: blockDays })) return;
+      const blockRecordId = makeDatabaseRecordId(parentId, "global", blockId);
       extraGlobalBlockRows.push({
         ...baseDatabaseRecord({ parentId, recordId: blockRecordId, recordType: SMARTSHEET_RECORD_TYPES.globalBlock, status: rotation.status || "Draft", district, cafe, week, stationKey: "global" }),
         [SMARTSHEET_COLUMNS.menuConcept]: block.menu || "",
@@ -489,11 +493,17 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
     });
   }
 
-  if (!isSplitGlobalCafe(cafe) && cafe !== "Nitro") {
+  if (hasGlobalStation && !isSplitGlobalCafe(cafe) && cafe !== "Nitro" && !promotionCoversWeek(promo)) {
     pushSelections("global", SMARTSHEET_SELECTION_TYPES.entree, rotation.entrees || [], 0);
     pushSelections("global", SMARTSHEET_SELECTION_TYPES.side, rotation.sides || [], 100);
     pushSelections("global", SMARTSHEET_SELECTION_TYPES.subRecipe, rotation.subRecipes || [], 200);
     pushSelections("global", SMARTSHEET_SELECTION_TYPES.extension, rotation.extensions || [], 300);
+  }
+  if (promo.enabled) {
+    const promoSource = { ...rotation, menu: promo.name || "Promotion Override", station: "Promotion Override" };
+    pushSelections("promotion", SMARTSHEET_SELECTION_TYPES.entree, promo.selections.entrees || [], 2100, promoSource);
+    pushSelections("promotion", SMARTSHEET_SELECTION_TYPES.side, promo.selections.sides || [], 2130, promoSource);
+    pushSelections("promotion", SMARTSHEET_SELECTION_TYPES.extension, promo.selections.extensions || [], 2160, promoSource);
   }
   pushSelections("grill", SMARTSHEET_SELECTION_TYPES.locationSpotlight, [rotation.grill?.regionalSpecial, rotation.grill?.locationSpotlight], 400);
   if (rotation.grill?.promoActive) {
@@ -595,7 +605,7 @@ function normalizeLoadedRotationRecord(record = {}) {
     promotionOverrideEnabled: String(record[SMARTSHEET_COLUMNS.promotionOverrideEnabled] || "").toLowerCase() === "true" || record[SMARTSHEET_COLUMNS.promotionOverrideEnabled] === true,
     promotionName: String(record[SMARTSHEET_COLUMNS.promotionName] || ""),
     promotionDays: String(record[SMARTSHEET_COLUMNS.promotionDays] || "").split(",").map((value) => value.trim()).filter(Boolean),
-    returnToCycleDays: String(record[SMARTSHEET_COLUMNS.returnToCycleDays] || "").split(",").map((value) => value.trim()).filter(Boolean),
+    returnToCycleDays: [],
   };
 }
 
@@ -646,6 +656,7 @@ function recordsToRotations(records = []) {
         carvery: { ...EMPTY_ROTATION.carvery },
         customStations: cloneCustomStations(),
         uploadedLtos: {},
+        promotionOverride: normalizePromotionOverride(EMPTY_ROTATION.promotionOverride),
       };
     }
     return grouped[key];
@@ -754,12 +765,13 @@ function recordsToRotations(records = []) {
         rotation.station = rotation.station || record.stationSubConcept || "";
       }
       rotation.status = mergeStatus(rotation.status, record.status);
-      rotation.promotionOverride = {
-        enabled: Boolean(record.promotionOverrideEnabled),
-        name: record.promotionName || "",
-        days: record.promotionDays || [],
-        returnDays: record.returnToCycleDays || [],
-      };
+      const currentPromo = normalizePromotionOverride(rotation.promotionOverride);
+      rotation.promotionOverride = normalizePromotionOverride({
+        ...currentPromo,
+        enabled: currentPromo.enabled || Boolean(record.promotionOverrideEnabled),
+        name: record.promotionName || currentPromo.name,
+        days: (record.promotionDays || []).length ? record.promotionDays : currentPromo.days,
+      });
       return;
     }
 
@@ -780,6 +792,20 @@ function recordsToRotations(records = []) {
 
     if (!record.itemName) return;
     const index = Math.max(0, (record.slotNumber || 1) - 1);
+
+    if (record.stationKey === "promotion") {
+      const promo = normalizePromotionOverride({
+        ...rotation.promotionOverride,
+        enabled: rotation.promotionOverride?.enabled || true,
+        name: rotation.promotionOverride?.name || record.menuConcept || "Promotion Override",
+      });
+      const selections = promotionSelections(promo);
+      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.entree) putSlot(selections.entrees, index, record.itemName);
+      else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.side) putSlot(selections.sides, index, record.itemName);
+      else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.extension) putSlot(selections.extensions, index, record.itemName);
+      rotation.promotionOverride = normalizePromotionOverride({ ...promo, selections });
+      return;
+    }
 
     if (record.stationKey === "global") {
       const blockId = blockIdFromRecord(record);
@@ -1353,7 +1379,70 @@ function stationSlots(cafe, stationKey) {
   return 1;
 }
 
-const GLOBAL_CYCLE_DAY_OPTIONS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Next Monday", "Next Tuesday"];
+const WEEKDAY_OPTIONS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+const GLOBAL_CYCLE_DAY_OPTIONS = [...WEEKDAY_OPTIONS, "Next Monday", "Next Tuesday"];
+
+function cafeHasGlobalStation(cafe = "") {
+  return (CAFE_STATION_CONFIG[cafe] || []).includes("global");
+}
+
+function defaultPromotionSelections() {
+  return { entrees: ["", "", ""], sides: ["", "", ""], extensions: ["", ""] };
+}
+
+function promotionSelections(promo = {}) {
+  const selections = promo.selections || {};
+  return {
+    entrees: [...(selections.entrees || []), "", "", ""].slice(0, 3),
+    sides: [...(selections.sides || []), "", "", ""].slice(0, 3),
+    extensions: [...(selections.extensions || []), ""].slice(0, 2),
+  };
+}
+
+function normalizePromotionOverride(promo = {}) {
+  return {
+    enabled: Boolean(promo.enabled),
+    name: promo.name || "",
+    days: (promo.days || []).filter((day) => WEEKDAY_OPTIONS.includes(day)),
+    selections: promotionSelections(promo),
+  };
+}
+
+function promotionIsActive(promo = {}) {
+  const normalized = normalizePromotionOverride(promo);
+  return Boolean(normalized.enabled && normalized.name.trim() && normalized.days.length);
+}
+
+function promotionDaySet(promo = {}) {
+  return new Set(normalizePromotionOverride(promo).days);
+}
+
+function promotionCoversWeek(promo = {}) {
+  const days = promotionDaySet(promo);
+  return promotionIsActive(promo) && WEEKDAY_OPTIONS.every((day) => days.has(day));
+}
+
+function blockWeekdays(blockInfo = {}) {
+  return (blockInfo.days || []).filter((day) => WEEKDAY_OPTIONS.includes(day));
+}
+
+function promotionCoversBlock(promo = {}, blockInfo = {}) {
+  const days = blockWeekdays(blockInfo);
+  const promoDays = promotionDaySet(promo);
+  return promotionIsActive(promo) && days.length > 0 && days.every((day) => promoDays.has(day));
+}
+
+function remainingBlockWeekdays(blockInfo = {}, promo = {}) {
+  const promoDays = promotionDaySet(promo);
+  return blockWeekdays(blockInfo).filter((day) => !promoDays.has(day));
+}
+
+function dayListLabel(days = []) {
+  if (!days.length) return "Promotion days";
+  if (days.length === 1) return days[0];
+  if (days.length === 2) return `${days[0]} + ${days[1]}`;
+  return `${days[0]}-${days[days.length - 1]}`;
+}
 
 function globalCycleConfig(cafe, week = "") {
   if (cafe === "Doppler") {
@@ -1573,10 +1662,25 @@ function summaryBlockFromSaved(blockId, block, title = "") {
   };
 }
 
+function promotionSummaryBlock(rotation = {}) {
+  const promo = normalizePromotionOverride(rotation.promotionOverride);
+  if (!promotionIsActive(promo)) return null;
+  return {
+    id: "promotion",
+    title: dayListLabel(promo.days),
+    menu: promo.name || "Promotion Override",
+    isPending: false,
+    isCarryover: false,
+    isPromotion: true,
+  };
+}
+
 function splitGlobalSummaryBlockLabels(rotation = {}, cafe = "", week = rotation?.week || "") {
+  const promoBlock = promotionSummaryBlock(rotation);
   const persistedBlocks = persistedSplitGlobalBlocks(rotation, cafe, week);
   const persistedById = new Map(persistedBlocks);
   const layoutBlocks = splitGlobalBlockLayout(cafe, week).map((blockInfo) => {
+    if (promotionCoversBlock(rotation.promotionOverride, blockInfo)) return null;
     if (blockInfo.closed) {
       return {
         id: blockInfo.id,
@@ -1600,12 +1704,14 @@ function splitGlobalSummaryBlockLabels(rotation = {}, cafe = "", week = rotation
       isPending: !block?.menu,
       isCarryover: Boolean(blockInfo.readOnly || blockInfo.continuesNextWeek),
     };
-  });
-  if (layoutBlocks.some((block) => !block.isPending || block.isClosed)) return layoutBlocks;
-  return persistedBlocks
+  }).filter(Boolean);
+  const blocks = promoBlock ? [promoBlock, ...layoutBlocks] : layoutBlocks;
+  if (blocks.some((block) => !block.isPending || block.isClosed)) return blocks;
+  const savedBlocks = persistedBlocks
     .slice()
     .sort(([a], [b]) => SPLIT_GLOBAL_DISPLAY_ORDER.indexOf(a) - SPLIT_GLOBAL_DISPLAY_ORDER.indexOf(b))
     .map(([blockId, block]) => summaryBlockFromSaved(blockId, block));
+  return promoBlock ? [promoBlock, ...savedBlocks] : savedBlocks;
 }
 
 function persistedSplitGlobalBlocks(rotation = {}, cafe = "", week = rotation?.week || "") {
@@ -1621,9 +1727,10 @@ function persistedSplitGlobalBlocks(rotation = {}, cafe = "", week = rotation?.w
 }
 
 function dopplerSummaryBlockLabels(rotation = {}, previousRotation = EMPTY_ROTATION) {
+  const promoBlock = promotionSummaryBlock(rotation);
   const carryover = carryoverGlobalBlock(previousRotation);
   const currentBlock = dopplerCurrentGlobalBlock(rotation);
-  return [
+  const blocks = [
     {
       id: "dopplerMonTue",
       title: "Monday + Tuesday",
@@ -1639,11 +1746,15 @@ function dopplerSummaryBlockLabels(rotation = {}, previousRotation = EMPTY_ROTAT
       isCarryover: false,
     },
   ];
+  return promoBlock ? [promoBlock, ...blocks.filter((block) => !promotionCoversBlock(rotation.promotionOverride, { days: block.id === "dopplerMonTue" ? ["Monday", "Tuesday"] : ["Wednesday", "Thursday", "Friday"] }))] : blocks;
 }
 
 function rotationSummaryBlockLabels(rotation = {}, cafe = rotation?.cafe || "", week = rotation?.week || "", previousRotation = rotation?.previousRotation || EMPTY_ROTATION) {
+  if (!cafeHasGlobalStation(cafe)) return [];
   if (isSplitGlobalCafe(cafe)) return splitGlobalSummaryBlockLabels({ ...rotation, previousRotation }, cafe, week);
   if (cafe === "Doppler") return dopplerSummaryBlockLabels(rotation, previousRotation);
+  const promoBlock = promotionSummaryBlock(rotation);
+  if (promoBlock) return promotionCoversWeek(rotation.promotionOverride) ? [promoBlock] : [promoBlock, { id: "weekly", title: "Standard Global", menu: rotation.menu || "Not selected", isPending: !rotation.menu }];
   return [];
 }
 
@@ -1703,6 +1814,8 @@ function carryoverGlobalBlock(rotation = {}, preferredBlockId = "") {
 }
 
 function rotationMenuLabel(rotation = {}, cafe = rotation?.cafe || "", week = rotation?.week || "") {
+  if (!cafeHasGlobalStation(cafe)) return "";
+  if (promotionCoversWeek(rotation.promotionOverride)) return normalizePromotionOverride(rotation.promotionOverride).name || "";
   if (rotation.menu) return rotation.menu;
   if (isSplitGlobalCafe(cafe)) return splitGlobalMenuLabel(rotation, cafe, week);
   const entries = Object.entries(rotation.globalBlocks || {});
@@ -1768,7 +1881,7 @@ function blankRotation(menu = "", station = "") {
     carvery: { ...EMPTY_ROTATION.carvery },
     customStations: cloneCustomStations(),
     uploadedLtos: {},
-    promotionOverride: { enabled: false, name: "", days: [], returnDays: [] },
+    promotionOverride: { enabled: false, name: "", days: [], selections: defaultPromotionSelections() },
     globalBlocks: {},
     status: "Draft",
     submittedBy: "",
@@ -1783,13 +1896,19 @@ function nowStamp() {
 
 function stationComplete(rotation, stationKey, cafe = "", week = "") {
   if (stationKey === "global" && isSplitGlobalCafe(cafe)) {
-    return splitGlobalBlockLayout(cafe, week).filter((block) => !block.readOnly).every((block) => blockComplete(getRotationGlobalBlock(rotation, block.id)));
+    return splitGlobalBlockLayout(cafe, week)
+      .filter((block) => !block.readOnly && !promotionCoversBlock(rotation.promotionOverride, block))
+      .every((block) => blockComplete(getRotationGlobalBlock(rotation, block.id)));
   }
   if (stationKey === "global" && cafe === "Nitro") {
+    if (promotionCoversWeek(rotation.promotionOverride)) return true;
     if (!hasNitroSplitBlocks(rotation)) return Boolean(rotation.menu && (rotation.entrees || []).filter(Boolean).length >= 1);
-    return Boolean(rotation.menu) && nitroGlobalBlockLayout().every((block) => blockComplete(hydrateNitroBlock(rotation, block.id)));
+    return Boolean(rotation.menu) && nitroGlobalBlockLayout()
+      .filter((block) => !promotionCoversBlock(rotation.promotionOverride, block))
+      .every((block) => blockComplete(hydrateNitroBlock(rotation, block.id)));
   }
   if (stationKey === "global") {
+    if (promotionCoversWeek(rotation.promotionOverride)) return true;
     return Boolean(rotation.menu && (rotation.entrees || []).filter(Boolean).length >= 1);
   }
   return stationHasAnySelection(rotation, stationKey);
@@ -3676,7 +3795,8 @@ function downloadDopplerMenuPowerPoint(packet) {
 }
 
 function SubmittedRotationRecap({ cafe, week, rotation, previousRotation = EMPTY_ROTATION, rows, onEdit }) {
-  const menuLabel = rotationMenuLabel(rotation, cafe, week);
+  const hasGlobalStation = cafeHasGlobalStation(cafe);
+  const menuLabel = hasGlobalStation ? rotationMenuLabel(rotation, cafe, week) : "";
   const summaryBlocks = rotationSummaryBlockLabels(rotation, cafe, week, previousRotation);
   const duplicateSplitMenus = duplicateSplitGlobalMenuIssues(rotation, cafe, week);
   const totalSelections = rows.reduce((sum, row) => sum + row.selectedCount, 0);
@@ -3696,8 +3816,10 @@ function SubmittedRotationRecap({ cafe, week, rotation, previousRotation = EMPTY
                 </div>
               ))}
             </div>
-          ) : (
+          ) : hasGlobalStation ? (
             <p className="mt-2 text-lg font-black text-slate-950">{menuLabel || "No Global menu saved"}</p>
+          ) : (
+            <p className="mt-2 text-lg font-black text-slate-950">Station selections locked</p>
           )}
           {duplicateSplitMenus.length ? (
             <div className="mt-3 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-black text-amber-950">
@@ -4222,6 +4344,7 @@ function ExportCafeCard({ row }) {
   const trueCostRange = selectedTrueCostRange(items);
   const foodCostRange = selectedFoodCostRange(items);
   const cafeStations = CAFE_STATION_CONFIG[row.cafe] || [];
+  const hasGlobalStation = cafeHasGlobalStation(row.cafe);
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-4 break-inside-avoid">
@@ -4236,15 +4359,17 @@ function ExportCafeCard({ row }) {
         </div>
       </div>
 
-      <div className="mt-3 rounded-xl bg-slate-50 border border-slate-200 p-3">
-        <p className="text-xs uppercase tracking-[0.14em] text-slate-400 font-bold">Global</p>
-        <p className="font-semibold text-slate-900 mt-1">{row.menu || "No Global Menu selected"}</p>
-        {row.station && <p className="text-sm text-slate-500">{row.station}</p>}
-        <ExportLine label="Entrées" values={row.entrees} />
-        <ExportLine label="Sides" values={row.sides} />
-        <ExportLine label="Sub Recipes" values={row.subRecipes} />
-        <ExportLine label="Extensions" values={row.extensions} />
-      </div>
+      {hasGlobalStation && (
+        <div className="mt-3 rounded-xl bg-slate-50 border border-slate-200 p-3">
+          <p className="text-xs uppercase tracking-[0.14em] text-slate-400 font-bold">Global</p>
+          <p className="font-semibold text-slate-900 mt-1">{row.menu || "No Global Menu selected"}</p>
+          {row.station && <p className="text-sm text-slate-500">{row.station}</p>}
+          <ExportLine label="Entrées" values={row.entrees} />
+          <ExportLine label="Sides" values={row.sides} />
+          <ExportLine label="Sub Recipes" values={row.subRecipes} />
+          <ExportLine label="Extensions" values={row.extensions} />
+        </div>
+      )}
 
       <div className="mt-3 space-y-2">
         {cafeStations.filter((stationKey) => stationKey !== "global").map((stationKey) => (
@@ -4395,11 +4520,65 @@ function CafeStationSection(props) {
   return <div id={stationAnchorId(stationKey)} className="scroll-mt-28">{content}</div>;
 }
 
+function PromotionOverridePanel({ cafe, promo, updatePromo }) {
+  const normalizedPromo = normalizePromotionOverride(promo);
+  const updateSelection = (key, index, value) => {
+    const selections = promotionSelections(normalizedPromo);
+    selections[key][index] = value;
+    updatePromo({ selections });
+  };
+  const clearOverride = () => updatePromo({ enabled: false, name: "", days: [], selections: defaultPromotionSelections() });
+
+  return (
+    <div className="mt-4 rounded-3xl border border-purple-200 bg-purple-50/80 p-4">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.18em] text-purple-700 font-bold">Promotion Override Active</p>
+          <h4 className="mt-1 text-xl font-bold text-purple-950">Promo takeover for this week only</h4>
+          <p className="mt-1 text-sm text-purple-900">Choose the weekdays the promo replaces. Standard Global selectors stay visible only for the remaining days.</p>
+        </div>
+        <button type="button" onClick={clearOverride} className="rounded-2xl border border-purple-200 bg-white px-4 py-2 text-sm font-bold text-purple-900 hover:bg-purple-100">Clear Override</button>
+      </div>
+      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[1fr_2fr]">
+        <div>
+          <label className="mb-2 block text-sm font-semibold text-purple-900">Promotion / Takeover Name</label>
+          <input value={normalizedPromo.name} onChange={(e) => updatePromo({ name: e.target.value })} placeholder={`${cafe || "Cafe"} promo menu`} className="w-full rounded-2xl border border-purple-200 bg-white px-4 py-3 font-semibold outline-none focus:border-purple-500" />
+        </div>
+        <DayToggleGroup title="Promo Days" values={normalizedPromo.days} onToggle={(day) => updatePromo({ days: updateArrayToggle(normalizedPromo.days, day) })} tone="purple" options={WEEKDAY_OPTIONS} />
+      </div>
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <PromotionSlotGroup title="Promo Entrees" values={normalizedPromo.selections.entrees} onChange={(index, value) => updateSelection("entrees", index, value)} />
+        <PromotionSlotGroup title="Promo Sides" values={normalizedPromo.selections.sides} onChange={(index, value) => updateSelection("sides", index, value)} />
+        <PromotionSlotGroup title="Promo Extensions" values={normalizedPromo.selections.extensions} onChange={(index, value) => updateSelection("extensions", index, value)} />
+      </div>
+    </div>
+  );
+}
+
+function PromotionSlotGroup({ title, values, onChange }) {
+  return (
+    <div className="rounded-2xl border border-purple-100 bg-white/80 p-3">
+      <p className="text-xs font-black uppercase tracking-[0.14em] text-purple-700">{title}</p>
+      <div className="mt-3 space-y-2">
+        {values.map((value, index) => (
+          <input
+            key={`${title}-${index}`}
+            value={value || ""}
+            onChange={(event) => onChange(index, event.target.value)}
+            placeholder={`${title.replace("Promo ", "").replace(/s$/, "")} ${index + 1}`}
+            className="w-full rounded-xl border border-purple-100 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-purple-500"
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function GlobalSection({ cafe, week, rotation, previousRotation, previousWeek, menuOptions, stationOptions, categorized, updateRotation, updateSlot, summary, selectedItems }) {
   const globalTitle = cafe === "Doppler" ? "Wok Xahn" : "Global Station";
   const cycle = globalCycleConfig(cafe, week);
-  const promo = rotation.promotionOverride || EMPTY_ROTATION.promotionOverride;
-  const updatePromo = (patch) => updateRotation({ promotionOverride: { ...promo, ...patch } });
+  const promo = normalizePromotionOverride(rotation.promotionOverride || EMPTY_ROTATION.promotionOverride);
+  const updatePromo = (patch) => updateRotation({ promotionOverride: normalizePromotionOverride({ ...promo, ...patch }) });
   const menuStationOptions = subConceptOptionsForMenu(rotation.menu);
   const menuCategorized = categorize(globalMenuRows(rotation.menu, rotation.station));
   const carryover = carryoverGlobalBlock(previousRotation);
@@ -4485,22 +4664,36 @@ function GlobalSection({ cafe, week, rotation, previousRotation, previousWeek, m
             <div>
               <p className="text-xs uppercase tracking-[0.18em] text-purple-700 font-bold">Promotion Override Active</p>
               <h4 className="text-xl font-bold text-purple-950 mt-1">Break the normal cycle for this café/week only</h4>
-              <p className="text-sm text-purple-900 mt-1">Use this for Global takeovers, promos, or one-off concepts. Return-to-cycle days restore normalcy without changing future weeks.</p>
+              <p className="text-sm text-purple-900 mt-1">Use this for Global takeovers, promos, or one-off concepts for this week only.</p>
             </div>
-            <button type="button" onClick={() => updatePromo({ enabled: false, name: "", days: [], returnDays: [] })} className="rounded-2xl bg-white border border-purple-200 px-4 py-2 text-sm font-bold text-purple-900 hover:bg-purple-100">Clear Override</button>
+            <button type="button" onClick={() => updatePromo({ enabled: false, name: "", days: [], selections: defaultPromotionSelections() })} className="rounded-2xl bg-white border border-purple-200 px-4 py-2 text-sm font-bold text-purple-900 hover:bg-purple-100">Clear Override</button>
           </div>
           <div className="mt-4 grid grid-cols-1 xl:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-semibold text-purple-900 mb-2">Promotion / Takeover Name</label>
               <input value={promo.name || ""} onChange={(e) => updatePromo({ name: e.target.value })} placeholder="Example: Global Takeover / Promo" className="w-full rounded-2xl border border-purple-200 bg-white px-4 py-3 font-semibold outline-none focus:border-purple-500" />
             </div>
-            <DayToggleGroup title="Promo Days" values={promo.days || []} onToggle={(day) => updatePromo({ days: updateArrayToggle(promo.days || [], day) })} tone="purple" />
-            <DayToggleGroup title="Return-To-Cycle Days" values={promo.returnDays || []} onToggle={(day) => updatePromo({ returnDays: updateArrayToggle(promo.returnDays || [], day) })} tone="amber" />
+            <DayToggleGroup title="Promo Days" values={promo.days || []} onToggle={(day) => updatePromo({ days: updateArrayToggle(promo.days || [], day) })} tone="purple" options={WEEKDAY_OPTIONS} />
+            <PromotionSlotGroup title="Promo Entrees" values={promotionSelections(promo).entrees} onChange={(index, value) => {
+              const selections = promotionSelections(promo);
+              selections.entrees[index] = value;
+              updatePromo({ selections });
+            }} />
+            <PromotionSlotGroup title="Promo Sides" values={promotionSelections(promo).sides} onChange={(index, value) => {
+              const selections = promotionSelections(promo);
+              selections.sides[index] = value;
+              updatePromo({ selections });
+            }} />
+            <PromotionSlotGroup title="Promo Extensions" values={promotionSelections(promo).extensions} onChange={(index, value) => {
+              const selections = promotionSelections(promo);
+              selections.extensions[index] = value;
+              updatePromo({ selections });
+            }} />
           </div>
         </div>
       )}
 
-      <div className="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className={`mt-5 grid grid-cols-1 lg:grid-cols-2 gap-4 ${promotionCoversWeek(promo) ? "hidden" : ""}`}>
         <div>
           <label className="block text-sm font-semibold text-slate-500 mb-2">Global Menu</label>
           <select value={rotation.menu} onChange={(e) => selectMenu(e.target.value)} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
@@ -4518,8 +4711,8 @@ function GlobalSection({ cafe, week, rotation, previousRotation, previousWeek, m
           </div>
         )}
       </div>
-      {rotation.menu && <LiveAnalytics summary={summary} selectedItems={globalSelectedRows(rotation)} />}
-      <div className="mt-5 grid grid-cols-1 xl:grid-cols-4 gap-5">
+      {rotation.menu && !promotionCoversWeek(promo) && <LiveAnalytics summary={summary} selectedItems={globalSelectedRows(rotation)} />}
+      <div className={`mt-5 grid grid-cols-1 xl:grid-cols-4 gap-5 ${promotionCoversWeek(promo) ? "hidden" : ""}`}>
         <PickerGroup title="Entrees" limit="up to 3" items={menuCategorized.entrees} values={rotation.entrees || ["", "", ""]} onChange={(index, value) => updateSlot("entrees", index, value)} />
         <PickerGroup title="Sides" limit="up to 4" items={menuCategorized.sides} values={rotation.sides || ["", "", "", ""]} onChange={(index, value) => updateSlot("sides", index, value)} />
         <PickerGroup title="Sub Recipes" limit="up to 4" items={menuCategorized.subRecipes} values={rotation.subRecipes || ["", "", "", ""]} onChange={(index, value) => updateSlot("subRecipes", index, value)} />
@@ -4598,20 +4791,34 @@ function NitroGlobalSection({ rotation, menuOptions, updateRotation, promo, upda
               <p className="text-xs uppercase tracking-[0.18em] text-purple-700 font-bold">Promotion Override Active</p>
               <h4 className="text-xl font-bold text-purple-950 mt-1">Break Nitro's normal weekly pattern for this week only</h4>
             </div>
-            <button type="button" onClick={() => updatePromo({ enabled: false, name: "", days: [], returnDays: [] })} className="rounded-2xl bg-white border border-purple-200 px-4 py-2 text-sm font-bold text-purple-900 hover:bg-purple-100">Clear Override</button>
+            <button type="button" onClick={() => updatePromo({ enabled: false, name: "", days: [], selections: defaultPromotionSelections() })} className="rounded-2xl bg-white border border-purple-200 px-4 py-2 text-sm font-bold text-purple-900 hover:bg-purple-100">Clear Override</button>
           </div>
           <div className="mt-4 grid grid-cols-1 xl:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-semibold text-purple-900 mb-2">Promotion / Takeover Name</label>
               <input value={promo.name || ""} onChange={(e) => updatePromo({ name: e.target.value })} placeholder="Example: Global Takeover / Promo" className="w-full rounded-2xl border border-purple-200 bg-white px-4 py-3 font-semibold outline-none focus:border-purple-500" />
             </div>
-            <DayToggleGroup title="Promo Days" values={promo.days || []} onToggle={(day) => updatePromo({ days: updateArrayToggle(promo.days || [], day) })} tone="purple" />
-            <DayToggleGroup title="Return-To-Cycle Days" values={promo.returnDays || []} onToggle={(day) => updatePromo({ returnDays: updateArrayToggle(promo.returnDays || [], day) })} tone="amber" />
+            <DayToggleGroup title="Promo Days" values={promo.days || []} onToggle={(day) => updatePromo({ days: updateArrayToggle(promo.days || [], day) })} tone="purple" options={WEEKDAY_OPTIONS} />
+            <PromotionSlotGroup title="Promo Entrees" values={promotionSelections(promo).entrees} onChange={(index, value) => {
+              const selections = promotionSelections(promo);
+              selections.entrees[index] = value;
+              updatePromo({ selections });
+            }} />
+            <PromotionSlotGroup title="Promo Sides" values={promotionSelections(promo).sides} onChange={(index, value) => {
+              const selections = promotionSelections(promo);
+              selections.sides[index] = value;
+              updatePromo({ selections });
+            }} />
+            <PromotionSlotGroup title="Promo Extensions" values={promotionSelections(promo).extensions} onChange={(index, value) => {
+              const selections = promotionSelections(promo);
+              selections.extensions[index] = value;
+              updatePromo({ selections });
+            }} />
           </div>
         </div>
       )}
 
-      <div className="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className={`mt-5 grid grid-cols-1 lg:grid-cols-2 gap-4 ${promotionCoversWeek(promo) ? "hidden" : ""}`}>
         <div>
           <label className="block text-sm font-semibold text-slate-500 mb-2">Global Menu</label>
           <select value={rotation.menu} onChange={(e) => setMenu(e.target.value)} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
@@ -4630,10 +4837,10 @@ function NitroGlobalSection({ rotation, menuOptions, updateRotation, promo, upda
         )}
       </div>
 
-      {rotation.menu && <LiveAnalytics summary={summary} selectedItems={globalSelectedRowsForCafe(rotation, "Nitro")} />}
-      {rotation.menu && (
+      {rotation.menu && !promotionCoversWeek(promo) && <LiveAnalytics summary={summary} selectedItems={globalSelectedRowsForCafe(rotation, "Nitro")} />}
+      {rotation.menu && !promotionCoversWeek(promo) && (
         <div className="mt-5 grid grid-cols-1 gap-5">
-          {layout.map((blockInfo) => {
+          {layout.filter((blockInfo) => !promotionCoversBlock(promo, blockInfo)).map((blockInfo) => {
             const block = getRotationGlobalBlock(rotation, blockInfo.id);
             const hydratedBlock = block.menu || blockHasSelections(block) ? block : hydrateNitroBlock(rotation, blockInfo.id);
             const blockCategorized = categorize(globalMenuRows(rotation.menu, rotation.station));
@@ -4711,23 +4918,37 @@ function SplitGlobalSection({ cafe, week, rotation, previousRotation, previousWe
             <div>
               <p className="text-xs uppercase tracking-[0.18em] text-purple-700 font-bold">Promotion Override Active</p>
               <h4 className="text-xl font-bold text-purple-950 mt-1">Break the normal {cafe} cycle for this week only</h4>
-              <p className="text-sm text-purple-900 mt-1">Use this for Global takeovers, promos, or one-off concepts. Return-to-cycle days restore normalcy without changing future weeks.</p>
+              <p className="text-sm text-purple-900 mt-1">Use this for Global takeovers, promos, or one-off concepts for this week only.</p>
             </div>
-            <button type="button" onClick={() => updatePromo({ enabled: false, name: "", days: [], returnDays: [] })} className="rounded-2xl bg-white border border-purple-200 px-4 py-2 text-sm font-bold text-purple-900 hover:bg-purple-100">Clear Override</button>
+            <button type="button" onClick={() => updatePromo({ enabled: false, name: "", days: [], selections: defaultPromotionSelections() })} className="rounded-2xl bg-white border border-purple-200 px-4 py-2 text-sm font-bold text-purple-900 hover:bg-purple-100">Clear Override</button>
           </div>
           <div className="mt-4 grid grid-cols-1 xl:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-semibold text-purple-900 mb-2">Promotion / Takeover Name</label>
               <input value={promo.name || ""} onChange={(e) => updatePromo({ name: e.target.value })} placeholder="Example: Global Takeover / Promo" className="w-full rounded-2xl border border-purple-200 bg-white px-4 py-3 font-semibold outline-none focus:border-purple-500" />
             </div>
-            <DayToggleGroup title="Promo Days" values={promo.days || []} onToggle={(day) => updatePromo({ days: updateArrayToggle(promo.days || [], day) })} tone="purple" />
-            <DayToggleGroup title="Return-To-Cycle Days" values={promo.returnDays || []} onToggle={(day) => updatePromo({ returnDays: updateArrayToggle(promo.returnDays || [], day) })} tone="amber" />
+            <DayToggleGroup title="Promo Days" values={promo.days || []} onToggle={(day) => updatePromo({ days: updateArrayToggle(promo.days || [], day) })} tone="purple" options={WEEKDAY_OPTIONS} />
+            <PromotionSlotGroup title="Promo Entrees" values={promotionSelections(promo).entrees} onChange={(index, value) => {
+              const selections = promotionSelections(promo);
+              selections.entrees[index] = value;
+              updatePromo({ selections });
+            }} />
+            <PromotionSlotGroup title="Promo Sides" values={promotionSelections(promo).sides} onChange={(index, value) => {
+              const selections = promotionSelections(promo);
+              selections.sides[index] = value;
+              updatePromo({ selections });
+            }} />
+            <PromotionSlotGroup title="Promo Extensions" values={promotionSelections(promo).extensions} onChange={(index, value) => {
+              const selections = promotionSelections(promo);
+              selections.extensions[index] = value;
+              updatePromo({ selections });
+            }} />
           </div>
         </div>
       )}
 
       <div className="mt-5 space-y-5">
-        {layout.map((blockInfo, index) => {
+        {layout.filter((blockInfo) => !promotionCoversBlock(promo, blockInfo)).map((blockInfo, index) => {
           const block = getRotationGlobalBlock(rotation, blockInfo.id);
           const blockStationOptions = subConceptOptionsForMenu(block.menu);
           const blockCategorized = categorize(globalMenuRows(block.menu, block.station));
@@ -4878,12 +5099,12 @@ function CarryoverPanel({ title, previousWeek, block, empty }) {
   );
 }
 
-function DayToggleGroup({ title, values = [], onToggle, tone = "sky" }) {
+function DayToggleGroup({ title, values = [], onToggle, tone = "sky", options = GLOBAL_CYCLE_DAY_OPTIONS }) {
   return (
     <div>
       <p className={`block text-sm font-semibold mb-2 ${tone === "amber" ? "text-amber-900" : tone === "purple" ? "text-purple-900" : "text-slate-600"}`}>{title}</p>
       <div className="flex flex-wrap gap-2">
-        {GLOBAL_CYCLE_DAY_OPTIONS.map((day) => {
+        {options.map((day) => {
           const selected = values.includes(day);
           const selectedClass = tone === "amber" ? "bg-amber-500 border-amber-500 text-white" : tone === "purple" ? "bg-purple-600 border-purple-600 text-white" : "bg-sky-600 border-sky-600 text-white";
           return (
@@ -5616,6 +5837,7 @@ function ExecutiveMetric({ title, value, sub, tone = "neutral" }) {
 
 function SummaryCard({ row, conflict, showDistrict = true, onOpenPlanner = null }) {
   const locked = isSubmittedRotation(row);
+  const hasGlobalStation = cafeHasGlobalStation(row.cafe);
   const rowItems = submittedSelectedItems(row);
   const summary = foodSummary(rowItems);
   const fcRange = selectedFoodCostRange(rowItems);
@@ -5623,9 +5845,9 @@ function SummaryCard({ row, conflict, showDistrict = true, onOpenPlanner = null 
   const stationKeys = CAFE_STATION_CONFIG[row.cafe] || [];
   const completedStations = locked ? stationKeys.filter((stationKey) => stationComplete(row, stationKey, row.cafe, row.week)).length : 0;
   const progressPct = stationKeys.length ? Math.round((completedStations / stationKeys.length) * 100) : 0;
-  const menuLabel = locked ? rotationMenuLabel(row) : "";
+  const menuLabel = locked && hasGlobalStation ? rotationMenuLabel(row) : "";
   const summaryBlocks = locked ? rotationSummaryBlockLabels(row, row.cafe, row.week, row.previousRotation || EMPTY_ROTATION) : [];
-  const tone = !menuLabel ? "border-slate-200 bg-white" : fcMidpoint == null ? "border-slate-300 bg-slate-50" : fcMidpoint > 0.34 ? "border-amber-300 bg-amber-50" : fcMidpoint <= 0.30 ? "border-emerald-300 bg-emerald-50" : "border-sky-200 bg-sky-50";
+  const tone = !locked ? "border-slate-200 bg-white" : !hasGlobalStation ? "border-sky-200 bg-sky-50" : !menuLabel ? "border-slate-200 bg-white" : fcMidpoint == null ? "border-slate-300 bg-slate-50" : fcMidpoint > 0.34 ? "border-amber-300 bg-amber-50" : fcMidpoint <= 0.30 ? "border-emerald-300 bg-emerald-50" : "border-sky-200 bg-sky-50";
   const statusTone = locked ? "bg-emerald-500 text-white border-emerald-500" : "bg-rose-100 text-rose-900 border-rose-200";
   const CardShell = onOpenPlanner ? "button" : "div";
 
@@ -5653,17 +5875,20 @@ function SummaryCard({ row, conflict, showDistrict = true, onOpenPlanner = null 
                 </p>
               ))}
             </div>
-          ) : (
+          ) : hasGlobalStation ? (
             <p className="text-base font-black text-slate-950 mt-1 leading-snug">{menuLabel || "No locked menu"}</p>
+          ) : locked ? (
+            <p className="text-base font-black text-slate-950 mt-1 leading-snug">Selections locked</p>
+          ) : (
+            <p className="text-base font-black text-slate-950 mt-1 leading-snug">No locked menu</p>
           )}
           {locked && row.updatedAt && <p className="text-xs text-slate-500 mt-1">Updated {row.updatedAt}</p>}
-          {locked && row.submittedBy && <p className="text-xs text-slate-500 mt-1">By {row.submittedBy}</p>}
           {locked && row.station && <p className="text-xs text-slate-500 mt-1">{row.station}</p>}
         </div>
         <div className="flex flex-col items-end gap-2">
           <span className={`rounded-full border px-3 py-1 text-xs font-bold ${statusTone}`}>{locked ? "locked" : "open"}</span>
           {locked && <span className="rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-xs font-bold text-slate-700">{pctRange(fcRange)}</span>}
-          {conflict ? <AlertTriangle className="text-amber-600" size={18} /> : menuLabel ? <CheckCircle2 className="text-emerald-600" size={18} /> : null}
+          {conflict ? <AlertTriangle className="text-amber-600" size={18} /> : locked ? <CheckCircle2 className="text-emerald-600" size={18} /> : null}
         </div>
       </div>
       <div className="mt-4">
@@ -5676,9 +5901,9 @@ function SummaryCard({ row, conflict, showDistrict = true, onOpenPlanner = null 
         </div>
       </div>
       <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
-        {menuLabel && <span className="rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-slate-600">{(row.entrees || []).filter(Boolean).length} entrees</span>}
-        {menuLabel && <span className="rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-slate-600">{(row.sides || []).filter(Boolean).length} sides</span>}
-        {menuLabel && <span className="rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-slate-600">{(row.subRecipes || []).filter(Boolean).length} sub recipes</span>}
+        {hasGlobalStation && menuLabel && <span className="rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-slate-600">{(row.entrees || []).filter(Boolean).length} entrees</span>}
+        {hasGlobalStation && menuLabel && <span className="rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-slate-600">{(row.sides || []).filter(Boolean).length} sides</span>}
+        {hasGlobalStation && menuLabel && <span className="rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-slate-600">{(row.subRecipes || []).filter(Boolean).length} sub recipes</span>}
         {stationKeys.length > 0 && <span className="rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-slate-600">{completedStations}/{stationKeys.length} stations</span>}
         {conflict && <span className="rounded-full bg-amber-100 border border-amber-200 px-3 py-1 text-amber-800">duplicate</span>}
       </div>

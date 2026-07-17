@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-07-17
+
+- [Jul 17, 12:00 PM] Removed fake Global/AMZ labels from submitted recaps, leadership cards, and export cards for cafes that do not run a Global station; locked cards keep update time and station progress without the unhelpful `By Chef` line.
+- [Jul 17, 12:00 PM] Reworked promotion override data so it is week-only, uses Monday-Friday promo days, stores optional promo entree/side/extension notes, and no longer requires normal Global selection rows when the promo covers the full week.
+- [Jul 17, 12:00 PM] Set visible app version to `2026.07.17.001-promo-override-global-card-integrity`.
+
 ## 2026-07-16
 
 - [Jul 16, 12:00 PM] Added a repo-local `scripts/publish-live.ps1` fast publish path that uses the GitHub CLI token with portable Git/OpenSSL so releases do not depend on flaky Windows credential prompts.
