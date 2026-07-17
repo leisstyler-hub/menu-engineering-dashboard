@@ -35,21 +35,30 @@ function Resolve-FirstExistingPath($Paths) {
   return $null
 }
 
+function ConvertTo-CommandLineArgument($Argument) {
+  $value = [string]$Argument
+  if ($value -notmatch '[\s"]') { return $value }
+  $value = $value -replace '(\\*)"', '$1$1\"'
+  $value = $value -replace '(\\+)$', '$1$1'
+  return '"' + $value + '"'
+}
+
 function Invoke-Checked($FilePath, $Arguments, $SecretToRedact = "") {
-  $previousErrorActionPreference = $ErrorActionPreference
-  $ErrorActionPreference = "Continue"
-  $stdoutPath = [System.IO.Path]::GetTempFileName()
-  $stderrPath = [System.IO.Path]::GetTempFileName()
-  try {
-    & $FilePath @Arguments 1>$stdoutPath 2>$stderrPath
-    $exitCode = $LASTEXITCODE
-  } finally {
-    $ErrorActionPreference = $previousErrorActionPreference
-  }
+  $process = New-Object System.Diagnostics.Process
+  $process.StartInfo.FileName = $FilePath
+  $process.StartInfo.Arguments = ($Arguments | ForEach-Object { ConvertTo-CommandLineArgument $_ }) -join " "
+  $process.StartInfo.UseShellExecute = $false
+  $process.StartInfo.RedirectStandardOutput = $true
+  $process.StartInfo.RedirectStandardError = $true
+  $process.StartInfo.CreateNoWindow = $true
+  $null = $process.Start()
+  $stdout = $process.StandardOutput.ReadToEnd()
+  $stderr = $process.StandardError.ReadToEnd()
+  $process.WaitForExit()
+  $exitCode = $process.ExitCode
   $output = @()
-  if (Test-Path -LiteralPath $stdoutPath) { $output += Get-Content -LiteralPath $stdoutPath }
-  if (Test-Path -LiteralPath $stderrPath) { $output += Get-Content -LiteralPath $stderrPath }
-  Remove-Item -LiteralPath $stdoutPath, $stderrPath -Force -ErrorAction SilentlyContinue
+  if ($stdout) { $output += $stdout -split "`r?`n" | Where-Object { $_ } }
+  if ($stderr) { $output += $stderr -split "`r?`n" | Where-Object { $_ } }
   if ($SecretToRedact) {
     $output = $output | ForEach-Object { $_.ToString() -replace [regex]::Escape($SecretToRedact), "***TOKEN***" }
   }
