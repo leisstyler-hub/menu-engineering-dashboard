@@ -9,6 +9,7 @@ outputs/
 .playwright-browsers/
 playwright-report/
 test-results/
+*.log
 
 .vercel
 .gh-config-codex/
