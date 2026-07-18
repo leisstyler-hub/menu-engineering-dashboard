@@ -60,6 +60,32 @@ or blocked in prior sessions. The proven stable path is:
 The script codifies that path so future Codex sessions and collaborators do not
 need to rediscover it.
 
+## Repair GitHub HTTPS
+
+If the shell reports `SEC_E_NO_CREDENTIALS`, `git-remote-https` is missing, or
+`git status` looks stale after a publish, run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/repair-git-https.ps1
+```
+
+Or through npm:
+
+```powershell
+pnpm run repair:git
+```
+
+The repair check:
+
+- Uses the same portable Git executable as `publish-live.ps1`.
+- Forces `http.sslBackend=openssl` for the GitHub operation.
+- Uses the GitHub CLI token without printing it.
+- Refreshes `origin/main` through the known-good HTTPS path.
+- Warns when the bundled Codex runtime Git is missing `git-remote-https.exe`.
+
+This does not change app code or credentials. It only avoids the broken Windows
+Schannel/runtime-Git path for this project.
+
 ## If It Fails
 
 - If authentication fails, reconnect GitHub or run `gh auth login`.

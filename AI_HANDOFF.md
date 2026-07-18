@@ -4,7 +4,7 @@ Last updated: July 18, 2026
 
 Current release version: `2026.07.18.006-menuworks-import-pipeline`
 
-Latest process update: July 16, 2026 added `scripts/publish-live.ps1`, `pnpm run publish:live`, and `docs/DEPLOYMENT.md` to standardize the proven GitHub CLI token + portable Git/OpenSSL publish path. This is a docs/process change and does not bump the visible app version.
+Latest process update: July 18, 2026 added `scripts/repair-git-https.ps1` and `pnpm run repair:git` to diagnose and repair the local GitHub HTTPS sync path after `SEC_E_NO_CREDENTIALS`, missing `git-remote-https`, or stale `origin/main` symptoms. This is a tooling/process change and does not bump the visible app version.
 
 ## First Rule
 
@@ -249,7 +249,7 @@ Do not use it as the only source of shared truth. Any large cache write must be 
 ## Current Known Issues / Open Risks
 
 - Normal local `git push` has been unreliable in this Windows workspace. GitHub API publishing has been used successfully.
-- The repo may show local commits ahead of `origin/main` because publishing has happened file-by-file through GitHub API.
+- The bundled Codex runtime Git may be missing `git-remote-https.exe`, and Windows Schannel can raise `SEC_E_NO_CREDENTIALS`. Use `pnpm run repair:git` or `scripts\repair-git-https.ps1` before trusting GitHub sync status; it uses the portable Git/OpenSSL path and refreshes `origin/main`.
 - Historical rotation status drift exists and should be cleaned carefully, not destructively.
 - Menu Audit Tool still needs deeper SSMT parsing literacy and durable uploaded file/source handling.
 - Menu Library photo/recipe/plating-guide uploads are not fully complete across Supabase Storage for all future file types.
@@ -309,6 +309,20 @@ powershell -ExecutionPolicy Bypass -File scripts/publish-live.ps1 -CommitMessage
 ```
 
 The script uses the known-working GitHub CLI token plus portable Git/OpenSSL path and redacts the token from output. Prefer this over ad hoc `git push` when the Windows shell reports `SEC_E_NO_CREDENTIALS`, `git-remote-https` issues, or credential-helper hangs.
+
+GitHub HTTPS repair path:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/repair-git-https.ps1
+```
+
+Or:
+
+```powershell
+pnpm run repair:git
+```
+
+Run this if local `origin/main` looks stale, normal Git reports `SEC_E_NO_CREDENTIALS`, or the shell says `git: 'remote-https' is not a git command`.
 
 If normal `git push` fails, use GitHub Contents API or the GitHub connector, but make sure all intended files are published. New files require create-file handling, not update-only handling.
 

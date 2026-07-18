@@ -2,6 +2,8 @@
 
 ## 2026-07-18
 
+- [Jul 18, 12:45 PM] Added a repo-local GitHub HTTPS repair command that uses portable Git/OpenSSL plus the GitHub CLI token to avoid Windows `SEC_E_NO_CREDENTIALS`, missing `git-remote-https`, and stale `origin/main` states.
+- [Jul 18, 12:45 PM] Added `pnpm run repair:git` and documented when to use it before publish work; this is a tooling/process update and does not change the visible app version.
 - [Jul 18, 12:00 PM] Upgraded Menu Library MenuWorks uploads into a reviewed weekly import pipeline with schema preflight, exact MRN precision signals, protected curated descriptions, hidden-after-accept counts, and import batch language.
 - [Jul 18, 12:00 PM] Wired accepted MenuWorks imports through the Recipe Library Supabase API first, with local browser fallback if the server write fails, and scoped stale-row hiding to only the menus included in the upload; set visible app version to `2026.07.18.006-menuworks-import-pipeline`.
 - [Jul 18, 11:16 AM] Changed Menu Library Webtrition actions from forced recipe side-panel links to plain MRN search links so Webtrition does not reject recipes with an access error; set visible app version to `2026.07.18.005-webtrition-search-only`.

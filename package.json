@@ -14,7 +14,8 @@
     "release:check": "node scripts/release-health.mjs",
     "release:health": "node scripts/release-health.mjs",
     "release:live": "node scripts/release-live.mjs",
-    "publish:live": "powershell -ExecutionPolicy Bypass -File scripts/publish-live.ps1"
+    "publish:live": "powershell -ExecutionPolicy Bypass -File scripts/publish-live.ps1",
+    "repair:git": "powershell -ExecutionPolicy Bypass -File scripts/repair-git-https.ps1"
   },
   "dependencies": {
     "@sentry/react": "^10.59.0",
