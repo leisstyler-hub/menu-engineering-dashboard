@@ -33,6 +33,10 @@ if (/Cafe \/ Station List/.test(source) || /function LeanTrendPanel/.test(source
   fail("Lean Results should not show the old cafe/station list or trend panel in the main results view.");
 }
 
+if (/Bil Smith/.test(source) || /bil\.smith@compass-usa\.com/.test(source)) {
+  fail("Lean Tool email report recipients must not include Bil Smith.");
+}
+
 if (!process.exitCode) {
   console.log("Lean Results view checks passed.");
 }

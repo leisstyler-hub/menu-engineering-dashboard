@@ -24,7 +24,6 @@ const RECIPIENTS = [
   { name: "Alex Neuse", email: "alex.neuse@compass-usa.com" },
   { name: "Jeremy Slagle", email: "jeremy.slagle@compass-usa.com" },
   { name: "DJ Bauer", email: "dj.bauer@compass-usa.com" },
-  { name: "Bil Smith", email: "bil.smith@compass-usa.com" },
   { name: "Summer Hinshaw", email: "summer.hinshaw@compass-usa.com" },
 ];
 

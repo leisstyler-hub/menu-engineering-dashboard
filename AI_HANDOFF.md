@@ -2,7 +2,7 @@
 
 Last updated: July 18, 2026
 
-Current release version: `2026.07.18.001-menu-library-all-menus-export`
+Current release version: `2026.07.18.002-lean-report-recipient-cleanup`
 
 Latest process update: July 16, 2026 added `scripts/publish-live.ps1`, `pnpm run publish:live`, and `docs/DEPLOYMENT.md` to standardize the proven GitHub CLI token + portable Git/OpenSSL publish path. This is a docs/process change and does not bump the visible app version.
 
@@ -138,6 +138,7 @@ Watch-outs:
 - Mobile interaction must avoid constant up/down scrolling during active observation.
 - Results should be clean, filterable, and support delete/void controls.
 - Smartsheet/Supabase records should be auditable by leadership roles.
+- Lean Tool email report recipients intentionally exclude Bil Smith as of `2026.07.18.002-lean-report-recipient-cleanup`; `scripts/verify-lean-results-view.mjs` guards this.
 
 ### Ladle Compliance
 

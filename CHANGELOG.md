@@ -2,6 +2,8 @@
 
 ## 2026-07-18
 
+- [Jul 18, 12:42 AM] Removed Bil Smith from the Lean Tool email report-out recipient list while leaving unrelated Menu Projects contact data untouched.
+- [Jul 18, 12:42 AM] Added a Lean Tool verification guard so Bil Smith cannot be reintroduced to Lean report recipients accidentally; set visible app version to `2026.07.18.002-lean-report-recipient-cleanup`.
 - [Jul 18, 12:16 AM] Added a Menu Library `Download All Menus CSV` export beside the selected-menu export so leaders can pull menu, recipe name, MRN, category, description, calories, sell price, and true cost across the full library in one file.
 - [Jul 18, 12:16 AM] Kept the existing selected-menu CSV export intact and added release verification markers for the all-menu export path; set visible app version to `2026.07.18.001-menu-library-all-menus-export`.
 
