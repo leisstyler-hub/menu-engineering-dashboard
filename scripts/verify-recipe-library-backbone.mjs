@@ -62,7 +62,9 @@ assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Download All 
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "buildWebtritionRecipeSearchUrl");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "https://www.webtrition.com/ui/#/recipes/search");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Copy MRN");
-assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Open Webtrition");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Search Webtrition");
+assertNotIncludes("src/features/recipe-database/RecipeDatabase.jsx", "preview: \"sidePanel\"");
+assertNotIncludes("src/features/recipe-database/RecipeDatabase.jsx", "productType: \"2\"");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "<Property label=\"MRN\"");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Recipe Name");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Sell Price");

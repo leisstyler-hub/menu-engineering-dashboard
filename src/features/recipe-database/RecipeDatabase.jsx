@@ -99,10 +99,6 @@ function buildWebtritionRecipeSearchUrl(item) {
     q: mrn,
     p: "1",
     l: "100",
-    productType: "2",
-    template: "standard",
-    preview: "sidePanel",
-    view: "Standard",
     sort: "relevance",
     type: "keyword",
   });
@@ -1166,10 +1162,10 @@ function LibraryCardDrawer({ item, onClose, onSave, onUploadDocument }) {
                   disabled={!webtritionRecipeUrl}
                   onClick={() => openWebtritionRecipe(item)}
                   className="inline-flex items-center justify-center gap-2 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-base font-black text-sky-900 hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50"
-                  title="Opens Webtrition in a new tab by MRN. If Webtrition resets after login, paste the copied MRN into its search."
+                  title="Searches Webtrition by MRN. If Webtrition does not open the right result, paste the copied MRN into its search."
                 >
                   <ExternalLink size={18} />
-                  Open Webtrition
+                  Search Webtrition
                 </button>
                 <button
                   type="button"

@@ -2,6 +2,7 @@
 
 ## 2026-07-18
 
+- [Jul 18, 11:16 AM] Changed Menu Library Webtrition actions from forced recipe side-panel links to plain MRN search links so Webtrition does not reject recipes with an access error; set visible app version to `2026.07.18.005-webtrition-search-only`.
 - [Jul 18, 10:45 AM] Added exact MRN display to Menu Library item cards so Webtrition IDs are visible before opening the detail drawer.
 - [Jul 18, 10:45 AM] Added Menu Library detail actions to open a Webtrition MRN search in a new tab and copy the MRN when Webtrition collapses the recipe route after auth; set visible app version to `2026.07.18.004-menu-library-mrn-webtrition-link`.
 - [Jul 18, 10:05 AM] Added Webtrition as an external platform tool card using the Webtrition logo and opening `https://www.webtrition.com/ui/#/` in a new browser tab.
