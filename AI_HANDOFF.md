@@ -4,7 +4,7 @@ Last updated: July 18, 2026
 
 Current release version: `2026.07.18.006-menuworks-import-pipeline`
 
-Latest process update: July 18, 2026 added `scripts/repair-git-https.ps1` and `pnpm run repair:git` to diagnose and repair the local GitHub HTTPS sync path after `SEC_E_NO_CREDENTIALS`, missing `git-remote-https`, or stale `origin/main` symptoms. This is a tooling/process change and does not bump the visible app version.
+Latest process update: July 18, 2026 added `pnpm run release:preflight` for a quick handoff/source/auth check before small publishes, and updated `scripts/publish-live.ps1` so successful pushes immediately move local `origin/main` to the pushed commit. This avoids the stale-source confusion without adding a second network fetch or full verification to every docs/tooling publish. This is a tooling/process change and does not bump the visible app version.
 
 ## First Rule
 
@@ -13,9 +13,10 @@ Read this file before changing code. After every meaningful change, update this 
 Handoff protocol:
 
 1. Start every code pass by reading this file, `CHANGELOG.md`, `src/shared/appConfig.js`, and the working tree/source sync status.
-2. Treat GitHub/Vercel/Supabase/live app as the shared truth, not just the local checkout.
-3. When a change is meaningful, update this handoff with the new version, current state, verification, and any risks that the next Codex/co-worker must know.
-4. Never leave a release with the handoff pointing to an older version than the visible app.
+2. For quick source/auth checks, run `pnpm run release:preflight`; for app behavior/data/UI changes, still run the relevant verification or full `pnpm run verify`.
+3. Treat GitHub/Vercel/Supabase/live app as the shared truth, not just the local checkout.
+4. When a change is meaningful, update this handoff with the new version, current state, verification, and any risks that the next Codex/co-worker must know.
+5. Never leave a release with the handoff pointing to an older version than the visible app.
 
 This project is actively developed by more than one person and may be touched from phone, PC, GitHub, Vercel, and multiple Codex sessions. Do not trust local state alone.
 

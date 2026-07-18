@@ -29,8 +29,24 @@ The script:
 - Refuses to publish if local work is behind GitHub unless `-AllowBehind` is
   explicitly provided.
 - Pushes `HEAD` to `main`.
+- Updates local `origin/main` to the pushed commit immediately after a
+  successful push, so the shell does not look stale while Vercel is building.
 - Polls the live app for the current version stamp so Vercel deployment status is
   obvious.
+
+## Fast Preflight
+
+Before a quick publish, run the small source/credential check:
+
+```powershell
+pnpm run release:preflight
+```
+
+The preflight is intentionally light. It checks the handoff/release files, reads
+the visible version stamp, and runs the GitHub HTTPS repair/sync path. It does
+not run the full app verification suite. Use it when you want confidence that
+GitHub auth/source sync is healthy without adding several minutes to a small
+release.
 
 ## Fast Docs-Only Publish
 

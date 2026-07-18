@@ -189,8 +189,10 @@ if ($mergeBase -ne $remoteSha) {
 }
 
 Invoke-Checked $git @("-c", "http.sslBackend=openssl", "-c", "credential.helper=", "-c", "safe.directory=$repoRoot", "push", $remoteUrl, "HEAD:$Branch") $token
+Invoke-Checked $git @("-c", "safe.directory=$repoRoot", "update-ref", "refs/remotes/origin/$Branch", "HEAD")
 $publishedSha = (& $git -c "safe.directory=$repoRoot" rev-parse --short HEAD).Trim()
 Write-Pass "Pushed $publishedSha to GitHub. Vercel Git integration should now deploy production."
+Write-Pass "Local origin/$Branch now points at the pushed commit."
 
 if (-not $SkipVercelWait) {
   Write-Step "Live version check"

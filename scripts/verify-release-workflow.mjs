@@ -23,6 +23,7 @@ function assertNotIncludes(file, unexpected) {
 
 assertIncludes("package.json", "\"release:health\": \"node scripts/release-health.mjs\"");
 assertIncludes("package.json", "\"release:check\": \"node scripts/release-health.mjs\"");
+assertIncludes("package.json", "\"release:preflight\": \"powershell -ExecutionPolicy Bypass -File scripts/release-preflight.ps1\"");
 assertIncludes("package.json", "\"release:live\": \"node scripts/release-live.mjs\"");
 assertIncludes("package.json", "\"verify:release\": \"node scripts/verify-release-workflow.mjs\"");
 assertIncludes("package.json", "\"install:browser\": \"node scripts/install-playwright-browsers.mjs\"");
@@ -66,6 +67,9 @@ assertIncludes("scripts/release-health.mjs", "Vercel deploy");
 assertIncludes("scripts/release-health.mjs", "No secret values are printed");
 assertIncludes("scripts/release-health.mjs", "Working tree");
 assertIncludes("scripts/release-health.mjs", "Live app version");
+assertIncludes("scripts/release-preflight.ps1", "Fast release preflight passed.");
+assertIncludes("scripts/publish-live.ps1", "update-ref");
+assertIncludes("scripts/publish-live.ps1", "Local origin/$Branch now points at the pushed commit.");
 
 assertIncludes("scripts/release-live.mjs", "runPackageScript(\"verify\")");
 assertIncludes("scripts/release-live.mjs", "deployToVercel");

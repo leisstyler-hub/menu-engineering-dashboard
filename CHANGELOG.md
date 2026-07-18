@@ -2,6 +2,8 @@
 
 ## 2026-07-18
 
+- [Jul 18, 1:25 PM] Added a fast `pnpm run release:preflight` command for source/auth/handoff checks before small publishes without running the full app verification suite.
+- [Jul 18, 1:25 PM] Updated `publish-live.ps1` so successful pushes immediately update local `origin/main` to the pushed commit, avoiding stale Git status without an extra network fetch; this is a tooling/process update and does not change the visible app version.
 - [Jul 18, 12:45 PM] Added a repo-local GitHub HTTPS repair command that uses portable Git/OpenSSL plus the GitHub CLI token to avoid Windows `SEC_E_NO_CREDENTIALS`, missing `git-remote-https`, and stale `origin/main` states.
 - [Jul 18, 12:45 PM] Added `pnpm run repair:git` and documented when to use it before publish work; this is a tooling/process update and does not change the visible app version.
 - [Jul 18, 12:00 PM] Upgraded Menu Library MenuWorks uploads into a reviewed weekly import pipeline with schema preflight, exact MRN precision signals, protected curated descriptions, hidden-after-accept counts, and import batch language.
