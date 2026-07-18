@@ -1758,6 +1758,13 @@ function rotationSummaryBlockLabels(rotation = {}, cafe = rotation?.cafe || "", 
   return [];
 }
 
+function cardSummaryBlockLabels(rotation = {}, cafe = rotation?.cafe || "", week = rotation?.week || "", previousRotation = rotation?.previousRotation || EMPTY_ROTATION) {
+  const blocks = rotationSummaryBlockLabels(rotation, cafe, week, previousRotation);
+  if (blocks.length || !cafeHasGlobalStation(cafe)) return blocks;
+  const menu = rotationMenuLabel(rotation, cafe, week);
+  return menu ? [{ id: "fullWeek", title: "Monday - Friday", menu }] : [];
+}
+
 function hasNitroSplitBlocks(rotation = {}) {
   return nitroGlobalBlockLayout().some((block) => {
     const value = getRotationGlobalBlock(rotation, block.id);
@@ -3831,7 +3838,7 @@ function downloadDopplerMenuPowerPoint(packet) {
 function SubmittedRotationRecap({ cafe, week, rotation, previousRotation = EMPTY_ROTATION, rows, onEdit }) {
   const hasGlobalStation = cafeHasGlobalStation(cafe);
   const menuLabel = hasGlobalStation ? rotationMenuLabel(rotation, cafe, week) : "";
-  const summaryBlocks = rotationSummaryBlockLabels(rotation, cafe, week, previousRotation);
+  const summaryBlocks = cardSummaryBlockLabels(rotation, cafe, week, previousRotation);
   const duplicateSplitMenus = duplicateSplitGlobalMenuIssues(rotation, cafe, week);
   const totalSelections = rows.reduce((sum, row) => sum + row.selectedCount, 0);
   return (
@@ -5880,7 +5887,7 @@ function SummaryCard({ row, conflict, showDistrict = true, onOpenPlanner = null 
   const completedStations = locked ? stationKeys.filter((stationKey) => stationComplete(row, stationKey, row.cafe, row.week)).length : 0;
   const progressPct = stationKeys.length ? Math.round((completedStations / stationKeys.length) * 100) : 0;
   const menuLabel = locked && hasGlobalStation ? rotationMenuLabel(row) : "";
-  const summaryBlocks = locked ? rotationSummaryBlockLabels(row, row.cafe, row.week, row.previousRotation || EMPTY_ROTATION) : [];
+  const summaryBlocks = locked ? cardSummaryBlockLabels(row, row.cafe, row.week, row.previousRotation || EMPTY_ROTATION) : [];
   const tone = !locked ? "border-slate-200 bg-white" : !hasGlobalStation ? "border-sky-200 bg-sky-50" : !menuLabel ? "border-slate-200 bg-white" : fcMidpoint == null ? "border-slate-300 bg-slate-50" : fcMidpoint > 0.34 ? "border-amber-300 bg-amber-50" : fcMidpoint <= 0.30 ? "border-emerald-300 bg-emerald-50" : "border-sky-200 bg-sky-50";
   const statusTone = locked ? "bg-emerald-500 text-white border-emerald-500" : "bg-rose-100 text-rose-900 border-rose-200";
   const CardShell = onOpenPlanner ? "button" : "div";

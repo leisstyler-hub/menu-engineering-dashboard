@@ -130,7 +130,7 @@ if (!/if \(isSplitGlobalCafe\(cafe\)\) \{[\s\S]*splitGlobalBlockLayout\(cafe, we
   fail("Database records must save all active split-global blocks, not only Re:Invent blocks.");
 }
 
-if (!/const summaryBlocks = locked \? rotationSummaryBlockLabels\(row, row\.cafe, row\.week, row\.previousRotation \|\| EMPTY_ROTATION\) : \[\];/.test(source) || !/function dopplerSummaryBlockLabels/.test(source)) {
+if (!/function cardSummaryBlockLabels/.test(source) || !/title: "Monday - Friday"/.test(source) || !/const summaryBlocks = locked \? cardSummaryBlockLabels\(row, row\.cafe, row\.week, row\.previousRotation \|\| EMPTY_ROTATION\) : \[\];/.test(source) || !/function dopplerSummaryBlockLabels/.test(source)) {
   fail("Executive summary cards must show full-week labels for split-global cafes and Doppler.");
 }
 
@@ -158,7 +158,7 @@ if (firstSplitBlockId("Blueshift", "Jul 6, 2026 - Jul 10, 2026") !== "monTue") {
   fail("Blueshift Jul 6, 2026 must start with the Monday + Tuesday block.");
 }
 
-if (!/<SubmittedRotationRecap[^>]*previousRotation=\{previousRotation\}/.test(source) || !/const summaryBlocks = rotationSummaryBlockLabels\(rotation, cafe, week, previousRotation\);/.test(source) || !/function persistedSplitGlobalBlocks/.test(source)) {
+if (!/<SubmittedRotationRecap[^>]*previousRotation=\{previousRotation\}/.test(source) || !/const summaryBlocks = cardSummaryBlockLabels\(rotation, cafe, week, previousRotation\);/.test(source) || !/function persistedSplitGlobalBlocks/.test(source)) {
   fail("Submitted recap must show full-week split-global and Doppler blocks while still supporting prior-Friday Monday carryover.");
 }
 

@@ -2,9 +2,9 @@
 
 Last updated: July 18, 2026
 
-Current release version: `2026.07.18.007-changelog-time-guard`
+Current release version: `2026.07.18.008-rotation-card-summary-border`
 
-Latest process update: July 18, 2026 added `pnpm run changelog:stamp` to generate changelog timestamps in `America/Los_Angeles`, and strengthened `scripts/verify-changelog-timestamps.mjs` so current entries must preserve exact `Mon D, h:mm AM/PM` hour/minute formatting. Use the helper timestamp before adding new `CHANGELOG.md` entries.
+Latest process update: July 18, 2026 normalized Neighborhood Rotation card summaries so single-menu Global weeks render as bordered `Monday - Friday` concept tiles, matching split-week and promo cards in light and dark mode. Keep this card display consistent; cafes without Global stations should still avoid fake AMZ labels.
 
 ## First Rule
 
@@ -103,6 +103,7 @@ Purpose: Weekly cafe menu selections, station selections, executive read, saved/
 Critical integrity rules:
 
 - A submitted/locked rotation must recall exactly as submitted.
+- Single-menu Global weeks should display in the same bordered card-block style as split-week and promo summaries, labeled `Monday - Friday`; do not revert them to loose plain text.
 - Re:Invent and Blueshift use split-global `2/2/2` logic.
 - Re:Invent current pattern starts Monday/Tuesday, Wednesday/Thursday, Friday wrapping into next Monday unless holiday logic says closed.
 - Submit/resubmit should overwrite the saved rotation for that cafe/week, not create useless duplicate history.
@@ -111,6 +112,7 @@ Critical integrity rules:
 
 Recent critical fix:
 
+- `2026.07.18.008-rotation-card-summary-border` makes single-menu Global leadership cards and submitted recaps use the same bordered concept tile treatment as Re:Invent/Doppler split-week and promo cards. One-menu weeks should display `Monday - Friday` above the menu name in both light and dark mode.
 - `2026.07.17.002-promo-resubmit-state-integrity` makes promo override recalls authoritative for display and selected-food-cost math. Full-week promo takeovers now render a `Promotion Override` row with saved promo entree/side/extension items and suppress stale normal Global rows from prior submissions, so old menu choices and old food-cost percentages do not bleed into the locked card or submitted recap. `Edit and resubmit` state now resets when district/cafe/week changes and after a confirmed resubmit, preventing one cafe's edit mode from carrying into another cafe.
 - `2026.07.17.001-promo-override-global-card-integrity` removes fake Global/AMZ labels from no-Global cafe recaps/cards/exports, currently Atlas and Commissary, while still showing locked state, updated time, and station progress. Promotion override is now treated as a week-only takeover with Monday-Friday coverage, optional promo entree/side/extension memory slots, and submission logic that does not require normal Global rows when a promo covers the full week.
 - `2026.07.15.005-nitro-canonical-menu-integrity` enforces Nitro's weekly Global Menu as the canonical menu for both protein blocks. If persisted child blocks disagree with the weekly menu, recall relabels the blocks to the weekly menu and retains only selected items that actually belong to that menu. Canonical blocks are also written on resubmit. The exact live failure shape, Anisa weekly parent with Ciudad child blocks, has regression coverage.
