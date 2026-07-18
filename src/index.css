@@ -168,6 +168,23 @@
     flex: 0 0 auto;
   }
 
+  .tool-card-logo {
+    display: block;
+    max-height: 24px;
+    max-width: 96px;
+    width: 100%;
+    object-fit: contain;
+  }
+
+  .mobile-tool-logo-icon {
+    width: 88px;
+  }
+
+  .mobile-tool-icon .tool-card-logo {
+    max-height: 22px;
+    max-width: 72px;
+  }
+
   .mobile-status-chip {
     flex: 0 0 auto;
     max-width: 104px;

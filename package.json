@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "verify": "node scripts/verify-rotation-integrity.mjs && node scripts/verify-submission-health.mjs && node scripts/verify-lean-results-view.mjs && node scripts/verify-rotation-record-audit.mjs && node scripts/verify-operational-readiness.mjs && node scripts/verify-changelog-timestamps.mjs && node scripts/verify-recipe-library-backbone.mjs && node scripts/verify-recipe-library-trust.mjs && node scripts/verify-menuworks-import.mjs && node scripts/verify-menu-classification.mjs && node scripts/verify-dashboard-summary.mjs && node scripts/verify-menu-projects.mjs && node scripts/verify-menu-audit-tool.mjs && node scripts/verify-release-workflow.mjs && vite build",
+    "verify": "node scripts/verify-rotation-integrity.mjs && node scripts/verify-submission-health.mjs && node scripts/verify-lean-results-view.mjs && node scripts/verify-rotation-record-audit.mjs && node scripts/verify-operational-readiness.mjs && node scripts/verify-changelog-timestamps.mjs && node scripts/verify-recipe-library-backbone.mjs && node scripts/verify-recipe-library-trust.mjs && node scripts/verify-menuworks-import.mjs && node scripts/verify-menu-classification.mjs && node scripts/verify-dashboard-summary.mjs && node scripts/verify-platform-tools.mjs && node scripts/verify-menu-projects.mjs && node scripts/verify-menu-audit-tool.mjs && node scripts/verify-release-workflow.mjs && vite build",
     "install:browser": "node scripts/install-playwright-browsers.mjs",
     "verify:browser": "node scripts/run-playwright.mjs",
     "verify:release": "node scripts/verify-release-workflow.mjs",

@@ -2,7 +2,7 @@
 
 Last updated: July 18, 2026
 
-Current release version: `2026.07.18.002-lean-report-recipient-cleanup`
+Current release version: `2026.07.18.003-webtrition-tool-link`
 
 Latest process update: July 16, 2026 added `scripts/publish-live.ps1`, `pnpm run publish:live`, and `docs/DEPLOYMENT.md` to standardize the proven GitHub CLI token + portable Git/OpenSSL publish path. This is a docs/process change and does not bump the visible app version.
 
@@ -78,6 +78,7 @@ Watch-outs:
 - Weekly Traffic must not depend on Smartsheet writes/reads; Smartsheet hit the 500,000-cell limit on July 14, 2026. The traffic endpoint is now Supabase-first through `app_records` and should return a safe fallback instead of exposing raw storage errors.
 - Weekly Traffic is not a historical archive. It should keep only the current Monday-Sunday visitor week and prune older `Traffic Daily Visitor` rows from Supabase on traffic reads/writes.
 - Tool cards should be visually balanced and not leave awkward empty space.
+- Webtrition is an external tool card on the platform home. It opens `https://www.webtrition.com/ui/#/` in a new tab and uses `public/webtrition-logo.png`; do not route it as an internal React tool.
 
 ### Menu Engineering
 

@@ -2,6 +2,8 @@
 
 ## 2026-07-18
 
+- [Jul 18, 10:05 AM] Added Webtrition as an external platform tool card using the Webtrition logo and opening `https://www.webtrition.com/ui/#/` in a new browser tab.
+- [Jul 18, 10:05 AM] Added a platform tool verification guard for the Webtrition external link/logo and set visible app version to `2026.07.18.003-webtrition-tool-link`.
 - [Jul 18, 12:42 AM] Removed Bil Smith from the Lean Tool email report-out recipient list while leaving unrelated Menu Projects contact data untouched.
 - [Jul 18, 12:42 AM] Added a Lean Tool verification guard so Bil Smith cannot be reintroduced to Lean report recipients accidentally; set visible app version to `2026.07.18.002-lean-report-recipient-cleanup`.
 - [Jul 18, 12:16 AM] Added a Menu Library `Download All Menus CSV` export beside the selected-menu export so leaders can pull menu, recipe name, MRN, category, description, calories, sell price, and true cost across the full library in one file.

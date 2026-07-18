@@ -181,6 +181,11 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
     downloadTrustLayerGapList(buildTrustGapRows(payload.rows || []));
   };
 
+  const openExternalTool = (url) => {
+    if (typeof window === "undefined") return;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
   const tools = [
     {
       title: "Menu Engineering",
@@ -231,6 +236,17 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
       icon: ClipboardCheck,
       tone: "sky",
       meta: "IT menu audit"
+    },
+    {
+      title: "Webtrition",
+      eyebrow: "External",
+      description: "Open Webtrition for recipes, MRNs, nutrition, and menu programming source data.",
+      action: "Open Webtrition",
+      onOpen: () => openExternalTool("https://www.webtrition.com/ui/#/"),
+      icon: null,
+      logo: "/webtrition-logo.png",
+      tone: "teal",
+      meta: "Source system"
     },
     {
       title: "Lean Tool",
@@ -289,7 +305,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
               Built for quick chef decisions: choose the workstream, check status, and move straight into the active tool.
             </p>
             <div className="mt-5 grid grid-cols-2 gap-3">
-              <Metric label="Tools" value="6" />
+              <Metric label="Tools" value="7" />
               <Metric label="Menu items" value={totalItems.toLocaleString()} />
               <Metric label="Menus" value={menuCount} />
               <Metric label="Costed items" value={costedItems.toLocaleString()} />
@@ -447,7 +463,7 @@ function MobileLanding({
   onOpenSmartsheetHealth,
 }) {
   const metricTiles = [
-    { label: "Tools", value: "6", icon: Wrench, tone: "bg-[#fff7e7] text-[#8a621b]" },
+    { label: "Tools", value: "7", icon: Wrench, tone: "bg-[#fff7e7] text-[#8a621b]" },
     { label: "Menu Items", value: totalItems.toLocaleString(), icon: Utensils, tone: "bg-[#eaf8f2] text-emerald-700" },
     { label: "Menus", value: menuCount, icon: ListChecks, tone: "bg-[#edf5ff] text-sky-700" },
     { label: "Costed Items", value: costedItems.toLocaleString(), icon: Database, tone: "bg-[#f0eefb] text-indigo-700" },
@@ -615,7 +631,7 @@ function MobileMetricTile({ label, value, icon: Icon, tone }) {
   );
 }
 
-function MobileToolCard({ title, eyebrow, description, action, onOpen, icon: Icon, tone, meta }) {
+function MobileToolCard({ title, eyebrow, description, action, onOpen, icon: Icon, tone, meta, logo }) {
   const tones = {
     emerald: "bg-emerald-50 text-emerald-700 border-emerald-100",
     sky: "bg-sky-50 text-sky-700 border-sky-100",
@@ -623,6 +639,7 @@ function MobileToolCard({ title, eyebrow, description, action, onOpen, icon: Ico
     indigo: "bg-indigo-50 text-indigo-700 border-indigo-100",
     violet: "bg-violet-50 text-violet-700 border-violet-100",
     lime: "bg-lime-50 text-lime-700 border-lime-100",
+    teal: "bg-teal-50 text-teal-700 border-teal-100",
   };
   const chipLabels = {
     "Menu Engineering": "Live",
@@ -630,13 +647,14 @@ function MobileToolCard({ title, eyebrow, description, action, onOpen, icon: Ico
     "Menu Library": "New",
     "Menu Projects": "New",
     "Menu Audit Tool": "Phase 1",
+    "Webtrition": "External",
     "Lean Tool": "New",
   };
 
   return (
     <button type="button" onClick={onOpen} className="mobile-tool-card">
-      <div className={`mobile-tool-icon ${tones[tone]}`}>
-        <Icon size={21} />
+      <div className={`mobile-tool-icon ${logo ? "mobile-tool-logo-icon" : ""} ${tones[tone]}`}>
+        {logo ? <img src={logo} alt={`${title} logo`} className="tool-card-logo" /> : <Icon size={21} />}
       </div>
       <div className="min-w-0 flex-1 text-left">
         <div className="flex items-start justify-between gap-3">
@@ -945,22 +963,23 @@ function CategoryBars({ counts, total }) {
   );
 }
 
-function ToolCard({ title, eyebrow, description, action, onOpen, icon: Icon, tone, meta }) {
+function ToolCard({ title, eyebrow, description, action, onOpen, icon: Icon, tone, meta, logo }) {
   const tones = {
     emerald: "bg-emerald-50 text-emerald-800 border-emerald-200",
     sky: "bg-sky-50 text-sky-800 border-sky-200",
     amber: "bg-amber-50 text-amber-900 border-amber-200",
     indigo: "bg-indigo-50 text-indigo-800 border-indigo-200",
     violet: "bg-violet-50 text-violet-800 border-violet-200",
-    lime: "bg-lime-50 text-lime-900 border-lime-200"
+    lime: "bg-lime-50 text-lime-900 border-lime-200",
+    teal: "bg-teal-50 text-teal-800 border-teal-200"
   };
 
   return (
     <article className="flex min-h-[292px] flex-col justify-between rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <div>
         <div className="flex items-start justify-between gap-3">
-          <div className={`flex h-11 w-11 items-center justify-center rounded-lg border ${tones[tone]}`}>
-            <Icon size={21} />
+          <div className={`flex h-11 ${logo ? "w-28 px-2" : "w-11"} items-center justify-center rounded-lg border ${tones[tone]}`}>
+            {logo ? <img src={logo} alt={`${title} logo`} className="tool-card-logo" /> : <Icon size={21} />}
           </div>
           <span className={`rounded-full border px-3 py-1 text-xs font-bold ${tones[tone]}`}>{eyebrow}</span>
         </div>
