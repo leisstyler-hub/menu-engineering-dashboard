@@ -2,7 +2,7 @@
 
 Last updated: July 18, 2026
 
-Current release version: `2026.07.18.003-webtrition-tool-link`
+Current release version: `2026.07.18.004-menu-library-mrn-webtrition-link`
 
 Latest process update: July 16, 2026 added `scripts/publish-live.ps1`, `pnpm run publish:live`, and `docs/DEPLOYMENT.md` to standardize the proven GitHub CLI token + portable Git/OpenSSL publish path. This is a docs/process change and does not bump the visible app version.
 
@@ -79,6 +79,7 @@ Watch-outs:
 - Weekly Traffic is not a historical archive. It should keep only the current Monday-Sunday visitor week and prune older `Traffic Daily Visitor` rows from Supabase on traffic reads/writes.
 - Tool cards should be visually balanced and not leave awkward empty space.
 - Webtrition is an external tool card on the platform home. It opens `https://www.webtrition.com/ui/#/` in a new tab and uses `public/webtrition-logo.png`; do not route it as an internal React tool.
+- Webtrition recipe URLs can collapse back to the base Webtrition app after Webtrition auth/session routing. Treat this as an external Webtrition behavior. Menu Library should open MRN search links in a new tab and provide a Copy MRN fallback instead of relying on embedded or guaranteed side-panel deep links.
 
 ### Menu Engineering
 
@@ -164,6 +165,7 @@ Watch-outs:
 - The current raw source archive is `public/data/master-menus-raw-2026-07-12.json`. Older raw MenuWorks archives were removed from the deployable app.
 - Recipe Library Supabase backfill now upserts the current Master rows and marks visible Supabase recipe rows absent from the Master as `visible_in_library: false`; do not reintroduce append-only backfill behavior.
 - Item cards show Webtrition weight in oz when available from MenuWorks/Supabase for audit visibility.
+- `2026.07.18.004-menu-library-mrn-webtrition-link` shows exact MRNs on Menu Library front cards and adds drawer actions to open Webtrition by MRN search or copy the MRN for manual Webtrition search.
 - Keep compact card labels short; `WebT OZ` is intentional so the Webtrition weight label does not overflow narrow property cards.
 - Curated app assets now provide one exact, normalized-name photo for 110 matched dishes across Atlas Noodle, Anisa, Bibimbowl, Balti, Breakfast, and Carvery. Do not replace this with fuzzy runtime matching.
 - Atlas Noodle, Anisa, Breakfast, and Carvery have verified group-photo banners. Bibimbowl and Balti intentionally remain banner-free because their supplied folders did not contain a true group shot.

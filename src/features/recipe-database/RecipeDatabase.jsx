@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Activity, AlertTriangle, ArrowLeft, Camera, Database, DollarSign, FileDown, FileText, Flame, ListChecks, Pencil, Save, Search, ShieldCheck, Sparkles, Upload, Utensils, X } from "lucide-react";
+import { Activity, AlertTriangle, ArrowLeft, Camera, Copy, Database, DollarSign, ExternalLink, FileDown, FileText, Flame, ListChecks, Pencil, Save, Search, ShieldCheck, Sparkles, Upload, Utensils, X } from "lucide-react";
 
 import { MENU_HEADER_ASSETS, getRecipeLibraryPhoto } from "../../data/recipeLibraryAssets.js";
 import { money, pct, priceLabel, titleCase } from "../../shared/formatting.js";
@@ -85,6 +85,45 @@ function recipePhoto(rowOrItem) {
   }
   const localPhoto = getRecipeLibraryPhoto(rowOrItem?.raw || rowOrItem);
   return localPhoto ? { ...localPhoto, source: "asset" } : null;
+}
+
+function cleanMrn(value) {
+  const text = String(value ?? "").trim();
+  return text && text !== "-" ? text : "";
+}
+
+function buildWebtritionRecipeSearchUrl(item) {
+  const mrn = cleanMrn(item?.mrn || item?.MRN || item?.raw?.mrn || item?.raw?.MRN);
+  if (!mrn) return "";
+  const params = new URLSearchParams({
+    q: mrn,
+    p: "1",
+    l: "100",
+    productType: "2",
+    template: "standard",
+    preview: "sidePanel",
+    view: "Standard",
+    sort: "relevance",
+    type: "keyword",
+  });
+  return `https://www.webtrition.com/ui/#/recipes/search?${params.toString()}`;
+}
+
+function openWebtritionRecipe(item) {
+  const url = buildWebtritionRecipeSearchUrl(item);
+  if (!url || typeof window === "undefined") return;
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
+async function copyMrnToClipboard(item) {
+  const mrn = cleanMrn(item?.mrn || item?.MRN || item?.raw?.mrn || item?.raw?.MRN);
+  if (!mrn || typeof navigator === "undefined") return false;
+  try {
+    await navigator.clipboard?.writeText(mrn);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function hasRecipePhoto(rowOrItem) {
@@ -985,6 +1024,7 @@ function ItemCard({ row, onOpen }) {
   const photo = recipePhoto(row);
   const trustFlags = itemTrustFlags(row);
   const trustStatus = itemTrustStatus(row);
+  const mrn = cleanMrn(row.mrn || row.MRN);
   return (
     <button type="button" onClick={onOpen} className="recipe-library-card w-full rounded-3xl border border-slate-200 bg-slate-50/80 p-4 text-left transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-lg active:translate-y-0">
       {photo && (
@@ -1013,6 +1053,7 @@ function ItemCard({ row, onOpen }) {
         <Property label="Food cost" value={pct(fc)} />
         <Property label="Protein" value={proteinLabel(libraryItem)} />
         <Property label="Portion" value={row.portion || row.Portion || "Not loaded" } />
+        <Property label="MRN" value={mrn || "Not loaded"} />
         <Property label="WebT OZ" value={webtritionWeightOzLabel(libraryItem)} />
       </div>
 
@@ -1048,8 +1089,11 @@ function LibraryCardDrawer({ item, onClose, onSave, onUploadDocument }) {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState("");
+  const [copyStatus, setCopyStatus] = useState("");
   const photo = recipePhoto(item);
   const photoSlot = item.file_slots.find((slot) => slot.type === "item-photo");
+  const mrn = cleanMrn(item.mrn);
+  const webtritionRecipeUrl = buildWebtritionRecipeSearchUrl(item);
   const [draft, setDraft] = useState(() => ({
     display_name: item.display_name || "",
     description: item.description || "",
@@ -1116,6 +1160,31 @@ function LibraryCardDrawer({ item, onClose, onSave, onUploadDocument }) {
                 <InfoPill icon={Database} label={item.mrn ? `MRN ${item.mrn}` : "MRN not loaded"} tone="slate" />
                 <InfoPill icon={Utensils} label={webtritionWeightOzLabel(item)} tone="slate" />
               </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  disabled={!webtritionRecipeUrl}
+                  onClick={() => openWebtritionRecipe(item)}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-base font-black text-sky-900 hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  title="Opens Webtrition in a new tab by MRN. If Webtrition resets after login, paste the copied MRN into its search."
+                >
+                  <ExternalLink size={18} />
+                  Open Webtrition
+                </button>
+                <button
+                  type="button"
+                  disabled={!mrn}
+                  onClick={async () => {
+                    const copied = await copyMrnToClipboard(item);
+                    setCopyStatus(copied ? `Copied MRN ${mrn}` : "MRN copy unavailable");
+                  }}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base font-black text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Copy size={18} />
+                  Copy MRN
+                </button>
+              </div>
+              {copyStatus && <p className="text-sm font-bold text-slate-500">{copyStatus}</p>}
               <InlineDocumentUpload
                 item={item}
                 slot={photoSlot}

@@ -2,6 +2,8 @@
 
 ## 2026-07-18
 
+- [Jul 18, 10:45 AM] Added exact MRN display to Menu Library item cards so Webtrition IDs are visible before opening the detail drawer.
+- [Jul 18, 10:45 AM] Added Menu Library detail actions to open a Webtrition MRN search in a new tab and copy the MRN when Webtrition collapses the recipe route after auth; set visible app version to `2026.07.18.004-menu-library-mrn-webtrition-link`.
 - [Jul 18, 10:05 AM] Added Webtrition as an external platform tool card using the Webtrition logo and opening `https://www.webtrition.com/ui/#/` in a new browser tab.
 - [Jul 18, 10:05 AM] Added a platform tool verification guard for the Webtrition external link/logo and set visible app version to `2026.07.18.003-webtrition-tool-link`.
 - [Jul 18, 12:42 AM] Removed Bil Smith from the Lean Tool email report-out recipient list while leaving unrelated Menu Projects contact data untouched.
