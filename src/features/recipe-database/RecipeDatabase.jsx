@@ -413,6 +413,7 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
   const [pendingImport, setPendingImport] = useState(null);
   const [uploadInitiationCode, setUploadInitiationCode] = useState("");
   const [uploadStatus, setUploadStatus] = useState("");
+  const [isAcceptingImport, setIsAcceptingImport] = useState(false);
   const [isAllMenusCsvDownloading, setIsAllMenusCsvDownloading] = useState(false);
 
   const selectedRows = useMemo(() => {
@@ -582,21 +583,44 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
     }
   };
 
-  const acceptImport = () => {
+  const acceptImport = async () => {
     if (!pendingImport || uploadInitiationCode.trim() !== MENUWORKS_IMPORT_INITIATION_CODE) return;
     const importScope = new Set(pendingImport.importedMenuNames);
     const retainedRows = (pendingImport.currentRows || rows).filter((row) => !importScope.has(row.menu));
     const nextRows = [...retainedRows, ...pendingImport.importedRows].map((row, index) => ({ ...row, id: index }));
-    setRows(nextRows);
-    setSelectedMenu(pendingImport.importedMenuNames[0] || selectedMenu);
-    setSelectedItemKey("");
-    setCategoryFilter("All");
-    setDietFilter("All");
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(MENU_ENGINEERING_OVERRIDE_STORAGE_KEY, JSON.stringify(nextRows));
+    setIsAcceptingImport(true);
+    try {
+      const payload = await postRecipeLibraryAction("acceptMenuWorksImport", {
+        adminCode: uploadInitiationCode.trim(),
+        rows: pendingImport.importedRows,
+        importedMenuNames: pendingImport.importedMenuNames,
+        importBatch: pendingImport.importBatch,
+      });
+      setRowState((current) => ({
+        ...current,
+        rows: nextRows,
+        source: payload.source || "supabase-recipe-items",
+        usesLocalRows: false,
+        summary: null,
+      }));
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(MENU_ENGINEERING_OVERRIDE_STORAGE_KEY, JSON.stringify(nextRows));
+      }
+      setUploadStatus(payload.message || `Accepted import batch ${pendingImport.importBatch?.id || ""}.`);
+    } catch (error) {
+      setRows(nextRows);
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(MENU_ENGINEERING_OVERRIDE_STORAGE_KEY, JSON.stringify(nextRows));
+      }
+      setUploadStatus(`${error instanceof Error ? error.message : "Supabase import failed."} Local fallback was updated in this browser so work is not lost.`);
+    } finally {
+      setSelectedMenu(pendingImport.importedMenuNames[0] || selectedMenu);
+      setSelectedItemKey("");
+      setCategoryFilter("All");
+      setDietFilter("All");
+      setPendingImport(null);
+      setIsAcceptingImport(false);
     }
-    setUploadStatus(`Accepted ${pendingImport.importedRows.length.toLocaleString()} MenuWorks rows into Menu Library.`);
-    setPendingImport(null);
   };
 
   if (isMenuRowsLoading) {
@@ -765,6 +789,7 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
           review={pendingImport}
           onCancel={() => setPendingImport(null)}
           onAccept={acceptImport}
+          isAccepting={isAcceptingImport}
         />
       )}
     </div>
@@ -904,7 +929,13 @@ function importPercentLabel(value) {
   return `${sign}${value.toFixed(1)}%`;
 }
 
-function MenuWorksImportReviewModal({ review, onCancel, onAccept }) {
+function MenuWorksImportReviewModal({ review, onCancel, onAccept, isAccepting = false }) {
+  const warnings = [
+    ...(review.preflight?.missingRequiredColumns || []).map((column) => `Missing expected column: ${column}`),
+    review.preflight?.roundedMrnRiskRows ? `${review.preflight.roundedMrnRiskRows.toLocaleString()} MRN rows look rounded to one decimal. Check source export formatting before accepting.` : "",
+    review.preflight?.missingMrnRows ? `${review.preflight.missingMrnRows.toLocaleString()} rows have no MRN.` : "",
+    review.preflight?.duplicateKeys?.length ? `${review.preflight.duplicateKeys.length.toLocaleString()} duplicate menu/item keys detected.` : "",
+  ].filter(Boolean);
   return (
     <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-slate-950/50 p-3 backdrop-blur-sm md:p-8" role="dialog" aria-modal="true">
       <section className="mx-auto w-full max-w-5xl rounded-[2rem] border border-slate-200 bg-white shadow-2xl">
@@ -915,6 +946,9 @@ function MenuWorksImportReviewModal({ review, onCancel, onAccept }) {
             <p className="mt-2 text-sm font-semibold text-slate-600">
               {review.fileName} has {review.importedRows.length.toLocaleString()} rows across {review.importedMenuNames.length.toLocaleString()} menus.
             </p>
+            <p className="mt-2 text-xs font-black uppercase tracking-[0.14em] text-slate-400">
+              Import batch {review.importBatch?.id || "pending"} · {review.preflight?.columnsDetected || 0} columns detected · {review.preflight?.exactMrnTextRows || 0} exact decimal MRNs
+            </p>
           </div>
           <button type="button" onClick={onCancel} className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100" aria-label="Close import review">
             <X size={19} />
@@ -924,8 +958,35 @@ function MenuWorksImportReviewModal({ review, onCancel, onAccept }) {
         <div className="grid gap-4 p-5 lg:grid-cols-4">
           <ImportMetric label="New items" value={review.newItems.length} tone="emerald" />
           <ImportMetric label="Changed items" value={review.changedItems.length} tone="sky" />
-          <ImportMetric label="Removed items" value={review.removedItems.length} tone="amber" />
+          <ImportMetric label="Hidden after accept" value={review.hiddenAfterAccept?.length ?? review.removedItems.length} tone="amber" />
           <ImportMetric label="Cost movement" value={importPercentLabel(review.totalCostChangePct)} tone="slate" />
+        </div>
+
+        <div className="grid gap-4 px-5 pb-5 lg:grid-cols-2">
+          <section className={`rounded-3xl border p-4 ${warnings.length ? "border-amber-200 bg-amber-50 text-amber-950" : "border-emerald-200 bg-emerald-50 text-emerald-950"}`}>
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-base font-black">Preflight check</h3>
+              <span className="rounded-full border border-white bg-white/80 px-3 py-1 text-xs font-black">{review.preflight?.status || "ready"}</span>
+            </div>
+            {warnings.length ? (
+              <div className="mt-3 space-y-2">
+                {warnings.slice(0, 5).map((warning) => (
+                  <p key={warning} className="rounded-2xl border border-amber-200 bg-white px-3 py-2 text-sm font-bold leading-5">{warning}</p>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-3 rounded-2xl border border-emerald-200 bg-white px-3 py-2 text-sm font-bold leading-5">Schema, rows, and MRN precision look ready for review.</p>
+            )}
+          </section>
+          <section className="rounded-3xl border border-sky-200 bg-sky-50 p-4 text-sky-950">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-base font-black">Protected descriptions</h3>
+              <span className="rounded-full border border-white bg-white/80 px-3 py-1 text-xs font-black">{(review.protectedDescriptionChanges || []).length.toLocaleString()}</span>
+            </div>
+            <p className="mt-3 rounded-2xl border border-sky-200 bg-white px-3 py-2 text-sm font-bold leading-5">
+              Curated/source-truth descriptions stay active when Webtrition copy differs. Webtrition copy is retained as secondary detail.
+            </p>
+          </section>
         </div>
 
         <div className="grid gap-4 px-5 pb-5 lg:grid-cols-2">
@@ -937,14 +998,14 @@ function MenuWorksImportReviewModal({ review, onCancel, onAccept }) {
 
         <div className="flex flex-col gap-3 border-t border-slate-200 p-5 md:flex-row md:items-center md:justify-between">
           <p className="text-sm font-semibold leading-6 text-slate-600">
-            Accepting replaces only the menus included in this upload and keeps all other menus in place.
+            Accepting writes the parsed rows to Supabase first, hides stale rows only inside the uploaded menus, then keeps a local fallback copy if the server is unavailable.
           </p>
           <div className="flex flex-col gap-2 sm:flex-row">
             <button type="button" onClick={onCancel} className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-700 hover:bg-slate-50">
               Cancel
             </button>
-            <button type="button" onClick={onAccept} className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white hover:bg-slate-800">
-              Accept Update + Replace Library Data
+            <button type="button" onClick={onAccept} disabled={isAccepting} className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white hover:bg-slate-800 disabled:cursor-wait disabled:opacity-70">
+              {isAccepting ? "Accepting Import..." : "Accept Update + Replace Library Data"}
             </button>
           </div>
         </div>

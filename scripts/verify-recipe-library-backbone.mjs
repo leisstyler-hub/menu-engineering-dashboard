@@ -50,6 +50,9 @@ assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "grid-cols-[re
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "data-library-property-label");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "MenuWorks Truth Upload");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Accept Update + Replace Library Data");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Import batch");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Preflight check");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Protected descriptions");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "postRecipeLibraryAction");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "updateRecipeItem");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "uploadRecipeDocument");
@@ -133,6 +136,8 @@ assertIncludes("api/recipe-library.js", "scope === \"menu\"");
 assertIncludes("api/recipe-library.js", "scope === \"all\"");
 assertIncludes("api/recipe-library.js", "server-menuworks-json");
 assertIncludes("api/recipe-library.js", "backfillRecipeItems");
+assertIncludes("api/recipe-library.js", "acceptMenuWorksImport");
+assertIncludes("api/recipe-library.js", "hideStaleSupabaseRecipeItems(activeItemKeys, menuScope)");
 assertIncludes("api/recipe-library.js", "updateRecipeItem");
 assertIncludes("api/recipe-library.js", "uploadRecipeDocument");
 assertIncludes("api/recipe-library.js", "recipe_item_documents");

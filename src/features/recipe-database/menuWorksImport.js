@@ -171,6 +171,8 @@ function parseImportedMenuWorksRow(row, index) {
     portionOz: cleanNumber(textValue(row, "Menu Portion Weight(oz)")),
     category: inferImportedCategory(row, price),
     enticingDescription: textValue(row, "Enticing Description"),
+    menuWorksDescription: textValue(row, "Enticing Description"),
+    primaryDescriptionSource: "menuworks-import",
     dietDescription: textValue(row, "Diet Description"),
     dietTags: [textValue(row, "Diet"), textValue(row, "Vegan Tag."), textValue(row, "Vegetarian Tag."), textValue(row, "Compass Fit.")].filter(Boolean).join(", "),
     ingredients: textValue(row, "Ingredients"),
@@ -188,6 +190,23 @@ function parseImportedMenuWorksRow(row, index) {
     madeFromSingleSource: textValue(row, "Made from Single Source.") || null,
     veganTag: textValue(row, "Vegan Tag.") || null,
     vegetarianTag: textValue(row, "Vegetarian Tag.") || null,
+    calories: cleanNumber(textValue(row, "Calories", "Calories.", "Calories (kcal)", "Kcal")),
+    protein_g: cleanNumber(textValue(row, "Protein (g)", "Protein", "Protein g")),
+    sodium_mg: cleanNumber(textValue(row, "Sodium (mg)", "Sodium", "Sodium mg")),
+    carbs_g: cleanNumber(textValue(row, "Carbohydrates (g)", "Carbohydrates", "Total Carbohydrate (g)")),
+    fiber_g: cleanNumber(textValue(row, "Dietary Fiber (g)", "Fiber (g)", "Fiber")),
+    sugars_g: cleanNumber(textValue(row, "Total Sugars (g)", "Sugars (g)", "Sugars")),
+    added_sugars_g: cleanNumber(textValue(row, "Added Sugars (g)", "Added Sugars")),
+    total_fat_g: cleanNumber(textValue(row, "Total Fat (g)", "Fat (g)", "Total Fat")),
+    saturated_fat_g: cleanNumber(textValue(row, "Saturated Fat (g)", "Sat Fat (g)", "Saturated Fat")),
+    trans_fat_g: cleanNumber(textValue(row, "Trans Fat (g)", "Trans Fat")),
+    cholesterol_mg: cleanNumber(textValue(row, "Cholesterol (mg)", "Cholesterol")),
+    potassium_mg: cleanNumber(textValue(row, "Potassium (mg)", "Potassium")),
+    calcium_mg: cleanNumber(textValue(row, "Calcium (mg)", "Calcium")),
+    iron_mg: cleanNumber(textValue(row, "Iron (mg)", "Iron")),
+    sourceFileName: "",
+    sourceTruthName: "MenuWorks upload",
+    menuWorksRaw: row,
     dataSource: "menuworks-user-upload",
   };
 }
@@ -208,20 +227,114 @@ function buildComparableMap(rows) {
   return result;
 }
 
+const REQUIRED_COLUMN_GROUPS = [
+  ["Menu Name"],
+  ["Recipe Name", "Menu Item"],
+  ["Recipe Number", "MRN"],
+  ["Sell Price", "Price"],
+];
+
+function headerSet(rawRows = []) {
+  const headers = new Set();
+  rawRows.forEach((row) => {
+    Object.keys(row || {}).forEach((key) => headers.add(key));
+  });
+  return headers;
+}
+
+function buildPreflight(rawRows = [], importedRows = [], fileName = "") {
+  const headers = headerSet(rawRows);
+  const missingRequiredGroups = REQUIRED_COLUMN_GROUPS
+    .filter((group) => !group.some((column) => headers.has(column)))
+    .map((group) => group.join(" or "));
+  const exactMrnTextRows = importedRows.filter((row) => /\.\d{2,}$/.test(String(row.mrn || ""))).length;
+  const roundedMrnRiskRows = importedRows.filter((row) => {
+    const raw = String(row.mrn || "");
+    return /\.\d$/.test(raw);
+  }).length;
+  const missingMrnRows = importedRows.filter((row) => !row.mrn).length;
+  const duplicateKeys = [];
+  const seen = new Map();
+  importedRows.forEach((row) => {
+    const key = baseRowKey(row);
+    seen.set(key, (seen.get(key) || 0) + 1);
+  });
+  seen.forEach((count, key) => {
+    if (count > 1) duplicateKeys.push(key);
+  });
+
+  return {
+    status: missingRequiredGroups.length ? "needs attention" : "ready",
+    fileName,
+    rawRows: rawRows.length,
+    parsedRows: importedRows.length,
+    columnsDetected: headers.size,
+    requiredColumnsPresent: REQUIRED_COLUMN_GROUPS.length - missingRequiredGroups.length,
+    missingRequiredColumns: missingRequiredGroups,
+    exactMrnTextRows,
+    roundedMrnRiskRows,
+    missingMrnRows,
+    duplicateKeys,
+  };
+}
+
+function buildImportBatch(fileName, importedRows, importedMenuNames) {
+  const safeName = String(fileName || "menuworks-upload").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "menuworks-upload";
+  const importedAt = new Date().toISOString();
+  return {
+    id: `menuworks-${importedAt.slice(0, 10).replace(/-/g, "")}-${safeName.slice(0, 48)}`,
+    sourceFileName: fileName || "MenuWorks upload",
+    importedAt,
+    rowCount: importedRows.length,
+    menuCount: importedMenuNames.length,
+  };
+}
+
+function curatedDescription(row = {}) {
+  const description = textValue(row, "enticingDescription");
+  if (!description || description === "No description loaded yet.") return "";
+  return description;
+}
+
+function protectCuratedDescription(importedRow, currentRow) {
+  const currentDescription = curatedDescription(currentRow);
+  const importedDescription = textValue(importedRow, "enticingDescription");
+  if (!currentDescription || !importedDescription || currentDescription === importedDescription) return importedRow;
+  return {
+    ...importedRow,
+    enticingDescription: currentDescription,
+    menuWorksDescription: importedDescription,
+    primaryDescriptionSource: "source-truth-preserved",
+  };
+}
+
 export async function buildMenuWorksImportReview(file, currentRows = []) {
   const buffer = await file.arrayBuffer();
   const workbook = XLSX.read(buffer, { type: "array" });
   const sheet = workbook.Sheets.Report || workbook.Sheets[workbook.SheetNames[0]];
   const rawRows = XLSX.utils.sheet_to_json(sheet, { defval: null });
-  const importedRows = rawRows.map((row, index) => parseImportedMenuWorksRow(row, index)).filter(Boolean);
+  const parsedRows = rawRows.map((row, index) => parseImportedMenuWorksRow(row, index)).filter(Boolean);
 
-  if (!importedRows.length) {
+  if (!parsedRows.length) {
     throw new Error("No MenuWorks menu item rows were detected. Use the Menu Item Index or MenuWorks export format.");
   }
 
-  const importedMenuNames = Array.from(new Set(importedRows.map((row) => row.menu).filter(Boolean)));
+  const importedMenuNames = Array.from(new Set(parsedRows.map((row) => row.menu).filter(Boolean)));
   const currentRowsInScope = currentRows.filter((row) => importedMenuNames.includes(row.menu));
   const currentByKey = buildComparableMap(currentRowsInScope);
+  const protectedDescriptionChanges = [];
+  const importedRows = parsedRows.map((row) => {
+    const current = currentByKey.get(`${baseRowKey(row)}|occurrence:0`);
+    const protectedRow = protectCuratedDescription(row, current);
+    if (protectedRow !== row) {
+      protectedDescriptionChanges.push({ before: current, after: row, accepted: protectedRow });
+    }
+    return {
+      ...protectedRow,
+      sourceFileName: file.name,
+      sourceTruthName: "MenuWorks upload",
+    };
+  });
   const importedByKey = buildComparableMap(importedRows);
   const newItems = [];
   const removedItems = [];
@@ -280,8 +393,12 @@ export async function buildMenuWorksImportReview(file, currentRows = []) {
     costIncreases,
     costDecreases,
     priceChanges,
+    protectedDescriptionChanges,
+    hiddenAfterAccept: removedItems,
     newMenus,
     fileName: file.name,
+    preflight: buildPreflight(rawRows, importedRows, file.name),
+    importBatch: buildImportBatch(file.name, importedRows, importedMenuNames),
     comparableCostChangePct,
     totalCostChangePct,
     importQuality: getMenuDataQuality(importedRows),

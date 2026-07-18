@@ -2,7 +2,7 @@
 
 Last updated: July 18, 2026
 
-Current release version: `2026.07.18.005-webtrition-search-only`
+Current release version: `2026.07.18.006-menuworks-import-pipeline`
 
 Latest process update: July 16, 2026 added `scripts/publish-live.ps1`, `pnpm run publish:live`, and `docs/DEPLOYMENT.md` to standardize the proven GitHub CLI token + portable Git/OpenSSL publish path. This is a docs/process change and does not bump the visible app version.
 
@@ -167,6 +167,7 @@ Watch-outs:
 - Item cards show Webtrition weight in oz when available from MenuWorks/Supabase for audit visibility.
 - `2026.07.18.004-menu-library-mrn-webtrition-link` shows exact MRNs on Menu Library front cards and adds drawer actions to open Webtrition by MRN search or copy the MRN for manual Webtrition search.
 - `2026.07.18.005-webtrition-search-only` removes forced Webtrition `preview=sidePanel`, `productType`, and recipe-view parameters. The drawer action is now `Search Webtrition` and should keep users in the accessible search/result flow.
+- `2026.07.18.006-menuworks-import-pipeline` turns MenuWorks Truth Upload into a reviewed weekly import pipeline: schema preflight, exact MRN precision signals, protected curated descriptions, hidden-after-accept counts, and import batch tracking. Accept writes through the Recipe Library Supabase API first, hides stale rows only inside uploaded menus, then keeps a local fallback if the server write fails.
 - Keep compact card labels short; `WebT OZ` is intentional so the Webtrition weight label does not overflow narrow property cards.
 - Curated app assets now provide one exact, normalized-name photo for 110 matched dishes across Atlas Noodle, Anisa, Bibimbowl, Balti, Breakfast, and Carvery. Do not replace this with fuzzy runtime matching.
 - Atlas Noodle, Anisa, Breakfast, and Carvery have verified group-photo banners. Bibimbowl and Balti intentionally remain banner-free because their supplied folders did not contain a true group shot.

@@ -306,11 +306,11 @@ function postgrestQuotedList(values = []) {
     .join(",");
 }
 
-async function loadSupabaseRecipeItemKeys() {
-  const keys = [];
+async function loadSupabaseRecipeItemRefs() {
+  const refs = [];
   for (let offset = 0; offset < 50000; offset += SUPABASE_READ_PAGE_SIZE) {
     const params = new URLSearchParams({
-      select: "item_key",
+      select: "item_key,menu",
       visible_in_library: "eq.true",
     });
     const page = await supabaseFetch(`recipe_items?${params.toString()}`, {
@@ -321,16 +321,20 @@ async function loadSupabaseRecipeItemKeys() {
     });
     const pageRows = Array.isArray(page) ? page : [];
     pageRows.forEach((row) => {
-      if (row?.item_key) keys.push(row.item_key);
+      if (row?.item_key) refs.push({ itemKey: row.item_key, menu: row.menu || "" });
     });
     if (pageRows.length < SUPABASE_READ_PAGE_SIZE) break;
   }
-  return keys;
+  return refs;
 }
 
-async function hideStaleSupabaseRecipeItems(activeItemKeys = new Set()) {
-  const currentKeys = await loadSupabaseRecipeItemKeys();
-  const staleKeys = currentKeys.filter((key) => !activeItemKeys.has(key));
+async function hideStaleSupabaseRecipeItems(activeItemKeys = new Set(), menuScope = []) {
+  const currentRefs = await loadSupabaseRecipeItemRefs();
+  const scopedMenus = new Set(menuScope.filter(Boolean));
+  const staleKeys = currentRefs
+    .filter((ref) => !scopedMenus.size || scopedMenus.has(ref.menu))
+    .filter((ref) => !activeItemKeys.has(ref.itemKey))
+    .map((ref) => ref.itemKey);
   for (let index = 0; index < staleKeys.length; index += 100) {
     const batch = staleKeys.slice(index, index + 100);
     await supabaseFetch(`recipe_items?item_key=in.(${postgrestQuotedList(batch)})`, {
@@ -343,6 +347,21 @@ async function hideStaleSupabaseRecipeItems(activeItemKeys = new Set()) {
     });
   }
   return staleKeys.length;
+}
+
+async function writeRecipeRowsToSupabase(sourceRows = [], menuScope = []) {
+  const rows = sourceRows.map(recipeItemPayload);
+  const activeItemKeys = new Set(rows.map((row) => row.item_key).filter(Boolean));
+  for (let index = 0; index < rows.length; index += SUPABASE_BATCH_SIZE) {
+    const batch = rows.slice(index, index + SUPABASE_BATCH_SIZE);
+    await supabaseFetch("recipe_items?on_conflict=item_key", {
+      method: "POST",
+      headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify(batch),
+    });
+  }
+  const rowsHidden = await hideStaleSupabaseRecipeItems(activeItemKeys, menuScope);
+  return { rowsWritten: rows.length, rowsHidden, activeItemKeys };
 }
 
 function attachDocumentsToRows(rows = [], documents = []) {
@@ -537,6 +556,11 @@ async function handlePost(req, res) {
     return;
   }
 
+  if (action === "acceptMenuWorksImport") {
+    await handleAcceptMenuWorksImport(req, res, body);
+    return;
+  }
+
   if (action !== "backfillRecipeItems") {
     sendJson(res, 400, { ok: false, message: "Unsupported Recipe Library action." });
     return;
@@ -549,23 +573,14 @@ async function handlePost(req, res) {
 
   try {
     const sourceRows = Array.isArray(body?.rows) && body.rows.length ? body.rows : await loadMenuWorksFallbackRows();
-    const rows = sourceRows.map(recipeItemPayload);
-    const activeItemKeys = new Set(rows.map((row) => row.item_key).filter(Boolean));
-    for (let index = 0; index < rows.length; index += SUPABASE_BATCH_SIZE) {
-      const batch = rows.slice(index, index + SUPABASE_BATCH_SIZE);
-      await supabaseFetch("recipe_items?on_conflict=item_key", {
-        method: "POST",
-        headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
-        body: JSON.stringify(batch),
-      });
-    }
-    const rowsHidden = await hideStaleSupabaseRecipeItems(activeItemKeys);
+    const menuScope = Array.from(new Set(sourceRows.map((row) => row?.menu).filter(Boolean)));
+    const { rowsWritten, rowsHidden } = await writeRecipeRowsToSupabase(sourceRows, menuScope);
 
     sendJson(res, 200, {
       ok: true,
       source: "supabase-recipe-items",
-      message: `Backfilled ${rows.length.toLocaleString()} Recipe Library rows to Supabase and hid ${rowsHidden.toLocaleString()} stale rows.`,
-      rowsWritten: rows.length,
+      message: `Backfilled ${rowsWritten.toLocaleString()} Recipe Library rows to Supabase and hid ${rowsHidden.toLocaleString()} stale rows.`,
+      rowsWritten,
       rowsHidden,
       menus: buildMenuSummaries(sourceRows).length,
     });
@@ -574,6 +589,49 @@ async function handlePost(req, res) {
       ok: false,
       source: "supabase-recipe-items",
       message: error.message || "Recipe Library Supabase backfill failed.",
+      detail: error.payload || null,
+    });
+  }
+}
+
+async function handleAcceptMenuWorksImport(req, res, body) {
+  if (!isAuthorized(req, body)) {
+    sendJson(res, 401, { ok: false, message: "Accepting a MenuWorks import requires the admin code." });
+    return;
+  }
+
+  try {
+    const sourceRows = Array.isArray(body?.rows) ? body.rows : [];
+    const menuScope = Array.isArray(body?.importedMenuNames)
+      ? body.importedMenuNames.map((menu) => String(menu || "").trim()).filter(Boolean)
+      : Array.from(new Set(sourceRows.map((row) => row?.menu).filter(Boolean)));
+    if (!sourceRows.length || !menuScope.length) {
+      sendJson(res, 400, { ok: false, message: "Accepted import needs parsed rows and at least one menu scope." });
+      return;
+    }
+
+    const importBatch = {
+      ...(body?.importBatch || {}),
+      acceptedAt: new Date().toISOString(),
+      rowCount: sourceRows.length,
+      menuCount: menuScope.length,
+    };
+    const { rowsWritten, rowsHidden } = await writeRecipeRowsToSupabase(sourceRows, menuScope);
+
+    sendJson(res, 200, {
+      ok: true,
+      source: "supabase-recipe-items",
+      message: `Accepted import batch ${importBatch.id || "MenuWorks"}: wrote ${rowsWritten.toLocaleString()} rows and hid ${rowsHidden.toLocaleString()} stale rows in ${menuScope.length.toLocaleString()} menus.`,
+      rowsWritten,
+      rowsHidden,
+      menus: menuScope.length,
+      importBatch,
+    });
+  } catch (error) {
+    sendJson(res, error.status || 500, {
+      ok: false,
+      source: "supabase-recipe-items",
+      message: error.message || "MenuWorks import accept failed.",
       detail: error.payload || null,
     });
   }
