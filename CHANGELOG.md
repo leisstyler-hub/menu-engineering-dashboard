@@ -2,6 +2,7 @@
 
 ## 2026-07-18
 
+- [Jul 18, 3:28 PM] Added a Los Angeles changelog timestamp helper and stricter timestamp validation so dashboard changelog entries keep the intended hour and minute; set visible app version to `2026.07.18.007-changelog-time-guard`.
 - [Jul 18, 1:25 PM] Added a fast `pnpm run release:preflight` command for source/auth/handoff checks before small publishes without running the full app verification suite.
 - [Jul 18, 1:25 PM] Updated `publish-live.ps1` so successful pushes immediately update local `origin/main` to the pushed commit, avoiding stale Git status without an extra network fetch; this is a tooling/process update and does not change the visible app version.
 - [Jul 18, 12:45 PM] Added a repo-local GitHub HTTPS repair command that uses portable Git/OpenSSL plus the GitHub CLI token to avoid Windows `SEC_E_NO_CREDENTIALS`, missing `git-remote-https`, and stale `origin/main` states.
