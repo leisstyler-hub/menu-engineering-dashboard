@@ -182,6 +182,23 @@ function csvEscape(value) {
   return `"${String(value ?? "").replace(/"/g, '""')}"`;
 }
 
+function downloadCsvFile(filename, headers, body) {
+  const csv = [headers, ...body].map((line) => line.map(csvEscape).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function csvSlug(value, fallback = "menu-library") {
+  return `${String(value || fallback).replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase() || fallback}`;
+}
+
 function downloadMenuCsv(menu, rows) {
   const headers = [
     "Menu",
@@ -215,16 +232,34 @@ function downloadMenuCsv(menu, rows) {
     itemDescription(row),
     "Recipe instructions not loaded"
   ]);
-  const csv = [headers, ...body].map((line) => line.map(csvEscape).join(",")).join("\n");
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `${String(menu || "recipe-database").replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase()}-items.csv`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
+  downloadCsvFile(`${csvSlug(menu, "menu-library")}-items.csv`, headers, body);
+}
+
+function downloadAllMenusCsv(rows) {
+  const headers = [
+    "Menu",
+    "Recipe Name",
+    "MRN",
+    "Category",
+    "Description",
+    "Calories",
+    "Sell Price",
+    "True Cost"
+  ];
+  const body = rows
+    .slice()
+    .sort((a, b) => String(a.menu || "").localeCompare(String(b.menu || "")) || itemName(a).localeCompare(itemName(b)))
+    .map((row) => [
+      row.menu,
+      itemName(row),
+      row.mrn || row.MRN || "",
+      categoryLabel(row),
+      itemDescription(row),
+      row.calories ?? "",
+      row.price ?? "",
+      row.trueCost ?? "",
+    ]);
+  downloadCsvFile("all-menu-library-items.csv", headers, body);
 }
 
 function RecipeLibraryStatus({ title, detail, onBackToPlatform, onOpenSmartsheetHealth, tone = "loading" }) {
@@ -343,6 +378,7 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
   const [pendingImport, setPendingImport] = useState(null);
   const [uploadInitiationCode, setUploadInitiationCode] = useState("");
   const [uploadStatus, setUploadStatus] = useState("");
+  const [isAllMenusCsvDownloading, setIsAllMenusCsvDownloading] = useState(false);
 
   const selectedRows = useMemo(() => {
     if (!usesLocalRows) return rows;
@@ -428,6 +464,18 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
     if (usesLocalRows) return rows;
     const payload = await fetchRecipeLibraryPayload("all");
     return payload.rows || [];
+  };
+
+  const handleDownloadAllMenusCsv = async () => {
+    try {
+      setIsAllMenusCsvDownloading(true);
+      const fullRows = await ensureFullRecipeRows();
+      downloadAllMenusCsv(fullRows);
+    } catch (error) {
+      setMenuRowsLoadError(error instanceof Error ? error.message : "Unable to prepare the all-menu CSV export.");
+    } finally {
+      setIsAllMenusCsvDownloading(false);
+    }
   };
 
   const saveLibraryItem = async (patch) => {
@@ -615,10 +663,16 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
                     {filteredRows.length.toLocaleString()} visible of {selectedRows.length.toLocaleString()} items. Average priced food cost: {pct(avgFc)}.
                   </p>
                 </div>
-                <button type="button" onClick={() => downloadMenuCsv(selectedMenu, filteredRows)} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white hover:bg-slate-800">
-                  <FileDown size={17} />
-                  Download menu CSV
-                </button>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <button type="button" onClick={handleDownloadAllMenusCsv} disabled={isAllMenusCsvDownloading} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-950 shadow-sm hover:border-emerald-200 hover:bg-emerald-50 disabled:cursor-wait disabled:opacity-70">
+                    <FileDown size={17} />
+                    {isAllMenusCsvDownloading ? "Preparing..." : "Download All Menus CSV"}
+                  </button>
+                  <button type="button" onClick={() => downloadMenuCsv(selectedMenu, filteredRows)} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white hover:bg-slate-800">
+                    <FileDown size={17} />
+                    Download menu CSV
+                  </button>
+                </div>
               </div>
 
               <div className="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_220px_180px]">

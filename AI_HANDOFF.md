@@ -1,8 +1,8 @@
 # AI Handoff
 
-Last updated: July 17, 2026
+Last updated: July 18, 2026
 
-Current release version: `2026.07.17.002-promo-resubmit-state-integrity`
+Current release version: `2026.07.18.001-menu-library-all-menus-export`
 
 Latest process update: July 16, 2026 added `scripts/publish-live.ps1`, `pnpm run publish:live`, and `docs/DEPLOYMENT.md` to standardize the proven GitHub CLI token + portable Git/OpenSSL publish path. This is a docs/process change and does not bump the visible app version.
 
@@ -157,6 +157,7 @@ Purpose: Menu and item library organized by menus, with cards, detail drawer, nu
 Watch-outs:
 
 - It is called Menu Library in user-facing UI. Internal file paths still use `recipe-database`.
+- `2026.07.18.001-menu-library-all-menus-export` added a `Download All Menus CSV` button beside the selected-menu CSV export. It calls `ensureFullRecipeRows()` on demand and exports menu, recipe name, MRN, category, description, calories, sell price, and true cost across the full library.
 - `2026.07.12.003-master-menus-sync` rebuilt `src/data/menuItems.json` from `Master Menus 7-12-26.csv`: 1,550 Master rows, 53 menus, 100 new/rekeyed rows, and 57 stale generated rows removed compared with the previous app dataset.
 - The current raw source archive is `public/data/master-menus-raw-2026-07-12.json`. Older raw MenuWorks archives were removed from the deployable app.
 - Recipe Library Supabase backfill now upserts the current Master rows and marks visible Supabase recipe rows absent from the Master as `visible_in_library: false`; do not reintroduce append-only backfill behavior.

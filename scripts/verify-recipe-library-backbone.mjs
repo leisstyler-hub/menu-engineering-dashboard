@@ -56,6 +56,12 @@ assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "uploadRecipeD
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Upload food photo");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "DatabaseSourceChip");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Supabase");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "downloadAllMenusCsv");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "handleDownloadAllMenusCsv");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Download All Menus CSV");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Recipe Name");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Sell Price");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "ensureFullRecipeRows()");
 
 const recipeDatabaseText = read("src/features/recipe-database/RecipeDatabase.jsx");
 const statusStart = recipeDatabaseText.indexOf("function RecipeLibraryStatus");

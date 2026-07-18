@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-07-18
+
+- [Jul 18, 12:16 AM] Added a Menu Library `Download All Menus CSV` export beside the selected-menu export so leaders can pull menu, recipe name, MRN, category, description, calories, sell price, and true cost across the full library in one file.
+- [Jul 18, 12:16 AM] Kept the existing selected-menu CSV export intact and added release verification markers for the all-menu export path; set visible app version to `2026.07.18.001-menu-library-all-menus-export`.
+
 ## 2026-07-17
 
 - [Jul 17, 10:35 PM] Fixed promo override submitted recaps and leadership cards so full-week takeovers show the promo name and saved promo items while suppressing stale normal Global rows from prior submissions.
