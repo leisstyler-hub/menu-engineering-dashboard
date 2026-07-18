@@ -130,6 +130,55 @@ function savedReInventRecoveryWeekOutOfOrderRecords() {
   ];
 }
 
+function promoSelection(item, selectionType, slotNumber, overrides = {}) {
+  const activeParentId = overrides.parentId || parentId;
+  return {
+    ...baseRecord(`${activeParentId}|promotion|base|${selectionType}|${slotNumber}|${item}`, SMARTSHEET_RECORD_TYPES.stationSelection, "Submitted", overrides),
+    [SMARTSHEET_COLUMNS.stationKey]: "promotion",
+    [SMARTSHEET_COLUMNS.menuConcept]: overrides.promotionName || "Summer Crop Menu",
+    [SMARTSHEET_COLUMNS.selectionType]: selectionType,
+    [SMARTSHEET_COLUMNS.menuItemSelection]: item,
+    [SMARTSHEET_COLUMNS.slotNumber]: slotNumber,
+  };
+}
+
+function savedReInventFullWeekPromoWithStaleGlobalRows() {
+  const overrides = {
+    parentId: augustParentId,
+    week: augustWeek,
+    cafe: "Re:Invent",
+    weekStartDate: "2026-08-10",
+    weekEndDate: "2026-08-14",
+    promotionName: "Summer Crop Menu",
+  };
+  return [
+    {
+      ...baseRecord(augustParentId, SMARTSHEET_RECORD_TYPES.rotationHeader, "Submitted", overrides),
+      [SMARTSHEET_COLUMNS.savedEntryCount]: 5,
+      [SMARTSHEET_COLUMNS.historyInclude]: true,
+      [SMARTSHEET_COLUMNS.foodCostRangeLowPct]: 6.6,
+      [SMARTSHEET_COLUMNS.foodCostRangeHighPct]: 43.5,
+    },
+    {
+      ...globalBlock("promotion-override", "Promotion Override", "", 1, overrides),
+      [SMARTSHEET_COLUMNS.menuConcept]: "",
+      [SMARTSHEET_COLUMNS.globalBlockId]: `${augustParentId}|global|promotion-override`,
+      [SMARTSHEET_COLUMNS.promotionOverrideEnabled]: true,
+      [SMARTSHEET_COLUMNS.promotionName]: "Summer Crop Menu",
+      [SMARTSHEET_COLUMNS.promotionDays]: "Monday, Tuesday, Wednesday, Thursday, Friday",
+    },
+    promoSelection("Summer Crop Chicken", SMARTSHEET_SELECTION_TYPES.entree, 1, overrides),
+    promoSelection("Summer Corn Salad", SMARTSHEET_SELECTION_TYPES.side, 1, overrides),
+    promoSelection("Watermelon Fresca", SMARTSHEET_SELECTION_TYPES.extension, 1, overrides),
+    globalBlock("monTue", "Monday + Tuesday", "AMZ: Cypress", 1, overrides),
+    globalBlock("wedThu", "Wednesday + Thursday", "AMZ: Cypress", 2, overrides),
+    globalBlock("friCarry", "Friday", "AMZ: Cypress", 3, overrides),
+    selection("monTue", "AMZ: Cypress", "Chicken Souvlaki Gyro", 1, overrides),
+    selection("wedThu", "AMZ: Cypress", "Spiced Jasmine Rice", 2, overrides),
+    selection("friCarry", "AMZ: Cypress", "Chicken Souvlaki Gyro", 1, overrides),
+  ];
+}
+
 function savedDopplerRecordsWithWrongGlobalBlockMenu() {
   const overrides = {
     parentId: dopplerParentId,
@@ -307,6 +356,59 @@ test("Re:Invent leadership card shows the full recovery week in calendar order",
   const card = page.getByRole("button", { name: /Open Re:Invent planner/i }).first();
   await expect(card).toBeVisible({ timeout: 20_000 });
   await expect(card).toContainText(/Monday[\s\S]*AMZ: Saffron[\s\S]*Tuesday \+ Wednesday[\s\S]*AMZ: Lemongrass \+ Lime[\s\S]*Thursday \+ Friday[\s\S]*AMZ: Cypress/);
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("Re:Invent full-week promo recall ignores stale normal global rows", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await stubRotationReads(page, savedReInventFullWeekPromoWithStaleGlobalRows());
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: /South/i }).click();
+  await page.getByRole("combobox").first().selectOption({ label: augustWeek });
+  await page.getByRole("button", { name: /^Re:Invent$/i }).click();
+
+  const card = page.getByRole("button", { name: /Open Re:Invent planner/i }).first();
+  await expect(card).toBeVisible({ timeout: 20_000 });
+  await expect(card).toContainText(/Monday-Friday[\s\S]*Summer Crop Menu/);
+  await expect(card.getByText("AMZ: Cypress")).toHaveCount(0);
+  await expect(card.getByText(/6\.6%\s*–\s*43\.5%/)).toHaveCount(0);
+
+  const recap = page.getByText("Submitted Menu Recap").locator("xpath=ancestor::section[1]");
+  await expect(recap).toBeVisible({ timeout: 20_000 });
+  await expect(recap.getByText("Summer Crop Menu").first()).toBeVisible();
+  await expect(recap.getByText("Summer Crop Chicken").first()).toBeVisible();
+  await expect(recap.getByText("Summer Corn Salad").first()).toBeVisible();
+  await expect(recap.getByText("Watermelon Fresca").first()).toBeVisible();
+  await expect(recap.getByText("AMZ: Cypress")).toHaveCount(0);
+  await expect(recap.getByText("Chicken Souvlaki Gyro")).toHaveCount(0);
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("edit and resubmit state clears when switching cafes", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await stubRotationReads(page, [
+    ...savedReInventRecordsWithWrongBlockMenus(),
+    ...savedDopplerRecordsWithWrongGlobalBlockMenu()
+  ]);
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: /South/i }).click();
+  await page.getByRole("combobox").first().selectOption({ label: augustWeek });
+  await page.getByRole("button", { name: /^Re:Invent$/i }).click();
+
+  const reInventRecap = page.getByText("Submitted Menu Recap").locator("xpath=ancestor::section[1]");
+  await expect(reInventRecap).toBeVisible({ timeout: 20_000 });
+  await reInventRecap.getByLabel(/Edit and resubmit/i).click({ force: true, noWaitAfter: true });
+  await expect(page.getByRole("heading", { name: /^Re:Invent$/i }).first()).toBeVisible();
+
+  await page.getByRole("button", { name: /^Doppler$/i }).click();
+  const dopplerRecap = page.getByText("Submitted Menu Recap").locator("xpath=ancestor::section[1]");
+  await expect(dopplerRecap).toBeVisible({ timeout: 20_000 });
+  await expect(dopplerRecap.getByRole("heading", { name: /^Doppler$/i })).toBeVisible();
+  await expect(dopplerRecap.getByText("AMZ+RA: Andes").first()).toBeVisible();
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });

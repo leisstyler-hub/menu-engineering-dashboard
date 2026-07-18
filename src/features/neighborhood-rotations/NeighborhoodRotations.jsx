@@ -2077,6 +2077,16 @@ function selectedRowsFromGlobalBlock(block = {}, options) {
   return uniqueSelectionRows(rows, options);
 }
 
+function selectedRowsFromPromotionOverride(promo = {}, options = {}) {
+  const selections = promotionSelections(promo);
+  const rows = [
+    ...rowsForSelectedNames(selections.entrees || [], { ...options, selectionGroup: "entrees" }),
+    ...rowsForSelectedNames(selections.sides || [], { ...options, selectionGroup: "sides" }),
+    ...rowsForSelectedNames(selections.extensions || [], { ...options, selectionGroup: "extensions" })
+  ];
+  return uniqueSelectionRows(rows, options);
+}
+
 function globalSelectedRows(rotation, options) {
   const candidateRows = globalMenuRows(rotation.menu, rotation.station);
   const rows = [
@@ -2111,17 +2121,34 @@ function getStationSelectionRows(rotation, cafe, week = rotation?.week || "") {
   const uploaded = rotation.uploadedLtos || {};
   const stationRows = [];
   const cafeStations = CAFE_STATION_CONFIG[cafe] || ["global"];
+  const promo = normalizePromotionOverride(rotation.promotionOverride);
+  const promoActive = promotionIsActive(promo);
+  const promoCoversWholeWeek = promotionCoversWeek(promo);
 
   if (cafeStations.includes("global")) {
-    if (cafe === "Nitro") {
+    if (promoActive) {
+      stationRows.push({
+        key: "promotion",
+        label: "Promotion Override",
+        items: selectedRowsFromPromotionOverride(promo, { unique: true }),
+        note: `${promo.name}${promo.days.length ? ` - ${dayListLabel(promo.days)}` : ""}`
+      });
+    }
+
+    if (promoCoversWholeWeek) {
+      // Full-week takeovers replace the normal global rows for this saved week.
+    } else if (cafe === "Nitro") {
       const hasSplit = hasNitroSplitBlocks(rotation);
-      const blockLayout = hasSplit ? nitroGlobalBlockLayout() : [{ id: "nitroMonTue", title: "Weekly Global Selection" }];
+      const blockLayout = (hasSplit ? nitroGlobalBlockLayout() : [{ id: "nitroMonTue", title: "Weekly Global Selection", days: WEEKDAY_OPTIONS }])
+        .filter((blockInfo) => !promotionCoversBlock(promo, blockInfo));
       blockLayout.forEach((blockInfo) => {
         const block = hydrateNitroBlock(rotation, blockInfo.id);
         stationRows.push({ key: `global-${blockInfo.id}`, label: blockInfo.title, items: selectedRowsFromGlobalBlock(block, { unique: true }), note: block.menu ? block.menu : "not selected" });
       });
     } else if (isSplitGlobalCafe(cafe)) {
-      const blocks = persistedSplitGlobalBlocks(rotation, cafe, week || rotation.week || "");
+      const blockLayoutById = new Map(splitGlobalBlockLayout(cafe, week || rotation.week || "").map((block) => [block.id, block]));
+      const blocks = persistedSplitGlobalBlocks(rotation, cafe, week || rotation.week || "")
+        .filter(([blockId]) => !promotionCoversBlock(promo, blockLayoutById.get(blockId)));
       if (blocks.length) {
         blocks.forEach(([blockId, block]) => {
           const meta = menuBlockMeta(blockId);
@@ -2823,6 +2850,12 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
     updateRotation(patch);
   };
 
+  useEffect(() => {
+    setEditSubmitted(false);
+    setSubmitWarningOpen(false);
+    setSubmitPersistError("");
+  }, [district, cafe, week]);
+
   const stationOptions = subConceptOptionsForMenu(rotation.menu);
   const menuItems = globalMenuRows(rotation.menu, rotation.station);
   const categorized = categorize(menuItems);
@@ -2885,6 +2918,7 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
     try {
       await persistRotationToDatabase?.(nextRotation, { optimistic: false, requirePrimary: true });
       updateRotation(nextRotation);
+      setEditSubmitted(false);
       setSubmitWarningOpen(false);
     } catch (error) {
       setSubmitPersistError(error?.message || "The app could not confirm this submission in the live database. Please try again.");

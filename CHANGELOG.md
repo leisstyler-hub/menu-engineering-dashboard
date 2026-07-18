@@ -2,6 +2,10 @@
 
 ## 2026-07-17
 
+- [Jul 17, 10:35 PM] Fixed promo override submitted recaps and leadership cards so full-week takeovers show the promo name and saved promo items while suppressing stale normal Global rows from prior submissions.
+- [Jul 17, 10:35 PM] Cleared stale selected-food-cost signals from promo override recalls by routing cards, recaps, and station rows through the same promo-aware selection builder.
+- [Jul 17, 10:35 PM] Reset `Edit and resubmit` mode whenever the selected district, cafe, or week changes, and after a confirmed resubmit, so edit state cannot carry into another cafe.
+- [Jul 17, 10:35 PM] Added browser regression coverage for full-week Re:Invent promo recall and cross-cafe edit-state reset; set visible app version to `2026.07.17.002-promo-resubmit-state-integrity`.
 - [Jul 17, 12:00 PM] Removed fake Global/AMZ labels from submitted recaps, leadership cards, and export cards for cafes that do not run a Global station; locked cards keep update time and station progress without the unhelpful `By Chef` line.
 - [Jul 17, 12:00 PM] Reworked promotion override data so it is week-only, uses Monday-Friday promo days, stores optional promo entree/side/extension notes, and no longer requires normal Global selection rows when the promo covers the full week.
 - [Jul 17, 12:00 PM] Set visible app version to `2026.07.17.001-promo-override-global-card-integrity`.
