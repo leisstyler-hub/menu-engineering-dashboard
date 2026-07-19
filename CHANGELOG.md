@@ -2,6 +2,7 @@
 
 ## 2026-07-18
 
+- [Jul 18, 5:43 PM] Put no-Global locked cafe cards into the same bordered summary tile style by showing `Stations` / `Selections locked` instead of loose text, while still avoiding fake AMZ labels; set visible app version to `2026.07.18.009-station-locked-card-border`.
 - [Jul 18, 4:08 PM] Normalized Neighborhood Rotation leadership and submitted recap cards so one-menu Global weeks render as bordered `Monday - Friday` concept tiles, matching split-week and promo cards in light and dark mode; set visible app version to `2026.07.18.008-rotation-card-summary-border`.
 - [Jul 18, 3:28 PM] Added a Los Angeles changelog timestamp helper and stricter timestamp validation so dashboard changelog entries keep the intended hour and minute; set visible app version to `2026.07.18.007-changelog-time-guard`.
 - [Jul 18, 1:25 PM] Added a fast `pnpm run release:preflight` command for source/auth/handoff checks before small publishes without running the full app verification suite.

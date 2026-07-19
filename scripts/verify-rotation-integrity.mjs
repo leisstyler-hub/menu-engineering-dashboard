@@ -134,6 +134,10 @@ if (!/function cardSummaryBlockLabels/.test(source) || !/title: "Monday - Friday
   fail("Executive summary cards must show full-week labels for split-global cafes and Doppler.");
 }
 
+if (!/id: "stationLocked", title: "Stations", menu: "Selections locked"/.test(source)) {
+  fail("No-Global locked cafes must show Selections locked in the same bordered summary block style without fake AMZ labels.");
+}
+
 if (!/const SPLIT_GLOBAL_CAFE_CYCLE_STARTS = \{\s*"Re:Invent": "2026-07-06",\s*Blueshift: "2026-07-06"\s*\};/.test(source)) {
   fail("Split-global cafes need separate cycle anchors: Re:Invent and Blueshift both restart Mon+Tue on Jul 6, 2026.");
 }

@@ -1760,7 +1760,10 @@ function rotationSummaryBlockLabels(rotation = {}, cafe = rotation?.cafe || "", 
 
 function cardSummaryBlockLabels(rotation = {}, cafe = rotation?.cafe || "", week = rotation?.week || "", previousRotation = rotation?.previousRotation || EMPTY_ROTATION) {
   const blocks = rotationSummaryBlockLabels(rotation, cafe, week, previousRotation);
-  if (blocks.length || !cafeHasGlobalStation(cafe)) return blocks;
+  if (blocks.length) return blocks;
+  if (!cafeHasGlobalStation(cafe)) {
+    return isSubmittedRotation(rotation) ? [{ id: "stationLocked", title: "Stations", menu: "Selections locked" }] : [];
+  }
   const menu = rotationMenuLabel(rotation, cafe, week);
   return menu ? [{ id: "fullWeek", title: "Monday - Friday", menu }] : [];
 }
