@@ -2,6 +2,7 @@
 
 ## 2026-07-18
 
+- [Jul 18, 9:10 PM] Organized AMZ: Carvery in Menu Library into Carved Proteins, Sandwiches, and Vegetable Carvery sections, and added persistent Search Items, Item Section, and Diet Type labels above the Menu Library controls; set visible app version to `2026.07.18.011-carvery-library-sections`.
 - [Jul 18, 7:25 PM] Collapsed duplicate chef-facing Menu Library cards and Neighborhood Rotation selector options by visible menu, station, category, item name, and MRN while keeping raw Webtrition rows available for audits; set visible app version to `2026.07.18.010-menu-item-dedupe`.
 - [Jul 18, 5:43 PM] Put no-Global locked cafe cards into the same bordered summary tile style by showing `Stations` / `Selections locked` instead of loose text, while still avoiding fake AMZ labels; set visible app version to `2026.07.18.009-station-locked-card-border`.
 - [Jul 18, 4:08 PM] Normalized Neighborhood Rotation leadership and submitted recap cards so one-menu Global weeks render as bordered `Monday - Friday` concept tiles, matching split-week and promo cards in light and dark mode; set visible app version to `2026.07.18.008-rotation-card-summary-border`.

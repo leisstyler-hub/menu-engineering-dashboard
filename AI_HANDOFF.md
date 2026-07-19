@@ -2,9 +2,9 @@
 
 Last updated: July 18, 2026
 
-Current release version: `2026.07.18.010-menu-item-dedupe`
+Current release version: `2026.07.18.011-carvery-library-sections`
 
-Latest process update: July 18, 2026 collapsed duplicate chef-facing Menu Library cards and Neighborhood Rotation selector options by visible menu, station, category, item name, and MRN while preserving raw Webtrition rows for audit/source work.
+Latest process update: July 18, 2026 organized AMZ: Carvery in Menu Library into Carved Proteins, Sandwiches, and Vegetable Carvery sections, and added persistent labels above the Menu Library search/category/diet controls so the filters no longer appear as anonymous `All` dropdowns.
 
 ## First Rule
 

@@ -187,12 +187,14 @@ function categoryLabel(row) {
 
 function categoryRank(category = "") {
   const normalized = String(category).toLowerCase();
-  if (normalized.includes("entree")) return 1;
-  if (normalized.includes("vegetable carvery")) return 2;
-  if (normalized.includes("side")) return 3;
-  if (normalized.includes("sub")) return 4;
-  if (normalized.includes("extension")) return 5;
-  return 5;
+  if (normalized.includes("carved proteins")) return 1;
+  if (normalized.includes("sandwich")) return 2;
+  if (normalized.includes("entree")) return 3;
+  if (normalized.includes("vegetable carvery")) return 4;
+  if (normalized.includes("side")) return 5;
+  if (normalized.includes("sub")) return 6;
+  if (normalized.includes("extension")) return 7;
+  return 7;
 }
 
 function foodCost(row) {
@@ -736,16 +738,25 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
               </div>
 
               <div className="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_220px_180px]">
-                <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                  <Search size={17} className="text-slate-400" />
-                  <input value={itemSearch} onChange={(event) => setItemSearch(event.target.value)} placeholder="Search item, ingredient, allergen..." className="w-full bg-transparent text-sm font-bold outline-none placeholder:text-slate-400" />
+                <label className="space-y-1.5">
+                  <span className="block text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">Search Items</span>
+                  <span className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <Search size={17} className="text-slate-400" />
+                    <input value={itemSearch} onChange={(event) => setItemSearch(event.target.value)} placeholder="Search item, ingredient, allergen..." className="w-full bg-transparent text-sm font-bold outline-none placeholder:text-slate-400" />
+                  </span>
                 </label>
-                <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 outline-none">
-                  {categoryOptions.map((option) => <option key={option} value={option}>{option}</option>)}
-                </select>
-                <select value={dietFilter} onChange={(event) => setDietFilter(event.target.value)} className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 outline-none">
-                  {["All", "Vegan", "Vegetarian", "Regular"].map((option) => <option key={option} value={option}>{option}</option>)}
-                </select>
+                <label className="space-y-1.5">
+                  <span className="block text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">Item Section</span>
+                  <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 outline-none">
+                    {categoryOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                  </select>
+                </label>
+                <label className="space-y-1.5">
+                  <span className="block text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">Diet Type</span>
+                  <select value={dietFilter} onChange={(event) => setDietFilter(event.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 outline-none">
+                    {["All", "Vegan", "Vegetarian", "Regular"].map((option) => <option key={option} value={option}>{option}</option>)}
+                  </select>
+                </label>
               </div>
             </section>
 

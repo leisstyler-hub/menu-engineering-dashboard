@@ -96,13 +96,21 @@ export function recipeLibraryCategoryGroup(row = {}) {
   const notes = textValue(row, "menuItemNotes");
   const selectorGroup = textValue(row, "plannerSelectorGroup", "selectorGroup");
   const role = textValue(row, "menuItemRole", "selectionBehavior");
-  if (
-    menu === "AMZ: Carvery" &&
-    (/charred vegetable option/i.test(notes) || /carvery-rotating-vegetable/i.test(`${selectorGroup} ${role}`))
-  ) {
-    return "Vegetable Carvery";
+  const recipeCategory = textValue(row, "recipeCategory");
+  const category = textValue(row, "category");
+  if (menu === "AMZ: Carvery") {
+    const carverySignals = `${notes} ${selectorGroup} ${role} ${recipeCategory} ${category}`;
+    if (/charred vegetable option/i.test(notes) || /carvery-rotating-vegetable/i.test(carverySignals)) {
+      return "Vegetable Carvery";
+    }
+    if (/sandwich served a la carte/i.test(notes) || /\ba-la-carte\b/i.test(role) || /sandwich\/wrap/i.test(recipeCategory)) {
+      return "Sandwiches";
+    }
+    if (category.toLowerCase() === "entree" || /\bentree\b/i.test(role)) {
+      return "Carved Proteins";
+    }
   }
-  return textValue(row, "category") || "Unclassified";
+  return category || "Unclassified";
 }
 
 function itemTrustText(row, { includeIngredients = true } = {}) {

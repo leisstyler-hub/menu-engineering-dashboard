@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import MENUWORKS_ITEMS from "../src/data/menuItems.json" with { type: "json" };
 import { MENU_HEADER_ASSETS, getRecipeLibraryPhoto } from "../src/data/recipeLibraryAssets.js";
-import { normalizeRecipeLibraryItem } from "../src/features/recipe-database/recipeLibraryModel.js";
+import { normalizeRecipeLibraryItem, recipeLibraryCategoryGroup } from "../src/features/recipe-database/recipeLibraryModel.js";
 
 const root = process.cwd();
 
@@ -72,6 +72,11 @@ assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "<Property lab
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Recipe Name");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Sell Price");
 assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "ensureFullRecipeRows()");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Search Items");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Item Section");
+assertIncludes("src/features/recipe-database/RecipeDatabase.jsx", "Diet Type");
+assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "Carved Proteins");
+assertIncludes("src/features/recipe-database/recipeLibraryModel.js", "Sandwiches");
 
 const recipeDatabaseText = read("src/features/recipe-database/RecipeDatabase.jsx");
 const statusStart = recipeDatabaseText.indexOf("function RecipeLibraryStatus");
@@ -191,6 +196,25 @@ Object.entries(MENU_HEADER_ASSETS).forEach(([menu, asset]) => {
     throw new Error(`Menu Library header photo is missing: ${menu} -> ${asset.src}`);
   }
 });
+
+const carveryRows = MENUWORKS_ITEMS.filter((row) => row.menu === "AMZ: Carvery");
+const carveryGroups = new Set(carveryRows.map((row) => recipeLibraryCategoryGroup(row)));
+["Carved Proteins", "Sandwiches", "Vegetable Carvery"].forEach((expectedGroup) => {
+  if (!carveryGroups.has(expectedGroup)) {
+    throw new Error(`Menu Library AMZ: Carvery is missing expected section: ${expectedGroup}`);
+  }
+});
+
+const carverySandwichMistakes = carveryRows.filter((row) => /sandwich served a la carte|sandwich\/wrap|\ba-la-carte\b/i.test(`${row.menuItemNotes || ""} ${row.recipeCategory || ""} ${row.menuItemRole || ""}`) && recipeLibraryCategoryGroup(row) !== "Sandwiches");
+if (carverySandwichMistakes.length) {
+  throw new Error(`Menu Library AMZ: Carvery sandwich section mapping failed for: ${carverySandwichMistakes.map((row) => row.item || row.recipeName).join(", ")}`);
+}
+
+const carveryProteinMistakes = carveryRows.filter((row) => /entree/i.test(`${row.category || ""} ${row.menuItemRole || ""}`) && !/sandwich served a la carte|sandwich\/wrap|\ba-la-carte\b/i.test(`${row.menuItemNotes || ""} ${row.recipeCategory || ""} ${row.menuItemRole || ""}`) && recipeLibraryCategoryGroup(row) !== "Carved Proteins");
+if (carveryProteinMistakes.length) {
+  throw new Error(`Menu Library AMZ: Carvery carved protein mapping failed for: ${carveryProteinMistakes.map((row) => row.item || row.recipeName).join(", ")}`);
+}
+
 const mismatchedPhotoRows = photoRows.filter((row) => {
   const itemKey = normalizeRecipeLibraryItem(row).item_key;
   const openedRow = MENUWORKS_ITEMS.find((candidate) => normalizeRecipeLibraryItem(candidate).item_key === itemKey);
