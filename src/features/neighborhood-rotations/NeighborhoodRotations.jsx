@@ -1111,14 +1111,7 @@ function getDiet(row) {
 }
 
 function uniqueRows(rows) {
-  const seen = new Set();
-  return rows.filter((row) => {
-    const identity = getItemIdentity(row);
-    const key = `${identity}`.toLowerCase() + "|" + (row.mrn || row.MRN || "") + "|" + (row.portion || row.Portion || "");
-    if (!identity || seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  return uniqueOptionRows(rows);
 }
 
 function uniqueOptionRows(rows) {
@@ -5276,7 +5269,8 @@ const WRITE_IN_SENTINEL = "__write_in__";
 
 function ItemPickerSlot({ value = "", items = [], onChange, selectClassName, inputClassName, placeholder = "Type item name" }) {
   const [writeInOpen, setWriteInOpen] = useState(false);
-  const isKnownValue = isValueFromItems(value, items);
+  const optionItems = useMemo(() => uniqueOptionRows(items), [items]);
+  const isKnownValue = isValueFromItems(value, optionItems);
   const isWriteIn = writeInOpen || Boolean(value && !isKnownValue);
 
   if (isWriteIn) {
@@ -5323,7 +5317,7 @@ function ItemPickerSlot({ value = "", items = [], onChange, selectClassName, inp
       >
         <option value="">&lt;Select Item&gt;</option>
         <option value={WRITE_IN_SENTINEL}>Type if not listed</option>
-        {items.map((row) => <option key={getItemIdentity(row)} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}
+        {optionItems.map((row) => <option key={getItemIdentity(row)} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}
       </select>
     </div>
   );

@@ -2,9 +2,9 @@
 
 Last updated: July 18, 2026
 
-Current release version: `2026.07.18.009-station-locked-card-border`
+Current release version: `2026.07.18.010-menu-item-dedupe`
 
-Latest process update: July 18, 2026 normalized Neighborhood Rotation card summaries so single-menu Global weeks render as bordered `Monday - Friday` concept tiles and no-Global locked cafes render `Stations` / `Selections locked` in the same bordered tile style. Keep this card display consistent; cafes without Global stations should still avoid fake AMZ labels.
+Latest process update: July 18, 2026 collapsed duplicate chef-facing Menu Library cards and Neighborhood Rotation selector options by visible menu, station, category, item name, and MRN while preserving raw Webtrition rows for audit/source work.
 
 ## First Rule
 
@@ -113,6 +113,7 @@ Critical integrity rules:
 
 Recent critical fix:
 
+- `2026.07.18.010-menu-item-dedupe` dedupes chef-facing Neighborhood Rotation item pickers before rendering options. Webtrition may still contain repeated raw rows for the same item/MRN with different portion or pricing contexts; selectors should show one polished option, not every raw context row.
 - `2026.07.18.009-station-locked-card-border` puts no-Global locked cafes into the same bordered summary tile style by showing `Stations` / `Selections locked` instead of loose text, while still avoiding fake AMZ labels.
 - `2026.07.18.008-rotation-card-summary-border` makes single-menu Global leadership cards and submitted recaps use the same bordered concept tile treatment as Re:Invent/Doppler split-week and promo cards. One-menu weeks should display `Monday - Friday` above the menu name in both light and dark mode.
 - `2026.07.17.002-promo-resubmit-state-integrity` makes promo override recalls authoritative for display and selected-food-cost math. Full-week promo takeovers now render a `Promotion Override` row with saved promo entree/side/extension items and suppress stale normal Global rows from prior submissions, so old menu choices and old food-cost percentages do not bleed into the locked card or submitted recap. `Edit and resubmit` state now resets when district/cafe/week changes and after a confirmed resubmit, preventing one cafe's edit mode from carrying into another cafe.
@@ -166,6 +167,7 @@ Purpose: Menu and item library organized by menus, with cards, detail drawer, nu
 Watch-outs:
 
 - It is called Menu Library in user-facing UI. Internal file paths still use `recipe-database`.
+- `2026.07.18.010-menu-item-dedupe` dedupes visible Menu Library rows with `dedupeRecipeLibraryRows()`. Do not remove raw Webtrition duplicates from the source dataset simply to fix card polish; collapse them at display/export/selector boundaries unless an explicit source-of-truth cleanup is intended.
 - `2026.07.18.001-menu-library-all-menus-export` added a `Download All Menus CSV` button beside the selected-menu CSV export. It calls `ensureFullRecipeRows()` on demand and exports menu, recipe name, MRN, category, description, calories, sell price, and true cost across the full library.
 - `2026.07.12.003-master-menus-sync` rebuilt `src/data/menuItems.json` from `Master Menus 7-12-26.csv`: 1,550 Master rows, 53 menus, 100 new/rekeyed rows, and 57 stale generated rows removed compared with the previous app dataset.
 - The current raw source archive is `public/data/master-menus-raw-2026-07-12.json`. Older raw MenuWorks archives were removed from the deployable app.

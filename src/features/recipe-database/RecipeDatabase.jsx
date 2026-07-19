@@ -16,6 +16,7 @@ import {
   MENU_ENGINEERING_OVERRIDE_STORAGE_KEY,
   applyRecipeLibraryEdit,
   caloriesLabel,
+  dedupeRecipeLibraryRows,
   itemTrustFlags,
   itemTrustStatus,
   itemDescription,
@@ -208,7 +209,7 @@ function countBy(rows, getKey) {
 }
 
 function deriveMenuEntries(rows = []) {
-  return Object.entries(countBy(rows, (row) => row.menu || "No menu assigned"))
+  return Object.entries(countBy(dedupeRecipeLibraryRows(rows), (row) => row.menu || "No menu assigned"))
     .map(([menu, count]) => ({ menu, count }))
     .sort((a, b) => a.menu.localeCompare(b.menu));
 }
@@ -417,8 +418,8 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
   const [isAllMenusCsvDownloading, setIsAllMenusCsvDownloading] = useState(false);
 
   const selectedRows = useMemo(() => {
-    if (!usesLocalRows) return rows;
-    return rows.filter((row) => (row.menu || "No menu assigned") === selectedMenu);
+    const scopedRows = usesLocalRows ? rows.filter((row) => (row.menu || "No menu assigned") === selectedMenu) : rows;
+    return dedupeRecipeLibraryRows(scopedRows);
   }, [rows, selectedMenu, usesLocalRows]);
   const filteredMenuList = menus.filter((entry) => entry.menu.toLowerCase().includes(menuSearch.toLowerCase()));
   const categoryOptions = ["All", ...Array.from(new Set(selectedRows.map(categoryLabel))).sort((a, b) => categoryRank(a) - categoryRank(b) || a.localeCompare(b))];
@@ -506,7 +507,7 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
     try {
       setIsAllMenusCsvDownloading(true);
       const fullRows = await ensureFullRecipeRows();
-      downloadAllMenusCsv(fullRows);
+      downloadAllMenusCsv(dedupeRecipeLibraryRows(fullRows));
     } catch (error) {
       setMenuRowsLoadError(error instanceof Error ? error.message : "Unable to prepare the all-menu CSV export.");
     } finally {

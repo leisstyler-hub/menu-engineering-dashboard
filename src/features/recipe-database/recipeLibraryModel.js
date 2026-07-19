@@ -41,6 +41,51 @@ export function itemDescription(row) {
   return textValue(row, "enticingDescription", "ingredientsCommonName", "ingredients") || "No description loaded yet.";
 }
 
+function normalizedVisibleText(value) {
+  return String(value ?? "")
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9.]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function recipeLibraryRowCompletenessScore(row = {}) {
+  let score = 0;
+  if (numberValue(row, "price") != null) score += 20;
+  if (numberValue(row, "trueCost", "itemCost") != null) score += 20;
+  if (numberValue(row, "calories", "calories_kcal", "kcal") != null) score += 10;
+  if (numberValue(row, "protein_g", "proteinG", "protein", "proteinGrams") != null) score += 8;
+  if (numberValue(row, "portionOz", "portion_oz") != null) score += 6;
+  if (textValue(row, "portion", "Portion")) score += 3;
+  if (itemDescription(row) !== "No description loaded yet.") score += 5;
+  if (textValue(row, "allergenSummary") || (Array.isArray(row?.allergens) && row.allergens.length)) score += 5;
+  if (textValue(row, "menuItemNotes")) score += 2;
+  if (textValue(row, "sourceDataVersion", "sourceFileName")) score += 1;
+  return score;
+}
+
+export function recipeLibraryVisibleItemKey(row = {}) {
+  const menu = normalizedVisibleText(textValue(row, "menu") || "No menu assigned");
+  const station = normalizedVisibleText(textValue(row, "station"));
+  const category = normalizedVisibleText(recipeLibraryCategoryGroup(row));
+  const name = normalizedVisibleText(itemName(row));
+  const mrn = normalizedVisibleText(textValue(row, "mrn", "MRN"));
+  return [menu, station, category, name, mrn || name].join("|");
+}
+
+export function dedupeRecipeLibraryRows(rows = []) {
+  const byVisibleItem = new Map();
+  rows.filter(Boolean).forEach((row) => {
+    const key = recipeLibraryVisibleItemKey(row);
+    const current = byVisibleItem.get(key);
+    if (!current || recipeLibraryRowCompletenessScore(row) > recipeLibraryRowCompletenessScore(current)) {
+      byVisibleItem.set(key, row);
+    }
+  });
+  return Array.from(byVisibleItem.values());
+}
+
 const PROTEIN_SIGNAL = /\b(beef|chicken|pork|turkey|salmon|fish|cod|shrimp|tuna|meatballs?|steak|brisket|carnitas|chorizo|bacon|sausage|eggs?|tofu|tempeh|paneer|lentils?|beans?|chickpeas?|falafel|poultry|ham|lamb)\b/i;
 const SUPPORT_SIGNAL = /sauce|dressing|dip|salsa|aioli|chutney|relish|gravy|marinade|vinaigrette|condiment|garnish|pickle|seasoning|spice|rub|spread|preserve|preserves/i;
 const SIDE_CHOICE_SIGNAL = /side choice|side pairing|a la carte\s*(?:&|and)\s*side choice|hot a la carte|cold a la carte/i;
