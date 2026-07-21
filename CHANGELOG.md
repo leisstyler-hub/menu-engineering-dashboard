@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-21
+
+- [Jul 21, 7:18 AM] Fixed Re:Invent split-global recall/display so saved Global Block menu names are authoritative over child selection-row menu evidence, preventing submitted Cypress/chef-selected menus from being relabeled as stale AMZ menus in recaps and leadership cards; set visible app version to `2026.07.21.001-reinvent-block-menu-authority`.
+
 ## 2026-07-18
 
 - [Jul 18, 9:10 PM] Organized AMZ: Carvery in Menu Library into Carved Proteins, Sandwiches, and Vegetable Carvery sections, and added persistent Search Items, Item Section, and Diet Type labels above the Menu Library controls; set visible app version to `2026.07.18.011-carvery-library-sections`.

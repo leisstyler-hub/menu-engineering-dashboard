@@ -1,10 +1,10 @@
 # AI Handoff
 
-Last updated: July 18, 2026
+Last updated: July 21, 2026
 
-Current release version: `2026.07.18.011-carvery-library-sections`
+Current release version: `2026.07.21.001-reinvent-block-menu-authority`
 
-Latest process update: July 18, 2026 organized AMZ: Carvery in Menu Library into Carved Proteins, Sandwiches, and Vegetable Carvery sections, and added persistent labels above the Menu Library search/category/diet controls so the filters no longer appear as anonymous `All` dropdowns.
+Latest process update: July 21, 2026 fixed Re:Invent split-global recall/display so saved Global Block menu names are authoritative over child selection-row menu evidence. This prevents submitted Cypress/chef-selected menus from being relabeled as stale AMZ menus in recaps and leadership cards.
 
 ## First Rule
 
@@ -113,6 +113,7 @@ Critical integrity rules:
 
 Recent critical fix:
 
+- `2026.07.21.001-reinvent-block-menu-authority` makes saved split-global `Global Block` rows the authority for the displayed menu name during recall. Child `Global Selection` rows still restore the selected items, but they cannot relabel a block to an inherited/stale `menuConcept`. This protects Re:Invent cases where a chef selected Cypress but the display showed a different AMZ menu.
 - `2026.07.18.010-menu-item-dedupe` dedupes chef-facing Neighborhood Rotation item pickers before rendering options. Webtrition may still contain repeated raw rows for the same item/MRN with different portion or pricing contexts; selectors should show one polished option, not every raw context row.
 - `2026.07.18.009-station-locked-card-border` puts no-Global locked cafes into the same bordered summary tile style by showing `Stations` / `Selections locked` instead of loose text, while still avoiding fake AMZ labels.
 - `2026.07.18.008-rotation-card-summary-border` makes single-menu Global leadership cards and submitted recaps use the same bordered concept tile treatment as Re:Invent/Doppler split-week and promo cards. One-menu weeks should display `Monday - Friday` above the menu name in both light and dark mode.
@@ -122,7 +123,7 @@ Recent critical fix:
 - `2026.07.15.004-rotation-submitted-family-integrity` protects submitted recalls from mixed-status Supabase families. When a Submitted parent has confirmed Submitted child rows, older Draft children in that family are excluded from reconstruction. If a legacy Submitted family has no Submitted children, its Draft children remain readable as a compatibility fallback. This specifically covers the live Nitro October pattern where Anisa header/current rows coexisted with stale Ciudad child selections.
 - `2026.07.15.003-rotation-source-integrity` stopped Neighborhood Rotations from merging stale Smartsheet child rows into current Supabase submissions. Supabase records are authoritative whenever available and Smartsheet is used only as fallback. Submission readiness now derives from `CAFE_STATION_CONFIG`, so cafes without Global stations, currently Atlas and Commissary, are not blocked by impossible Global Menu requirements. Browser regressions cover Nitro Anisa recall against stale Ciudad mirror rows and both no-Global cafes.
 - `2026.07.14.004-rotation-full-week-cards` fixed locked leadership cards so Re:Invent uses the computed calendar block layout for the selected week, including Monday carryover/recovery blocks, and renders saved block data in calendar order instead of insertion order. Doppler cards now show Monday + Tuesday carryover plus Wednesday-Friday current menu so the leadership view reads as a full week.
-- `2026.07.14.003-rotation-recall-integrity` fixed Re:Invent/Doppler recall corruption where stale/default Global Block rows could display Cypress or the wrong menu even though submitted selection rows carried the chef's actual choices. `recordsToRotations` now scores saved menu evidence so `Global Selection` rows with selected items outrank stale `Global Block` rows. Split-global recap/station rows now prefer persisted submitted blocks when saved block IDs do not match the recomputed week layout.
+- `2026.07.14.003-rotation-recall-integrity` fixed Re:Invent/Doppler recall corruption where stale/default Global Block rows could display Cypress or the wrong menu even though submitted selection rows carried the chef's actual choices. This was superseded by `2026.07.21.001-reinvent-block-menu-authority`: saved `Global Block` menu names are now the authority for split-global display, while child rows restore selected items only.
 - `2026.07.12.002-selector-library-scope` restored Doppler/Zane's Salad selectors to the full Menu Library salad pool (37 scoped Cafe Express Curated Salad rows) instead of the tiny `saladFreshFive` override. Release guards now fail if that stale override returns.
 - `2026.07.12.001-desktop-density` reduced the desktop-only density of the page and widened the rotations workspace so large monitors feel closer to the user's preferred 75% browser zoom without forcing actual browser zoom. Mobile/tablet sizing is intentionally preserved.
 - `2026.07.11.001-rotation-storage-quota-guard` added `src/shared/safeStorage.js` and changed Neighborhood Rotations to treat `culinaryToolsSmartsheetReadyRecords_v1` as optional browser cache. Oversized localStorage writes must not crash the tool.
@@ -134,7 +135,7 @@ Important tests:
 - `scripts/verify-submission-health.mjs`
 - `scripts/verify-rotation-record-audit.mjs`
 
-Do not remove the Re:Invent/Doppler stale-block or Nitro canonical-menu regression cases in `tests/browser/reinvent-submit-recall.spec.js`. They protect the rules that actual submitted selection rows are stronger recall evidence than stale/default Global Block rows and that Nitro child blocks cannot contradict the saved weekly menu.
+Do not remove the Re:Invent/Doppler stale-block or Nitro canonical-menu regression cases in `tests/browser/reinvent-submit-recall.spec.js`. They protect the rules that saved split-global block headers control displayed menu names, child rows restore selected items, and Nitro child blocks cannot contradict the saved weekly menu.
 
 ### Lean Tool
 

@@ -714,27 +714,36 @@ function recordsToRotations(records = []) {
     return String(record.status || "").toLowerCase() === "submitted";
   });
   const menuEvidence = new Map();
+  const authoritativeBlockMenus = new Map();
   const evidenceKey = (record, blockId = "") => `${rotationKey(record.week, record.district, record.cafe)}|${blockId || "__base"}`;
+  const addAuthoritativeBlockMenu = (record) => {
+    if (record.stationKey !== "global" || record.recordType !== SMARTSHEET_RECORD_TYPES.globalBlock || !record.menuConcept) return;
+    authoritativeBlockMenus.set(evidenceKey(record, blockIdFromRecord(record)), record.menuConcept);
+  };
   const addMenuEvidence = (record) => {
     if (record.stationKey !== "global" || !record.menuConcept) return;
     const blockId = blockIdFromRecord(record);
     const key = evidenceKey(record, blockId);
     const weight = record.recordType === SMARTSHEET_RECORD_TYPES.globalSelection && record.itemName
-      ? 5
+      ? 1
       : record.recordType === SMARTSHEET_RECORD_TYPES.globalBlock
-        ? 1
+        ? 10
         : 0;
     if (!weight) return;
     const bucket = menuEvidence.get(key) || new Map();
     bucket.set(record.menuConcept, (bucket.get(record.menuConcept) || 0) + weight);
     menuEvidence.set(key, bucket);
   };
+  const authoritativeBlockMenuFor = (record, blockId = "") => authoritativeBlockMenus.get(evidenceKey(record, blockId)) || "";
   const preferredMenuFor = (record, blockId = "") => {
+    const authoritative = authoritativeBlockMenuFor(record, blockId);
+    if (authoritative) return authoritative;
     const bucket = menuEvidence.get(evidenceKey(record, blockId));
     if (!bucket) return "";
     return Array.from(bucket.entries()).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] || "";
   };
 
+  normalizedRecords.forEach(addAuthoritativeBlockMenu);
   normalizedRecords.forEach(addMenuEvidence);
 
   normalizedRecords.forEach((record) => {
@@ -754,10 +763,11 @@ function recordsToRotations(records = []) {
       const blockId = blockIdFromRecord(record);
       if (blockId) {
         const currentBlock = rotation.globalBlocks[blockId] || blankGlobalBlock();
+        const authoritativeMenu = authoritativeBlockMenuFor(record, blockId);
         const preferredMenu = preferredMenuFor(record, blockId);
         rotation.globalBlocks[blockId] = {
           ...currentBlock,
-          menu: preferredMenu || currentBlock.menu || record.menuConcept || "",
+          menu: authoritativeMenu || record.menuConcept || preferredMenu || currentBlock.menu || "",
           station: currentBlock.station || record.stationSubConcept || ""
         };
       } else {

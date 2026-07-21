@@ -78,12 +78,20 @@ if (!/const normalizedRecordCandidates = newestRecordsById\(records\)\.map\(norm
   fail("Rotation reload must dedupe newest saved rows before rebuilding cafe selections.");
 }
 
-if (!/const menuEvidence = new Map\(\);/.test(source) || !/preferredMenuFor\(record, blockId\)/.test(source)) {
-  fail("Rotation reload must score menu evidence so submitted selection rows can override stale block defaults.");
+if (!/const menuEvidence = new Map\(\);/.test(source) || !/const authoritativeBlockMenus = new Map\(\);/.test(source) || !/preferredMenuFor\(record, blockId\)/.test(source)) {
+  fail("Rotation reload must track authoritative Global Block menu names separately from child selection rows.");
 }
 
-if (!/record\.recordType === SMARTSHEET_RECORD_TYPES\.globalSelection && record\.itemName[\s\S]*\? 5[\s\S]*SMARTSHEET_RECORD_TYPES\.globalBlock[\s\S]*\? 1/.test(source)) {
-  fail("Global selection rows must outweigh global block rows when saved Menu / Concept values disagree.");
+if (!/record\.recordType === SMARTSHEET_RECORD_TYPES\.globalSelection && record\.itemName[\s\S]*\? 1[\s\S]*SMARTSHEET_RECORD_TYPES\.globalBlock[\s\S]*\? 10/.test(source)) {
+  fail("Global Block rows must outweigh child selection rows when saved Menu / Concept values disagree.");
+}
+
+if (!/const authoritativeBlockMenuFor = \(record, blockId = ""\) => authoritativeBlockMenus\.get\(evidenceKey\(record, blockId\)\) \|\| "";/.test(source) || !/const authoritative = authoritativeBlockMenuFor\(record, blockId\);[\s\S]*if \(authoritative\) return authoritative;/.test(source)) {
+  fail("Split-global recall must prefer the saved Global Block menu before considering child-row menu evidence.");
+}
+
+if (!/menu: authoritativeMenu \|\| record\.menuConcept \|\| preferredMenu \|\| currentBlock\.menu \|\| ""/.test(source)) {
+  fail("Global Block restore must overwrite stale child-row menus with the saved block Menu / Concept.");
 }
 
 if (!/const withRotationRecordTimestamps = \(record\) => \(\{[\s\S]*SMARTSHEET_COLUMNS\.updatedAt\]: record\[SMARTSHEET_COLUMNS\.updatedAt\] \|\| rotation\.updatedAt \|\| rotation\.submittedAt \|\| ""/.test(source)) {
