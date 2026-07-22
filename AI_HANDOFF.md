@@ -2,9 +2,9 @@
 
 Last updated: July 21, 2026
 
-Current release version: `2026.07.21.004-reinvent-same-block-stale-row-guard`
+Current release version: `2026.07.21.005-reinvent-shared-recall-authority`
 
-Latest process update: July 21, 2026 fixed the deeper Re:Invent edit-and-resubmit recall failure where older same-block rows with different IDs could overwrite fresh Monday/Tuesday menu labels and selected item slots after leaving and reopening the tool.
+Latest process update: July 21, 2026 fixed Re:Invent edit-and-resubmit recall by making shared database rotation rows replace stale browser cache on load and by ranking saved Global Block records with canonical block identity when rebuilding split-week menus.
 
 ## First Rule
 
@@ -113,6 +113,7 @@ Critical integrity rules:
 
 Recent critical fix:
 
+- `2026.07.21.005-reinvent-shared-recall-authority` makes Supabase/shared rotation rows authoritative over local browser rotation cache when Neighborhood Rotations loads. This protects the user path: edit Re:Invent, submit Cypress for Monday/Tuesday, go back to Platform Home, reopen Neighborhood Rotations, and still see Cypress instead of an older local Roam BBQ cache. Global Block evidence now also breaks freshness ties using canonical block identity so stale odd-ID block rows cannot outrank the proper saved block row. Browser coverage: full `tests/browser/reinvent-submit-recall.spec.js` passes against the built production bundle, including stale local cache replacement, same-block stale rows, draft child compatibility, promo recall, Doppler, and Nitro.
 - `2026.07.21.004-reinvent-same-block-stale-row-guard` fixes Re:Invent edit-and-resubmit recall when fresh Cypress rows and older Roam BBQ rows remain for the same Monday/Tuesday block under different record IDs. Split Global block menu labels and selected item slots are now newest-submitted-row-wins, so leaving the tool and reopening it cannot let stale same-block rows overwrite fresh submitted selections.
 - `2026.07.21.003-reinvent-doppler-stale-menu-guard` prevents stale one-week legacy Global rows from overriding split Global block display for Re:Invent/Blueshift. Split cafes should recall Monday/Tuesday, Wednesday/Thursday, and Friday from `globalBlocks`, not from `rotation.menu`. This release also ignores blank legacy Global blocks as authoritative evidence so Doppler submitted selections cannot be relabeled back to a stale Cypress block.
 - `2026.07.21.001-reinvent-block-menu-authority` makes saved split-global `Global Block` rows the authority for the displayed menu name during recall. Child `Global Selection` rows still restore the selected items, but they cannot relabel a block to an inherited/stale `menuConcept`. This protects Re:Invent cases where a chef selected Cypress but the display showed a different AMZ menu.

@@ -757,15 +757,30 @@ function recordsToRotations(records = []) {
   const authoritativeBlockMenus = new Map();
   const evidenceKey = (record, blockId = "") => `${rotationKey(record.week, record.district, record.cafe)}|${blockId || "__base"}`;
   const hasBlockIdentity = (record) => Boolean(record.globalBlockId || record.menuBlockLabel);
+  const blockRecordRank = (record, blockId = "") => {
+    if (!blockId) return hasBlockIdentity(record) ? 1 : 0;
+    const canonicalBlockId = `${parentIdForLoadedRecord(record) || rotationRecordParentId(record.week, record.district, record.cafe)}|global|${blockId}`;
+    if (record.recordId === canonicalBlockId && record.globalBlockId === canonicalBlockId) return 4;
+    if (record.globalBlockId === canonicalBlockId) return 3;
+    if (record.recordId === canonicalBlockId) return 2;
+    if (String(record.recordId || "").includes("|global|") || String(record.globalBlockId || "").includes("|global|")) return 1;
+    return 0;
+  };
+  const shouldReplaceBlockEvidence = (next, current) => {
+    if (!current) return true;
+    if (next.freshness !== current.freshness) return next.freshness > current.freshness;
+    if (next.rank !== current.rank) return next.rank > current.rank;
+    return next.index < current.index;
+  };
   const addAuthoritativeBlockMenu = (record, index = 0) => {
     if (record.stationKey !== "global" || record.recordType !== SMARTSHEET_RECORD_TYPES.globalBlock || !record.menuConcept) return;
     const blockId = blockIdFromRecord(record);
     if (!blockId && !hasBlockIdentity(record)) return;
     const key = evidenceKey(record, blockId);
-    const freshness = loadedRecordFreshness(record, index);
+    const next = { menu: record.menuConcept, freshness: loadedRecordFreshness(record, index), rank: blockRecordRank(record, blockId), index };
     const current = authoritativeBlockMenus.get(key);
-    if (!current || freshness > current.freshness) {
-      authoritativeBlockMenus.set(key, { menu: record.menuConcept, freshness });
+    if (shouldReplaceBlockEvidence(next, current)) {
+      authoritativeBlockMenus.set(key, next);
     }
   };
   const addMenuEvidence = (record) => {
@@ -871,8 +886,9 @@ function recordsToRotations(records = []) {
     if (record.stationKey === "global") {
       const blockId = blockIdFromRecord(record);
       if (blockId) {
+        const authoritativeMenu = authoritativeBlockMenuFor(record, blockId);
         const block = rotation.globalBlocks[blockId] || blankGlobalBlock();
-        block.menu = preferredMenuFor(record, blockId) || block.menu || record.menuConcept || "";
+        block.menu = authoritativeMenu || preferredMenuFor(record, blockId) || block.menu || record.menuConcept || "";
         block.station = block.station || record.stationSubConcept || "";
         if (record.selectionType === SMARTSHEET_SELECTION_TYPES.entree) putFreshSlot(record, block.entrees, index, record.itemName, ["global", blockId, "entree"]);
         else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.side) putFreshSlot(record, block.sides, index, record.itemName, ["global", blockId, "side"]);
@@ -882,6 +898,7 @@ function recordsToRotations(records = []) {
         return;
       }
       if (isSplitGlobalCafe(record.cafe)) return;
+      const authoritativeMenu = authoritativeBlockMenuFor(record);
       rotation.menu = preferredMenuFor(record) || rotation.menu || record.menuConcept || "";
       rotation.station = rotation.station || record.stationSubConcept || "";
       if (record.selectionType === SMARTSHEET_SELECTION_TYPES.entree) putFreshSlot(record, rotation.entrees, index, record.itemName, ["global", "base", "entree"]);
@@ -2567,7 +2584,12 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
       const records = payload.records || [];
       const loadedRotations = recordsToRotations(records);
       setDatabaseRecords(records);
-      setRotations((prev) => ({ ...prev, ...loadedRotations }));
+      setRotations((prev) => {
+        if (records.length && payload.state !== "local") {
+          return loadedRotations;
+        }
+        return { ...prev, ...loadedRotations };
+      });
       setDatabaseLoadStatus({
         state: payload.state === "fallback" ? "fallback" : "synced",
         message: payload.message || `Loaded ${records.length} database row${records.length === 1 ? "" : "s"}. Executive View is using shared rotations when available.`,

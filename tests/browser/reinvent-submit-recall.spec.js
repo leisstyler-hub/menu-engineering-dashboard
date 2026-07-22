@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { SMARTSHEET_COLUMNS, SMARTSHEET_RECORD_TYPES, SMARTSHEET_SELECTION_TYPES } from "../../src/integrations/smartsheet/contract.js";
+import { NEIGHBORHOOD_ROTATIONS_STORAGE_KEY, SMARTSHEET_COLUMNS, SMARTSHEET_RECORD_TYPES, SMARTSHEET_SELECTION_TYPES } from "../../src/integrations/smartsheet/contract.js";
 import { collectUnexpectedPageErrors, expectNoAppProtection, expectNoUnexpectedPageErrors, openTool } from "./smoke-helpers.js";
 
 const week = "Jul 6, 2026 - Jul 10, 2026";
@@ -507,6 +507,43 @@ test("Re:Invent submitted blocks recover saved item rows that were previously wr
   await expect(recap).toContainText(/Friday[\s\S]*AMZ: Andes[\s\S]*Aji De Gallina/);
   const card = page.getByRole("button", { name: /Open Re:Invent planner/i }).first();
   await expect(card).toContainText(/Monday \+ Tuesday[\s\S]*AMZ: Cypress[\s\S]*Wednesday \+ Thursday[\s\S]*AMZ: House of Teriyaki[\s\S]*Friday[\s\S]*AMZ: Andes/);
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("Re:Invent shared database recall replaces stale local browser cache", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await stubRotationReads(page, savedReInventSubmittedBlocksWithDraftSelections());
+  await page.addInitScript(([storageKey, staleKey]) => {
+    window.localStorage.setItem(storageKey, JSON.stringify({
+      [staleKey]: {
+        status: "Submitted",
+        submittedAt: "Jul 1, 12:50 PM",
+        updatedAt: "Jul 1, 12:50 PM",
+        globalBlocks: {
+          monTue: {
+            menu: "AMZ: Roam BBQ",
+            station: "",
+            entrees: ["Smoked Brisket", "", ""],
+            sides: ["Mac & Cheese", "", "", ""],
+            subRecipes: ["", "", "", ""],
+            extensions: ["", ""],
+          },
+        },
+      },
+    }));
+  }, [NEIGHBORHOOD_ROTATIONS_STORAGE_KEY, `${currentWeek}|South|Re:Invent`]);
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: /South/i }).click();
+  await page.getByRole("combobox").first().selectOption({ label: currentWeek });
+  await page.getByRole("button", { name: /^Re:Invent$/i }).click();
+
+  const recap = page.getByText("Submitted Menu Recap").locator("xpath=ancestor::section[1]");
+  await expect(recap).toBeVisible({ timeout: 20_000 });
+  await expect(recap).toContainText(/Monday \+ Tuesday[\s\S]*AMZ: Cypress[\s\S]*Chicken Souvlaki Plate/);
+  await expect(recap.getByText("AMZ: Roam BBQ")).toHaveCount(0);
+  await expect(recap.getByText("Smoked Brisket")).toHaveCount(0);
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
