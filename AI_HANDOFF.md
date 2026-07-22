@@ -2,9 +2,9 @@
 
 Last updated: July 21, 2026
 
-Current release version: `2026.07.21.003-reinvent-doppler-stale-menu-guard`
+Current release version: `2026.07.21.004-reinvent-same-block-stale-row-guard`
 
-Latest process update: July 21, 2026 made split Global blocks authoritative for Re:Invent/Blueshift recall after edit-and-resubmit, and ignored blank legacy Global blocks that could force Doppler back to stale Cypress instead of submitted selection evidence.
+Latest process update: July 21, 2026 fixed the deeper Re:Invent edit-and-resubmit recall failure where older same-block rows with different IDs could overwrite fresh Monday/Tuesday menu labels and selected item slots after leaving and reopening the tool.
 
 ## First Rule
 
@@ -113,6 +113,7 @@ Critical integrity rules:
 
 Recent critical fix:
 
+- `2026.07.21.004-reinvent-same-block-stale-row-guard` fixes Re:Invent edit-and-resubmit recall when fresh Cypress rows and older Roam BBQ rows remain for the same Monday/Tuesday block under different record IDs. Split Global block menu labels and selected item slots are now newest-submitted-row-wins, so leaving the tool and reopening it cannot let stale same-block rows overwrite fresh submitted selections.
 - `2026.07.21.003-reinvent-doppler-stale-menu-guard` prevents stale one-week legacy Global rows from overriding split Global block display for Re:Invent/Blueshift. Split cafes should recall Monday/Tuesday, Wednesday/Thursday, and Friday from `globalBlocks`, not from `rotation.menu`. This release also ignores blank legacy Global blocks as authoritative evidence so Doppler submitted selections cannot be relabeled back to a stale Cypress block.
 - `2026.07.21.001-reinvent-block-menu-authority` makes saved split-global `Global Block` rows the authority for the displayed menu name during recall. Child `Global Selection` rows still restore the selected items, but they cannot relabel a block to an inherited/stale `menuConcept`. This protects Re:Invent cases where a chef selected Cypress but the display showed a different AMZ menu.
 - `2026.07.18.010-menu-item-dedupe` dedupes chef-facing Neighborhood Rotation item pickers before rendering options. Webtrition may still contain repeated raw rows for the same item/MRN with different portion or pricing contexts; selectors should show one polished option, not every raw context row.
@@ -136,7 +137,7 @@ Important tests:
 - `scripts/verify-submission-health.mjs`
 - `scripts/verify-rotation-record-audit.mjs`
 
-Do not remove the Re:Invent/Doppler stale-block or Nitro canonical-menu regression cases in `tests/browser/reinvent-submit-recall.spec.js`. They protect the rules that saved split-global block headers control displayed menu names, child rows restore selected items, and Nitro child blocks cannot contradict the saved weekly menu.
+Do not remove the Re:Invent/Doppler stale-block or Nitro canonical-menu regression cases in `tests/browser/reinvent-submit-recall.spec.js`. They protect the rules that saved split-global block headers control displayed menu names, stale same-block rows cannot overwrite newer submitted item slots, child rows restore selected items, and Nitro child blocks cannot contradict the saved weekly menu.
 
 ### Lean Tool
 

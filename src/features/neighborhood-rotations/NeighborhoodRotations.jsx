@@ -621,6 +621,8 @@ function normalizeLoadedRotationRecord(record = {}) {
 function loadedRecordFreshness(record = {}, index = 0) {
   const candidates = [
     record.__supabaseUpdatedAt,
+    record.updatedAt,
+    record.submittedAt,
     record[SMARTSHEET_COLUMNS.updatedAt],
     record[SMARTSHEET_COLUMNS.submittedAt],
   ];
@@ -692,6 +694,20 @@ function recordsToRotations(records = []) {
     if (!Array.isArray(values) || index < 0 || index >= values.length) return;
     values[index] = itemName;
   };
+  const slotWriteFreshness = new Map();
+  const putFreshSlot = (record, values, index, itemName, scopeParts = []) => {
+    if (!Array.isArray(values) || index < 0 || index >= values.length) return;
+    const freshness = loadedRecordFreshness(record, index);
+    const scopeKey = [
+      rotationKey(record.week, record.district, record.cafe),
+      ...scopeParts.map((part) => String(part || "__base"))
+    ].join("|");
+    const slotKey = `${scopeKey}|slot:${index}`;
+    const currentFreshness = slotWriteFreshness.get(slotKey);
+    if (currentFreshness !== undefined && freshness <= currentFreshness) return;
+    values[index] = itemName;
+    slotWriteFreshness.set(slotKey, freshness);
+  };
   const mergeStatus = (current = "Draft", incoming = "") => {
     const currentText = String(current || "").trim();
     const incomingText = String(incoming || "").trim();
@@ -741,11 +757,16 @@ function recordsToRotations(records = []) {
   const authoritativeBlockMenus = new Map();
   const evidenceKey = (record, blockId = "") => `${rotationKey(record.week, record.district, record.cafe)}|${blockId || "__base"}`;
   const hasBlockIdentity = (record) => Boolean(record.globalBlockId || record.menuBlockLabel);
-  const addAuthoritativeBlockMenu = (record) => {
+  const addAuthoritativeBlockMenu = (record, index = 0) => {
     if (record.stationKey !== "global" || record.recordType !== SMARTSHEET_RECORD_TYPES.globalBlock || !record.menuConcept) return;
     const blockId = blockIdFromRecord(record);
     if (!blockId && !hasBlockIdentity(record)) return;
-    authoritativeBlockMenus.set(evidenceKey(record, blockId), record.menuConcept);
+    const key = evidenceKey(record, blockId);
+    const freshness = loadedRecordFreshness(record, index);
+    const current = authoritativeBlockMenus.get(key);
+    if (!current || freshness > current.freshness) {
+      authoritativeBlockMenus.set(key, { menu: record.menuConcept, freshness });
+    }
   };
   const addMenuEvidence = (record) => {
     if (record.stationKey !== "global" || !record.menuConcept) return;
@@ -762,7 +783,7 @@ function recordsToRotations(records = []) {
     bucket.set(record.menuConcept, (bucket.get(record.menuConcept) || 0) + weight);
     menuEvidence.set(key, bucket);
   };
-  const authoritativeBlockMenuFor = (record, blockId = "") => authoritativeBlockMenus.get(evidenceKey(record, blockId)) || "";
+  const authoritativeBlockMenuFor = (record, blockId = "") => authoritativeBlockMenus.get(evidenceKey(record, blockId))?.menu || "";
   const preferredMenuFor = (record, blockId = "") => {
     const authoritative = authoritativeBlockMenuFor(record, blockId);
     if (authoritative) return authoritative;
@@ -840,9 +861,9 @@ function recordsToRotations(records = []) {
         name: rotation.promotionOverride?.name || record.menuConcept || "Promotion Override",
       });
       const selections = promotionSelections(promo);
-      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.entree) putSlot(selections.entrees, index, record.itemName);
-      else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.side) putSlot(selections.sides, index, record.itemName);
-      else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.extension) putSlot(selections.extensions, index, record.itemName);
+      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.entree) putFreshSlot(record, selections.entrees, index, record.itemName, ["promotion", "entree"]);
+      else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.side) putFreshSlot(record, selections.sides, index, record.itemName, ["promotion", "side"]);
+      else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.extension) putFreshSlot(record, selections.extensions, index, record.itemName, ["promotion", "extension"]);
       rotation.promotionOverride = normalizePromotionOverride({ ...promo, selections });
       return;
     }
@@ -853,20 +874,20 @@ function recordsToRotations(records = []) {
         const block = rotation.globalBlocks[blockId] || blankGlobalBlock();
         block.menu = preferredMenuFor(record, blockId) || block.menu || record.menuConcept || "";
         block.station = block.station || record.stationSubConcept || "";
-        if (record.selectionType === SMARTSHEET_SELECTION_TYPES.entree) putSlot(block.entrees, index, record.itemName);
-        else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.side) putSlot(block.sides, index, record.itemName);
-        else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.subRecipe) putSlot(block.subRecipes, index, record.itemName);
-        else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.extension) putSlot(block.extensions, index, record.itemName);
+        if (record.selectionType === SMARTSHEET_SELECTION_TYPES.entree) putFreshSlot(record, block.entrees, index, record.itemName, ["global", blockId, "entree"]);
+        else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.side) putFreshSlot(record, block.sides, index, record.itemName, ["global", blockId, "side"]);
+        else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.subRecipe) putFreshSlot(record, block.subRecipes, index, record.itemName, ["global", blockId, "subRecipe"]);
+        else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.extension) putFreshSlot(record, block.extensions, index, record.itemName, ["global", blockId, "extension"]);
         rotation.globalBlocks[blockId] = block;
         return;
       }
       if (isSplitGlobalCafe(record.cafe)) return;
       rotation.menu = preferredMenuFor(record) || rotation.menu || record.menuConcept || "";
       rotation.station = rotation.station || record.stationSubConcept || "";
-      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.entree) putSlot(rotation.entrees, index, record.itemName);
-      else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.side) putSlot(rotation.sides, index, record.itemName);
-      else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.subRecipe) putSlot(rotation.subRecipes, index, record.itemName);
-      else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.extension) putSlot(rotation.extensions, index, record.itemName);
+      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.entree) putFreshSlot(record, rotation.entrees, index, record.itemName, ["global", "base", "entree"]);
+      else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.side) putFreshSlot(record, rotation.sides, index, record.itemName, ["global", "base", "side"]);
+      else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.subRecipe) putFreshSlot(record, rotation.subRecipes, index, record.itemName, ["global", "base", "subRecipe"]);
+      else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.extension) putFreshSlot(record, rotation.extensions, index, record.itemName, ["global", "base", "extension"]);
       return;
     }
 
