@@ -150,6 +150,10 @@ function asLiveSupabasePayloadRows(records = []) {
       next["Café / Unit"] = next[SMARTSHEET_COLUMNS.cafeUnit];
       delete next[SMARTSHEET_COLUMNS.cafeUnit];
     }
+    if (Object.prototype.hasOwnProperty.call(next, SMARTSHEET_COLUMNS.menuItemSelection)) {
+      next["Menu Item Selection"] = next[SMARTSHEET_COLUMNS.menuItemSelection];
+      delete next[SMARTSHEET_COLUMNS.menuItemSelection];
+    }
     if (next[SMARTSHEET_COLUMNS.selectionType] === SMARTSHEET_SELECTION_TYPES.entree) {
       next[SMARTSHEET_COLUMNS.selectionType] = "Entrée";
     }

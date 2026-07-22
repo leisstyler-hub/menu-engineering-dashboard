@@ -617,10 +617,13 @@ function upsertDatabaseRecords(existingRecords = [], nextRecords = []) {
 }
 
 function firstLoadedRecordValue(record = {}, keys = []) {
+  const source = record?.data && typeof record.data === "object"
+    ? { ...record.data, ...record }
+    : record;
   for (const key of keys) {
     if (!key) continue;
-    if (Object.prototype.hasOwnProperty.call(record, key)) {
-      const value = record[key];
+    if (Object.prototype.hasOwnProperty.call(source, key)) {
+      const value = source[key];
       if (value !== undefined && value !== null && value !== "") return value;
     }
   }
@@ -689,14 +692,23 @@ function normalizeLoadedRotationRecord(record = {}) {
     district: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.district, "District", "district"]) || identity.district || ""),
     cafe: String(cafeUnit || identity.cafe || ""),
     week: canonicalRotationWeek(loadedWeekValue),
-    stationKey: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.stationKey, "stationKey"])),
-    selectionType: normalizeLoadedSelectionType(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.selectionType, "selectionType"])),
-    itemName: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.menuItemSelection, SMARTSHEET_COLUMNS.uploadedItemName, "itemName", "menuItemSelection", "uploadedItemName"])),
-    slotNumber: Number(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.slotNumber, "slotNumber"]) || 0),
-    menuConcept: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.menuConcept, "menuConcept", "menu"])),
-    stationSubConcept: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.stationSubConcept, "stationSubConcept", "station"])),
-    menuBlockLabel: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.menuBlockLabel, "menuBlockLabel"])),
-    globalBlockId: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.globalBlockId, "globalBlockId"])),
+    stationKey: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.stationKey, "Station Key", "stationKey", "station_key"])),
+    selectionType: normalizeLoadedSelectionType(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.selectionType, "Selection Type", "selectionType", "selection_type"])),
+    itemName: String(firstLoadedRecordValue(record, [
+      SMARTSHEET_COLUMNS.menuItemSelection,
+      "Menu Item / Selection",
+      "Menu Item Selection",
+      SMARTSHEET_COLUMNS.uploadedItemName,
+      "itemName",
+      "menuItemSelection",
+      "menu_item_selection",
+      "uploadedItemName",
+    ])),
+    slotNumber: Number(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.slotNumber, "Slot Number", "slotNumber", "slot_number"]) || 0),
+    menuConcept: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.menuConcept, "Menu / Concept", "Menu Concept", "menuConcept", "menu_concept", "menu"])),
+    stationSubConcept: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.stationSubConcept, "Station / Sub-Concept", "Station Sub-Concept", "stationSubConcept", "station_sub_concept", "station"])),
+    menuBlockLabel: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.menuBlockLabel, "Menu Block Label", "Global Block Label", "menuBlockLabel", "menu_block_label"])),
+    globalBlockId: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.globalBlockId, "Global Block ID", "globalBlockId", "global_block_id"])),
     submittedBy: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.submittedBy, "submittedBy"])),
     submittedAt: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.submittedAt, "submittedAt"])),
     updatedAt: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.updatedAt, "updatedAt", "__supabaseUpdatedAt"])),
@@ -827,6 +839,12 @@ function recordsToRotations(records = []) {
   };
   const evidenceKey = (record, blockId = "") => `${rotationKey(record.week, record.district, record.cafe)}|${blockId || "__base"}`;
   const hasBlockIdentity = (record) => Boolean(record.globalBlockId || record.menuBlockLabel);
+  const isGlobalRecord = (record = {}) => record.stationKey === "global"
+    || String(record.recordId || "").includes("|global|")
+    || String(record.globalBlockId || "").includes("|global|")
+    || Boolean(blockIdFromRecord(record));
+  const isGlobalBlockRecord = (record = {}) => record.recordType === SMARTSHEET_RECORD_TYPES.globalBlock && isGlobalRecord(record);
+  const isGlobalSelectionRecord = (record = {}) => record.recordType === SMARTSHEET_RECORD_TYPES.globalSelection && isGlobalRecord(record);
   const blockRecordRank = (record, blockId = "") => {
     if (!blockId) return hasBlockIdentity(record) ? 1 : 0;
     const canonicalBlockId = `${parentIdForLoadedRecord(record) || rotationRecordParentId(record.week, record.district, record.cafe)}|global|${blockId}`;
@@ -869,12 +887,12 @@ function recordsToRotations(records = []) {
     }
   };
   normalizedRecordCandidates
-    .filter((record) => record.recordType === SMARTSHEET_RECORD_TYPES.globalBlock && String(record.status || "").toLowerCase() === "submitted")
+    .filter((record) => isGlobalBlockRecord(record) && String(record.status || "").toLowerCase() === "submitted")
     .forEach((record, index) => {
       const parentId = parentIdForLoadedRecord(record) || rotationRecordParentId(record.week, record.district, record.cafe);
       const blockId = blockIdFromRecord(record);
       const canonicalBlockId = blockId ? makeDatabaseRecordId(parentId, "global", blockId) : "";
-      [record.recordId, record.globalBlockId, canonicalBlockId].filter(Boolean).forEach((key) => putSubmittedGlobalBlockMenu(record, index, key));
+      [record.recordId, record.globalBlockId, canonicalBlockId, evidenceKey(record, blockId)].filter(Boolean).forEach((key) => putSubmittedGlobalBlockMenu(record, index, key));
     });
   const submittedGlobalBlockMenus = new Map(Array.from(submittedGlobalBlockMenuEvidence.entries()).map(([key, value]) => [key, value.menu]));
   const submittedBlockMenuForRecord = (record) => {
@@ -882,12 +900,15 @@ function recordsToRotations(records = []) {
     const blockId = blockIdFromRecord(record);
     const canonicalBlockId = blockId ? makeDatabaseRecordId(parentId, "global", blockId) : "";
     return submittedGlobalBlockMenus.get(record.globalBlockId)
+      || submittedGlobalBlockMenus.get(record.recordId)
       || submittedGlobalBlockMenus.get(canonicalBlockId)
+      || submittedGlobalBlockMenus.get(evidenceKey(record, blockId))
       || "";
   };
   const matchesSubmittedBlockMenu = (record) => {
     const submittedMenu = submittedBlockMenuForRecord(record);
     if (!submittedMenu) return true;
+    if (!record.menuConcept) return true;
     return normalizeItemName(record.menuConcept) === normalizeItemName(submittedMenu);
   };
   const normalizedRecords = normalizedRecordCandidates.filter((record) => {
@@ -895,7 +916,7 @@ function recordsToRotations(records = []) {
     const parentId = parentIdForLoadedRecord(record);
     if (!submittedParentIds.has(parentId) || !parentsWithSubmittedChildren.has(parentId)) return true;
     if (
-      record.recordType === SMARTSHEET_RECORD_TYPES.globalSelection
+      isGlobalSelectionRecord(record)
       && submittedBlockMenuForRecord(record)
     ) {
       return matchesSubmittedBlockMenu(record);
@@ -905,7 +926,7 @@ function recordsToRotations(records = []) {
   const menuEvidence = new Map();
   const authoritativeBlockMenus = new Map();
   const addAuthoritativeBlockMenu = (record, index = 0) => {
-    if (record.stationKey !== "global" || record.recordType !== SMARTSHEET_RECORD_TYPES.globalBlock || !record.menuConcept) return;
+    if (!isGlobalBlockRecord(record) || !record.menuConcept) return;
     const blockId = blockIdFromRecord(record);
     if (!blockId && !hasBlockIdentity(record)) return;
     const key = evidenceKey(record, blockId);
@@ -916,7 +937,7 @@ function recordsToRotations(records = []) {
     }
   };
   const addMenuEvidence = (record) => {
-    if (record.stationKey !== "global" || !record.menuConcept) return;
+    if (!isGlobalRecord(record) || !record.menuConcept) return;
     const blockId = blockIdFromRecord(record);
     if (record.recordType === SMARTSHEET_RECORD_TYPES.globalBlock && !blockId && !hasBlockIdentity(record)) return;
     const key = evidenceKey(record, blockId);
@@ -1015,7 +1036,7 @@ function recordsToRotations(records = []) {
       return;
     }
 
-    if (record.stationKey === "global") {
+    if (record.stationKey === "global" || isGlobalSelectionRecord(record)) {
       const blockId = blockIdFromRecord(record);
       if (blockId) {
         const authoritativeMenu = authoritativeBlockMenuFor(record, blockId);
@@ -1140,6 +1161,18 @@ function recordsToRotations(records = []) {
   });
 
   Object.entries(grouped).forEach(([key, rotation]) => {
+    if (isSplitGlobalCafe(rotation.cafe)) {
+      activeSplitGlobalBlockIds(rotation.cafe, rotation.week).forEach((blockId) => {
+        const submittedMenu = submittedGlobalBlockMenus.get(`${key}|${blockId}`);
+        if (!submittedMenu) return;
+        const currentBlock = rotation.globalBlocks?.[blockId] || blankGlobalBlock();
+        const currentMenu = normalizeItemName(currentBlock.menu);
+        const authoritativeMenu = normalizeItemName(submittedMenu);
+        rotation.globalBlocks[blockId] = currentMenu && currentMenu !== authoritativeMenu
+          ? blankGlobalBlock(submittedMenu, currentBlock.station || "")
+          : { ...currentBlock, menu: submittedMenu };
+      });
+    }
     grouped[key] = normalizeSplitGlobalBlocksForWeek(rotation, rotation.cafe, rotation.week);
   });
 
