@@ -279,7 +279,14 @@ const EMPTY_ROTATION = {
   submittedAt: ""
 };
 
-const rotationKey = (week, district, cafe) => `${week}|${district}|${cafe}`;
+const canonicalRotationWeek = (week = "") => {
+  const raw = String(week || "").trim();
+  const start = parseWeekStart(raw);
+  if (!start) return raw;
+  return ROTATION_WEEKS.find((weekLabel) => parseWeekStart(weekLabel) === start)
+    || makeWeekOption(new Date(`${start}T00:00:00`));
+};
+const rotationKey = (week, district, cafe) => `${canonicalRotationWeek(week)}|${district}|${cafe}`;
 const rotationRecordParentId = (week, district, cafe) => `rotation|${parseWeekStart(week) || week}|${district}|${cafe}`;
 const makeDatabaseRecordId = (...parts) => parts.filter(Boolean).join("|").replace(/\s+/g, " ").trim();
 const compactValues = (values = []) => values.filter((value) => String(value || "").trim());
@@ -663,6 +670,14 @@ function normalizeLoadedRotationRecord(record = {}) {
     "Copied From Cafe / Unit",
     "Copied From CafÃ© / Unit",
   ]);
+  const loadedWeekValue = firstLoadedRecordValue(record, [
+    SMARTSHEET_COLUMNS.dateRangeLabel,
+    "week",
+    "dateRangeLabel",
+    SMARTSHEET_COLUMNS.weekStartDate,
+    "Week Start Date",
+    "weekStartDate",
+  ]) || identity.weekStartDate || "";
   return {
     recordId,
     parentRecordId,
@@ -670,7 +685,7 @@ function normalizeLoadedRotationRecord(record = {}) {
     status: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.status, "Status", "status"])),
     district: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.district, "District", "district"]) || identity.district || ""),
     cafe: String(cafeUnit || identity.cafe || ""),
-    week: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.dateRangeLabel, "week", "dateRangeLabel"])),
+    week: canonicalRotationWeek(loadedWeekValue),
     stationKey: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.stationKey, "stationKey"])),
     selectionType: normalizeLoadedSelectionType(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.selectionType, "selectionType"])),
     itemName: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.menuItemSelection, SMARTSHEET_COLUMNS.uploadedItemName, "itemName", "menuItemSelection", "uploadedItemName"])),

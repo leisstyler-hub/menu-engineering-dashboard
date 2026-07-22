@@ -157,6 +157,16 @@ function asLiveSupabasePayloadRows(records = []) {
   });
 }
 
+function asLiveWeekStartOnlyRows(records = []) {
+  return asLiveSupabasePayloadRows(records).map((record) => {
+    const next = { ...record };
+    delete next[SMARTSHEET_COLUMNS.dateRangeLabel];
+    delete next.dateRangeLabel;
+    delete next.week;
+    return next;
+  });
+}
+
 function savedReInventRecordsWithStaleLegacyMenu() {
   return [
     {
@@ -827,6 +837,55 @@ test("Re:Invent shared database recall replaces stale local browser cache", asyn
   await expect(recap).toContainText(/Monday \+ Tuesday[\s\S]*AMZ: Cypress[\s\S]*Chicken Souvlaki Plate/);
   await expect(recap.getByText("AMZ: Roam BBQ")).toHaveCount(0);
   await expect(recap.getByText("Smoked Brisket")).toHaveCount(0);
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("Re:Invent shared database recall maps week-start rows over stale display-week cache", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await stubRotationReads(page, asLiveWeekStartOnlyRows(savedReInventSubmittedBlocksWithDraftSelections()));
+  await page.addInitScript(([storageKey, staleKey]) => {
+    window.localStorage.setItem(storageKey, JSON.stringify({
+      [staleKey]: {
+        status: "Submitted",
+        submittedAt: "Jul 21, 10:30 PM",
+        updatedAt: "Jul 21, 10:30 PM",
+        globalBlocks: {
+          monTue: {
+            menu: "AMZ: Roam BBQ",
+            entrees: ["Huli Huli Chicken", "", ""],
+            sides: ["Brown Rice", "", "", ""],
+            subRecipes: ["", "", "", ""],
+            extensions: ["", ""],
+          },
+          wedThu: {
+            menu: "AMZ: Lotus",
+            entrees: ["Pork Hung Lay", "", ""],
+            sides: ["", "", "", ""],
+            subRecipes: ["", "", "", ""],
+            extensions: ["", ""],
+          },
+          friCarry: {
+            menu: "AMZ: Ohana",
+            entrees: ["Huli Huli Chicken", "", ""],
+            sides: ["", "", "", ""],
+            subRecipes: ["", "", "", ""],
+            extensions: ["", ""],
+          },
+        },
+      },
+    }));
+  }, [NEIGHBORHOOD_ROTATIONS_STORAGE_KEY, `${currentWeek}|South|Re:Invent`]);
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: /South/i }).click();
+  await page.getByRole("combobox").first().selectOption({ label: currentWeek });
+  await page.getByRole("button", { name: /^Re:Invent$/i }).click();
+
+  const recap = page.getByText("Submitted Menu Recap").locator("xpath=ancestor::section[1]");
+  await expect(recap).toBeVisible({ timeout: 20_000 });
+  await expect(recap).toContainText(/Monday \+ Tuesday[\s\S]*AMZ: Cypress[\s\S]*Chicken Souvlaki Plate/);
+  await expect(recap.getByText("AMZ: Roam BBQ")).toHaveCount(0);
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
