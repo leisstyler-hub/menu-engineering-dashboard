@@ -132,7 +132,10 @@ const weekIndexFromStartDate = (weekLabel = "", startDateKey = "") => {
   if (Number.isNaN(weekStart.getTime()) || Number.isNaN(cycleStart.getTime())) return 0;
   return Math.max(0, Math.round((weekStart - cycleStart) / (7 * 24 * 60 * 60 * 1000)));
 };
-const splitGlobalFridayCarriesToNextMonday = (cafe, weekLabel = "") => weekIndexFromStartDate(weekLabel, SPLIT_GLOBAL_CAFE_CYCLE_STARTS[cafe] || SPLIT_GLOBAL_CAFE_CYCLE_STARTS["Re:Invent"]) % 2 === 0;
+const splitGlobalFridayCarriesToNextMonday = (cafe, weekLabel = "") => {
+  if (cafe === "Re:Invent") return true;
+  return weekIndexFromStartDate(weekLabel, SPLIT_GLOBAL_CAFE_CYCLE_STARTS[cafe] || SPLIT_GLOBAL_CAFE_CYCLE_STARTS["Re:Invent"]) % 2 === 0;
+};
 const isReInventFridayMondayWeek = (weekLabel = "") => splitGlobalFridayCarriesToNextMonday("Re:Invent", weekLabel);
 const ROTATION_WEEKS = Array.from({ length: 160 }, (_, index) => makeWeekOption(addDays(ROTATION_CYCLE_START, index * 7)));
 const CURRENT_ROTATION_WEEK_START = getMonday(new Date());
@@ -960,7 +963,7 @@ function recordsToRotations(records = []) {
         const preferredMenu = preferredMenuFor(record, blockId);
         rotation.globalBlocks[blockId] = {
           ...currentBlock,
-          menu: authoritativeMenu || record.menuConcept || preferredMenu || currentBlock.menu || "",
+          menu: authoritativeMenu || preferredMenu || currentBlock.menu || record.menuConcept || "",
           station: currentBlock.station || record.stationSubConcept || ""
         };
       } else {
@@ -1134,6 +1137,10 @@ function recordsToRotations(records = []) {
       if (!block.menu && !blockHasSelections(block)) return;
       rotation.globalBlocks[id] = alignNitroBlockToMenu(block, rotation.menu, rotation.station);
     });
+  });
+
+  Object.entries(grouped).forEach(([key, rotation]) => {
+    grouped[key] = normalizeSplitGlobalBlocksForWeek(rotation, rotation.cafe, rotation.week);
   });
 
   return grouped;
@@ -1757,6 +1764,31 @@ function activeSplitGlobalBlockIds(cafe, week = "") {
   return new Set(splitGlobalBlockLayout(cafe, week).map((block) => block.id));
 }
 
+function normalizeSplitGlobalBlocksForWeek(rotation = EMPTY_ROTATION, cafe = rotation.cafe || "", week = rotation.week || "") {
+  if (promotionCoversWeek(rotation.promotionOverride)) {
+    return {
+      ...rotation,
+      menu: "",
+      station: "",
+      entrees: [...EMPTY_ROTATION.entrees],
+      sides: [...EMPTY_ROTATION.sides],
+      subRecipes: [...EMPTY_ROTATION.subRecipes],
+      extensions: [...EMPTY_ROTATION.extensions],
+      globalBlocks: {}
+    };
+  }
+  if (!isSplitGlobalCafe(cafe)) return rotation;
+  const activeBlockIds = activeSplitGlobalBlockIds(cafe, week || rotation.week || "");
+  if (!activeBlockIds.size) return rotation;
+  const nextBlocks = {};
+  Object.entries(rotation.globalBlocks || {}).forEach(([blockId, block]) => {
+    if (blockId === "noodles" || !SPLIT_GLOBAL_BLOCK_IDS.has(blockId) || activeBlockIds.has(blockId)) {
+      nextBlocks[blockId] = block;
+    }
+  });
+  return { ...rotation, globalBlocks: nextBlocks };
+}
+
 function nitroGlobalBlockLayout() {
   return [
     { id: "nitroMonTue", title: "Monday + Tuesday Proteins", days: ["Monday", "Tuesday"], help: "Select the Global item mix Nitro runs before the Wednesday protein change." },
@@ -1924,7 +1956,7 @@ function persistedSplitGlobalBlocks(rotation = {}, cafe = "", week = rotation?.w
   const activeWithSelections = activeEntries.filter(([, block]) => blockHasSelections(block));
   if (activeWithSelections.length) return activeWithSelections;
   if (activeEntries.length) return activeEntries;
-  if (activeBlockIds.size) return [];
+  if (activeBlockIds.size || isSplitGlobalCafe(cafe)) return [];
   const savedWithSelections = entries.filter(([, block]) => blockHasSelections(block));
   if (savedWithSelections.length) return savedWithSelections;
   return entries;
@@ -2673,14 +2705,20 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
   const [rotationView, setRotationView] = useState("planner");
   const [resultsDistrict, setResultsDistrict] = useState("All");
   const [resultsCafe, setResultsCafe] = useState("All");
-  const [rotations, setRotations] = useState(() => readLocalStorageJson(NEIGHBORHOOD_ROTATIONS_STORAGE_KEY, {}));
-  const [databaseRecords, setDatabaseRecords] = useState(() => readLocalStorageJson(SMARTSHEET_DATABASE_STORAGE_KEY, []));
-  const [databaseLoadStatus, setDatabaseLoadStatus] = useState({ state: "idle", message: "Using local saved data until the shared database is loaded.", loadedAt: "" });
+  const [rotations, setRotations] = useState({});
+  const [databaseRecords, setDatabaseRecords] = useState([]);
+  const [databaseLoadStatus, setDatabaseLoadStatus] = useState({ state: "idle", message: "Waiting for shared database before showing saved rotations.", loadedAt: "" });
   const [databaseSyncStatus, setDatabaseSyncStatus] = useState({ state: "idle", message: "No database sync attempted yet.", syncedAt: "" });
   const [smartsheetReadCooldown, setSmartsheetReadCooldown] = useState(false);
 
-  useEffect(() => { writeLocalStorageJson(NEIGHBORHOOD_ROTATIONS_STORAGE_KEY, rotations, { clearOnQuota: true }); }, [rotations]);
-  useEffect(() => { writeLocalStorageJson(SMARTSHEET_DATABASE_STORAGE_KEY, databaseRecords, { clearOnQuota: true }); }, [databaseRecords]);
+  useEffect(() => {
+    if (databaseLoadStatus.state === "idle" || databaseLoadStatus.state === "loading") return;
+    writeLocalStorageJson(NEIGHBORHOOD_ROTATIONS_STORAGE_KEY, rotations, { clearOnQuota: true });
+  }, [databaseLoadStatus.state, rotations]);
+  useEffect(() => {
+    if (databaseLoadStatus.state === "idle" || databaseLoadStatus.state === "loading") return;
+    writeLocalStorageJson(SMARTSHEET_DATABASE_STORAGE_KEY, databaseRecords, { clearOnQuota: true });
+  }, [databaseLoadStatus.state, databaseRecords]);
 
   useEffect(() => {
     if (MENUWORKS_ITEMS.length) return undefined;
@@ -2728,6 +2766,12 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
         loadedAt: nowStamp(),
       });
     } catch (error) {
+      const fallbackRecords = readLocalStorageJson(SMARTSHEET_DATABASE_STORAGE_KEY, []);
+      const fallbackRotations = fallbackRecords.length
+        ? recordsToRotations(fallbackRecords)
+        : readLocalStorageJson(NEIGHBORHOOD_ROTATIONS_STORAGE_KEY, {});
+      setDatabaseRecords(fallbackRecords);
+      setRotations(fallbackRotations);
       setDatabaseLoadStatus({
         state: "fallback",
         message: error.message || "Could not load shared database records. Using local fallback records.",
@@ -2743,14 +2787,18 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
   const cafes = DISTRICTS[district] || [];
   useEffect(() => { if (district && selectedCafe && !cafes.includes(selectedCafe)) setSelectedCafe(""); }, [district, cafes, selectedCafe]);
 
-  const currentRotation = selectedCafe ? (rotations[rotationKey(week, district, selectedCafe)] || EMPTY_ROTATION) : EMPTY_ROTATION;
+  const currentRotation = selectedCafe ? normalizeSplitGlobalBlocksForWeek(rotations[rotationKey(week, district, selectedCafe)] || EMPTY_ROTATION, selectedCafe, week) : EMPTY_ROTATION;
   const carryoverWeek = previousRotationWeek(week);
-  const previousRotation = selectedCafe && carryoverWeek ? (rotations[rotationKey(carryoverWeek, district, selectedCafe)] || EMPTY_ROTATION) : EMPTY_ROTATION;
+  const previousRotation = selectedCafe && carryoverWeek ? normalizeSplitGlobalBlocksForWeek(rotations[rotationKey(carryoverWeek, district, selectedCafe)] || EMPTY_ROTATION, selectedCafe, carryoverWeek) : EMPTY_ROTATION;
   const menus = useMemo(() => Array.from(new Set(MENUWORKS_ITEMS.map((row) => getMenuName(row)).filter(Boolean).filter(isGlobalMenuOption))).sort(), [menuWorksItemsVersion]);
-  const updateRotation = (patch) => setRotations((prev) => ({
-    ...prev,
-    [rotationKey(week, district, selectedCafe)]: { ...(prev[rotationKey(week, district, selectedCafe)] || EMPTY_ROTATION), ...patch }
-  }));
+  const updateRotation = (patch) => setRotations((prev) => {
+    const key = rotationKey(week, district, selectedCafe);
+    const nextRotation = normalizeSplitGlobalBlocksForWeek({ ...(prev[key] || EMPTY_ROTATION), ...patch }, selectedCafe, week);
+    return {
+      ...prev,
+      [key]: nextRotation
+    };
+  });
 
   const rowForCafe = (wk, dist, cafe) => {
     const priorWeek = previousRotationWeek(wk);

@@ -331,12 +331,14 @@ function savedReInventRecoveryWeekOutOfOrderRecords() {
       [SMARTSHEET_COLUMNS.savedEntryCount]: 4,
       [SMARTSHEET_COLUMNS.historyInclude]: true,
     },
-    globalBlock("thuFri", "Thursday + Friday", "AMZ: Cypress", 2, overrides),
-    selection("thuFri", "AMZ: Cypress", "Chicken Souvlaki Gyro", 1, overrides),
-    selection("thuFri", "AMZ: Cypress", "Spiced Jasmine Rice", 2, overrides),
-    globalBlock("tueWed", "Tuesday + Wednesday", "AMZ: Lemongrass + Lime", 1, overrides),
-    selection("tueWed", "AMZ: Lemongrass + Lime", "Lemongrass Chicken", 1, overrides),
-    selection("tueWed", "AMZ: Lemongrass + Lime", "Thai Sweet + Sour Slaw", 2, overrides),
+    globalBlock("friCarry", "Friday", "AMZ: Cypress", 3, overrides),
+    selection("friCarry", "AMZ: Cypress", "Chicken Souvlaki Gyro", 1, overrides),
+    selection("friCarry", "AMZ: Cypress", "Spiced Jasmine Rice", 2, overrides),
+    globalBlock("monTue", "Monday + Tuesday", "AMZ: Saffron", 1, overrides),
+    selection("monTue", "AMZ: Saffron", "Chicken Apricot Tagine", 1, overrides),
+    globalBlock("wedThu", "Wednesday + Thursday", "AMZ: Lemongrass + Lime", 2, overrides),
+    selection("wedThu", "AMZ: Lemongrass + Lime", "Lemongrass Chicken", 1, overrides),
+    selection("wedThu", "AMZ: Lemongrass + Lime", "Thai Sweet + Sour Slaw", 2, overrides),
   ];
 }
 
@@ -934,7 +936,7 @@ test("Re:Invent leadership card shows the full recovery week in calendar order",
 
   const card = page.getByRole("button", { name: /Open Re:Invent planner/i }).first();
   await expect(card).toBeVisible({ timeout: 20_000 });
-  await expect(card).toContainText(/Monday[\s\S]*AMZ: Saffron[\s\S]*Tuesday \+ Wednesday[\s\S]*AMZ: Lemongrass \+ Lime[\s\S]*Thursday \+ Friday[\s\S]*AMZ: Cypress/);
+  await expect(card).toContainText(/Monday \+ Tuesday[\s\S]*AMZ: Saffron[\s\S]*Wednesday \+ Thursday[\s\S]*AMZ: Lemongrass \+ Lime[\s\S]*Friday[\s\S]*AMZ: Cypress/);
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
