@@ -2,9 +2,9 @@
 
 Last updated: July 21, 2026
 
-Current release version: `2026.07.21.002-reinvent-submit-recall-integrity`
+Current release version: `2026.07.21.003-reinvent-doppler-stale-menu-guard`
 
-Latest process update: July 21, 2026 fixed Re:Invent split-global submit/recall integrity. Split Global item rows now inherit the parent Submitted state when saved, and existing submitted Global Blocks can recover matching saved item rows that were previously written as Draft instead of throwing them away after refresh.
+Latest process update: July 21, 2026 made split Global blocks authoritative for Re:Invent/Blueshift recall after edit-and-resubmit, and ignored blank legacy Global blocks that could force Doppler back to stale Cypress instead of submitted selection evidence.
 
 ## First Rule
 
@@ -113,6 +113,7 @@ Critical integrity rules:
 
 Recent critical fix:
 
+- `2026.07.21.003-reinvent-doppler-stale-menu-guard` prevents stale one-week legacy Global rows from overriding split Global block display for Re:Invent/Blueshift. Split cafes should recall Monday/Tuesday, Wednesday/Thursday, and Friday from `globalBlocks`, not from `rotation.menu`. This release also ignores blank legacy Global blocks as authoritative evidence so Doppler submitted selections cannot be relabeled back to a stale Cypress block.
 - `2026.07.21.001-reinvent-block-menu-authority` makes saved split-global `Global Block` rows the authority for the displayed menu name during recall. Child `Global Selection` rows still restore the selected items, but they cannot relabel a block to an inherited/stale `menuConcept`. This protects Re:Invent cases where a chef selected Cypress but the display showed a different AMZ menu.
 - `2026.07.18.010-menu-item-dedupe` dedupes chef-facing Neighborhood Rotation item pickers before rendering options. Webtrition may still contain repeated raw rows for the same item/MRN with different portion or pricing contexts; selectors should show one polished option, not every raw context row.
 - `2026.07.18.009-station-locked-card-border` puts no-Global locked cafes into the same bordered summary tile style by showing `Stations` / `Selections locked` instead of loose text, while still avoiding fake AMZ labels.

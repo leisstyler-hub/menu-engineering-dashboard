@@ -2,6 +2,7 @@
 
 ## 2026-07-21
 
+- [Jul 21, 6:38 PM] Made split Global blocks authoritative for Re:Invent/Blueshift so stale one-week Global rows can no longer override Monday/Tuesday, Wednesday/Thursday, or Friday selections after edit-and-resubmit; also ignored blank legacy Global blocks that were forcing Doppler back to Cypress over submitted item evidence; set visible app version to `2026.07.21.003-reinvent-doppler-stale-menu-guard`.
 - [Jul 21, 6:04 PM] Fixed Re:Invent split-global submit/recall integrity so Global Block item rows inherit Submitted status during save, and existing submitted blocks can recover matching saved item rows that were previously written as Draft; set visible app version to `2026.07.21.002-reinvent-submit-recall-integrity`.
 - [Jul 21, 7:18 AM] Fixed Re:Invent split-global recall/display so saved Global Block menu names are authoritative over child selection-row menu evidence, preventing submitted Cypress/chef-selected menus from being relabeled as stale AMZ menus in recaps and leadership cards; set visible app version to `2026.07.21.001-reinvent-block-menu-authority`.
 

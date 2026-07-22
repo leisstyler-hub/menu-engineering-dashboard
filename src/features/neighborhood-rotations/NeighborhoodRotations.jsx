@@ -345,6 +345,7 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
   const costRange = selectedTrueCostRange(selected);
   const fcRange = selectedFoodCostRange(selected);
   const hasGlobalStation = cafeHasGlobalStation(cafe);
+  const splitGlobalRotation = hasGlobalStation && isSplitGlobalCafe(cafe);
   const header = {
     ...baseDatabaseRecord({
       parentId: "",
@@ -370,7 +371,8 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
 
   const cycleConfig = globalCycleConfig(cafe, week);
   const promo = normalizePromotionOverride(rotation.promotionOverride || EMPTY_ROTATION.promotionOverride);
-  const globalBlock = hasGlobalStation && (rotation.menu || promo.enabled) ? {
+  const shouldWriteBaseGlobalBlock = hasGlobalStation && (promo.enabled || (!splitGlobalRotation && rotation.menu));
+  const globalBlock = shouldWriteBaseGlobalBlock ? {
     ...baseDatabaseRecord({
       parentId,
       recordId: makeDatabaseRecordId(parentId, "global-block", rotation.menu || promo.name || "promotion-override"),
@@ -402,16 +404,16 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
   } : null;
 
   const selectionRows = [];
-  const pushSelections = (stationKey, selectionType, values, offset = 0, sourceRotation = rotation, blockId = "", candidateRows = MENUWORKS_ITEMS) => {
+  const pushSelections = (stationKey, selectionType, values, offset = 0, selectionRotation = rotation, blockId = "", candidateRows = MENUWORKS_ITEMS) => {
     compactValues(values).forEach((itemName, index) => {
-      const selectionSource = {
-        ...sourceRotation,
-        status: sourceRotation.status || rotation.status,
-        submittedBy: sourceRotation.submittedBy || rotation.submittedBy,
-        submittedAt: sourceRotation.submittedAt || rotation.submittedAt,
-        updatedAt: sourceRotation.updatedAt || rotation.updatedAt,
+      const sourceRotation = {
+        ...selectionRotation,
+        status: selectionRotation.status || rotation.status,
+        submittedBy: selectionRotation.submittedBy || rotation.submittedBy,
+        submittedAt: selectionRotation.submittedAt || rotation.submittedAt,
+        updatedAt: selectionRotation.updatedAt || rotation.updatedAt,
       };
-      const rec = selectionDatabaseRecord({ parentId, district, cafe, week, rotation: selectionSource, stationKey, selectionType, itemName, sortOrder: offset + index + 1, slotNumber: index + 1, blockId, candidateRows });
+      const rec = selectionDatabaseRecord({ parentId, district, cafe, week, rotation: sourceRotation, stationKey, selectionType, itemName, sortOrder: offset + index + 1, slotNumber: index + 1, blockId, candidateRows });
       if (blockId) {
         rec[SMARTSHEET_COLUMNS.globalBlockId] = makeDatabaseRecordId(parentId, "global", blockId);
         rec[SMARTSHEET_COLUMNS.menuBlockLabel] = blockId;
@@ -738,13 +740,17 @@ function recordsToRotations(records = []) {
   const menuEvidence = new Map();
   const authoritativeBlockMenus = new Map();
   const evidenceKey = (record, blockId = "") => `${rotationKey(record.week, record.district, record.cafe)}|${blockId || "__base"}`;
+  const hasBlockIdentity = (record) => Boolean(record.globalBlockId || record.menuBlockLabel);
   const addAuthoritativeBlockMenu = (record) => {
     if (record.stationKey !== "global" || record.recordType !== SMARTSHEET_RECORD_TYPES.globalBlock || !record.menuConcept) return;
-    authoritativeBlockMenus.set(evidenceKey(record, blockIdFromRecord(record)), record.menuConcept);
+    const blockId = blockIdFromRecord(record);
+    if (!blockId && !hasBlockIdentity(record)) return;
+    authoritativeBlockMenus.set(evidenceKey(record, blockId), record.menuConcept);
   };
   const addMenuEvidence = (record) => {
     if (record.stationKey !== "global" || !record.menuConcept) return;
     const blockId = blockIdFromRecord(record);
+    if (record.recordType === SMARTSHEET_RECORD_TYPES.globalBlock && !blockId && !hasBlockIdentity(record)) return;
     const key = evidenceKey(record, blockId);
     const weight = record.recordType === SMARTSHEET_RECORD_TYPES.globalSelection && record.itemName
       ? 1
@@ -793,8 +799,10 @@ function recordsToRotations(records = []) {
           station: currentBlock.station || record.stationSubConcept || ""
         };
       } else {
-        rotation.menu = preferredMenuFor(record) || rotation.menu || record.menuConcept || "";
-        rotation.station = rotation.station || record.stationSubConcept || "";
+        if (!isSplitGlobalCafe(record.cafe)) {
+          rotation.menu = preferredMenuFor(record) || rotation.menu || record.menuConcept || "";
+          rotation.station = rotation.station || record.stationSubConcept || "";
+        }
       }
       rotation.status = mergeStatus(rotation.status, record.status);
       const currentPromo = normalizePromotionOverride(rotation.promotionOverride);
@@ -852,6 +860,7 @@ function recordsToRotations(records = []) {
         rotation.globalBlocks[blockId] = block;
         return;
       }
+      if (isSplitGlobalCafe(record.cafe)) return;
       rotation.menu = preferredMenuFor(record) || rotation.menu || record.menuConcept || "";
       rotation.station = rotation.station || record.stationSubConcept || "";
       if (record.selectionType === SMARTSHEET_SELECTION_TYPES.entree) putSlot(rotation.entrees, index, record.itemName);
@@ -1851,8 +1860,8 @@ function carryoverGlobalBlock(rotation = {}, preferredBlockId = "") {
 function rotationMenuLabel(rotation = {}, cafe = rotation?.cafe || "", week = rotation?.week || "") {
   if (!cafeHasGlobalStation(cafe)) return "";
   if (promotionCoversWeek(rotation.promotionOverride)) return normalizePromotionOverride(rotation.promotionOverride).name || "";
+  if (isSplitGlobalCafe(cafe)) return splitGlobalMenuLabel(rotation, cafe, week) || rotation.menu || "";
   if (rotation.menu) return rotation.menu;
-  if (isSplitGlobalCafe(cafe)) return splitGlobalMenuLabel(rotation, cafe, week);
   const entries = Object.entries(rotation.globalBlocks || {});
   const blockMenus = entries.map(([, block]) => block?.menu).filter(Boolean);
   return blockMenus.length ? Array.from(new Set(blockMenus)).join(" / ") : "";

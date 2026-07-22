@@ -82,6 +82,31 @@ function savedReInventRecords() {
   ];
 }
 
+function savedReInventRecordsWithStaleLegacyMenu() {
+  return [
+    {
+      ...baseRecord(parentId, SMARTSHEET_RECORD_TYPES.rotationHeader),
+      [SMARTSHEET_COLUMNS.savedEntryCount]: 5,
+      [SMARTSHEET_COLUMNS.historyInclude]: true,
+    },
+    {
+      ...baseRecord(`${parentId}|global-block|AMZ: Ohana`, SMARTSHEET_RECORD_TYPES.globalBlock),
+      [SMARTSHEET_COLUMNS.menuConcept]: "AMZ: Ohana",
+      [SMARTSHEET_COLUMNS.menuBlockLabel]: "Global",
+      [SMARTSHEET_COLUMNS.globalBlockId]: `${parentId}|global`,
+      [SMARTSHEET_COLUMNS.globalBlockIndex]: 1,
+      [SMARTSHEET_COLUMNS.globalBlockDays]: "Monday, Tuesday, Wednesday, Thursday, Friday",
+    },
+    globalBlock("monTue", "Monday + Tuesday", "AMZ: Cypress", 1),
+    globalBlock("wedThu", "Wednesday + Thursday", "AMZ: Lotus", 2),
+    globalBlock("friCarry", "Friday", "AMZ: Saffron", 3),
+    selection("monTue", "AMZ: Cypress", "Chicken Souvlaki Gyro", 1),
+    selection("monTue", "AMZ: Cypress", "Spiced Jasmine Rice", 2),
+    selection("wedThu", "AMZ: Lotus", "Pork Hung Lay", 1),
+    selection("friCarry", "AMZ: Saffron", "Chicken Apricot Tagine", 1),
+  ];
+}
+
 function savedReInventRecordsWithWrongBlockMenus() {
   const overrides = {
     parentId: augustParentId,
@@ -354,6 +379,29 @@ test("Re:Invent saved split global blocks recall as the submitted menus", async 
   await expect(recap.getByText("Friday").first()).toBeVisible();
   await expect(recap.getByText("AMZ: Saffron").first()).toBeVisible();
   await expect(page.getByText(new RegExp("AMZ: Ohana\\s*/\\s*AMZ: Lotus\\s*/\\s*AMZ: Ohana", "i"))).toHaveCount(0);
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("Re:Invent split-block recall ignores a stale legacy one-week menu after resubmit", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await stubRotationReads(page, savedReInventRecordsWithStaleLegacyMenu());
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: /South/i }).click();
+  await page.getByRole("combobox").first().selectOption({ label: week });
+  await page.getByRole("button", { name: /^Re:Invent$/i }).click();
+
+  const recap = page.getByText("Submitted Menu Recap").locator("xpath=ancestor::section[1]");
+  await expect(recap).toBeVisible({ timeout: 20_000 });
+  await expect(recap).toContainText(/Monday \+ Tuesday[\s\S]*AMZ: Cypress[\s\S]*Chicken Souvlaki Gyro/);
+  await expect(recap).toContainText(/Wednesday \+ Thursday[\s\S]*AMZ: Lotus/);
+  await expect(recap).toContainText(/Friday[\s\S]*AMZ: Saffron/);
+
+  const card = page.getByRole("button", { name: /Open Re:Invent planner/i }).first();
+  await expect(card).toBeVisible({ timeout: 20_000 });
+  await expect(card).toContainText(/Monday \+ Tuesday[\s\S]*AMZ: Cypress[\s\S]*Wednesday \+ Thursday[\s\S]*AMZ: Lotus[\s\S]*Friday[\s\S]*AMZ: Saffron/);
+  await expect(card.getByText("AMZ: Ohana")).toHaveCount(0);
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
