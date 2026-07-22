@@ -1,1 +1,1 @@
-export const APP_VERSION_STAMP = "2026.07.21.005-reinvent-shared-recall-authority";
+export const APP_VERSION_STAMP = "2026.07.21.006-reinvent-slot-stale-row-lock";

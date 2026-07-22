@@ -186,8 +186,8 @@ if (!/replaceParentRecordIds: \[rotationRecordParentId\(week, district, selected
   fail("Rotation submit sync must ask the Smartsheet mirror to auto-repair missing used columns.");
 }
 
-if (!/function selectionDatabaseRecord\(\{[\s\S]*blockId = ""[\s\S]*recordId: makeDatabaseRecordId\(parentId, stationKey, blockId \|\| "base", selectionType, slotNumber, itemName\)/.test(source)) {
-  fail("Selection record IDs must include the global block ID so split menus can resubmit repeated items without Supabase row conflicts.");
+if (!/const recordId = blockId[\s\S]*makeDatabaseRecordId\(parentId, stationKey, blockId, selectionType, slotNumber\)[\s\S]*makeDatabaseRecordId\(parentId, stationKey, "base", selectionType, slotNumber, itemName\)/.test(source)) {
+  fail("Split-global selection record IDs must include the global block ID and use stable slot identity so resubmits replace stale rows.");
 }
 
 if (!/selectionDatabaseRecord\(\{ parentId, district, cafe, week, rotation: sourceRotation, stationKey, selectionType, itemName, sortOrder: offset \+ index \+ 1, slotNumber: index \+ 1, blockId, candidateRows \}\)/.test(source)) {

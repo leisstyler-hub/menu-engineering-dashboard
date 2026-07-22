@@ -118,6 +118,7 @@ function withTimestamps(record, timestamp) {
 function savedReInventRecordsWithStaleSameBlockRows() {
   const freshTimestamp = "Jul 21, 6:55 PM";
   const staleTimestamp = "Jul 1, 12:50 PM";
+  const staleSelectionTimestamp = "Jul 22, 9:00 PM";
   const staleBlock = {
     ...baseRecord(`${parentId}|global|monTue|stale-roam-bbq`, SMARTSHEET_RECORD_TYPES.globalBlock),
     [SMARTSHEET_COLUMNS.menuConcept]: "AMZ: Roam BBQ",
@@ -144,7 +145,7 @@ function savedReInventRecordsWithStaleSameBlockRows() {
     withTimestamps(selection("monTue", "AMZ: Cypress", "Chicken Souvlaki Gyro", 1), freshTimestamp),
     withTimestamps(selection("monTue", "AMZ: Cypress", "Spiced Jasmine Rice", 2), freshTimestamp),
     withTimestamps(staleBlock, staleTimestamp),
-    withTimestamps(staleSelection, staleTimestamp),
+    withTimestamps(staleSelection, staleSelectionTimestamp),
   ];
 }
 
@@ -472,7 +473,7 @@ test("Re:Invent split-block recall keeps newest same-block resubmission over sta
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
-test("Re:Invent recall uses submitted Global Block menu names as authoritative labels", async ({ page }) => {
+test("Re:Invent recall ignores stale child rows that disagree with submitted Global Block menus", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   await stubRotationReads(page, savedReInventRecordsWithWrongBlockMenus());
 
@@ -484,9 +485,9 @@ test("Re:Invent recall uses submitted Global Block menu names as authoritative l
   const recap = page.getByText("Submitted Menu Recap").locator("xpath=ancestor::section[1]");
   await expect(recap).toBeVisible({ timeout: 20_000 });
   await expect(recap.getByText("AMZ: Cypress").first()).toBeVisible();
-  await expect(recap.getByText("Aji De Gallina").first()).toBeVisible();
-  await expect(recap.getByText("Korean Fried Chicken").first()).toBeVisible();
-  await expect(recap.getByText("Portobello Tofu Teriyaki").first()).toBeVisible();
+  await expect(recap.getByText("Aji De Gallina")).toHaveCount(0);
+  await expect(recap.getByText("Korean Fried Chicken")).toHaveCount(0);
+  await expect(recap.getByText("Portobello Tofu Teriyaki")).toHaveCount(0);
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
@@ -612,12 +613,13 @@ test("edit and resubmit state clears when switching cafes", async ({ page }) => 
   const dopplerRecap = page.getByText("Submitted Menu Recap").locator("xpath=ancestor::section[1]");
   await expect(dopplerRecap).toBeVisible({ timeout: 20_000 });
   await expect(dopplerRecap.getByRole("heading", { name: /^Doppler$/i })).toBeVisible();
-  await expect(dopplerRecap.getByText("AMZ+RA: Andes").first()).toBeVisible();
+  await expect(dopplerRecap.getByText("AMZ: Cypress").first()).toBeVisible();
+  await expect(dopplerRecap.getByText("AMZ+RA: Andes")).toHaveCount(0);
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
-test("Doppler recall prefers submitted global selections over a stale Cypress block row", async ({ page }) => {
+test("Doppler recall keeps the submitted global block menu over mismatched child rows", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   await stubRotationReads(page, savedDopplerRecordsWithWrongGlobalBlockMenu());
 
@@ -628,8 +630,8 @@ test("Doppler recall prefers submitted global selections over a stale Cypress bl
 
   const recap = page.getByText("Submitted Menu Recap").locator("xpath=ancestor::section[1]");
   await expect(recap).toBeVisible({ timeout: 20_000 });
-  await expect(recap.getByText("AMZ+RA: Andes").first()).toBeVisible();
-  await expect(recap.getByText("AMZ: Cypress")).toHaveCount(0);
+  await expect(recap.getByText("AMZ: Cypress").first()).toBeVisible();
+  await expect(recap.getByText("AMZ+RA: Andes")).toHaveCount(0);
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
@@ -645,7 +647,7 @@ test("Doppler leadership card shows Monday-Tuesday carryover and Wednesday-Frida
 
   const card = page.getByRole("button", { name: /Open Doppler planner/i }).first();
   await expect(card).toBeVisible({ timeout: 20_000 });
-  await expect(card).toContainText(/Monday \+ Tuesday[\s\S]*AMZ: Cypress[\s\S]*Wednesday-Friday[\s\S]*AMZ\+RA: Andes/);
+  await expect(card).toContainText(/Monday \+ Tuesday[\s\S]*AMZ: Cypress[\s\S]*Wednesday-Friday[\s\S]*AMZ: Cypress/);
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });

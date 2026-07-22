@@ -309,10 +309,13 @@ function selectionDatabaseRecord({ parentId, district, cafe, week, rotation, sta
   const trueCost = getTrueCost(row);
   const foodCost = price ? Number(trueCost || 0) / Number(price) : null;
   const calorieValue = calories || getCalories(row) || "";
+  const recordId = blockId
+    ? makeDatabaseRecordId(parentId, stationKey, blockId, selectionType, slotNumber)
+    : makeDatabaseRecordId(parentId, stationKey, "base", selectionType, slotNumber, itemName);
   return {
     ...baseDatabaseRecord({
       parentId,
-      recordId: makeDatabaseRecordId(parentId, stationKey, blockId || "base", selectionType, slotNumber, itemName),
+      recordId,
       recordType: stationKey === "global" ? SMARTSHEET_RECORD_TYPES.globalSelection : SMARTSHEET_RECORD_TYPES.stationSelection,
       status: rotation.status || "Draft",
       district,
@@ -737,9 +740,14 @@ function recordsToRotations(records = []) {
     .filter((record) => record.recordType === SMARTSHEET_RECORD_TYPES.globalBlock && String(record.status || "").toLowerCase() === "submitted")
     .forEach((record) => {
       [record.recordId, record.globalBlockId].filter(Boolean).forEach((blockId) => {
-        submittedGlobalBlockMenus.set(blockId, record.menuConcept || "");
+        if (!submittedGlobalBlockMenus.has(blockId)) submittedGlobalBlockMenus.set(blockId, record.menuConcept || "");
       });
     });
+  const matchesSubmittedBlockMenu = (record) => {
+    const submittedMenu = submittedGlobalBlockMenus.get(record.globalBlockId);
+    if (!submittedMenu) return true;
+    return normalizeItemName(record.menuConcept) === normalizeItemName(submittedMenu);
+  };
   const normalizedRecords = normalizedRecordCandidates.filter((record) => {
     if (record.recordType === SMARTSHEET_RECORD_TYPES.rotationHeader) return true;
     const parentId = parentIdForLoadedRecord(record);
@@ -747,9 +755,8 @@ function recordsToRotations(records = []) {
     if (
       record.recordType === SMARTSHEET_RECORD_TYPES.globalSelection
       && submittedGlobalBlockMenus.has(record.globalBlockId)
-      && submittedGlobalBlockMenus.get(record.globalBlockId) === record.menuConcept
     ) {
-      return true;
+      return matchesSubmittedBlockMenu(record);
     }
     return String(record.status || "").toLowerCase() === "submitted";
   });
@@ -887,6 +894,7 @@ function recordsToRotations(records = []) {
       const blockId = blockIdFromRecord(record);
       if (blockId) {
         const authoritativeMenu = authoritativeBlockMenuFor(record, blockId);
+        if (authoritativeMenu && !matchesSubmittedBlockMenu(record)) return;
         const block = rotation.globalBlocks[blockId] || blankGlobalBlock();
         block.menu = authoritativeMenu || preferredMenuFor(record, blockId) || block.menu || record.menuConcept || "";
         block.station = block.station || record.stationSubConcept || "";
@@ -1793,9 +1801,10 @@ function persistedSplitGlobalBlocks(rotation = {}, cafe = "", week = rotation?.w
   const activeEntries = entries.filter(([blockId]) => activeBlockIds.has(blockId));
   const activeWithSelections = activeEntries.filter(([, block]) => blockHasSelections(block));
   if (activeWithSelections.length) return activeWithSelections;
+  if (activeEntries.length) return activeEntries;
   const savedWithSelections = entries.filter(([, block]) => blockHasSelections(block));
   if (savedWithSelections.length) return savedWithSelections;
-  return activeEntries.length ? activeEntries : entries;
+  return entries;
 }
 
 function dopplerSummaryBlockLabels(rotation = {}, previousRotation = EMPTY_ROTATION) {
