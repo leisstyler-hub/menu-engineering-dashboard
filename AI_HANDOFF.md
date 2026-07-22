@@ -2,9 +2,9 @@
 
 Last updated: July 21, 2026
 
-Current release version: `2026.07.21.006-reinvent-slot-stale-row-lock`
+Current release version: `2026.07.21.007-reinvent-raw-block-recall`
 
-Latest process update: July 21, 2026 tightened Re:Invent/Blueshift split-global resubmit integrity by writing selection rows with stable block-slot IDs and ignoring stale child rows whose menu does not match the submitted Global Block menu.
+Latest process update: July 21, 2026 hardened Re:Invent/Blueshift split-global recall by recognizing raw saved block labels like `monTue`/`wedThu`/`friCarry` and checking child rows against the submitted canonical Global Block menu before rebuilding recaps/cards. This closes the reload case where a chef could submit Cypress, leave the tool, return, and see an older Roam BBQ/Ciudad/Cypress child row again.
 
 ## First Rule
 

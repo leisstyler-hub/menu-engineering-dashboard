@@ -676,22 +676,34 @@ function recordsToRotations(records = []) {
     return grouped[key];
   };
   const blockIdFromRecord = (record) => {
+    const knownBlockIds = new Set(["monTue", "wedThu", "friCarry", "monCarry", "tueWed", "thuFri", "friClosed", "noodles", "nitroMonTue", "nitroWedFri"]);
+    const rawLabel = String(record.menuBlockLabel || "").trim();
     const fromLabel = {
+      monTue: "monTue",
+      wedThu: "wedThu",
+      friCarry: "friCarry",
+      monCarry: "monCarry",
+      tueWed: "tueWed",
+      thuFri: "thuFri",
+      friClosed: "friClosed",
+      noodles: "noodles",
+      nitroMonTue: "nitroMonTue",
+      nitroWedFri: "nitroWedFri",
       "Monday + Tuesday": "monTue",
       "Wednesday + Thursday": "wedThu",
       Friday: "friCarry",
       Monday: "monCarry",
       "Tuesday + Wednesday": "tueWed",
       "Thursday + Friday": "thuFri",
-      noodles: "noodles",
       "Noodle Station": "noodles",
       "Monday + Tuesday Proteins": "nitroMonTue",
       "Wednesday + Friday Proteins": "nitroWedFri"
-    }[record.menuBlockLabel] || "";
+    }[rawLabel] || "";
     const fromGlobalId = String(record.globalBlockId || "").split("|").filter(Boolean).pop() || "";
-    const fromRecordId = String(record.recordId || "").split("|").filter(Boolean).pop() || "";
-    const candidate = fromGlobalId || fromRecordId || fromLabel;
-    return ["monTue", "wedThu", "friCarry", "monCarry", "tueWed", "thuFri", "noodles", "nitroMonTue", "nitroWedFri"].includes(candidate) ? candidate : fromLabel;
+    const recordParts = String(record.recordId || "").split("|").filter(Boolean);
+    const fromRecordId = recordParts.slice().reverse().find((part) => knownBlockIds.has(part)) || "";
+    const candidate = [fromGlobalId, fromRecordId, fromLabel].find((value) => knownBlockIds.has(value)) || "";
+    return candidate || fromLabel;
   };
   const putSlot = (values, index, itemName) => {
     if (!Array.isArray(values) || index < 0 || index >= values.length) return;
@@ -743,8 +755,16 @@ function recordsToRotations(records = []) {
         if (!submittedGlobalBlockMenus.has(blockId)) submittedGlobalBlockMenus.set(blockId, record.menuConcept || "");
       });
     });
+  const submittedBlockMenuForRecord = (record) => {
+    const parentId = parentIdForLoadedRecord(record) || rotationRecordParentId(record.week, record.district, record.cafe);
+    const blockId = blockIdFromRecord(record);
+    const canonicalBlockId = blockId ? makeDatabaseRecordId(parentId, "global", blockId) : "";
+    return submittedGlobalBlockMenus.get(record.globalBlockId)
+      || submittedGlobalBlockMenus.get(canonicalBlockId)
+      || "";
+  };
   const matchesSubmittedBlockMenu = (record) => {
-    const submittedMenu = submittedGlobalBlockMenus.get(record.globalBlockId);
+    const submittedMenu = submittedBlockMenuForRecord(record);
     if (!submittedMenu) return true;
     return normalizeItemName(record.menuConcept) === normalizeItemName(submittedMenu);
   };
@@ -754,7 +774,7 @@ function recordsToRotations(records = []) {
     if (!submittedParentIds.has(parentId) || !parentsWithSubmittedChildren.has(parentId)) return true;
     if (
       record.recordType === SMARTSHEET_RECORD_TYPES.globalSelection
-      && submittedGlobalBlockMenus.has(record.globalBlockId)
+      && submittedBlockMenuForRecord(record)
     ) {
       return matchesSubmittedBlockMenu(record);
     }

@@ -149,6 +149,31 @@ function savedReInventRecordsWithStaleSameBlockRows() {
   ];
 }
 
+function savedReInventRecordsWithRawLabelStaleRows() {
+  const freshTimestamp = "Jul 21, 7:15 PM";
+  const staleSelectionTimestamp = "Jul 22, 9:00 PM";
+  const rawLabelStaleSelection = {
+    ...selection("monTue", "AMZ: Roam BBQ", "Smoked Brisket", 1),
+    [SMARTSHEET_COLUMNS.recordId]: `${parentId}|global-selection|monTue|1|Smoked Brisket`,
+    [SMARTSHEET_COLUMNS.globalBlockId]: "",
+    [SMARTSHEET_COLUMNS.menuBlockLabel]: "monTue",
+    [SMARTSHEET_COLUMNS.menuConcept]: "AMZ: Roam BBQ",
+  };
+  return [
+    withTimestamps({
+      ...baseRecord(parentId, SMARTSHEET_RECORD_TYPES.rotationHeader),
+      [SMARTSHEET_COLUMNS.savedEntryCount]: 7,
+      [SMARTSHEET_COLUMNS.historyInclude]: true,
+    }, freshTimestamp),
+    withTimestamps(globalBlock("monTue", "Monday + Tuesday", "AMZ: Cypress", 1), freshTimestamp),
+    withTimestamps(globalBlock("wedThu", "Wednesday + Thursday", "AMZ: Lotus", 2), freshTimestamp),
+    withTimestamps(globalBlock("friCarry", "Friday", "AMZ: Saffron", 3), freshTimestamp),
+    withTimestamps(selection("monTue", "AMZ: Cypress", "Chicken Souvlaki Gyro", 1), freshTimestamp),
+    withTimestamps(selection("monTue", "AMZ: Cypress", "Spiced Jasmine Rice", 2), freshTimestamp),
+    withTimestamps(rawLabelStaleSelection, staleSelectionTimestamp),
+  ];
+}
+
 function savedReInventRecordsWithWrongBlockMenus() {
   const overrides = {
     parentId: augustParentId,
@@ -462,6 +487,29 @@ test("Re:Invent split-block recall keeps newest same-block resubmission over sta
   await expect(recap).toContainText(/Monday \+ Tuesday[\s\S]*AMZ: Cypress[\s\S]*Chicken Souvlaki Gyro/);
   await expect(recap).toContainText(/Wednesday \+ Thursday[\s\S]*AMZ: Lotus/);
   await expect(recap).toContainText(/Friday[\s\S]*AMZ: Saffron/);
+  await expect(recap.getByText("AMZ: Roam BBQ")).toHaveCount(0);
+  await expect(recap.getByText("Smoked Brisket")).toHaveCount(0);
+
+  const card = page.getByRole("button", { name: /Open Re:Invent planner/i }).first();
+  await expect(card).toBeVisible({ timeout: 20_000 });
+  await expect(card).toContainText(/Monday \+ Tuesday[\s\S]*AMZ: Cypress/);
+  await expect(card.getByText("AMZ: Roam BBQ")).toHaveCount(0);
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("Re:Invent split-block recall rejects raw-label stale rows after leaving and returning", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await stubRotationReads(page, savedReInventRecordsWithRawLabelStaleRows());
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: /South/i }).click();
+  await page.getByRole("combobox").first().selectOption({ label: week });
+  await page.getByRole("button", { name: /^Re:Invent$/i }).click();
+
+  const recap = page.getByText("Submitted Menu Recap").locator("xpath=ancestor::section[1]");
+  await expect(recap).toBeVisible({ timeout: 20_000 });
+  await expect(recap).toContainText(/Monday \+ Tuesday[\s\S]*AMZ: Cypress[\s\S]*Chicken Souvlaki Gyro/);
   await expect(recap.getByText("AMZ: Roam BBQ")).toHaveCount(0);
   await expect(recap.getByText("Smoked Brisket")).toHaveCount(0);
 

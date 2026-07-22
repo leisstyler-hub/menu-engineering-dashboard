@@ -190,6 +190,14 @@ if (!/const recordId = blockId[\s\S]*makeDatabaseRecordId\(parentId, stationKey,
   fail("Split-global selection record IDs must include the global block ID and use stable slot identity so resubmits replace stale rows.");
 }
 
+if (!/const knownBlockIds = new Set\(\["monTue", "wedThu", "friCarry", "monCarry", "tueWed", "thuFri", "friClosed", "noodles", "nitroMonTue", "nitroWedFri"\]\);/.test(source) || !/monTue: "monTue"[\s\S]*wedThu: "wedThu"[\s\S]*friCarry: "friCarry"/.test(source) || !/const fromRecordId = recordParts\.slice\(\)\.reverse\(\)\.find\(\(part\) => knownBlockIds\.has\(part\)\) \|\| "";/.test(source)) {
+  fail("Split-global recall must recognize raw saved block labels like monTue/wedThu/friCarry and old record IDs with item-name suffixes.");
+}
+
+if (!/const submittedBlockMenuForRecord = \(record\) => \{[\s\S]*makeDatabaseRecordId\(parentId, "global", blockId\)[\s\S]*submittedGlobalBlockMenus\.get\(record\.globalBlockId\)[\s\S]*submittedGlobalBlockMenus\.get\(canonicalBlockId\)/.test(source)) {
+  fail("Split-global child rows must be checked against the submitted canonical Global Block menu before recall.");
+}
+
 if (!/selectionDatabaseRecord\(\{ parentId, district, cafe, week, rotation: sourceRotation, stationKey, selectionType, itemName, sortOrder: offset \+ index \+ 1, slotNumber: index \+ 1, blockId, candidateRows \}\)/.test(source)) {
   fail("Split/global block saves must pass blockId into selection row identity.");
 }
