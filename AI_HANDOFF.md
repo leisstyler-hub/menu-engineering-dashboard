@@ -2,9 +2,9 @@
 
 Last updated: July 21, 2026
 
-Current release version: `2026.07.21.001-reinvent-block-menu-authority`
+Current release version: `2026.07.21.002-reinvent-submit-recall-integrity`
 
-Latest process update: July 21, 2026 fixed Re:Invent split-global recall/display so saved Global Block menu names are authoritative over child selection-row menu evidence. This prevents submitted Cypress/chef-selected menus from being relabeled as stale AMZ menus in recaps and leadership cards.
+Latest process update: July 21, 2026 fixed Re:Invent split-global submit/recall integrity. Split Global item rows now inherit the parent Submitted state when saved, and existing submitted Global Blocks can recover matching saved item rows that were previously written as Draft instead of throwing them away after refresh.
 
 ## First Rule
 

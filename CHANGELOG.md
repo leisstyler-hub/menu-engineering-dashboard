@@ -2,6 +2,7 @@
 
 ## 2026-07-21
 
+- [Jul 21, 6:04 PM] Fixed Re:Invent split-global submit/recall integrity so Global Block item rows inherit Submitted status during save, and existing submitted blocks can recover matching saved item rows that were previously written as Draft; set visible app version to `2026.07.21.002-reinvent-submit-recall-integrity`.
 - [Jul 21, 7:18 AM] Fixed Re:Invent split-global recall/display so saved Global Block menu names are authoritative over child selection-row menu evidence, preventing submitted Cypress/chef-selected menus from being relabeled as stale AMZ menus in recaps and leadership cards; set visible app version to `2026.07.21.001-reinvent-block-menu-authority`.
 
 ## 2026-07-18

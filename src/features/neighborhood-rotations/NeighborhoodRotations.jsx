@@ -404,7 +404,14 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
   const selectionRows = [];
   const pushSelections = (stationKey, selectionType, values, offset = 0, sourceRotation = rotation, blockId = "", candidateRows = MENUWORKS_ITEMS) => {
     compactValues(values).forEach((itemName, index) => {
-      const rec = selectionDatabaseRecord({ parentId, district, cafe, week, rotation: sourceRotation, stationKey, selectionType, itemName, sortOrder: offset + index + 1, slotNumber: index + 1, blockId, candidateRows });
+      const selectionSource = {
+        ...sourceRotation,
+        status: sourceRotation.status || rotation.status,
+        submittedBy: sourceRotation.submittedBy || rotation.submittedBy,
+        submittedAt: sourceRotation.submittedAt || rotation.submittedAt,
+        updatedAt: sourceRotation.updatedAt || rotation.updatedAt,
+      };
+      const rec = selectionDatabaseRecord({ parentId, district, cafe, week, rotation: selectionSource, stationKey, selectionType, itemName, sortOrder: offset + index + 1, slotNumber: index + 1, blockId, candidateRows });
       if (blockId) {
         rec[SMARTSHEET_COLUMNS.globalBlockId] = makeDatabaseRecordId(parentId, "global", blockId);
         rec[SMARTSHEET_COLUMNS.menuBlockLabel] = blockId;
@@ -707,10 +714,25 @@ function recordsToRotations(records = []) {
       .map(parentIdForLoadedRecord)
       .filter(Boolean)
   );
+  const submittedGlobalBlockMenus = new Map();
+  normalizedRecordCandidates
+    .filter((record) => record.recordType === SMARTSHEET_RECORD_TYPES.globalBlock && String(record.status || "").toLowerCase() === "submitted")
+    .forEach((record) => {
+      [record.recordId, record.globalBlockId].filter(Boolean).forEach((blockId) => {
+        submittedGlobalBlockMenus.set(blockId, record.menuConcept || "");
+      });
+    });
   const normalizedRecords = normalizedRecordCandidates.filter((record) => {
     if (record.recordType === SMARTSHEET_RECORD_TYPES.rotationHeader) return true;
     const parentId = parentIdForLoadedRecord(record);
     if (!submittedParentIds.has(parentId) || !parentsWithSubmittedChildren.has(parentId)) return true;
+    if (
+      record.recordType === SMARTSHEET_RECORD_TYPES.globalSelection
+      && submittedGlobalBlockMenus.has(record.globalBlockId)
+      && submittedGlobalBlockMenus.get(record.globalBlockId) === record.menuConcept
+    ) {
+      return true;
+    }
     return String(record.status || "").toLowerCase() === "submitted";
   });
   const menuEvidence = new Map();

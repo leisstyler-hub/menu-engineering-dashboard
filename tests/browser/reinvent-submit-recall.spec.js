@@ -4,6 +4,8 @@ import { collectUnexpectedPageErrors, expectNoAppProtection, expectNoUnexpectedP
 
 const week = "Jul 6, 2026 - Jul 10, 2026";
 const parentId = `rotation|2026-07-06|South|Re:Invent`;
+const currentWeek = "Jul 20, 2026 - Jul 24, 2026";
+const currentParentId = `rotation|2026-07-20|South|Re:Invent`;
 const augustWeek = "Aug 10, 2026 - Aug 14, 2026";
 const augustParentId = `rotation|2026-08-10|South|Re:Invent`;
 const recoveryWeek = "Jul 13, 2026 - Jul 17, 2026";
@@ -103,6 +105,37 @@ function savedReInventRecordsWithWrongBlockMenus() {
     selection("wedThu", "AMZ+RA: K-Town", "Kimchi Fried Rice", 2, overrides),
     selection("friCarry", "AMZ+RA: House of Teriyaki", "Portobello Tofu Teriyaki", 1, overrides),
     selection("friCarry", "AMZ+RA: House of Teriyaki", "Steamed Jasmine Rice", 2, overrides),
+  ];
+}
+
+function savedReInventSubmittedBlocksWithDraftSelections() {
+  const overrides = {
+    parentId: currentParentId,
+    week: currentWeek,
+    cafe: "Re:Invent",
+    weekStartDate: "2026-07-20",
+    weekEndDate: "2026-07-24",
+  };
+  const draftSelection = (blockId, menu, item, slotNumber) => ({
+    ...selection(blockId, menu, item, slotNumber, overrides),
+    [SMARTSHEET_COLUMNS.status]: "Draft",
+    [SMARTSHEET_COLUMNS.submittedAt]: "",
+  });
+  return [
+    {
+      ...baseRecord(currentParentId, SMARTSHEET_RECORD_TYPES.rotationHeader, "Submitted", overrides),
+      [SMARTSHEET_COLUMNS.savedEntryCount]: 6,
+      [SMARTSHEET_COLUMNS.historyInclude]: true,
+    },
+    globalBlock("monTue", "Monday + Tuesday", "AMZ: Cypress", 1, overrides),
+    globalBlock("wedThu", "Wednesday + Thursday", "AMZ: House of Teriyaki", 2, overrides),
+    globalBlock("friCarry", "Friday", "AMZ: Andes", 3, overrides),
+    draftSelection("monTue", "AMZ: Cypress", "Chicken Souvlaki Plate", 1),
+    draftSelection("monTue", "AMZ: Cypress", "Spiced Jasmine Rice", 2),
+    draftSelection("wedThu", "AMZ: House of Teriyaki", "Beef Teriyaki", 1),
+    draftSelection("wedThu", "AMZ: House of Teriyaki", "Steamed Jasmine Rice", 2),
+    draftSelection("friCarry", "AMZ: Andes", "Aji De Gallina", 1),
+    draftSelection("friCarry", "AMZ: Andes", "Peruvian Roasted Potatoes", 2),
   ];
 }
 
@@ -325,7 +358,7 @@ test("Re:Invent saved split global blocks recall as the submitted menus", async 
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
-test("Re:Invent recall prefers the chef-selected split menu rows over stale block defaults", async ({ page }) => {
+test("Re:Invent recall uses submitted Global Block menu names as authoritative labels", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   await stubRotationReads(page, savedReInventRecordsWithWrongBlockMenus());
 
@@ -336,10 +369,30 @@ test("Re:Invent recall prefers the chef-selected split menu rows over stale bloc
 
   const recap = page.getByText("Submitted Menu Recap").locator("xpath=ancestor::section[1]");
   await expect(recap).toBeVisible({ timeout: 20_000 });
-  await expect(recap.getByText("AMZ+RA: Andes").first()).toBeVisible();
-  await expect(recap.getByText("AMZ+RA: K-Town").first()).toBeVisible();
-  await expect(recap.getByText("AMZ+RA: House of Teriyaki").first()).toBeVisible();
-  await expect(recap.getByText("AMZ: Cypress")).toHaveCount(0);
+  await expect(recap.getByText("AMZ: Cypress").first()).toBeVisible();
+  await expect(recap.getByText("Aji De Gallina").first()).toBeVisible();
+  await expect(recap.getByText("Korean Fried Chicken").first()).toBeVisible();
+  await expect(recap.getByText("Portobello Tofu Teriyaki").first()).toBeVisible();
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("Re:Invent submitted blocks recover saved item rows that were previously written as Draft", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await stubRotationReads(page, savedReInventSubmittedBlocksWithDraftSelections());
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: /South/i }).click();
+  await page.getByRole("combobox").first().selectOption({ label: currentWeek });
+  await page.getByRole("button", { name: /^Re:Invent$/i }).click();
+
+  const recap = page.getByText("Submitted Menu Recap").locator("xpath=ancestor::section[1]");
+  await expect(recap).toBeVisible({ timeout: 20_000 });
+  await expect(recap).toContainText(/Monday \+ Tuesday[\s\S]*AMZ: Cypress[\s\S]*Chicken Souvlaki Plate/);
+  await expect(recap).toContainText(/Wednesday \+ Thursday[\s\S]*AMZ: House of Teriyaki[\s\S]*Beef Teriyaki/);
+  await expect(recap).toContainText(/Friday[\s\S]*AMZ: Andes[\s\S]*Aji De Gallina/);
+  const card = page.getByRole("button", { name: /Open Re:Invent planner/i }).first();
+  await expect(card).toContainText(/Monday \+ Tuesday[\s\S]*AMZ: Cypress[\s\S]*Wednesday \+ Thursday[\s\S]*AMZ: House of Teriyaki[\s\S]*Friday[\s\S]*AMZ: Andes/);
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
