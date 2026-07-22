@@ -736,6 +736,23 @@ function recordsToRotations(records = []) {
     const recordIdParts = String(record.recordId || "").split("|");
     return recordIdParts[0] === "rotation" && recordIdParts.length >= 4 ? recordIdParts.slice(0, 4).join("|") : "";
   };
+  const evidenceKey = (record, blockId = "") => `${rotationKey(record.week, record.district, record.cafe)}|${blockId || "__base"}`;
+  const hasBlockIdentity = (record) => Boolean(record.globalBlockId || record.menuBlockLabel);
+  const blockRecordRank = (record, blockId = "") => {
+    if (!blockId) return hasBlockIdentity(record) ? 1 : 0;
+    const canonicalBlockId = `${parentIdForLoadedRecord(record) || rotationRecordParentId(record.week, record.district, record.cafe)}|global|${blockId}`;
+    if (record.recordId === canonicalBlockId && record.globalBlockId === canonicalBlockId) return 4;
+    if (record.globalBlockId === canonicalBlockId) return 3;
+    if (record.recordId === canonicalBlockId) return 2;
+    if (String(record.recordId || "").includes("|global|") || String(record.globalBlockId || "").includes("|global|")) return 1;
+    return 0;
+  };
+  const shouldReplaceBlockEvidence = (next, current) => {
+    if (!current) return true;
+    if (next.rank !== current.rank) return next.rank > current.rank;
+    if (next.freshness !== current.freshness) return next.freshness > current.freshness;
+    return next.index < current.index;
+  };
   const submittedParentIds = new Set(
     normalizedRecordCandidates
       .filter((record) => record.recordType === SMARTSHEET_RECORD_TYPES.rotationHeader && String(record.status || "").toLowerCase() === "submitted")
@@ -747,14 +764,30 @@ function recordsToRotations(records = []) {
       .map(parentIdForLoadedRecord)
       .filter(Boolean)
   );
-  const submittedGlobalBlockMenus = new Map();
+  const submittedGlobalBlockMenuEvidence = new Map();
+  const putSubmittedGlobalBlockMenu = (record, index, key) => {
+    if (!key || !record.menuConcept) return;
+    const blockId = blockIdFromRecord(record);
+    const next = {
+      menu: record.menuConcept,
+      freshness: loadedRecordFreshness(record, index),
+      rank: blockRecordRank(record, blockId),
+      index,
+    };
+    const current = submittedGlobalBlockMenuEvidence.get(key);
+    if (shouldReplaceBlockEvidence(next, current)) {
+      submittedGlobalBlockMenuEvidence.set(key, next);
+    }
+  };
   normalizedRecordCandidates
     .filter((record) => record.recordType === SMARTSHEET_RECORD_TYPES.globalBlock && String(record.status || "").toLowerCase() === "submitted")
-    .forEach((record) => {
-      [record.recordId, record.globalBlockId].filter(Boolean).forEach((blockId) => {
-        if (!submittedGlobalBlockMenus.has(blockId)) submittedGlobalBlockMenus.set(blockId, record.menuConcept || "");
-      });
+    .forEach((record, index) => {
+      const parentId = parentIdForLoadedRecord(record) || rotationRecordParentId(record.week, record.district, record.cafe);
+      const blockId = blockIdFromRecord(record);
+      const canonicalBlockId = blockId ? makeDatabaseRecordId(parentId, "global", blockId) : "";
+      [record.recordId, record.globalBlockId, canonicalBlockId].filter(Boolean).forEach((key) => putSubmittedGlobalBlockMenu(record, index, key));
     });
+  const submittedGlobalBlockMenus = new Map(Array.from(submittedGlobalBlockMenuEvidence.entries()).map(([key, value]) => [key, value.menu]));
   const submittedBlockMenuForRecord = (record) => {
     const parentId = parentIdForLoadedRecord(record) || rotationRecordParentId(record.week, record.district, record.cafe);
     const blockId = blockIdFromRecord(record);
@@ -782,23 +815,6 @@ function recordsToRotations(records = []) {
   });
   const menuEvidence = new Map();
   const authoritativeBlockMenus = new Map();
-  const evidenceKey = (record, blockId = "") => `${rotationKey(record.week, record.district, record.cafe)}|${blockId || "__base"}`;
-  const hasBlockIdentity = (record) => Boolean(record.globalBlockId || record.menuBlockLabel);
-  const blockRecordRank = (record, blockId = "") => {
-    if (!blockId) return hasBlockIdentity(record) ? 1 : 0;
-    const canonicalBlockId = `${parentIdForLoadedRecord(record) || rotationRecordParentId(record.week, record.district, record.cafe)}|global|${blockId}`;
-    if (record.recordId === canonicalBlockId && record.globalBlockId === canonicalBlockId) return 4;
-    if (record.globalBlockId === canonicalBlockId) return 3;
-    if (record.recordId === canonicalBlockId) return 2;
-    if (String(record.recordId || "").includes("|global|") || String(record.globalBlockId || "").includes("|global|")) return 1;
-    return 0;
-  };
-  const shouldReplaceBlockEvidence = (next, current) => {
-    if (!current) return true;
-    if (next.freshness !== current.freshness) return next.freshness > current.freshness;
-    if (next.rank !== current.rank) return next.rank > current.rank;
-    return next.index < current.index;
-  };
   const addAuthoritativeBlockMenu = (record, index = 0) => {
     if (record.stationKey !== "global" || record.recordType !== SMARTSHEET_RECORD_TYPES.globalBlock || !record.menuConcept) return;
     const blockId = blockIdFromRecord(record);

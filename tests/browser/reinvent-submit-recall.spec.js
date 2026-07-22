@@ -66,6 +66,47 @@ function selection(blockId, menu, item, slotNumber, overrides = {}) {
   };
 }
 
+function stationSelection(stationKey, selectionType, item, slotNumber, overrides = {}) {
+  const activeParentId = overrides.parentId || parentId;
+  return {
+    ...baseRecord(`${activeParentId}|${stationKey}|${selectionType}|${slotNumber}|${item}`, SMARTSHEET_RECORD_TYPES.stationSelection, "Submitted", overrides),
+    [SMARTSHEET_COLUMNS.stationKey]: stationKey,
+    [SMARTSHEET_COLUMNS.selectionType]: selectionType,
+    [SMARTSHEET_COLUMNS.menuItemSelection]: item,
+    [SMARTSHEET_COLUMNS.slotNumber]: slotNumber,
+  };
+}
+
+function menuRow(menu, station, item, category = "entree", price = 11.75) {
+  return {
+    menu,
+    station,
+    item,
+    recipeName: item,
+    displayName: item,
+    category,
+    recipeCategory: category,
+    price,
+    sellPrice: price,
+    trueCost: price > 4 ? 2.5 : 0.5,
+    calories: price > 4 ? 420 : 180,
+    allergens: "",
+    enticingDescription: `${item} smoke selector row`,
+  };
+}
+
+const smokeMenuRows = [
+  menuRow("AMZ: Roam BBQ", "Global", "Smoked Brisket"),
+  menuRow("AMZ: Cypress", "Global", "Chicken Souvlaki Gyro"),
+  menuRow("AMZ: Cypress", "Global", "Spiced Jasmine Rice", "side", 2.55),
+  menuRow("AMZ: Lotus", "Global", "Pork Hung Lay"),
+  menuRow("AMZ: Saffron", "Global", "Chicken Apricot Tagine"),
+  menuRow("AMZ: Fish Market", "Fish Market", "Steelhead Croquettes"),
+  menuRow("AMZ: Cafe Express Curated Sandwiches", "Curated Sandwiches", "Chicken Caesar Wrap"),
+  menuRow("AMZ: Cafe Express Curated Sandwiches", "Curated Sandwiches", "Caprese Sandwich"),
+  menuRow("AMZ: Grill Core", "Location Spotlights", "Diablo Burger"),
+];
+
 function savedReInventRecords() {
   return [
     {
@@ -79,6 +120,26 @@ function savedReInventRecords() {
     selection("monTue", "AMZ: Ohana", "Huli Huli Chicken", 1),
     selection("wedThu", "AMZ: Lotus", "Pork Hung Lay", 1),
     selection("friCarry", "AMZ: Saffron", "Chicken Apricot Tagine", 1),
+  ];
+}
+
+function savedReInventCompleteRecords(menu = "AMZ: Roam BBQ") {
+  return [
+    {
+      ...baseRecord(parentId, SMARTSHEET_RECORD_TYPES.rotationHeader),
+      [SMARTSHEET_COLUMNS.savedEntryCount]: 8,
+      [SMARTSHEET_COLUMNS.historyInclude]: true,
+    },
+    globalBlock("monTue", "Monday + Tuesday", menu, 1),
+    globalBlock("wedThu", "Wednesday + Thursday", "AMZ: Lotus", 2),
+    globalBlock("friCarry", "Friday", "AMZ: Saffron", 3),
+    selection("monTue", menu, "Smoked Brisket", 1),
+    selection("wedThu", "AMZ: Lotus", "Pork Hung Lay", 1),
+    selection("friCarry", "AMZ: Saffron", "Chicken Apricot Tagine", 1),
+    stationSelection("fishMarket", SMARTSHEET_SELECTION_TYPES.lto, "Steelhead Croquettes", 1),
+    stationSelection("deli", SMARTSHEET_SELECTION_TYPES.lto, "Chicken Caesar Wrap", 1),
+    stationSelection("deli", SMARTSHEET_SELECTION_TYPES.lto, "Caprese Sandwich", 2),
+    stationSelection("grill", SMARTSHEET_SELECTION_TYPES.locationSpotlight, "Diablo Burger", 1),
   ];
 }
 
@@ -117,7 +178,7 @@ function withTimestamps(record, timestamp) {
 
 function savedReInventRecordsWithStaleSameBlockRows() {
   const freshTimestamp = "Jul 21, 6:55 PM";
-  const staleTimestamp = "Jul 1, 12:50 PM";
+  const staleTimestamp = "Jul 22, 9:00 PM";
   const staleSelectionTimestamp = "Jul 22, 9:00 PM";
   const staleBlock = {
     ...baseRecord(`${parentId}|global|monTue|stale-roam-bbq`, SMARTSHEET_RECORD_TYPES.globalBlock),
@@ -379,6 +440,92 @@ async function stubRotationReads(page, records = [], mirrorRecords = []) {
   });
 }
 
+async function stubMutableRotationStorage(page, initialRecords = []) {
+  let records = [...initialRecords];
+  await page.route("**/api/recipe-library**", async (route) => {
+    await route.fulfill({
+      json: {
+        ok: true,
+        source: "smoke-menu-rows",
+        rows: smokeMenuRows,
+        count: smokeMenuRows.length,
+      },
+    });
+  });
+  await page.route("**/api/storage/records**", async (route) => {
+    if (route.request().method() === "GET") {
+      await route.fulfill({
+        json: {
+          ok: true,
+          state: "synced",
+          source: "supabase",
+          records,
+          count: records.length,
+          message: `Loaded ${records.length} smoke rotation rows.`,
+        },
+      });
+      return;
+    }
+
+    let body = {};
+    try {
+      body = route.request().postDataJSON();
+    } catch {
+      body = {};
+    }
+    if (body?.action === "upsertRecords") {
+      const nextRecords = body.records || [];
+      const replaceParentRecordIds = new Set((body.context?.replaceParentRecordIds || []).map(String));
+      const nextRecordIds = new Set(nextRecords.map((record) => String(record[SMARTSHEET_COLUMNS.recordId] || "")));
+      records = [
+        ...records.filter((record) => {
+          const recordId = String(record[SMARTSHEET_COLUMNS.recordId] || "");
+          const parentRecordId = String(record[SMARTSHEET_COLUMNS.parentRecordId] || "");
+          if (nextRecordIds.has(recordId)) return false;
+          if (replaceParentRecordIds.has(recordId) || replaceParentRecordIds.has(parentRecordId)) return false;
+          return true;
+        }),
+        ...nextRecords,
+      ];
+      await route.fulfill({
+        json: {
+          ok: true,
+          state: "synced",
+          source: "supabase",
+          synced: nextRecords.length,
+          deletedStale: 0,
+          message: `Saved ${nextRecords.length} smoke rotation rows.`,
+        },
+      });
+      return;
+    }
+
+    await route.fulfill({ json: { ok: true, state: "synced", source: "supabase", records } });
+  });
+  await page.route("**/api/smartsheet/records**", async (route) => {
+    if (route.request().method() === "GET") {
+      await route.fulfill({ json: { ok: true, records: [] } });
+      return;
+    }
+    await route.fulfill({ json: { ok: true, message: "Smartsheet smoke stub." } });
+  });
+}
+
+async function selectMenuItemInBlock(block, itemPattern) {
+  const selects = block.locator("select");
+  const count = await selects.count();
+  for (let index = 1; index < count; index += 1) {
+    const select = selects.nth(index);
+    const options = await select.locator("option").allTextContents();
+    const optionIndex = options.findIndex((text) => itemPattern.test(text));
+    if (optionIndex >= 0) {
+      await select.selectOption({ index: optionIndex });
+      return;
+    }
+  }
+  throw new Error(`Could not find selector option matching ${itemPattern}`);
+}
+
 function savedNitroRecords(menu, itemPrefix, count, source = "primary") {
   const overrides = {
     parentId: nitroParentId,
@@ -494,6 +641,47 @@ test("Re:Invent split-block recall keeps newest same-block resubmission over sta
   await expect(card).toBeVisible({ timeout: 20_000 });
   await expect(card).toContainText(/Monday \+ Tuesday[\s\S]*AMZ: Cypress/);
   await expect(card.getByText("AMZ: Roam BBQ")).toHaveCount(0);
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("Re:Invent edit and resubmit keeps changed Monday-Tuesday menu after leaving and returning", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await stubMutableRotationStorage(page, savedReInventCompleteRecords());
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: /South/i }).click();
+  await page.getByRole("combobox").first().selectOption({ label: week });
+  await page.getByRole("button", { name: /^Re:Invent$/i }).click();
+
+  const firstRecap = page.getByText("Submitted Menu Recap").locator("xpath=ancestor::section[1]");
+  await expect(firstRecap).toBeVisible({ timeout: 20_000 });
+  await expect(firstRecap).toContainText(/Monday \+ Tuesday[\s\S]*AMZ: Roam BBQ/);
+  await firstRecap.getByLabel(/Edit and resubmit/i).click({ force: true, noWaitAfter: true });
+
+  const monTueEditor = page.getByText("Global Block 1").locator("xpath=ancestor::div[contains(@class,'rounded-3xl')][1]");
+  await expect(monTueEditor).toBeVisible({ timeout: 20_000 });
+  await monTueEditor.locator("select").first().selectOption({ label: "AMZ: Cypress" });
+  await selectMenuItemInBlock(monTueEditor, /Chicken Souvlaki/i);
+
+  await expect(page.getByRole("button", { name: /^Submit$/i })).toBeEnabled({ timeout: 10_000 });
+  await page.getByRole("button", { name: /^Submit$/i }).click();
+
+  const submittedRecap = page.getByText("Submitted Menu Recap").locator("xpath=ancestor::section[1]");
+  await expect(submittedRecap).toBeVisible({ timeout: 20_000 });
+  await expect(submittedRecap).toContainText(/Monday \+ Tuesday[\s\S]*AMZ: Cypress[\s\S]*Chicken Souvlaki/);
+  await expect(submittedRecap.getByText("AMZ: Roam BBQ")).toHaveCount(0);
+
+  await page.getByRole("button", { name: /Back to Platform/i }).click();
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: /South/i }).click();
+  await page.getByRole("combobox").first().selectOption({ label: week });
+  await page.getByRole("button", { name: /^Re:Invent$/i }).click();
+
+  const recalledRecap = page.getByText("Submitted Menu Recap").locator("xpath=ancestor::section[1]");
+  await expect(recalledRecap).toBeVisible({ timeout: 20_000 });
+  await expect(recalledRecap).toContainText(/Monday \+ Tuesday[\s\S]*AMZ: Cypress[\s\S]*Chicken Souvlaki/);
+  await expect(recalledRecap.getByText("AMZ: Roam BBQ")).toHaveCount(0);
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });

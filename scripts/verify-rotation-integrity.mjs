@@ -86,8 +86,8 @@ if (!/record\.recordType === SMARTSHEET_RECORD_TYPES\.globalSelection && record\
   fail("Global Block rows must outweigh child selection rows when saved Menu / Concept values disagree.");
 }
 
-if (!/const shouldReplaceBlockEvidence = \(next, current\) => \{[\s\S]*next\.freshness > current\.freshness[\s\S]*next\.rank > current\.rank[\s\S]*next\.index < current\.index/.test(source) || !/authoritativeBlockMenus\.set\(key, next\)/.test(source) || !/const authoritativeBlockMenuFor = \(record, blockId = ""\) => authoritativeBlockMenus\.get\(evidenceKey\(record, blockId\)\)\?\.menu \|\| "";/.test(source) || !/const authoritative = authoritativeBlockMenuFor\(record, blockId\);[\s\S]*if \(authoritative\) return authoritative;/.test(source)) {
-  fail("Split-global recall must prefer the saved Global Block menu before considering child-row menu evidence.");
+if (!/const shouldReplaceBlockEvidence = \(next, current\) => \{[\s\S]*next\.rank > current\.rank[\s\S]*next\.freshness > current\.freshness[\s\S]*next\.index < current\.index/.test(source) || !/authoritativeBlockMenus\.set\(key, next\)/.test(source) || !/const authoritativeBlockMenuFor = \(record, blockId = ""\) => authoritativeBlockMenus\.get\(evidenceKey\(record, blockId\)\)\?\.menu \|\| "";/.test(source) || !/const authoritative = authoritativeBlockMenuFor\(record, blockId\);[\s\S]*if \(authoritative\) return authoritative;/.test(source)) {
+  fail("Split-global recall must prefer canonical saved Global Block identity before freshness and child-row menu evidence.");
 }
 
 if (!/const putFreshSlot = \(record, values, index, itemName, scopeParts = \[\]\) => \{[\s\S]*freshness <= currentFreshness[\s\S]*return;[\s\S]*values\[index\] = itemName;/.test(source) || !/putFreshSlot\(record, block\.entrees, index, record\.itemName, \["global", blockId, "entree"\]\)/.test(source)) {

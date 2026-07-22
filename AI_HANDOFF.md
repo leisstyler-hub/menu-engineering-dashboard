@@ -2,9 +2,9 @@
 
 Last updated: July 21, 2026
 
-Current release version: `2026.07.21.007-reinvent-raw-block-recall`
+Current release version: `2026.07.21.008-reinvent-submit-recall-verified`
 
-Latest process update: July 21, 2026 hardened Re:Invent/Blueshift split-global recall by recognizing raw saved block labels like `monTue`/`wedThu`/`friCarry` and checking child rows against the submitted canonical Global Block menu before rebuilding recaps/cards. This closes the reload case where a chef could submit Cypress, leave the tool, return, and see an older Roam BBQ/Ciudad/Cypress child row again.
+Latest process update: July 21, 2026 fixed the exact Re:Invent edit-and-resubmit recall path by making canonical submitted Global Block rows outrank stale duplicate rows even when the stale row has a newer sync timestamp. Verification gate: edit Re:Invent, set Monday+Tuesday to `AMZ: Cypress`, select an item, submit, leave Neighborhood Rotations, return to the same cafe/week, and confirm Cypress still displays and Roam BBQ is absent. The focused Playwright test and full `reinvent-submit-recall.spec.js` suite passed locally before publish.
 
 ## First Rule
 
