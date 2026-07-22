@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-22
+
+- [Jul 22, 7:45 AM] Fixed the Re:Invent stale recall path where synced shared database reads could still leave old browser-cache rotations in place for weeks with no saved rows, causing future weeks to preload old concepts and submitted recaps to appear when they should be blank; Supabase/Smartsheet save cleanup now replaces the full rotation record family by parent ID prefix so stale Roam BBQ children are removed on resubmit; added browser coverage proving blank future weeks stay blank and reran the full Re:Invent/Nitro/Doppler recall suite; set visible app version to `2026.07.22.001-reinvent-shared-cache-fix`.
+
 ## 2026-07-21
 
 - [Jul 21, 10:56 PM] Fixed the live Re:Invent recall failure where Supabase rows saved as `Café / Unit` / `Entrée` could be ignored by the app reader, causing submitted Cypress selections to reopen as stale/default Roam BBQ; the rotation reader now accepts live Unicode column labels and falls back to the canonical `rotation|week|district|cafe` record ID when cafe fields are unreadable; added browser coverage for the live Supabase payload shape and set visible app version to `2026.07.21.009-live-column-recall-fix`.

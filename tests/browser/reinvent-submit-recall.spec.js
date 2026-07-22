@@ -429,6 +429,16 @@ function savedDopplerFullWeekRecords() {
 }
 
 async function stubRotationReads(page, records = [], mirrorRecords = []) {
+  await page.route("**/api/recipe-library**", async (route) => {
+    await route.fulfill({
+      json: {
+        ok: true,
+        source: "smoke-menu-rows",
+        rows: smokeMenuRows,
+        count: smokeMenuRows.length,
+      },
+    });
+  });
   await page.route("**/api/storage/records**", async (route) => {
     if (route.request().method() === "GET") {
       await route.fulfill({
@@ -495,8 +505,13 @@ async function stubMutableRotationStorage(page, initialRecords = []) {
         ...records.filter((record) => {
           const recordId = String(record[SMARTSHEET_COLUMNS.recordId] || "");
           const parentRecordId = String(record[SMARTSHEET_COLUMNS.parentRecordId] || "");
+          const replacedFamily = Array.from(replaceParentRecordIds).some((replacementParentId) => (
+            recordId === replacementParentId
+            || parentRecordId === replacementParentId
+            || recordId.startsWith(`${replacementParentId}|`)
+          ));
           if (nextRecordIds.has(recordId)) return false;
-          if (replaceParentRecordIds.has(recordId) || replaceParentRecordIds.has(parentRecordId)) return false;
+          if (replacedFamily) return false;
           return true;
         }),
         ...nextRecords,
@@ -812,6 +827,39 @@ test("Re:Invent shared database recall replaces stale local browser cache", asyn
   await expect(recap).toContainText(/Monday \+ Tuesday[\s\S]*AMZ: Cypress[\s\S]*Chicken Souvlaki Plate/);
   await expect(recap.getByText("AMZ: Roam BBQ")).toHaveCount(0);
   await expect(recap.getByText("Smoked Brisket")).toHaveCount(0);
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("Re:Invent future week stays blank when shared database has no saved rotation", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await stubRotationReads(page, []);
+  await page.addInitScript(([storageKey, staleKey]) => {
+    window.localStorage.setItem(storageKey, JSON.stringify({
+      [staleKey]: {
+        status: "Submitted",
+        submittedAt: "Jul 1, 12:50 PM",
+        updatedAt: "Jul 1, 12:50 PM",
+        globalBlocks: {
+          monTue: {
+            menu: "AMZ: Roam BBQ",
+            entrees: ["Smoked Brisket", "", ""],
+            sides: ["Mac & Cheese", "", "", ""],
+            subRecipes: ["", "", "", ""],
+            extensions: ["", ""],
+          },
+        },
+      },
+    }));
+  }, [NEIGHBORHOOD_ROTATIONS_STORAGE_KEY, `${augustWeek}|South|Re:Invent`]);
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: /South/i }).click();
+  await page.getByRole("combobox").first().selectOption({ label: augustWeek });
+  await page.getByRole("button", { name: /^Re:Invent$/i }).click();
+
+  await expect(page.getByText("Submitted Menu Recap")).toHaveCount(0, { timeout: 20_000 });
+  await expect(page.getByRole("button", { name: /^Submit$/i })).toBeDisabled({ timeout: 20_000 });
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });

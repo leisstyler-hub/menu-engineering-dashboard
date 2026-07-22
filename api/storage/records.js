@@ -77,18 +77,7 @@ async function findStaleRowIds(parentRecordIds = [], nextRecordIds = []) {
   const staleIds = [];
 
   for (const parentId of parentRecordIds.map(String).filter(Boolean)) {
-    const directParams = queryString({
-      select: "record_id",
-      record_id: `eq.${parentId}`,
-    });
-    const childParams = queryString({
-      select: "record_id",
-      parent_record_id: `eq.${parentId}`,
-    });
-    const rows = [
-      ...((await supabaseFetch(`app_records?${directParams}`)) || []),
-      ...((await supabaseFetch(`app_records?${childParams}`)) || []),
-    ];
+    const rows = await findRecordFamilyRows(parentId);
     for (const row of rows || []) {
       if (row.record_id && !nextIds.has(String(row.record_id))) staleIds.push(String(row.record_id));
     }
@@ -97,21 +86,33 @@ async function findStaleRowIds(parentRecordIds = [], nextRecordIds = []) {
   return Array.from(new Set(staleIds));
 }
 
+async function findRecordFamilyRows(recordId = "") {
+  const trimmedRecordId = String(recordId || "").trim();
+  if (!trimmedRecordId) return [];
+  const directParams = queryString({
+    select: "record_id",
+    record_id: `eq.${trimmedRecordId}`,
+  });
+  const childParams = queryString({
+    select: "record_id",
+    parent_record_id: `eq.${trimmedRecordId}`,
+  });
+  const prefixParams = queryString({
+    select: "record_id",
+    record_id: `like.${trimmedRecordId}|*`,
+  });
+  const rows = [
+    ...((await supabaseFetch(`app_records?${directParams}`)) || []),
+    ...((await supabaseFetch(`app_records?${childParams}`)) || []),
+    ...((await supabaseFetch(`app_records?${prefixParams}`)) || []),
+  ];
+  return dedupeRowsByRecordId(rows);
+}
+
 async function findRecordFamilyIds(recordIds = []) {
   const ids = [];
   for (const recordId of recordIds.map(String).filter(Boolean)) {
-    const directParams = queryString({
-      select: "record_id",
-      record_id: `eq.${recordId}`,
-    });
-    const childParams = queryString({
-      select: "record_id",
-      parent_record_id: `eq.${recordId}`,
-    });
-    const rows = [
-      ...((await supabaseFetch(`app_records?${directParams}`)) || []),
-      ...((await supabaseFetch(`app_records?${childParams}`)) || []),
-    ];
+    const rows = await findRecordFamilyRows(recordId);
     rows.forEach((row) => {
       if (row.record_id) ids.push(String(row.record_id));
     });

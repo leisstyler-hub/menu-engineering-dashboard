@@ -583,11 +583,24 @@ function upsertDatabaseRecords(existingRecords = [], nextRecords = []) {
     if (record[SMARTSHEET_COLUMNS.parentRecordId]) parentIds.add(record[SMARTSHEET_COLUMNS.parentRecordId]);
   });
   const ids = new Set(nextRecords.map((record) => record[SMARTSHEET_COLUMNS.recordId]));
+  const isReplacedRecordFamily = (record = {}) => {
+    const recordId = String(record[SMARTSHEET_COLUMNS.recordId] || "");
+    const parentId = String(record[SMARTSHEET_COLUMNS.parentRecordId] || "");
+    for (const replacementParentId of parentIds) {
+      if (
+        recordId === replacementParentId
+        || parentId === replacementParentId
+        || recordId.startsWith(`${replacementParentId}|`)
+      ) {
+        return true;
+      }
+    }
+    return false;
+  };
   return [
     ...existingRecords.filter((record) => {
       const recordId = record[SMARTSHEET_COLUMNS.recordId];
-      const parentId = record[SMARTSHEET_COLUMNS.parentRecordId];
-      return !ids.has(recordId) && !parentIds.has(recordId) && !parentIds.has(parentId);
+      return !ids.has(recordId) && !isReplacedRecordFamily(record);
     }),
     ...nextRecords
   ];
@@ -1896,6 +1909,7 @@ function persistedSplitGlobalBlocks(rotation = {}, cafe = "", week = rotation?.w
   const activeWithSelections = activeEntries.filter(([, block]) => blockHasSelections(block));
   if (activeWithSelections.length) return activeWithSelections;
   if (activeEntries.length) return activeEntries;
+  if (activeBlockIds.size) return [];
   const savedWithSelections = entries.filter(([, block]) => blockHasSelections(block));
   if (savedWithSelections.length) return savedWithSelections;
   return entries;
@@ -2688,7 +2702,7 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
       const loadedRotations = recordsToRotations(records);
       setDatabaseRecords(records);
       setRotations((prev) => {
-        if (records.length && payload.state !== "local") {
+        if (payload.state !== "local") {
           return loadedRotations;
         }
         return { ...prev, ...loadedRotations };

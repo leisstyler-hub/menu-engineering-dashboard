@@ -1,10 +1,12 @@
 # AI Handoff
 
-Last updated: July 21, 2026
+Last updated: July 22, 2026
 
-Current release version: `2026.07.21.009-live-column-recall-fix`
+Current release version: `2026.07.22.001-reinvent-shared-cache-fix`
 
-Latest process update: July 21, 2026 fixed the live Re:Invent recall path where Supabase returned clean Unicode column labels like `Café / Unit` and `Entrée`, while the app reader still expected older internal/Smartsheet labels. This made live submitted Cypress rows save correctly but reopen as stale/default Roam BBQ because the cafe normalized to blank. The reader now accepts both label shapes and falls back to the canonical `rotation|week|district|cafe` record ID when cafe/district fields are unreadable. Verification gate: edit Re:Invent, set Monday+Tuesday to `AMZ: Cypress`, submit, leave Neighborhood Rotations, return to the same cafe/week, and confirm Cypress still displays and Roam BBQ is absent. The full `reinvent-submit-recall.spec.js` browser suite passed locally before publish, including the new live Supabase column-shape regression.
+Latest process update: July 22, 2026 fixed the second Re:Invent recall failure where shared Supabase data could be correct but stale local/fallback rotations still survived in the browser after returning from the platform home or opening an unsaved future week. Shared database reads now replace the local rotation map whenever the server responds, even with zero rows, so unsaved weeks stay blank. Re:Invent split-block rendering no longer falls back to inactive saved blocks for weeks with active block IDs. Supabase/Smartsheet save cleanup now deletes the full rotation record family by parent record ID prefix, preventing stale Roam BBQ child rows from surviving a Cypress resubmit. Verification gate: edit Re:Invent for `Jul 20, 2026 - Jul 24, 2026`, set Monday+Tuesday to `AMZ: Cypress`, submit, leave Neighborhood Rotations, return to the same cafe/week, and confirm Cypress still displays and Roam BBQ is absent. The full `reinvent-submit-recall.spec.js` browser suite passed locally before publish, including the new blank-future-week stale-cache regression.
+
+Previous process update: July 21, 2026 fixed the live Re:Invent recall path where Supabase returned clean Unicode column labels like `Café / Unit` and `Entrée`, while the app reader still expected older internal/Smartsheet labels. This made live submitted Cypress rows save correctly but reopen as stale/default Roam BBQ because the cafe normalized to blank. The reader now accepts both label shapes and falls back to the canonical `rotation|week|district|cafe` record ID when cafe/district fields are unreadable. Verification gate: edit Re:Invent, set Monday+Tuesday to `AMZ: Cypress`, submit, leave Neighborhood Rotations, return to the same cafe/week, and confirm Cypress still displays and Roam BBQ is absent. The full `reinvent-submit-recall.spec.js` browser suite passed locally before publish, including the new live Supabase column-shape regression.
 
 ## First Rule
 
