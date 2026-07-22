@@ -772,6 +772,7 @@ function recordsToRotations(records = []) {
         customStations: cloneCustomStations(),
         uploadedLtos: {},
         promotionOverride: normalizePromotionOverride(EMPTY_ROTATION.promotionOverride),
+        globalBlocks: {},
       };
     }
     return grouped[key];

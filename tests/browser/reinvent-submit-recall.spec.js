@@ -320,6 +320,30 @@ function savedReInventSubmittedBlocksWithDraftSelections() {
   ];
 }
 
+function savedStaleReInventWeekAfterCurrentWeek() {
+  const staleParentId = "rotation|2026-07-27|South|Re:Invent";
+  const overrides = {
+    parentId: staleParentId,
+    week: "Jul 27, 2026 - Jul 31, 2026",
+    cafe: "Re:Invent",
+    weekStartDate: "2026-07-27",
+    weekEndDate: "2026-07-31",
+  };
+  return [
+    {
+      ...baseRecord(staleParentId, SMARTSHEET_RECORD_TYPES.rotationHeader, "Submitted", overrides),
+      [SMARTSHEET_COLUMNS.savedEntryCount]: 3,
+      [SMARTSHEET_COLUMNS.historyInclude]: true,
+    },
+    globalBlock("monTue", "Monday + Tuesday", "AMZ: Roam BBQ", 1, overrides),
+    globalBlock("wedThu", "Wednesday + Thursday", "AMZ: Lotus", 2, overrides),
+    globalBlock("friCarry", "Friday", "AMZ: Ohana", 3, overrides),
+    selection("monTue", "AMZ: Roam BBQ", "Smoked Brisket", 1, overrides),
+    selection("wedThu", "AMZ: Lotus", "Pork Hung Lay", 1, overrides),
+    selection("friCarry", "AMZ: Ohana", "Huli Huli Chicken", 1, overrides),
+  ];
+}
+
 function savedReInventRecoveryWeekOutOfOrderRecords() {
   const overrides = {
     parentId: recoveryParentId,
@@ -843,6 +867,39 @@ test("Re:Invent shared database recall replaces stale local browser cache", asyn
   await expect(recap).toContainText(/Monday \+ Tuesday[\s\S]*AMZ: Cypress[\s\S]*Chicken Souvlaki Plate/);
   await expect(recap.getByText("AMZ: Roam BBQ")).toHaveCount(0);
   await expect(recap.getByText("Smoked Brisket")).toHaveCount(0);
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("Re:Invent rebuilt records isolate global blocks from other saved weeks", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await stubRotationReads(page, [
+    ...savedReInventSubmittedBlocksWithDraftSelections(),
+    ...savedStaleReInventWeekAfterCurrentWeek(),
+  ]);
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: /South/i }).click();
+  await page.getByRole("combobox").first().selectOption({ label: currentWeek });
+  await page.getByRole("button", { name: /^Re:Invent$/i }).click();
+
+  const recap = page.getByText("Submitted Menu Recap").locator("xpath=ancestor::section[1]");
+  await expect(recap).toBeVisible({ timeout: 20_000 });
+  await expect(recap).toContainText(/Monday \+ Tuesday[\s\S]*AMZ: Cypress[\s\S]*Chicken Souvlaki Plate/);
+  await expect(recap).toContainText(/Wednesday \+ Thursday[\s\S]*AMZ: House of Teriyaki/);
+  await expect(recap).toContainText(/Friday[\s\S]*AMZ: Andes/);
+  await expect(recap.getByText("AMZ: Roam BBQ")).toHaveCount(0);
+  await expect(recap.getByText("Smoked Brisket")).toHaveCount(0);
+
+  const storedBlocks = await page.evaluate(([storageKey, rotationKey]) => {
+    const stored = JSON.parse(window.localStorage.getItem(storageKey) || "{}");
+    return stored[rotationKey]?.globalBlocks || {};
+  }, [NEIGHBORHOOD_ROTATIONS_STORAGE_KEY, `${currentWeek}|South|Re:Invent`]);
+  expect(storedBlocks.monTue?.menu).toBe("AMZ: Cypress");
+  expect(storedBlocks.wedThu?.menu).toBe("AMZ: House of Teriyaki");
+  expect(storedBlocks.friCarry?.menu).toBe("AMZ: Andes");
+  expect(storedBlocks.monTue?.menu).not.toBe("AMZ: Roam BBQ");
+
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
