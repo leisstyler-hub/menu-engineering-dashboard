@@ -593,30 +593,88 @@ function upsertDatabaseRecords(existingRecords = [], nextRecords = []) {
   ];
 }
 
-function normalizeLoadedRotationRecord(record = {}) {
+function firstLoadedRecordValue(record = {}, keys = []) {
+  for (const key of keys) {
+    if (!key) continue;
+    if (Object.prototype.hasOwnProperty.call(record, key)) {
+      const value = record[key];
+      if (value !== undefined && value !== null && value !== "") return value;
+    }
+  }
+  return "";
+}
+
+function normalizeLoadedSelectionType(value = "") {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (normalized === "entrée" || normalized === "entree" || normalized === "entrã©e") {
+    return SMARTSHEET_SELECTION_TYPES.entree;
+  }
+  if (normalized === "wok entrée" || normalized === "wok entree" || normalized === "wok entrã©e") {
+    return SMARTSHEET_SELECTION_TYPES.wokEntree;
+  }
+  return String(value || "");
+}
+
+function parseRotationIdentityFromRecordId(recordId = "") {
+  const parts = String(recordId || "").split("|");
+  if (parts[0] !== "rotation" || parts.length < 4) return {};
   return {
-    recordId: String(record[SMARTSHEET_COLUMNS.recordId] || ""),
-    parentRecordId: String(record[SMARTSHEET_COLUMNS.parentRecordId] || ""),
-    recordType: String(record[SMARTSHEET_COLUMNS.recordType] || ""),
-    status: String(record[SMARTSHEET_COLUMNS.status] || ""),
-    district: String(record[SMARTSHEET_COLUMNS.district] || ""),
-    cafe: String(record[SMARTSHEET_COLUMNS.cafeUnit] || ""),
-    week: String(record[SMARTSHEET_COLUMNS.dateRangeLabel] || ""),
-    stationKey: String(record[SMARTSHEET_COLUMNS.stationKey] || ""),
-    selectionType: String(record[SMARTSHEET_COLUMNS.selectionType] || ""),
-    itemName: String(record[SMARTSHEET_COLUMNS.menuItemSelection] || record[SMARTSHEET_COLUMNS.uploadedItemName] || ""),
-    slotNumber: Number(record[SMARTSHEET_COLUMNS.slotNumber] || 0),
-    menuConcept: String(record[SMARTSHEET_COLUMNS.menuConcept] || ""),
-    stationSubConcept: String(record[SMARTSHEET_COLUMNS.stationSubConcept] || ""),
-    menuBlockLabel: String(record[SMARTSHEET_COLUMNS.menuBlockLabel] || ""),
-    globalBlockId: String(record[SMARTSHEET_COLUMNS.globalBlockId] || ""),
-    submittedBy: String(record[SMARTSHEET_COLUMNS.submittedBy] || ""),
-    submittedAt: String(record[SMARTSHEET_COLUMNS.submittedAt] || ""),
-    updatedAt: String(record[SMARTSHEET_COLUMNS.updatedAt] || ""),
-    calories: String(record[SMARTSHEET_COLUMNS.calories] || ""),
-    promotionOverrideEnabled: String(record[SMARTSHEET_COLUMNS.promotionOverrideEnabled] || "").toLowerCase() === "true" || record[SMARTSHEET_COLUMNS.promotionOverrideEnabled] === true,
-    promotionName: String(record[SMARTSHEET_COLUMNS.promotionName] || ""),
-    promotionDays: String(record[SMARTSHEET_COLUMNS.promotionDays] || "").split(",").map((value) => value.trim()).filter(Boolean),
+    weekStartDate: parts[1] || "",
+    district: parts[2] || "",
+    cafe: parts[3] || "",
+    parentRecordId: parts.slice(0, 4).join("|"),
+  };
+}
+
+function normalizeLoadedRotationRecord(record = {}) {
+  const recordId = String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.recordId, "Record ID", "recordId", "__supabaseRecordId"]));
+  const parentRecordId = String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.parentRecordId, "Parent Record ID", "parentRecordId"]));
+  const identity = parseRotationIdentityFromRecordId(parentRecordId || recordId);
+  const cafeUnit = firstLoadedRecordValue(record, [
+    SMARTSHEET_COLUMNS.cafeUnit,
+    "Café / Unit",
+    "Cafe / Unit",
+    "CafÃ© / Unit",
+    "cafe",
+    "cafeUnit",
+  ]);
+  const cycleSourceCafeUnit = firstLoadedRecordValue(record, [
+    SMARTSHEET_COLUMNS.cycleSourceCafeUnit,
+    "Cycle Source Café / Unit",
+    "Cycle Source Cafe / Unit",
+    "Cycle Source CafÃ© / Unit",
+  ]);
+  const copiedFromCafeUnit = firstLoadedRecordValue(record, [
+    SMARTSHEET_COLUMNS.copiedFromCafeUnit,
+    "Copied From Café / Unit",
+    "Copied From Cafe / Unit",
+    "Copied From CafÃ© / Unit",
+  ]);
+  return {
+    recordId,
+    parentRecordId,
+    recordType: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.recordType, "Record Type", "recordType"])),
+    status: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.status, "Status", "status"])),
+    district: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.district, "District", "district"]) || identity.district || ""),
+    cafe: String(cafeUnit || identity.cafe || ""),
+    week: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.dateRangeLabel, "week", "dateRangeLabel"])),
+    stationKey: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.stationKey, "stationKey"])),
+    selectionType: normalizeLoadedSelectionType(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.selectionType, "selectionType"])),
+    itemName: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.menuItemSelection, SMARTSHEET_COLUMNS.uploadedItemName, "itemName", "menuItemSelection", "uploadedItemName"])),
+    slotNumber: Number(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.slotNumber, "slotNumber"]) || 0),
+    menuConcept: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.menuConcept, "menuConcept", "menu"])),
+    stationSubConcept: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.stationSubConcept, "stationSubConcept", "station"])),
+    menuBlockLabel: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.menuBlockLabel, "menuBlockLabel"])),
+    globalBlockId: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.globalBlockId, "globalBlockId"])),
+    submittedBy: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.submittedBy, "submittedBy"])),
+    submittedAt: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.submittedAt, "submittedAt"])),
+    updatedAt: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.updatedAt, "updatedAt", "__supabaseUpdatedAt"])),
+    calories: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.calories, "calories"])),
+    promotionOverrideEnabled: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.promotionOverrideEnabled, "promotionOverrideEnabled"])).toLowerCase() === "true" || firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.promotionOverrideEnabled, "promotionOverrideEnabled"]) === true,
+    promotionName: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.promotionName, "promotionName"])),
+    promotionDays: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.promotionDays, "promotionDays"])).split(",").map((value) => value.trim()).filter(Boolean),
+    cycleSourceCafeUnit: String(cycleSourceCafeUnit),
+    copiedFromCafeUnit: String(copiedFromCafeUnit),
     returnToCycleDays: [],
   };
 }

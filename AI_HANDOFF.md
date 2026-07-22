@@ -2,9 +2,9 @@
 
 Last updated: July 21, 2026
 
-Current release version: `2026.07.21.008-reinvent-submit-recall-verified`
+Current release version: `2026.07.21.009-live-column-recall-fix`
 
-Latest process update: July 21, 2026 fixed the exact Re:Invent edit-and-resubmit recall path by making canonical submitted Global Block rows outrank stale duplicate rows even when the stale row has a newer sync timestamp. Verification gate: edit Re:Invent, set Monday+Tuesday to `AMZ: Cypress`, select an item, submit, leave Neighborhood Rotations, return to the same cafe/week, and confirm Cypress still displays and Roam BBQ is absent. The focused Playwright test and full `reinvent-submit-recall.spec.js` suite passed locally before publish.
+Latest process update: July 21, 2026 fixed the live Re:Invent recall path where Supabase returned clean Unicode column labels like `Café / Unit` and `Entrée`, while the app reader still expected older internal/Smartsheet labels. This made live submitted Cypress rows save correctly but reopen as stale/default Roam BBQ because the cafe normalized to blank. The reader now accepts both label shapes and falls back to the canonical `rotation|week|district|cafe` record ID when cafe/district fields are unreadable. Verification gate: edit Re:Invent, set Monday+Tuesday to `AMZ: Cypress`, submit, leave Neighborhood Rotations, return to the same cafe/week, and confirm Cypress still displays and Roam BBQ is absent. The full `reinvent-submit-recall.spec.js` browser suite passed locally before publish, including the new live Supabase column-shape regression.
 
 ## First Rule
 

@@ -143,6 +143,20 @@ function savedReInventCompleteRecords(menu = "AMZ: Roam BBQ") {
   ];
 }
 
+function asLiveSupabasePayloadRows(records = []) {
+  return records.map((record) => {
+    const next = { ...record };
+    if (Object.prototype.hasOwnProperty.call(next, SMARTSHEET_COLUMNS.cafeUnit)) {
+      next["Café / Unit"] = next[SMARTSHEET_COLUMNS.cafeUnit];
+      delete next[SMARTSHEET_COLUMNS.cafeUnit];
+    }
+    if (next[SMARTSHEET_COLUMNS.selectionType] === SMARTSHEET_SELECTION_TYPES.entree) {
+      next[SMARTSHEET_COLUMNS.selectionType] = "Entrée";
+    }
+    return next;
+  });
+}
+
 function savedReInventRecordsWithStaleLegacyMenu() {
   return [
     {
@@ -682,6 +696,23 @@ test("Re:Invent edit and resubmit keeps changed Monday-Tuesday menu after leavin
   await expect(recalledRecap).toBeVisible({ timeout: 20_000 });
   await expect(recalledRecap).toContainText(/Monday \+ Tuesday[\s\S]*AMZ: Cypress[\s\S]*Chicken Souvlaki/);
   await expect(recalledRecap.getByText("AMZ: Roam BBQ")).toHaveCount(0);
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("Re:Invent recall reads live Supabase café and entrée column shapes", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await stubRotationReads(page, asLiveSupabasePayloadRows(savedReInventCompleteRecords("AMZ: Cypress")));
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: /South/i }).click();
+  await page.getByRole("combobox").first().selectOption({ label: week });
+  await page.getByRole("button", { name: /^Re:Invent$/i }).click();
+
+  const recap = page.getByText("Submitted Menu Recap").locator("xpath=ancestor::section[1]");
+  await expect(recap).toBeVisible({ timeout: 20_000 });
+  await expect(recap).toContainText(/Monday \+ Tuesday[\s\S]*AMZ: Cypress[\s\S]*Smoked Brisket/);
+  await expect(recap.getByText("AMZ: Roam BBQ")).toHaveCount(0);
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
