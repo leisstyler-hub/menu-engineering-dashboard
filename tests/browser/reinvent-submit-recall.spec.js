@@ -289,6 +289,26 @@ function savedReInventRecordsWithWrongBlockMenus() {
   ];
 }
 
+function savedReInventRecordsWithSelectionOnlyBlockAggregateDisagreement() {
+  const staleTimestampA = "Jul 23, 9:00 PM";
+  const staleTimestampB = "Jul 23, 9:05 PM";
+  const correctTimestamp = "Jul 20, 12:00 PM";
+  return [
+    {
+      ...baseRecord(parentId, SMARTSHEET_RECORD_TYPES.rotationHeader),
+      [SMARTSHEET_COLUMNS.savedEntryCount]: 7,
+      [SMARTSHEET_COLUMNS.historyInclude]: true,
+    },
+    globalBlock("wedThu", "Wednesday + Thursday", "AMZ: Lotus", 2),
+    globalBlock("friCarry", "Friday", "AMZ: Saffron", 3),
+    selection("wedThu", "AMZ: Lotus", "Pork Hung Lay", 1),
+    selection("friCarry", "AMZ: Saffron", "Chicken Apricot Tagine", 1),
+    withTimestamps(selection("monTue", "AMZ: Roam BBQ", "Smoked Brisket", 1), staleTimestampA),
+    withTimestamps(selection("monTue", "AMZ: Roam BBQ", "Smoked Brisket", 2), staleTimestampB),
+    withTimestamps(selection("monTue", "AMZ: Cypress", "Chicken Souvlaki Gyro", 3), correctTimestamp),
+  ];
+}
+
 function savedReInventSubmittedBlocksWithDraftSelections() {
   const overrides = {
     parentId: currentParentId,
@@ -810,6 +830,23 @@ test("Re:Invent recall ignores stale child rows that disagree with submitted Glo
   await expect(recap.getByText("Aji De Gallina")).toHaveCount(0);
   await expect(recap.getByText("Korean Fried Chicken")).toHaveCount(0);
   await expect(recap.getByText("Portobello Tofu Teriyaki")).toHaveCount(0);
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("Re:Invent recall prefers a global-selection record's own submitted menu over stale weighted aggregate evidence when no global block row exists", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await stubRotationReads(page, savedReInventRecordsWithSelectionOnlyBlockAggregateDisagreement());
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: /South/i }).click();
+  await page.getByRole("combobox").first().selectOption({ label: week });
+  await page.getByRole("button", { name: /^Re:Invent$/i }).click();
+
+  const recap = page.getByText("Submitted Menu Recap").locator("xpath=ancestor::section[1]");
+  await expect(recap).toBeVisible({ timeout: 20_000 });
+  await expect(recap).toContainText(/Monday \+ Tuesday[\s\S]*AMZ: Cypress/);
+  await expect(recap.getByText("AMZ: Roam BBQ")).toHaveCount(0);
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });

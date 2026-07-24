@@ -985,7 +985,7 @@ function recordsToRotations(records = []) {
         const preferredMenu = preferredMenuFor(record, blockId);
         rotation.globalBlocks[blockId] = {
           ...currentBlock,
-          menu: authoritativeMenu || preferredMenu || currentBlock.menu || record.menuConcept || "",
+          menu: authoritativeMenu || record.menuConcept || preferredMenu || currentBlock.menu || "",
           station: currentBlock.station || record.stationSubConcept || ""
         };
       } else {
@@ -1043,7 +1043,7 @@ function recordsToRotations(records = []) {
         const authoritativeMenu = authoritativeBlockMenuFor(record, blockId);
         if (authoritativeMenu && !matchesSubmittedBlockMenu(record)) return;
         const block = rotation.globalBlocks[blockId] || blankGlobalBlock();
-        block.menu = authoritativeMenu || preferredMenuFor(record, blockId) || block.menu || record.menuConcept || "";
+        block.menu = authoritativeMenu || record.menuConcept || preferredMenuFor(record, blockId) || block.menu || "";
         block.station = block.station || record.stationSubConcept || "";
         if (record.selectionType === SMARTSHEET_SELECTION_TYPES.entree) putFreshSlot(record, block.entrees, index, record.itemName, ["global", blockId, "entree"]);
         else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.side) putFreshSlot(record, block.sides, index, record.itemName, ["global", blockId, "side"]);
