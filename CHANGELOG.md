@@ -2,7 +2,10 @@
 
 ## 2026-07-24
 
-- [Jul 24, 9:15 AM] Fixed the second Re:Invent global-block merge site (`recordsToRotations`, global-selection-only records with no existing Global Block row) where menu precedence resolved as `authoritativeMenu || preferredMenuFor(...) || block.menu || record.menuConcept`, letting the `preferredMenuFor` weighted-aggregate fallback pick a stale menu (e.g. `AMZ: Roam BBQ`) over the record's own submitted `menuConcept` (e.g. `AMZ: Cypress`) when older duplicate rows outweighed the correct one -- the same stale-precedence bug already fixed at the sibling merge site on line 988; block menu now resolves as `authoritativeMenu || record.menuConcept || preferredMenuFor(...) || block.menu`; added browser coverage for a global-selection-only record disagreeing with stale weighted-aggregate evidence and reran the full Re:Invent/Doppler/Nitro recall suite with 21/21 passing; set visible app version to `2026.07.24.001-reinvent-selection-menu-precedence`.
+- [Jul 24, 1:34 PM] Fixed the second Re:Invent global-block merge site (`recordsToRotations`, global-selection-only records with no existing Global Block row) where menu precedence resolved as `authoritativeMenu || preferredMenuFor(...) || block.menu || record.menuConcept`, letting the `preferredMenuFor` weighted-aggregate fallback pick a stale menu (e.g. `AMZ: Roam BBQ`) over the record's own submitted `menuConcept` (e.g. `AMZ: Cypress`) when older duplicate rows outweighed the correct one -- the same stale-precedence bug already fixed at the sibling merge site on line 988.
+- [Jul 24, 1:34 PM] Reordered precedence at line 1046 so block menu now resolves as `authoritativeMenu || record.menuConcept || preferredMenuFor(...) || block.menu`.
+- [Jul 24, 1:34 PM] Added browser coverage for a global-selection-only record disagreeing with stale weighted-aggregate evidence and reran the full Re:Invent/Doppler/Nitro recall suite with 21/21 passing.
+- [Jul 24, 1:34 PM] Set visible app version to `2026.07.24.001-reinvent-selection-menu-precedence`.
 
 ## 2026-07-22
 
