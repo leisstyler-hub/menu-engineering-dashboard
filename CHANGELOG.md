@@ -2,6 +2,8 @@
 
 ## 2026-07-25
 
+- [Jul 25, 6:52 AM] test2
+- [Jul 25, 6:52 AM] Set visible app version to `2026.07.25.002-test2-changelog-entry`.
 - [Jul 25, 6:01 AM] test
 - [Jul 25, 6:01 AM] Set visible app version to `2026.07.25.001-test-changelog-entry`.
 
