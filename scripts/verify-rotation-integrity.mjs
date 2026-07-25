@@ -218,6 +218,24 @@ if (!/function stationHasAnySelection/.test(source) || !/return stationHasAnySel
   fail("Required non-global stations should submit with one selected item instead of strict station-specific counts.");
 }
 
+if (
+  !/carveryPromotionOverride: \{[\s\S]*enabled: false,[\s\S]*selections: blankCarverySelections\(\)/.test(source)
+  || !/cafe === "Dawson" && Boolean\(carveryPromo\.enabled\)/.test(source)
+  || !/record\.stationKey === "carveryPromotion"/.test(source)
+  || !/Carvery Promotion Override Active/.test(source)
+  || !/!\(cafe === "Dawson" && promo\.enabled\)/.test(source)
+) {
+  fail("Dawson Carvery must keep an isolated promotion override that replaces normal Carvery fields and persists through dedicated records.");
+}
+
+if (
+  !/stationKey === "carvery" && cafe === "Dawson" && rotation\.carveryPromotionOverride\?\.enabled/.test(source)
+  || !/carveryPromotionIsActive\(rotation\.carveryPromotionOverride\)/.test(source)
+  || !/label: "Carvery Promotion Override"/.test(source)
+) {
+  fail("Dawson Carvery promotion completion and recap rows must use the isolated promo selections.");
+}
+
 if (!/Select a Global Menu and at least one Global entree/.test(source) || !/Add at least one item for each required station/.test(source)) {
   fail("Submit blocked messaging must explain the relaxed one-selection requirements clearly.");
 }

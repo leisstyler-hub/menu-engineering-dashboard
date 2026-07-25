@@ -2,9 +2,11 @@
 
 Last updated: July 25, 2026
 
-Current release version: `2026.07.25.002-test2-changelog-entry`
+Current release version: `2026.07.25.003-dawson-carvery-promo-override`
 
-Latest process update: July 25, 2026 added the requested timestamped `test2` entry to the dashboard changelog and advanced the visible app version to `2026.07.25.002-test2-changelog-entry`. This is a changelog-only visible-content release with no application logic, data flow, or storage changes. The full `pnpm run verify` release gate passed, including 451 timestamped changelog entries and the production Vite build.
+Latest process update: July 25, 2026 added a Dawson-only Promotion Override to Carvery Station for every selectable week and advanced the visible app version to `2026.07.25.003-dawson-carvery-promo-override`. The override has its own `carveryPromotionOverride` state and `carveryPromotion` database-record family, so it cannot change Dawson's separate Global promotion or any other station. Chefs can select individual weekdays, name the promotion, and use the same nine Carvery-specific protein/vegetable/starch/hot-side/cold-side fields. Enabling the override hides and replaces the normal Carvery selectors for the saved week; submission completion, selected-item cost signals, recaps, details, and exports all use only the promo selections. Browser coverage clears localStorage after saving, reloads the shared rows, and confirms the promo name/item return while ordinary Carvery rows remain absent. Verification passed the full `pnpm run verify` suite, including all 455 timestamped changelog entries and the production build, plus both required browser suites at 27/27 against the exact built artifact.
+
+Previous process update: July 25, 2026 added the requested timestamped `test2` entry to the dashboard changelog and advanced the visible app version to `2026.07.25.002-test2-changelog-entry`. This is a changelog-only visible-content release with no application logic, data flow, or storage changes. The full `pnpm run verify` release gate passed, including 451 timestamped changelog entries and the production Vite build.
 
 Previous process update: July 25, 2026 added the requested `test` entry to the dashboard changelog and advanced the visible app version to `2026.07.25.001-test-changelog-entry`. This is a changelog-only visible-content release with no application logic, data flow, or storage changes. The full `pnpm run verify` release gate passed, including 449 timestamped changelog entries and the production Vite build.
 

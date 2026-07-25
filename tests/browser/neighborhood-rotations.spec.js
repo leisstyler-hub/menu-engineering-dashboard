@@ -30,7 +30,7 @@ function exactName(name) {
   return new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i");
 }
 
-async function stubEmptyRotationBackbone(page) {
+async function stubEmptyRotationBackbone(page, { onStorageWrite = null, getStorageRecords = null } = {}) {
   await page.route("**/api/recipe-library**", async (route) => {
     await route.fulfill({
       json: {
@@ -47,12 +47,15 @@ async function stubEmptyRotationBackbone(page) {
           ok: true,
           state: "synced",
           source: "supabase",
-          records: [],
-          count: 0,
-          message: "Loaded 0 smoke rotation rows.",
+          records: getStorageRecords ? getStorageRecords() : [],
+          count: getStorageRecords ? getStorageRecords().length : 0,
+          message: `Loaded ${getStorageRecords ? getStorageRecords().length : 0} smoke rotation rows.`,
         },
       });
       return;
+    }
+    if (onStorageWrite) {
+      onStorageWrite(route.request().postDataJSON());
     }
     await route.fulfill({ json: { ok: true, source: "supabase", records: [] } });
   });
@@ -175,6 +178,64 @@ test("Cafes without a Global station are never blocked by Global requirements", 
     await expect(blocker).toBeVisible();
     await expect(blocker).not.toContainText(/Global Menu|Global entree/i);
   }
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("Dawson Carvery promotion override replaces normal Carvery fields and saves isolated promo rows", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const storageWrites = [];
+  let storedRecords = [];
+  await stubEmptyRotationBackbone(page, {
+    onStorageWrite: (body) => {
+      storageWrites.push(body);
+      storedRecords = body.records || [];
+    },
+    getStorageRecords: () => storedRecords,
+  });
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: exactName("North") }).click();
+  await page.getByRole("button", { name: exactName("Dawson") }).click();
+
+  const carverySection = page.getByRole("heading", { name: "Carvery Rotations" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await expect(carverySection).toBeVisible({ timeout: 20_000 });
+  await expect(carverySection.getByText("choose here").first()).toBeVisible();
+
+  await carverySection.getByLabel("Promotion Override").check();
+  await expect(carverySection.getByText("Carvery Promotion Override Active")).toBeVisible();
+  await expect(carverySection.getByText("choose here")).toHaveCount(0);
+
+  await carverySection.getByPlaceholder("Dawson Carvery promo").fill("Harvest Carvery");
+  await carverySection.getByRole("button", { name: "Monday", exact: true }).click();
+  await carverySection.getByRole("button", { name: "Wednesday", exact: true }).click();
+
+  const proteinSelect = carverySection.locator("select").first();
+  const proteinValue = await proteinSelect.evaluate((select) => Array.from(select.options).find((option) => option.value && option.value !== "__write_in__")?.value || "");
+  expect(proteinValue).not.toBe("");
+  await proteinSelect.selectOption(proteinValue);
+
+  await page.getByRole("button", { name: "Save Draft", exact: true }).click();
+  await expect.poll(() => storageWrites.length).toBeGreaterThan(0);
+
+  const savedRecords = storageWrites.at(-1)?.records || [];
+  const promoRows = savedRecords.filter((record) => record["Station Key"] === "carveryPromotion");
+  expect(promoRows.length).toBeGreaterThanOrEqual(2);
+  expect(promoRows.some((record) => record["Selection Type"] === "Menu Name" && record["Promotion Name"] === "Harvest Carvery")).toBe(true);
+  expect(promoRows.some((record) => record["Promotion Days"] === "Monday, Wednesday")).toBe(true);
+  expect(savedRecords.filter((record) => record["Station Key"] === "carvery")).toHaveLength(0);
+
+  await page.evaluate(() => window.localStorage.clear());
+  await page.reload();
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: exactName("North") }).click();
+  await page.getByRole("button", { name: exactName("Dawson") }).click();
+  const recalledCarvery = page.getByRole("heading", { name: "Carvery Rotations" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await expect(recalledCarvery.getByText("Carvery Promotion Override Active")).toBeVisible();
+  await expect(recalledCarvery.getByPlaceholder("Dawson Carvery promo")).toHaveValue("Harvest Carvery");
+  await expect(recalledCarvery.getByText("choose here")).toHaveCount(0);
+  await expect(recalledCarvery.locator("select").first()).toHaveValue(proteinValue);
 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);

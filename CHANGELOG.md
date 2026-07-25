@@ -2,6 +2,10 @@
 
 ## 2026-07-25
 
+- [Jul 25, 7:53 AM] Added a Dawson-only Promotion Override inside Carvery Station for every available week, with individual weekday selection and isolated state that does not affect Dawson's Global or other stations.
+- [Jul 25, 7:53 AM] Reused the established promotion persistence pattern with Carvery-specific protein, vegetable, starch, hot-side, and cold-side fields; any enabled Carvery promo hides and replaces the normal Carvery selections for that saved week.
+- [Jul 25, 7:53 AM] Added database-record, recap/export, submission-completion, and browser save/reload coverage proving Carvery promo rows recall from shared storage without leaking ordinary Carvery rows.
+- [Jul 25, 7:53 AM] Set visible app version to `2026.07.25.003-dawson-carvery-promo-override`.
 - [Jul 25, 6:52 AM] test2
 - [Jul 25, 6:52 AM] Set visible app version to `2026.07.25.002-test2-changelog-entry`.
 - [Jul 25, 6:01 AM] test

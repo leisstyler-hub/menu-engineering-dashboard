@@ -272,6 +272,12 @@ const EMPTY_ROTATION = {
     coldSide1: "",
     coldSide2: ""
   },
+  carveryPromotionOverride: {
+    enabled: false,
+    name: "",
+    days: [],
+    selections: blankCarverySelections()
+  },
   customStations: blankCustomStations(),
   uploadedLtos: {},
   promotionOverride: { enabled: false, name: "", days: [], selections: defaultPromotionSelections() },
@@ -384,6 +390,8 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
 
   const cycleConfig = globalCycleConfig(cafe, week);
   const promo = normalizePromotionOverride(rotation.promotionOverride || EMPTY_ROTATION.promotionOverride);
+  const carveryPromo = normalizeCarveryPromotionOverride(rotation.carveryPromotionOverride || EMPTY_ROTATION.carveryPromotionOverride);
+  const useCarveryPromo = cafe === "Dawson" && Boolean(carveryPromo.enabled);
   const shouldWriteBaseGlobalBlock = hasGlobalStation && (promo.enabled || (!splitGlobalRotation && rotation.menu));
   const globalBlock = shouldWriteBaseGlobalBlock ? {
     ...baseDatabaseRecord({
@@ -538,10 +546,51 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
   pushSelections("wok", SMARTSHEET_SELECTION_TYPES.wokSide, rotation.ltos?.wokSides || [], 1100, rotation, "", stationPool("wokSides"));
   pushSelections("wok", SMARTSHEET_SELECTION_TYPES.wokBase, rotation.ltos?.wokBase || [], 1200, rotation, "", stationPool("wokBase"));
   pushSelections("wok", SMARTSHEET_SELECTION_TYPES.wokSubRecipe, rotation.ltos?.wokSubRecipes || [], 1300, rotation, "", stationPool("wokSubRecipes"));
-  Object.entries(rotation.carvery || {}).filter(([, value]) => value).forEach(([field, value], index) => {
-    const type = field.includes("protein") ? SMARTSHEET_SELECTION_TYPES.carveryProtein : field.includes("vegetable") ? SMARTSHEET_SELECTION_TYPES.carveryVegetable : field.includes("starch") ? SMARTSHEET_SELECTION_TYPES.carveryStarch : field.includes("hot") ? SMARTSHEET_SELECTION_TYPES.carveryHotSide : SMARTSHEET_SELECTION_TYPES.carveryColdSide;
-    selectionRows.push(selectionDatabaseRecord({ parentId, district, cafe, week, rotation, stationKey: "carvery", selectionType: type, itemName: value, sortOrder: 1400 + index, slotNumber: index + 1, candidateRows: carveryCandidateRowsForField(field) }));
-  });
+  const pushCarverySelection = (stationKey, field, value, index, selectionRotation = rotation) => {
+    if (!value) return;
+    const record = selectionDatabaseRecord({
+      parentId,
+      district,
+      cafe,
+      week,
+      rotation: selectionRotation,
+      stationKey,
+      selectionType: carverySelectionTypeForField(field),
+      itemName: value,
+      sortOrder: 1400 + index,
+      slotNumber: carverySlotNumberForField(field),
+      candidateRows: carveryCandidateRowsForField(field)
+    });
+    if (stationKey === "carveryPromotion") {
+      record[SMARTSHEET_COLUMNS.promotionOverrideEnabled] = true;
+      record[SMARTSHEET_COLUMNS.promotionName] = carveryPromo.name || "";
+      record[SMARTSHEET_COLUMNS.promotionDays] = (carveryPromo.days || []).join(", ");
+    }
+    selectionRows.push(record);
+  };
+  if (useCarveryPromo) {
+    const promoSource = { ...rotation, menu: carveryPromo.name || "Carvery Promotion Override", station: "Carvery Promotion Override" };
+    const marker = selectionDatabaseRecord({
+      parentId,
+      district,
+      cafe,
+      week,
+      rotation: promoSource,
+      stationKey: "carveryPromotion",
+      selectionType: SMARTSHEET_SELECTION_TYPES.menuName,
+      itemName: carveryPromo.name || "Carvery Promotion Override",
+      sortOrder: 1390,
+      slotNumber: 1,
+      candidateRows: MENUWORKS_ITEMS
+    });
+    marker[SMARTSHEET_COLUMNS.promotionOverrideEnabled] = true;
+    marker[SMARTSHEET_COLUMNS.promotionName] = carveryPromo.name || "";
+    marker[SMARTSHEET_COLUMNS.promotionDays] = (carveryPromo.days || []).join(", ");
+    selectionRows.push(marker);
+    Object.entries(carveryPromo.selections || {}).forEach(([field, value], index) => pushCarverySelection("carveryPromotion", field, value, index, promoSource));
+  } else {
+    Object.entries(rotation.carvery || {}).forEach(([field, value], index) => pushCarverySelection("carvery", field, value, index));
+  }
 
   const custom = cloneCustomStations(rotation.customStations);
   pushCustomSelections("streetBeets", SMARTSHEET_SELECTION_TYPES.entree, custom.streetBeets.entrees, 1500, custom.streetBeets.calories.entrees);
@@ -769,6 +818,7 @@ function recordsToRotations(records = []) {
         grill: { ...EMPTY_ROTATION.grill },
         ltos: Object.fromEntries(Object.entries(EMPTY_ROTATION.ltos).map(([station, values]) => [station, [...values]])),
         carvery: { ...EMPTY_ROTATION.carvery },
+        carveryPromotionOverride: normalizeCarveryPromotionOverride(EMPTY_ROTATION.carveryPromotionOverride),
         customStations: cloneCustomStations(),
         uploadedLtos: {},
         promotionOverride: normalizePromotionOverride(EMPTY_ROTATION.promotionOverride),
@@ -1084,16 +1134,23 @@ function recordsToRotations(records = []) {
       return;
     }
 
+    if (record.stationKey === "carveryPromotion") {
+      const promo = normalizeCarveryPromotionOverride({
+        ...rotation.carveryPromotionOverride,
+        enabled: true,
+        name: record.promotionName || rotation.carveryPromotionOverride?.name || record.menuConcept || "",
+        days: (record.promotionDays || []).length ? record.promotionDays : rotation.carveryPromotionOverride?.days,
+      });
+      if (record.selectionType !== SMARTSHEET_SELECTION_TYPES.menuName) {
+        const field = carveryFieldForSelection(record.selectionType, index);
+        if (field) promo.selections[field] = record.itemName;
+      }
+      rotation.carveryPromotionOverride = normalizeCarveryPromotionOverride(promo);
+      return;
+    }
+
     if (record.stationKey === "carvery") {
-      const carveryFieldByType = {
-        [SMARTSHEET_SELECTION_TYPES.carveryProtein]: ["protein1", "protein2"],
-        [SMARTSHEET_SELECTION_TYPES.carveryVegetable]: ["vegetable1", "vegetable2", "vegetable3"],
-        [SMARTSHEET_SELECTION_TYPES.carveryStarch]: ["starch"],
-        [SMARTSHEET_SELECTION_TYPES.carveryHotSide]: ["hotSide1"],
-        [SMARTSHEET_SELECTION_TYPES.carveryColdSide]: ["coldSide1", "coldSide2"],
-      };
-      const fields = carveryFieldByType[record.selectionType] || [];
-      const field = fields[Math.min(index, fields.length - 1)];
+      const field = carveryFieldForSelection(record.selectionType, index);
       if (field) rotation.carvery[field] = record.itemName;
       return;
     }
@@ -1633,6 +1690,20 @@ function defaultPromotionSelections() {
   return { entrees: ["", "", ""], sides: ["", "", ""], extensions: ["", ""] };
 }
 
+function blankCarverySelections() {
+  return {
+    protein1: "",
+    protein2: "",
+    vegetable1: "",
+    vegetable2: "",
+    vegetable3: "",
+    starch: "",
+    hotSide1: "",
+    coldSide1: "",
+    coldSide2: ""
+  };
+}
+
 function promotionSelections(promo = {}) {
   const selections = promo.selections || {};
   return {
@@ -1649,6 +1720,23 @@ function normalizePromotionOverride(promo = {}) {
     days: (promo.days || []).filter((day) => WEEKDAY_OPTIONS.includes(day)),
     selections: promotionSelections(promo),
   };
+}
+
+function normalizeCarveryPromotionOverride(promo = {}) {
+  return {
+    enabled: Boolean(promo.enabled),
+    name: promo.name || "",
+    days: (promo.days || []).filter((day) => WEEKDAY_OPTIONS.includes(day)),
+    selections: {
+      ...blankCarverySelections(),
+      ...(promo.selections || {})
+    }
+  };
+}
+
+function carveryPromotionIsActive(promo = {}) {
+  const normalized = normalizeCarveryPromotionOverride(promo);
+  return Boolean(normalized.enabled && normalized.name.trim() && normalized.days.length);
 }
 
 function promotionIsActive(promo = {}) {
@@ -2159,6 +2247,7 @@ function blankRotation(menu = "", station = "") {
     grill: { regionalSpecial: "", locationSpotlight: "", promoActive: false, promoItem: "" },
     ltos: Object.fromEntries(Object.entries(EMPTY_ROTATION.ltos).map(([key, values]) => [key, [...values]])),
     carvery: { ...EMPTY_ROTATION.carvery },
+    carveryPromotionOverride: normalizeCarveryPromotionOverride(EMPTY_ROTATION.carveryPromotionOverride),
     customStations: cloneCustomStations(),
     uploadedLtos: {},
     promotionOverride: { enabled: false, name: "", days: [], selections: defaultPromotionSelections() },
@@ -2190,6 +2279,10 @@ function stationComplete(rotation, stationKey, cafe = "", week = "") {
   if (stationKey === "global") {
     if (promotionCoversWeek(rotation.promotionOverride)) return true;
     return Boolean(rotation.menu && (rotation.entrees || []).filter(Boolean).length >= 1);
+  }
+  if (stationKey === "carvery" && cafe === "Dawson" && rotation.carveryPromotionOverride?.enabled) {
+    return carveryPromotionIsActive(rotation.carveryPromotionOverride)
+      && carveryPromotionSelectedRows(rotation, { unique: true }).length > 0;
   }
   return stationHasAnySelection(rotation, stationKey);
 }
@@ -2470,7 +2563,19 @@ function getStationSelectionRows(rotation, cafe, week = rotation?.week || "") {
   });
 
   if (cafeStations.includes("wok")) stationRows.push({ key: "wok", label: "Wok Station", items: wokSelectedRows(rotation, { unique: true }), note: "wok selections" });
-  if (cafeStations.includes("carvery")) stationRows.push({ key: "carvery", label: "Carvery Station", items: carverySelectedRows(rotation, { unique: true }), note: "carvery selections" });
+  if (cafeStations.includes("carvery")) {
+    const carveryPromo = normalizeCarveryPromotionOverride(rotation.carveryPromotionOverride);
+    if (cafe === "Dawson" && carveryPromo.enabled) {
+      stationRows.push({
+        key: "carveryPromotion",
+        label: "Carvery Promotion Override",
+        items: carveryPromotionSelectedRows(rotation, { unique: true }),
+        note: `${carveryPromo.name || "Promotion name pending"}${carveryPromo.days.length ? ` - ${dayListLabel(carveryPromo.days)}` : " - promo days pending"}`
+      });
+    } else {
+      stationRows.push({ key: "carvery", label: "Carvery Station", items: carverySelectedRows(rotation, { unique: true }), note: "carvery selections" });
+    }
+  }
 
   return stationRows;
 }
@@ -2484,7 +2589,7 @@ function allLegacySelectedRows(rotation) {
     ...["salad", "pizza", "deli", "fishMarket", "freshFive", "grillFreshFive", "saladFreshFive", "soup"].flatMap((stationKey) => ltoSelectedRows(rotation, stationKey)),
     ...["streetBeets", "commissaryEverest", "lotusWp", "stationTakeover"].flatMap((stationKey) => customStationSelectedRows(rotation, stationKey)),
     ...wokSelectedRows(rotation),
-    ...carverySelectedRows(rotation)
+    ...(rotation.carveryPromotionOverride?.enabled ? carveryPromotionSelectedRows(rotation) : carverySelectedRows(rotation))
   ];
 }
 
@@ -2512,12 +2617,50 @@ function carveryCandidateRowsForField(field = "") {
   return stationPool("carverySide");
 }
 
+const CARVERY_FIELDS_BY_SELECTION_TYPE = {
+  [SMARTSHEET_SELECTION_TYPES.carveryProtein]: ["protein1", "protein2"],
+  [SMARTSHEET_SELECTION_TYPES.carveryVegetable]: ["vegetable1", "vegetable2", "vegetable3"],
+  [SMARTSHEET_SELECTION_TYPES.carveryStarch]: ["starch"],
+  [SMARTSHEET_SELECTION_TYPES.carveryHotSide]: ["hotSide1"],
+  [SMARTSHEET_SELECTION_TYPES.carveryColdSide]: ["coldSide1", "coldSide2"],
+};
+
+function carverySelectionTypeForField(field = "") {
+  if (field.includes("protein")) return SMARTSHEET_SELECTION_TYPES.carveryProtein;
+  if (field.includes("vegetable")) return SMARTSHEET_SELECTION_TYPES.carveryVegetable;
+  if (field.includes("starch")) return SMARTSHEET_SELECTION_TYPES.carveryStarch;
+  if (field.includes("hot")) return SMARTSHEET_SELECTION_TYPES.carveryHotSide;
+  return SMARTSHEET_SELECTION_TYPES.carveryColdSide;
+}
+
+function carverySlotNumberForField(field = "") {
+  const fields = CARVERY_FIELDS_BY_SELECTION_TYPE[carverySelectionTypeForField(field)] || [];
+  return Math.max(1, fields.indexOf(field) + 1);
+}
+
+function carveryFieldForSelection(selectionType, index = 0) {
+  const fields = CARVERY_FIELDS_BY_SELECTION_TYPE[selectionType] || [];
+  return fields[Math.min(index, fields.length - 1)] || "";
+}
+
 function carverySelectionGroupForField(field = "") {
   return field.includes("protein") ? "entrees" : "sides";
 }
 
 function carverySelectedRows(rotation, options) {
   const rows = Object.entries(rotation.carvery || {}).flatMap(([field, value]) =>
+    rowsForSelectedNames([value], {
+      ...options,
+      candidateRows: carveryCandidateRowsForField(field),
+      selectionGroup: carverySelectionGroupForField(field)
+    })
+  );
+  return uniqueSelectionRows(rows, options);
+}
+
+function carveryPromotionSelectedRows(rotation, options) {
+  const promo = normalizeCarveryPromotionOverride(rotation.carveryPromotionOverride);
+  const rows = Object.entries(promo.selections || {}).flatMap(([field, value]) =>
     rowsForSelectedNames([value], {
       ...options,
       candidateRows: carveryCandidateRowsForField(field),
@@ -4717,7 +4860,10 @@ function ExportCafeCard({ row }) {
 
 function ExportStationBlock({ stationKey, cafe, row }) {
   if (stationKey === "grill") return <ExportLineCard title={stationLabel(cafe, stationKey)} values={[row.grill?.regionalSpecial, row.grill?.locationSpotlight, row.grill?.promoActive ? row.grill?.promoItem : ""]} />;
-  if (stationKey === "carvery") return <ExportLineCard title={stationLabel(cafe, stationKey)} values={Object.values(row.carvery || {})} />;
+  if (stationKey === "carvery") {
+    const promo = normalizeCarveryPromotionOverride(row.carveryPromotionOverride);
+    return <ExportLineCard title={cafe === "Dawson" && promo.enabled ? `Carvery Promotion Override - ${promo.name || "Name pending"} (${dayListLabel(promo.days)})` : stationLabel(cafe, stationKey)} values={Object.values(cafe === "Dawson" && promo.enabled ? promo.selections : row.carvery || {})} />;
+  }
   if (stationKey === "wok") return <ExportLineCard title={stationLabel(cafe, stationKey)} values={[...(row.ltos?.wokEntrees || []), ...(row.ltos?.wokSides || []), ...(row.ltos?.wokBase || []), ...(row.ltos?.wokSubRecipes || [])]} />;
   return <ExportLineCard title={stationLabel(cafe, stationKey)} values={row.ltos?.[stationKey] || []} />;
 }
@@ -4846,7 +4992,7 @@ function CafeStationSection(props) {
   if (stationKey === "saladFreshFive") content = <SimpleLTOSection stationKey="saladFreshFive" title="Salad Fresh $5" slots={["Salad Fresh $5"]} values={rotation.ltos?.saladFreshFive || EMPTY_ROTATION.ltos.saladFreshFive} uploaded={rotation.uploadedLtos?.saladFreshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "saladFreshFive")} poolOverride={stationPool("saladFreshFive")} />;
   if (stationKey === "soup") content = <SimpleLTOSection stationKey="soup" title="Soup LTOs" slots={Array.from({ length: stationSlots(cafe, "soup") }, (_, i) => `Soup ${i + 1}`)} values={rotation.ltos?.soup || EMPTY_ROTATION.ltos.soup} uploaded={rotation.uploadedLtos?.soup || []} updateLto={updateLto} complete={stationComplete(rotation, "soup")} />;
   if (stationKey === "wok") content = <WokSection rotation={rotation} updateLto={updateLto} />;
-  if (stationKey === "carvery") content = <CarverySection rotation={rotation} updateCarvery={updateCarvery} />;
+  if (stationKey === "carvery") content = <CarverySection cafe={cafe} week={week} rotation={rotation} updateCarvery={updateCarvery} updateRotation={updateRotation} />;
   if (stationKey === "streetBeets") content = <StreetBeetsSection rotation={rotation} updateCustomStation={updateCustomStation} />;
   if (stationKey === "commissaryEverest") content = <CommissaryEverestSection rotation={rotation} updateCustomStation={updateCustomStation} />;
   if (stationKey === "lotusWp") content = <LotusWpSection rotation={rotation} updateCustomStation={updateCustomStation} />;
@@ -5747,7 +5893,7 @@ function WokSection({ rotation, updateLto }) {
   );
 }
 
-function CarverySection({ rotation, updateCarvery }) {
+function CarverySection({ cafe, week, rotation, updateCarvery, updateRotation }) {
   const fields = [
     ["protein1", "Rotating Protein 1", stationPool("carveryProtein")],
     ["protein2", "Rotating Protein 2", stationPool("carveryProtein")],
@@ -5759,25 +5905,85 @@ function CarverySection({ rotation, updateCarvery }) {
     ["coldSide1", "Cold Side 1", carveryColdSides()],
     ["coldSide2", "Cold Side 2", carveryColdSides()]
   ];
+  const promo = normalizeCarveryPromotionOverride(rotation.carveryPromotionOverride || EMPTY_ROTATION.carveryPromotionOverride);
+  const updatePromo = (patch) => updateRotation({
+    carveryPromotionOverride: normalizeCarveryPromotionOverride({ ...promo, ...patch })
+  });
+  const updatePromoSelection = (field, value) => updatePromo({
+    selections: { ...promo.selections, [field]: value }
+  });
+  const clearPromo = () => updateRotation({
+    carveryPromotionOverride: normalizeCarveryPromotionOverride(EMPTY_ROTATION.carveryPromotionOverride)
+  });
+  const selectedRows = cafe === "Dawson" && promo.enabled
+    ? carveryPromotionSelectedRows(rotation, { unique: true })
+    : carverySelectedRows(rotation, { unique: true });
+
   return (
-    <CollapsibleStation title="Carvery Rotations" eyebrow="Carvery Station" complete={stationComplete(rotation, "carvery")}>
-      <p className="text-sm text-slate-500 mb-4">Carvery dropdowns follow MenuWorks notes: charred vegetable options, hot side choices, and cold side choices.</p>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {fields.map(([field, label, options]) => (
-          <div key={field} className="rounded-3xl border-2 border-sky-200 bg-sky-50/80 p-4 shadow-sm">
-            <div className="flex items-center justify-between gap-2 mb-2"><label className="block text-sm font-bold text-slate-900">{label}</label><span className="rounded-full bg-white border border-sky-200 px-3 py-1 text-xs font-bold text-sky-700">choose here</span></div>
-            <ItemPickerSlot
-              value={rotation.carvery?.[field] || ""}
-              items={options}
-              onChange={(nextValue) => updateCarvery(field, nextValue)}
-              placeholder="Type if not listed"
-              selectClassName="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
-              inputClassName="w-full rounded-2xl border-2 border-emerald-200 bg-white px-4 py-3 font-semibold outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
-            />
-          </div>
-        ))}
+    <CollapsibleStation title="Carvery Rotations" eyebrow="Carvery Station" complete={stationComplete(rotation, "carvery", cafe, week)}>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <p className="text-sm text-slate-500">Carvery dropdowns follow MenuWorks notes: charred vegetable options, hot side choices, and cold side choices.</p>
+        {cafe === "Dawson" && (
+          <label className="inline-flex cursor-pointer items-center gap-3 rounded-2xl border border-purple-200 bg-purple-50 px-4 py-3 text-sm font-bold text-purple-900">
+            <input type="checkbox" checked={promo.enabled} onChange={(event) => updatePromo({ enabled: event.target.checked })} />
+            Promotion Override
+          </label>
+        )}
       </div>
-      <StationSelectedList title="Items Description" items={carverySelectedRows(rotation, { unique: true })} complete={stationComplete(rotation, "carvery")} />
+
+      {cafe === "Dawson" && promo.enabled && (
+        <div className="mt-4 rounded-3xl border border-purple-200 bg-purple-50/80 p-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-purple-700">Carvery Promotion Override Active</p>
+              <h4 className="mt-1 text-xl font-bold text-purple-950">Replace Dawson&apos;s normal Carvery rotation for selected promo days</h4>
+              <p className="mt-1 text-sm text-purple-900">Any enabled Carvery promo replaces the normal Carvery selections for this entire saved week. Dawson&apos;s other stations are unchanged.</p>
+            </div>
+            <button type="button" onClick={clearPromo} className="rounded-2xl border border-purple-200 bg-white px-4 py-2 text-sm font-bold text-purple-900 hover:bg-purple-100">Clear Override</button>
+          </div>
+          <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[1fr_2fr]">
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-purple-900">Promotion / Takeover Name</label>
+              <input value={promo.name} onChange={(event) => updatePromo({ name: event.target.value })} placeholder="Dawson Carvery promo" className="w-full rounded-2xl border border-purple-200 bg-white px-4 py-3 font-semibold outline-none focus:border-purple-500" />
+            </div>
+            <DayToggleGroup title="Promo Days" values={promo.days} onToggle={(day) => updatePromo({ days: updateArrayToggle(promo.days, day) })} tone="purple" options={WEEKDAY_OPTIONS} />
+          </div>
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+            {fields.map(([field, label, options]) => (
+              <div key={`promo-${field}`} className="rounded-3xl border-2 border-purple-200 bg-white p-4 shadow-sm">
+                <div className="mb-2 flex items-center justify-between gap-2"><label className="block text-sm font-bold text-purple-950">{label}</label><span className="rounded-full border border-purple-200 bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700">promo</span></div>
+                <ItemPickerSlot
+                  value={promo.selections[field] || ""}
+                  items={options}
+                  onChange={(nextValue) => updatePromoSelection(field, nextValue)}
+                  placeholder="Type if not listed"
+                  selectClassName="w-full rounded-2xl border-2 border-purple-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-purple-500 focus:ring-4 focus:ring-purple-100"
+                  inputClassName="w-full rounded-2xl border-2 border-purple-200 bg-white px-4 py-3 font-semibold outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-100"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!(cafe === "Dawson" && promo.enabled) && (
+        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+          {fields.map(([field, label, options]) => (
+            <div key={field} className="rounded-3xl border-2 border-sky-200 bg-sky-50/80 p-4 shadow-sm">
+              <div className="mb-2 flex items-center justify-between gap-2"><label className="block text-sm font-bold text-slate-900">{label}</label><span className="rounded-full border border-sky-200 bg-white px-3 py-1 text-xs font-bold text-sky-700">choose here</span></div>
+              <ItemPickerSlot
+                value={rotation.carvery?.[field] || ""}
+                items={options}
+                onChange={(nextValue) => updateCarvery(field, nextValue)}
+                placeholder="Type if not listed"
+                selectClassName="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                inputClassName="w-full rounded-2xl border-2 border-emerald-200 bg-white px-4 py-3 font-semibold outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+              />
+            </div>
+          ))}
+        </div>
+      )}
+      <StationSelectedList title={cafe === "Dawson" && promo.enabled ? "Promotion Items Description" : "Items Description"} items={selectedRows} complete={stationComplete(rotation, "carvery", cafe, week)} />
     </CollapsibleStation>
   );
 }
