@@ -2,6 +2,9 @@
 
 ## 2026-07-25
 
+- [Jul 25, 11:15 AM] Added the browser/OS application icon (favicon, PWA manifest, apple-touch-icon) as the official Culinary Tools Platform icon for browser tabs, pinned tabs, installed PWA, and iOS/Android home-screen shortcuts; this is OS/browser chrome branding only, with zero change to in-app UI, layout, or colors.
+- [Jul 25, 11:15 AM] Generated `favicon.ico`, `favicon-16x16.png`, `favicon-32x32.png`, `apple-touch-icon.png` (180x180, flattened onto the artwork's own opaque black background since iOS renders alpha as black), `android-chrome-192x192.png`, `android-chrome-512x512.png`, and `site.webmanifest` from the supplied master artwork; `theme_color`/`background_color` (`#000000`) were sampled directly from the artwork's dominant background pixel rather than invented, and no maskable icon variant is shipped because the design bleeds past the safe center-crop margin.
+- [Jul 25, 11:15 AM] Set visible app version to `2026.07.25.004-app-icon-favicon-manifest`.
 - [Jul 25, 7:53 AM] Added a Dawson-only Promotion Override inside Carvery Station for every available week, with individual weekday selection and isolated state that does not affect Dawson's Global or other stations.
 - [Jul 25, 7:53 AM] Reused the established promotion persistence pattern with Carvery-specific protein, vegetable, starch, hot-side, and cold-side fields; any enabled Carvery promo hides and replaces the normal Carvery selections for that saved week.
 - [Jul 25, 7:53 AM] Added database-record, recap/export, submission-completion, and browser save/reload coverage proving Carvery promo rows recall from shared storage without leaking ordinary Carvery rows.
