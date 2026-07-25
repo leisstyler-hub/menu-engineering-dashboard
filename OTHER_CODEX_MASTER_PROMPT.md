@@ -1,4 +1,12 @@
-# Other Codex Master Prompt
+# Other Codex Master Prompt — HISTORICAL, NOT AUTHORITATIVE
+
+**This document is deprecated as of 2026-07-25 and does not reflect current guidance.** It predates the Buzz agent/team reorg and the governance documentation hierarchy. It is kept only for historical reference (e.g., understanding pre-reorg Codex sessions); do not follow it for onboarding or as current process.
+
+Current authoritative entry point: `AGENTS.md`, which points to `GOVERNANCE.md`, `ARCHITECTURE_RULES.md`, `PRODUCT_DECISIONS.md`, `MISSION_TEMPLATE.md`, and `RELEASE_RUNBOOK.md`.
+
+Note on content below: the "Final response format requested by Tyler" line reflects a formatting preference from one individual at the time this was written. It is not a governance rule and should not be read as naming an individual as permanent authority — see `GOVERNANCE.md` § Admin Roles for the current, role-based framing.
+
+---
 
 Use this prompt when starting a new Codex session or onboarding another teammate's Codex into this project.
 
