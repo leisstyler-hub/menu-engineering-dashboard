@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-07-25
+
+- [Jul 25, 6:01 AM] test
+- [Jul 25, 6:01 AM] Set visible app version to `2026.07.25.001-test-changelog-entry`.
+
 ## 2026-07-24
 
 - [Jul 24, 1:34 PM] Fixed the second Re:Invent global-block merge site (`recordsToRotations`, global-selection-only records with no existing Global Block row) where menu precedence resolved as `authoritativeMenu || preferredMenuFor(...) || block.menu || record.menuConcept`, letting the `preferredMenuFor` weighted-aggregate fallback pick a stale menu (e.g. `AMZ: Roam BBQ`) over the record's own submitted `menuConcept` (e.g. `AMZ: Cypress`) when older duplicate rows outweighed the correct one -- the same stale-precedence bug already fixed at the sibling merge site on line 988.
