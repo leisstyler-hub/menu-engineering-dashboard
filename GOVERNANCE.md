@@ -13,7 +13,7 @@ Roles, not individuals. No permanent agent instruction should hard-code a specif
 - **Admin of Record** — whoever explicitly approved a mission's scope in-thread. Recorded per-mission in the `ADMIN OF RECORD` field. A mission may not proceed past scoping without one.
 - **Release-Authorized Admin** — a human whose explicit approval is required before any merge or deploy. Release will not infer this from casual phrasing (e.g., "fix it," "make it happen").
 
-As of this writing, Tyler has held the Requesting Admin, Admin of Record, and Release-Authorized Admin roles in practice for every mission on record. That is a factual observation, not a permanent binding — any Registered Admin can fill these roles going forward.
+Who currently holds each role is recorded in [ADMIN_REGISTRY.md](ADMIN_REGISTRY.md), not here — this file defines the roles and what they authorize; the registry defines who holds them, and changes independently of this document.
 
 ## Orchestrator
 
@@ -58,4 +58,4 @@ Fizz, Bumble, and Honey remain members of the Culinary Tools Project channel but
 
 ## Reading Order
 
-New agents and Registered Admins should read, in order: this file → [ARCHITECTURE_RULES.md](ARCHITECTURE_RULES.md) → [PRODUCT_DECISIONS.md](PRODUCT_DECISIONS.md) → [MISSION_TEMPLATE.md](MISSION_TEMPLATE.md) → [RELEASE_RUNBOOK.md](RELEASE_RUNBOOK.md) → `AI_HANDOFF.md` → `CHANGELOG.md`. See `AGENTS.md` for the full entry point.
+New agents and Registered Admins should read, in order: this file → [ADMIN_REGISTRY.md](ADMIN_REGISTRY.md) → [ARCHITECTURE_RULES.md](ARCHITECTURE_RULES.md) → [PRODUCT_DECISIONS.md](PRODUCT_DECISIONS.md) → [MISSION_TEMPLATE.md](MISSION_TEMPLATE.md) → [RELEASE_RUNBOOK.md](RELEASE_RUNBOOK.md) → `AI_HANDOFF.md` → `CHANGELOG.md`. See `AGENTS.md` for the full entry point.

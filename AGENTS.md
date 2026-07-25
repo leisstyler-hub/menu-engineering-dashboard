@@ -3,13 +3,14 @@
 This is the entry point for any agent or Registered Admin working on the Culinary Tools Platform. Read in this order:
 
 1. **AGENTS.md** (this file) — roster, teams, reading order.
-2. [GOVERNANCE.md](GOVERNANCE.md) — admin roles, orchestrator, permanent worker roster, agent teams, permission boundaries.
-3. [ARCHITECTURE_RULES.md](ARCHITECTURE_RULES.md) — current system architecture and data-authority rules.
-4. [PRODUCT_DECISIONS.md](PRODUCT_DECISIONS.md) — approved product decisions and rejected alternatives.
-5. [MISSION_TEMPLATE.md](MISSION_TEMPLATE.md) — how Chief assigns and scopes work.
-6. [RELEASE_RUNBOOK.md](RELEASE_RUNBOOK.md) — how a change goes from implemented to live.
-7. `AI_HANDOFF.md` — tool-by-tool technical state, current version, and known risks. Read before touching code.
-8. `CHANGELOG.md` — detailed change history.
+2. [ADMIN_REGISTRY.md](ADMIN_REGISTRY.md) — who currently holds administrative authority.
+3. [GOVERNANCE.md](GOVERNANCE.md) — admin roles, orchestrator, permanent worker roster, agent teams, permission boundaries.
+4. [ARCHITECTURE_RULES.md](ARCHITECTURE_RULES.md) — current system architecture and data-authority rules.
+5. [PRODUCT_DECISIONS.md](PRODUCT_DECISIONS.md) — approved product decisions and rejected alternatives.
+6. [MISSION_TEMPLATE.md](MISSION_TEMPLATE.md) — how Chief assigns and scopes work.
+7. [RELEASE_RUNBOOK.md](RELEASE_RUNBOOK.md) — how a change goes from implemented to live.
+8. `AI_HANDOFF.md` — tool-by-tool technical state, current version, and known risks. Read before touching code.
+9. `CHANGELOG.md` — detailed change history.
 
 `docs/ARCHITECTURE.md` and `docs/DEPLOYMENT.md` hold code-structure and deployment-command detail referenced from the governance docs above; they are not themselves governance-tier documents.
 
