@@ -2,6 +2,7 @@
 
 ## 2026-07-25
 
+- [Jul 25, 6:52 PM] Formalized in `RELEASE_RUNBOOK.md` that any report declaring release state `LIVE` requires Scribe's own independent sign-off in the same thread (checked against `CHANGELOG.md`/`AI_HANDOFF.md` and production evidence), separate from Reviewer/Verifier's pre-merge sign-off; this is a governance/process update with no application code or visible app version change.
 - [Jul 25, 11:15 AM] Added the browser/OS application icon (favicon, PWA manifest, apple-touch-icon) as the official Culinary Tools Platform icon for browser tabs, pinned tabs, installed PWA, and iOS/Android home-screen shortcuts; this is OS/browser chrome branding only, with zero change to in-app UI, layout, or colors.
 - [Jul 25, 11:15 AM] Generated `favicon.ico`, `favicon-16x16.png`, `favicon-32x32.png`, `apple-touch-icon.png` (180x180, flattened onto the artwork's own opaque black background since iOS renders alpha as black), `android-chrome-192x192.png`, `android-chrome-512x512.png`, and `site.webmanifest` from the supplied master artwork; `theme_color`/`background_color` (`#000000`) were sampled directly from the artwork's dominant background pixel rather than invented, and no maskable icon variant is shipped because the design bleeds past the safe center-crop margin.
 - [Jul 25, 11:15 AM] Set visible app version to `2026.07.25.004-app-icon-favicon-manifest`.
