@@ -77,10 +77,22 @@ test("Neighborhood Rotations opens planner and gives a visible blocked-submit re
   await page.getByRole("button", { name: /^Doppler$/i }).click();
 
   await expect(page.getByRole("heading", { name: /^Doppler$/ })).toBeVisible({ timeout: 20_000 });
-  await expect(page.getByText(/Planner Remote Control/i)).toBeVisible();
+  const remote = page.getByLabel("Planner Remote Control");
+  await expect(remote).toBeVisible();
+  await expect(remote.getByRole("button", { name: "Save Draft", exact: true })).toBeVisible();
+  await expect(remote.getByRole("button", { name: "Submit", exact: true })).toBeVisible();
+  await expect(remote.getByText("Save Draft", { exact: true })).toHaveCount(0);
+  await expect(remote.getByRole("status")).toHaveAttribute("aria-label", /Draft.*Submit blocked/i);
+
+  const expandButton = remote.getByRole("button", { name: "Expand", exact: true });
+  await expect(expandButton).toHaveAttribute("aria-expanded", "false");
+  await expandButton.click();
+  await expect(remote.getByText("Planner Remote Control", { exact: true })).toBeVisible();
+  await expect(remote.getByText("Save Draft", { exact: true })).toBeVisible();
+  await expect(remote.getByRole("button", { name: "Collapse", exact: true })).toHaveAttribute("aria-expanded", "true");
   await expect(page.getByText(/Global Rotation/i)).toBeVisible();
 
-  const submitButton = page.getByRole("button", { name: /Submit/i });
+  const submitButton = remote.getByRole("button", { name: "Submit", exact: true });
   await expect(submitButton).toBeVisible();
   await expect(submitButton).toHaveAttribute("aria-disabled", "true");
   await expect(submitButton).toHaveAttribute("title", /Global Menu|entree|station/i);
@@ -105,13 +117,70 @@ test("Neighborhood Rotations opens every cafe selector for future weeks", async 
       for (const cafe of cafes) {
         await page.getByRole("button", { name: exactName(cafe) }).click();
         await expect(page.getByRole("heading", { name: exactName(cafe) })).toBeVisible({ timeout: 20_000 });
-        await expect(page.getByText(/Planner Remote Control/i)).toBeVisible();
+        const remote = page.getByLabel("Planner Remote Control");
+        await expect(remote).toBeVisible();
+        await expect(remote.getByRole("button", { name: "Expand", exact: true })).toHaveAttribute("aria-expanded", "false");
+        await expect(remote.getByRole("button", { name: "Save Draft", exact: true })).toBeVisible();
+        await expect(remote.getByRole("button", { name: "Submit", exact: true })).toBeVisible();
+        await expect(remote.getByText("Save Draft", { exact: true })).toHaveCount(0);
         await expect(page.getByText(/System Status/i)).toBeVisible();
         await expectNoAppProtection(page);
       }
     }
   }
 
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("Planner Remote Control keeps every action visible and keyboard operable on phones", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await page.setViewportSize({ width: 360, height: 800 });
+  await stubEmptyRotationBackbone(page);
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: exactName("South") }).click();
+  await page.getByRole("button", { name: exactName("Doppler") }).click();
+
+  const remote = page.getByLabel("Planner Remote Control");
+  await expect(remote).toBeVisible();
+  const remoteBox = await remote.boundingBox();
+  expect(remoteBox).not.toBeNull();
+
+  const actionNames = ["Copy", "Load", "Upload", "Generate Menu", "View/Print", "Save Draft", "Submit"];
+  await remote.getByRole("button", { name: "Copy", exact: true }).click();
+  await expect(remote.getByRole("button", { name: "Load", exact: true })).toBeEnabled();
+
+  for (const actionName of actionNames) {
+    const action = remote.getByRole("button", { name: actionName, exact: true });
+    await expect(action).toBeVisible();
+    const actionBox = await action.boundingBox();
+    expect(actionBox).not.toBeNull();
+    expect(actionBox.x).toBeGreaterThanOrEqual(remoteBox.x - 1);
+    expect(actionBox.x + actionBox.width).toBeLessThanOrEqual(remoteBox.x + remoteBox.width + 1);
+  }
+
+  await page.evaluate((labels) => {
+    window.__remoteKeyboardActivations = [];
+    document.addEventListener("click", (event) => {
+      const button = event.target.closest('div[aria-label="Planner Remote Control"] button');
+      const label = button?.getAttribute("aria-label");
+      if (!labels.includes(label)) return;
+      window.__remoteKeyboardActivations.push(label);
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }, true);
+  }, actionNames);
+
+  await remote.getByRole("button", { name: "Copy", exact: true }).focus();
+  for (const actionName of actionNames) {
+    await expect(remote.getByRole("button", { name: actionName, exact: true })).toBeFocused();
+    await page.keyboard.press("Enter");
+    await page.keyboard.press("Tab");
+  }
+  await expect.poll(() => page.evaluate(() => window.__remoteKeyboardActivations)).toEqual(actionNames);
+  await expect(remote.getByRole("button", { name: "Expand", exact: true })).toBeFocused();
+
+  await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
@@ -133,7 +202,7 @@ test("Neighborhood Rotations opens Re:Invent when browser storage cannot cache S
   await page.getByRole("button", { name: exactName("Re:Invent") }).click();
 
   await expect(page.getByRole("heading", { name: /^Re:Invent$/ })).toBeVisible({ timeout: 20_000 });
-  await expect(page.getByText(/Planner Remote Control/i)).toBeVisible();
+  await expect(page.getByLabel("Planner Remote Control")).toBeVisible();
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
@@ -174,9 +243,12 @@ test("Cafes without a Global station are never blocked by Global requirements", 
   for (const cafe of ["Commissary", "Atlas"]) {
     await page.getByRole("button", { name: exactName(cafe) }).click();
     await expect(page.getByRole("heading", { name: exactName(cafe) })).toBeVisible({ timeout: 20_000 });
+    const remote = page.getByLabel("Planner Remote Control");
+    await remote.getByRole("button", { name: "Expand", exact: true }).click();
     const blocker = page.getByText(/Submit is blocked until these are fixed/i).locator("xpath=..", { hasText: /Add at least one item/i });
     await expect(blocker).toBeVisible();
     await expect(blocker).not.toContainText(/Global Menu|Global entree/i);
+    await remote.getByRole("button", { name: "Collapse", exact: true }).click();
   }
 
   await expectNoAppProtection(page);

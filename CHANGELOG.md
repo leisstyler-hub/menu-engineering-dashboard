@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-07-26
+
+- [Jul 26, 9:36 AM] Reworked the shared Neighborhood Rotations Planner Remote Control into a slim black bar that stays at the top of the rotation and keeps the current full-width footprint across every district, cafe, and selectable week.
+- [Jul 26, 9:36 AM] Made the remote icon-only by default while keeping Copy, Load, Upload, Generate Menu, View/Print, Save Draft, and Submit immediately available—even at phone widths; added keyboard-operable buttons, compact tooltips, accessible labels, and a colored Draft/Ready/Blocked/Submitting indicator.
+- [Jul 26, 9:36 AM] Added an Expand/Collapse control that reveals the labeled actions, cafe/week context, copy/update state, and full submit guidance; active submissions automatically expand so the live-storage warning remains visible.
+- [Jul 26, 9:36 AM] Added browser coverage proving the collapsed default, immediate Save Draft/Submit access, phone-width visibility and keyboard operation for all seven actions, expanded details, and consistent availability across all configured cafes and future weeks.
+- [Jul 26, 9:36 AM] Set visible app version to `2026.07.26.001-planner-remote-minimal-bar`.
+
 ## 2026-07-25
 
 - [Jul 25, 6:52 PM] Formalized in `RELEASE_RUNBOOK.md` that any report declaring release state `LIVE` requires Scribe's own independent sign-off in the same thread (checked against `CHANGELOG.md`/`AI_HANDOFF.md` and production evidence), separate from Reviewer/Verifier's pre-merge sign-off; this is a governance/process update with no application code or visible app version change.

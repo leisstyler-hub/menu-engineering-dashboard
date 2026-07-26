@@ -248,6 +248,32 @@ if (/canSubmit=\{canSubmitRotation && !isSubmitting\}/.test(source)) {
   fail("The remote must not treat the temporary saving state as submit-blocked; saving should only disable the button.");
 }
 
+if (
+  !/const \[isExpanded, setIsExpanded\] = useState\(false\);/.test(source)
+  || !/aria-label="Planner Remote Control"/.test(source)
+  || !/aria-expanded=\{isExpanded\}/.test(source)
+  || !/showLabel=\{isExpanded\}/.test(source)
+  || !/if \(isSubmitting\) setIsExpanded\(true\);/.test(source)
+) {
+  fail("The Planner Remote Control must default to a compact accessible icon bar, expand on request, and reveal submission details while saving.");
+}
+
+if (
+  !/<RemoteButton icon=\{Save\} label="Save Draft"[\s\S]{0,200}showLabel=\{isExpanded\}/.test(source)
+  || !/<RemoteButton icon=\{Send\} label=\{isSubmitting \? "Submitting\.\.\." : "Submit"\}[\s\S]{0,350}showLabel=\{isExpanded\}/.test(source)
+) {
+  fail("Save Draft and Submit must remain immediately available in the collapsed Planner Remote Control.");
+}
+
+if (
+  !/grid-cols-7/.test(source)
+  || !/grid-cols-4 sm:grid-cols-7/.test(source)
+  || !/function RemoteUploadButton\(\{ onChange, showLabel = false \}\) \{\s*const inputRef = useRef\(null\);/.test(source)
+  || !/onClick=\{\(\) => inputRef\.current\?\.click\(\)\}/.test(source)
+) {
+  fail("The compact remote must keep all seven actions visible on phones and expose Upload through a keyboard-operable button.");
+}
+
 if (/Edit locked rotation/.test(source)) {
   fail("The duplicate top Edit locked rotation checkbox must be removed; edit should live on the submitted recap card.");
 }

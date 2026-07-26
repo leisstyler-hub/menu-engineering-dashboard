@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import { ArrowLeft, AlertTriangle, CalendarDays, CheckCircle2, ChevronDown, ChevronUp, Clipboard, FileText, Printer, Save, Send, Upload, X } from "lucide-react";
 
@@ -4448,6 +4448,7 @@ function StationCostOverview({ rows }) {
 
 
 function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, setPreview, applyPreview, week, previousWeek, previousRotation, printRows, rotation, requirements, submitIssues = [], canSubmit, isSubmitting = false, onSaveDraft, onSubmit }) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [showMenuPacket, setShowMenuPacket] = useState(false);
   const menuPacket = cafe === "Doppler" ? buildDopplerMenuPacket({ rotation, previousRotation, week, previousWeek }) : null;
@@ -4463,6 +4464,17 @@ function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, s
     event.target.value = "";
   };
   const submitHelp = submitIssues.length ? submitIssues.join(" ") : canSubmit ? "Ready to submit." : visibleSubmitIssues.join(" ");
+  const remoteStatus = isSubmitting ? "Submitting" : canSubmit ? "Ready to submit" : "Submit blocked";
+  const remoteStatusTone = isSubmitting
+    ? "border-sky-300 bg-sky-400"
+    : canSubmit
+      ? "border-emerald-300 bg-emerald-400"
+      : "border-rose-300 bg-rose-400";
+
+  useEffect(() => {
+    if (isSubmitting) setIsExpanded(true);
+  }, [isSubmitting]);
+
   const generateMenu = async () => {
     if (!menuPacket) return;
     try {
@@ -4474,30 +4486,67 @@ function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, s
   };
 
   return (
-    <div className="mb-5 rounded-[1.75rem] border border-slate-300 bg-slate-950 p-3 shadow-lg print:hidden" aria-busy={isSubmitting ? "true" : "false"}>
-      <div className="rounded-[1.35rem] border border-slate-700 bg-slate-900 p-4">
-        <div className="space-y-4">
-          <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-emerald-300 font-bold">Planner Remote Control</p>
-            <h3 className="text-2xl font-bold mt-1 text-white">{rotation?.status || "Draft"}</h3>
-            <div className="mt-2 flex flex-wrap gap-2 text-xs">
-              <span className="rounded-full border border-slate-600 bg-slate-800 px-3 py-1 font-semibold text-slate-300">{copiedSummary}</span>
-              <span title={isSubmitting ? "Submitting to live storage. Keep this tab open." : submitHelp} className={`rounded-full border px-3 py-1 font-semibold ${isSubmitting ? "border-sky-300 bg-sky-400/20 text-sky-100" : canSubmit ? "border-emerald-400 bg-emerald-500/15 text-emerald-200" : "border-rose-400 bg-rose-500/15 text-rose-100"}`}>{isSubmitting ? "Submitting..." : canSubmit ? "Ready to submit" : "Submit blocked"}</span>
-              {rotation?.updatedAt && <span className="rounded-full border border-slate-600 bg-slate-800 px-3 py-1 font-semibold text-slate-300">Updated {rotation.updatedAt}</span>}
+    <div
+      className="mb-5 w-full rounded-2xl border border-slate-700 bg-slate-950 p-2 shadow-lg print:hidden"
+      aria-busy={isSubmitting ? "true" : "false"}
+      aria-label="Planner Remote Control"
+    >
+      <div className="grid min-w-0 grid-cols-[auto_1fr_auto] items-center gap-2">
+        <div
+          className="col-start-1 row-start-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-700 bg-slate-900"
+          role="status"
+          aria-label={`Planner status: ${rotation?.status || "Draft"}. ${remoteStatus}.`}
+          title={`${rotation?.status || "Draft"} · ${remoteStatus}`}
+        >
+          <span className={`h-2.5 w-2.5 rounded-full border ${remoteStatusTone} ${isSubmitting ? "animate-pulse" : ""}`} aria-hidden="true" />
+        </div>
+
+        <div className={`col-span-3 row-start-2 grid min-w-0 gap-1 sm:col-span-1 sm:col-start-2 sm:row-start-1 ${isExpanded ? "grid-cols-4 sm:grid-cols-7" : "grid-cols-7"}`}>
+          <RemoteButton icon={Clipboard} label="Copy" onClick={onCopy} showLabel={isExpanded} />
+          <RemoteButton icon={ChevronDown} label="Load" onClick={onLoad} disabled={!copiedRotation} showLabel={isExpanded} />
+          <RemoteUploadButton onChange={handleUpload} showLabel={isExpanded} />
+          <RemoteButton icon={FileText} label="Generate Menu" onClick={generateMenu} blocked={cafe !== "Doppler"} title={cafe === "Doppler" ? "Download a Doppler PowerPoint from the live template." : "Menu generation is being built first for Doppler."} tone="light" showLabel={isExpanded} />
+          <RemoteButton icon={Printer} label={showPrintPreview ? "Hide View" : "View/Print"} onClick={() => setShowPrintPreview((value) => !value)} tone="light" showLabel={isExpanded} />
+          <RemoteButton icon={Save} label="Save Draft" onClick={onSaveDraft} tone="light" showLabel={isExpanded} />
+          <RemoteButton icon={Send} label={isSubmitting ? "Submitting..." : "Submit"} onClick={onSubmit} disabled={isSubmitting} blocked={!canSubmit} title={isSubmitting ? "Submitting to live database. Keep this tab open until this finishes." : submitHelp} tone="go" showLabel={isExpanded} />
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setIsExpanded((value) => !value)}
+          aria-expanded={isExpanded}
+          aria-controls="planner-remote-details"
+          className="col-start-3 row-start-1 inline-flex h-9 shrink-0 items-center justify-center gap-1 rounded-xl border border-emerald-400/70 bg-emerald-400/10 px-2.5 text-[10px] font-black uppercase tracking-wide text-emerald-200 transition hover:bg-emerald-400/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+        >
+          {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          <span>{isExpanded ? "Collapse" : "Expand"}</span>
+        </button>
+      </div>
+
+      {isExpanded && (
+        <div id="planner-remote-details" className="mt-2 rounded-xl border border-slate-700 bg-slate-900 px-3 py-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-300">Planner Remote Control</p>
+              <h3 className="mt-1 text-lg font-bold text-white">{rotation?.status || "Draft"}</h3>
+              <div className="mt-2 flex flex-wrap gap-1.5 text-[10px]">
+                <span className="rounded-full border border-slate-600 bg-slate-800 px-2.5 py-1 font-semibold text-slate-300">{copiedSummary}</span>
+                <span title={isSubmitting ? "Submitting to live storage. Keep this tab open." : submitHelp} className={`rounded-full border px-2.5 py-1 font-semibold ${isSubmitting ? "border-sky-300 bg-sky-400/20 text-sky-100" : canSubmit ? "border-emerald-400 bg-emerald-500/15 text-emerald-200" : "border-rose-400 bg-rose-500/15 text-rose-100"}`}>{isSubmitting ? "Submitting..." : canSubmit ? "Ready to submit" : "Submit blocked"}</span>
+                {rotation?.updatedAt && <span className="rounded-full border border-slate-600 bg-slate-800 px-2.5 py-1 font-semibold text-slate-300">Updated {rotation.updatedAt}</span>}
+              </div>
+            </div>
+            <div className="sm:text-right">
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Current Cafe</p>
+              <p className="mt-1 text-xs font-semibold text-slate-200">{cafe} · {week}</p>
             </div>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2">
-            <RemoteButton icon={Clipboard} label="Copy" onClick={onCopy} />
-            <RemoteButton icon={ChevronDown} label="Load" onClick={onLoad} disabled={!copiedRotation} />
-            <RemoteUploadButton onChange={handleUpload} />
-            <RemoteButton icon={FileText} label="Generate Menu" onClick={generateMenu} blocked={cafe !== "Doppler"} title={cafe === "Doppler" ? "Download a Doppler PowerPoint from the live template." : "Menu generation is being built first for Doppler."} tone="light" />
-            <RemoteButton icon={Printer} label={showPrintPreview ? "Hide View" : "View/Print"} onClick={() => setShowPrintPreview((value) => !value)} tone="light" />
-            <RemoteButton icon={Save} label="Save Draft" onClick={onSaveDraft} tone="light" />
-          <RemoteButton icon={Send} label={isSubmitting ? "Submitting..." : "Submit"} onClick={onSubmit} disabled={isSubmitting} blocked={!canSubmit} title={isSubmitting ? "Submitting to live database. Keep this tab open until this finishes." : submitHelp} tone="go" />
-          </div>
         </div>
+      )}
+
+      {isExpanded && (
+        <>
         {isSubmitting && (
-          <div className="mt-3 rounded-2xl border border-sky-300/70 bg-sky-400/15 px-4 py-3 text-sm font-semibold text-sky-50 shadow-[0_0_0_1px_rgba(125,211,252,0.18)]" role="status" aria-live="assertive">
+          <div className="mt-2 rounded-xl border border-sky-300/70 bg-sky-400/15 px-3 py-2.5 text-xs font-semibold text-sky-50 shadow-[0_0_0_1px_rgba(125,211,252,0.18)]" role="status" aria-live="assertive">
             <div className="flex items-start gap-3">
               <span className="mt-1 inline-flex h-3 w-3 shrink-0 animate-pulse rounded-full bg-sky-300 shadow-[0_0_0_6px_rgba(125,211,252,0.15)]" aria-hidden="true" />
               <div>
@@ -4508,7 +4557,7 @@ function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, s
           </div>
         )}
         {!canSubmit && (
-          <div className="mt-3 rounded-2xl border border-rose-400/60 bg-rose-500/15 px-4 py-3 text-sm font-semibold text-rose-50 shadow-[0_0_0_1px_rgba(251,113,133,0.18)]">
+          <div className="mt-2 rounded-xl border border-rose-400/60 bg-rose-500/15 px-3 py-2.5 text-xs font-semibold text-rose-50 shadow-[0_0_0_1px_rgba(251,113,133,0.18)]">
             <div className="flex items-start gap-2">
               <AlertTriangle className="mt-0.5 shrink-0 text-rose-200" size={18} />
               <div>
@@ -4520,11 +4569,8 @@ function PlannerControlsPanel({ cafe, copiedRotation, onCopy, onLoad, preview, s
             </div>
           </div>
         )}
-      </div>
-      <div className="mt-3 rounded-[1.35rem] border border-slate-700 bg-slate-900 px-4 py-3">
-        <p className="text-xs uppercase tracking-[0.18em] text-slate-400 font-bold">Current Cafe</p>
-        <p className="mt-1 text-sm font-semibold text-slate-200">{cafe} · {week}</p>
-      </div>
+        </>
+      )}
 
       {showPrintPreview && <WeeklyPrintPreview week={week} cafe={cafe} rows={printRows || []} />}
       {showMenuPacket && menuPacket && <DopplerMenuPacketModal packet={menuPacket} onClose={() => setShowMenuPacket(false)} />}
@@ -4608,7 +4654,7 @@ function SubmitSaveFailedModal({ message, onClose }) {
   );
 }
 
-function RemoteButton({ icon: Icon, label, onClick, disabled = false, blocked = false, title = "", tone = "default" }) {
+function RemoteButton({ icon: Icon, label, onClick, disabled = false, blocked = false, title = "", tone = "default", showLabel = false }) {
   const toneClass = tone === "go"
     ? "border-emerald-400 bg-emerald-400 text-slate-950 hover:bg-emerald-300"
     : tone === "light"
@@ -4620,23 +4666,33 @@ function RemoteButton({ icon: Icon, label, onClick, disabled = false, blocked = 
       type="button"
       onClick={onClick}
       disabled={disabled}
+      aria-label={label}
       aria-disabled={blocked || disabled}
-      title={title}
-      className={`flex min-h-[64px] min-w-0 flex-col items-center justify-center gap-1 rounded-2xl border px-2.5 py-2.5 text-center text-[11px] font-bold leading-tight shadow-sm transition ${disabled ? "cursor-not-allowed border-slate-700 bg-slate-800 text-slate-500 opacity-60" : blocked ? blockedClass : toneClass}`}
+      title={title || label}
+      className={`flex h-9 min-w-0 items-center justify-center rounded-xl border text-center text-[9px] font-bold leading-none shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${showLabel ? "gap-1 px-1.5" : "px-0"} ${disabled ? "cursor-not-allowed border-slate-700 bg-slate-800 text-slate-500 opacity-60" : blocked ? blockedClass : toneClass}`}
     >
-      <Icon size={18} />
-      <span>{label}</span>
+      <Icon size={15} aria-hidden="true" />
+      {showLabel && <span className="max-w-[44px] leading-tight">{label}</span>}
     </button>
   );
 }
 
-function RemoteUploadButton({ onChange }) {
+function RemoteUploadButton({ onChange, showLabel = false }) {
+  const inputRef = useRef(null);
   return (
-    <label className="flex min-h-[64px] min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border border-slate-600 bg-slate-800 px-2.5 py-2.5 text-center text-[11px] font-bold leading-tight text-slate-100 shadow-sm transition hover:bg-slate-700">
-      <Upload size={18} />
-      <span>Upload</span>
-      <input type="file" accept="application/pdf,.pdf" onChange={onChange} className="hidden" />
-    </label>
+    <>
+    <button
+      type="button"
+      aria-label="Upload"
+      title="Upload"
+      onClick={() => inputRef.current?.click()}
+      className={`flex h-9 min-w-0 items-center justify-center rounded-xl border border-slate-600 bg-slate-800 text-center text-[9px] font-bold leading-none text-slate-100 shadow-sm transition hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${showLabel ? "gap-1 px-1.5" : "px-0"}`}
+    >
+      <Upload size={15} aria-hidden="true" />
+      {showLabel && <span>Upload</span>}
+    </button>
+    <input ref={inputRef} type="file" accept="application/pdf,.pdf" onChange={onChange} className="sr-only" tabIndex={-1} />
+    </>
   );
 }
 
