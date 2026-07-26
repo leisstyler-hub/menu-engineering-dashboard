@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-07-26
+
+- [Jul 26, 9:45 AM] Buzz Mobile Chief test
+- [Jul 26, 9:45 AM] Set visible app version to `2026.07.26.001-buzz-mobile-chief-test`.
+
 ## 2026-07-25
 
 - [Jul 25, 6:52 PM] Formalized in `RELEASE_RUNBOOK.md` that any report declaring release state `LIVE` requires Scribe's own independent sign-off in the same thread (checked against `CHANGELOG.md`/`AI_HANDOFF.md` and production evidence), separate from Reviewer/Verifier's pre-merge sign-off; this is a governance/process update with no application code or visible app version change.
