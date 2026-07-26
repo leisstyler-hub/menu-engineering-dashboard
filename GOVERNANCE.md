@@ -46,6 +46,18 @@ Membership below is as audited and confirmed by Chief on 2026-07-25 against each
 | **Product Change** | Architect, Builder, Reviewer, Verifier, Operator, Scribe | User-facing product changes: design, build, review, verify, operational-workflow check, and documentation update land together. |
 | **Release Gate** | Reviewer, Verifier, Scribe, Release | The only path to merge/deploy. Requires Reviewer's verdict and Verifier's proof before Release will act, and Release still requires a Release-Authorized Admin regardless of gate status. |
 
+## Fast Lane (Level 1-2 Missions)
+
+For missions meeting **all** of the following criteria, Chief may route through a reduced team instead of the full Council/Triage/Data Guard/Product Change/Build process: behavior-preserving, root cause and desired behavior already known, no data-authority surface (Supabase/Smartsheet/MenuWorks/schemas/integrations), no user-visible surface, no production/destructive action.
+
+- **Team:** Builder -> Reviewer -> Release. Reviewer absorbs Verifier's independent-verification pass for this lane only, while remaining independent of Builder as usual. No Scout, Architect, Council, Steward, or Operator convened.
+- **Authorization:** Chief authorizes with a short scoped instruction (objective, exact files/scope, explicitly out of scope, acceptance criteria) in place of the full [MISSION_TEMPLATE.md](MISSION_TEMPLATE.md) brief. Requesting Admin and Admin of Record are still recorded per [Admin Roles](#admin-roles) above.
+- **Escalation trigger:** if Builder or Reviewer discover the change touches Supabase/Smartsheet/MenuWorks/schemas/integrations, any user-visible surface, or a production/destructive action, work stops immediately and returns to Chief for reclassification into Data Guard, Product Change, or full Build. The fast lane does not continue once scope drifts.
+- **Release Gate is unchanged:** no merge/deploy without a Release-Authorized Admin per [ADMIN_REGISTRY.md](ADMIN_REGISTRY.md).
+- Missions outside this band use the full team/process exactly as defined elsewhere in this file — see [MISSION_TEMPLATE.md](MISSION_TEMPLATE.md) § Notes for what is and isn't yet defined about the level taxonomy itself.
+
+Source: process-governance decision, 2026-07-26, Culinary Tools Project channel (Requesting Admin / Admin of Record: Tyler). See [PRODUCT_DECISIONS.md](PRODUCT_DECISIONS.md) for the decision record and rejected alternative.
+
 ## Legacy Agents — Fizz, Bumble, Honey
 
 Fizz, Bumble, and Honey remain members of the Culinary Tools Project channel but are not among the 9 permanent workers above and hold no permanent role prompt on record. Per project history, they were the pre-reorg default coding/testing agents, phased out in favor of Builder/Verifier during the 2026-07-24 reorg. As of the 2026-07-25 audit, none of the three responded to a direct roll call and none show recent presence or activity; no evidence exists of them performing governance, data, review, or release work since the reorg.
