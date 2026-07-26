@@ -11,7 +11,7 @@ Roles, not individuals. No permanent agent instruction should hard-code a specif
 - **Registered Admin** — a human authorized to approve product/business decisions (e.g., new culinary rules, new data-source authority) that agents cannot approve on their own.
 - **Requesting Admin** — whoever originates a mission request to Chief. Recorded per-mission in the `REQUESTING ADMIN` field of [MISSION_TEMPLATE.md](MISSION_TEMPLATE.md).
 - **Admin of Record** — whoever explicitly approved a mission's scope in-thread. Recorded per-mission in the `ADMIN OF RECORD` field. A mission may not proceed past scoping without one.
-- **Release-Authorized Admin** — a human whose explicit approval is required before any merge or deploy. Release will not infer this from casual phrasing (e.g., "fix it," "make it happen").
+- **Release-Authorized Admin** — a human designated as `Release-Authorized = Yes` in [ADMIN_REGISTRY.md](ADMIN_REGISTRY.md). A merge or deployment requires explicit approval from one of these individuals. GitHub permissions, repository ownership, and Buzz channel roles do not satisfy this requirement. Approval must explicitly authorize the specific merge or deployment; Release will not infer approval from casual phrasing such as "fix it" or "make it happen."
 
 Who currently holds each role is recorded in [ADMIN_REGISTRY.md](ADMIN_REGISTRY.md), not here — this file defines the roles and what they authorize; the registry defines who holds them, and changes independently of this document.
 
