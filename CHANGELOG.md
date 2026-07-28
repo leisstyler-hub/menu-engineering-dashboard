@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-07-27
+
+- [Jul 27, 6:20 PM] Kept every expanded Planner Remote Control label inside its own action button across all districts, cafes, and selectable weeks by removing the fixed label width, allowing safe wrapping, tightening icon/padding spacing, and stacking the small icon above its label on phones without changing the shared black-bar layout or any action behavior.
+- [Jul 27, 6:20 PM] Added desktop and phone browser coverage that measures Copy, Load, Upload, Generate Menu, View/Print, Save Draft, and Submit label bounds against their buttons, plus a source guard that prevents clipped expanded labels from returning.
+- [Jul 27, 6:20 PM] Set visible app version to `2026.07.27.001-planner-remote-label-containment`.
+
 ## 2026-07-26
 
 - [Jul 26, 10:39 AM] PC Buzz Donnie Test

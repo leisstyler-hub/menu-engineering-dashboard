@@ -274,6 +274,14 @@ if (
   fail("The compact remote must keep all seven actions visible on phones and expose Upload through a keyboard-operable button.");
 }
 
+if (
+  !/items-center justify-center overflow-hidden rounded-xl border text-center/.test(source)
+  || !/!text-\[8px\][\s\S]{0,120}sm:!text-\[9px\]/.test(source)
+  || !/min-w-0 max-w-full whitespace-normal \[overflow-wrap:anywhere\] leading-\[1\.05\]/.test(source)
+) {
+  fail("Expanded Planner Remote Control labels must wrap within their own button boundaries.");
+}
+
 if (/Edit locked rotation/.test(source)) {
   fail("The duplicate top Edit locked rotation checkbox must be removed; edit should live on the submitted recap card.");
 }

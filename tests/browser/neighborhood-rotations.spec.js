@@ -68,6 +68,36 @@ async function stubEmptyRotationBackbone(page, { onStorageWrite = null, getStora
   });
 }
 
+async function expectExpandedRemoteLabelsContained(page, viewport) {
+  await page.setViewportSize(viewport);
+  await stubEmptyRotationBackbone(page);
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: exactName("South") }).click();
+  await page.getByRole("button", { name: exactName("Doppler") }).click();
+
+  const remote = page.getByLabel("Planner Remote Control");
+  await remote.getByRole("button", { name: "Expand", exact: true }).click();
+
+  for (const actionName of ["Copy", "Load", "Upload", "Generate Menu", "View/Print", "Save Draft", "Submit"]) {
+    const action = remote.getByRole("button", { name: actionName, exact: true });
+    const label = action.locator("span");
+    await expect(label).toBeVisible();
+    const bounds = await action.evaluate((button) => {
+      const text = button.querySelector("span");
+      const buttonBox = button.getBoundingClientRect();
+      const textBox = text.getBoundingClientRect();
+      return {
+        button: { left: buttonBox.left, top: buttonBox.top, right: buttonBox.right, bottom: buttonBox.bottom },
+        text: { left: textBox.left, top: textBox.top, right: textBox.right, bottom: textBox.bottom },
+      };
+    });
+    expect(bounds.text.left, `${actionName} label left edge`).toBeGreaterThanOrEqual(bounds.button.left - 1);
+    expect(bounds.text.top, `${actionName} label top edge`).toBeGreaterThanOrEqual(bounds.button.top - 1);
+    expect(bounds.text.right, `${actionName} label right edge`).toBeLessThanOrEqual(bounds.button.right + 1);
+    expect(bounds.text.bottom, `${actionName} label bottom edge`).toBeLessThanOrEqual(bounds.button.bottom + 1);
+  }
+}
+
 test("Neighborhood Rotations opens planner and gives a visible blocked-submit reason", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
 
@@ -100,6 +130,11 @@ test("Neighborhood Rotations opens planner and gives a visible blocked-submit re
 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("Planner Remote Control keeps expanded labels inside every button", async ({ page }) => {
+  await expectExpandedRemoteLabelsContained(page, { width: 930, height: 700 });
+  await expectExpandedRemoteLabelsContained(page, { width: 360, height: 800 });
 });
 
 test("Neighborhood Rotations opens every cafe selector for future weeks", async ({ page }) => {

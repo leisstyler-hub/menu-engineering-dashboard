@@ -4669,10 +4669,10 @@ function RemoteButton({ icon: Icon, label, onClick, disabled = false, blocked = 
       aria-label={label}
       aria-disabled={blocked || disabled}
       title={title || label}
-      className={`flex h-9 min-w-0 items-center justify-center rounded-xl border text-center text-[9px] font-bold leading-none shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${showLabel ? "gap-1 px-1.5" : "px-0"} ${disabled ? "cursor-not-allowed border-slate-700 bg-slate-800 text-slate-500 opacity-60" : blocked ? blockedClass : toneClass}`}
+      className={`flex min-w-0 items-center justify-center overflow-hidden rounded-xl border text-center font-bold leading-none shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${showLabel ? "h-10 flex-col gap-0 px-0.5 py-0.5 !text-[8px] sm:h-9 sm:flex-row sm:gap-0.5 sm:px-1 sm:py-0 sm:!text-[9px]" : "h-9 px-0 !text-[9px]"} ${disabled ? "cursor-not-allowed border-slate-700 bg-slate-800 text-slate-500 opacity-60" : blocked ? blockedClass : toneClass}`}
     >
-      <Icon size={15} aria-hidden="true" />
-      {showLabel && <span className="max-w-[44px] leading-tight">{label}</span>}
+      <Icon className="shrink-0" size={14} aria-hidden="true" />
+      {showLabel && <span className="min-w-0 max-w-full whitespace-normal [overflow-wrap:anywhere] leading-[1.05]">{label}</span>}
     </button>
   );
 }
@@ -4686,10 +4686,10 @@ function RemoteUploadButton({ onChange, showLabel = false }) {
       aria-label="Upload"
       title="Upload"
       onClick={() => inputRef.current?.click()}
-      className={`flex h-9 min-w-0 items-center justify-center rounded-xl border border-slate-600 bg-slate-800 text-center text-[9px] font-bold leading-none text-slate-100 shadow-sm transition hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${showLabel ? "gap-1 px-1.5" : "px-0"}`}
+      className={`flex min-w-0 items-center justify-center overflow-hidden rounded-xl border border-slate-600 bg-slate-800 text-center font-bold leading-none text-slate-100 shadow-sm transition hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${showLabel ? "h-10 flex-col gap-0 px-0.5 py-0.5 !text-[8px] sm:h-9 sm:flex-row sm:gap-0.5 sm:px-1 sm:py-0 sm:!text-[9px]" : "h-9 px-0 !text-[9px]"}`}
     >
-      <Upload size={15} aria-hidden="true" />
-      {showLabel && <span>Upload</span>}
+      <Upload className="shrink-0" size={14} aria-hidden="true" />
+      {showLabel && <span className="min-w-0 max-w-full whitespace-normal [overflow-wrap:anywhere] leading-[1.05]">Upload</span>}
     </button>
     <input ref={inputRef} type="file" accept="application/pdf,.pdf" onChange={onChange} className="sr-only" tabIndex={-1} />
     </>

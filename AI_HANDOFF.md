@@ -1,10 +1,12 @@
 # AI Handoff
 
-Last updated: July 26, 2026
+Last updated: July 27, 2026
 
-Current release version: `2026.07.26.003-buzz-mobile-chief-test`
+Current release version: `2026.07.27.001-planner-remote-label-containment`
 
-Latest process update: July 26, 2026 added a requested `Buzz Mobile Chief test` entry to the dashboard changelog (testing that Alex Neuse, a Release-Authorized Admin per `ADMIN_REGISTRY.md`, can direct real work through the agent workforce from Buzz Mobile) and advanced the visible app version to `2026.07.26.003-buzz-mobile-chief-test`. This is a changelog-only visible-content release with no application logic, data flow, or storage changes, matching the `test`/`test2-changelog-entry` precedent from 2026-07-25.
+Latest process update: July 27, 2026 fixed expanded Planner Remote Control labels that could slide beyond their button edges at narrower desktop widths. The shared action buttons now hide external overflow, use slightly tighter icon/padding spacing, and allow labels such as `Generate Menu`, `View/Print`, and `Save Draft` to wrap within the available button width instead of relying on a fixed 44px label box. Expanded phone buttons stack the small icon above the label so longer text keeps enough horizontal room, while desktop keeps the inline layout. The fix applies through the one shared control to every district, cafe, and selectable week. Browser coverage measures all seven expanded label rectangles against their button rectangles at 930px desktop and 360px phone widths, and the rotation integrity guard protects the containment classes. This is presentation-only: action behavior, submission state, rotation data, Supabase authority, and Smartsheet fallback are unchanged.
+
+Previous process update: July 26, 2026 added a requested `Buzz Mobile Chief test` entry to the dashboard changelog (testing that Alex Neuse, a Release-Authorized Admin per `ADMIN_REGISTRY.md`, can direct real work through the agent workforce from Buzz Mobile) and advanced the visible app version to `2026.07.26.003-buzz-mobile-chief-test`. This is a changelog-only visible-content release with no application logic, data flow, or storage changes, matching the `test`/`test2-changelog-entry` precedent from 2026-07-25.
 
 Previous process update: July 26, 2026 added the requested `Buzz mobile chief test 2` entry to the dashboard changelog and advanced the visible app version to `2026.07.26.002-buzz-mobile-chief-test-2`. This is a changelog-only visible-content release with no application logic, data flow, or storage changes.
 
