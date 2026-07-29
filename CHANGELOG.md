@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-07-29
+
+- [Jul 29, 7:00 AM] Removed the redundant word `protein` after gram values on Menu Library cards; `proteinLabel()` now renders grams-only (for example `36g`) everywhere it pairs with a `Protein` label, while the `Protein not loaded` fallback is unchanged.
+- [Jul 29, 7:00 AM] Added browser coverage asserting the Menu Library card shows `36g` (not `36g protein`) for a stored `protein_g` value.
+- [Jul 29, 7:00 AM] Set visible app version to `2026.07.29.001-menu-library-protein-label-cleanup`.
+
 ## 2026-07-27
 
 - [Jul 27, 6:20 PM] Kept every expanded Planner Remote Control label inside its own action button across all districts, cafes, and selectable weeks by removing the fixed label width, allowing safe wrapping, tightening icon/padding spacing, and stacking the small icon above its label on phones without changing the shared black-bar layout or any action behavior.

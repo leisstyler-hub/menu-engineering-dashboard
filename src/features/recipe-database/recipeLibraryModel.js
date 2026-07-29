@@ -282,7 +282,7 @@ export function normalizeRecipeLibraryItem(row) {
 
 export function proteinLabel(rowOrItem) {
   const protein = rowOrItem?.protein_g ?? numberValue(rowOrItem, "protein_g", "proteinG", "protein", "proteinGrams");
-  return protein === null || protein === undefined ? "Protein not loaded" : `${Math.round(Number(protein)).toLocaleString()}g protein`;
+  return protein === null || protein === undefined ? "Protein not loaded" : `${Math.round(Number(protein)).toLocaleString()}g`;
 }
 
 export function caloriesLabel(value) {

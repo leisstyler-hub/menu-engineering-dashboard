@@ -44,6 +44,8 @@ test("Menu Library opens without app protection or scoped-state crashes and show
 
   const itemCard = page.getByRole("button", { name: /Smoke Test Chicken/ }).first();
   await expect(itemCard).toBeVisible();
+  await expect(itemCard.getByText("36g", { exact: true })).toHaveCount(2);
+  await expect(itemCard.getByText("36g protein")).toHaveCount(0);
   const propertyLabels = itemCard.locator("[data-library-property-label]");
   await expect(propertyLabels).toHaveCount(5);
   const labelsFit = await propertyLabels.evaluateAll((labels) => labels.every((label) => (
