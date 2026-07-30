@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-07-30
+
+- [Jul 30, 3:38 PM] Fixed the mobile and tablet Menu Library item detail drawer so the drawer shell scrolls through the photo/header, Overview/Nutrition/Files tabs, and active tab content instead of clipping the tabs below the phone viewport while only a collapsed inner body could scroll; desktop `lg+` keeps the prior internal-scroll drawer layout.
+- [Jul 30, 3:38 PM] Added phone-width Menu Library browser coverage proving all three tabs and bottom content stay reachable, the persistent mobile close button stays hidden until the header close scrolls away, never overlaps the header close button or food photo, and no horizontal overflow is introduced.
+- [Jul 30, 3:38 PM] Set visible app version to `2026.07.30.001-menu-library-mobile-drawer-scroll`.
+
 ## 2026-07-29
 
 - [Jul 29, 7:00 AM] Removed the redundant word `protein` after gram values on Menu Library cards; `proteinLabel()` now renders grams-only (for example `36g`) everywhere it pairs with a `Protein` label, while the `Protein not loaded` fallback is unchanged.
