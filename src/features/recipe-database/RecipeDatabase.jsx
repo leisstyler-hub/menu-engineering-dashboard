@@ -1202,7 +1202,15 @@ function LibraryCardDrawer({ item, onClose, onSave, onUploadDocument }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/40 p-3 backdrop-blur-sm md:p-8" role="dialog" aria-modal="true">
-      <section className="recipe-library-drawer mx-auto flex max-h-[calc(100vh-1.5rem)] w-full max-w-5xl flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-2xl md:mt-4 md:max-h-[calc(100vh-4rem)]">
+      <button
+        type="button"
+        onClick={onClose}
+        className="fixed right-5 top-5 z-[60] inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 shadow-lg hover:bg-slate-100 lg:hidden"
+        aria-label="Close library card (persistent)"
+      >
+        <X size={21} />
+      </button>
+      <section className="recipe-library-drawer mx-auto flex max-h-[calc(100vh-1.5rem)] w-full max-w-5xl flex-col overflow-y-auto rounded-[2rem] border border-slate-200 bg-white shadow-2xl md:mt-4 md:max-h-[calc(100vh-4rem)] lg:overflow-hidden">
         <div className="border-b border-slate-200 bg-slate-50 p-5 md:p-6">
           <div className={`grid gap-5 ${photo ? "lg:grid-cols-[minmax(0,1.15fr)_minmax(21rem,0.85fr)]" : ""}`}>
             {photo && (
@@ -1265,7 +1273,7 @@ function LibraryCardDrawer({ item, onClose, onSave, onUploadDocument }) {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-3 border-b border-slate-200 bg-white p-4">
+        <div className="sticky top-0 z-10 grid grid-cols-3 gap-3 border-b border-slate-200 bg-white p-4">
           {["overview", "nutrition", "files"].map((tab) => (
             <button
               key={tab}
@@ -1278,7 +1286,7 @@ function LibraryCardDrawer({ item, onClose, onSave, onUploadDocument }) {
           ))}
         </div>
 
-        <div className="flex-1 overflow-auto p-5 md:p-6">
+        <div className="p-5 lg:flex-1 lg:overflow-auto md:p-6">
           {activeTab === "overview" && (
             <div className="space-y-5">
               <div className="flex flex-wrap items-center justify-between gap-2">

@@ -61,6 +61,129 @@ test("Menu Library opens without app protection or scoped-state crashes and show
   expect(pageErrors).toEqual([]);
 });
 
+test("mobile Menu Library item detail drawer scrolls through all tabs to bottom content and stays closable", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(() => {
+    window.localStorage.setItem("culinaryToolsMenuEngineeringItems_v3", JSON.stringify([
+      {
+        id: "mobile-drawer-scroll",
+        mrn: "MOBILE-2",
+        menu: "AMZ: Anisa",
+        station: "Anisa",
+        category: "Main Entree",
+        recipeName: "Zaffron Ember Chicken Plate",
+        displayName: "Zaffron Ember Chicken Plate",
+        item: "Zaffron Ember Chicken Plate",
+        enticingDescription: "Mobile drawer scroll coverage row with enough detail to exercise the card drawer.",
+        allergens: ["Milk", "Wheat"],
+        portion: "1 each",
+        portionOz: 8,
+        price: 11.75,
+        trueCost: 2.57,
+        calories: 650,
+        protein_g: 42,
+      },
+    ]));
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: /open library/i }).click();
+  await page.getByRole("button", { name: /Zaffron Ember Chicken Plate/i }).first().click();
+
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByRole("heading", { name: /Zaffron Ember Chicken Plate/i })).toBeVisible();
+
+  const drawer = dialog.locator(".recipe-library-drawer");
+  const geometry = await drawer.evaluate((node) => ({
+    scrollWidth: node.scrollWidth,
+    clientWidth: node.clientWidth,
+    scrollHeight: node.scrollHeight,
+    clientHeight: node.clientHeight,
+    documentOverflowsHorizontally: document.documentElement.scrollWidth > window.innerWidth,
+  }));
+  expect(geometry.scrollWidth, JSON.stringify(geometry)).toBeLessThanOrEqual(geometry.clientWidth);
+  expect(geometry.documentOverflowsHorizontally, JSON.stringify(geometry)).toBe(false);
+  expect(geometry.scrollHeight, JSON.stringify(geometry)).toBeGreaterThan(geometry.clientHeight);
+
+  const scrollDrawerToBottom = () => drawer.evaluate((node) => {
+    node.scrollTo(0, node.scrollHeight);
+    return { scrollTop: node.scrollTop, scrollHeight: node.scrollHeight, clientHeight: node.clientHeight };
+  });
+
+  const inPhoneViewport = async (locator) => locator.evaluate((node) => {
+    const rect = node.getBoundingClientRect();
+    return rect.bottom > 0 && rect.top < window.innerHeight;
+  });
+
+  const afterFirstScroll = await scrollDrawerToBottom();
+  expect(afterFirstScroll.scrollTop + afterFirstScroll.clientHeight, JSON.stringify(afterFirstScroll)).toBeGreaterThanOrEqual(afterFirstScroll.scrollHeight - 2);
+  const nutritionTab = dialog.getByRole("button", { name: /^nutrition$/i });
+  expect(await inPhoneViewport(nutritionTab), "nutrition tab should stay reachable via the sticky tab bar after scrolling").toBe(true);
+
+  await nutritionTab.click();
+  await scrollDrawerToBottom();
+  const cholesterolLabel = dialog.getByText("Cholesterol", { exact: true });
+  expect(await inPhoneViewport(cholesterolLabel), "bottom nutrition row should be reachable by scrolling").toBe(true);
+
+  await dialog.getByRole("button", { name: /^files$/i }).click();
+  await scrollDrawerToBottom();
+  const recipeFileSlot = dialog.getByText("No recipe uploaded", { exact: true });
+  expect(await inPhoneViewport(recipeFileSlot), "Files tab bottom content should be reachable by scrolling").toBe(true);
+
+  const persistentClose = page.getByRole("button", { name: "Close library card (persistent)" });
+  await expect(persistentClose).toBeVisible();
+  expect(await inPhoneViewport(persistentClose), "persistent close control should stay reachable after scrolling").toBe(true);
+  await persistentClose.click();
+  await expect(dialog).toHaveCount(0);
+});
+
+test("desktop Menu Library item detail drawer keeps its existing layout and hides the mobile-only close control", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.addInitScript(() => {
+    window.localStorage.setItem("culinaryToolsMenuEngineeringItems_v3", JSON.stringify([
+      {
+        id: "desktop-drawer-check",
+        mrn: "DESKTOP-1",
+        menu: "AMZ: Anisa",
+        station: "Anisa",
+        category: "Main Entree",
+        recipeName: "Zaffron Ember Chicken Plate",
+        displayName: "Zaffron Ember Chicken Plate",
+        item: "Zaffron Ember Chicken Plate",
+        enticingDescription: "Desktop drawer regression row.",
+        allergens: ["Milk", "Wheat"],
+        portion: "1 each",
+        portionOz: 8,
+        price: 11.75,
+        trueCost: 2.57,
+        calories: 650,
+        protein_g: 42,
+      },
+    ]));
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: /open library/i }).click();
+  await page.getByRole("button", { name: /Zaffron Ember Chicken Plate/i }).first().click();
+
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByRole("heading", { name: /Zaffron Ember Chicken Plate/i })).toBeVisible();
+
+  await expect(dialog.getByRole("button", { name: /^overview$/i })).toBeVisible();
+  await expect(dialog.getByRole("button", { name: /^nutrition$/i })).toBeVisible();
+  await expect(dialog.getByRole("button", { name: /^files$/i })).toBeVisible();
+
+  const drawer = dialog.locator(".recipe-library-drawer");
+  await expect(drawer).toHaveCSS("overflow-y", "hidden");
+  const bodyOverflowY = await drawer.evaluate((node) => getComputedStyle(node.lastElementChild).overflowY);
+  expect(bodyOverflowY).toBe("auto");
+
+  await expect(page.getByRole("button", { name: "Close library card (persistent)" })).toBeHidden();
+
+  await dialog.getByRole("button", { name: "Close library card", exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+});
+
 test("curated menu banner and dish photo load together for Anisa", async ({ page }) => {
   await page.addInitScript(() => {
     window.localStorage.setItem("culinaryToolsMenuEngineeringItems_v3", JSON.stringify([
