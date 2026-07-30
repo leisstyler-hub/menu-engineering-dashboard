@@ -137,6 +137,70 @@ test("mobile Menu Library item detail drawer scrolls through all tabs to bottom 
   await expect(dialog).toHaveCount(0);
 });
 
+test("mobile Menu Library persistent close control stays hidden until scrolled past the header and never overlaps the header close button or food photo", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(() => {
+    window.localStorage.setItem("culinaryToolsMenuEngineeringItems_v3", JSON.stringify([
+      {
+        id: "mobile-drawer-photo-overlap",
+        mrn: "PHOTO-MOBILE-1",
+        menu: "AMZ: Anisa",
+        station: "Anisa",
+        category: "Main Entree",
+        recipeName: "Zaffron Ember Chicken Plate",
+        displayName: "Zaffron Ember Chicken Plate",
+        item: "Zaffron Ember Chicken Plate",
+        enticingDescription: "Photo-present mobile drawer overlap coverage row.",
+        allergens: ["Milk", "Wheat"],
+        portion: "1 each",
+        portionOz: 8,
+        price: 11.75,
+        trueCost: 2.57,
+        calories: 650,
+        protein_g: 42,
+      },
+    ]));
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: /open library/i }).click();
+  await page.getByRole("button", { name: /Zaffron Ember Chicken Plate/i }).first().click();
+
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByRole("heading", { name: /Zaffron Ember Chicken Plate/i })).toBeVisible();
+
+  const headerClose = dialog.getByRole("button", { name: "Close library card", exact: true });
+  const persistentClose = page.getByRole("button", { name: "Close library card (persistent)" });
+  const dishPhoto = dialog.getByAltText("zaffron ember chicken plate photo");
+  await expect(dishPhoto).toBeVisible({ timeout: 20_000 });
+  await expect(headerClose).toBeVisible();
+  await expect(persistentClose).toHaveCount(0);
+
+  const drawer = dialog.locator(".recipe-library-drawer");
+  await drawer.evaluate((node) => node.scrollTo(0, node.scrollHeight));
+  await expect(persistentClose).toBeVisible();
+
+  const overlap = await dialog.evaluate((node) => {
+    const persistent = node.querySelector('[aria-label="Close library card (persistent)"]');
+    const header = node.querySelector('[aria-label="Close library card"]');
+    const photo = node.querySelector('img[alt="zaffron ember chicken plate photo"]');
+    const intersects = (first, second) => {
+      const a = first.getBoundingClientRect();
+      const b = second.getBoundingClientRect();
+      return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+    };
+    return {
+      closeOverlapsHeader: intersects(persistent, header),
+      closeOverlapsPhoto: intersects(persistent, photo),
+    };
+  });
+  expect(overlap.closeOverlapsHeader, JSON.stringify(overlap)).toBe(false);
+  expect(overlap.closeOverlapsPhoto, JSON.stringify(overlap)).toBe(false);
+
+  await persistentClose.click();
+  await expect(dialog).toHaveCount(0);
+});
+
 test("desktop Menu Library item detail drawer keeps its existing layout and hides the mobile-only close control", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.addInitScript(() => {

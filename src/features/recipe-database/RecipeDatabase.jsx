@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Activity, AlertTriangle, ArrowLeft, Camera, Copy, Database, DollarSign, ExternalLink, FileDown, FileText, Flame, ListChecks, Pencil, Save, Search, ShieldCheck, Sparkles, Upload, Utensils, X } from "lucide-react";
 
 import { MENU_HEADER_ASSETS, getRecipeLibraryPhoto } from "../../data/recipeLibraryAssets.js";
@@ -1159,6 +1159,9 @@ function LibraryCardDrawer({ item, onClose, onSave, onUploadDocument }) {
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState("");
   const [copyStatus, setCopyStatus] = useState("");
+  const [showPersistentClose, setShowPersistentClose] = useState(false);
+  const drawerShellRef = useRef(null);
+  const headerCloseRef = useRef(null);
   const photo = recipePhoto(item);
   const photoSlot = item.file_slots.find((slot) => slot.type === "item-photo");
   const mrn = cleanMrn(item.mrn);
@@ -1200,17 +1203,37 @@ function LibraryCardDrawer({ item, onClose, onSave, onUploadDocument }) {
     ["Cholesterol", item.cholesterol_mg == null ? "Stored when loaded" : `${item.cholesterol_mg} mg`],
   ];
 
+  useEffect(() => {
+    const section = drawerShellRef.current;
+    const headerClose = headerCloseRef.current;
+    if (!section || !headerClose) return undefined;
+    const updateVisibility = () => {
+      const sectionRect = section.getBoundingClientRect();
+      const headerCloseRect = headerClose.getBoundingClientRect();
+      setShowPersistentClose(headerCloseRect.bottom <= sectionRect.top);
+    };
+    updateVisibility();
+    section.addEventListener("scroll", updateVisibility);
+    window.addEventListener("resize", updateVisibility);
+    return () => {
+      section.removeEventListener("scroll", updateVisibility);
+      window.removeEventListener("resize", updateVisibility);
+    };
+  }, []);
+
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/40 p-3 backdrop-blur-sm md:p-8" role="dialog" aria-modal="true">
-      <button
-        type="button"
-        onClick={onClose}
-        className="fixed right-5 top-5 z-[60] inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 shadow-lg hover:bg-slate-100 lg:hidden"
-        aria-label="Close library card (persistent)"
-      >
-        <X size={21} />
-      </button>
-      <section className="recipe-library-drawer mx-auto flex max-h-[calc(100vh-1.5rem)] w-full max-w-5xl flex-col overflow-y-auto rounded-[2rem] border border-slate-200 bg-white shadow-2xl md:mt-4 md:max-h-[calc(100vh-4rem)] lg:overflow-hidden">
+      {showPersistentClose && (
+        <button
+          type="button"
+          onClick={onClose}
+          className="fixed right-5 top-5 z-[60] inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 shadow-lg hover:bg-slate-100 lg:hidden"
+          aria-label="Close library card (persistent)"
+        >
+          <X size={21} />
+        </button>
+      )}
+      <section ref={drawerShellRef} className="recipe-library-drawer mx-auto flex max-h-[calc(100vh-1.5rem)] w-full max-w-5xl flex-col overflow-y-auto rounded-[2rem] border border-slate-200 bg-white shadow-2xl md:mt-4 md:max-h-[calc(100vh-4rem)] lg:overflow-hidden">
         <div className="border-b border-slate-200 bg-slate-50 p-5 md:p-6">
           <div className={`grid gap-5 ${photo ? "lg:grid-cols-[minmax(0,1.15fr)_minmax(21rem,0.85fr)]" : ""}`}>
             {photo && (
@@ -1225,7 +1248,7 @@ function LibraryCardDrawer({ item, onClose, onSave, onUploadDocument }) {
                   <h2 className="mt-2 text-3xl font-black leading-tight text-slate-950 md:text-5xl">{item.display_name}</h2>
                   <p className="mt-3 text-base font-bold leading-7 text-slate-500">{item.menu || "No menu"} / {item.station || "No station"} / {item.category_group || item.category || "No category"}</p>
                 </div>
-                <button type="button" onClick={onClose} className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-100" aria-label="Close library card">
+                <button ref={headerCloseRef} type="button" onClick={onClose} className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-100" aria-label="Close library card">
                   <X size={21} />
                 </button>
               </div>
