@@ -252,7 +252,7 @@ const EMPTY_ROTATION = {
     deli: ["", ""],
     fishMarket: [""],
     freshFive: ["", "", "", "", ""],
-    grillFreshFive: [""],
+    grillFreshFive: ["", ""],
     saladFreshFive: [""],
     soup: ["", ""],
     noodles: [""],
@@ -1666,7 +1666,7 @@ function stationSlots(cafe, stationKey) {
     Astra: { freshFive: 2 },
     Grace: { freshFive: 2, salad: 2 },
     Sonic: { freshFive: 2, salad: 5, deli: 4 },
-    Bingo: { fishMarket: 2, salad: 2, grillFreshFive: 1, saladFreshFive: 1 },
+    Bingo: { fishMarket: 2, salad: 2, grillFreshFive: 2, saladFreshFive: 1 },
     Blueshift: { salad: 5, deli: 4, fishMarket: 2, freshFive: 2 },
     Eclipse: { freshFive: 2 }
   }[cafe]?.[stationKey];
@@ -1780,6 +1780,21 @@ function globalCycleConfig(cafe, week = "") {
     return {
       title: "Doppler Wednesday–Tuesday Global Cycle",
       summary: "Doppler changes Global every Wednesday. Monday and Tuesday are carryover from the prior Wednesday cycle; Wednesday starts the next cycle through the following Tuesday.",
+      chips: [
+        { label: "Mon + Tue", note: "carryover", tone: "indigo" },
+        { label: "Wed–Tue", note: "new cycle", tone: "sky" },
+      ],
+      blockType: "Wednesday Cycle",
+      days: "Wednesday, Thursday, Friday, Next Monday, Next Tuesday",
+      startedPreviousWeek: true,
+      continuesNextWeek: true,
+      nextWeekCarryoverDays: "Next Monday, Next Tuesday",
+    };
+  }
+  if (cafe === "Bingo") {
+    return {
+      title: "Bingo Wednesday–Tuesday Global Cycle",
+      summary: "Bingo changes Global every Wednesday. Monday and Tuesday are carryover from the prior Wednesday cycle; Wednesday starts the next cycle through the following Tuesday.",
       chips: [
         { label: "Mon + Tue", note: "carryover", tone: "indigo" },
         { label: "Wed–Tue", note: "new cycle", tone: "sky" },
@@ -2084,7 +2099,7 @@ function persistedSplitGlobalBlocks(rotation = {}, cafe = "", week = rotation?.w
   return entries;
 }
 
-function dopplerSummaryBlockLabels(rotation = {}, previousRotation = EMPTY_ROTATION) {
+function wedTuesGlobalSummaryBlockLabels(rotation = {}, previousRotation = EMPTY_ROTATION) {
   const promoBlock = promotionSummaryBlock(rotation);
   const carryover = carryoverGlobalBlock(previousRotation);
   const currentBlock = dopplerCurrentGlobalBlock(rotation);
@@ -2110,7 +2125,7 @@ function dopplerSummaryBlockLabels(rotation = {}, previousRotation = EMPTY_ROTAT
 function rotationSummaryBlockLabels(rotation = {}, cafe = rotation?.cafe || "", week = rotation?.week || "", previousRotation = rotation?.previousRotation || EMPTY_ROTATION) {
   if (!cafeHasGlobalStation(cafe)) return [];
   if (isSplitGlobalCafe(cafe)) return splitGlobalSummaryBlockLabels({ ...rotation, previousRotation }, cafe, week);
-  if (cafe === "Doppler") return dopplerSummaryBlockLabels(rotation, previousRotation);
+  if (cafe === "Doppler" || cafe === "Bingo") return wedTuesGlobalSummaryBlockLabels(rotation, previousRotation);
   const promoBlock = promotionSummaryBlock(rotation);
   if (promoBlock) return promotionCoversWeek(rotation.promotionOverride) ? [promoBlock] : [promoBlock, { id: "weekly", title: "Standard Global", menu: rotation.menu || "Not selected", isPending: !rotation.menu }];
   return [];
@@ -5044,7 +5059,7 @@ function CafeStationSection(props) {
   if (stationKey === "fishMarket") content = <SimpleLTOSection stationKey="fishMarket" title="Fish Market LTO" slots={Array.from({ length: stationSlots(cafe, "fishMarket") }, (_, i) => `Fish Market LTO ${i + 1}`)} values={rotation.ltos?.fishMarket || EMPTY_ROTATION.ltos.fishMarket} uploaded={rotation.uploadedLtos?.fishMarket || []} updateLto={updateLto} complete={stationComplete(rotation, "fishMarket")} />;
   if (stationKey === "noodles") content = <SecondaryGlobalSection blockId="noodles" title="Noodle Station" eyebrow="Secondary Global" rotation={rotation} menuOptions={menuOptions} updateRotation={updateRotation} />;
   if (stationKey === "freshFive") content = <SimpleLTOSection stationKey="freshFive" title="Fresh $5" slots={Array.from({ length: stationSlots(cafe, "freshFive") }, (_, i) => `Fresh $5 Option ${i + 1}`)} values={rotation.ltos?.freshFive || EMPTY_ROTATION.ltos.freshFive} uploaded={rotation.uploadedLtos?.freshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "freshFive")} />;
-  if (stationKey === "grillFreshFive") content = <SimpleLTOSection stationKey="grillFreshFive" title="Grill Fresh $5" slots={["Grill Fresh $5"]} values={rotation.ltos?.grillFreshFive || EMPTY_ROTATION.ltos.grillFreshFive} uploaded={rotation.uploadedLtos?.grillFreshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "grillFreshFive")} poolOverride={stationPool("grillFreshFive")} />;
+  if (stationKey === "grillFreshFive") content = <SimpleLTOSection stationKey="grillFreshFive" title="Grill Fresh $5" slots={Array.from({ length: stationSlots(cafe, "grillFreshFive") }, (_, i) => `Grill Fresh $5 ${i + 1}`)} values={rotation.ltos?.grillFreshFive || EMPTY_ROTATION.ltos.grillFreshFive} uploaded={rotation.uploadedLtos?.grillFreshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "grillFreshFive")} poolOverride={stationPool("grillFreshFive")} />;
   if (stationKey === "saladFreshFive") content = <SimpleLTOSection stationKey="saladFreshFive" title="Salad Fresh $5" slots={["Salad Fresh $5"]} values={rotation.ltos?.saladFreshFive || EMPTY_ROTATION.ltos.saladFreshFive} uploaded={rotation.uploadedLtos?.saladFreshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "saladFreshFive")} poolOverride={stationPool("saladFreshFive")} />;
   if (stationKey === "soup") content = <SimpleLTOSection stationKey="soup" title="Soup LTOs" slots={Array.from({ length: stationSlots(cafe, "soup") }, (_, i) => `Soup ${i + 1}`)} values={rotation.ltos?.soup || EMPTY_ROTATION.ltos.soup} uploaded={rotation.uploadedLtos?.soup || []} updateLto={updateLto} complete={stationComplete(rotation, "soup")} />;
   if (stationKey === "wok") content = <WokSection rotation={rotation} updateLto={updateLto} />;

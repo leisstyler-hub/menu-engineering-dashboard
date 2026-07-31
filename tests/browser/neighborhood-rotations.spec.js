@@ -347,3 +347,61 @@ test("Dawson Carvery promotion override replaces normal Carvery fields and saves
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
+
+test("Bingo Global shows a Wednesday-Tuesday cycle and both Grill Fresh $5 slots save and recall independently", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const storageWrites = [];
+  let storedRecords = [];
+  await stubEmptyRotationBackbone(page, {
+    onStorageWrite: (body) => {
+      storageWrites.push(body);
+      storedRecords = body.records || [];
+    },
+    getStorageRecords: () => storedRecords,
+  });
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: exactName("East") }).click();
+  await page.getByRole("button", { name: exactName("Bingo") }).click();
+  await expect(page.getByRole("heading", { name: exactName("Bingo") })).toBeVisible({ timeout: 20_000 });
+
+  await expect(page.getByText(/Bingo changes Global every Wednesday\./i)).toBeVisible();
+
+  const grillFreshFive = page.getByRole("heading", { name: "Grill Fresh $5" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await expect(grillFreshFive).toBeVisible();
+  await expect(grillFreshFive.getByText("Grill Fresh $5 1", { exact: true })).toBeVisible();
+  await expect(grillFreshFive.getByText("Grill Fresh $5 2", { exact: true })).toBeVisible();
+
+  const slotSelects = grillFreshFive.locator("select");
+  await expect(slotSelects).toHaveCount(2);
+  const slot1Value = await slotSelects.nth(0).evaluate((select) => Array.from(select.options).find((option) => option.value && option.value !== "__write_in__")?.value || "");
+  const slot2Value = await slotSelects.nth(1).evaluate((select) => Array.from(select.options).find((option) => option.value && option.value !== "__write_in__")?.value || "");
+  expect(slot1Value).not.toBe("");
+  expect(slot2Value).not.toBe("");
+  await slotSelects.nth(0).selectOption(slot1Value);
+  await slotSelects.nth(1).selectOption(slot2Value);
+
+  await page.getByRole("button", { name: "Save Draft", exact: true }).click();
+  await expect.poll(() => storageWrites.length).toBeGreaterThan(0);
+
+  const savedRecords = storageWrites.at(-1)?.records || [];
+  const grillFreshFiveRows = savedRecords.filter((record) => record["Station Key"] === "grillFreshFive");
+  expect(grillFreshFiveRows.length).toBe(2);
+  expect(grillFreshFiveRows.some((record) => record["Slot Number"] === 1)).toBe(true);
+  expect(grillFreshFiveRows.some((record) => record["Slot Number"] === 2)).toBe(true);
+
+  await page.evaluate(() => window.localStorage.clear());
+  await page.reload();
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: exactName("East") }).click();
+  await page.getByRole("button", { name: exactName("Bingo") }).click();
+  const recalledGrillFreshFive = page.getByRole("heading", { name: "Grill Fresh $5" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await expect(recalledGrillFreshFive).toBeVisible({ timeout: 20_000 });
+  const recalledSelects = recalledGrillFreshFive.locator("select");
+  await expect(recalledSelects).toHaveCount(2);
+  await expect(recalledSelects.nth(0)).toHaveValue(slot1Value);
+  await expect(recalledSelects.nth(1)).toHaveValue(slot2Value);
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});

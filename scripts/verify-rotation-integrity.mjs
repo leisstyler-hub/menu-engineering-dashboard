@@ -142,7 +142,7 @@ if (!/if \(isSplitGlobalCafe\(cafe\)\) \{[\s\S]*splitGlobalBlockLayout\(cafe, we
   fail("Database records must save all active split-global blocks, not only Re:Invent blocks.");
 }
 
-if (!/function cardSummaryBlockLabels/.test(source) || !/title: "Monday - Friday"/.test(source) || !/const summaryBlocks = locked \? cardSummaryBlockLabels\(row, row\.cafe, row\.week, row\.previousRotation \|\| EMPTY_ROTATION\) : \[\];/.test(source) || !/function dopplerSummaryBlockLabels/.test(source)) {
+if (!/function cardSummaryBlockLabels/.test(source) || !/title: "Monday - Friday"/.test(source) || !/const summaryBlocks = locked \? cardSummaryBlockLabels\(row, row\.cafe, row\.week, row\.previousRotation \|\| EMPTY_ROTATION\) : \[\];/.test(source) || !/function wedTuesGlobalSummaryBlockLabels/.test(source)) {
   fail("Executive summary cards must show full-week labels for split-global cafes and Doppler.");
 }
 
@@ -156,6 +156,18 @@ if (!/const SPLIT_GLOBAL_CAFE_CYCLE_STARTS = \{\s*"Re:Invent": "2026-07-06",\s*B
 
 if (!/const REINVENT_CLOSED_WEEK_STARTS = new Set\(\["2026-06-29"\]\);/.test(source) || !/function isReInventHolidayClosedWeek\(cafe, week = ""\)/.test(source)) {
   fail("Re:Invent Jun 29, 2026 holiday week must be explicitly modeled as a Friday-closed week.");
+}
+
+if (!/if \(cafe === "Bingo"\) \{\s*return \{\s*title: "Bingo Wednesday\u2013Tuesday Global Cycle"/.test(source)) {
+  fail("Bingo must use the Doppler-style single Wednesday-Tuesday Global cycle, not the default Monday-Friday weekly cycle.");
+}
+
+if (!/Bingo: \{ fishMarket: 2, salad: 2, grillFreshFive: 2, saladFreshFive: 1 \}/.test(source)) {
+  fail("Bingo must have a two-slot grillFreshFive station override.");
+}
+
+if (!/stationKey === "grillFreshFive"\) content = <SimpleLTOSection stationKey="grillFreshFive" title="Grill Fresh \$5" slots=\{Array\.from\(\{ length: stationSlots\(cafe, "grillFreshFive"\) \}/.test(source)) {
+  fail("Grill Fresh $5 slots must render dynamically from stationSlots instead of a hardcoded single slot.");
 }
 
 if (!/id: "friClosed"[\s\S]*title: "Friday Closed"[\s\S]*closed: true/.test(source)) {
