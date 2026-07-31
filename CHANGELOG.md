@@ -4,7 +4,7 @@
 
 - [Jul 30, 10:48 PM] Switched Bingo Cafe's Neighborhood Rotations Global cadence to a single Wednesday-Tuesday cycle patterned after Doppler, including Monday-Tuesday carryover messaging and the same submitted-recap / leadership-card week structure, while keeping Bingo out of split-global behavior.
 - [Jul 30, 10:48 PM] Added a second Bingo `Grill Fresh $5` slot, dynamic slot rendering, source guards, and browser save/reload coverage proving both Grill Fresh $5 selections persist and recall independently without changing other cafes.
-- [Jul 30, 10:48 PM] Set visible app version to `2026.07.31.001-bingo-wed-tues-grill-fresh-five`.
+- [Jul 30, 10:48 PM] Set visible app version to `2026.07.30.002-bingo-wed-tues-grill-fresh-five`.
 
 - [Jul 30, 3:38 PM] Fixed the mobile and tablet Menu Library item detail drawer so the drawer shell scrolls through the photo/header, Overview/Nutrition/Files tabs, and active tab content instead of clipping the tabs below the phone viewport while only a collapsed inner body could scroll; desktop `lg+` keeps the prior internal-scroll drawer layout.
 - [Jul 30, 3:38 PM] Added phone-width Menu Library browser coverage proving all three tabs and bottom content stay reachable, the persistent mobile close button stays hidden until the header close scrolls away, never overlaps the header close button or food photo, and no horizontal overflow is introduced.
