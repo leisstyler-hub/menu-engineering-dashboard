@@ -10,6 +10,12 @@ When a mission produces an approved product decision, Scribe adds an entry below
 
 ## Decisions
 
+### 2026-07-31 — Bingo Cafe Wed-Tues Global cadence and second Grill Fresh $5 slot
+Tyler approved a Bingo-only Neighborhood Rotations change: Bingo's Global Rotation should follow the same single Wednesday-Tuesday cadence pattern used by Doppler, and Bingo's Grill Fresh $5 station should expose two independently selectable `grillFreshFive` slots instead of one. This is explicitly not a split-global conversion: Bingo remains a one-menu Global cycle with Wednesday start / Monday-Tuesday carryover behavior, and the second option is a second `Grill Fresh $5` slot, not a second generic Grill `Location Spotlight`.
+Source: Culinary Tools Project channel, thread rooted at event `9dc3ad58cd58ae10ddbf4bc027f78b5d7c3e9e732ddc20c995582d4f8b8d6aed`, request from Tyler on 2026-07-31, with Chief assigning scoped implementation and then directing Scribe to record the accepted behavior after Builder/Steward/Reviewer/Verifier clearance. Admin of Record: Tyler.
+Rejected alternatives: converting Bingo to the Re:Invent/Blueshift split-global model; interpreting the request as a second generic Grill `Location Spotlight` instead of a second `grillFreshFive` slot.
+Implementation status note: implemented and independently verified locally at commit `ef2aa015338ad4eef716aa80e79afe98323aaf82`; not merged, not deployed, not live as of this entry.
+
 ### 2026-07-11 — Hide Ladle Compliance from navigation
 Hidden from the platform home screen and mobile tool navigation as of version `2026.07.11.003-hide-ladle-compliance`. The underlying code remains in the repo for a future rebuild; users should not be routed into it from normal navigation while it is unfinished/non-working.
 Source: `AI_HANDOFF.md`, Ladle Compliance section.
