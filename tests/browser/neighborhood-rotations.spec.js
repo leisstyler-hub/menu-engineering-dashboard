@@ -28,6 +28,55 @@ const smokeMenuItems = [
   { menu: "AMZ: Carvery", station: "Sides", item: "Roasted Root Vegetables", category: "side", price: 3.25, trueCost: 0.9, calories: 180 },
 ];
 
+function rotationRecord({ id, parent = "", type, cafe, week, status = "Submitted", stationKey = "", selectionType = "", item = "", menu = "", slot = 1, promoName = "", promoDays = "" }) {
+  return {
+    "Record ID": id,
+    "Parent Record ID": parent,
+    "Record Type": type,
+    Status: status,
+    District: "North",
+    "Café / Unit": cafe,
+    "Date Range Label": week,
+    "Station Key": stationKey,
+    "Selection Type": selectionType,
+    "Menu Item / Selection": item,
+    "Menu / Concept": menu,
+    "Slot Number": slot,
+    "Promotion Override Enabled": Boolean(promoName),
+    "Promotion Name": promoName,
+    "Promotion Days": promoDays,
+    "Submitted At": "Aug 1, 2026, 8:00 AM",
+    "Updated At": "Aug 1, 2026, 8:00 AM",
+  };
+}
+
+function submittedProjectionRecords({ week, promo = false, mobyStatus = "Submitted" }) {
+  const suffix = week.startsWith("Aug 31") ? "0831" : "0907";
+  const parent = (cafe) => `rotation|${suffix}|North|${cafe}`;
+  const header = (cafe) => rotationRecord({ id: parent(cafe), type: "Rotation Header", cafe, week, status: cafe === "Moby" ? mobyStatus : "Submitted" });
+  const child = (cafe, localId, fields) => rotationRecord({ id: `${parent(cafe)}|${localId}`, parent: parent(cafe), cafe, week, ...fields });
+  const mobyChild = (localId, fields) => child("Moby", localId, { status: mobyStatus, ...fields });
+  const dawsonRows = promo ? [
+    child("Dawson", "moby-promo-menu", { type: "Station Selection", stationKey: "mobyPopUpPromotion", selectionType: "Menu Name", item: "One Day Showcase", menu: "One Day Showcase", promoName: "One Day Showcase", promoDays: "Tuesday" }),
+    child("Dawson", "moby-promo-entree", { type: "Station Selection", stationKey: "mobyPopUpPromotion", selectionType: "Entrée", item: "Huli Huli Chicken", menu: "One Day Showcase", promoName: "One Day Showcase", promoDays: "Tuesday" }),
+  ] : [
+    child("Dawson", "moby-menu", { type: "Station Selection", stationKey: "mobyPopUp", selectionType: "Menu Name", item: "AMZ: Carvery", menu: "AMZ: Carvery" }),
+    child("Dawson", "moby-entree", { type: "Station Selection", stationKey: "mobyPopUp", selectionType: "Entrée", item: "Herb Roasted Turkey", menu: "AMZ: Carvery" }),
+    child("Dawson", "moby-side", { type: "Station Selection", stationKey: "mobyPopUp", selectionType: "Side", item: "Roasted Root Vegetables", menu: "AMZ: Carvery" }),
+  ];
+  return [
+    header("Dawson"),
+    ...dawsonRows,
+    header("Moby"),
+    mobyChild("global-block", { type: "Global Block", stationKey: "global", menu: "AMZ: Ohana" }),
+    mobyChild("global-entree", { type: "Global Selection", stationKey: "global", selectionType: "Entrée", item: "Huli Huli Chicken", menu: "AMZ: Ohana" }),
+    mobyChild("pizza", { type: "Station Selection", stationKey: "pizza", selectionType: "LTO", item: "Mac Salad", menu: "Moby Pizza" }),
+    header("Cricket"),
+    child("Cricket", "global-block", { type: "Global Block", stationKey: "global", menu: "AMZ: Carvery" }),
+    child("Cricket", "global-entree", { type: "Global Selection", stationKey: "global", selectionType: "Entrée", item: "Herb Roasted Turkey", menu: "AMZ: Carvery" }),
+  ];
+}
+
 function exactName(name) {
   return new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i");
 }
@@ -450,6 +499,63 @@ test("Dawson Moby Pop-Up starts Aug 31, uses Global or Carvery menus, and recall
   await expect(recalledMoby.getByPlaceholder("Moby Pop-Up promo")).toHaveValue("One Day Showcase");
   await expect(recalledMoby.getByRole("button", { name: "Tuesday", exact: true })).toHaveClass(/bg-purple-600/);
   await expect(recalledMoby.locator("select").first()).toHaveValue("Huli Huli Chicken");
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("submitted Dawson Moby Pop-Up replaces only Moby Global presentation without changing duplicate reporting", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const normalWeek = "Aug 31, 2026 - Sep 4, 2026";
+  const promoWeek = "Sep 7, 2026 - Sep 11, 2026";
+  const records = [...submittedProjectionRecords({ week: normalWeek }), ...submittedProjectionRecords({ week: promoWeek, promo: true, mobyStatus: "Draft" })];
+  await stubEmptyRotationBackbone(page, { getStorageRecords: () => records });
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: "Executive View", exact: true }).click();
+  await page.locator("select").first().selectOption({ label: normalWeek });
+
+  const mobyCard = page.getByRole("button", { name: "Open Moby planner" });
+  await expect(mobyCard).toContainText("Dawson Moby Pop-Up - Tuesday-Thursday");
+  await expect(mobyCard).toContainText("AMZ: Carvery");
+  await expect(mobyCard).toContainText("1 entrees");
+  await expect(mobyCard).not.toContainText("duplicate");
+
+  await mobyCard.click();
+  const submittedRecap = page.getByText("Submitted Menu Recap", { exact: true }).locator("xpath=ancestor::section[1]");
+  await expect(submittedRecap).toContainText("Dawson Moby Pop-Up - Tuesday-Thursday");
+  await expect(submittedRecap).toContainText("AMZ: Carvery");
+  await expect(submittedRecap).toContainText("Herb Roasted Turkey");
+  await expect(submittedRecap).toContainText("Pizza");
+  await expect(submittedRecap).toContainText("Mac Salad");
+
+  await page.getByRole("button", { name: "Results", exact: true }).click();
+  await page.locator("select").nth(1).selectOption({ label: "Moby" });
+  const mobyResult = page.getByRole("button", { name: /Aug 31.*Moby.*AMZ: Carvery/i });
+  await expect(mobyResult).toBeVisible();
+  await mobyResult.click();
+  const detail = page.getByText("Saved Selection Detail", { exact: true }).locator("xpath=ancestor::section[1]");
+  await expect(detail).toContainText("Global Station - Dawson Moby Pop-Up");
+  await expect(detail).toContainText("Herb Roasted Turkey");
+  await expect(detail).toContainText("Roasted Root Vegetables");
+  await expect(detail).toContainText("Pizza");
+  await expect(detail).toContainText("Mac Salad");
+
+  await page.getByRole("button", { name: "Executive View", exact: true }).click();
+  await page.locator("select").first().selectOption({ label: promoWeek });
+  const promoMobyCard = page.getByRole("button", { name: "Open Moby planner" });
+  await expect(promoMobyCard).toContainText("Dawson Moby Promo - Tuesday");
+  await expect(promoMobyCard).toContainText("One Day Showcase");
+  await expect(promoMobyCard).toContainText("open");
+  await expect(promoMobyCard).toContainText("0/5");
+
+  await promoMobyCard.click();
+  const remote = page.getByLabel("Planner Remote Control");
+  await remote.getByRole("button", { name: "View/Print", exact: true }).click();
+  const printPreview = page.getByText("Weekly Rotation Packet", { exact: true }).locator("xpath=ancestor::div[contains(@class,'rounded-3xl')][1]");
+  await expect(printPreview).toContainText("One Day Showcase");
+  await expect(printPreview).toContainText("Dawson Moby Pop-Up - Tuesday");
+  await expect(printPreview).toContainText("Mac Salad");
 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);

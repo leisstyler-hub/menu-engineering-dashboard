@@ -2238,6 +2238,16 @@ function wedTuesGlobalSummaryBlockLabels(rotation = {}, previousRotation = EMPTY
 
 function rotationSummaryBlockLabels(rotation = {}, cafe = rotation?.cafe || "", week = rotation?.week || "", previousRotation = rotation?.previousRotation || EMPTY_ROTATION) {
   if (!cafeHasGlobalStation(cafe)) return [];
+  const dawsonOverride = rotation.__dawsonMobyGlobalOverride;
+  if (cafe === "Moby" && dawsonOverride) {
+    return [{
+      id: "dawsonMobyGlobalOverride",
+      title: dawsonOverride.kind === "promotion"
+        ? `Dawson Moby Promo - ${dayListLabel(dawsonOverride.days)}`
+        : "Dawson Moby Pop-Up - Tuesday-Thursday",
+      menu: dawsonOverride.menu,
+    }];
+  }
   if (isSplitGlobalCafe(cafe)) return splitGlobalSummaryBlockLabels({ ...rotation, previousRotation }, cafe, week);
   if (cafe === "Doppler" || cafe === "Bingo") return wedTuesGlobalSummaryBlockLabels(rotation, previousRotation);
   const promoBlock = promotionSummaryBlock(rotation);
@@ -2312,6 +2322,7 @@ function carryoverGlobalBlock(rotation = {}, preferredBlockId = "") {
 
 function rotationMenuLabel(rotation = {}, cafe = rotation?.cafe || "", week = rotation?.week || "") {
   if (!cafeHasGlobalStation(cafe)) return "";
+  if (cafe === "Moby" && rotation.__dawsonMobyGlobalOverride?.menu) return rotation.__dawsonMobyGlobalOverride.menu;
   if (promotionCoversWeek(rotation.promotionOverride)) return normalizePromotionOverride(rotation.promotionOverride).name || "";
   if (isSplitGlobalCafe(cafe)) return splitGlobalMenuLabel(rotation, cafe, week) || rotation.menu || "";
   if (rotation.menu) return rotation.menu;
@@ -2459,7 +2470,7 @@ function conflictControlledRows(district, rows) {
 function menuConflictCounts(rows) {
   return rows.reduce((acc, row) => {
     if (!isSubmittedRotation(row)) return acc;
-    const menu = rotationMenuLabel(row, row.cafe, row.week) || row.menu;
+    const menu = rotationMenuLabelForDuplicateReporting(row);
     if (menu) acc[menu] = (acc[menu] || 0) + 1;
     return acc;
   }, {});
@@ -2478,7 +2489,7 @@ function cafeUsesMenuConflictRule(district, cafe, copiedFrom = "") {
 
 function rowHasMenuConflict(row, conflictMenus) {
   if (!isSubmittedRotation(row)) return false;
-  const menu = rotationMenuLabel(row, row.cafe, row.week) || row.menu;
+  const menu = rotationMenuLabelForDuplicateReporting(row);
   if (!menu || !cafeUsesMenuConflictRule(row.district, row.cafe, row.copiedFrom)) return false;
   const count = conflictMenus[`${row.district}|${menu}`] ?? conflictMenus[menu] ?? 0;
   return count > 1;
@@ -2488,9 +2499,16 @@ function menuConflictCountForCandidate(district, rows, candidateCafe, candidateM
   if (!candidateMenu || !cafeUsesMenuConflictRule(district, candidateCafe)) return 0;
   const submittedMatches = conflictControlledRows(district, rows).filter((row) => {
     if (!isSubmittedRotation(row) || row.cafe === candidateCafe) return false;
-    return (rotationMenuLabel(row, row.cafe, row.week) || row.menu) === candidateMenu;
+    return rotationMenuLabelForDuplicateReporting(row) === candidateMenu;
   }).length;
   return submittedMatches + 1;
+}
+
+function rotationMenuLabelForDuplicateReporting(rotation = {}) {
+  if (!rotation.__dawsonMobyGlobalOverride) return rotationMenuLabel(rotation, rotation.cafe, rotation.week) || rotation.menu || "";
+  const ownRotation = { ...rotation };
+  delete ownRotation.__dawsonMobyGlobalOverride;
+  return rotationMenuLabel(ownRotation, ownRotation.cafe, ownRotation.week) || ownRotation.menu || "";
 }
 
 function rotationRequirementIssues(requirements, cafe, { menu = "", duplicateMenuCount = 0, conflictNote = "", rotation = {}, week = "" } = {}) {
@@ -2637,6 +2655,45 @@ const mobyPopUpPromotionIsActive = (promo = {}) => {
   return normalized.enabled && Boolean(normalized.name.trim()) && normalized.days.length > 0;
 };
 
+function dawsonMobyGlobalOverride(rotation = {}, week = rotation?.week || "") {
+  if (!isSubmittedRotation(rotation) || !isMobyPopUpActive("Dawson", week)) return null;
+  const promo = normalizeMobyPopUpPromotionOverride(rotation.mobyPopUpPromotionOverride);
+  if (mobyPopUpPromotionIsActive(promo) && mobyPopUpPromotionSelectedRows(rotation, { unique: true }).length) {
+    return {
+      kind: "promotion",
+      menu: promo.name,
+      days: promo.days,
+      selections: promo.selections,
+      sourceCafe: "Dawson",
+    };
+  }
+  const station = normalizeMobyPopUp(rotation.mobyPopUp);
+  if (!station.menu || !mobyPopUpSelectedRows(rotation, { unique: true }).length) return null;
+  return {
+    kind: "menu",
+    menu: station.menu,
+    days: MOBY_POP_UP_DAYS,
+    selections: station,
+    sourceCafe: "Dawson",
+  };
+}
+
+function dawsonMobyGlobalSelectedRows(override = {}, options = {}) {
+  const station = normalizeMobyPopUp(override.selections);
+  const candidateRows = override.kind === "promotion" ? allMobyPopUpRows() : mobyPopUpMenuRows(override.menu);
+  return uniqueSelectionRows([
+    ...rowsForSelectedNames(station.entrees, { ...options, candidateRows, selectionGroup: "entrees" }),
+    ...rowsForSelectedNames(station.sides, { ...options, candidateRows, selectionGroup: "sides" }),
+    ...rowsForSelectedNames(station.subRecipes, { ...options, candidateRows, selectionGroup: "subRecipes" }),
+    ...rowsForSelectedNames(station.extensions, { ...options, candidateRows, selectionGroup: "extensions" }),
+  ], options);
+}
+
+function projectDawsonMobyGlobal(mobyRotation = {}, dawsonRotation = {}, week = mobyRotation?.week || "") {
+  const override = dawsonMobyGlobalOverride(dawsonRotation, week);
+  return override ? { ...mobyRotation, __dawsonMobyGlobalOverride: override } : mobyRotation;
+}
+
 function globalSelectedRowsForCafe(rotation, cafe = "", options = {}, week = rotation?.week || "") {
   if (cafe === "Nitro") {
     const blocks = hasNitroSplitBlocks(rotation)
@@ -2663,9 +2720,17 @@ function getStationSelectionRows(rotation, cafe, week = rotation?.week || "") {
   const promo = normalizePromotionOverride(rotation.promotionOverride);
   const promoActive = promotionIsActive(promo);
   const promoCoversWholeWeek = promotionCoversWeek(promo);
+  const dawsonOverride = cafe === "Moby" ? rotation.__dawsonMobyGlobalOverride : null;
 
   if (cafeStations.includes("global")) {
-    if (promoActive) {
+    if (dawsonOverride) {
+      stationRows.push({
+        key: "global",
+        label: "Global Station - Dawson Moby Pop-Up",
+        items: dawsonMobyGlobalSelectedRows(dawsonOverride, { unique: true }),
+        note: `${dawsonOverride.menu} - ${dayListLabel(dawsonOverride.days)}`,
+      });
+    } else if (promoActive) {
       stationRows.push({
         key: "promotion",
         label: "Promotion Override",
@@ -2674,7 +2739,9 @@ function getStationSelectionRows(rotation, cafe, week = rotation?.week || "") {
       });
     }
 
-    if (promoCoversWholeWeek) {
+    if (dawsonOverride) {
+      // A submitted Dawson Moby Pop-Up replaces only Moby's visible Global station.
+    } else if (promoCoversWholeWeek) {
       // Full-week takeovers replace the normal global rows for this saved week.
     } else if (cafe === "Nitro") {
       const hasSplit = hasNitroSplitBlocks(rotation);
@@ -3169,6 +3236,11 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
       ...(rotations[rotationKey(wk, dist, cafe)] || EMPTY_ROTATION)
     };
   };
+  const rowForDisplay = (wk, dist, cafe) => {
+    const row = rowForCafe(wk, dist, cafe);
+    if (dist !== "North" || cafe !== "Moby") return row;
+    return projectDawsonMobyGlobal(row, rowForCafe(wk, dist, "Dawson"), wk);
+  };
   const handleOpenPlannerFromSummary = (row) => {
     const targetCafe = row?.copiedFrom || row?.cafe || "";
     if (!row?.district || !targetCafe) return;
@@ -3182,9 +3254,10 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
   };
 
   const districtWeekRows = cafes.map((cafe) => rowForCafe(week, district, cafe));
-  const leadershipRows = district === "South" ? districtWeekRows.flatMap((row) => row.cafe === "Nitro" ? [row, { ...row, cafe: "Frontier", copiedFrom: "Nitro" }] : [row]) : districtWeekRows;
+  const displayDistrictWeekRows = cafes.map((cafe) => rowForDisplay(week, district, cafe));
+  const leadershipRows = district === "South" ? displayDistrictWeekRows.flatMap((row) => row.cafe === "Nitro" ? [row, { ...row, cafe: "Frontier", copiedFrom: "Nitro" }] : [row]) : displayDistrictWeekRows;
   const conflictMenus = menuConflictCounts(conflictControlledRows(district, districtWeekRows));
-  const allRows = Object.entries(DISTRICTS).flatMap(([dist, cafeList]) => cafeList.map((cafe) => rowForCafe(week, dist, cafe)));
+  const allRows = Object.entries(DISTRICTS).flatMap(([dist, cafeList]) => cafeList.map((cafe) => rowForDisplay(week, dist, cafe)));
   const allConflictMenus = Object.entries(DISTRICTS).reduce((acc, [dist, cafeList]) => {
     const rows = cafeList.map((cafe) => rowForCafe(week, dist, cafe));
     Object.entries(menuConflictCounts(conflictControlledRows(dist, rows))).forEach(([menu, count]) => {
@@ -3192,7 +3265,7 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
     });
     return acc;
   }, {});
-  const resultRows = ROLLING_ROTATION_WEEKS.flatMap((wk) => Object.entries(DISTRICTS).flatMap(([dist, cafeList]) => cafeList.map((cafe) => rowForCafe(wk, dist, cafe)))).filter(hasSubmittedRotationMenu);
+  const resultRows = ROLLING_ROTATION_WEEKS.flatMap((wk) => Object.entries(DISTRICTS).flatMap(([dist, cafeList]) => cafeList.map((cafe) => rowForDisplay(wk, dist, cafe)))).filter(hasSubmittedRotationMenu);
   const filteredResults = resultRows.filter((row) => (resultsDistrict === "All" || row.district === resultsDistrict) && (resultsCafe === "All" || row.cafe === resultsCafe)).reverse();
   const persistRotationToDatabase = async (nextRotation, options = {}) => {
     if (!week || !district || !selectedCafe) return;
@@ -3250,7 +3323,7 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
             </section>
             <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
               <div className="xl:col-span-2 space-y-6">
-                {district && selectedCafe ? <RotationPlannerCard cafe={selectedCafe} district={district} menuOptions={menus} rotation={currentRotation} previousRotation={previousRotation} previousWeek={carryoverWeek} updateRotation={updateRotation} week={week} printRows={allRows} persistRotationToDatabase={persistRotationToDatabase} databaseLoadStatus={databaseLoadStatus} databaseSyncStatus={databaseSyncStatus} onRefreshDatabase={refreshFromDatabase} isRefreshCoolingDown={smartsheetReadCooldown} menuConflictCount={menuConflictCountForCandidate(district, districtWeekRows, selectedCafe, rotationMenuLabel(currentRotation, selectedCafe, week) || currentRotation.menu)} /> : <SelectPlannerPrompt />}
+                {district && selectedCafe ? <RotationPlannerCard cafe={selectedCafe} district={district} menuOptions={menus} rotation={currentRotation} presentationRotation={rowForDisplay(week, district, selectedCafe)} previousRotation={previousRotation} previousWeek={carryoverWeek} updateRotation={updateRotation} week={week} printRows={allRows} persistRotationToDatabase={persistRotationToDatabase} databaseLoadStatus={databaseLoadStatus} databaseSyncStatus={databaseSyncStatus} onRefreshDatabase={refreshFromDatabase} isRefreshCoolingDown={smartsheetReadCooldown} menuConflictCount={menuConflictCountForCandidate(district, districtWeekRows, selectedCafe, rotationMenuLabel(currentRotation, selectedCafe, week) || currentRotation.menu)} /> : <SelectPlannerPrompt />}
               </div>
               <LeadershipOverview district={district} week={week} rows={leadershipRows} conflictMenus={conflictMenus} onOpenPlanner={handleOpenPlannerFromSummary} />
             </section>
@@ -3462,7 +3535,7 @@ function SmartsheetDatabaseStatusPanel({ loadStatus, syncStatus, onRefreshDataba
   );
 }
 
-function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRotation, previousWeek, updateRotation, week, printRows, persistRotationToDatabase, databaseLoadStatus, databaseSyncStatus, onRefreshDatabase, isRefreshCoolingDown = false, menuConflictCount = 0 }) {
+function RotationPlannerCard({ cafe, district, menuOptions, rotation, presentationRotation = rotation, previousRotation, previousWeek, updateRotation, week, printRows, persistRotationToDatabase, databaseLoadStatus, databaseSyncStatus, onRefreshDatabase, isRefreshCoolingDown = false, menuConflictCount = 0 }) {
   const [preview, setPreview] = useState(null);
   const [copiedRotation, setCopiedRotation] = useState(null);
   const [submitWarningOpen, setSubmitWarningOpen] = useState(false);
@@ -3489,6 +3562,7 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
   const summary = foodSummary(items);
   const cafeStations = cafeStationsForWeek(cafe, week);
   const stationCostOverview = getStationCostOverview(rotation, cafe, week);
+  const submittedStationCostOverview = getStationCostOverview(presentationRotation, cafe, week);
   const requirements = rotationRequirements(rotation, cafe, week);
   const submitIssues = rotationRequirementIssues(requirements, cafe, { menu: rotationMenuLabel(rotation, cafe, week) || rotation.menu, duplicateMenuCount: menuConflictCount, conflictNote: menuConflictNote(district, cafe), rotation, week });
   const canSubmitRotation = requirements.canSubmit && submitIssues.length === 0;
@@ -3619,7 +3693,7 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
       </div>
 
       {lockedForEditing ? (
-        <SubmittedRotationRecap cafe={cafe} week={week} rotation={rotation} previousRotation={previousRotation} rows={stationCostOverview} onEdit={() => setEditSubmitted(true)} />
+        <SubmittedRotationRecap cafe={cafe} week={week} rotation={presentationRotation} previousRotation={previousRotation} rows={submittedStationCostOverview} onEdit={() => setEditSubmitted(true)} />
       ) : (
         <>
           <StationPills cafe={cafe} stations={cafeStations} />
@@ -5061,6 +5135,12 @@ function ExportCafeCard({ row }) {
   const foodCostRange = selectedFoodCostRange(items);
   const cafeStations = cafeStationsForWeek(row.cafe, row.week);
   const hasGlobalStation = cafeHasGlobalStation(row.cafe);
+  const dawsonOverride = row.__dawsonMobyGlobalOverride;
+  const globalExport = dawsonOverride ? {
+    ...normalizeMobyPopUp(dawsonOverride.selections),
+    menu: dawsonOverride.menu,
+    station: `Dawson Moby Pop-Up - ${dayListLabel(dawsonOverride.days)}`,
+  } : row;
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-4 break-inside-avoid">
@@ -5078,12 +5158,12 @@ function ExportCafeCard({ row }) {
       {hasGlobalStation && (
         <div className="mt-3 rounded-xl bg-slate-50 border border-slate-200 p-3">
           <p className="text-xs uppercase tracking-[0.14em] text-slate-400 font-bold">Global</p>
-          <p className="font-semibold text-slate-900 mt-1">{row.menu || "No Global Menu selected"}</p>
-          {row.station && <p className="text-sm text-slate-500">{row.station}</p>}
-          <ExportLine label="Entrées" values={row.entrees} />
-          <ExportLine label="Sides" values={row.sides} />
-          <ExportLine label="Sub Recipes" values={row.subRecipes} />
-          <ExportLine label="Extensions" values={row.extensions} />
+          <p className="font-semibold text-slate-900 mt-1">{globalExport.menu || "No Global Menu selected"}</p>
+          {globalExport.station && <p className="text-sm text-slate-500">{globalExport.station}</p>}
+          <ExportLine label="Entrées" values={globalExport.entrees} />
+          <ExportLine label="Sides" values={globalExport.sides} />
+          <ExportLine label="Sub Recipes" values={globalExport.subRecipes} />
+          <ExportLine label="Extensions" values={globalExport.extensions} />
         </div>
       )}
 
@@ -6712,15 +6792,17 @@ function ExecutiveMetric({ title, value, sub, tone = "neutral" }) {
 function SummaryCard({ row, conflict, showDistrict = true, onOpenPlanner = null }) {
   const locked = isSubmittedRotation(row);
   const hasGlobalStation = cafeHasGlobalStation(row.cafe);
-  const rowItems = submittedSelectedItems(row);
+  const dawsonOverride = row.__dawsonMobyGlobalOverride;
+  const rowItems = locked ? selectedItems(row) : dawsonOverride ? dawsonMobyGlobalSelectedRows(dawsonOverride, { unique: true }) : [];
   const summary = foodSummary(rowItems);
   const fcRange = selectedFoodCostRange(rowItems);
   const fcMidpoint = fcRange.low != null && fcRange.high != null ? (fcRange.low + fcRange.high) / 2 : summary.fc;
   const stationKeys = cafeStationsForWeek(row.cafe, row.week);
   const completedStations = locked ? stationKeys.filter((stationKey) => stationComplete(row, stationKey, row.cafe, row.week)).length : 0;
   const progressPct = stationKeys.length ? Math.round((completedStations / stationKeys.length) * 100) : 0;
-  const menuLabel = locked && hasGlobalStation ? rotationMenuLabel(row) : "";
-  const summaryBlocks = locked ? cardSummaryBlockLabels(row, row.cafe, row.week, row.previousRotation || EMPTY_ROTATION) : [];
+  const menuLabel = (locked || dawsonOverride) && hasGlobalStation ? rotationMenuLabel(row) : "";
+  const summaryBlocks = locked || dawsonOverride ? cardSummaryBlockLabels(row, row.cafe, row.week, row.previousRotation || EMPTY_ROTATION) : [];
+  const visibleGlobal = dawsonOverride ? normalizeMobyPopUp(dawsonOverride.selections) : row;
   const tone = !locked ? "border-slate-200 bg-white" : !hasGlobalStation ? "border-sky-200 bg-sky-50" : !menuLabel ? "border-slate-200 bg-white" : fcMidpoint == null ? "border-slate-300 bg-slate-50" : fcMidpoint > 0.34 ? "border-amber-300 bg-amber-50" : fcMidpoint <= 0.30 ? "border-emerald-300 bg-emerald-50" : "border-sky-200 bg-sky-50";
   const statusTone = locked ? "bg-emerald-500 text-white border-emerald-500" : "bg-rose-100 text-rose-900 border-rose-200";
   const CardShell = onOpenPlanner ? "button" : "div";
@@ -6775,9 +6857,9 @@ function SummaryCard({ row, conflict, showDistrict = true, onOpenPlanner = null 
         </div>
       </div>
       <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
-        {hasGlobalStation && menuLabel && <span className="rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-slate-600">{(row.entrees || []).filter(Boolean).length} entrees</span>}
-        {hasGlobalStation && menuLabel && <span className="rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-slate-600">{(row.sides || []).filter(Boolean).length} sides</span>}
-        {hasGlobalStation && menuLabel && <span className="rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-slate-600">{(row.subRecipes || []).filter(Boolean).length} sub recipes</span>}
+        {hasGlobalStation && menuLabel && <span className="rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-slate-600">{(visibleGlobal.entrees || []).filter(Boolean).length} entrees</span>}
+        {hasGlobalStation && menuLabel && <span className="rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-slate-600">{(visibleGlobal.sides || []).filter(Boolean).length} sides</span>}
+        {hasGlobalStation && menuLabel && <span className="rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-slate-600">{(visibleGlobal.subRecipes || []).filter(Boolean).length} sub recipes</span>}
         {stationKeys.length > 0 && <span className="rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-slate-600">{completedStations}/{stationKeys.length} stations</span>}
         {conflict && <span className="rounded-full bg-amber-100 border border-amber-200 px-3 py-1 text-amber-800">duplicate</span>}
       </div>

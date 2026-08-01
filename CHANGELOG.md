@@ -2,6 +2,9 @@
 
 ## 2026-08-01
 
+- [Aug 1, 7:17 AM] Prepared a same-week Dawson-to-Moby Global projection: when Dawson has submitted valid Moby Pop-Up data, Moby's cafe tile, Results analytics/details, summaries/recaps, and print exports now show the submitted Dawson Moby menu and selections in place of Moby's Global content.
+- [Aug 1, 7:17 AM] Kept Moby's own Global selector available for planning and preserved Moby's native Draft/Submitted status, station progress, and every non-Global station; Dawson's Moby promotion override likewise replaces only Moby Global for its selected promo days.
+- [Aug 1, 7:17 AM] Explicitly isolated duplicate-menu reporting from the projection so conflicts continue to compare Moby's native Global menu, added normal/promo browser coverage across Executive View, Results, other-station preservation, print export, and duplicate isolation, and set visible app version to `2026.08.01.002-moby-dawson-global-projection`. Release state: prepared locally; not yet published or deployed.
 - [Aug 1, 6:45 AM] Prepared Dawson's new required `Moby Pop-Up` Neighborhood Rotations station for every selectable week beginning Aug 31, 2026, with explicit Tuesday-through-Thursday service messaging, a Global-or-Carvery menu selector, and menu-driven capacity for 2 entrees, 3 sides, 2 sub recipes, and 1 extension.
 - [Aug 1, 6:45 AM] Added an isolated Moby Pop-Up promotion override with Tuesday/Wednesday/Thursday day selection (including one-day promos); any enabled override hides and replaces all normal Moby selections for that saved week without affecting Dawson Global, Carvery, or other stations.
 - [Aug 1, 6:45 AM] Added dedicated shared-storage save/recall records, required-station submission checks, selected-item cost/calorie/retail metadata, recap/export support, source-integrity guards, and browser coverage for activation gating, menu sources, slot counts, promo replacement, persistence, and clean recall.

@@ -142,7 +142,7 @@ if (!/if \(isSplitGlobalCafe\(cafe\)\) \{[\s\S]*splitGlobalBlockLayout\(cafe, we
   fail("Database records must save all active split-global blocks, not only Re:Invent blocks.");
 }
 
-if (!/function cardSummaryBlockLabels/.test(source) || !/title: "Monday - Friday"/.test(source) || !/const summaryBlocks = locked \? cardSummaryBlockLabels\(row, row\.cafe, row\.week, row\.previousRotation \|\| EMPTY_ROTATION\) : \[\];/.test(source) || !/function wedTuesGlobalSummaryBlockLabels/.test(source)) {
+if (!/function cardSummaryBlockLabels/.test(source) || !/title: "Monday - Friday"/.test(source) || !/const summaryBlocks = locked \|\| dawsonOverride \? cardSummaryBlockLabels\(row, row\.cafe, row\.week, row\.previousRotation \|\| EMPTY_ROTATION\) : \[\];/.test(source) || !/function wedTuesGlobalSummaryBlockLabels/.test(source)) {
   fail("Executive summary cards must show full-week labels for split-global cafes and Doppler.");
 }
 
@@ -396,6 +396,14 @@ if (!/mobyStationKey = useMobyPromo \? "mobyPopUpPromotion" : "mobyPopUp"/.test(
 
 if (!/<CollapsibleStation title="Moby Pop-Up" eyebrow="Dawson · Tuesday–Thursday"/.test(source) || !/mobyPopUpMenuOptions\(menuOptions\)/.test(source) || !/Replace all normal Moby selections for this saved week/.test(source)) {
   fail("Moby Pop-Up must expose the Dawson UI, Global/Carvery menu choices, and whole-week promotion replacement behavior.");
+}
+
+if (!/function projectDawsonMobyGlobal\(/.test(source) || !/__dawsonMobyGlobalOverride/.test(source) || !/Global Station - Dawson Moby Pop-Up/.test(source)) {
+  fail("Submitted Dawson Moby Pop-Up data must project into Moby's visible Global station.");
+}
+
+if (!/function rotationMenuLabelForDuplicateReporting\(/.test(source) || !/const menu = rotationMenuLabelForDuplicateReporting\(row\);/.test(source)) {
+  fail("Moby's Dawson projection must remain isolated from duplicate-menu reporting.");
 }
 
 if (!process.exitCode) {
