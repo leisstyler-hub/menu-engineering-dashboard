@@ -24,9 +24,9 @@ This is the entry point for any agent or Registered Admin working on the Culinar
 
 **6 agent teams:** Council, Triage, Build, Data Guard, Product Change, Release Gate.
 
-Full role descriptions, team membership, and permission boundaries (e.g., Builder cannot merge/deploy; Reviewer and Verifier are independent; Release requires a Release-Authorized Admin) are in [GOVERNANCE.md](GOVERNANCE.md) — this file only points there so the detail has one home.
+Full role descriptions, team membership, and permission boundaries (e.g., Builder cannot merge/deploy; Reviewer and Verifier are independent; Release requires Release-Authorized Admin authority) are in [GOVERNANCE.md](GOVERNANCE.md) - this file only points there so the detail has one home.
 
-For Level 1-2 missions (behavior-preserving, root cause and desired behavior already known, no data-authority or user-visible surface, no production/destructive action), Chief may route through a reduced Builder -> Reviewer -> Release team instead of the full process above — see [GOVERNANCE.md](GOVERNANCE.md#fast-lane-level-1-2-missions) for the rule and its escalation trigger.
+For tiny, well-understood micro-fixes, Chief may route through a reduced one-owner -> one-Reviewer -> one-Verifier path and continue into Release Gate when deploy-intended. Ordinary app changes requested by a Release-Authorized Admin are deploy-intended by default unless explicitly marked no-deploy/local/investigation-only or blocked by safety conditions. See [GOVERNANCE.md](GOVERNANCE.md#micro-fix-lane) and [RELEASE_RUNBOOK.md](RELEASE_RUNBOOK.md).
 
 **Legacy/inactive:** Fizz, Bumble, Honey remain channel members from the pre-reorg lineup but hold no permanent role prompt and show no recent activity. Do not assign them governance, data, review, or release work. See [GOVERNANCE.md](GOVERNANCE.md) § Legacy Agents for status and the open decision.
 

@@ -29,13 +29,13 @@ REQUIRED TESTS:
 REQUIRED REVIEWERS:
 DOCUMENTATION REQUIREMENTS:
 ROLLBACK APPROACH:
-MERGE AUTHORITY:             (granted or not — see GOVERNANCE.md; Builder never has this)
-DEPLOYMENT AUTHORITY:        (granted or not — requires a Release-Authorized Admin)
+MERGE AUTHORITY:             (granted, not granted, or deploy-intended by default under GOVERNANCE.md; Builder never has this)
+DEPLOYMENT AUTHORITY:        (granted, not granted, or deploy-intended by default; requires Release-Authorized Admin authority)
 REQUIRED FINAL REPORT:       (what the assignee must report back, and to whom)
 ```
 
 ## Notes
 
-- **REQUEST CLASSIFICATION** — one level has been used standalone on record: `Level 1 — Investigation/Documentation` (no application code change, no visible behavior change). On 2026-07-26 a Registered Admin (Tyler) additionally approved a coarse two-band split for routing purposes: **Level 1-2** (behavior-preserving, root cause and desired behavior already known, no data-authority or user-visible surface, no production/destructive action — eligible for [GOVERNANCE.md](GOVERNANCE.md)'s [Fast Lane](GOVERNANCE.md#fast-lane-level-1-2-missions)) versus **Level 3-5** (everything else — full Council/Triage/Data Guard/Product Change/Build process, unchanged). The finer distinctions within each band — e.g., what separates Level 1 from Level 2, or Level 3 from Level 4/5 — have not been defined by a Registered Admin. Do not invent those finer distinctions here; add them to this note once Chief/a Registered Admin actually defines and uses them.
-- **MERGE AUTHORITY / DEPLOYMENT AUTHORITY** — default to none granted. A mission that needs either must say so explicitly, and deployment authority additionally requires a named Release-Authorized Admin per [RELEASE_RUNBOOK.md](RELEASE_RUNBOOK.md).
+- **REQUEST CLASSIFICATION** - one level has been used standalone on record: `Level 1 - Investigation/Documentation` (no application code change, no visible behavior change). On 2026-07-26 a Registered Admin (Tyler) approved a coarse two-band split for routing purposes. On 2026-08-01 Tyler approved a streamlined [Micro-Fix Lane](GOVERNANCE.md#micro-fix-lane) for tiny, well-understood presentation, formatter, test-only, and documentation/process changes. Do not invent finer distinctions here; add them once Chief/a Registered Admin actually defines and uses them.
+- **MERGE AUTHORITY / DEPLOYMENT AUTHORITY** - for ordinary app changes requested by a Release-Authorized Admin, default to `deploy-intended by default` unless the request says `do not deploy`, `local only`, or `investigate only`. For non-Release-Authorized requesters, high-risk production data/schema/destructive actions, conflicting admin instructions, failed review/verification, dirty/widened scope, or tooling/credential blockers, default to `not granted` and stop for Chief/admin resolution. Deployment authority requires Release-Authorized Admin authority per [RELEASE_RUNBOOK.md](RELEASE_RUNBOOK.md).
 - **STOP CONDITIONS** should always include: stop and ask Chief before inventing an approval, date, or decision not already established in-thread or in existing repo files.

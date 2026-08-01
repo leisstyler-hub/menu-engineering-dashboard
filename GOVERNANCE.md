@@ -15,6 +15,14 @@ Roles, not individuals. No permanent agent instruction should hard-code a specif
 
 Who currently holds each role is recorded in [ADMIN_REGISTRY.md](ADMIN_REGISTRY.md), not here — this file defines the roles and what they authorize; the registry defines who holds them, and changes independently of this document.
 
+## Default Deployment Intent
+
+For ordinary app changes requested by a **Release-Authorized Admin**, the request is deploy-intended by default. Chief should plan the work as one continuous path from scoped implementation through review, verification, Release Gate, production deployment, live verification, and final state reporting without asking for a second `deploy` message after development is complete.
+
+This default exists to reduce handoff stalls and usage dead-ends. It applies only when the Requesting Admin is also Release-Authorized and the request is an ordinary app fix or feature. It does not apply when the admin explicitly says `do not deploy`, `local only`, or `investigate only`.
+
+Release must still stop before merge/deploy when there is a real safety blocker: failed review or verification, dirty or widened scope, missing credentials or tooling failure, conflicting admin instruction, data/schema/destructive production risk, source-authority change, or production-data change. High-risk production data/schema/destructive actions require explicit per-action approval even when the requester is Release-Authorized.
+
 ## Orchestrator
 
 **Chief** — mission orchestrator. Issues Mission Assignments (see [MISSION_TEMPLATE.md](MISSION_TEMPLATE.md)) to workers, collects their reports, and reports to the Requesting Admin. Chief is explicitly **not** a member of any worker team (Council, Triage, Build, Data Guard, Product Change, or Release Gate) — confirmed in the 2026-07-25 audit.
@@ -31,7 +39,7 @@ Who currently holds each role is recorded in [ADMIN_REGISTRY.md](ADMIN_REGISTRY.
 | **Steward** | Data-integrity and integration-governance agent. Protects operational truth across Supabase, Smartsheet, MenuWorks, imports, browser caching, APIs, identifiers, and reconstructed records (source authority, dedup/normalization, precedence, stale-data/fallback behavior, rollback/recovery). | — |
 | **Operator** | Culinary-operations and product-workflow reviewer. Evaluates whether workflows make operational sense, preserves recognizable tool names/UX, flags missing operational safeguards, checks terminology against user expectations. | Does not write implementation code; does not approve redesigns for looks alone; does not create culinary rules without Registered Admin approval or an authoritative source. |
 | **Scribe** | Durable-memory and documentation agent (this agent). Maintains this file, [PRODUCT_DECISIONS.md](PRODUCT_DECISIONS.md), [ARCHITECTURE_RULES.md](ARCHITECTURE_RULES.md), `AI_HANDOFF.md`, [RELEASE_RUNBOOK.md](RELEASE_RUNBOOK.md), [MISSION_TEMPLATE.md](MISSION_TEMPLATE.md), and `CHANGELOG.md` (per repository policy). Records decisions and rejected alternatives; distinguishes current state from proposals. | Does not change application code. |
-| **Release** | Release-control, deployment-evidence, and rollback agent. Distinguishes implementation from release; verifies merge/version/changelog readiness before deploy; collects deployment identifiers; verifies production behavior; preserves rollback evidence. Reports exact release state: `ANALYZED → ... → LIVE` / `ROLLED BACK` / `RELEASE FAILED`. | **No merge/deploy without explicit Release-Authorized Admin approval.** Will not release while Reviewer or Verifier have unresolved blocking findings. Will not claim "live" without production verification. |
+| **Release** | Release-control, deployment-evidence, and rollback agent. Distinguishes implementation from release; verifies merge/version/changelog readiness before deploy; collects deployment identifiers; verifies production behavior; preserves rollback evidence. Reports exact release state: `ANALYZED → ... → LIVE` / `ROLLED BACK` / `RELEASE FAILED`. | **No merge/deploy without Release-Authorized Admin authority, either explicit per request or deploy-intended by default for ordinary app changes requested by a Release-Authorized Admin.** Will not release while Reviewer or Verifier have unresolved blocking findings. Will not claim "live" without production verification. |
 
 ## Agent Teams (6)
 
@@ -44,19 +52,20 @@ Membership below is as audited and confirmed by Chief on 2026-07-25 against each
 | **Build** | Architect, Builder, Reviewer, Verifier | The implementation path: design → build → independent review → independent verification. |
 | **Data Guard** | Scout, Builder, Reviewer, Verifier, Steward | Missions touching shared data (Supabase/Smartsheet/MenuWorks/imports/caching) — Steward's domain, backed by the same build/review/verify path as Build. |
 | **Product Change** | Architect, Builder, Reviewer, Verifier, Operator, Scribe | User-facing product changes: design, build, review, verify, operational-workflow check, and documentation update land together. |
-| **Release Gate** | Reviewer, Verifier, Scribe, Release | The only path to merge/deploy. Requires Reviewer's verdict and Verifier's proof before Release will act, and Release still requires a Release-Authorized Admin regardless of gate status. |
+| **Release Gate** | Reviewer, Verifier, Scribe, Release | The only path to merge/deploy. Requires Reviewer's verdict and Verifier's proof before Release will act, and Release still requires Release-Authorized Admin authority regardless of gate status. For ordinary app changes requested by a Release-Authorized Admin, that authority is presumed deploy-intended unless the request or a stop condition says otherwise. |
 
-## Fast Lane (Level 1-2 Missions)
+## Micro-Fix Lane
 
-For missions meeting **all** of the following criteria, Chief may route through a reduced team instead of the full Council/Triage/Data Guard/Product Change/Build process: behavior-preserving, root cause and desired behavior already known, no data-authority surface (Supabase/Smartsheet/MenuWorks/schemas/integrations), no user-visible surface, no production/destructive action.
+For tiny, well-understood changes, Chief should avoid full mission ceremony. This lane covers one-string presentation cleanups, one shared formatter change with obvious call sites, stale test assertions with known expected output, documentation/process corrections, and similarly narrow work where root cause and desired behavior are already known.
 
-- **Team:** Builder -> Reviewer -> Release. Reviewer absorbs Verifier's independent-verification pass for this lane only, while remaining independent of Builder as usual. No Scout, Architect, Council, Steward, or Operator convened.
-- **Authorization:** Chief authorizes with a short scoped instruction (objective, exact files/scope, explicitly out of scope, acceptance criteria) in place of the full [MISSION_TEMPLATE.md](MISSION_TEMPLATE.md) brief. Requesting Admin and Admin of Record are still recorded per [Admin Roles](#admin-roles) above.
-- **Escalation trigger:** if Builder or Reviewer discover the change touches Supabase/Smartsheet/MenuWorks/schemas/integrations, any user-visible surface, or a production/destructive action, work stops immediately and returns to Chief for reclassification into Data Guard, Product Change, or full Build. The fast lane does not continue once scope drifts.
-- **Release Gate is unchanged:** no merge/deploy without a Release-Authorized Admin per [ADMIN_REGISTRY.md](ADMIN_REGISTRY.md).
-- Missions outside this band use the full team/process exactly as defined elsewhere in this file — see [MISSION_TEMPLATE.md](MISSION_TEMPLATE.md) § Notes for what is and isn't yet defined about the level taxonomy itself.
+- **Team:** one Builder or owner -> one Reviewer -> one Verifier -> Release Gate when deploy-intended. No Council, no broad mission brief, and no full roster unless evidence shows the issue is broader than the request.
+- **Authorization:** Chief may use a short scoped instruction instead of the full [MISSION_TEMPLATE.md](MISSION_TEMPLATE.md): objective, exact files or domain, explicitly out of scope, acceptance criteria, required narrow proof, and deployment intent. Requesting Admin and Admin of Record are still recorded per [Admin Roles](#admin-roles) above.
+- **Verification:** run the narrow proof for the changed behavior plus any required repo guard for release-bound work. Pre-existing unrelated red tests are documented and separated; they do not hold the micro-fix hostage once proven unrelated.
+- **Deployment default:** if a Release-Authorized Admin requested the ordinary app change and did not mark it no-deploy/local/investigation-only, Chief should keep the lane moving through Release Gate to production verification and final `LIVE`/blocker reporting.
+- **Escalation trigger:** if the change touches Supabase/Smartsheet/MenuWorks/schemas/integrations, source authority, production data, destructive operations, broad navigation/workflow redesign, unclear product intent, failed review/verification, or widened file scope, work stops immediately and returns to Chief for reclassification into Data Guard, Product Change, or full Build/Release Gate.
+- Missions outside this lane use the full team/process exactly as defined elsewhere in this file.
 
-Source: process-governance decision, 2026-07-26, Culinary Tools Project channel (Requesting Admin / Admin of Record: Tyler). See [PRODUCT_DECISIONS.md](PRODUCT_DECISIONS.md) for the decision record and rejected alternative.
+Source: process-governance decisions, 2026-07-26 and 2026-08-01, Culinary Tools Project channel (Requesting Admin / Admin of Record: Tyler). See [PRODUCT_DECISIONS.md](PRODUCT_DECISIONS.md) for the decision records and rejected alternatives.
 
 ## Legacy Agents — Fizz, Bumble, Honey
 
