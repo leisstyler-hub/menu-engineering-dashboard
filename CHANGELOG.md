@@ -6,6 +6,7 @@
 - [Aug 1, 6:45 AM] Added an isolated Moby Pop-Up promotion override with Tuesday/Wednesday/Thursday day selection (including one-day promos); any enabled override hides and replaces all normal Moby selections for that saved week without affecting Dawson Global, Carvery, or other stations.
 - [Aug 1, 6:45 AM] Added dedicated shared-storage save/recall records, required-station submission checks, selected-item cost/calorie/retail metadata, recap/export support, source-integrity guards, and browser coverage for activation gating, menu sources, slot counts, promo replacement, persistence, and clean recall.
 - [Aug 1, 6:45 AM] Set visible app version to `2026.08.01.001-dawson-moby-pop-up`; Alex authorized deployment after the implementation, full verification, and independent review gates passed. Production verification is pending.
+- [Aug 1, 6:58 AM] Published Dawson Moby Pop-Up to GitHub `main` at commit `0b4ac627eb51bb68f8e92dd0fc4edb5435efef74` and Vercel production deployment `dpl_2CRuWUbLK7AKR9rVNQAhYg54Cwgi`; confirmed the public bundle contains the exact version, Aug 31 activation, Global/Carvery selector, Tuesday-through-Thursday behavior, and platform changelog entry, then passed both required production browser suites 31/31. Release state: production verified.
 
 ## 2026-07-30
 
