@@ -11,7 +11,7 @@ const districts = {
 
 const futureWeeks = ["Jul 13, 2026 - Jul 17, 2026", "Jul 20, 2026 - Jul 24, 2026"];
 const smokeMenuItems = [
-  { menu: "AMZ: Ohana", station: "Premium Mains", item: "Huli Huli Chicken", category: "entree", price: 11.75 },
+  { menu: "AMZ: Ohana", station: "Premium Mains", item: "Huli Huli Chicken", category: "entree", price: 11.75, trueCost: 3.45, calories: 410, enticingDescription: "Grilled island-style chicken.", allergens: "Soy" },
   { menu: "AMZ: Ohana", station: "Sides", item: "Mac Salad", category: "side", price: 2.55 },
   { menu: "AMZ: Lotus", station: "Premium Mains", item: "Pork Hung Lay", category: "entree", price: 11.75 },
   { menu: "AMZ: Lotus", station: "Sides", item: "Papaya Salad", category: "side", price: 2.55 },
@@ -24,6 +24,8 @@ const smokeMenuItems = [
   { menu: "AMZ: Cafe Express Curated Sandwiches", station: "Curated Sandwiches", item: "Chicken Caesar Wrap", category: "entree", price: 9.9 },
   { menu: "AMZ: Fish Market", station: "Fish Market", item: "Steelhead Croquettes", category: "entree", price: 11.75 },
   { menu: "AMZ: Fresh Five", station: "Grill", item: "Fresh 5 Black Bean Burger", category: "entree", price: 5 },
+  { menu: "AMZ: Carvery", station: "Premium Mains", item: "Herb Roasted Turkey", category: "entree", price: 12.25, trueCost: 3.8, calories: 390 },
+  { menu: "AMZ: Carvery", station: "Sides", item: "Roasted Root Vegetables", category: "side", price: 3.25, trueCost: 0.9, calories: 180 },
 ];
 
 function exactName(name) {
@@ -343,6 +345,111 @@ test("Dawson Carvery promotion override replaces normal Carvery fields and saves
   await expect(recalledCarvery.getByPlaceholder("Dawson Carvery promo")).toHaveValue("Harvest Carvery");
   await expect(recalledCarvery.getByText("choose here")).toHaveCount(0);
   await expect(recalledCarvery.locator("select").first()).toHaveValue(proteinValue);
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("Dawson Moby Pop-Up starts Aug 31, uses Global or Carvery menus, and recalls an isolated day promo", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const storageWrites = [];
+  let storedRecords = [];
+  await stubEmptyRotationBackbone(page, {
+    onStorageWrite: (body) => {
+      storageWrites.push(body);
+      storedRecords = body.records || [];
+    },
+    getStorageRecords: () => storedRecords,
+  });
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.locator("select").first().selectOption({ label: "Aug 24, 2026 - Aug 28, 2026" });
+  await page.getByRole("button", { name: exactName("North") }).click();
+  await page.getByRole("button", { name: exactName("Dawson") }).click();
+  await expect(page.getByRole("heading", { name: "Moby Pop-Up" })).toHaveCount(0);
+
+  await page.locator("select").first().selectOption({ label: "Aug 31, 2026 - Sep 4, 2026" });
+  await expect(page.getByRole("heading", { name: "Moby Pop-Up" })).toBeVisible({ timeout: 20_000 });
+  const mobySection = page.getByRole("heading", { name: "Moby Pop-Up" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await expect(mobySection.getByText("Service runs Tuesday through Thursday only")).toBeVisible();
+  await expect(mobySection.getByText(/Required station starting September 1/i)).toBeVisible();
+  await expect(page.getByLabel("Planner Remote Control").getByRole("button", { name: "Submit", exact: true })).toHaveAttribute("title", /Moby Pop-Up/);
+
+  const menuSelect = mobySection.getByLabel("Moby Pop-Up Menu");
+  await expect(menuSelect.locator('option[value="AMZ: Ohana"]')).toHaveCount(1);
+  await expect(menuSelect.locator('option[value="AMZ: Carvery"]')).toHaveCount(1);
+  await menuSelect.selectOption("AMZ: Ohana");
+  await expect(mobySection.getByText("2 slots")).toHaveCount(2);
+  await expect(mobySection.getByText("3 slots")).toHaveCount(1);
+  await expect(mobySection.getByText("1 slot")).toHaveCount(1);
+
+  const normalEntree = mobySection.locator("select").nth(1);
+  await normalEntree.selectOption("Huli Huli Chicken");
+  await page.getByRole("button", { name: "Save Draft", exact: true }).click();
+  await expect.poll(() => storageWrites.length).toBeGreaterThan(0);
+  let savedRecords = storageWrites.at(-1)?.records || [];
+  const normalRows = savedRecords.filter((record) => record["Station Key"] === "mobyPopUp");
+  expect(normalRows.some((record) => record["Selection Type"] === "Menu Name" && record["Menu / Concept"] === "AMZ: Ohana")).toBe(true);
+  expect(normalRows).toContainEqual(expect.objectContaining({
+    "Menu Item / Selection": "Huli Huli Chicken",
+    Price: 11.75,
+    "True Cost": 3.45,
+    Calories: 410,
+  }));
+
+  await menuSelect.selectOption("AMZ: Carvery");
+  await expect(mobySection.locator("select").nth(1).locator('option[value="Herb Roasted Turkey"]')).toHaveCount(1);
+  await expect(mobySection.locator("select").nth(3).locator('option[value="Roasted Root Vegetables"]')).toHaveCount(1);
+  await mobySection.locator("select").nth(1).selectOption("Herb Roasted Turkey");
+  await mobySection.locator("select").nth(3).selectOption("Roasted Root Vegetables");
+  await page.getByRole("button", { name: "Save Draft", exact: true }).click();
+  await expect.poll(() => storageWrites.length).toBeGreaterThan(1);
+  savedRecords = storageWrites.at(-1)?.records || [];
+  const carveryRows = savedRecords.filter((record) => record["Station Key"] === "mobyPopUp");
+  expect(carveryRows.some((record) => record["Selection Type"] === "Menu Name" && record["Menu / Concept"] === "AMZ: Carvery")).toBe(true);
+  expect(carveryRows.some((record) => record["Selection Type"] === "Entrée" && record["Menu Item / Selection"] === "Herb Roasted Turkey")).toBe(true);
+  expect(carveryRows.some((record) => record["Selection Type"] === "Side" && record["Menu Item / Selection"] === "Roasted Root Vegetables")).toBe(true);
+
+  await page.evaluate(() => window.localStorage.clear());
+  await page.reload();
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.locator("select").first().selectOption({ label: "Aug 31, 2026 - Sep 4, 2026" });
+  await page.getByRole("button", { name: exactName("North") }).click();
+  await page.getByRole("button", { name: exactName("Dawson") }).click();
+  const recalledNormalMoby = page.getByRole("heading", { name: "Moby Pop-Up" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await expect(recalledNormalMoby.getByLabel("Moby Pop-Up Menu")).toHaveValue("AMZ: Carvery");
+  await expect(recalledNormalMoby.locator("select").nth(1)).toHaveValue("Herb Roasted Turkey");
+  await expect(recalledNormalMoby.locator("select").nth(3)).toHaveValue("Roasted Root Vegetables");
+
+  await recalledNormalMoby.getByLabel("Promotion Override").check();
+  await expect(recalledNormalMoby.getByText("Moby Pop-Up Promotion Override Active")).toBeVisible();
+  await expect(recalledNormalMoby.getByLabel("Moby Pop-Up Menu")).toHaveCount(0);
+  await expect(recalledNormalMoby.getByRole("button", { name: "Monday", exact: true })).toHaveCount(0);
+  await expect(recalledNormalMoby.getByRole("button", { name: "Friday", exact: true })).toHaveCount(0);
+  await recalledNormalMoby.getByPlaceholder("Moby Pop-Up promo").fill("One Day Showcase");
+  await recalledNormalMoby.getByRole("button", { name: "Tuesday", exact: true }).click();
+  const promoEntree = recalledNormalMoby.locator("select").first();
+  await promoEntree.selectOption("Huli Huli Chicken");
+  await page.getByRole("button", { name: "Save Draft", exact: true }).click();
+  await expect.poll(() => storageWrites.length).toBeGreaterThan(2);
+
+  savedRecords = storageWrites.at(-1)?.records || [];
+  const promoRows = savedRecords.filter((record) => record["Station Key"] === "mobyPopUpPromotion");
+  expect(promoRows.length).toBeGreaterThanOrEqual(2);
+  expect(promoRows.some((record) => record["Promotion Name"] === "One Day Showcase" && record["Promotion Days"] === "Tuesday")).toBe(true);
+  expect(savedRecords.filter((record) => record["Station Key"] === "mobyPopUp")).toHaveLength(0);
+
+  await page.evaluate(() => window.localStorage.clear());
+  await page.reload();
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.locator("select").first().selectOption({ label: "Aug 31, 2026 - Sep 4, 2026" });
+  await page.getByRole("button", { name: exactName("North") }).click();
+  await page.getByRole("button", { name: exactName("Dawson") }).click();
+  const recalledMoby = page.getByRole("heading", { name: "Moby Pop-Up" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await expect(recalledMoby.getByText("Moby Pop-Up Promotion Override Active")).toBeVisible();
+  await expect(recalledMoby.getByPlaceholder("Moby Pop-Up promo")).toHaveValue("One Day Showcase");
+  await expect(recalledMoby.getByRole("button", { name: "Tuesday", exact: true })).toHaveClass(/bg-purple-600/);
+  await expect(recalledMoby.locator("select").first()).toHaveValue("Huli Huli Chicken");
 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);

@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-08-01
+
+- [Aug 1, 6:45 AM] Prepared Dawson's new required `Moby Pop-Up` Neighborhood Rotations station for every selectable week beginning Aug 31, 2026, with explicit Tuesday-through-Thursday service messaging, a Global-or-Carvery menu selector, and menu-driven capacity for 2 entrees, 3 sides, 2 sub recipes, and 1 extension.
+- [Aug 1, 6:45 AM] Added an isolated Moby Pop-Up promotion override with Tuesday/Wednesday/Thursday day selection (including one-day promos); any enabled override hides and replaces all normal Moby selections for that saved week without affecting Dawson Global, Carvery, or other stations.
+- [Aug 1, 6:45 AM] Added dedicated shared-storage save/recall records, required-station submission checks, selected-item cost/calorie/retail metadata, recap/export support, source-integrity guards, and browser coverage for activation gating, menu sources, slot counts, promo replacement, persistence, and clean recall.
+- [Aug 1, 6:45 AM] Set visible app version to `2026.08.01.001-dawson-moby-pop-up`; Alex authorized deployment after the implementation, full verification, and independent review gates passed. Production verification is pending.
+
 ## 2026-07-30
 
 - [Jul 30, 10:48 PM] Switched Bingo Cafe's Neighborhood Rotations Global cadence to a single Wednesday-Tuesday cycle patterned after Doppler, including Monday-Tuesday carryover messaging and the same submitted-recap / leadership-card week structure, while keeping Bingo out of split-global behavior.

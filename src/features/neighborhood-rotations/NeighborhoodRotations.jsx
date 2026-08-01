@@ -70,8 +70,12 @@ const STATION_LABELS = {
   streetBeets: "Street Beets",
   commissaryEverest: "Everest Commissary",
   lotusWp: "Lotus W&P",
-  stationTakeover: "Station Takeover"
+  stationTakeover: "Station Takeover",
+  mobyPopUp: "Moby Pop-Up"
 };
+
+const MOBY_POP_UP_START_WEEK = "2026-08-31";
+const MOBY_POP_UP_DAYS = ["Tuesday", "Wednesday", "Thursday"];
 
 const formatDateKey = (date) => date.toISOString().slice(0, 10);
 const addDays = (date, days) => {
@@ -113,6 +117,11 @@ const weekIndexFromLabel = (weekLabel = "") => {
   const weekStart = new Date(`${start}T00:00:00`);
   if (Number.isNaN(weekStart.getTime())) return 0;
   return Math.max(0, Math.round((weekStart - ROTATION_CYCLE_START) / (7 * 24 * 60 * 60 * 1000)));
+};
+const isMobyPopUpActive = (cafe = "", week = "") => cafe === "Dawson" && parseWeekStart(week) >= MOBY_POP_UP_START_WEEK;
+const cafeStationsForWeek = (cafe = "", week = "") => {
+  const stations = CAFE_STATION_CONFIG[cafe] || ["global"];
+  return isMobyPopUpActive(cafe, week) && !stations.includes("mobyPopUp") ? [...stations, "mobyPopUp"] : stations;
 };
 const SPLIT_GLOBAL_CAFES = new Set(["Re:Invent", "Blueshift"]);
 const isSplitGlobalCafe = (cafe = "") => SPLIT_GLOBAL_CAFES.has(cafe);
@@ -238,6 +247,36 @@ function cloneCustomStations(source = {}) {
   };
 }
 
+function blankMobyPopUpSelections() {
+  return {
+    entrees: ["", ""],
+    sides: ["", "", ""],
+    subRecipes: ["", ""],
+    extensions: [""]
+  };
+}
+
+function normalizeMobyPopUp(source = {}) {
+  const blank = blankMobyPopUpSelections();
+  const slots = (values, defaults) => defaults.map((fallback, index) => String(values?.[index] || fallback));
+  return {
+    menu: String(source.menu || ""),
+    entrees: slots(source.entrees, blank.entrees),
+    sides: slots(source.sides, blank.sides),
+    subRecipes: slots(source.subRecipes, blank.subRecipes),
+    extensions: slots(source.extensions, blank.extensions)
+  };
+}
+
+function normalizeMobyPopUpPromotionOverride(source = {}) {
+  return {
+    enabled: Boolean(source.enabled),
+    name: String(source.name || ""),
+    days: (Array.isArray(source.days) ? source.days : []).filter((day) => MOBY_POP_UP_DAYS.includes(day)),
+    selections: normalizeMobyPopUp(source.selections || {})
+  };
+}
+
 const EMPTY_ROTATION = {
   menu: "",
   station: "",
@@ -278,6 +317,8 @@ const EMPTY_ROTATION = {
     days: [],
     selections: blankCarverySelections()
   },
+  mobyPopUp: normalizeMobyPopUp(),
+  mobyPopUpPromotionOverride: normalizeMobyPopUpPromotionOverride(),
   customStations: blankCustomStations(),
   uploadedLtos: {},
   promotionOverride: { enabled: false, name: "", days: [], selections: defaultPromotionSelections() },
@@ -360,7 +401,7 @@ function selectionDatabaseRecord({ parentId, district, cafe, week, rotation, sta
 function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
   if (!week || !district || !cafe) return [];
   const parentId = rotationRecordParentId(week, district, cafe);
-  const selected = selectedItems(rotation, cafe);
+  const selected = selectedItems(rotation, cafe, week);
   const costRange = selectedTrueCostRange(selected);
   const fcRange = selectedFoodCostRange(selected);
   const hasGlobalStation = cafeHasGlobalStation(cafe);
@@ -392,6 +433,9 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
   const promo = normalizePromotionOverride(rotation.promotionOverride || EMPTY_ROTATION.promotionOverride);
   const carveryPromo = normalizeCarveryPromotionOverride(rotation.carveryPromotionOverride || EMPTY_ROTATION.carveryPromotionOverride);
   const useCarveryPromo = cafe === "Dawson" && Boolean(carveryPromo.enabled);
+  const mobyPopUp = normalizeMobyPopUp(rotation.mobyPopUp || EMPTY_ROTATION.mobyPopUp);
+  const mobyPromo = normalizeMobyPopUpPromotionOverride(rotation.mobyPopUpPromotionOverride || EMPTY_ROTATION.mobyPopUpPromotionOverride);
+  const useMobyPromo = isMobyPopUpActive(cafe, week) && mobyPromo.enabled;
   const shouldWriteBaseGlobalBlock = hasGlobalStation && (promo.enabled || (!splitGlobalRotation && rotation.menu));
   const globalBlock = shouldWriteBaseGlobalBlock ? {
     ...baseDatabaseRecord({
@@ -590,6 +634,49 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
     Object.entries(carveryPromo.selections || {}).forEach(([field, value], index) => pushCarverySelection("carveryPromotion", field, value, index, promoSource));
   } else {
     Object.entries(rotation.carvery || {}).forEach(([field, value], index) => pushCarverySelection("carvery", field, value, index));
+  }
+
+  if (isMobyPopUpActive(cafe, week)) {
+    const mobyStationKey = useMobyPromo ? "mobyPopUpPromotion" : "mobyPopUp";
+    const mobySelections = useMobyPromo ? mobyPromo.selections : mobyPopUp;
+    const mobySource = {
+      ...rotation,
+      menu: useMobyPromo ? (mobyPromo.name || "Moby Pop-Up Promotion Override") : mobyPopUp.menu,
+      station: useMobyPromo ? "Moby Pop-Up Promotion Override" : "Moby Pop-Up"
+    };
+    const candidateRows = useMobyPromo ? allMobyPopUpRows() : mobyPopUpMenuRows(mobyPopUp.menu);
+    const markerName = useMobyPromo ? (mobyPromo.name || "Moby Pop-Up Promotion Override") : mobyPopUp.menu;
+    if (markerName) {
+      const marker = selectionDatabaseRecord({
+        parentId, district, cafe, week, rotation: mobySource, stationKey: mobyStationKey,
+        selectionType: SMARTSHEET_SELECTION_TYPES.menuName, itemName: markerName,
+        sortOrder: 2000, slotNumber: 1, candidateRows
+      });
+      if (useMobyPromo) {
+        marker[SMARTSHEET_COLUMNS.promotionOverrideEnabled] = true;
+        marker[SMARTSHEET_COLUMNS.promotionName] = mobyPromo.name;
+        marker[SMARTSHEET_COLUMNS.promotionDays] = mobyPromo.days.join(", ");
+      }
+      selectionRows.push(marker);
+    }
+    const pushMobySelections = (selectionType, values, offset) => {
+      compactValues(values).forEach((itemName, index) => {
+        const record = selectionDatabaseRecord({
+          parentId, district, cafe, week, rotation: mobySource, stationKey: mobyStationKey,
+          selectionType, itemName, sortOrder: offset + index, slotNumber: index + 1, candidateRows
+        });
+        if (useMobyPromo) {
+          record[SMARTSHEET_COLUMNS.promotionOverrideEnabled] = true;
+          record[SMARTSHEET_COLUMNS.promotionName] = mobyPromo.name;
+          record[SMARTSHEET_COLUMNS.promotionDays] = mobyPromo.days.join(", ");
+        }
+        selectionRows.push(record);
+      });
+    };
+    pushMobySelections(SMARTSHEET_SELECTION_TYPES.entree, mobySelections.entrees, 2010);
+    pushMobySelections(SMARTSHEET_SELECTION_TYPES.side, mobySelections.sides, 2030);
+    pushMobySelections(SMARTSHEET_SELECTION_TYPES.subRecipe, mobySelections.subRecipes, 2060);
+    pushMobySelections(SMARTSHEET_SELECTION_TYPES.extension, mobySelections.extensions, 2080);
   }
 
   const custom = cloneCustomStations(rotation.customStations);
@@ -819,6 +906,8 @@ function recordsToRotations(records = []) {
         ltos: Object.fromEntries(Object.entries(EMPTY_ROTATION.ltos).map(([station, values]) => [station, [...values]])),
         carvery: { ...EMPTY_ROTATION.carvery },
         carveryPromotionOverride: normalizeCarveryPromotionOverride(EMPTY_ROTATION.carveryPromotionOverride),
+        mobyPopUp: normalizeMobyPopUp(EMPTY_ROTATION.mobyPopUp),
+        mobyPopUpPromotionOverride: normalizeMobyPopUpPromotionOverride(EMPTY_ROTATION.mobyPopUpPromotionOverride),
         customStations: cloneCustomStations(),
         uploadedLtos: {},
         promotionOverride: normalizePromotionOverride(EMPTY_ROTATION.promotionOverride),
@@ -1134,6 +1223,28 @@ function recordsToRotations(records = []) {
       return;
     }
 
+    if (record.stationKey === "mobyPopUp" || record.stationKey === "mobyPopUpPromotion") {
+      const isPromo = record.stationKey === "mobyPopUpPromotion";
+      const target = isPromo
+        ? normalizeMobyPopUpPromotionOverride({
+            ...rotation.mobyPopUpPromotionOverride,
+            enabled: true,
+            name: record.promotionName || rotation.mobyPopUpPromotionOverride?.name || record.menuConcept || "",
+            days: (record.promotionDays || []).length ? record.promotionDays : rotation.mobyPopUpPromotionOverride?.days
+          })
+        : normalizeMobyPopUp(rotation.mobyPopUp);
+      const selections = isPromo ? target.selections : target;
+      if (record.selectionType === SMARTSHEET_SELECTION_TYPES.menuName) {
+        if (!isPromo) selections.menu = record.menuConcept || record.itemName;
+      } else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.entree) putFreshSlot(record, selections.entrees, index, record.itemName, [record.stationKey, "entree"]);
+      else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.side) putFreshSlot(record, selections.sides, index, record.itemName, [record.stationKey, "side"]);
+      else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.subRecipe) putFreshSlot(record, selections.subRecipes, index, record.itemName, [record.stationKey, "subRecipe"]);
+      else if (record.selectionType === SMARTSHEET_SELECTION_TYPES.extension) putFreshSlot(record, selections.extensions, index, record.itemName, [record.stationKey, "extension"]);
+      if (isPromo) rotation.mobyPopUpPromotionOverride = normalizeMobyPopUpPromotionOverride({ ...target, selections });
+      else rotation.mobyPopUp = normalizeMobyPopUp(selections);
+      return;
+    }
+
     if (record.stationKey === "carveryPromotion") {
       const promo = normalizeCarveryPromotionOverride({
         ...rotation.carveryPromotionOverride,
@@ -1328,6 +1439,9 @@ const globalMenuRows = (menu = "", station = "") => {
   }
   return GLOBAL_MENU_ROWS_CACHE.get(key);
 };
+const mobyPopUpMenuOptions = (globalMenus = []) => Array.from(new Set([...globalMenus, "AMZ: Carvery"])).sort();
+const mobyPopUpMenuRows = (menu = "") => globalMenuRows(menu);
+const allMobyPopUpRows = () => MENUWORKS_ITEMS.filter((row) => isGlobalMenuOption(getMenuName(row)) || getMenuName(row) === "AMZ: Carvery");
 const subConceptOptionsForMenu = (menu = "") => {
   if (!allowsSubConcept(menu)) return [];
   if (!SUB_CONCEPT_OPTIONS_CACHE.has(menu)) {
@@ -2299,6 +2413,14 @@ function stationComplete(rotation, stationKey, cafe = "", week = "") {
     return carveryPromotionIsActive(rotation.carveryPromotionOverride)
       && carveryPromotionSelectedRows(rotation, { unique: true }).length > 0;
   }
+  if (stationKey === "mobyPopUp") {
+    if (rotation.mobyPopUpPromotionOverride?.enabled) {
+      return mobyPopUpPromotionIsActive(rotation.mobyPopUpPromotionOverride)
+        && mobyPopUpPromotionSelectedRows(rotation, { unique: true }).length > 0;
+    }
+    return Boolean(normalizeMobyPopUp(rotation.mobyPopUp).menu)
+      && mobyPopUpSelectedRows(rotation, { unique: true }).length > 0;
+  }
   return stationHasAnySelection(rotation, stationKey);
 }
 
@@ -2309,11 +2431,12 @@ function stationHasAnySelection(rotation, stationKey) {
   if (["streetBeets", "commissaryEverest", "lotusWp", "stationTakeover"].includes(stationKey)) return customStationSelectedRows(rotation, stationKey, { unique: true }).length > 0;
   if (stationKey === "wok") return wokSelectedRows(rotation, { unique: true }).length > 0;
   if (stationKey === "carvery") return carverySelectedRows(rotation, { unique: true }).length > 0;
+  if (stationKey === "mobyPopUp") return (rotation.mobyPopUpPromotionOverride?.enabled ? mobyPopUpPromotionSelectedRows(rotation, { unique: true }) : mobyPopUpSelectedRows(rotation, { unique: true })).length > 0;
   return false;
 }
 
 function rotationRequirements(rotation, cafe, week = "") {
-  const stationKeys = CAFE_STATION_CONFIG[cafe] || ["global"];
+  const stationKeys = cafeStationsForWeek(cafe, week);
   const requiresGlobal = stationKeys.includes("global");
   const globalReady = !requiresGlobal || stationComplete(rotation, "global", cafe, week);
   const optionalStations = cafe === "Doppler" ? new Set(["pizza"]) : cafe === "Astra" ? new Set(["grill"]) : new Set();
@@ -2486,6 +2609,34 @@ function globalSelectedRows(rotation, options) {
   return uniqueSelectionRows(rows, options);
 }
 
+function mobyPopUpSelectedRows(rotation, options = {}) {
+  const station = normalizeMobyPopUp(rotation.mobyPopUp);
+  const candidateRows = mobyPopUpMenuRows(station.menu);
+  return uniqueSelectionRows([
+    ...rowsForSelectedNames(station.entrees, { ...options, candidateRows, selectionGroup: "entrees" }),
+    ...rowsForSelectedNames(station.sides, { ...options, candidateRows, selectionGroup: "sides" }),
+    ...rowsForSelectedNames(station.subRecipes, { ...options, candidateRows, selectionGroup: "subRecipes" }),
+    ...rowsForSelectedNames(station.extensions, { ...options, candidateRows, selectionGroup: "extensions" })
+  ], options);
+}
+
+function mobyPopUpPromotionSelectedRows(rotation, options = {}) {
+  const promo = normalizeMobyPopUpPromotionOverride(rotation.mobyPopUpPromotionOverride);
+  const station = promo.selections;
+  const candidateRows = allMobyPopUpRows();
+  return uniqueSelectionRows([
+    ...rowsForSelectedNames(station.entrees, { ...options, candidateRows, selectionGroup: "entrees" }),
+    ...rowsForSelectedNames(station.sides, { ...options, candidateRows, selectionGroup: "sides" }),
+    ...rowsForSelectedNames(station.subRecipes, { ...options, candidateRows, selectionGroup: "subRecipes" }),
+    ...rowsForSelectedNames(station.extensions, { ...options, candidateRows, selectionGroup: "extensions" })
+  ], options);
+}
+
+const mobyPopUpPromotionIsActive = (promo = {}) => {
+  const normalized = normalizeMobyPopUpPromotionOverride(promo);
+  return normalized.enabled && Boolean(normalized.name.trim()) && normalized.days.length > 0;
+};
+
 function globalSelectedRowsForCafe(rotation, cafe = "", options = {}, week = rotation?.week || "") {
   if (cafe === "Nitro") {
     const blocks = hasNitroSplitBlocks(rotation)
@@ -2508,7 +2659,7 @@ function globalSelectedRowsForCafe(rotation, cafe = "", options = {}, week = rot
 function getStationSelectionRows(rotation, cafe, week = rotation?.week || "") {
   const uploaded = rotation.uploadedLtos || {};
   const stationRows = [];
-  const cafeStations = CAFE_STATION_CONFIG[cafe] || ["global"];
+  const cafeStations = cafeStationsForWeek(cafe, week);
   const promo = normalizePromotionOverride(rotation.promotionOverride);
   const promoActive = promotionIsActive(promo);
   const promoCoversWholeWeek = promotionCoversWeek(promo);
@@ -2592,6 +2743,21 @@ function getStationSelectionRows(rotation, cafe, week = rotation?.week || "") {
     }
   }
 
+  if (cafeStations.includes("mobyPopUp")) {
+    const mobyPromo = normalizeMobyPopUpPromotionOverride(rotation.mobyPopUpPromotionOverride);
+    if (mobyPromo.enabled) {
+      stationRows.push({
+        key: "mobyPopUpPromotion",
+        label: "Moby Pop-Up Promotion Override",
+        items: mobyPopUpPromotionSelectedRows(rotation, { unique: true }),
+        note: `${mobyPromo.name || "Promotion name pending"}${mobyPromo.days.length ? ` - ${dayListLabel(mobyPromo.days)}` : " - promo days pending"}`
+      });
+    } else {
+      const moby = normalizeMobyPopUp(rotation.mobyPopUp);
+      stationRows.push({ key: "mobyPopUp", label: "Moby Pop-Up", items: mobyPopUpSelectedRows(rotation, { unique: true }), note: `${moby.menu || "menu not selected"} - Tuesday through Thursday` });
+    }
+  }
+
   return stationRows;
 }
 
@@ -2604,7 +2770,8 @@ function allLegacySelectedRows(rotation) {
     ...["salad", "pizza", "deli", "fishMarket", "freshFive", "grillFreshFive", "saladFreshFive", "soup"].flatMap((stationKey) => ltoSelectedRows(rotation, stationKey)),
     ...["streetBeets", "commissaryEverest", "lotusWp", "stationTakeover"].flatMap((stationKey) => customStationSelectedRows(rotation, stationKey)),
     ...wokSelectedRows(rotation),
-    ...(rotation.carveryPromotionOverride?.enabled ? carveryPromotionSelectedRows(rotation) : carverySelectedRows(rotation))
+    ...(rotation.carveryPromotionOverride?.enabled ? carveryPromotionSelectedRows(rotation) : carverySelectedRows(rotation)),
+    ...(rotation.mobyPopUpPromotionOverride?.enabled ? mobyPopUpPromotionSelectedRows(rotation) : mobyPopUpSelectedRows(rotation))
   ];
 }
 
@@ -3320,7 +3487,7 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, previousRo
   const categorized = categorize(menuItems);
   const items = selectedItems(rotation, cafe, week);
   const summary = foodSummary(items);
-  const cafeStations = CAFE_STATION_CONFIG[cafe] || ["global"];
+  const cafeStations = cafeStationsForWeek(cafe, week);
   const stationCostOverview = getStationCostOverview(rotation, cafe, week);
   const requirements = rotationRequirements(rotation, cafe, week);
   const submitIssues = rotationRequirementIssues(requirements, cafe, { menu: rotationMenuLabel(rotation, cafe, week) || rotation.menu, duplicateMenuCount: menuConflictCount, conflictNote: menuConflictNote(district, cafe), rotation, week });
@@ -4892,7 +5059,7 @@ function ExportCafeCard({ row }) {
   const items = selectedItems(row);
   const trueCostRange = selectedTrueCostRange(items);
   const foodCostRange = selectedFoodCostRange(items);
-  const cafeStations = CAFE_STATION_CONFIG[row.cafe] || [];
+  const cafeStations = cafeStationsForWeek(row.cafe, row.week);
   const hasGlobalStation = cafeHasGlobalStation(row.cafe);
 
   return (
@@ -4934,6 +5101,14 @@ function ExportStationBlock({ stationKey, cafe, row }) {
   if (stationKey === "carvery") {
     const promo = normalizeCarveryPromotionOverride(row.carveryPromotionOverride);
     return <ExportLineCard title={cafe === "Dawson" && promo.enabled ? `Carvery Promotion Override - ${promo.name || "Name pending"} (${dayListLabel(promo.days)})` : stationLabel(cafe, stationKey)} values={Object.values(cafe === "Dawson" && promo.enabled ? promo.selections : row.carvery || {})} />;
+  }
+  if (stationKey === "mobyPopUp") {
+    const promo = normalizeMobyPopUpPromotionOverride(row.mobyPopUpPromotionOverride);
+    const station = promo.enabled ? promo.selections : normalizeMobyPopUp(row.mobyPopUp);
+    const title = promo.enabled
+      ? `Moby Pop-Up Promotion Override - ${promo.name || "Name pending"} (${dayListLabel(promo.days)})`
+      : `Moby Pop-Up - ${station.menu || "Menu pending"} (Tuesday-Thursday)`;
+    return <ExportLineCard title={title} values={[...station.entrees, ...station.sides, ...station.subRecipes, ...station.extensions]} />;
   }
   if (stationKey === "wok") return <ExportLineCard title={stationLabel(cafe, stationKey)} values={[...(row.ltos?.wokEntrees || []), ...(row.ltos?.wokSides || []), ...(row.ltos?.wokBase || []), ...(row.ltos?.wokSubRecipes || [])]} />;
   return <ExportLineCard title={stationLabel(cafe, stationKey)} values={row.ltos?.[stationKey] || []} />;
@@ -5064,6 +5239,7 @@ function CafeStationSection(props) {
   if (stationKey === "soup") content = <SimpleLTOSection stationKey="soup" title="Soup LTOs" slots={Array.from({ length: stationSlots(cafe, "soup") }, (_, i) => `Soup ${i + 1}`)} values={rotation.ltos?.soup || EMPTY_ROTATION.ltos.soup} uploaded={rotation.uploadedLtos?.soup || []} updateLto={updateLto} complete={stationComplete(rotation, "soup")} />;
   if (stationKey === "wok") content = <WokSection rotation={rotation} updateLto={updateLto} />;
   if (stationKey === "carvery") content = <CarverySection cafe={cafe} week={week} rotation={rotation} updateCarvery={updateCarvery} updateRotation={updateRotation} />;
+  if (stationKey === "mobyPopUp") content = <MobyPopUpSection week={week} rotation={rotation} menuOptions={menuOptions} updateRotation={updateRotation} />;
   if (stationKey === "streetBeets") content = <StreetBeetsSection rotation={rotation} updateCustomStation={updateCustomStation} />;
   if (stationKey === "commissaryEverest") content = <CommissaryEverestSection rotation={rotation} updateCustomStation={updateCustomStation} />;
   if (stationKey === "lotusWp") content = <LotusWpSection rotation={rotation} updateCustomStation={updateCustomStation} />;
@@ -5964,6 +6140,91 @@ function WokSection({ rotation, updateLto }) {
   );
 }
 
+function MobyPopUpSection({ week, rotation, menuOptions, updateRotation }) {
+  const station = normalizeMobyPopUp(rotation.mobyPopUp);
+  const promo = normalizeMobyPopUpPromotionOverride(rotation.mobyPopUpPromotionOverride);
+  const normalOptions = categorize(mobyPopUpMenuRows(station.menu));
+  const promoOptions = categorize(allMobyPopUpRows());
+  const updateStation = (patch) => updateRotation({ mobyPopUp: normalizeMobyPopUp({ ...station, ...patch }) });
+  const updateStationSlot = (field, index, value) => {
+    const values = [...station[field]];
+    values[index] = value;
+    updateStation({ [field]: values });
+  };
+  const updatePromo = (patch) => updateRotation({ mobyPopUpPromotionOverride: normalizeMobyPopUpPromotionOverride({ ...promo, ...patch }) });
+  const updatePromoSlot = (field, index, value) => {
+    const selections = normalizeMobyPopUp(promo.selections);
+    selections[field][index] = value;
+    updatePromo({ selections });
+  };
+  const setMenu = (menu) => updateRotation({ mobyPopUp: normalizeMobyPopUp({ menu }) });
+  const clearPromo = () => updateRotation({ mobyPopUpPromotionOverride: normalizeMobyPopUpPromotionOverride() });
+  const selectedRows = promo.enabled ? mobyPopUpPromotionSelectedRows(rotation, { unique: true }) : mobyPopUpSelectedRows(rotation, { unique: true });
+  const slotGroups = [
+    ["entrees", "Entrees", "2 slots"],
+    ["sides", "Sides", "3 slots"],
+    ["subRecipes", "Sub Recipes", "2 slots"],
+    ["extensions", "Extensions", "1 slot"]
+  ];
+
+  return (
+    <CollapsibleStation title="Moby Pop-Up" eyebrow="Dawson · Tuesday–Thursday" complete={stationComplete(rotation, "mobyPopUp", "Dawson", week)}>
+      <div className="rounded-3xl border border-slate-200 bg-white p-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Required station starting September 1</p>
+            <h4 className="mt-1 text-xl font-bold text-slate-950">Service runs Tuesday through Thursday only</h4>
+            <p className="mt-1 text-sm text-slate-500">Choose a Global or Carvery menu, then build the Moby Pop-Up from its inherent menu items.</p>
+          </div>
+          <label className="inline-flex cursor-pointer items-center gap-3 rounded-2xl border border-purple-200 bg-purple-50 px-4 py-3 text-sm font-bold text-purple-900">
+            <input type="checkbox" checked={promo.enabled} onChange={(event) => updatePromo({ enabled: event.target.checked })} />
+            Promotion Override
+          </label>
+        </div>
+      </div>
+
+      {promo.enabled ? (
+        <div className="mt-4 rounded-3xl border border-purple-200 bg-purple-50/80 p-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-purple-700">Moby Pop-Up Promotion Override Active</p>
+              <h4 className="mt-1 text-xl font-bold text-purple-950">Replace all normal Moby selections for this saved week</h4>
+              <p className="mt-1 text-sm text-purple-900">Select one or more service days. A one-day promo is allowed; normal Moby selections stay hidden while the override is enabled.</p>
+            </div>
+            <button type="button" onClick={clearPromo} className="rounded-2xl border border-purple-200 bg-white px-4 py-2 text-sm font-bold text-purple-900 hover:bg-purple-100">Clear Override</button>
+          </div>
+          <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[1fr_2fr]">
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-purple-900">Promotion / Takeover Name</label>
+              <input value={promo.name} onChange={(event) => updatePromo({ name: event.target.value })} placeholder="Moby Pop-Up promo" className="w-full rounded-2xl border border-purple-200 bg-white px-4 py-3 font-semibold outline-none focus:border-purple-500" />
+            </div>
+            <DayToggleGroup title="Promo Days" values={promo.days} onToggle={(day) => updatePromo({ days: updateArrayToggle(promo.days, day) })} tone="purple" options={MOBY_POP_UP_DAYS} />
+          </div>
+          <div className="mt-4 grid grid-cols-1 gap-5 xl:grid-cols-4">
+            {slotGroups.map(([field, title, limit]) => <PickerGroup key={`promo-${field}`} title={`Promo ${title}`} limit={limit} items={promoOptions[field]} values={promo.selections[field]} onChange={(index, value) => updatePromoSlot(field, index, value)} />)}
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="mt-5">
+            <label className="mb-2 block text-sm font-semibold text-slate-500">Moby Pop-Up Menu</label>
+            <select aria-label="Moby Pop-Up Menu" value={station.menu} onChange={(event) => setMenu(event.target.value)} className="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100">
+              <option value="">Select Global or Carvery Menu</option>
+              {mobyPopUpMenuOptions(menuOptions).map((menu) => <option key={menu} value={menu}>{menu}</option>)}
+            </select>
+          </div>
+          {station.menu && (
+            <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-4">
+              {slotGroups.map(([field, title, limit]) => <PickerGroup key={field} title={title} limit={limit} items={normalOptions[field]} values={station[field]} onChange={(index, value) => updateStationSlot(field, index, value)} />)}
+            </div>
+          )}
+        </>
+      )}
+      <StationSelectedList title={promo.enabled ? "Promotion Items Description" : "Items Description"} items={selectedRows} complete={stationComplete(rotation, "mobyPopUp", "Dawson", week)} />
+    </CollapsibleStation>
+  );
+}
+
 function CarverySection({ cafe, week, rotation, updateCarvery, updateRotation }) {
   const fields = [
     ["protein1", "Rotating Protein 1", stationPool("carveryProtein")],
@@ -6455,7 +6716,7 @@ function SummaryCard({ row, conflict, showDistrict = true, onOpenPlanner = null 
   const summary = foodSummary(rowItems);
   const fcRange = selectedFoodCostRange(rowItems);
   const fcMidpoint = fcRange.low != null && fcRange.high != null ? (fcRange.low + fcRange.high) / 2 : summary.fc;
-  const stationKeys = CAFE_STATION_CONFIG[row.cafe] || [];
+  const stationKeys = cafeStationsForWeek(row.cafe, row.week);
   const completedStations = locked ? stationKeys.filter((stationKey) => stationComplete(row, stationKey, row.cafe, row.week)).length : 0;
   const progressPct = stationKeys.length ? Math.round((completedStations / stationKeys.length) * 100) : 0;
   const menuLabel = locked && hasGlobalStation ? rotationMenuLabel(row) : "";

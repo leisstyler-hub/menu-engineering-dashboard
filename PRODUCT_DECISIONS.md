@@ -10,6 +10,12 @@ When a mission produces an approved product decision, Scribe adds an entry below
 
 ## Decisions
 
+### 2026-08-01 — Dawson Moby Pop-Up station
+Alex approved a Dawson-only Neighborhood Rotations station named `Moby Pop-Up`, required for submission beginning with the week of Aug 31, 2026 and explicitly operating Tuesday through Thursday. The station mirrors Dawson Global's menu-first planning format while allowing both Global menus and `AMZ: Carvery`, with capacity for 2 entrees, 3 sides, 2 sub recipes, and 1 extension. Alex also approved an isolated Moby promotion override with individually selectable Tuesday/Wednesday/Thursday service days, including one-day promos; enabling it hides and replaces the full normal Moby selection set for that saved week.
+Source: direct request and clarifications from Alex in the current Codex task on 2026-08-01. Admin of Record: Alex Neuse.
+Rejected alternatives: making Moby optional; showing it before the Aug 31 week; allowing Monday or Friday promo days; preserving normal Moby fields alongside an enabled promo; sharing Moby's override state or saved records with Dawson Global or Carvery.
+Implementation status note: prepared locally as version `2026.08.01.001-dawson-moby-pop-up`; Alex authorized deployment after the implementation and independent gates passed. Production verification is pending.
+
 ### 2026-07-31 — Bingo Cafe Wed-Tues Global cadence and second Grill Fresh $5 slot
 Tyler approved a Bingo-only Neighborhood Rotations change: Bingo's Global Rotation should follow the same single Wednesday-Tuesday cadence pattern used by Doppler, and Bingo's Grill Fresh $5 station should expose two independently selectable `grillFreshFive` slots instead of one. This is explicitly not a split-global conversion: Bingo remains a one-menu Global cycle with Wednesday start / Monday-Tuesday carryover behavior, and the second option is a second `Grill Fresh $5` slot, not a second generic Grill `Location Spotlight`.
 Source: Culinary Tools Project channel, thread rooted at event `9dc3ad58cd58ae10ddbf4bc027f78b5d7c3e9e732ddc20c995582d4f8b8d6aed`, request from Tyler on 2026-07-31, with Chief assigning scoped implementation and then directing Scribe to record the accepted behavior after Builder/Steward/Reviewer/Verifier clearance. Admin of Record: Tyler.
