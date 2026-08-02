@@ -561,6 +561,56 @@ test("submitted Dawson Moby Pop-Up replaces only Moby Global presentation withou
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
+test("Everest Commissary belongs to Blueshift instead of Bingo", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const storageWrites = [];
+  let storedRecords = [];
+  await stubEmptyRotationBackbone(page, {
+    onStorageWrite: (body) => {
+      storageWrites.push(body);
+      storedRecords = body.records || [];
+    },
+    getStorageRecords: () => storedRecords,
+  });
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: exactName("East") }).click();
+  await page.getByRole("button", { name: exactName("Bingo") }).click();
+  await expect(page.getByRole("heading", { name: exactName("Bingo") })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole("heading", { name: "Everest Commissary" })).toHaveCount(0);
+  await expect(page.getByLabel("Jump to planner station")).not.toContainText("Everest Commissary");
+
+  await page.getByRole("button", { name: exactName("Blueshift") }).click();
+  await expect(page.getByRole("heading", { name: exactName("Blueshift") })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole("heading", { name: "Everest Commissary" })).toBeVisible();
+  await expect(page.getByLabel("Jump to planner station")).toContainText("Everest Commissary");
+  await expect(page.getByText("Blueshift Commissary Station", { exact: true })).toBeVisible();
+
+  const everest = page.getByRole("heading", { name: "Everest Commissary" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await everest.locator('input[placeholder="Type menu name"]').fill("Everest Blueshift Feature");
+  await everest.getByPlaceholder("Entree 1 - Type item name").fill("Everest Curry Bowl");
+  await page.getByRole("button", { name: "Save Draft", exact: true }).click();
+  await expect.poll(() => storageWrites.length).toBeGreaterThan(0);
+
+  const savedRecords = storageWrites.at(-1)?.records || [];
+  const everestRows = savedRecords.filter((record) => record["Station Key"] === "commissaryEverest");
+  expect(everestRows.length).toBeGreaterThanOrEqual(2);
+  expect(everestRows.some((record) => record["Menu Item / Selection"] === "Everest Blueshift Feature")).toBe(true);
+  expect(everestRows.some((record) => record["Menu Item / Selection"] === "Everest Curry Bowl")).toBe(true);
+
+  await page.evaluate(() => window.localStorage.clear());
+  await page.reload();
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: exactName("East") }).click();
+  await page.getByRole("button", { name: exactName("Blueshift") }).click();
+  const recalledEverest = page.getByRole("heading", { name: "Everest Commissary" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await expect(recalledEverest.locator('input[placeholder="Type menu name"]')).toHaveValue("Everest Blueshift Feature");
+  await expect(recalledEverest.getByPlaceholder("Entree 1 - Type item name")).toHaveValue("Everest Curry Bowl");
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
 test("Bingo Global shows a Wednesday-Tuesday cycle and both Grill Fresh $5 slots save and recall independently", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   const storageWrites = [];
