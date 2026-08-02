@@ -36,9 +36,9 @@ const CAFE_STATION_CONFIG = {
   LAX78: ["global", "grill", "salad", "freshFive"],
   SNA3: ["global", "grill", "salad", "freshFive"],
   Astra: ["global", "grill", "freshFive"],
-  Bingo: ["global", "fishMarket", "grill", "grillFreshFive", "salad", "saladFreshFive", "commissaryEverest"],
+  Bingo: ["global", "fishMarket", "grill", "grillFreshFive", "salad", "saladFreshFive"],
   Sonic: ["global", "grill", "freshFive", "salad", "deli"],
-  Blueshift: ["global", "lotusWp", "grill", "salad", "deli", "fishMarket", "freshFive"],
+  Blueshift: ["global", "lotusWp", "grill", "salad", "deli", "fishMarket", "freshFive", "commissaryEverest"],
   Eclipse: ["global", "stationTakeover", "freshFive"],
   Grace: ["streetBeets", "global", "grill", "freshFive", "salad"]
 };
@@ -6489,7 +6489,7 @@ function CommissaryEverestSection({ rotation, updateCustomStation }) {
   };
   const complete = stationComplete(rotation, "commissaryEverest");
   return (
-    <CollapsibleStation title="Everest Commissary" eyebrow="Bingo Commissary Station" complete={complete}>
+    <CollapsibleStation title="Everest Commissary" eyebrow="Blueshift Commissary Station" complete={complete}>
       <div className="mb-5 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
         <label className="block text-sm font-bold text-slate-900 mb-2">Commissary Menu Name</label>
         <input value={station.menu || ""} onChange={(event) => updateCustomStation("commissaryEverest", { menu: event.target.value })} placeholder="Type menu name" className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100" />

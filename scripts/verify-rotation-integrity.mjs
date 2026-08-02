@@ -351,9 +351,9 @@ if (grillSpotlights.some((row) => !/location spotlights|regional spotlights|^spo
 }
 
 const requiredEastMarkers = [
-  'Bingo: ["global", "fishMarket", "grill", "grillFreshFive", "salad", "saladFreshFive", "commissaryEverest"]',
+  'Bingo: ["global", "fishMarket", "grill", "grillFreshFive", "salad", "saladFreshFive"]',
   'Grace: ["streetBeets", "global", "grill", "freshFive", "salad"]',
-  'Blueshift: ["global", "lotusWp", "grill", "salad", "deli", "fishMarket", "freshFive"]',
+  'Blueshift: ["global", "lotusWp", "grill", "salad", "deli", "fishMarket", "freshFive", "commissaryEverest"]',
   'Eclipse: ["global", "stationTakeover", "freshFive"]',
   'customStations: cloneCustomStations()',
   'function StreetBeetsSection',
