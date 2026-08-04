@@ -14,6 +14,10 @@ const dopplerWeek = "Aug 10, 2026 - Aug 14, 2026";
 const dopplerParentId = `rotation|2026-08-10|South|Doppler`;
 const dopplerPreviousWeek = "Aug 3, 2026 - Aug 7, 2026";
 const dopplerPreviousParentId = `rotation|2026-08-03|South|Doppler`;
+const graceWeek = "Aug 10, 2026 - Aug 14, 2026";
+const graceParentId = `rotation|2026-08-10|East|Grace`;
+const gracePreviousWeek = "Aug 3, 2026 - Aug 7, 2026";
+const gracePreviousParentId = `rotation|2026-08-03|East|Grace`;
 const nitroWeek = "Oct 12, 2026 - Oct 16, 2026";
 const nitroParentId = `rotation|2026-10-12|South|Nitro`;
 
@@ -485,6 +489,53 @@ function savedDopplerFullWeekRecords() {
     selection("base", "AMZ: Cypress", "Chicken Souvlaki Gyro", 1, previousOverrides),
     selection("base", "AMZ: Cypress", "Spiced Jasmine Rice", 2, previousOverrides),
     ...savedDopplerRecordsWithWrongGlobalBlockMenu(),
+  ];
+}
+
+function savedGraceFullWeekRecords() {
+  const previousOverrides = {
+    parentId: gracePreviousParentId,
+    week: gracePreviousWeek,
+    cafe: "Grace",
+    weekStartDate: "2026-08-03",
+    weekEndDate: "2026-08-07",
+  };
+  const currentOverrides = {
+    parentId: graceParentId,
+    week: graceWeek,
+    cafe: "Grace",
+    weekStartDate: "2026-08-10",
+    weekEndDate: "2026-08-14",
+  };
+  return [
+    {
+      ...baseRecord(gracePreviousParentId, SMARTSHEET_RECORD_TYPES.rotationHeader, "Submitted", previousOverrides),
+      [SMARTSHEET_COLUMNS.district]: "East",
+      [SMARTSHEET_COLUMNS.savedEntryCount]: 2,
+      [SMARTSHEET_COLUMNS.historyInclude]: true,
+    },
+    {
+      ...globalBlock("base", "Global", "AMZ: Ohana", 1, previousOverrides),
+      [SMARTSHEET_COLUMNS.district]: "East",
+      [SMARTSHEET_COLUMNS.globalBlockId]: "",
+      [SMARTSHEET_COLUMNS.menuBlockLabel]: "",
+    },
+    { ...selection("base", "AMZ: Ohana", "Huli Huli Chicken", 1, previousOverrides), [SMARTSHEET_COLUMNS.district]: "East" },
+    { ...selection("base", "AMZ: Ohana", "Mac Salad", 2, previousOverrides), [SMARTSHEET_COLUMNS.district]: "East" },
+    {
+      ...baseRecord(graceParentId, SMARTSHEET_RECORD_TYPES.rotationHeader, "Submitted", currentOverrides),
+      [SMARTSHEET_COLUMNS.district]: "East",
+      [SMARTSHEET_COLUMNS.savedEntryCount]: 2,
+      [SMARTSHEET_COLUMNS.historyInclude]: true,
+    },
+    {
+      ...globalBlock("base", "Global", "AMZ: Cypress", 1, currentOverrides),
+      [SMARTSHEET_COLUMNS.district]: "East",
+      [SMARTSHEET_COLUMNS.globalBlockId]: "",
+      [SMARTSHEET_COLUMNS.menuBlockLabel]: "",
+    },
+    { ...selection("base", "AMZ: Cypress", "Chicken Souvlaki Gyro", 1, currentOverrides), [SMARTSHEET_COLUMNS.district]: "East" },
+    { ...selection("base", "AMZ: Cypress", "Spiced Jasmine Rice", 2, currentOverrides), [SMARTSHEET_COLUMNS.district]: "East" },
   ];
 }
 
@@ -1122,6 +1173,22 @@ test("Doppler leadership card shows Monday-Tuesday carryover and Wednesday-Frida
   const card = page.getByRole("button", { name: /Open Doppler planner/i }).first();
   await expect(card).toBeVisible({ timeout: 20_000 });
   await expect(card).toContainText(/Monday \+ Tuesday[\s\S]*AMZ: Cypress[\s\S]*Wednesday-Friday[\s\S]*AMZ: Cypress/);
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("Grace leadership card shows Monday-Tuesday carryover and Wednesday-Friday current menu", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await stubRotationReads(page, savedGraceFullWeekRecords());
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: /East/i }).click();
+  await page.getByRole("combobox").first().selectOption({ label: graceWeek });
+  await page.getByRole("button", { name: /^Grace$/i }).click();
+
+  const card = page.getByRole("button", { name: /Open Grace planner/i }).first();
+  await expect(card).toBeVisible({ timeout: 20_000 });
+  await expect(card).toContainText(/Monday \+ Tuesday[\s\S]*AMZ: Ohana[\s\S]*Wednesday-Friday[\s\S]*AMZ: Cypress/);
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
