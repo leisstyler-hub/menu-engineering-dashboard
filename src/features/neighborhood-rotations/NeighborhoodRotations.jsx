@@ -125,6 +125,8 @@ const cafeStationsForWeek = (cafe = "", week = "") => {
 };
 const SPLIT_GLOBAL_CAFES = new Set(["Re:Invent", "Blueshift"]);
 const isSplitGlobalCafe = (cafe = "") => SPLIT_GLOBAL_CAFES.has(cafe);
+const WED_TUES_GLOBAL_CAFES = new Set(["Doppler", "Bingo", "Grace"]);
+const isWedTuesGlobalCafe = (cafe = "") => WED_TUES_GLOBAL_CAFES.has(cafe);
 const SPLIT_GLOBAL_CAFE_CYCLE_STARTS = {
   "Re:Invent": "2026-07-06",
   Blueshift: "2026-07-06"
@@ -1890,25 +1892,11 @@ function dayListLabel(days = []) {
 }
 
 function globalCycleConfig(cafe, week = "") {
-  if (cafe === "Doppler") {
+  if (isWedTuesGlobalCafe(cafe)) {
+    const cafeName = cafe || "This cafe";
     return {
-      title: "Doppler Wednesday–Tuesday Global Cycle",
-      summary: "Doppler changes Global every Wednesday. Monday and Tuesday are carryover from the prior Wednesday cycle; Wednesday starts the next cycle through the following Tuesday.",
-      chips: [
-        { label: "Mon + Tue", note: "carryover", tone: "indigo" },
-        { label: "Wed–Tue", note: "new cycle", tone: "sky" },
-      ],
-      blockType: "Wednesday Cycle",
-      days: "Wednesday, Thursday, Friday, Next Monday, Next Tuesday",
-      startedPreviousWeek: true,
-      continuesNextWeek: true,
-      nextWeekCarryoverDays: "Next Monday, Next Tuesday",
-    };
-  }
-  if (cafe === "Bingo") {
-    return {
-      title: "Bingo Wednesday–Tuesday Global Cycle",
-      summary: "Bingo changes Global every Wednesday. Monday and Tuesday are carryover from the prior Wednesday cycle; Wednesday starts the next cycle through the following Tuesday.",
+      title: `${cafeName} Wednesday–Tuesday Global Cycle`,
+      summary: `${cafeName} changes Global every Wednesday. Monday and Tuesday are carryover from the prior Wednesday cycle; Wednesday starts the next cycle through the following Tuesday.`,
       chips: [
         { label: "Mon + Tue", note: "carryover", tone: "indigo" },
         { label: "Wed–Tue", note: "new cycle", tone: "sky" },
@@ -2249,7 +2237,7 @@ function rotationSummaryBlockLabels(rotation = {}, cafe = rotation?.cafe || "", 
     }];
   }
   if (isSplitGlobalCafe(cafe)) return splitGlobalSummaryBlockLabels({ ...rotation, previousRotation }, cafe, week);
-  if (cafe === "Doppler" || cafe === "Bingo") return wedTuesGlobalSummaryBlockLabels(rotation, previousRotation);
+  if (isWedTuesGlobalCafe(cafe)) return wedTuesGlobalSummaryBlockLabels(rotation, previousRotation);
   const promoBlock = promotionSummaryBlock(rotation);
   if (promoBlock) return promotionCoversWeek(rotation.promotionOverride) ? [promoBlock] : [promoBlock, { id: "weekly", title: "Standard Global", menu: rotation.menu || "Not selected", isPending: !rotation.menu }];
   return [];

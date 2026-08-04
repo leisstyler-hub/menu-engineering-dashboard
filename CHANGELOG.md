@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-08-04
+
+- [Aug 4, 4:34 PM] Switched Grace Cafe's East District Neighborhood Rotations Global cadence to the same single Wednesday-Tuesday cycle used by Doppler and Bingo, including Monday-Tuesday carryover messaging and the same submitted-recap / leadership-card week structure, while keeping Grace out of split-global behavior.
+- [Aug 4, 4:34 PM] Generalized the shared `globalCycleConfig()` and `rotationSummaryBlockLabels()` routing into one `isWedTuesGlobalCafe()` check covering Doppler, Bingo, and Grace instead of two separate cafe-literal checks; Doppler and Bingo's rendered text and save/recall behavior are unchanged.
+- [Aug 4, 4:34 PM] Added direct browser coverage proving Grace shows the Wednesday cadence text and Monday + Tuesday carryover panel, and that a saved Grace Global menu/entree selection recalls correctly after reload.
+- [Aug 4, 4:34 PM] Set visible app version to `2026.08.04.001-grace-wed-tues-global`.
+
 ## 2026-08-01
 
 - [Aug 1, 7:37 PM] Tightened the release process so deploy-intended work ends with one Release final admin-facing result instead of duplicate closeout chatter, added a pre-release `AI_HANDOFF.md` reconciliation step so stale current-state docs cannot first surface after production verification, required direct automated acceptance tests in the first implementation commit for visible behavior changes, documented the prepared-worktree / warm-Playwright expectation for active release candidates, and required a timing/avoidable-delays block in every Release final report. This is a governance/process-only documentation update with no application code or visible app version change.

@@ -668,3 +668,52 @@ test("Bingo Global shows a Wednesday-Tuesday cycle and both Grill Fresh $5 slots
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
+
+test("Grace Global shows a Wednesday-Tuesday cycle and save/reload recall keeps the selected Global menu", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const storageWrites = [];
+  let storedRecords = [];
+  await stubEmptyRotationBackbone(page, {
+    onStorageWrite: (body) => {
+      storageWrites.push(body);
+      storedRecords = body.records || [];
+    },
+    getStorageRecords: () => storedRecords,
+  });
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: exactName("East") }).click();
+  await page.getByRole("button", { name: exactName("Grace") }).click();
+  await expect(page.getByRole("heading", { name: exactName("Grace") })).toBeVisible({ timeout: 20_000 });
+
+  await expect(page.getByText(/Grace changes Global every Wednesday\./i)).toBeVisible();
+  await expect(page.getByText("Monday + Tuesday Carryover")).toBeVisible();
+
+  const globalSection = page.getByRole("heading", { name: "Global Station" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await expect(globalSection).toBeVisible();
+  const menuSelect = globalSection.locator("select").first();
+  await menuSelect.selectOption("AMZ: Ohana");
+  const entreeSelect = globalSection.locator("select").nth(1);
+  await entreeSelect.selectOption("Huli Huli Chicken");
+
+  await page.getByRole("button", { name: "Save Draft", exact: true }).click();
+  await expect.poll(() => storageWrites.length).toBeGreaterThan(0);
+
+  const savedRecords = storageWrites.at(-1)?.records || [];
+  const globalRows = savedRecords.filter((record) => record["Café / Unit"] === "Grace" && record["Station Key"] === "global");
+  expect(globalRows.some((record) => record["Record Type"] === "Global Block" && record["Menu / Concept"] === "AMZ: Ohana")).toBe(true);
+  expect(globalRows.some((record) => record["Record Type"] === "Global Selection" && record["Menu Item / Selection"] === "Huli Huli Chicken" && record["Menu / Concept"] === "AMZ: Ohana")).toBe(true);
+
+  await page.evaluate(() => window.localStorage.clear());
+  await page.reload();
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: exactName("East") }).click();
+  await page.getByRole("button", { name: exactName("Grace") }).click();
+  const recalledGlobalSection = page.getByRole("heading", { name: "Global Station" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await expect(recalledGlobalSection).toBeVisible({ timeout: 20_000 });
+  await expect(recalledGlobalSection.locator("select").first()).toHaveValue("AMZ: Ohana");
+  await expect(recalledGlobalSection.locator("select").nth(1)).toHaveValue("Huli Huli Chicken");
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});

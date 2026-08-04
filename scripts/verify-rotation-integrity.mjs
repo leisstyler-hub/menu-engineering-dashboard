@@ -158,8 +158,16 @@ if (!/const REINVENT_CLOSED_WEEK_STARTS = new Set\(\["2026-06-29"\]\);/.test(sou
   fail("Re:Invent Jun 29, 2026 holiday week must be explicitly modeled as a Friday-closed week.");
 }
 
-if (!/if \(cafe === "Bingo"\) \{\s*return \{\s*title: "Bingo Wednesday\u2013Tuesday Global Cycle"/.test(source)) {
-  fail("Bingo must use the Doppler-style single Wednesday-Tuesday Global cycle, not the default Monday-Friday weekly cycle.");
+if (!/const WED_TUES_GLOBAL_CAFES = new Set\(\["Doppler", "Bingo", "Grace"\]\);/.test(source) || !/const isWedTuesGlobalCafe = \(cafe = ""\) => WED_TUES_GLOBAL_CAFES\.has\(cafe\);/.test(source)) {
+  fail("Doppler, Bingo, and Grace must share one Wednesday-Tuesday Global cafe set.");
+}
+
+if (!/if \(isWedTuesGlobalCafe\(cafe\)\) \{\s*const cafeName = cafe \|\| "This cafe";[\s\S]{0,80}Wednesday\u2013Tuesday Global Cycle/.test(source)) {
+  fail("Doppler, Bingo, and Grace must use the shared single Wednesday-Tuesday Global cycle, not the default Monday-Friday weekly cycle.");
+}
+
+if (!/if \(isWedTuesGlobalCafe\(cafe\)\) return wedTuesGlobalSummaryBlockLabels\(rotation, previousRotation\);/.test(source)) {
+  fail("Doppler, Bingo, and Grace submitted/leadership summaries must share the Wednesday-Tuesday block labels.");
 }
 
 if (!/Bingo: \{ fishMarket: 2, salad: 2, grillFreshFive: 2, saladFreshFive: 1 \}/.test(source)) {
