@@ -26,15 +26,16 @@ const smokeMenuItems = [
   { menu: "AMZ: Fresh Five", station: "Grill", item: "Fresh 5 Black Bean Burger", category: "entree", price: 5 },
   { menu: "AMZ: Carvery", station: "Premium Mains", item: "Herb Roasted Turkey", category: "entree", price: 12.25, trueCost: 3.8, calories: 390 },
   { menu: "AMZ: Carvery", station: "Sides", item: "Roasted Root Vegetables", category: "side", price: 3.25, trueCost: 0.9, calories: 180 },
+  { menu: "AMZ: Balti", station: "Premium Mains", item: "Balti Chicken", category: "entree", price: 11.75 },
 ];
 
-function rotationRecord({ id, parent = "", type, cafe, week, status = "Submitted", stationKey = "", selectionType = "", item = "", menu = "", slot = 1, promoName = "", promoDays = "" }) {
+function rotationRecord({ id, parent = "", type, cafe, week, district = "North", status = "Submitted", stationKey = "", selectionType = "", item = "", menu = "", slot = 1, promoName = "", promoDays = "" }) {
   return {
     "Record ID": id,
     "Parent Record ID": parent,
     "Record Type": type,
     Status: status,
-    District: "North",
+    District: district,
     "Café / Unit": cafe,
     "Date Range Label": week,
     "Station Key": stationKey,
@@ -713,6 +714,92 @@ test("Grace Global shows a Wednesday-Tuesday cycle and save/reload recall keeps 
   await expect(recalledGlobalSection).toBeVisible({ timeout: 20_000 });
   await expect(recalledGlobalSection.locator("select").first()).toHaveValue("AMZ: Ohana");
   await expect(recalledGlobalSection.locator("select").nth(1)).toHaveValue("Huli Huli Chicken");
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("East AMZ: Balti duplicate is exempt and does not block Astra from submitting alongside Bingo", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const week = "Jul 13, 2026 - Jul 17, 2026";
+  const bingoParent = "rotation|balti-exempt|East|Bingo";
+  const records = [
+    rotationRecord({ id: bingoParent, type: "Rotation Header", cafe: "Bingo", week, district: "East", status: "Submitted" }),
+    rotationRecord({ id: `${bingoParent}|global-block`, parent: bingoParent, type: "Global Block", cafe: "Bingo", week, district: "East", stationKey: "global", menu: "AMZ: Balti" }),
+    rotationRecord({ id: `${bingoParent}|global-entree`, parent: bingoParent, type: "Global Selection", cafe: "Bingo", week, district: "East", stationKey: "global", selectionType: "Entrée", item: "Balti Chicken", menu: "AMZ: Balti" }),
+  ];
+  const storageWrites = [];
+  let storedRecords = records;
+  await stubEmptyRotationBackbone(page, {
+    onStorageWrite: (body) => {
+      storageWrites.push(body);
+      storedRecords = body.records || [];
+    },
+    getStorageRecords: () => storedRecords,
+  });
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.locator("select").first().selectOption({ label: week });
+  await page.getByRole("button", { name: exactName("East") }).click();
+  await page.getByRole("button", { name: exactName("Astra") }).click();
+  await expect(page.getByRole("heading", { name: exactName("Astra") })).toBeVisible({ timeout: 20_000 });
+
+  const globalSection = page.getByRole("heading", { name: "Global Station" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await globalSection.locator("select").first().selectOption("AMZ: Balti");
+  await globalSection.locator("select").nth(1).selectOption("Balti Chicken");
+  const freshFive = page.getByRole("heading", { name: "Fresh $5" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await freshFive.locator("select").first().selectOption("Fresh 5 Black Bean Burger");
+
+  const remote = page.getByLabel("Planner Remote Control");
+  await remote.getByRole("button", { name: "Expand", exact: true }).click();
+  const submitButton = remote.getByRole("button", { name: "Submit", exact: true });
+  await expect(submitButton).toHaveAttribute("aria-disabled", "false");
+  await expect(page.getByText(/already selected by/i)).toHaveCount(0);
+  await expect(page.getByText(/choose a different global menu/i)).toHaveCount(0);
+
+  await submitButton.click();
+  await expect(page.getByText("Fix this before submitting", { exact: true })).toHaveCount(0);
+  await expect.poll(() => storageWrites.length).toBeGreaterThan(0);
+  const savedRecords = storageWrites.at(-1)?.records || [];
+  expect(savedRecords.some((record) => record["Café / Unit"] === "Astra" && record.Status === "Submitted" && record["Menu / Concept"] === "AMZ: Balti")).toBe(true);
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("East non-Balti Global Menu duplicate still blocks submission (regression)", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const week = "Jul 20, 2026 - Jul 24, 2026";
+  const bingoParent = "rotation|non-balti-conflict|East|Bingo";
+  const records = [
+    rotationRecord({ id: bingoParent, type: "Rotation Header", cafe: "Bingo", week, district: "East", status: "Submitted" }),
+    rotationRecord({ id: `${bingoParent}|global-block`, parent: bingoParent, type: "Global Block", cafe: "Bingo", week, district: "East", stationKey: "global", menu: "AMZ: Ohana" }),
+    rotationRecord({ id: `${bingoParent}|global-entree`, parent: bingoParent, type: "Global Selection", cafe: "Bingo", week, district: "East", stationKey: "global", selectionType: "Entrée", item: "Huli Huli Chicken", menu: "AMZ: Ohana" }),
+  ];
+  await stubEmptyRotationBackbone(page, { getStorageRecords: () => records });
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.locator("select").first().selectOption({ label: week });
+  await page.getByRole("button", { name: exactName("East") }).click();
+  await page.getByRole("button", { name: exactName("Astra") }).click();
+  await expect(page.getByRole("heading", { name: exactName("Astra") })).toBeVisible({ timeout: 20_000 });
+
+  const globalSection = page.getByRole("heading", { name: "Global Station" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await globalSection.locator("select").first().selectOption("AMZ: Ohana");
+  await globalSection.locator("select").nth(1).selectOption("Huli Huli Chicken");
+  const freshFive = page.getByRole("heading", { name: "Fresh $5" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await freshFive.locator("select").first().selectOption("Fresh 5 Black Bean Burger");
+
+  const remote = page.getByLabel("Planner Remote Control");
+  await remote.getByRole("button", { name: "Expand", exact: true }).click();
+  const submitButton = remote.getByRole("button", { name: "Submit", exact: true });
+  await expect(submitButton).toHaveAttribute("aria-disabled", "true");
+  await expect(submitButton).toHaveAttribute("title", /already selected by 1 other caf/i);
+
+  await submitButton.click({ force: true });
+  const blockedModal = page.getByRole("dialog", { name: "Fix this before submitting" });
+  await expect(blockedModal).toBeVisible();
+  await expect(blockedModal.getByText(/AMZ: Ohana is already selected by 1 other caf.*Choose a different Global Menu/i)).toBeVisible();
 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);

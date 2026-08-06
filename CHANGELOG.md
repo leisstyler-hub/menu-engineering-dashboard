@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-08-05
+
+- [Aug 5, 5:23 PM] Added an East District exception so more than one East cafe can select the Global Menu `AMZ: Balti` in the same week without Neighborhood Rotations treating it as a duplicate: a new `DUPLICATE_MENU_EXCEPTIONS` config plus `isDuplicateMenuExempt()` helper exempt East `AMZ: Balti` from `menuConflictCounts()` (leadership duplicate badges/counts) and `menuConflictCountForCandidate()` (submit blocker), so Bingo and other East cafes can submit `AMZ: Balti` even when another East cafe already has it that week.
+- [Aug 5, 5:23 PM] Every other duplicate-menu rule is unchanged: non-Balti East duplicates and all South `MENU_CONFLICT_GROUPS` behavior (Nitro/Day 1/Doppler, Re:Invent exception) still block/flag exactly as before.
+- [Aug 5, 5:23 PM] Added direct browser coverage proving an East cafe (Astra) can submit `AMZ: Balti` alongside an already-submitted Bingo `AMZ: Balti` rotation with no blocker text and no duplicate badge, and a regression test proving a non-Balti East duplicate (`AMZ: Ohana`) still blocks submission with the unchanged blocker wording.
+- [Aug 5, 5:23 PM] Set visible app version to `2026.08.05.001-east-balti-duplicate-exception`.
+
 ## 2026-08-04
 
 - [Aug 4, 4:34 PM] Switched Grace Cafe's East District Neighborhood Rotations Global cadence to the same single Wednesday-Tuesday cycle used by Doppler and Bingo, including Monday-Tuesday carryover messaging and the same submitted-recap / leadership-card week structure, while keeping Grace out of split-global behavior.

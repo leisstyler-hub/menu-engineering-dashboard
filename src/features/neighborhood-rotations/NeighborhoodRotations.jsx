@@ -53,6 +53,12 @@ const MENU_CONFLICT_GROUPS = {
   ]
 };
 
+const DUPLICATE_MENU_EXCEPTIONS = { East: ["AMZ: Balti"] };
+
+function isDuplicateMenuExempt(district, menu) {
+  return Boolean(menu) && (DUPLICATE_MENU_EXCEPTIONS[district] || []).includes(menu);
+}
+
 const STATION_LABELS = {
   global: "Global Station",
   noodles: "Noodle Station",
@@ -2459,7 +2465,8 @@ function menuConflictCounts(rows) {
   return rows.reduce((acc, row) => {
     if (!isSubmittedRotation(row)) return acc;
     const menu = rotationMenuLabelForDuplicateReporting(row);
-    if (menu) acc[menu] = (acc[menu] || 0) + 1;
+    if (!menu || isDuplicateMenuExempt(row.district, menu)) return acc;
+    acc[menu] = (acc[menu] || 0) + 1;
     return acc;
   }, {});
 }
@@ -2485,6 +2492,7 @@ function rowHasMenuConflict(row, conflictMenus) {
 
 function menuConflictCountForCandidate(district, rows, candidateCafe, candidateMenu) {
   if (!candidateMenu || !cafeUsesMenuConflictRule(district, candidateCafe)) return 0;
+  if (isDuplicateMenuExempt(district, candidateMenu)) return 0;
   const submittedMatches = conflictControlledRows(district, rows).filter((row) => {
     if (!isSubmittedRotation(row) || row.cafe === candidateCafe) return false;
     return rotationMenuLabelForDuplicateReporting(row) === candidateMenu;
