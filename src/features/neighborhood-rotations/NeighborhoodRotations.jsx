@@ -2690,6 +2690,21 @@ function projectDawsonMobyGlobal(mobyRotation = {}, dawsonRotation = {}, week = 
   return override ? { ...mobyRotation, __dawsonMobyGlobalOverride: override } : mobyRotation;
 }
 
+function dawsonMobyGlobalPresentationRotation(rotation = {}) {
+  const override = rotation.__dawsonMobyGlobalOverride;
+  if (!override) return rotation;
+  const selections = normalizeMobyPopUp(override.selections);
+  return {
+    ...rotation,
+    menu: override.menu || selections.menu || "",
+    station: `Dawson Moby Pop-Up - ${dayListLabel(override.days)}`,
+    entrees: [...selections.entrees],
+    sides: [...selections.sides],
+    subRecipes: [...selections.subRecipes],
+    extensions: [...selections.extensions],
+  };
+}
+
 function globalSelectedRowsForCafe(rotation, cafe = "", options = {}, week = rotation?.week || "") {
   if (cafe === "Nitro") {
     const blocks = hasNitroSplitBlocks(rotation)
@@ -3397,15 +3412,15 @@ function ChoiceCard({ label, value, setValue, options, disabled = false }) {
               type="button"
               disabled={isDisabled}
               onClick={() => setValue(option)}
-              className={`min-h-[44px] rounded-lg border px-3 py-2 text-left text-sm font-bold transition ${
+              className={`min-h-[44px] min-w-0 overflow-hidden rounded-lg border px-2 py-2 text-left text-xs font-bold transition sm:px-3 sm:text-sm ${
                 selected
                   ? "border-emerald-400 bg-emerald-50 text-emerald-950 shadow-sm ring-2 ring-emerald-200"
                   : "border-slate-200 bg-white text-slate-700 hover:border-sky-300 hover:bg-sky-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
               }`}
             >
-              <span className="flex items-center gap-2">
-                <span className={`h-2.5 w-2.5 rounded-full ${selected ? "bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.16)]" : "bg-slate-300"}`} />
-                {option}
+              <span className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+                <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${selected ? "bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.16)]" : "bg-slate-300"}`} />
+                <span className="min-w-0 flex-1 whitespace-normal leading-tight [overflow-wrap:anywhere]">{option}</span>
               </span>
             </button>
           );
@@ -3540,6 +3555,8 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, presentati
   const [editSubmitted, setEditSubmitted] = useState(false);
   const submittedRotation = isSubmittedRotation(rotation);
   const lockedForEditing = submittedRotation && !editSubmitted;
+  const draftPresentationRotation = dawsonMobyGlobalPresentationRotation(presentationRotation);
+  const hasDawsonMobyGlobalProjection = cafe === "Moby" && Boolean(presentationRotation.__dawsonMobyGlobalOverride);
   const guardedUpdateRotation = (patch) => {
     if (lockedForEditing) return;
     updateRotation(patch);
@@ -3554,10 +3571,10 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, presentati
   const stationOptions = subConceptOptionsForMenu(rotation.menu);
   const menuItems = globalMenuRows(rotation.menu, rotation.station);
   const categorized = categorize(menuItems);
-  const items = selectedItems(rotation, cafe, week);
+  const items = hasDawsonMobyGlobalProjection ? selectedItems(presentationRotation, cafe, week) : selectedItems(rotation, cafe, week);
   const summary = foodSummary(items);
   const cafeStations = cafeStationsForWeek(cafe, week);
-  const stationCostOverview = getStationCostOverview(rotation, cafe, week);
+  const stationCostOverview = getStationCostOverview(hasDawsonMobyGlobalProjection ? presentationRotation : rotation, cafe, week);
   const submittedStationCostOverview = getStationCostOverview(presentationRotation, cafe, week);
   const requirements = rotationRequirements(rotation, cafe, week);
   const submitIssues = rotationRequirementIssues(requirements, cafe, { menu: rotationMenuLabel(rotation, cafe, week) || rotation.menu, duplicateMenuCount: menuConflictCount, conflictNote: menuConflictNote(district, cafe), rotation, week });
@@ -3693,7 +3710,7 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, presentati
       ) : (
         <>
           <StationPills cafe={cafe} stations={cafeStations} />
-          <PlannerSnapshot rotation={rotation} items={items} />
+          <PlannerSnapshot rotation={hasDawsonMobyGlobalProjection ? draftPresentationRotation : rotation} items={items} />
           <StationCostOverview rows={stationCostOverview} />
 
           {cafeStations.map((stationKey) => (
@@ -3702,7 +3719,8 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, presentati
               stationKey={stationKey}
               cafe={cafe}
               week={week}
-              rotation={rotation}
+              rotation={stationKey === "global" && hasDawsonMobyGlobalProjection ? draftPresentationRotation : rotation}
+              dawsonMobyGlobalOverride={stationKey === "global" ? presentationRotation.__dawsonMobyGlobalOverride : null}
               previousRotation={previousRotation}
               previousWeek={previousWeek}
               menuOptions={menuOptions}
@@ -5300,9 +5318,11 @@ function StationPills({ cafe, stations }) {
 }
 
 function CafeStationSection(props) {
-  const { stationKey, cafe, week, rotation, previousRotation, previousWeek, menuOptions, stationOptions, categorized, updateRotation, updateSlot, updateGrill, updateLto, updateCarvery, updateCustomStation, summary, selectedItems } = props;
+  const { stationKey, cafe, week, rotation, previousRotation, previousWeek, menuOptions, stationOptions, categorized, updateRotation, updateSlot, updateGrill, updateLto, updateCarvery, updateCustomStation, summary, selectedItems, dawsonMobyGlobalOverride } = props;
   let content = null;
-  if (stationKey === "global") content = <GlobalSection cafe={cafe} week={week} rotation={rotation} previousRotation={previousRotation} previousWeek={previousWeek} menuOptions={menuOptions} stationOptions={stationOptions} categorized={categorized} updateRotation={updateRotation} updateSlot={updateSlot} summary={summary} selectedItems={selectedItems} />;
+  if (stationKey === "global") content = dawsonMobyGlobalOverride
+    ? <DawsonMobyGlobalProjectionSection rotation={rotation} override={dawsonMobyGlobalOverride} week={week} />
+    : <GlobalSection cafe={cafe} week={week} rotation={rotation} previousRotation={previousRotation} previousWeek={previousWeek} menuOptions={menuOptions} stationOptions={stationOptions} categorized={categorized} updateRotation={updateRotation} updateSlot={updateSlot} summary={summary} selectedItems={selectedItems} />;
   if (stationKey === "grill") content = <GrillSection cafe={cafe} rotation={rotation} updateGrill={updateGrill} />;
   if (stationKey === "salad") content = <SimpleLTOSection stationKey="salad" title={cafe === "Doppler" ? "Zane's Salad" : "Salad LTOs"} slots={Array.from({ length: stationSlots(cafe, "salad") }, (_, i) => cafe === "Doppler" ? `Fresh Five Salad ${i + 1}` : `Salad LTO ${i + 1}`)} values={rotation.ltos?.salad || EMPTY_ROTATION.ltos.salad} uploaded={rotation.uploadedLtos?.salad || []} updateLto={updateLto} complete={stationComplete(rotation, "salad")} />;
   if (stationKey === "pizza") content = <SimpleLTOSection stationKey="pizza" title={cafe === "Doppler" ? "Pizza LTOs" : "Pizza / Flatbread LTOs"} slots={cafe === "Doppler" ? ["Pizza LTO 1", "Pizza LTO 2"] : Array.from({ length: stationSlots(cafe, "pizza") }, (_, i) => `Pizza/Flatbread LTO ${i + 1}`)} values={rotation.ltos?.pizza || EMPTY_ROTATION.ltos.pizza} uploaded={rotation.uploadedLtos?.pizza || []} updateLto={updateLto} complete={stationComplete(rotation, "pizza")} slotPoolOverrides={cafe === "Doppler" ? [stationPool("pizza"), stationPool("pizza")] : null} optional={cafe === "Doppler"} />;
@@ -5322,6 +5342,51 @@ function CafeStationSection(props) {
   if (stationKey === "stationTakeover") content = <StationTakeoverSection rotation={rotation} updateCustomStation={updateCustomStation} />;
   if (!content) return null;
   return <div id={stationAnchorId(stationKey)} className="scroll-mt-28">{content}</div>;
+}
+
+function DawsonMobyGlobalProjectionSection({ rotation, override, week }) {
+  const rows = dawsonMobyGlobalSelectedRows(override, { unique: true });
+  const groups = [
+    ["Entrees", rotation.entrees],
+    ["Sides", rotation.sides],
+    ["Sub Recipes", rotation.subRecipes],
+    ["Extensions", rotation.extensions],
+  ];
+  const schedule = dayListLabel(override.days);
+
+  return (
+    <CollapsibleStation title="Global Station" eyebrow="Dawson Moby Pop-Up Projection" complete defaultOpen>
+      <div className="rounded-3xl border-2 border-emerald-300 bg-emerald-50/70 p-4 shadow-sm">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">Automatically supplied by Dawson</p>
+            <h4 className="mt-1 text-xl font-black text-slate-950">{rotation.menu}</h4>
+            <p className="mt-1 text-sm font-semibold text-slate-600">Dawson Moby Pop-Up runs {schedule}. This read-only Global projection updates when Dawson submits {week}.</p>
+          </div>
+          <span className="self-start rounded-full border border-emerald-300 bg-white px-3 py-1 text-xs font-black text-emerald-800">Dawson override active</span>
+        </div>
+      </div>
+
+      <LiveAnalytics summary={foodSummary(rows)} selectedItems={rows} />
+      <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-4">
+        {groups.map(([title, values]) => (
+          <div key={title} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex items-center justify-between gap-2">
+              <p className="font-bold text-slate-900">{title}</p>
+              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">synced</span>
+            </div>
+            <div className="mt-3 space-y-2">
+              {(values || []).filter(Boolean).map((value, index) => (
+                <div key={`${title}-${value}-${index}`} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800">{titleCase(value)}</div>
+              ))}
+              {!(values || []).filter(Boolean).length && <p className="text-sm font-semibold text-slate-400">No selection supplied</p>}
+            </div>
+          </div>
+        ))}
+      </div>
+      <StationSelectedList title="Items Description" items={rows} complete />
+    </CollapsibleStation>
+  );
 }
 
 function PromotionOverridePanel({ cafe, promo, updatePromo }) {

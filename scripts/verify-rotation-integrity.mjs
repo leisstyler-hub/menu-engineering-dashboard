@@ -410,6 +410,14 @@ if (!/function projectDawsonMobyGlobal\(/.test(source) || !/__dawsonMobyGlobalOv
   fail("Submitted Dawson Moby Pop-Up data must project into Moby's visible Global station.");
 }
 
+if (!/function DawsonMobyGlobalProjectionSection\(/.test(source) || !/Automatically supplied by Dawson/.test(source) || !/Dawson override active/.test(source)) {
+  fail("An open Moby draft must render the submitted Dawson Global projection as read-only visible content.");
+}
+
+if (!/min-w-0 overflow-hidden rounded-lg border px-2/.test(source) || !/min-w-0 flex-1 whitespace-normal leading-tight \[overflow-wrap:anywhere\]/.test(source)) {
+  fail("Cafe selector buttons must contain long labels such as Commissary without clipping their borders.");
+}
+
 if (!/function rotationMenuLabelForDuplicateReporting\(/.test(source) || !/const menu = rotationMenuLabelForDuplicateReporting\(row\);/.test(source)) {
   fail("Moby's Dawson projection must remain isolated from duplicate-menu reporting.");
 }

@@ -27,6 +27,8 @@ const smokeMenuItems = [
   { menu: "AMZ: Carvery", station: "Premium Mains", item: "Herb Roasted Turkey", category: "entree", price: 12.25, trueCost: 3.8, calories: 390 },
   { menu: "AMZ: Carvery", station: "Sides", item: "Roasted Root Vegetables", category: "side", price: 3.25, trueCost: 0.9, calories: 180 },
   { menu: "AMZ: Balti", station: "Premium Mains", item: "Balti Chicken", category: "entree", price: 11.75 },
+  { menu: "AMZ: House of Teriyaki", station: "Premium Mains", item: "Chicken Teriyaki", category: "entree", price: 11.75, trueCost: 2.318, calories: 375 },
+  { menu: "AMZ: House of Teriyaki", station: "Sides", item: "Cucumber Salad", category: "side", price: 2.55, trueCost: 0.928, calories: 125 },
 ];
 
 function rotationRecord({ id, parent = "", type, cafe, week, district = "North", status = "Submitted", stationKey = "", selectionType = "", item = "", menu = "", slot = 1, promoName = "", promoDays = "" }) {
@@ -51,8 +53,8 @@ function rotationRecord({ id, parent = "", type, cafe, week, district = "North",
   };
 }
 
-function submittedProjectionRecords({ week, promo = false, mobyStatus = "Submitted" }) {
-  const suffix = week.startsWith("Aug 31") ? "0831" : "0907";
+function submittedProjectionRecords({ week, promo = false, mobyStatus = "Submitted", includeMobyRecords = true, normalMenu = "AMZ: Carvery", normalEntree = "Herb Roasted Turkey", normalSide = "Roasted Root Vegetables" }) {
+  const suffix = new Date(`${week.split(" - ")[0]} 12:00:00`).toISOString().slice(0, 10);
   const parent = (cafe) => `rotation|${suffix}|North|${cafe}`;
   const header = (cafe) => rotationRecord({ id: parent(cafe), type: "Rotation Header", cafe, week, status: cafe === "Moby" ? mobyStatus : "Submitted" });
   const child = (cafe, localId, fields) => rotationRecord({ id: `${parent(cafe)}|${localId}`, parent: parent(cafe), cafe, week, ...fields });
@@ -61,17 +63,20 @@ function submittedProjectionRecords({ week, promo = false, mobyStatus = "Submitt
     child("Dawson", "moby-promo-menu", { type: "Station Selection", stationKey: "mobyPopUpPromotion", selectionType: "Menu Name", item: "One Day Showcase", menu: "One Day Showcase", promoName: "One Day Showcase", promoDays: "Tuesday" }),
     child("Dawson", "moby-promo-entree", { type: "Station Selection", stationKey: "mobyPopUpPromotion", selectionType: "Entrée", item: "Huli Huli Chicken", menu: "One Day Showcase", promoName: "One Day Showcase", promoDays: "Tuesday" }),
   ] : [
-    child("Dawson", "moby-menu", { type: "Station Selection", stationKey: "mobyPopUp", selectionType: "Menu Name", item: "AMZ: Carvery", menu: "AMZ: Carvery" }),
-    child("Dawson", "moby-entree", { type: "Station Selection", stationKey: "mobyPopUp", selectionType: "Entrée", item: "Herb Roasted Turkey", menu: "AMZ: Carvery" }),
-    child("Dawson", "moby-side", { type: "Station Selection", stationKey: "mobyPopUp", selectionType: "Side", item: "Roasted Root Vegetables", menu: "AMZ: Carvery" }),
+    child("Dawson", "moby-menu", { type: "Station Selection", stationKey: "mobyPopUp", selectionType: "Menu Name", item: normalMenu, menu: normalMenu }),
+    child("Dawson", "moby-entree", { type: "Station Selection", stationKey: "mobyPopUp", selectionType: "Entrée", item: normalEntree, menu: normalMenu }),
+    child("Dawson", "moby-side", { type: "Station Selection", stationKey: "mobyPopUp", selectionType: "Side", item: normalSide, menu: normalMenu }),
   ];
-  return [
-    header("Dawson"),
-    ...dawsonRows,
+  const mobyRows = includeMobyRecords ? [
     header("Moby"),
     mobyChild("global-block", { type: "Global Block", stationKey: "global", menu: "AMZ: Ohana" }),
     mobyChild("global-entree", { type: "Global Selection", stationKey: "global", selectionType: "Entrée", item: "Huli Huli Chicken", menu: "AMZ: Ohana" }),
     mobyChild("pizza", { type: "Station Selection", stationKey: "pizza", selectionType: "LTO", item: "Mac Salad", menu: "Moby Pizza" }),
+  ] : [];
+  return [
+    header("Dawson"),
+    ...dawsonRows,
+    ...mobyRows,
     header("Cricket"),
     child("Cricket", "global-block", { type: "Global Block", stationKey: "global", menu: "AMZ: Carvery" }),
     child("Cricket", "global-entree", { type: "Global Selection", stationKey: "global", selectionType: "Entrée", item: "Herb Roasted Turkey", menu: "AMZ: Carvery" }),
@@ -187,6 +192,32 @@ test("Neighborhood Rotations opens planner and gives a visible blocked-submit re
 test("Planner Remote Control keeps expanded labels inside every button", async ({ page }) => {
   await expectExpandedRemoteLabelsContained(page, { width: 930, height: 700 });
   await expectExpandedRemoteLabelsContained(page, { width: 360, height: 800 });
+});
+
+test("North Commissary cafe label stays inside its selector button", async ({ page }) => {
+  await stubEmptyRotationBackbone(page);
+  for (const width of [240, 1024]) {
+    await page.setViewportSize({ width, height: 768 });
+    await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+    await page.getByRole("button", { name: exactName("North") }).click();
+
+    const button = page.getByRole("button", { name: exactName("Commissary") });
+    const label = button.getByText("Commissary", { exact: true });
+    await expect(button).toBeVisible();
+    const [buttonBox, labelBox, labelMetrics] = await Promise.all([
+      button.boundingBox(),
+      label.boundingBox(),
+      label.evaluate((element) => ({ clientWidth: element.clientWidth, scrollWidth: element.scrollWidth, overflowWrap: getComputedStyle(element).overflowWrap })),
+    ]);
+    expect(buttonBox).not.toBeNull();
+    expect(labelBox).not.toBeNull();
+    expect(labelBox.x).toBeGreaterThanOrEqual(buttonBox.x);
+    expect(labelBox.y).toBeGreaterThanOrEqual(buttonBox.y);
+    expect(labelBox.x + labelBox.width).toBeLessThanOrEqual(buttonBox.x + buttonBox.width);
+    expect(labelBox.y + labelBox.height).toBeLessThanOrEqual(buttonBox.y + buttonBox.height);
+    expect(labelMetrics.scrollWidth).toBeLessThanOrEqual(labelMetrics.clientWidth);
+    expect(labelMetrics.overflowWrap).toBe("anywhere");
+  }
 });
 
 test("Neighborhood Rotations opens every cafe selector for future weeks", async ({ page }) => {
@@ -507,10 +538,16 @@ test("Dawson Moby Pop-Up starts Aug 31, uses Global or Carvery menus, and recall
 
 test("submitted Dawson Moby Pop-Up replaces only Moby Global presentation without changing duplicate reporting", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
+  const storageWrites = [];
   const normalWeek = "Aug 31, 2026 - Sep 4, 2026";
   const promoWeek = "Sep 7, 2026 - Sep 11, 2026";
-  const records = [...submittedProjectionRecords({ week: normalWeek }), ...submittedProjectionRecords({ week: promoWeek, promo: true, mobyStatus: "Draft" })];
-  await stubEmptyRotationBackbone(page, { getStorageRecords: () => records });
+  const draftWeek = "Oct 5, 2026 - Oct 9, 2026";
+  const records = [
+    ...submittedProjectionRecords({ week: normalWeek }),
+    ...submittedProjectionRecords({ week: promoWeek, promo: true, mobyStatus: "Draft" }),
+    ...submittedProjectionRecords({ week: draftWeek, includeMobyRecords: false, normalMenu: "AMZ: House of Teriyaki", normalEntree: "Chicken Teriyaki", normalSide: "Cucumber Salad" }),
+  ];
+  await stubEmptyRotationBackbone(page, { getStorageRecords: () => records, onStorageWrite: (body) => storageWrites.push(body) });
 
   await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
   await page.getByRole("button", { name: "Executive View", exact: true }).click();
@@ -557,6 +594,26 @@ test("submitted Dawson Moby Pop-Up replaces only Moby Global presentation withou
   await expect(printPreview).toContainText("One Day Showcase");
   await expect(printPreview).toContainText("Dawson Moby Pop-Up - Tuesday");
   await expect(printPreview).toContainText("Mac Salad");
+
+  await remote.getByRole("button", { name: "Hide View", exact: true }).click();
+  await page.getByRole("button", { name: "Executive View", exact: true }).click();
+  await page.locator("select").first().selectOption({ label: draftWeek });
+  const draftMobyCard = page.getByRole("button", { name: "Open Moby planner" });
+  await expect(draftMobyCard).toContainText("AMZ: House of Teriyaki");
+  await expect(draftMobyCard).toContainText("open");
+  await draftMobyCard.click();
+  const projectedGlobal = page.getByRole("heading", { name: "Global Station", exact: true }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await expect(projectedGlobal).toContainText("Automatically supplied by Dawson");
+  await expect(projectedGlobal).toContainText("AMZ: House of Teriyaki");
+  await expect(projectedGlobal).toContainText("Chicken Teriyaki");
+  await expect(projectedGlobal).toContainText("Cucumber Salad");
+  await expect(projectedGlobal).toContainText("Dawson override active");
+  await expect(projectedGlobal.locator("select")).toHaveCount(0);
+  await page.getByRole("button", { name: "Save Draft", exact: true }).click();
+  await expect.poll(() => storageWrites.length).toBeGreaterThan(0);
+  const savedMobyRows = storageWrites.at(-1)?.records || [];
+  expect(savedMobyRows.some((record) => record["Station Key"] === "global")).toBe(false);
+  expect(savedMobyRows.some((record) => ["AMZ: House of Teriyaki", "Chicken Teriyaki", "Cucumber Salad"].includes(record["Menu Item / Selection"]))).toBe(false);
 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
