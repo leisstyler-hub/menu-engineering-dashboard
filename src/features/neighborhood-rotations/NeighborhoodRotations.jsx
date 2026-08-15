@@ -3102,7 +3102,8 @@ function isPlateBaseSide(row) {
   const identity = normalizeItemName(getItemIdentity(row));
   const sourceCategory = `${row?.recipeCategory || ""} ${row?.category || ""}`.toLowerCase();
   if (/side\s*salad|salad/.test(sourceCategory)) return false;
-  return /\b(rice|noodles?|lo mein|yakisoba|udon|soba)\b/.test(identity);
+  return /starch\s*\/\s*grain|starch\s*\/\s*grains|starch\/grain/.test(sourceCategory)
+    || /\b(rice|noodles?|lo mein|yakisoba|udon|soba)\b/.test(identity);
 }
 
 function distinctSelectionRows(rows = []) {
@@ -6155,7 +6156,7 @@ function PerEntreePlateCostAnalytics({ items, menu }) {
   return (
     <div data-testid="nessie-global-plate-cost" className="rounded-2xl border border-sky-200 bg-sky-50 p-4 text-slate-900">
       <p className="text-xs font-semibold opacity-75">Per-Plate Food Cost Range</p>
-      <p className="mt-1 text-xs text-slate-600">Bases are identified automatically from selected rice/noodle choices; salads remain sides.</p>
+      <p className="mt-1 text-xs text-slate-600">Bases are identified automatically from selected starch/grain choices, including rice, noodles, and pasta; salads remain sides.</p>
       {!ranges.length && <p className="mt-2 text-sm font-semibold text-slate-600">Select an entrée to calculate each plate.</p>}
       <div className="mt-2 space-y-2">
         {ranges.map((range) => (

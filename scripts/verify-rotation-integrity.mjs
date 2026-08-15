@@ -82,6 +82,10 @@ if (!/"AMZ: Piccola Italia"[\s\S]*"AMZ: Lemongrass \+ Lime"[\s\S]*"AMZ: Chiang M
   fail("The Nessie pilot must preserve its three one-side menu exceptions and per-entree calculator.");
 }
 
+if (!/starch\\s\*\\\/\\s\*grain/.test(source) || !/rice\|noodles\?\|lo mein\|yakisoba\|udon\|soba/.test(source)) {
+  fail("The Nessie pilot must recognize explicit starch/grain bases, including Smokehouse Mac & Cheese, while retaining rice/noodle fallback inference.");
+}
+
 if (!/plateCostMenu=\{isNessieGlobalPlateCostPilot\(district, cafe, week\) \? rotation\.menu : ""\}/.test(source)) {
   fail("The Nessie per-plate analytics must replace Mix Food Cost only inside the exact Global planner pilot scope.");
 }

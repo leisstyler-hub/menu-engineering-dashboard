@@ -23,6 +23,14 @@ const smokeMenuItems = [
   { menu: "AMZ: Piccola Italia", station: "Sides", item: "Balsamic Glazed Carrots", category: "side", price: 2.55, trueCost: 0.5 },
   { menu: "AMZ: Piccola Italia", station: "Sides", item: "Garlic Bread", category: "side", price: 2.55, trueCost: 0.8 },
   { menu: "AMZ: Piccola Italia", station: "Sub Recipes", item: "Marinara", category: "subRecipe", trueCost: 0.2 },
+  { menu: "AMZ: Smokehouse BBQ", station: "Premium Mains", item: "Bbq Chicken Thighs", category: "entree", price: 11.75, trueCost: 1.106 },
+  { menu: "AMZ: Smokehouse BBQ", station: "Premium Mains", item: "Braised Shredded Pork", category: "entree", price: 11.75, trueCost: 1.471 },
+  { menu: "AMZ: Smokehouse BBQ", station: "Sides", item: "Mac & Cheese", category: "side", recipeCategory: "Starch/Grain > Pasta", price: 2.55, trueCost: 0.184 },
+  { menu: "AMZ: Smokehouse BBQ", station: "Sides", item: "Spicy Collard Greens", category: "side", recipeCategory: "Vegetable > Other Vegetable", price: 2.55, trueCost: 0.199 },
+  { menu: "AMZ: Smokehouse BBQ", station: "Sides", item: "Bbq Baked Beans", category: "side", recipeCategory: "Vegetable > Legume", price: 2.55, trueCost: 0.331 },
+  { menu: "AMZ: Smokehouse BBQ", station: "Sides", item: "Grilled Corn", category: "side", recipeCategory: "Vegetable > Other Vegetable", price: 2.55, trueCost: 0.336 },
+  { menu: "AMZ: Smokehouse BBQ", station: "Sub Recipes", item: "Carochina Mustard Sauce", category: "subRecipe", trueCost: 0.222 },
+  { menu: "AMZ: Smokehouse BBQ", station: "Extensions", item: "Pecan Pie", category: "extension", price: 4.25, trueCost: 1.533 },
   { menu: "AMZ: Lotus", station: "Premium Mains", item: "Pork Hung Lay", category: "entree", price: 11.75 },
   { menu: "AMZ: Lotus", station: "Sides", item: "Papaya Salad", category: "side", price: 2.55 },
   { menu: "AMZ: Saffron", station: "Premium Mains", item: "Chicken Apricot Tagine", category: "entree", price: 11.75 },
@@ -248,7 +256,7 @@ test("Nessie Global pilot calculates complete per-entree plate ranges only for A
   const plateAnalytics = globalSection.getByTestId("nessie-global-plate-cost");
   const huliPlate = plateAnalytics.getByTestId("plate-cost-huli-huli-chicken");
   await expect(plateAnalytics.getByText("Per-Plate Food Cost Range", { exact: true })).toBeVisible();
-  await expect(plateAnalytics.getByText("Bases are identified automatically from selected rice/noodle choices; salads remain sides.", { exact: true })).toBeVisible();
+  await expect(plateAnalytics.getByText("Bases are identified automatically from selected starch/grain choices, including rice, noodles, and pasta; salads remain sides.", { exact: true })).toBeVisible();
   await expect(globalSection.getByText("Selected Mix Food Cost %", { exact: true })).toHaveCount(0);
   await expect(globalSection.getByText("Selected True Cost Range", { exact: true })).toBeVisible();
   await expect(huliPlate).toContainText("Select 1 base and 2 distinct non-base sides");
@@ -278,6 +286,25 @@ test("Nessie Global pilot calculates complete per-entree plate ranges only for A
   await expect(piccolaPlate).toContainText(/\$2\.70.*\$3\.00/);
   await expect(piccolaPlate).toContainText(/20\.8%.*23\.1%/);
   await expect(piccolaPlate).toContainText("Entrée + 1 side + all selected sub recipes · entrée retail only");
+
+  await globalSection.locator("select").first().selectOption("AMZ: Smokehouse BBQ");
+  const smokehouseEntrees = pickerGroup("Entrees").locator("select");
+  await smokehouseEntrees.nth(0).selectOption("Bbq Chicken Thighs");
+  await smokehouseEntrees.nth(1).selectOption("Braised Shredded Pork");
+  const smokehouseSides = pickerGroup("Sides").locator("select");
+  await smokehouseSides.nth(0).selectOption("Mac & Cheese");
+  await smokehouseSides.nth(1).selectOption("Spicy Collard Greens");
+  await smokehouseSides.nth(2).selectOption("Bbq Baked Beans");
+  await smokehouseSides.nth(3).selectOption("Grilled Corn");
+  await pickerGroup("Sub Recipes").locator("select").first().selectOption("Carochina Mustard Sauce");
+  await pickerGroup("Extensions").locator("select").first().selectOption("Pecan Pie");
+  const chickenPlate = plateAnalytics.getByTestId("plate-cost-bbq-chicken-thighs");
+  const porkPlate = plateAnalytics.getByTestId("plate-cost-braised-shredded-pork");
+  await expect(chickenPlate).toContainText(/\$2\.04.*\$2\.18/);
+  await expect(chickenPlate).toContainText(/17\.4%.*18\.5%/);
+  await expect(porkPlate).toContainText(/\$2\.41.*\$2\.54/);
+  await expect(porkPlate).toContainText(/20\.5%.*21\.7%/);
+  await expect(chickenPlate).not.toContainText("Select 1 base");
 
   await page.locator("select").first().selectOption({ label: "Aug 24, 2026 - Aug 28, 2026" });
   const adjacentGlobal = page.getByRole("heading", { name: "Global Station" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
