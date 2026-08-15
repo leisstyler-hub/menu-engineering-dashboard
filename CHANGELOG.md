@@ -2,7 +2,7 @@
 
 ## 2026-08-15
 
-- Added `docs/FOOD_COST_PLATE_COSTING_REFERENCE.md`, the durable agent reference converted from Tyler's reviewed WebT cost workbook. It preserves all 1,566 item-cost rows and 53 menu concepts, retains MRNs as exact text, makes `Item + Waste Cost` the plate-cost input, records the confirmed non-RA plate formats and station-level grouping direction, and keeps every `AMZ+RA:` concept explicitly unclassified. This is documentation-only: no application logic, Supabase data, Smartsheet data, or menu source records changed.
+- Published `docs/FOOD_COST_PLATE_COSTING_REFERENCE.md`, the durable agent reference converted from Tyler's reviewed WebT cost workbook. It preserves all 1,566 item-cost rows and 53 menu concepts, retains MRNs as exact text, makes `Item + Waste Cost` the plate-cost input, records the confirmed non-RA plate formats and station-level grouping direction, and keeps every `AMZ+RA:` concept explicitly unclassified. Markdown validation confirmed the 1,566-row / 53-concept source conversion and the production build passed. GitHub `main` commit `5fce98490851338ea51b7152fff39f8dc47439db` reached Vercel production deployment `dpl_6hgjXVt3tVX9Mp5ufXZPasQVvToY` (`READY`); the live bundle contains version `2026.08.15.001-food-cost-plate-reference`. This is documentation-only: no application logic, Supabase data, Smartsheet data, or menu source records changed.
 - Set visible app version to `2026.08.15.001-food-cost-plate-reference`.
 
 ## 2026-08-14
