@@ -238,10 +238,18 @@ test("North Commissary cafe label stays inside its selector button", async ({ pa
   }
 });
 
-test("Nessie Global pilot calculates complete per-entree plate ranges only for Aug 17", async ({ page }) => {
+test("Nessie Global pilot uses menu-isolated reference plate builds only for Aug 17", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   const pilotWeek = "Aug 17, 2026 - Aug 21, 2026";
-  await stubEmptyRotationBackbone(page);
+  const storageWrites = [];
+  let storedRecords = [];
+  await stubEmptyRotationBackbone(page, {
+    onStorageWrite: (body) => {
+      storageWrites.push(body);
+      storedRecords = body.records || [];
+    },
+    getStorageRecords: () => storedRecords,
+  });
 
   await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
   await page.locator("select").first().selectOption({ label: pilotWeek });
@@ -249,68 +257,137 @@ test("Nessie Global pilot calculates complete per-entree plate ranges only for A
   await page.getByRole("button", { name: exactName("Nessie") }).click();
 
   const globalSection = page.getByRole("heading", { name: "Global Station" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
-  await globalSection.locator("select").first().selectOption("AMZ: Ohana");
-  const pickerGroup = (title) => globalSection.getByText(title, { exact: true }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
-  await pickerGroup("Entrees").locator("select").first().selectOption("Huli Huli Chicken");
-
-  const plateAnalytics = globalSection.getByTestId("nessie-global-plate-cost");
-  const huliPlate = plateAnalytics.getByTestId("plate-cost-huli-huli-chicken");
-  await expect(plateAnalytics.getByText("Per-Plate Food Cost Range", { exact: true })).toBeVisible();
-  await expect(plateAnalytics.getByText("Bases are identified automatically from selected starch/grain choices, including rice, noodles, and pasta; salads remain sides.", { exact: true })).toBeVisible();
-  await expect(globalSection.getByText("Selected Mix Food Cost %", { exact: true })).toHaveCount(0);
-  await expect(globalSection.getByText("Selected True Cost Range", { exact: true })).toBeVisible();
-  await expect(huliPlate).toContainText("Select 1 base and 2 distinct non-base sides");
-  await expect(huliPlate).not.toContainText("%");
-
-  const sideSelects = pickerGroup("Sides").locator("select");
-  await sideSelects.nth(0).selectOption("Jasmine Rice");
-  await sideSelects.nth(1).selectOption("Rice Noodle Salad");
-  await sideSelects.nth(2).selectOption("Blistered Green Beans");
-  await sideSelects.nth(3).selectOption("Cucumber Carrot Slaw");
-  await pickerGroup("Sub Recipes").locator("select").first().selectOption("Huli Huli Glaze");
-  await pickerGroup("Extensions").locator("select").first().selectOption("Guava Lemonade");
-
-  await expect(huliPlate).toContainText(/\$4\.70.*\$5\.10/);
-  await expect(huliPlate).toContainText(/40\.0%.*43\.4%/);
-  await expect(huliPlate.getByText("Plate true cost", { exact: true })).toBeVisible();
-  await expect(huliPlate.getByText("Food cost % (entrée retail)", { exact: true })).toBeVisible();
-  await expect(huliPlate).toContainText("Entrée + 1 base + 2 sides + all selected sub recipes · entrée retail only");
-
-  await globalSection.locator("select").first().selectOption("AMZ: Piccola Italia");
-  await pickerGroup("Entrees").locator("select").first().selectOption("Spaghetti Bolognese");
-  const piccolaSides = pickerGroup("Sides").locator("select");
-  await piccolaSides.nth(0).selectOption("Balsamic Glazed Carrots");
-  await piccolaSides.nth(1).selectOption("Garlic Bread");
-  await pickerGroup("Sub Recipes").locator("select").first().selectOption("Marinara");
-  const piccolaPlate = plateAnalytics.getByTestId("plate-cost-spaghetti-bolognese");
-  await expect(piccolaPlate).toContainText(/\$2\.70.*\$3\.00/);
-  await expect(piccolaPlate).toContainText(/20\.8%.*23\.1%/);
-  await expect(piccolaPlate).toContainText("Entrée + 1 side + all selected sub recipes · entrée retail only");
-
+  await expect(globalSection.locator('option[value^="AMZ+RA:"]')).toHaveCount(0);
+  await expect(globalSection.locator('option[value="AMZ: Breakfast"]')).toHaveCount(1);
+  await expect(globalSection.locator('option[value="AMZ: Cafe Express Soup"]')).toHaveCount(1);
+  await expect(globalSection.locator('option[value="AMZ: Wok"]')).toHaveCount(1);
   await globalSection.locator("select").first().selectOption("AMZ: Smokehouse BBQ");
+  const pickerGroup = (title) => globalSection.getByText(title, { exact: true }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  const plateAnalytics = globalSection.getByTestId("nessie-global-reference-plate-cost");
+  await expect(plateAnalytics.getByText("Menu-Specific Plate Cost", { exact: true })).toBeVisible();
+  await expect(plateAnalytics.getByText("Item + Waste Cost", { exact: true })).toBeVisible();
+  await expect(globalSection.getByText("Selected Mix Food Cost %", { exact: true })).toHaveCount(0);
   const smokehouseEntrees = pickerGroup("Entrees").locator("select");
-  await smokehouseEntrees.nth(0).selectOption("Bbq Chicken Thighs");
-  await smokehouseEntrees.nth(1).selectOption("Braised Shredded Pork");
+  await smokehouseEntrees.nth(0).selectOption({ label: "BBQ Chicken Thighs" });
+  await smokehouseEntrees.nth(1).selectOption({ label: "Braised Shredded Pork" });
+  const chickenReferenceId = await smokehouseEntrees.nth(0).inputValue();
+  const porkReferenceId = await smokehouseEntrees.nth(1).inputValue();
   const smokehouseSides = pickerGroup("Sides").locator("select");
-  await smokehouseSides.nth(0).selectOption("Mac & Cheese");
-  await smokehouseSides.nth(1).selectOption("Spicy Collard Greens");
-  await smokehouseSides.nth(2).selectOption("Bbq Baked Beans");
-  await smokehouseSides.nth(3).selectOption("Grilled Corn");
-  await pickerGroup("Sub Recipes").locator("select").first().selectOption("Carochina Mustard Sauce");
-  await pickerGroup("Extensions").locator("select").first().selectOption("Pecan Pie");
-  const chickenPlate = plateAnalytics.getByTestId("plate-cost-bbq-chicken-thighs");
-  const porkPlate = plateAnalytics.getByTestId("plate-cost-braised-shredded-pork");
-  await expect(chickenPlate).toContainText(/\$2\.04.*\$2\.18/);
-  await expect(chickenPlate).toContainText(/17\.4%.*18\.5%/);
-  await expect(porkPlate).toContainText(/\$2\.41.*\$2\.54/);
-  await expect(porkPlate).toContainText(/20\.5%.*21\.7%/);
-  await expect(chickenPlate).not.toContainText("Select 1 base");
+  await smokehouseSides.nth(0).selectOption({ label: "Bbq Baked Beans" });
+  await smokehouseSides.nth(1).selectOption({ label: "Spicy Collard Greens" });
+  await smokehouseSides.nth(2).selectOption({ label: "Grilled Corn" });
+  await pickerGroup("Cornbread").locator("select").first().selectOption({ label: "Cornbread" });
+  const plateAdds = pickerGroup("Plate Add").locator("select");
+  await plateAdds.nth(0).selectOption({ label: "Barbecue Sauce" });
+  await plateAdds.nth(1).selectOption({ label: "Carochina Mustard Sauce" });
+  await pickerGroup("Extensions").locator("select").first().selectOption({ label: "Pecan Pie" });
+  const chickenPlate = plateAnalytics.getByTestId("reference-plate-171040");
+  const porkPlate = plateAnalytics.getByTestId("reference-plate-44948.1");
+  await expect(chickenPlate).toContainText(/\$2\.11.*\$2\.39/);
+  await expect(chickenPlate).toContainText(/18\.0%.*20\.3%/);
+  await expect(porkPlate).toContainText(/\$2\.68.*\$2\.96/);
+  await expect(porkPlate).toContainText(/22\.8%.*25\.2%/);
+  await expect(plateAnalytics).toContainText("Cost $1.56 · Sell $3.85 · Food cost 40.6%");
+  await expect(chickenPlate).not.toContainText("pecan pie");
+  await page.getByRole("button", { name: "Save Draft", exact: true }).click();
+  await expect.poll(() => storageWrites.length).toBeGreaterThan(0);
+  const savedGlobalRows = (storageWrites.at(-1)?.records || []).filter((record) => record["Station Key"] === "global" && record["Record Type"] === "Global Selection");
+  const savedHeader = (storageWrites.at(-1)?.records || []).find((record) => record["Record Type"] === "Rotation Header" && record["Café / Unit"] === "Nessie");
+  expect(savedHeader["Projected True Cost Low"]).toBeCloseTo(2.1104, 4);
+  expect(savedHeader["Projected True Cost High"]).toBeCloseTo(2.9583, 4);
+  expect(savedHeader).toMatchObject({ "Food Cost Range Low %": 18, "Food Cost Range High %": 25.2 });
+  expect(savedGlobalRows.find((record) => record["MRN"] === "171040")).toMatchObject({ "Menu / Concept": "AMZ: Smokehouse BBQ", "Station / Sub-Concept": "Big City BBQ", Portion: "5 oz portion", "True Cost": 0.9622, Price: 11.75 });
+  expect(savedGlobalRows.find((record) => record["MRN"] === "140479")).toMatchObject({ "Menu / Concept": "AMZ: Smokehouse BBQ", "Station / Sub-Concept": "Big City BBQ", Portion: "4 ounce", "True Cost": 0.2839 });
+  expect(savedGlobalRows.find((record) => record["MRN"] === "84769")).toMatchObject({ "Menu / Concept": "AMZ: Smokehouse BBQ", "Station / Sub-Concept": "Big City BBQ", Portion: "1 slice", "True Cost": 1.5618, Price: 3.85 });
+
+  await page.evaluate(() => window.localStorage.clear());
+  await page.reload();
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.locator("select").first().selectOption({ label: pilotWeek });
+  await page.getByRole("button", { name: exactName("North") }).click();
+  await page.getByRole("button", { name: exactName("Nessie") }).click();
+  const recalledGlobal = page.getByRole("heading", { name: "Global Station" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  const recalledPickerGroup = (title) => recalledGlobal.getByText(title, { exact: true }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await expect(recalledGlobal.locator("select").first()).toHaveValue("AMZ: Smokehouse BBQ");
+  await expect(recalledPickerGroup("Entrees").locator("select").nth(0)).toHaveValue(chickenReferenceId);
+  await expect(recalledPickerGroup("Entrees").locator("select").nth(1)).toHaveValue(porkReferenceId);
+  await expect(recalledGlobal.getByTestId("reference-plate-171040")).toContainText(/\$2\.11.*\$2\.39/);
+
+  await recalledGlobal.locator("select").first().selectOption("AMZ: Piccola Italia");
+  const piccolaEntrees = recalledPickerGroup("Entrees").locator("select");
+  await piccolaEntrees.nth(0).selectOption({ label: "Spaghetti Bolognese" });
+  await piccolaEntrees.nth(1).selectOption({ label: "Fresh Vegetable Lasagna" });
+  const piccolaSides = recalledPickerGroup("Sides").locator("select");
+  await piccolaSides.nth(0).selectOption({ label: "Balsamic Glazed Carrots" });
+  await piccolaSides.nth(1).selectOption({ label: "Lemon Green Beans With Capers" });
+  await recalledPickerGroup("Garlic Bread").locator("select").first().selectOption({ label: "Garlic Bread" });
+  const writesBeforeIncompleteSave = storageWrites.length;
+  await page.getByRole("button", { name: "Save Draft", exact: true }).click();
+  await expect.poll(() => storageWrites.length).toBeGreaterThan(writesBeforeIncompleteSave);
+  const incompleteHeader = (storageWrites.at(-1)?.records || []).find((record) => record["Record Type"] === "Rotation Header" && record["Café / Unit"] === "Nessie");
+  expect(incompleteHeader).toMatchObject({ "Projected True Cost Low": "", "Projected True Cost High": "", "Food Cost Range Low %": "", "Food Cost Range High %": "" });
+
+  await recalledGlobal.locator("select").first().selectOption("AMZ: Ohana");
+  await recalledPickerGroup("Entrees").locator("select").first().selectOption({ label: "Huli Huli Chicken" });
+  const ohanaRiceValue = await recalledPickerGroup("Rice").locator("option", { hasText: "jasmine rice" }).first().getAttribute("value");
+  await recalledGlobal.locator("select").first().selectOption("AMZ: Lotus");
+  await recalledPickerGroup("Entrees").locator("select").first().selectOption({ label: "Beef And Broccoli" });
+  const lotusRiceValue = await recalledPickerGroup("Base").locator("option", { hasText: "jasmine rice" }).first().getAttribute("value");
+  expect(ohanaRiceValue).not.toBe(lotusRiceValue);
+  expect(ohanaRiceValue).toContain("AMZ: Ohana");
+  expect(lotusRiceValue).toContain("AMZ: Lotus");
+
+  await recalledGlobal.locator("select").first().selectOption("AMZ: Wok");
+  await expect(recalledGlobal.getByText("Reference Station", { exact: true })).toBeVisible();
+  const stationSelect = recalledGlobal.locator("select").nth(1);
+  await expect(stationSelect.locator('option[value="Bibimbap - Wok"]')).toHaveCount(1);
+  await expect(stationSelect.locator('option[value="Japanese - Wok"]')).toHaveCount(1);
+  await expect(stationSelect.locator('option[value="Thai - Wok"]')).toHaveCount(1);
+
+  await recalledGlobal.locator("select").first().selectOption("AMZ: Breakfast");
+  await recalledGlobal.locator("select").nth(1).selectOption("Plates");
+  await recalledPickerGroup("Entrees").locator("select").first().selectOption({ label: "Breakfast Plate" });
+  await recalledPickerGroup("Side").locator("select").first().selectOption({ label: "Fresh Fruit Cup" });
+  const breakfastPrimaryId = await recalledPickerGroup("Entrees").locator("select").first().inputValue();
+  const breakfastSideId = await recalledPickerGroup("Side").locator("select").first().inputValue();
+  const breakfastPlate = recalledGlobal.getByTestId("reference-plate-210366");
+  await expect(breakfastPlate).toContainText("$2.32");
+  await expect(breakfastPlate).toContainText("21.3%");
+
+  const writesBeforeBreakfastSave = storageWrites.length;
+  await page.getByRole("button", { name: "Save Draft", exact: true }).click();
+  await expect.poll(() => storageWrites.length).toBeGreaterThan(writesBeforeBreakfastSave);
+  const breakfastRecords = storageWrites.at(-1)?.records || [];
+  const breakfastComponent = breakfastRecords.find((record) => record["Station Key"] === "global" && record["Selection Type"] === "Side");
+  const breakfastBlock = breakfastRecords.find((record) => record["Record Type"] === "Global Block");
+  const breakfastPrimary = breakfastRecords.find((record) => record["Station Key"] === "global" && record["Selection Type"] === "Entrée");
+  expect(breakfastComponent).toMatchObject({ "Station / Sub-Concept": "Sides & More", MRN: "13158.4", Portion: "4 oz parfait", "True Cost": 0.4283 });
+  storedRecords = [
+    breakfastComponent,
+    ...breakfastRecords.filter((record) => ![breakfastComponent, breakfastBlock, breakfastPrimary].includes(record)),
+    breakfastBlock,
+    breakfastPrimary,
+  ].filter(Boolean);
+
+  await page.evaluate(() => window.localStorage.clear());
+  await page.reload();
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.locator("select").first().selectOption({ label: pilotWeek });
+  await page.getByRole("button", { name: exactName("North") }).click();
+  await page.getByRole("button", { name: exactName("Nessie") }).click();
+  const shuffledBreakfast = page.getByRole("heading", { name: "Global Station" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  const shuffledBreakfastGroup = (title) => shuffledBreakfast.getByText(title, { exact: true }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await expect(shuffledBreakfast.locator("select").first()).toHaveValue("AMZ: Breakfast");
+  await expect(shuffledBreakfast.locator("select").nth(1)).toHaveValue("Plates");
+  await expect(shuffledBreakfastGroup("Entrees").locator("select").first()).toHaveValue(breakfastPrimaryId);
+  await expect(shuffledBreakfastGroup("Side").locator("select").first()).toHaveValue(breakfastSideId);
+  await expect(shuffledBreakfast.getByTestId("reference-plate-210366")).toContainText("21.3%");
 
   await page.locator("select").first().selectOption({ label: "Aug 24, 2026 - Aug 28, 2026" });
   const adjacentGlobal = page.getByRole("heading", { name: "Global Station" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
   await adjacentGlobal.locator("select").first().selectOption("AMZ: Ohana");
   await expect(adjacentGlobal.getByText("Selected Mix Food Cost %", { exact: true })).toBeVisible();
-  await expect(adjacentGlobal.getByTestId("nessie-global-plate-cost")).toHaveCount(0);
+  await expect(adjacentGlobal.getByTestId("nessie-global-reference-plate-cost")).toHaveCount(0);
 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);

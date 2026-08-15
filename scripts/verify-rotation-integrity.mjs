@@ -4,8 +4,10 @@ import path from "node:path";
 const root = process.cwd();
 const sourcePath = path.join(root, "src", "features", "neighborhood-rotations", "NeighborhoodRotations.jsx");
 const dataPath = path.join(root, "src", "data", "menuItems.json");
+const platePilotPath = path.join(root, "src", "features", "neighborhood-rotations", "foodCostPlatePilot.js");
 
 const source = fs.readFileSync(sourcePath, "utf8");
+const platePilotSource = fs.readFileSync(platePilotPath, "utf8");
 const rows = JSON.parse(fs.readFileSync(dataPath, "utf8"));
 
 const fail = (message) => {
@@ -74,20 +76,42 @@ const grillSpotlights = uniqueByName(rows.filter((row) =>
   isEntree(row)
 ));
 
-if (!/const NESSIE_GLOBAL_PLATE_COST_PILOT_WEEK = "2026-08-17";/.test(source) || !/district === "North" && cafe === "Nessie"/.test(source)) {
+if (!/const PILOT_WEEK_START = "2026-08-17";/.test(platePilotSource) || !/district === "North" && cafe === "Nessie"/.test(platePilotSource)) {
   fail("The per-plate food-cost pilot must stay scoped to North Nessie for the Aug 17, 2026 week.");
 }
 
-if (!/"AMZ: Piccola Italia"[\s\S]*"AMZ: Lemongrass \+ Lime"[\s\S]*"AMZ: Chiang Mai"/.test(source) || !/function perEntreePlateCostRanges/.test(source)) {
-  fail("The Nessie pilot must preserve its three one-side menu exceptions and per-entree calculator.");
+if (!/reference\.rows[\s\S]*filter\(\(row\) => !row\.menu\.startsWith\("AMZ\+RA:"\)\)/.test(platePilotSource) || !/itemWasteCost/.test(platePilotSource) || !/calculateReferencePlateRanges/.test(platePilotSource)) {
+  fail("The Nessie pilot must use the menu-isolated Markdown reference, Item + Waste Cost, and plate-build calculator without inferring RA concepts.");
 }
 
-if (!/starch\\s\*\\\/\\s\*grain/.test(source) || !/rice\|noodles\?\|lo mein\|yakisoba\|udon\|soba/.test(source)) {
-  fail("The Nessie pilot must recognize explicit starch/grain bases, including Smokehouse Mac & Cheese, while retaining rice/noodle fallback inference.");
+if (!/const selectedPlateIds = \[\.\.\.\(rotation\.entrees \|\| \[\]\), \.\.\.\(rotation\.sides \|\| \[\]\), \.\.\.\(rotation\.subRecipes \|\| \[\]\)\]/.test(source) || !/Extensions are excluded from every plate combination/.test(source)) {
+  fail("The Nessie reference calculator must exclude extensions from plate combinations and show them as separate economics.");
 }
 
-if (!/plateCostMenu=\{isNessieGlobalPlateCostPilot\(district, cafe, week\) \? rotation\.menu : ""\}/.test(source)) {
+if (!/referencePilot\s*\? <ReferencePlateCostAnalytics rotation=\{rotation\} model=\{referenceModel\} \/>\s*: <LiveAnalytics/.test(source)) {
   fail("The Nessie per-plate analytics must replace Mix Food Cost only inside the exact Global planner pilot scope.");
+}
+
+if (
+  !/const row = pilotReferenceRow \|\| selectedRowForName/.test(source)
+  || !/referenceIdForLoadedSelection[\s\S]*mrn: record\.mrn[\s\S]*portion: record\.portion/.test(source)
+  || !/pilotRows = isNessieGlobalPlateCostPilot/.test(source)
+  || !/const pilotReferenceStations = new Map\(\)/.test(source)
+) {
+  fail("The Nessie reference selections must save and recall with menu, station, MRN, and portion isolation.");
+}
+
+if (!/foodCostReferenceMenus/.test(source) || !/foodCostReferenceStations/.test(source) || !/pilotMenuOptions = referencePilot \? foodCostReferenceMenus\(\) : menuOptions/.test(source)) {
+  fail("The Nessie pilot must hide unclassified/unpriceable concepts and expose reference stations for multi-station menus.");
+}
+
+if (
+  !/const referenceResults = referencePilot[\s\S]*calculateReferencePlateRanges/.test(source)
+  || !/const referenceRanges = referenceResults\.length && referenceResults\.every\(\(range\) => range\.low != null\) \? referenceResults : \[\]/.test(source)
+  || !/const costRange = referencePilot/.test(source)
+  || !/const fcRange = referencePilot/.test(source)
+) {
+  fail("Saved Nessie pilot header analytics must use the same reference plate ranges instead of legacy mix math.");
 }
 
 if (!/const normalizedRecordCandidates = newestRecordsById\(records\)\.map\(normalizeLoadedRotationRecord\);/.test(source) || !/const normalizedRecords = normalizedRecordCandidates\.filter/.test(source)) {
