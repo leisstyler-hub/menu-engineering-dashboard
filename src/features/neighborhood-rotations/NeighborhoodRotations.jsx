@@ -6240,46 +6240,46 @@ function ReferencePlateCostAnalytics({ rotation, model }) {
   } : null;
   const extensions = (rotation.extensions || []).map(foodCostReferenceRow).filter(Boolean);
   return (
-    <div data-testid="nessie-global-reference-plate-cost" className="mt-4 rounded-lg border border-sky-200 bg-white p-4 shadow-sm">
-      <div className="flex flex-wrap items-start justify-between gap-2">
+    <div data-testid="nessie-global-reference-plate-cost" className="mt-5 rounded-lg border border-sky-200 bg-white p-5 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sky-700">Food Cost Reference Pilot</p>
-          <h3 className="mt-0.5 text-xl font-bold">Menu-Specific Plate Cost</h3>
-          <p className="mt-0.5 text-xs text-slate-600">Uses Item + Waste Cost from the plate-cost reference. Items stay isolated by menu, station, and MRN.</p>
+          <p className="text-sm uppercase tracking-[0.18em] text-sky-700">Food Cost Reference Pilot</p>
+          <h3 className="mt-1 text-2xl font-bold">Menu-Specific Plate Cost</h3>
+          <p className="mt-1 text-sm text-slate-600">Uses Item + Waste Cost from the plate-cost reference. Items stay isolated by menu, station, and MRN.</p>
         </div>
-        <span className="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-0.5 text-[11px] font-black text-sky-800">Nessie Global · Aug 17–21</span>
+        <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-black text-sky-800">Nessie Global · Aug 17–21</span>
       </div>
-      {!model.rows.length && <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-xs font-semibold text-amber-900">Select the menu’s station option to load its plate-build reference.</p>}
-      <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
-        <Mini title="Selected Plate Cost Range" value={moneyRange(overall)} sub="entrée + every required plate-build component" emphasize compact />
-        <Mini title="Plate Cost Source" value="Item + Waste Cost" sub="reference cost replaces MenuWorks true cost in this pilot only" emphasize compact />
+      {!model.rows.length && <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-900">Select the menu’s station option to load its plate-build reference.</p>}
+      <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3">
+        <Mini title="Selected Plate Cost Range" value={moneyRange(overall)} sub="entrée + every required plate-build component" emphasize />
+        <Mini title="Plate Cost Source" value="Item + Waste Cost" sub="reference cost replaces MenuWorks true cost in this pilot only" emphasize />
       </div>
-      <div className="mt-3 grid grid-cols-1 gap-2 lg:grid-cols-2">
+      <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-3">
         {ranges.map((range) => (
-          <div key={range.entree.id} className="rounded-xl border border-sky-200 bg-sky-50 p-3" data-testid={`reference-plate-${range.entree.mrn}`}>
-            <p className="text-sm font-black leading-tight text-slate-950">{range.entree.displayName}</p>
-            <p className="mt-0.5 text-[11px] leading-tight text-slate-500">MRN {range.entree.mrn} · {range.entree.plateBuild}</p>
+          <div key={range.entree.id} className="rounded-2xl border border-sky-200 bg-sky-50 p-4" data-testid={`reference-plate-${range.entree.mrn}`}>
+            <p className="font-black text-slate-950">{range.entree.displayName}</p>
+            <p className="mt-1 text-xs text-slate-500">MRN {range.entree.mrn} · {range.entree.plateBuild}</p>
             {range.missing?.length ? (
-              <p className="mt-2 text-xs font-semibold text-amber-800">Select {range.missing.join("; ")} to calculate every valid plate.</p>
+              <p className="mt-3 text-sm font-semibold text-amber-800">Select {range.missing.join("; ")} to calculate every valid plate.</p>
             ) : (
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                <div><p className="text-[11px] font-semibold leading-tight text-slate-500">Plate cost range</p><p className="mt-0.5 text-xl font-black leading-none">{moneyRange(range)}</p></div>
-                <div><p className="text-[11px] font-semibold leading-tight text-slate-500">Food cost % (entrée sell price)</p><p className="mt-0.5 text-lg font-black leading-none text-emerald-800">{pctRange({ low: range.lowPct, high: range.highPct })}</p><p className="mt-0.5 text-[11px] leading-tight text-slate-500">Sell {money(range.entree.sellPrice)}</p></div>
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <div><p className="text-xs font-semibold text-slate-500">Plate cost range</p><p className="text-2xl font-black">{moneyRange(range)}</p></div>
+                <div><p className="text-xs font-semibold text-slate-500">Food cost % (entrée sell price)</p><p className="text-xl font-black text-emerald-800">{pctRange({ low: range.lowPct, high: range.highPct })}</p><p className="text-xs text-slate-500">Sell {money(range.entree.sellPrice)}</p></div>
               </div>
             )}
           </div>
         ))}
-        {!ranges.length && model.rows.length > 0 && <p className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs font-semibold text-slate-600">Select an entrée to build plate-cost ranges.</p>}
+        {!ranges.length && model.rows.length > 0 && <p className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-600">Select an entrée to build plate-cost ranges.</p>}
       </div>
-      <div className="mt-3 border-t border-slate-200 pt-3">
-        <p className="text-xs font-black text-slate-900">Extensions · separate item economics</p>
-        <p className="mt-0.5 text-[11px] text-slate-500">Extensions are excluded from every plate combination.</p>
-        <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
+      <div className="mt-5 border-t border-slate-200 pt-4">
+        <p className="text-sm font-black text-slate-900">Extensions · separate item economics</p>
+        <p className="mt-1 text-xs text-slate-500">Extensions are excluded from every plate combination.</p>
+        <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2">
           {extensions.map((row) => {
             const foodCost = extensionFoodCost(row);
-            return <div key={row.id} className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2"><p className="text-xs font-bold">{row.displayName}</p><p className="mt-0.5 text-xs text-slate-600">Cost {row.itemWasteCost == null ? "—" : money(row.itemWasteCost)} · Sell {row.sellPrice == null ? "—" : money(row.sellPrice)} · Food cost {foodCost == null ? "—" : pct(foodCost)}</p></div>;
+            return <div key={row.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="font-bold">{row.displayName}</p><p className="mt-1 text-sm text-slate-600">Cost {row.itemWasteCost == null ? "—" : money(row.itemWasteCost)} · Sell {row.sellPrice == null ? "—" : money(row.sellPrice)} · Food cost {foodCost == null ? "—" : pct(foodCost)}</p></div>;
           })}
-          {!extensions.length && <p className="text-xs text-slate-500">Select an extension to see its individual cost, sell price, and food cost.</p>}
+          {!extensions.length && <p className="text-sm text-slate-500">Select an extension to see its individual cost, sell price, and food cost.</p>}
         </div>
       </div>
     </div>
@@ -6341,9 +6341,9 @@ function LiveAnalytics({ selectedItems, plateCostMenu = "" }) {
   );
 }
 
-function Mini({ title, value, sub, tone = "neutral", emphasize = false, compact = false }) {
+function Mini({ title, value, sub, tone = "neutral", emphasize = false }) {
   const cls = tone === "amber" ? "border-amber-200 bg-amber-50 text-amber-900" : tone === "green" ? "border-emerald-200 bg-emerald-50 text-emerald-900" : emphasize ? "border-sky-200 bg-sky-50 text-slate-900" : "border-slate-200 bg-white text-slate-900";
-  return <div className={`${compact ? "rounded-xl p-3" : "rounded-2xl p-4"} border ${cls}`}><p className={`${compact ? "text-[11px] leading-tight" : "text-xs"} font-semibold opacity-75`}>{title}</p><p className={`${compact ? (emphasize ? "text-2xl leading-none" : "text-xl leading-none") : (emphasize ? "text-4xl" : "text-2xl")} mt-1 font-bold`}>{value}</p><p className={`${compact ? "mt-1 text-[11px] leading-tight" : "mt-1 text-xs"} opacity-70`}>{sub}</p></div>;
+  return <div className={`rounded-2xl border p-4 ${cls}`}><p className="text-xs font-semibold opacity-75">{title}</p><p className={`${emphasize ? "text-4xl" : "text-2xl"} font-bold mt-1`}>{value}</p><p className="text-xs opacity-70 mt-1">{sub}</p></div>;
 }
 
 function isValueFromItems(value = "", items = []) {

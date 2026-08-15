@@ -289,7 +289,7 @@ test("Nessie Global pilot uses menu-isolated reference plate builds only for Aug
   await expect(porkPlate).toContainText(/22\.8%.*25\.2%/);
   await expect(plateAnalytics).toContainText("Cost $1.56 · Sell $3.85 · Food cost 40.6%");
   await expect(chickenPlate).not.toContainText("pecan pie");
-  const compactCardStyles = await plateAnalytics.evaluate((panel) => {
+  const restoredCardStyles = await plateAnalytics.evaluate((panel) => {
     const plate = panel.querySelector('[data-testid="reference-plate-171040"]');
     const summaryLabel = Array.from(panel.querySelectorAll("p")).find((element) => element.textContent === "Selected Plate Cost Range");
     const summary = summaryLabel?.parentElement;
@@ -301,11 +301,11 @@ test("Nessie Global pilot uses menu-isolated reference plate builds only for Aug
       summaryPadding: summary ? getComputedStyle(summary).paddingTop : "",
     };
   });
-  expect(parseFloat(compactCardStyles.panelPadding)).toBeLessThanOrEqual(16);
-  expect(parseFloat(compactCardStyles.platePadding)).toBeLessThanOrEqual(12);
-  expect(parseFloat(compactCardStyles.plateRadius)).toBeLessThanOrEqual(12);
-  expect(parseFloat(compactCardStyles.summaryPadding)).toBeLessThanOrEqual(12);
-  expect(compactCardStyles.plateContained).toBe(true);
+  expect(parseFloat(restoredCardStyles.panelPadding)).toBeGreaterThanOrEqual(18);
+  expect(parseFloat(restoredCardStyles.platePadding)).toBeGreaterThanOrEqual(14);
+  expect(parseFloat(restoredCardStyles.plateRadius)).toBeGreaterThanOrEqual(14);
+  expect(parseFloat(restoredCardStyles.summaryPadding)).toBeGreaterThanOrEqual(14);
+  expect(restoredCardStyles.plateContained).toBe(true);
   await page.getByRole("button", { name: "Save Draft", exact: true }).click();
   await expect.poll(() => storageWrites.length).toBeGreaterThan(0);
   const savedGlobalRows = (storageWrites.at(-1)?.records || []).filter((record) => record["Station Key"] === "global" && record["Record Type"] === "Global Selection");

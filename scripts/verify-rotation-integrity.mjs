@@ -93,11 +93,11 @@ if (!/referencePilot\s*\? <ReferencePlateCostAnalytics rotation=\{rotation\} mod
 }
 
 if (
-  !/data-testid="nessie-global-reference-plate-cost" className="mt-4 rounded-lg border border-sky-200 bg-white p-4/.test(source)
-  || !/className="rounded-xl border border-sky-200 bg-sky-50 p-3" data-testid=\{`reference-plate-/.test(source)
-  || !/sub="entrée \+ every required plate-build component" emphasize compact/.test(source)
+  !/data-testid="nessie-global-reference-plate-cost" className="mt-5 rounded-lg border border-sky-200 bg-white p-5/.test(source)
+  || !/className="rounded-2xl border border-sky-200 bg-sky-50 p-4" data-testid=\{`reference-plate-/.test(source)
+  || /emphasize compact/.test(source)
 ) {
-  fail("The Nessie reference analytics must keep its compact panel, summary, and plate-card presentation.");
+  fail("The Nessie reference analytics must retain the restored spacious pre-compact card presentation.");
 }
 
 if (
