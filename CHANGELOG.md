@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-08-15
+
+- Added `docs/FOOD_COST_PLATE_COSTING_REFERENCE.md`, the durable agent reference converted from Tyler's reviewed WebT cost workbook. It preserves all 1,566 item-cost rows and 53 menu concepts, retains MRNs as exact text, makes `Item + Waste Cost` the plate-cost input, records the confirmed non-RA plate formats and station-level grouping direction, and keeps every `AMZ+RA:` concept explicitly unclassified. This is documentation-only: no application logic, Supabase data, Smartsheet data, or menu source records changed.
+- Set visible app version to `2026.08.15.001-food-cost-plate-reference`.
+
 ## 2026-08-14
 
 - [Aug 14, 7:21 PM] Published the Smokehouse starch/grain base correction to GitHub `main` at application commit `5f22b9811b2b4fa13da44abcd58a2ad3c389ded3`. Vercel reported production deployment success, the live bundle contains version `2026.08.14.002-smokehouse-starch-base-fix`, and both required browser suites passed 39/39 against `https://project-d8v25.vercel.app`. The deployed regression proves `Mac & Cheese` completes Smokehouse plates for both Bbq Chicken Thighs and Braised Shredded Pork, all selected sub recipes remain included, and extensions remain excluded. Release state: LIVE.
