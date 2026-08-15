@@ -10,6 +10,12 @@ When a mission produces an approved product decision, Scribe adds an entry below
 
 ## Decisions
 
+### 2026-08-14 - Nessie Global per-plate food-cost pilot
+Alex approved a planner-only per-entree plate food-cost pilot for North/Nessie Global in the exact week `Aug 17, 2026 - Aug 21, 2026`. Standard menu plates consist of one selected entree, one automatically identified selected rice/noodle base, two selected non-base sides, and every selected sub recipe. The exact carb-heavy exception menus `AMZ: Piccola Italia`, `AMZ: Lemongrass + Lime`, and `AMZ: Chiang Mai` instead use one entree, one selected side, and every selected sub recipe. Extensions are excluded. When multiple valid bases or sides are selected, the displayed range uses the least- and most-expensive valid plate combinations, and every percentage divides by the entree retail price only. The pilot appears only in the live Nessie Global planner for that week; submitted recaps, Results, summaries, exports, persistence, and every other cafe/week retain existing behavior.
+Source: direct request and clarifications from Alex in the current Codex task on 2026-08-14. Admin of Record: Alex Neuse.
+Rejected alternatives: adding a separate Base selector; continuing to divide by combined entree-and-side retail; including extensions; applying sub recipes only to selected entrees; immediately scaling the calculation to other stations, cafes, weeks, recaps, Results, summaries, exports, or persistence.
+Implementation status note: implemented and under release verification as version `2026.08.14.001-nessie-global-plate-cost-pilot`; not yet published or live as of this entry.
+
 ### 2026-08-05 - East District `AMZ: Balti` duplicate exception
 Tyler approved a narrow Neighborhood Rotations duplicate-menu exception: within the East district only, `AMZ: Balti` may be selected by more than one cafe in the same week without blocking submission or counting as a leadership duplicate-menu problem. This exception applies only to the `AMZ: Balti` Global Menu label and only to East cafes; every other East duplicate rule stays unchanged, and South's existing `MENU_CONFLICT_GROUPS` behavior plus the `Re:Invent` exception remain unchanged.
 Source: Culinary Tools Project channel, thread rooted at event `e97feca4d30b05f595b4050d2c356452a921060dd2c680e5a74f246d0e0c1f4f`, Tyler request on 2026-08-05, with Chief's scoped mission assignment and subsequent Reviewer/Verifier clearance on the amended candidate. Admin of Record: Tyler.

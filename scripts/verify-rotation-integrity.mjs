@@ -74,6 +74,18 @@ const grillSpotlights = uniqueByName(rows.filter((row) =>
   isEntree(row)
 ));
 
+if (!/const NESSIE_GLOBAL_PLATE_COST_PILOT_WEEK = "2026-08-17";/.test(source) || !/district === "North" && cafe === "Nessie"/.test(source)) {
+  fail("The per-plate food-cost pilot must stay scoped to North Nessie for the Aug 17, 2026 week.");
+}
+
+if (!/"AMZ: Piccola Italia"[\s\S]*"AMZ: Lemongrass \+ Lime"[\s\S]*"AMZ: Chiang Mai"/.test(source) || !/function perEntreePlateCostRanges/.test(source)) {
+  fail("The Nessie pilot must preserve its three one-side menu exceptions and per-entree calculator.");
+}
+
+if (!/plateCostMenu=\{isNessieGlobalPlateCostPilot\(district, cafe, week\) \? rotation\.menu : ""\}/.test(source)) {
+  fail("The Nessie per-plate analytics must replace Mix Food Cost only inside the exact Global planner pilot scope.");
+}
+
 if (!/const normalizedRecordCandidates = newestRecordsById\(records\)\.map\(normalizeLoadedRotationRecord\);/.test(source) || !/const normalizedRecords = normalizedRecordCandidates\.filter/.test(source)) {
   fail("Rotation reload must dedupe newest saved rows before rebuilding cafe selections.");
 }

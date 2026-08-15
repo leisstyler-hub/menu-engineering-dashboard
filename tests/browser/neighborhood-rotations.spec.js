@@ -13,6 +13,16 @@ const futureWeeks = ["Jul 13, 2026 - Jul 17, 2026", "Jul 20, 2026 - Jul 24, 2026
 const smokeMenuItems = [
   { menu: "AMZ: Ohana", station: "Premium Mains", item: "Huli Huli Chicken", category: "entree", price: 11.75, trueCost: 3.45, calories: 410, enticingDescription: "Grilled island-style chicken.", allergens: "Soy" },
   { menu: "AMZ: Ohana", station: "Sides", item: "Mac Salad", category: "side", price: 2.55 },
+  { menu: "AMZ: Ohana", station: "Sides", item: "Jasmine Rice", category: "side", recipeCategory: "Grain", price: 2.55, trueCost: 0.5 },
+  { menu: "AMZ: Ohana", station: "Sides", item: "Rice Noodle Salad", category: "side", recipeCategory: "Side Salad", price: 2.55, trueCost: 0.2 },
+  { menu: "AMZ: Ohana", station: "Sides", item: "Blistered Green Beans", category: "side", recipeCategory: "Vegetable", price: 2.55, trueCost: 0.3 },
+  { menu: "AMZ: Ohana", station: "Sides", item: "Cucumber Carrot Slaw", category: "side", recipeCategory: "Vegetable", price: 2.55, trueCost: 0.6 },
+  { menu: "AMZ: Ohana", station: "Sub Recipes", item: "Huli Huli Glaze", category: "subRecipe", trueCost: 0.25 },
+  { menu: "AMZ: Ohana", station: "Extensions", item: "Guava Lemonade", category: "extension", price: 3.25, trueCost: 0.01 },
+  { menu: "AMZ: Piccola Italia", station: "Premium Mains", item: "Spaghetti Bolognese", category: "entree", price: 13, trueCost: 2 },
+  { menu: "AMZ: Piccola Italia", station: "Sides", item: "Balsamic Glazed Carrots", category: "side", price: 2.55, trueCost: 0.5 },
+  { menu: "AMZ: Piccola Italia", station: "Sides", item: "Garlic Bread", category: "side", price: 2.55, trueCost: 0.8 },
+  { menu: "AMZ: Piccola Italia", station: "Sub Recipes", item: "Marinara", category: "subRecipe", trueCost: 0.2 },
   { menu: "AMZ: Lotus", station: "Premium Mains", item: "Pork Hung Lay", category: "entree", price: 11.75 },
   { menu: "AMZ: Lotus", station: "Sides", item: "Papaya Salad", category: "side", price: 2.55 },
   { menu: "AMZ: Saffron", station: "Premium Mains", item: "Chicken Apricot Tagine", category: "entree", price: 11.75 },
@@ -218,6 +228,65 @@ test("North Commissary cafe label stays inside its selector button", async ({ pa
     expect(labelMetrics.scrollWidth).toBeLessThanOrEqual(labelMetrics.clientWidth);
     expect(labelMetrics.overflowWrap).toBe("anywhere");
   }
+});
+
+test("Nessie Global pilot calculates complete per-entree plate ranges only for Aug 17", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const pilotWeek = "Aug 17, 2026 - Aug 21, 2026";
+  await stubEmptyRotationBackbone(page);
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.locator("select").first().selectOption({ label: pilotWeek });
+  await page.getByRole("button", { name: exactName("North") }).click();
+  await page.getByRole("button", { name: exactName("Nessie") }).click();
+
+  const globalSection = page.getByRole("heading", { name: "Global Station" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await globalSection.locator("select").first().selectOption("AMZ: Ohana");
+  const pickerGroup = (title) => globalSection.getByText(title, { exact: true }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await pickerGroup("Entrees").locator("select").first().selectOption("Huli Huli Chicken");
+
+  const plateAnalytics = globalSection.getByTestId("nessie-global-plate-cost");
+  const huliPlate = plateAnalytics.getByTestId("plate-cost-huli-huli-chicken");
+  await expect(plateAnalytics.getByText("Per-Plate Food Cost Range", { exact: true })).toBeVisible();
+  await expect(plateAnalytics.getByText("Bases are identified automatically from selected rice/noodle choices; salads remain sides.", { exact: true })).toBeVisible();
+  await expect(globalSection.getByText("Selected Mix Food Cost %", { exact: true })).toHaveCount(0);
+  await expect(globalSection.getByText("Selected True Cost Range", { exact: true })).toBeVisible();
+  await expect(huliPlate).toContainText("Select 1 base and 2 distinct non-base sides");
+  await expect(huliPlate).not.toContainText("%");
+
+  const sideSelects = pickerGroup("Sides").locator("select");
+  await sideSelects.nth(0).selectOption("Jasmine Rice");
+  await sideSelects.nth(1).selectOption("Rice Noodle Salad");
+  await sideSelects.nth(2).selectOption("Blistered Green Beans");
+  await sideSelects.nth(3).selectOption("Cucumber Carrot Slaw");
+  await pickerGroup("Sub Recipes").locator("select").first().selectOption("Huli Huli Glaze");
+  await pickerGroup("Extensions").locator("select").first().selectOption("Guava Lemonade");
+
+  await expect(huliPlate).toContainText(/\$4\.70.*\$5\.10/);
+  await expect(huliPlate).toContainText(/40\.0%.*43\.4%/);
+  await expect(huliPlate.getByText("Plate true cost", { exact: true })).toBeVisible();
+  await expect(huliPlate.getByText("Food cost % (entrée retail)", { exact: true })).toBeVisible();
+  await expect(huliPlate).toContainText("Entrée + 1 base + 2 sides + all selected sub recipes · entrée retail only");
+
+  await globalSection.locator("select").first().selectOption("AMZ: Piccola Italia");
+  await pickerGroup("Entrees").locator("select").first().selectOption("Spaghetti Bolognese");
+  const piccolaSides = pickerGroup("Sides").locator("select");
+  await piccolaSides.nth(0).selectOption("Balsamic Glazed Carrots");
+  await piccolaSides.nth(1).selectOption("Garlic Bread");
+  await pickerGroup("Sub Recipes").locator("select").first().selectOption("Marinara");
+  const piccolaPlate = plateAnalytics.getByTestId("plate-cost-spaghetti-bolognese");
+  await expect(piccolaPlate).toContainText(/\$2\.70.*\$3\.00/);
+  await expect(piccolaPlate).toContainText(/20\.8%.*23\.1%/);
+  await expect(piccolaPlate).toContainText("Entrée + 1 side + all selected sub recipes · entrée retail only");
+
+  await page.locator("select").first().selectOption({ label: "Aug 24, 2026 - Aug 28, 2026" });
+  const adjacentGlobal = page.getByRole("heading", { name: "Global Station" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await adjacentGlobal.locator("select").first().selectOption("AMZ: Ohana");
+  await expect(adjacentGlobal.getByText("Selected Mix Food Cost %", { exact: true })).toBeVisible();
+  await expect(adjacentGlobal.getByTestId("nessie-global-plate-cost")).toHaveCount(0);
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
 });
 
 test("Neighborhood Rotations opens every cafe selector for future weeks", async ({ page }) => {

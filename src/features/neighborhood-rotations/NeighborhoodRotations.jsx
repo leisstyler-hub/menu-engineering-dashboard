@@ -82,6 +82,12 @@ const STATION_LABELS = {
 
 const MOBY_POP_UP_START_WEEK = "2026-08-31";
 const MOBY_POP_UP_DAYS = ["Tuesday", "Wednesday", "Thursday"];
+const NESSIE_GLOBAL_PLATE_COST_PILOT_WEEK = "2026-08-17";
+const ONE_SIDE_PLATE_MENUS = new Set([
+  "AMZ: Piccola Italia",
+  "AMZ: Lemongrass + Lime",
+  "AMZ: Chiang Mai",
+]);
 
 const formatDateKey = (date) => date.toISOString().slice(0, 10);
 const addDays = (date, days) => {
@@ -124,6 +130,8 @@ const weekIndexFromLabel = (weekLabel = "") => {
   if (Number.isNaN(weekStart.getTime())) return 0;
   return Math.max(0, Math.round((weekStart - ROTATION_CYCLE_START) / (7 * 24 * 60 * 60 * 1000)));
 };
+const isNessieGlobalPlateCostPilot = (district = "", cafe = "", week = "") =>
+  district === "North" && cafe === "Nessie" && parseWeekStart(week) === NESSIE_GLOBAL_PLATE_COST_PILOT_WEEK;
 const isMobyPopUpActive = (cafe = "", week = "") => cafe === "Dawson" && parseWeekStart(week) >= MOBY_POP_UP_START_WEEK;
 const cafeStationsForWeek = (cafe = "", week = "") => {
   const stations = CAFE_STATION_CONFIG[cafe] || ["global"];
@@ -3083,6 +3091,77 @@ function foodCostRangeNote(range) {
   return "plate range with sub recipes included";
 }
 
+function numericTrueCost(row) {
+  const raw = getTrueCost(row);
+  if (raw == null || String(raw).trim() === "") return null;
+  const value = Number(String(raw).replace(/[$,]/g, ""));
+  return Number.isFinite(value) && value >= 0 ? value : null;
+}
+
+function isPlateBaseSide(row) {
+  const identity = normalizeItemName(getItemIdentity(row));
+  const sourceCategory = `${row?.recipeCategory || ""} ${row?.category || ""}`.toLowerCase();
+  if (/side\s*salad|salad/.test(sourceCategory)) return false;
+  return /\b(rice|noodles?|lo mein|yakisoba|udon|soba)\b/.test(identity);
+}
+
+function distinctSelectionRows(rows = []) {
+  const seen = new Set();
+  return rows.filter((row) => {
+    const identity = normalizeItemName(getItemIdentity(row));
+    if (!identity || seen.has(identity)) return false;
+    seen.add(identity);
+    return true;
+  });
+}
+
+function twoItemCombinations(rows = []) {
+  const combinations = [];
+  rows.forEach((first, firstIndex) => {
+    rows.slice(firstIndex + 1).forEach((second) => combinations.push([first, second]));
+  });
+  return combinations;
+}
+
+function perEntreePlateCostRanges(items = [], menu = "") {
+  const entrees = distinctSelectionRows(items.filter((row) => selectionRole(row) === "entree"));
+  const sides = distinctSelectionRows(items.filter((row) => selectionRole(row) === "side"));
+  const subRecipes = items.filter((row) => selectionRole(row) === "subRecipe");
+  const oneSideMenu = ONE_SIDE_PLATE_MENUS.has(menu);
+  const bases = sides.filter(isPlateBaseSide);
+  const nonBaseSides = sides.filter((row) => !isPlateBaseSide(row));
+  const missingSharedCost = [...sides, ...subRecipes].some((row) => numericTrueCost(row) == null);
+  const subRecipeCost = subRecipes.reduce((sum, row) => sum + (numericTrueCost(row) || 0), 0);
+  const plateAddOns = oneSideMenu
+    ? sides.map((side) => [side])
+    : bases.flatMap((base) => twoItemCombinations(nonBaseSides).map((sidePair) => [base, ...sidePair]));
+  const compositionIssue = oneSideMenu
+    ? (sides.length ? "" : "Select at least 1 side to calculate a complete plate.")
+    : (bases.length && nonBaseSides.length >= 2 ? "" : "Select 1 base and 2 distinct non-base sides to calculate a complete plate.");
+
+  return entrees.map((entree) => {
+    const entreeCost = numericTrueCost(entree);
+    const retail = getSuggestedRetailPrice(entree);
+    let issue = compositionIssue;
+    if (!issue && missingSharedCost) issue = "Cost data is missing for a selected plate component.";
+    if (!issue && entreeCost == null) issue = "Entrée cost is missing.";
+    if (!issue && retail == null) issue = "Entrée retail price is missing.";
+    if (issue) return { name: getDisplayName(entree), issue, oneSideMenu };
+
+    const costs = plateAddOns.map((addOns) => entreeCost + subRecipeCost + addOns.reduce((sum, row) => sum + numericTrueCost(row), 0));
+    const low = Math.min(...costs);
+    const high = Math.max(...costs);
+    return {
+      name: getDisplayName(entree),
+      low,
+      high,
+      lowPct: low / retail,
+      highPct: high / retail,
+      oneSideMenu,
+    };
+  });
+}
+
 function getStationCostOverview(rotation, cafe, week = rotation?.week || "") {
   return getStationSelectionRows(rotation, cafe, week).map((row) => {
     const summary = foodSummary(row.items);
@@ -3717,6 +3796,7 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, presentati
             <CafeStationSection
               key={stationKey}
               stationKey={stationKey}
+              district={district}
               cafe={cafe}
               week={week}
               rotation={stationKey === "global" && hasDawsonMobyGlobalProjection ? draftPresentationRotation : rotation}
@@ -5318,11 +5398,11 @@ function StationPills({ cafe, stations }) {
 }
 
 function CafeStationSection(props) {
-  const { stationKey, cafe, week, rotation, previousRotation, previousWeek, menuOptions, stationOptions, categorized, updateRotation, updateSlot, updateGrill, updateLto, updateCarvery, updateCustomStation, summary, selectedItems, dawsonMobyGlobalOverride } = props;
+  const { stationKey, district, cafe, week, rotation, previousRotation, previousWeek, menuOptions, stationOptions, categorized, updateRotation, updateSlot, updateGrill, updateLto, updateCarvery, updateCustomStation, summary, selectedItems, dawsonMobyGlobalOverride } = props;
   let content = null;
   if (stationKey === "global") content = dawsonMobyGlobalOverride
     ? <DawsonMobyGlobalProjectionSection rotation={rotation} override={dawsonMobyGlobalOverride} week={week} />
-    : <GlobalSection cafe={cafe} week={week} rotation={rotation} previousRotation={previousRotation} previousWeek={previousWeek} menuOptions={menuOptions} stationOptions={stationOptions} categorized={categorized} updateRotation={updateRotation} updateSlot={updateSlot} summary={summary} selectedItems={selectedItems} />;
+    : <GlobalSection district={district} cafe={cafe} week={week} rotation={rotation} previousRotation={previousRotation} previousWeek={previousWeek} menuOptions={menuOptions} stationOptions={stationOptions} categorized={categorized} updateRotation={updateRotation} updateSlot={updateSlot} summary={summary} selectedItems={selectedItems} />;
   if (stationKey === "grill") content = <GrillSection cafe={cafe} rotation={rotation} updateGrill={updateGrill} />;
   if (stationKey === "salad") content = <SimpleLTOSection stationKey="salad" title={cafe === "Doppler" ? "Zane's Salad" : "Salad LTOs"} slots={Array.from({ length: stationSlots(cafe, "salad") }, (_, i) => cafe === "Doppler" ? `Fresh Five Salad ${i + 1}` : `Salad LTO ${i + 1}`)} values={rotation.ltos?.salad || EMPTY_ROTATION.ltos.salad} uploaded={rotation.uploadedLtos?.salad || []} updateLto={updateLto} complete={stationComplete(rotation, "salad")} />;
   if (stationKey === "pizza") content = <SimpleLTOSection stationKey="pizza" title={cafe === "Doppler" ? "Pizza LTOs" : "Pizza / Flatbread LTOs"} slots={cafe === "Doppler" ? ["Pizza LTO 1", "Pizza LTO 2"] : Array.from({ length: stationSlots(cafe, "pizza") }, (_, i) => `Pizza/Flatbread LTO ${i + 1}`)} values={rotation.ltos?.pizza || EMPTY_ROTATION.ltos.pizza} uploaded={rotation.uploadedLtos?.pizza || []} updateLto={updateLto} complete={stationComplete(rotation, "pizza")} slotPoolOverrides={cafe === "Doppler" ? [stationPool("pizza"), stationPool("pizza")] : null} optional={cafe === "Doppler"} />;
@@ -5443,7 +5523,7 @@ function PromotionSlotGroup({ title, values, onChange }) {
   );
 }
 
-function GlobalSection({ cafe, week, rotation, previousRotation, previousWeek, menuOptions, stationOptions, categorized, updateRotation, updateSlot, summary, selectedItems }) {
+function GlobalSection({ district, cafe, week, rotation, previousRotation, previousWeek, menuOptions, stationOptions, categorized, updateRotation, updateSlot, summary, selectedItems }) {
   const globalTitle = cafe === "Doppler" ? "Wok Xahn" : "Global Station";
   const cycle = globalCycleConfig(cafe, week);
   const promo = normalizePromotionOverride(rotation.promotionOverride || EMPTY_ROTATION.promotionOverride);
@@ -5580,7 +5660,13 @@ function GlobalSection({ cafe, week, rotation, previousRotation, previousWeek, m
           </div>
         )}
       </div>
-      {rotation.menu && !promotionCoversWeek(promo) && <LiveAnalytics summary={summary} selectedItems={globalSelectedRows(rotation)} />}
+      {rotation.menu && !promotionCoversWeek(promo) && (
+        <LiveAnalytics
+          summary={summary}
+          selectedItems={globalSelectedRows(rotation)}
+          plateCostMenu={isNessieGlobalPlateCostPilot(district, cafe, week) ? rotation.menu : ""}
+        />
+      )}
       <div className={`mt-5 grid grid-cols-1 xl:grid-cols-4 gap-5 ${promotionCoversWeek(promo) ? "hidden" : ""}`}>
         <PickerGroup title="Entrees" limit="up to 3" items={menuCategorized.entrees} values={rotation.entrees || ["", "", ""]} onChange={(index, value) => updateSlot("entrees", index, value)} />
         <PickerGroup title="Sides" limit="up to 4" items={menuCategorized.sides} values={rotation.sides || ["", "", "", ""]} onChange={(index, value) => updateSlot("sides", index, value)} />
@@ -6064,7 +6150,38 @@ function StationSelectedList({ title = "Items Description", items, complete = fa
   );
 }
 
-function LiveAnalytics({ selectedItems }) {
+function PerEntreePlateCostAnalytics({ items, menu }) {
+  const ranges = perEntreePlateCostRanges(items, menu);
+  return (
+    <div data-testid="nessie-global-plate-cost" className="rounded-2xl border border-sky-200 bg-sky-50 p-4 text-slate-900">
+      <p className="text-xs font-semibold opacity-75">Per-Plate Food Cost Range</p>
+      <p className="mt-1 text-xs text-slate-600">Bases are identified automatically from selected rice/noodle choices; salads remain sides.</p>
+      {!ranges.length && <p className="mt-2 text-sm font-semibold text-slate-600">Select an entrée to calculate each plate.</p>}
+      <div className="mt-2 space-y-2">
+        {ranges.map((range) => (
+          <div key={range.name} className="rounded-xl border border-sky-200 bg-white/80 p-3" data-testid={`plate-cost-${normalizeItemName(range.name).replace(/\s+/g, "-")}`}>
+            <p className="text-sm font-black text-slate-950">{range.name}</p>
+            {range.issue ? (
+              <p className="mt-1 text-sm font-semibold text-amber-800">{range.issue}</p>
+            ) : (
+              <>
+                <p className="mt-2 text-xs font-semibold text-slate-500">Plate true cost</p>
+                <p className="text-2xl font-bold">{moneyRange(range)}</p>
+                <p className="mt-2 text-xs font-semibold text-slate-500">Food cost % (entrée retail)</p>
+                <p className="text-lg font-black text-emerald-800">{pctRange({ low: range.lowPct, high: range.highPct })}</p>
+                <p className="mt-1 text-xs text-slate-600">
+                  {range.oneSideMenu ? "Entrée + 1 side" : "Entrée + 1 base + 2 sides"} + all selected sub recipes · entrée retail only
+                </p>
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LiveAnalytics({ selectedItems, plateCostMenu = "" }) {
   const trueCostRange = selectedTrueCostRange(selectedItems);
   const foodCostRange = selectedFoodCostRange(selectedItems);
   const immediateSelectedCost = selectedItems.filter((row) => getTrueCost(row) != null).reduce((sum, row) => sum + Number(getTrueCost(row) || 0), 0);
@@ -6080,7 +6197,9 @@ function LiveAnalytics({ selectedItems }) {
       </div>
       <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3">
         <Mini title="Selected True Cost Range" value={moneyRange(trueCostRange)} sub={trueCostRangeNote(trueCostRange)} emphasize />
-        <Mini title="Selected Mix Food Cost %" value={foodCostDisplayValue} sub={foodCostDisplayNote} emphasize />
+        {plateCostMenu
+          ? <PerEntreePlateCostAnalytics items={selectedItems} menu={plateCostMenu} />
+          : <Mini title="Selected Mix Food Cost %" value={foodCostDisplayValue} sub={foodCostDisplayNote} emphasize />}
       </div>
     </div>
   );

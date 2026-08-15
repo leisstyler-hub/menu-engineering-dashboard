@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-08-14
+
+- [Aug 14, 6:41 PM] Prepared a North/Nessie Global planner pilot for `Aug 17, 2026 - Aug 21, 2026` that replaces the station's `Selected Mix Food Cost %` with one live per-entree plate-cost card per selected entree. Standard menus calculate every valid entree + one selected rice/noodle base + two distinct non-base sides combination; `AMZ: Piccola Italia`, `AMZ: Lemongrass + Lime`, and `AMZ: Chiang Mai` calculate entree + one selected side. Every selected sub recipe is included, extensions are excluded, and percentages divide by entree retail only. The pilot explains that rice/noodle choices are automatically recognized as bases while salads remain sides, and labels each result as `Plate true cost` and `Food cost % (entrée retail)`. Missing composition, component cost, entree cost, or retail now produces an explicit issue instead of a misleading partial percentage. Added direct standard/exception/adjacent-week browser coverage and set visible version `2026.08.14.001-nessie-global-plate-cost-pilot`. Recaps, Results, summaries, exports, storage records, Supabase/Smartsheet authority, other cafes, and other weeks are unchanged.
+
 ## 2026-08-13
 
 - [Aug 13, 6:04 AM] Published the corrected North `Commissary` containment and Moby open-draft projection fix to GitHub `main` at commit `76fff0a88816dd091dbdfc25d3efdd727993278d`; Vercel reported production deployment success, and both required browser suites passed 38/38 against `https://project-d8v25.vercel.app`. The live regression verifies the full `Commissary` label stays inside its button at both 240px and 1024px with no horizontal label overflow. Release state: LIVE.
