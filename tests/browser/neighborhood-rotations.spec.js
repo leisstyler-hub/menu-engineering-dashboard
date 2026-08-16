@@ -38,16 +38,24 @@ const smokeMenuItems = [
   { menu: "AMZ: Saffron", station: "Sides", item: "Citrus Almond Rice", category: "side", price: 2.55 },
   { menu: "AMZ: Maya", station: "Premium Mains", item: "Chicken Adobo", category: "entree", price: 11.75 },
   { menu: "AMZ: Chang Mai", station: "Premium Mains", item: "Pork Hung Lay", category: "entree", price: 11.75 },
-  { menu: "AMZ: Grill Core", station: "Location Spotlights", item: "Char Siu Pork", category: "entree", price: 11.75 },
+  { menu: "AMZ: Grill Core", station: "Spotlights", item: "crispy buffalo chicken wrap", category: "entree", price: 11.45, trueCost: 3.0893, mrn: "132547.5", portion: "1 sandwich" },
+  { menu: "AMZ: Grill Core", station: "Spotlights", item: "carolina bbq burger", category: "entree", price: 11.45, trueCost: 2.9227, mrn: "63329.3", portion: "1 each" },
   { menu: "AMZ: Cafe Express Curated Salads", station: "Curated Salads", item: "Baja Crunch Salad", category: "entree", price: 11.45 },
   { menu: "AMZ: Cafe Express Curated Sandwiches", station: "Curated Sandwiches", item: "Chicken Caesar Wrap", category: "entree", price: 9.9 },
-  { menu: "AMZ: Fish Market", station: "Fish Market", item: "Steelhead Croquettes", category: "entree", price: 11.75 },
+  { menu: "AMZ: Fish Market", station: "Fish Market", item: "Steelhead Croquettes", category: "entree", price: 15.5, trueCost: 1.2688, mrn: "194276", portion: "2 each" },
   { menu: "AMZ: Fresh Five", station: "Grill", item: "Fresh 5 Black Bean Burger", category: "entree", price: 5 },
   { menu: "AMZ: Carvery", station: "Premium Mains", item: "Herb Roasted Turkey", category: "entree", price: 12.25, trueCost: 3.8, calories: 390 },
   { menu: "AMZ: Carvery", station: "Sides", item: "Roasted Root Vegetables", category: "side", price: 3.25, trueCost: 0.9, calories: 180 },
   { menu: "AMZ: Balti", station: "Premium Mains", item: "Balti Chicken", category: "entree", price: 11.75 },
-  { menu: "AMZ: House of Teriyaki", station: "Premium Mains", item: "Chicken Teriyaki", category: "entree", price: 11.75, trueCost: 2.318, calories: 375 },
-  { menu: "AMZ: House of Teriyaki", station: "Sides", item: "Cucumber Salad", category: "side", price: 2.55, trueCost: 0.928, calories: 125 },
+  { menu: "AMZ: House of Teriyaki", station: "Teriyaki", item: "Chicken Teriyaki", category: "entree", price: 11.75, trueCost: 2.0768, mrn: "83244.7", portion: "6 oz portion", calories: 375 },
+  { menu: "AMZ: House of Teriyaki", station: "Teriyaki", item: "Cucumber Salad", category: "side", price: 2.55, trueCost: 0.9397, mrn: "76874", portion: "4 ounce", calories: 125 },
+  { menu: "AMZ: House of Teriyaki", station: "Teriyaki", item: "Teriyaki Sauce", category: "subRecipe", trueCost: 0.1989, mrn: "83233", portion: "2 ounce" },
+  { menu: "AMZ: Anisa", station: "Lebanese Menu", item: "chicken souvlaki kebab plate", category: "entree", price: 11.75, trueCost: 1.9089, mrn: "216051", portion: "1 each" },
+  { menu: "AMZ: Anisa", station: "Lebanese Menu", item: "Grilled Vegetables", category: "side", price: 2.55, trueCost: 0.6853, mrn: "172546", portion: "4 ounce" },
+  { menu: "AMZ: Anisa", station: "Persian Menu", item: "crispy saffron rice with yogurt and eggs", category: "side", price: 2.55, trueCost: 1.104, mrn: "191654", portion: "1 cup" },
+  { menu: "AMZ: Anisa", station: "Lebanese Menu", item: "harissa relish", category: "subRecipe", trueCost: 0.49, mrn: "191490", portion: "2 floz" },
+  { menu: "AMZ: Anisa", station: "Persian Menu", item: "mezze butter", category: "subRecipe", trueCost: 0.4232, mrn: "191736", portion: "2 oz portion" },
+  { menu: "AMZ: Anisa", station: "Persian Menu", item: "sumac onion relish", category: "subRecipe", trueCost: 0.3775, mrn: "191726", portion: "1/4 cup" },
 ];
 
 function rotationRecord({ id, parent = "", type, cafe, week, district = "North", status = "Submitted", stationKey = "", selectionType = "", item = "", menu = "", slot = 1, promoName = "", promoDays = "" }) {
@@ -278,9 +286,10 @@ test("Nessie Global reference picker preserves exact plate builds while rollout 
   await smokehouseSides.nth(1).selectOption({ label: "Spicy Collard Greens" });
   await smokehouseSides.nth(2).selectOption({ label: "Grilled Corn" });
   await pickerGroup("Cornbread").locator("select").first().selectOption({ label: "Cornbread" });
-  const plateAdds = pickerGroup("Plate Add").locator("select");
-  await plateAdds.nth(0).selectOption({ label: "Barbecue Sauce" });
-  await plateAdds.nth(1).selectOption({ label: "Carochina Mustard Sauce" });
+  const subRecipes = pickerGroup("Sub Recipe").locator("select");
+  await subRecipes.nth(0).selectOption({ label: "Barbecue Sauce" });
+  await subRecipes.nth(1).selectOption({ label: "Carochina Mustard Sauce" });
+  const barbecueReferenceId = await subRecipes.nth(0).inputValue();
   await pickerGroup("Extensions").locator("select").first().selectOption({ label: "Pecan Pie" });
   const chickenPlate = plateAnalytics.getByTestId("reference-plate-171040");
   const porkPlate = plateAnalytics.getByTestId("reference-plate-44948.1");
@@ -316,6 +325,7 @@ test("Nessie Global reference picker preserves exact plate builds while rollout 
   expect(savedHeader).toMatchObject({ "Food Cost Range Low %": 18, "Food Cost Range High %": 25.2 });
   expect(savedGlobalRows.find((record) => record["MRN"] === "171040")).toMatchObject({ "Menu / Concept": "AMZ: Smokehouse BBQ", "Station / Sub-Concept": "Big City BBQ", Portion: "5 oz portion", "True Cost": 0.9622, Price: 11.75 });
   expect(savedGlobalRows.find((record) => record["MRN"] === "140479")).toMatchObject({ "Menu / Concept": "AMZ: Smokehouse BBQ", "Station / Sub-Concept": "Big City BBQ", Portion: "4 ounce", "True Cost": 0.2839 });
+  expect(savedGlobalRows.find((record) => record["MRN"] === "184229")).toMatchObject({ "Menu / Concept": "AMZ: Smokehouse BBQ", "Selection Type": "Sub Recipe", Portion: "2 ounce", "True Cost": 0.1786 });
   expect(savedGlobalRows.find((record) => record["MRN"] === "84769")).toMatchObject({ "Menu / Concept": "AMZ: Smokehouse BBQ", "Station / Sub-Concept": "Big City BBQ", Portion: "1 slice", "True Cost": 1.5618, Price: 3.85 });
 
   await page.evaluate(() => window.localStorage.clear());
@@ -329,6 +339,7 @@ test("Nessie Global reference picker preserves exact plate builds while rollout 
   await expect(recalledGlobal.locator("select").first()).toHaveValue("AMZ: Smokehouse BBQ");
   await expect(recalledPickerGroup("Entrees").locator("select").nth(0)).toHaveValue(chickenReferenceId);
   await expect(recalledPickerGroup("Entrees").locator("select").nth(1)).toHaveValue(porkReferenceId);
+  await expect(recalledPickerGroup("Sub Recipe").locator("select").nth(0)).toHaveValue(barbecueReferenceId);
   await expect(recalledGlobal.getByTestId("reference-plate-171040")).toContainText(/\$2\.11.*\$2\.39/);
 
   await recalledGlobal.locator("select").first().selectOption("AMZ: Piccola Italia");
@@ -535,6 +546,107 @@ test("reference plate cost covers split, Nitro, Moby Pop-Up, and LAX planner pat
   global = page.getByRole("heading", { name: "Global Station" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
   await global.locator("select").first().selectOption("AMZ: Ohana");
   await expect(global.getByTestId("nessie-global-reference-plate-cost")).toBeVisible();
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("Fish Market and Core Grill calculate automatic operator-ready plate options", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const storageWrites = [];
+  await stubEmptyRotationBackbone(page, { onStorageWrite: (body) => storageWrites.push(body) });
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.locator("select").first().selectOption({ label: "Aug 31, 2026 - Sep 4, 2026" });
+  await page.getByRole("button", { name: exactName("South") }).click();
+  await page.getByRole("button", { name: exactName("Re:Invent") }).click();
+
+  const fish = page.getByRole("heading", { name: "Fish Market LTO" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await fish.locator("select").first().selectOption({ label: "Steelhead Croquettes" });
+  const fishCost = fish.getByTestId("nessie-global-reference-plate-cost");
+  await expect(fishCost).toContainText("Automatic plate build: entrée + 2 unique Fish Market sides + 1 sauce");
+  await expect(fishCost).not.toContainText(/Select .*Side|Select .*Sub Recipe/i);
+  const fishLow = fishCost.getByTestId("fish-market-lowest-194276");
+  const fishHigh = fishCost.getByTestId("fish-market-highest-194276");
+  await expect(fishLow).toContainText("brown rice");
+  await expect(fishLow).toContainText("Roasted Potatoes");
+  await expect(fishLow).toContainText("tartar sauce");
+  await expect(fishLow).toContainText("$1.96");
+  await expect(fishLow).toContainText("12.6%");
+  await expect(fishHigh).toContainText("garlic lemon broccolini");
+  await expect(fishHigh).toContainText("garden salad");
+  await expect(fishHigh).toContainText("chimichurri sauce");
+  await expect(fishHigh).toContainText("$5.53");
+  await expect(fishHigh).toContainText("35.7%");
+
+  const grill = page.getByRole("heading", { name: "Core Grill Additions" }).locator("xpath=ancestor::div[contains(@class,'rounded-3xl')][1]");
+  const grillSelects = grill.locator("select");
+  const optionValue = (select, labelToken) => select.evaluate((element, expected) => Array.from(element.options).find((option) => option.label.toLowerCase().includes(expected.toLowerCase()))?.value || "", labelToken);
+  const crispyValue = await optionValue(grillSelects.nth(0), "buffalo");
+  const carolinaValue = await optionValue(grillSelects.nth(1), "carolina");
+  expect(crispyValue).not.toBe("");
+  expect(carolinaValue).not.toBe("");
+  await grillSelects.nth(0).selectOption(crispyValue);
+  await grillSelects.nth(1).selectOption(carolinaValue);
+  const grillCost = grill.getByTestId("nessie-global-reference-plate-cost");
+  await expect(grillCost).toContainText("No side selection needed");
+  for (const mrn of ["132547.5", "63329.3"]) {
+    const options = grillCost.getByTestId(`grill-side-options-${mrn}`);
+    await expect(options.getByTestId(`grill-side-option-${mrn}`)).toHaveCount(4);
+    for (const side of ["Sweet Potato Fries", "Waffle Fries", "Onion Rings", "garden salad"]) await expect(options.getByText(side, { exact: true })).toHaveCount(1);
+  }
+  await expect(grillCost.getByTestId("grill-side-options-132547.5")).toContainText(/\$3\.48.*30\.4%/s);
+  await expect(grillCost.getByTestId("grill-side-options-132547.5")).toContainText(/\$3\.62.*31\.7%/s);
+  await expect(grillCost.getByTestId("grill-side-options-132547.5")).toContainText(/\$4\.50.*39\.3%/s);
+  await expect(grillCost.getByTestId("grill-side-options-132547.5")).toContainText(/\$4\.51.*39\.4%/s);
+
+  await page.getByRole("button", { name: "Save Draft", exact: true }).click();
+  await expect.poll(() => storageWrites.length).toBeGreaterThan(0);
+  const savedNames = (storageWrites.at(-1)?.records || []).map((record) => record["Menu Item / Selection"]);
+  for (const inferred of ["brown rice", "Roasted Potatoes", "tartar sauce", "Sweet Potato Fries", "Waffle Fries", "Onion Rings", "garden salad"]) expect(savedNames).not.toContain(inferred);
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("Teriyaki and Anisa Sub Recipe selections satisfy normalized plate builds", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await stubEmptyRotationBackbone(page);
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.locator("select").first().selectOption({ label: "Aug 31, 2026 - Sep 4, 2026" });
+  await page.getByRole("button", { name: exactName("South") }).click();
+  await page.getByRole("button", { name: exactName("Nitro") }).click();
+  let global = page.getByRole("heading", { name: "Global Station" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await global.locator("select").first().selectOption("AMZ: House of Teriyaki");
+  const nitroBlock = global.getByRole("heading", { name: "Monday + Tuesday Proteins" }).locator("xpath=ancestor::div[contains(@class,'rounded-3xl')][1]");
+  const nitroPicker = (title) => nitroBlock.getByText(title, { exact: true }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await nitroPicker("Entrees").locator("select").first().selectOption({ label: "Chicken Teriyaki" });
+  await nitroPicker("Sides").locator("select").first().selectOption({ label: "Cucumber Salad" });
+  await nitroPicker("Sub Recipes").locator("select").first().selectOption({ label: "Teriyaki Sauce" });
+  const teriyakiCost = nitroBlock.getByTestId("nessie-global-reference-plate-cost");
+  await expect(teriyakiCost.getByTestId("reference-plate-83244.7")).toContainText("$3.22");
+  await expect(teriyakiCost.getByTestId("reference-plate-83244.7")).toContainText("27.4%");
+  await expect(teriyakiCost).not.toContainText("Plate Add");
+
+  await page.getByRole("button", { name: exactName("East") }).click();
+  await page.getByRole("button", { name: exactName("Blueshift") }).click();
+  global = page.getByRole("heading", { name: "Global Station" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  const anisaBlock = global.getByRole("heading", { name: "Monday + Tuesday" }).locator("xpath=ancestor::div[contains(@class,'rounded-3xl')][1]");
+  await anisaBlock.locator("select").first().selectOption("AMZ: Anisa");
+  const anisaPicker = (title) => anisaBlock.getByText(title, { exact: true }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await anisaPicker("Entrees").locator("select").first().selectOption("chicken souvlaki kebab plate");
+  await anisaPicker("Sides").locator("select").nth(0).selectOption("Grilled Vegetables");
+  await anisaPicker("Sides").locator("select").nth(1).selectOption("crispy saffron rice with yogurt and eggs");
+  await anisaPicker("Sub Recipes").locator("select").nth(0).selectOption("harissa relish");
+  await anisaPicker("Sub Recipes").locator("select").nth(1).selectOption("mezze butter");
+  await anisaPicker("Sub Recipes").locator("select").nth(2).selectOption("sumac onion relish");
+  const anisaCost = anisaBlock.getByTestId("nessie-global-reference-plate-cost");
+  const anisaPlate = anisaCost.getByTestId("reference-plate-216051");
+  await expect(anisaPlate).toContainText(/\$4\.50.*\$4\.61/);
+  await expect(anisaPlate).toContainText(/38\.3%.*39\.2%/);
+  await expect(anisaCost).not.toContainText("Plate Add");
+  await expect(anisaCost).not.toContainText(/Select .*Sub Recipe/i);
 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);

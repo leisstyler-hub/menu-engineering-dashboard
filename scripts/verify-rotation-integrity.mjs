@@ -5,9 +5,13 @@ const root = process.cwd();
 const sourcePath = path.join(root, "src", "features", "neighborhood-rotations", "NeighborhoodRotations.jsx");
 const dataPath = path.join(root, "src", "data", "menuItems.json");
 const platePilotPath = path.join(root, "src", "features", "neighborhood-rotations", "foodCostPlatePilot.js");
+const plateReferencePath = path.join(root, "docs", "FOOD_COST_PLATE_COSTING_REFERENCE.md");
+const generatedPlateReferencePath = path.join(root, "src", "data", "foodCostPlateReference.json");
 
 const source = fs.readFileSync(sourcePath, "utf8");
 const platePilotSource = fs.readFileSync(platePilotPath, "utf8");
+const plateReferenceSource = fs.readFileSync(plateReferencePath, "utf8");
+const generatedPlateReferenceSource = fs.readFileSync(generatedPlateReferencePath, "utf8");
 const rows = JSON.parse(fs.readFileSync(dataPath, "utf8"));
 
 const fail = (message) => {
@@ -82,6 +86,28 @@ if (!/const PILOT_WEEK_START = "2026-08-17";/.test(platePilotSource) || !/distri
 
 if (!/reference\.rows[\s\S]*filter\(\(row\) => !row\.menu\.startsWith\("AMZ\+RA:"\)\)/.test(platePilotSource) || !/itemWasteCost/.test(platePilotSource) || !/calculateReferencePlateRanges/.test(platePilotSource)) {
   fail("The Nessie pilot must use the menu-isolated Markdown reference, Item + Waste Cost, and plate-build calculator without inferring RA concepts.");
+}
+
+if (/\bPlate Adds?\b/.test(plateReferenceSource) || /\bPlate Adds?\b/.test(generatedPlateReferenceSource) || !/Legacy Plate Add terminology/.test(fs.readFileSync(path.join(root, "scripts", "build-food-cost-plate-reference.mjs"), "utf8"))) {
+  fail("The food-cost authority and generated reference must use canonical Sub Recipe terminology and reject legacy Plate Add labels.");
+}
+
+if (
+  !/fish-market-automatic/.test(platePilotSource)
+  || !/grill-side-extremes/.test(platePilotSource)
+  || !/FISH_MARKET_NON_SAUCE_MRNS = new Set\(\["1261"\]\)/.test(platePilotSource)
+  || !/normalize\(menu\) === "amz: anisa"/.test(platePilotSource)
+  || !/grillExtremeSideRows/.test(platePilotSource)
+  || !/Automatic plate build: entrée \+ 2 unique Fish Market sides \+ 1 sauce/.test(source)
+  || !/2 lowest-cost and 2 highest-cost unique Grill Core reference sides/.test(source)
+) {
+  fail("Fish Market, Core Grill, and Anisa must retain their approved automatic/reference component corrections.");
+}
+
+if (!/storageGroup: normalize\(label\)\.startsWith\("sub recipe"\) \? "subRecipes" : "sides"/.test(platePilotSource)
+  || !/const targetGroup = group\.storageGroup \|\| "sides"/.test(source)
+  || !/validSubRecipeIds/.test(source)) {
+  fail("Reference-generated Sub Recipe choices must use the planner's Sub Recipe storage group and preserve recall compatibility.");
 }
 
 if (!/const selectedPlateIds = items[\s\S]*rotation\?\.extensions/.test(source) || !/filter\(\(row\) => normalizeItemName\(row\.componentType\) === "extension"\)/.test(source) || !/Extensions are excluded from every plate combination/.test(source)) {

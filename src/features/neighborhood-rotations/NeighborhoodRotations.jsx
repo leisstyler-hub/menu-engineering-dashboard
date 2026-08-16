@@ -11,7 +11,7 @@ import { readLocalStorageJson, writeLocalStorageJson } from "../../shared/safeSt
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
 import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
-import { calculateReferencePlateRanges, extensionFoodCost, foodCostReferenceMenus, foodCostReferenceRow, foodCostReferenceRows, foodCostReferenceStations, isFoodCostPlatePilot, isFoodCostReferenceMenu, referenceIdForLoadedSelection, referencePickerModel } from "./foodCostPlatePilot.js";
+import { calculateReferencePlateRanges, extensionFoodCost, foodCostReferenceMenus, foodCostReferenceRow, foodCostReferenceRows, foodCostReferenceStations, isFoodCostPlatePilot, isFoodCostReferenceMenu, REFERENCE_CALCULATION_PROFILES, referenceIdForLoadedSelection, referencePickerModel } from "./foodCostPlatePilot.js";
 
 const DISTRICTS = {
   South: ["Doppler", "Day 1", "Nitro", "Re:Invent"],
@@ -5605,22 +5605,33 @@ function GlobalSection({ district, cafe, week, rotation, previousRotation, previ
   const menuCategorized = categorize(globalMenuRows(rotation.menu, rotation.station));
   const carryover = carryoverGlobalBlock(previousRotation);
   const referenceModel = referencePilot ? referencePickerModel(rotation.menu, rotation.station, rotation.entrees || []) : null;
-  const referenceGroupValues = (group) => (rotation.sides || []).filter((id) => group.rows.some((row) => row.id === id));
+  const referenceGroupValues = (group) => [...(rotation[group.storageGroup] || []), ...(group.storageGroup === "subRecipes" ? rotation.sides || [] : [])]
+    .filter((id, index, values) => id && values.indexOf(id) === index && group.rows.some((row) => row.id === id));
   const updateReferenceGroup = (group, index, value) => {
     const groupIds = new Set(group.rows.map((row) => row.id));
-    const otherValues = (rotation.sides || []).filter((id) => id && !groupIds.has(id));
+    const targetGroup = group.storageGroup || "sides";
+    const otherValues = (rotation[targetGroup] || []).filter((id) => id && !groupIds.has(id));
     const values = referenceGroupValues(group);
     values[index] = value;
-    updateRotation({ sides: [...otherValues, ...values.filter(Boolean)], status: "Draft", submittedAt: "", updatedAt: nowStamp() });
+    const otherGroup = targetGroup === "subRecipes" ? "sides" : "subRecipes";
+    updateRotation({
+      [targetGroup]: [...otherValues, ...values.filter(Boolean)],
+      [otherGroup]: (rotation[otherGroup] || []).filter((id) => !groupIds.has(id)),
+      status: "Draft",
+      submittedAt: "",
+      updatedAt: nowStamp(),
+    });
   };
   const updateReferenceEntree = (index, value) => {
     const entrees = [...(rotation.entrees || EMPTY_ROTATION.entrees)];
     entrees[index] = value;
     const nextModel = referencePickerModel(rotation.menu, rotation.station, entrees);
-    const validComponentIds = new Set(nextModel.groups.flatMap((group) => group.rows.map((row) => row.id)));
+    const validSideIds = new Set(nextModel.groups.filter((group) => group.storageGroup !== "subRecipes").flatMap((group) => group.rows.map((row) => row.id)));
+    const validSubRecipeIds = new Set(nextModel.groups.filter((group) => group.storageGroup === "subRecipes").flatMap((group) => group.rows.map((row) => row.id)));
     updateRotation({
       entrees,
-      sides: (rotation.sides || []).filter((id) => validComponentIds.has(id)),
+      sides: (rotation.sides || []).filter((id) => validSideIds.has(id)),
+      subRecipes: [...(rotation.subRecipes || []), ...(rotation.sides || [])].filter((id, index, values) => validSubRecipeIds.has(id) && values.indexOf(id) === index),
       status: "Draft",
       submittedAt: "",
       updatedAt: nowStamp(),
@@ -6291,17 +6302,17 @@ function referenceMenuForPlannerItems(items = []) {
   return menus.length === 1 ? menus[0] : "";
 }
 
-function PlannerReferencePlateCost({ week, menu, station = "", items = [], promotionActive = false, scopeLabel = "" }) {
+function PlannerReferencePlateCost({ week, menu, station = "", items = [], promotionActive = false, scopeLabel = "", calculationProfile = "" }) {
   const resolvedMenu = isFoodCostReferenceMenu(menu) ? menu : referenceMenuForPlannerItems(items);
   if (!isReferencePlateCostRolloutWeek(week) || promotionActive || !resolvedMenu) return null;
-  return <ReferencePlateCostAnalytics menu={resolvedMenu} station={station} items={items} scopeLabel={scopeLabel} />;
+  return <ReferencePlateCostAnalytics menu={resolvedMenu} station={station} items={items} scopeLabel={scopeLabel} calculationProfile={calculationProfile} />;
 }
 
-function ReferencePlateCostAnalytics({ rotation = null, model = null, menu = rotation?.menu || "", station = rotation?.station || "", items = null, scopeLabel = "" }) {
+function ReferencePlateCostAnalytics({ rotation = null, model = null, menu = rotation?.menu || "", station = rotation?.station || "", items = null, scopeLabel = "", calculationProfile = "" }) {
   const selectedPlateIds = items
     ? referenceIdsForPlannerItems(menu, items)
     : [...(rotation?.entrees || []), ...(rotation?.sides || []), ...(rotation?.subRecipes || []), ...(rotation?.extensions || [])].filter(Boolean);
-  const ranges = calculateReferencePlateRanges(menu, station, selectedPlateIds);
+  const ranges = calculateReferencePlateRanges(menu, station, selectedPlateIds, { profile: calculationProfile });
   const completeRanges = ranges.filter((range) => range.low != null);
   const calculatedOverall = completeRanges.length ? {
     low: Math.min(...completeRanges.map((range) => range.low)),
@@ -6322,6 +6333,8 @@ function ReferencePlateCostAnalytics({ rotation = null, model = null, menu = rot
       : ranges.length
         ? "Complete plate selections required"
         : "Select an entrée";
+  const automaticFishMarket = calculationProfile === REFERENCE_CALCULATION_PROFILES.fishMarketAutomatic;
+  const automaticGrillSides = calculationProfile === REFERENCE_CALCULATION_PROFILES.grillSideExtremes;
   return (
     <div data-testid="nessie-global-reference-plate-cost" data-reference-plate-cost="true" className="mt-5 rounded-lg border border-sky-200 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -6334,6 +6347,8 @@ function ReferencePlateCostAnalytics({ rotation = null, model = null, menu = rot
       </div>
       {referenceUnavailable && <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-900">Reference data unavailable. No plate-cost range is calculated until every selected plate item has complete reference identity, cost, and entrée sell price.</p>}
       {!model?.rows?.length && !items && <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-900">Select the menu’s station option to load its plate-build reference.</p>}
+      {automaticFishMarket && <p className="mt-4 rounded-xl border border-sky-200 bg-sky-50 p-3 text-sm font-semibold text-sky-900">Automatic plate build: entrée + 2 unique Fish Market sides + 1 sauce. No side or sauce selection is needed.</p>}
+      {automaticGrillSides && <p className="mt-4 rounded-xl border border-sky-200 bg-sky-50 p-3 text-sm font-semibold text-sky-900">No side selection needed. Each selected Grill item is priced with the 2 lowest-cost and 2 highest-cost unique Grill Core reference sides.</p>}
       <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3">
         <Mini title="Selected Plate Cost Range" value={summaryValue} sub="entrée + every required plate-build component" emphasize />
         <Mini title="Plate Cost Source" value="Item + Waste Cost" sub="planner-only reference calculation" emphasize />
@@ -6347,6 +6362,30 @@ function ReferencePlateCostAnalytics({ rotation = null, model = null, menu = rot
               <p className="mt-3 text-sm font-semibold text-amber-800">Reference data unavailable. No calculated range is shown while any selected plate item lacks complete reference data.</p>
             ) : range.missing?.length ? (
               <p className="mt-3 text-sm font-semibold text-amber-800">{/cost|sell price/i.test(range.missing.join(" ")) ? "Reference data unavailable — " : "Select "}{range.missing.join("; ")} to calculate every valid plate.</p>
+            ) : range.profile === REFERENCE_CALCULATION_PROFILES.fishMarketAutomatic ? (
+              <div className="mt-3 grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2">
+                {[{ label: "Lowest-cost plate", outcome: range.lowOutcome }, { label: "Highest-cost plate", outcome: range.highOutcome }].map(({ label, outcome }) => (
+                  <div key={label} className="min-w-0 rounded-xl border border-sky-200 bg-white p-3" data-testid={`fish-market-${label.startsWith("Lowest") ? "lowest" : "highest"}-${range.entree.mrn}`}>
+                    <p className="text-xs font-black uppercase tracking-wide text-sky-800">{label}</p>
+                    <p className="mt-1 break-words text-sm font-bold text-slate-900">{outcome.items.map((row) => row.displayName).join(" · ")}</p>
+                    <p className="mt-2 text-xs font-semibold text-slate-500">Plate true cost</p>
+                    <p className="text-xl font-black">{money(outcome.cost)}</p>
+                    <p className="mt-1 text-xs font-semibold text-slate-500">Food cost % (entrée sell price)</p>
+                    <p className="text-lg font-black text-emerald-800">{pct(outcome.foodCostPct)}</p>
+                  </div>
+                ))}
+              </div>
+            ) : range.profile === REFERENCE_CALCULATION_PROFILES.grillSideExtremes ? (
+              <div className="mt-3 grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2" data-testid={`grill-side-options-${range.entree.mrn}`}>
+                {range.automaticOptions.map((outcome) => (
+                  <div key={outcome.items[0].id} className="min-w-0 rounded-xl border border-sky-200 bg-white p-3" data-testid={`grill-side-option-${range.entree.mrn}`}>
+                    <p className="text-xs font-black uppercase tracking-wide text-sky-800">{outcome.tier}</p>
+                    <p className="mt-1 break-words text-sm font-black text-slate-950">{outcome.items[0].displayName}</p>
+                    <p className="mt-2 text-sm font-semibold text-slate-700">Plate true cost <span className="font-black tabular-nums text-slate-950">{money(outcome.cost)}</span></p>
+                    <p className="text-sm font-semibold text-slate-700">Food cost <span className="font-black tabular-nums text-emerald-800">{pct(outcome.foodCostPct)}</span></p>
+                  </div>
+                ))}
+              </div>
             ) : (
               <div className="mt-3 grid grid-cols-2 gap-3">
                 <div><p className="text-xs font-semibold text-slate-500">Plate cost range</p><p className="text-2xl font-black">{moneyRange(range)}</p></div>
@@ -6561,7 +6600,13 @@ function GrillSection({ cafe, week, rotation, updateGrill }) {
           />
         </div>
       )}
-      <PlannerReferencePlateCost week={week} items={grillSelectedRows(rotation, { unique: true })} promotionActive={promoActive} scopeLabel={`${cafe} · ${grillTitle}`} />
+      <PlannerReferencePlateCost
+        week={week}
+        items={grillSelectedRows(rotation, { unique: true })}
+        promotionActive={promoActive}
+        scopeLabel={`${cafe} · ${grillTitle}`}
+        calculationProfile={REFERENCE_CALCULATION_PROFILES.grillSideExtremes}
+      />
       <StationSelectedList title="Items Description" items={grillSelectedRows(rotation, { unique: true })} complete={complete} />
     </div>
   );
@@ -6606,7 +6651,13 @@ function SimpleLTOSection({ cafe, week, stationKey, title, slots, values = [], u
           );
         })}
       </div>
-      <PlannerReferencePlateCost week={week} menu={referenceMenu} items={selected} scopeLabel={`${cafe} · ${title}`} />
+      <PlannerReferencePlateCost
+        week={week}
+        menu={referenceMenu}
+        items={selected}
+        scopeLabel={`${cafe} · ${title}`}
+        calculationProfile={stationKey === "fishMarket" ? REFERENCE_CALCULATION_PROFILES.fishMarketAutomatic : ""}
+      />
       <StationSelectedList title="Items Description" items={selected} complete={complete} />
     </CollapsibleStation>
   );

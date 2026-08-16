@@ -8,15 +8,19 @@
 - Treat MRNs as exact text identifiers. Never coerce, round, or numerically reformat them.
 - `Item + Waste Cost` is the item-level cost to use when calculating a plate. `Item Cost` and `Waste %` are retained for auditability.
 - Sides and extensions remain individually costed and priced even when they are also selectable components of an entrée plate.
+- `Sub Recipe` is the canonical planner-facing name for every composed plate component; generated application data must reject the retired label.
 - A blank row-level `Plate Build` generally means the item is an individually sold component or a component whose grouping rule is pending; it does not mean that its cost is zero.
 - All `AMZ+RA:` concepts are intentionally unclassified. Do not infer their component types, plate builds, grouping rules, special rules, or source-cost assumptions until directed.
-- Compatibility/grouping rules, special rules, and source-cost-gap remediation are deliberately pending. Use only the explicit formats and grouping direction below until those passes are completed.
+- Compatibility/grouping rules, special rules, and source-cost-gap remediation remain pending except for the explicit confirmed treatments below. Do not infer additional exceptions.
 
 ## Confirmed plate-format decisions
 
 | Concept | Confirmed treatment |
 | --- | --- |
+| Anisa | The combined planner may satisfy the entrée's two Side and two Sub Recipe requirements from either Lebanese or Persian reference stations, while all identities remain isolated to `AMZ: Anisa`. |
 | Cafe Express Soup | `1 Entree` |
+| Fish Market | Dedicated Fish Market LTO pricing automatically enumerates `1 Entree + 2 distinct Sides + 1 Sub Recipe sauce` from the same menu. MRN `1261` Lemon Wedge is not a sauce and is excluded from that automatic sauce pool. |
+| Grill Core | Each selected Spotlights sandwich is shown with four automatic individual plate outcomes: the two lowest-cost and two highest-cost unique Grill Core Sides, deduplicated by item/MRN/portion/cost. |
 | Pizzas & Flatbreads | `1 Entree` |
 | Street Eats | Group and calculate by station/concept (for example, Naan Nomad separately from Pho Dip). |
 | Taco Total | `1 Entree + 1 Bean Choice + 1 Protein Choice`. The listed bean and protein MRNs are the current reference set. |
@@ -28,44 +32,44 @@
 
 | Menu Concept | Stations | Plate Build / Treatment | Component Types | Item Rows | Review Status |
 | --- | --- | --- | --- | ---: | --- |
-| AMZ: Andes | Andes | Entree + Base + 2 Sides + Plate Add; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Side + Base; Side; Plate Add; Extension | 19 | Reviewed |
-| AMZ: Anisa | Lebanese Menu; Persian Menu | 1 Entree + 2 Sides + 2 Plate Adds; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Side; Plate Add; Extension | 30 | Reviewed |
+| AMZ: Andes | Andes | Entree + Base + 2 Sides + Sub Recipe; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Side + Base; Side; Sub Recipe; Extension | 19 | Reviewed |
+| AMZ: Anisa | Lebanese Menu; Persian Menu | 1 Entree + 2 Sides + 2 Sub Recipes; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Side; Sub Recipe; Extension | 30 | Reviewed |
 | AMZ: Atlas Noodle | Atlas Noodle | 1 Entree | Entree; Extension | 9 | Reviewed |
-| AMZ: Balti | Balti | 1 Entree + 2 Sides; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Side; Naan; Plate Add; Extension | 44 | Reviewed |
-| AMZ: Bibimbowl | Bibimbap | 1 Entree; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Plate Add; Extension | 10 | Reviewed |
+| AMZ: Balti | Balti | 1 Entree + 2 Sides; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Side; Naan; Sub Recipe; Extension | 44 | Reviewed |
+| AMZ: Bibimbowl | Bibimbap | 1 Entree; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Sub Recipe; Extension | 10 | Reviewed |
 | AMZ: Breakfast | Handhelds; Hot Cereal / Yogurt Bar; Sides & More; Plates | Plate + 1 Side; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Plate; Side; Topping; Extension | 94 | Reviewed |
 | AMZ: Cafe Express Curated Salads | Curated Salads | 1 Entree | Entree | 38 | Reviewed |
 | AMZ: Cafe Express Curated Sandwiches | Curated Sandwiches | 1 Entree | Entree; Side; Extension | 62 | Reviewed |
 | AMZ: Cafe Express Soup | Soup | 1 Entree | Entree | 70 | Reviewed |
-| AMZ: Carvery | Carvery Sandwiches; Premium Mains; Vegetarian Mains; Extensions; Sauces; Sides | 1 Entree + 2 Sides + 1 Plate Add; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Side; Plate Add; Extension | 122 | Reviewed |
-| AMZ: Cevicheria | Cevicheria | 1 Entree + 1 Chips + 1 Plate Add; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Side; Chips; Plate Add; Extension | 15 | Reviewed |
-| AMZ: Chaatwalla | Chaatwalla | 1 Entree + 1 Side; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY; Complimentary with each order of other station items | Entree; Side; Plate Add; Extension | 28 | Reviewed |
+| AMZ: Carvery | Carvery Sandwiches; Premium Mains; Vegetarian Mains; Extensions; Sauces; Sides | 1 Entree + 2 Sides + 1 Sub Recipe; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Side; Sub Recipe; Extension | 122 | Reviewed |
+| AMZ: Cevicheria | Cevicheria | 1 Entree + 1 Chips + 1 Sub Recipe; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Side; Chips; Sub Recipe; Extension | 15 | Reviewed |
+| AMZ: Chaatwalla | Chaatwalla | 1 Entree + 1 Side; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY; Complimentary with each order of other station items | Entree; Side; Sub Recipe; Extension | 28 | Reviewed |
 | AMZ: Chiang Mai | Chiang Mai | 1 Entree + Rice + Papaya Salad | Entree; Side; Extension | 11 | Reviewed |
 | AMZ: Ciudad | Ciudad | 1 Entree + 2 Sides | Entree; Side; Extension | 23 | Reviewed |
 | AMZ: Cypress | Cypress | 1 Entree + 2 Sides | Entree; Side; Extension | 23 | Reviewed |
-| AMZ: Fish Market | Fish Market; LTO | 1 Entree + 2 Sides + 1 Plate Add; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Side; Plate Add | 51 | Reviewed |
+| AMZ: Fish Market | Fish Market; LTO | 1 Entree + 2 Sides + 1 Sub Recipe; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Side; Sub Recipe | 51 | Reviewed |
 | AMZ: Fresh Five | Deli; Grill; Hibernate; Salad; Soup; Sides | 1 Entree | Entree; Side | 98 | Reviewed |
 | AMZ: Greens & Grains | Greens & Grains | Entree + Base; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Base | 39 | Reviewed |
 | AMZ: Grill Core | Grill Core; Spotlights | 1 Entree + 1 Side; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Side; Extension | 41 | Reviewed |
-| AMZ: Harvest Co. | Harvest Co. | 1 Entree + 2 Sides; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Side; Plate Add | 17 | Reviewed |
-| AMZ: House of Teriyaki | Teriyaki | Entree + Side + Plate Add; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Side; Plate Add | 13 | Reviewed |
+| AMZ: Harvest Co. | Harvest Co. | 1 Entree + 2 Sides; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Side; Sub Recipe | 17 | Reviewed |
+| AMZ: House of Teriyaki | Teriyaki | Entree + Side + Sub Recipe; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Side; Sub Recipe | 13 | Reviewed |
 | AMZ: Lemongrass + Lime | Lemongrass + Lime | 1 Entree + 1 Rice + 1 Side | Entree; Rice; Side; Extension | 23 | Reviewed |
-| AMZ: Lotus | Lotus | 1 Entree + 1 Base + 2 Sides; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Side; Base; Plate Add; Extension | 26 | Reviewed |
+| AMZ: Lotus | Lotus | 1 Entree + 1 Base + 2 Sides; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Side; Base; Sub Recipe; Extension | 26 | Reviewed |
 | AMZ: Masaya | Masaya | 1 Entree + 1 Base + 2 Sides | Entree; Base; Side; Extension | 19 | Reviewed |
 | AMZ: Ohana | Hawaiian | Entree + Rice + 2 Sides | Entree; Side; Rice; Extension | 23 | Reviewed |
-| AMZ: Pho | Pho | 1 Entree; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Plate Add | 7 | Reviewed |
+| AMZ: Pho | Pho | 1 Entree; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Sub Recipe | 7 | Reviewed |
 | AMZ: Piccola Italia | Piccola Italia | 1 Entree + 2 Sides + Garlic Bread | Entree; Side; Garlic Bread; Extension | 29 | Reviewed |
 | AMZ: Pizzas & Flatbreads | Flatbreads; Pizzas | 1 Entree | Entree; Side; Extension | 30 | Reviewed |
-| AMZ: Poke Counter | Poke | 1 Entree + 1 Base + 5 Toppings + 1 Plate Add; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Base; Plate Add; Topping | 26 | Reviewed |
-| AMZ: Porto | Piri Piri | 1 Entree + 2 Sides + 1 Plate Add; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Side; Plate Add; Extension | 12 | Reviewed |
-| AMZ: Roam BBQ | Roam BBQ | 1 Entree + 2 Sides + 4 Plate Adds; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Side; Plate Add; Extension | 24 | Reviewed |
+| AMZ: Poke Counter | Poke | 1 Entree + 1 Base + 5 Toppings + 1 Sub Recipe; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Base; Sub Recipe; Topping | 26 | Reviewed |
+| AMZ: Porto | Piri Piri | 1 Entree + 2 Sides + 1 Sub Recipe; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Side; Sub Recipe; Extension | 12 | Reviewed |
+| AMZ: Roam BBQ | Roam BBQ | 1 Entree + 2 Sides + 4 Sub Recipes; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Side; Sub Recipe; Extension | 24 | Reviewed |
 | AMZ: Saffron | Saffron | 1 Entree + 2 Sides | Entree; Side | 7 | Reviewed |
 | AMZ: Salt & Char | Salt & Char | 1 Entree + 1 Side; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Side; Extension | 17 | Reviewed |
-| AMZ: Smokehouse BBQ | Big City BBQ | 1 Entree + 2 Sides + Cornbread + 1 Plate Add; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Side; Cornbread; Plate Add; Extension | 30 | Reviewed |
-| AMZ: Street Eats | El Queso Birria; Fried Rice; Naan Nomad; Pho Dip; Quesadillas | Varies by station: group Naan Nomad, Pho Dip, and each other Street Eats station independently. | Entree; Side; Plate Add; Extension | 40 | Reviewed |
+| AMZ: Smokehouse BBQ | Big City BBQ | 1 Entree + 2 Sides + Cornbread + 1 Sub Recipe; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY | Entree; Side; Cornbread; Sub Recipe; Extension | 30 | Reviewed |
+| AMZ: Street Eats | El Queso Birria; Fried Rice; Naan Nomad; Pho Dip; Quesadillas | Varies by station: group Naan Nomad, Pho Dip, and each other Street Eats station independently. | Entree; Side; Sub Recipe; Extension | 40 | Reviewed |
 | AMZ: Taco Total | Taco Total | 1 Entree + 1 Bean Choice + 1 Protein Choice | Entree; Side; Base; Topping; Protein; Extension | 36 | Reviewed |
 | AMZ: Tavola Nova | Antipasti; Dolce; Primi; Secondi | Combo: 1 Antipasti + 1 Primi + 1 Secondi; Antipasti are also available a la carte. | Antipasti; Extension; Primi; Secondi | 18 | Reviewed |
-| AMZ: Wok | Bibimbap - Wok; Japanese - Wok; Lotus - Wok; Teriyaki - Wok; Thai - Wok; Vietnamese - Wok | Varies by station: group Vietnamese, Japanese, and each other Wok station independently. | Entree; Extension; Side; Rice; Plate Add | 95 | Reviewed |
+| AMZ: Wok | Bibimbap - Wok; Japanese - Wok; Lotus - Wok; Teriyaki - Wok; Thai - Wok; Vietnamese - Wok | Varies by station: group Vietnamese, Japanese, and each other Wok station independently. | Entree; Extension; Side; Rice; Sub Recipe | 95 | Reviewed |
 | AMZ: Yakisoba | Yakisoba | 1 Entree | Entree | 5 | Reviewed |
 | AMZ+RA: Barbanzo | RA BARBANZO | Unknown — intentionally blank / not yet classified. | Pita; Base | 38 | RA unknown — do not infer |
 | AMZ+RA: Bowl Inc | BOWL INC | Unknown — intentionally blank / not yet classified. |  | 8 | RA unknown — do not infer |
@@ -90,11 +94,11 @@ The tables below preserve the workbook's item records. `Protein` is the canonica
 
 | Menu Name | Station | Item | MRN | Portion | Component Type | Sell Price | Item Cost | Waste % | Item + Waste Cost | Food Cost % | Average Cost | Average Cost + Waste | Plate Build |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| AMZ: Andes | Andes | aji de gallina | 122251 | 8 ounce | Entree | 11.75 | 2.4732 | 0.04 | 2.5722 | 0.2189 | 2.2979 | 0.1863 | Entree + Base + 2 Sides + Plate Add |
-| AMZ: Andes | Andes | chicharron de langostino | 122254 | 5 ounce | Entree | 13 | 1.675 | 0.04 | 1.742 | 0.134 |  |  | Entree + Base + 2 Sides + Plate Add |
-| AMZ: Andes | Andes | lomo saltado | 122258 | 8 ounce | Entree | 13 | 3.7513 | 0.04 | 3.9013 | 0.3001 |  |  | Entree + Base + 2 Sides + Plate Add |
-| AMZ: Andes | Andes | peruvian stewed tofu | 122251.4 | 8 ounce | Entree | 11.75 | 1.4115 | 0.04 | 1.468 | 0.1249 |  |  | Entree + Base + 2 Sides + Plate Add |
-| AMZ: Andes | Andes | pollo a la brasa | 122260 | 1 piece | Entree | 11.75 | 1.7366 | 0.04 | 1.8061 | 0.1537 |  |  | Entree + Base + 2 Sides + Plate Add |
+| AMZ: Andes | Andes | aji de gallina | 122251 | 8 ounce | Entree | 11.75 | 2.4732 | 0.04 | 2.5722 | 0.2189 | 2.2979 | 0.1863 | Entree + Base + 2 Sides + Sub Recipe |
+| AMZ: Andes | Andes | chicharron de langostino | 122254 | 5 ounce | Entree | 13 | 1.675 | 0.04 | 1.742 | 0.134 |  |  | Entree + Base + 2 Sides + Sub Recipe |
+| AMZ: Andes | Andes | lomo saltado | 122258 | 8 ounce | Entree | 13 | 3.7513 | 0.04 | 3.9013 | 0.3001 |  |  | Entree + Base + 2 Sides + Sub Recipe |
+| AMZ: Andes | Andes | peruvian stewed tofu | 122251.4 | 8 ounce | Entree | 11.75 | 1.4115 | 0.04 | 1.468 | 0.1249 |  |  | Entree + Base + 2 Sides + Sub Recipe |
+| AMZ: Andes | Andes | pollo a la brasa | 122260 | 1 piece | Entree | 11.75 | 1.7366 | 0.04 | 1.8061 | 0.1537 |  |  | Entree + Base + 2 Sides + Sub Recipe |
 | AMZ: Andes | Andes | arroz chaufa | 122256 | 1 cup | Side + Base | 2.55 | 0.7236 | 0.04 | 0.7525 | 0.2951 | 0.6633 | 0.2601 |  |
 | AMZ: Andes | Andes | Cooked Quinoa | 73825.2 | 1 cup | Side + Base | 2.55 | 0.8754 | 0.04 | 0.9104 | 0.357 |  |  |  |
 | AMZ: Andes | Andes | jasmine rice | 5354.11 | 1 cup | Side + Base | 2.55 | 0.3144 | 0.04 | 0.3269 | 0.1282 |  |  |  |
@@ -105,22 +109,22 @@ The tables below preserve the workbook's item records. `Protein` is the canonica
 | AMZ: Andes | Andes | salsa criolla | 122262 | 4 ounce | Side | 2.55 | 0.7192 | 0.04 | 0.7479 | 0.2933 |  |  |  |
 | AMZ: Andes | Andes | solterito | 122263 | 4 ounce | Side | 2.55 | 0.5979 | 0.04 | 0.6218 | 0.2438 |  |  |  |
 | AMZ: Andes | Andes | yucca fries | 51228.1 | 4 ounce | Side | 2.55 | 0.5421 | 0.04 | 0.5638 | 0.2211 |  |  |  |
-| AMZ: Andes | Andes | aji amarillo dipping sauce | 122252 | 1 floz | Plate Add |  | 0.3682 | 0.04 | 0.3829 |  | 0.3509 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Andes | Andes | huacatay dipping sauce | 122255 | 1 floz | Plate Add |  | 0.4241 | 0.04 | 0.4411 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Andes | Andes | spicy rocoto dipping sauce | 122261 | 1 floz | Plate Add |  | 0.2198 | 0.04 | 0.2286 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Andes | Andes | aji amarillo dipping sauce | 122252 | 1 floz | Sub Recipe |  | 0.3682 | 0.04 | 0.3829 |  | 0.3509 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Andes | Andes | huacatay dipping sauce | 122255 | 1 floz | Sub Recipe |  | 0.4241 | 0.04 | 0.4411 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Andes | Andes | spicy rocoto dipping sauce | 122261 | 1 floz | Sub Recipe |  | 0.2198 | 0.04 | 0.2286 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 | AMZ: Andes | Andes | horchata almond pudding | 122265 | 1 each | Extension | 3.85 | 0.6619 | 0.04 | 0.6884 | 0.1788 | 0.6884 | 0.1788 |  |
 
 ### AMZ: Anisa
 
 | Menu Name | Station | Item | MRN | Portion | Component Type | Sell Price | Item Cost | Waste % | Item + Waste Cost | Food Cost % | Average Cost | Average Cost + Waste | Plate Build |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| AMZ: Anisa | Lebanese Menu | chicken souvlaki kebab plate | 216051 | 1 each | Entree | 11.75 | 1.8355 | 0.04 | 1.9089 | 0.1625 | 2.6261 | 0.2133 | 1 Entree + 2 Sides + 2 Plate Adds |
-| AMZ: Anisa | Lebanese Menu | lamb kofta kebab plate | 216051.1 | 1 each | Entree | 13 | 5.5671 | 0.04 | 5.7898 | 0.4454 |  |  | 1 Entree + 2 Sides + 2 Plate Adds |
-| AMZ: Anisa | Lebanese Menu | lemon herb halloumi kebab plate | 216051.2 | 1 serving(s) | Entree | 11.75 | 1.8491 | 0.04 | 1.923 | 0.1637 |  |  | 1 Entree + 2 Sides + 2 Plate Adds |
-| AMZ: Anisa | Persian Menu | sumac pistachio halloumi kebab plate | 216051.5 | 1 serving(s) | Entree | 11.75 | 1.8841 | 0.04 | 1.9595 | 0.1668 |  |  | 1 Entree + 2 Sides + 2 Plate Adds |
-| AMZ: Anisa | Persian Menu | sumac tomato eggplant plate | 216051.6 | 1 serving(s) | Entree | 11.75 | 1.0011 | 0.04 | 1.0412 | 0.0886 |  |  | 1 Entree + 2 Sides + 2 Plate Adds |
-| AMZ: Anisa | Persian Menu | za'atar lamb kofta kebab plate | 216051.3 | 1 serving(s) | Entree | 13 | 2.8518 | 0.04 | 2.9658 | 0.2281 |  |  | 1 Entree + 2 Sides + 2 Plate Adds |
-| AMZ: Anisa | Persian Menu | zaffron ember chicken plate | 216051.4 | 1 serving(s) | Entree | 11.75 | 2.687 | 0.04 | 2.7945 | 0.2378 |  |  | 1 Entree + 2 Sides + 2 Plate Adds |
+| AMZ: Anisa | Lebanese Menu | chicken souvlaki kebab plate | 216051 | 1 each | Entree | 11.75 | 1.8355 | 0.04 | 1.9089 | 0.1625 | 2.6261 | 0.2133 | 1 Entree + 2 Sides + 2 Sub Recipes |
+| AMZ: Anisa | Lebanese Menu | lamb kofta kebab plate | 216051.1 | 1 each | Entree | 13 | 5.5671 | 0.04 | 5.7898 | 0.4454 |  |  | 1 Entree + 2 Sides + 2 Sub Recipes |
+| AMZ: Anisa | Lebanese Menu | lemon herb halloumi kebab plate | 216051.2 | 1 serving(s) | Entree | 11.75 | 1.8491 | 0.04 | 1.923 | 0.1637 |  |  | 1 Entree + 2 Sides + 2 Sub Recipes |
+| AMZ: Anisa | Persian Menu | sumac pistachio halloumi kebab plate | 216051.5 | 1 serving(s) | Entree | 11.75 | 1.8841 | 0.04 | 1.9595 | 0.1668 |  |  | 1 Entree + 2 Sides + 2 Sub Recipes |
+| AMZ: Anisa | Persian Menu | sumac tomato eggplant plate | 216051.6 | 1 serving(s) | Entree | 11.75 | 1.0011 | 0.04 | 1.0412 | 0.0886 |  |  | 1 Entree + 2 Sides + 2 Sub Recipes |
+| AMZ: Anisa | Persian Menu | za'atar lamb kofta kebab plate | 216051.3 | 1 serving(s) | Entree | 13 | 2.8518 | 0.04 | 2.9658 | 0.2281 |  |  | 1 Entree + 2 Sides + 2 Sub Recipes |
+| AMZ: Anisa | Persian Menu | zaffron ember chicken plate | 216051.4 | 1 serving(s) | Entree | 11.75 | 2.687 | 0.04 | 2.7945 | 0.2378 |  |  | 1 Entree + 2 Sides + 2 Sub Recipes |
 | AMZ: Anisa | Lebanese Menu | Grilled Vegetables | 172546 | 4 ounce | Side | 2.55 | 0.6589 | 0.04 | 0.6853 | 0.2687 | 0.6882 | 0.2699 |  |
 | AMZ: Anisa | Lebanese Menu | harissa cauliflower and hummus | 181410.1 | 4 ounce | Side | 2.55 | 0.7118 | 0.04 | 0.7402 | 0.2903 |  |  |  |
 | AMZ: Anisa | Lebanese Menu | lemon basmati rice | 165425 | 1 cup | Side | 2.55 | 0.3961 | 0.04 | 0.412 | 0.1616 |  |  |  |
@@ -130,14 +134,14 @@ The tables below preserve the workbook's item records. `Protein` is the canonica
 | AMZ: Anisa | Persian Menu | Grilled Vegetables | 172546 | 4 ounce | Side | 2.55 | 0.6589 | 0.04 | 0.6853 | 0.2687 |  |  |  |
 | AMZ: Anisa | Persian Menu | harissa cauliflower and hummus | 181410.1 | 4 ounce | Side | 2.55 | 0.7118 | 0.04 | 0.7402 | 0.2903 |  |  |  |
 | AMZ: Anisa | Persian Menu | jewelled rice | 191690 | 1 cup | Side | 2.55 | 0.6364 | 0.04 | 0.6619 | 0.2596 |  |  |  |
-| AMZ: Anisa | Lebanese Menu | baba ghanoush | 24347.7 | 2 floz | Plate Add |  | 0.4169 | 0.04 | 0.4336 |  | 0.4606 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Anisa | Lebanese Menu | harissa relish | 191490 | 2 floz | Plate Add |  | 0.4712 | 0.04 | 0.49 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Anisa | Lebanese Menu | tahini sauce | 61291.6 | 2 floz | Plate Add |  | 0.5982 | 0.04 | 0.6221 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Anisa | Lebanese Menu | whipped garlic toum | 144613 | 2 ounce | Plate Add |  | 0.279 | 0.04 | 0.2901 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Anisa | Persian Menu | cucumber yogurt dip | 78682.1 | 2 ounce | Plate Add |  | 0.5364 | 0.04 | 0.5578 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Anisa | Persian Menu | mezze butter | 191736 | 2 oz portion | Plate Add |  | 0.4069 | 0.04 | 0.4232 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Anisa | Persian Menu | red pepper pepita muhammara | 191730 | 1/4 cup | Plate Add |  | 0.4717 | 0.04 | 0.4906 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Anisa | Persian Menu | sumac onion relish | 191726 | 1/4 cup | Plate Add |  | 0.363 | 0.04 | 0.3775 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Anisa | Lebanese Menu | baba ghanoush | 24347.7 | 2 floz | Sub Recipe |  | 0.4169 | 0.04 | 0.4336 |  | 0.4606 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Anisa | Lebanese Menu | harissa relish | 191490 | 2 floz | Sub Recipe |  | 0.4712 | 0.04 | 0.49 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Anisa | Lebanese Menu | tahini sauce | 61291.6 | 2 floz | Sub Recipe |  | 0.5982 | 0.04 | 0.6221 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Anisa | Lebanese Menu | whipped garlic toum | 144613 | 2 ounce | Sub Recipe |  | 0.279 | 0.04 | 0.2901 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Anisa | Persian Menu | cucumber yogurt dip | 78682.1 | 2 ounce | Sub Recipe |  | 0.5364 | 0.04 | 0.5578 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Anisa | Persian Menu | mezze butter | 191736 | 2 oz portion | Sub Recipe |  | 0.4069 | 0.04 | 0.4232 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Anisa | Persian Menu | red pepper pepita muhammara | 191730 | 1/4 cup | Sub Recipe |  | 0.4717 | 0.04 | 0.4906 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Anisa | Persian Menu | sumac onion relish | 191726 | 1/4 cup | Sub Recipe |  | 0.363 | 0.04 | 0.3775 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 | AMZ: Anisa | Lebanese Menu | black tea | 191503 | 1 cup | Extension | 3.85 | 0.0695 | 0.04 | 0.0723 | 0.0188 | 1.448 | 0.253 |  |
 | AMZ: Anisa | Lebanese Menu | fresh olive feta mezze platter | 143944.1 | 1 plate | Extension | 6.5 | 3.3535 | 0.04 | 3.4876 | 0.5366 |  |  |  |
 | AMZ: Anisa | Lebanese Menu | sfoof cake | 216162 | 1 piece | Extension | 3.85 | 0.7351 | 0.04 | 0.7645 | 0.1986 |  |  |  |
@@ -201,10 +205,10 @@ The tables below preserve the workbook's item records. `Protein` is the canonica
 | AMZ: Balti | Balti | vegetable palao rice | 165741.22 | 1 cup | Side | 2.55 | 0.6192 | 0.04 | 0.6439 | 0.2525 |  |  |  |
 | AMZ: Balti | Balti | Garlic Butter Naan | 97343.4 | 1 each | Naan | 2.55 | 0.9887 | 0.04 | 1.0283 | 0.4032 | 1.0428 | 0.4089 | 1 Entree + 2 Sides |
 | AMZ: Balti | Balti | grilled naan | 155592 | 1 each | Naan | 2.55 | 1.0166 | 0.04 | 1.0573 | 0.4146 |  |  | 1 Entree + 2 Sides |
-| AMZ: Balti | Balti | Mango Chutney | 89516 | 2 ounce | Plate Add |  | 0.2693 | 0.04 | 0.2801 |  | 0.7523 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Balti | Balti | Raita Sauce | 81281 | 2 ounce | Plate Add |  | 0.3208 | 0.04 | 0.3336 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Balti | Balti | Spicy Cilantro Chutney | 81768 | 2 ounce | Plate Add |  | 0.1336 | 0.04 | 0.139 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Balti | Balti | tamarind-date chutney | 87890 | 2 ounce | Plate Add |  | 2.1697 | 0.04 | 2.2565 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Balti | Balti | Mango Chutney | 89516 | 2 ounce | Sub Recipe |  | 0.2693 | 0.04 | 0.2801 |  | 0.7523 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Balti | Balti | Raita Sauce | 81281 | 2 ounce | Sub Recipe |  | 0.3208 | 0.04 | 0.3336 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Balti | Balti | Spicy Cilantro Chutney | 81768 | 2 ounce | Sub Recipe |  | 0.1336 | 0.04 | 0.139 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Balti | Balti | tamarind-date chutney | 87890 | 2 ounce | Sub Recipe |  | 2.1697 | 0.04 | 2.2565 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 | AMZ: Balti | Balti | Mango Lassi | 105093 | 12 ounce | Extension | 3.85 | 1.4033 | 0.04 | 1.4594 | 0.3791 | 1.8467 | 0.4797 |  |
 | AMZ: Balti | Balti | Vegetable Samosa | 127582.1 | 1 each | Extension | 3.85 | 2.1481 | 0.04 | 2.2341 | 0.5803 |  |  |  |
 
@@ -217,9 +221,9 @@ The tables below preserve the workbook's item records. `Protein` is the canonica
 | AMZ: Bibimbowl | Bibimbap | gochujang pork bibimbap bowl | 145714.4 | 1 bowl | Entree | 11.75 | 4.25 | 0.04 | 4.42 | 0.3762 |  |  | 1 Entree |
 | AMZ: Bibimbowl | Bibimbap | gochujang tofu bibimbap bowl | 145714.2 | 1 bowl | Entree | 11.75 | 3.6858 | 0.04 | 3.8332 | 0.3262 |  |  | 1 Entree |
 | AMZ: Bibimbowl | Bibimbap | shrimp bibimbap bowl | 145714.5 | 1 bowl | Entree | 13 | 5.6685 | 0.04 | 5.8952 | 0.4535 |  |  | 1 Entree |
-| AMZ: Bibimbowl | Bibimbap | Ssamjang Sauce | 142259 | 1 floz | Plate Add |  | 0.2763 | 0.04 | 0.2873 |  | 0.3696 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Bibimbowl | Bibimbap | unagi sauce | 86977 | 1 floz | Plate Add |  | 0.1468 | 0.04 | 0.1527 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Bibimbowl | Bibimbap | yuzu mayo | 147394 | 2 tbsp | Plate Add |  | 0.6431 | 0.04 | 0.6689 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Bibimbowl | Bibimbap | Ssamjang Sauce | 142259 | 1 floz | Sub Recipe |  | 0.2763 | 0.04 | 0.2873 |  | 0.3696 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Bibimbowl | Bibimbap | unagi sauce | 86977 | 1 floz | Sub Recipe |  | 0.1468 | 0.04 | 0.1527 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Bibimbowl | Bibimbap | yuzu mayo | 147394 | 2 tbsp | Sub Recipe |  | 0.6431 | 0.04 | 0.6689 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 | AMZ: Bibimbowl | Bibimbap | Fried Egg | 48575.1 | 1 each | Extension | 2.25 | 0.4938 | 0.04 | 0.5135 | 0.2282 | 0.4429 | 0.1625 |  |
 | AMZ: Bibimbowl | Bibimbap | sesame peanut hotteok pancake | 210236 | 1 serving(s) | Extension | 3.85 | 0.3579 | 0.04 | 0.3723 | 0.0967 |  |  |  |
 
@@ -511,58 +515,58 @@ The tables below preserve the workbook's item records. `Protein` is the canonica
 
 | Menu Name | Station | Item | MRN | Portion | Component Type | Sell Price | Item Cost | Waste % | Item + Waste Cost | Food Cost % | Average Cost | Average Cost + Waste | Plate Build |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| AMZ: Carvery | Carvery Sandwiches | beef brisket sandwich | 10379.3 | 1 sandwich | Entree | 10.25 | 5.2252 | 0.04 | 5.4342 | 0.5302 | 2.23 | 0.3076 | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Carvery Sandwiches | black forest ham and brie panini | 33674.5 | 1 sandwich | Entree | 10.25 | 2.3287 | 0.04 | 2.4218 | 0.2363 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Carvery Sandwiches | Cajun Turkey | 76682.6 | 1 sandwich | Entree | 10.25 | 3.6619 | 0.04 | 3.8084 | 0.3716 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Carvery Sandwiches | classic beef french dip | 63618 | 1 each | Entree | 10.25 | 2.8265 | 0.04 | 2.9395 | 0.2868 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Carvery Sandwiches | cuban | 32415 | 1 sandwich | Entree | 10.25 | 2.0918 | 0.04 | 2.1755 | 0.2122 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Carvery Sandwiches | Porchetta Sandwich | 78027.1 | 1 sandwich | Entree | 10.25 | 2.5432 | 0.04 | 2.6449 | 0.258 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Carvery Sandwiches | portobello reuben | 38489.4 | 1 each | Entree | 9.2 | 3.0974 | 0.04 | 3.2213 | 0.3501 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Carvery Sandwiches | The Reuben | 84262.1 | 1 sandwich | Entree | 10.25 | 4.3262 | 0.04 | 4.4992 | 0.439 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Carvery Sandwiches | tuscan turkey sandwich | 20776.46 | 1 each | Entree | 10.25 | 2.7845 | 0.04 | 2.8959 | 0.2825 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Premium Mains | ancho honey glazed salmon | 131984 | 1 each | Entree | 13 | 3.4104 | 0.04 | 3.5468 | 0.2728 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Premium Mains | Beef Brisket | 9631 | 5 oz portion | Entree | 13 | 3.0127 | 0.04 | 3.1332 | 0.241 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Premium Mains | blackened steelhead trout | 191368 | 1 each | Entree | 13 | 2.594 | 0.04 | 2.6978 | 0.2075 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Premium Mains | brown sugar mustard ham | 44863 | 5 ounce | Entree | 11.75 | 1.4231 | 0.04 | 1.48 | 0.126 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Premium Mains | carved cajun turkey breast | 44763.7 | 5 ounce | Entree | 0.67 | 2.3454 | 0.04 | 2.4392 | 3.6407 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Premium Mains | Carved Pork Loin | 9010 | 5 oz portion | Entree | 11.75 | 1.1548 | 0.04 | 1.201 | 0.1022 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Premium Mains | cider braised pork shoulder | 88181.1 | 5 ounce | Entree | 13 | 2.1011 | 0.04 | 2.1852 | 0.1681 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Premium Mains | Corned Beef Brisket | 93475.1 | 5 ounce | Entree | 13 | 3.4376 | 0.04 | 3.5751 | 0.275 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Premium Mains | creamy eggplant and impossible bake | 44891.2 | 1 serving(s) | Entree | 11.75 | 2.5171 | 0.04 | 2.6178 | 0.2228 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Premium Mains | Flank Steak | 94006.1 | 5 ounce | Entree | 13 | 4.6395 | 0.04 | 4.8251 | 0.3712 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Premium Mains | Garlic Herb Roasted Leg of Lamb | 143753 | 5 ounce | Entree | 13 | 1.4553 | 0.04 | 1.5135 | 0.1164 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Premium Mains | garlic sage pork chop | 70829 | 5 ounce | Entree | 13 | 1.9673 | 0.04 | 2.046 | 0.1574 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Premium Mains | grilled steak | 3972.12 | 5 ounce | Entree | 13 | 6.7697 | 0.04 | 7.0405 | 0.5416 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Premium Mains | Herb Roasted Turkey Breast | 13573.4 | 5 ounce | Entree | 11.75 | 2.5656 | 0.04 | 2.6682 | 0.2271 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Premium Mains | herbed roast beef | 45120 | 5 ounce | Entree | 13 | 1.9667 | 0.04 | 2.0454 | 0.1573 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Premium Mains | Hny Caj Salmon | 166683 | 5 oz portion | Entree | 13 | 2.8413 | 0.04 | 2.955 | 0.2273 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Premium Mains | lemongrass pork | 118124.1 | 5 ounce | Entree | 13 | 1.9751 | 0.04 | 2.0542 | 0.158 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Premium Mains | Monster Meatloaf | 76432 | 5 ounce | Entree | 13 | 1.683 | 0.04 | 1.7503 | 0.1346 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Premium Mains | plant based meatloaf | 99064.2 | 1 piece | Entree | 11.75 | 3.0853 | 0.04 | 3.2087 | 0.2731 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Premium Mains | porchetta | 162512 | 5 ounce | Entree | 11.75 | 1.4719 | 0.04 | 1.5308 | 0.1303 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Premium Mains | Rosemary Crusted Pork Loin | 144240 | 5 ounce | Entree | 13 | 1.6596 | 0.03 | 1.7094 | 0.1315 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Premium Mains | rotisserie chicken | 4651.19 | 1 each | Entree | 13 | 2.8337 | 0.04 | 2.9471 | 0.2267 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Premium Mains | shrimp mozambique | 142016.4 | 5 ounce | Entree | 13 | 2.2682 | 0.04 | 2.3589 | 0.1815 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Premium Mains | Spiced Leg of Lamb | 143413 | 5 oz meat | Entree | 13 | 4.3187 | 0.04 | 4.4915 | 0.3455 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Premium Mains | spiced maple soy glazed steelhead | 194262 | 1 each | Entree | 13 | 3.137 | 0.04 | 3.2625 | 0.251 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Premium Mains | steelhead croquettes | 194276 | 2 each | Entree | 13 | 1.22 | 0.04 | 1.2688 | 0.0976 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Premium Mains | Traditional Meatloaf | 144069 | 5 ounce | Entree | 11.75 | 2.7827 | 0.04 | 2.894 | 0.2463 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Vegetarian Mains | butternut squash with toasted pecans | 134368.2 | 5 ounce | Entree | 11.75 | 0.5473 | 0.04 | 0.5692 | 0.0484 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
+| AMZ: Carvery | Carvery Sandwiches | beef brisket sandwich | 10379.3 | 1 sandwich | Entree | 10.25 | 5.2252 | 0.04 | 5.4342 | 0.5302 | 2.23 | 0.3076 | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Carvery Sandwiches | black forest ham and brie panini | 33674.5 | 1 sandwich | Entree | 10.25 | 2.3287 | 0.04 | 2.4218 | 0.2363 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Carvery Sandwiches | Cajun Turkey | 76682.6 | 1 sandwich | Entree | 10.25 | 3.6619 | 0.04 | 3.8084 | 0.3716 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Carvery Sandwiches | classic beef french dip | 63618 | 1 each | Entree | 10.25 | 2.8265 | 0.04 | 2.9395 | 0.2868 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Carvery Sandwiches | cuban | 32415 | 1 sandwich | Entree | 10.25 | 2.0918 | 0.04 | 2.1755 | 0.2122 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Carvery Sandwiches | Porchetta Sandwich | 78027.1 | 1 sandwich | Entree | 10.25 | 2.5432 | 0.04 | 2.6449 | 0.258 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Carvery Sandwiches | portobello reuben | 38489.4 | 1 each | Entree | 9.2 | 3.0974 | 0.04 | 3.2213 | 0.3501 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Carvery Sandwiches | The Reuben | 84262.1 | 1 sandwich | Entree | 10.25 | 4.3262 | 0.04 | 4.4992 | 0.439 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Carvery Sandwiches | tuscan turkey sandwich | 20776.46 | 1 each | Entree | 10.25 | 2.7845 | 0.04 | 2.8959 | 0.2825 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Premium Mains | ancho honey glazed salmon | 131984 | 1 each | Entree | 13 | 3.4104 | 0.04 | 3.5468 | 0.2728 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Premium Mains | Beef Brisket | 9631 | 5 oz portion | Entree | 13 | 3.0127 | 0.04 | 3.1332 | 0.241 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Premium Mains | blackened steelhead trout | 191368 | 1 each | Entree | 13 | 2.594 | 0.04 | 2.6978 | 0.2075 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Premium Mains | brown sugar mustard ham | 44863 | 5 ounce | Entree | 11.75 | 1.4231 | 0.04 | 1.48 | 0.126 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Premium Mains | carved cajun turkey breast | 44763.7 | 5 ounce | Entree | 0.67 | 2.3454 | 0.04 | 2.4392 | 3.6407 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Premium Mains | Carved Pork Loin | 9010 | 5 oz portion | Entree | 11.75 | 1.1548 | 0.04 | 1.201 | 0.1022 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Premium Mains | cider braised pork shoulder | 88181.1 | 5 ounce | Entree | 13 | 2.1011 | 0.04 | 2.1852 | 0.1681 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Premium Mains | Corned Beef Brisket | 93475.1 | 5 ounce | Entree | 13 | 3.4376 | 0.04 | 3.5751 | 0.275 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Premium Mains | creamy eggplant and impossible bake | 44891.2 | 1 serving(s) | Entree | 11.75 | 2.5171 | 0.04 | 2.6178 | 0.2228 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Premium Mains | Flank Steak | 94006.1 | 5 ounce | Entree | 13 | 4.6395 | 0.04 | 4.8251 | 0.3712 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Premium Mains | Garlic Herb Roasted Leg of Lamb | 143753 | 5 ounce | Entree | 13 | 1.4553 | 0.04 | 1.5135 | 0.1164 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Premium Mains | garlic sage pork chop | 70829 | 5 ounce | Entree | 13 | 1.9673 | 0.04 | 2.046 | 0.1574 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Premium Mains | grilled steak | 3972.12 | 5 ounce | Entree | 13 | 6.7697 | 0.04 | 7.0405 | 0.5416 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Premium Mains | Herb Roasted Turkey Breast | 13573.4 | 5 ounce | Entree | 11.75 | 2.5656 | 0.04 | 2.6682 | 0.2271 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Premium Mains | herbed roast beef | 45120 | 5 ounce | Entree | 13 | 1.9667 | 0.04 | 2.0454 | 0.1573 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Premium Mains | Hny Caj Salmon | 166683 | 5 oz portion | Entree | 13 | 2.8413 | 0.04 | 2.955 | 0.2273 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Premium Mains | lemongrass pork | 118124.1 | 5 ounce | Entree | 13 | 1.9751 | 0.04 | 2.0542 | 0.158 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Premium Mains | Monster Meatloaf | 76432 | 5 ounce | Entree | 13 | 1.683 | 0.04 | 1.7503 | 0.1346 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Premium Mains | plant based meatloaf | 99064.2 | 1 piece | Entree | 11.75 | 3.0853 | 0.04 | 3.2087 | 0.2731 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Premium Mains | porchetta | 162512 | 5 ounce | Entree | 11.75 | 1.4719 | 0.04 | 1.5308 | 0.1303 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Premium Mains | Rosemary Crusted Pork Loin | 144240 | 5 ounce | Entree | 13 | 1.6596 | 0.03 | 1.7094 | 0.1315 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Premium Mains | rotisserie chicken | 4651.19 | 1 each | Entree | 13 | 2.8337 | 0.04 | 2.9471 | 0.2267 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Premium Mains | shrimp mozambique | 142016.4 | 5 ounce | Entree | 13 | 2.2682 | 0.04 | 2.3589 | 0.1815 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Premium Mains | Spiced Leg of Lamb | 143413 | 5 oz meat | Entree | 13 | 4.3187 | 0.04 | 4.4915 | 0.3455 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Premium Mains | spiced maple soy glazed steelhead | 194262 | 1 each | Entree | 13 | 3.137 | 0.04 | 3.2625 | 0.251 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Premium Mains | steelhead croquettes | 194276 | 2 each | Entree | 13 | 1.22 | 0.04 | 1.2688 | 0.0976 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Premium Mains | Traditional Meatloaf | 144069 | 5 ounce | Entree | 11.75 | 2.7827 | 0.04 | 2.894 | 0.2463 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Vegetarian Mains | butternut squash with toasted pecans | 134368.2 | 5 ounce | Entree | 11.75 | 0.5473 | 0.04 | 0.5692 | 0.0484 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
 | AMZ: Carvery | Vegetarian Mains | ember roasted cabbage | 157988 | 2 ounce | Entree |  | 0.1732 | 0.04 | 0.1801 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 | AMZ: Carvery | Vegetarian Mains | espresso roasted carrots | 33992.194 | 1/4 cup | Entree |  | 0.118 | 0.04 | 0.1228 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 | AMZ: Carvery | Vegetarian Mains | Harissa Carrot | 142000 | 1/4 cup | Entree |  | 0.3604 | 0.04 | 0.3748 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 | AMZ: Carvery | Vegetarian Mains | herb smoked delicata squash | 158042 | 2 ounce | Entree |  | 0.6255 | 0.04 | 0.6505 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 | AMZ: Carvery | Vegetarian Mains | lemon pepper roasted cauliflower | 73729.66 | 1/4 cup | Entree |  | 0.2948 | 0.04 | 0.3066 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 | AMZ: Carvery | Vegetarian Mains | makhani roasted cauliflower | 73729.65 | 1/4 cup | Entree |  | 0.2595 | 0.04 | 0.2699 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Carvery | Vegetarian Mains | miso soy stuffed kabocha squash | 31917.5 | 1 each | Entree | 11.75 | 0.4628 | 0.04 | 0.4813 | 0.041 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Vegetarian Mains | miso tofu roulade with pecans | 194280 | 1 slice | Entree | 11.75 | 1.0506 | 0.04 | 1.0926 | 0.093 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
+| AMZ: Carvery | Vegetarian Mains | miso soy stuffed kabocha squash | 31917.5 | 1 each | Entree | 11.75 | 0.4628 | 0.04 | 0.4813 | 0.041 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Vegetarian Mains | miso tofu roulade with pecans | 194280 | 1 slice | Entree | 11.75 | 1.0506 | 0.04 | 1.0926 | 0.093 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
 | AMZ: Carvery | Vegetarian Mains | Mushroom Shawarma | 147085 | 2 oz portion | Entree |  | 0.9933 | 0.04 | 1.033 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Carvery | Vegetarian Mains | pecan and lentil stuffed pumpkins | 78151.1 | 1 each | Entree | 11.75 | 2.6152 | 0.04 | 2.7198 | 0.2315 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Vegetarian Mains | plant based meatloaf | 99064.2 | 5 ounce | Entree | 11.75 | 2.0508 | 0.04 | 2.1328 | 0.1815 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Carvery | Vegetarian Mains | plant-based cottage pie | 31680.13 | 1 serving(s) | Entree | 11.75 | 2.5528 | 0.04 | 2.6549 | 0.226 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
+| AMZ: Carvery | Vegetarian Mains | pecan and lentil stuffed pumpkins | 78151.1 | 1 each | Entree | 11.75 | 2.6152 | 0.04 | 2.7198 | 0.2315 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Vegetarian Mains | plant based meatloaf | 99064.2 | 5 ounce | Entree | 11.75 | 2.0508 | 0.04 | 2.1328 | 0.1815 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Carvery | Vegetarian Mains | plant-based cottage pie | 31680.13 | 1 serving(s) | Entree | 11.75 | 2.5528 | 0.04 | 2.6549 | 0.226 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
 | AMZ: Carvery | Vegetarian Mains | Roasted Sun Chokes | 139607 | 2 ounce | Entree |  | 0.9806 | 0.04 | 1.0199 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 | AMZ: Carvery | Vegetarian Mains | seared maitake | 187004.1 | 1/4 cup | Entree |  | 0.3431 | 0.04 | 0.3568 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Carvery | Vegetarian Mains | spiced roasted kabocha squash | 121459.3 | 4 ounce | Entree | 2.55 | 0.5105 | 0.04 | 0.5309 | 0.2082 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
+| AMZ: Carvery | Vegetarian Mains | spiced roasted kabocha squash | 121459.3 | 4 ounce | Entree | 2.55 | 0.5105 | 0.04 | 0.5309 | 0.2082 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
 | AMZ: Carvery | Vegetarian Mains | Turmeric Roasted Cauliflower | 165393 | 1/4 cup | Entree |  | 0.0855 | 0.04 | 0.0889 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 | AMZ: Carvery | Extensions | caramelized onion braids | 65369.2 | 1 each | Side | 2.55 | 0.5163 | 0.04 | 0.537 | 0.2106 | 0.7438 | 0.2741 |  |
 | AMZ: Carvery | Extensions | irish soda bread | 134228.1 | 1 serving(s) | Side | 2.55 | 0.1783 | 0.04 | 0.1855 | 0.0727 |  |  |  |
@@ -607,29 +611,29 @@ The tables below preserve the workbook's item records. `Protein` is the canonica
 | AMZ: Carvery | Sides | Vegetarian Collard Greens | 103139.2 | 1/2 cup | Side | 2.55 | 0.1472 | 0.04 | 0.1531 | 0.06 |  |  |  |
 | AMZ: Carvery | Sides | white bean kale salad | 35089.6 | 1/2 cup | Side | 2.55 | 0.9002 | 0.04 | 0.9362 | 0.3671 |  |  |  |
 | AMZ: Carvery | Sides | wild rice medley | 32748 | 1/2 cup | Side | 2.55 | 0.1919 | 0.04 | 0.1995 | 0.0783 |  |  |  |
-| AMZ: Carvery | Sauces | 1000 Island Dressing | 62351 | 2 ounce | Plate Add |  | 0.3437 | 0.04 | 0.3574 |  | 0.4307 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Carvery | Sauces | Apple juice, vinegar and Dijon mustard make a tangy vinaigrette | 14243.1 | 3 ounce | Plate Add |  | 0.7632 | 0.04 | 0.7938 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Carvery | Sauces | Apricot Preserves | 74413.1 | 2 ounce | Plate Add |  | 0.2826 | 0.04 | 0.2939 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Carvery | Sauces | Barbecue Sauce | 184229 | 2 floz | Plate Add |  | 0.206 | 0.04 | 0.2142 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Carvery | Sauces | Chimmichuri Sauce | 144721 | 2 floz | Plate Add |  | 0.6719 | 0.04 | 0.6988 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Carvery | Sauces | chipotle mayonnaise | 66851 | 2 ounce | Plate Add |  | 0.3486 | 0.04 | 0.3625 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Carvery | Sauces | Classic Hummus | 187183 | 2 ounce | Plate Add |  | 0.4841 | 0.04 | 0.5034 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Carvery | Sauces | Country Gravy | 81538 | 3-1/2 ounce | Plate Add |  | 0.5061 | 0.04 | 0.5264 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Carvery | Sauces | cranberry mayonnaise | 18485.8 | 2 ounce | Plate Add |  | 0.2272 | 0.04 | 0.2363 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Carvery | Sauces | Creamy Horseradish Sauce | 138929 | 2 ounce | Plate Add |  | 0.2565 | 0.04 | 0.2667 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Carvery | Sauces | Creole Sauce | 12036 | 4 tbsp | Plate Add |  | 0.2702 | 0.04 | 0.281 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Carvery | Sauces | honey mint yogurt sauce | 8264.1 | 2 floz | Plate Add |  | 0.4778 | 0.04 | 0.4969 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Carvery | Sauces | Honey Mustard Dressing | 27070.1 | 2 floz | Plate Add |  | 0.6588 | 0.04 | 0.6852 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Carvery | Sauces | Lemon Dill Aioli | 19400.8 | 2 ounce | Plate Add |  | 0.4232 | 0.04 | 0.4402 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Carvery | Sauces | muhammara with walnuts | 22652.5 | 2 tbsp | Plate Add |  | 0.3162 | 0.04 | 0.3289 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Carvery | Sauces | peanut satay sauce | 143103 | 2 ounce | Plate Add |  | 0.4305 | 0.04 | 0.4477 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Carvery | Sauces | pesto aioli | 140911 | 2 ounce | Plate Add |  | 0.6772 | 0.04 | 0.7043 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Carvery | Sauces | roasted garlic aioli | 14681.3 | 2 ounce | Plate Add |  | 0.4096 | 0.04 | 0.4259 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Carvery | Sauces | Sweet and Smoky Sauce | 77537.1 | 3 ounce | Plate Add |  | 0.5485 | 0.04 | 0.5704 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Carvery | Sauces | sweet and spicy honey mustard dressing | 10812.1 | 2 ounce | Plate Add |  | 0.3233 | 0.04 | 0.3362 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Carvery | Sauces | Vegan Brown Gravy | 133961 | 1 serving(s) | Plate Add |  |  | 0.04 |  |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Carvery | Sauces | Vegan Mayo | 108718 | 2 ounce | Plate Add |  | 0.3972 | 0.04 | 0.4131 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Carvery | Sauces | Yellow Mustard | 47957.1 | 2 ounce | Plate Add |  | 0.0879 | 0.04 | 0.0914 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Carvery | Sauces | 1000 Island Dressing | 62351 | 2 ounce | Sub Recipe |  | 0.3437 | 0.04 | 0.3574 |  | 0.4307 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Carvery | Sauces | Apple juice, vinegar and Dijon mustard make a tangy vinaigrette | 14243.1 | 3 ounce | Sub Recipe |  | 0.7632 | 0.04 | 0.7938 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Carvery | Sauces | Apricot Preserves | 74413.1 | 2 ounce | Sub Recipe |  | 0.2826 | 0.04 | 0.2939 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Carvery | Sauces | Barbecue Sauce | 184229 | 2 floz | Sub Recipe |  | 0.206 | 0.04 | 0.2142 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Carvery | Sauces | Chimmichuri Sauce | 144721 | 2 floz | Sub Recipe |  | 0.6719 | 0.04 | 0.6988 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Carvery | Sauces | chipotle mayonnaise | 66851 | 2 ounce | Sub Recipe |  | 0.3486 | 0.04 | 0.3625 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Carvery | Sauces | Classic Hummus | 187183 | 2 ounce | Sub Recipe |  | 0.4841 | 0.04 | 0.5034 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Carvery | Sauces | Country Gravy | 81538 | 3-1/2 ounce | Sub Recipe |  | 0.5061 | 0.04 | 0.5264 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Carvery | Sauces | cranberry mayonnaise | 18485.8 | 2 ounce | Sub Recipe |  | 0.2272 | 0.04 | 0.2363 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Carvery | Sauces | Creamy Horseradish Sauce | 138929 | 2 ounce | Sub Recipe |  | 0.2565 | 0.04 | 0.2667 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Carvery | Sauces | Creole Sauce | 12036 | 4 tbsp | Sub Recipe |  | 0.2702 | 0.04 | 0.281 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Carvery | Sauces | honey mint yogurt sauce | 8264.1 | 2 floz | Sub Recipe |  | 0.4778 | 0.04 | 0.4969 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Carvery | Sauces | Honey Mustard Dressing | 27070.1 | 2 floz | Sub Recipe |  | 0.6588 | 0.04 | 0.6852 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Carvery | Sauces | Lemon Dill Aioli | 19400.8 | 2 ounce | Sub Recipe |  | 0.4232 | 0.04 | 0.4402 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Carvery | Sauces | muhammara with walnuts | 22652.5 | 2 tbsp | Sub Recipe |  | 0.3162 | 0.04 | 0.3289 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Carvery | Sauces | peanut satay sauce | 143103 | 2 ounce | Sub Recipe |  | 0.4305 | 0.04 | 0.4477 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Carvery | Sauces | pesto aioli | 140911 | 2 ounce | Sub Recipe |  | 0.6772 | 0.04 | 0.7043 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Carvery | Sauces | roasted garlic aioli | 14681.3 | 2 ounce | Sub Recipe |  | 0.4096 | 0.04 | 0.4259 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Carvery | Sauces | Sweet and Smoky Sauce | 77537.1 | 3 ounce | Sub Recipe |  | 0.5485 | 0.04 | 0.5704 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Carvery | Sauces | sweet and spicy honey mustard dressing | 10812.1 | 2 ounce | Sub Recipe |  | 0.3233 | 0.04 | 0.3362 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Carvery | Sauces | Vegan Brown Gravy | 133961 | 1 serving(s) | Sub Recipe |  |  | 0.04 |  |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Carvery | Sauces | Vegan Mayo | 108718 | 2 ounce | Sub Recipe |  | 0.3972 | 0.04 | 0.4131 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Carvery | Sauces | Yellow Mustard | 47957.1 | 2 ounce | Sub Recipe |  | 0.0879 | 0.04 | 0.0914 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 | AMZ: Carvery | Extensions | Doughnuts | 83674 | 1 serving(s) | Extension | 2.3 | 0.3627 | 0.04 | 0.3772 | 0.164 | 0.7716 | 0.2224 |  |
 | AMZ: Carvery | Extensions | garlic knots with marinara | 16121.9 | 3 serving(s) | Extension | 3.85 | 1.1491 | 0.04 | 1.1951 | 0.3104 |  |  |  |
 | AMZ: Carvery | Extensions | Polenta Frita | 135046 | 5 serving(s) | Extension | 3.85 | 0.7138 | 0.04 | 0.7424 | 0.1928 |  |  |  |
@@ -638,10 +642,10 @@ The tables below preserve the workbook's item records. `Protein` is the canonica
 
 | Menu Name | Station | Item | MRN | Portion | Component Type | Sell Price | Item Cost | Waste % | Item + Waste Cost | Food Cost % | Average Cost | Average Cost + Waste | Plate Build |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| AMZ: Cevicheria | Cevicheria | baja shrimp ceviche | 206968 | 6 ounce | Entree | 13 | 2.3765 | 0.04 | 2.4715 | 0.1901 | 2.091 | 0.1638 | 1 Entree + 1 Chips + 1 Plate Add |
-| AMZ: Cevicheria | Cevicheria | coconut jackfruit ceviche | 132054.2 | 6 ounce | Entree | 11.75 | 1.3664 | 0.04 | 1.421 | 0.1209 |  |  | 1 Entree + 1 Chips + 1 Plate Add |
-| AMZ: Cevicheria | Cevicheria | scallop peruvian ceviche | 145020.1 | 6 ounce | Entree | 13 | 1.8564 | 0.04 | 1.9306 | 0.1485 |  |  | 1 Entree + 1 Chips + 1 Plate Add |
-| AMZ: Cevicheria | Cevicheria | whitefish peruvian ceviche | 145020.2 | 6 ounce | Entree | 13 | 2.443 | 0.04 | 2.5407 | 0.1954 |  |  | 1 Entree + 1 Chips + 1 Plate Add |
+| AMZ: Cevicheria | Cevicheria | baja shrimp ceviche | 206968 | 6 ounce | Entree | 13 | 2.3765 | 0.04 | 2.4715 | 0.1901 | 2.091 | 0.1638 | 1 Entree + 1 Chips + 1 Sub Recipe |
+| AMZ: Cevicheria | Cevicheria | coconut jackfruit ceviche | 132054.2 | 6 ounce | Entree | 11.75 | 1.3664 | 0.04 | 1.421 | 0.1209 |  |  | 1 Entree + 1 Chips + 1 Sub Recipe |
+| AMZ: Cevicheria | Cevicheria | scallop peruvian ceviche | 145020.1 | 6 ounce | Entree | 13 | 1.8564 | 0.04 | 1.9306 | 0.1485 |  |  | 1 Entree + 1 Chips + 1 Sub Recipe |
+| AMZ: Cevicheria | Cevicheria | whitefish peruvian ceviche | 145020.2 | 6 ounce | Entree | 13 | 2.443 | 0.04 | 2.5407 | 0.1954 |  |  | 1 Entree + 1 Chips + 1 Sub Recipe |
 | AMZ: Cevicheria | Cevicheria | cilantro lime rice | 41689.9 | 1/2 cup | Side | 2.55 | 0.3514 | 0.04 | 0.3655 | 0.1433 | 0.4106 | 0.161 |  |
 | AMZ: Cevicheria | Cevicheria | Shaved Radish Salad | 93033.1 | 110 g | Side | 2.55 | 0.4382 | 0.04 | 0.4558 | 0.1787 |  |  |  |
 | AMZ: Cevicheria | Cevicheria | bakers chips | 18733.1 | 1 cup | Chips |  | 0.1434 | 0.04 | 0.1491 |  | 0.3422 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
@@ -650,8 +654,8 @@ The tables below preserve the workbook's item records. `Protein` is the canonica
 | AMZ: Cevicheria | Cevicheria | Habanero Salsa | 41707.8 | 1 floz | Chips |  | 0.164 | 0.04 | 0.1705 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 | AMZ: Cevicheria | Cevicheria | House Fried Tortilla Chips | 41281.9 | 1-1/2 ounce | Chips |  | 0.0623 | 0.04 | 0.0648 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 | AMZ: Cevicheria | Cevicheria | purple potato chips | 145710.1 | 1 cup | Chips |  | 0.3587 | 0.04 | 0.3731 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Cevicheria | Cevicheria | Avocado Ranch Dressing | 24747.3 | 1 ounce | Plate Add |  | 0.238 | 0.04 | 0.2475 |  | 0.3508 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Cevicheria | Cevicheria | Molcajete Salsa | 87748 | 1 ounce | Plate Add |  | 0.4365 | 0.04 | 0.454 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Cevicheria | Cevicheria | Avocado Ranch Dressing | 24747.3 | 1 ounce | Sub Recipe |  | 0.238 | 0.04 | 0.2475 |  | 0.3508 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Cevicheria | Cevicheria | Molcajete Salsa | 87748 | 1 ounce | Sub Recipe |  | 0.4365 | 0.04 | 0.454 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 | AMZ: Cevicheria | Cevicheria | cinnamon churro | 28961.2 | 2 each | Extension | 3.85 | 0.652 | 0.04 | 0.6781 | 0.1761 | 0.6781 | 0.1761 |  |
 
 ### AMZ: Chaatwalla
@@ -672,9 +676,9 @@ The tables below preserve the workbook's item records. `Protein` is the canonica
 | AMZ: Chaatwalla | Chaatwalla | kale poriyal | 193119 | 1/2 cup | Side | 2.55 | 1.3848 | 0.04 | 1.4402 | 0.5648 |  |  |  |
 | AMZ: Chaatwalla | Chaatwalla | lemon basmati rice | 165425 | 1 cup | Side | 2.55 | 0.3961 | 0.04 | 0.412 | 0.1616 |  |  |  |
 | AMZ: Chaatwalla | Chaatwalla | Vegetable Biryani | 84099.2 | 8 ounce | Side | 2.55 | 0.9804 | 0.04 | 1.0196 | 0.3999 |  |  |  |
-| AMZ: Chaatwalla | Chaatwalla | Raita Sauce | 81281 | 2 ounce | Plate Add |  | 0.3208 | 0.04 | 0.3336 |  | 1.6619 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Chaatwalla | Chaatwalla | Spicy Cilantro Chutney | 81768 | 2 ounce | Plate Add |  | 0.1336 | 0.04 | 0.139 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Chaatwalla | Chaatwalla | tamarind-date chutney | 87890 | 4 ounce | Plate Add |  | 4.3394 | 0.04 | 4.513 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Chaatwalla | Chaatwalla | Raita Sauce | 81281 | 2 ounce | Sub Recipe |  | 0.3208 | 0.04 | 0.3336 |  | 1.6619 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Chaatwalla | Chaatwalla | Spicy Cilantro Chutney | 81768 | 2 ounce | Sub Recipe |  | 0.1336 | 0.04 | 0.139 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Chaatwalla | Chaatwalla | tamarind-date chutney | 87890 | 4 ounce | Sub Recipe |  | 4.3394 | 0.04 | 4.513 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 | AMZ: Chaatwalla | Chaatwalla | besan ladoo | 179496 | 3 each | Extension | 3.85 | 0.636 | 0.04 | 0.6614 | 0.1718 | 2.5041 | 0.4114 |  |
 | AMZ: Chaatwalla | Chaatwalla | chai tea | 131668 | 4 floz | Extension |  | 0.2097 | 0.04 | 0.218 |  |  |  | Complimentary with each order of other station items |
 | AMZ: Chaatwalla | Chaatwalla | chicken tikka kathi | 179454.2 | 1 each | Extension | 7.25 | 2.2409 | 0.04 | 2.3306 | 0.3215 |  |  |  |
@@ -763,36 +767,36 @@ The tables below preserve the workbook's item records. `Protein` is the canonica
 
 | Menu Name | Station | Item | MRN | Portion | Component Type | Sell Price | Item Cost | Waste % | Item + Waste Cost | Food Cost % | Average Cost | Average Cost + Waste | Plate Build |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| AMZ: Fish Market | Fish Market | Cajun Blackened Shrimp | 95621.3 | 5 ounce | Entree | 15.5 | 2.0367 | 0.04 | 2.1182 | 0.1367 | 4.0465 | 0.2847 | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Fish Market | Fish Market | Cajun Blackened Shrimp | 95621.3 | 4 ounce | Entree | 10.95 | 1.6294 | 0.04 | 1.6946 | 0.1548 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Fish Market | Fish Market | Classic Caesar Salad | 76761.4 | 11-1/2 ounce | Entree | 14.95 | 4.3732 | 0.04 | 4.5481 | 0.3042 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Fish Market | Fish Market | grilled cod | 16299.5 | 5 oz portion | Entree | 15.5 | 18.1308 | 0.04 | 18.856 | 1.2165 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Fish Market | Fish Market | grilled cod | 16299.5 | 1 serving(s) | Entree | 10.95 | 3.6262 | 0.04 | 3.7712 | 0.3444 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Fish Market | Fish Market | grilled herb barramundi | 194781 | 5 ounce | Entree | 15.5 | 4.6746 | 0.04 | 4.8616 | 0.3136 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Fish Market | Fish Market | grilled herb barramundi | 194781 | 1 each | Entree | 10.95 | 2.9814 | 0.04 | 3.1006 | 0.2832 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Fish Market | Fish Market | Grilled Steelhead Trout | 98380 | 5 ounce | Entree | 15.5 | 3.7373 | 0.04 | 3.8868 | 0.2508 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Fish Market | Fish Market | Grilled Steelhead Trout | 98380 | 1 each | Entree | 10.95 | 3.6292 | 0.04 | 3.7743 | 0.3447 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Fish Market | Fish Market | grilled tuna | 12989.14 | 1 serving(s) | Entree | 15.5 | 1.5389 | 0.04 | 1.6005 | 0.1033 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Fish Market | Fish Market | grilled tuna | 12989.14 | 1 serving(s) | Entree | 10.95 | 1.5389 | 0.04 | 1.6005 | 0.1462 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Fish Market | Fish Market | Herb Grilled Salmon | 135663.1 | 5 ounce | Entree | 15.5 | 3.1703 | 0.04 | 3.2972 | 0.2127 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Fish Market | Fish Market | Herb Grilled Salmon | 135663.1 | 4 ounce | Entree | 10.95 | 2.5363 | 0.04 | 2.6377 | 0.2409 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Fish Market | Fish Market | Lemon Herb Mahi Mahi | 57059.16 | 5 ounce | Entree | 15.5 | 5.9848 | 0.04 | 6.2242 | 0.4016 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Fish Market | Fish Market | Lemon Herb Mahi Mahi | 57059.16 | 1 each | Entree | 10.95 | 4.2546 | 0.04 | 4.4248 | 0.4041 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Fish Market | Fish Market | Louie Salad base | 78200.3 | 1 each | Entree | 14.95 | 2.1444 | 0.04 | 2.2301 | 0.1492 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Fish Market | Fish Market | Tuna Nicoise Salad, Lemon Vinaigrette | 32980.8 | 1 serving(s) | Entree | 15.5 | 3.4949 | 0.04 | 3.6347 | 0.2345 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Fish Market | LTO | baja grilled fish taco | 84484.1 | 2 each | Entree | 15.5 | 4.4702 | 0.04 | 4.649 | 0.2999 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Fish Market | LTO | BBQ Shrimp & Grits | 42120.8 | 1 plate | Entree | 15.5 | 2.8631 | 0.04 | 2.9776 | 0.1921 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Fish Market | LTO | crab cakes | 194073 | 2 each | Entree | 15.5 | 4.3174 | 0.04 | 4.4901 | 0.2897 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Fish Market | LTO | Fish and Chips | 134605 | 1 plate | Entree | 13 | 3.434 | 0.04 | 3.5713 | 0.2747 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Fish Market | LTO | grilled steelhead caesar sandwich | 194090 | 1 sandwich | Entree | 15.5 | 3.8326 | 0.04 | 3.9859 | 0.2572 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Fish Market | LTO | miso soy black cod | 189227.2 | 1 each | Entree | 15.5 | 7.6554 | 0.04 | 7.9616 | 0.5137 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Fish Market | LTO | Salmon Nicoise Salad | 4640.4 | 1 plate | Entree | 14.95 |  | 0.04 |  |  |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Fish Market | LTO | seafood cioppino | 44897.4 | 1 serving(s) | Entree | 15.5 |  | 0.04 |  |  |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Fish Market | LTO | shrimp and sausage gumbo | 147575 | 8 oz portion | Entree | 15.5 | 2.1516 | 0.04 | 2.2376 | 0.1444 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Fish Market | LTO | shrimp po boy | 77597.14 | 1 each | Entree | 13 | 2.9099 | 0.04 | 3.0263 | 0.2328 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Fish Market | LTO | shrimp, sausage, & clam jambalaya | 45108 | 2 cup | Entree | 15.5 | 3.5308 | 0.04 | 3.672 | 0.2369 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Fish Market | LTO | steelhead croquettes | 194276 | 2 each | Entree | 15.5 | 1.22 | 0.04 | 1.2688 | 0.0819 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Fish Market | LTO | tuna melt on sourdough | 106974.2 | 1 sandwich | Entree | 15.5 | 3.0765 | 0.04 | 3.1996 | 0.2064 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
+| AMZ: Fish Market | Fish Market | Cajun Blackened Shrimp | 95621.3 | 5 ounce | Entree | 15.5 | 2.0367 | 0.04 | 2.1182 | 0.1367 | 4.0465 | 0.2847 | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Fish Market | Fish Market | Cajun Blackened Shrimp | 95621.3 | 4 ounce | Entree | 10.95 | 1.6294 | 0.04 | 1.6946 | 0.1548 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Fish Market | Fish Market | Classic Caesar Salad | 76761.4 | 11-1/2 ounce | Entree | 14.95 | 4.3732 | 0.04 | 4.5481 | 0.3042 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Fish Market | Fish Market | grilled cod | 16299.5 | 5 oz portion | Entree | 15.5 | 18.1308 | 0.04 | 18.856 | 1.2165 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Fish Market | Fish Market | grilled cod | 16299.5 | 1 serving(s) | Entree | 10.95 | 3.6262 | 0.04 | 3.7712 | 0.3444 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Fish Market | Fish Market | grilled herb barramundi | 194781 | 5 ounce | Entree | 15.5 | 4.6746 | 0.04 | 4.8616 | 0.3136 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Fish Market | Fish Market | grilled herb barramundi | 194781 | 1 each | Entree | 10.95 | 2.9814 | 0.04 | 3.1006 | 0.2832 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Fish Market | Fish Market | Grilled Steelhead Trout | 98380 | 5 ounce | Entree | 15.5 | 3.7373 | 0.04 | 3.8868 | 0.2508 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Fish Market | Fish Market | Grilled Steelhead Trout | 98380 | 1 each | Entree | 10.95 | 3.6292 | 0.04 | 3.7743 | 0.3447 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Fish Market | Fish Market | grilled tuna | 12989.14 | 1 serving(s) | Entree | 15.5 | 1.5389 | 0.04 | 1.6005 | 0.1033 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Fish Market | Fish Market | grilled tuna | 12989.14 | 1 serving(s) | Entree | 10.95 | 1.5389 | 0.04 | 1.6005 | 0.1462 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Fish Market | Fish Market | Herb Grilled Salmon | 135663.1 | 5 ounce | Entree | 15.5 | 3.1703 | 0.04 | 3.2972 | 0.2127 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Fish Market | Fish Market | Herb Grilled Salmon | 135663.1 | 4 ounce | Entree | 10.95 | 2.5363 | 0.04 | 2.6377 | 0.2409 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Fish Market | Fish Market | Lemon Herb Mahi Mahi | 57059.16 | 5 ounce | Entree | 15.5 | 5.9848 | 0.04 | 6.2242 | 0.4016 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Fish Market | Fish Market | Lemon Herb Mahi Mahi | 57059.16 | 1 each | Entree | 10.95 | 4.2546 | 0.04 | 4.4248 | 0.4041 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Fish Market | Fish Market | Louie Salad base | 78200.3 | 1 each | Entree | 14.95 | 2.1444 | 0.04 | 2.2301 | 0.1492 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Fish Market | Fish Market | Tuna Nicoise Salad, Lemon Vinaigrette | 32980.8 | 1 serving(s) | Entree | 15.5 | 3.4949 | 0.04 | 3.6347 | 0.2345 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Fish Market | LTO | baja grilled fish taco | 84484.1 | 2 each | Entree | 15.5 | 4.4702 | 0.04 | 4.649 | 0.2999 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Fish Market | LTO | BBQ Shrimp & Grits | 42120.8 | 1 plate | Entree | 15.5 | 2.8631 | 0.04 | 2.9776 | 0.1921 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Fish Market | LTO | crab cakes | 194073 | 2 each | Entree | 15.5 | 4.3174 | 0.04 | 4.4901 | 0.2897 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Fish Market | LTO | Fish and Chips | 134605 | 1 plate | Entree | 13 | 3.434 | 0.04 | 3.5713 | 0.2747 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Fish Market | LTO | grilled steelhead caesar sandwich | 194090 | 1 sandwich | Entree | 15.5 | 3.8326 | 0.04 | 3.9859 | 0.2572 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Fish Market | LTO | miso soy black cod | 189227.2 | 1 each | Entree | 15.5 | 7.6554 | 0.04 | 7.9616 | 0.5137 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Fish Market | LTO | Salmon Nicoise Salad | 4640.4 | 1 plate | Entree | 14.95 |  | 0.04 |  |  |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Fish Market | LTO | seafood cioppino | 44897.4 | 1 serving(s) | Entree | 15.5 |  | 0.04 |  |  |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Fish Market | LTO | shrimp and sausage gumbo | 147575 | 8 oz portion | Entree | 15.5 | 2.1516 | 0.04 | 2.2376 | 0.1444 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Fish Market | LTO | shrimp po boy | 77597.14 | 1 each | Entree | 13 | 2.9099 | 0.04 | 3.0263 | 0.2328 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Fish Market | LTO | shrimp, sausage, & clam jambalaya | 45108 | 2 cup | Entree | 15.5 | 3.5308 | 0.04 | 3.672 | 0.2369 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Fish Market | LTO | steelhead croquettes | 194276 | 2 each | Entree | 15.5 | 1.22 | 0.04 | 1.2688 | 0.0819 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Fish Market | LTO | tuna melt on sourdough | 106974.2 | 1 sandwich | Entree | 15.5 | 3.0765 | 0.04 | 3.1996 | 0.2064 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
 | AMZ: Fish Market | Fish Market | brown rice | 16882.7 | 1 cup | Side | 2.55 | 0.153 | 0.04 | 0.1592 | 0.0624 | 0.6868 | 0.2693 |  |
 | AMZ: Fish Market | Fish Market | French Fries | 8414 | 5 ounce | Side | 2.55 | 0.5468 | 0.04 | 0.5687 | 0.223 |  |  |  |
 | AMZ: Fish Market | Fish Market | garden salad | 16811 | 1 serving(s) | Side | 2.55 | 1.3639 | 0.04 | 1.4185 | 0.5563 |  |  |  |
@@ -805,15 +809,15 @@ The tables below preserve the workbook's item records. `Protein` is the canonica
 | AMZ: Fish Market | Fish Market | Sauteed Shishito Peppers | 124403 | 1/2 cup | Side | 2.55 | 0.8507 | 0.04 | 0.8847 | 0.347 |  |  |  |
 | AMZ: Fish Market | Fish Market | shishito mashed potato | 134911.2 | 1/2 cup | Side | 2.55 | 0.6836 | 0.04 | 0.711 | 0.2788 |  |  |  |
 | AMZ: Fish Market | Fish Market | spicy collard greens | 18326.5 | 1/2 cup | Side | 2.55 | 0.5394 | 0.04 | 0.561 | 0.22 |  |  |  |
-| AMZ: Fish Market | Fish Market | Beurre Blanc | 162137.1 | 2 floz | Plate Add |  | 0.5416 | 0.04 | 0.5633 |  | 0.5627 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Fish Market | Fish Market | Chermoula | 138944 | 2 floz | Plate Add |  | 0.9545 | 0.04 | 0.9927 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Fish Market | Fish Market | chimichurri sauce | 61283.7 | 2 floz | Plate Add |  | 0.9849 | 0.04 | 1.0243 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Fish Market | Fish Market | lemon dill compound butter | 46265 | 2 tbsp | Plate Add |  | 0.3725 | 0.04 | 0.3874 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Fish Market | Fish Market | Lemon Wedge | 1261 | 1 wedge | Plate Add |  | 0.0219 | 0.04 | 0.0228 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Fish Market | Fish Market | pineapple mango salsa | 41724 | 2 floz | Plate Add |  | 0.3414 | 0.04 | 0.3551 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Fish Market | Fish Market | remoulade sauce | 129694.1 | 2 floz | Plate Add |  | 0.4226 | 0.04 | 0.4395 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Fish Market | Fish Market | Romesco Sauce | 197452 | 2 floz | Plate Add |  | 0.9519 | 0.04 | 0.99 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Fish Market | Fish Market | tartar sauce | 61541.4 | 2 floz | Plate Add |  | 0.2778 | 0.04 | 0.289 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Fish Market | Fish Market | Beurre Blanc | 162137.1 | 2 floz | Sub Recipe |  | 0.5416 | 0.04 | 0.5633 |  | 0.5627 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Fish Market | Fish Market | Chermoula | 138944 | 2 floz | Sub Recipe |  | 0.9545 | 0.04 | 0.9927 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Fish Market | Fish Market | chimichurri sauce | 61283.7 | 2 floz | Sub Recipe |  | 0.9849 | 0.04 | 1.0243 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Fish Market | Fish Market | lemon dill compound butter | 46265 | 2 tbsp | Sub Recipe |  | 0.3725 | 0.04 | 0.3874 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Fish Market | Fish Market | Lemon Wedge | 1261 | 1 wedge | Sub Recipe |  | 0.0219 | 0.04 | 0.0228 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Fish Market | Fish Market | pineapple mango salsa | 41724 | 2 floz | Sub Recipe |  | 0.3414 | 0.04 | 0.3551 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Fish Market | Fish Market | remoulade sauce | 129694.1 | 2 floz | Sub Recipe |  | 0.4226 | 0.04 | 0.4395 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Fish Market | Fish Market | Romesco Sauce | 197452 | 2 floz | Sub Recipe |  | 0.9519 | 0.04 | 0.99 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Fish Market | Fish Market | tartar sauce | 61541.4 | 2 floz | Sub Recipe |  | 0.2778 | 0.04 | 0.289 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 
 ### AMZ: Fresh Five
 
@@ -1025,18 +1029,18 @@ The tables below preserve the workbook's item records. `Protein` is the canonica
 | AMZ: Harvest Co. | Harvest Co. | ratatouille | 144598.1 | 5 oz portion | Side | 2.55 | 1.8042 | 0.04 | 1.8764 | 0.7358 |  |  |  |
 | AMZ: Harvest Co. | Harvest Co. | roasted yucca | 51228.7 | 1/2 cup | Side | 2.55 | 0.3929 | 0.04 | 0.4086 | 0.1603 |  |  |  |
 | AMZ: Harvest Co. | Harvest Co. | tomato and bulgur pilaf | 91296.2 | 4 ounce | Side | 2.55 | 0.5347 | 0.04 | 0.556 | 0.2181 |  |  |  |
-| AMZ: Harvest Co. | Harvest Co. | baby arugula salad garnish | 88033.1 | 1 ounce | Plate Add |  | 0.3984 | 0.04 | 0.4144 |  | 0.3866 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Harvest Co. | Harvest Co. | dill orange fennel | 60810.6 | 1 ounce | Plate Add |  | 0.1668 | 0.04 | 0.1735 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Harvest Co. | Harvest Co. | lemon herb cucumbers | 81258.3 | 1 ounce | Plate Add |  | 0.2058 | 0.04 | 0.214 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Harvest Co. | Harvest Co. | spicy pickled carrots | 81315.3 | 1 ounce | Plate Add |  | 0.7158 | 0.04 | 0.7444 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Harvest Co. | Harvest Co. | baby arugula salad garnish | 88033.1 | 1 ounce | Sub Recipe |  | 0.3984 | 0.04 | 0.4144 |  | 0.3866 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Harvest Co. | Harvest Co. | dill orange fennel | 60810.6 | 1 ounce | Sub Recipe |  | 0.1668 | 0.04 | 0.1735 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Harvest Co. | Harvest Co. | lemon herb cucumbers | 81258.3 | 1 ounce | Sub Recipe |  | 0.2058 | 0.04 | 0.214 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Harvest Co. | Harvest Co. | spicy pickled carrots | 81315.3 | 1 ounce | Sub Recipe |  | 0.7158 | 0.04 | 0.7444 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 
 ### AMZ: House of Teriyaki
 
 | Menu Name | Station | Item | MRN | Portion | Component Type | Sell Price | Item Cost | Waste % | Item + Waste Cost | Food Cost % | Average Cost | Average Cost + Waste | Plate Build |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| AMZ: House of Teriyaki | Teriyaki | Beef Teriyaki | 83244.2 | 6 ounce | Entree | 13 | 6.3055 | 0.04 | 6.5577 | 0.5044 | 3.2409 | 0.2579 | Entree + Side + Plate Add |
-| AMZ: House of Teriyaki | Teriyaki | Chicken Teriyaki | 83244.7 | 6 oz portion | Entree | 11.75 | 1.9969 | 0.04 | 2.0768 | 0.1767 |  |  | Entree + Side + Plate Add |
-| AMZ: House of Teriyaki | Teriyaki | portobello tofu teriyaki | 107142.156 | 6 ounce | Entree | 11.75 | 1.0463 | 0.04 | 1.0881 | 0.0926 |  |  | Entree + Side + Plate Add |
+| AMZ: House of Teriyaki | Teriyaki | Beef Teriyaki | 83244.2 | 6 ounce | Entree | 13 | 6.3055 | 0.04 | 6.5577 | 0.5044 | 3.2409 | 0.2579 | Entree + Side + Sub Recipe |
+| AMZ: House of Teriyaki | Teriyaki | Chicken Teriyaki | 83244.7 | 6 oz portion | Entree | 11.75 | 1.9969 | 0.04 | 2.0768 | 0.1767 |  |  | Entree + Side + Sub Recipe |
+| AMZ: House of Teriyaki | Teriyaki | portobello tofu teriyaki | 107142.156 | 6 ounce | Entree | 11.75 | 1.0463 | 0.04 | 1.0881 | 0.0926 |  |  | Entree + Side + Sub Recipe |
 | AMZ: House of Teriyaki | Teriyaki | brown rice | 16882.7 | 1 cup | Side | 2.55 | 0.153 | 0.04 | 0.1592 | 0.0624 | 0.5775 | 0.2265 |  |
 | AMZ: House of Teriyaki | Teriyaki | Cucumber Salad | 76874 | 4 ounce | Side | 2.55 | 0.9035 | 0.04 | 0.9397 | 0.3685 |  |  |  |
 | AMZ: House of Teriyaki | Teriyaki | jasmine rice | 5354.11 | 1 cup | Side | 2.55 | 0.3144 | 0.04 | 0.3269 | 0.1282 |  |  |  |
@@ -1044,9 +1048,9 @@ The tables below preserve the workbook's item records. `Protein` is the canonica
 | AMZ: House of Teriyaki | Teriyaki | sunomono sesame cucumber salad | 200583 | 1/2 cup | Side | 2.55 | 0.3861 | 0.04 | 0.4015 | 0.1575 |  |  |  |
 | AMZ: House of Teriyaki | Teriyaki | Teriyaki Salad | 83251 | 3 ounce | Side | 2.55 | 0.5591 | 0.04 | 0.5814 | 0.228 |  |  |  |
 | AMZ: House of Teriyaki | Teriyaki | Yakisoba Noodle Stir Fry | 112463 | 4 ounce | Side | 2.55 | 0.5468 | 0.04 | 0.5686 | 0.223 |  |  |  |
-| AMZ: House of Teriyaki | Teriyaki | Organic Soy Ginger Dressing | 81555.7 | 1 ounce | Plate Add |  | 0.2831 | 0.04 | 0.2944 |  | 0.3094 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: House of Teriyaki | Teriyaki | Spicy Teriyaki Sauce | 83240 | 2 floz | Plate Add |  | 0.4183 | 0.04 | 0.435 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: House of Teriyaki | Teriyaki | Teriyaki Sauce | 83233 | 2 ounce | Plate Add |  | 0.1913 | 0.04 | 0.1989 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: House of Teriyaki | Teriyaki | Organic Soy Ginger Dressing | 81555.7 | 1 ounce | Sub Recipe |  | 0.2831 | 0.04 | 0.2944 |  | 0.3094 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: House of Teriyaki | Teriyaki | Spicy Teriyaki Sauce | 83240 | 2 floz | Sub Recipe |  | 0.4183 | 0.04 | 0.435 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: House of Teriyaki | Teriyaki | Teriyaki Sauce | 83233 | 2 ounce | Sub Recipe |  | 0.1913 | 0.04 | 0.1989 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 
 ### AMZ: Lemongrass + Lime
 
@@ -1102,9 +1106,9 @@ The tables below preserve the workbook's item records. `Protein` is the canonica
 | AMZ: Lotus | Lotus | brown rice | 16882.7 | 1 cup | Base | 2.55 | 0.153 | 0.04 | 0.1592 | 0.0624 | 0.5808 | 0.2278 | 1 Entree + 1 Base + 2 Sides |
 | AMZ: Lotus | Lotus | jasmine rice | 5354.11 | 1 cup | Base | 2.55 | 0.3144 | 0.04 | 0.3269 | 0.1282 |  |  | 1 Entree + 1 Base + 2 Sides |
 | AMZ: Lotus | Lotus | vegetable lo mein | 165520.14 | 1 cup | Base | 2.55 | 1.2079 | 0.04 | 1.2562 | 0.4926 |  |  | 1 Entree + 1 Base + 2 Sides |
-| AMZ: Lotus | Lotus | Shandong Sauce | 143744 | 1-1/2 ounce | Plate Add |  | 0.3731 | 0.04 | 0.388 |  | 0.4074 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Lotus | Lotus | Sweet and Sour Sauce | 31693.4 | 1-1/2 floz | Plate Add |  | 0.1348 | 0.04 | 0.1402 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Lotus | Lotus | szechuan dumpling sauce | 193093 | 1-1/2 oz portion | Plate Add |  | 0.6672 | 0.04 | 0.6939 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Lotus | Lotus | Shandong Sauce | 143744 | 1-1/2 ounce | Sub Recipe |  | 0.3731 | 0.04 | 0.388 |  | 0.4074 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Lotus | Lotus | Sweet and Sour Sauce | 31693.4 | 1-1/2 floz | Sub Recipe |  | 0.1348 | 0.04 | 0.1402 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Lotus | Lotus | szechuan dumpling sauce | 193093 | 1-1/2 oz portion | Sub Recipe |  | 0.6672 | 0.04 | 0.6939 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 | AMZ: Lotus | Lotus | vegetable dumpling | 80785.1 | 5 each | Extension | 3.85 | 1.2331 | 0.04 | 1.2825 | 0.3331 | 1.2825 | 0.3331 |  |
 
 ### AMZ: Masaya
@@ -1169,7 +1173,7 @@ The tables below preserve the workbook's item records. `Protein` is the canonica
 | AMZ: Pho | Pho | mushroom pho | 176645.9 | 1 bowl | Entree | 11.75 | 4.8599 | 0.04 | 5.0543 | 0.4302 |  |  | 1 Entree |
 | AMZ: Pho | Pho | spicy shrimp pho | 176645.5 | 1 bowl | Entree | 13 | 5.1326 | 0.04 | 5.3379 | 0.4106 |  |  | 1 Entree |
 | AMZ: Pho | Pho | tofu mushroom pho | 176645.6 | 1 serving(s) | Entree | 11.75 | 4.6207 | 0.04 | 4.8055 | 0.409 |  |  | 1 Entree |
-| AMZ: Pho | Pho | Sliced Jalapeno Pepper | 63607 | 1 tbsp | Plate Add |  | 0.0301 | 0.04 | 0.0313 |  | 0.0313 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Pho | Pho | Sliced Jalapeno Pepper | 63607 | 1 tbsp | Sub Recipe |  | 0.0301 | 0.04 | 0.0313 |  | 0.0313 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 
 ### AMZ: Piccola Italia
 
@@ -1244,20 +1248,20 @@ The tables below preserve the workbook's item records. `Protein` is the canonica
 
 | Menu Name | Station | Item | MRN | Portion | Component Type | Sell Price | Item Cost | Waste % | Item + Waste Cost | Food Cost % | Average Cost | Average Cost + Waste | Plate Build |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| AMZ: Poke Counter | Poke | salmon poke bowl | 141014.3 | 1 each | Entree | 13 | 3.2346 | 0.04 | 3.364 | 0.2588 | 2.4834 | 0.1955 | 1 Entree + 1 Base + 5 Toppings + 1 Plate Add |
-| AMZ: Poke Counter | Poke | shrimp poke | 193768.2 | 1/2 cup | Entree | 13 | 0.9771 | 0.04 | 1.0161 | 0.0782 |  |  | 1 Entree + 1 Base + 5 Toppings + 1 Plate Add |
-| AMZ: Poke Counter | Poke | tofu poke bowl | 141014.2 | 1 each | Entree | 11.75 | 2.1052 | 0.04 | 2.1894 | 0.1863 |  |  | 1 Entree + 1 Base + 5 Toppings + 1 Plate Add |
-| AMZ: Poke Counter | Poke | tuna poke bowl | 141014.4 | 1 each | Entree | 13 | 3.2346 | 0.04 | 3.364 | 0.2588 |  |  | 1 Entree + 1 Base + 5 Toppings + 1 Plate Add |
+| AMZ: Poke Counter | Poke | salmon poke bowl | 141014.3 | 1 each | Entree | 13 | 3.2346 | 0.04 | 3.364 | 0.2588 | 2.4834 | 0.1955 | 1 Entree + 1 Base + 5 Toppings + 1 Sub Recipe |
+| AMZ: Poke Counter | Poke | shrimp poke | 193768.2 | 1/2 cup | Entree | 13 | 0.9771 | 0.04 | 1.0161 | 0.0782 |  |  | 1 Entree + 1 Base + 5 Toppings + 1 Sub Recipe |
+| AMZ: Poke Counter | Poke | tofu poke bowl | 141014.2 | 1 each | Entree | 11.75 | 2.1052 | 0.04 | 2.1894 | 0.1863 |  |  | 1 Entree + 1 Base + 5 Toppings + 1 Sub Recipe |
+| AMZ: Poke Counter | Poke | tuna poke bowl | 141014.4 | 1 each | Entree | 13 | 3.2346 | 0.04 | 3.364 | 0.2588 |  |  | 1 Entree + 1 Base + 5 Toppings + 1 Sub Recipe |
 | AMZ: Poke Counter | Poke | brown sushi rice | 76699.2 | 12 ounce | Base |  | 1.5347 | 0.04 | 1.5961 |  | 0.6647 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 | AMZ: Poke Counter | Poke | Spring Mix | 47795.1 | 1 cup | Base |  | 0.5858 | 0.04 | 0.6092 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 | AMZ: Poke Counter | Poke | Wakame Seaweed Salad | 77206 | 1/4 cup | Base |  | 0.2203 | 0.04 | 0.2291 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 | AMZ: Poke Counter | Poke | wonton chips | 162132.1 | 2-1/4 oz portion | Base |  | 0.838 | 0.04 | 0.8715 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 | AMZ: Poke Counter | Poke | wonton strips | 10820.8 | 1/8 cup | Base |  | 0.0172 | 0.04 | 0.0178 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Poke Counter | Poke | Shoyu Yuzu Sauce | 122493 | 2 floz | Plate Add |  | 0.4397 | 0.04 | 0.4573 |  | 0.4299 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Poke Counter | Poke | Sriracha Mayo | 140423 | 2 floz | Plate Add |  | 0.387 | 0.04 | 0.4025 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Poke Counter | Poke | Shoyu Yuzu Sauce | 122493 | 2 floz | Sub Recipe |  | 0.4397 | 0.04 | 0.4573 |  | 0.4299 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Poke Counter | Poke | Sriracha Mayo | 140423 | 2 floz | Sub Recipe |  | 0.387 | 0.04 | 0.4025 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 | AMZ: Poke Counter | Poke | Chopped Dried Nori | 13404.9 | 1/4 cup | Topping |  | 0.0666 | 0.04 | 0.0693 |  | 0.2441 | 0.1368 | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 | AMZ: Poke Counter | Poke | daikon slaw | 95884.2 | 1/4 cup | Topping |  | 0.3815 | 0.04 | 0.3968 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Poke Counter | Poke | Diced Avocado | 62292 | 1/4 cup | Topping | 2.05 | 0.2697 | 0.04 | 0.2805 | 0.1368 |  |  | 1 Entree + 1 Base + 5 Toppings + 1 Plate Add |
+| AMZ: Poke Counter | Poke | Diced Avocado | 62292 | 1/4 cup | Topping | 2.05 | 0.2697 | 0.04 | 0.2805 | 0.1368 |  |  | 1 Entree + 1 Base + 5 Toppings + 1 Sub Recipe |
 | AMZ: Poke Counter | Poke | Diced Cucumber | 62336 | 1/4 cup | Topping |  | 0.197 | 0.04 | 0.2048 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 | AMZ: Poke Counter | Poke | fried shallots | 25135.1 | 1/4 cup | Topping |  | 0.2563 | 0.04 | 0.2665 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 | AMZ: Poke Counter | Poke | Julienned Red Onion | 148498 | 1/4 cup | Topping |  | 0.0792 | 0.04 | 0.0823 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
@@ -1275,45 +1279,45 @@ The tables below preserve the workbook's item records. `Protein` is the canonica
 
 | Menu Name | Station | Item | MRN | Portion | Component Type | Sell Price | Item Cost | Waste % | Item + Waste Cost | Food Cost % | Average Cost | Average Cost + Waste | Plate Build |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| AMZ: Porto | Piri Piri | piri piri chicken | 121026 | 1 piece | Entree | 11.75 | 1.7215 | 0.04 | 1.7904 | 0.1524 | 1.5278 | 0.1258 | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Porto | Piri Piri | piri piri chicken thigh | 121025 | 5 ounce | Entree | 11.75 | 1.2877 | 0.04 | 1.3392 | 0.114 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Porto | Piri Piri | piri piri shrimp skewers | 121023 | 2 each | Entree | 13 | 1.9734 | 0.04 | 2.0524 | 0.1579 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
-| AMZ: Porto | Piri Piri | piri piri tofu skewers | 121022.2 | 1 each | Entree | 11.75 | 0.8937 | 0.04 | 0.9294 | 0.0791 |  |  | 1 Entree + 2 Sides + 1 Plate Add |
+| AMZ: Porto | Piri Piri | piri piri chicken | 121026 | 1 piece | Entree | 11.75 | 1.7215 | 0.04 | 1.7904 | 0.1524 | 1.5278 | 0.1258 | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Porto | Piri Piri | piri piri chicken thigh | 121025 | 5 ounce | Entree | 11.75 | 1.2877 | 0.04 | 1.3392 | 0.114 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Porto | Piri Piri | piri piri shrimp skewers | 121023 | 2 each | Entree | 13 | 1.9734 | 0.04 | 2.0524 | 0.1579 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
+| AMZ: Porto | Piri Piri | piri piri tofu skewers | 121022.2 | 1 each | Entree | 11.75 | 0.8937 | 0.04 | 0.9294 | 0.0791 |  |  | 1 Entree + 2 Sides + 1 Sub Recipe |
 | AMZ: Porto | Piri Piri | black eyed pea salad | 120671 | 1/2 cup | Side | 2.55 | 0.5618 | 0.04 | 0.5843 | 0.2291 | 0.7557 | 0.2964 |  |
 | AMZ: Porto | Piri Piri | escalivada | 120752 | 1/2 cup | Side | 2.55 | 0.4549 | 0.04 | 0.4731 | 0.1855 |  |  |  |
 | AMZ: Porto | Piri Piri | peri peri green beans | 9002.15 | 1/2 cup | Side | 2.55 | 1.239 | 0.04 | 1.2886 | 0.5053 |  |  |  |
 | AMZ: Porto | Piri Piri | piri piri potato wedges | 121015 | 4 oz portion | Side | 2.55 | 0.2222 | 0.04 | 0.231 | 0.0906 |  |  |  |
 | AMZ: Porto | Piri Piri | pistachio herb couscous salad | 120641 | 1/2 cup | Side | 2.55 | 1.1553 | 0.04 | 1.2015 | 0.4712 |  |  |  |
-| AMZ: Porto | Piri Piri | piri piri dipping sauce | 120722 | 2 floz | Plate Add |  | 0.7705 | 0.04 | 0.8013 |  | 0.6413 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Porto | Piri Piri | piri-naise dipping sauce | 121071 | 2 floz | Plate Add |  | 0.4628 | 0.04 | 0.4813 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Porto | Piri Piri | piri piri dipping sauce | 120722 | 2 floz | Sub Recipe |  | 0.7705 | 0.04 | 0.8013 |  | 0.6413 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Porto | Piri Piri | piri-naise dipping sauce | 121071 | 2 floz | Sub Recipe |  | 0.4628 | 0.04 | 0.4813 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 | AMZ: Porto | Piri Piri | Piri Piri Guacamole with Crudite | 147707 | 1 serving(s) | Extension | 3.85 | 1.8387 | 0.04 | 1.9122 | 0.4967 | 1.9122 | 0.4967 |  |
 
 ### AMZ: Roam BBQ
 
 | Menu Name | Station | Item | MRN | Portion | Component Type | Sell Price | Item Cost | Waste % | Item + Waste Cost | Food Cost % | Average Cost | Average Cost + Waste | Plate Build |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| AMZ: Roam BBQ | Roam BBQ | carochina ribs | 191763 | 5 ounce | Entree | 11.75 | 5.1681 | 0.04 | 5.3749 | 0.4574 | 2.4051 | 0.1976 | 1 Entree + 2 Sides + 4 Plate Adds |
-| AMZ: Roam BBQ | Roam BBQ | honey gochu-butter shrimp | 191761 | 1 each | Entree | 13 | 2.6408 | 0.04 | 2.7464 | 0.2113 |  |  | 1 Entree + 2 Sides + 4 Plate Adds |
-| AMZ: Roam BBQ | Roam BBQ | honey gochujang butter chicken | 191762 | 5 oz meat | Entree | 11.75 | 1.1853 | 0.04 | 1.2327 | 0.1049 |  |  | 1 Entree + 2 Sides + 4 Plate Adds |
-| AMZ: Roam BBQ | Roam BBQ | honey gochujang butter eggplant and tofu | 191760 | 1 each | Entree | 11.75 | 1.2476 | 0.04 | 1.2975 | 0.1104 |  |  | 1 Entree + 2 Sides + 4 Plate Adds |
-| AMZ: Roam BBQ | Roam BBQ | shaokao chicken skewer | 191769 | 1 each | Entree | 11.75 | 1.3672 | 0.04 | 1.4219 | 0.121 |  |  | 1 Entree + 2 Sides + 4 Plate Adds |
-| AMZ: Roam BBQ | Roam BBQ | shaokao lamb skewer | 191768 | 1 each | Entree | 13 | 3.9967 | 0.04 | 4.1565 | 0.3197 |  |  | 1 Entree + 2 Sides + 4 Plate Adds |
-| AMZ: Roam BBQ | Roam BBQ | shaokao tofu skewer | 191767 | 1 each | Entree | 11.75 | 1.3855 | 0.04 | 1.4409 | 0.1226 |  |  | 1 Entree + 2 Sides + 4 Plate Adds |
-| AMZ: Roam BBQ | Roam BBQ | sweet gochujang pork belly burnt ends | 191756 | 5 ounce | Entree | 11.75 | 1.5097 | 0.04 | 1.5701 | 0.1336 |  |  | 1 Entree + 2 Sides + 4 Plate Adds |
+| AMZ: Roam BBQ | Roam BBQ | carochina ribs | 191763 | 5 ounce | Entree | 11.75 | 5.1681 | 0.04 | 5.3749 | 0.4574 | 2.4051 | 0.1976 | 1 Entree + 2 Sides + 4 Sub Recipes |
+| AMZ: Roam BBQ | Roam BBQ | honey gochu-butter shrimp | 191761 | 1 each | Entree | 13 | 2.6408 | 0.04 | 2.7464 | 0.2113 |  |  | 1 Entree + 2 Sides + 4 Sub Recipes |
+| AMZ: Roam BBQ | Roam BBQ | honey gochujang butter chicken | 191762 | 5 oz meat | Entree | 11.75 | 1.1853 | 0.04 | 1.2327 | 0.1049 |  |  | 1 Entree + 2 Sides + 4 Sub Recipes |
+| AMZ: Roam BBQ | Roam BBQ | honey gochujang butter eggplant and tofu | 191760 | 1 each | Entree | 11.75 | 1.2476 | 0.04 | 1.2975 | 0.1104 |  |  | 1 Entree + 2 Sides + 4 Sub Recipes |
+| AMZ: Roam BBQ | Roam BBQ | shaokao chicken skewer | 191769 | 1 each | Entree | 11.75 | 1.3672 | 0.04 | 1.4219 | 0.121 |  |  | 1 Entree + 2 Sides + 4 Sub Recipes |
+| AMZ: Roam BBQ | Roam BBQ | shaokao lamb skewer | 191768 | 1 each | Entree | 13 | 3.9967 | 0.04 | 4.1565 | 0.3197 |  |  | 1 Entree + 2 Sides + 4 Sub Recipes |
+| AMZ: Roam BBQ | Roam BBQ | shaokao tofu skewer | 191767 | 1 each | Entree | 11.75 | 1.3855 | 0.04 | 1.4409 | 0.1226 |  |  | 1 Entree + 2 Sides + 4 Sub Recipes |
+| AMZ: Roam BBQ | Roam BBQ | sweet gochujang pork belly burnt ends | 191756 | 5 ounce | Entree | 11.75 | 1.5097 | 0.04 | 1.5701 | 0.1336 |  |  | 1 Entree + 2 Sides + 4 Sub Recipes |
 | AMZ: Roam BBQ | Roam BBQ | cabbage apple slaw | 91765.2 | 1/2 cup | Side | 2.55 | 0.4372 | 0.04 | 0.4547 | 0.1783 | 0.5488 | 0.2152 |  |
 | AMZ: Roam BBQ | Roam BBQ | cheesy tteokbokki | 191753 | 4 ounce | Side | 2.55 | 0.6044 | 0.04 | 0.6286 | 0.2465 |  |  |  |
 | AMZ: Roam BBQ | Roam BBQ | Glass Noodles with Vegetables | 86472.1 | 4 ounce | Side | 2.55 | 0.3846 | 0.04 | 0.4 | 0.1569 |  |  |  |
 | AMZ: Roam BBQ | Roam BBQ | Steamed Jasmine Rice | 165124 | 1 cup | Side | 2.55 | 0.634 | 0.04 | 0.6594 | 0.2586 |  |  |  |
 | AMZ: Roam BBQ | Roam BBQ | wasabi potato salad | 27313.7 | 1/2 cup | Side | 2.55 | 0.5781 | 0.04 | 0.6012 | 0.2358 |  |  |  |
-| AMZ: Roam BBQ | Roam BBQ | Bread & Butter Pickles | 63438.1 | 4 each | Plate Add |  | 0.0521 | 0.04 | 0.0542 |  | 0.3322 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Roam BBQ | Roam BBQ | carochina mustard sauce | 191747 | 2 floz | Plate Add |  | 0.225 | 0.04 | 0.234 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Roam BBQ | Roam BBQ | fire cracker sauce | 191744 | 2 floz | Plate Add |  | 0.4113 | 0.04 | 0.4278 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Roam BBQ | Roam BBQ | Kimchi | 144772 | 1/8 cup | Plate Add |  | 0.1782 | 0.04 | 0.1854 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Roam BBQ | Roam BBQ | kombu miso eggplant | 191750 | 2 ounce | Plate Add |  | 0.4326 | 0.04 | 0.45 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Roam BBQ | Roam BBQ | kombu miso greens | 191751 | 2 ounce | Plate Add |  | 0.6371 | 0.04 | 0.6626 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Roam BBQ | Roam BBQ | korean kansas city bbq sauce | 191746 | 2 floz | Plate Add |  | 0.2888 | 0.04 | 0.3004 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Roam BBQ | Roam BBQ | ssamjang brussels sprouts | 191748 | 1/4 cup | Plate Add |  | 0.4586 | 0.04 | 0.4769 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Roam BBQ | Roam BBQ | sweet fire sauce | 191745 | 2 floz | Plate Add |  | 0.1913 | 0.04 | 0.1989 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Roam BBQ | Roam BBQ | Bread & Butter Pickles | 63438.1 | 4 each | Sub Recipe |  | 0.0521 | 0.04 | 0.0542 |  | 0.3322 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Roam BBQ | Roam BBQ | carochina mustard sauce | 191747 | 2 floz | Sub Recipe |  | 0.225 | 0.04 | 0.234 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Roam BBQ | Roam BBQ | fire cracker sauce | 191744 | 2 floz | Sub Recipe |  | 0.4113 | 0.04 | 0.4278 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Roam BBQ | Roam BBQ | Kimchi | 144772 | 1/8 cup | Sub Recipe |  | 0.1782 | 0.04 | 0.1854 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Roam BBQ | Roam BBQ | kombu miso eggplant | 191750 | 2 ounce | Sub Recipe |  | 0.4326 | 0.04 | 0.45 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Roam BBQ | Roam BBQ | kombu miso greens | 191751 | 2 ounce | Sub Recipe |  | 0.6371 | 0.04 | 0.6626 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Roam BBQ | Roam BBQ | korean kansas city bbq sauce | 191746 | 2 floz | Sub Recipe |  | 0.2888 | 0.04 | 0.3004 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Roam BBQ | Roam BBQ | ssamjang brussels sprouts | 191748 | 1/4 cup | Sub Recipe |  | 0.4586 | 0.04 | 0.4769 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Roam BBQ | Roam BBQ | sweet fire sauce | 191745 | 2 floz | Sub Recipe |  | 0.1913 | 0.04 | 0.1989 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 | AMZ: Roam BBQ | Roam BBQ | banana miso pudding | 191734 | 8 oz parfait | Extension | 3.85 | 1.1572 | 0.04 | 1.2035 | 0.3126 | 1.4331 | 0.3722 |  |
 | AMZ: Roam BBQ | Roam BBQ | yuzu cream lemonade | 191743 | 8 floz | Extension | 3.85 | 1.5989 | 0.04 | 1.6628 | 0.4319 |  |  |  |
 
@@ -1355,19 +1359,19 @@ The tables below preserve the workbook's item records. `Protein` is the canonica
 
 | Menu Name | Station | Item | MRN | Portion | Component Type | Sell Price | Item Cost | Waste % | Item + Waste Cost | Food Cost % | Average Cost | Average Cost + Waste | Plate Build |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| AMZ: Smokehouse BBQ | Big City BBQ | BBQ baby back ribs | 44966 | 4 each | Entree | 13 | 2.6069 | 0.04 | 2.7111 | 0.2085 | 1.9193 | 0.1572 | 1 Entree + 2 Sides + Cornbread + 1 Plate Add |
-| AMZ: Smokehouse BBQ | Big City BBQ | BBQ Chicken Thighs | 171040 | 5 oz portion | Entree | 11.75 | 0.9252 | 0.04 | 0.9622 | 0.0819 |  |  | 1 Entree + 2 Sides + Cornbread + 1 Plate Add |
-| AMZ: Smokehouse BBQ | Big City BBQ | bbq rotisserie chicken | 4651.6 | 1 each | Entree | 11.75 | 1.5114 | 0.04 | 1.5718 | 0.1338 |  |  | 1 Entree + 2 Sides + Cornbread + 1 Plate Add |
-| AMZ: Smokehouse BBQ | Big City BBQ | Braised Shredded Pork | 44948.1 | 5 ounce | Entree | 11.75 | 1.4722 | 0.04 | 1.5311 | 0.1303 |  |  | 1 Entree + 2 Sides + Cornbread + 1 Plate Add |
-| AMZ: Smokehouse BBQ | Big City BBQ | Jackfruit Barbecue Sandwich | 135703 | 1 sandwich | Entree | 11.75 | 1.5618 | 0.04 | 1.6243 | 0.1382 |  |  | 1 Entree + 2 Sides + Cornbread + 1 Plate Add |
-| AMZ: Smokehouse BBQ | Big City BBQ | kielbasa sausage | 5365.6 | 5 ounce | Entree | 11.75 | 1.8025 | 0.04 | 1.8746 | 0.1595 |  |  | 1 Entree + 2 Sides + Cornbread + 1 Plate Add |
-| AMZ: Smokehouse BBQ | Big City BBQ | Memphis Pulled Pork Sandwich | 143209 | 1 sandwich | Entree | 11.75 | 2.1503 | 0.04 | 2.2363 | 0.1903 |  |  | 1 Entree + 2 Sides + Cornbread + 1 Plate Add |
-| AMZ: Smokehouse BBQ | Big City BBQ | Slow Roasted BBQ Spareribs | 178230 | 5 ounce | Entree | 13 | 3.8914 | 0.04 | 4.0471 | 0.3113 |  |  | 1 Entree + 2 Sides + Cornbread + 1 Plate Add |
-| AMZ: Smokehouse BBQ | Big City BBQ | Smoked BBQ Tofu | 87937 | 5 ounce | Entree | 11.75 | 0.6875 | 0.04 | 0.715 | 0.0608 |  |  | 1 Entree + 2 Sides + Cornbread + 1 Plate Add |
+| AMZ: Smokehouse BBQ | Big City BBQ | BBQ baby back ribs | 44966 | 4 each | Entree | 13 | 2.6069 | 0.04 | 2.7111 | 0.2085 | 1.9193 | 0.1572 | 1 Entree + 2 Sides + Cornbread + 1 Sub Recipe |
+| AMZ: Smokehouse BBQ | Big City BBQ | BBQ Chicken Thighs | 171040 | 5 oz portion | Entree | 11.75 | 0.9252 | 0.04 | 0.9622 | 0.0819 |  |  | 1 Entree + 2 Sides + Cornbread + 1 Sub Recipe |
+| AMZ: Smokehouse BBQ | Big City BBQ | bbq rotisserie chicken | 4651.6 | 1 each | Entree | 11.75 | 1.5114 | 0.04 | 1.5718 | 0.1338 |  |  | 1 Entree + 2 Sides + Cornbread + 1 Sub Recipe |
+| AMZ: Smokehouse BBQ | Big City BBQ | Braised Shredded Pork | 44948.1 | 5 ounce | Entree | 11.75 | 1.4722 | 0.04 | 1.5311 | 0.1303 |  |  | 1 Entree + 2 Sides + Cornbread + 1 Sub Recipe |
+| AMZ: Smokehouse BBQ | Big City BBQ | Jackfruit Barbecue Sandwich | 135703 | 1 sandwich | Entree | 11.75 | 1.5618 | 0.04 | 1.6243 | 0.1382 |  |  | 1 Entree + 2 Sides + Cornbread + 1 Sub Recipe |
+| AMZ: Smokehouse BBQ | Big City BBQ | kielbasa sausage | 5365.6 | 5 ounce | Entree | 11.75 | 1.8025 | 0.04 | 1.8746 | 0.1595 |  |  | 1 Entree + 2 Sides + Cornbread + 1 Sub Recipe |
+| AMZ: Smokehouse BBQ | Big City BBQ | Memphis Pulled Pork Sandwich | 143209 | 1 sandwich | Entree | 11.75 | 2.1503 | 0.04 | 2.2363 | 0.1903 |  |  | 1 Entree + 2 Sides + Cornbread + 1 Sub Recipe |
+| AMZ: Smokehouse BBQ | Big City BBQ | Slow Roasted BBQ Spareribs | 178230 | 5 ounce | Entree | 13 | 3.8914 | 0.04 | 4.0471 | 0.3113 |  |  | 1 Entree + 2 Sides + Cornbread + 1 Sub Recipe |
+| AMZ: Smokehouse BBQ | Big City BBQ | Smoked BBQ Tofu | 87937 | 5 ounce | Entree | 11.75 | 0.6875 | 0.04 | 0.715 | 0.0608 |  |  | 1 Entree + 2 Sides + Cornbread + 1 Sub Recipe |
 | AMZ: Smokehouse BBQ | Big City BBQ | bbq baked beans | 18314 | 4 oz portion | Side | 2.55 | 0.3349 | 0.04 | 0.3483 | 0.1366 | 0.411 | 0.1612 |  |
 | AMZ: Smokehouse BBQ | Big City BBQ | coleslaw | 156388 | 1/2 cup | Side | 2.55 | 0.3435 | 0.04 | 0.3572 | 0.1401 |  |  |  |
 | AMZ: Smokehouse BBQ | Big City BBQ | Corn Succotash with Lima Beans | 27385.2 | 4 ounce | Side | 2.55 | 0.5385 | 0.04 | 0.5601 | 0.2196 |  |  |  |
-| AMZ: Smokehouse BBQ | Big City BBQ | Cornbread | 140479 | 4 ounce | Cornbread | 2.55 | 0.2729 | 0.04 | 0.2839 | 0.1113 |  |  | 1 Entree + 2 Sides + Cornbread + 1 Plate Add |
+| AMZ: Smokehouse BBQ | Big City BBQ | Cornbread | 140479 | 4 ounce | Cornbread | 2.55 | 0.2729 | 0.04 | 0.2839 | 0.1113 |  |  | 1 Entree + 2 Sides + Cornbread + 1 Sub Recipe |
 | AMZ: Smokehouse BBQ | Big City BBQ | Grilled Corn | 34041.1 | 1 each | Side | 2.55 | 0.3245 | 0.04 | 0.3374 | 0.1323 |  |  |  |
 | AMZ: Smokehouse BBQ | Big City BBQ | hush puppies | 116037 | 2 each | Side | 2.55 | 0.2557 | 0.04 | 0.266 | 0.1043 |  |  |  |
 | AMZ: Smokehouse BBQ | Big City BBQ | loaded potato salad | 34989.6 | 1/2 cup | Side | 2.55 | 0.5089 | 0.04 | 0.5292 | 0.2075 |  |  |  |
@@ -1375,12 +1379,12 @@ The tables below preserve the workbook's item records. `Protein` is the canonica
 | AMZ: Smokehouse BBQ | Big City BBQ | roasted sweet potatoes | 5633.3 | 1/2 cup | Side | 2.55 | 0.2446 | 0.04 | 0.2544 | 0.0998 |  |  |  |
 | AMZ: Smokehouse BBQ | Big City BBQ | root vegetable succotash | 162176 | 1/2 cup | Side | 2.55 | 0.7609 | 0.04 | 0.7913 | 0.3103 |  |  |  |
 | AMZ: Smokehouse BBQ | Big City BBQ | spicy collard greens | 18326.5 | 1/2 cup | Side | 2.55 | 0.5394 | 0.04 | 0.561 | 0.22 |  |  |  |
-| AMZ: Smokehouse BBQ | Big City BBQ | Barbecue Sauce | 184229 | 2 ounce | Plate Add |  | 0.1717 | 0.04 | 0.1786 |  | 0.2452 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Smokehouse BBQ | Big City BBQ | carochina mustard sauce | 191747 | 2 floz | Plate Add |  | 0.225 | 0.04 | 0.234 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Smokehouse BBQ | Big City BBQ | Gold Barbecue Sauce | 39571 | 2 floz | Plate Add |  | 0.2295 | 0.04 | 0.2387 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Smokehouse BBQ | Big City BBQ | Honey Barbecue Sauce | 144725 | 2 floz | Plate Add |  | 0.2419 | 0 | 0.2419 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Smokehouse BBQ | Big City BBQ | honey BBQ | 27397.2 | 2 floz | Plate Add |  | 0.4113 | 0.04 | 0.4277 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Smokehouse BBQ | Big City BBQ | Memphis Style Barbecue Sauce | 142988 | 2 ounce | Plate Add |  | 0.1444 | 0.04 | 0.1502 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Smokehouse BBQ | Big City BBQ | Barbecue Sauce | 184229 | 2 ounce | Sub Recipe |  | 0.1717 | 0.04 | 0.1786 |  | 0.2452 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Smokehouse BBQ | Big City BBQ | carochina mustard sauce | 191747 | 2 floz | Sub Recipe |  | 0.225 | 0.04 | 0.234 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Smokehouse BBQ | Big City BBQ | Gold Barbecue Sauce | 39571 | 2 floz | Sub Recipe |  | 0.2295 | 0.04 | 0.2387 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Smokehouse BBQ | Big City BBQ | Honey Barbecue Sauce | 144725 | 2 floz | Sub Recipe |  | 0.2419 | 0 | 0.2419 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Smokehouse BBQ | Big City BBQ | honey BBQ | 27397.2 | 2 floz | Sub Recipe |  | 0.4113 | 0.04 | 0.4277 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Smokehouse BBQ | Big City BBQ | Memphis Style Barbecue Sauce | 142988 | 2 ounce | Sub Recipe |  | 0.1444 | 0.04 | 0.1502 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 | AMZ: Smokehouse BBQ | Big City BBQ | Bread Pudding | 159866 | 1 serving(s) | Extension | 3.85 | 1.2032 | 0.04 | 1.2513 | 0.325 | 0.9875 | 0.2565 |  |
 | AMZ: Smokehouse BBQ | Big City BBQ | fresh lemonade | 26880.3 | 12 floz | Extension | 3.85 | 0.3153 | 0.04 | 0.3279 | 0.0852 |  |  |  |
 | AMZ: Smokehouse BBQ | Big City BBQ | old fashioned peach cobbler | 60694.1 | 1 cup | Extension | 3.85 | 0.778 | 0.04 | 0.8091 | 0.2102 |  |  |  |
@@ -1425,9 +1429,9 @@ The tables below preserve the workbook's item records. `Protein` is the canonica
 | AMZ: Street Eats | Quesadillas | chana masala | 165741.24 | 1/2 cup | Side | 2.55 | 1.1214 | 0.04 | 1.1662 | 0.4573 |  |  |  |
 | AMZ: Street Eats | Quesadillas | Dal Amritsari (Dhaaba Dal) | 118715 | 1/2 cup | Side | 2.55 | 0.4598 | 0.04 | 0.4781 | 0.1875 |  |  |  |
 | AMZ: Street Eats | Quesadillas | kachumbar | 165741.11 | 1/2 cup | Side | 2.55 | 0.6984 | 0.04 | 0.7263 | 0.2848 |  |  |  |
-| AMZ: Street Eats | Fried Rice | Kimchi | 144772 | 1 floz | Plate Add |  | 0.1782 | 0.04 | 0.1854 |  | 0.1405 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Street Eats | Quesadillas | Raita Sauce | 81281 | 1 ounce | Plate Add |  | 0.1604 | 0.04 | 0.1668 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Street Eats | Quesadillas | Spicy Cilantro Chutney | 81768 | 1 ounce | Plate Add |  | 0.0668 | 0.04 | 0.0695 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Street Eats | Fried Rice | Kimchi | 144772 | 1 floz | Sub Recipe |  | 0.1782 | 0.04 | 0.1854 |  | 0.1405 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Street Eats | Quesadillas | Raita Sauce | 81281 | 1 ounce | Sub Recipe |  | 0.1604 | 0.04 | 0.1668 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Street Eats | Quesadillas | Spicy Cilantro Chutney | 81768 | 1 ounce | Sub Recipe |  | 0.0668 | 0.04 | 0.0695 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 | AMZ: Street Eats | Fried Rice | Fried Egg | 48575.1 | 1 each | Extension | 2.05 | 0.4938 | 0.04 | 0.5135 | 0.2505 | 0.9864 | 0.3148 |  |
 | AMZ: Street Eats | Naan Nomad | Mango Lassi | 105093 | 12 ounce | Extension | 3.85 | 1.4033 | 0.04 | 1.4594 | 0.3791 |  |  |  |
 
@@ -1576,18 +1580,18 @@ The tables below preserve the workbook's item records. `Protein` is the canonica
 | AMZ: Wok | Vietnamese - Wok | Papaya Salad | 107128.2 | 1/2 cup | Side | 2.55 | 0.584 | 0.04 | 0.6074 | 0.2382 |  |  |  |
 | AMZ: Wok | Vietnamese - Wok | Seaweed and Cabbage Slaw | 75761.3 | 1/2 cup | Side | 2.55 | 0.413 | 0.04 | 0.4295 | 0.1684 |  |  |  |
 | AMZ: Wok | Vietnamese - Wok | vegetable fried rice | 165520.13 | 1 cup | Side | 2.55 | 0.8194 | 0.04 | 0.8522 | 0.3342 |  |  |  |
-| AMZ: Wok | Bibimbap - Wok | Ssamjang Sauce | 142259 | 1 floz | Plate Add |  | 0.2763 | 0.04 | 0.2873 |  | 0.3635 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Wok | Bibimbap - Wok | unagi sauce | 86977 | 1 floz | Plate Add |  | 0.1468 | 0.04 | 0.1527 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Wok | Bibimbap - Wok | yuzu mayo | 147394 | 2 tbsp | Plate Add |  | 0.6431 | 0.04 | 0.6689 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Wok | Japanese - Wok | green sriracha | 176739 | 1-1/2 floz | Plate Add |  | 0.5225 | 0.04 | 0.5434 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Wok | Japanese - Wok | ponzu sauce | 88514.1 | 1-1/2 floz | Plate Add |  | 0.2038 | 0.04 | 0.212 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Wok | Lotus - Wok | Shandong Sauce | 143744 | 1-1/2 ounce | Plate Add |  | 0.3731 | 0.04 | 0.388 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Wok | Lotus - Wok | Sweet and Sour Sauce | 31693.4 | 1-1/2 floz | Plate Add |  | 0.1348 | 0.04 | 0.1402 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Wok | Lotus - Wok | szechuan dumpling sauce | 193093 | 1-1/2 oz portion | Plate Add |  | 0.6672 | 0.04 | 0.6939 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Wok | Teriyaki - Wok | Spicy Teriyaki Sauce | 83240 | 2 floz | Plate Add |  | 0.4183 | 0.04 | 0.435 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Wok | Teriyaki - Wok | Teriyaki Sauce | 83233 | 2 ounce | Plate Add |  | 0.1913 | 0 | 0.1913 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Wok | Vietnamese - Wok | green sriracha | 176739 | 1-1/2 floz | Plate Add |  | 0.5225 | 0.04 | 0.5434 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
-| AMZ: Wok | Vietnamese - Wok | Vietnamese Vinaigrette | 112805 | 1-1/2 ounce | Plate Add |  | 0.1024 | 0.04 | 0.1065 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Wok | Bibimbap - Wok | Ssamjang Sauce | 142259 | 1 floz | Sub Recipe |  | 0.2763 | 0.04 | 0.2873 |  | 0.3635 |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Wok | Bibimbap - Wok | unagi sauce | 86977 | 1 floz | Sub Recipe |  | 0.1468 | 0.04 | 0.1527 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Wok | Bibimbap - Wok | yuzu mayo | 147394 | 2 tbsp | Sub Recipe |  | 0.6431 | 0.04 | 0.6689 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Wok | Japanese - Wok | green sriracha | 176739 | 1-1/2 floz | Sub Recipe |  | 0.5225 | 0.04 | 0.5434 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Wok | Japanese - Wok | ponzu sauce | 88514.1 | 1-1/2 floz | Sub Recipe |  | 0.2038 | 0.04 | 0.212 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Wok | Lotus - Wok | Shandong Sauce | 143744 | 1-1/2 ounce | Sub Recipe |  | 0.3731 | 0.04 | 0.388 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Wok | Lotus - Wok | Sweet and Sour Sauce | 31693.4 | 1-1/2 floz | Sub Recipe |  | 0.1348 | 0.04 | 0.1402 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Wok | Lotus - Wok | szechuan dumpling sauce | 193093 | 1-1/2 oz portion | Sub Recipe |  | 0.6672 | 0.04 | 0.6939 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Wok | Teriyaki - Wok | Spicy Teriyaki Sauce | 83240 | 2 floz | Sub Recipe |  | 0.4183 | 0.04 | 0.435 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Wok | Teriyaki - Wok | Teriyaki Sauce | 83233 | 2 ounce | Sub Recipe |  | 0.1913 | 0 | 0.1913 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Wok | Vietnamese - Wok | green sriracha | 176739 | 1-1/2 floz | Sub Recipe |  | 0.5225 | 0.04 | 0.5434 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
+| AMZ: Wok | Vietnamese - Wok | Vietnamese Vinaigrette | 112805 | 1-1/2 ounce | Sub Recipe |  | 0.1024 | 0.04 | 0.1065 |  |  |  | NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY |
 | AMZ: Wok | Bibimbap - Wok | sesame peanut hotteok pancake | 210236 | 1 serving(s) | Extension | 3.85 | 0.3579 | 0.04 | 0.3723 | 0.0967 | 0.6807 | 0.1768 |  |
 | AMZ: Wok | Japanese - Wok | black sesame miso cookies | 176618 | 3 each | Extension | 3.85 | 0.8524 | 0 | 0.8524 | 0.2214 |  |  |  |
 | AMZ: Wok | Lotus - Wok | vegetable dumpling | 80785.1 | 5 each | Extension | 3.85 | 1.2331 | 0.04 | 1.2825 | 0.3331 |  |  |  |

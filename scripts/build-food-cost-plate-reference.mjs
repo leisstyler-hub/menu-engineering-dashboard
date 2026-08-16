@@ -5,6 +5,9 @@ const root = process.cwd();
 const sourcePath = path.join(root, "docs", "FOOD_COST_PLATE_COSTING_REFERENCE.md");
 const outputPath = path.join(root, "src", "data", "foodCostPlateReference.json");
 const source = fs.readFileSync(sourcePath, "utf8");
+if (/\bPlate Adds?\b/.test(source)) {
+  throw new Error("Legacy Plate Add terminology found. Normalize plate components to Sub Recipe in the Markdown authority.");
+}
 const fullIndex = source.split(/^## Full item cost index\s*$/m)[1];
 const conceptGuide = source.split(/^## Concept guide\s*$/m)[1]?.split(/^## Full item cost index\s*$/m)[0] || "";
 

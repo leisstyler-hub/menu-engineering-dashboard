@@ -4,16 +4,16 @@
     {
       "menu": "AMZ: Andes",
       "stations": "Andes",
-      "plateBuild": "Entree + Base + 2 Sides + Plate Add; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY",
-      "componentTypes": "Entree; Side + Base; Side; Plate Add; Extension",
+      "plateBuild": "Entree + Base + 2 Sides + Sub Recipe; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY",
+      "componentTypes": "Entree; Side + Base; Side; Sub Recipe; Extension",
       "itemCount": 19,
       "status": "Reviewed"
     },
     {
       "menu": "AMZ: Anisa",
       "stations": "Lebanese Menu; Persian Menu",
-      "plateBuild": "1 Entree + 2 Sides + 2 Plate Adds; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY",
-      "componentTypes": "Entree; Side; Plate Add; Extension",
+      "plateBuild": "1 Entree + 2 Sides + 2 Sub Recipes; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY",
+      "componentTypes": "Entree; Side; Sub Recipe; Extension",
       "itemCount": 30,
       "status": "Reviewed"
     },
@@ -29,7 +29,7 @@
       "menu": "AMZ: Balti",
       "stations": "Balti",
       "plateBuild": "1 Entree + 2 Sides; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY",
-      "componentTypes": "Entree; Side; Naan; Plate Add; Extension",
+      "componentTypes": "Entree; Side; Naan; Sub Recipe; Extension",
       "itemCount": 44,
       "status": "Reviewed"
     },
@@ -37,7 +37,7 @@
       "menu": "AMZ: Bibimbowl",
       "stations": "Bibimbap",
       "plateBuild": "1 Entree; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY",
-      "componentTypes": "Entree; Plate Add; Extension",
+      "componentTypes": "Entree; Sub Recipe; Extension",
       "itemCount": 10,
       "status": "Reviewed"
     },
@@ -76,16 +76,16 @@
     {
       "menu": "AMZ: Carvery",
       "stations": "Carvery Sandwiches; Premium Mains; Vegetarian Mains; Extensions; Sauces; Sides",
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY",
-      "componentTypes": "Entree; Side; Plate Add; Extension",
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY",
+      "componentTypes": "Entree; Side; Sub Recipe; Extension",
       "itemCount": 122,
       "status": "Reviewed"
     },
     {
       "menu": "AMZ: Cevicheria",
       "stations": "Cevicheria",
-      "plateBuild": "1 Entree + 1 Chips + 1 Plate Add; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY",
-      "componentTypes": "Entree; Side; Chips; Plate Add; Extension",
+      "plateBuild": "1 Entree + 1 Chips + 1 Sub Recipe; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY",
+      "componentTypes": "Entree; Side; Chips; Sub Recipe; Extension",
       "itemCount": 15,
       "status": "Reviewed"
     },
@@ -93,7 +93,7 @@
       "menu": "AMZ: Chaatwalla",
       "stations": "Chaatwalla",
       "plateBuild": "1 Entree + 1 Side; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY; Complimentary with each order of other station items",
-      "componentTypes": "Entree; Side; Plate Add; Extension",
+      "componentTypes": "Entree; Side; Sub Recipe; Extension",
       "itemCount": 28,
       "status": "Reviewed"
     },
@@ -124,8 +124,8 @@
     {
       "menu": "AMZ: Fish Market",
       "stations": "Fish Market; LTO",
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY",
-      "componentTypes": "Entree; Side; Plate Add",
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY",
+      "componentTypes": "Entree; Side; Sub Recipe",
       "itemCount": 51,
       "status": "Reviewed"
     },
@@ -157,15 +157,15 @@
       "menu": "AMZ: Harvest Co.",
       "stations": "Harvest Co.",
       "plateBuild": "1 Entree + 2 Sides; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY",
-      "componentTypes": "Entree; Side; Plate Add",
+      "componentTypes": "Entree; Side; Sub Recipe",
       "itemCount": 17,
       "status": "Reviewed"
     },
     {
       "menu": "AMZ: House of Teriyaki",
       "stations": "Teriyaki",
-      "plateBuild": "Entree + Side + Plate Add; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY",
-      "componentTypes": "Entree; Side; Plate Add",
+      "plateBuild": "Entree + Side + Sub Recipe; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY",
+      "componentTypes": "Entree; Side; Sub Recipe",
       "itemCount": 13,
       "status": "Reviewed"
     },
@@ -181,7 +181,7 @@
       "menu": "AMZ: Lotus",
       "stations": "Lotus",
       "plateBuild": "1 Entree + 1 Base + 2 Sides; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY",
-      "componentTypes": "Entree; Side; Base; Plate Add; Extension",
+      "componentTypes": "Entree; Side; Base; Sub Recipe; Extension",
       "itemCount": 26,
       "status": "Reviewed"
     },
@@ -205,7 +205,7 @@
       "menu": "AMZ: Pho",
       "stations": "Pho",
       "plateBuild": "1 Entree; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY",
-      "componentTypes": "Entree; Plate Add",
+      "componentTypes": "Entree; Sub Recipe",
       "itemCount": 7,
       "status": "Reviewed"
     },
@@ -228,24 +228,24 @@
     {
       "menu": "AMZ: Poke Counter",
       "stations": "Poke",
-      "plateBuild": "1 Entree + 1 Base + 5 Toppings + 1 Plate Add; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY",
-      "componentTypes": "Entree; Base; Plate Add; Topping",
+      "plateBuild": "1 Entree + 1 Base + 5 Toppings + 1 Sub Recipe; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY",
+      "componentTypes": "Entree; Base; Sub Recipe; Topping",
       "itemCount": 26,
       "status": "Reviewed"
     },
     {
       "menu": "AMZ: Porto",
       "stations": "Piri Piri",
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY",
-      "componentTypes": "Entree; Side; Plate Add; Extension",
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY",
+      "componentTypes": "Entree; Side; Sub Recipe; Extension",
       "itemCount": 12,
       "status": "Reviewed"
     },
     {
       "menu": "AMZ: Roam BBQ",
       "stations": "Roam BBQ",
-      "plateBuild": "1 Entree + 2 Sides + 4 Plate Adds; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY",
-      "componentTypes": "Entree; Side; Plate Add; Extension",
+      "plateBuild": "1 Entree + 2 Sides + 4 Sub Recipes; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY",
+      "componentTypes": "Entree; Side; Sub Recipe; Extension",
       "itemCount": 24,
       "status": "Reviewed"
     },
@@ -268,8 +268,8 @@
     {
       "menu": "AMZ: Smokehouse BBQ",
       "stations": "Big City BBQ",
-      "plateBuild": "1 Entree + 2 Sides + Cornbread + 1 Plate Add; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY",
-      "componentTypes": "Entree; Side; Cornbread; Plate Add; Extension",
+      "plateBuild": "1 Entree + 2 Sides + Cornbread + 1 Sub Recipe; NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY",
+      "componentTypes": "Entree; Side; Cornbread; Sub Recipe; Extension",
       "itemCount": 30,
       "status": "Reviewed"
     },
@@ -277,7 +277,7 @@
       "menu": "AMZ: Street Eats",
       "stations": "El Queso Birria; Fried Rice; Naan Nomad; Pho Dip; Quesadillas",
       "plateBuild": "Varies by station: group Naan Nomad, Pho Dip, and each other Street Eats station independently.",
-      "componentTypes": "Entree; Side; Plate Add; Extension",
+      "componentTypes": "Entree; Side; Sub Recipe; Extension",
       "itemCount": 40,
       "status": "Reviewed"
     },
@@ -301,7 +301,7 @@
       "menu": "AMZ: Wok",
       "stations": "Bibimbap - Wok; Japanese - Wok; Lotus - Wok; Teriyaki - Wok; Thai - Wok; Vietnamese - Wok",
       "plateBuild": "Varies by station: group Vietnamese, Japanese, and each other Wok station independently.",
-      "componentTypes": "Entree; Extension; Side; Rice; Plate Add",
+      "componentTypes": "Entree; Extension; Side; Rice; Sub Recipe",
       "itemCount": 95,
       "status": "Reviewed"
     },
@@ -437,7 +437,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 2.5722,
-      "plateBuild": "Entree + Base + 2 Sides + Plate Add"
+      "plateBuild": "Entree + Base + 2 Sides + Sub Recipe"
     },
     {
       "id": "AMZ: Andes␟Andes␟122254␟5 ounce␟1",
@@ -449,7 +449,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 1.742,
-      "plateBuild": "Entree + Base + 2 Sides + Plate Add"
+      "plateBuild": "Entree + Base + 2 Sides + Sub Recipe"
     },
     {
       "id": "AMZ: Andes␟Andes␟122258␟8 ounce␟1",
@@ -461,7 +461,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 3.9013,
-      "plateBuild": "Entree + Base + 2 Sides + Plate Add"
+      "plateBuild": "Entree + Base + 2 Sides + Sub Recipe"
     },
     {
       "id": "AMZ: Andes␟Andes␟122251.4␟8 ounce␟1",
@@ -473,7 +473,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 1.468,
-      "plateBuild": "Entree + Base + 2 Sides + Plate Add"
+      "plateBuild": "Entree + Base + 2 Sides + Sub Recipe"
     },
     {
       "id": "AMZ: Andes␟Andes␟122260␟1 piece␟1",
@@ -485,7 +485,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 1.8061,
-      "plateBuild": "Entree + Base + 2 Sides + Plate Add"
+      "plateBuild": "Entree + Base + 2 Sides + Sub Recipe"
     },
     {
       "id": "AMZ: Andes␟Andes␟122256␟1 cup␟1",
@@ -614,7 +614,7 @@
       "item": "aji amarillo dipping sauce",
       "mrn": "122252",
       "portion": "1 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.3829,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -626,7 +626,7 @@
       "item": "huacatay dipping sauce",
       "mrn": "122255",
       "portion": "1 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.4411,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -638,7 +638,7 @@
       "item": "spicy rocoto dipping sauce",
       "mrn": "122261",
       "portion": "1 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.2286,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -665,7 +665,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 1.9089,
-      "plateBuild": "1 Entree + 2 Sides + 2 Plate Adds"
+      "plateBuild": "1 Entree + 2 Sides + 2 Sub Recipes"
     },
     {
       "id": "AMZ: Anisa␟Lebanese Menu␟216051.1␟1 each␟1",
@@ -677,7 +677,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 5.7898,
-      "plateBuild": "1 Entree + 2 Sides + 2 Plate Adds"
+      "plateBuild": "1 Entree + 2 Sides + 2 Sub Recipes"
     },
     {
       "id": "AMZ: Anisa␟Lebanese Menu␟216051.2␟1 serving(s)␟1",
@@ -689,7 +689,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 1.923,
-      "plateBuild": "1 Entree + 2 Sides + 2 Plate Adds"
+      "plateBuild": "1 Entree + 2 Sides + 2 Sub Recipes"
     },
     {
       "id": "AMZ: Anisa␟Persian Menu␟216051.5␟1 serving(s)␟1",
@@ -701,7 +701,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 1.9595,
-      "plateBuild": "1 Entree + 2 Sides + 2 Plate Adds"
+      "plateBuild": "1 Entree + 2 Sides + 2 Sub Recipes"
     },
     {
       "id": "AMZ: Anisa␟Persian Menu␟216051.6␟1 serving(s)␟1",
@@ -713,7 +713,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 1.0412,
-      "plateBuild": "1 Entree + 2 Sides + 2 Plate Adds"
+      "plateBuild": "1 Entree + 2 Sides + 2 Sub Recipes"
     },
     {
       "id": "AMZ: Anisa␟Persian Menu␟216051.3␟1 serving(s)␟1",
@@ -725,7 +725,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 2.9658,
-      "plateBuild": "1 Entree + 2 Sides + 2 Plate Adds"
+      "plateBuild": "1 Entree + 2 Sides + 2 Sub Recipes"
     },
     {
       "id": "AMZ: Anisa␟Persian Menu␟216051.4␟1 serving(s)␟1",
@@ -737,7 +737,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 2.7945,
-      "plateBuild": "1 Entree + 2 Sides + 2 Plate Adds"
+      "plateBuild": "1 Entree + 2 Sides + 2 Sub Recipes"
     },
     {
       "id": "AMZ: Anisa␟Lebanese Menu␟172546␟4 ounce␟1",
@@ -854,7 +854,7 @@
       "item": "baba ghanoush",
       "mrn": "24347.7",
       "portion": "2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.4336,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -866,7 +866,7 @@
       "item": "harissa relish",
       "mrn": "191490",
       "portion": "2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.49,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -878,7 +878,7 @@
       "item": "tahini sauce",
       "mrn": "61291.6",
       "portion": "2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.6221,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -890,7 +890,7 @@
       "item": "whipped garlic toum",
       "mrn": "144613",
       "portion": "2 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.2901,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -902,7 +902,7 @@
       "item": "cucumber yogurt dip",
       "mrn": "78682.1",
       "portion": "2 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.5578,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -914,7 +914,7 @@
       "item": "mezze butter",
       "mrn": "191736",
       "portion": "2 oz portion",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.4232,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -926,7 +926,7 @@
       "item": "red pepper pepita muhammara",
       "mrn": "191730",
       "portion": "1/4 cup",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.4906,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -938,7 +938,7 @@
       "item": "sumac onion relish",
       "mrn": "191726",
       "portion": "1/4 cup",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.3775,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -1586,7 +1586,7 @@
       "item": "Mango Chutney",
       "mrn": "89516",
       "portion": "2 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.2801,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -1598,7 +1598,7 @@
       "item": "Raita Sauce",
       "mrn": "81281",
       "portion": "2 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.3336,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -1610,7 +1610,7 @@
       "item": "Spicy Cilantro Chutney",
       "mrn": "81768",
       "portion": "2 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.139,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -1622,7 +1622,7 @@
       "item": "tamarind-date chutney",
       "mrn": "87890",
       "portion": "2 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 2.2565,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -1718,7 +1718,7 @@
       "item": "Ssamjang Sauce",
       "mrn": "142259",
       "portion": "1 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.2873,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -1730,7 +1730,7 @@
       "item": "unagi sauce",
       "mrn": "86977",
       "portion": "1 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.1527,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -1742,7 +1742,7 @@
       "item": "yuzu mayo",
       "mrn": "147394",
       "portion": "2 tbsp",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.6689,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -4949,7 +4949,7 @@
       "componentType": "Entree",
       "sellPrice": 10.25,
       "itemWasteCost": 5.4342,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Carvery Sandwiches␟33674.5␟1 sandwich␟1",
@@ -4961,7 +4961,7 @@
       "componentType": "Entree",
       "sellPrice": 10.25,
       "itemWasteCost": 2.4218,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Carvery Sandwiches␟76682.6␟1 sandwich␟1",
@@ -4973,7 +4973,7 @@
       "componentType": "Entree",
       "sellPrice": 10.25,
       "itemWasteCost": 3.8084,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Carvery Sandwiches␟63618␟1 each␟1",
@@ -4985,7 +4985,7 @@
       "componentType": "Entree",
       "sellPrice": 10.25,
       "itemWasteCost": 2.9395,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Carvery Sandwiches␟32415␟1 sandwich␟1",
@@ -4997,7 +4997,7 @@
       "componentType": "Entree",
       "sellPrice": 10.25,
       "itemWasteCost": 2.1755,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Carvery Sandwiches␟78027.1␟1 sandwich␟1",
@@ -5009,7 +5009,7 @@
       "componentType": "Entree",
       "sellPrice": 10.25,
       "itemWasteCost": 2.6449,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Carvery Sandwiches␟38489.4␟1 each␟1",
@@ -5021,7 +5021,7 @@
       "componentType": "Entree",
       "sellPrice": 9.2,
       "itemWasteCost": 3.2213,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Carvery Sandwiches␟84262.1␟1 sandwich␟1",
@@ -5033,7 +5033,7 @@
       "componentType": "Entree",
       "sellPrice": 10.25,
       "itemWasteCost": 4.4992,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Carvery Sandwiches␟20776.46␟1 each␟1",
@@ -5045,7 +5045,7 @@
       "componentType": "Entree",
       "sellPrice": 10.25,
       "itemWasteCost": 2.8959,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Premium Mains␟131984␟1 each␟1",
@@ -5057,7 +5057,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 3.5468,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Premium Mains␟9631␟5 oz portion␟1",
@@ -5069,7 +5069,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 3.1332,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Premium Mains␟191368␟1 each␟1",
@@ -5081,7 +5081,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 2.6978,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Premium Mains␟44863␟5 ounce␟1",
@@ -5093,7 +5093,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 1.48,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Premium Mains␟44763.7␟5 ounce␟1",
@@ -5105,7 +5105,7 @@
       "componentType": "Entree",
       "sellPrice": 0.67,
       "itemWasteCost": 2.4392,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Premium Mains␟9010␟5 oz portion␟1",
@@ -5117,7 +5117,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 1.201,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Premium Mains␟88181.1␟5 ounce␟1",
@@ -5129,7 +5129,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 2.1852,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Premium Mains␟93475.1␟5 ounce␟1",
@@ -5141,7 +5141,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 3.5751,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Premium Mains␟44891.2␟1 serving(s)␟1",
@@ -5153,7 +5153,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 2.6178,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Premium Mains␟94006.1␟5 ounce␟1",
@@ -5165,7 +5165,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 4.8251,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Premium Mains␟143753␟5 ounce␟1",
@@ -5177,7 +5177,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 1.5135,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Premium Mains␟70829␟5 ounce␟1",
@@ -5189,7 +5189,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 2.046,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Premium Mains␟3972.12␟5 ounce␟1",
@@ -5201,7 +5201,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 7.0405,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Premium Mains␟13573.4␟5 ounce␟1",
@@ -5213,7 +5213,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 2.6682,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Premium Mains␟45120␟5 ounce␟1",
@@ -5225,7 +5225,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 2.0454,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Premium Mains␟166683␟5 oz portion␟1",
@@ -5237,7 +5237,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 2.955,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Premium Mains␟118124.1␟5 ounce␟1",
@@ -5249,7 +5249,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 2.0542,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Premium Mains␟76432␟5 ounce␟1",
@@ -5261,7 +5261,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 1.7503,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Premium Mains␟99064.2␟1 piece␟1",
@@ -5273,7 +5273,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 3.2087,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Premium Mains␟162512␟5 ounce␟1",
@@ -5285,7 +5285,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 1.5308,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Premium Mains␟144240␟5 ounce␟1",
@@ -5297,7 +5297,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 1.7094,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Premium Mains␟4651.19␟1 each␟1",
@@ -5309,7 +5309,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 2.9471,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Premium Mains␟142016.4␟5 ounce␟1",
@@ -5321,7 +5321,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 2.3589,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Premium Mains␟143413␟5 oz meat␟1",
@@ -5333,7 +5333,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 4.4915,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Premium Mains␟194262␟1 each␟1",
@@ -5345,7 +5345,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 3.2625,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Premium Mains␟194276␟2 each␟1",
@@ -5357,7 +5357,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 1.2688,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Premium Mains␟144069␟5 ounce␟1",
@@ -5369,7 +5369,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 2.894,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Vegetarian Mains␟134368.2␟5 ounce␟1",
@@ -5381,7 +5381,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 0.5692,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Vegetarian Mains␟157988␟2 ounce␟1",
@@ -5465,7 +5465,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 0.4813,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Vegetarian Mains␟194280␟1 slice␟1",
@@ -5477,7 +5477,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 1.0926,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Vegetarian Mains␟147085␟2 oz portion␟1",
@@ -5501,7 +5501,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 2.7198,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Vegetarian Mains␟99064.2␟5 ounce␟1",
@@ -5513,7 +5513,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 2.1328,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Vegetarian Mains␟31680.13␟1 serving(s)␟1",
@@ -5525,7 +5525,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 2.6549,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Vegetarian Mains␟139607␟2 ounce␟1",
@@ -5561,7 +5561,7 @@
       "componentType": "Entree",
       "sellPrice": 2.55,
       "itemWasteCost": 0.5309,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Carvery␟Vegetarian Mains␟165393␟1/4 cup␟1",
@@ -6098,7 +6098,7 @@
       "item": "1000 Island Dressing",
       "mrn": "62351",
       "portion": "2 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.3574,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -6110,7 +6110,7 @@
       "item": "Apple juice, vinegar and Dijon mustard make a tangy vinaigrette",
       "mrn": "14243.1",
       "portion": "3 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.7938,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -6122,7 +6122,7 @@
       "item": "Apricot Preserves",
       "mrn": "74413.1",
       "portion": "2 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.2939,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -6134,7 +6134,7 @@
       "item": "Barbecue Sauce",
       "mrn": "184229",
       "portion": "2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.2142,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -6146,7 +6146,7 @@
       "item": "Chimmichuri Sauce",
       "mrn": "144721",
       "portion": "2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.6988,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -6158,7 +6158,7 @@
       "item": "chipotle mayonnaise",
       "mrn": "66851",
       "portion": "2 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.3625,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -6170,7 +6170,7 @@
       "item": "Classic Hummus",
       "mrn": "187183",
       "portion": "2 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.5034,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -6182,7 +6182,7 @@
       "item": "Country Gravy",
       "mrn": "81538",
       "portion": "3-1/2 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.5264,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -6194,7 +6194,7 @@
       "item": "cranberry mayonnaise",
       "mrn": "18485.8",
       "portion": "2 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.2363,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -6206,7 +6206,7 @@
       "item": "Creamy Horseradish Sauce",
       "mrn": "138929",
       "portion": "2 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.2667,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -6218,7 +6218,7 @@
       "item": "Creole Sauce",
       "mrn": "12036",
       "portion": "4 tbsp",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.281,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -6230,7 +6230,7 @@
       "item": "honey mint yogurt sauce",
       "mrn": "8264.1",
       "portion": "2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.4969,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -6242,7 +6242,7 @@
       "item": "Honey Mustard Dressing",
       "mrn": "27070.1",
       "portion": "2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.6852,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -6254,7 +6254,7 @@
       "item": "Lemon Dill Aioli",
       "mrn": "19400.8",
       "portion": "2 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.4402,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -6266,7 +6266,7 @@
       "item": "muhammara with walnuts",
       "mrn": "22652.5",
       "portion": "2 tbsp",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.3289,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -6278,7 +6278,7 @@
       "item": "peanut satay sauce",
       "mrn": "143103",
       "portion": "2 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.4477,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -6290,7 +6290,7 @@
       "item": "pesto aioli",
       "mrn": "140911",
       "portion": "2 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.7043,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -6302,7 +6302,7 @@
       "item": "roasted garlic aioli",
       "mrn": "14681.3",
       "portion": "2 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.4259,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -6314,7 +6314,7 @@
       "item": "Sweet and Smoky Sauce",
       "mrn": "77537.1",
       "portion": "3 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.5704,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -6326,7 +6326,7 @@
       "item": "sweet and spicy honey mustard dressing",
       "mrn": "10812.1",
       "portion": "2 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.3362,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -6338,7 +6338,7 @@
       "item": "Vegan Brown Gravy",
       "mrn": "133961",
       "portion": "1 serving(s)",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": null,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -6350,7 +6350,7 @@
       "item": "Vegan Mayo",
       "mrn": "108718",
       "portion": "2 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.4131,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -6362,7 +6362,7 @@
       "item": "Yellow Mustard",
       "mrn": "47957.1",
       "portion": "2 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.0914,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -6413,7 +6413,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 2.4715,
-      "plateBuild": "1 Entree + 1 Chips + 1 Plate Add"
+      "plateBuild": "1 Entree + 1 Chips + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Cevicheria␟Cevicheria␟132054.2␟6 ounce␟1",
@@ -6425,7 +6425,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 1.421,
-      "plateBuild": "1 Entree + 1 Chips + 1 Plate Add"
+      "plateBuild": "1 Entree + 1 Chips + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Cevicheria␟Cevicheria␟145020.1␟6 ounce␟1",
@@ -6437,7 +6437,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 1.9306,
-      "plateBuild": "1 Entree + 1 Chips + 1 Plate Add"
+      "plateBuild": "1 Entree + 1 Chips + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Cevicheria␟Cevicheria␟145020.2␟6 ounce␟1",
@@ -6449,7 +6449,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 2.5407,
-      "plateBuild": "1 Entree + 1 Chips + 1 Plate Add"
+      "plateBuild": "1 Entree + 1 Chips + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Cevicheria␟Cevicheria␟41689.9␟1/2 cup␟1",
@@ -6554,7 +6554,7 @@
       "item": "Avocado Ranch Dressing",
       "mrn": "24747.3",
       "portion": "1 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.2475,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -6566,7 +6566,7 @@
       "item": "Molcajete Salsa",
       "mrn": "87748",
       "portion": "1 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.454,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -6758,7 +6758,7 @@
       "item": "Raita Sauce",
       "mrn": "81281",
       "portion": "2 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.3336,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -6770,7 +6770,7 @@
       "item": "Spicy Cilantro Chutney",
       "mrn": "81768",
       "portion": "2 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.139,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -6782,7 +6782,7 @@
       "item": "tamarind-date chutney",
       "mrn": "87890",
       "portion": "4 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 4.513,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -7613,7 +7613,7 @@
       "componentType": "Entree",
       "sellPrice": 15.5,
       "itemWasteCost": 2.1182,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Fish Market␟Fish Market␟95621.3␟4 ounce␟1",
@@ -7625,7 +7625,7 @@
       "componentType": "Entree",
       "sellPrice": 10.95,
       "itemWasteCost": 1.6946,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Fish Market␟Fish Market␟76761.4␟11-1/2 ounce␟1",
@@ -7637,7 +7637,7 @@
       "componentType": "Entree",
       "sellPrice": 14.95,
       "itemWasteCost": 4.5481,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Fish Market␟Fish Market␟16299.5␟5 oz portion␟1",
@@ -7649,7 +7649,7 @@
       "componentType": "Entree",
       "sellPrice": 15.5,
       "itemWasteCost": 18.856,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Fish Market␟Fish Market␟16299.5␟1 serving(s)␟1",
@@ -7661,7 +7661,7 @@
       "componentType": "Entree",
       "sellPrice": 10.95,
       "itemWasteCost": 3.7712,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Fish Market␟Fish Market␟194781␟5 ounce␟1",
@@ -7673,7 +7673,7 @@
       "componentType": "Entree",
       "sellPrice": 15.5,
       "itemWasteCost": 4.8616,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Fish Market␟Fish Market␟194781␟1 each␟1",
@@ -7685,7 +7685,7 @@
       "componentType": "Entree",
       "sellPrice": 10.95,
       "itemWasteCost": 3.1006,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Fish Market␟Fish Market␟98380␟5 ounce␟1",
@@ -7697,7 +7697,7 @@
       "componentType": "Entree",
       "sellPrice": 15.5,
       "itemWasteCost": 3.8868,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Fish Market␟Fish Market␟98380␟1 each␟1",
@@ -7709,7 +7709,7 @@
       "componentType": "Entree",
       "sellPrice": 10.95,
       "itemWasteCost": 3.7743,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Fish Market␟Fish Market␟12989.14␟1 serving(s)␟1",
@@ -7721,7 +7721,7 @@
       "componentType": "Entree",
       "sellPrice": 15.5,
       "itemWasteCost": 1.6005,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Fish Market␟Fish Market␟12989.14␟1 serving(s)␟2",
@@ -7733,7 +7733,7 @@
       "componentType": "Entree",
       "sellPrice": 10.95,
       "itemWasteCost": 1.6005,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Fish Market␟Fish Market␟135663.1␟5 ounce␟1",
@@ -7745,7 +7745,7 @@
       "componentType": "Entree",
       "sellPrice": 15.5,
       "itemWasteCost": 3.2972,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Fish Market␟Fish Market␟135663.1␟4 ounce␟1",
@@ -7757,7 +7757,7 @@
       "componentType": "Entree",
       "sellPrice": 10.95,
       "itemWasteCost": 2.6377,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Fish Market␟Fish Market␟57059.16␟5 ounce␟1",
@@ -7769,7 +7769,7 @@
       "componentType": "Entree",
       "sellPrice": 15.5,
       "itemWasteCost": 6.2242,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Fish Market␟Fish Market␟57059.16␟1 each␟1",
@@ -7781,7 +7781,7 @@
       "componentType": "Entree",
       "sellPrice": 10.95,
       "itemWasteCost": 4.4248,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Fish Market␟Fish Market␟78200.3␟1 each␟1",
@@ -7793,7 +7793,7 @@
       "componentType": "Entree",
       "sellPrice": 14.95,
       "itemWasteCost": 2.2301,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Fish Market␟Fish Market␟32980.8␟1 serving(s)␟1",
@@ -7805,7 +7805,7 @@
       "componentType": "Entree",
       "sellPrice": 15.5,
       "itemWasteCost": 3.6347,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Fish Market␟LTO␟84484.1␟2 each␟1",
@@ -7817,7 +7817,7 @@
       "componentType": "Entree",
       "sellPrice": 15.5,
       "itemWasteCost": 4.649,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Fish Market␟LTO␟42120.8␟1 plate␟1",
@@ -7829,7 +7829,7 @@
       "componentType": "Entree",
       "sellPrice": 15.5,
       "itemWasteCost": 2.9776,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Fish Market␟LTO␟194073␟2 each␟1",
@@ -7841,7 +7841,7 @@
       "componentType": "Entree",
       "sellPrice": 15.5,
       "itemWasteCost": 4.4901,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Fish Market␟LTO␟134605␟1 plate␟1",
@@ -7853,7 +7853,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 3.5713,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Fish Market␟LTO␟194090␟1 sandwich␟1",
@@ -7865,7 +7865,7 @@
       "componentType": "Entree",
       "sellPrice": 15.5,
       "itemWasteCost": 3.9859,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Fish Market␟LTO␟189227.2␟1 each␟1",
@@ -7877,7 +7877,7 @@
       "componentType": "Entree",
       "sellPrice": 15.5,
       "itemWasteCost": 7.9616,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Fish Market␟LTO␟4640.4␟1 plate␟1",
@@ -7889,7 +7889,7 @@
       "componentType": "Entree",
       "sellPrice": 14.95,
       "itemWasteCost": null,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Fish Market␟LTO␟44897.4␟1 serving(s)␟1",
@@ -7901,7 +7901,7 @@
       "componentType": "Entree",
       "sellPrice": 15.5,
       "itemWasteCost": null,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Fish Market␟LTO␟147575␟8 oz portion␟1",
@@ -7913,7 +7913,7 @@
       "componentType": "Entree",
       "sellPrice": 15.5,
       "itemWasteCost": 2.2376,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Fish Market␟LTO␟77597.14␟1 each␟1",
@@ -7925,7 +7925,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 3.0263,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Fish Market␟LTO␟45108␟2 cup␟1",
@@ -7937,7 +7937,7 @@
       "componentType": "Entree",
       "sellPrice": 15.5,
       "itemWasteCost": 3.672,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Fish Market␟LTO␟194276␟2 each␟1",
@@ -7949,7 +7949,7 @@
       "componentType": "Entree",
       "sellPrice": 15.5,
       "itemWasteCost": 1.2688,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Fish Market␟LTO␟106974.2␟1 sandwich␟1",
@@ -7961,7 +7961,7 @@
       "componentType": "Entree",
       "sellPrice": 15.5,
       "itemWasteCost": 3.1996,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Fish Market␟Fish Market␟16882.7␟1 cup␟1",
@@ -8114,7 +8114,7 @@
       "item": "Beurre Blanc",
       "mrn": "162137.1",
       "portion": "2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.5633,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -8126,7 +8126,7 @@
       "item": "Chermoula",
       "mrn": "138944",
       "portion": "2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.9927,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -8138,7 +8138,7 @@
       "item": "chimichurri sauce",
       "mrn": "61283.7",
       "portion": "2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 1.0243,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -8150,7 +8150,7 @@
       "item": "lemon dill compound butter",
       "mrn": "46265",
       "portion": "2 tbsp",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.3874,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -8162,7 +8162,7 @@
       "item": "Lemon Wedge",
       "mrn": "1261",
       "portion": "1 wedge",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.0228,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -8174,7 +8174,7 @@
       "item": "pineapple mango salsa",
       "mrn": "41724",
       "portion": "2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.3551,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -8186,7 +8186,7 @@
       "item": "remoulade sauce",
       "mrn": "129694.1",
       "portion": "2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.4395,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -8198,7 +8198,7 @@
       "item": "Romesco Sauce",
       "mrn": "197452",
       "portion": "2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.99,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -8210,7 +8210,7 @@
       "item": "tartar sauce",
       "mrn": "61541.4",
       "portion": "2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.289,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -10514,7 +10514,7 @@
       "item": "baby arugula salad garnish",
       "mrn": "88033.1",
       "portion": "1 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.4144,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -10526,7 +10526,7 @@
       "item": "dill orange fennel",
       "mrn": "60810.6",
       "portion": "1 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.1735,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -10538,7 +10538,7 @@
       "item": "lemon herb cucumbers",
       "mrn": "81258.3",
       "portion": "1 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.214,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -10550,7 +10550,7 @@
       "item": "spicy pickled carrots",
       "mrn": "81315.3",
       "portion": "1 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.7444,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -10565,7 +10565,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 6.5577,
-      "plateBuild": "Entree + Side + Plate Add"
+      "plateBuild": "Entree + Side + Sub Recipe"
     },
     {
       "id": "AMZ: House of Teriyaki␟Teriyaki␟83244.7␟6 oz portion␟1",
@@ -10577,7 +10577,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 2.0768,
-      "plateBuild": "Entree + Side + Plate Add"
+      "plateBuild": "Entree + Side + Sub Recipe"
     },
     {
       "id": "AMZ: House of Teriyaki␟Teriyaki␟107142.156␟6 ounce␟1",
@@ -10589,7 +10589,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 1.0881,
-      "plateBuild": "Entree + Side + Plate Add"
+      "plateBuild": "Entree + Side + Sub Recipe"
     },
     {
       "id": "AMZ: House of Teriyaki␟Teriyaki␟16882.7␟1 cup␟1",
@@ -10682,7 +10682,7 @@
       "item": "Organic Soy Ginger Dressing",
       "mrn": "81555.7",
       "portion": "1 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.2944,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -10694,7 +10694,7 @@
       "item": "Spicy Teriyaki Sauce",
       "mrn": "83240",
       "portion": "2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.435,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -10706,7 +10706,7 @@
       "item": "Teriyaki Sauce",
       "mrn": "83233",
       "portion": "2 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.1989,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -11258,7 +11258,7 @@
       "item": "Shandong Sauce",
       "mrn": "143744",
       "portion": "1-1/2 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.388,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -11270,7 +11270,7 @@
       "item": "Sweet and Sour Sauce",
       "mrn": "31693.4",
       "portion": "1-1/2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.1402,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -11282,7 +11282,7 @@
       "item": "szechuan dumpling sauce",
       "mrn": "193093",
       "portion": "1-1/2 oz portion",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.6939,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -11882,7 +11882,7 @@
       "item": "Sliced Jalapeno Pepper",
       "mrn": "63607",
       "portion": "1 tbsp",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.0313,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -12605,7 +12605,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 3.364,
-      "plateBuild": "1 Entree + 1 Base + 5 Toppings + 1 Plate Add"
+      "plateBuild": "1 Entree + 1 Base + 5 Toppings + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Poke Counter␟Poke␟193768.2␟1/2 cup␟1",
@@ -12617,7 +12617,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 1.0161,
-      "plateBuild": "1 Entree + 1 Base + 5 Toppings + 1 Plate Add"
+      "plateBuild": "1 Entree + 1 Base + 5 Toppings + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Poke Counter␟Poke␟141014.2␟1 each␟1",
@@ -12629,7 +12629,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 2.1894,
-      "plateBuild": "1 Entree + 1 Base + 5 Toppings + 1 Plate Add"
+      "plateBuild": "1 Entree + 1 Base + 5 Toppings + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Poke Counter␟Poke␟141014.4␟1 each␟1",
@@ -12641,7 +12641,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 3.364,
-      "plateBuild": "1 Entree + 1 Base + 5 Toppings + 1 Plate Add"
+      "plateBuild": "1 Entree + 1 Base + 5 Toppings + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Poke Counter␟Poke␟76699.2␟12 ounce␟1",
@@ -12710,7 +12710,7 @@
       "item": "Shoyu Yuzu Sauce",
       "mrn": "122493",
       "portion": "2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.4573,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -12722,7 +12722,7 @@
       "item": "Sriracha Mayo",
       "mrn": "140423",
       "portion": "2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.4025,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -12761,7 +12761,7 @@
       "componentType": "Topping",
       "sellPrice": 2.05,
       "itemWasteCost": 0.2805,
-      "plateBuild": "1 Entree + 1 Base + 5 Toppings + 1 Plate Add"
+      "plateBuild": "1 Entree + 1 Base + 5 Toppings + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Poke Counter␟Poke␟62336␟1/4 cup␟1",
@@ -12917,7 +12917,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 1.7904,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Porto␟Piri Piri␟121025␟5 ounce␟1",
@@ -12929,7 +12929,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 1.3392,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Porto␟Piri Piri␟121023␟2 each␟1",
@@ -12941,7 +12941,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 2.0524,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Porto␟Piri Piri␟121022.2␟1 each␟1",
@@ -12953,7 +12953,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 0.9294,
-      "plateBuild": "1 Entree + 2 Sides + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Porto␟Piri Piri␟120671␟1/2 cup␟1",
@@ -13022,7 +13022,7 @@
       "item": "piri piri dipping sauce",
       "mrn": "120722",
       "portion": "2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.8013,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -13034,7 +13034,7 @@
       "item": "piri-naise dipping sauce",
       "mrn": "121071",
       "portion": "2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.4813,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -13061,7 +13061,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 5.3749,
-      "plateBuild": "1 Entree + 2 Sides + 4 Plate Adds"
+      "plateBuild": "1 Entree + 2 Sides + 4 Sub Recipes"
     },
     {
       "id": "AMZ: Roam BBQ␟Roam BBQ␟191761␟1 each␟1",
@@ -13073,7 +13073,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 2.7464,
-      "plateBuild": "1 Entree + 2 Sides + 4 Plate Adds"
+      "plateBuild": "1 Entree + 2 Sides + 4 Sub Recipes"
     },
     {
       "id": "AMZ: Roam BBQ␟Roam BBQ␟191762␟5 oz meat␟1",
@@ -13085,7 +13085,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 1.2327,
-      "plateBuild": "1 Entree + 2 Sides + 4 Plate Adds"
+      "plateBuild": "1 Entree + 2 Sides + 4 Sub Recipes"
     },
     {
       "id": "AMZ: Roam BBQ␟Roam BBQ␟191760␟1 each␟1",
@@ -13097,7 +13097,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 1.2975,
-      "plateBuild": "1 Entree + 2 Sides + 4 Plate Adds"
+      "plateBuild": "1 Entree + 2 Sides + 4 Sub Recipes"
     },
     {
       "id": "AMZ: Roam BBQ␟Roam BBQ␟191769␟1 each␟1",
@@ -13109,7 +13109,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 1.4219,
-      "plateBuild": "1 Entree + 2 Sides + 4 Plate Adds"
+      "plateBuild": "1 Entree + 2 Sides + 4 Sub Recipes"
     },
     {
       "id": "AMZ: Roam BBQ␟Roam BBQ␟191768␟1 each␟1",
@@ -13121,7 +13121,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 4.1565,
-      "plateBuild": "1 Entree + 2 Sides + 4 Plate Adds"
+      "plateBuild": "1 Entree + 2 Sides + 4 Sub Recipes"
     },
     {
       "id": "AMZ: Roam BBQ␟Roam BBQ␟191767␟1 each␟1",
@@ -13133,7 +13133,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 1.4409,
-      "plateBuild": "1 Entree + 2 Sides + 4 Plate Adds"
+      "plateBuild": "1 Entree + 2 Sides + 4 Sub Recipes"
     },
     {
       "id": "AMZ: Roam BBQ␟Roam BBQ␟191756␟5 ounce␟1",
@@ -13145,7 +13145,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 1.5701,
-      "plateBuild": "1 Entree + 2 Sides + 4 Plate Adds"
+      "plateBuild": "1 Entree + 2 Sides + 4 Sub Recipes"
     },
     {
       "id": "AMZ: Roam BBQ␟Roam BBQ␟91765.2␟1/2 cup␟1",
@@ -13214,7 +13214,7 @@
       "item": "Bread & Butter Pickles",
       "mrn": "63438.1",
       "portion": "4 each",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.0542,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -13226,7 +13226,7 @@
       "item": "carochina mustard sauce",
       "mrn": "191747",
       "portion": "2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.234,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -13238,7 +13238,7 @@
       "item": "fire cracker sauce",
       "mrn": "191744",
       "portion": "2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.4278,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -13250,7 +13250,7 @@
       "item": "Kimchi",
       "mrn": "144772",
       "portion": "1/8 cup",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.1854,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -13262,7 +13262,7 @@
       "item": "kombu miso eggplant",
       "mrn": "191750",
       "portion": "2 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.45,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -13274,7 +13274,7 @@
       "item": "kombu miso greens",
       "mrn": "191751",
       "portion": "2 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.6626,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -13286,7 +13286,7 @@
       "item": "korean kansas city bbq sauce",
       "mrn": "191746",
       "portion": "2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.3004,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -13298,7 +13298,7 @@
       "item": "ssamjang brussels sprouts",
       "mrn": "191748",
       "portion": "1/4 cup",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.4769,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -13310,7 +13310,7 @@
       "item": "sweet fire sauce",
       "mrn": "191745",
       "portion": "2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.1989,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -13637,7 +13637,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 2.7111,
-      "plateBuild": "1 Entree + 2 Sides + Cornbread + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + Cornbread + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Smokehouse BBQ␟Big City BBQ␟171040␟5 oz portion␟1",
@@ -13649,7 +13649,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 0.9622,
-      "plateBuild": "1 Entree + 2 Sides + Cornbread + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + Cornbread + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Smokehouse BBQ␟Big City BBQ␟4651.6␟1 each␟1",
@@ -13661,7 +13661,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 1.5718,
-      "plateBuild": "1 Entree + 2 Sides + Cornbread + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + Cornbread + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Smokehouse BBQ␟Big City BBQ␟44948.1␟5 ounce␟1",
@@ -13673,7 +13673,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 1.5311,
-      "plateBuild": "1 Entree + 2 Sides + Cornbread + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + Cornbread + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Smokehouse BBQ␟Big City BBQ␟135703␟1 sandwich␟1",
@@ -13685,7 +13685,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 1.6243,
-      "plateBuild": "1 Entree + 2 Sides + Cornbread + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + Cornbread + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Smokehouse BBQ␟Big City BBQ␟5365.6␟5 ounce␟1",
@@ -13697,7 +13697,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 1.8746,
-      "plateBuild": "1 Entree + 2 Sides + Cornbread + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + Cornbread + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Smokehouse BBQ␟Big City BBQ␟143209␟1 sandwich␟1",
@@ -13709,7 +13709,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 2.2363,
-      "plateBuild": "1 Entree + 2 Sides + Cornbread + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + Cornbread + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Smokehouse BBQ␟Big City BBQ␟178230␟5 ounce␟1",
@@ -13721,7 +13721,7 @@
       "componentType": "Entree",
       "sellPrice": 13,
       "itemWasteCost": 4.0471,
-      "plateBuild": "1 Entree + 2 Sides + Cornbread + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + Cornbread + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Smokehouse BBQ␟Big City BBQ␟87937␟5 ounce␟1",
@@ -13733,7 +13733,7 @@
       "componentType": "Entree",
       "sellPrice": 11.75,
       "itemWasteCost": 0.715,
-      "plateBuild": "1 Entree + 2 Sides + Cornbread + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + Cornbread + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Smokehouse BBQ␟Big City BBQ␟18314␟4 oz portion␟1",
@@ -13781,7 +13781,7 @@
       "componentType": "Cornbread",
       "sellPrice": 2.55,
       "itemWasteCost": 0.2839,
-      "plateBuild": "1 Entree + 2 Sides + Cornbread + 1 Plate Add"
+      "plateBuild": "1 Entree + 2 Sides + Cornbread + 1 Sub Recipe"
     },
     {
       "id": "AMZ: Smokehouse BBQ␟Big City BBQ␟34041.1␟1 each␟1",
@@ -13874,7 +13874,7 @@
       "item": "Barbecue Sauce",
       "mrn": "184229",
       "portion": "2 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.1786,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -13886,7 +13886,7 @@
       "item": "carochina mustard sauce",
       "mrn": "191747",
       "portion": "2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.234,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -13898,7 +13898,7 @@
       "item": "Gold Barbecue Sauce",
       "mrn": "39571",
       "portion": "2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.2387,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -13910,7 +13910,7 @@
       "item": "Honey Barbecue Sauce",
       "mrn": "144725",
       "portion": "2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.2419,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -13922,7 +13922,7 @@
       "item": "honey BBQ",
       "mrn": "27397.2",
       "portion": "2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.4277,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -13934,7 +13934,7 @@
       "item": "Memphis Style Barbecue Sauce",
       "mrn": "142988",
       "portion": "2 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.1502,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -14414,7 +14414,7 @@
       "item": "Kimchi",
       "mrn": "144772",
       "portion": "1 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.1854,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -14426,7 +14426,7 @@
       "item": "Raita Sauce",
       "mrn": "81281",
       "portion": "1 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.1668,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -14438,7 +14438,7 @@
       "item": "Spicy Cilantro Chutney",
       "mrn": "81768",
       "portion": "1 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.0695,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -16046,7 +16046,7 @@
       "item": "Ssamjang Sauce",
       "mrn": "142259",
       "portion": "1 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.2873,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -16058,7 +16058,7 @@
       "item": "unagi sauce",
       "mrn": "86977",
       "portion": "1 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.1527,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -16070,7 +16070,7 @@
       "item": "yuzu mayo",
       "mrn": "147394",
       "portion": "2 tbsp",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.6689,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -16082,7 +16082,7 @@
       "item": "green sriracha",
       "mrn": "176739",
       "portion": "1-1/2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.5434,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -16094,7 +16094,7 @@
       "item": "ponzu sauce",
       "mrn": "88514.1",
       "portion": "1-1/2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.212,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -16106,7 +16106,7 @@
       "item": "Shandong Sauce",
       "mrn": "143744",
       "portion": "1-1/2 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.388,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -16118,7 +16118,7 @@
       "item": "Sweet and Sour Sauce",
       "mrn": "31693.4",
       "portion": "1-1/2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.1402,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -16130,7 +16130,7 @@
       "item": "szechuan dumpling sauce",
       "mrn": "193093",
       "portion": "1-1/2 oz portion",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.6939,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -16142,7 +16142,7 @@
       "item": "Spicy Teriyaki Sauce",
       "mrn": "83240",
       "portion": "2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.435,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -16154,7 +16154,7 @@
       "item": "Teriyaki Sauce",
       "mrn": "83233",
       "portion": "2 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.1913,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -16166,7 +16166,7 @@
       "item": "green sriracha",
       "mrn": "176739",
       "portion": "1-1/2 floz",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.5434,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"
@@ -16178,7 +16178,7 @@
       "item": "Vietnamese Vinaigrette",
       "mrn": "112805",
       "portion": "1-1/2 ounce",
-      "componentType": "Plate Add",
+      "componentType": "Sub Recipe",
       "sellPrice": null,
       "itemWasteCost": 0.1065,
       "plateBuild": "NOT FOR INDIVIDUAL SALE - PLATE_BUILD COMPONENT ONLY"

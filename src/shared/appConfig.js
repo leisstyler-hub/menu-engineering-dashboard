@@ -1,1 +1,1 @@
-export const APP_VERSION_STAMP = "2026.08.16.001-reference-plate-cost-rollout";
+export const APP_VERSION_STAMP = "2026.08.16.002-reference-plate-component-corrections";

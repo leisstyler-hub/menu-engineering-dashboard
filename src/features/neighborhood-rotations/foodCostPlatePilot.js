@@ -1,6 +1,11 @@
 import reference from "../../data/foodCostPlateReference.json";
 
 const PILOT_WEEK_START = "2026-08-17";
+export const REFERENCE_CALCULATION_PROFILES = Object.freeze({
+  fishMarketAutomatic: "fish-market-automatic",
+  grillSideExtremes: "grill-side-extremes",
+});
+const FISH_MARKET_NON_SAUCE_MRNS = new Set(["1261"]);
 const normalize = (value) => String(value || "").trim().toLowerCase();
 const title = (value) => String(value || "").replace(/\b\w/g, (letter) => letter.toUpperCase());
 const conceptBuild = (menu) => {
@@ -75,6 +80,7 @@ const requirement = (label, count, rows, predicate) => ({
   label,
   count,
   rows: rows.filter(predicate),
+  storageGroup: normalize(label).startsWith("sub recipe") ? "subRecipes" : "sides",
 });
 
 export function parsePlateBuild(plateBuild, rows) {
@@ -102,7 +108,6 @@ export function parsePlateBuild(plateBuild, rows) {
       base: (row) => typeMatches(row, ["base", "side + base"]),
       side: (row) => typeMatches(row, ["side"]),
       rice: (row) => typeMatches(row, ["rice"]) || (/rice/i.test(row.displayName) && typeMatches(row, ["side", "base", "side + base"])),
-      "plate add": (row) => typeMatches(row, ["plate add"]),
       topping: (row) => typeMatches(row, ["topping"]),
       chips: (row) => typeMatches(row, ["chips"]),
       cornbread: (row) => typeMatches(row, ["cornbread"]),
@@ -145,19 +150,49 @@ const combinations = (rows, count, start = 0) => {
   return result;
 };
 
-export function calculateReferencePlateRanges(menu, station, selectedIds = []) {
+const referenceIdentityKey = (row) => [normalize(row.displayName), normalize(row.mrn), normalize(row.portion), row.itemWasteCost].join("|");
+const uniqueCostedRows = (rows) => [...new Map(rows
+  .filter((row) => row.itemWasteCost != null)
+  .map((row) => [referenceIdentityKey(row), row])).values()];
+const sortedByReferenceCost = (rows) => uniqueCostedRows(rows).sort((left, right) => left.itemWasteCost - right.itemWasteCost
+  || left.displayName.localeCompare(right.displayName)
+  || left.id.localeCompare(right.id));
+const grillExtremeSideRows = (rows) => {
+  const sorted = sortedByReferenceCost(rows);
+  return [...new Map([...sorted.slice(0, 2), ...sorted.slice(-2)].map((row) => [referenceIdentityKey(row), row])).values()];
+};
+
+export function calculateReferencePlateRanges(menu, station, selectedIds = [], { profile = "" } = {}) {
+  const normalizedMenu = normalize(menu);
+  const calculationProfile = profile === REFERENCE_CALCULATION_PROFILES.fishMarketAutomatic && normalizedMenu === "amz: fish market"
+    ? profile
+    : profile === REFERENCE_CALCULATION_PROFILES.grillSideExtremes && normalizedMenu === "amz: grill core"
+      ? profile
+      : "";
   const selected = [...new Map(selectedIds.map(foodCostReferenceRow).filter(Boolean).map((row) => [row.id, row])).values()];
   const selectedEntrees = selected.filter((row) => normalize(row.menu) === normalize(menu) && isPrimary(row));
   return selectedEntrees.map((entree) => {
     const allMenuRows = FOOD_COST_REFERENCE_ROWS.filter((row) => normalize(row.menu) === normalize(menu));
     const primaryStationRows = foodCostReferenceRows(menu, entree.station || station);
-    const requirements = parsePlateBuild(entree.plateBuild, primaryStationRows).map((group) => group.rows.length
-      ? group
-      : (parsePlateBuild(entree.plateBuild, allMenuRows).find((fallback) => fallback.key === group.key) || group));
+    const allMenuRequirements = parsePlateBuild(entree.plateBuild, allMenuRows);
+    const requirements = parsePlateBuild(entree.plateBuild, primaryStationRows).map((group) => {
+      const fallback = allMenuRequirements.find((candidate) => candidate.key === group.key);
+      if (normalize(menu) === "amz: anisa") return fallback || group;
+      return group.rows.length ? group : (fallback || group);
+    });
     const missing = [];
+    const automaticTiers = new Map();
     const choices = requirements.map((group) => {
-      const candidates = selected.filter((row) => group.rows.some((option) => option.id === row.id));
-      if (candidates.length < group.count) missing.push(`${group.count} ${group.label}`);
+      let candidates = selected.filter((row) => group.rows.some((option) => option.id === row.id));
+      if (calculationProfile === REFERENCE_CALCULATION_PROFILES.fishMarketAutomatic) {
+        candidates = sortedByReferenceCost(group.rows.filter((row) => group.storageGroup !== "subRecipes" || !FISH_MARKET_NON_SAUCE_MRNS.has(row.mrn)));
+      }
+      if (calculationProfile === REFERENCE_CALCULATION_PROFILES.grillSideExtremes && group.storageGroup === "sides") {
+        candidates = grillExtremeSideRows(group.rows);
+        candidates.forEach((row, index) => automaticTiers.set(row.id, index < 2 ? "Lowest-cost side" : "Highest-cost side"));
+        if (candidates.length < 4) missing.push("reference cost for 4 unique Grill Core sides");
+      }
+      if (candidates.length < group.count) missing.push(calculationProfile ? `reference cost for ${group.count} ${group.label}` : `${group.count} ${group.label}`);
       return combinations(candidates, group.count);
     });
     const relevantSelected = selected.filter((row) => row.id === entree.id || requirements.some((group) => group.rows.some((option) => option.id === row.id)));
@@ -166,10 +201,25 @@ export function calculateReferencePlateRanges(menu, station, selectedIds = []) {
     if (missingCosts.length) missing.push(`cost for ${missingCosts.join(", ")}`);
     if (missing.length) return { entree, missing, requirements };
     const products = choices.reduce((sets, next) => sets.flatMap((set) => next.map((items) => [...set, ...items])), [[]]);
-    const costs = products.map((items) => entree.itemWasteCost + items.reduce((sum, row) => sum + row.itemWasteCost, 0));
-    const low = Math.min(...costs);
-    const high = Math.max(...costs);
-    return { entree, requirements, low, high, lowPct: low / entree.sellPrice, highPct: high / entree.sellPrice };
+    const outcomes = products.map((items) => {
+      const cost = entree.itemWasteCost + items.reduce((sum, row) => sum + row.itemWasteCost, 0);
+      return { items, cost, foodCostPct: cost / entree.sellPrice, tier: items.length === 1 ? automaticTiers.get(items[0].id) || "" : "" };
+    });
+    const orderedOutcomes = [...outcomes].sort((left, right) => left.cost - right.cost);
+    const lowOutcome = orderedOutcomes[0];
+    const highOutcome = orderedOutcomes.at(-1);
+    return {
+      entree,
+      requirements,
+      low: lowOutcome.cost,
+      high: highOutcome.cost,
+      lowPct: lowOutcome.foodCostPct,
+      highPct: highOutcome.foodCostPct,
+      profile: calculationProfile,
+      lowOutcome,
+      highOutcome,
+      automaticOptions: calculationProfile === REFERENCE_CALCULATION_PROFILES.grillSideExtremes ? outcomes : [],
+    };
   });
 }
 
