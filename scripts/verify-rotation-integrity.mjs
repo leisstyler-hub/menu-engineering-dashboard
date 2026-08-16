@@ -84,16 +84,40 @@ if (!/reference\.rows[\s\S]*filter\(\(row\) => !row\.menu\.startsWith\("AMZ\+RA:
   fail("The Nessie pilot must use the menu-isolated Markdown reference, Item + Waste Cost, and plate-build calculator without inferring RA concepts.");
 }
 
-if (!/const selectedPlateIds = \[\.\.\.\(rotation\.entrees \|\| \[\]\), \.\.\.\(rotation\.sides \|\| \[\]\), \.\.\.\(rotation\.subRecipes \|\| \[\]\)\]/.test(source) || !/Extensions are excluded from every plate combination/.test(source)) {
-  fail("The Nessie reference calculator must exclude extensions from plate combinations and show them as separate economics.");
-}
-
-if (!/referencePilot\s*\? <ReferencePlateCostAnalytics rotation=\{rotation\} model=\{referenceModel\} \/>\s*: <LiveAnalytics/.test(source)) {
-  fail("The Nessie per-plate analytics must replace Mix Food Cost only inside the exact Global planner pilot scope.");
+if (!/const selectedPlateIds = items[\s\S]*rotation\?\.extensions/.test(source) || !/filter\(\(row\) => normalizeItemName\(row\.componentType\) === "extension"\)/.test(source) || !/Extensions are excluded from every plate combination/.test(source)) {
+  fail("Reference plate calculations must exclude extensions from combinations and show them as separate economics.");
 }
 
 if (
-  !/data-testid="nessie-global-reference-plate-cost" className="mt-5 rounded-lg border border-sky-200 bg-white p-5/.test(source)
+  !/isReferencePlateCostRolloutWeek[\s\S]*weekStart >= formatDateKey\(CURRENT_ROTATION_WEEK_START\)/.test(source)
+  || !/usesReferenceGlobalPlanner[\s\S]*isFoodCostReferenceMenu\(menu\)/.test(source)
+  || !/function PlannerReferencePlateCost[\s\S]*promotionActive[\s\S]*return null/.test(source)
+) {
+  fail("Reference plate analytics must be menu-gated, current/future-only, planner-only, and suppressed by promotion overrides.");
+}
+
+if (
+  !/const overall = referenceUnavailable \? null : calculatedOverall/.test(source)
+  || !/const hasNonCalculablePrimary = selectedReferenceRows\.some/.test(source)
+  || !/const summaryValue = referenceUnavailable[\s\S]*"Reference data unavailable"/.test(source)
+  || !/\{referenceUnavailable \? \([\s\S]*No calculated range is shown/.test(source)
+) {
+  fail("Incomplete or unresolved reference selections must suppress summary and per-primary calculated ranges.");
+}
+
+if (
+  !/scopeLabel=\{`\$\{cafe\} · \$\{blockInfo\.title\}`\}/.test(source)
+  || !/menu="AMZ: Wok"/.test(source)
+  || !/menu="AMZ: Carvery"/.test(source)
+  || !/scopeLabel="Dawson · Moby Pop-Up"/.test(source)
+  || !/scopeLabel=\{`\$\{cafe\} · \$\{title\}`\}/.test(source)
+  || !/menu="AMZ: Lotus"/.test(source)
+) {
+  fail("Reference plate analytics must cover eligible Global blocks and menu-backed Wok, Carvery, Moby Pop-Up, LTO, and Lotus station planners.");
+}
+
+if (
+  !/data-testid="nessie-global-reference-plate-cost" data-reference-plate-cost="true" className="mt-5 rounded-lg border border-sky-200 bg-white p-5/.test(source)
   || !/className="rounded-2xl border border-sky-200 bg-sky-50 p-4" data-testid=\{`reference-plate-/.test(source)
   || /emphasize compact/.test(source)
 ) {
@@ -103,14 +127,14 @@ if (
 if (
   !/const row = pilotReferenceRow \|\| selectedRowForName/.test(source)
   || !/referenceIdForLoadedSelection[\s\S]*mrn: record\.mrn[\s\S]*portion: record\.portion/.test(source)
-  || !/pilotRows = isNessieGlobalPlateCostPilot/.test(source)
+  || !/pilotRows = usesNessieReferencePicker/.test(source)
   || !/const pilotReferenceStations = new Map\(\)/.test(source)
 ) {
   fail("The Nessie reference selections must save and recall with menu, station, MRN, and portion isolation.");
 }
 
-if (!/foodCostReferenceMenus/.test(source) || !/foodCostReferenceStations/.test(source) || !/pilotMenuOptions = referencePilot \? foodCostReferenceMenus\(\) : menuOptions/.test(source)) {
-  fail("The Nessie pilot must hide unclassified/unpriceable concepts and expose reference stations for multi-station menus.");
+if (!/isFoodCostReferenceMenu/.test(source) || !/foodCostReferenceStations/.test(source) || !/const pilotMenuOptions = referencePilotScope \? foodCostReferenceMenus\(\) : menuOptions/.test(source)) {
+  fail("All menu options must remain available while reference stations and analytics activate only for classified reference menus.");
 }
 
 if (
@@ -222,7 +246,7 @@ if (!/Bingo: \{ fishMarket: 2, salad: 2, grillFreshFive: 2, saladFreshFive: 1 \}
   fail("Bingo must have a two-slot grillFreshFive station override.");
 }
 
-if (!/stationKey === "grillFreshFive"\) content = <SimpleLTOSection stationKey="grillFreshFive" title="Grill Fresh \$5" slots=\{Array\.from\(\{ length: stationSlots\(cafe, "grillFreshFive"\) \}/.test(source)) {
+if (!/stationKey === "grillFreshFive"\) content = <SimpleLTOSection[^>]*stationKey="grillFreshFive" title="Grill Fresh \$5" slots=\{Array\.from\(\{ length: stationSlots\(cafe, "grillFreshFive"\) \}/.test(source)) {
   fail("Grill Fresh $5 slots must render dynamically from stationSlots instead of a hardcoded single slot.");
 }
 

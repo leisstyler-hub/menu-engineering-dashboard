@@ -11,6 +11,7 @@ const districts = {
 
 const futureWeeks = ["Jul 13, 2026 - Jul 17, 2026", "Jul 20, 2026 - Jul 24, 2026"];
 const smokeMenuItems = [
+  { menu: "AMZ: Breakfast", station: "Premium Mains", item: "Biscuits and Gravy", category: "entree", price: 9, trueCost: 1.0215 },
   { menu: "AMZ: Ohana", station: "Premium Mains", item: "Huli Huli Chicken", category: "entree", price: 11.75, trueCost: 3.45, calories: 410, enticingDescription: "Grilled island-style chicken.", allergens: "Soy" },
   { menu: "AMZ: Ohana", station: "Sides", item: "Mac Salad", category: "side", price: 2.55 },
   { menu: "AMZ: Ohana", station: "Sides", item: "Jasmine Rice", category: "side", recipeCategory: "Grain", price: 2.55, trueCost: 0.5 },
@@ -238,7 +239,7 @@ test("North Commissary cafe label stays inside its selector button", async ({ pa
   }
 });
 
-test("Nessie Global pilot uses menu-isolated reference plate builds only for Aug 17", async ({ page }) => {
+test("Nessie Global reference picker preserves exact plate builds while rollout remains planner-only", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   const pilotWeek = "Aug 17, 2026 - Aug 21, 2026";
   const storageWrites = [];
@@ -403,8 +404,137 @@ test("Nessie Global pilot uses menu-isolated reference plate builds only for Aug
   await page.locator("select").first().selectOption({ label: "Aug 24, 2026 - Aug 28, 2026" });
   const adjacentGlobal = page.getByRole("heading", { name: "Global Station" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
   await adjacentGlobal.locator("select").first().selectOption("AMZ: Ohana");
-  await expect(adjacentGlobal.getByText("Selected Mix Food Cost %", { exact: true })).toBeVisible();
-  await expect(adjacentGlobal.getByTestId("nessie-global-reference-plate-cost")).toHaveCount(0);
+  await expect(adjacentGlobal.getByTestId("nessie-global-reference-plate-cost")).toBeVisible();
+  await expect(adjacentGlobal.getByText("Selected Mix Food Cost %", { exact: true })).toHaveCount(0);
+
+  await page.locator("select").first().selectOption({ label: "Jul 20, 2026 - Jul 24, 2026" });
+  const historicalGlobal = page.getByRole("heading", { name: "Global Station" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await historicalGlobal.locator("select").first().selectOption("AMZ: Ohana");
+  await expect(historicalGlobal.getByText("Selected Mix Food Cost %", { exact: true })).toBeVisible();
+  await expect(historicalGlobal.getByTestId("nessie-global-reference-plate-cost")).toHaveCount(0);
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("reference plate cost rolls out by menu across current and future planners only", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const rolloutWeek = "Aug 24, 2026 - Aug 28, 2026";
+  const storageWrites = [];
+  await stubEmptyRotationBackbone(page, { onStorageWrite: (body) => storageWrites.push(body) });
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.locator("select").first().selectOption({ label: rolloutWeek });
+  await page.getByRole("button", { name: exactName("North") }).click();
+  await page.getByRole("button", { name: exactName("Dawson") }).click();
+
+  const global = page.getByRole("heading", { name: "Global Station" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await global.locator("select").first().selectOption("AMZ: Ohana");
+  const picker = (title) => global.getByText(title, { exact: true }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await picker("Entrees").locator("select").first().selectOption({ label: "Huli Huli Chicken" });
+  await picker("Sides").locator("select").nth(0).selectOption({ label: "Jasmine Rice" });
+  await picker("Sides").locator("select").nth(1).selectOption({ label: "Blistered Green Beans" });
+  await picker("Sides").locator("select").nth(2).selectOption({ label: "Cucumber Carrot Slaw" });
+  await picker("Extensions").locator("select").first().selectOption({ label: "Guava Lemonade" });
+  const globalReference = global.getByTestId("nessie-global-reference-plate-cost");
+  await expect(globalReference).toContainText("$3.91");
+  await expect(globalReference).toContainText("33.3%");
+  await expect(globalReference).toContainText("Cost $0.86 · Sell $3.85 · Food cost 22.4%");
+  await expect(global.getByText("Selected Mix Food Cost %", { exact: true })).toHaveCount(0);
+
+  await picker("Sides").locator("select").nth(3).selectOption("__write_in__");
+  await picker("Sides").locator("input").last().fill("Unmapped Mixed Plate Item");
+  await expect(globalReference).toContainText("Reference data unavailable");
+  await expect(globalReference).not.toContainText("$3.91");
+  await expect(globalReference).not.toContainText("33.3%");
+  await expect(globalReference.getByText("Plate cost range", { exact: true })).toHaveCount(0);
+
+  await global.locator("select").first().selectOption("AMZ: Breakfast");
+  await picker("Entrees").locator("select").first().selectOption("__write_in__");
+  await picker("Entrees").locator("input").first().fill("Biscuits and Gravy");
+  await expect(globalReference).toContainText("Reference data unavailable");
+  await expect(globalReference).not.toContainText("Select an entrée");
+  await expect(globalReference.getByText("Plate cost range", { exact: true })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Save Draft", exact: true }).click();
+  await expect.poll(() => storageWrites.length).toBeGreaterThan(0);
+  const dawsonHeader = (storageWrites.at(-1)?.records || []).find((record) => record["Record Type"] === "Rotation Header" && record["Café / Unit"] === "Dawson");
+  expect(dawsonHeader["Projected True Cost Low"]).not.toBeCloseTo(3.91, 2);
+
+  await page.getByRole("button", { name: "Results", exact: true }).click();
+  await expect(page.getByText("Food Cost Reference", { exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "Chef Planner", exact: true }).click();
+
+  const carvery = page.getByRole("heading", { name: "Carvery Rotations" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await expect(carvery.getByTestId("nessie-global-reference-plate-cost")).toBeVisible();
+  await carvery.getByLabel("Promotion Override").check();
+  await expect(carvery.getByTestId("nessie-global-reference-plate-cost")).toHaveCount(0);
+
+  await global.getByLabel("Promotion Override").check();
+  await expect(global.getByTestId("nessie-global-reference-plate-cost")).toHaveCount(0);
+  await global.getByRole("button", { name: "Clear Override", exact: true }).click();
+  await global.locator("select").first().selectOption("AMZ: Maya");
+  await expect(global.getByTestId("nessie-global-reference-plate-cost")).toHaveCount(0);
+  await expect(global.getByText("Selected Mix Food Cost %", { exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: exactName("Nessie") }).click();
+  const wok = page.getByRole("heading", { name: "Wok Station" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await expect(wok.getByTestId("nessie-global-reference-plate-cost")).toBeVisible();
+  const wokEntrees = wok.getByText("Wok Entrees", { exact: true }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await wokEntrees.locator("select").first().selectOption("__write_in__");
+  await wokEntrees.locator("input").first().fill("Unmapped Wok Test Item");
+  await expect(wok.getByTestId("nessie-global-reference-plate-cost")).toContainText("Reference data unavailable");
+
+  await page.getByRole("button", { name: exactName("Commissary") }).click();
+  const soup = page.getByRole("heading", { name: "Soup LTOs" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await expect(soup.getByTestId("nessie-global-reference-plate-cost")).toBeVisible();
+
+  await page.getByRole("button", { name: exactName("East") }).click();
+  await page.getByRole("button", { name: exactName("Blueshift") }).click();
+  const lotus = page.getByRole("heading", { name: "Lotus W&P" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await expect(lotus.getByTestId("nessie-global-reference-plate-cost")).toBeVisible();
+
+  await page.locator("select").first().selectOption({ label: "Jul 20, 2026 - Jul 24, 2026" });
+  await expect(page.locator('[data-reference-plate-cost="true"]')).toHaveCount(0);
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("reference plate cost covers split, Nitro, Moby Pop-Up, and LAX planner paths", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const rolloutWeek = "Aug 31, 2026 - Sep 4, 2026";
+  await stubEmptyRotationBackbone(page);
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.locator("select").first().selectOption({ label: rolloutWeek });
+
+  await page.getByRole("button", { name: exactName("South") }).click();
+  await page.getByRole("button", { name: exactName("Nitro") }).click();
+  let global = page.getByRole("heading", { name: "Global Station" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await global.locator("select").first().selectOption("AMZ: Ohana");
+  await expect(global.locator('[data-reference-plate-cost="true"]')).toHaveCount(2);
+  await global.getByLabel("Promotion Override").check();
+  await expect(global.locator('[data-reference-plate-cost="true"]')).toHaveCount(0);
+
+  await page.getByRole("button", { name: exactName("Re:Invent") }).click();
+  global = page.getByRole("heading", { name: "Global Station" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await global.locator("select").first().selectOption("AMZ: Ohana");
+  await expect(global.locator('[data-reference-plate-cost="true"]')).toHaveCount(1);
+
+  await page.getByRole("button", { name: exactName("North") }).click();
+  await page.getByRole("button", { name: exactName("Dawson") }).click();
+  const moby = page.getByRole("heading", { name: "Moby Pop-Up" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await moby.getByLabel("Moby Pop-Up Menu").selectOption("AMZ: Carvery");
+  await expect(moby.getByTestId("nessie-global-reference-plate-cost")).toBeVisible();
+  await moby.getByLabel("Promotion Override").check();
+  await expect(moby.getByTestId("nessie-global-reference-plate-cost")).toHaveCount(0);
+
+  await page.getByRole("button", { name: exactName("LAX") }).click();
+  await page.getByRole("button", { name: exactName("LAX22") }).click();
+  global = page.getByRole("heading", { name: "Global Station" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await global.locator("select").first().selectOption("AMZ: Ohana");
+  await expect(global.getByTestId("nessie-global-reference-plate-cost")).toBeVisible();
 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);

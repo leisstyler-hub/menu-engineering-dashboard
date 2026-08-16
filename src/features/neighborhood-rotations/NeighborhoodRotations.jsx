@@ -11,7 +11,7 @@ import { readLocalStorageJson, writeLocalStorageJson } from "../../shared/safeSt
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
 import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
-import { calculateReferencePlateRanges, extensionFoodCost, foodCostReferenceMenus, foodCostReferenceRow, foodCostReferenceRows, foodCostReferenceStations, isFoodCostPlatePilot, referenceIdForLoadedSelection, referencePickerModel } from "./foodCostPlatePilot.js";
+import { calculateReferencePlateRanges, extensionFoodCost, foodCostReferenceMenus, foodCostReferenceRow, foodCostReferenceRows, foodCostReferenceStations, isFoodCostPlatePilot, isFoodCostReferenceMenu, referenceIdForLoadedSelection, referencePickerModel } from "./foodCostPlatePilot.js";
 
 const DISTRICTS = {
   South: ["Doppler", "Day 1", "Nitro", "Re:Invent"],
@@ -81,6 +81,17 @@ const STATION_LABELS = {
   mobyPopUp: "Moby Pop-Up"
 };
 
+const REFERENCE_MENU_BY_STATION = {
+  salad: "AMZ: Cafe Express Curated Salads",
+  pizza: "AMZ: Pizzas & Flatbreads",
+  deli: "AMZ: Cafe Express Curated Sandwiches",
+  fishMarket: "AMZ: Fish Market",
+  freshFive: "AMZ: Fresh Five",
+  grillFreshFive: "AMZ: Fresh Five",
+  saladFreshFive: "AMZ: Fresh Five",
+  soup: "AMZ: Cafe Express Soup",
+};
+
 const MOBY_POP_UP_START_WEEK = "2026-08-31";
 const MOBY_POP_UP_DAYS = ["Tuesday", "Wednesday", "Thursday"];
 const NESSIE_GLOBAL_PLATE_COST_PILOT_WEEK = "2026-08-17";
@@ -131,8 +142,16 @@ const weekIndexFromLabel = (weekLabel = "") => {
   if (Number.isNaN(weekStart.getTime())) return 0;
   return Math.max(0, Math.round((weekStart - ROTATION_CYCLE_START) / (7 * 24 * 60 * 60 * 1000)));
 };
+const isReferencePlateCostRolloutWeek = (week = "") => {
+  const weekStart = parseWeekStart(week);
+  return Boolean(weekStart) && weekStart >= formatDateKey(CURRENT_ROTATION_WEEK_START);
+};
 const isNessieGlobalPlateCostPilot = (district = "", cafe = "", week = "") =>
   isFoodCostPlatePilot(district, cafe, parseWeekStart(week));
+const usesNessieReferencePicker = (district = "", cafe = "", week = "", menu = "") =>
+  isNessieGlobalPlateCostPilot(district, cafe, week) && isFoodCostReferenceMenu(menu);
+const usesReferenceGlobalPlanner = (week = "", menu = "") =>
+  isReferencePlateCostRolloutWeek(week) && isFoodCostReferenceMenu(menu);
 const isMobyPopUpActive = (cafe = "", week = "") => cafe === "Dawson" && parseWeekStart(week) >= MOBY_POP_UP_START_WEEK;
 const cafeStationsForWeek = (cafe = "", week = "") => {
   const stations = CAFE_STATION_CONFIG[cafe] || ["global"];
@@ -420,11 +439,14 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
   if (!week || !district || !cafe) return [];
   const parentId = rotationRecordParentId(week, district, cafe);
   const selected = selectedItems(rotation, cafe, week);
-  const referencePilot = isNessieGlobalPlateCostPilot(district, cafe, week);
+  const referencePilot = usesNessieReferencePicker(district, cafe, week, rotation.menu);
   const referenceResults = referencePilot
     ? calculateReferencePlateRanges(rotation.menu, rotation.station, [...(rotation.entrees || []), ...(rotation.sides || []), ...(rotation.subRecipes || [])].filter(Boolean))
     : [];
   const referenceRanges = referenceResults.length && referenceResults.every((range) => range.low != null) ? referenceResults : [];
+  // The rollout is planner-only: only the already-published Nessie pilot retains its
+  // existing saved-header compatibility behavior. Every expanded surface stays on the
+  // pre-rollout MenuWorks summary contract used by recaps, Results, and exports.
   const costRange = referencePilot
     ? (referenceRanges.length ? { low: Math.min(...referenceRanges.map((range) => range.low)), high: Math.max(...referenceRanges.map((range) => range.high)) } : { low: null, high: null })
     : selectedTrueCostRange(selected);
@@ -595,7 +617,7 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
   }
 
   if (hasGlobalStation && !isSplitGlobalCafe(cafe) && cafe !== "Nitro" && !promotionCoversWeek(promo)) {
-    const pilotRows = isNessieGlobalPlateCostPilot(district, cafe, week) ? foodCostReferenceRows(rotation.menu, rotation.station) : MENUWORKS_ITEMS;
+    const pilotRows = usesNessieReferencePicker(district, cafe, week, rotation.menu) ? foodCostReferenceRows(rotation.menu, rotation.station) : MENUWORKS_ITEMS;
     pushSelections("global", SMARTSHEET_SELECTION_TYPES.entree, rotation.entrees || [], 0, rotation, "", pilotRows);
     pushSelections("global", SMARTSHEET_SELECTION_TYPES.side, rotation.sides || [], 100, rotation, "", pilotRows);
     pushSelections("global", SMARTSHEET_SELECTION_TYPES.subRecipe, rotation.subRecipes || [], 200, rotation, "", pilotRows);
@@ -1138,7 +1160,7 @@ function recordsToRotations(records = []) {
   // promote a component's station to the rotation-level reference station.
   const pilotReferenceStations = new Map();
   normalizedRecords.forEach((record) => {
-    if (!isNessieGlobalPlateCostPilot(record.district, record.cafe, record.week)) return;
+    if (!usesNessieReferencePicker(record.district, record.cafe, record.week, record.menuConcept)) return;
     if (blockIdFromRecord(record)) return;
     const station = record.stationSubConcept || "";
     if (!station) return;
@@ -1249,7 +1271,7 @@ function recordsToRotations(records = []) {
       const authoritativeMenu = authoritativeBlockMenuFor(record);
       rotation.menu = preferredMenuFor(record) || rotation.menu || record.menuConcept || "";
       rotation.station = pilotReferenceStationFor(record) || rotation.station || record.stationSubConcept || "";
-      const pilotReferenceId = isNessieGlobalPlateCostPilot(record.district, record.cafe, record.week)
+      const pilotReferenceId = usesNessieReferencePicker(record.district, record.cafe, record.week, record.menuConcept || rotation.menu)
         ? referenceIdForLoadedSelection({ menu: record.menuConcept || rotation.menu, station: record.stationSubConcept || rotation.station, mrn: record.mrn, portion: record.portion, itemName: record.itemName })
         : "";
       const loadedItem = pilotReferenceId || record.itemName;
@@ -5449,22 +5471,22 @@ function CafeStationSection(props) {
   if (stationKey === "global") content = dawsonMobyGlobalOverride
     ? <DawsonMobyGlobalProjectionSection rotation={rotation} override={dawsonMobyGlobalOverride} week={week} />
     : <GlobalSection district={district} cafe={cafe} week={week} rotation={rotation} previousRotation={previousRotation} previousWeek={previousWeek} menuOptions={menuOptions} stationOptions={stationOptions} categorized={categorized} updateRotation={updateRotation} updateSlot={updateSlot} summary={summary} selectedItems={selectedItems} />;
-  if (stationKey === "grill") content = <GrillSection cafe={cafe} rotation={rotation} updateGrill={updateGrill} />;
-  if (stationKey === "salad") content = <SimpleLTOSection stationKey="salad" title={cafe === "Doppler" ? "Zane's Salad" : "Salad LTOs"} slots={Array.from({ length: stationSlots(cafe, "salad") }, (_, i) => cafe === "Doppler" ? `Fresh Five Salad ${i + 1}` : `Salad LTO ${i + 1}`)} values={rotation.ltos?.salad || EMPTY_ROTATION.ltos.salad} uploaded={rotation.uploadedLtos?.salad || []} updateLto={updateLto} complete={stationComplete(rotation, "salad")} />;
-  if (stationKey === "pizza") content = <SimpleLTOSection stationKey="pizza" title={cafe === "Doppler" ? "Pizza LTOs" : "Pizza / Flatbread LTOs"} slots={cafe === "Doppler" ? ["Pizza LTO 1", "Pizza LTO 2"] : Array.from({ length: stationSlots(cafe, "pizza") }, (_, i) => `Pizza/Flatbread LTO ${i + 1}`)} values={rotation.ltos?.pizza || EMPTY_ROTATION.ltos.pizza} uploaded={rotation.uploadedLtos?.pizza || []} updateLto={updateLto} complete={stationComplete(rotation, "pizza")} slotPoolOverrides={cafe === "Doppler" ? [stationPool("pizza"), stationPool("pizza")] : null} optional={cafe === "Doppler"} />;
-  if (stationKey === "deli") content = <SimpleLTOSection stationKey="deli" title={cafe === "Doppler" ? "Paninoteca Deli" : "Deli LTOs"} slots={Array.from({ length: stationSlots(cafe, "deli") }, (_, i) => cafe === "Doppler" ? "Fresh Five Deli Selection" : `Deli LTO ${i + 1}`)} values={rotation.ltos?.deli || EMPTY_ROTATION.ltos.deli} uploaded={rotation.uploadedLtos?.deli || []} updateLto={updateLto} complete={stationComplete(rotation, "deli")} poolOverride={cafe === "Doppler" ? stationPool("deliFreshFive") : null} />;
-  if (stationKey === "fishMarket") content = <SimpleLTOSection stationKey="fishMarket" title="Fish Market LTO" slots={Array.from({ length: stationSlots(cafe, "fishMarket") }, (_, i) => `Fish Market LTO ${i + 1}`)} values={rotation.ltos?.fishMarket || EMPTY_ROTATION.ltos.fishMarket} uploaded={rotation.uploadedLtos?.fishMarket || []} updateLto={updateLto} complete={stationComplete(rotation, "fishMarket")} />;
-  if (stationKey === "noodles") content = <SecondaryGlobalSection blockId="noodles" title="Noodle Station" eyebrow="Secondary Global" rotation={rotation} menuOptions={menuOptions} updateRotation={updateRotation} />;
-  if (stationKey === "freshFive") content = <SimpleLTOSection stationKey="freshFive" title="Fresh $5" slots={Array.from({ length: stationSlots(cafe, "freshFive") }, (_, i) => `Fresh $5 Option ${i + 1}`)} values={rotation.ltos?.freshFive || EMPTY_ROTATION.ltos.freshFive} uploaded={rotation.uploadedLtos?.freshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "freshFive")} />;
-  if (stationKey === "grillFreshFive") content = <SimpleLTOSection stationKey="grillFreshFive" title="Grill Fresh $5" slots={Array.from({ length: stationSlots(cafe, "grillFreshFive") }, (_, i) => `Grill Fresh $5 ${i + 1}`)} values={rotation.ltos?.grillFreshFive || EMPTY_ROTATION.ltos.grillFreshFive} uploaded={rotation.uploadedLtos?.grillFreshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "grillFreshFive")} poolOverride={stationPool("grillFreshFive")} />;
-  if (stationKey === "saladFreshFive") content = <SimpleLTOSection stationKey="saladFreshFive" title="Salad Fresh $5" slots={["Salad Fresh $5"]} values={rotation.ltos?.saladFreshFive || EMPTY_ROTATION.ltos.saladFreshFive} uploaded={rotation.uploadedLtos?.saladFreshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "saladFreshFive")} poolOverride={stationPool("saladFreshFive")} />;
-  if (stationKey === "soup") content = <SimpleLTOSection stationKey="soup" title="Soup LTOs" slots={Array.from({ length: stationSlots(cafe, "soup") }, (_, i) => `Soup ${i + 1}`)} values={rotation.ltos?.soup || EMPTY_ROTATION.ltos.soup} uploaded={rotation.uploadedLtos?.soup || []} updateLto={updateLto} complete={stationComplete(rotation, "soup")} />;
-  if (stationKey === "wok") content = <WokSection rotation={rotation} updateLto={updateLto} />;
+  if (stationKey === "grill") content = <GrillSection cafe={cafe} week={week} rotation={rotation} updateGrill={updateGrill} />;
+  if (stationKey === "salad") content = <SimpleLTOSection cafe={cafe} week={week} stationKey="salad" title={cafe === "Doppler" ? "Zane's Salad" : "Salad LTOs"} slots={Array.from({ length: stationSlots(cafe, "salad") }, (_, i) => cafe === "Doppler" ? `Fresh Five Salad ${i + 1}` : `Salad LTO ${i + 1}`)} values={rotation.ltos?.salad || EMPTY_ROTATION.ltos.salad} uploaded={rotation.uploadedLtos?.salad || []} updateLto={updateLto} complete={stationComplete(rotation, "salad")} />;
+  if (stationKey === "pizza") content = <SimpleLTOSection cafe={cafe} week={week} stationKey="pizza" title={cafe === "Doppler" ? "Pizza LTOs" : "Pizza / Flatbread LTOs"} slots={cafe === "Doppler" ? ["Pizza LTO 1", "Pizza LTO 2"] : Array.from({ length: stationSlots(cafe, "pizza") }, (_, i) => `Pizza/Flatbread LTO ${i + 1}`)} values={rotation.ltos?.pizza || EMPTY_ROTATION.ltos.pizza} uploaded={rotation.uploadedLtos?.pizza || []} updateLto={updateLto} complete={stationComplete(rotation, "pizza")} slotPoolOverrides={cafe === "Doppler" ? [stationPool("pizza"), stationPool("pizza")] : null} optional={cafe === "Doppler"} />;
+  if (stationKey === "deli") content = <SimpleLTOSection cafe={cafe} week={week} stationKey="deli" title={cafe === "Doppler" ? "Paninoteca Deli" : "Deli LTOs"} slots={Array.from({ length: stationSlots(cafe, "deli") }, (_, i) => cafe === "Doppler" ? "Fresh Five Deli Selection" : `Deli LTO ${i + 1}`)} values={rotation.ltos?.deli || EMPTY_ROTATION.ltos.deli} uploaded={rotation.uploadedLtos?.deli || []} updateLto={updateLto} complete={stationComplete(rotation, "deli")} poolOverride={cafe === "Doppler" ? stationPool("deliFreshFive") : null} />;
+  if (stationKey === "fishMarket") content = <SimpleLTOSection cafe={cafe} week={week} stationKey="fishMarket" title="Fish Market LTO" slots={Array.from({ length: stationSlots(cafe, "fishMarket") }, (_, i) => `Fish Market LTO ${i + 1}`)} values={rotation.ltos?.fishMarket || EMPTY_ROTATION.ltos.fishMarket} uploaded={rotation.uploadedLtos?.fishMarket || []} updateLto={updateLto} complete={stationComplete(rotation, "fishMarket")} />;
+  if (stationKey === "noodles") content = <SecondaryGlobalSection blockId="noodles" title="Noodle Station" eyebrow="Secondary Global" cafe={cafe} week={week} rotation={rotation} menuOptions={menuOptions} updateRotation={updateRotation} />;
+  if (stationKey === "freshFive") content = <SimpleLTOSection cafe={cafe} week={week} stationKey="freshFive" title="Fresh $5" slots={Array.from({ length: stationSlots(cafe, "freshFive") }, (_, i) => `Fresh $5 Option ${i + 1}`)} values={rotation.ltos?.freshFive || EMPTY_ROTATION.ltos.freshFive} uploaded={rotation.uploadedLtos?.freshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "freshFive")} />;
+  if (stationKey === "grillFreshFive") content = <SimpleLTOSection cafe={cafe} week={week} stationKey="grillFreshFive" title="Grill Fresh $5" slots={Array.from({ length: stationSlots(cafe, "grillFreshFive") }, (_, i) => `Grill Fresh $5 ${i + 1}`)} values={rotation.ltos?.grillFreshFive || EMPTY_ROTATION.ltos.grillFreshFive} uploaded={rotation.uploadedLtos?.grillFreshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "grillFreshFive")} poolOverride={stationPool("grillFreshFive")} />;
+  if (stationKey === "saladFreshFive") content = <SimpleLTOSection cafe={cafe} week={week} stationKey="saladFreshFive" title="Salad Fresh $5" slots={["Salad Fresh $5"]} values={rotation.ltos?.saladFreshFive || EMPTY_ROTATION.ltos.saladFreshFive} uploaded={rotation.uploadedLtos?.saladFreshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "saladFreshFive")} poolOverride={stationPool("saladFreshFive")} />;
+  if (stationKey === "soup") content = <SimpleLTOSection cafe={cafe} week={week} stationKey="soup" title="Soup LTOs" slots={Array.from({ length: stationSlots(cafe, "soup") }, (_, i) => `Soup ${i + 1}`)} values={rotation.ltos?.soup || EMPTY_ROTATION.ltos.soup} uploaded={rotation.uploadedLtos?.soup || []} updateLto={updateLto} complete={stationComplete(rotation, "soup")} />;
+  if (stationKey === "wok") content = <WokSection cafe={cafe} week={week} rotation={rotation} updateLto={updateLto} />;
   if (stationKey === "carvery") content = <CarverySection cafe={cafe} week={week} rotation={rotation} updateCarvery={updateCarvery} updateRotation={updateRotation} />;
   if (stationKey === "mobyPopUp") content = <MobyPopUpSection week={week} rotation={rotation} menuOptions={menuOptions} updateRotation={updateRotation} />;
   if (stationKey === "streetBeets") content = <StreetBeetsSection rotation={rotation} updateCustomStation={updateCustomStation} />;
-  if (stationKey === "commissaryEverest") content = <CommissaryEverestSection rotation={rotation} updateCustomStation={updateCustomStation} />;
-  if (stationKey === "lotusWp") content = <LotusWpSection rotation={rotation} updateCustomStation={updateCustomStation} />;
+  if (stationKey === "commissaryEverest") content = <CommissaryEverestSection cafe={cafe} week={week} rotation={rotation} updateCustomStation={updateCustomStation} />;
+  if (stationKey === "lotusWp") content = <LotusWpSection cafe={cafe} week={week} rotation={rotation} updateCustomStation={updateCustomStation} />;
   if (stationKey === "stationTakeover") content = <StationTakeoverSection rotation={rotation} updateCustomStation={updateCustomStation} />;
   if (!content) return null;
   return <div id={stationAnchorId(stationKey)} className="scroll-mt-28">{content}</div>;
@@ -5510,6 +5532,7 @@ function DawsonMobyGlobalProjectionSection({ rotation, override, week }) {
           </div>
         ))}
       </div>
+      <PlannerReferencePlateCost week={week} menu={override.menu} items={rows} promotionActive={override.kind === "promotion"} scopeLabel="Moby Global · Dawson projection" />
       <StationSelectedList title="Items Description" items={rows} complete />
     </CollapsibleStation>
   );
@@ -5574,8 +5597,10 @@ function GlobalSection({ district, cafe, week, rotation, previousRotation, previ
   const cycle = globalCycleConfig(cafe, week);
   const promo = normalizePromotionOverride(rotation.promotionOverride || EMPTY_ROTATION.promotionOverride);
   const updatePromo = (patch) => updateRotation({ promotionOverride: normalizePromotionOverride({ ...promo, ...patch }) });
-  const referencePilot = isNessieGlobalPlateCostPilot(district, cafe, week);
-  const pilotMenuOptions = referencePilot ? foodCostReferenceMenus() : menuOptions;
+  const referencePilotScope = isNessieGlobalPlateCostPilot(district, cafe, week);
+  const referencePilot = usesNessieReferencePicker(district, cafe, week, rotation.menu);
+  const referenceAnalytics = usesReferenceGlobalPlanner(week, rotation.menu);
+  const pilotMenuOptions = referencePilotScope ? foodCostReferenceMenus() : menuOptions;
   const menuStationOptions = referencePilot ? foodCostReferenceStations(rotation.menu) : subConceptOptionsForMenu(rotation.menu);
   const menuCategorized = categorize(globalMenuRows(rotation.menu, rotation.station));
   const carryover = carryoverGlobalBlock(previousRotation);
@@ -5640,7 +5665,7 @@ function GlobalSection({ district, cafe, week, rotation, previousRotation, previ
   }
 
   if (cafe === "Nitro") {
-    return <NitroGlobalSection rotation={rotation} menuOptions={menuOptions} updateRotation={updateRotation} promo={promo} updatePromo={updatePromo} summary={summary} />;
+    return <NitroGlobalSection week={week} rotation={rotation} menuOptions={menuOptions} updateRotation={updateRotation} promo={promo} updatePromo={updatePromo} summary={summary} />;
   }
 
   return (
@@ -5730,11 +5755,11 @@ function GlobalSection({ district, cafe, week, rotation, previousRotation, previ
           </div>
         )}
       </div>
-      {rotation.menu && !promotionCoversWeek(promo) && (
-        referencePilot
-          ? <ReferencePlateCostAnalytics rotation={rotation} model={referenceModel} />
-          : <LiveAnalytics summary={summary} selectedItems={globalSelectedRows(rotation)} />
-      )}
+      {rotation.menu && !promo.enabled && (referenceAnalytics
+        ? (referencePilot
+            ? <ReferencePlateCostAnalytics rotation={rotation} model={referenceModel} scopeLabel={`${cafe} Global · ${week}`} />
+            : <PlannerReferencePlateCost week={week} menu={rotation.menu} station={rotation.station} items={globalSelectedRows(rotation, { unique: true })} scopeLabel={`${cafe} Global · ${week}`} />)
+        : <LiveAnalytics summary={summary} selectedItems={globalSelectedRows(rotation)} />)}
       {referencePilot ? (
         <div data-testid="food-cost-reference-pickers" className={`mt-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 ${promotionCoversWeek(promo) ? "hidden" : ""}`}>
           <PickerGroup title="Entrees" limit="up to 3 · plate sell price" items={referenceModel.entrees} values={Array.from({ length: Math.min(3, Math.max(1, referenceModel.entrees.length)) }, (_, index) => rotation.entrees?.[index] || "")} onChange={updateReferenceEntree} />
@@ -5758,7 +5783,7 @@ function GlobalSection({ district, cafe, week, rotation, previousRotation, previ
   );
 }
 
-function NitroGlobalSection({ rotation, menuOptions, updateRotation, promo, updatePromo, summary }) {
+function NitroGlobalSection({ week, rotation, menuOptions, updateRotation, promo, updatePromo, summary }) {
   const layout = nitroGlobalBlockLayout();
   const menuStationOptions = subConceptOptionsForMenu(rotation.menu);
   const setMenu = (menu) => {
@@ -5872,7 +5897,7 @@ function NitroGlobalSection({ rotation, menuOptions, updateRotation, promo, upda
         )}
       </div>
 
-      {rotation.menu && !promotionCoversWeek(promo) && <LiveAnalytics summary={summary} selectedItems={globalSelectedRowsForCafe(rotation, "Nitro")} />}
+      {rotation.menu && !promo.enabled && !usesReferenceGlobalPlanner(week, rotation.menu) && <LiveAnalytics summary={summary} selectedItems={globalSelectedRowsForCafe(rotation, "Nitro")} />}
       {rotation.menu && !promotionCoversWeek(promo) && (
         <div className="mt-5 grid grid-cols-1 gap-5">
           {layout.filter((blockInfo) => !promotionCoversBlock(promo, blockInfo)).map((blockInfo) => {
@@ -5895,6 +5920,14 @@ function NitroGlobalSection({ rotation, menuOptions, updateRotation, promo, upda
                   <PickerGroup title="Sub Recipes" limit="up to 4" items={blockCategorized.subRecipes} values={hydratedBlock.subRecipes || ["", "", "", ""]} onChange={(slot, value) => updateBlockSlot(blockInfo.id, "subRecipes", slot, value)} />
                   <PickerGroup title="Extensions" limit="up to 2" items={blockCategorized.extensions} values={hydratedBlock.extensions || ["", ""]} onChange={(slot, value) => updateBlockSlot(blockInfo.id, "extensions", slot, value)} />
                 </div>
+                <PlannerReferencePlateCost
+                  week={week}
+                  menu={hydratedBlock.menu || rotation.menu}
+                  station={hydratedBlock.station || rotation.station}
+                  items={selectedRowsFromGlobalBlock(hydratedBlock, { unique: true })}
+                  promotionActive={promo.enabled}
+                  scopeLabel={`Nitro · ${blockInfo.title}`}
+                />
               </div>
             );
           })}
@@ -6051,6 +6084,14 @@ function SplitGlobalSection({ cafe, week, rotation, previousRotation, previousWe
                   <PickerGroup title="Extensions" limit="up to 2" items={blockCategorized.extensions} values={block.extensions || ["", ""]} onChange={(slot, value) => updateBlockSlot(blockInfo.id, "extensions", slot, value)} />
                 </div>
               )}
+              <PlannerReferencePlateCost
+                week={week}
+                menu={block.menu}
+                station={block.station}
+                items={selectedRowsFromGlobalBlock(block, { unique: true })}
+                promotionActive={promo.enabled}
+                scopeLabel={`${cafe} · ${blockInfo.title}`}
+              />
             </div>
           );
         })}
@@ -6060,7 +6101,7 @@ function SplitGlobalSection({ cafe, week, rotation, previousRotation, previousWe
   );
 }
 
-function SecondaryGlobalSection({ blockId, title, eyebrow, rotation, menuOptions, updateRotation }) {
+function SecondaryGlobalSection({ blockId, title, eyebrow, cafe, week, rotation, menuOptions, updateRotation }) {
   const block = getRotationGlobalBlock(rotation, blockId);
   const blockStationOptions = subConceptOptionsForMenu(block.menu);
   const blockCategorized = categorize(globalMenuRows(block.menu, block.station));
@@ -6109,6 +6150,7 @@ function SecondaryGlobalSection({ blockId, title, eyebrow, rotation, menuOptions
           <PickerGroup title="Extensions" limit="up to 2" items={blockCategorized.extensions} values={block.extensions || ["", ""]} onChange={(slot, value) => updateBlockSlot("extensions", slot, value)} />
         </div>
       )}
+      <PlannerReferencePlateCost week={week} menu={block.menu} station={block.station} items={blockItems} scopeLabel={`${cafe} · ${title}`} />
       <StationSelectedList title="Items Description" items={blockItems} complete={blockComplete(block)} />
     </CollapsibleStation>
   );
@@ -6230,37 +6272,81 @@ function StationSelectedList({ title = "Items Description", items, complete = fa
   );
 }
 
-function ReferencePlateCostAnalytics({ rotation, model }) {
-  const selectedPlateIds = [...(rotation.entrees || []), ...(rotation.sides || []), ...(rotation.subRecipes || [])].filter(Boolean);
-  const ranges = calculateReferencePlateRanges(rotation.menu, rotation.station, selectedPlateIds);
+function referenceIdsForPlannerItems(menu, items = []) {
+  return [...new Set(items.map((row) => {
+    const rowMenu = getMenuName(row) || menu;
+    if (normalizeItemName(rowMenu) !== normalizeItemName(menu)) return "";
+    return foodCostReferenceRow(getItemIdentity(row))?.id || referenceIdForLoadedSelection({
+      menu,
+      station: getStationName(row),
+      mrn: row.mrn || row.MRN || row["MRN"] || "",
+      portion: row.portion || row.Portion || row["Portion"] || "",
+      itemName: getDisplayName(row),
+    });
+  }).filter(Boolean))];
+}
+
+function referenceMenuForPlannerItems(items = []) {
+  const menus = [...new Set(items.map(getMenuName).filter((menu) => isFoodCostReferenceMenu(menu)))];
+  return menus.length === 1 ? menus[0] : "";
+}
+
+function PlannerReferencePlateCost({ week, menu, station = "", items = [], promotionActive = false, scopeLabel = "" }) {
+  const resolvedMenu = isFoodCostReferenceMenu(menu) ? menu : referenceMenuForPlannerItems(items);
+  if (!isReferencePlateCostRolloutWeek(week) || promotionActive || !resolvedMenu) return null;
+  return <ReferencePlateCostAnalytics menu={resolvedMenu} station={station} items={items} scopeLabel={scopeLabel} />;
+}
+
+function ReferencePlateCostAnalytics({ rotation = null, model = null, menu = rotation?.menu || "", station = rotation?.station || "", items = null, scopeLabel = "" }) {
+  const selectedPlateIds = items
+    ? referenceIdsForPlannerItems(menu, items)
+    : [...(rotation?.entrees || []), ...(rotation?.sides || []), ...(rotation?.subRecipes || []), ...(rotation?.extensions || [])].filter(Boolean);
+  const ranges = calculateReferencePlateRanges(menu, station, selectedPlateIds);
   const completeRanges = ranges.filter((range) => range.low != null);
-  const overall = completeRanges.length ? {
+  const calculatedOverall = completeRanges.length ? {
     low: Math.min(...completeRanges.map((range) => range.low)),
     high: Math.max(...completeRanges.map((range) => range.high)),
   } : null;
-  const extensions = (rotation.extensions || []).map(foodCostReferenceRow).filter(Boolean);
+  const selectedReferenceRows = selectedPlateIds.map(foodCostReferenceRow).filter(Boolean);
+  const extensions = selectedReferenceRows.filter((row) => normalizeItemName(row.componentType) === "extension");
+  const unavailableReasons = ranges.flatMap((range) => range.missing || []).filter((reason) => /cost|sell price/i.test(reason));
+  const hasUnresolvedSelections = Boolean(items?.length) && selectedPlateIds.length < items.length;
+  const hasNonCalculablePrimary = selectedReferenceRows.some((row) => ["entree", "plate"].includes(normalizeItemName(row.componentType))
+    && (row.sellPrice == null || !row.plateBuild || /NOT FOR INDIVIDUAL/i.test(row.plateBuild)));
+  const referenceUnavailable = hasUnresolvedSelections || hasNonCalculablePrimary || unavailableReasons.length > 0;
+  const overall = referenceUnavailable ? null : calculatedOverall;
+  const summaryValue = referenceUnavailable
+    ? "Reference data unavailable"
+    : overall
+      ? moneyRange(overall)
+      : ranges.length
+        ? "Complete plate selections required"
+        : "Select an entrée";
   return (
-    <div data-testid="nessie-global-reference-plate-cost" className="mt-5 rounded-lg border border-sky-200 bg-white p-5 shadow-sm">
+    <div data-testid="nessie-global-reference-plate-cost" data-reference-plate-cost="true" className="mt-5 rounded-lg border border-sky-200 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-sm uppercase tracking-[0.18em] text-sky-700">Food Cost Reference Pilot</p>
+          <p className="text-sm uppercase tracking-[0.18em] text-sky-700">Food Cost Reference</p>
           <h3 className="mt-1 text-2xl font-bold">Menu-Specific Plate Cost</h3>
           <p className="mt-1 text-sm text-slate-600">Uses Item + Waste Cost from the plate-cost reference. Items stay isolated by menu, station, and MRN.</p>
         </div>
-        <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-black text-sky-800">Nessie Global · Aug 17–21</span>
+        <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-black text-sky-800">{scopeLabel || menu}</span>
       </div>
-      {!model.rows.length && <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-900">Select the menu’s station option to load its plate-build reference.</p>}
+      {referenceUnavailable && <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-900">Reference data unavailable. No plate-cost range is calculated until every selected plate item has complete reference identity, cost, and entrée sell price.</p>}
+      {!model?.rows?.length && !items && <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-900">Select the menu’s station option to load its plate-build reference.</p>}
       <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3">
-        <Mini title="Selected Plate Cost Range" value={moneyRange(overall)} sub="entrée + every required plate-build component" emphasize />
-        <Mini title="Plate Cost Source" value="Item + Waste Cost" sub="reference cost replaces MenuWorks true cost in this pilot only" emphasize />
+        <Mini title="Selected Plate Cost Range" value={summaryValue} sub="entrée + every required plate-build component" emphasize />
+        <Mini title="Plate Cost Source" value="Item + Waste Cost" sub="planner-only reference calculation" emphasize />
       </div>
       <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-3">
         {ranges.map((range) => (
           <div key={range.entree.id} className="rounded-2xl border border-sky-200 bg-sky-50 p-4" data-testid={`reference-plate-${range.entree.mrn}`}>
             <p className="font-black text-slate-950">{range.entree.displayName}</p>
             <p className="mt-1 text-xs text-slate-500">MRN {range.entree.mrn} · {range.entree.plateBuild}</p>
-            {range.missing?.length ? (
-              <p className="mt-3 text-sm font-semibold text-amber-800">Select {range.missing.join("; ")} to calculate every valid plate.</p>
+            {referenceUnavailable ? (
+              <p className="mt-3 text-sm font-semibold text-amber-800">Reference data unavailable. No calculated range is shown while any selected plate item lacks complete reference data.</p>
+            ) : range.missing?.length ? (
+              <p className="mt-3 text-sm font-semibold text-amber-800">{/cost|sell price/i.test(range.missing.join(" ")) ? "Reference data unavailable — " : "Select "}{range.missing.join("; ")} to calculate every valid plate.</p>
             ) : (
               <div className="mt-3 grid grid-cols-2 gap-3">
                 <div><p className="text-xs font-semibold text-slate-500">Plate cost range</p><p className="text-2xl font-black">{moneyRange(range)}</p></div>
@@ -6269,7 +6355,7 @@ function ReferencePlateCostAnalytics({ rotation, model }) {
             )}
           </div>
         ))}
-        {!ranges.length && model.rows.length > 0 && <p className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-600">Select an entrée to build plate-cost ranges.</p>}
+        {!ranges.length && !referenceUnavailable && <p className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-600">Select an entrée to build plate-cost ranges.</p>}
       </div>
       <div className="mt-5 border-t border-slate-200 pt-4">
         <p className="text-sm font-black text-slate-900">Extensions · separate item economics</p>
@@ -6431,7 +6517,7 @@ function PickerGroup({ title, limit, items, values, onChange }) {
   );
 }
 
-function GrillSection({ cafe, rotation, updateGrill }) {
+function GrillSection({ cafe, week, rotation, updateGrill }) {
   const grillItems = stationPool("grillSpotlight");
   const grillTitle = cafe === "Doppler" ? "Salt + Char" : cafe === "Day 1" ? "Adelaide's" : "Core Grill Additions";
   const options = cafe === "Doppler" ? stationPool("grillFreshFive") : grillItems.length ? grillItems : stationPool("carveryProtein");
@@ -6475,6 +6561,7 @@ function GrillSection({ cafe, rotation, updateGrill }) {
           />
         </div>
       )}
+      <PlannerReferencePlateCost week={week} items={grillSelectedRows(rotation, { unique: true })} promotionActive={promoActive} scopeLabel={`${cafe} · ${grillTitle}`} />
       <StationSelectedList title="Items Description" items={grillSelectedRows(rotation, { unique: true })} complete={complete} />
     </div>
   );
@@ -6495,8 +6582,10 @@ function GrillSelect({ label, value, onChange, items }) {
   );
 }
 
-function SimpleLTOSection({ stationKey, title, slots, values = [], uploaded = [], updateLto, complete, poolOverride = null, slotPoolOverrides = null, optional = false }) {
+function SimpleLTOSection({ cafe, week, stationKey, title, slots, values = [], uploaded = [], updateLto, complete, poolOverride = null, slotPoolOverrides = null, optional = false }) {
   const pool = poolOverride || stationPool(stationKey);
+  const selected = ltoSelectedRows({ ltos: { [stationKey]: values }, uploadedLtos: { [stationKey]: uploaded } }, stationKey, { unique: true });
+  const referenceMenu = referenceMenuForPlannerItems(pool) || REFERENCE_MENU_BY_STATION[stationKey] || "";
   return (
     <CollapsibleStation title={title} eyebrow="Station Special" complete={complete}>
       {optional && <p className="mb-3 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-500">Optional for submission, included in generated menus when selected.</p>}
@@ -6517,12 +6606,13 @@ function SimpleLTOSection({ stationKey, title, slots, values = [], uploaded = []
           );
         })}
       </div>
-      <StationSelectedList title="Items Description" items={ltoSelectedRows({ ltos: { [stationKey]: values }, uploadedLtos: { [stationKey]: uploaded } }, stationKey, { unique: true })} complete={complete} />
+      <PlannerReferencePlateCost week={week} menu={referenceMenu} items={selected} scopeLabel={`${cafe} · ${title}`} />
+      <StationSelectedList title="Items Description" items={selected} complete={complete} />
     </CollapsibleStation>
   );
 }
 
-function WokSection({ rotation, updateLto }) {
+function WokSection({ cafe, week, rotation, updateLto }) {
   return (
     <CollapsibleStation title="Wok Station" eyebrow="Station Rotation" complete={stationComplete(rotation, "wok")}>
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-5">
@@ -6531,6 +6621,7 @@ function WokSection({ rotation, updateLto }) {
         <PickerGroup title="Wok Base" limit="1 base" items={stationPool("wokBase")} values={rotation.ltos?.wokBase || EMPTY_ROTATION.ltos.wokBase} onChange={(index, value) => updateLto("wokBase", index, value)} />
         <PickerGroup title="Wok Sub Recipes" limit="up to 2" items={stationPool("wokSubRecipes")} values={rotation.ltos?.wokSubRecipes || EMPTY_ROTATION.ltos.wokSubRecipes} onChange={(index, value) => updateLto("wokSubRecipes", index, value)} />
       </div>
+      <PlannerReferencePlateCost week={week} menu="AMZ: Wok" items={wokSelectedRows(rotation, { unique: true })} scopeLabel={`${cafe} · Wok Station`} />
       <StationSelectedList title="Items Description" items={wokSelectedRows(rotation, { unique: true })} complete={stationComplete(rotation, "wok")} />
     </CollapsibleStation>
   );
@@ -6616,6 +6707,7 @@ function MobyPopUpSection({ week, rotation, menuOptions, updateRotation }) {
           )}
         </>
       )}
+      <PlannerReferencePlateCost week={week} menu={station.menu} items={selectedRows} promotionActive={promo.enabled} scopeLabel="Dawson · Moby Pop-Up" />
       <StationSelectedList title={promo.enabled ? "Promotion Items Description" : "Items Description"} items={selectedRows} complete={stationComplete(rotation, "mobyPopUp", "Dawson", week)} />
     </CollapsibleStation>
   );
@@ -6711,6 +6803,7 @@ function CarverySection({ cafe, week, rotation, updateCarvery, updateRotation })
           ))}
         </div>
       )}
+      <PlannerReferencePlateCost week={week} menu="AMZ: Carvery" items={selectedRows} promotionActive={cafe === "Dawson" && promo.enabled} scopeLabel={`${cafe} · Carvery Station`} />
       <StationSelectedList title={cafe === "Dawson" && promo.enabled ? "Promotion Items Description" : "Items Description"} items={selectedRows} complete={stationComplete(rotation, "carvery", cafe, week)} />
     </CollapsibleStation>
   );
@@ -6795,7 +6888,7 @@ function StreetBeetsSection({ rotation, updateCustomStation }) {
   );
 }
 
-function CommissaryEverestSection({ rotation, updateCustomStation }) {
+function CommissaryEverestSection({ cafe, week, rotation, updateCustomStation }) {
   const custom = cloneCustomStations(rotation.customStations);
   const station = custom.commissaryEverest;
   const updateValues = (field, index, value) => {
@@ -6816,12 +6909,13 @@ function CommissaryEverestSection({ rotation, updateCustomStation }) {
         <TextSlotGrid title="Cold Sides" slots={["Cold Side 1", "Cold Side 2", "Cold Side 3", "Cold Side 4"]} values={station.coldSides} onChange={(index, value) => updateValues("coldSides", index, value)} />
         <TextSlotGrid title="Rice Dish" slots={["Rice Dish"]} values={station.riceDishes} onChange={(index, value) => updateValues("riceDishes", index, value)} />
       </div>
+      <PlannerReferencePlateCost week={week} menu={station.menu} items={customStationSelectedRows(rotation, "commissaryEverest", { unique: true })} scopeLabel={`${cafe} · Everest Commissary`} />
       <StationSelectedList title="Items Description" items={customStationSelectedRows(rotation, "commissaryEverest", { unique: true })} complete={complete} />
     </CollapsibleStation>
   );
 }
 
-function LotusWpSection({ rotation, updateCustomStation }) {
+function LotusWpSection({ cafe, week, rotation, updateCustomStation }) {
   const custom = cloneCustomStations(rotation.customStations);
   const station = custom.lotusWp;
   const updateValues = (field, index, value) => {
@@ -6836,6 +6930,7 @@ function LotusWpSection({ rotation, updateCustomStation }) {
         <SelectSlotGrid title="Entrees" slots={["Entree 1", "Entree 2", "Entree 3", "Entree 4"]} values={station.entrees} items={stationPool("lotusEntrees")} onChange={(index, value) => updateValues("entrees", index, value)} />
         <SelectSlotGrid title="Sides" slots={["Side 1", "Side 2", "Side 3", "Side 4", "Side 5", "Side 6"]} values={station.sides} items={stationPool("lotusSides")} onChange={(index, value) => updateValues("sides", index, value)} />
       </div>
+      <PlannerReferencePlateCost week={week} menu="AMZ: Lotus" items={customStationSelectedRows(rotation, "lotusWp", { unique: true })} scopeLabel={`${cafe} · Lotus W&P`} />
       <StationSelectedList title="Items Description" items={customStationSelectedRows(rotation, "lotusWp", { unique: true })} complete={complete} />
     </CollapsibleStation>
   );

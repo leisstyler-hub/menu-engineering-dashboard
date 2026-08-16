@@ -31,6 +31,10 @@ export function isFoodCostPlatePilot(district, cafe, weekStart) {
   return district === "North" && cafe === "Nessie" && weekStart === PILOT_WEEK_START;
 }
 
+export function isFoodCostReferenceMenu(menu) {
+  return FOOD_COST_REFERENCE_ROWS.some((row) => normalize(row.menu) === normalize(menu) && isPrimary(row));
+}
+
 export function foodCostReferenceRow(id) {
   return ROWS_BY_ID.get(String(id || "")) || null;
 }
@@ -52,10 +56,17 @@ export function foodCostReferenceStations(menu) {
 }
 
 export function referenceIdForLoadedSelection({ menu, station, mrn, portion, itemName }) {
-  const candidates = foodCostReferenceRows(menu, station).filter((row) => normalize(row.mrn) === normalize(mrn));
-  return (candidates.find((row) => normalize(row.portion) === normalize(portion) && normalize(row.displayName) === normalize(itemName))
-    || candidates.find((row) => normalize(row.displayName) === normalize(itemName))
-    || candidates[0])?.id || "";
+  const menuRows = FOOD_COST_REFERENCE_ROWS.filter((row) => normalize(row.menu) === normalize(menu));
+  const stationRows = station ? menuRows.filter((row) => normalize(row.station) === normalize(station)) : menuRows;
+  const identityMatches = (rows) => {
+    const mrnRows = mrn ? rows.filter((row) => normalize(row.mrn) === normalize(mrn)) : [];
+    return mrnRows.find((row) => normalize(row.portion) === normalize(portion) && normalize(row.displayName) === normalize(itemName))
+      || mrnRows.find((row) => normalize(row.displayName) === normalize(itemName))
+      || mrnRows[0]
+      || rows.find((row) => normalize(row.portion) === normalize(portion) && normalize(row.displayName) === normalize(itemName))
+      || rows.find((row) => normalize(row.displayName) === normalize(itemName));
+  };
+  return (identityMatches(stationRows) || identityMatches(menuRows))?.id || "";
 }
 
 const plural = (label, count) => count === 1 ? label : `${label}s`;
@@ -135,12 +146,12 @@ const combinations = (rows, count, start = 0) => {
 };
 
 export function calculateReferencePlateRanges(menu, station, selectedIds = []) {
-  const model = referencePickerModel(menu, station);
   const selected = [...new Map(selectedIds.map(foodCostReferenceRow).filter(Boolean).map((row) => [row.id, row])).values()];
-  const selectedEntrees = selected.filter(isPrimary);
+  const selectedEntrees = selected.filter((row) => normalize(row.menu) === normalize(menu) && isPrimary(row));
   return selectedEntrees.map((entree) => {
     const allMenuRows = FOOD_COST_REFERENCE_ROWS.filter((row) => normalize(row.menu) === normalize(menu));
-    const requirements = parsePlateBuild(entree.plateBuild, model.rows).map((group) => group.rows.length
+    const primaryStationRows = foodCostReferenceRows(menu, entree.station || station);
+    const requirements = parsePlateBuild(entree.plateBuild, primaryStationRows).map((group) => group.rows.length
       ? group
       : (parsePlateBuild(entree.plateBuild, allMenuRows).find((fallback) => fallback.key === group.key) || group));
     const missing = [];
