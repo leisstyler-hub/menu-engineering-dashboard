@@ -2,6 +2,8 @@
 
 ## 2026-08-23
 
+- [Aug 23, 12:22 PM] Menu Cross Utilization: made the Pair Detail panel give long Shared Ingredients lists a taller scroll area and moved the blue Ordering / reuse opportunity note to the bottom of the detail panel. Set visible version `2026.08.23.007-menu-cross-pair-detail-scroll`.
+
 - [Aug 23, 12:06 PM] Menu Cross Utilization: added pillar % to cards/table, grouped and color-coded the matrix by pillar, added non-clickable `100%` self-match cells, and widened the grid. Set visible version `2026.08.23.006-menu-cross-pillar-grouped-matrix`.
 
 - [Aug 23, 12:09 PM] Published the North-only duplicate Global-menu policy to GitHub `main` at application commit `a5f9ce77135c4844d54da51446feca39424aa4d2`. Vercel deployment `3a4a9CYaT9JyHwMMKq5cuThvDHZL` completed successfully, and the public bundle at `https://project-d8v25.vercel.app` contains version `2026.08.23.005-north-duplicate-menu-policy`. `pnpm run verify` passed, and both mandatory browser suites passed 46/46 locally and 46/46 in production, proving North cafés may match Global menus without duplicate blockers while East non-Balti and same-café split-block protections remain active. No schema, storage, source-authority, production-data, Results, recap, cost, or export change. Release state: LIVE.

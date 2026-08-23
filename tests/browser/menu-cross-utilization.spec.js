@@ -59,6 +59,33 @@ test("Menu Cross Utilization Tool pairwise matrix shows overlap detail in the re
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
+test("Menu Cross Utilization Tool gives long pair details more shared-ingredient space", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+
+  await openTool(page, /open cross utilization/i, /^Menu Cross Utilization Tool$/);
+  await page.getByRole("button", { name: /open pairwise matrix/i }).click();
+
+  await page.getByTitle(/Curated Sandwiches .* Deli Core:/).click();
+
+  const detail = page.getByTestId("pair-detail-panel");
+  const sharedList = page.getByTestId("pair-detail-shared-ingredients");
+  const reuseNote = page.getByTestId("pair-detail-reuse-opportunity");
+
+  await expect(detail.getByRole("heading", { name: /Curated Sandwiches .* Deli Core/ })).toBeVisible();
+  await expect(sharedList.getByText(/Anchovy Fillets/)).toBeVisible();
+  await expect(sharedList).toHaveCSS("overflow-y", "auto");
+
+  const detailBox = await detail.boundingBox();
+  const sharedListBox = await sharedList.boundingBox();
+  const reuseNoteBox = await reuseNote.boundingBox();
+
+  expect(sharedListBox?.height).toBeGreaterThanOrEqual(320);
+  expect(reuseNoteBox && detailBox ? Math.abs(detailBox.y + detailBox.height - (reuseNoteBox.y + reuseNoteBox.height)) : 999).toBeLessThanOrEqual(24);
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
 test("Menu Cross Utilization Tool groups the pairwise matrix by pillar with self-match diagonal cells", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
 

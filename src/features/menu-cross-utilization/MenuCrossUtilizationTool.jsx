@@ -280,7 +280,7 @@ function PairwiseMatrix({ menus, pairs, maxOverlap, selectedPair, setSelectedPai
 
       <PillarCrossUseStrip pillars={DATA.pillars} menus={menus} />
 
-      <div className="mt-4 grid grid-cols-1 gap-4 2xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="mt-4 grid grid-cols-1 items-stretch gap-4 2xl:grid-cols-[minmax(0,1fr)_400px]">
         <div data-testid="pairwise-matrix-grid" className="overflow-auto rounded-lg border border-slate-200" style={{ maxHeight: 820 }}>
           <table className="border-collapse text-[11px]">
             <thead>
@@ -390,7 +390,7 @@ function PairDetail({ pair, menus }) {
   const shared = sharedIngredients(menus, pair.a, pair.b).map((key) => DATA.ingredientLabels[key]).sort();
 
   return (
-    <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <aside data-testid="pair-detail-panel" className="flex h-full min-h-[680px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Pair Detail</p>
       <h3 className="mt-1 text-xl font-black">{pair.a} × {pair.b}</h3>
 
@@ -406,16 +406,16 @@ function PairDetail({ pair, menus }) {
       </div>
       <p className="mt-2 text-[11px] font-semibold text-slate-500">Small menus can show noisier percentages against large menus — check eligible SKU counts above before over-reading a big-looking percentage.</p>
 
-      <div className="mt-4">
+      <div className="mt-4 flex min-h-0 flex-1 flex-col">
         <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Shared ingredients ({shared.length})</p>
-        <div className="mt-2 max-h-48 space-y-1 overflow-y-auto">
+        <div data-testid="pair-detail-shared-ingredients" className="mt-2 min-h-[320px] flex-1 space-y-1 overflow-y-auto pr-1">
           {shared.map((label) => (
             <p key={label} className="rounded-lg border border-slate-100 bg-slate-50 px-2 py-1 text-xs font-semibold text-slate-700">{label}</p>
           ))}
         </div>
       </div>
 
-      <div className="mt-4 rounded-lg border border-sky-200 bg-sky-50 p-3">
+      <div data-testid="pair-detail-reuse-opportunity" className="mt-4 rounded-lg border border-sky-200 bg-sky-50 p-3">
         <p className="text-xs font-black uppercase tracking-[0.12em] text-sky-700">Ordering / reuse opportunity</p>
         <p className="mt-1 text-xs font-semibold leading-5 text-sky-900">
           {pair.sharedCount} ingredients purchased by both menus is a purchasing/ordering reuse signal, not proof of a shared recipe. Use this as a data-based starting point for menu-planning conversations, not an automatic rotation decision.
