@@ -49,7 +49,7 @@ assert(
 );
 assert(
   source.includes('const options = cafe === "Doppler" ? stationPool("grillFreshFive")') &&
-    source.includes('poolOverride={cafe === "Doppler" ? stationPool("deliFreshFive") : null}') &&
+    source.includes('cafe === "Doppler" ? stationPool("deliFreshFive") : null') &&
     source.includes('poolOverride={stationPool("grillFreshFive")}') &&
     source.includes('poolOverride={stationPool("saladFreshFive")}') &&
     !/stationKey="salad"[\s\S]{0,700}poolOverride=\{cafe === "Doppler" \? stationPool\("saladFreshFive"\) : null\}/.test(source),

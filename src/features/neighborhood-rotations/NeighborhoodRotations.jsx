@@ -96,6 +96,7 @@ const REFERENCE_MENU_BY_STATION = {
 
 const MOBY_POP_UP_START_WEEK = "2026-08-31";
 const MOBY_POP_UP_DAYS = ["Tuesday", "Wednesday", "Thursday"];
+const CRICKET_DELI_MIN_SELECTIONS = 3;
 const NESSIE_GLOBAL_PLATE_COST_PILOT_WEEK = "2026-08-17";
 const ONE_SIDE_PLATE_MENUS = new Set([
   "AMZ: Piccola Italia",
@@ -327,7 +328,7 @@ const EMPTY_ROTATION = {
   ltos: {
     salad: ["", ""],
     pizza: ["", ""],
-    deli: ["", ""],
+    deli: Array(6).fill(""),
     fishMarket: [""],
     freshFive: ["", "", "", "", ""],
     grillFreshFive: ["", ""],
@@ -1868,7 +1869,7 @@ function stationSlots(cafe, stationKey) {
     Doppler: { pizza: 2, deli: 1 },
     Dawson: { freshFive: 5 },
     Nessie: { freshFive: 5 },
-    Cricket: { freshFive: 5 },
+    Cricket: { deli: 6, freshFive: 5 },
     Moby: { deli: 4, salad: 4, freshFive: 2 },
     Commissary: { deli: 4, salad: 3, freshFive: 2 },
     Atlas: { freshFive: 2 },
@@ -2516,6 +2517,9 @@ function stationComplete(rotation, stationKey, cafe = "", week = "") {
     return Boolean(normalizeMobyPopUp(rotation.mobyPopUp).menu)
       && mobyPopUpSelectedRows(rotation, { unique: true }).length > 0;
   }
+  if (stationKey === "deli" && cafe === "Cricket") {
+    return ltoSelectedRows(rotation, "deli", { unique: true }).length >= CRICKET_DELI_MIN_SELECTIONS;
+  }
   return stationHasAnySelection(rotation, stationKey);
 }
 
@@ -2612,7 +2616,7 @@ function rotationRequirementIssues(requirements, cafe, { menu = "", duplicateMen
     issues.push("Select a Global Menu and at least one Global entree.");
   }
   if (requirements.incompleteStations.length > 0) {
-    issues.push(`Add at least one item for each required station: ${requirements.incompleteStations.map((stationKey) => stationLabel(cafe, stationKey)).join(", ")}.`);
+    issues.push(`Complete each required station: ${requirements.incompleteStations.map((stationKey) => stationRequirementLabel(cafe, stationKey)).join(", ")}.`);
   }
   if (menu && duplicateMenuCount > 1) {
     const otherCount = duplicateMenuCount - 1;
@@ -2623,6 +2627,11 @@ function rotationRequirementIssues(requirements, cafe, { menu = "", duplicateMen
     issues.push(`Choose a different Global Menu for each ${cafe} split block. Duplicate: ${duplicateSplitMenus.join("; ")}.`);
   }
   return issues;
+}
+
+function stationRequirementLabel(cafe, stationKey) {
+  if (cafe === "Cricket" && stationKey === "deli") return `Deli LTOs (${CRICKET_DELI_MIN_SELECTIONS} distinct selections required)`;
+  return `${stationLabel(cafe, stationKey)} (at least 1 selection)`;
 }
 
 function leadershipRead(rows, conflictMenus) {
@@ -5503,7 +5512,7 @@ function CafeStationSection(props) {
   if (stationKey === "grill") content = <GrillSection cafe={cafe} week={week} rotation={rotation} updateGrill={updateGrill} />;
   if (stationKey === "salad") content = <SimpleLTOSection cafe={cafe} week={week} stationKey="salad" title={cafe === "Doppler" ? "Zane's Salad" : "Salad LTOs"} slots={Array.from({ length: stationSlots(cafe, "salad") }, (_, i) => cafe === "Doppler" ? `Fresh Five Salad ${i + 1}` : `Salad LTO ${i + 1}`)} values={rotation.ltos?.salad || EMPTY_ROTATION.ltos.salad} uploaded={rotation.uploadedLtos?.salad || []} updateLto={updateLto} complete={stationComplete(rotation, "salad")} />;
   if (stationKey === "pizza") content = <SimpleLTOSection cafe={cafe} week={week} stationKey="pizza" title={cafe === "Doppler" ? "Pizza LTOs" : "Pizza / Flatbread LTOs"} slots={cafe === "Doppler" ? ["Pizza LTO 1", "Pizza LTO 2"] : Array.from({ length: stationSlots(cafe, "pizza") }, (_, i) => `Pizza/Flatbread LTO ${i + 1}`)} values={rotation.ltos?.pizza || EMPTY_ROTATION.ltos.pizza} uploaded={rotation.uploadedLtos?.pizza || []} updateLto={updateLto} complete={stationComplete(rotation, "pizza")} slotPoolOverrides={cafe === "Doppler" ? [stationPool("pizza"), stationPool("pizza")] : null} optional={cafe === "Doppler"} />;
-  if (stationKey === "deli") content = <SimpleLTOSection cafe={cafe} week={week} stationKey="deli" title={cafe === "Doppler" ? "Paninoteca Deli" : "Deli LTOs"} slots={Array.from({ length: stationSlots(cafe, "deli") }, (_, i) => cafe === "Doppler" ? "Fresh Five Deli Selection" : `Deli LTO ${i + 1}`)} values={rotation.ltos?.deli || EMPTY_ROTATION.ltos.deli} uploaded={rotation.uploadedLtos?.deli || []} updateLto={updateLto} complete={stationComplete(rotation, "deli")} poolOverride={cafe === "Doppler" ? stationPool("deliFreshFive") : null} />;
+  if (stationKey === "deli") content = <SimpleLTOSection cafe={cafe} week={week} stationKey="deli" title={cafe === "Doppler" ? "Paninoteca Deli" : "Deli LTOs"} slots={Array.from({ length: stationSlots(cafe, "deli") }, (_, i) => cafe === "Doppler" ? "Fresh Five Deli Selection" : `Deli LTO ${i + 1}`)} values={rotation.ltos?.deli || EMPTY_ROTATION.ltos.deli} uploaded={rotation.uploadedLtos?.deli || []} updateLto={updateLto} complete={stationComplete(rotation, "deli", cafe, week)} poolOverride={cafe === "Cricket" ? stationPool("deli").filter((row) => getMenuName(row) === REFERENCE_MENU_BY_STATION.deli && /curated sandwiches/i.test(getStationName(row))) : cafe === "Doppler" ? stationPool("deliFreshFive") : null} allowWriteIn={cafe !== "Cricket"} requirementNote={cafe === "Cricket" ? "Select at least 3 distinct sandwiches to submit. Up to 6 selections are available." : ""} />;
   if (stationKey === "fishMarket") content = <SimpleLTOSection cafe={cafe} week={week} stationKey="fishMarket" title="Fish Market LTO" slots={Array.from({ length: stationSlots(cafe, "fishMarket") }, (_, i) => `Fish Market LTO ${i + 1}`)} values={rotation.ltos?.fishMarket || EMPTY_ROTATION.ltos.fishMarket} uploaded={rotation.uploadedLtos?.fishMarket || []} updateLto={updateLto} complete={stationComplete(rotation, "fishMarket")} />;
   if (stationKey === "noodles") content = <SecondaryGlobalSection blockId="noodles" title="Noodle Station" eyebrow="Secondary Global" cafe={cafe} week={week} rotation={rotation} menuOptions={menuOptions} updateRotation={updateRotation} />;
   if (stationKey === "freshFive") content = <SimpleLTOSection cafe={cafe} week={week} stationKey="freshFive" title="Fresh $5" slots={Array.from({ length: stationSlots(cafe, "freshFive") }, (_, i) => `Fresh $5 Option ${i + 1}`)} values={rotation.ltos?.freshFive || EMPTY_ROTATION.ltos.freshFive} uploaded={rotation.uploadedLtos?.freshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "freshFive")} />;
@@ -6662,13 +6671,14 @@ function GrillSelect({ label, value, onChange, items }) {
   );
 }
 
-function SimpleLTOSection({ cafe, week, stationKey, title, slots, values = [], uploaded = [], updateLto, complete, poolOverride = null, slotPoolOverrides = null, optional = false }) {
+function SimpleLTOSection({ cafe, week, stationKey, title, slots, values = [], uploaded = [], updateLto, complete, poolOverride = null, slotPoolOverrides = null, optional = false, allowWriteIn = true, requirementNote = "" }) {
   const pool = poolOverride || stationPool(stationKey);
   const selected = ltoSelectedRows({ ltos: { [stationKey]: values }, uploadedLtos: { [stationKey]: uploaded } }, stationKey, { unique: true });
   const referenceMenu = referenceMenuForPlannerItems(pool) || REFERENCE_MENU_BY_STATION[stationKey] || "";
   return (
     <CollapsibleStation title={title} eyebrow="Station Special" complete={complete} optional={optional}>
       {optional && <p className="mb-3 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-500">Optional for submission, included in generated menus when selected.</p>}
+      {requirementNote && <p className="mb-3 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-bold text-sky-900">{requirementNote}</p>}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {slots.map((slot, index) => {
           const slotPool = slotPoolOverrides?.[index] || pool;
@@ -6679,6 +6689,8 @@ function SimpleLTOSection({ cafe, week, stationKey, title, slots, values = [], u
                 value={values[index] || uploaded[index] || ""}
                 items={slotPool}
                 onChange={(nextValue) => updateLto(stationKey, index, nextValue)}
+                allowWriteIn={allowWriteIn}
+                ariaLabel={`${cafe} ${slot}`}
                 selectClassName="w-full rounded-2xl border-2 border-sky-200 bg-white px-4 py-3 font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                 inputClassName="w-full rounded-2xl border-2 border-emerald-200 bg-white px-4 py-3 font-semibold outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
               />
@@ -7157,9 +7169,9 @@ function SubmitBar({ rotation, cafe, requirements, canSubmit, onSaveDraft, onSub
         <h3 className="text-2xl font-bold mt-1">{rotation.status || "Draft"}</h3>
         <p className="text-sm text-slate-500 mt-1">{rotation.updatedAt ? `Updated ${rotation.updatedAt} by ${rotation.submittedBy || "Chef"}` : "Not saved yet"}</p>
         {rotation.submittedAt && <p className="text-sm text-slate-500 mt-1">Submitted {rotation.submittedAt}</p>}
-        {!canSubmit && <p className="text-sm text-amber-700 mt-2">Submit requires at least one selection for each assigned station{requirements.requiresGlobal ? ", including a Global Menu and Global entree" : ""}.</p>}
+        {!canSubmit && <p className="text-sm text-amber-700 mt-2">Submit requires each assigned station to meet its selection requirement{requirements.requiresGlobal ? ", including a Global Menu and Global entree" : ""}.</p>}
         {requirements.requiresGlobal && !requirements.globalReady && <p className="text-xs text-amber-700 mt-1">Missing: Global Menu or one Global entree.</p>}
-        {requirements.incompleteStations.length > 0 && <p className="text-xs text-amber-700 mt-1">Missing station selection: {requirements.incompleteStations.map((stationKey) => stationLabel(cafe, stationKey)).join(", ")}.</p>}
+        {requirements.incompleteStations.length > 0 && <p className="text-xs text-amber-700 mt-1">Missing station selection: {requirements.incompleteStations.map((stationKey) => stationRequirementLabel(cafe, stationKey)).join(", ")}.</p>}
       </div>
       <div className="flex flex-wrap gap-2">
         <button onClick={onSaveDraft} className="rounded-2xl bg-white border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">Save Draft</button>

@@ -42,6 +42,9 @@ const smokeMenuItems = [
   { menu: "AMZ: Grill Core", station: "Spotlights", item: "carolina bbq burger", category: "entree", price: 11.45, trueCost: 2.9227, mrn: "63329.3", portion: "1 each" },
   { menu: "AMZ: Cafe Express Curated Salads", station: "Curated Salads", item: "Baja Crunch Salad", category: "entree", price: 11.45 },
   { menu: "AMZ: Cafe Express Curated Sandwiches", station: "Curated Sandwiches", item: "Chicken Caesar Wrap", category: "entree", price: 9.9 },
+  { menu: "AMZ: Cafe Express Curated Sandwiches", station: "Curated Sandwiches", item: "Caprese Sandwich", category: "entree", price: 9.9 },
+  { menu: "AMZ: Cafe Express Curated Sandwiches", station: "Curated Sandwiches", item: "Turkey Avocado Sandwich", category: "entree", price: 9.9 },
+  { menu: "AMZ: Carvery", station: "Deli", item: "Carvery Turkey Sandwich", category: "entree", price: 10.5 },
   { menu: "AMZ: Cafe Express Soup", station: "Soup", item: "Tomato Basil Soup", category: "entree", portion: "12 floz", portionOz: 11.71, price: 5.15, trueCost: 1.2, calories: 180, enticingDescription: "Creamy tomato soup with basil." },
   { menu: "AMZ: Cafe Express Soup", station: "Soup", item: "Chicken Noodle Soup", category: "entree", portion: "12 floz", price: 5.15, trueCost: 0.9, calories: 160, enticingDescription: "Chicken and noodles in a savory broth." },
   { menu: "AMZ: Cafe Express Soup", station: "Soup", item: "Vegetable Minestrone Soup", category: "entree", portion: "12 floz", price: 5.15, trueCost: null, calories: 140, enticingDescription: "Vegetable soup with pasta and beans." },
@@ -899,11 +902,85 @@ test("Cafes without a Global station are never blocked by Global requirements", 
     await expect(page.getByRole("heading", { name: exactName(cafe) })).toBeVisible({ timeout: 20_000 });
     const remote = page.getByLabel("Planner Remote Control");
     await remote.getByRole("button", { name: "Expand", exact: true }).click();
-    const blocker = page.getByText(/Submit is blocked until these are fixed/i).locator("xpath=..", { hasText: /Add at least one item/i });
+    const blocker = page.getByText(/Submit is blocked until these are fixed/i).locator("xpath=..", { hasText: /Complete each required station/i });
     await expect(blocker).toBeVisible();
     await expect(blocker).not.toContainText(/Global Menu|Global entree/i);
     await remote.getByRole("button", { name: "Collapse", exact: true }).click();
   }
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("Cricket Deli offers six slots and requires three distinct sandwiches", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const storageWrites = [];
+  let storedRecords = [];
+  await stubEmptyRotationBackbone(page, {
+    onStorageWrite: (body) => {
+      storageWrites.push(body);
+      storedRecords = body.records || [];
+    },
+    getStorageRecords: () => storedRecords,
+  });
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: exactName("North") }).click();
+  await page.getByRole("button", { name: exactName("Cricket") }).click();
+  await expect(page.getByRole("heading", { name: exactName("Cricket") })).toBeVisible({ timeout: 20_000 });
+
+  const deli = page.getByRole("heading", { name: "Deli LTOs" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await expect(deli).toContainText("Select at least 3 distinct sandwiches to submit. Up to 6 selections are available.");
+  const deliSelects = deli.locator("select");
+  await expect(deliSelects).toHaveCount(6);
+  for (let index = 0; index < 6; index += 1) await expect(deliSelects.nth(index)).toHaveAccessibleName(`Cricket Deli LTO ${index + 1}`);
+  const firstDeliOptions = await deliSelects.first().evaluate((select) => Array.from(select.options).map((option) => option.value));
+  expect(firstDeliOptions).not.toContain("__write_in__");
+  expect(firstDeliOptions).not.toContain("Carvery Turkey Sandwich");
+  const sandwichValues = firstDeliOptions.filter(Boolean).slice(0, 3);
+  expect(sandwichValues).toHaveLength(3);
+
+  await deliSelects.nth(0).selectOption(sandwichValues[0]);
+  await deliSelects.nth(1).selectOption(sandwichValues[0]);
+  await deliSelects.nth(2).selectOption(sandwichValues[0]);
+
+  const remote = page.getByLabel("Planner Remote Control");
+  await remote.getByRole("button", { name: "Expand", exact: true }).click();
+  const submitButton = remote.getByRole("button", { name: "Submit", exact: true });
+  await expect(submitButton).toHaveAttribute("title", /Deli LTOs \(3 distinct selections required\)/i);
+
+  await deliSelects.nth(1).selectOption(sandwichValues[1]);
+  await deliSelects.nth(2).selectOption("");
+  await deliSelects.nth(5).selectOption(sandwichValues[2]);
+  await expect(submitButton).not.toHaveAttribute("title", /Deli LTOs/i);
+
+  await remote.getByRole("button", { name: "Save Draft", exact: true }).click();
+  await expect.poll(() => storageWrites.length).toBeGreaterThan(0);
+  const deliRows = (storageWrites.at(-1)?.records || []).filter((record) => record["Café / Unit"] === "Cricket" && record["Station Key"] === "deli");
+  expect(deliRows).toHaveLength(3);
+  expect(deliRows.map((record) => record["Slot Number"])).toEqual([1, 2, 6]);
+  expect(new Set(deliRows.map((record) => record["Menu Item / Selection"])).size).toBe(3);
+
+  await page.evaluate(() => window.localStorage.clear());
+  await page.reload();
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: exactName("North") }).click();
+  await page.getByRole("button", { name: exactName("Cricket") }).click();
+  const recalledDeli = page.getByRole("heading", { name: "Deli LTOs" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  const recalledSelects = recalledDeli.locator("select");
+  await expect(recalledSelects).toHaveCount(6);
+  await expect(recalledSelects.nth(0)).toHaveValue(sandwichValues[0]);
+  await expect(recalledSelects.nth(1)).toHaveValue(sandwichValues[1]);
+  await expect(recalledSelects.nth(5)).toHaveValue(sandwichValues[2]);
+
+  await page.getByRole("button", { name: exactName("Moby") }).click();
+  const mobyDeli = page.getByRole("heading", { name: "Deli LTOs" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  const mobyDeliSelects = mobyDeli.locator("select");
+  await expect(mobyDeliSelects).toHaveCount(4);
+  await mobyDeliSelects.first().selectOption(sandwichValues[0]);
+  const mobyRemote = page.getByLabel("Planner Remote Control");
+  await mobyRemote.getByRole("button", { name: "Expand", exact: true }).click();
+  await expect(mobyRemote.getByRole("button", { name: "Submit", exact: true })).not.toHaveAttribute("title", /Deli LTOs/i);
 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);

@@ -374,8 +374,21 @@ if (
   fail("Dawson Carvery promotion completion and recap rows must use the isolated promo selections.");
 }
 
-if (!/Select a Global Menu and at least one Global entree/.test(source) || !/Add at least one item for each required station/.test(source)) {
+if (!/Select a Global Menu and at least one Global entree/.test(source) || !/Complete each required station/.test(source)) {
   fail("Submit blocked messaging must explain the relaxed one-selection requirements clearly.");
+}
+
+if (
+  !/const CRICKET_DELI_MIN_SELECTIONS = 3;/.test(source)
+  || !/Cricket: \{ deli: 6, freshFive: 5 \}/.test(source)
+  || !/stationKey === "deli" && cafe === "Cricket"/.test(source)
+  || !/ltoSelectedRows\(rotation, "deli", \{ unique: true \}\)\.length >= CRICKET_DELI_MIN_SELECTIONS/.test(source)
+  || !/poolOverride=\{cafe === "Cricket" \? stationPool\("deli"\)\.filter/.test(source)
+  || !/allowWriteIn=\{cafe !== "Cricket"\}/.test(source)
+  || !/ariaLabel=\{`\$\{cafe\} \$\{slot\}`\}/.test(source)
+  || !/Select at least 3 distinct sandwiches to submit\. Up to 6 selections are available\./.test(source)
+) {
+  fail("Cricket Deli must expose six accessible exact-menu slots, disable write-ins, and require three distinct sandwich selections for submission.");
 }
 
 if (!/function splitGlobalMenuOptionsForBlock/.test(source) || !/function duplicateSplitGlobalMenuIssues/.test(source) || !/splitGlobalMenuOptionsForBlock\(menuOptions, rotation, layout, blockInfo\.id\)/.test(source)) {
