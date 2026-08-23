@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ArrowRight, BarChart3, BookOpen, CalendarRange, ClipboardCheck, Database, FolderKanban, Home, ListChecks, PieChart, Settings, Smartphone, Sparkles, TrendingUp, Utensils, Wrench } from "lucide-react";
+import { ArrowRight, BarChart3, BookOpen, CalendarRange, ClipboardCheck, Database, FolderKanban, Home, ListChecks, PieChart, Settings, Shuffle, Smartphone, Sparkles, TrendingUp, Utensils, Wrench } from "lucide-react";
 
 import CHANGELOG_TEXT from "../../CHANGELOG.md?raw";
 import DASHBOARD_SUMMARY from "../data/dashboardSummary.json";
@@ -153,7 +153,7 @@ function downloadTrustLayerGapList(rows) {
   URL.revokeObjectURL(url);
 }
 
-export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodRotations, onOpenRecipeDatabase, onOpenMenuProjects, onOpenMenuAuditTool, onOpenLeanTool, onOpenSmartsheetHealth }) {
+export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodRotations, onOpenRecipeDatabase, onOpenMenuProjects, onOpenMenuAuditTool, onOpenLeanTool, onOpenMenuCrossUtilization, onOpenSmartsheetHealth }) {
   const {
     totalItems,
     menuCount,
@@ -257,6 +257,16 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
       icon: Smartphone,
       tone: "lime",
       meta: "Field tracker"
+    },
+    {
+      title: "Menu Cross Utilization Tool",
+      eyebrow: "New",
+      description: "See pillar strategy, per-menu ingredient overlap, and a pairwise matrix built from shopping-list data for menu planning.",
+      action: "Open Cross Utilization",
+      onOpen: onOpenMenuCrossUtilization,
+      icon: Shuffle,
+      tone: "amber",
+      meta: "Menu planner"
     }
   ];
 
@@ -280,6 +290,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
         onOpenMenuProjects={onOpenMenuProjects}
         onOpenMenuAuditTool={onOpenMenuAuditTool}
         onOpenLeanTool={onOpenLeanTool}
+        onOpenMenuCrossUtilization={onOpenMenuCrossUtilization}
         onOpenSmartsheetHealth={onOpenSmartsheetHealth}
       />
 
@@ -305,7 +316,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
               Built for quick chef decisions: choose the workstream, check status, and move straight into the active tool.
             </p>
             <div className="mt-5 grid grid-cols-2 gap-3">
-              <Metric label="Tools" value="7" />
+              <Metric label="Tools" value="8" />
               <Metric label="Menu items" value={totalItems.toLocaleString()} />
               <Metric label="Menus" value={menuCount} />
               <Metric label="Costed items" value={costedItems.toLocaleString()} />
@@ -460,10 +471,11 @@ function MobileLanding({
   onOpenMenuProjects,
   onOpenMenuAuditTool,
   onOpenLeanTool,
+  onOpenMenuCrossUtilization,
   onOpenSmartsheetHealth,
 }) {
   const metricTiles = [
-    { label: "Tools", value: "7", icon: Wrench, tone: "bg-[#fff7e7] text-[#8a621b]" },
+    { label: "Tools", value: "8", icon: Wrench, tone: "bg-[#fff7e7] text-[#8a621b]" },
     { label: "Menu Items", value: totalItems.toLocaleString(), icon: Utensils, tone: "bg-[#eaf8f2] text-emerald-700" },
     { label: "Menus", value: menuCount, icon: ListChecks, tone: "bg-[#edf5ff] text-sky-700" },
     { label: "Costed Items", value: costedItems.toLocaleString(), icon: Database, tone: "bg-[#f0eefb] text-indigo-700" },
@@ -649,6 +661,7 @@ function MobileToolCard({ title, eyebrow, description, action, onOpen, icon: Ico
     "Menu Audit Tool": "Phase 1",
     "Webtrition": "External",
     "Lean Tool": "New",
+    "Menu Cross Utilization Tool": "New",
   };
 
   return (

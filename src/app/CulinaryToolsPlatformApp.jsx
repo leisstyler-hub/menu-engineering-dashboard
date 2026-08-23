@@ -37,6 +37,7 @@ const RecipeDatabase = lazyWithStaleBundleReload(() => import("../features/recip
 const MenuProjects = lazyWithStaleBundleReload(() => import("../features/menu-projects/MenuProjects.jsx"));
 const MenuAuditTool = lazyWithStaleBundleReload(() => import("../features/menu-audit/MenuAuditTool.jsx"));
 const SmartsheetHealth = lazyWithStaleBundleReload(() => import("../features/smartsheet-health/SmartsheetHealth.jsx"));
+const MenuCrossUtilizationTool = lazyWithStaleBundleReload(() => import("../features/menu-cross-utilization/MenuCrossUtilizationTool.jsx"));
 
 export default function CulinaryToolsPlatformApp() {
   const [activeTool, setActiveTool] = useState("home");
@@ -105,6 +106,17 @@ export default function CulinaryToolsPlatformApp() {
     );
   }
 
+  if (activeTool === "menuCrossUtilization") {
+    return (
+      <>
+        <Suspense fallback={<ToolLoading title="Opening Menu Cross Utilization Tool" />}>
+          <MenuCrossUtilizationTool onBackToPlatform={() => setActiveTool("home")} onOpenSmartsheetHealth={openSmartsheetHealth} />
+        </Suspense>
+        <MobileToolNav activeTool={activeTool} setActiveTool={setActiveTool} />
+      </>
+    );
+  }
+
   if (activeTool === "ladleCompliance") {
     return (
       <>
@@ -145,6 +157,7 @@ export default function CulinaryToolsPlatformApp() {
       onOpenMenuProjects={() => setActiveTool("menuProjects")}
       onOpenMenuAuditTool={() => setActiveTool("menuAuditTool")}
       onOpenLeanTool={() => setActiveTool("leanTool")}
+      onOpenMenuCrossUtilization={() => setActiveTool("menuCrossUtilization")}
       onOpenSmartsheetHealth={openSmartsheetHealth}
     />
   );
