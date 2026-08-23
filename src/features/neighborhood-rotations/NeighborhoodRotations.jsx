@@ -55,9 +55,11 @@ const MENU_CONFLICT_GROUPS = {
 };
 
 const DUPLICATE_MENU_EXCEPTIONS = { East: ["AMZ: Balti"] };
+const DUPLICATE_MENU_ALLOWED_DISTRICTS = new Set(["North"]);
 
-function isDuplicateMenuExempt(district, menu) {
-  return Boolean(menu) && (DUPLICATE_MENU_EXCEPTIONS[district] || []).includes(menu);
+function isDuplicateMenuAllowed(district, menu) {
+  return DUPLICATE_MENU_ALLOWED_DISTRICTS.has(district)
+    || (Boolean(menu) && (DUPLICATE_MENU_EXCEPTIONS[district] || []).includes(menu));
 }
 
 const STATION_LABELS = {
@@ -2550,6 +2552,7 @@ function optionalStationKeys(cafe = "") {
 }
 
 function conflictControlledRows(district, rows) {
+  if (DUPLICATE_MENU_ALLOWED_DISTRICTS.has(district)) return [];
   const groups = MENU_CONFLICT_GROUPS[district];
   if (!groups?.length) return rows;
   const controlledCafes = new Set(groups.flatMap((group) => group.cafes));
@@ -2560,7 +2563,7 @@ function menuConflictCounts(rows) {
   return rows.reduce((acc, row) => {
     if (!isSubmittedRotation(row)) return acc;
     const menu = rotationMenuLabelForDuplicateReporting(row);
-    if (!menu || isDuplicateMenuExempt(row.district, menu)) return acc;
+    if (!menu || isDuplicateMenuAllowed(row.district, menu)) return acc;
     acc[menu] = (acc[menu] || 0) + 1;
     return acc;
   }, {});
@@ -2572,6 +2575,7 @@ function menuConflictNote(district, cafe) {
 }
 
 function cafeUsesMenuConflictRule(district, cafe, copiedFrom = "") {
+  if (DUPLICATE_MENU_ALLOWED_DISTRICTS.has(district)) return false;
   const groups = MENU_CONFLICT_GROUPS[district];
   if (!groups?.length) return true;
   return groups.some((group) => group.cafes.includes(cafe) || (copiedFrom && group.cafes.includes(copiedFrom)));
@@ -2587,7 +2591,7 @@ function rowHasMenuConflict(row, conflictMenus) {
 
 function menuConflictCountForCandidate(district, rows, candidateCafe, candidateMenu) {
   if (!candidateMenu || !cafeUsesMenuConflictRule(district, candidateCafe)) return 0;
-  if (isDuplicateMenuExempt(district, candidateMenu)) return 0;
+  if (isDuplicateMenuAllowed(district, candidateMenu)) return 0;
   const submittedMatches = conflictControlledRows(district, rows).filter((row) => {
     if (!isSubmittedRotation(row) || row.cafe === candidateCafe) return false;
     return rotationMenuLabelForDuplicateReporting(row) === candidateMenu;

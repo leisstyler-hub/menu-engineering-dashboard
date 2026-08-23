@@ -1072,7 +1072,7 @@ test("Dawson Moby Pop-Up starts Aug 31, uses Global or Carvery menus, and recall
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
-test("submitted Dawson Moby Pop-Up replaces only Moby Global presentation without changing duplicate reporting", async ({ page }) => {
+test("submitted Dawson Moby Pop-Up replaces only Moby Global presentation without persisting the projection", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   const storageWrites = [];
   const normalWeek = "Aug 31, 2026 - Sep 4, 2026";
@@ -1356,6 +1356,39 @@ test("East AMZ: Balti duplicate is exempt and does not block Astra from submitti
   await expect.poll(() => storageWrites.length).toBeGreaterThan(0);
   const savedRecords = storageWrites.at(-1)?.records || [];
   expect(savedRecords.some((record) => record["Café / Unit"] === "Astra" && record.Status === "Submitted" && record["Menu / Concept"] === "AMZ: Balti")).toBe(true);
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("North cafes may select the same Global Menu without a district duplicate blocker", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const week = "Jul 20, 2026 - Jul 24, 2026";
+  const dawsonParent = "rotation|north-duplicate-allowed|North|Dawson";
+  const records = [
+    rotationRecord({ id: dawsonParent, type: "Rotation Header", cafe: "Dawson", week, district: "North", status: "Submitted" }),
+    rotationRecord({ id: `${dawsonParent}|global-block`, parent: dawsonParent, type: "Global Block", cafe: "Dawson", week, district: "North", stationKey: "global", menu: "AMZ: Ohana" }),
+    rotationRecord({ id: `${dawsonParent}|global-entree`, parent: dawsonParent, type: "Global Selection", cafe: "Dawson", week, district: "North", stationKey: "global", selectionType: "Entrée", item: "Huli Huli Chicken", menu: "AMZ: Ohana" }),
+  ];
+  await stubEmptyRotationBackbone(page, { getStorageRecords: () => records });
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.locator("select").first().selectOption({ label: week });
+  await page.getByRole("button", { name: exactName("North") }).click();
+  await page.getByRole("button", { name: exactName("Nessie") }).click();
+  await expect(page.getByRole("heading", { name: exactName("Nessie") })).toBeVisible({ timeout: 20_000 });
+
+  const globalSection = page.getByRole("heading", { name: "Global Station" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await globalSection.locator("select").first().selectOption("AMZ: Ohana");
+  await globalSection.locator("select").nth(1).selectOption("Huli Huli Chicken");
+
+  const remote = page.getByLabel("Planner Remote Control");
+  await remote.getByRole("button", { name: "Expand", exact: true }).click();
+  const submitButton = remote.getByRole("button", { name: "Submit", exact: true });
+  await expect(submitButton).toHaveAttribute("aria-disabled", "true");
+  await expect(submitButton).toHaveAttribute("title", /required station/i);
+  await expect(submitButton).not.toHaveAttribute("title", /already selected|different Global Menu|duplicate/i);
+  await expect(page.getByText(/already selected by|choose a different global menu/i)).toHaveCount(0);
 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);

@@ -1,1 +1,1 @@
-export const APP_VERSION_STAMP = "2026.08.23.004-weekly-soup-planner";
+export const APP_VERSION_STAMP = "2026.08.23.005-north-duplicate-menu-policy";

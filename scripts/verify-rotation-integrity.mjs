@@ -382,6 +382,14 @@ if (!/function splitGlobalMenuOptionsForBlock/.test(source) || !/function duplic
   fail("Split-global menu blocks must remove menus already selected in other blocks and report duplicate menus before submit.");
 }
 
+if (
+  !/const DUPLICATE_MENU_ALLOWED_DISTRICTS = new Set\(\["North"\]\);/.test(source)
+  || !/DUPLICATE_MENU_ALLOWED_DISTRICTS\.has\(district\)/.test(source)
+  || !/function isDuplicateMenuAllowed\(district, menu\)/.test(source)
+) {
+  fail("North must allow duplicate Global menus across cafes while preserving the duplicate policy for other districts.");
+}
+
 if (/canSubmit=\{canSubmitRotation && !isSubmitting\}/.test(source)) {
   fail("The remote must not treat the temporary saving state as submit-blocked; saving should only disable the button.");
 }
