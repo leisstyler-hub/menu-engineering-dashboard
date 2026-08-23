@@ -9,6 +9,23 @@ import { findPair, sharedIngredients } from "./menuCrossUtilizationModel.js";
 const percent = (value) => `${Math.round((value || 0) * 100)}%`;
 const DATA_PAIRS = DATA.pairs;
 
+function pillarCrossUseStats(pillar, menus) {
+  const members = menus.filter((menu) => pillar.menus.includes(menu.name));
+  const eligibleMembers = members.filter((menu) => menu.hasIngredientData);
+  let total = 0;
+  let count = 0;
+  for (let i = 0; i < eligibleMembers.length; i += 1) {
+    for (let j = i + 1; j < eligibleMembers.length; j += 1) {
+      const pair = findPair(DATA_PAIRS, eligibleMembers[i].name, eligibleMembers[j].name);
+      if (pair) {
+        total += pair.overlapPercent;
+        count += 1;
+      }
+    }
+  }
+  return { members, eligibleMembers, avgOverlap: count ? total / count : 0, pairCount: count };
+}
+
 export default function MenuCrossUtilizationTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const [view, setView] = useState("overview");
   const [search, setSearch] = useState("");
@@ -118,22 +135,7 @@ function PillarStrategy({ pillars, menus }) {
 }
 
 function PillarCard({ pillar, menus }) {
-  const members = menus.filter((menu) => pillar.menus.includes(menu.name));
-  const eligibleMembers = members.filter((menu) => menu.hasIngredientData);
-  const avgOverlap = useMemo(() => {
-    let total = 0;
-    let count = 0;
-    for (let i = 0; i < eligibleMembers.length; i += 1) {
-      for (let j = i + 1; j < eligibleMembers.length; j += 1) {
-        const pair = findPair(DATA_PAIRS, eligibleMembers[i].name, eligibleMembers[j].name);
-        if (pair) {
-          total += pair.overlapPercent;
-          count += 1;
-        }
-      }
-    }
-    return count ? total / count : 0;
-  }, [eligibleMembers]);
+  const { members, avgOverlap } = useMemo(() => pillarCrossUseStats(pillar, menus), [pillar, menus]);
 
   return (
     <article className="rounded-lg border border-slate-200 bg-slate-50 p-4">
@@ -224,7 +226,7 @@ function MenuTable({ menus, search, setSearch, pillarFilter, setPillarFilter, pi
 function overlapColor(value, max) {
   const ratio = max ? Math.min(1, value / max) : 0;
   const alpha = 0.08 + ratio * 0.72;
-  return `rgba(15, 118, 110, ${alpha.toFixed(3)})`;
+  return `rgba(185, 28, 28, ${alpha.toFixed(3)})`;
 }
 
 function PairwiseMatrix({ menus, pairs, maxOverlap, selectedPair, setSelectedPair }) {
@@ -241,8 +243,10 @@ function PairwiseMatrix({ menus, pairs, maxOverlap, selectedPair, setSelectedPai
         Hover a cell for a quick read, or click it for the full pair detail. Overlap is plain Jaccard on shared match keys (shared ingredients divided by union of ingredients). Chickle has no ingredient data and is excluded from this grid.
       </p>
 
-      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="overflow-auto rounded-lg border border-slate-200" style={{ maxHeight: 640 }}>
+      <PillarCrossUseStrip pillars={DATA.pillars} menus={menus} />
+
+      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div data-testid="pairwise-matrix-grid" className="overflow-auto rounded-lg border border-slate-200" style={{ maxHeight: 780 }}>
           <table className="border-collapse text-[11px]">
             <thead>
               <tr>
@@ -261,17 +265,20 @@ function PairwiseMatrix({ menus, pairs, maxOverlap, selectedPair, setSelectedPai
                   {menus.map((colMenu) => {
                     const pair = cellFor(rowMenu.name, colMenu.name);
                     if (!pair) {
-                      return <td key={colMenu.name} className="h-6 w-6 border border-slate-100 bg-slate-50" />;
+                      return <td key={colMenu.name} className="border border-slate-100 bg-slate-50" style={{ height: 38, minWidth: 38, width: 38 }} />;
                     }
                     const isSelected = selectedPair && ((selectedPair.a === pair.a && selectedPair.b === pair.b));
+                    const intensity = maxOverlap ? pair.overlapPercent / maxOverlap : 0;
                     return (
                       <td
                         key={colMenu.name}
                         title={`${rowMenu.name} × ${colMenu.name}: ${percent(pair.overlapPercent)} overlap, ${pair.sharedCount} shared ingredients`}
                         onClick={() => setSelectedPair(pair)}
-                        className={`h-6 w-6 cursor-pointer border ${isSelected ? "border-2 border-slate-950" : "border-slate-100"}`}
+                        className={`cursor-pointer border p-0 text-center align-middle text-[10px] font-black leading-none ${isSelected ? "border-2 border-slate-950" : "border-red-100"} ${intensity > 0.45 ? "text-white" : "text-red-950"}`}
                         style={{ backgroundColor: overlapColor(pair.overlapPercent, maxOverlap) }}
-                      />
+                      >
+                        {percent(pair.overlapPercent)}
+                      </td>
                     );
                   })}
                 </tr>
@@ -283,6 +290,30 @@ function PairwiseMatrix({ menus, pairs, maxOverlap, selectedPair, setSelectedPai
         <PairDetail pair={selectedPair} menus={menus} />
       </div>
     </section>
+  );
+}
+
+function PillarCrossUseStrip({ pillars, menus }) {
+  return (
+    <div className="mt-4 rounded-lg border border-red-100 bg-red-50 p-3">
+      <p className="text-xs font-black uppercase tracking-[0.16em] text-red-700">Pillar cross-utilization %</p>
+      <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
+        {pillars.map((pillar) => {
+          const { members, eligibleMembers, avgOverlap, pairCount } = pillarCrossUseStats(pillar, menus);
+          return (
+            <div key={pillar.name} data-testid={`pillar-cross-use-${pillar.name}`} className="rounded-lg border border-red-100 bg-white p-3">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm font-black text-slate-950">{pillar.name}</span>
+                <span className="text-lg font-black text-red-700">{percent(avgOverlap)}</span>
+              </div>
+              <p className="mt-1 text-[11px] font-bold text-slate-500">
+                {eligibleMembers.length}/{members.length} menus with ingredient data, {pairCount} menu pairs
+              </p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

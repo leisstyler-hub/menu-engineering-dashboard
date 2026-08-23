@@ -32,8 +32,20 @@ test("Menu Cross Utilization Tool pairwise matrix shows overlap detail in the re
   await expect(page.getByRole("heading", { name: "Ingredient overlap by menu pair" })).toBeVisible();
   await expect(page.getByText("Chickle has no ingredient data and is excluded from this grid.")).toBeVisible();
   await expect(page.getByRole("columnheader", { name: "Chickle" })).toHaveCount(0);
+  await expect(page.getByText("Pillar cross-utilization %")).toBeVisible();
+  await expect(page.getByTestId("pillar-cross-use-Latin").getByText(/\d+%/)).toBeVisible();
 
   await page.getByTitle(/Andes × Cevicheria:/).click();
+
+  const andesCevicheriaCell = page.getByTitle(/Andes .* Cevicheria:/).first();
+  await expect(andesCevicheriaCell).toContainText(/\d+%/);
+  const cellBox = await andesCevicheriaCell.boundingBox();
+  expect(cellBox?.width).toBeGreaterThanOrEqual(34);
+  expect(cellBox?.height).toBeGreaterThanOrEqual(34);
+  const background = await andesCevicheriaCell.evaluate((element) => getComputedStyle(element).backgroundColor);
+  const channels = background.match(/\d+(\.\d+)?/g)?.map(Number) ?? [];
+  expect(channels[0]).toBeGreaterThan(channels[1]);
+  expect(channels[0]).toBeGreaterThan(channels[2]);
 
   const detail = page.locator("aside", { hasText: "Pair Detail" });
   await expect(detail.getByRole("heading", { name: "Andes × Cevicheria" })).toBeVisible();
