@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import XLSX from "xlsx";
+import * as XLSX from "xlsx/xlsx.mjs";
 import {
   matchKeyFor,
   normalizeDescription,
@@ -64,7 +64,7 @@ assert(Math.abs(overlap.overlapPercent - 0.5) < 1e-9, "Jaccard overlap must be |
 // --- Sample cross-check against the Compass workbook (validation reference, not source truth) -
 
 const workbookPath = path.join(root, "docs", "menu-cross-utilization", "SEA_Cross_Utilization_Analysis.xlsx");
-const workbook = XLSX.readFile(workbookPath);
+const workbook = XLSX.read(fs.readFileSync(workbookPath), { type: "buffer" });
 const scorecardRows = XLSX.utils.sheet_to_json(workbook.Sheets["02 Menu Scorecard"], { header: 1, defval: "" }).slice(4);
 const topMatchRows = XLSX.utils.sheet_to_json(workbook.Sheets["03 Top Matches"], { header: 1, defval: "" }).slice(4);
 

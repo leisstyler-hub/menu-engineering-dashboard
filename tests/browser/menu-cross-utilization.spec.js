@@ -32,7 +32,7 @@ test("Menu Cross Utilization Tool pairwise matrix shows overlap detail in the re
   await expect(page.getByRole("heading", { name: "Ingredient overlap by menu pair" })).toBeVisible();
   await expect(page.getByText("Chickle has no ingredient data and is excluded from this grid.")).toBeVisible();
   await expect(page.getByRole("columnheader", { name: "Chickle" })).toHaveCount(0);
-  await expect(page.getByText("Pillar cross-utilization %")).toBeVisible();
+  await expect(page.getByText("Pillar cross-utilization %").first()).toBeVisible();
   await expect(page.getByTestId("pillar-cross-use-Latin").getByText(/\d+%/)).toBeVisible();
 
   await page.getByTitle(/Andes × Cevicheria:/).click();
@@ -54,6 +54,33 @@ test("Menu Cross Utilization Tool pairwise matrix shows overlap detail in the re
   await expect(detail.getByText(/Shared ingredients \(\d+\)/)).toBeVisible();
   await expect(detail.getByText(/Ordering \/ reuse opportunity/i)).toBeVisible();
   await expect(detail.getByText(/not proof of a shared recipe/i)).toBeVisible();
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("Menu Cross Utilization Tool groups the pairwise matrix by pillar with self-match diagonal cells", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+
+  await openTool(page, /open cross utilization/i, /^Menu Cross Utilization Tool$/);
+  await expect(page.getByText("Pillar cross-utilization %").first()).toBeVisible();
+  await expect(page.getByTestId("pillar-overview-Latin").getByText("Pillar cross-utilization %")).toBeVisible();
+  await expect(page.getByTestId("pillar-overview-Latin").getByText(/Andes/)).toBeVisible();
+  await expect(page.getByRole("columnheader", { name: "Pillar Cross-Use %" })).toBeVisible();
+  await expect(page.getByRole("row", { name: /^Andes/ }).getByText(/\d+%/)).toHaveCount(2);
+
+  await page.getByRole("button", { name: /open pairwise matrix/i }).click();
+
+  await expect(page.getByTestId("pairwise-pillar-group-Latin")).toBeVisible();
+  await expect(page.getByTestId("pairwise-self-cell-Andes")).toContainText("100%");
+  await expect(page.getByTestId("pairwise-self-cell-Andes")).toHaveCSS("cursor", "default");
+  await expect(page.getByTitle(/Andes .* Andes:/)).toHaveCount(0);
+
+  const latinHeaderColor = await page.getByTestId("pairwise-pillar-group-Latin").evaluate((element) => getComputedStyle(element).borderLeftColor);
+  expect(latinHeaderColor).not.toBe("rgb(226, 232, 240)");
+
+  const matrixBox = await page.getByTestId("pairwise-matrix-grid").boundingBox();
+  expect(matrixBox?.width).toBeGreaterThanOrEqual(1200);
 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);

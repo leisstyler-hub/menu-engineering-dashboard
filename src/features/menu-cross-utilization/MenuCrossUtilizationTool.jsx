@@ -9,6 +9,17 @@ import { findPair, sharedIngredients } from "./menuCrossUtilizationModel.js";
 const percent = (value) => `${Math.round((value || 0) * 100)}%`;
 const DATA_PAIRS = DATA.pairs;
 
+function pillarIndexForMenu(menuName) {
+  const index = DATA.pillars.findIndex((pillar) => pillar.menus.includes(menuName));
+  return index === -1 ? DATA.pillars.length : index;
+}
+
+function menuSortByPillarThenName(a, b) {
+  const pillarDiff = pillarIndexForMenu(a.name) - pillarIndexForMenu(b.name);
+  if (pillarDiff) return pillarDiff;
+  return a.name.localeCompare(b.name);
+}
+
 function pillarCrossUseStats(pillar, menus) {
   const members = menus.filter((menu) => pillar.menus.includes(menu.name));
   const eligibleMembers = members.filter((menu) => menu.hasIngredientData);
@@ -26,6 +37,24 @@ function pillarCrossUseStats(pillar, menus) {
   return { members, eligibleMembers, avgOverlap: count ? total / count : 0, pairCount: count };
 }
 
+function menuPillarCrossUsePercent(menu, menus) {
+  if (!menu?.hasIngredientData) return null;
+  const pillarMenus = menus.filter((candidate) => candidate.name !== menu.name && candidate.hasIngredientData && candidate.pillar === menu.pillar);
+  if (!pillarMenus.length) return 0;
+  const otherKeys = new Set(pillarMenus.flatMap((candidate) => candidate.matchKeys));
+  const sharedInsidePillar = menu.matchKeys.filter((key) => otherKeys.has(key)).length;
+  return menu.matchKeys.length ? sharedInsidePillar / menu.matchKeys.length : 0;
+}
+
+function groupedMenusByPillar(menus) {
+  return DATA.pillars
+    .map((pillar) => ({
+      pillar,
+      menus: menus.filter((menu) => pillar.menus.includes(menu.name)).sort((a, b) => a.name.localeCompare(b.name)),
+    }))
+    .filter((group) => group.menus.length);
+}
+
 export default function MenuCrossUtilizationTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const [view, setView] = useState("overview");
   const [search, setSearch] = useState("");
@@ -33,7 +62,7 @@ export default function MenuCrossUtilizationTool({ onBackToPlatform, onOpenSmart
   const [selectedPair, setSelectedPair] = useState(null);
 
   const menus = DATA.menus;
-  const eligibleMenus = useMemo(() => menus.filter((menu) => menu.hasIngredientData), [menus]);
+  const eligibleMenus = useMemo(() => menus.filter((menu) => menu.hasIngredientData).sort(menuSortByPillarThenName), [menus]);
   const maxOverlap = useMemo(() => DATA.pairs.reduce((max, pair) => Math.max(max, pair.overlapPercent), 0), []);
 
   const filteredMenus = useMemo(() => {
@@ -46,8 +75,8 @@ export default function MenuCrossUtilizationTool({ onBackToPlatform, onOpenSmart
   }, [menus, search, pillarFilter]);
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-5 text-slate-950 md:px-8">
-      <div className="mx-auto max-w-[110rem] space-y-5">
+    <div className="min-h-screen bg-slate-50 px-4 py-5 text-slate-950">
+      <div className="mx-auto max-w-[132rem] space-y-5">
         <header className="rounded-lg border border-sky-200 bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div>
@@ -138,16 +167,19 @@ function PillarCard({ pillar, menus }) {
   const { members, avgOverlap } = useMemo(() => pillarCrossUseStats(pillar, menus), [pillar, menus]);
 
   return (
-    <article className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+    <article data-testid={`pillar-overview-${pillar.name}`} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
       <div className="flex items-center gap-2">
         <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: pillar.color }} />
         <h3 className="text-sm font-black text-slate-950">{pillar.name}</h3>
       </div>
       <p className="mt-2 text-xs font-semibold text-slate-500">{members.length} menus</p>
-      <p className="mt-1 text-lg font-black text-slate-950">{percent(avgOverlap)} <span className="text-xs font-bold text-slate-500">avg pairwise overlap</span></p>
+      <p className="mt-1 text-lg font-black text-slate-950">{percent(avgOverlap)} <span className="text-xs font-bold text-slate-500">Pillar cross-utilization %</span></p>
       <div className="mt-3 flex flex-wrap gap-1">
         {members.map((menu) => (
-          <span key={menu.name} className="rounded-full border border-slate-200 bg-white px-2 py-1 text-[11px] font-bold text-slate-600">{menu.name}</span>
+          <span key={menu.name} className="rounded-full border border-slate-200 bg-white px-2 py-1 text-[11px] font-bold text-slate-600">
+            {menu.name}
+            {menu.hasIngredientData ? <span className="ml-1 text-slate-950">{percent(menuPillarCrossUsePercent(menu, menus))}</span> : null}
+          </span>
         ))}
       </div>
     </article>
@@ -186,7 +218,7 @@ function MenuTable({ menus, search, setSearch, pillarFilter, setPillarFilter, pi
       </div>
 
       <div className="mt-4 overflow-x-auto">
-        <table className="w-full min-w-[720px] border-collapse text-sm">
+        <table className="w-full min-w-[820px] border-collapse text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-left text-xs font-black uppercase tracking-[0.08em] text-slate-500">
               <th className="py-2 pr-3">Menu</th>
@@ -194,6 +226,7 @@ function MenuTable({ menus, search, setSearch, pillarFilter, setPillarFilter, pi
               <th className="py-2 pr-3">Eligible SKUs</th>
               <th className="py-2 pr-3">Portfolio Shared SKUs</th>
               <th className="py-2 pr-3">Portfolio Cross-Use %</th>
+              <th className="py-2 pr-3">Pillar Cross-Use %</th>
               <th className="py-2 pr-3">Unique SKUs</th>
             </tr>
           </thead>
@@ -207,10 +240,11 @@ function MenuTable({ menus, search, setSearch, pillarFilter, setPillarFilter, pi
                     <td className="py-2 pr-3 text-slate-700">{menu.portfolio.eligibleCount.toLocaleString()}</td>
                     <td className="py-2 pr-3 text-slate-700">{menu.portfolio.sharedWithAny.toLocaleString()}</td>
                     <td className="py-2 pr-3 font-bold text-slate-950">{percent(menu.portfolio.crossUsePercent)}</td>
+                    <td className="py-2 pr-3 font-bold text-slate-950">{percent(menuPillarCrossUsePercent(menu, DATA.menus))}</td>
                     <td className="py-2 pr-3 text-slate-700">{menu.portfolio.uniqueCount.toLocaleString()}</td>
                   </>
                 ) : (
-                  <td className="py-2 pr-3 text-amber-800" colSpan={4}>
+                  <td className="py-2 pr-3 text-amber-800" colSpan={5}>
                     <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-black">no ingredient data</span>
                   </td>
                 )}
@@ -230,6 +264,7 @@ function overlapColor(value, max) {
 }
 
 function PairwiseMatrix({ menus, pairs, maxOverlap, selectedPair, setSelectedPair }) {
+  const groupedMenus = useMemo(() => groupedMenusByPillar(menus), [menus]);
   const cellFor = (a, b) => {
     if (a === b) return null;
     return findPair(pairs, a, b);
@@ -245,14 +280,28 @@ function PairwiseMatrix({ menus, pairs, maxOverlap, selectedPair, setSelectedPai
 
       <PillarCrossUseStrip pillars={DATA.pillars} menus={menus} />
 
-      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
-        <div data-testid="pairwise-matrix-grid" className="overflow-auto rounded-lg border border-slate-200" style={{ maxHeight: 780 }}>
+      <div className="mt-4 grid grid-cols-1 gap-4 2xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div data-testid="pairwise-matrix-grid" className="overflow-auto rounded-lg border border-slate-200" style={{ maxHeight: 820 }}>
           <table className="border-collapse text-[11px]">
             <thead>
               <tr>
-                <th className="sticky left-0 top-0 z-20 bg-white p-1" />
+                <th className="sticky left-0 top-0 z-30 bg-white p-1" />
+                {groupedMenus.map((group) => (
+                  <th
+                    key={group.pillar.name}
+                    data-testid={`pairwise-pillar-group-${group.pillar.name}`}
+                    colSpan={group.menus.length}
+                    className="sticky top-0 z-20 border-b border-l-4 bg-white p-2 text-left text-[11px] font-black uppercase tracking-[0.08em] text-slate-700"
+                    style={{ borderLeftColor: group.pillar.color }}
+                  >
+                    {group.pillar.name}
+                  </th>
+                ))}
+              </tr>
+              <tr>
+                <th className="sticky left-0 top-[35px] z-30 bg-white p-1" />
                 {menus.map((menu) => (
-                  <th key={menu.name} className="sticky top-0 z-10 bg-white p-1 font-bold text-slate-600" style={{ writingMode: "vertical-rl", height: 110 }}>
+                  <th key={menu.name} className="sticky top-[35px] z-10 border-l-2 bg-white p-1 font-bold text-slate-600" style={{ writingMode: "vertical-rl", height: 124, borderLeftColor: DATA.pillars.find((pillar) => pillar.name === menu.pillar)?.color || "#E2E8F0" }}>
                     {menu.name}
                   </th>
                 ))}
@@ -261,11 +310,20 @@ function PairwiseMatrix({ menus, pairs, maxOverlap, selectedPair, setSelectedPai
             <tbody>
               {menus.map((rowMenu) => (
                 <tr key={rowMenu.name}>
-                  <th className="sticky left-0 z-10 whitespace-nowrap bg-white p-1 text-right font-bold text-slate-600">{rowMenu.name}</th>
+                  <th className="sticky left-0 z-10 whitespace-nowrap border-l-4 bg-white p-1 text-right font-bold text-slate-600" style={{ borderLeftColor: DATA.pillars.find((pillar) => pillar.name === rowMenu.pillar)?.color || "#E2E8F0" }}>{rowMenu.name}</th>
                   {menus.map((colMenu) => {
                     const pair = cellFor(rowMenu.name, colMenu.name);
                     if (!pair) {
-                      return <td key={colMenu.name} className="border border-slate-100 bg-slate-50" style={{ height: 38, minWidth: 38, width: 38 }} />;
+                      return (
+                        <td
+                          key={colMenu.name}
+                          data-testid={`pairwise-self-cell-${rowMenu.name}`}
+                          className="cursor-default border border-slate-200 bg-slate-900 p-0 text-center align-middle text-[10px] font-black leading-none text-white"
+                          style={{ height: 44, minWidth: 44, width: 44 }}
+                        >
+                          100%
+                        </td>
+                      );
                     }
                     const isSelected = selectedPair && ((selectedPair.a === pair.a && selectedPair.b === pair.b));
                     const intensity = maxOverlap ? pair.overlapPercent / maxOverlap : 0;
@@ -275,7 +333,7 @@ function PairwiseMatrix({ menus, pairs, maxOverlap, selectedPair, setSelectedPai
                         title={`${rowMenu.name} × ${colMenu.name}: ${percent(pair.overlapPercent)} overlap, ${pair.sharedCount} shared ingredients`}
                         onClick={() => setSelectedPair(pair)}
                         className={`cursor-pointer border p-0 text-center align-middle text-[10px] font-black leading-none ${isSelected ? "border-2 border-slate-950" : "border-red-100"} ${intensity > 0.45 ? "text-white" : "text-red-950"}`}
-                        style={{ backgroundColor: overlapColor(pair.overlapPercent, maxOverlap) }}
+                        style={{ height: 44, minWidth: 44, width: 44, backgroundColor: overlapColor(pair.overlapPercent, maxOverlap) }}
                       >
                         {percent(pair.overlapPercent)}
                       </td>
