@@ -42,6 +42,9 @@ const smokeMenuItems = [
   { menu: "AMZ: Grill Core", station: "Spotlights", item: "carolina bbq burger", category: "entree", price: 11.45, trueCost: 2.9227, mrn: "63329.3", portion: "1 each" },
   { menu: "AMZ: Cafe Express Curated Salads", station: "Curated Salads", item: "Baja Crunch Salad", category: "entree", price: 11.45 },
   { menu: "AMZ: Cafe Express Curated Sandwiches", station: "Curated Sandwiches", item: "Chicken Caesar Wrap", category: "entree", price: 9.9 },
+  { menu: "AMZ: Cafe Express Soup", station: "Soup", item: "Tomato Basil Soup", category: "entree", portion: "12 floz", portionOz: 11.71, price: 5.15, trueCost: 1.2, calories: 180, enticingDescription: "Creamy tomato soup with basil." },
+  { menu: "AMZ: Cafe Express Soup", station: "Soup", item: "Chicken Noodle Soup", category: "entree", portion: "12 floz", price: 5.15, trueCost: 0.9, calories: 160, enticingDescription: "Chicken and noodles in a savory broth." },
+  { menu: "AMZ: Cafe Express Soup", station: "Soup", item: "Vegetable Minestrone Soup", category: "entree", portion: "12 floz", price: 5.15, trueCost: null, calories: 140, enticingDescription: "Vegetable soup with pasta and beans." },
   { menu: "AMZ: Fish Market", station: "Fish Market", item: "Steelhead Croquettes", category: "entree", price: 15.5, trueCost: 1.2688, mrn: "194276", portion: "2 each" },
   { menu: "AMZ: Fresh Five", station: "Grill", item: "Fresh 5 Black Bean Burger", category: "entree", price: 5 },
   { menu: "AMZ: Carvery", station: "Premium Mains", item: "Herb Roasted Turkey", category: "entree", price: 12.25, trueCost: 3.8, calories: 390 },
@@ -498,7 +501,7 @@ test("reference plate cost rolls out by menu across current and future planners 
 
   await page.getByRole("button", { name: exactName("Commissary") }).click();
   const soup = page.getByRole("heading", { name: "Soup LTOs" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
-  await expect(soup.getByTestId("nessie-global-reference-plate-cost")).toBeVisible();
+  await expect(soup.getByTestId("soup-portion-costing")).toBeVisible();
 
   await page.getByRole("button", { name: exactName("East") }).click();
   await page.getByRole("button", { name: exactName("Blueshift") }).click();
@@ -674,11 +677,112 @@ test("Neighborhood Rotations opens every cafe selector for future weeks", async 
         await expect(remote.getByRole("button", { name: "Submit", exact: true })).toBeVisible();
         await expect(remote.getByText("Save Draft", { exact: true })).toHaveCount(0);
         await expect(page.getByText(/System Status/i)).toBeVisible();
+        await expect(page.getByRole("heading", { name: "Soup LTOs" })).toBeVisible();
         await expectNoAppProtection(page);
       }
     }
   }
 
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("Every cafe gets ten optional weekday soup slots with fixed 12 oz and 16 oz economics", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const storageWrites = [];
+  let storedRecords = [];
+  await stubEmptyRotationBackbone(page, {
+    onStorageWrite: (body) => {
+      storageWrites.push(body);
+      storedRecords = body.records || [];
+    },
+    getStorageRecords: () => storedRecords,
+  });
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: exactName("North") }).click();
+  await page.getByRole("button", { name: exactName("Atlas") }).click();
+
+  const soup = page.getByRole("heading", { name: "Soup LTOs" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await expect(soup.getByText("optional", { exact: true })).toBeVisible();
+  await expect(soup.locator("select")).toHaveCount(10);
+  for (const day of ["monday", "tuesday", "wednesday", "thursday", "friday"]) {
+    await expect(soup.getByTestId(`soup-day-${day}`).locator("select")).toHaveCount(2);
+  }
+  await expect(soup.locator('option[value="Tomato Basil Soup"]')).toHaveCount(10);
+  await expect(soup.locator('option[value="Huli Huli Chicken"]')).toHaveCount(0);
+  await expect(soup.locator('option[value="__write_in__"]')).toHaveCount(0);
+  await expect(soup.getByLabel("Monday Soup 1", { exact: true })).toBeVisible();
+  await expect(soup.getByLabel("Friday Soup 2", { exact: true })).toBeVisible();
+
+  await soup.getByTestId("soup-day-friday").locator("select").nth(1).selectOption("Tomato Basil Soup");
+  const costing = soup.getByTestId("soup-portion-costing");
+  await expect(costing.getByTestId("soup-cost-12oz")).toContainText("Cost $1.20");
+  await expect(costing.getByTestId("soup-cost-12oz")).toContainText("Retail $5.00 · Food cost 24.0%");
+  await expect(costing.getByTestId("soup-cost-16oz")).toContainText("Cost $1.60");
+  await expect(costing.getByTestId("soup-cost-16oz")).toContainText("Retail $6.10 · Food cost 26.2%");
+  await soup.getByTestId("soup-day-thursday").locator("select").first().selectOption("Vegetable Minestrone Soup");
+  await expect(costing.getByText("Cost unavailable").first()).toBeVisible();
+
+  await page.getByRole("button", { name: "Save Draft", exact: true }).click();
+  await expect.poll(() => storageWrites.length).toBeGreaterThan(0);
+  const soupRecord = (storageWrites.at(-1)?.records || []).find((record) => record["Station Key"] === "soup" && record["Menu Item / Selection"] === "Tomato Basil Soup");
+  expect(soupRecord).toMatchObject({
+    "Menu / Concept": "AMZ: Cafe Express Soup",
+    "Station / Sub-Concept": "Soup",
+    "Menu Item / Selection": "Tomato Basil Soup",
+    "Slot Number": 10,
+  });
+  const missingCostSoupRecord = (storageWrites.at(-1)?.records || []).find((record) => record["Station Key"] === "soup" && record["Menu Item / Selection"] === "Vegetable Minestrone Soup");
+  expect(missingCostSoupRecord).toMatchObject({ "True Cost": "", "Food Cost %": "", "Slot Number": 7 });
+
+  await page.reload();
+  await page.getByRole("button", { name: /open rotations/i }).click();
+  await page.getByRole("button", { name: exactName("North") }).click();
+  await page.getByRole("button", { name: exactName("Atlas") }).click();
+  const recalledSoup = page.getByRole("heading", { name: "Soup LTOs" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await expect(recalledSoup.getByTestId("soup-day-friday").locator("select").nth(1)).toHaveValue("Tomato Basil Soup");
+  await expect(recalledSoup.getByTestId("soup-day-thursday").locator("select").first()).toHaveValue("Vegetable Minestrone Soup");
+  await expect(recalledSoup.getByTestId("soup-day-monday").locator("select").first()).toHaveValue("");
+
+  await recalledSoup.getByTestId("soup-day-friday").locator("select").nth(1).selectOption("");
+  await recalledSoup.getByTestId("soup-day-thursday").locator("select").first().selectOption("");
+  const grill = page.getByRole("heading", { name: "Core Grill Additions" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await grill.locator("select").first().selectOption("crispy buffalo chicken wrap");
+  const freshFive = page.getByRole("heading", { name: "Fresh $5" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await freshFive.locator("select").first().selectOption("Fresh 5 Black Bean Burger");
+  await expect(page.getByRole("button", { name: "Submit", exact: true })).toBeEnabled();
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("Legacy non-Cafe-Express soup rows are neither displayed, costed, nor re-saved", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const legacyWeek = "Aug 24, 2026 - Aug 28, 2026";
+  const parent = "rotation|2026-08-24|North|Atlas";
+  const storageWrites = [];
+  const storedRecords = [
+    rotationRecord({ id: parent, type: "Rotation Header", cafe: "Atlas", week: legacyWeek, status: "Draft" }),
+    rotationRecord({ id: `${parent}|soup|base|LTO|1|Fresh 5 Black Bean Burger`, parent, type: "Station Selection", cafe: "Atlas", week: legacyWeek, status: "Draft", stationKey: "soup", selectionType: "LTO", item: "Fresh 5 Black Bean Burger", menu: "AMZ: Fresh Five", slot: 1 }),
+  ];
+  await stubEmptyRotationBackbone(page, {
+    onStorageWrite: (body) => storageWrites.push(body),
+    getStorageRecords: () => storedRecords,
+  });
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.locator("select").first().selectOption({ label: legacyWeek });
+  await page.getByRole("button", { name: exactName("North") }).click();
+  await page.getByRole("button", { name: exactName("Atlas") }).click();
+
+  const soup = page.getByRole("heading", { name: "Soup LTOs" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await expect(soup.getByLabel("Monday Soup 1", { exact: true })).toHaveValue("");
+  await expect(soup.getByTestId("soup-portion-costing")).not.toContainText("Fresh 5 Black Bean Burger");
+  await page.getByRole("button", { name: "Save Draft", exact: true }).click();
+  await expect.poll(() => storageWrites.length).toBeGreaterThan(0);
+  expect((storageWrites.at(-1)?.records || []).filter((record) => record["Station Key"] === "soup")).toHaveLength(0);
+
+  await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
@@ -1018,6 +1122,7 @@ test("submitted Dawson Moby Pop-Up replaces only Moby Global presentation withou
   await expect(promoMobyCard).toContainText("One Day Showcase");
   await expect(promoMobyCard).toContainText("open");
   await expect(promoMobyCard).toContainText("0/5");
+  await expect(promoMobyCard).toContainText("required stations");
 
   await promoMobyCard.click();
   const remote = page.getByLabel("Planner Remote Control");

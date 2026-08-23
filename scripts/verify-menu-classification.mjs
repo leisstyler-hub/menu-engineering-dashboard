@@ -42,10 +42,10 @@ assert(
 assert(
   source.includes('freshFiveStationRows("Grill")') &&
     source.includes('freshFiveStationRows("Salad")') &&
-    source.includes('freshFiveStationRows("Soup")') &&
     source.includes('freshFiveStationRows("Sides")') &&
-    source.includes('freshFiveStationRows("Deli")'),
-  "Neighborhood Fresh Five picker pools must be scoped by exact Fresh Five station."
+    source.includes('freshFiveStationRows("Deli")') &&
+    source.includes('getMenuName(row) === "AMZ: Cafe Express Soup"'),
+  "Neighborhood Fresh Five picker pools and the standalone Cafe Express Soup pool must retain exact source scoping."
 );
 assert(
   source.includes('const options = cafe === "Doppler" ? stationPool("grillFreshFive")') &&

@@ -155,7 +155,8 @@ const usesReferenceGlobalPlanner = (week = "", menu = "") =>
 const isMobyPopUpActive = (cafe = "", week = "") => cafe === "Dawson" && parseWeekStart(week) >= MOBY_POP_UP_START_WEEK;
 const cafeStationsForWeek = (cafe = "", week = "") => {
   const stations = CAFE_STATION_CONFIG[cafe] || ["global"];
-  return isMobyPopUpActive(cafe, week) && !stations.includes("mobyPopUp") ? [...stations, "mobyPopUp"] : stations;
+  const activeStations = isMobyPopUpActive(cafe, week) && !stations.includes("mobyPopUp") ? [...stations, "mobyPopUp"] : [...stations];
+  return activeStations.includes("soup") ? activeStations : [...activeStations, "soup"];
 };
 const SPLIT_GLOBAL_CAFES = new Set(["Re:Invent", "Blueshift"]);
 const isSplitGlobalCafe = (cafe = "") => SPLIT_GLOBAL_CAFES.has(cafe);
@@ -329,7 +330,7 @@ const EMPTY_ROTATION = {
     freshFive: ["", "", "", "", ""],
     grillFreshFive: ["", ""],
     saladFreshFive: [""],
-    soup: ["", ""],
+    soup: Array(10).fill(""),
     noodles: [""],
     wokEntrees: ["", "", ""],
     wokSides: ["", ""],
@@ -397,11 +398,12 @@ function baseDatabaseRecord({ parentId, recordId, recordType, status, district, 
 }
 
 function selectionDatabaseRecord({ parentId, district, cafe, week, rotation, stationKey, selectionType, itemName, sortOrder, slotNumber, blockId = "", candidateRows, calories }) {
-  const pilotReferenceRow = foodCostReferenceRow(itemName);
+  const pilotReferenceRow = stationKey === "soup" ? null : foodCostReferenceRow(itemName);
   const row = pilotReferenceRow || selectedRowForName(itemName, candidateRows);
-  const price = getPrice(row);
+  const price = stationKey === "soup" ? 5 : getPrice(row);
   const trueCost = getTrueCost(row);
-  const foodCost = price ? Number(trueCost || 0) / Number(price) : null;
+  const hasTrueCost = trueCost != null && String(trueCost).trim() !== "";
+  const foodCost = price && hasTrueCost ? Number(trueCost) / Number(price) : null;
   const calorieValue = calories || getCalories(row) || "";
   const recordId = blockId
     ? makeDatabaseRecordId(parentId, stationKey, blockId, selectionType, slotNumber)
@@ -418,8 +420,8 @@ function selectionDatabaseRecord({ parentId, district, cafe, week, rotation, sta
       stationKey,
     }),
     [SMARTSHEET_COLUMNS.slotNumber]: slotNumber,
-    [SMARTSHEET_COLUMNS.menuConcept]: pilotReferenceRow?.menu || rotation.menu || "",
-    [SMARTSHEET_COLUMNS.stationSubConcept]: pilotReferenceRow?.station || rotation.station || "",
+    [SMARTSHEET_COLUMNS.menuConcept]: pilotReferenceRow?.menu || (stationKey === "soup" ? getMenuName(row) : "") || rotation.menu || "",
+    [SMARTSHEET_COLUMNS.stationSubConcept]: pilotReferenceRow?.station || (stationKey === "soup" ? getStationName(row) : "") || rotation.station || "",
     [SMARTSHEET_COLUMNS.selectionType]: selectionType,
     [SMARTSHEET_COLUMNS.menuItemSelection]: getDisplayName(row) || titleCase(itemName),
     [SMARTSHEET_COLUMNS.mrn]: row.mrn || row.MRN || "",
@@ -519,7 +521,8 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
 
   const selectionRows = [];
   const pushSelections = (stationKey, selectionType, values, offset = 0, selectionRotation = rotation, blockId = "", candidateRows = MENUWORKS_ITEMS) => {
-    compactValues(values).forEach((itemName, index) => {
+    (values || []).forEach((itemName, index) => {
+      if (!String(itemName || "").trim()) return;
       const sourceRotation = {
         ...selectionRotation,
         status: selectionRotation.status || rotation.status,
@@ -634,7 +637,11 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
     pushSelections("grill", SMARTSHEET_SELECTION_TYPES.grillPromo, [rotation.grill?.promoItem], 420);
   }
   ["salad", "pizza", "deli", "fishMarket", "freshFive", "grillFreshFive", "saladFreshFive", "soup"].forEach((stationKey, stationIndex) => {
-    pushSelections(stationKey, SMARTSHEET_SELECTION_TYPES.lto, rotation.ltos?.[stationKey] || [], 500 + stationIndex * 100, rotation, "", stationPool(stationKey));
+    const stationValues = rotation.ltos?.[stationKey] || [];
+    const values = stationKey === "soup"
+      ? stationValues.map((value) => isValueFromItems(value, stationPool("soup")) ? value : "")
+      : stationValues;
+    pushSelections(stationKey, SMARTSHEET_SELECTION_TYPES.lto, values, 500 + stationIndex * 100, rotation, "", stationPool(stationKey));
   });
   pushSelections("wok", SMARTSHEET_SELECTION_TYPES.wokEntree, rotation.ltos?.wokEntrees || [], 1000, rotation, "", stationPool("wokEntrees"));
   pushSelections("wok", SMARTSHEET_SELECTION_TYPES.wokSide, rotation.ltos?.wokSides || [], 1100, rotation, "", stationPool("wokSides"));
@@ -1788,7 +1795,7 @@ function stationPool(stationKey) {
     ...freshFiveStationRows("Hibernate").filter((row) => isEntree(row))
   ]);
   const freshFiveSides = uniqueOptionRows(freshFiveStationRows("Sides").filter((row) => isSide(row)));
-  const freshFiveSoups = uniqueOptionRows(freshFiveStationRows("Soup"));
+  const cafeExpressSoups = uniqueOptionRows(all.filter((row) => getMenuName(row) === "AMZ: Cafe Express Soup"));
   const asianGlobalRows = scoped(
     [
       ...byMenuPattern(/asia|asian|bibimb|korean|japanese|thai|wok|lotus|pho|ramen|teriyaki|curry|indian|tikka|gochujang|xahn/i),
@@ -1815,7 +1822,7 @@ function stationPool(stationKey) {
       ...freshFiveStationRows("Salad").filter((row) => isEntree(row)),
       ...saladRequestedOptions
     ]),
-    soup: freshFiveSoups.length ? freshFiveSoups : scoped([...byMenuPattern(/\bsoup\b/i), ...byStationPattern(/\bsoup\b/i)], byText(/soup|chili|bisque|chowder/)),
+    soup: cafeExpressSoups,
     wokEntrees: scoped([...byMenu("wok"), ...byStation("wok")], byText(/wok|stir fry|stir-fry|orange peel|sweet and sour|huli huli/)).filter((row) => isEntree(row)),
     wokSides: scoped([...byMenu("wok"), ...byStation("wok")], byText(/lo mein|fried rice|green beans|carrots|gai lan|slaw/)).filter((row) => isSide(row)),
     wokBase: scoped([...byMenu("wok"), ...byStation("wok")], byText(/rice|noodle|lo mein|base/)).filter((row) => isSide(row) || /rice|noodle|base/i.test(getItemIdentity(row))),
@@ -1838,6 +1845,11 @@ function stationPool(stationKey) {
     return pool;
   }
 
+  if (stationKey === "soup") {
+    STATION_POOL_CACHE.set(stationKey, []);
+    return [];
+  }
+
   if (["freshFive", "grillFreshFive", "saladFreshFive", "salad", "pizza", "deli", "fishMarket", "soup"].includes(stationKey)) {
     const fallback = uniqueOptionRows(all.filter((row) => isEntree(row) || isSide(row)));
     STATION_POOL_CACHE.set(stationKey, fallback);
@@ -1856,7 +1868,7 @@ function stationSlots(cafe, stationKey) {
     Nessie: { freshFive: 5 },
     Cricket: { freshFive: 5 },
     Moby: { deli: 4, salad: 4, freshFive: 2 },
-    Commissary: { deli: 4, salad: 3, freshFive: 2, soup: 2 },
+    Commissary: { deli: 4, salad: 3, freshFive: 2 },
     Atlas: { freshFive: 2 },
     Frontier: { freshFive: 2 },
     Nitro: { pizza: 3 },
@@ -1870,7 +1882,8 @@ function stationSlots(cafe, stationKey) {
 
   if (override) return override;
   if (stationKey === "fishMarket") return 1;
-  if (["salad", "pizza", "deli", "soup"].includes(stationKey)) return 2;
+  if (stationKey === "soup") return 10;
+  if (["salad", "pizza", "deli"].includes(stationKey)) return 2;
   if (["grillFreshFive", "saladFreshFive"].includes(stationKey)) return 1;
   if (stationKey === "freshFive") return 5;
   return 1;
@@ -2519,7 +2532,7 @@ function rotationRequirements(rotation, cafe, week = "") {
   const stationKeys = cafeStationsForWeek(cafe, week);
   const requiresGlobal = stationKeys.includes("global");
   const globalReady = !requiresGlobal || stationComplete(rotation, "global", cafe, week);
-  const optionalStations = cafe === "Doppler" ? new Set(["pizza"]) : cafe === "Astra" ? new Set(["grill"]) : new Set();
+  const optionalStations = optionalStationKeys(cafe);
   const incompleteStations = stationKeys.filter((stationKey) => stationKey !== "global" && !optionalStations.has(stationKey) && !stationComplete(rotation, stationKey, cafe, week));
   return {
     requiresGlobal,
@@ -2527,6 +2540,13 @@ function rotationRequirements(rotation, cafe, week = "") {
     incompleteStations,
     canSubmit: globalReady && incompleteStations.length === 0
   };
+}
+
+function optionalStationKeys(cafe = "") {
+  const optionalStations = new Set(["soup"]);
+  if (cafe === "Doppler") optionalStations.add("pizza");
+  if (cafe === "Astra") optionalStations.add("grill");
+  return optionalStations;
 }
 
 function conflictControlledRows(district, rows) {
@@ -2933,10 +2953,15 @@ function grillSelectedRows(rotation, options) {
 }
 
 function ltoSelectedRows(rotation, stationKey, options) {
-  return rowsForSelectedNames(
-    [...(rotation.ltos?.[stationKey] || []), ...(rotation.uploadedLtos?.[stationKey] || [])],
+  const selectedNames = [...(rotation.ltos?.[stationKey] || []), ...(rotation.uploadedLtos?.[stationKey] || [])];
+  const names = stationKey === "soup"
+    ? selectedNames.filter((value) => isValueFromItems(value, stationPool("soup")))
+    : selectedNames;
+  const rows = rowsForSelectedNames(
+    names,
     { ...options, candidateRows: stationPool(stationKey) }
   );
+  return stationKey === "soup" ? rows.map((row) => ({ ...row, price: 5, suggestedRetailPrice: 5 })) : rows;
 }
 
 function wokSelectedRows(rotation, options) {
@@ -5480,7 +5505,7 @@ function CafeStationSection(props) {
   if (stationKey === "freshFive") content = <SimpleLTOSection cafe={cafe} week={week} stationKey="freshFive" title="Fresh $5" slots={Array.from({ length: stationSlots(cafe, "freshFive") }, (_, i) => `Fresh $5 Option ${i + 1}`)} values={rotation.ltos?.freshFive || EMPTY_ROTATION.ltos.freshFive} uploaded={rotation.uploadedLtos?.freshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "freshFive")} />;
   if (stationKey === "grillFreshFive") content = <SimpleLTOSection cafe={cafe} week={week} stationKey="grillFreshFive" title="Grill Fresh $5" slots={Array.from({ length: stationSlots(cafe, "grillFreshFive") }, (_, i) => `Grill Fresh $5 ${i + 1}`)} values={rotation.ltos?.grillFreshFive || EMPTY_ROTATION.ltos.grillFreshFive} uploaded={rotation.uploadedLtos?.grillFreshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "grillFreshFive")} poolOverride={stationPool("grillFreshFive")} />;
   if (stationKey === "saladFreshFive") content = <SimpleLTOSection cafe={cafe} week={week} stationKey="saladFreshFive" title="Salad Fresh $5" slots={["Salad Fresh $5"]} values={rotation.ltos?.saladFreshFive || EMPTY_ROTATION.ltos.saladFreshFive} uploaded={rotation.uploadedLtos?.saladFreshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "saladFreshFive")} poolOverride={stationPool("saladFreshFive")} />;
-  if (stationKey === "soup") content = <SimpleLTOSection cafe={cafe} week={week} stationKey="soup" title="Soup LTOs" slots={Array.from({ length: stationSlots(cafe, "soup") }, (_, i) => `Soup ${i + 1}`)} values={rotation.ltos?.soup || EMPTY_ROTATION.ltos.soup} uploaded={rotation.uploadedLtos?.soup || []} updateLto={updateLto} complete={stationComplete(rotation, "soup")} />;
+  if (stationKey === "soup") content = <SoupSection values={rotation.ltos?.soup || EMPTY_ROTATION.ltos.soup} uploaded={rotation.uploadedLtos?.soup || []} updateLto={updateLto} />;
   if (stationKey === "wok") content = <WokSection cafe={cafe} week={week} rotation={rotation} updateLto={updateLto} />;
   if (stationKey === "carvery") content = <CarverySection cafe={cafe} week={week} rotation={rotation} updateCarvery={updateCarvery} updateRotation={updateRotation} />;
   if (stationKey === "mobyPopUp") content = <MobyPopUpSection week={week} rotation={rotation} menuOptions={menuOptions} updateRotation={updateRotation} />;
@@ -6206,7 +6231,11 @@ function DayToggleGroup({ title, values = [], onToggle, tone = "sky", options = 
   );
 }
 
-function CollapsibleStation({ title, eyebrow, complete, children }) {
+function CollapsibleStation({ title, eyebrow, complete, optional = false, children }) {
+  const statusLabel = optional ? "optional" : complete ? "complete" : "needs selection";
+  const statusClass = optional
+    ? "bg-sky-50 border-sky-200 text-sky-800"
+    : complete ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-amber-50 border-amber-200 text-amber-800";
   return (
     <div className={`mt-5 rounded-lg border-2 p-5 shadow-md ${complete ? "border-emerald-300 bg-emerald-50/20" : "border-slate-300 bg-white"}`}>
       <div className="flex items-start justify-between gap-4">
@@ -6214,7 +6243,7 @@ function CollapsibleStation({ title, eyebrow, complete, children }) {
           <p className="text-sm uppercase tracking-[0.18em] text-slate-400">{eyebrow}</p>
           <h3 className="text-2xl font-bold mt-1">{title}</h3>
         </div>
-        <span className={`rounded-full px-3 py-1 text-xs font-bold border ${complete ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-amber-50 border-amber-200 text-amber-800"}`}>{complete ? "complete" : "needs selection"}</span>
+        <span className={`rounded-full px-3 py-1 text-xs font-bold border ${statusClass}`}>{statusLabel}</span>
       </div>
       <div className="mt-4">{children}</div>
     </div>
@@ -6479,11 +6508,11 @@ function isValueFromItems(value = "", items = []) {
 
 const WRITE_IN_SENTINEL = "__write_in__";
 
-function ItemPickerSlot({ value = "", items = [], onChange, selectClassName, inputClassName, placeholder = "Type item name" }) {
+function ItemPickerSlot({ value = "", items = [], onChange, selectClassName, inputClassName, placeholder = "Type item name", allowWriteIn = true, ariaLabel = "" }) {
   const [writeInOpen, setWriteInOpen] = useState(false);
   const optionItems = useMemo(() => uniqueOptionRows(items), [items]);
   const isKnownValue = isValueFromItems(value, optionItems);
-  const isWriteIn = writeInOpen || Boolean(value && !isKnownValue);
+  const isWriteIn = allowWriteIn && (writeInOpen || Boolean(value && !isKnownValue));
 
   if (isWriteIn) {
     return (
@@ -6492,6 +6521,7 @@ function ItemPickerSlot({ value = "", items = [], onChange, selectClassName, inp
           value={value || ""}
           onChange={(event) => onChange(event.target.value)}
           placeholder={placeholder}
+          aria-label={ariaLabel ? `${ariaLabel} write-in` : undefined}
           className={inputClassName}
           autoFocus={!value}
         />
@@ -6515,7 +6545,8 @@ function ItemPickerSlot({ value = "", items = [], onChange, selectClassName, inp
   return (
     <div className="space-y-2">
       <select
-        value={value || ""}
+        value={allowWriteIn || isKnownValue ? value || "" : ""}
+        aria-label={ariaLabel || undefined}
         onChange={(event) => {
           if (event.target.value === WRITE_IN_SENTINEL) {
             setWriteInOpen(true);
@@ -6528,7 +6559,7 @@ function ItemPickerSlot({ value = "", items = [], onChange, selectClassName, inp
         className={selectClassName}
       >
         <option value="">&lt;Select Item&gt;</option>
-        <option value={WRITE_IN_SENTINEL}>Type if not listed</option>
+        {allowWriteIn && <option value={WRITE_IN_SENTINEL}>Type if not listed</option>}
         {optionItems.map((row) => <option key={getItemIdentity(row)} value={getItemIdentity(row)}>{getDisplayName(row)}</option>)}
       </select>
     </div>
@@ -6632,7 +6663,7 @@ function SimpleLTOSection({ cafe, week, stationKey, title, slots, values = [], u
   const selected = ltoSelectedRows({ ltos: { [stationKey]: values }, uploadedLtos: { [stationKey]: uploaded } }, stationKey, { unique: true });
   const referenceMenu = referenceMenuForPlannerItems(pool) || REFERENCE_MENU_BY_STATION[stationKey] || "";
   return (
-    <CollapsibleStation title={title} eyebrow="Station Special" complete={complete}>
+    <CollapsibleStation title={title} eyebrow="Station Special" complete={complete} optional={optional}>
       {optional && <p className="mb-3 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-500">Optional for submission, included in generated menus when selected.</p>}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {slots.map((slot, index) => {
@@ -6674,6 +6705,100 @@ function WokSection({ cafe, week, rotation, updateLto }) {
       </div>
       <PlannerReferencePlateCost week={week} menu="AMZ: Wok" items={wokSelectedRows(rotation, { unique: true })} scopeLabel={`${cafe} · Wok Station`} />
       <StationSelectedList title="Items Description" items={wokSelectedRows(rotation, { unique: true })} complete={stationComplete(rotation, "wok")} />
+    </CollapsibleStation>
+  );
+}
+
+const SOUP_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+const SOUP_PORTIONS = [
+  { ounces: 12, retail: 5 },
+  { ounces: 16, retail: 6.10 },
+];
+
+function soupPortionCost(row, ounces) {
+  const sourceCost = numericTrueCost(row);
+  if (sourceCost == null) return null;
+  return sourceCost * (ounces / 12);
+}
+
+function SoupPortionEconomics({ items }) {
+  return (
+    <div className="mt-5 rounded-lg border border-sky-200 bg-white p-4" data-testid="soup-portion-costing">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <div>
+          <p className="text-sm uppercase tracking-[0.18em] text-sky-700">Soup Costing</p>
+          <h4 className="mt-1 text-xl font-bold text-slate-950">12 oz and 16 oz portions</h4>
+          <p className="mt-1 text-sm text-slate-500">True cost scales from the 12 oz Cafe Express Soup recipe. Retail is fixed at $5.00 and $6.10; a missing source cost stays unavailable.</p>
+        </div>
+        <span className="self-start rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-bold text-sky-800">AMZ: Cafe Express Soup</span>
+      </div>
+      {!items.length ? (
+        <p className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-500">Select a soup to see portion costs.</p>
+      ) : (
+        <div className="mt-4 grid grid-cols-1 gap-3 xl:grid-cols-2">
+          {items.map((row) => (
+            <div key={getItemIdentity(row)} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <p className="font-bold text-slate-950">{getDisplayName(row)}</p>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {SOUP_PORTIONS.map(({ ounces, retail }) => {
+                  const cost = soupPortionCost(row, ounces);
+                  const foodCost = cost == null ? null : cost / retail;
+                  return (
+                    <div key={ounces} className="rounded-lg border border-sky-200 bg-white p-3" data-testid={`soup-cost-${ounces}oz`}>
+                      <p className="text-xs font-black uppercase tracking-[0.12em] text-sky-700">{ounces} oz</p>
+                      <p className="mt-1 text-sm font-bold text-slate-950">Cost {cost == null ? "unavailable" : money(cost)}</p>
+                      <p className="mt-1 text-xs font-semibold text-slate-600">Retail {money(retail)} · Food cost {foodCost == null ? "unavailable" : pct(foodCost)}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SoupSection({ values = [], uploaded = [], updateLto }) {
+  const pool = stationPool("soup");
+  const selected = ltoSelectedRows({ ltos: { soup: values }, uploadedLtos: { soup: uploaded } }, "soup", { unique: true });
+  return (
+    <CollapsibleStation title="Soup LTOs" eyebrow="Weekly Soup Schedule" complete={selected.length > 0} optional>
+      <p className="mb-4 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-bold text-sky-900">Optional for submission. Choose up to two soups per weekday from AMZ: Cafe Express Soup.</p>
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
+        {SOUP_DAYS.map((day, dayIndex) => (
+          <div key={day} className="rounded-lg border-2 border-sky-200 bg-sky-50/80 p-3 shadow-sm" data-testid={`soup-day-${day.toLowerCase()}`}>
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h4 className="font-bold text-slate-950">{day}</h4>
+              <span className="rounded-full border border-sky-200 bg-white px-2 py-1 text-[11px] font-bold text-sky-700">up to 2</span>
+            </div>
+            <div className="space-y-2">
+              {[0, 1].map((dailyIndex) => {
+                const slotIndex = dayIndex * 2 + dailyIndex;
+                return (
+                  <label key={slotIndex} className="block text-xs font-bold text-slate-600">
+                    Soup {dailyIndex + 1}
+                    <span className="mt-1 block">
+                      <ItemPickerSlot
+                        value={values[slotIndex] || uploaded[slotIndex] || ""}
+                        items={pool}
+                        onChange={(nextValue) => updateLto("soup", slotIndex, nextValue)}
+                        allowWriteIn={false}
+                        ariaLabel={`${day} Soup ${dailyIndex + 1}`}
+                        selectClassName="w-full min-w-0 rounded-lg border-2 border-sky-200 bg-white px-2 py-2 text-sm font-semibold outline-none shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                        inputClassName="w-full min-w-0 rounded-lg border-2 border-emerald-200 bg-white px-2 py-2 text-sm font-semibold outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+                      />
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+      <SoupPortionEconomics items={selected} />
+      <StationSelectedList title="Soup Information" items={selected} complete={selected.length > 0} />
     </CollapsibleStation>
   );
 }
@@ -7260,8 +7385,9 @@ function SummaryCard({ row, conflict, showDistrict = true, onOpenPlanner = null 
   const fcRange = selectedFoodCostRange(rowItems);
   const fcMidpoint = fcRange.low != null && fcRange.high != null ? (fcRange.low + fcRange.high) / 2 : summary.fc;
   const stationKeys = cafeStationsForWeek(row.cafe, row.week);
-  const completedStations = locked ? stationKeys.filter((stationKey) => stationComplete(row, stationKey, row.cafe, row.week)).length : 0;
-  const progressPct = stationKeys.length ? Math.round((completedStations / stationKeys.length) * 100) : 0;
+  const progressStationKeys = stationKeys.filter((stationKey) => !optionalStationKeys(row.cafe).has(stationKey));
+  const completedStations = locked ? progressStationKeys.filter((stationKey) => stationComplete(row, stationKey, row.cafe, row.week)).length : 0;
+  const progressPct = progressStationKeys.length ? Math.round((completedStations / progressStationKeys.length) * 100) : 0;
   const menuLabel = (locked || dawsonOverride) && hasGlobalStation ? rotationMenuLabel(row) : "";
   const summaryBlocks = locked || dawsonOverride ? cardSummaryBlockLabels(row, row.cafe, row.week, row.previousRotation || EMPTY_ROTATION) : [];
   const visibleGlobal = dawsonOverride ? normalizeMobyPopUp(dawsonOverride.selections) : row;
@@ -7312,7 +7438,7 @@ function SummaryCard({ row, conflict, showDistrict = true, onOpenPlanner = null 
       <div className="mt-4">
         <div className="flex items-center justify-between text-xs font-bold text-slate-500">
           <span>Station Progress</span>
-          <span>{completedStations}/{stationKeys.length || 0}</span>
+          <span>{completedStations}/{progressStationKeys.length || 0}</span>
         </div>
         <div className="mt-2 h-2 overflow-hidden rounded-full border border-slate-200 bg-white">
           <div className={`h-full rounded-full ${progressPct === 100 ? "bg-emerald-500" : "bg-sky-500"}`} style={{ width: `${progressPct}%` }} />
@@ -7322,7 +7448,7 @@ function SummaryCard({ row, conflict, showDistrict = true, onOpenPlanner = null 
         {hasGlobalStation && menuLabel && <span className="rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-slate-600">{(visibleGlobal.entrees || []).filter(Boolean).length} entrees</span>}
         {hasGlobalStation && menuLabel && <span className="rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-slate-600">{(visibleGlobal.sides || []).filter(Boolean).length} sides</span>}
         {hasGlobalStation && menuLabel && <span className="rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-slate-600">{(visibleGlobal.subRecipes || []).filter(Boolean).length} sub recipes</span>}
-        {stationKeys.length > 0 && <span className="rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-slate-600">{completedStations}/{stationKeys.length} stations</span>}
+        {progressStationKeys.length > 0 && <span className="rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-slate-600">{completedStations}/{progressStationKeys.length} required stations</span>}
         {conflict && <span className="rounded-full bg-amber-100 border border-amber-200 px-3 py-1 text-amber-800">duplicate</span>}
       </div>
     </CardShell>

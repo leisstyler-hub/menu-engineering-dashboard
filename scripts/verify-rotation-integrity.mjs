@@ -143,6 +143,26 @@ if (
 }
 
 if (
+  !/return activeStations\.includes\("soup"\) \? activeStations : \[\.\.\.activeStations, "soup"\]/.test(source)
+  || !/soup: Array\(10\)\.fill\(""\)/.test(source)
+  || !/function optionalStationKeys[\s\S]*const optionalStations = new Set\(\["soup"\]\)/.test(source)
+  || !/getMenuName\(row\) === "AMZ: Cafe Express Soup"/.test(source)
+  || !/const SOUP_DAYS = \["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"\]/.test(source)
+  || !/\{ ounces: 12, retail: 5 \}/.test(source)
+  || !/\{ ounces: 16, retail: 6\.10 \}/.test(source)
+  || !/data-testid="soup-portion-costing"/.test(source)
+  || !/\(values \|\| \[\]\)\.forEach\(\(itemName, index\) => \{[\s\S]*slotNumber: index \+ 1/.test(source)
+  || !/return sourceCost \* \(ounces \/ 12\)/.test(source)
+  || !/const progressStationKeys = stationKeys\.filter\(\(stationKey\) => !optionalStationKeys\(row\.cafe\)\.has\(stationKey\)\)/.test(source)
+  || !/allowWriteIn=\{false\}/.test(source)
+  || !/ariaLabel=\{`\$\{day\} Soup \$\{dailyIndex \+ 1\}`\}/.test(source)
+  || !/const pilotReferenceRow = stationKey === "soup" \? null : foodCostReferenceRow/.test(source)
+  || !/const foodCost = price && hasTrueCost \? Number\(trueCost\) \/ Number\(price\) : null/.test(source)
+) {
+  fail("Every cafe must retain ten optional weekday soup slots sourced only from Cafe Express Soup with fixed 12 oz and 16 oz economics.");
+}
+
+if (
   !/data-testid="nessie-global-reference-plate-cost" data-reference-plate-cost="true" className="mt-5 rounded-lg border border-sky-200 bg-white p-5/.test(source)
   || !/className="rounded-2xl border border-sky-200 bg-sky-50 p-4" data-testid=\{`reference-plate-/.test(source)
   || /emphasize compact/.test(source)

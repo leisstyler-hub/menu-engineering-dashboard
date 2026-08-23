@@ -2,8 +2,8 @@ import { expect, test } from "@playwright/test";
 import { NEIGHBORHOOD_ROTATIONS_STORAGE_KEY, SMARTSHEET_COLUMNS, SMARTSHEET_RECORD_TYPES, SMARTSHEET_SELECTION_TYPES } from "../../src/integrations/smartsheet/contract.js";
 import { collectUnexpectedPageErrors, expectNoAppProtection, expectNoUnexpectedPageErrors, openTool } from "./smoke-helpers.js";
 
-const week = "Jul 6, 2026 - Jul 10, 2026";
-const parentId = `rotation|2026-07-06|South|Re:Invent`;
+const week = "Aug 17, 2026 - Aug 21, 2026";
+const parentId = `rotation|2026-08-17|South|Re:Invent`;
 const currentWeek = "Jul 20, 2026 - Jul 24, 2026";
 const currentParentId = `rotation|2026-07-20|South|Re:Invent`;
 const augustWeek = "Aug 10, 2026 - Aug 14, 2026";
@@ -25,8 +25,8 @@ function baseRecord(recordId, recordType, status = "Submitted", overrides = {}) 
   const activeParentId = overrides.parentId || parentId;
   const activeWeek = overrides.week || week;
   const activeCafe = overrides.cafe || "Re:Invent";
-  const weekStartDate = overrides.weekStartDate || "2026-07-06";
-  const weekEndDate = overrides.weekEndDate || "2026-07-10";
+  const weekStartDate = overrides.weekStartDate || "2026-08-17";
+  const weekEndDate = overrides.weekEndDate || "2026-08-21";
   return {
     [SMARTSHEET_COLUMNS.recordId]: recordId,
     [SMARTSHEET_COLUMNS.parentRecordId]: recordId === activeParentId ? "" : activeParentId,
