@@ -8,6 +8,63 @@ import PlatformSettings from "../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../shared/ui/VersionStamp.jsx";
 import { money } from "../shared/formatting.js";
 
+const CHANGELOG_SUMMARY_MAX_LENGTH = 146;
+const CHANGELOG_AUDIT_MARKERS = [
+  "The score formula",
+  "PR #",
+  "The known",
+  "Application commit",
+  "Vercel production",
+  "Vercel reported",
+  "Both required",
+  "Release state",
+  "This candidate",
+  "This release",
+  "No schema",
+  "Existing 7 tools",
+  "Added direct browser",
+  "Set visible version",
+];
+
+function cleanChangelogText(text) {
+  return text.replace(/[`*_]/g, "").replace(/\s+/g, " ").trim();
+}
+
+function trimSummary(text, maxLength = CHANGELOG_SUMMARY_MAX_LENGTH) {
+  if (text.length <= maxLength) return text;
+  const trimmed = text.slice(0, maxLength - 1);
+  const lastBreak = Math.max(trimmed.lastIndexOf(","), trimmed.lastIndexOf(";"), trimmed.lastIndexOf(" and "));
+  const safeText = lastBreak > 80 ? trimmed.slice(0, lastBreak) : trimmed;
+  return `${safeText.trim().replace(/[,:;]+$/, "")}.`;
+}
+
+function summarizeChangelogEntry(text) {
+  const cleaned = cleanChangelogText(text);
+
+  if (/^Refined the Menu Cross Utilization Tool matrix display/i.test(cleaned)) {
+    return "Menu Cross Utilization matrix: pillar %, red heatmap, larger cells, and percent labels.";
+  }
+  if (/^Published the Menu Cross Utilization Tool/i.test(cleaned)) {
+    return "Published Menu Cross Utilization Tool with pillar view, menu list, and pairwise matrix.";
+  }
+  if (/^Prepared the Menu Cross Utilization Tool/i.test(cleaned)) {
+    return "Prepared Menu Cross Utilization Tool from shopping-list data.";
+  }
+
+  let summary = cleaned;
+  for (const marker of CHANGELOG_AUDIT_MARKERS) {
+    const markerIndex = summary.indexOf(marker);
+    if (markerIndex > 0) summary = summary.slice(0, markerIndex).trim();
+  }
+
+  const sentenceMatch = summary.match(/^(.+?[.!?])\s/);
+  if (sentenceMatch && sentenceMatch[1].length <= CHANGELOG_SUMMARY_MAX_LENGTH) {
+    summary = sentenceMatch[1];
+  }
+
+  return trimSummary(summary.replace(/\s+\.$/, "."));
+}
+
 const CHANGELOG_ENTRIES = (() => {
   let currentDate = "";
   return CHANGELOG_TEXT
@@ -15,12 +72,15 @@ const CHANGELOG_ENTRIES = (() => {
     .reduce((entries, line) => {
       const dateMatch = line.match(/^##\s+(.+)/);
       if (dateMatch) currentDate = dateMatch[1].trim();
-      if (line.startsWith("- ")) entries.push({ text: line.replace(/^- /, ""), date: currentDate });
+      if (line.startsWith("- ")) {
+        const text = line.replace(/^- /, "");
+        entries.push({ text, summary: summarizeChangelogEntry(text), date: currentDate });
+      }
       return entries;
     }, []);
 })();
 
-const firstTenChangelogItems = CHANGELOG_ENTRIES.slice(0, 10);
+const visibleChangelogItems = CHANGELOG_ENTRIES.slice(0, 6);
 const WEEKLY_TRAFFIC_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, index) => ({
   day,
   visitors: null,
@@ -389,7 +449,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
               </DashboardPanel>
             </section>
 
-            <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(420px,0.75fr)]">
+            <section className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(420px,0.75fr)]">
               <DashboardPanel icon={ListChecks} eyebrow="Newest Data Signal" title="Recently Added Items">
                 <div className="space-y-2">
                   {recentItems.map((item) => (
@@ -407,14 +467,14 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
               </DashboardPanel>
 
               <DashboardPanel icon={Database} eyebrow="Release Signal" title="Latest Changelog">
-                <div className="space-y-2">
+                <div className="max-h-[460px] space-y-2 overflow-y-auto pr-1" data-testid="landing-changelog-panel">
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                     <p className="text-sm font-black text-slate-950">{CHANGELOG_ENTRIES.length.toLocaleString()} total logged changes</p>
                   </div>
-                  {firstTenChangelogItems.map((item, index) => (
-                    <div key={`${item.text}-${index}`} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  {visibleChangelogItems.map((item, index) => (
+                    <div key={`${item.summary}-${index}`} className="rounded-lg border border-slate-200 bg-slate-50 p-3" data-testid="landing-changelog-entry">
                       <div className="flex items-start justify-between gap-3">
-                        <p className="text-sm font-semibold leading-5 text-slate-700">{item.text}</p>
+                        <p className="line-clamp-2 text-sm font-semibold leading-5 text-slate-700" data-testid="landing-changelog-summary">{item.summary}</p>
                         <span className="shrink-0 rounded-full border border-slate-200 bg-white px-2 py-1 text-[10px] font-black text-slate-500">#{CHANGELOG_ENTRIES.length - index}</span>
                       </div>
                       <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">{item.date}</p>
@@ -562,9 +622,9 @@ function MobileLanding({
               <p className="text-sm font-black text-slate-950">{CHANGELOG_ENTRIES.length.toLocaleString()} total logged changes</p>
             </div>
             <div className="space-y-2">
-              {firstTenChangelogItems.slice(0, 4).map((item, index) => (
-                <div key={`${item.text}-${index}`} className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
-                  <p className="line-clamp-2 text-xs font-bold leading-5 text-slate-700">{item.text}</p>
+              {visibleChangelogItems.slice(0, 4).map((item, index) => (
+                <div key={`${item.summary}-${index}`} className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                  <p className="line-clamp-2 text-xs font-bold leading-5 text-slate-700">{item.summary}</p>
                   <div className="mt-2 flex items-center justify-between gap-2">
                     <p className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">{item.date}</p>
                     <span className="rounded-full bg-white px-2 py-1 text-[10px] font-black text-slate-500">#{CHANGELOG_ENTRIES.length - index}</span>
