@@ -17,6 +17,9 @@ const css = read("src/index.css");
 const logoPath = join(root, "public", "webtrition-logo.png");
 
 [
+  "SSMT",
+  "Open SSMT",
+  "onOpenSsmtTool",
   "Webtrition",
   "https://www.webtrition.com/ui/#/",
   "Open Webtrition",

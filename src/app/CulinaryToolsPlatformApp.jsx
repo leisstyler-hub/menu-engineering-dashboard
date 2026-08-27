@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect, useState } from "react";
-import { BarChart3, BookOpen, CalendarRange, ClipboardCheck, FolderKanban, Home } from "lucide-react";
+import { BarChart3, BookOpen, CalendarRange, ClipboardCheck, FileSpreadsheet, FolderKanban, Home } from "lucide-react";
 import LandingPage from "./LandingPage.jsx";
 import { addToolBreadcrumb, setActiveToolContext } from "../shared/monitoring/sentry.jsx";
 
@@ -38,6 +38,7 @@ const MenuProjects = lazyWithStaleBundleReload(() => import("../features/menu-pr
 const MenuAuditTool = lazyWithStaleBundleReload(() => import("../features/menu-audit/MenuAuditTool.jsx"));
 const SmartsheetHealth = lazyWithStaleBundleReload(() => import("../features/smartsheet-health/SmartsheetHealth.jsx"));
 const MenuCrossUtilizationTool = lazyWithStaleBundleReload(() => import("../features/menu-cross-utilization/MenuCrossUtilizationTool.jsx"));
+const SsmtTool = lazyWithStaleBundleReload(() => import("../features/ssmt/SsmtTool.jsx"));
 
 export default function CulinaryToolsPlatformApp() {
   const [activeTool, setActiveTool] = useState("home");
@@ -106,6 +107,17 @@ export default function CulinaryToolsPlatformApp() {
     );
   }
 
+  if (activeTool === "ssmtTool") {
+    return (
+      <>
+        <Suspense fallback={<ToolLoading title="Opening SSMT" />}>
+          <SsmtTool onBackToPlatform={() => setActiveTool("home")} onOpenSmartsheetHealth={openSmartsheetHealth} />
+        </Suspense>
+        <MobileToolNav activeTool={activeTool} setActiveTool={setActiveTool} />
+      </>
+    );
+  }
+
   if (activeTool === "menuCrossUtilization") {
     return (
       <>
@@ -156,6 +168,7 @@ export default function CulinaryToolsPlatformApp() {
       onOpenRecipeDatabase={() => setActiveTool("recipeDatabase")}
       onOpenMenuProjects={() => setActiveTool("menuProjects")}
       onOpenMenuAuditTool={() => setActiveTool("menuAuditTool")}
+      onOpenSsmtTool={() => setActiveTool("ssmtTool")}
       onOpenLeanTool={() => setActiveTool("leanTool")}
       onOpenMenuCrossUtilization={() => setActiveTool("menuCrossUtilization")}
       onOpenSmartsheetHealth={openSmartsheetHealth}
@@ -183,6 +196,7 @@ function MobileToolNav({ activeTool, setActiveTool }) {
     { key: "menuEngineering", label: "Engineering", icon: BarChart3 },
     { key: "recipeDatabase", label: "Library", icon: BookOpen },
     { key: "menuProjects", label: "Projects", icon: FolderKanban },
+    { key: "ssmtTool", label: "SSMT", icon: FileSpreadsheet },
     { key: "menuAuditTool", label: "Audit", icon: ClipboardCheck },
     { key: "neighborhoodRotations", label: "Rotations", icon: CalendarRange },
   ];

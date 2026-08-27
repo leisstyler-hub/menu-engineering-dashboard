@@ -196,7 +196,7 @@ export default function MenuAuditTool({ onBackToPlatform, onOpenSmartsheetHealth
               </button>
               <p className="mt-5 text-xs font-black uppercase tracking-[0.22em] text-emerald-600">IT Menu Tool</p>
               <h1 className="mt-2 text-3xl font-black md:text-5xl">Menu Audit Tool</h1>
-              <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-slate-600">Compare Master App Data, SSMT rows, and Centric Brand Reports without rounding MRNs or hiding missing records.</p>
+              <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-slate-600">Compare the new SSMT operating records against Webtrition metadata and shopping-list support without rounding MRNs or hiding missing fields.</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <PlatformSettings onOpenSmartsheetHealth={onOpenSmartsheetHealth} />
@@ -207,9 +207,14 @@ export default function MenuAuditTool({ onBackToPlatform, onOpenSmartsheetHealth
         </header>
 
         <section className="grid gap-4 lg:grid-cols-3">
-          <UploadCard title="Active SSMT" icon={FileSpreadsheet} detail="One active SSMT at a time. Rows marked remove are ignored." onChange={uploadSsmt} />
+          <SourceCard title="SSMT app records" value={ssmtRecords.length.toLocaleString()} detail="New SSMT records are the Culinary-entered menu, modifier, price, and workflow source. Workbook mismatches become review flags, not deletes." state="ready" />
+          <SourceCard title="Webtrition Report Menu Index" value={masterRows.length.toLocaleString()} detail={masterStatus.message} state={masterStatus.state} />
+          <SourceCard title="Shopping Lists" value="Cross-utilization" detail="The Webtrition shopping-list report supports ingredient overlap. Recipes are the remaining missing data layer." state="ready" />
+        </section>
+
+        <section className="grid gap-4 lg:grid-cols-2">
+          <UploadCard title="SSMT compatibility import" icon={FileSpreadsheet} detail="Temporary parser for workbook transition and candidate review flags; not item-removal authority." onChange={uploadSsmt} />
           <UploadCard title="Centric Brand Report" icon={UploadCloud} detail="Brand/menu name is read from the Brand tab, not the file name." onChange={uploadBrandReport} />
-          <SourceCard title="Master App Data" value={masterRows.length.toLocaleString()} detail={masterStatus.message} state={masterStatus.state} />
         </section>
 
         {message && (

@@ -157,6 +157,10 @@ assert(ssmtVsAppRows[0]?.status === "Match", "SSMT vs App comparison must not re
 assertIncludes("src/app/LandingPage.jsx", "Menu Audit Tool");
 assertIncludes("src/app/CulinaryToolsPlatformApp.jsx", "menuAuditTool");
 assertIncludes("src/features/menu-audit/MenuAuditTool.jsx", "Master App Data");
+assertIncludes("src/features/menu-audit/MenuAuditTool.jsx", "SSMT app records");
+assertIncludes("src/features/menu-audit/MenuAuditTool.jsx", "Webtrition Report Menu Index");
+assertIncludes("src/features/menu-audit/MenuAuditTool.jsx", "Shopping Lists");
+assertIncludes("src/features/menu-audit/MenuAuditTool.jsx", "Recipes are the remaining missing data layer");
 assertIncludes("src/features/menu-audit/MenuAuditTool.jsx", "SSMT vs App Data");
 assertIncludes("src/features/menu-audit/MenuAuditTool.jsx", "setComparisonMode");
 assertIncludes("src/features/menu-audit/MenuAuditTool.jsx", "Remove from Centric Brand");

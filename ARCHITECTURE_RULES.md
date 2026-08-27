@@ -9,6 +9,8 @@ Maintained by Scribe. Do not duplicate these rules into new documents — link h
 - **Supabase is the primary shared data backbone.** Known areas: `app_records`-style storage for rotations, lean, menu projects, analytics; `recipe_items` and recipe document/file structures for Menu Library; storage buckets prepared conceptually for recipe files, plating guides, and item photos.
 - **Smartsheet is fallback/mirror**, especially during migration. Do not remove Smartsheet paths without a deliberate migration plan. Env vars: `SMARTSHEET_ACCESS_TOKEN`, `SMARTSHEET_SHEET_ID`. Smartsheet hit a 500,000-cell limit on 2026-07-14; new work should not add load-bearing dependence on Smartsheet capacity.
 - **Browser localStorage is never a source of truth for critical shared data.** Use only for UI preferences, last-used local cache, or temporary convenience. Any large localStorage write must be guarded (`src/shared/safeStorage.js` or equivalent) and must not crash the app.
+- **SSMT workbook imports are not item-removal authority.** `docs/ssmt/SEA Standard Menu Template (1).xlsx` and generated `public/data/ssmtSeedData.json` may seed SSMT tool structure, pricing, modifiers, workflow records, and candidate alignment flags. Operational record deletion/removal remains governed by the Webtrition Report Menu Index until a Registered Admin explicitly approves a different removal authority.
+- **Menu Audit source model:** SSMT app records are the Culinary-entered programming source; Webtrition Report Menu Index is the menu/item metadata and removal-authority source; Webtrition Shopping Lists support cross-utilization; recipes are the remaining missing data layer. SSMT-only and Webtrition-only differences are review flags unless removal authority is confirmed.
 
 ## System Snapshot (carried forward unchanged from `AI_HANDOFF.md`)
 
@@ -26,7 +28,7 @@ Module-level structure (app shell, feature areas, shared modules, Smartsheet int
 These rules protect specific tools from regressions that have recurred historically. Full incident history lives in `AI_HANDOFF.md` and `CHANGELOG.md`; this section states the standing rule only.
 
 - **Neighborhood Rotations:** a submitted/locked rotation must recall exactly as submitted. Re:Invent and Blueshift use split-global `2/2/2` block logic (Monday/Tuesday, Wednesday/Thursday, Friday). Submit/resubmit overwrites the saved rotation for that cafe/week rather than creating duplicate history.
-- **Menu Audit Tool:** MRNs (Menu Record Numbers) must be treated as text. Never round, truncate, or coerce MRNs into numbers.
+- **Menu Audit Tool:** MRNs (Menu Record Numbers) must be treated as text. Never round, truncate, or coerce MRNs into numbers. SSMT/Webtrition mismatches must not become destructive deletes without the Webtrition Report Menu Index removal-authority check.
 - **Recipe Library / Menu Library:** menu/item data and photos must remain aligned. Do not blindly overwrite curated descriptions with secondary import descriptions.
 - **Menu Projects:** saved/deleted project records must persist across phone/desktop. Do not reintroduce local-only sample records as real data.
 - **Lean Tool:** mobile usability matters; the observation flow should be fast and avoid constant scrolling.

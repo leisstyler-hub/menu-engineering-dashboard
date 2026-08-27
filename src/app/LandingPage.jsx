@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ArrowRight, BarChart3, BookOpen, CalendarRange, ClipboardCheck, Database, FolderKanban, Home, ListChecks, PieChart, Settings, Shuffle, Smartphone, Sparkles, TrendingUp, Utensils, Wrench } from "lucide-react";
+import { ArrowRight, BarChart3, BookOpen, CalendarRange, ClipboardCheck, Database, FileSpreadsheet, FolderKanban, Home, ListChecks, PieChart, Settings, Shuffle, Smartphone, Sparkles, TrendingUp, Utensils, Wrench } from "lucide-react";
 
 import CHANGELOG_TEXT from "../../CHANGELOG.md?raw";
 import DASHBOARD_SUMMARY from "../data/dashboardSummary.json";
@@ -213,7 +213,7 @@ function downloadTrustLayerGapList(rows) {
   URL.revokeObjectURL(url);
 }
 
-export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodRotations, onOpenRecipeDatabase, onOpenMenuProjects, onOpenMenuAuditTool, onOpenLeanTool, onOpenMenuCrossUtilization, onOpenSmartsheetHealth }) {
+export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodRotations, onOpenRecipeDatabase, onOpenMenuProjects, onOpenMenuAuditTool, onOpenSsmtTool, onOpenLeanTool, onOpenMenuCrossUtilization, onOpenSmartsheetHealth }) {
   const {
     totalItems,
     menuCount,
@@ -288,9 +288,19 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
       meta: "Launch pipeline"
     },
     {
+      title: "SSMT",
+      eyebrow: "New",
+      description: "Build Culinary-to-IT menu records, assign pricing from SEA price + category, manage modifiers, flags, phases, and active dates.",
+      action: "Open SSMT",
+      onOpen: onOpenSsmtTool,
+      icon: FileSpreadsheet,
+      tone: "rose",
+      meta: "IT programming"
+    },
+    {
       title: "Menu Audit Tool",
       eyebrow: "Phase 1",
-      description: "Compare Master App Data, SSMT rows, and Centric Brand Reports with exact MRN preservation.",
+      description: "Compare SSMT app records with Webtrition metadata and shopping-list support with exact MRN preservation.",
       action: "Open Audit",
       onOpen: onOpenMenuAuditTool,
       icon: ClipboardCheck,
@@ -349,6 +359,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
         onOpenRecipeDatabase={onOpenRecipeDatabase}
         onOpenMenuProjects={onOpenMenuProjects}
         onOpenMenuAuditTool={onOpenMenuAuditTool}
+        onOpenSsmtTool={onOpenSsmtTool}
         onOpenLeanTool={onOpenLeanTool}
         onOpenMenuCrossUtilization={onOpenMenuCrossUtilization}
         onOpenSmartsheetHealth={onOpenSmartsheetHealth}
@@ -376,7 +387,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
               Built for quick chef decisions: choose the workstream, check status, and move straight into the active tool.
             </p>
             <div className="mt-5 grid grid-cols-2 gap-3">
-              <Metric label="Tools" value="8" />
+              <Metric label="Tools" value="9" />
               <Metric label="Menu items" value={totalItems.toLocaleString()} />
               <Metric label="Menus" value={menuCount} />
               <Metric label="Costed items" value={costedItems.toLocaleString()} />
@@ -530,12 +541,13 @@ function MobileLanding({
   onOpenRecipeDatabase,
   onOpenMenuProjects,
   onOpenMenuAuditTool,
+  onOpenSsmtTool,
   onOpenLeanTool,
   onOpenMenuCrossUtilization,
   onOpenSmartsheetHealth,
 }) {
   const metricTiles = [
-    { label: "Tools", value: "8", icon: Wrench, tone: "bg-[#fff7e7] text-[#8a621b]" },
+    { label: "Tools", value: "9", icon: Wrench, tone: "bg-[#fff7e7] text-[#8a621b]" },
     { label: "Menu Items", value: totalItems.toLocaleString(), icon: Utensils, tone: "bg-[#eaf8f2] text-emerald-700" },
     { label: "Menus", value: menuCount, icon: ListChecks, tone: "bg-[#edf5ff] text-sky-700" },
     { label: "Costed Items", value: costedItems.toLocaleString(), icon: Database, tone: "bg-[#f0eefb] text-indigo-700" },
@@ -546,6 +558,7 @@ function MobileLanding({
     { label: "Engineering", icon: BarChart3, onOpen: onOpenMenuEngineering },
     { label: "Library", icon: BookOpen, onOpen: onOpenRecipeDatabase },
     { label: "Projects", icon: FolderKanban, onOpen: onOpenMenuProjects },
+    { label: "SSMT", icon: FileSpreadsheet, onOpen: onOpenSsmtTool },
     { label: "Rotations", icon: CalendarRange, onOpen: onOpenNeighborhoodRotations },
   ];
 
@@ -710,6 +723,7 @@ function MobileToolCard({ title, eyebrow, description, action, onOpen, icon: Ico
     amber: "bg-amber-50 text-amber-700 border-amber-100",
     indigo: "bg-indigo-50 text-indigo-700 border-indigo-100",
     violet: "bg-violet-50 text-violet-700 border-violet-100",
+    rose: "bg-rose-50 text-rose-700 border-rose-100",
     lime: "bg-lime-50 text-lime-700 border-lime-100",
     teal: "bg-teal-50 text-teal-700 border-teal-100",
   };
@@ -718,6 +732,7 @@ function MobileToolCard({ title, eyebrow, description, action, onOpen, icon: Ico
     "Neighborhood Rotations": "Live",
     "Menu Library": "New",
     "Menu Projects": "New",
+    "SSMT": "New",
     "Menu Audit Tool": "Phase 1",
     "Webtrition": "External",
     "Lean Tool": "New",
@@ -1043,6 +1058,7 @@ function ToolCard({ title, eyebrow, description, action, onOpen, icon: Icon, ton
     amber: "bg-amber-50 text-amber-900 border-amber-200",
     indigo: "bg-indigo-50 text-indigo-800 border-indigo-200",
     violet: "bg-violet-50 text-violet-800 border-violet-200",
+    rose: "bg-rose-50 text-rose-800 border-rose-200",
     lime: "bg-lime-50 text-lime-900 border-lime-200",
     teal: "bg-teal-50 text-teal-800 border-teal-200"
   };
