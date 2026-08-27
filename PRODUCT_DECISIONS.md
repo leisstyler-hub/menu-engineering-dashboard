@@ -10,6 +10,15 @@ When a mission produces an approved product decision, Scribe adds an entry below
 
 ## Decisions
 
+### 2026-08-27 - SSMT workflow split and full-width menu editor
+Tyler approved restructuring the live `SSMT` flow after the initial release because the single post-passcode screen was too crowded for large menus. After passcode `0411`, SSMT should split into two primary paths: `Pricing Structure` and `Menu Selector / New Menu`. Pricing Structure should let Culinary view the controlled pricing table and add pricing rows while keeping SEA price + category as the selector authority. Menu Selector should open existing menus or create a new menu only after selecting the menu type.
+
+The selected-menu editor should use a fuller-width workspace for large menus. It must show a slim selected-menu navigation above the record with back to menu selection, pricing table, and delete menu actions. Delete menu requires retyping the menu name exactly before the destructive app-side record removal. Menu rows must include a typed Category field, a FOH / Fixy field for IT programming, and all area prices in Tyler's required IT programming order: `AUS, BNA, BOS, BWI, DEN, IAD, JFK, LAX, SAN, SNA, SEA, SJC, WAS, YVR, YYZ, MCO`. Menus may include titled divider rows so one Centric menu can be separated into internal programming categories such as grill and soups.
+
+Active start/end dates are required only for `Promotion` and `Thompson Hospitality` menu records; Core and Global menus do not need those active date fields in the normal editor. This follow-up does not change SSMT workbook parsing, pricing-source authority, Menu Audit removal authority, Supabase/schema state, or production data. Requesting Admin: Tyler. Approving Admin: Tyler. Admin of Record: Tyler.
+Rejected alternatives: keeping pricing, selection, and editing on one dense screen; requiring active start/end dates on every menu type; keeping category as display-only text; deleting menus without exact-name confirmation; hiding non-SEA area prices from the menu editor.
+Implementation status note: prepared as version `2026.08.27.001-ssmt-flow-restructure`; publication and production verification pending.
+
 ### 2026-08-26 - SSMT app replaces the workbook, adds workflow/calendar, and resets Menu Audit sources
 Tyler approved replacing the current SSMT Excel workflow with an in-app `SSMT` tool on the Culinary Tools Platform, gated by the shared hard-wired passcode `0411` as a convenience access gate rather than identity proof. The uploaded `SEA Standard Menu Template (1).xlsx` workbook is the current truth for building the first SSMT tool structure, pricing book, modifier relationships, workflow records, and candidate SSMT alignment flags. It is not deletion authority for Menu Library/Webtrition operational records on the first pass; item removal remains governed by the existing Webtrition Report Menu Index process until explicitly changed. First workbook import scope is limited to menus reachable from `Navigation UI` buttons, any hidden tab reached by one of those buttons, and Alex's recent Promotion tabs. Old hidden tabs that are not button-reachable stay out.
 
