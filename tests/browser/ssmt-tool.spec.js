@@ -249,6 +249,48 @@ test("SSMT selector and builder keep dense records and wide tables usable withou
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
+test("SSMT builder uses maximized desktop width and shows more menu rows", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await page.setViewportSize({ width: 3000, height: 1200 });
+  await page.goto("/");
+
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByLabel(/SSMT passcode/i).fill("0411");
+  await page.getByRole("button", { name: /unlock ssmt/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+  await page.getByRole("button", { name: /^The Daily/i }).click();
+  for (let index = 0; index < 12; index += 1) {
+    await page.getByRole("button", { name: /Add item/i }).click();
+  }
+
+  const builderScroll = page.getByTestId("ssmt-builder-scroll");
+  await expect(builderScroll).toBeVisible();
+  const builderMetrics = await builderScroll.evaluate((node) => {
+    const rows = Array.from(node.querySelectorAll("tbody tr[data-row-kind='item']"));
+    const firstRowHeight = rows[0]?.getBoundingClientRect().height || 0;
+    const rowTop = rows[0]?.getBoundingClientRect().top || 0;
+    const scrollBottom = node.getBoundingClientRect().bottom;
+    const visibleRows = rows.filter((row) => {
+      const box = row.getBoundingClientRect();
+      return box.top >= rowTop - 1 && box.bottom <= scrollBottom + 1;
+    }).length;
+    return {
+      width: node.getBoundingClientRect().width,
+      firstRowHeight,
+      visibleRows,
+      scrollWidth: node.scrollWidth,
+      clientWidth: node.clientWidth,
+    };
+  });
+  expect(builderMetrics.width).toBeGreaterThanOrEqual(2800);
+  expect(builderMetrics.firstRowHeight).toBeLessThanOrEqual(82);
+  expect(builderMetrics.visibleRows).toBeGreaterThanOrEqual(10);
+  expect(builderMetrics.scrollWidth).toBeLessThanOrEqual(builderMetrics.clientWidth + 4);
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
 test("SSMT modifier groups are editable with typed group metadata and line-level pricing fields", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   await page.setViewportSize({ width: 1440, height: 950 });

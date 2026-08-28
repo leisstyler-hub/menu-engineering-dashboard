@@ -734,17 +734,17 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f6f1] px-4 py-5 text-slate-950 md:px-8">
-      <div className="mx-auto max-w-[132rem] space-y-5">
-        <header className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+    <div className="min-h-screen bg-[#f5f6f1] px-3 py-4 text-slate-950 md:px-4">
+      <div className="w-full space-y-3">
+        <header className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
             <div>
-              <button onClick={onBackToPlatform} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-100">
+              <button onClick={onBackToPlatform} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-bold text-slate-700 hover:bg-slate-100">
                 <ArrowLeft size={16} /> Back to Platform
               </button>
-              <p className="mt-5 text-xs font-black uppercase tracking-[0.22em] text-emerald-600">Culinary to IT programming</p>
-              <h1 className="mt-2 text-4xl font-black">SSMT</h1>
-              <p className="mt-3 max-w-4xl text-sm font-semibold leading-6 text-slate-600">
+              <p className="mt-3 text-xs font-black uppercase tracking-[0.22em] text-emerald-600">Culinary to IT programming</p>
+              <h1 className="mt-1 text-3xl font-black">SSMT</h1>
+              <p className="mt-2 max-w-4xl text-sm font-semibold leading-5 text-slate-600">
                 Split pricing maintenance from menu programming so the menu editor has more working room for large Centric records.
               </p>
             </div>
@@ -756,14 +756,14 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
           </div>
         </header>
 
-        <section className="flex flex-wrap gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-          <button type="button" onClick={() => setActiveView("home")} className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-black ${activeView === "home" ? "bg-slate-950 text-white" : "bg-slate-50 text-slate-800 hover:bg-slate-100"}`}>
+        <section className="flex flex-wrap gap-2 rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm">
+          <button type="button" onClick={() => setActiveView("home")} className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-black ${activeView === "home" ? "bg-slate-950 text-white" : "bg-slate-50 text-slate-800 hover:bg-slate-100"}`}>
             <ListChecks size={16} /> SSMT Start
           </button>
-          <button type="button" onClick={() => setActiveView("pricing")} className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-black ${activeView === "pricing" ? "bg-slate-950 text-white" : "bg-slate-50 text-slate-800 hover:bg-slate-100"}`}>
+          <button type="button" onClick={() => setActiveView("pricing")} className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-black ${activeView === "pricing" ? "bg-slate-950 text-white" : "bg-slate-50 text-slate-800 hover:bg-slate-100"}`}>
             <DollarSign size={16} /> Pricing Structure
           </button>
-          <button type="button" onClick={() => setActiveView("menus")} className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-black ${activeView === "menus" ? "bg-slate-950 text-white" : "bg-slate-50 text-slate-800 hover:bg-slate-100"}`}>
+          <button type="button" onClick={() => setActiveView("menus")} className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-black ${activeView === "menus" ? "bg-slate-950 text-white" : "bg-slate-50 text-slate-800 hover:bg-slate-100"}`}>
             <ClipboardCheck size={16} /> Menu Selector / New Menu
           </button>
         </section>
@@ -932,27 +932,27 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
         )}
 
         {activeView === "editor" && (
-          <main className="space-y-5">
-            <section className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+          <main className="space-y-3">
+            <section className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm">
               <div className="flex flex-wrap gap-2">
-                <button type="button" onClick={() => setActiveView("menus")} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-black text-slate-800 hover:bg-slate-100">
+                <button type="button" onClick={() => setActiveView("menus")} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-black text-slate-800 hover:bg-slate-100">
                   <ArrowLeft size={16} /> Back to menu selection
                 </button>
-                <button type="button" onClick={() => setActiveView("pricing")} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-black text-slate-800 hover:bg-slate-100">
+                <button type="button" onClick={() => setActiveView("pricing")} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-black text-slate-800 hover:bg-slate-100">
                   <DollarSign size={16} /> Pricing table
                 </button>
               </div>
-              <button type="button" onClick={() => requestDelete({ type: "menu", id: selectedMenu.id, name: selectedMenu.name })} className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-black text-red-800 hover:bg-red-100">
+              <button type="button" onClick={() => requestDelete({ type: "menu", id: selectedMenu.id, name: selectedMenu.name })} className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-black text-red-800 hover:bg-red-100">
                 <Trash2 size={16} /> Delete menu
               </button>
             </section>
 
-            <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <section className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Menu Record</p>
-                  <h2 className="mt-1 text-3xl font-black">{selectedMenu.name}</h2>
-                  <p className="mt-2 text-sm font-semibold text-slate-600">{selectedMenu.type} / {selectedMenu.phase} / availability after IT complete</p>
+                  <h2 className="mt-1 text-2xl font-black">{selectedMenu.name}</h2>
+                  <p className="mt-1 text-sm font-semibold text-slate-600">{selectedMenu.type} / {selectedMenu.phase} / availability after IT complete</p>
                 </div>
                 <div className="grid min-w-[280px] gap-2 text-sm font-bold text-slate-700">
                   <label className="grid gap-1">
@@ -964,7 +964,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                   <span className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">Type: {selectedMenu.type}</span>
                 </div>
               </div>
-              <div className="mt-4 grid gap-3 md:grid-cols-4">
+              <div className="mt-3 grid gap-2 md:grid-cols-4">
                 {showActiveDates ? (
                   <>
                     <label className="grid gap-1 text-sm font-bold text-slate-700">
@@ -992,11 +992,11 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
               </div>
             </section>
 
-            <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-              <div className="flex flex-col gap-3 border-b border-slate-200 p-5 md:flex-row md:items-center md:justify-between">
+            <section className="overflow-hidden rounded-lg border border-slate-300 bg-white shadow-sm">
+              <div className="flex flex-col gap-2 border-b border-slate-300 p-3 md:flex-row md:items-center md:justify-between">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Menu Items</p>
-                  <h2 className="mt-1 text-2xl font-black">Builder rows</h2>
+                  <h2 className="mt-1 text-xl font-black">Builder rows</h2>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button type="button" onClick={addItem} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-black text-slate-800 hover:bg-slate-100">
@@ -1007,12 +1007,25 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                   </button>
                 </div>
               </div>
-              <div data-testid="ssmt-builder-scroll" className="max-h-[68vh] overflow-auto">
-                <table className="w-full min-w-[2300px] border-collapse text-left text-sm">
+              <div data-testid="ssmt-builder-scroll" className="max-h-[74vh] overflow-auto">
+                <table className="w-full min-w-[2520px] table-fixed border-collapse text-left text-xs">
+                  <colgroup>
+                    <col className="w-[46px]" />
+                    <col className="w-[125px]" />
+                    <col className="w-[320px]" />
+                    <col className="w-[450px]" />
+                    <col className="w-[112px]" />
+                    <col className="w-[170px]" />
+                    <col className="w-[140px]" />
+                    <col className="w-[150px]" />
+                    <col className="w-[330px]" />
+                    <col className="w-[72px]" />
+                    <col className="w-[130px]" />
+                  </colgroup>
                   <thead className="sticky top-0 z-10 bg-slate-100 text-xs font-black uppercase tracking-[0.12em] text-slate-600 shadow-sm">
                     <tr>
                       {["Move", "Fixy", "Label", "Description", "MRN", "SEA price", "Category", "Secondary category", "Area prices", "Calories", "Actions"].map((header) => (
-                        <th key={header} className="border-b border-slate-200 px-4 py-3">{header}</th>
+                        <th key={header} className="border-b border-slate-300 px-2 py-1.5">{header}</th>
                       ))}
                     </tr>
                   </thead>
@@ -1029,11 +1042,11 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                           onDrop={() => moveRow(draggedRowId, item.id)}
                           className="bg-slate-100"
                         >
-                          <td className="border-b border-slate-200 px-4 py-3 text-slate-500"><GripVertical size={18} /></td>
-                          <td colSpan={10} className="border-b border-slate-200 px-4 py-3">
-                            <label className="flex flex-col gap-2 md:flex-row md:items-center">
+                          <td className="border-b border-slate-300 px-2 py-1 text-slate-500"><GripVertical size={16} /></td>
+                          <td colSpan={10} className="border-b border-slate-300 px-2 py-1">
+                            <label className="flex flex-col gap-1 md:flex-row md:items-center">
                               <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Divider title</span>
-                              <input aria-label="Divider title" value={item.title} onChange={(event) => updateDivider(item.id, event.target.value)} className="min-w-[260px] rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-black outline-none focus:border-emerald-500" />
+                              <input aria-label="Divider title" value={item.title} onChange={(event) => updateDivider(item.id, event.target.value)} className="min-w-[260px] rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-black outline-none focus:border-emerald-500" />
                             </label>
                           </td>
                         </tr>
@@ -1048,45 +1061,45 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                           onDrop={() => moveRow(draggedRowId, item.id)}
                           className="align-top odd:bg-white even:bg-slate-50/70"
                         >
-                          <td className="border-b border-slate-100 px-4 py-3 text-slate-500"><GripVertical size={18} /></td>
-                          <td className="border-b border-slate-100 px-4 py-3">
+                          <td className="border-b border-slate-300 px-2 py-1 text-slate-500"><GripVertical size={16} /></td>
+                          <td className="border-b border-slate-300 px-2 py-1">
                             <input
                               aria-label={`Fixy for ${item.label || item.name || "item"}`}
                               value={item.fohColumn || ""}
                               onChange={(event) => updateItem(item.id, { fohColumn: event.target.value })}
-                              className="w-40 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500"
+                              className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-bold outline-none focus:border-emerald-500"
                             />
                           </td>
-                          <td className="border-b border-slate-100 px-4 py-3">
+                          <td className="border-b border-slate-300 px-2 py-1">
                             <input
                               aria-label="Item label"
                               value={item.label}
                               onChange={(event) => updateItem(item.id, { label: normalizeLabel(event.target.value) })}
-                              className="w-80 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-black outline-none focus:border-emerald-500"
+                              className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-black outline-none focus:border-emerald-500"
                             />
                           </td>
-                          <td className="border-b border-slate-100 px-4 py-3">
+                          <td className="border-b border-slate-300 px-2 py-1">
                             <textarea
                               aria-label="Description"
                               value={item.description}
                               onChange={(event) => updateItem(item.id, { description: normalizeDescription(event.target.value) })}
-                              className="h-32 w-[30rem] resize-y rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold leading-5 outline-none focus:border-emerald-500"
+                              className="h-14 w-full resize-y rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-semibold leading-4 outline-none focus:border-emerald-500"
                             />
                           </td>
-                          <td className="border-b border-slate-100 px-4 py-3">
+                          <td className="border-b border-slate-300 px-2 py-1">
                             <input
                               aria-label={`MRN for ${item.label || item.name || "item"}`}
                               value={item.mrn || ""}
                               onChange={(event) => updateItem(item.id, { mrn: event.target.value })}
-                              className="w-36 rounded-lg border border-slate-300 bg-white px-3 py-2 font-mono text-xs font-bold outline-none focus:border-emerald-500"
+                              className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 font-mono text-xs font-bold outline-none focus:border-emerald-500"
                             />
                           </td>
-                          <td className="border-b border-slate-100 px-4 py-3">
+                          <td className="border-b border-slate-300 px-2 py-1">
                             <select
                               aria-label={`SEA price for ${item.label || item.name || "item"}`}
                               value={item.priceSelectorId || ""}
                               onChange={(event) => assignItemPrice(item.id, event.target.value)}
-                              className="w-56 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-black text-slate-900"
+                              className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-[11px] font-black text-slate-900"
                             >
                               <option value="">Select SEA price</option>
                               {ssmtData.priceBook.map((price) => (
@@ -1094,45 +1107,45 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               ))}
                             </select>
                             {item.workbookSeaPrice && item.priceReviewStatus === "Needs pricing structure match" && (
-                              <p className="mt-2 text-[11px] font-bold text-amber-700">Workbook value needs pricing structure match.</p>
+                              <p className="mt-1 text-[10px] font-bold leading-3 text-amber-700">Workbook value needs pricing structure match.</p>
                             )}
                           </td>
-                          <td className="border-b border-slate-100 px-4 py-3">
+                          <td className="border-b border-slate-300 px-2 py-1">
                             <input
                               aria-label={`Category for ${item.label || item.name || "item"}`}
                               value={item.category || ""}
                               onChange={(event) => updateItem(item.id, { category: event.target.value })}
-                              className="w-44 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500"
+                              className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-bold outline-none focus:border-emerald-500"
                             />
                           </td>
-                          <td className="border-b border-slate-100 px-4 py-3">
+                          <td className="border-b border-slate-300 px-2 py-1">
                             <input
                               aria-label={`Secondary category for ${item.label || item.name || "item"}`}
                               value={item.secondaryCategory || item.reportingCategorySecondary || ""}
                               onChange={(event) => updateItem(item.id, { secondaryCategory: event.target.value, reportingCategorySecondary: event.target.value })}
-                              className="w-48 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500"
+                              className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-bold outline-none focus:border-emerald-500"
                             />
                           </td>
-                          <td className="border-b border-slate-100 px-4 py-3">
-                            <div aria-label={`Area prices for ${item.label || item.name || "item"}`} className="grid w-[460px] grid-cols-4 gap-1 text-[11px] font-bold text-slate-700">
+                          <td className="border-b border-slate-300 px-2 py-1">
+                            <div aria-label={`Area prices for ${item.label || item.name || "item"}`} className="grid w-full grid-cols-8 gap-px text-[10px] font-bold leading-3 text-slate-700">
                               {ssmtData.areaOrder.map((area) => (
-                                <span key={area} className="rounded border border-slate-200 bg-white px-2 py-1">
+                                <span key={area} className="rounded border border-slate-300 bg-white px-1 py-0.5">
                                   <span className="font-black text-slate-500">{area}</span> {item.areaPrices?.[area] || "TBD"}
                                 </span>
                               ))}
                             </div>
                           </td>
-                          <td className="border-b border-slate-100 px-4 py-3 font-bold text-slate-700">{selectedMenu.type === "Promotion" ? item.calories || "TBD" : "N/A"}</td>
-                          <td className="border-b border-slate-100 px-4 py-3">
-                            <div className="flex flex-col gap-2">
-                              <button type="button" onClick={() => openModifierDialog(item)} className="inline-flex items-center justify-center gap-2 rounded-lg border border-green-800 bg-green-700 px-3 py-2 text-xs font-black text-white shadow-sm hover:bg-green-800">
-                                <Tags size={15} /> View modifiers
+                          <td className="border-b border-slate-300 px-2 py-1 font-bold text-slate-700">{selectedMenu.type === "Promotion" ? item.calories || "TBD" : "N/A"}</td>
+                          <td className="border-b border-slate-300 px-2 py-1">
+                            <div className="grid grid-cols-2 gap-0.5">
+                              <button type="button" aria-label="View modifiers" onClick={() => openModifierDialog(item)} className="col-span-2 inline-flex items-center justify-center gap-1 rounded-md border border-green-800 bg-green-700 px-1.5 py-0.5 text-[10px] font-black text-white shadow-sm hover:bg-green-800">
+                                <Tags size={12} /> Mods
                               </button>
-                              <button type="button" onClick={() => requestDelete({ type: "item", id: item.id, name: item.label || item.name || "item" })} className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-black text-red-800 hover:bg-red-100" aria-label={`Delete item ${item.label || item.name || "item"}`}>
-                                <Trash2 size={15} /> Delete item
+                              <button type="button" onClick={() => requestDelete({ type: "item", id: item.id, name: item.label || item.name || "item" })} className="inline-flex items-center justify-center gap-1 rounded-md border border-red-200 bg-red-50 px-1.5 py-0.5 text-[10px] font-black text-red-800 hover:bg-red-100" aria-label={`Delete item ${item.label || item.name || "item"}`}>
+                                <Trash2 size={12} /> Del
                               </button>
-                              <button type="button" onClick={() => setFlagDialog({ item })} className="inline-flex items-center justify-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-black text-amber-900 hover:bg-amber-100">
-                                <Flag size={15} /> Flag for change
+                              <button type="button" aria-label="Flag for change" onClick={() => setFlagDialog({ item })} className="inline-flex items-center justify-center gap-1 rounded-md border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[10px] font-black text-amber-900 hover:bg-amber-100">
+                                <Flag size={12} /> Flag
                               </button>
                             </div>
                           </td>
