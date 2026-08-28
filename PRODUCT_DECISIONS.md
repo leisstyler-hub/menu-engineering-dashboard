@@ -10,6 +10,15 @@ When a mission produces an approved product decision, Scribe adds an entry below
 
 ## Decisions
 
+### 2026-08-27 - SSMT grouped menu selector and draggable IT row ordering
+Tyler approved refining the live `SSMT` menu selector and menu-builder table after the first flow restructure. Menu records should be organized by menu type in this order: `Core`, `Global`, `Promotions`, `Thompson Hospitality`. Groups should be color-coded, and menus should be alphabetized inside each group so IT/Culinary can find records faster.
+
+The selected-menu builder should allow Culinary/IT to add item rows, delete item rows, and drag/drop item or divider rows into the desired programming order. Divider rows remain titled Centric category separators inside one menu. The item table should show a blank editable `Fixy` field to the left of `Label`, keep `Label` normalized to all caps, make `MRN` a blank editable text field, remove the visible `FOH` label, keep calories as `N/A` unless the menu is `Promotion`, and place blank editable `Category` and `Secondary category` after SEA price before area prices.
+
+Phase/status remains a per-menu property. In this app-side pass, phase/status and row edits are saved through guarded browser persistence so they survive reload in the same browser. This is not yet shared Supabase persistence across the group; a backend SSMT persistence pass is still required before phase/status can be treated as organization-wide source of truth. This follow-up does not change pricing-source authority, workbook parsing, Supabase schema, production data, Menu Audit removal authority, or the rule that Core/Global become downstream-eligible only after `IT complete`. Requesting Admin: Tyler. Approving Admin: Tyler. Admin of Record: Tyler.
+Rejected alternatives: leaving the selector as one ungrouped list; keeping row order fixed to workbook/import order; keeping `FOH / Fixy` as the visible label; displaying non-Promotion calories as a workflow field; making phase/status a screen-only value that disappears on reload; treating browser persistence as shared group truth.
+Implementation status note: prepared as version `2026.08.27.002-ssmt-menu-row-ordering` with local browser coverage in `tests/browser/ssmt-tool.spec.js`; not yet published or production verified as of this entry.
+
 ### 2026-08-27 - SSMT workflow split and full-width menu editor
 Tyler approved restructuring the live `SSMT` flow after the initial release because the single post-passcode screen was too crowded for large menus. After passcode `0411`, SSMT should split into two primary paths: `Pricing Structure` and `Menu Selector / New Menu`. Pricing Structure should let Culinary view the controlled pricing table and add pricing rows while keeping SEA price + category as the selector authority. Menu Selector should open existing menus or create a new menu only after selecting the menu type.
 

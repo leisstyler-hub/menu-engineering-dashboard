@@ -6,6 +6,7 @@ import {
   Copy,
   DollarSign,
   Flag,
+  GripVertical,
   ListChecks,
   Mail,
   Plus,
@@ -18,11 +19,40 @@ import {
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
 import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
+import { readLocalStorageJson, writeLocalStorageJson } from "../../shared/safeStorage.js";
 
 const PASSCODE = "0411";
 const UNLOCKED_KEY = "culinaryToolsSsmtUnlocked";
+const WORKSPACE_STORAGE_KEY = "culinaryToolsSsmtWorkspace_v1";
 const DEFAULT_MENU_TYPES = ["Core", "Global", "Thompson Hospitality", "Promotion"];
 const ACTIVE_DATE_MENU_TYPES = ["Promotion", "Thompson Hospitality"];
+const MENU_TYPE_ORDER = ["Core", "Global", "Promotion", "Thompson Hospitality"];
+const MENU_TYPE_STYLES = {
+  Core: {
+    label: "Core",
+    groupClass: "border-emerald-300 bg-emerald-50",
+    badgeClass: "bg-emerald-700 text-white",
+    itemClass: "hover:border-emerald-400 hover:bg-emerald-100",
+  },
+  Global: {
+    label: "Global",
+    groupClass: "border-sky-300 bg-sky-50",
+    badgeClass: "bg-sky-700 text-white",
+    itemClass: "hover:border-sky-400 hover:bg-sky-100",
+  },
+  Promotion: {
+    label: "Promotions",
+    groupClass: "border-amber-300 bg-amber-50",
+    badgeClass: "bg-amber-700 text-white",
+    itemClass: "hover:border-amber-400 hover:bg-amber-100",
+  },
+  "Thompson Hospitality": {
+    label: "Thompson Hospitality",
+    groupClass: "border-fuchsia-300 bg-fuchsia-50",
+    badgeClass: "bg-fuchsia-700 text-white",
+    itemClass: "hover:border-fuchsia-400 hover:bg-fuchsia-100",
+  },
+};
 const EMPTY_SSMT_DATA = {
   areaOrder: [],
   workflowPhases: ["Culinary draft", "Experience review", "IT programming", "IT complete"],
@@ -48,6 +78,7 @@ function cloneMenu(menu) {
     ...menu,
     items: (menu.items || []).map((item) => ({
       ...item,
+      secondaryCategory: item.secondaryCategory || item.reportingCategorySecondary || "",
       areaPrices: { ...(item.areaPrices || {}) },
       modifierGroups: [...(item.modifierGroups || [])],
     })),
@@ -70,6 +101,31 @@ function activeDatesRequired(type) {
   return ACTIVE_DATE_MENU_TYPES.includes(type);
 }
 
+function compareMenuNames(a, b) {
+  return String(a.name || "").localeCompare(String(b.name || ""), undefined, { sensitivity: "base" });
+}
+
+function groupMenusByType(menus = []) {
+  const groups = MENU_TYPE_ORDER.map((type) => ({
+    type,
+    ...MENU_TYPE_STYLES[type],
+    menus: menus.filter((menu) => menu.type === type).sort(compareMenuNames),
+  }));
+  const knownTypes = new Set(MENU_TYPE_ORDER);
+  const otherMenus = menus.filter((menu) => !knownTypes.has(menu.type)).sort(compareMenuNames);
+  if (otherMenus.length) {
+    groups.push({
+      type: "Other",
+      label: "Other",
+      groupClass: "border-slate-300 bg-slate-50",
+      badgeClass: "bg-slate-700 text-white",
+      itemClass: "hover:border-slate-400 hover:bg-slate-100",
+      menus: otherMenus,
+    });
+  }
+  return groups.filter((group) => group.menus.length);
+}
+
 function createBlankItem(menuId, areaOrder, index = 1) {
   return {
     id: `${menuId}-item-${Date.now()}-${index}`,
@@ -79,7 +135,7 @@ function createBlankItem(menuId, areaOrder, index = 1) {
     mrn: "",
     category: "",
     fohColumn: "",
-    reportingCategorySecondary: "",
+    secondaryCategory: "",
     brandMenu: "",
     calories: "",
     priceSelectorId: "",
@@ -144,6 +200,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const [flagNote, setFlagNote] = useState("");
   const [reportedFlag, setReportedFlag] = useState(null);
   const [copiedModifierNotice, setCopiedModifierNotice] = useState("");
+  const [draggedRowId, setDraggedRowId] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -153,9 +210,18 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
         const payload = await response.json();
         if (!response.ok) throw new Error("SSMT seed data could not be loaded.");
         if (cancelled) return;
-        setSsmtData({ ...payload, menuTypes: payload.menuTypes?.length ? payload.menuTypes : DEFAULT_MENU_TYPES });
-        setMenus((current) => current.length ? current : payload.menus.map(cloneMenu));
-        setSelectedMenuId((current) => current || payload.menus[0]?.id || "");
+        const stored = readLocalStorageJson(WORKSPACE_STORAGE_KEY, null);
+        const storedMenus = Array.isArray(stored?.menus) && stored.menus.length ? stored.menus : payload.menus;
+        const storedPriceBook = Array.isArray(stored?.priceBook) && stored.priceBook.length ? stored.priceBook : payload.priceBook;
+        const storedModifierGroups = Array.isArray(stored?.modifierGroups) && stored.modifierGroups.length ? stored.modifierGroups : payload.modifierGroups;
+        setSsmtData({
+          ...payload,
+          menuTypes: payload.menuTypes?.length ? payload.menuTypes : DEFAULT_MENU_TYPES,
+          priceBook: storedPriceBook,
+          modifierGroups: storedModifierGroups,
+        });
+        setMenus((current) => current.length ? current : storedMenus.map(cloneMenu));
+        setSelectedMenuId((current) => current || (storedMenus.some((menu) => menu.id === stored?.selectedMenuId) ? stored.selectedMenuId : storedMenus[0]?.id || ""));
         setSelectedPriceId((current) => current || payload.priceBook[0]?.id || "");
         setNewMenuType(payload.menuTypes?.[0] || "Core");
         setDataStatus("ready");
@@ -168,6 +234,17 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (dataStatus !== "ready" || !menus.length) return;
+    writeLocalStorageJson(WORKSPACE_STORAGE_KEY, {
+      menus,
+      priceBook: ssmtData.priceBook,
+      modifierGroups: ssmtData.modifierGroups,
+      selectedMenuId,
+      updatedAt: new Date().toISOString(),
+    }, { clearOnQuota: true });
+  }, [dataStatus, menus, selectedMenuId, ssmtData.priceBook, ssmtData.modifierGroups]);
 
   useEffect(() => {
     if (!modifierDialog) return undefined;
@@ -185,6 +262,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
     if (!query) return menus;
     return menus.filter((menu) => `${menu.name} ${menu.type}`.toLowerCase().includes(query));
   }, [menus, search]);
+  const menuGroups = useMemo(() => groupMenusByType(visibleMenus), [visibleMenus]);
 
   const downstreamReadyCount = menus.filter((menu) => ["Core", "Global"].includes(menu.type) && menu.phase === "IT complete").length;
   const promotionCount = menus.filter((menu) => menu.type === "Promotion").length;
@@ -291,6 +369,35 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
       if (menu.id !== selectedMenu.id) return menu;
       return { ...menu, items: [...menu.items, createDivider(menu.id)] };
     }));
+  };
+
+  const addItem = () => {
+    setMenus((current) => current.map((menu) => {
+      if (menu.id !== selectedMenu.id) return menu;
+      return { ...menu, items: [...menu.items, createBlankItem(menu.id, ssmtData.areaOrder, menu.items.length + 1)] };
+    }));
+  };
+
+  const deleteItem = (itemId) => {
+    setMenus((current) => current.map((menu) => {
+      if (menu.id !== selectedMenu.id) return menu;
+      return { ...menu, items: menu.items.filter((item) => item.id !== itemId) };
+    }));
+  };
+
+  const moveRow = (sourceId, targetId) => {
+    if (!sourceId || !targetId || sourceId === targetId) return;
+    setMenus((current) => current.map((menu) => {
+      if (menu.id !== selectedMenu.id) return menu;
+      const sourceIndex = menu.items.findIndex((item) => item.id === sourceId);
+      const targetIndex = menu.items.findIndex((item) => item.id === targetId);
+      if (sourceIndex < 0 || targetIndex < 0) return menu;
+      const nextItems = [...menu.items];
+      const [moved] = nextItems.splice(sourceIndex, 1);
+      nextItems.splice(targetIndex, 0, moved);
+      return { ...menu, items: nextItems };
+    }));
+    setDraggedRowId("");
   };
 
   const deleteSelectedMenu = () => {
@@ -549,19 +656,35 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                 </label>
               </div>
               <div className="mt-4 grid max-h-[68vh] gap-2 overflow-y-auto pr-1 md:grid-cols-2 2xl:grid-cols-3">
-                {visibleMenus.map((menu) => (
-                  <button
-                    key={menu.id}
-                    type="button"
-                    onClick={() => openMenu(menu.id)}
-                    className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-left hover:border-emerald-300 hover:bg-emerald-50"
+                {menuGroups.map((group) => (
+                  <section
+                    key={group.type}
+                    data-testid={`ssmt-menu-group-${group.type}`}
+                    data-menu-type={group.type}
+                    className={`rounded-lg border p-3 ${group.groupClass}`}
                   >
-                    <span className="block truncate text-sm font-black text-slate-950">{menu.name}</span>
-                    <span className="mt-1 flex flex-wrap gap-2 text-[11px] font-bold text-slate-600">
-                      <span>{menu.type}</span>
-                      <span>{menu.phase}</span>
-                    </span>
-                  </button>
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <h3 className="text-sm font-black text-slate-950">{group.label}</h3>
+                      <span className={`rounded px-2 py-1 text-[11px] font-black ${group.badgeClass}`}>{group.menus.length}</span>
+                    </div>
+                    <div className="grid gap-2">
+                      {group.menus.map((menu) => (
+                        <button
+                          key={menu.id}
+                          type="button"
+                          data-menu-name={menu.name}
+                          onClick={() => openMenu(menu.id)}
+                          className={`rounded-lg border border-white bg-white p-3 text-left shadow-sm ${group.itemClass}`}
+                        >
+                          <span className="block truncate text-sm font-black text-slate-950">{menu.name}</span>
+                          <span className="mt-1 flex flex-wrap gap-2 text-[11px] font-bold text-slate-600">
+                            <span>{menu.type}</span>
+                            <span>{menu.phase}</span>
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </section>
                 ))}
               </div>
             </section>
@@ -655,24 +778,39 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                   <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Menu Items</p>
                   <h2 className="mt-1 text-2xl font-black">Builder rows</h2>
                 </div>
-                <button type="button" onClick={addDivider} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-black text-slate-800 hover:bg-slate-100">
-                  <Plus size={16} /> Add divider
-                </button>
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" onClick={addItem} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-black text-slate-800 hover:bg-slate-100">
+                    <Plus size={16} /> Add item
+                  </button>
+                  <button type="button" onClick={addDivider} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-black text-slate-800 hover:bg-slate-100">
+                    <Plus size={16} /> Add divider
+                  </button>
+                </div>
               </div>
               <div className="overflow-x-auto">
-                <table className="min-w-[1760px] w-full border-collapse text-left text-sm">
+                <table className="min-w-[2020px] w-full border-collapse text-left text-sm">
                   <thead className="bg-slate-50 text-xs font-black uppercase tracking-[0.12em] text-slate-500">
                     <tr>
-                      {["Label", "Description", "MRN", "Category", "FOH / Fixy", "Calories", "SEA price", "Area prices", "Actions"].map((header) => (
+                      {["Move", "Fixy", "Label", "Description", "MRN", "SEA price", "Category", "Secondary category", "Area prices", "Calories", "Actions"].map((header) => (
                         <th key={header} className="border-b border-slate-200 px-4 py-3">{header}</th>
                       ))}
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody data-testid="ssmt-builder-body">
                     {selectedMenu.items.slice(0, 80).map((item) => (
                       item.recordType === "divider" ? (
-                        <tr key={item.id} className="bg-slate-100">
-                          <td colSpan={9} className="border-b border-slate-200 px-4 py-3">
+                        <tr
+                          key={item.id}
+                          data-testid={`ssmt-row-divider-${item.id}`}
+                          data-row-kind="divider"
+                          draggable
+                          onDragStart={() => setDraggedRowId(item.id)}
+                          onDragOver={(event) => event.preventDefault()}
+                          onDrop={() => moveRow(draggedRowId, item.id)}
+                          className="bg-slate-100"
+                        >
+                          <td className="border-b border-slate-200 px-4 py-3 text-slate-500"><GripVertical size={18} /></td>
+                          <td colSpan={10} className="border-b border-slate-200 px-4 py-3">
                             <label className="flex flex-col gap-2 md:flex-row md:items-center">
                               <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Divider title</span>
                               <input aria-label="Divider title" value={item.title} onChange={(event) => updateDivider(item.id, event.target.value)} className="min-w-[260px] rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-black outline-none focus:border-emerald-500" />
@@ -680,7 +818,25 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                           </td>
                         </tr>
                       ) : (
-                        <tr key={item.id} className="align-top odd:bg-white even:bg-slate-50/70">
+                        <tr
+                          key={item.id}
+                          data-testid={`ssmt-row-item-${item.id}`}
+                          data-row-kind="item"
+                          draggable
+                          onDragStart={() => setDraggedRowId(item.id)}
+                          onDragOver={(event) => event.preventDefault()}
+                          onDrop={() => moveRow(draggedRowId, item.id)}
+                          className="align-top odd:bg-white even:bg-slate-50/70"
+                        >
+                          <td className="border-b border-slate-100 px-4 py-3 text-slate-500"><GripVertical size={18} /></td>
+                          <td className="border-b border-slate-100 px-4 py-3">
+                            <input
+                              aria-label={`Fixy for ${item.label || item.name || "item"}`}
+                              value={item.fohColumn || ""}
+                              onChange={(event) => updateItem(item.id, { fohColumn: event.target.value })}
+                              className="w-40 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500"
+                            />
+                          </td>
                           <td className="border-b border-slate-100 px-4 py-3">
                             <input
                               aria-label="Item label"
@@ -697,24 +853,14 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               className="h-20 w-72 resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-emerald-500"
                             />
                           </td>
-                          <td className="border-b border-slate-100 px-4 py-3 font-mono text-xs font-bold text-slate-700">{item.mrn || "TBD"}</td>
                           <td className="border-b border-slate-100 px-4 py-3">
                             <input
-                              aria-label={`Category for ${item.label || item.name || "item"}`}
-                              value={item.category || ""}
-                              onChange={(event) => updateItem(item.id, { category: event.target.value })}
-                              className="w-44 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500"
+                              aria-label={`MRN for ${item.label || item.name || "item"}`}
+                              value={item.mrn || ""}
+                              onChange={(event) => updateItem(item.id, { mrn: event.target.value })}
+                              className="w-36 rounded-lg border border-slate-300 bg-white px-3 py-2 font-mono text-xs font-bold outline-none focus:border-emerald-500"
                             />
                           </td>
-                          <td className="border-b border-slate-100 px-4 py-3">
-                            <input
-                              aria-label={`FOH / Fixy for ${item.label || item.name || "item"}`}
-                              value={item.fohColumn || ""}
-                              onChange={(event) => updateItem(item.id, { fohColumn: event.target.value })}
-                              className="w-40 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500"
-                            />
-                          </td>
-                          <td className="border-b border-slate-100 px-4 py-3 font-bold text-slate-700">{selectedMenu.type === "Promotion" ? item.calories || "TBD" : "Promo only"}</td>
                           <td className="border-b border-slate-100 px-4 py-3">
                             <select
                               aria-label={`SEA price for ${item.label || item.name || "item"}`}
@@ -732,6 +878,22 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                             )}
                           </td>
                           <td className="border-b border-slate-100 px-4 py-3">
+                            <input
+                              aria-label={`Category for ${item.label || item.name || "item"}`}
+                              value={item.category || ""}
+                              onChange={(event) => updateItem(item.id, { category: event.target.value })}
+                              className="w-44 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500"
+                            />
+                          </td>
+                          <td className="border-b border-slate-100 px-4 py-3">
+                            <input
+                              aria-label={`Secondary category for ${item.label || item.name || "item"}`}
+                              value={item.secondaryCategory || item.reportingCategorySecondary || ""}
+                              onChange={(event) => updateItem(item.id, { secondaryCategory: event.target.value, reportingCategorySecondary: event.target.value })}
+                              className="w-48 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500"
+                            />
+                          </td>
+                          <td className="border-b border-slate-100 px-4 py-3">
                             <div aria-label={`Area prices for ${item.label || item.name || "item"}`} className="grid w-[460px] grid-cols-4 gap-1 text-[11px] font-bold text-slate-700">
                               {ssmtData.areaOrder.map((area) => (
                                 <span key={area} className="rounded border border-slate-200 bg-white px-2 py-1">
@@ -740,10 +902,14 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               ))}
                             </div>
                           </td>
+                          <td className="border-b border-slate-100 px-4 py-3 font-bold text-slate-700">{selectedMenu.type === "Promotion" ? item.calories || "TBD" : "N/A"}</td>
                           <td className="border-b border-slate-100 px-4 py-3">
                             <div className="flex flex-col gap-2">
                               <button type="button" onClick={() => openModifierDialog(item)} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-black text-slate-800 hover:bg-slate-100">
                                 <Tags size={15} /> View modifiers
+                              </button>
+                              <button type="button" onClick={() => deleteItem(item.id)} className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-black text-red-800 hover:bg-red-100" aria-label={`Delete item ${item.label || item.name || "item"}`}>
+                                <Trash2 size={15} /> Delete item
                               </button>
                               <button type="button" onClick={() => setFlagDialog({ item })} className="inline-flex items-center justify-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-black text-amber-900 hover:bg-amber-100">
                                 <Flag size={15} /> Flag for change

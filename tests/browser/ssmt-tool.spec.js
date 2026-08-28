@@ -60,7 +60,7 @@ test("SSMT opens behind passcode and separates pricing from menu building", asyn
   await categoryInput.fill("Typed Category");
   await expect(categoryInput).toHaveValue("Typed Category");
 
-  const fixyInput = page.getByLabel(/FOH \/ Fixy for/i).first();
+  const fixyInput = page.getByLabel(/Fixy for/i).first();
   await fixyInput.fill("GRILL 1");
   await expect(fixyInput).toHaveValue("GRILL 1");
 
@@ -102,6 +102,91 @@ test("SSMT opens behind passcode and separates pricing from menu building", asyn
   await page.getByRole("button", { name: /^The Daily/i }).click();
   await expect(page.getByText(/Active dates are only required for Promotion and Thompson Hospitality/i)).toBeVisible();
   await expect(page.getByText(/Workbook value needs pricing structure match/i).first()).toBeVisible();
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("SSMT groups menus by type and supports row editing, ordering, and saved phase status", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await page.goto("/");
+
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByLabel(/SSMT passcode/i).fill("0411");
+  await page.getByRole("button", { name: /unlock ssmt/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+
+  const firstCoreGroup = page.getByTestId("ssmt-menu-group-Core");
+  const globalGroup = page.getByTestId("ssmt-menu-group-Global");
+  const promotionsGroup = page.getByTestId("ssmt-menu-group-Promotion");
+  const thompsonGroup = page.getByTestId("ssmt-menu-group-Thompson Hospitality");
+  await expect(firstCoreGroup).toBeVisible();
+  await expect(globalGroup).toBeVisible();
+  await expect(promotionsGroup).toBeVisible();
+  await expect(thompsonGroup).toBeVisible();
+
+  await expect(firstCoreGroup).toHaveClass(/border-emerald-300/);
+  await expect(globalGroup).toHaveClass(/border-sky-300/);
+  await expect(promotionsGroup).toHaveClass(/border-amber-300/);
+  await expect(thompsonGroup).toHaveClass(/border-fuchsia-300/);
+
+  const groupOrder = await page.getByTestId(/ssmt-menu-group-/).evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-menu-type")));
+  expect(groupOrder).toEqual(["Core", "Global", "Promotion", "Thompson Hospitality"]);
+
+  const coreNames = await firstCoreGroup.getByRole("button").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-menu-name")));
+  expect([...coreNames].sort((a, b) => a.localeCompare(b))).toEqual(coreNames);
+
+  await page.getByLabel(/New menu name/i).fill("Smoke Test Ordering");
+  await page.getByLabel(/New menu type/i).selectOption("Core");
+  await page.getByRole("button", { name: /Create menu/i }).click();
+  await expect(page.getByRole("heading", { name: /^Smoke Test Ordering$/ })).toBeVisible();
+
+  await page.getByLabel(/Phase/i).selectOption("IT complete");
+  await page.getByRole("button", { name: /Back to menu selection/i }).click();
+  await page.getByRole("button", { name: /^Smoke Test Ordering/i }).click();
+  await expect(page.getByLabel(/Phase/i)).toHaveValue("IT complete");
+
+  await page.reload();
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+  await page.getByRole("button", { name: /^Smoke Test Ordering/i }).click();
+  await expect(page.getByLabel(/Phase/i)).toHaveValue("IT complete");
+
+  await page.getByRole("button", { name: /Add item/i }).click();
+  const labels = page.getByLabel(/Item label/i);
+  await expect(labels).toHaveCount(2);
+  await labels.nth(0).fill("alpha item");
+  await labels.nth(1).fill("beta item");
+  await expect(labels.nth(0)).toHaveValue("ALPHA ITEM");
+  await expect(labels.nth(1)).toHaveValue("BETA ITEM");
+
+  await page.getByRole("button", { name: /Add divider/i }).click();
+  await page.getByLabel(/Divider title/i).fill("Soups");
+  await page.getByTestId(/ssmt-row-divider/).dragTo(page.getByTestId(/ssmt-row-item/).first());
+  await expect(page.getByTestId("ssmt-builder-body").locator("tr").first()).toHaveAttribute("data-row-kind", "divider");
+
+  await expect(page.getByRole("columnheader", { name: "Fixy" })).toBeVisible();
+  await expect(page.getByRole("columnheader", { name: "FOH / Fixy" })).toHaveCount(0);
+  await expect(page.getByRole("columnheader", { name: "SEA price" })).toBeVisible();
+  await expect(page.getByRole("columnheader", { name: "Category", exact: true })).toBeVisible();
+  await expect(page.getByRole("columnheader", { name: "Secondary category" })).toBeVisible();
+  await expect(page.getByRole("columnheader", { name: "Area prices" })).toBeVisible();
+
+  const fixyInput = page.getByLabel(/Fixy for/i).first();
+  await fixyInput.fill("station a");
+  await expect(fixyInput).toHaveValue("station a");
+  const mrnInput = page.getByLabel(/MRN for/i).first();
+  await mrnInput.fill("123456.78");
+  await expect(mrnInput).toHaveValue("123456.78");
+  await expect(page.getByText(/^N\/A$/).first()).toBeVisible();
+
+  await page.getByLabel(/Category for/i).first().fill("entree");
+  await page.getByLabel(/Secondary category for/i).first().fill("grill");
+  await expect(page.getByLabel(/Category for/i).first()).toHaveValue("entree");
+  await expect(page.getByLabel(/Secondary category for/i).first()).toHaveValue("grill");
+
+  await page.getByRole("button", { name: /Delete item ALPHA ITEM/i }).click();
+  await expect(page.getByLabel(/Item label/i).first()).toHaveValue("BETA ITEM");
 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
