@@ -298,7 +298,7 @@ test("SSMT modifier groups are editable with typed group metadata and line-level
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
-test("SSMT modifier editor opens wider and the modifier action is visually prominent", async ({ page }) => {
+test("SSMT modifier editor opens wider, prominent, and dense for item lines", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   await page.setViewportSize({ width: 1440, height: 950 });
   await page.goto("/");
@@ -328,14 +328,21 @@ test("SSMT modifier editor opens wider and the modifier action is visually promi
   await expect(modifierDialog).toBeVisible();
   const modifierDialogMetrics = await modifierDialog.evaluate((node) => {
     const tableScroll = node.querySelector("table")?.parentElement;
+    const firstItemRow = node.querySelector("tbody tr");
+    const firstItemCell = firstItemRow?.querySelector("td");
+    const firstCellStyle = firstItemCell ? getComputedStyle(firstItemCell) : null;
     return {
       dialogWidth: node.getBoundingClientRect().width,
       tableClientWidth: tableScroll?.clientWidth || 0,
       tableScrollWidth: tableScroll?.scrollWidth || 0,
+      firstItemRowHeight: firstItemRow?.getBoundingClientRect().height || 0,
+      firstItemBorderColor: firstCellStyle?.borderBottomColor || "",
     };
   });
   expect(modifierDialogMetrics.dialogWidth).toBeGreaterThanOrEqual(1300);
   expect(modifierDialogMetrics.tableScrollWidth).toBeLessThanOrEqual(modifierDialogMetrics.tableClientWidth + 4);
+  expect(modifierDialogMetrics.firstItemRowHeight).toBeLessThanOrEqual(76);
+  expect(modifierDialogMetrics.firstItemBorderColor).toBe("rgb(203, 213, 225)");
 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);

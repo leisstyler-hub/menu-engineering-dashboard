@@ -1149,8 +1149,8 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
 
       {modifierDialog && (
         <Modal title="Modifier detail" size="wide" onClose={() => setModifierDialog(null)}>
-          <div className="space-y-4">
-            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <div className="space-y-3">
+            <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
               <p className="text-sm font-bold leading-6 text-slate-700">For {modifierDialog.item.label || modifierDialog.item.name}, copy creates an independent modifier group. Modifier groups are saved as app-side SSMT records. Prices stay tied to Pricing Structure rows.</p>
               <button type="button" onClick={addModifierGroup} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-black text-slate-800 hover:bg-slate-100">
                 <Plus size={14} /> Add modifier group
@@ -1158,15 +1158,15 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
             </div>
             {copiedModifierNotice && <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-black text-emerald-900">{copiedModifierNotice}</p>}
             {modifierDialog.groups.map((group) => (
-              <section key={group.id} data-testid={`ssmt-modifier-group-${group.id}`} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                <div className="grid gap-3 lg:grid-cols-[minmax(220px,1fr)_180px_auto] lg:items-end">
+              <section key={group.id} data-testid={`ssmt-modifier-group-${group.id}`} className="rounded-lg border border-slate-300 bg-slate-50 p-3">
+                <div className="grid gap-2 lg:grid-cols-[minmax(220px,1fr)_170px_auto] lg:items-end">
                   <label className="grid gap-1">
                     <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Modifier group name</span>
                     <input
                       aria-label="Modifier group name"
                       value={group.name}
                       onChange={(event) => updateModifierGroup(group.id, { name: event.target.value })}
-                      className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-black outline-none focus:border-emerald-500"
+                      className="rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-black outline-none focus:border-emerald-500"
                     />
                   </label>
                   <label className="grid gap-1">
@@ -1175,7 +1175,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                       aria-label="Modifier group type"
                       value={modifierTypeForGroup(group)}
                       onChange={(event) => updateModifierGroup(group.id, { modifierType: event.target.value })}
-                      className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-black"
+                      className="rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-black"
                     >
                       {MODIFIER_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
                     </select>
@@ -1193,76 +1193,85 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                   </div>
                 </div>
 
-                <div className="mt-3 max-h-[48vh] overflow-auto rounded-lg border border-slate-200 bg-white">
+                <div className="mt-2 max-h-[52vh] overflow-auto rounded-lg border border-slate-300 bg-white">
                   <table className="w-full min-w-[1180px] table-fixed border-collapse text-left text-xs">
+                    <colgroup>
+                      <col className="w-[180px]" />
+                      <col className="w-[230px]" />
+                      <col className="w-[110px]" />
+                      <col className="w-[78px]" />
+                      <col className="w-[150px]" />
+                      <col className="w-[330px]" />
+                      <col className="w-[102px]" />
+                    </colgroup>
                     <thead className="sticky top-0 bg-slate-100 font-black uppercase tracking-[0.1em] text-slate-600">
                       <tr>
                         {["Modifier name", "Description", "MRN", "Calories", "Price", "Area prices", "Actions"].map((header) => (
-                          <th key={header} className="border-b border-slate-200 px-3 py-2">{header}</th>
+                          <th key={header} className="border-b border-slate-300 px-2 py-1.5">{header}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
                       {(group.choices || []).map((choice) => (
                         <tr key={choice.id} className="align-top odd:bg-white even:bg-slate-50">
-                          <td className="border-b border-slate-100 px-3 py-2">
+                          <td className="border-b border-slate-300 px-2 py-0.5">
                             <input
                               aria-label="Modifier name"
                               value={choice.label || ""}
                               onChange={(event) => updateModifierChoice(group.id, choice.id, { label: event.target.value })}
-                              className="w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-black outline-none focus:border-emerald-500"
+                              className="w-full min-w-0 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-black outline-none focus:border-emerald-500"
                             />
                           </td>
-                          <td className="border-b border-slate-100 px-3 py-2">
+                          <td className="border-b border-slate-300 px-2 py-0.5">
                             <textarea
                               aria-label="Modifier description"
                               value={choice.description || ""}
                               onChange={(event) => updateModifierChoice(group.id, choice.id, { description: event.target.value })}
-                              className="h-20 w-full min-w-0 resize-y rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold leading-5 outline-none focus:border-emerald-500"
+                              className="h-10 w-full min-w-0 resize-y rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-semibold leading-4 outline-none focus:border-emerald-500"
                             />
                           </td>
-                          <td className="border-b border-slate-100 px-3 py-2">
+                          <td className="border-b border-slate-300 px-2 py-0.5">
                             <input
                               aria-label="Modifier MRN"
                               value={choice.mrn || ""}
                               onChange={(event) => updateModifierChoice(group.id, choice.id, { mrn: event.target.value })}
-                              className="w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 py-2 font-mono text-xs font-bold outline-none focus:border-emerald-500"
+                              className="w-full min-w-0 rounded-md border border-slate-300 bg-white px-2 py-1 font-mono text-xs font-bold outline-none focus:border-emerald-500"
                             />
                           </td>
-                          <td className="border-b border-slate-100 px-3 py-2">
+                          <td className="border-b border-slate-300 px-2 py-0.5">
                             <input
                               aria-label="Modifier calories"
                               value={choice.calories || ""}
                               onChange={(event) => updateModifierChoice(group.id, choice.id, { calories: event.target.value })}
-                              className="w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500"
+                              className="w-full min-w-0 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-bold outline-none focus:border-emerald-500"
                             />
                           </td>
-                          <td className="border-b border-slate-100 px-3 py-2">
+                          <td className="border-b border-slate-300 px-2 py-0.5">
                             <select
                               aria-label="Modifier price"
                               value={choice.priceSelectorId || ""}
                               onChange={(event) => updateModifierChoice(group.id, choice.id, { priceSelectorId: event.target.value })}
-                              className="w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-black text-slate-900"
+                              className="w-full min-w-0 rounded-md border border-slate-300 bg-white px-2 py-1 text-[11px] font-black text-slate-900"
                             >
                               <option value="">Select price</option>
                               {ssmtData.priceBook.map((price) => (
                                 <option key={price.id} value={price.id}>{price.selectorLabel}</option>
                               ))}
                             </select>
-                            <p className="mt-1 text-[11px] font-bold text-slate-500">{choice.price || "TBD"}</p>
+                            <p className="mt-0.5 text-[10px] font-bold leading-3 text-slate-500">{choice.price || "TBD"}</p>
                           </td>
-                          <td className="border-b border-slate-100 px-3 py-2">
-                            <div className="grid w-full min-w-0 grid-cols-4 gap-1 text-[11px] font-bold text-slate-700">
+                          <td className="border-b border-slate-300 px-2 py-0.5">
+                            <div className="grid w-full min-w-0 grid-cols-8 gap-px text-[10px] font-bold leading-3 text-slate-700">
                               {ssmtData.areaOrder.map((area) => (
-                                <span key={area} className="rounded border border-slate-200 bg-white px-2 py-1">
+                                <span key={area} className="rounded border border-slate-300 bg-white px-1 py-0.5">
                                   <span className="font-black text-slate-500">{area}</span> {choice.areaPrices?.[area] || "TBD"}
                                 </span>
                               ))}
                             </div>
                           </td>
-                          <td className="border-b border-slate-100 px-3 py-2">
-                            <button type="button" onClick={() => requestDelete({ type: "modifier-item", groupId: group.id, id: choice.id, name: choice.label || "modifier item" })} className="inline-flex w-full min-w-0 items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-2 py-2 text-xs font-black text-red-800 hover:bg-red-100">
-                              <Trash2 size={14} /> Delete modifier item line
+                          <td className="border-b border-slate-300 px-2 py-0.5">
+                            <button type="button" aria-label="Delete modifier item line" onClick={() => requestDelete({ type: "modifier-item", groupId: group.id, id: choice.id, name: choice.label || "modifier item" })} className="inline-flex w-full min-w-0 items-center justify-center gap-1 rounded-md border border-red-300 bg-red-50 px-2 py-1 text-[11px] font-black text-red-800 hover:bg-red-100">
+                              <Trash2 size={13} /> Delete
                             </button>
                           </td>
                         </tr>
