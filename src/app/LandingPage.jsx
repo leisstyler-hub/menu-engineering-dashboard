@@ -246,8 +246,8 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
-  const tools = [
-    {
+  const toolMap = {
+    menuEngineering: {
       title: "Menu Engineering",
       eyebrow: "Live",
       description: "Review price, true cost, food cost %, margin, and portfolio health across MenuWorks items.",
@@ -257,7 +257,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
       tone: "emerald",
       meta: "Financial read"
     },
-    {
+    neighborhoodRotations: {
       title: "Neighborhood Rotations",
       eyebrow: "Pilot in Place",
       description: "Declare weekly global rotations, station LTOs, Fresh $5 selections, and district status.",
@@ -267,7 +267,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
       tone: "sky",
       meta: "Chef planner"
     },
-    {
+    menuLibrary: {
       title: "Menu Library",
       eyebrow: "New",
       description: "Open menu item library cards with costs, calories, protein, Webtrition weights, allergens, descriptions, and future recipe files.",
@@ -277,7 +277,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
       tone: "indigo",
       meta: "Item library"
     },
-    {
+    menuProjects: {
       title: "Menu Projects",
       eyebrow: "New",
       description: "Track concept briefs, approvals, files, SSMT programming, Centric handoffs, blockers, and launch deadlines.",
@@ -287,7 +287,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
       tone: "violet",
       meta: "Launch pipeline"
     },
-    {
+    ssmt: {
       title: "SSMT",
       eyebrow: "New",
       description: "Build Culinary-to-IT menu records, assign pricing from SEA price + category, manage modifiers, flags, phases, and active dates.",
@@ -297,7 +297,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
       tone: "rose",
       meta: "IT programming"
     },
-    {
+    menuAudit: {
       title: "Menu Audit Tool",
       eyebrow: "Phase 1",
       description: "Compare SSMT app records with Webtrition metadata and shopping-list support with exact MRN preservation.",
@@ -307,7 +307,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
       tone: "sky",
       meta: "IT menu audit"
     },
-    {
+    webtrition: {
       title: "Webtrition",
       eyebrow: "External",
       description: "Open Webtrition for recipes, MRNs, nutrition, and menu programming source data.",
@@ -318,7 +318,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
       tone: "teal",
       meta: "Source system"
     },
-    {
+    leanTool: {
       title: "Lean Tool",
       eyebrow: "New",
       description: "Run fast phone or tablet observations using DOWNTIME waste categories, live marks, and report-out email.",
@@ -328,7 +328,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
       tone: "lime",
       meta: "Field tracker"
     },
-    {
+    menuCrossUtilization: {
       title: "Menu Cross Utilization Tool",
       eyebrow: "New",
       description: "See pillar strategy, per-menu ingredient overlap, and a pairwise matrix built from shopping-list data for menu planning.",
@@ -338,12 +338,35 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
       tone: "amber",
       meta: "Menu planner"
     }
+  };
+  const toolSections = [
+    {
+      title: "Chef Tools",
+      tools: [
+        toolMap.neighborhoodRotations,
+        toolMap.menuLibrary,
+        toolMap.menuEngineering,
+        toolMap.menuCrossUtilization,
+        toolMap.webtrition,
+      ],
+    },
+    {
+      title: "Programming & Auditing",
+      tools: [
+        toolMap.ssmt,
+        toolMap.menuProjects,
+        toolMap.menuAudit,
+        toolMap.leanTool,
+      ],
+    },
   ];
+  const tools = toolSections.flatMap((section) => section.tools);
 
   return (
     <div className="min-h-screen bg-[#f6f7f9] text-slate-950">
       <MobileLanding
         tools={tools}
+        toolSections={toolSections}
         totalItems={totalItems}
         menuCount={menuCount}
         costedItems={costedItems}
@@ -404,9 +427,19 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
           </aside>
 
           <section className="space-y-5">
-            <section className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
-              {tools.map((tool) => (
-                <ToolCard key={tool.title} {...tool} />
+            <section className="space-y-5">
+              {toolSections.map((section) => (
+                <section key={section.title} data-testid="landing-tool-section" className="space-y-3">
+                  <div className="flex items-end justify-between gap-3 border-b border-slate-200 pb-2">
+                    <h2 className="text-2xl font-black tracking-normal text-slate-950">{section.title}</h2>
+                    <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">{section.tools.length} tools</span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+                    {section.tools.map((tool) => (
+                      <ToolCard key={tool.title} {...tool} />
+                    ))}
+                  </div>
+                </section>
               ))}
             </section>
 
@@ -526,6 +559,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
 
 function MobileLanding({
   tools,
+  toolSections,
   totalItems,
   menuCount,
   costedItems,
@@ -585,9 +619,16 @@ function MobileLanding({
           ))}
         </section>
 
-        <section className="space-y-3" aria-label="Tools">
-          {tools.map((tool) => (
-            <MobileToolCard key={tool.title} {...tool} />
+        <section className="space-y-5" aria-label="Tools">
+          {(toolSections?.length ? toolSections : [{ title: "Tools", tools }]).map((section) => (
+            <section key={section.title} data-testid="landing-mobile-tool-section" className="space-y-3">
+              <h2 className="text-xl font-black text-slate-950">{section.title}</h2>
+              <div className="space-y-3">
+                {section.tools.map((tool) => (
+                  <MobileToolCard key={tool.title} {...tool} />
+                ))}
+              </div>
+            </section>
           ))}
         </section>
 
@@ -740,7 +781,7 @@ function MobileToolCard({ title, eyebrow, description, action, onOpen, icon: Ico
   };
 
   return (
-    <button type="button" onClick={onOpen} className="mobile-tool-card">
+    <button type="button" onClick={onOpen} data-tool-title={title} className="mobile-tool-card">
       <div className={`mobile-tool-icon ${logo ? "mobile-tool-logo-icon" : ""} ${tones[tone]}`}>
         {logo ? <img src={logo} alt={`${title} logo`} className="tool-card-logo" /> : <Icon size={21} />}
       </div>
@@ -1064,7 +1105,7 @@ function ToolCard({ title, eyebrow, description, action, onOpen, icon: Icon, ton
   };
 
   return (
-    <article className="flex min-h-[292px] flex-col justify-between rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <article data-tool-title={title} className="flex min-h-[292px] flex-col justify-between rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <div>
         <div className="flex items-start justify-between gap-3">
           <div className={`flex h-11 ${logo ? "w-28 px-2" : "w-11"} items-center justify-center rounded-lg border ${tones[tone]}`}>

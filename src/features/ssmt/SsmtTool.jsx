@@ -27,30 +27,31 @@ const WORKSPACE_STORAGE_KEY = "culinaryToolsSsmtWorkspace_v1";
 const DEFAULT_MENU_TYPES = ["Core", "Global", "Thompson Hospitality", "Promotion"];
 const ACTIVE_DATE_MENU_TYPES = ["Promotion", "Thompson Hospitality"];
 const MENU_TYPE_ORDER = ["Core", "Global", "Promotion", "Thompson Hospitality"];
+const MODIFIER_TYPES = ["Force", "Remove", "Addition"];
 const MENU_TYPE_STYLES = {
   Core: {
     label: "Core",
-    groupClass: "border-emerald-300 bg-emerald-50",
+    groupClass: "border-emerald-400 bg-emerald-100/80",
     badgeClass: "bg-emerald-700 text-white",
-    itemClass: "hover:border-emerald-400 hover:bg-emerald-100",
+    itemClass: "border-emerald-100 hover:border-emerald-500 hover:bg-emerald-50",
   },
   Global: {
     label: "Global",
-    groupClass: "border-sky-300 bg-sky-50",
+    groupClass: "border-sky-400 bg-sky-100/80",
     badgeClass: "bg-sky-700 text-white",
-    itemClass: "hover:border-sky-400 hover:bg-sky-100",
+    itemClass: "border-sky-100 hover:border-sky-500 hover:bg-sky-50",
   },
   Promotion: {
     label: "Promotions",
-    groupClass: "border-amber-300 bg-amber-50",
+    groupClass: "border-amber-400 bg-amber-100/80",
     badgeClass: "bg-amber-700 text-white",
-    itemClass: "hover:border-amber-400 hover:bg-amber-100",
+    itemClass: "border-amber-100 hover:border-amber-500 hover:bg-amber-50",
   },
   "Thompson Hospitality": {
     label: "Thompson Hospitality",
-    groupClass: "border-fuchsia-300 bg-fuchsia-50",
+    groupClass: "border-fuchsia-400 bg-fuchsia-100/80",
     badgeClass: "bg-fuchsia-700 text-white",
-    itemClass: "hover:border-fuchsia-400 hover:bg-fuchsia-100",
+    itemClass: "border-fuchsia-100 hover:border-fuchsia-500 hover:bg-fuchsia-50",
   },
 };
 const EMPTY_SSMT_DATA = {
@@ -91,6 +92,42 @@ function metricValue(value) {
 
 function blankAreaPrices(areaOrder = []) {
   return Object.fromEntries(areaOrder.map((area) => [area, ""]));
+}
+
+function findPriceRow(priceBook, priceId) {
+  return priceBook.find((row) => row.id === priceId) || null;
+}
+
+function modifierTypeForGroup(group = {}) {
+  const rawType = group.modifierType || group.type;
+  if (MODIFIER_TYPES.includes(rawType)) return rawType;
+  const name = String(group.name || "").toLowerCase();
+  if (name.includes("remove")) return "Remove";
+  if (name.includes("force")) return "Force";
+  return "Addition";
+}
+
+function normalizeModifierChoice(choice = {}, areaOrder = [], priceBook = []) {
+  const priceSelectorId = choice.priceSelectorId || "";
+  const priceRow = findPriceRow(priceBook, priceSelectorId);
+  return {
+    ...choice,
+    label: choice.label || choice.name || "",
+    description: choice.description || "",
+    mrn: choice.mrn || "",
+    calories: choice.calories || "",
+    priceSelectorId,
+    price: choice.price || priceRow?.areas?.SEA || choice.priceSelector || "",
+    areaPrices: choice.areaPrices || priceRow?.areas || blankAreaPrices(areaOrder),
+  };
+}
+
+function normalizeModifierGroup(group = {}, areaOrder = [], priceBook = []) {
+  return {
+    ...group,
+    modifierType: modifierTypeForGroup(group),
+    choices: (group.choices || []).map((choice) => normalizeModifierChoice(choice, areaOrder, priceBook)),
+  };
 }
 
 function slugify(value) {
@@ -174,6 +211,34 @@ function createDivider(menuId) {
   };
 }
 
+function createBlankModifierChoice(groupId, areaOrder, index = 1) {
+  return {
+    id: `${groupId}-choice-${Date.now()}-${index}`,
+    label: "",
+    description: "",
+    mrn: "",
+    calories: "",
+    priceSelectorId: "",
+    price: "",
+    areaPrices: blankAreaPrices(areaOrder),
+  };
+}
+
+function createBlankModifierGroup(item, areaOrder) {
+  const groupId = `modifier-custom-${Date.now()}`;
+  return {
+    id: groupId,
+    name: "New modifier group",
+    modifierType: "Addition",
+    sourceSheet: "Created in SSMT",
+    menuName: item?.menuName || "Created in SSMT",
+    minQty: "",
+    maxQty: "",
+    copyBehavior: "Independent app-side modifier group",
+    choices: [createBlankModifierChoice(groupId, areaOrder, 1)],
+  };
+}
+
 export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const [ssmtData, setSsmtData] = useState(EMPTY_SSMT_DATA);
   const [dataStatus, setDataStatus] = useState("loading");
@@ -194,8 +259,8 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const [newPriceSea, setNewPriceSea] = useState("");
   const [modifierDialog, setModifierDialog] = useState(null);
   const [flagDialog, setFlagDialog] = useState(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [deleteRequest, setDeleteRequest] = useState(null);
+  const [deleteConfirmed, setDeleteConfirmed] = useState(false);
   const [flagReason, setFlagReason] = useState("Description correction");
   const [flagNote, setFlagNote] = useState("");
   const [reportedFlag, setReportedFlag] = useState(null);
@@ -214,11 +279,13 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
         const storedMenus = Array.isArray(stored?.menus) && stored.menus.length ? stored.menus : payload.menus;
         const storedPriceBook = Array.isArray(stored?.priceBook) && stored.priceBook.length ? stored.priceBook : payload.priceBook;
         const storedModifierGroups = Array.isArray(stored?.modifierGroups) && stored.modifierGroups.length ? stored.modifierGroups : payload.modifierGroups;
+        const priceBook = storedPriceBook;
+        const modifierGroups = storedModifierGroups.map((group) => normalizeModifierGroup(group, payload.areaOrder, priceBook));
         setSsmtData({
           ...payload,
           menuTypes: payload.menuTypes?.length ? payload.menuTypes : DEFAULT_MENU_TYPES,
-          priceBook: storedPriceBook,
-          modifierGroups: storedModifierGroups,
+          priceBook,
+          modifierGroups,
         });
         setMenus((current) => current.length ? current : storedMenus.map(cloneMenu));
         setSelectedMenuId((current) => current || (storedMenus.some((menu) => menu.id === stored?.selectedMenuId) ? stored.selectedMenuId : storedMenus[0]?.id || ""));
@@ -385,6 +452,11 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
     }));
   };
 
+  const requestDelete = (request) => {
+    setDeleteRequest(request);
+    setDeleteConfirmed(false);
+  };
+
   const moveRow = (sourceId, targetId) => {
     if (!sourceId || !targetId || sourceId === targetId) return;
     setMenus((current) => current.map((menu) => {
@@ -400,15 +472,14 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
     setDraggedRowId("");
   };
 
-  const deleteSelectedMenu = () => {
-    if (deleteConfirmation !== selectedMenu.name) return;
+  const deleteSelectedMenu = (menuId) => {
     setMenus((current) => {
-      const remaining = current.filter((menu) => menu.id !== selectedMenu.id);
+      const remaining = current.filter((menu) => menu.id !== menuId);
       setSelectedMenuId(remaining[0]?.id || "");
       return remaining;
     });
-    setDeleteDialogOpen(false);
-    setDeleteConfirmation("");
+    setDeleteRequest(null);
+    setDeleteConfirmed(false);
     setActiveView("menus");
   };
 
@@ -419,7 +490,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
       .slice(0, 4);
     setModifierDialog({
       item,
-      groups: matchedGroups.length ? matchedGroups : ssmtData.modifierGroups.slice(0, 3),
+      groups: (matchedGroups.length ? matchedGroups : ssmtData.modifierGroups.slice(0, 3)).map((group) => normalizeModifierGroup(group, ssmtData.areaOrder, ssmtData.priceBook)),
     });
   };
 
@@ -437,14 +508,163 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
         id: `${group.id}-copy-${Date.now()}-choice-${index + 1}`,
       })),
     };
-    setSsmtData((current) => ({ ...current, modifierGroups: [...current.modifierGroups, copiedGroup] }));
+    const normalizedGroup = normalizeModifierGroup(copiedGroup, ssmtData.areaOrder, ssmtData.priceBook);
+    setSsmtData((current) => ({ ...current, modifierGroups: [...current.modifierGroups, normalizedGroup] }));
     updateItem(modifierDialog.item.id, { modifierGroups: [...(modifierDialog.item.modifierGroups || []), copiedGroup.name] });
     setModifierDialog((current) => current ? {
       ...current,
       item: { ...current.item, modifierGroups: [...(current.item.modifierGroups || []), copiedGroup.name] },
-      groups: [...current.groups, copiedGroup],
+      groups: [...current.groups, normalizedGroup],
     } : current);
     setCopiedModifierNotice(`${copyName} added as an independent modifier group.`);
+  };
+
+  const updateModifierGroup = (groupId, patch) => {
+    const existingGroup = ssmtData.modifierGroups.find((group) => group.id === groupId)
+      || modifierDialog?.groups.find((group) => group.id === groupId)
+      || {};
+    const previousName = existingGroup.name || "";
+    const nextName = Object.prototype.hasOwnProperty.call(patch, "name") ? patch.name : previousName;
+    setSsmtData((current) => {
+      const modifierGroups = current.modifierGroups.map((group) => {
+        if (group.id !== groupId) return group;
+        return normalizeModifierGroup({ ...group, ...patch }, current.areaOrder, current.priceBook);
+      });
+      return { ...current, modifierGroups };
+    });
+    setModifierDialog((current) => current ? {
+      ...current,
+      item: {
+        ...current.item,
+        modifierGroups: (current.item.modifierGroups || []).map((name) => (name === previousName ? nextName : name)),
+      },
+      groups: current.groups.map((group) => (
+        group.id === groupId
+          ? normalizeModifierGroup({ ...group, ...patch }, ssmtData.areaOrder, ssmtData.priceBook)
+          : group
+      )),
+    } : current);
+    if (Object.prototype.hasOwnProperty.call(patch, "name")) {
+      setMenus((current) => current.map((menu) => ({
+        ...menu,
+        items: menu.items.map((item) => ({
+          ...item,
+          modifierGroups: (item.modifierGroups || []).map((name) => (name === previousName ? nextName : name)),
+        })),
+      })));
+    }
+  };
+
+  const addModifierGroup = () => {
+    const group = createBlankModifierGroup(modifierDialog?.item, ssmtData.areaOrder);
+    setSsmtData((current) => ({ ...current, modifierGroups: [...current.modifierGroups, group] }));
+    if (modifierDialog?.item?.id) {
+      updateItem(modifierDialog.item.id, { modifierGroups: [...(modifierDialog.item.modifierGroups || []), group.name] });
+    }
+    setModifierDialog((current) => current ? {
+      ...current,
+      item: { ...current.item, modifierGroups: [...(current.item.modifierGroups || []), group.name] },
+      groups: [...current.groups, group],
+    } : current);
+  };
+
+  const addModifierChoice = (groupId) => {
+    const addChoice = (group) => ({
+      ...group,
+      choices: [...(group.choices || []), createBlankModifierChoice(group.id, ssmtData.areaOrder, (group.choices || []).length + 1)],
+    });
+    setSsmtData((current) => ({
+      ...current,
+      modifierGroups: current.modifierGroups.map((group) => (group.id === groupId ? addChoice(group) : group)),
+    }));
+    setModifierDialog((current) => current ? {
+      ...current,
+      groups: current.groups.map((group) => (group.id === groupId ? addChoice(group) : group)),
+    } : current);
+  };
+
+  const updateModifierChoice = (groupId, choiceId, patch) => {
+    const normalizePatch = (choice, priceBook = ssmtData.priceBook) => {
+      const nextChoice = { ...choice, ...patch };
+      const priceRow = findPriceRow(priceBook, nextChoice.priceSelectorId);
+      if (Object.prototype.hasOwnProperty.call(patch, "priceSelectorId")) {
+        nextChoice.price = priceRow?.areas?.SEA || "";
+        nextChoice.areaPrices = priceRow?.areas || blankAreaPrices(ssmtData.areaOrder);
+      }
+      return normalizeModifierChoice(nextChoice, ssmtData.areaOrder, priceBook);
+    };
+    setSsmtData((current) => ({
+      ...current,
+      modifierGroups: current.modifierGroups.map((group) => (
+        group.id === groupId
+          ? { ...group, choices: group.choices.map((choice) => (choice.id === choiceId ? normalizePatch(choice, current.priceBook) : choice)) }
+          : group
+      )),
+    }));
+    setModifierDialog((current) => current ? {
+      ...current,
+      groups: current.groups.map((group) => (
+        group.id === groupId
+          ? { ...group, choices: group.choices.map((choice) => (choice.id === choiceId ? normalizePatch(choice) : choice)) }
+          : group
+      )),
+    } : current);
+  };
+
+  const deleteModifierGroup = (groupId) => {
+    const groupName = ssmtData.modifierGroups.find((group) => group.id === groupId)?.name
+      || modifierDialog?.groups.find((group) => group.id === groupId)?.name
+      || "";
+    setSsmtData((current) => ({
+      ...current,
+      modifierGroups: current.modifierGroups.filter((group) => group.id !== groupId),
+    }));
+    setMenus((current) => current.map((menu) => ({
+      ...menu,
+      items: menu.items.map((item) => ({
+        ...item,
+        modifierGroups: (item.modifierGroups || []).filter((name) => name !== groupName),
+      })),
+    })));
+    setModifierDialog((current) => current ? {
+      ...current,
+      item: { ...current.item, modifierGroups: (current.item.modifierGroups || []).filter((name) => name !== groupName) },
+      groups: current.groups.filter((group) => group.id !== groupId),
+    } : current);
+    setDeleteRequest(null);
+    setDeleteConfirmed(false);
+  };
+
+  const deleteModifierChoice = (groupId, choiceId) => {
+    setSsmtData((current) => ({
+      ...current,
+      modifierGroups: current.modifierGroups.map((group) => (
+        group.id === groupId ? { ...group, choices: group.choices.filter((choice) => choice.id !== choiceId) } : group
+      )),
+    }));
+    setModifierDialog((current) => current ? {
+      ...current,
+      groups: current.groups.map((group) => (
+        group.id === groupId ? { ...group, choices: group.choices.filter((choice) => choice.id !== choiceId) } : group
+      )),
+    } : current);
+    setDeleteRequest(null);
+    setDeleteConfirmed(false);
+  };
+
+  const confirmDelete = () => {
+    if (!deleteConfirmed || !deleteRequest) return;
+    if (deleteRequest.type === "menu") {
+      deleteSelectedMenu(deleteRequest.id);
+    } else if (deleteRequest.type === "item") {
+      deleteItem(deleteRequest.id);
+      setDeleteRequest(null);
+      setDeleteConfirmed(false);
+    } else if (deleteRequest.type === "modifier-group") {
+      deleteModifierGroup(deleteRequest.id);
+    } else if (deleteRequest.type === "modifier-item") {
+      deleteModifierChoice(deleteRequest.groupId, deleteRequest.id);
+    }
   };
 
   const reportFlag = () => {
@@ -655,29 +875,29 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                   <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search menus..." className="w-full rounded-lg border border-slate-300 bg-white py-3 pl-10 pr-3 text-sm font-bold outline-none focus:border-emerald-500" />
                 </label>
               </div>
-              <div className="mt-4 grid max-h-[68vh] gap-2 overflow-y-auto pr-1 md:grid-cols-2 2xl:grid-cols-3">
+              <div data-testid="ssmt-menu-selector-grid" className="mt-4 grid gap-2 lg:grid-cols-4">
                 {menuGroups.map((group) => (
                   <section
                     key={group.type}
                     data-testid={`ssmt-menu-group-${group.type}`}
                     data-menu-type={group.type}
-                    className={`rounded-lg border p-3 ${group.groupClass}`}
+                    className={`flex max-h-[52vh] min-h-0 flex-col rounded-lg border p-3 ${group.groupClass}`}
                   >
                     <div className="mb-2 flex items-center justify-between gap-2">
                       <h3 className="text-sm font-black text-slate-950">{group.label}</h3>
                       <span className={`rounded px-2 py-1 text-[11px] font-black ${group.badgeClass}`}>{group.menus.length}</span>
                     </div>
-                    <div className="grid gap-2">
+                    <div className="grid min-h-0 gap-1 overflow-y-auto pr-1">
                       {group.menus.map((menu) => (
                         <button
                           key={menu.id}
                           type="button"
                           data-menu-name={menu.name}
                           onClick={() => openMenu(menu.id)}
-                          className={`rounded-lg border border-white bg-white p-3 text-left shadow-sm ${group.itemClass}`}
+                          className={`rounded-lg border bg-white px-3 py-2 text-left shadow-sm ${group.itemClass}`}
                         >
-                          <span className="block truncate text-sm font-black text-slate-950">{menu.name}</span>
-                          <span className="mt-1 flex flex-wrap gap-2 text-[11px] font-bold text-slate-600">
+                          <span className="block whitespace-normal break-words text-sm font-black leading-4 text-slate-950">{menu.name}</span>
+                          <span className="mt-1 flex flex-wrap gap-1 text-[11px] font-bold text-slate-600">
                             <span>{menu.type}</span>
                             <span>{menu.phase}</span>
                           </span>
@@ -722,7 +942,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                   <DollarSign size={16} /> Pricing table
                 </button>
               </div>
-              <button type="button" onClick={() => setDeleteDialogOpen(true)} className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-black text-red-800 hover:bg-red-100">
+              <button type="button" onClick={() => requestDelete({ type: "menu", id: selectedMenu.id, name: selectedMenu.name })} className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-black text-red-800 hover:bg-red-100">
                 <Trash2 size={16} /> Delete menu
               </button>
             </section>
@@ -787,9 +1007,9 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                   </button>
                 </div>
               </div>
-              <div className="overflow-x-auto">
-                <table className="min-w-[2020px] w-full border-collapse text-left text-sm">
-                  <thead className="bg-slate-50 text-xs font-black uppercase tracking-[0.12em] text-slate-500">
+              <div data-testid="ssmt-builder-scroll" className="max-h-[68vh] overflow-auto">
+                <table className="w-full min-w-[2300px] border-collapse text-left text-sm">
+                  <thead className="sticky top-0 z-10 bg-slate-100 text-xs font-black uppercase tracking-[0.12em] text-slate-600 shadow-sm">
                     <tr>
                       {["Move", "Fixy", "Label", "Description", "MRN", "SEA price", "Category", "Secondary category", "Area prices", "Calories", "Actions"].map((header) => (
                         <th key={header} className="border-b border-slate-200 px-4 py-3">{header}</th>
@@ -842,7 +1062,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               aria-label="Item label"
                               value={item.label}
                               onChange={(event) => updateItem(item.id, { label: normalizeLabel(event.target.value) })}
-                              className="w-56 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-black outline-none focus:border-emerald-500"
+                              className="w-80 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-black outline-none focus:border-emerald-500"
                             />
                           </td>
                           <td className="border-b border-slate-100 px-4 py-3">
@@ -850,7 +1070,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               aria-label="Description"
                               value={item.description}
                               onChange={(event) => updateItem(item.id, { description: normalizeDescription(event.target.value) })}
-                              className="h-20 w-72 resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-emerald-500"
+                              className="h-32 w-[30rem] resize-y rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold leading-5 outline-none focus:border-emerald-500"
                             />
                           </td>
                           <td className="border-b border-slate-100 px-4 py-3">
@@ -908,7 +1128,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               <button type="button" onClick={() => openModifierDialog(item)} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-black text-slate-800 hover:bg-slate-100">
                                 <Tags size={15} /> View modifiers
                               </button>
-                              <button type="button" onClick={() => deleteItem(item.id)} className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-black text-red-800 hover:bg-red-100" aria-label={`Delete item ${item.label || item.name || "item"}`}>
+                              <button type="button" onClick={() => requestDelete({ type: "item", id: item.id, name: item.label || item.name || "item" })} className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-black text-red-800 hover:bg-red-100" aria-label={`Delete item ${item.label || item.name || "item"}`}>
                                 <Trash2 size={15} /> Delete item
                               </button>
                               <button type="button" onClick={() => setFlagDialog({ item })} className="inline-flex items-center justify-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-black text-amber-900 hover:bg-amber-100">
@@ -930,28 +1150,132 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
       {modifierDialog && (
         <Modal title="Modifier detail" onClose={() => setModifierDialog(null)}>
           <div className="space-y-4">
-            <p className="text-sm font-bold text-slate-700">For {modifierDialog.item.label || modifierDialog.item.name}, copy creates an independent modifier group so edits do not change another menu.</p>
+            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <p className="text-sm font-bold leading-6 text-slate-700">For {modifierDialog.item.label || modifierDialog.item.name}, copy creates an independent modifier group. Modifier groups are saved as app-side SSMT records. Prices stay tied to Pricing Structure rows.</p>
+              <button type="button" onClick={addModifierGroup} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-black text-slate-800 hover:bg-slate-100">
+                <Plus size={14} /> Add modifier group
+              </button>
+            </div>
             {copiedModifierNotice && <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-black text-emerald-900">{copiedModifierNotice}</p>}
             {modifierDialog.groups.map((group) => (
-              <section key={group.id} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-black text-slate-950">{group.name}</p>
-                    <p className="mt-1 text-xs font-bold text-slate-500">{group.choices.length} choices / {group.sourceSheet}</p>
+              <section key={group.id} data-testid={`ssmt-modifier-group-${group.id}`} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <div className="grid gap-3 lg:grid-cols-[minmax(220px,1fr)_180px_auto] lg:items-end">
+                  <label className="grid gap-1">
+                    <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Modifier group name</span>
+                    <input
+                      aria-label="Modifier group name"
+                      value={group.name}
+                      onChange={(event) => updateModifierGroup(group.id, { name: event.target.value })}
+                      className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-black outline-none focus:border-emerald-500"
+                    />
+                  </label>
+                  <label className="grid gap-1">
+                    <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Modifier group type</span>
+                    <select
+                      aria-label="Modifier group type"
+                      value={modifierTypeForGroup(group)}
+                      onChange={(event) => updateModifierGroup(group.id, { modifierType: event.target.value })}
+                      className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-black"
+                    >
+                      {MODIFIER_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
+                    </select>
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    <button type="button" onClick={() => addModifierChoice(group.id)} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-black text-slate-800 hover:bg-slate-100">
+                      <Plus size={14} /> Add modifier item line
+                    </button>
+                    <button type="button" onClick={() => requestDelete({ type: "modifier-group", id: group.id, name: group.name })} className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-black text-red-800 hover:bg-red-100">
+                      <Trash2 size={14} /> Delete modifier group
+                    </button>
+                    <button type="button" onClick={() => copyModifierGroup(group)} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-black text-slate-800 hover:bg-slate-100">
+                      <Copy size={14} /> Copy group
+                    </button>
                   </div>
-                  <button type="button" onClick={() => copyModifierGroup(group)} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-black text-slate-800">
-                    <Copy size={14} /> Copy group
-                  </button>
                 </div>
-                <div className="mt-3 grid gap-2 md:grid-cols-2">
-                  {group.choices.slice(0, 6).map((choice) => (
-                    <div key={choice.id} className="rounded-lg border border-white bg-white p-3">
-                      <p className="text-sm font-black text-slate-900">{choice.label}</p>
-                      <p className="mt-1 text-xs font-semibold text-slate-500">{choice.description || "No description"}</p>
-                      <p className="mt-2 font-mono text-[11px] font-bold text-slate-500">{choice.mrn || "No MRN"}</p>
-                    </div>
-                  ))}
+
+                <div className="mt-3 max-h-[48vh] overflow-auto rounded-lg border border-slate-200 bg-white">
+                  <table className="min-w-[1280px] w-full border-collapse text-left text-xs">
+                    <thead className="sticky top-0 bg-slate-100 font-black uppercase tracking-[0.1em] text-slate-600">
+                      <tr>
+                        {["Modifier name", "Description", "MRN", "Calories", "Price", "Area prices", "Actions"].map((header) => (
+                          <th key={header} className="border-b border-slate-200 px-3 py-2">{header}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(group.choices || []).map((choice) => (
+                        <tr key={choice.id} className="align-top odd:bg-white even:bg-slate-50">
+                          <td className="border-b border-slate-100 px-3 py-2">
+                            <input
+                              aria-label="Modifier name"
+                              value={choice.label || ""}
+                              onChange={(event) => updateModifierChoice(group.id, choice.id, { label: event.target.value })}
+                              className="w-56 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-black outline-none focus:border-emerald-500"
+                            />
+                          </td>
+                          <td className="border-b border-slate-100 px-3 py-2">
+                            <textarea
+                              aria-label="Modifier description"
+                              value={choice.description || ""}
+                              onChange={(event) => updateModifierChoice(group.id, choice.id, { description: event.target.value })}
+                              className="h-20 w-72 resize-y rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold leading-5 outline-none focus:border-emerald-500"
+                            />
+                          </td>
+                          <td className="border-b border-slate-100 px-3 py-2">
+                            <input
+                              aria-label="Modifier MRN"
+                              value={choice.mrn || ""}
+                              onChange={(event) => updateModifierChoice(group.id, choice.id, { mrn: event.target.value })}
+                              className="w-36 rounded-lg border border-slate-300 bg-white px-3 py-2 font-mono text-xs font-bold outline-none focus:border-emerald-500"
+                            />
+                          </td>
+                          <td className="border-b border-slate-100 px-3 py-2">
+                            <input
+                              aria-label="Modifier calories"
+                              value={choice.calories || ""}
+                              onChange={(event) => updateModifierChoice(group.id, choice.id, { calories: event.target.value })}
+                              className="w-28 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500"
+                            />
+                          </td>
+                          <td className="border-b border-slate-100 px-3 py-2">
+                            <select
+                              aria-label="Modifier price"
+                              value={choice.priceSelectorId || ""}
+                              onChange={(event) => updateModifierChoice(group.id, choice.id, { priceSelectorId: event.target.value })}
+                              className="w-60 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-black text-slate-900"
+                            >
+                              <option value="">Select price</option>
+                              {ssmtData.priceBook.map((price) => (
+                                <option key={price.id} value={price.id}>{price.selectorLabel}</option>
+                              ))}
+                            </select>
+                            <p className="mt-1 text-[11px] font-bold text-slate-500">{choice.price || "TBD"}</p>
+                          </td>
+                          <td className="border-b border-slate-100 px-3 py-2">
+                            <div className="grid w-[360px] grid-cols-4 gap-1 text-[11px] font-bold text-slate-700">
+                              {ssmtData.areaOrder.map((area) => (
+                                <span key={area} className="rounded border border-slate-200 bg-white px-2 py-1">
+                                  <span className="font-black text-slate-500">{area}</span> {choice.areaPrices?.[area] || "TBD"}
+                                </span>
+                              ))}
+                            </div>
+                          </td>
+                          <td className="border-b border-slate-100 px-3 py-2">
+                            <button type="button" onClick={() => requestDelete({ type: "modifier-item", groupId: group.id, id: choice.id, name: choice.label || "modifier item" })} className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-black text-red-800 hover:bg-red-100">
+                              <Trash2 size={14} /> Delete modifier item line
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {!group.choices?.length && (
+                    <div className="p-4 text-sm font-bold text-slate-600">No modifier item lines yet.</div>
+                  )}
                 </div>
+                <p className="mt-2 text-[11px] font-bold text-slate-500">
+                  {group.choices.length} choices / {group.sourceSheet}
+                </p>
               </section>
             ))}
           </div>
@@ -979,21 +1303,17 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
         </Modal>
       )}
 
-      {deleteDialogOpen && (
-        <Modal title="Delete menu" onClose={() => setDeleteDialogOpen(false)}>
-          <div className="space-y-4">
-            <p className="text-sm font-bold leading-6 text-slate-700">
-              Retype the menu name exactly to delete this in-app SSMT menu record: <span className="font-black text-slate-950">{selectedMenu.name}</span>
-            </p>
-            <label className="block">
-              <span className="text-sm font-black text-slate-900">Retype menu name</span>
-              <input value={deleteConfirmation} onChange={(event) => setDeleteConfirmation(event.target.value)} className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-sm font-bold outline-none focus:border-red-500" />
-            </label>
-            <button type="button" onClick={deleteSelectedMenu} disabled={deleteConfirmation !== selectedMenu.name} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-red-700 px-4 py-3 text-sm font-black text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-slate-300">
-              <Trash2 size={18} /> Delete permanently
-            </button>
-          </div>
-        </Modal>
+      {deleteRequest && (
+        <DeleteConfirmationModal
+          request={deleteRequest}
+          confirmed={deleteConfirmed}
+          onConfirmedChange={setDeleteConfirmed}
+          onClose={() => {
+            setDeleteRequest(null);
+            setDeleteConfirmed(false);
+          }}
+          onDelete={confirmDelete}
+        />
       )}
     </div>
   );
@@ -1030,5 +1350,38 @@ function Modal({ title, children, onClose }) {
         {children}
       </section>
     </div>
+  );
+}
+
+function DeleteConfirmationModal({ request, confirmed, onConfirmedChange, onClose, onDelete }) {
+  const labelByType = {
+    menu: "Delete menu",
+    item: "Delete item",
+    "modifier-group": "Delete modifier group",
+    "modifier-item": "Delete modifier item",
+  };
+  const title = labelByType[request.type] || "Delete item";
+  const targetName = request.name || "selected item";
+
+  return (
+    <Modal title={title} onClose={onClose}>
+      <div className="space-y-4">
+        <p className="text-sm font-bold leading-6 text-slate-700">
+          This deletes the app-side SSMT record only: <span className="font-black text-slate-950">{targetName}</span>.
+        </p>
+        <label className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-3 py-3 text-sm font-black text-red-900">
+          <input
+            type="checkbox"
+            checked={confirmed}
+            onChange={(event) => onConfirmedChange(event.target.checked)}
+            aria-label={`Confirm delete ${targetName}`}
+          />
+          Confirm delete
+        </label>
+        <button type="button" onClick={onDelete} disabled={!confirmed} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-red-700 px-4 py-3 text-sm font-black text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-slate-300">
+          <Trash2 size={18} /> {title}
+        </button>
+      </div>
+    </Modal>
   );
 }

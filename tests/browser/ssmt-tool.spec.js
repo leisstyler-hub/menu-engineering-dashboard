@@ -91,11 +91,11 @@ test("SSMT opens behind passcode and separates pricing from menu building", asyn
   await page.getByRole("button", { name: /Delete menu/i }).click();
   const deleteDialog = page.getByRole("dialog", { name: /Delete menu/i });
   await expect(deleteDialog).toBeVisible();
-  await deleteDialog.getByLabel(/Retype menu name/i).fill("Smoke Test");
-  await expect(deleteDialog.getByRole("button", { name: /Delete permanently/i })).toBeDisabled();
-  await deleteDialog.getByLabel(/Retype menu name/i).fill("Smoke Test Promo Menu");
-  await expect(deleteDialog.getByRole("button", { name: /Delete permanently/i })).toBeEnabled();
-  await deleteDialog.getByRole("button", { name: /Delete permanently/i }).click();
+  await expect(deleteDialog.getByLabel(/Retype menu name/i)).toHaveCount(0);
+  await expect(deleteDialog.getByRole("button", { name: "Delete menu", exact: true })).toBeDisabled();
+  await deleteDialog.getByLabel(/Confirm delete Smoke Test Promo Menu/i).check();
+  await expect(deleteDialog.getByRole("button", { name: "Delete menu", exact: true })).toBeEnabled();
+  await deleteDialog.getByRole("button", { name: "Delete menu", exact: true }).click();
   await expect(page.getByRole("heading", { name: /^Menu Selector$/ })).toBeVisible();
 
   await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
@@ -125,10 +125,10 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
   await expect(promotionsGroup).toBeVisible();
   await expect(thompsonGroup).toBeVisible();
 
-  await expect(firstCoreGroup).toHaveClass(/border-emerald-300/);
-  await expect(globalGroup).toHaveClass(/border-sky-300/);
-  await expect(promotionsGroup).toHaveClass(/border-amber-300/);
-  await expect(thompsonGroup).toHaveClass(/border-fuchsia-300/);
+  await expect(firstCoreGroup).toHaveClass(/border-emerald-400/);
+  await expect(globalGroup).toHaveClass(/border-sky-400/);
+  await expect(promotionsGroup).toHaveClass(/border-amber-400/);
+  await expect(thompsonGroup).toHaveClass(/border-fuchsia-400/);
 
   const groupOrder = await page.getByTestId(/ssmt-menu-group-/).evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-menu-type")));
   expect(groupOrder).toEqual(["Core", "Global", "Promotion", "Thompson Hospitality"]);
@@ -186,7 +186,113 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
   await expect(page.getByLabel(/Secondary category for/i).first()).toHaveValue("grill");
 
   await page.getByRole("button", { name: /Delete item ALPHA ITEM/i }).click();
+  const itemDeleteDialog = page.getByRole("dialog", { name: /Delete item/i });
+  await expect(itemDeleteDialog).toBeVisible();
+  await itemDeleteDialog.getByLabel(/Confirm delete ALPHA ITEM/i).check();
+  await itemDeleteDialog.getByRole("button", { name: "Delete item", exact: true }).click();
   await expect(page.getByLabel(/Item label/i).first()).toHaveValue("BETA ITEM");
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("SSMT selector and builder keep dense records and wide tables usable without bottom-only scrolling", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByLabel(/SSMT passcode/i).fill("0411");
+  await page.getByRole("button", { name: /unlock ssmt/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+
+  const selectorGrid = page.getByTestId("ssmt-menu-selector-grid");
+  await expect(selectorGrid).toBeVisible();
+  const selectorColumns = await selectorGrid.evaluate((node) => getComputedStyle(node).gridTemplateColumns.split(" ").length);
+  expect(selectorColumns).toBeGreaterThanOrEqual(4);
+
+  for (const type of ["Core", "Global", "Promotion", "Thompson Hospitality"]) {
+    const box = await page.getByTestId(`ssmt-menu-group-${type}`).boundingBox();
+    expect(box?.y).toBeGreaterThanOrEqual(0);
+    expect((box?.y || 0) + (box?.height || 0)).toBeLessThanOrEqual(900);
+  }
+
+  await page.getByRole("button", { name: /^The Daily/i }).click();
+  const builderScroll = page.getByTestId("ssmt-builder-scroll");
+  await expect(builderScroll).toBeVisible();
+  const scrollMetrics = await builderScroll.evaluate((node) => {
+    const style = getComputedStyle(node);
+    return {
+      overflowX: style.overflowX,
+      overflowY: style.overflowY,
+      maxHeight: style.maxHeight,
+      scrollWidth: node.scrollWidth,
+      clientWidth: node.clientWidth,
+    };
+  });
+  expect(scrollMetrics.overflowX).toBe("auto");
+  expect(scrollMetrics.overflowY).toBe("auto");
+  expect(scrollMetrics.maxHeight).not.toBe("none");
+  expect(scrollMetrics.scrollWidth).toBeGreaterThan(scrollMetrics.clientWidth);
+
+  const labelInput = page.getByLabel(/Item label/i).first();
+  await labelInput.fill("roasted poblano chicken torta with avocado crema");
+  const labelWidth = await labelInput.evaluate((node) => node.getBoundingClientRect().width);
+  expect(labelWidth).toBeGreaterThanOrEqual(300);
+
+  const descriptionInput = page.getByLabel(/Description/i).first();
+  await descriptionInput.fill("fire roasted poblano chicken layered with avocado crema, crisp vegetables, pickled onions, and a citrus chile finish");
+  const descriptionFits = await descriptionInput.evaluate((node) => node.scrollHeight <= node.clientHeight + 4);
+  expect(descriptionFits).toBe(true);
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("SSMT modifier groups are editable with typed group metadata and line-level pricing fields", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/");
+
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByLabel(/SSMT passcode/i).fill("0411");
+  await page.getByRole("button", { name: /unlock ssmt/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+  await page.getByLabel(/New menu name/i).fill("Smoke Test Modifiers");
+  await page.getByLabel(/New menu type/i).selectOption("Core");
+  await page.getByRole("button", { name: /Create menu/i }).click();
+
+  await page.getByRole("button", { name: /view modifiers/i }).first().click();
+  const modifierDialog = page.getByRole("dialog", { name: /modifier/i });
+  await expect(modifierDialog).toBeVisible();
+  await modifierDialog.getByRole("button", { name: /Add modifier group/i }).click();
+
+  await modifierDialog.getByLabel(/Modifier group name/i).last().fill("Sauce Rules");
+  await modifierDialog.getByLabel(/Modifier group type/i).last().selectOption("Addition");
+  await modifierDialog.getByRole("button", { name: /Add modifier item line/i }).last().click();
+
+  await modifierDialog.getByLabel(/Modifier name/i).last().fill("Chile crisp");
+  await modifierDialog.getByLabel(/Modifier description/i).last().fill("spicy crunchy oil");
+  await modifierDialog.getByLabel(/Modifier MRN/i).last().fill("123456.78");
+  await modifierDialog.getByLabel(/Modifier calories/i).last().fill("80");
+  await modifierDialog.getByLabel(/Modifier price/i).last().selectOption({ label: "$2.55 - Core Side / Global Side" });
+
+  const editableGroup = modifierDialog.getByTestId(/ssmt-modifier-group/).last();
+  await expect(editableGroup).toContainText("AUS");
+  await expect(editableGroup).toContainText("MCO");
+  await expect(modifierDialog.getByLabel(/Modifier MRN/i).last()).toHaveValue("123456.78");
+
+  await editableGroup.getByRole("button", { name: /Delete modifier item line/i }).last().click();
+  await page.getByRole("dialog", { name: /Delete modifier item/i }).getByLabel(/Confirm delete/i).check();
+  await page.getByRole("dialog", { name: /Delete modifier item/i }).getByRole("button", { name: "Delete modifier item", exact: true }).click();
+  const modifierNamesAfterDelete = await modifierDialog.getByLabel(/Modifier name/i).evaluateAll((nodes) => nodes.map((node) => node.value));
+  expect(modifierNamesAfterDelete).not.toContain("Chile crisp");
+
+  await editableGroup.getByRole("button", { name: /Delete modifier group/i }).click();
+  await page.getByRole("dialog", { name: /Delete modifier group/i }).getByLabel(/Confirm delete Sauce Rules/i).check();
+  await page.getByRole("dialog", { name: /Delete modifier group/i }).getByRole("button", { name: "Delete modifier group", exact: true }).click();
+  const groupNamesAfterDelete = await modifierDialog.getByLabel(/Modifier group name/i).evaluateAll((nodes) => nodes.map((node) => node.value));
+  expect(groupNamesAfterDelete).not.toContain("Sauce Rules");
 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
