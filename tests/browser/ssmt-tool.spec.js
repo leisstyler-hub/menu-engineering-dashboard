@@ -298,6 +298,49 @@ test("SSMT modifier groups are editable with typed group metadata and line-level
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
+test("SSMT modifier editor opens wider and the modifier action is visually prominent", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/");
+
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByLabel(/SSMT passcode/i).fill("0411");
+  await page.getByRole("button", { name: /unlock ssmt/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+  await page.getByRole("button", { name: /^The Daily/i }).click();
+
+  const modifierButton = page.getByRole("button", { name: /view modifiers/i }).first();
+  await expect(modifierButton).toBeVisible();
+  const modifierButtonStyle = await modifierButton.evaluate((node) => {
+    const style = getComputedStyle(node);
+    return {
+      backgroundColor: style.backgroundColor,
+      borderColor: style.borderColor,
+      color: style.color,
+    };
+  });
+  expect(modifierButtonStyle.backgroundColor).toBe("rgb(21, 128, 61)");
+  expect(modifierButtonStyle.borderColor).toBe("rgb(22, 101, 52)");
+  expect(modifierButtonStyle.color).toBe("rgb(255, 255, 255)");
+
+  await modifierButton.click();
+  const modifierDialog = page.getByRole("dialog", { name: /modifier/i });
+  await expect(modifierDialog).toBeVisible();
+  const modifierDialogMetrics = await modifierDialog.evaluate((node) => {
+    const tableScroll = node.querySelector("table")?.parentElement;
+    return {
+      dialogWidth: node.getBoundingClientRect().width,
+      tableClientWidth: tableScroll?.clientWidth || 0,
+      tableScrollWidth: tableScroll?.scrollWidth || 0,
+    };
+  });
+  expect(modifierDialogMetrics.dialogWidth).toBeGreaterThanOrEqual(1300);
+  expect(modifierDialogMetrics.tableScrollWidth).toBeLessThanOrEqual(modifierDialogMetrics.tableClientWidth + 4);
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
 test("Menu Audit describes SSMT app and Webtrition sources without old Excel as ongoing truth", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   await page.goto("/");
