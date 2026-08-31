@@ -151,7 +151,7 @@ assert.equal(itemRows[1][10], "540");
 assert.equal(itemRows[1][25], "123456.78", "Item MRN must stay exact text.");
 assert.equal(itemRows[1][32], "9.40");
 assert.equal(itemRows[1][42], "8.45");
-assert.equal(itemRows[1][47], "[placeholder]");
+assert.equal(itemRows[1][47], "", "Optional missing area prices should stay blank for IT/Centric cleanup.");
 
 const modifierGroupRows = sheetRows("Modifier Groups");
 assert.equal(modifierGroupRows[1][1], "Choice of Sauce");
@@ -162,6 +162,7 @@ assert.equal(modifierGroupRows[1][7], "selection");
 const modifierRows = sheetRows("Modifiers");
 assert.equal(modifierRows[1][3], "Garlic Aioli");
 assert.equal(modifierRows[1][9], "0.75");
+assert.equal(modifierRows[1][11], "", "Optional modifier cost should stay blank.");
 assert.equal(modifierRows[1][27], "987654.32", "Modifier MRN must stay exact text.");
 
 const relationshipRows = sheetRows("Relationships").map((row) => row.slice(0, 3).join("|"));

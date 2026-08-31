@@ -74,9 +74,8 @@ test("SSMT opens behind passcode and separates pricing from menu building", asyn
   await page.getByRole("button", { name: /view modifiers/i }).first().click();
   const modifierDialog = page.getByRole("dialog", { name: /modifier/i });
   await expect(modifierDialog).toBeVisible();
-  await expect(modifierDialog.getByText(/copy creates an independent modifier group/i)).toBeVisible();
-  await modifierDialog.getByRole("button", { name: /copy group/i }).first().click();
-  await expect(modifierDialog.getByText(/added as an independent modifier group/i)).toBeVisible();
+  await expect(modifierDialog.getByText(/copy places a modifier group on the SSMT clipboard/i)).toBeVisible();
+  await expect(modifierDialog.getByText(/No modifier groups attached/i)).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(modifierDialog).toHaveCount(0);
 
@@ -92,9 +91,11 @@ test("SSMT opens behind passcode and separates pricing from menu building", asyn
   await page.getByRole("button", { name: /Delete menu/i }).click();
   const deleteDialog = page.getByRole("dialog", { name: /Delete menu/i });
   await expect(deleteDialog).toBeVisible();
-  await expect(deleteDialog.getByLabel(/Retype menu name/i)).toHaveCount(0);
+  await expect(deleteDialog.getByLabel(/Retype menu name/i)).toBeVisible();
   await expect(deleteDialog.getByRole("button", { name: "Delete menu", exact: true })).toBeDisabled();
-  await deleteDialog.getByLabel(/Confirm delete Smoke Test Promo Menu/i).check();
+  await deleteDialog.getByLabel(/Retype menu name/i).fill("Smoke Test");
+  await expect(deleteDialog.getByRole("button", { name: "Delete menu", exact: true })).toBeDisabled();
+  await deleteDialog.getByLabel(/Retype menu name/i).fill("Smoke Test Promo Menu");
   await expect(deleteDialog.getByRole("button", { name: "Delete menu", exact: true })).toBeEnabled();
   await deleteDialog.getByRole("button", { name: "Delete menu", exact: true }).click();
   await expect(page.getByRole("heading", { name: /^Menu Selector$/ })).toBeVisible();
@@ -119,24 +120,27 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
 
   const firstCoreGroup = page.getByTestId("ssmt-menu-group-Core");
   const globalGroup = page.getByTestId("ssmt-menu-group-Global");
+  const menuLibraryGroup = page.getByTestId("ssmt-menu-group-Menu Library");
   const promotionsGroup = page.getByTestId("ssmt-menu-group-Promotion");
   const thompsonGroup = page.getByTestId("ssmt-menu-group-Thompson Hospitality");
   await expect(firstCoreGroup).toBeVisible();
   await expect(globalGroup).toBeVisible();
+  await expect(menuLibraryGroup).toBeVisible();
   await expect(promotionsGroup).toBeVisible();
   await expect(thompsonGroup).toBeVisible();
 
   await expect(firstCoreGroup).toHaveClass(/border-emerald-400/);
   await expect(globalGroup).toHaveClass(/border-sky-400/);
+  await expect(menuLibraryGroup).toHaveClass(/border-violet-400/);
   await expect(promotionsGroup).toHaveClass(/border-amber-400/);
   await expect(thompsonGroup).toHaveClass(/border-fuchsia-400/);
 
   const groupOrder = await page.getByTestId(/ssmt-menu-group-/).evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-menu-type")));
-  expect(groupOrder).toEqual(["Core", "Global", "Promotion", "Thompson Hospitality"]);
+  expect(groupOrder).toEqual(["Core", "Global", "Menu Library", "Promotion", "Thompson Hospitality"]);
 
-  const coreNames = await firstCoreGroup.getByRole("button").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-menu-name")));
+  const coreNames = await firstCoreGroup.locator("[data-menu-name]").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-menu-name")));
   expect([...coreNames].sort((a, b) => a.localeCompare(b))).toEqual(coreNames);
-  const globalNames = await globalGroup.getByRole("button").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-menu-name")));
+  const globalNames = await globalGroup.locator("[data-menu-name]").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-menu-name")));
   expect([...globalNames].sort((a, b) => a.localeCompare(b))).toEqual(globalNames);
   expect(globalNames).toEqual(expect.arrayContaining([
     "Andes",
@@ -528,10 +532,13 @@ test("SSMT selected-menu export downloads a Centric-shaped workbook", async ({ p
   const downloadPath = await download.path();
   const workbook = XLSX.readFile(downloadPath);
   expect(workbook.SheetNames).toEqual(["Glossary", "Brand", "Menus", "Categories", "Items", "Modifier Groups", "Modifiers", "Relationships"]);
+  const brandRows = XLSX.utils.sheet_to_json(workbook.Sheets.Brand, { header: 1, raw: false, defval: "" });
+  expect(brandRows[1][2]).toBe("");
   const itemRows = XLSX.utils.sheet_to_json(workbook.Sheets.Items, { header: 1, raw: false, defval: "" });
   expect(itemRows[1][3]).toBe("EXPORT SANDWICH");
   expect(itemRows[1][4]).toBe("EXPORT SANDWICH");
   expect(itemRows[1][8]).toBe("export ready description");
+  expect(itemRows[1][11]).toBe("");
   expect(itemRows[1][25]).toBe("321654.98");
   const relationshipRows = XLSX.utils.sheet_to_json(workbook.Sheets.Relationships, { header: 1, raw: false, defval: "" });
   expect(relationshipRows.map((row) => row.slice(0, 3).join("|"))).toContain("Item|EXPORT SANDWICH|FOOD");
@@ -553,36 +560,51 @@ test("SSMT modifier groups are editable with typed group metadata and line-level
   await page.getByLabel(/New menu type/i).selectOption("Core");
   await page.getByRole("button", { name: /Create menu/i }).click();
 
-  await page.getByRole("button", { name: /view modifiers/i }).first().click();
+  await expect(page.getByRole("button", { name: /mods \(0\)/i }).first()).toBeVisible();
+  await page.getByRole("button", { name: /mods \(0\)/i }).first().click();
   const modifierDialog = page.getByRole("dialog", { name: /modifier/i });
   await expect(modifierDialog).toBeVisible();
+  await expect(modifierDialog.getByText(/No modifier groups attached/i)).toBeVisible();
   await modifierDialog.getByRole("button", { name: /Add modifier group/i }).click();
+  await expect(modifierDialog.getByLabel(/Modifier name/i)).toHaveCount(1);
 
   await modifierDialog.getByLabel(/Modifier group name/i).last().fill("Sauce Rules");
   await modifierDialog.getByLabel(/Modifier group type/i).last().selectOption("Addition");
-  await modifierDialog.getByRole("button", { name: /Add modifier item line/i }).last().click();
 
-  await modifierDialog.getByLabel(/Modifier name/i).last().fill("Chile crisp");
+  await modifierDialog.getByLabel(/Modifier name/i).last().fill("Chile Crisp");
   await modifierDialog.getByLabel(/Modifier description/i).last().fill("spicy crunchy oil");
   await modifierDialog.getByLabel(/Modifier MRN/i).last().fill("123456.78");
   await modifierDialog.getByLabel(/Modifier calories/i).last().fill("80");
   await modifierDialog.getByLabel(/Modifier price/i).last().selectOption({ label: "$2.55 - Core Side / Global Side" });
+  await expect(modifierDialog.getByLabel(/Modifier name/i).last()).toHaveValue("chile crisp");
 
   const editableGroup = modifierDialog.getByTestId(/ssmt-modifier-group/).last();
   await expect(editableGroup).toContainText("AUS");
   await expect(editableGroup).toContainText("MCO");
   await expect(modifierDialog.getByLabel(/Modifier MRN/i).last()).toHaveValue("123456.78");
+  await editableGroup.getByRole("button", { name: /Lock modifier group Sauce Rules/i }).click();
+  await expect(editableGroup.getByLabel(/Modifier group name/i)).toHaveAttribute("readonly", "");
+  await editableGroup.getByRole("button", { name: /Unlock modifier group Sauce Rules/i }).click();
+  await editableGroup.getByRole("button", { name: /Copy group to clipboard/i }).click();
+  await expect(modifierDialog.getByText(/Sauce Rules copied to modifier clipboard/i)).toBeVisible();
+  await page.keyboard.press("Escape");
 
-  await editableGroup.getByRole("button", { name: /Delete modifier item line/i }).last().click();
+  await page.getByRole("button", { name: /Add item/i }).click();
+  await page.getByRole("button", { name: /mods \(0\)/i }).last().click();
+  const secondModifierDialog = page.getByRole("dialog", { name: /modifier/i });
+  await secondModifierDialog.getByRole("button", { name: /Paste modifier group/i }).click();
+  await expect(secondModifierDialog.getByLabel(/Modifier group name/i)).toHaveValue("Sauce Rules");
+
+  await secondModifierDialog.getByRole("button", { name: /Delete modifier item line/i }).last().click();
   await page.getByRole("dialog", { name: /Delete modifier item/i }).getByLabel(/Confirm delete/i).check();
   await page.getByRole("dialog", { name: /Delete modifier item/i }).getByRole("button", { name: "Delete modifier item", exact: true }).click();
-  const modifierNamesAfterDelete = await modifierDialog.getByLabel(/Modifier name/i).evaluateAll((nodes) => nodes.map((node) => node.value));
-  expect(modifierNamesAfterDelete).not.toContain("Chile crisp");
+  const modifierNamesAfterDelete = await secondModifierDialog.getByLabel(/Modifier name/i).evaluateAll((nodes) => nodes.map((node) => node.value));
+  expect(modifierNamesAfterDelete).not.toContain("chile crisp");
 
-  await editableGroup.getByRole("button", { name: /Delete modifier group/i }).click();
+  await secondModifierDialog.getByTestId(/ssmt-modifier-group/).last().getByRole("button", { name: /Delete modifier group/i }).click();
   await page.getByRole("dialog", { name: /Delete modifier group/i }).getByLabel(/Confirm delete Sauce Rules/i).check();
   await page.getByRole("dialog", { name: /Delete modifier group/i }).getByRole("button", { name: "Delete modifier group", exact: true }).click();
-  const groupNamesAfterDelete = await modifierDialog.getByLabel(/Modifier group name/i).evaluateAll((nodes) => nodes.map((node) => node.value));
+  const groupNamesAfterDelete = await secondModifierDialog.getByLabel(/Modifier group name/i).evaluateAll((nodes) => nodes.map((node) => node.value));
   expect(groupNamesAfterDelete).not.toContain("Sauce Rules");
 
   await expectNoAppProtection(page);
@@ -617,6 +639,7 @@ test("SSMT modifier editor opens wider, prominent, and dense for item lines", as
   await modifierButton.click();
   const modifierDialog = page.getByRole("dialog", { name: /modifier/i });
   await expect(modifierDialog).toBeVisible();
+  await modifierDialog.getByRole("button", { name: /Add modifier group/i }).click();
   const modifierDialogMetrics = await modifierDialog.evaluate((node) => {
     const tableScroll = node.querySelector("table")?.parentElement;
     const firstItemRow = node.querySelector("tbody tr");
