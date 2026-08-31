@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   CalendarDays,
@@ -22,6 +22,7 @@ import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
 import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
 import { readLocalStorageJson, writeLocalStorageJson } from "../../shared/safeStorage.js";
+import { loadSsmtWorkspaceFromSharedStorage, saveSsmtWorkspaceToSharedStorage } from "./ssmtWorkspaceStorage.js";
 
 const PASSCODE = "0411";
 const UNLOCKED_KEY = "culinaryToolsSsmtUnlocked";
@@ -272,6 +273,13 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const [copiedFieldNotice, setCopiedFieldNotice] = useState("");
   const [phaseBlocker, setPhaseBlocker] = useState("");
   const [draggedRowId, setDraggedRowId] = useState("");
+  const [workspaceSync, setWorkspaceSync] = useState({
+    state: "loading",
+    source: "local",
+    message: "Loading SSMT workspace...",
+  });
+  const workspaceLoadedRef = useRef(false);
+  const skipInitialSharedSaveRef = useRef(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -282,9 +290,32 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
         if (!response.ok) throw new Error("SSMT seed data could not be loaded.");
         if (cancelled) return;
         const stored = readLocalStorageJson(WORKSPACE_STORAGE_KEY, null);
-        const storedMenus = Array.isArray(stored?.menus) && stored.menus.length ? stored.menus : payload.menus;
-        const storedPriceBook = Array.isArray(stored?.priceBook) && stored.priceBook.length ? stored.priceBook : payload.priceBook;
-        const storedModifierGroups = Array.isArray(stored?.modifierGroups) && stored.modifierGroups.length ? stored.modifierGroups : payload.modifierGroups;
+        let sharedWorkspace = null;
+        try {
+          const shared = await loadSsmtWorkspaceFromSharedStorage();
+          if (cancelled) return;
+          sharedWorkspace = shared.workspace;
+          setWorkspaceSync(sharedWorkspace ? {
+            state: "synced",
+            source: shared.source || "supabase",
+            message: "Loaded shared SSMT workspace.",
+          } : {
+            state: "local",
+            source: shared.source || "supabase",
+            message: "No shared SSMT workspace yet. Saving will create it.",
+          });
+        } catch (error) {
+          if (cancelled) return;
+          setWorkspaceSync({
+            state: "fallback",
+            source: "local",
+            message: `${error.message || "Shared SSMT workspace unavailable."} Using this browser's saved SSMT cache.`,
+          });
+        }
+        const workspace = sharedWorkspace || stored || {};
+        const storedMenus = Array.isArray(workspace.menus) && workspace.menus.length ? workspace.menus : payload.menus;
+        const storedPriceBook = Array.isArray(workspace.priceBook) && workspace.priceBook.length ? workspace.priceBook : payload.priceBook;
+        const storedModifierGroups = Array.isArray(workspace.modifierGroups) && workspace.modifierGroups.length ? workspace.modifierGroups : payload.modifierGroups;
         const priceBook = storedPriceBook;
         const modifierGroups = storedModifierGroups.map((group) => normalizeModifierGroup(group, payload.areaOrder, priceBook));
         setSsmtData({
@@ -294,9 +325,10 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
           modifierGroups,
         });
         setMenus((current) => current.length ? current : storedMenus.map(cloneMenu));
-        setSelectedMenuId((current) => current || (storedMenus.some((menu) => menu.id === stored?.selectedMenuId) ? stored.selectedMenuId : storedMenus[0]?.id || ""));
+        setSelectedMenuId((current) => current || (storedMenus.some((menu) => menu.id === workspace.selectedMenuId) ? workspace.selectedMenuId : storedMenus[0]?.id || ""));
         setSelectedPriceId((current) => current || payload.priceBook[0]?.id || "");
         setNewMenuType(payload.menuTypes?.[0] || "Core");
+        workspaceLoadedRef.current = true;
         setDataStatus("ready");
       } catch {
         if (!cancelled) setDataStatus("error");
@@ -310,13 +342,41 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
 
   useEffect(() => {
     if (dataStatus !== "ready" || !menus.length) return;
-    writeLocalStorageJson(WORKSPACE_STORAGE_KEY, {
+    const workspace = {
       menus,
       priceBook: ssmtData.priceBook,
       modifierGroups: ssmtData.modifierGroups,
       selectedMenuId,
       updatedAt: new Date().toISOString(),
-    }, { clearOnQuota: true });
+    };
+    writeLocalStorageJson(WORKSPACE_STORAGE_KEY, workspace, { clearOnQuota: true });
+    if (!workspaceLoadedRef.current) return;
+    if (skipInitialSharedSaveRef.current) {
+      skipInitialSharedSaveRef.current = false;
+      return;
+    }
+    setWorkspaceSync((current) => ({
+      ...current,
+      state: "saving",
+      message: "Saving shared SSMT workspace...",
+    }));
+    const saveTimer = window.setTimeout(async () => {
+      try {
+        const result = await saveSsmtWorkspaceToSharedStorage(workspace);
+        setWorkspaceSync({
+          state: "synced",
+          source: result.source || "supabase",
+          message: "Shared SSMT workspace saved.",
+        });
+      } catch (error) {
+        setWorkspaceSync({
+          state: "fallback",
+          source: "local",
+          message: `${error.message || "Shared SSMT workspace save failed."} This browser kept a local cache.`,
+        });
+      }
+    }, 500);
+    return () => window.clearTimeout(saveTimer);
   }, [dataStatus, menus, selectedMenuId, ssmtData.priceBook, ssmtData.modifierGroups]);
 
   useEffect(() => {
@@ -806,6 +866,21 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
         {dataStatus !== "ready" && (
           <section className={`rounded-lg border p-4 text-sm font-bold leading-6 ${dataStatus === "error" ? "border-red-200 bg-red-50 text-red-800" : "border-sky-200 bg-sky-50 text-sky-900"}`}>
             {dataStatus === "error" ? "SSMT seed data could not be loaded." : "Loading current SSMT seed data..."}
+          </section>
+        )}
+
+        {dataStatus === "ready" && (
+          <section
+            data-testid="ssmt-workspace-sync"
+            className={`rounded-lg border px-3 py-2 text-xs font-black ${
+              workspaceSync.state === "synced"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                : workspaceSync.state === "saving"
+                  ? "border-sky-200 bg-sky-50 text-sky-900"
+                  : "border-amber-200 bg-amber-50 text-amber-900"
+            }`}
+          >
+            Shared workspace: {workspaceSync.message}
           </section>
         )}
 

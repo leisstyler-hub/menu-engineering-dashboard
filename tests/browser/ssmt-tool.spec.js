@@ -357,6 +357,108 @@ test("SSMT item locks enable Centric copy fields and gate phase advancement", as
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
+test("SSMT loads and saves item lock state through shared storage", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const savedBodies = [];
+  const sharedMenu = {
+    id: "shared-lock-menu",
+    name: "Shared Lock Menu",
+    sourceSheet: "Shared storage test",
+    includeReason: "Created in SSMT",
+    type: "Core",
+    phase: "Culinary draft",
+    status: "Draft",
+    activeStart: "",
+    activeEnd: "",
+    completedAt: "",
+    editSignal: false,
+    downstreamEligibleAfter: "IT complete",
+    items: [
+      {
+        id: "shared-lock-item",
+        label: "REMOTE LOCKED ITEM",
+        name: "REMOTE LOCKED ITEM",
+        description: "shared saved row",
+        mrn: "444444.44",
+        category: "Entree",
+        fohColumn: "IT 1",
+        secondaryCategory: "",
+        brandMenu: "",
+        calories: "",
+        priceSelectorId: "",
+        seaPrice: "$9.99",
+        workbookSeaPrice: "",
+        priceReviewStatus: "Pricing structure match",
+        areaPrices: { AUS: "$9.99", SEA: "$9.99", MCO: "$9.99" },
+        modifierGroups: [],
+        lockedForCentric: true,
+      },
+    ],
+  };
+
+  await page.addInitScript(() => {
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+  });
+  await page.route("**/api/storage/records**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (request.method() === "GET" && url.searchParams.get("tool") === "SSMT") {
+      await route.fulfill({
+        json: {
+          ok: true,
+          source: "supabase",
+          records: [
+            {
+              "Record ID": "ssmt|workspace|current",
+              "Record Type": "SSMT Workspace",
+              Status: "Shared",
+              menus: [sharedMenu],
+              priceBook: [],
+              modifierGroups: [],
+              selectedMenuId: "shared-lock-menu",
+              updatedAt: "2026-08-31T04:30:00.000Z",
+            },
+          ],
+        },
+      });
+      return;
+    }
+    if (request.method() === "POST") {
+      savedBodies.push(request.postDataJSON());
+      await route.fulfill({ json: { ok: true, source: "supabase", synced: 1, message: "Saved 1 row to Supabase." } });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByLabel(/SSMT passcode/i).fill("0411");
+  await page.getByRole("button", { name: /unlock ssmt/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+
+  await expect(page.getByRole("button", { name: /^Shared Lock Menu/i })).toBeVisible();
+  await page.getByRole("button", { name: /^Shared Lock Menu/i }).click();
+  await expect(page.getByTestId("ssmt-phase-panel").getByText(/1 of 1 item rows locked/i)).toBeVisible();
+  await expect(page.getByLabel(/MRN for REMOTE LOCKED ITEM/i)).toHaveAttribute("readonly", "");
+
+  await page.getByRole("button", { name: /Unlock item REMOTE LOCKED ITEM/i }).click();
+  await expect(page.getByTestId("ssmt-phase-panel").getByText(/0 of 1 item rows locked/i)).toBeVisible();
+
+  await expect.poll(() => {
+    const record = savedBodies
+      .flatMap((body) => body?.records || [])
+      .find((candidate) => candidate?.["Record ID"] === "ssmt|workspace|current");
+    return record?.menus?.find((menu) => menu.id === "shared-lock-menu")
+      ?.items?.find((item) => item.id === "shared-lock-item")
+      ?.lockedForCentric;
+  }).toBe(false);
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
 test("SSMT modifier groups are editable with typed group metadata and line-level pricing fields", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   await page.setViewportSize({ width: 1440, height: 950 });

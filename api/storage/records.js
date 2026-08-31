@@ -165,6 +165,7 @@ async function loadRecords(req, res) {
   const params = {
     select: "record_id,updated_at,retain_until,record_payload",
     tool: `eq.${databaseTool}`,
+    record_id: tool === "ssmt" ? "eq.ssmt|workspace|current" : undefined,
     visible_in_dashboard: includeHidden ? undefined : "eq.true",
     order: "updated_at.desc",
   };
@@ -172,9 +173,15 @@ async function loadRecords(req, res) {
     ? await supabaseFetch(`app_records?${queryString({ ...params, limit: "1" })}`)
     : await loadAllSupabaseRows("app_records", params);
   const records = normalizeBackboneRows(rows || []).filter((record) => {
-    if (tool !== "menuProjects") return true;
-    return String(record["Record Type"] || "") === "Menu Project" || String(record["Record ID"] || "").startsWith("menuProject|");
+    if (tool === "menuProjects") {
+      return String(record["Record Type"] || "") === "Menu Project" || String(record["Record ID"] || "").startsWith("menuProject|");
+    }
+    if (tool === "ssmt") {
+      return String(record["Record Type"] || "") === "SSMT Workspace" || String(record["Record ID"] || "").startsWith("ssmt|");
+    }
+    return true;
   });
+  const toolLabel = tool === "lean" ? "Lean" : tool === "menuProjects" ? "Menu Project" : tool === "ssmt" ? "SSMT" : "rotation";
 
   return res.status(200).json({
     ok: true,
@@ -187,7 +194,7 @@ async function loadRecords(req, res) {
     count: records.length,
     message: healthOnly
       ? "Supabase secure storage endpoint is ready."
-      : `Loaded ${records.length} ${tool === "lean" ? "Lean" : tool === "menuProjects" ? "Menu Project" : "rotation"} record${records.length === 1 ? "" : "s"} from Supabase.`,
+      : `Loaded ${records.length} ${toolLabel} record${records.length === 1 ? "" : "s"} from Supabase.`,
   });
 }
 

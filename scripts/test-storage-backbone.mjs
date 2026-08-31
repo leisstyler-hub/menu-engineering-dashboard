@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 
 import {
   buildBackboneRows,
+  getBackboneDatabaseToolFromContext,
   getBackboneToolFromContext,
   normalizeBackboneRows,
   retentionDateFor,
@@ -10,6 +11,8 @@ import {
 const now = new Date("2026-06-23T12:00:00.000Z");
 
 assert.equal(getBackboneToolFromContext({ tool: "Lean Tool" }), "lean");
+assert.equal(getBackboneToolFromContext({ tool: "SSMT" }), "ssmt");
+assert.equal(getBackboneDatabaseToolFromContext({ tool: "SSMT" }), "rotation");
 assert.equal(getBackboneToolFromContext({ cafe: "Doppler", week: "Jun 15, 2026 - Jun 19, 2026" }), "rotation");
 
 assert.equal(retentionDateFor(now).toISOString(), "2028-06-23T12:00:00.000Z");

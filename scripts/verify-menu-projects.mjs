@@ -153,7 +153,8 @@ if (!model.includes("__sampleProject: true")) {
   "findRecordFamilyIds",
   "deleteRecords",
   "action === \"deleteRecords\"",
-  "Loaded ${records.length} ${tool === \"lean\" ? \"Lean\" : tool === \"menuProjects\" ? \"Menu Project\" : \"rotation\"}",
+  "const toolLabel = tool === \"lean\" ? \"Lean\" : tool === \"menuProjects\" ? \"Menu Project\" : tool === \"ssmt\" ? \"SSMT\" : \"rotation\"",
+  "Loaded ${records.length} ${toolLabel} record",
 ].forEach((needle) => {
   if (!storageApi.includes(needle)) throw new Error(`Storage API Menu Projects source handling is missing ${needle}`);
 });
