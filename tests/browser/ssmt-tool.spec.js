@@ -141,6 +141,7 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
   await page.getByRole("button", { name: /Create menu/i }).click();
   await expect(page.getByRole("heading", { name: /^Smoke Test Ordering$/ })).toBeVisible();
 
+  await page.getByRole("button", { name: /Lock item NEW ITEM/i }).click();
   await page.getByLabel(/Phase/i).selectOption("IT complete");
   await page.getByRole("button", { name: /Back to menu selection/i }).click();
   await page.getByRole("button", { name: /^Smoke Test Ordering/i }).click();
@@ -152,6 +153,7 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
   await page.getByRole("button", { name: /^Smoke Test Ordering/i }).click();
   await expect(page.getByLabel(/Phase/i)).toHaveValue("IT complete");
 
+  await page.getByRole("button", { name: /Unlock item NEW ITEM/i }).click();
   await page.getByRole("button", { name: /Add item/i }).click();
   const labels = page.getByLabel(/Item label/i);
   await expect(labels).toHaveCount(2);
@@ -249,7 +251,7 @@ test("SSMT selector and builder keep dense records and wide tables usable withou
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
-test("SSMT builder uses maximized desktop width and shows more menu rows", async ({ page }) => {
+test("SSMT builder locks at a readable maximized desktop width and shows more menu rows", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   await page.setViewportSize({ width: 3000, height: 1200 });
   await page.goto("/");
@@ -282,10 +284,74 @@ test("SSMT builder uses maximized desktop width and shows more menu rows", async
       clientWidth: node.clientWidth,
     };
   });
-  expect(builderMetrics.width).toBeGreaterThanOrEqual(2800);
+  expect(builderMetrics.width).toBeGreaterThanOrEqual(2520);
+  expect(builderMetrics.width).toBeLessThanOrEqual(2700);
   expect(builderMetrics.firstRowHeight).toBeLessThanOrEqual(82);
   expect(builderMetrics.visibleRows).toBeGreaterThanOrEqual(10);
   expect(builderMetrics.scrollWidth).toBeLessThanOrEqual(builderMetrics.clientWidth + 4);
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("SSMT item locks enable Centric copy fields and gate phase advancement", async ({ page, context }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.setViewportSize({ width: 1800, height: 950 });
+  await page.goto("/");
+
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByLabel(/SSMT passcode/i).fill("0411");
+  await page.getByRole("button", { name: /unlock ssmt/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+  await page.getByLabel(/New menu name/i).fill("Centric Copy Lock Test");
+  await page.getByLabel(/New menu type/i).selectOption("Core");
+  await page.getByRole("button", { name: /Create menu/i }).click();
+  await page.getByRole("button", { name: /Add item/i }).click();
+
+  const phasePanel = page.getByTestId("ssmt-phase-panel");
+  await expect(phasePanel).toBeVisible();
+  await expect(phasePanel.getByText(/0 of 2 item rows locked/i)).toBeVisible();
+  const phaseSelect = page.getByLabel(/Current SSMT phase/i);
+  const experienceOptionDisabled = await phaseSelect.locator("option", { hasText: "Experience review" }).evaluate((option) => option.disabled);
+  expect(experienceOptionDisabled).toBe(true);
+
+  await page.getByLabel(/Item label/i).first().fill("centric paste item");
+  await page.getByLabel(/MRN for/i).first().fill("123456.78");
+  await page.getByLabel(/Category for/i).first().fill("Entree");
+  await page.getByLabel(/SEA price for/i).first().selectOption({ index: 1 });
+
+  const firstPriceButton = page.getByRole("button", { name: /Copy AUS price for CENTRIC PASTE ITEM/i }).first();
+  const priceFontSize = await firstPriceButton.evaluate((node) => Number.parseFloat(getComputedStyle(node).fontSize));
+  expect(priceFontSize).toBeGreaterThanOrEqual(11);
+  await expect(firstPriceButton).toBeDisabled();
+
+  const rowFills = await page.getByTestId("ssmt-builder-body").locator("tr[data-row-kind='item']").evaluateAll((rows) => rows.slice(0, 2).map((row) => getComputedStyle(row).backgroundColor));
+  expect(new Set(rowFills).size).toBeGreaterThan(1);
+
+  await page.getByRole("button", { name: /Lock item CENTRIC PASTE ITEM/i }).click();
+  await expect(phasePanel.getByText(/1 of 2 item rows locked/i)).toBeVisible();
+  await expect(page.getByLabel(/MRN for CENTRIC PASTE ITEM/i)).toHaveAttribute("readonly", "");
+  await expect(firstPriceButton).toBeEnabled();
+
+  await page.getByLabel(/MRN for CENTRIC PASTE ITEM/i).click();
+  await expect(page.getByText(/MRN copied for Centric/i)).toBeVisible();
+  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe("123456.78");
+
+  const seaPriceButton = page.getByRole("button", { name: /Copy SEA price for CENTRIC PASTE ITEM/i });
+  const seaPriceText = await seaPriceButton.evaluate((node) => node.textContent.match(/\$[0-9.]+/)?.[0] || "");
+  await expect(page.getByLabel("SEA price for CENTRIC PASTE ITEM", { exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: /Delete item CENTRIC PASTE ITEM/i })).toBeDisabled();
+  await seaPriceButton.click();
+  await expect(page.getByText(/SEA price copied for Centric/i)).toBeVisible();
+  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(seaPriceText);
+
+  await page.getByRole("button", { name: /Lock item NEW ITEM/i }).click();
+  await expect(phasePanel.getByText(/2 of 2 item rows locked/i)).toBeVisible();
+  const enabledAfterLock = await phaseSelect.locator("option", { hasText: "Experience review" }).evaluate((option) => option.disabled);
+  expect(enabledAfterLock).toBe(false);
+  await phaseSelect.selectOption("Experience review");
+  await expect(phaseSelect).toHaveValue("Experience review");
 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);

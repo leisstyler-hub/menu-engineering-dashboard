@@ -8,12 +8,14 @@ import {
   Flag,
   GripVertical,
   ListChecks,
+  Lock,
   Mail,
   Plus,
   Search,
   ShieldCheck,
   Tags,
   Trash2,
+  Unlock,
   X,
 } from "lucide-react";
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
@@ -79,6 +81,7 @@ function cloneMenu(menu) {
     ...menu,
     items: (menu.items || []).map((item) => ({
       ...item,
+      lockedForCentric: Boolean(item.lockedForCentric),
       secondaryCategory: item.secondaryCategory || item.reportingCategorySecondary || "",
       areaPrices: { ...(item.areaPrices || {}) },
       modifierGroups: [...(item.modifierGroups || [])],
@@ -181,6 +184,7 @@ function createBlankItem(menuId, areaOrder, index = 1) {
     priceReviewStatus: "Unpriced",
     areaPrices: blankAreaPrices(areaOrder),
     modifierGroups: [],
+    lockedForCentric: false,
   };
 }
 
@@ -265,6 +269,8 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const [flagNote, setFlagNote] = useState("");
   const [reportedFlag, setReportedFlag] = useState(null);
   const [copiedModifierNotice, setCopiedModifierNotice] = useState("");
+  const [copiedFieldNotice, setCopiedFieldNotice] = useState("");
+  const [phaseBlocker, setPhaseBlocker] = useState("");
   const [draggedRowId, setDraggedRowId] = useState("");
 
   useEffect(() => {
@@ -336,6 +342,14 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const historicalCount = menus.filter((menu) => ["Thompson Hospitality", "Promotion"].includes(menu.type)).length;
   const menuTypes = ssmtData.menuTypes?.length ? ssmtData.menuTypes : DEFAULT_MENU_TYPES;
   const showActiveDates = activeDatesRequired(selectedMenu.type);
+  const selectedItemRows = (selectedMenu.items || []).filter((item) => item.recordType !== "divider");
+  const lockedItemCount = selectedItemRows.filter((item) => item.lockedForCentric).length;
+  const allItemRowsLocked = selectedItemRows.length === 0 || lockedItemCount === selectedItemRows.length;
+  const currentPhaseIndex = ssmtData.workflowPhases.indexOf(selectedMenu.phase);
+  const phaseIsBlocked = (phase) => {
+    const nextIndex = ssmtData.workflowPhases.indexOf(phase);
+    return nextIndex > currentPhaseIndex && !allItemRowsLocked;
+  };
 
   const submitPasscode = (event) => {
     event.preventDefault();
@@ -384,7 +398,12 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   };
 
   const updateSelectedMenuPhase = (phase) => {
+    if (phaseIsBlocked(phase)) {
+      setPhaseBlocker(`Lock all item rows before moving to ${phase}.`);
+      return;
+    }
     const timestamp = new Date().toISOString();
+    setPhaseBlocker("");
     updateSelectedMenu({
       phase,
       status: phase === "IT complete" ? "IT complete / Centric ready" : phase,
@@ -394,6 +413,22 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
         [phase]: timestamp,
       },
     });
+  };
+
+  const copyForCentric = async (value, label) => {
+    const text = String(value || "").trim();
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedFieldNotice(`${label} copied for Centric.`);
+    } catch {
+      setCopiedFieldNotice(`${label} ready for Centric copy: ${text}`);
+    }
+  };
+
+  const copyLockedField = (item, value, label) => {
+    if (!item.lockedForCentric) return;
+    copyForCentric(value, label);
   };
 
   const addPricingRow = () => {
@@ -735,7 +770,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
 
   return (
     <div className="min-h-screen bg-[#f5f6f1] px-3 py-4 text-slate-950 md:px-4">
-      <div className="w-full space-y-3">
+      <div className="mx-auto w-full max-w-[2680px] space-y-3">
         <header className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
             <div>
@@ -780,6 +815,12 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
             <a href={reportedFlag.mailto} className="ml-2 inline-flex items-center gap-1 underline">
               <Mail size={16} /> Open email
             </a>
+          </section>
+        )}
+
+        {copiedFieldNotice && (
+          <section className="rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-950">
+            {copiedFieldNotice}
           </section>
         )}
 
@@ -947,6 +988,27 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
               </button>
             </section>
 
+            <section data-testid="ssmt-phase-panel" className="grid gap-3 rounded-lg border border-slate-400 bg-slate-950 p-3 text-white shadow-sm lg:grid-cols-[minmax(260px,1fr)_minmax(220px,0.7fr)_minmax(260px,1fr)] lg:items-end">
+              <label className="grid gap-1 text-sm font-bold">
+                <span className="text-xs font-black uppercase tracking-[0.16em] text-emerald-200">Current SSMT phase</span>
+                <select value={selectedMenu.phase} onChange={(event) => updateSelectedMenuPhase(event.target.value)} className="rounded-lg border border-emerald-300 bg-white px-3 py-2 text-base font-black text-slate-950">
+                  {ssmtData.workflowPhases.map((phase) => (
+                    <option key={phase} disabled={phaseIsBlocked(phase)}>{phase}</option>
+                  ))}
+                </select>
+              </label>
+              <div className="rounded-lg border border-white/20 bg-white/10 px-3 py-2">
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-200">Item readiness</p>
+                <p className="mt-1 text-xl font-black">{lockedItemCount} of {selectedItemRows.length} item rows locked</p>
+              </div>
+              <div className="rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm font-bold leading-5">
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-200">Status</p>
+                <p className="mt-1">{selectedMenu.status || selectedMenu.phase}</p>
+                {!allItemRowsLocked && <p className="mt-1 text-amber-200">Lock all item rows before moving to the next phase.</p>}
+                {phaseBlocker && <p className="mt-1 text-amber-200">{phaseBlocker}</p>}
+              </div>
+            </section>
+
             <section className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
@@ -954,15 +1016,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                   <h2 className="mt-1 text-2xl font-black">{selectedMenu.name}</h2>
                   <p className="mt-1 text-sm font-semibold text-slate-600">{selectedMenu.type} / {selectedMenu.phase} / availability after IT complete</p>
                 </div>
-                <div className="grid min-w-[280px] gap-2 text-sm font-bold text-slate-700">
-                  <label className="grid gap-1">
-                    <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Phase</span>
-                    <select value={selectedMenu.phase} onChange={(event) => updateSelectedMenuPhase(event.target.value)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 font-bold">
-                      {ssmtData.workflowPhases.map((phase) => <option key={phase}>{phase}</option>)}
-                    </select>
-                  </label>
-                  <span className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">Type: {selectedMenu.type}</span>
-                </div>
+                <span className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-slate-700">Type: {selectedMenu.type}</span>
               </div>
               <div className="mt-3 grid gap-2 md:grid-cols-4">
                 {showActiveDates ? (
@@ -1020,7 +1074,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                     <col className="w-[150px]" />
                     <col className="w-[330px]" />
                     <col className="w-[72px]" />
-                    <col className="w-[130px]" />
+                    <col className="w-[160px]" />
                   </colgroup>
                   <thead className="sticky top-0 z-10 bg-slate-100 text-xs font-black uppercase tracking-[0.12em] text-slate-600 shadow-sm">
                     <tr>
@@ -1059,7 +1113,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                           onDragStart={() => setDraggedRowId(item.id)}
                           onDragOver={(event) => event.preventDefault()}
                           onDrop={() => moveRow(draggedRowId, item.id)}
-                          className="align-top odd:bg-white even:bg-slate-50/70"
+                          className={`align-top odd:bg-white even:bg-sky-50/70 ${item.lockedForCentric ? "outline outline-1 -outline-offset-1 outline-emerald-500" : ""}`}
                         >
                           <td className="border-b border-slate-300 px-2 py-1 text-slate-500"><GripVertical size={16} /></td>
                           <td className="border-b border-slate-300 px-2 py-1">
@@ -1067,7 +1121,9 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               aria-label={`Fixy for ${item.label || item.name || "item"}`}
                               value={item.fohColumn || ""}
                               onChange={(event) => updateItem(item.id, { fohColumn: event.target.value })}
-                              className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-bold outline-none focus:border-emerald-500"
+                              onClick={() => copyLockedField(item, item.fohColumn, "Fixy")}
+                              readOnly={Boolean(item.lockedForCentric)}
+                              className={`w-full rounded-md border border-slate-300 px-2 py-1 text-xs font-bold outline-none focus:border-emerald-500 ${item.lockedForCentric ? "cursor-copy bg-emerald-50 text-slate-950" : "bg-white"}`}
                             />
                           </td>
                           <td className="border-b border-slate-300 px-2 py-1">
@@ -1075,7 +1131,9 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               aria-label="Item label"
                               value={item.label}
                               onChange={(event) => updateItem(item.id, { label: normalizeLabel(event.target.value) })}
-                              className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-black outline-none focus:border-emerald-500"
+                              onClick={() => copyLockedField(item, item.label, "Label")}
+                              readOnly={Boolean(item.lockedForCentric)}
+                              className={`w-full rounded-md border border-slate-300 px-2 py-1 text-xs font-black outline-none focus:border-emerald-500 ${item.lockedForCentric ? "cursor-copy bg-emerald-50 text-slate-950" : "bg-white"}`}
                             />
                           </td>
                           <td className="border-b border-slate-300 px-2 py-1">
@@ -1083,7 +1141,9 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               aria-label="Description"
                               value={item.description}
                               onChange={(event) => updateItem(item.id, { description: normalizeDescription(event.target.value) })}
-                              className="h-14 w-full resize-y rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-semibold leading-4 outline-none focus:border-emerald-500"
+                              onClick={() => copyLockedField(item, item.description, "Description")}
+                              readOnly={Boolean(item.lockedForCentric)}
+                              className={`h-14 w-full resize-y rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold leading-4 outline-none focus:border-emerald-500 ${item.lockedForCentric ? "cursor-copy bg-emerald-50 text-slate-950" : "bg-white"}`}
                             />
                           </td>
                           <td className="border-b border-slate-300 px-2 py-1">
@@ -1091,7 +1151,9 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               aria-label={`MRN for ${item.label || item.name || "item"}`}
                               value={item.mrn || ""}
                               onChange={(event) => updateItem(item.id, { mrn: event.target.value })}
-                              className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 font-mono text-xs font-bold outline-none focus:border-emerald-500"
+                              onClick={() => copyLockedField(item, item.mrn, "MRN")}
+                              readOnly={Boolean(item.lockedForCentric)}
+                              className={`w-full rounded-md border border-slate-300 px-2 py-1 font-mono text-xs font-bold outline-none focus:border-emerald-500 ${item.lockedForCentric ? "cursor-copy bg-emerald-50 text-slate-950" : "bg-white"}`}
                             />
                           </td>
                           <td className="border-b border-slate-300 px-2 py-1">
@@ -1099,7 +1161,8 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               aria-label={`SEA price for ${item.label || item.name || "item"}`}
                               value={item.priceSelectorId || ""}
                               onChange={(event) => assignItemPrice(item.id, event.target.value)}
-                              className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-[11px] font-black text-slate-900"
+                              disabled={Boolean(item.lockedForCentric)}
+                              className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-black text-slate-900"
                             >
                               <option value="">Select SEA price</option>
                               {ssmtData.priceBook.map((price) => (
@@ -1115,7 +1178,9 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               aria-label={`Category for ${item.label || item.name || "item"}`}
                               value={item.category || ""}
                               onChange={(event) => updateItem(item.id, { category: event.target.value })}
-                              className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-bold outline-none focus:border-emerald-500"
+                              onClick={() => copyLockedField(item, item.category, "Category")}
+                              readOnly={Boolean(item.lockedForCentric)}
+                              className={`w-full rounded-md border border-slate-300 px-2 py-1 text-xs font-bold outline-none focus:border-emerald-500 ${item.lockedForCentric ? "cursor-copy bg-emerald-50 text-slate-950" : "bg-white"}`}
                             />
                           </td>
                           <td className="border-b border-slate-300 px-2 py-1">
@@ -1123,25 +1188,37 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               aria-label={`Secondary category for ${item.label || item.name || "item"}`}
                               value={item.secondaryCategory || item.reportingCategorySecondary || ""}
                               onChange={(event) => updateItem(item.id, { secondaryCategory: event.target.value, reportingCategorySecondary: event.target.value })}
-                              className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-bold outline-none focus:border-emerald-500"
+                              onClick={() => copyLockedField(item, item.secondaryCategory || item.reportingCategorySecondary, "Secondary category")}
+                              readOnly={Boolean(item.lockedForCentric)}
+                              className={`w-full rounded-md border border-slate-300 px-2 py-1 text-xs font-bold outline-none focus:border-emerald-500 ${item.lockedForCentric ? "cursor-copy bg-emerald-50 text-slate-950" : "bg-white"}`}
                             />
                           </td>
                           <td className="border-b border-slate-300 px-2 py-1">
-                            <div aria-label={`Area prices for ${item.label || item.name || "item"}`} className="grid w-full grid-cols-8 gap-px text-[10px] font-bold leading-3 text-slate-700">
+                            <div aria-label={`Area prices for ${item.label || item.name || "item"}`} className="grid w-full grid-cols-8 gap-px text-[11px] font-bold leading-4 text-slate-700">
                               {ssmtData.areaOrder.map((area) => (
-                                <span key={area} className="rounded border border-slate-300 bg-white px-1 py-0.5">
+                                <button
+                                  key={area}
+                                  type="button"
+                                  aria-label={`Copy ${area} price for ${item.label || item.name || "item"}`}
+                                  disabled={!item.lockedForCentric || !item.areaPrices?.[area]}
+                                  onClick={() => copyForCentric(item.areaPrices?.[area], `${area} price`)}
+                                  className="rounded border border-slate-300 bg-white px-1 py-0.5 text-left disabled:cursor-not-allowed disabled:text-slate-700 disabled:opacity-100 enabled:cursor-copy enabled:border-emerald-400 enabled:bg-emerald-50 enabled:hover:bg-emerald-100"
+                                >
                                   <span className="font-black text-slate-500">{area}</span> {item.areaPrices?.[area] || "TBD"}
-                                </span>
+                                </button>
                               ))}
                             </div>
                           </td>
                           <td className="border-b border-slate-300 px-2 py-1 font-bold text-slate-700">{selectedMenu.type === "Promotion" ? item.calories || "TBD" : "N/A"}</td>
                           <td className="border-b border-slate-300 px-2 py-1">
-                            <div className="grid grid-cols-2 gap-0.5">
-                              <button type="button" aria-label="View modifiers" onClick={() => openModifierDialog(item)} className="col-span-2 inline-flex items-center justify-center gap-1 rounded-md border border-green-800 bg-green-700 px-1.5 py-0.5 text-[10px] font-black text-white shadow-sm hover:bg-green-800">
+                            <div className="grid grid-cols-3 gap-0.5">
+                              <button type="button" aria-label="View modifiers" onClick={() => openModifierDialog(item)} className="col-span-3 inline-flex items-center justify-center gap-1 rounded-md border border-green-800 bg-green-700 px-1.5 py-0.5 text-[10px] font-black text-white shadow-sm hover:bg-green-800">
                                 <Tags size={12} /> Mods
                               </button>
-                              <button type="button" onClick={() => requestDelete({ type: "item", id: item.id, name: item.label || item.name || "item" })} className="inline-flex items-center justify-center gap-1 rounded-md border border-red-200 bg-red-50 px-1.5 py-0.5 text-[10px] font-black text-red-800 hover:bg-red-100" aria-label={`Delete item ${item.label || item.name || "item"}`}>
+                              <button type="button" onClick={() => updateItem(item.id, { lockedForCentric: !item.lockedForCentric })} className={`inline-flex items-center justify-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-black ${item.lockedForCentric ? "border-emerald-700 bg-emerald-700 text-white hover:bg-emerald-800" : "border-slate-300 bg-slate-50 text-slate-800 hover:bg-slate-100"}`} aria-label={`${item.lockedForCentric ? "Unlock" : "Lock"} item ${item.label || item.name || "item"}`}>
+                                {item.lockedForCentric ? <Lock size={12} /> : <Unlock size={12} />} {item.lockedForCentric ? "Locked" : "Lock"}
+                              </button>
+                              <button type="button" onClick={() => requestDelete({ type: "item", id: item.id, name: item.label || item.name || "item" })} disabled={Boolean(item.lockedForCentric)} className="inline-flex items-center justify-center gap-1 rounded-md border border-red-200 bg-red-50 px-1.5 py-0.5 text-[10px] font-black text-red-800 hover:bg-red-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400" aria-label={`Delete item ${item.label || item.name || "item"}`}>
                                 <Trash2 size={12} /> Del
                               </button>
                               <button type="button" aria-label="Flag for change" onClick={() => setFlagDialog({ item })} className="inline-flex items-center justify-center gap-1 rounded-md border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[10px] font-black text-amber-900 hover:bg-amber-100">
