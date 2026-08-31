@@ -28,6 +28,7 @@ test("SSMT opens behind passcode and separates pricing from menu building", asyn
 
   await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
   await expect(page.getByRole("heading", { name: /^Menu Selector$/ })).toBeVisible();
+  await expect(page.getByText(/Loading current SSMT seed data/i)).toHaveCount(0, { timeout: 20_000 });
   await page.getByLabel(/New menu name/i).fill("Smoke Test Promo Menu");
   await page.getByLabel(/New menu type/i).selectOption("Promotion");
   await page.getByRole("button", { name: /Create menu/i }).click();
@@ -117,6 +118,7 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
   await page.getByLabel(/SSMT passcode/i).fill("0411");
   await page.getByRole("button", { name: /unlock ssmt/i }).click();
   await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+  await expect(page.getByText(/Loading current SSMT seed data/i)).toHaveCount(0, { timeout: 20_000 });
 
   const firstCoreGroup = page.getByTestId("ssmt-menu-group-Core");
   const globalGroup = page.getByTestId("ssmt-menu-group-Global");
@@ -458,7 +460,7 @@ test("SSMT loads and saves item lock state through shared storage", async ({ pag
               "Record ID": "ssmt|workspace|current",
               "Record Type": "SSMT Workspace",
               Status: "Shared",
-              menus: [sharedMenu],
+              menus: [sharedMenu, { id: "legacy-global-grains", name: "Global Grains", type: "Global", items: [] }],
               priceBook: [],
               modifierGroups: [],
               selectedMenuId: "shared-lock-menu",
@@ -484,6 +486,7 @@ test("SSMT loads and saves item lock state through shared storage", async ({ pag
   await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
 
   await expect(page.getByRole("button", { name: /^Shared Lock Menu/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Andes/i })).toBeVisible();
   await page.getByRole("button", { name: /^Shared Lock Menu/i }).click();
   await expect(page.getByTestId("ssmt-phase-panel").getByText(/1 of 1 item rows locked/i)).toBeVisible();
   await expect(page.getByLabel(/MRN for REMOTE LOCKED ITEM/i)).toHaveAttribute("readonly", "");

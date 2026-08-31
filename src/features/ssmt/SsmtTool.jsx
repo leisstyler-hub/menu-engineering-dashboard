@@ -98,6 +98,31 @@ function cloneMenu(menu) {
   };
 }
 
+function menuKey(menu = {}) {
+  return String(menu.name || menu.id || "").trim().toLowerCase();
+}
+
+function mergeWorkspaceMenusWithSeed(workspaceMenus = [], seedMenus = []) {
+  const merged = [];
+  const seen = new Set();
+
+  for (const menu of workspaceMenus) {
+    const key = menuKey(menu);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    merged.push(menu);
+  }
+
+  for (const menu of seedMenus) {
+    const key = menuKey(menu);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    merged.push(menu);
+  }
+
+  return merged;
+}
+
 function metricValue(value) {
   return Number(value || 0).toLocaleString();
 }
@@ -385,7 +410,9 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
           });
         }
         const workspace = sharedWorkspace || stored || {};
-        const storedMenus = Array.isArray(workspace.menus) && workspace.menus.length ? workspace.menus : payload.menus;
+        const storedMenus = Array.isArray(workspace.menus) && workspace.menus.length
+          ? mergeWorkspaceMenusWithSeed(workspace.menus, payload.menus)
+          : payload.menus;
         const storedPriceBook = Array.isArray(workspace.priceBook) && workspace.priceBook.length ? workspace.priceBook : payload.priceBook;
         const storedModifierGroups = Array.isArray(workspace.modifierGroups) && workspace.modifierGroups.length ? workspace.modifierGroups : payload.modifierGroups;
         const priceBook = storedPriceBook;
