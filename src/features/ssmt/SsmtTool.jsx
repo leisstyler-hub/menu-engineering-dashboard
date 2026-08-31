@@ -102,15 +102,17 @@ function menuKey(menu = {}) {
   return String(menu.name || menu.id || "").trim().toLowerCase();
 }
 
-function mergeWorkspaceMenusWithSeed(workspaceMenus = [], seedMenus = []) {
+function mergeWorkspaceMenusWithSeed(workspaceMenus = [], seedMenus = [], { applySeedTypes = false } = {}) {
   const merged = [];
   const seen = new Set();
+  const seedByKey = new Map(seedMenus.map((menu) => [menuKey(menu), menu]));
 
   for (const menu of workspaceMenus) {
     const key = menuKey(menu);
     if (!key || seen.has(key)) continue;
     seen.add(key);
-    merged.push(menu);
+    const seedMenu = seedByKey.get(key);
+    merged.push(applySeedTypes && seedMenu?.type ? { ...menu, type: seedMenu.type } : menu);
   }
 
   for (const menu of seedMenus) {
@@ -411,7 +413,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
         }
         const workspace = sharedWorkspace || stored || {};
         const storedMenus = Array.isArray(workspace.menus) && workspace.menus.length
-          ? mergeWorkspaceMenusWithSeed(workspace.menus, payload.menus)
+          ? mergeWorkspaceMenusWithSeed(workspace.menus, payload.menus, { applySeedTypes: !workspace.seedMenuTypeCorrectionsApplied })
           : payload.menus;
         const storedPriceBook = Array.isArray(workspace.priceBook) && workspace.priceBook.length ? workspace.priceBook : payload.priceBook;
         const storedModifierGroups = Array.isArray(workspace.modifierGroups) && workspace.modifierGroups.length ? workspace.modifierGroups : payload.modifierGroups;
@@ -446,6 +448,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
       priceBook: ssmtData.priceBook,
       modifierGroups: ssmtData.modifierGroups,
       selectedMenuId,
+      seedMenuTypeCorrectionsApplied: true,
       updatedAt: new Date().toISOString(),
     };
     writeLocalStorageJson(WORKSPACE_STORAGE_KEY, workspace, { clearOnQuota: true });

@@ -17,6 +17,7 @@ export function buildSsmtWorkspaceRecord(workspace = {}, updatedAt = new Date().
     priceBook: Array.isArray(workspace.priceBook) ? workspace.priceBook : [],
     modifierGroups: Array.isArray(workspace.modifierGroups) ? workspace.modifierGroups : [],
     selectedMenuId: workspace.selectedMenuId || "",
+    seedMenuTypeCorrectionsApplied: Boolean(workspace.seedMenuTypeCorrectionsApplied),
     updatedAt,
   };
 }
@@ -28,6 +29,7 @@ export function workspaceFromRecord(record = null) {
     priceBook: Array.isArray(record.priceBook) ? record.priceBook : [],
     modifierGroups: Array.isArray(record.modifierGroups) ? record.modifierGroups : [],
     selectedMenuId: record.selectedMenuId || "",
+    seedMenuTypeCorrectionsApplied: Boolean(record.seedMenuTypeCorrectionsApplied),
     updatedAt: record.updatedAt || record["Updated At"] || record.__supabaseUpdatedAt || "",
   };
 }

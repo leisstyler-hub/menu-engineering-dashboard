@@ -460,7 +460,11 @@ test("SSMT loads and saves item lock state through shared storage", async ({ pag
               "Record ID": "ssmt|workspace|current",
               "Record Type": "SSMT Workspace",
               Status: "Shared",
-              menus: [sharedMenu, { id: "legacy-global-grains", name: "Global Grains", type: "Global", items: [] }],
+              menus: [
+                sharedMenu,
+                { id: "legacy-andes", name: "Andes", type: "Core", items: [] },
+                { id: "legacy-global-grains", name: "Global Grains", type: "Global", items: [] },
+              ],
               priceBook: [],
               modifierGroups: [],
               selectedMenuId: "shared-lock-menu",
@@ -486,7 +490,7 @@ test("SSMT loads and saves item lock state through shared storage", async ({ pag
   await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
 
   await expect(page.getByRole("button", { name: /^Shared Lock Menu/i })).toBeVisible();
-  await expect(page.getByRole("button", { name: /^Andes/i })).toBeVisible();
+  await expect(page.getByTestId("ssmt-menu-group-Global").getByRole("button", { name: /^Andes/i })).toBeVisible();
   await page.getByRole("button", { name: /^Shared Lock Menu/i }).click();
   await expect(page.getByTestId("ssmt-phase-panel").getByText(/1 of 1 item rows locked/i)).toBeVisible();
   await expect(page.getByLabel(/MRN for REMOTE LOCKED ITEM/i)).toHaveAttribute("readonly", "");
