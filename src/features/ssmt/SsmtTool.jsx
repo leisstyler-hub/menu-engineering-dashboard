@@ -4,6 +4,7 @@ import {
   CalendarDays,
   ClipboardCheck,
   Copy,
+  Download,
   DollarSign,
   Flag,
   GripVertical,
@@ -22,6 +23,7 @@ import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
 import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
 import { readLocalStorageJson, writeLocalStorageJson } from "../../shared/safeStorage.js";
+import { downloadCentricExport } from "./ssmtCentricExport.js";
 import { loadSsmtWorkspaceFromSharedStorage, saveSsmtWorkspaceToSharedStorage } from "./ssmtWorkspaceStorage.js";
 
 const PASSCODE = "0411";
@@ -489,6 +491,15 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const copyLockedField = (item, value, label) => {
     if (!item.lockedForCentric) return;
     copyForCentric(value, label);
+  };
+
+  const exportSelectedMenuForCentric = () => {
+    downloadCentricExport({
+      selectedMenu,
+      areaOrder: ssmtData.areaOrder,
+      modifierGroups: ssmtData.modifierGroups,
+    });
+    setCopiedFieldNotice(`${selectedMenu.name} SSMT Export downloaded.`);
   };
 
   const addPricingRow = () => {
@@ -1058,9 +1069,14 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                   <DollarSign size={16} /> Pricing table
                 </button>
               </div>
-              <button type="button" onClick={() => requestDelete({ type: "menu", id: selectedMenu.id, name: selectedMenu.name })} className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-black text-red-800 hover:bg-red-100">
-                <Trash2 size={16} /> Delete menu
-              </button>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={exportSelectedMenuForCentric} className="inline-flex items-center gap-2 rounded-lg border border-emerald-700 bg-emerald-700 px-3 py-1.5 text-sm font-black text-white hover:bg-emerald-800">
+                  <Download size={16} /> Export SSMT
+                </button>
+                <button type="button" onClick={() => requestDelete({ type: "menu", id: selectedMenu.id, name: selectedMenu.name })} className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-black text-red-800 hover:bg-red-100">
+                  <Trash2 size={16} /> Delete menu
+                </button>
+              </div>
             </section>
 
             <section data-testid="ssmt-phase-panel" className="grid gap-3 rounded-lg border border-slate-400 bg-slate-950 p-3 text-white shadow-sm lg:grid-cols-[minmax(260px,1fr)_minmax(220px,0.7fr)_minmax(260px,1fr)] lg:items-end">

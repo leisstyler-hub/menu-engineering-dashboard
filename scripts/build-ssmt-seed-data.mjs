@@ -19,6 +19,127 @@ const IGNORED_SHEET_PATTERNS = [
 ];
 const PROMOTION_SHEET_PATTERNS = /promo|promotion|world cup|mlb|breakfast promo|hispanic heritage|oktoberfest|football|picnic|summer crop/i;
 const RECENT_UNLINKED_SHEET_PATTERNS = /the daily|fall menu 26|balti pilot|thompson sept 26|soft serve/i;
+const GLOBAL_MENU_NAMES = new Set([
+  "Andes",
+  "Anisa",
+  "Atlas Noodle",
+  "Balti",
+  "Bibimbowl",
+  "Bowld",
+  "Cevicheria",
+  "Chatwalla",
+  "Chiang Mai",
+  "Ciudad",
+  "Cypress",
+  "House of Teriyaki",
+  "Lemongrass Lime",
+  "Lotus",
+  "Masaya",
+  "Ohana",
+  "Pho",
+  "Piccola Italia",
+  "Poke",
+  "Porto",
+  "Saffron",
+  "Smokehouse BBQ",
+  "SE: Birria",
+  "SE: Fried Rice",
+  "SE: Naanwich",
+  "SE: Pho Dip",
+  "SE: Quesadilla",
+  "Tavola Nova",
+  "Yakisoba",
+  "Roam BBQ",
+  "Harvest & Co",
+  "Q Bowl",
+  "Global Grains",
+  "Sushi",
+  "Smoothies",
+  "Retail Extensions",
+]);
+const CORE_MENU_NAMES = new Set([
+  "AFC - Sushi",
+  "AWS",
+  "Breakfast",
+  "Cafe Express",
+  "Carvery",
+  "Coffee Shop",
+  "Fish Market",
+  "Greens & Grains",
+  "Grill Core",
+  "Pizza & Flatbreads",
+  "Salt & Char",
+  "Street Beats",
+  "Taco Total",
+  "Wok",
+  "Fresh Five",
+  "Brochette",
+  "SNA Adds",
+  "Drinks",
+  "Chefs Table",
+  "Deli Core",
+  "MCO14",
+]);
+const SHEET_DISPLAY_NAMES = new Map(Object.entries({
+  "AFC Sushi": "AFC - Sushi",
+  "Anisa Microconcept": "Anisa",
+  "Balti (Dhaba)": "Balti",
+  Bibimbap: "Bibimbowl",
+  "Carvery Updated": "Carvery",
+  "CAFE EXPRESS": "Cafe Express",
+  "DELI CORE": "Deli Core",
+  "GREENS AND GRAINS": "Greens & Grains",
+  "Grill Core ": "Grill Core",
+  "Harvest + Co": "Harvest & Co",
+  Hawaiian: "Ohana",
+  "Lemongrass + Lime": "Lemongrass Lime",
+  "Lotus (Ginger Republic)": "Lotus",
+  "Pho and Yakisoba (Noodles)": "Pho",
+  "Picola Italia": "Piccola Italia",
+  Pizza: "Pizza & Flatbreads",
+  "SNA ADDS": "SNA Adds",
+}));
+const SPLIT_MENU_SHEETS = new Map(Object.entries({
+  Globals: {
+    "Chiang Mai": "Chiang Mai",
+    Teriyaki: "House of Teriyaki",
+    TERIYAKI: "House of Teriyaki",
+    Porto: "Porto",
+    PORTO: "Porto",
+  },
+  "Street Eat Concepts": {
+    "Chiang Mai": "Chiang Mai",
+    Naanwich: "SE: Naanwich",
+    NAANWICH: "SE: Naanwich",
+    "Pho Dip": "SE: Pho Dip",
+    "PHO DIP": "SE: Pho Dip",
+    "Fried Rice": "SE: Fried Rice",
+    "FRIED RICE": "SE: Fried Rice",
+    Queadillas: "SE: Quesadilla",
+    QUESADILLAS: "SE: Quesadilla",
+    Quesabirria: "SE: Birria",
+    QUESABIRRIA: "SE: Birria",
+  },
+  Microconcept: {
+    "Atlas Noodle": "Atlas Noodle",
+    Bowld: "Bowld",
+    BOWLD: "Bowld",
+    Cevicheria: "Cevicheria",
+    CEVICHERIA: "Cevicheria",
+    Chaatwalla: "Chatwalla",
+    CHAATWALLA: "Chatwalla",
+    "Chiang Mai": "Chiang Mai",
+    "CHIANG MAI": "Chiang Mai",
+    Ciudad: "Ciudad",
+    CIUDAD: "Ciudad",
+    Poke: "Poke",
+    POKE: "Poke",
+  },
+  "Pho and Yakisoba (Noodles)": {
+    Pho: "Pho",
+    Yakisoba: "Yakisoba",
+  },
+}));
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -65,10 +186,17 @@ function valueAt(row, index) {
 }
 
 function menuTypeForSheet(sheetName) {
+  const displayName = SHEET_DISPLAY_NAMES.get(sheetName) || sheetName.trim();
+  if (GLOBAL_MENU_NAMES.has(displayName)) return "Global";
+  if (CORE_MENU_NAMES.has(displayName)) return "Core";
   if (/thompson/i.test(sheetName)) return "Thompson Hospitality";
   if (PROMOTION_SHEET_PATTERNS.test(sheetName)) return "Promotion";
   if (/global/i.test(sheetName)) return "Global";
   return "Core";
+}
+
+function menuDisplayName(sheetName) {
+  return SHEET_DISPLAY_NAMES.get(sheetName) || sheetName.trim();
 }
 
 function isModifierSheet(sheetName) {
@@ -84,7 +212,10 @@ function findHeaderRow(rows) {
     const headers = row.map(normalizedHeader);
     return headerIndex(headers, [/^label$/, /label/]) >= 0
       && headerIndex(headers, [/description/]) >= 0
-      && headerIndex(headers, [/mrn|recipe number|pos id/]) >= 0;
+      && (
+        headerIndex(headers, [/mrn|recipe number|pos id/]) >= 0
+        || headerIndex(headers, [/sea price/, /^price$/, /price selector/]) >= 0
+      );
   });
 }
 
@@ -191,11 +322,12 @@ async function navigationTargetSheetNames(sourceBuffer) {
 
 function includeReasonForSheet(sheetName, navigationTargets) {
   if (navigationTargets.has(sheetName)) return "Navigation UI button target";
+  if (GLOBAL_MENU_NAMES.has(menuDisplayName(sheetName)) || CORE_MENU_NAMES.has(menuDisplayName(sheetName))) return "Screenshot menu group target";
   if (PROMOTION_SHEET_PATTERNS.test(sheetName) || RECENT_UNLINKED_SHEET_PATTERNS.test(sheetName)) return "Visible recent/promotion sheet";
   return "";
 }
 
-function parseMenuSheet(workbook, sheetName, priceBook, includeReason = "") {
+function parseMenuSheet(workbook, sheetName, priceBook, includeReason = "", options = {}) {
   const rows = worksheetRows(workbook.Sheets[sheetName]);
   const headerRowIndex = findHeaderRow(rows);
   if (headerRowIndex < 0) return null;
@@ -215,9 +347,11 @@ function parseMenuSheet(workbook, sheetName, priceBook, includeReason = "") {
     .filter(({ header }) => /modifier/.test(header))
     .map(({ index }) => index);
 
-  const type = menuTypeForSheet(sheetName);
-  const menuId = `menu-${slug(sheetName)}`;
+  const type = options.type || menuTypeForSheet(sheetName);
+  const displayName = options.displayName || menuDisplayName(sheetName);
+  const menuId = `menu-${slug(displayName)}`;
   const items = rows.slice(headerRowIndex + 1)
+    .filter((row) => (typeof options.rowFilter === "function" ? options.rowFilter(row, { brandIndex }) : true))
     .map((row, index) => {
       const rawLabel = valueAt(row, labelIndex) || valueAt(row, nameIndex);
       const rawName = valueAt(row, nameIndex) || rawLabel;
@@ -251,7 +385,7 @@ function parseMenuSheet(workbook, sheetName, priceBook, includeReason = "") {
 
   return {
     id: menuId,
-    name: sheetName.trim(),
+    name: displayName,
     sourceSheet: sheetName,
     includeReason,
     type,
@@ -264,6 +398,28 @@ function parseMenuSheet(workbook, sheetName, priceBook, includeReason = "") {
     downstreamEligibleAfter: type === "Core" || type === "Global" ? "IT complete" : "Excluded historical record",
     items,
   };
+}
+
+function parseSplitMenuSheet(workbook, sheetName, priceBook, includeReason = "") {
+  const brandTargets = SPLIT_MENU_SHEETS.get(sheetName);
+  if (!brandTargets) return [];
+  return Object.entries(brandTargets)
+    .map(([brandValue, displayName]) => parseMenuSheet(workbook, sheetName, priceBook, includeReason, {
+      displayName,
+      type: "Global",
+      rowFilter: (row, { brandIndex }) => valueAt(row, brandIndex) === brandValue,
+    }))
+    .filter(Boolean);
+}
+
+function uniqueMenusByName(menus = []) {
+  const seen = new Set();
+  return menus.filter((menu) => {
+    const key = menu.name.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function parseModifierSheet(workbook, sheetName) {
@@ -315,10 +471,14 @@ async function buildData() {
   const priceBook = parsePriceBook(workbook);
   const menuSheetNames = workbook.SheetNames
     .filter((sheetName) => isCandidateMenuSheet(sheetName) && includeReasonForSheet(sheetName, navigationTargets));
-  const includedMenuSheets = new Set(menuSheetNames);
-  const menus = menuSheetNames
-    .map((sheetName) => parseMenuSheet(workbook, sheetName, priceBook, includeReasonForSheet(sheetName, navigationTargets)))
-    .filter(Boolean);
+  const menus = uniqueMenusByName(menuSheetNames
+    .flatMap((sheetName) => (
+      SPLIT_MENU_SHEETS.has(sheetName)
+        ? parseSplitMenuSheet(workbook, sheetName, priceBook, includeReasonForSheet(sheetName, navigationTargets))
+        : [parseMenuSheet(workbook, sheetName, priceBook, includeReasonForSheet(sheetName, navigationTargets))]
+    ))
+    .filter(Boolean));
+  const includedMenuSheets = new Set(menuSheetNames.concat(menus.map((menu) => menu.sourceSheet)));
   const modifierGroups = workbook.SheetNames
     .filter((sheetName) => isModifierSheet(sheetName) && (
       visibleSheets.includes(sheetName)

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import XLSX from "xlsx";
 import { collectUnexpectedPageErrors, expectNoAppProtection, expectNoUnexpectedPageErrors } from "./smoke-helpers.js";
 
 test("SSMT opens behind passcode and separates pricing from menu building", async ({ page }) => {
@@ -135,6 +136,46 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
 
   const coreNames = await firstCoreGroup.getByRole("button").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-menu-name")));
   expect([...coreNames].sort((a, b) => a.localeCompare(b))).toEqual(coreNames);
+  const globalNames = await globalGroup.getByRole("button").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-menu-name")));
+  expect([...globalNames].sort((a, b) => a.localeCompare(b))).toEqual(globalNames);
+  expect(globalNames).toEqual(expect.arrayContaining([
+    "Andes",
+    "Anisa",
+    "Atlas Noodle",
+    "Balti",
+    "Bibimbowl",
+    "Bowld",
+    "Cevicheria",
+    "Chatwalla",
+    "Chiang Mai",
+    "Ciudad",
+    "Cypress",
+    "Global Grains",
+    "Harvest & Co",
+    "House of Teriyaki",
+    "Lemongrass Lime",
+    "Lotus",
+    "Masaya",
+    "Ohana",
+    "Pho",
+    "Piccola Italia",
+    "Poke",
+    "Porto",
+    "Q Bowl",
+    "Retail Extensions",
+    "Roam BBQ",
+    "Saffron",
+    "SE: Birria",
+    "SE: Fried Rice",
+    "SE: Naanwich",
+    "SE: Pho Dip",
+    "SE: Quesadilla",
+    "Smokehouse BBQ",
+    "Smoothies",
+    "Sushi",
+    "Tavola Nova",
+    "Yakisoba",
+  ]));
 
   await page.getByLabel(/New menu name/i).fill("Smoke Test Ordering");
   await page.getByLabel(/New menu type/i).selectOption("Core");
@@ -454,6 +495,46 @@ test("SSMT loads and saves item lock state through shared storage", async ({ pag
       ?.items?.find((item) => item.id === "shared-lock-item")
       ?.lockedForCentric;
   }).toBe(false);
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("SSMT selected-menu export downloads a Centric-shaped workbook", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await page.goto("/");
+
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByLabel(/SSMT passcode/i).fill("0411");
+  await page.getByRole("button", { name: /unlock ssmt/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+  await page.getByLabel(/New menu name/i).fill("Export Button Test");
+  await page.getByLabel(/New menu type/i).selectOption("Core");
+  await page.getByRole("button", { name: /Create menu/i }).click();
+
+  await page.getByLabel(/Item label/i).first().fill("export sandwich");
+  await page.getByLabel(/Description/i).first().fill("export ready description");
+  await page.getByLabel(/MRN for/i).first().fill("321654.98");
+  await page.getByLabel(/Category for/i).first().fill("Food");
+  await page.getByLabel(/Secondary category for/i).first().fill("Entree");
+  await page.getByLabel(/SEA price for/i).first().selectOption({ index: 1 });
+
+  const [download] = await Promise.all([
+    page.waitForEvent("download"),
+    page.getByRole("button", { name: /Export SSMT/i }).click(),
+  ]);
+  expect(download.suggestedFilename()).toBe("Export Button Test SSMT Export.xlsx");
+
+  const downloadPath = await download.path();
+  const workbook = XLSX.readFile(downloadPath);
+  expect(workbook.SheetNames).toEqual(["Glossary", "Brand", "Menus", "Categories", "Items", "Modifier Groups", "Modifiers", "Relationships"]);
+  const itemRows = XLSX.utils.sheet_to_json(workbook.Sheets.Items, { header: 1, raw: false, defval: "" });
+  expect(itemRows[1][3]).toBe("EXPORT SANDWICH");
+  expect(itemRows[1][4]).toBe("EXPORT SANDWICH");
+  expect(itemRows[1][8]).toBe("export ready description");
+  expect(itemRows[1][25]).toBe("321654.98");
+  const relationshipRows = XLSX.utils.sheet_to_json(workbook.Sheets.Relationships, { header: 1, raw: false, defval: "" });
+  expect(relationshipRows.map((row) => row.slice(0, 3).join("|"))).toContain("Item|EXPORT SANDWICH|FOOD");
 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
