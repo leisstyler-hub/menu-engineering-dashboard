@@ -193,6 +193,7 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
   await page.getByRole("button", { name: /Back to menu selection/i }).click();
   await page.getByRole("button", { name: /^Smoke Test Ordering/i }).click();
   await expect(page.getByLabel(/Phase/i)).toHaveValue("IT complete");
+  await expect(page.getByTestId("ssmt-workspace-sync")).toContainText(/Shared SSMT workspace saved/i, { timeout: 20_000 });
 
   await page.reload();
   await page.getByRole("button", { name: /open ssmt/i }).click();
