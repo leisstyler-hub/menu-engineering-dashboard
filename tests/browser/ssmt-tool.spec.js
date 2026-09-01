@@ -112,6 +112,7 @@ test("SSMT opens behind passcode and separates pricing from menu building", asyn
 
 test("SSMT groups menus by type and supports row editing, ordering, and saved phase status", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
+  const smokeMenuName = `Smoke Test Ordering ${Date.now()}`;
   await page.goto("/");
 
   await page.getByRole("button", { name: /open ssmt/i }).click();
@@ -183,22 +184,22 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
     "Yakisoba",
   ]));
 
-  await page.getByLabel(/New menu name/i).fill("Smoke Test Ordering");
+  await page.getByLabel(/New menu name/i).fill(smokeMenuName);
   await page.getByLabel(/New menu type/i).selectOption("Core");
   await page.getByRole("button", { name: /Create menu/i }).click();
-  await expect(page.getByRole("heading", { name: /^Smoke Test Ordering$/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: smokeMenuName })).toBeVisible();
 
   await page.getByRole("button", { name: /Lock item NEW ITEM/i }).click();
   await page.getByLabel(/Phase/i).selectOption("IT complete");
   await page.getByRole("button", { name: /Back to menu selection/i }).click();
-  await page.getByRole("button", { name: /^Smoke Test Ordering/i }).click();
+  await page.locator(`[data-menu-name="${smokeMenuName}"]`).click();
   await expect(page.getByLabel(/Phase/i)).toHaveValue("IT complete");
   await expect(page.getByTestId("ssmt-workspace-sync")).toContainText(/Shared SSMT workspace saved/i, { timeout: 20_000 });
 
   await page.reload();
   await page.getByRole("button", { name: /open ssmt/i }).click();
   await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
-  await page.getByRole("button", { name: /^Smoke Test Ordering/i }).click();
+  await page.locator(`[data-menu-name="${smokeMenuName}"]`).click();
   await expect(page.getByLabel(/Phase/i)).toHaveValue("IT complete");
 
   await page.getByRole("button", { name: /Unlock item NEW ITEM/i }).click();
@@ -246,7 +247,7 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
 
   await page.getByRole("button", { name: /Lock item BETA ITEM/i }).click();
   await page.getByLabel(/Current SSMT phase/i).selectOption("IT complete");
-  await expect(page.getByTestId("ssmt-derived-source-preview")).toContainText("AMZ: Smoke Test Ordering - Curated Sandwiches");
+  await expect(page.getByTestId("ssmt-derived-source-preview")).toContainText(`AMZ: ${smokeMenuName} - Curated Sandwiches`);
 
   await submenuRow.getByRole("button", { name: /Delete sub menu/i }).click();
   await page.getByRole("dialog", { name: /Delete sub menu/i }).getByLabel(/Confirm delete Curated Sandwiches/i).check();
