@@ -1,6 +1,8 @@
 import { Buffer } from "node:buffer";
 import { getRecipeLibraryPhoto } from "../src/data/recipeLibraryAssets.js";
 import { itemDescription, normalizeRecipeLibraryItem, recipeLibraryCategoryGroup, textValue } from "../src/features/recipe-database/recipeLibraryModel.js";
+import { deriveSsmtOperatingRows, mergeSsmtRowsWithMenuWorksRows } from "../src/features/ssmt/ssmtDerivedMenuSource.js";
+import { SSMT_WORKSPACE_RECORD_ID, workspaceFromRecord } from "../src/features/ssmt/ssmtWorkspaceStorage.js";
 
 const DEFAULT_SUPABASE_URL = "https://pzilyzqhatthctgsjwtt.supabase.co";
 const SUPABASE_BATCH_SIZE = 250;
@@ -300,6 +302,40 @@ async function loadSupabaseRecipeRows() {
   }
 }
 
+function appRecordToWorkspaceRecord(row = {}) {
+  return {
+    ...(row.record_payload || {}),
+    __supabaseRecordId: row.record_id,
+    __supabaseUpdatedAt: row.updated_at || "",
+    __supabaseRetainUntil: row.retain_until || "",
+  };
+}
+
+async function loadSsmtOperatingRows() {
+  try {
+    const params = new URLSearchParams({
+      select: "record_id,updated_at,retain_until,record_payload",
+      tool: "eq.rotation",
+      record_id: `eq.${SSMT_WORKSPACE_RECORD_ID}`,
+      limit: "1",
+    });
+    const rows = await supabaseFetch(`app_records?${params.toString()}`);
+    const record = Array.isArray(rows) ? rows[0] : null;
+    const workspace = workspaceFromRecord(appRecordToWorkspaceRecord(record));
+    return {
+      ok: true,
+      rows: deriveSsmtOperatingRows(workspace || {}),
+      message: workspace ? "Loaded IT-complete SSMT operating rows." : "No shared SSMT workspace record was found.",
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      rows: [],
+      message: error.message || "SSMT operating rows could not be loaded.",
+    };
+  }
+}
+
 function postgrestQuotedList(values = []) {
   return values
     .map((value) => `"${String(value).replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`)
@@ -490,11 +526,18 @@ export default async function handler(req, res) {
 async function handleGet(req, res) {
   const supabaseRead = await loadSupabaseRecipeRows();
   const usesSupabaseRows = supabaseRead.ok && supabaseRead.rows.length;
-  const rows = usesSupabaseRows ? supabaseRead.rows : await loadMenuWorksFallbackRows();
-  const source = usesSupabaseRows ? supabaseRead.source : "server-menuworks-json";
+  const baseRows = usesSupabaseRows ? supabaseRead.rows : await loadMenuWorksFallbackRows();
+  const ssmtRead = await loadSsmtOperatingRows();
+  const rows = ssmtRead.rows.length ? mergeSsmtRowsWithMenuWorksRows(baseRows, ssmtRead.rows) : baseRows;
+  const sourceBase = usesSupabaseRows ? supabaseRead.source : "server-menuworks-json";
+  const source = ssmtRead.rows.length ? `${sourceBase}+ssmt-derived` : sourceBase;
   const scope = String(req.query.scope || "summary").toLowerCase();
   const menus = buildMenuSummaries(rows);
   const summary = buildQuality(rows);
+  const fallbackMessage = [
+    supabaseRead.ok ? "" : supabaseRead.message,
+    ssmtRead.ok ? "" : ssmtRead.message,
+  ].filter(Boolean).join(" ");
 
   if (scope === "summary") {
     sendJson(res, 200, {
@@ -503,7 +546,8 @@ async function handleGet(req, res) {
       scope,
       menus,
       summary,
-      fallbackMessage: supabaseRead.ok ? "" : supabaseRead.message,
+      ssmtDerivedRows: ssmtRead.rows.length,
+      fallbackMessage,
     });
     return;
   }
@@ -521,7 +565,8 @@ async function handleGet(req, res) {
       selectedMenu,
       selectedSummary: buildQuality(menuRows),
       rows: menuRows,
-      fallbackMessage: supabaseRead.ok ? "" : supabaseRead.message,
+      ssmtDerivedRows: ssmtRead.rows.length,
+      fallbackMessage,
     });
     return;
   }
@@ -534,7 +579,8 @@ async function handleGet(req, res) {
       menus,
       summary,
       rows,
-      fallbackMessage: supabaseRead.ok ? "" : supabaseRead.message,
+      ssmtDerivedRows: ssmtRead.rows.length,
+      fallbackMessage,
     });
     return;
   }

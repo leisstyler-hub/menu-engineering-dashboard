@@ -24,6 +24,7 @@ import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
 import { readLocalStorageJson, writeLocalStorageJson } from "../../shared/safeStorage.js";
 import { downloadCentricExport } from "./ssmtCentricExport.js";
+import { deriveSsmtOperatingRows, ssmtDerivedMenuEntries } from "./ssmtDerivedMenuSource.js";
 import { loadSsmtWorkspaceFromSharedStorage, saveSsmtWorkspaceToSharedStorage } from "./ssmtWorkspaceStorage.js";
 
 const PASSCODE = "0411";
@@ -300,11 +301,12 @@ function createMenuRecord(name, type, areaOrder) {
   };
 }
 
-function createDivider(menuId) {
+function createDivider(menuId, dividerKind = "category") {
   return {
     id: `${menuId}-divider-${Date.now()}`,
     recordType: "divider",
-    title: "New divider",
+    dividerKind,
+    title: dividerKind === "submenu" ? "New sub menu" : "New divider",
   };
 }
 
@@ -510,6 +512,8 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const menuTypes = ssmtData.menuTypes?.length ? ssmtData.menuTypes : DEFAULT_MENU_TYPES;
   const showActiveDates = activeDatesRequired(selectedMenu.type);
   const selectedItemRows = (selectedMenu.items || []).filter((item) => item.recordType !== "divider");
+  const selectedDerivedRows = useMemo(() => deriveSsmtOperatingRows({ menus: [selectedMenu] }), [selectedMenu]);
+  const selectedDerivedMenus = useMemo(() => ssmtDerivedMenuEntries(selectedDerivedRows), [selectedDerivedRows]);
   const lockedItemCount = selectedItemRows.filter((item) => item.lockedForCentric).length;
   const allItemRowsLocked = selectedItemRows.length === 0 || lockedItemCount === selectedItemRows.length;
   const currentPhaseIndex = ssmtData.workflowPhases.indexOf(selectedMenu.phase);
@@ -540,12 +544,13 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
     }));
   };
 
-  const updateDivider = (dividerId, title) => {
+  const updateDivider = (dividerId, patch) => {
+    const resolvedPatch = typeof patch === "string" ? { title: patch } : patch;
     setMenus((current) => current.map((menu) => {
       if (menu.id !== selectedMenu.id) return menu;
       return {
         ...menu,
-        items: menu.items.map((item) => (item.id === dividerId ? { ...item, title } : item)),
+        items: menu.items.map((item) => (item.id === dividerId ? { ...item, ...resolvedPatch } : item)),
       };
     }));
   };
@@ -674,6 +679,13 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
     setMenus((current) => current.map((menu) => {
       if (menu.id !== selectedMenu.id) return menu;
       return { ...menu, items: [...menu.items, createDivider(menu.id)] };
+    }));
+  };
+
+  const addSubmenuDivider = () => {
+    setMenus((current) => current.map((menu) => {
+      if (menu.id !== selectedMenu.id) return menu;
+      return { ...menu, items: [...menu.items, createDivider(menu.id, "submenu")] };
     }));
   };
 
@@ -944,7 +956,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
     if (deleteRequest.type !== "menu" && !deleteConfirmed) return;
     if (deleteRequest.type === "menu") {
       deleteSelectedMenu(deleteRequest.id);
-    } else if (deleteRequest.type === "item") {
+    } else if (deleteRequest.type === "item" || deleteRequest.type === "divider" || deleteRequest.type === "submenu") {
       deleteItem(deleteRequest.id);
       setDeleteRequest(null);
       setDeleteConfirmed(false);
@@ -1382,7 +1394,17 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                   <button type="button" onClick={addDivider} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-black text-slate-800 hover:bg-slate-100">
                     <Plus size={16} /> Add divider
                   </button>
+                  <button type="button" onClick={addSubmenuDivider} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm font-black text-white hover:bg-slate-800">
+                    <Plus size={16} /> Add sub menu
+                  </button>
                 </div>
+              </div>
+              <div data-testid="ssmt-derived-source-preview" className="border-b border-slate-300 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-600">
+                {selectedDerivedMenus.length ? (
+                  <span>Downstream SSMT menus after IT complete: {selectedDerivedMenus.map((entry) => `${entry.menu} (${entry.count})`).join(", ")}</span>
+                ) : (
+                  <span>Downstream SSMT menus appear here after this menu reaches IT complete.</span>
+                )}
               </div>
               <div data-testid="ssmt-builder-scroll" className="max-h-[74vh] overflow-auto">
                 <table className="w-full min-w-[2520px] table-fixed border-collapse text-left text-xs">
@@ -1409,24 +1431,34 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                   <tbody data-testid="ssmt-builder-body">
                     {selectedMenu.items.slice(0, 80).map((item) => (
                       item.recordType === "divider" ? (
+                        (() => {
+                          const isSubmenu = item.dividerKind === "submenu";
+                          return (
                         <tr
                           key={item.id}
-                          data-testid={`ssmt-row-divider-${item.id}`}
-                          data-row-kind="divider"
+                          data-testid={`${isSubmenu ? "ssmt-row-submenu" : "ssmt-row-divider"}-${item.id}`}
+                          data-row-kind={isSubmenu ? "submenu" : "divider"}
                           draggable
                           onDragStart={() => setDraggedRowId(item.id)}
                           onDragOver={(event) => event.preventDefault()}
                           onDrop={() => moveRow(draggedRowId, item.id)}
-                          className="bg-slate-100"
+                          className={isSubmenu ? "bg-slate-900 text-white" : "bg-slate-100"}
                         >
-                          <td className="border-b border-slate-300 px-2 py-1 text-slate-500"><GripVertical size={16} /></td>
-                          <td colSpan={10} className="border-b border-slate-300 px-2 py-1">
-                            <label className="flex flex-col gap-1 md:flex-row md:items-center">
-                              <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Divider title</span>
-                              <input aria-label="Divider title" value={item.title} onChange={(event) => updateDivider(item.id, event.target.value)} className="min-w-[260px] rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-black outline-none focus:border-emerald-500" />
-                            </label>
+                          <td className={`border-b px-2 py-1 ${isSubmenu ? "border-slate-700 text-slate-200" : "border-slate-300 text-slate-500"}`}><GripVertical size={16} /></td>
+                          <td colSpan={10} className={`border-b px-2 py-1 ${isSubmenu ? "border-slate-700" : "border-slate-300"}`}>
+                            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                              <label className="flex flex-col gap-1 md:flex-row md:items-center">
+                                <span className={`text-xs font-black uppercase tracking-[0.14em] ${isSubmenu ? "text-slate-200" : "text-slate-500"}`}>{isSubmenu ? "Sub menu title" : "Divider title"}</span>
+                                <input aria-label={isSubmenu ? "Sub menu title" : "Divider title"} value={item.title} onChange={(event) => updateDivider(item.id, event.target.value)} className="min-w-[260px] rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-black text-slate-950 outline-none focus:border-emerald-500" />
+                              </label>
+                              <button type="button" onClick={() => requestDelete({ type: isSubmenu ? "submenu" : "divider", id: item.id, name: item.title || (isSubmenu ? "sub menu" : "divider") })} className={`inline-flex items-center justify-center gap-1 rounded-md border px-2 py-1 text-[10px] font-black ${isSubmenu ? "border-red-300 bg-red-50 text-red-800 hover:bg-red-100" : "border-red-200 bg-red-50 text-red-800 hover:bg-red-100"}`} aria-label={isSubmenu ? `Delete sub menu ${item.title || "sub menu"}` : `Delete divider ${item.title || "divider"}`}>
+                                <Trash2 size={13} /> Delete
+                              </button>
+                            </div>
                           </td>
                         </tr>
+                          );
+                        })()
                       ) : (
                         <tr
                           key={item.id}
@@ -1812,6 +1844,8 @@ function DeleteConfirmationModal({ request, confirmed, onConfirmedChange, confir
   const labelByType = {
     menu: "Delete menu",
     item: "Delete item",
+    divider: "Delete divider",
+    submenu: "Delete sub menu",
     "modifier-group": "Delete modifier group",
     "modifier-item": "Delete modifier item",
   };

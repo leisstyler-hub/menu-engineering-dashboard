@@ -215,6 +215,15 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
   await page.getByTestId(/ssmt-row-divider/).dragTo(page.getByTestId(/ssmt-row-item/).first());
   await expect(page.getByTestId("ssmt-builder-body").locator("tr").first()).toHaveAttribute("data-row-kind", "divider");
 
+  await page.getByRole("button", { name: /Add sub menu/i }).click();
+  const submenuRow = page.getByTestId(/ssmt-row-submenu/).first();
+  await expect(submenuRow).toBeVisible();
+  await expect(submenuRow).toHaveAttribute("data-row-kind", "submenu");
+  await submenuRow.getByLabel(/Sub menu title/i).fill("Curated Sandwiches");
+  await submenuRow.dragTo(page.getByTestId(/ssmt-row-item/).nth(1));
+  const submenuBackground = await submenuRow.evaluate((node) => getComputedStyle(node).backgroundColor);
+  expect(submenuBackground).toBe("rgb(15, 23, 42)");
+
   await expect(page.getByRole("columnheader", { name: "Fixy" })).toBeVisible();
   await expect(page.getByRole("columnheader", { name: "FOH / Fixy" })).toHaveCount(0);
   await expect(page.getByRole("columnheader", { name: "SEA price" })).toBeVisible();
@@ -235,6 +244,16 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
   await expect(page.getByLabel(/Category for/i).first()).toHaveValue("entree");
   await expect(page.getByLabel(/Secondary category for/i).first()).toHaveValue("grill");
 
+  await page.getByRole("button", { name: /Lock item BETA ITEM/i }).click();
+  await page.getByLabel(/Current SSMT phase/i).selectOption("IT complete");
+  await expect(page.getByTestId("ssmt-derived-source-preview")).toContainText("AMZ: Smoke Test Ordering - Curated Sandwiches");
+
+  await submenuRow.getByRole("button", { name: /Delete sub menu/i }).click();
+  await page.getByRole("dialog", { name: /Delete sub menu/i }).getByLabel(/Confirm delete Curated Sandwiches/i).check();
+  await page.getByRole("dialog", { name: /Delete sub menu/i }).getByRole("button", { name: "Delete sub menu", exact: true }).click();
+  await expect(page.getByTestId(/ssmt-row-submenu/)).toHaveCount(0);
+
+  await page.getByRole("button", { name: /Unlock item BETA ITEM/i }).click();
   await page.getByRole("button", { name: /Delete item ALPHA ITEM/i }).click();
   const itemDeleteDialog = page.getByRole("dialog", { name: /Delete item/i });
   await expect(itemDeleteDialog).toBeVisible();

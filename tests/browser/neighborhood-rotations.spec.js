@@ -120,13 +120,13 @@ function exactName(name) {
   return new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i");
 }
 
-async function stubEmptyRotationBackbone(page, { onStorageWrite = null, getStorageRecords = null } = {}) {
+async function stubEmptyRotationBackbone(page, { onStorageWrite = null, getStorageRecords = null, menuRows = smokeMenuItems } = {}) {
   await page.route("**/api/recipe-library**", async (route) => {
     await route.fulfill({
       json: {
         ok: true,
         source: "browser-smoke-menuworks",
-        rows: smokeMenuItems,
+        rows: menuRows,
       },
     });
   });
@@ -217,6 +217,44 @@ test("Neighborhood Rotations opens planner and gives a visible blocked-submit re
   await expect(submitButton).toHaveAttribute("aria-disabled", "true");
   await expect(submitButton).toHaveAttribute("title", /Global Menu|entree|station/i);
   await expect(page.getByText(/Submit blocked/i)).toBeVisible();
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("Neighborhood Rotations can use SSMT-derived submenus from selector data", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const derivedMenu = "AMZ: SSMT Smoke Core - Curated Sandwiches";
+  const derivedItem = "SSMT TURKEY CLUB";
+  await stubEmptyRotationBackbone(page, {
+    menuRows: [
+      ...smokeMenuItems,
+      {
+        id: "ssmt-derived-turkey-club",
+        menu: derivedMenu,
+        station: "Curated Sandwiches",
+        item: derivedItem,
+        recipeName: derivedItem,
+        displayName: derivedItem,
+        category: "entree",
+        recipeCategory: "Sandwich",
+        price: 9.95,
+        __ssmtOperatingMenu: true,
+      },
+    ],
+  });
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: exactName("North") }).click();
+  await page.getByRole("button", { name: exactName("Dawson") }).click();
+
+  const globalSection = page.getByRole("heading", { name: "Global Station" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  const menuSelect = globalSection.locator("select").first();
+  await expect(menuSelect.locator(`option[value="${derivedMenu}"]`)).toHaveCount(1);
+  await menuSelect.selectOption(derivedMenu);
+  await expect(globalSection.locator("select").nth(1).locator(`option[value="${derivedItem}"]`)).toHaveCount(1);
+  await globalSection.locator("select").nth(1).selectOption(derivedItem);
+  await expect(globalSection.locator("select").nth(1)).toHaveValue(derivedItem);
 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);

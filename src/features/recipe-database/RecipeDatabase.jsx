@@ -129,6 +129,7 @@ function hasRecipePhoto(rowOrItem) {
 
 function recipeLibrarySourceLabel(source = "", usesLocalRows = false) {
   if (usesLocalRows || source === "local-override") return "Local override";
+  if (String(source).includes("ssmt-derived")) return "Menu data + SSMT";
   if (source === "supabase-recipe-items") return "Supabase";
   if (source === "server-menuworks-json") return "Server fallback";
   return "Database checking";

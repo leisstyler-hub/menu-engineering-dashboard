@@ -3319,7 +3319,7 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
   const [menuWorksItemsVersion, setMenuWorksItemsVersion] = useState(MENUWORKS_ITEMS.length ? 1 : 0);
   const [menuWorksLoadStatus, setMenuWorksLoadStatus] = useState(() => ({
     state: MENUWORKS_ITEMS.length ? "ready" : "loading",
-    message: MENUWORKS_ITEMS.length ? "MenuWorks items ready." : "Loading MenuWorks selector data...",
+    message: MENUWORKS_ITEMS.length ? "Menu selector data ready." : "Loading menu selector data...",
   }));
   const [district, setDistrict] = useState("");
   const [week, setWeek] = useState(DEFAULT_ROTATION_WEEK);
@@ -3350,11 +3350,11 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
         if (!isActive) return;
         resetMenuWorksCaches(rows);
         setMenuWorksItemsVersion((version) => version + 1);
-        setMenuWorksLoadStatus({ state: "ready", message: "MenuWorks selector data loaded." });
+        setMenuWorksLoadStatus({ state: "ready", message: "Menu selector data loaded." });
       })
       .catch((error) => {
         if (!isActive) return;
-        setMenuWorksLoadStatus({ state: "error", message: error instanceof Error ? error.message : "Unable to load MenuWorks selector data." });
+        setMenuWorksLoadStatus({ state: "error", message: error instanceof Error ? error.message : "Unable to load menu selector data." });
       });
     return () => {
       isActive = false;
