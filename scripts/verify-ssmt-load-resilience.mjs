@@ -3,10 +3,12 @@ import { gzipSync } from "node:zlib";
 
 import recipeLibraryHandler from "../api/recipe-library.js";
 import storageRecordsHandler from "../api/storage/records.js";
+import trafficWeeklyHandler from "../api/traffic/weekly.js";
 
 process.env.SUPABASE_URL = "https://example.supabase.co";
 process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-key";
 process.env.SUPABASE_API_TIMEOUT_MS = "100";
+process.env.TRAFFIC_SUPABASE_TIMEOUT_MS = "100";
 
 const originalFetch = globalThis.fetch;
 
@@ -76,6 +78,34 @@ async function invokeStorageRecords({ method = "GET", query = {}, body = {} } = 
   return { statusCode, body: bodyPayload };
 }
 
+async function invokeTrafficWeekly({ method = "GET", body = {} } = {}) {
+  let statusCode = 0;
+  let bodyPayload = null;
+  await trafficWeeklyHandler(
+    {
+      method,
+      query: {},
+      body,
+      headers: {
+        "user-agent": "Playwright smoke test",
+        "x-vercel-id": "verify-ssmt-load-resilience",
+      },
+    },
+    {
+      setHeader() {},
+      status(code) {
+        statusCode = code;
+        return {
+          json(payload) {
+            bodyPayload = payload;
+          },
+        };
+      },
+    }
+  );
+  return { statusCode, body: bodyPayload };
+}
+
 try {
   const result = await Promise.race([
     invokeRecipeLibrary({ scope: "summary" }),
@@ -89,6 +119,21 @@ try {
   assert.match(result.body.fallbackMessage, /Supabase API request timed out|aborted/i);
   assert.match(result.body.fallbackMessage, /SSMT operating rows could not be loaded|aborted|timed out/i);
   assert(result.body.menus.some((entry) => entry.menu === "AMZ: Ohana"));
+
+  const trafficResult = await Promise.race([
+    invokeTrafficWeekly({
+      method: "POST",
+      body: {
+        visitorId: "verify-ssmt-load-resilience-visitor",
+        path: "/",
+      },
+    }),
+    new Promise((_, reject) => setTimeout(() => reject(new Error("Traffic analytics waited too long on slow Supabase.")), 180)),
+  ]);
+  assert.equal(trafficResult.statusCode, 200);
+  assert.equal(trafficResult.body.status, "degraded");
+  assert.equal(trafficResult.body.recorded.recorded, false);
+  assert.match(trafficResult.body.message, /temporarily unavailable/i);
 
   const oversizedWorkspace = {
     "Record ID": "ssmt|workspace|current",
@@ -112,9 +157,10 @@ try {
   let compressedPayload = null;
   globalThis.fetch = async (url, options = {}) => {
     const href = String(url);
-    if (href.includes("/rest/v1/app_records?on_conflict=record_id")) {
-      const rows = JSON.parse(options.body || "[]");
-      compressedPayload = rows[0]?.record_payload;
+    if (href.includes("/rest/v1/app_records?record_id=eq.ssmt%7Cworkspace%7Ccurrent")) {
+      const row = JSON.parse(options.body || "{}");
+      assert.equal(options.method, "PATCH");
+      compressedPayload = row?.record_payload;
       return { ok: true, status: 200, text: async () => "" };
     }
     throw new Error(`Unexpected storage fetch: ${href}`);

@@ -5,6 +5,7 @@ const TRAFFIC_RECORD_TYPE = "Traffic Daily Visitor";
 const TRAFFIC_DATABASE_TOOL = "rotation";
 const TRAFFIC_SOURCE_SYSTEM = "culinary-tools-traffic";
 const TRAFFIC_TIME_ZONE = "America/Los_Angeles";
+const DEFAULT_TRAFFIC_SUPABASE_TIMEOUT_MS = 2500;
 const TRAFFIC_COLUMNS = {
   recordId: "Record ID",
   recordType: "Record Type",
@@ -46,15 +47,31 @@ async function supabaseFetch(path, options = {}) {
     throw error;
   }
 
-  const response = await fetch(`${config.url}/rest/v1/${path}`, {
-    ...options,
-    headers: {
-      apikey: config.serviceKey,
-      Authorization: `Bearer ${config.serviceKey}`,
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
-  });
+  const timeoutMs = Number(process.env.TRAFFIC_SUPABASE_TIMEOUT_MS || DEFAULT_TRAFFIC_SUPABASE_TIMEOUT_MS);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), Number.isFinite(timeoutMs) && timeoutMs > 0 ? timeoutMs : DEFAULT_TRAFFIC_SUPABASE_TIMEOUT_MS);
+  let response;
+  try {
+    response = await fetch(`${config.url}/rest/v1/${path}`, {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        apikey: config.serviceKey,
+        Authorization: `Bearer ${config.serviceKey}`,
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
+      },
+    });
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      const timeoutError = new Error("Traffic Supabase request timed out.");
+      timeoutError.statusCode = 504;
+      throw timeoutError;
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
 
   const text = await response.text();
   let payload = null;

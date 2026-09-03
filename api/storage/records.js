@@ -201,6 +201,16 @@ async function deleteRecordIds(recordIds = []) {
   return deleted;
 }
 
+async function updateSingleExistingRecord(row) {
+  await supabaseFetch(`app_records?${queryString({ record_id: `eq.${row.record_id}` })}`, {
+    method: "PATCH",
+    headers: {
+      Prefer: "return=minimal",
+    },
+    body: JSON.stringify(row),
+  }, DEFAULT_SUPABASE_WRITE_TIMEOUT_MS);
+}
+
 function dedupeRowsByRecordId(rows = []) {
   const byRecordId = new Map();
   rows.forEach((row) => {
@@ -290,13 +300,17 @@ async function upsertRecords(req, res) {
     ? await findStaleRowIds(replaceParentRecordIds, rows.map((row) => row.record_id))
     : [];
 
-  await supabaseFetch("app_records?on_conflict=record_id", {
-    method: "POST",
-    headers: {
-      Prefer: "resolution=merge-duplicates,return=minimal",
-    },
-    body: JSON.stringify(rows),
-  }, DEFAULT_SUPABASE_WRITE_TIMEOUT_MS);
+  if (rows.length === 1 && rows[0]?.record_id === SSMT_WORKSPACE_RECORD_ID) {
+    await updateSingleExistingRecord(rows[0]);
+  } else {
+    await supabaseFetch("app_records?on_conflict=record_id", {
+      method: "POST",
+      headers: {
+        Prefer: "resolution=merge-duplicates,return=minimal",
+      },
+      body: JSON.stringify(rows),
+    }, DEFAULT_SUPABASE_WRITE_TIMEOUT_MS);
+  }
 
   const deletedStale = await deleteRecordIds(staleRowIds);
 
