@@ -1,7 +1,7 @@
 export const SSMT_WORKSPACE_RECORD_ID = "ssmt|workspace|current";
 export const SSMT_WORKSPACE_RECORD_TYPE = "SSMT Workspace";
 const SHARED_LOAD_TIMEOUT_MS = 3000;
-const SHARED_SAVE_TIMEOUT_MS = 15000;
+const SHARED_SAVE_TIMEOUT_MS = 30000;
 
 async function readJson(response) {
   return response.json().catch(() => ({}));

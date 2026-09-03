@@ -8,6 +8,7 @@ import { gzipSync, gunzipSync } from "node:zlib";
 
 const DEFAULT_SUPABASE_URL = "https://pzilyzqhatthctgsjwtt.supabase.co";
 const DEFAULT_SUPABASE_TIMEOUT_MS = 8000;
+const DEFAULT_SUPABASE_WRITE_TIMEOUT_MS = 25000;
 const SSMT_WORKSPACE_RECORD_ID = "ssmt|workspace|current";
 const SSMT_WORKSPACE_ENCODING = "gzip-base64-json-v1";
 
@@ -31,12 +32,12 @@ function getSupabaseServerConfig() {
   };
 }
 
-function supabaseTimeoutMs() {
-  const value = Number(process.env.SUPABASE_API_TIMEOUT_MS || DEFAULT_SUPABASE_TIMEOUT_MS);
-  return Number.isFinite(value) && value > 0 ? value : DEFAULT_SUPABASE_TIMEOUT_MS;
+function supabaseTimeoutMs(fallback = DEFAULT_SUPABASE_TIMEOUT_MS) {
+  const value = Number(process.env.SUPABASE_API_TIMEOUT_MS || fallback);
+  return Number.isFinite(value) && value > 0 ? value : fallback;
 }
 
-async function supabaseFetch(path, options = {}) {
+async function supabaseFetch(path, options = {}, timeoutMs = DEFAULT_SUPABASE_TIMEOUT_MS) {
   const config = getSupabaseServerConfig();
   if (!config.configured) {
     const error = new Error("Supabase server key is not configured yet.");
@@ -46,7 +47,7 @@ async function supabaseFetch(path, options = {}) {
   }
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), supabaseTimeoutMs());
+  const timeout = setTimeout(() => controller.abort(), supabaseTimeoutMs(timeoutMs));
   let response;
   try {
     response = await fetch(`${config.url}/rest/v1/${path}`, {
@@ -295,7 +296,7 @@ async function upsertRecords(req, res) {
       Prefer: "resolution=merge-duplicates,return=minimal",
     },
     body: JSON.stringify(rows),
-  });
+  }, DEFAULT_SUPABASE_WRITE_TIMEOUT_MS);
 
   const deletedStale = await deleteRecordIds(staleRowIds);
 
