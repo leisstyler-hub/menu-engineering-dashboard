@@ -136,7 +136,7 @@ try {
   assert.match(trafficResult.body.message, /temporarily unavailable/i);
 
   const oversizedWorkspace = {
-    "Record ID": "ssmt|workspace|current",
+    "Record ID": "ssmt|workspace|current-v2",
     "Record Type": "SSMT Workspace",
     menus: Array.from({ length: 80 }, (_, index) => ({
       id: `menu-${index}`,
@@ -157,9 +157,11 @@ try {
   let compressedPayload = null;
   globalThis.fetch = async (url, options = {}) => {
     const href = String(url);
-    if (href.includes("/rest/v1/app_records?record_id=eq.ssmt%7Cworkspace%7Ccurrent")) {
-      const row = JSON.parse(options.body || "{}");
-      assert.equal(options.method, "PATCH");
+    if (href.includes("/rest/v1/app_records?on_conflict=record_id")) {
+      const rows = JSON.parse(options.body || "[]");
+      const row = rows[0];
+      assert.equal(options.method, "POST");
+      assert.equal(row.record_id, "ssmt|workspace|current-v2");
       compressedPayload = row?.record_payload;
       return { ok: true, status: 200, text: async () => "" };
     }
@@ -180,7 +182,7 @@ try {
   assert(compressedPayload.compressedWorkspace.length < JSON.stringify(oversizedWorkspace).length);
 
   const storedPayload = {
-    "Record ID": "ssmt|workspace|current",
+    "Record ID": "ssmt|workspace|current-v2",
     "Record Type": "SSMT Workspace",
     ssmtPayloadEncoding: "gzip-base64-json-v1",
     compressedWorkspace: gzipSync(Buffer.from(JSON.stringify({
@@ -198,7 +200,7 @@ try {
         ok: true,
         status: 200,
         text: async () => JSON.stringify([{
-          record_id: "ssmt|workspace|current",
+          record_id: "ssmt|workspace|current-v2",
           updated_at: "2026-09-03T00:00:00.000Z",
           retain_until: "2028-09-03T00:00:00.000Z",
           record_payload: storedPayload,

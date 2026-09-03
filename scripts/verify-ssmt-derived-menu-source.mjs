@@ -128,11 +128,11 @@ globalThis.fetch = async (url) => {
   }
   if (href.includes("/rest/v1/app_records?")) {
     payload = [{
-      record_id: "ssmt|workspace|current",
+      record_id: "ssmt|workspace|current-v2",
       updated_at: "2026-09-01T12:00:00.000Z",
       retain_until: "2028-09-01T12:00:00.000Z",
       record_payload: {
-        "Record ID": "ssmt|workspace|current",
+        "Record ID": "ssmt|workspace|current-v2",
         "Record Type": "SSMT Workspace",
         ...workspace,
       },

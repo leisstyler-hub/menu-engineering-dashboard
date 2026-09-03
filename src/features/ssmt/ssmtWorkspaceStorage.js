@@ -1,4 +1,5 @@
-export const SSMT_WORKSPACE_RECORD_ID = "ssmt|workspace|current";
+export const SSMT_LEGACY_WORKSPACE_RECORD_ID = "ssmt|workspace|current";
+export const SSMT_WORKSPACE_RECORD_ID = "ssmt|workspace|current-v2";
 export const SSMT_WORKSPACE_RECORD_TYPE = "SSMT Workspace";
 const SHARED_LOAD_TIMEOUT_MS = 3000;
 const SHARED_SAVE_TIMEOUT_MS = 30000;
@@ -44,7 +45,10 @@ export function buildSsmtWorkspaceRecord(workspace = {}, updatedAt = new Date().
 }
 
 export function workspaceFromRecord(record = null) {
-  if (!record || record["Record ID"] !== SSMT_WORKSPACE_RECORD_ID) return null;
+  if (
+    !record ||
+    ![SSMT_WORKSPACE_RECORD_ID, SSMT_LEGACY_WORKSPACE_RECORD_ID].includes(record["Record ID"])
+  ) return null;
   return {
     menus: Array.isArray(record.menus) ? record.menus : [],
     priceBook: Array.isArray(record.priceBook) ? record.priceBook : [],
@@ -64,7 +68,8 @@ export async function loadSsmtWorkspaceFromSharedStorage() {
     error.payload = payload;
     throw error;
   }
-  const record = (payload.records || []).find((candidate) => candidate?.["Record ID"] === SSMT_WORKSPACE_RECORD_ID);
+  const record = (payload.records || []).find((candidate) => candidate?.["Record ID"] === SSMT_WORKSPACE_RECORD_ID)
+    || (payload.records || []).find((candidate) => candidate?.["Record ID"] === SSMT_LEGACY_WORKSPACE_RECORD_ID);
   return {
     ok: true,
     source: payload.source || "supabase",

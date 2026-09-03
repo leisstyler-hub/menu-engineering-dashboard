@@ -9,7 +9,8 @@ import { gzipSync, gunzipSync } from "node:zlib";
 const DEFAULT_SUPABASE_URL = "https://pzilyzqhatthctgsjwtt.supabase.co";
 const DEFAULT_SUPABASE_TIMEOUT_MS = 8000;
 const DEFAULT_SUPABASE_WRITE_TIMEOUT_MS = 25000;
-const SSMT_WORKSPACE_RECORD_ID = "ssmt|workspace|current";
+const SSMT_LEGACY_WORKSPACE_RECORD_ID = "ssmt|workspace|current";
+const SSMT_WORKSPACE_RECORD_ID = "ssmt|workspace|current-v2";
 const SSMT_WORKSPACE_ENCODING = "gzip-base64-json-v1";
 
 function cleanUrl(value = "") {
@@ -103,7 +104,7 @@ function ssmtWorkspaceRecordId(record = {}) {
 }
 
 function compressSsmtWorkspaceRecord(record = {}) {
-  if (ssmtWorkspaceRecordId(record) !== SSMT_WORKSPACE_RECORD_ID) return record;
+  if (![SSMT_WORKSPACE_RECORD_ID, SSMT_LEGACY_WORKSPACE_RECORD_ID].includes(ssmtWorkspaceRecordId(record))) return record;
   if (record.ssmtPayloadEncoding === SSMT_WORKSPACE_ENCODING && record.compressedWorkspace) return record;
 
   const json = JSON.stringify(record);
@@ -202,13 +203,14 @@ async function deleteRecordIds(recordIds = []) {
 }
 
 async function updateSingleExistingRecord(row) {
-  await supabaseFetch(`app_records?${queryString({ record_id: `eq.${row.record_id}` })}`, {
-    method: "PATCH",
+  const inserted = await supabaseFetch("app_records?on_conflict=record_id", {
+    method: "POST",
     headers: {
-      Prefer: "return=minimal",
+      Prefer: "resolution=merge-duplicates,return=minimal",
     },
-    body: JSON.stringify(row),
-  }, DEFAULT_SUPABASE_WRITE_TIMEOUT_MS);
+    body: JSON.stringify([row]),
+  }, DEFAULT_SUPABASE_TIMEOUT_MS);
+  return inserted;
 }
 
 function dedupeRowsByRecordId(rows = []) {
@@ -247,7 +249,7 @@ async function loadRecords(req, res) {
   const params = {
     select: "record_id,updated_at,retain_until,record_payload",
     tool: `eq.${databaseTool}`,
-    record_id: tool === "ssmt" ? "eq.ssmt|workspace|current" : undefined,
+    record_id: tool === "ssmt" ? `eq.${SSMT_WORKSPACE_RECORD_ID}` : undefined,
     visible_in_dashboard: includeHidden ? undefined : "eq.true",
     order: "updated_at.desc",
   };

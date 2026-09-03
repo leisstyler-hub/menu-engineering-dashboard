@@ -478,7 +478,7 @@ test("SSMT loads and saves item lock state through shared storage", async ({ pag
           source: "supabase",
           records: [
             {
-              "Record ID": "ssmt|workspace|current",
+              "Record ID": "ssmt|workspace|current-v2",
               "Record Type": "SSMT Workspace",
               Status: "Shared",
               menus: [
@@ -523,7 +523,7 @@ test("SSMT loads and saves item lock state through shared storage", async ({ pag
   await expect.poll(() => {
     const record = savedBodies
       .flatMap((body) => body?.records || [])
-      .find((candidate) => candidate?.["Record ID"] === "ssmt|workspace|current");
+      .find((candidate) => candidate?.["Record ID"] === "ssmt|workspace|current-v2");
     return record?.menus?.find((menu) => menu.id === "shared-lock-menu")
       ?.items?.find((item) => item.id === "shared-lock-item")
       ?.lockedForCentric;
@@ -629,7 +629,7 @@ test("SSMT manual saves recover failed shared saves and keep flags plus modifier
     const record = savedBodies
       .flatMap((body) => body?.records || [])
       .reverse()
-      .find((candidate) => candidate?.["Record ID"] === "ssmt|workspace|current");
+      .find((candidate) => candidate?.["Record ID"] === "ssmt|workspace|current-v2");
     const menu = record?.menus?.find((candidate) => candidate.name === smokeMenuName);
     return {
       flags: menu?.flags?.length || 0,
@@ -689,7 +689,7 @@ test("SSMT selected menu names are editable and persist into export plus downstr
     const record = savedBodies
       .flatMap((body) => body?.records || [])
       .reverse()
-      .find((candidate) => candidate?.["Record ID"] === "ssmt|workspace|current");
+      .find((candidate) => candidate?.["Record ID"] === "ssmt|workspace|current-v2");
     return record?.menus?.some((menu) => menu.name === renamedMenuName) || false;
   }).toBe(true);
 
