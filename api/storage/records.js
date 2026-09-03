@@ -6,6 +6,7 @@ import {
 } from "../../src/integrations/storage/backboneRecords.js";
 
 const DEFAULT_SUPABASE_URL = "https://pzilyzqhatthctgsjwtt.supabase.co";
+const DEFAULT_SUPABASE_TIMEOUT_MS = 8000;
 
 function cleanUrl(value = "") {
   return String(value || "").trim().replace(/\/+$/, "");
@@ -27,6 +28,11 @@ function getSupabaseServerConfig() {
   };
 }
 
+function supabaseTimeoutMs() {
+  const value = Number(process.env.SUPABASE_API_TIMEOUT_MS || DEFAULT_SUPABASE_TIMEOUT_MS);
+  return Number.isFinite(value) && value > 0 ? value : DEFAULT_SUPABASE_TIMEOUT_MS;
+}
+
 async function supabaseFetch(path, options = {}) {
   const config = getSupabaseServerConfig();
   if (!config.configured) {
@@ -36,15 +42,31 @@ async function supabaseFetch(path, options = {}) {
     throw error;
   }
 
-  const response = await fetch(`${config.url}/rest/v1/${path}`, {
-    ...options,
-    headers: {
-      apikey: config.serviceKey,
-      Authorization: `Bearer ${config.serviceKey}`,
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), supabaseTimeoutMs());
+  let response;
+  try {
+    response = await fetch(`${config.url}/rest/v1/${path}`, {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        apikey: config.serviceKey,
+        Authorization: `Bearer ${config.serviceKey}`,
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
+      },
+    });
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      const timeoutError = new Error("Supabase storage request timed out.");
+      timeoutError.statusCode = 504;
+      timeoutError.fallbackRecommended = true;
+      throw timeoutError;
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
 
   const text = await response.text();
   let payload = null;

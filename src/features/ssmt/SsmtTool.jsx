@@ -36,6 +36,7 @@ const ACTIVE_DATE_MENU_TYPES = ["Promotion", "Thompson Hospitality"];
 const MENU_TYPE_ORDER = ["Core", "Global", "Menu Library", "Promotion", "Thompson Hospitality"];
 const MODIFIER_TYPES = ["Force", "Remove", "Addition"];
 const MODIFIER_CLIPBOARD_SLOT_COUNT = 4;
+const AUTO_SHARED_SAVE_DELAY_MS = 10000;
 const EMPTY_MODIFIER_CLIPBOARD_SLOTS = Array.from({ length: MODIFIER_CLIPBOARD_SLOT_COUNT }, (_, index) => ({
   id: `slot-${index + 1}`,
   label: `Slot ${index + 1}`,
@@ -147,6 +148,16 @@ function buildFlagReportMailto({ menu = {}, flags = [], recipients = [] } = {}) 
     "This report was generated from saved SSMT item flags.",
   ].join("\n"));
   return `mailto:${recipients.join(",")}?subject=${subject}&body=${body}`;
+}
+
+function workspaceSharedSignature(workspace = {}) {
+  return JSON.stringify({
+    menus: workspace.menus || [],
+    priceBook: workspace.priceBook || [],
+    modifierGroups: workspace.modifierGroups || [],
+    modifierClipboardSlots: workspace.modifierClipboardSlots || [],
+    seedMenuTypeCorrectionsApplied: Boolean(workspace.seedMenuTypeCorrectionsApplied),
+  });
 }
 
 function menuKey(menu = {}) {
@@ -432,6 +443,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   });
   const workspaceLoadedRef = useRef(false);
   const skipInitialSharedSaveRef = useRef(true);
+  const lastSharedSaveSignatureRef = useRef("");
   const modifierClipboard = modifierClipboardSlots.find((slot) => slot.group)?.group || null;
 
   const buildWorkspaceSnapshot = (overrides = {}) => ({
@@ -456,6 +468,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
     }));
     try {
       const result = await saveSsmtWorkspaceToSharedStorage(workspace);
+      lastSharedSaveSignatureRef.current = workspaceSharedSignature(workspace);
       setWorkspaceSync({
         state: "synced",
         source: result.source || "supabase",
@@ -512,6 +525,13 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
         const priceBook = storedPriceBook;
         const modifierGroups = storedModifierGroups.map((group) => normalizeModifierGroup(group, payload.areaOrder, priceBook));
         const clipboardSlots = normalizeModifierClipboardSlots(workspace.modifierClipboardSlots);
+        lastSharedSaveSignatureRef.current = workspaceSharedSignature({
+          menus: storedMenus,
+          priceBook,
+          modifierGroups,
+          modifierClipboardSlots: clipboardSlots,
+          seedMenuTypeCorrectionsApplied: true,
+        });
         setSsmtData({
           ...payload,
           menuTypes: mergeMenuTypes(payload.menuTypes),
@@ -539,6 +559,13 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
     if (dataStatus !== "ready" || !menus.length) return;
     const workspace = buildWorkspaceSnapshot();
     writeLocalStorageJson(WORKSPACE_STORAGE_KEY, workspace, { clearOnQuota: true });
+  }, [dataStatus, menus, selectedMenuId, ssmtData.priceBook, ssmtData.modifierGroups, modifierClipboardSlots]);
+
+  useEffect(() => {
+    if (dataStatus !== "ready" || !menus.length) return;
+    const workspace = buildWorkspaceSnapshot();
+    const sharedSignature = workspaceSharedSignature(workspace);
+    if (sharedSignature === lastSharedSaveSignatureRef.current) return;
     if (!workspaceLoadedRef.current) return;
     if (skipInitialSharedSaveRef.current) {
       skipInitialSharedSaveRef.current = false;
@@ -547,11 +574,12 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
     setWorkspaceSync((current) => ({
       ...current,
       state: "saving",
-      message: "Saving shared SSMT workspace...",
+      message: "Saving shared SSMT workspace after idle edits...",
     }));
     const saveTimer = window.setTimeout(async () => {
       try {
         const result = await saveSsmtWorkspaceToSharedStorage(workspace);
+        lastSharedSaveSignatureRef.current = sharedSignature;
         setWorkspaceSync({
           state: "synced",
           source: result.source || "supabase",
@@ -564,9 +592,9 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
           message: `${error.message || "Shared SSMT workspace save failed."} This browser kept a local cache.`,
         });
       }
-    }, 500);
+    }, AUTO_SHARED_SAVE_DELAY_MS);
     return () => window.clearTimeout(saveTimer);
-  }, [dataStatus, menus, selectedMenuId, ssmtData.priceBook, ssmtData.modifierGroups, modifierClipboardSlots]);
+  }, [dataStatus, menus, ssmtData.priceBook, ssmtData.modifierGroups, modifierClipboardSlots]);
 
   useEffect(() => {
     if (!modifierDialog) return undefined;
@@ -1460,12 +1488,25 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Menu Record</p>
-                  <h2 className="mt-1 text-2xl font-black">{selectedMenu.name}</h2>
+                  <h2 className="mt-1 text-2xl font-black">{selectedMenu.name || "Unnamed menu"}</h2>
                   <p className="mt-1 text-sm font-semibold text-slate-600">{selectedMenu.type} / {selectedMenu.phase} / availability after IT complete</p>
                 </div>
                 <span className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-slate-700">Type: {selectedMenu.type}</span>
               </div>
               <div className="mt-3 grid gap-2 md:grid-cols-4">
+                <label className="grid gap-1 text-sm font-bold text-slate-700 md:col-span-2">
+                  <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Menu name</span>
+                  <input
+                    aria-label="Menu name"
+                    value={selectedMenu.name || ""}
+                    onChange={(event) => updateSelectedMenu({ name: event.target.value })}
+                    onBlur={(event) => {
+                      const cleanedName = event.target.value.trim();
+                      if (cleanedName) updateSelectedMenu({ name: cleanedName });
+                    }}
+                    className="rounded-lg border border-slate-300 bg-white px-3 py-2 font-bold outline-none focus:border-emerald-500"
+                  />
+                </label>
                 {showActiveDates ? (
                   <>
                     <label className="grid gap-1 text-sm font-bold text-slate-700">

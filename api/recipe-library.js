@@ -7,6 +7,7 @@ import { SSMT_WORKSPACE_RECORD_ID, workspaceFromRecord } from "../src/features/s
 const DEFAULT_SUPABASE_URL = "https://pzilyzqhatthctgsjwtt.supabase.co";
 const SUPABASE_BATCH_SIZE = 250;
 const SUPABASE_READ_PAGE_SIZE = 1000;
+const DEFAULT_SUPABASE_TIMEOUT_MS = 8000;
 const DOCUMENT_BUCKETS = {
   "item-photo": "item-photos",
   "plating-guide": "plating-guides",
@@ -41,6 +42,11 @@ function getAdminCode() {
   return String(process.env.RECIPE_LIBRARY_ADMIN_CODE || process.env.MENUWORKS_IMPORT_INITIATION_CODE || "410410").trim();
 }
 
+function supabaseTimeoutMs() {
+  const value = Number(process.env.SUPABASE_API_TIMEOUT_MS || DEFAULT_SUPABASE_TIMEOUT_MS);
+  return Number.isFinite(value) && value > 0 ? value : DEFAULT_SUPABASE_TIMEOUT_MS;
+}
+
 function requestBody(req) {
   if (!req.body) return {};
   if (typeof req.body === "string") {
@@ -67,15 +73,31 @@ async function supabaseFetch(path, options = {}) {
     throw error;
   }
 
-  const response = await fetch(`${config.url}/rest/v1/${path}`, {
-    ...options,
-    headers: {
-      apikey: config.key,
-      Authorization: `Bearer ${config.key}`,
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), supabaseTimeoutMs());
+  let response;
+  try {
+    response = await fetch(`${config.url}/rest/v1/${path}`, {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        apikey: config.key,
+        Authorization: `Bearer ${config.key}`,
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
+      },
+    });
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      const timeoutError = new Error("Supabase API request timed out.");
+      timeoutError.status = 504;
+      timeoutError.fallbackRecommended = true;
+      throw timeoutError;
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
   const text = await response.text();
   const payload = text ? JSON.parse(text) : null;
   if (!response.ok) {
@@ -524,10 +546,12 @@ export default async function handler(req, res) {
 }
 
 async function handleGet(req, res) {
-  const supabaseRead = await loadSupabaseRecipeRows();
+  const [supabaseRead, ssmtRead] = await Promise.all([
+    loadSupabaseRecipeRows(),
+    loadSsmtOperatingRows(),
+  ]);
   const usesSupabaseRows = supabaseRead.ok && supabaseRead.rows.length;
   const baseRows = usesSupabaseRows ? supabaseRead.rows : await loadMenuWorksFallbackRows();
-  const ssmtRead = await loadSsmtOperatingRows();
   const rows = ssmtRead.rows.length ? mergeSsmtRowsWithMenuWorksRows(baseRows, ssmtRead.rows) : baseRows;
   const sourceBase = usesSupabaseRows ? supabaseRead.source : "server-menuworks-json";
   const source = ssmtRead.rows.length ? `${sourceBase}+ssmt-derived` : sourceBase;

@@ -1,8 +1,28 @@
 export const SSMT_WORKSPACE_RECORD_ID = "ssmt|workspace|current";
 export const SSMT_WORKSPACE_RECORD_TYPE = "SSMT Workspace";
+const SHARED_LOAD_TIMEOUT_MS = 3000;
+const SHARED_SAVE_TIMEOUT_MS = 15000;
 
 async function readJson(response) {
   return response.json().catch(() => ({}));
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = SHARED_LOAD_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timeout = globalThis.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new Error("Shared SSMT workspace request timed out.");
+    }
+    throw error;
+  } finally {
+    globalThis.clearTimeout(timeout);
+  }
 }
 
 export function buildSsmtWorkspaceRecord(workspace = {}, updatedAt = new Date().toISOString()) {
@@ -37,7 +57,7 @@ export function workspaceFromRecord(record = null) {
 }
 
 export async function loadSsmtWorkspaceFromSharedStorage() {
-  const response = await fetch("/api/storage/records?tool=SSMT&includeHidden=1");
+  const response = await fetchWithTimeout("/api/storage/records?tool=SSMT&includeHidden=1", {}, SHARED_LOAD_TIMEOUT_MS);
   const payload = await readJson(response);
   if (!response.ok || payload.ok === false) {
     const error = new Error(payload.message || "Shared SSMT workspace could not be loaded.");
@@ -55,7 +75,7 @@ export async function loadSsmtWorkspaceFromSharedStorage() {
 
 export async function saveSsmtWorkspaceToSharedStorage(workspace = {}) {
   const record = buildSsmtWorkspaceRecord(workspace);
-  const response = await fetch("/api/storage/records", {
+  const response = await fetchWithTimeout("/api/storage/records", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -63,7 +83,7 @@ export async function saveSsmtWorkspaceToSharedStorage(workspace = {}) {
       records: [record],
       context: { tool: "SSMT" },
     }),
-  });
+  }, SHARED_SAVE_TIMEOUT_MS);
   const payload = await readJson(response);
   if (!response.ok || payload.ok === false) {
     const error = new Error(payload.message || "Shared SSMT workspace could not be saved.");

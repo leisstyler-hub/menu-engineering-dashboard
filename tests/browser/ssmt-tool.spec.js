@@ -518,6 +518,7 @@ test("SSMT loads and saves item lock state through shared storage", async ({ pag
 
   await page.getByRole("button", { name: /Unlock item REMOTE LOCKED ITEM/i }).click();
   await expect(page.getByTestId("ssmt-phase-panel").getByText(/0 of 1 item rows locked/i)).toBeVisible();
+  await page.getByRole("button", { name: /Save menu/i }).click();
 
   await expect.poll(() => {
     const record = savedBodies
@@ -636,6 +637,71 @@ test("SSMT manual saves recover failed shared saves and keep flags plus modifier
       secondItemMods: menu?.items?.find((item) => item.label === "SECOND SANDWICH")?.modifierGroups?.length || 0,
     };
   }).toEqual({ flags: 2, slotOne: "Sauce Rules", secondItemMods: 1 });
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("SSMT selected menu names are editable and persist into export plus downstream preview", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const savedBodies = [];
+  const smokeMenuName = `Editable Name SSMT ${Date.now()}`;
+  const renamedMenuName = `${smokeMenuName} Renamed`;
+
+  await page.addInitScript(() => {
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+  });
+  await page.route("**/api/storage/records**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (request.method() === "GET" && url.searchParams.get("tool") === "SSMT") {
+      await route.fulfill({ json: { ok: true, source: "supabase", records: [] } });
+      return;
+    }
+    if (request.method() === "POST") {
+      savedBodies.push(request.postDataJSON());
+      await route.fulfill({ json: { ok: true, source: "supabase", synced: 1, message: "Saved 1 row to Supabase." } });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByLabel(/SSMT passcode/i).fill("0411");
+  await page.getByRole("button", { name: /unlock ssmt/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+  await expect(page.getByText(/Loading current SSMT seed data/i)).toHaveCount(0, { timeout: 20_000 });
+
+  await page.getByLabel(/New menu name/i).fill(smokeMenuName);
+  await page.getByLabel(/New menu type/i).selectOption("Core");
+  await page.getByRole("button", { name: /Create menu/i }).click();
+
+  await page.getByLabel(/Menu name/i).fill(renamedMenuName);
+  await expect(page.getByRole("heading", { name: renamedMenuName })).toBeVisible();
+  await page.getByRole("button", { name: /Lock item NEW ITEM/i }).click();
+  await page.getByLabel(/Current SSMT phase/i).selectOption("IT complete");
+  await expect(page.getByTestId("ssmt-derived-source-preview")).toContainText(`AMZ: ${renamedMenuName}`);
+
+  await page.getByRole("button", { name: /Save menu/i }).click();
+  await expect.poll(() => {
+    const record = savedBodies
+      .flatMap((body) => body?.records || [])
+      .reverse()
+      .find((candidate) => candidate?.["Record ID"] === "ssmt|workspace|current");
+    return record?.menus?.some((menu) => menu.name === renamedMenuName) || false;
+  }).toBe(true);
+
+  const [download] = await Promise.all([
+    page.waitForEvent("download"),
+    page.getByRole("button", { name: /Export SSMT/i }).click(),
+  ]);
+  expect(download.suggestedFilename()).toBe(`${renamedMenuName} SSMT Export.xlsx`);
+
+  await page.getByRole("button", { name: /Back to menu selection/i }).click();
+  await expect(page.locator(`[data-menu-name="${renamedMenuName}"]`)).toBeVisible();
+  await expect(page.locator(`[data-menu-name="${smokeMenuName}"]`)).toHaveCount(0);
 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
