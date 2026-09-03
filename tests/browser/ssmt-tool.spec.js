@@ -532,6 +532,115 @@ test("SSMT loads and saves item lock state through shared storage", async ({ pag
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
+test("SSMT manual saves recover failed shared saves and keep flags plus modifier clipboard slots", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const savedBodies = [];
+  let postCount = 0;
+  const smokeMenuName = `Manual Save SSMT ${Date.now()}`;
+
+  await page.addInitScript(() => {
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+  });
+  await page.route("**/api/storage/records**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (request.method() === "GET" && url.searchParams.get("tool") === "SSMT") {
+      await route.fulfill({ json: { ok: true, source: "supabase", records: [] } });
+      return;
+    }
+    if (request.method() === "POST") {
+      postCount += 1;
+      savedBodies.push(request.postDataJSON());
+      if (postCount === 1) {
+        await route.fulfill({ status: 500, json: { ok: false, message: "Simulated shared save failure." } });
+        return;
+      }
+      await route.fulfill({ json: { ok: true, source: "supabase", synced: 1, message: "Saved 1 row to Supabase." } });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByLabel(/SSMT passcode/i).fill("0411");
+  await page.getByRole("button", { name: /unlock ssmt/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+
+  await expect(page.getByRole("button", { name: /Save SSMT workspace/i })).toBeVisible();
+  await page.getByLabel(/New menu name/i).fill(smokeMenuName);
+  await page.getByLabel(/New menu type/i).selectOption("Core");
+  await page.getByRole("button", { name: /Create menu/i }).click();
+  await expect(page.getByRole("heading", { name: smokeMenuName })).toBeVisible();
+  await expect(page.getByTestId("ssmt-workspace-sync")).toContainText(/failed|local cache/i, { timeout: 20_000 });
+
+  await expect(page.getByRole("button", { name: /Save menu/i })).toBeVisible();
+  await page.getByLabel(/Item label/i).first().fill("flagged sandwich");
+  await page.getByRole("button", { name: /view modifiers/i }).first().click();
+  const modifierDialog = page.getByRole("dialog", { name: /modifier/i });
+  await expect(modifierDialog).toBeVisible();
+  await expect(modifierDialog.getByText(/Slot 1/i)).toBeVisible();
+  await expect(modifierDialog.getByText(/Slot 4/i)).toBeVisible();
+  await expect(modifierDialog.getByText(/Empty slot/i)).toHaveCount(4);
+
+  await modifierDialog.getByRole("button", { name: /Add modifier group/i }).click();
+  await modifierDialog.getByLabel(/Modifier group name/i).last().fill("Sauce Rules");
+  await modifierDialog.getByLabel(/Modifier name/i).last().fill("Chile Crisp");
+  await modifierDialog.getByRole("button", { name: /Save group to slot 1/i }).click();
+  await expect(modifierDialog.getByText(/Slot 1: Sauce Rules/i)).toBeVisible();
+  await modifierDialog.getByRole("button", { name: /Save modifiers/i }).click();
+  await expect(page.getByTestId("ssmt-workspace-sync")).toContainText(/Shared SSMT workspace saved/i, { timeout: 20_000 });
+  await page.keyboard.press("Escape");
+
+  await page.getByRole("button", { name: /Add item/i }).click();
+  await page.getByLabel(/Item label/i).last().fill("second sandwich");
+  await page.getByRole("button", { name: /mods \(0\)/i }).last().click();
+  const secondModifierDialog = page.getByRole("dialog", { name: /modifier/i });
+  await secondModifierDialog.getByRole("button", { name: /Paste slot 1/i }).click();
+  await expect(secondModifierDialog.getByLabel(/Modifier group name/i)).toHaveValue("Sauce Rules");
+  await page.keyboard.press("Escape");
+
+  await page.getByRole("button", { name: /Flag for change/i }).first().click();
+  let flagDialog = page.getByRole("dialog", { name: /flag for change/i });
+  await flagDialog.getByLabel(/Reason/i).selectOption("Missing / wrong modifier");
+  await flagDialog.getByLabel(/Note/i).fill("needs sauce defaults");
+  await flagDialog.getByRole("button", { name: /Save flag/i }).click();
+  await expect(page.getByText(/1 saved item flag/i)).toBeVisible();
+
+  await page.getByRole("button", { name: /Flag for change/i }).last().click();
+  flagDialog = page.getByRole("dialog", { name: /flag for change/i });
+  await flagDialog.getByLabel(/Reason/i).selectOption("Price assignment question");
+  await flagDialog.getByLabel(/Note/i).fill("confirm premium tier");
+  await flagDialog.getByRole("button", { name: /Save flag/i }).click();
+  await expect(page.getByText(/2 saved item flags/i)).toBeVisible();
+
+  const reportLink = page.getByRole("link", { name: /Report flags \(2\)/i });
+  await expect(reportLink).toBeVisible();
+  const reportHref = decodeURIComponent(await reportLink.getAttribute("href"));
+  expect(reportHref).toContain("mailto:alexander.neuse@compass-usa.com,tyler.leiss@compass-usa.com");
+  expect(reportHref).toContain("needs sauce defaults");
+  expect(reportHref).toContain("confirm premium tier");
+  expect(reportHref).toContain("Timestamp:");
+
+  await page.getByRole("button", { name: /Save menu/i }).click();
+  await expect.poll(() => {
+    const record = savedBodies
+      .flatMap((body) => body?.records || [])
+      .reverse()
+      .find((candidate) => candidate?.["Record ID"] === "ssmt|workspace|current");
+    const menu = record?.menus?.find((candidate) => candidate.name === smokeMenuName);
+    return {
+      flags: menu?.flags?.length || 0,
+      slotOne: record?.modifierClipboardSlots?.[0]?.group?.name || "",
+      secondItemMods: menu?.items?.find((item) => item.label === "SECOND SANDWICH")?.modifierGroups?.length || 0,
+    };
+  }).toEqual({ flags: 2, slotOne: "Sauce Rules", secondItemMods: 1 });
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
 test("SSMT selected-menu export downloads a Centric-shaped workbook", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   await page.goto("/");
@@ -684,7 +793,7 @@ test("SSMT modifier editor opens wider, prominent, and dense for item lines", as
   expect(modifierDialogMetrics.dialogWidth).toBeGreaterThanOrEqual(1300);
   expect(modifierDialogMetrics.tableScrollWidth).toBeLessThanOrEqual(modifierDialogMetrics.tableClientWidth + 4);
   expect(modifierDialogMetrics.firstItemRowHeight).toBeLessThanOrEqual(76);
-  expect(modifierDialogMetrics.firstItemBorderColor).toBe("rgb(203, 213, 225)");
+  expect(modifierDialogMetrics.firstItemBorderColor).toBe("rgb(148, 163, 184)");
 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);

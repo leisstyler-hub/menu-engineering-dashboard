@@ -1,1 +1,1 @@
-export const APP_VERSION_STAMP = "2026.08.31.005-ssmt-derived-menus";
+export const APP_VERSION_STAMP = "2026.09.03.001-ssmt-manual-save-flags";
