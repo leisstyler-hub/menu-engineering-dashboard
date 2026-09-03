@@ -1,4 +1,5 @@
 import { Buffer } from "node:buffer";
+import { gunzipSync } from "node:zlib";
 import { getRecipeLibraryPhoto } from "../src/data/recipeLibraryAssets.js";
 import { itemDescription, normalizeRecipeLibraryItem, recipeLibraryCategoryGroup, textValue } from "../src/features/recipe-database/recipeLibraryModel.js";
 import { deriveSsmtOperatingRows, mergeSsmtRowsWithMenuWorksRows } from "../src/features/ssmt/ssmtDerivedMenuSource.js";
@@ -8,6 +9,7 @@ const DEFAULT_SUPABASE_URL = "https://pzilyzqhatthctgsjwtt.supabase.co";
 const SUPABASE_BATCH_SIZE = 250;
 const SUPABASE_READ_PAGE_SIZE = 1000;
 const DEFAULT_SUPABASE_TIMEOUT_MS = 8000;
+const SSMT_WORKSPACE_ENCODING = "gzip-base64-json-v1";
 const DOCUMENT_BUCKETS = {
   "item-photo": "item-photos",
   "plating-guide": "plating-guides",
@@ -324,9 +326,29 @@ async function loadSupabaseRecipeRows() {
   }
 }
 
+function expandSsmtWorkspaceRecord(record = {}) {
+  if (record.ssmtPayloadEncoding !== SSMT_WORKSPACE_ENCODING || !record.compressedWorkspace) return record;
+  try {
+    const {
+      ssmtPayloadEncoding,
+      compressedWorkspace,
+      compressedWorkspaceBytes,
+      uncompressedWorkspaceBytes,
+      ...metadata
+    } = record;
+    return {
+      ...metadata,
+      ...JSON.parse(gunzipSync(Buffer.from(record.compressedWorkspace, "base64")).toString("utf8")),
+    };
+  } catch {
+    return record;
+  }
+}
+
 function appRecordToWorkspaceRecord(row = {}) {
+  const payload = expandSsmtWorkspaceRecord(row.record_payload || {});
   return {
-    ...(row.record_payload || {}),
+    ...payload,
     __supabaseRecordId: row.record_id,
     __supabaseUpdatedAt: row.updated_at || "",
     __supabaseRetainUntil: row.retain_until || "",

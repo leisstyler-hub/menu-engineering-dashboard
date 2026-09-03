@@ -4,9 +4,12 @@ import {
   getBackboneToolFromContext,
   normalizeBackboneRows,
 } from "../../src/integrations/storage/backboneRecords.js";
+import { gzipSync, gunzipSync } from "node:zlib";
 
 const DEFAULT_SUPABASE_URL = "https://pzilyzqhatthctgsjwtt.supabase.co";
 const DEFAULT_SUPABASE_TIMEOUT_MS = 8000;
+const SSMT_WORKSPACE_RECORD_ID = "ssmt|workspace|current";
+const SSMT_WORKSPACE_ENCODING = "gzip-base64-json-v1";
 
 function cleanUrl(value = "") {
   return String(value || "").trim().replace(/\/+$/, "");
@@ -92,6 +95,52 @@ function queryString(params) {
     if (value !== undefined && value !== null && value !== "") search.set(key, value);
   });
   return search.toString();
+}
+
+function ssmtWorkspaceRecordId(record = {}) {
+  return String(record["Record ID"] || record.record_id || record.__supabaseRecordId || "").trim();
+}
+
+function compressSsmtWorkspaceRecord(record = {}) {
+  if (ssmtWorkspaceRecordId(record) !== SSMT_WORKSPACE_RECORD_ID) return record;
+  if (record.ssmtPayloadEncoding === SSMT_WORKSPACE_ENCODING && record.compressedWorkspace) return record;
+
+  const json = JSON.stringify(record);
+  const compressedWorkspace = gzipSync(Buffer.from(json, "utf8")).toString("base64");
+  return {
+    "Record ID": SSMT_WORKSPACE_RECORD_ID,
+    "Record Type": record["Record Type"] || "SSMT Workspace",
+    "Status": record.Status || record.status || "Draft",
+    "Visible In Dashboard": record["Visible In Dashboard"] ?? true,
+    ssmtPayloadEncoding: SSMT_WORKSPACE_ENCODING,
+    compressedWorkspace,
+    compressedWorkspaceBytes: Buffer.byteLength(compressedWorkspace, "utf8"),
+    uncompressedWorkspaceBytes: Buffer.byteLength(json, "utf8"),
+    updatedAt: record.updatedAt || new Date().toISOString(),
+  };
+}
+
+function expandSsmtWorkspaceRecord(record = {}) {
+  if (record.ssmtPayloadEncoding !== SSMT_WORKSPACE_ENCODING || !record.compressedWorkspace) return record;
+  try {
+    const {
+      ssmtPayloadEncoding,
+      compressedWorkspace,
+      compressedWorkspaceBytes,
+      uncompressedWorkspaceBytes,
+      ...metadata
+    } = record;
+    const inflated = JSON.parse(gunzipSync(Buffer.from(record.compressedWorkspace, "base64")).toString("utf8"));
+    return {
+      ...metadata,
+      ...inflated,
+      __supabaseRecordId: record.__supabaseRecordId,
+      __supabaseUpdatedAt: record.__supabaseUpdatedAt,
+      __supabaseRetainUntil: record.__supabaseRetainUntil,
+    };
+  } catch {
+    return record;
+  }
 }
 
 async function findStaleRowIds(parentRecordIds = [], nextRecordIds = []) {
@@ -194,7 +243,7 @@ async function loadRecords(req, res) {
   const rows = healthOnly
     ? await supabaseFetch(`app_records?${queryString({ ...params, limit: "1" })}`)
     : await loadAllSupabaseRows("app_records", params);
-  const records = normalizeBackboneRows(rows || []).filter((record) => {
+  const records = normalizeBackboneRows(rows || []).map(expandSsmtWorkspaceRecord).filter((record) => {
     if (tool === "menuProjects") {
       return String(record["Record Type"] || "") === "Menu Project" || String(record["Record ID"] || "").startsWith("menuProject|");
     }
@@ -226,7 +275,10 @@ async function upsertRecords(req, res) {
     return res.status(400).json({ ok: false, message: "No records supplied." });
   }
 
-  const rawRows = buildBackboneRows(records, context);
+  const packedRecords = getBackboneToolFromContext(context) === "ssmt"
+    ? records.map(compressSsmtWorkspaceRecord)
+    : records;
+  const rawRows = buildBackboneRows(packedRecords, context);
   const rows = dedupeRowsByRecordId(rawRows);
   if (!rows.length) {
     return res.status(400).json({ ok: false, message: "No records had a Record ID." });
