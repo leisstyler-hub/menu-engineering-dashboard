@@ -1,5 +1,10 @@
-export const SSMT_LEGACY_WORKSPACE_RECORD_ID = "ssmt|workspace|current";
-export const SSMT_WORKSPACE_RECORD_ID = "ssmt|workspace|current-v2";
+// Canonical shared-workspace record id. This is the live row that actually holds
+// the SSMT workspace; the app reads and writes it as the single source of truth.
+export const SSMT_WORKSPACE_RECORD_ID = "ssmt|workspace|current";
+// Legacy/alternate id from an abandoned "compact v2" migration that never
+// materialized a row. Still accepted on read in case any client wrote it, but we
+// no longer write to it. See ARCHITECTURE_RULES.md (SSMT workspace record id).
+export const SSMT_LEGACY_WORKSPACE_RECORD_ID = "ssmt|workspace|current-v2";
 export const SSMT_WORKSPACE_RECORD_TYPE = "SSMT Workspace";
 const SHARED_LOAD_TIMEOUT_MS = 3000;
 const SHARED_SAVE_TIMEOUT_MS = 30000;
