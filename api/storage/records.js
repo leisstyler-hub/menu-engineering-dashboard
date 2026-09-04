@@ -9,8 +9,12 @@ import { gzipSync, gunzipSync } from "node:zlib";
 const DEFAULT_SUPABASE_URL = "https://pzilyzqhatthctgsjwtt.supabase.co";
 const DEFAULT_SUPABASE_TIMEOUT_MS = 8000;
 const DEFAULT_SUPABASE_WRITE_TIMEOUT_MS = 25000;
-const SSMT_LEGACY_WORKSPACE_RECORD_ID = "ssmt|workspace|current";
-const SSMT_WORKSPACE_RECORD_ID = "ssmt|workspace|current-v2";
+// Canonical shared-workspace record id - the live row that holds the SSMT
+// workspace. Reads and writes target this id. `current-v2` is a legacy/alternate
+// id from an abandoned migration that never materialized a row; accepted on read
+// only. See ARCHITECTURE_RULES.md (SSMT workspace record id).
+const SSMT_WORKSPACE_RECORD_ID = "ssmt|workspace|current";
+const SSMT_LEGACY_WORKSPACE_RECORD_ID = "ssmt|workspace|current-v2";
 const SSMT_WORKSPACE_ENCODING = "gzip-base64-json-v1";
 
 function cleanUrl(value = "") {
