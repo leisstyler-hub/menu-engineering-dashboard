@@ -2,6 +2,8 @@
 
 ## 2026-09-05
 
+- [Sep 5, 10:17 AM] Matched SSMT Menu Builder item rows to their parent visual section. Main Menu Items now carry the blue row/border treatment, items under Sub Menu rows carry the green treatment, and items under Divider rows carry the violet treatment so the rows visually belong to the section above them. Added browser coverage for the section-tone inheritance. This is UI-only and does not change SSMT data, save, export, pricing, source-authority, Supabase, Webtrition/MenuWorks, MRN, modifier, deletion, or submit behavior. Set visible app version to `2026.09.05.002-ssmt-section-row-colors`. Release state: LIVE.
+
 - [Sep 5, 10:00 AM] Polished the SSMT Menu Builder and modifier detail screens without changing SSMT data, save, export, pricing, source-authority, Supabase, or Webtrition behavior. The builder now has a stronger framed `Main Menu Items` header and clearer colored treatments for Sub Menu and Divider rows, while modifier groups now use a cleaner card header and no longer show the extra `choices / source sheet` helper line under the group. Added browser coverage for the grouped builder presentation and the clean modifier group title area; local `node scripts/run-playwright.mjs tests/browser/ssmt-tool.spec.js` passed 13/13. Set visible app version to `2026.09.05.001-ssmt-builder-modifier-polish`. Release state: LIVE.
 
 ## 2026-09-04

@@ -75,6 +75,23 @@ const MENU_TYPE_STYLES = {
     itemClass: "border-fuchsia-100 hover:border-fuchsia-500 hover:bg-fuchsia-50",
   },
 };
+const SSMT_BUILDER_SECTION_ROW_STYLES = {
+  main: {
+    rowClass: "odd:bg-sky-50 even:bg-sky-100/60",
+    cellBorderClass: "border-sky-200",
+    handleClass: "text-sky-700",
+  },
+  submenu: {
+    rowClass: "odd:bg-emerald-50 even:bg-emerald-100/60",
+    cellBorderClass: "border-emerald-200",
+    handleClass: "text-emerald-700",
+  },
+  divider: {
+    rowClass: "odd:bg-violet-50 even:bg-violet-100/60",
+    cellBorderClass: "border-violet-200",
+    handleClass: "text-violet-700",
+  },
+};
 const EMPTY_SSMT_DATA = {
   areaOrder: [],
   workflowPhases: ["Culinary draft", "Experience review", "IT programming", "IT complete"],
@@ -1595,10 +1612,14 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                     </tr>
                   </thead>
                   <tbody data-testid="ssmt-builder-body">
-                    {selectedMenu.items.slice(0, 80).map((item) => (
+                    {(() => {
+                      const visibleBuilderRows = selectedMenu.items.slice(0, 80);
+                      let activeSectionTone = "main";
+                      return visibleBuilderRows.map((item) => (
                       item.recordType === "divider" ? (
                         (() => {
                           const isSubmenu = item.dividerKind === "submenu";
+                          activeSectionTone = isSubmenu ? "submenu" : "divider";
                           return (
                         <tr
                           key={item.id}
@@ -1636,18 +1657,24 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                           );
                         })()
                       ) : (
+                        (() => {
+                          const sectionToneName = activeSectionTone;
+                          const sectionTone = SSMT_BUILDER_SECTION_ROW_STYLES[sectionToneName] || SSMT_BUILDER_SECTION_ROW_STYLES.main;
+                          const builderCellClass = `border-b ${sectionTone.cellBorderClass} px-2 py-1`;
+                          return (
                         <tr
                           key={item.id}
                           data-testid={`ssmt-row-item-${item.id}`}
                           data-row-kind="item"
+                          data-section-tone={sectionToneName}
                           draggable
                           onDragStart={() => setDraggedRowId(item.id)}
                           onDragOver={(event) => event.preventDefault()}
                           onDrop={() => moveRow(draggedRowId, item.id)}
-                          className={`align-top odd:bg-white even:bg-slate-100/80 ${item.lockedForCentric ? "outline outline-1 -outline-offset-1 outline-emerald-500" : ""}`}
+                          className={`align-top ${sectionTone.rowClass} ${item.lockedForCentric ? "outline outline-1 -outline-offset-1 outline-emerald-500" : ""}`}
                         >
-                          <td className="border-b border-slate-400 px-2 py-1 text-slate-500"><GripVertical size={16} /></td>
-                          <td className="border-b border-slate-400 px-2 py-1">
+                          <td className={`${builderCellClass} ${sectionTone.handleClass}`}><GripVertical size={16} /></td>
+                          <td className={builderCellClass}>
                             <input
                               aria-label={`Fixy for ${item.label || item.name || "item"}`}
                               value={item.fohColumn || ""}
@@ -1657,7 +1684,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               className={`w-full rounded-md border border-slate-300 px-2 py-1 text-xs font-bold outline-none focus:border-emerald-500 ${item.lockedForCentric ? "cursor-copy bg-emerald-50 text-slate-950" : "bg-white"}`}
                             />
                           </td>
-                          <td className="border-b border-slate-400 px-2 py-1">
+                          <td className={builderCellClass}>
                             <input
                               aria-label="Item label"
                               value={item.label}
@@ -1667,7 +1694,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               className={`w-full rounded-md border border-slate-300 px-2 py-1 text-xs font-black outline-none focus:border-emerald-500 ${item.lockedForCentric ? "cursor-copy bg-emerald-50 text-slate-950" : "bg-white"}`}
                             />
                           </td>
-                          <td className="border-b border-slate-400 px-2 py-1">
+                          <td className={builderCellClass}>
                             <textarea
                               aria-label="Description"
                               value={item.description}
@@ -1677,7 +1704,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               className={`h-14 w-full resize-y rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold leading-4 outline-none focus:border-emerald-500 ${item.lockedForCentric ? "cursor-copy bg-emerald-50 text-slate-950" : "bg-white"}`}
                             />
                           </td>
-                          <td className="border-b border-slate-400 px-2 py-1">
+                          <td className={builderCellClass}>
                             <input
                               aria-label={`MRN for ${item.label || item.name || "item"}`}
                               value={item.mrn || ""}
@@ -1687,7 +1714,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               className={`w-full rounded-md border border-slate-300 px-2 py-1 font-mono text-xs font-bold outline-none focus:border-emerald-500 ${item.lockedForCentric ? "cursor-copy bg-emerald-50 text-slate-950" : "bg-white"}`}
                             />
                           </td>
-                          <td className="border-b border-slate-400 px-2 py-1">
+                          <td className={builderCellClass}>
                             <select
                               aria-label={`SEA price for ${item.label || item.name || "item"}`}
                               value={item.priceSelectorId || ""}
@@ -1704,7 +1731,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               <p className="mt-1 text-[10px] font-bold leading-3 text-amber-700">Workbook value needs pricing structure match.</p>
                             )}
                           </td>
-                          <td className="border-b border-slate-400 px-2 py-1">
+                          <td className={builderCellClass}>
                             <input
                               aria-label={`Category for ${item.label || item.name || "item"}`}
                               value={item.category || ""}
@@ -1714,7 +1741,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               className={`w-full rounded-md border border-slate-300 px-2 py-1 text-xs font-bold outline-none focus:border-emerald-500 ${item.lockedForCentric ? "cursor-copy bg-emerald-50 text-slate-950" : "bg-white"}`}
                             />
                           </td>
-                          <td className="border-b border-slate-400 px-2 py-1">
+                          <td className={builderCellClass}>
                             <input
                               aria-label={`Secondary category for ${item.label || item.name || "item"}`}
                               value={item.secondaryCategory || item.reportingCategorySecondary || ""}
@@ -1724,7 +1751,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               className={`w-full rounded-md border border-slate-300 px-2 py-1 text-xs font-bold outline-none focus:border-emerald-500 ${item.lockedForCentric ? "cursor-copy bg-emerald-50 text-slate-950" : "bg-white"}`}
                             />
                           </td>
-                          <td className="border-b border-slate-400 px-2 py-1">
+                          <td className={builderCellClass}>
                             <div aria-label={`Area prices for ${item.label || item.name || "item"}`} className="grid w-full grid-cols-8 gap-px text-[11px] font-bold leading-4 text-slate-700">
                               {ssmtData.areaOrder.map((area) => (
                                 <button
@@ -1740,8 +1767,8 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               ))}
                             </div>
                           </td>
-                          <td className="border-b border-slate-400 px-2 py-1 font-bold text-slate-700">{selectedMenu.type === "Promotion" ? item.calories || "TBD" : "N/A"}</td>
-                          <td className="border-b border-slate-400 px-2 py-1">
+                          <td className={`${builderCellClass} font-bold text-slate-700`}>{selectedMenu.type === "Promotion" ? item.calories || "TBD" : "N/A"}</td>
+                          <td className={builderCellClass}>
                             <div className="grid grid-cols-3 gap-0.5">
                               <button type="button" aria-label={`View modifiers Mods (${modifierCountForItem(item)})`} onClick={() => openModifierDialog(item)} className="col-span-3 inline-flex items-center justify-center gap-1 rounded-md border border-green-800 bg-green-700 px-1.5 py-0.5 text-[10px] font-black text-white shadow-sm hover:bg-green-800">
                                 <Tags size={12} /> Mods ({modifierCountForItem(item)})
@@ -1758,8 +1785,11 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                             </div>
                           </td>
                         </tr>
+                          );
+                        })()
                       )
-                    ))}
+                    ));
+                  })()}
                   </tbody>
                 </table>
               </div>

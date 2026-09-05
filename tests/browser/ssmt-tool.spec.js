@@ -886,22 +886,44 @@ test("SSMT builder uses polished grouped sections and keeps modifier group title
   const dividerSection = page.getByTestId(/ssmt-builder-section-divider/).last();
   await expect(submenuSection).toContainText(/Sub Menu/i);
   await expect(dividerSection).toContainText(/Divider/i);
+  await page.getByTestId(/ssmt-row-submenu/).last().dragTo(page.getByTestId(/ssmt-row-item/).nth(1));
+  await page.getByTestId(/ssmt-row-divider/).last().dragTo(page.getByTestId(/ssmt-row-item/).nth(3));
 
   const sectionMetrics = await page.evaluate(() => {
     const main = document.querySelector('[data-testid="ssmt-builder-section-main"]');
     const submenu = document.querySelector('[data-testid^="ssmt-builder-section-submenu"]');
     const divider = document.querySelector('[data-testid^="ssmt-builder-section-divider"]');
+    const rows = Array.from(document.querySelectorAll('[data-testid="ssmt-builder-body"] tr[data-row-kind]'));
+    const metricForItem = (row) => {
+      const firstCell = row?.querySelector("td");
+      return {
+        tone: row?.getAttribute("data-section-tone") || "",
+        border: firstCell ? getComputedStyle(firstCell).borderBottomColor : "",
+        background: row ? getComputedStyle(row).backgroundColor : "",
+      };
+    };
+    const firstItem = rows.find((row) => row.getAttribute("data-row-kind") === "item");
+    const itemAfter = (kind) => {
+      const sectionIndex = rows.findIndex((row) => row.getAttribute("data-row-kind") === kind);
+      return rows.slice(sectionIndex + 1).find((row) => row.getAttribute("data-row-kind") === "item");
+    };
     return {
       mainBorder: main ? getComputedStyle(main).borderColor : "",
       submenuBorder: submenu ? getComputedStyle(submenu).borderColor : "",
       dividerBorder: divider ? getComputedStyle(divider).borderColor : "",
       mainRadius: main ? getComputedStyle(main).borderRadius : "",
+      mainItem: metricForItem(firstItem),
+      submenuItem: metricForItem(itemAfter("submenu")),
+      dividerItem: metricForItem(itemAfter("divider")),
     };
   });
   expect(sectionMetrics.mainBorder).toBe("rgb(125, 211, 252)");
   expect(sectionMetrics.submenuBorder).toBe("rgb(52, 211, 153)");
   expect(sectionMetrics.dividerBorder).toBe("rgb(167, 139, 250)");
   expect(Number.parseFloat(sectionMetrics.mainRadius)).toBeLessThanOrEqual(8);
+  expect(sectionMetrics.mainItem).toMatchObject({ tone: "main", border: "rgb(186, 230, 253)" });
+  expect(sectionMetrics.submenuItem).toMatchObject({ tone: "submenu", border: "rgb(167, 243, 208)" });
+  expect(sectionMetrics.dividerItem).toMatchObject({ tone: "divider", border: "rgb(221, 214, 254)" });
 
   await page.getByRole("button", { name: /view modifiers/i }).first().click();
   const modifierDialog = page.getByRole("dialog", { name: /modifier/i });
