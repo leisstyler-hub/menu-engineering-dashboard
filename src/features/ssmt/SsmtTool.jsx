@@ -1542,11 +1542,16 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
               )}
             </section>
 
-            <section className="overflow-hidden rounded-lg border border-slate-400 bg-white shadow-sm">
-              <div className="flex flex-col gap-2 border-b border-slate-400 p-3 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Menu Items</p>
-                  <h2 className="mt-1 text-xl font-black">Builder rows</h2>
+            <section data-testid="ssmt-builder-sections" className="overflow-hidden rounded-lg border border-sky-300 bg-white shadow-sm shadow-sky-100">
+              <div data-testid="ssmt-builder-section-main" className="m-3 flex flex-col gap-2 rounded-lg border border-sky-300 bg-gradient-to-r from-sky-50 to-white p-3 md:flex-row md:items-center md:justify-between">
+                <div className="flex items-start gap-3">
+                  <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-600 text-white shadow-sm">
+                    <ListChecks size={20} />
+                  </span>
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-sky-700">Menu Items</p>
+                    <h2 className="mt-1 text-xl font-black">Main Menu Items <span className="ml-1 text-base text-slate-700">Builder rows</span></h2>
+                  </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button type="button" onClick={addItem} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-black text-slate-800 hover:bg-slate-100">
@@ -1560,7 +1565,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                   </button>
                 </div>
               </div>
-              <div data-testid="ssmt-derived-source-preview" className="border-b border-slate-400 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-600">
+              <div data-testid="ssmt-derived-source-preview" className="border-y border-sky-200 bg-sky-50/60 px-4 py-2 text-xs font-bold text-slate-600">
                 {selectedDerivedMenus.length ? (
                   <span>Downstream SSMT menus after IT complete: {selectedDerivedMenus.map((entry) => `${entry.menu} (${entry.count})`).join(", ")}</span>
                 ) : (
@@ -1603,16 +1608,26 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                           onDragStart={() => setDraggedRowId(item.id)}
                           onDragOver={(event) => event.preventDefault()}
                           onDrop={() => moveRow(draggedRowId, item.id)}
-                          className={isSubmenu ? "bg-slate-900 text-white" : "bg-slate-100"}
+                          className={isSubmenu ? "bg-emerald-50 text-slate-950" : "bg-violet-50 text-slate-950"}
                         >
-                          <td className={`border-b px-2 py-1 ${isSubmenu ? "border-slate-700 text-slate-200" : "border-slate-400 text-slate-500"}`}><GripVertical size={16} /></td>
-                          <td colSpan={10} className={`border-b px-2 py-1 ${isSubmenu ? "border-slate-700" : "border-slate-400"}`}>
-                            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                              <label className="flex flex-col gap-1 md:flex-row md:items-center">
-                                <span className={`text-xs font-black uppercase tracking-[0.14em] ${isSubmenu ? "text-slate-200" : "text-slate-500"}`}>{isSubmenu ? "Sub menu title" : "Divider title"}</span>
+                          <td className={`border-b px-2 py-2 ${isSubmenu ? "border-emerald-300 text-emerald-800" : "border-violet-300 text-violet-800"}`}><GripVertical size={16} /></td>
+                          <td colSpan={10} className={`border-b px-2 py-2 ${isSubmenu ? "border-emerald-300" : "border-violet-300"}`}>
+                            <div
+                              data-testid={`${isSubmenu ? "ssmt-builder-section-submenu" : "ssmt-builder-section-divider"}-${item.id}`}
+                              className={`flex flex-col gap-2 rounded-lg border p-2 md:flex-row md:items-center md:justify-between ${
+                                isSubmenu
+                                  ? "border-emerald-400 bg-emerald-50"
+                                  : "border-violet-400 bg-violet-50"
+                              }`}
+                            >
+                              <label className="flex flex-1 flex-col gap-1 md:flex-row md:items-center">
+                                <span className={`inline-flex items-center rounded-full px-2 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-white ${isSubmenu ? "bg-emerald-700" : "bg-violet-700"}`}>
+                                  {isSubmenu ? "Sub Menu" : "Divider"}
+                                </span>
+                                <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">{isSubmenu ? "Title" : "Title"}</span>
                                 <input aria-label={isSubmenu ? "Sub menu title" : "Divider title"} value={item.title} onChange={(event) => updateDivider(item.id, event.target.value)} className="min-w-[260px] rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-black text-slate-950 outline-none focus:border-emerald-500" />
                               </label>
-                              <button type="button" onClick={() => requestDelete({ type: isSubmenu ? "submenu" : "divider", id: item.id, name: item.title || (isSubmenu ? "sub menu" : "divider") })} className={`inline-flex items-center justify-center gap-1 rounded-md border px-2 py-1 text-[10px] font-black ${isSubmenu ? "border-red-300 bg-red-50 text-red-800 hover:bg-red-100" : "border-red-200 bg-red-50 text-red-800 hover:bg-red-100"}`} aria-label={isSubmenu ? `Delete sub menu ${item.title || "sub menu"}` : `Delete divider ${item.title || "divider"}`}>
+                              <button type="button" onClick={() => requestDelete({ type: isSubmenu ? "submenu" : "divider", id: item.id, name: item.title || (isSubmenu ? "sub menu" : "divider") })} className="inline-flex items-center justify-center gap-1 rounded-md border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-black text-red-800 hover:bg-red-100" aria-label={isSubmenu ? `Delete sub menu ${item.title || "sub menu"}` : `Delete divider ${item.title || "divider"}`}>
                                 <Trash2 size={13} /> Delete
                               </button>
                             </div>
@@ -1798,9 +1813,14 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                 onDragStart={() => setDraggedModifierGroupId(group.id)}
                 onDragOver={(event) => event.preventDefault()}
                 onDrop={() => moveModifierGroup(draggedModifierGroupId, group.id)}
-                className={`rounded-lg border p-3 ${group.lockedForCentric ? "border-emerald-600 bg-emerald-50" : "border-slate-400 bg-slate-50"}`}
+                className={`overflow-hidden rounded-lg border ${group.lockedForCentric ? "border-emerald-600 bg-emerald-50" : "border-sky-200 bg-white"}`}
               >
-                <div className="grid gap-2 lg:grid-cols-[minmax(220px,1fr)_170px_auto] lg:items-end">
+                <div className={`grid gap-3 border-b p-3 lg:grid-cols-[auto_minmax(220px,1fr)_170px_auto] lg:items-end ${
+                  group.lockedForCentric ? "border-emerald-300 bg-emerald-100/70" : "border-sky-200 bg-sky-50"
+                }`}>
+                  <span className={`inline-flex h-10 w-10 items-center justify-center rounded-full text-white shadow-sm ${group.lockedForCentric ? "bg-emerald-700" : "bg-sky-700"}`}>
+                    <Tags size={19} />
+                  </span>
                   <label className="grid gap-1">
                     <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Modifier group name</span>
                     <input
@@ -1823,7 +1843,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                       {MODIFIER_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
                     </select>
                   </label>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap justify-end gap-2">
                     <button type="button" onClick={() => addModifierChoice(group.id)} disabled={Boolean(group.lockedForCentric)} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-black text-slate-800 hover:bg-slate-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400">
                       <Plus size={14} /> Add modifier item line
                     </button>
@@ -1844,7 +1864,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                   </div>
                 </div>
 
-                <div className="mt-2 max-h-[52vh] overflow-auto rounded-lg border border-slate-400 bg-white">
+                <div className="max-h-[52vh] overflow-auto bg-white">
                   <table className="w-full min-w-[1180px] table-fixed border-collapse text-left text-xs">
                     <colgroup>
                       <col className="w-[180px]" />
@@ -1938,9 +1958,6 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                     <div className="p-4 text-sm font-bold text-slate-600">No modifier item lines yet.</div>
                   )}
                 </div>
-                <p className="mt-2 text-[11px] font-bold text-slate-500">
-                  {group.choices.length} choices / {group.sourceSheet}
-                </p>
               </section>
             ))}
           </div>

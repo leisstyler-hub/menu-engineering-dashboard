@@ -223,7 +223,7 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
   await submenuRow.getByLabel(/Sub menu title/i).fill("Curated Sandwiches");
   await submenuRow.dragTo(page.getByTestId(/ssmt-row-item/).nth(1));
   const submenuBackground = await submenuRow.evaluate((node) => getComputedStyle(node).backgroundColor);
-  expect(submenuBackground).toBe("rgb(15, 23, 42)");
+  expect(submenuBackground).toBe("rgb(236, 253, 245)");
 
   await expect(page.getByRole("columnheader", { name: "Fixy" })).toBeVisible();
   await expect(page.getByRole("columnheader", { name: "FOH / Fixy" })).toHaveCount(0);
@@ -860,6 +860,56 @@ test("SSMT modifier editor opens wider, prominent, and dense for item lines", as
   expect(modifierDialogMetrics.tableScrollWidth).toBeLessThanOrEqual(modifierDialogMetrics.tableClientWidth + 4);
   expect(modifierDialogMetrics.firstItemRowHeight).toBeLessThanOrEqual(76);
   expect(modifierDialogMetrics.firstItemBorderColor).toBe("rgb(148, 163, 184)");
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("SSMT builder uses polished grouped sections and keeps modifier group titles clean", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await page.setViewportSize({ width: 1680, height: 950 });
+  await page.goto("/");
+
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByLabel(/SSMT passcode/i).fill("0411");
+  await page.getByRole("button", { name: /unlock ssmt/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+  await page.getByRole("button", { name: /^The Daily/i }).click();
+
+  const builderSections = page.getByTestId("ssmt-builder-sections");
+  await expect(builderSections).toBeVisible();
+  await expect(page.getByTestId("ssmt-builder-section-main").first()).toContainText(/Main Menu Items/i);
+
+  await page.getByRole("button", { name: /Add sub menu/i }).click();
+  await page.getByRole("button", { name: /Add divider/i }).click();
+  const submenuSection = page.getByTestId(/ssmt-builder-section-submenu/).last();
+  const dividerSection = page.getByTestId(/ssmt-builder-section-divider/).last();
+  await expect(submenuSection).toContainText(/Sub Menu/i);
+  await expect(dividerSection).toContainText(/Divider/i);
+
+  const sectionMetrics = await page.evaluate(() => {
+    const main = document.querySelector('[data-testid="ssmt-builder-section-main"]');
+    const submenu = document.querySelector('[data-testid^="ssmt-builder-section-submenu"]');
+    const divider = document.querySelector('[data-testid^="ssmt-builder-section-divider"]');
+    return {
+      mainBorder: main ? getComputedStyle(main).borderColor : "",
+      submenuBorder: submenu ? getComputedStyle(submenu).borderColor : "",
+      dividerBorder: divider ? getComputedStyle(divider).borderColor : "",
+      mainRadius: main ? getComputedStyle(main).borderRadius : "",
+    };
+  });
+  expect(sectionMetrics.mainBorder).toBe("rgb(125, 211, 252)");
+  expect(sectionMetrics.submenuBorder).toBe("rgb(52, 211, 153)");
+  expect(sectionMetrics.dividerBorder).toBe("rgb(167, 139, 250)");
+  expect(Number.parseFloat(sectionMetrics.mainRadius)).toBeLessThanOrEqual(8);
+
+  await page.getByRole("button", { name: /view modifiers/i }).first().click();
+  const modifierDialog = page.getByRole("dialog", { name: /modifier/i });
+  await expect(modifierDialog).toBeVisible();
+  await modifierDialog.getByRole("button", { name: /Add modifier group/i }).click();
+  const modifierGroup = modifierDialog.getByTestId(/ssmt-modifier-group/).last();
+  await modifierGroup.getByLabel(/Modifier group name/i).fill("Sauce Rules");
+  await expect(modifierGroup).not.toContainText(/choices\s*\//i);
 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
