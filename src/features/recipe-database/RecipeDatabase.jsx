@@ -28,6 +28,12 @@ import {
   textValue,
 } from "./recipeLibraryModel.js";
 
+// Temporarily hidden per Tyler (2026-09-04) while SSMT moves toward being the single source of
+// truth for menus/items. The panel and its import pipeline are intentionally kept intact so this
+// upload slot can return as the Webtrition item-index "empty bucket" fill once SSMT is up to date.
+// Flip to true to restore the MenuWorks Truth Upload panel on Menu Library.
+const SHOW_MENUWORKS_TRUTH_UPLOAD = false;
+
 function readStoredMenuRows() {
   if (typeof window === "undefined") return null;
   try {
@@ -670,6 +676,7 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
           <MetricCard icon={Camera} label="Photos" value={(librarySummary?.photoRows ?? allPhotoRows.length).toLocaleString()} detail={`${missingPhotoRows.toLocaleString()} missing photos`} tone={missingPhotoRows ? "amber" : "green"} />
         </section>
 
+        {SHOW_MENUWORKS_TRUTH_UPLOAD && (
         <MenuWorksRefreshPanel
           dataQuality={dataQuality}
           selectedMenuDataQuality={selectedMenuDataQuality}
@@ -680,6 +687,7 @@ export default function RecipeDatabase({ onBackToPlatform, onOpenSmartsheetHealt
           onFileChange={parseMenuWorksFile}
           onOpenReview={() => setPendingImport((current) => current)}
         />
+        )}
 
         <main className="grid grid-cols-1 gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
           <aside className="rounded-[2rem] border border-slate-200 bg-white p-4 shadow-xl">
