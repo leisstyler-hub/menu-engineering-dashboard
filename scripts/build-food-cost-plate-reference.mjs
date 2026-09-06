@@ -54,7 +54,9 @@ if (new Set(rows.map((row) => row.id)).size !== rows.length) throw new Error("Fo
 
 const output = `${JSON.stringify({ source: "docs/FOOD_COST_PLATE_COSTING_REFERENCE.md", concepts, rows }, null, 2)}\n`;
 if (process.argv.includes("--check")) {
-  if (!fs.existsSync(outputPath) || fs.readFileSync(outputPath, "utf8") !== output) {
+  // Normalize CRLF -> LF so the guard tests real content drift, not the line-ending
+  // conversion Git applies to the committed LF artifact on Windows checkouts (autocrlf).
+  if (!fs.existsSync(outputPath) || fs.readFileSync(outputPath, "utf8").replace(/\r\n/g, "\n") !== output) {
     throw new Error("Generated food-cost reference is stale. Run node scripts/build-food-cost-plate-reference.mjs.");
   }
   console.log(`Verified ${rows.length} menu-isolated food-cost rows against the Markdown authority.`);

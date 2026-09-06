@@ -524,7 +524,9 @@ const data = await buildData();
 const serialized = `${JSON.stringify(data, null, 2)}\n`;
 
 if (CHECK_MODE) {
-  const current = readFileSync(OUTPUT, "utf8");
+  // Normalize CRLF -> LF so the guard tests real content drift, not the line-ending
+  // conversion Git applies to the committed LF artifact on Windows checkouts (autocrlf).
+  const current = readFileSync(OUTPUT, "utf8").replace(/\r\n/g, "\n");
   assert(current === serialized, "public/data/ssmtSeedData.json is out of date. Run node scripts/build-ssmt-seed-data.mjs.");
   console.log("SSMT seed data is current.");
 } else {

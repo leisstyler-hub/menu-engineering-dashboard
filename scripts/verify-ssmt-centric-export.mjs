@@ -172,4 +172,47 @@ assert(relationshipRows.includes("Item|EUR: Test Sandwich|SANDWICHES"));
 assert(relationshipRows.includes("Modifier Group|Choice of Sauce|EUR: Test Sandwich"));
 assert(relationshipRows.includes("Modifier|Garlic Aioli|Choice of Sauce"));
 
+// Regression: the export must match modifier groups to an item only by exact id or exact
+// name, never by substring. Template-artifact groups left by the original seed import
+// (names like "Forced/Add/Remove?", "1", "NO", "FORCE") must never attach to an item and
+// inject fabricated modifier rows / literal placeholder text into the Centric export.
+const junkMatchMenu = {
+  id: "menu-junk-match",
+  name: "Junk Match Brand",
+  type: "Core",
+  items: [
+    {
+      id: "item-junk-1",
+      name: "Force Rice Bowl",
+      label: "FORCE RICE BOWL",
+      seaPrice: "$7.00",
+      // real intent is only "Choice of Sauce"; the free-text refs also carry noise that used
+      // to substring-match the junk template groups below.
+      modifierGroups: ["Choice of Sauce", "Force Rice Choice", "1 scoop"],
+    },
+  ],
+};
+const junkModifierGroups = [
+  ...modifierGroups,
+  { id: "junk-group-force", name: "FORCE", choices: [{ label: "Choices", description: "description", mrn: "MRN", price: "Price" }] },
+  { id: "junk-group-one", name: "1", choices: [{ label: "Choices", description: "description", mrn: "MRN", price: "Price" }] },
+  { id: "junk-group-tmpl", name: "Forced/Add/Remove?", choices: [{ label: "Choices", description: "description", mrn: "MRN", price: "Price" }] },
+];
+const junkWorkbook = buildCentricExportWorkbook({
+  selectedMenu: junkMatchMenu,
+  areaOrder: seedData.areaOrder,
+  modifierGroups: junkModifierGroups,
+});
+const junkRows = (sheetName) => XLSX.utils.sheet_to_json(junkWorkbook.Sheets[sheetName], { header: 1, raw: false, defval: "" });
+const junkGroupNames = junkRows("Modifier Groups").slice(1).map((row) => row[1]);
+assert(
+  !junkGroupNames.some((name) => ["FORCE", "1", "Forced/Add/Remove?"].includes(name)),
+  "Template-artifact modifier groups must not substring-match an item into the export.",
+);
+const junkModifierNames = junkRows("Modifiers").slice(1).map((row) => row[3]);
+assert(
+  !junkModifierNames.includes("Choices"),
+  "Placeholder template choice text ('Choices') must never appear in the exported Modifiers sheet.",
+);
+
 console.log("SSMT Centric export model verified.");

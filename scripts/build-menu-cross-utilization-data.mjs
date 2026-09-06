@@ -147,7 +147,10 @@ async function build() {
   const pairs = buildPairwiseMatrix(menuSummaries);
 
   const output = {
-    generatedAt: new Date().toISOString().slice(0, 10),
+    // Pinned (not new Date()) so the build is deterministic and `--check` tests real
+    // content drift instead of failing every day when the wall clock rolls over. Bump
+    // this manually when the underlying source data actually changes.
+    generatedAt: "2026-08-23",
     scope: SCOPE,
     pillars: PILLARS,
     menus: menuSummaries,
@@ -157,7 +160,9 @@ async function build() {
   const json = `${JSON.stringify(output, null, 2)}\n`;
 
   if (process.argv.includes("--check")) {
-    if (!fs.existsSync(outputPath) || fs.readFileSync(outputPath, "utf8") !== json) {
+    // Normalize CRLF -> LF so the guard tests real content drift, not the line-ending
+    // conversion Git applies to the committed LF artifact on Windows checkouts (autocrlf).
+    if (!fs.existsSync(outputPath) || fs.readFileSync(outputPath, "utf8").replace(/\r\n/g, "\n") !== json) {
       throw new Error("Generated menuCrossUtilization.json is stale. Run node scripts/build-menu-cross-utilization-data.mjs.");
     }
     console.log(`Verified menu cross-utilization data for ${menus.length} menus (${namesWithData.size} with ingredient data).`);

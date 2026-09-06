@@ -124,10 +124,16 @@ function areaValues(areaOrder = [], areaPrices = {}, fallback = "") {
 function relatedModifierGroups(item, modifierGroups = []) {
   const itemGroupNames = item?.modifierGroups || [];
   return modifierGroups.filter((group) => itemGroupNames.some((name) => {
-    if (cleanText(group.id) && cleanText(group.id) === cleanText(name)) return true;
-    const left = cleanText(group.name).toLowerCase();
-    const right = cleanText(name).toLowerCase();
-    return left && right && (left.includes(right) || right.includes(left));
+    const ref = cleanText(name);
+    if (!ref) return false;
+    // Match only by exact id (fresh groups link by id) or exact name — mirrors the
+    // SsmtTool badge fix (da8f91e). Substring matching was removed because it silently
+    // attached template-artifact groups (names like "1", "NO", "FORCE", "Forced/Add/Remove?")
+    // from the original seed import to unrelated items, injecting fabricated modifier
+    // rows and literal placeholder text into the Centric export.
+    if (cleanText(group.id) && cleanText(group.id) === ref) return true;
+    const groupName = cleanText(group.name).toLowerCase();
+    return groupName !== "" && groupName === ref.toLowerCase();
   }));
 }
 
