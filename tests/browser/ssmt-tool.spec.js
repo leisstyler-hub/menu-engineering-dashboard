@@ -71,6 +71,13 @@ test("SSMT opens behind passcode and separates pricing from menu building", asyn
   await expect(page.getByLabel(/SEA price for/i).first()).not.toHaveValue("");
   await expect(page.getByLabel(/Area prices for/i).first()).toContainText("AUS");
   await expect(page.getByLabel(/Area prices for/i).first()).toContainText("MCO");
+  const areaPriceCell = page.getByLabel(/Area prices for/i).first();
+  const expectedAreas = ["AUS", "BNA", "BOS", "BWI", "DEN", "IAD", "JFK", "LAX", "SAN", "SNA", "SEA", "SJC", "WAS", "YVR", "YYZ", "MCO"];
+  const renderedAreas = await areaPriceCell.locator("button").evaluateAll((buttons) =>
+    buttons.map((button) => button.textContent.trim().split(/\s+/)[0])
+  );
+  expect(renderedAreas).toEqual(expectedAreas);
+  expect(renderedAreas.some((area) => /^\+\d+$/.test(area))).toBe(false);
 
   await page.getByRole("button", { name: /view modifiers/i }).first().click();
   const modifierDialog = page.getByRole("dialog", { name: /modifier/i });

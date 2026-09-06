@@ -92,6 +92,7 @@ const SSMT_BUILDER_SECTION_ROW_STYLES = {
     handleClass: "text-violet-700",
   },
 };
+const SSMT_AREA_PRICE_GRID_CLASS = "grid w-full min-w-0 grid-cols-[repeat(auto-fit,minmax(54px,1fr))] gap-1 text-[11px] font-bold leading-3 text-slate-700";
 const EMPTY_SSMT_DATA = {
   areaOrder: [],
   workflowPhases: ["Culinary draft", "Experience review", "IT programming", "IT complete"],
@@ -1590,7 +1591,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                 )}
               </div>
               <div data-testid="ssmt-builder-scroll" className="max-h-[74vh] overflow-auto">
-                <table className="w-full min-w-[2520px] table-fixed border-collapse text-left text-xs">
+                <table className="w-full min-w-[2680px] table-fixed border-collapse text-left text-xs">
                   <colgroup>
                     <col className="w-[46px]" />
                     <col className="w-[125px]" />
@@ -1600,7 +1601,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                     <col className="w-[170px]" />
                     <col className="w-[118px]" />
                     <col className="w-[128px]" />
-                    <col className="w-[330px]" />
+                    <col className="w-[490px]" />
                     <col className="w-[72px]" />
                     <col className="w-[160px]" />
                   </colgroup>
@@ -1752,7 +1753,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                             />
                           </td>
                           <td className={builderCellClass}>
-                            <div aria-label={`Area prices for ${item.label || item.name || "item"}`} className="grid w-full grid-cols-8 gap-px text-[11px] font-bold leading-4 text-slate-700">
+                            <div aria-label={`Area prices for ${item.label || item.name || "item"}`} className={SSMT_AREA_PRICE_GRID_CLASS}>
                               {ssmtData.areaOrder.map((area) => (
                                 <button
                                   key={area}
@@ -1760,7 +1761,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                                   aria-label={`Copy ${area} price for ${item.label || item.name || "item"}`}
                                   disabled={!item.lockedForCentric || !item.areaPrices?.[area]}
                                   onClick={() => copyForCentric(item.areaPrices?.[area], `${area} price`)}
-                                  className="rounded border border-slate-300 bg-white px-1 py-0.5 text-left disabled:cursor-not-allowed disabled:text-slate-700 disabled:opacity-100 enabled:cursor-copy enabled:border-emerald-400 enabled:bg-emerald-50 enabled:hover:bg-emerald-100"
+                                  className="min-w-0 rounded border border-slate-300 bg-white px-1 py-0.5 text-left disabled:cursor-not-allowed disabled:text-slate-700 disabled:opacity-100 enabled:cursor-copy enabled:border-emerald-400 enabled:bg-emerald-50 enabled:hover:bg-emerald-100"
                                 >
                                   <span className="font-black text-slate-500">{area}</span> {item.areaPrices?.[area] || "TBD"}
                                 </button>
@@ -1895,15 +1896,15 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                 </div>
 
                 <div className="max-h-[52vh] overflow-auto bg-white">
-                  <table className="w-full min-w-[1180px] table-fixed border-collapse text-left text-xs">
+                  <table className="w-full min-w-[1340px] table-fixed border-collapse text-left text-xs">
                     <colgroup>
-                      <col className="w-[180px]" />
-                      <col className="w-[230px]" />
-                      <col className="w-[110px]" />
-                      <col className="w-[78px]" />
-                      <col className="w-[150px]" />
-                      <col className="w-[330px]" />
-                      <col className="w-[102px]" />
+                      <col className="w-[155px]" />
+                      <col className="w-[190px]" />
+                      <col className="w-[96px]" />
+                      <col className="w-[70px]" />
+                      <col className="w-[130px]" />
+                      <col className="w-[590px]" />
+                      <col className="w-[109px]" />
                     </colgroup>
                     <thead className="sticky top-0 bg-slate-100 font-black uppercase tracking-[0.1em] text-slate-600">
                       <tr>
@@ -1967,9 +1968,9 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                             <p className="mt-0.5 text-[10px] font-bold leading-3 text-slate-500">{choice.price || "TBD"}</p>
                           </td>
                           <td className="border-b border-slate-400 px-2 py-0.5">
-                            <div className="grid w-full min-w-0 grid-cols-8 gap-px text-[10px] font-bold leading-3 text-slate-700">
+                            <div className={SSMT_AREA_PRICE_GRID_CLASS}>
                               {ssmtData.areaOrder.map((area) => (
-                                <span key={area} className="rounded border border-slate-300 bg-white px-1 py-0.5">
+                                <span key={area} className="min-w-0 rounded border border-slate-300 bg-white px-1 py-0.5">
                                   <span className="font-black text-slate-500">{area}</span> {choice.areaPrices?.[area] || "TBD"}
                                 </span>
                               ))}
