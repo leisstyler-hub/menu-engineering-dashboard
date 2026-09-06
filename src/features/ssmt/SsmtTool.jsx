@@ -246,17 +246,30 @@ function sortPricesForModifierSelector(priceBook = []) {
   });
 }
 
-function modifierCountForItem(item = {}) {
-  return Array.isArray(item.modifierGroups) ? item.modifierGroups.length : 0;
+function matchedModifierGroupsForItem(item = {}, modifierGroups = []) {
+  if (!Array.isArray(modifierGroups)) return [];
+  const refs = Array.isArray(item.modifierGroups) ? item.modifierGroups : [];
+  return modifierGroups
+    .filter((group) => refs.some((ref) => modifierGroupMatchesItemRef(group, ref)))
+    .slice(0, 4);
+}
+
+function modifierCountForItem(item = {}, modifierGroups = []) {
+  return matchedModifierGroupsForItem(item, modifierGroups).length;
 }
 
 function modifierGroupMatchesItemRef(group = {}, ref = "") {
   const cleanRef = String(ref || "").trim();
   if (!cleanRef) return false;
+  // Fresh groups are linked to items by id (addModifierGroup / paste), so id is the
+  // reliable key. Legacy free-text refs only count when they match a group name exactly.
+  // Substring matching was removed: it silently attached template-artifact groups
+  // (names like "2", "NO", "1", "Forced/Add/Remove?") to unrelated items, inflating the
+  // Mods count against groups that were never really authored for that item.
   if (group.id === cleanRef) return true;
-  const groupName = String(group.name || "").toLowerCase();
+  const groupName = String(group.name || "").trim().toLowerCase();
   const refName = cleanRef.toLowerCase();
-  return groupName && (groupName.includes(refName) || refName.includes(groupName));
+  return groupName !== "" && groupName === refName;
 }
 
 function modifierTypeForGroup(group = {}) {
@@ -906,9 +919,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
 
   const openModifierDialog = (item) => {
     setCopiedModifierNotice("");
-    const matchedGroups = ssmtData.modifierGroups
-      .filter((group) => (item.modifierGroups || []).some((ref) => modifierGroupMatchesItemRef(group, ref)))
-      .slice(0, 4);
+    const matchedGroups = matchedModifierGroupsForItem(item, ssmtData.modifierGroups);
     setModifierDialog({
       item,
       groups: matchedGroups.map((group) => normalizeModifierGroup(group, ssmtData.areaOrder, ssmtData.priceBook)),
@@ -1795,8 +1806,8 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                           <td className={`${builderCellClass} font-bold text-slate-700`}>{selectedMenu.type === "Promotion" ? item.calories || "TBD" : "N/A"}</td>
                           <td className={builderCellClass}>
                             <div className="grid grid-cols-2 gap-1">
-                              <button type="button" aria-label={`View modifiers Mods (${modifierCountForItem(item)})`} onClick={() => openModifierDialog(item)} className="inline-flex items-center justify-center gap-1 rounded-md border border-green-800 bg-green-700 px-2 py-1.5 text-xs font-black text-white shadow-sm hover:bg-green-800">
-                                <Tags size={14} /> Mods ({modifierCountForItem(item)})
+                              <button type="button" aria-label={`View modifiers Mods (${modifierCountForItem(item, ssmtData.modifierGroups)})`} onClick={() => openModifierDialog(item)} className="inline-flex items-center justify-center gap-1 rounded-md border border-green-800 bg-green-700 px-2 py-1.5 text-xs font-black text-white shadow-sm hover:bg-green-800">
+                                <Tags size={14} /> Mods ({modifierCountForItem(item, ssmtData.modifierGroups)})
                               </button>
                               <button type="button" onClick={() => updateItem(item.id, { lockedForCentric: !item.lockedForCentric })} className={`inline-flex items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-xs font-black ${item.lockedForCentric ? "border-emerald-700 bg-emerald-700 text-white hover:bg-emerald-800" : "border-slate-300 bg-slate-50 text-slate-800 hover:bg-slate-100"}`} aria-label={`${item.lockedForCentric ? "Unlock" : "Lock"} item ${item.label || item.name || "item"}`}>
                                 {item.lockedForCentric ? <Lock size={14} /> : <Unlock size={14} />} {item.lockedForCentric ? "Locked" : "Lock"}

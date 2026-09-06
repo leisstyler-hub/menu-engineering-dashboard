@@ -821,6 +821,53 @@ test("SSMT modifier groups are editable with typed group metadata and line-level
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
+test("SSMT Mods badge counts only reliably-linked groups, not stale free-text refs", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await page.setViewportSize({ width: 1800, height: 950 });
+  await page.goto("/");
+
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByLabel(/SSMT passcode/i).fill("0411");
+  await page.getByRole("button", { name: /unlock ssmt/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+  await expect(page.getByText(/Loading current SSMT seed data/i)).toHaveCount(0, { timeout: 20_000 });
+
+  // Reported defect: Andes "PERUVIAN STEWED TOFU" carries three free-text modifier refs
+  // ("BASE CHOICE", "Choose 2 Sides", "Choose Sauce") that match no real authored group.
+  // The badge must read the real linked count (0) and match the empty dialog, not the raw ref length (3).
+  await page.locator('[data-menu-name="Andes"]').click();
+  const tofuRow = page
+    .locator("tr[data-row-kind='item']")
+    .filter({ has: page.getByRole("button", { name: /Lock item PERUVIAN STEWED TOFU/i }) });
+  const tofuMods = tofuRow.getByRole("button", { name: /View modifiers Mods \(\d+\)/i });
+  await expect(tofuMods).toHaveAccessibleName(/Mods \(0\)/i);
+  await tofuMods.click();
+  const tofuDialog = page.getByRole("dialog", { name: /modifier/i });
+  await expect(tofuDialog.getByText(/No modifier groups attached/i)).toBeVisible();
+  await page.keyboard.press("Escape");
+
+  // Fresh-build path must still count: a group created in the dialog is linked by id and
+  // must make the badge read (1) after the dialog closes — guards against over-tightening the match.
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+  await page.getByLabel(/New menu name/i).fill("Badge Count Test");
+  await page.getByLabel(/New menu type/i).selectOption("Core");
+  await page.getByRole("button", { name: /Create menu/i }).click();
+
+  const newRow = page
+    .locator("tr[data-row-kind='item']")
+    .filter({ has: page.getByRole("button", { name: /Lock item NEW ITEM/i }) })
+    .first();
+  await newRow.getByRole("button", { name: /View modifiers Mods \(0\)/i }).click();
+  const buildDialog = page.getByRole("dialog", { name: /modifier/i });
+  await buildDialog.getByRole("button", { name: /Add modifier group/i }).click();
+  await buildDialog.getByLabel(/Modifier group name/i).last().fill("Choose Sauce");
+  await page.keyboard.press("Escape");
+  await expect(newRow.getByRole("button", { name: /View modifiers Mods \(1\)/i })).toBeVisible();
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
 test("SSMT modifier editor opens wider, prominent, and dense for item lines", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   await page.setViewportSize({ width: 1440, height: 950 });
