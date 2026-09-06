@@ -92,7 +92,7 @@ const SSMT_BUILDER_SECTION_ROW_STYLES = {
     handleClass: "text-violet-700",
   },
 };
-const SSMT_AREA_PRICE_GRID_CLASS = "grid w-full min-w-0 grid-cols-[repeat(auto-fit,minmax(54px,1fr))] gap-1 text-[11px] font-bold leading-3 text-slate-700";
+const SSMT_AREA_PRICE_GRID_CLASS = "grid w-full min-w-0 grid-cols-8 gap-1 text-[11px] font-bold leading-3 text-slate-700";
 const EMPTY_SSMT_DATA = {
   areaOrder: [],
   workflowPhases: ["Culinary draft", "Experience review", "IT programming", "IT complete"],
@@ -447,6 +447,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const [flagReason, setFlagReason] = useState("Description correction");
   const [flagNote, setFlagNote] = useState("");
   const [reportedFlag, setReportedFlag] = useState(null);
+  const [leaveMenuPrompt, setLeaveMenuPrompt] = useState(null);
   const [copiedModifierNotice, setCopiedModifierNotice] = useState("");
   const [copiedFieldNotice, setCopiedFieldNotice] = useState("");
   const [modifierClipboardSlots, setModifierClipboardSlots] = useState(EMPTY_MODIFIER_CLIPBOARD_SLOTS);
@@ -801,6 +802,29 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
     setSelectedMenuId(menuId);
     setActiveView("editor");
   };
+
+  // Flags are report-only and menu-session-scoped: warn before leaving a menu
+  // that still has unreported flags, and clear them if the user confirms leaving.
+  const currentMenuHasUnreportedFlags = () =>
+    activeView === "editor" && Array.isArray(selectedMenu?.flags) && selectedMenu.flags.length > 0;
+
+  const requestLeaveCurrentMenu = (action) => {
+    if (currentMenuHasUnreportedFlags()) {
+      setLeaveMenuPrompt({ action });
+      return;
+    }
+    action();
+  };
+
+  const confirmLeaveCurrentMenu = () => {
+    const action = leaveMenuPrompt?.action;
+    updateSelectedMenu({ flags: [] });
+    setReportedFlag(null);
+    setLeaveMenuPrompt(null);
+    if (typeof action === "function") action();
+  };
+
+  const cancelLeaveCurrentMenu = () => setLeaveMenuPrompt(null);
 
   const createNewMenu = () => {
     const name = newMenuName.trim();
@@ -1186,12 +1210,12 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f6f1] px-3 py-4 text-slate-950 md:px-4">
-      <div className="mx-auto w-full max-w-[2680px] space-y-3">
+    <div className="min-h-screen bg-[#f5f6f1] px-2 py-4 text-slate-950 md:px-3">
+      <div className="mx-auto w-full max-w-[2760px] space-y-3">
         <header className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
             <div>
-              <button onClick={onBackToPlatform} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-bold text-slate-700 hover:bg-slate-100">
+              <button onClick={() => requestLeaveCurrentMenu(onBackToPlatform)} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-bold text-slate-700 hover:bg-slate-100">
                 <ArrowLeft size={16} /> Back to Platform
               </button>
               <p className="mt-3 text-xs font-black uppercase tracking-[0.22em] text-emerald-600">Culinary to IT programming</p>
@@ -1209,13 +1233,13 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
         </header>
 
         <section className="flex flex-wrap gap-2 rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm">
-          <button type="button" onClick={() => setActiveView("home")} className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-black ${activeView === "home" ? "bg-slate-950 text-white" : "bg-slate-50 text-slate-800 hover:bg-slate-100"}`}>
+          <button type="button" onClick={() => requestLeaveCurrentMenu(() => setActiveView("home"))} className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-black ${activeView === "home" ? "bg-slate-950 text-white" : "bg-slate-50 text-slate-800 hover:bg-slate-100"}`}>
             <ListChecks size={16} /> SSMT Start
           </button>
-          <button type="button" onClick={() => setActiveView("pricing")} className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-black ${activeView === "pricing" ? "bg-slate-950 text-white" : "bg-slate-50 text-slate-800 hover:bg-slate-100"}`}>
+          <button type="button" onClick={() => requestLeaveCurrentMenu(() => setActiveView("pricing"))} className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-black ${activeView === "pricing" ? "bg-slate-950 text-white" : "bg-slate-50 text-slate-800 hover:bg-slate-100"}`}>
             <DollarSign size={16} /> Pricing Structure
           </button>
-          <button type="button" onClick={() => setActiveView("menus")} className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-black ${activeView === "menus" ? "bg-slate-950 text-white" : "bg-slate-50 text-slate-800 hover:bg-slate-100"}`}>
+          <button type="button" onClick={() => requestLeaveCurrentMenu(() => setActiveView("menus"))} className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-black ${activeView === "menus" ? "bg-slate-950 text-white" : "bg-slate-50 text-slate-800 hover:bg-slate-100"}`}>
             <ClipboardCheck size={16} /> Menu Selector / New Menu
           </button>
         </section>
@@ -1461,10 +1485,10 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
           <main className="space-y-3">
             <section className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm">
               <div className="flex flex-wrap gap-2">
-                <button type="button" onClick={() => setActiveView("menus")} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-black text-slate-800 hover:bg-slate-100">
+                <button type="button" onClick={() => requestLeaveCurrentMenu(() => setActiveView("menus"))} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-black text-slate-800 hover:bg-slate-100">
                   <ArrowLeft size={16} /> Back to menu selection
                 </button>
-                <button type="button" onClick={() => setActiveView("pricing")} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-black text-slate-800 hover:bg-slate-100">
+                <button type="button" onClick={() => requestLeaveCurrentMenu(() => setActiveView("pricing"))} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-black text-slate-800 hover:bg-slate-100">
                   <DollarSign size={16} /> Pricing table
                 </button>
               </div>
@@ -1770,18 +1794,18 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                           </td>
                           <td className={`${builderCellClass} font-bold text-slate-700`}>{selectedMenu.type === "Promotion" ? item.calories || "TBD" : "N/A"}</td>
                           <td className={builderCellClass}>
-                            <div className="grid grid-cols-3 gap-0.5">
-                              <button type="button" aria-label={`View modifiers Mods (${modifierCountForItem(item)})`} onClick={() => openModifierDialog(item)} className="col-span-3 inline-flex items-center justify-center gap-1 rounded-md border border-green-800 bg-green-700 px-1.5 py-0.5 text-[10px] font-black text-white shadow-sm hover:bg-green-800">
-                                <Tags size={12} /> Mods ({modifierCountForItem(item)})
+                            <div className="grid grid-cols-2 gap-1">
+                              <button type="button" aria-label={`View modifiers Mods (${modifierCountForItem(item)})`} onClick={() => openModifierDialog(item)} className="inline-flex items-center justify-center gap-1 rounded-md border border-green-800 bg-green-700 px-2 py-1.5 text-xs font-black text-white shadow-sm hover:bg-green-800">
+                                <Tags size={14} /> Mods ({modifierCountForItem(item)})
                               </button>
-                              <button type="button" onClick={() => updateItem(item.id, { lockedForCentric: !item.lockedForCentric })} className={`inline-flex items-center justify-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-black ${item.lockedForCentric ? "border-emerald-700 bg-emerald-700 text-white hover:bg-emerald-800" : "border-slate-300 bg-slate-50 text-slate-800 hover:bg-slate-100"}`} aria-label={`${item.lockedForCentric ? "Unlock" : "Lock"} item ${item.label || item.name || "item"}`}>
-                                {item.lockedForCentric ? <Lock size={12} /> : <Unlock size={12} />} {item.lockedForCentric ? "Locked" : "Lock"}
+                              <button type="button" onClick={() => updateItem(item.id, { lockedForCentric: !item.lockedForCentric })} className={`inline-flex items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-xs font-black ${item.lockedForCentric ? "border-emerald-700 bg-emerald-700 text-white hover:bg-emerald-800" : "border-slate-300 bg-slate-50 text-slate-800 hover:bg-slate-100"}`} aria-label={`${item.lockedForCentric ? "Unlock" : "Lock"} item ${item.label || item.name || "item"}`}>
+                                {item.lockedForCentric ? <Lock size={14} /> : <Unlock size={14} />} {item.lockedForCentric ? "Locked" : "Lock"}
                               </button>
-                              <button type="button" onClick={() => requestDelete({ type: "item", id: item.id, name: item.label || item.name || "item" })} disabled={Boolean(item.lockedForCentric)} className="inline-flex items-center justify-center gap-1 rounded-md border border-red-200 bg-red-50 px-1.5 py-0.5 text-[10px] font-black text-red-800 hover:bg-red-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400" aria-label={`Delete item ${item.label || item.name || "item"}`}>
-                                <Trash2 size={12} /> Del
+                              <button type="button" aria-label="Flag for change" onClick={() => setFlagDialog({ item })} className="inline-flex items-center justify-center gap-1 rounded-md border border-amber-300 bg-amber-50 px-2 py-1.5 text-xs font-black text-amber-900 hover:bg-amber-100">
+                                <Flag size={14} /> Flag
                               </button>
-                              <button type="button" aria-label="Flag for change" onClick={() => setFlagDialog({ item })} className="inline-flex items-center justify-center gap-1 rounded-md border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[10px] font-black text-amber-900 hover:bg-amber-100">
-                                <Flag size={12} /> Flag
+                              <button type="button" onClick={() => requestDelete({ type: "item", id: item.id, name: item.label || item.name || "item" })} disabled={Boolean(item.lockedForCentric)} className="inline-flex items-center justify-center gap-1 rounded-md border border-red-200 bg-red-50 px-2 py-1.5 text-xs font-black text-red-800 hover:bg-red-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400" aria-label={`Delete item ${item.label || item.name || "item"}`}>
+                                <Trash2 size={14} /> Del
                               </button>
                             </div>
                           </td>
@@ -1922,7 +1946,8 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               value={choice.label || ""}
                               onChange={(event) => updateModifierChoice(group.id, choice.id, { label: event.target.value })}
                               readOnly={Boolean(group.lockedForCentric)}
-                              className={`w-full min-w-0 rounded-md border border-slate-300 px-2 py-1 text-xs font-normal outline-none focus:border-emerald-500 ${group.lockedForCentric ? "bg-emerald-50" : "bg-white"}`}
+                              onClick={group.lockedForCentric ? (event) => { event.currentTarget.select(); copyForCentric(choice.label, "Modifier name"); } : undefined}
+                              className={`w-full min-w-0 rounded-md border border-slate-300 px-2 py-1 text-xs font-normal outline-none focus:border-emerald-500 ${group.lockedForCentric ? "cursor-copy bg-emerald-50" : "bg-white"}`}
                             />
                           </td>
                           <td className="border-b border-slate-400 px-2 py-0.5">
@@ -1931,7 +1956,8 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               value={choice.description || ""}
                               onChange={(event) => updateModifierChoice(group.id, choice.id, { description: event.target.value })}
                               readOnly={Boolean(group.lockedForCentric)}
-                              className={`h-10 w-full min-w-0 resize-y rounded-md border border-slate-300 px-2 py-1 text-xs font-normal leading-4 outline-none focus:border-emerald-500 ${group.lockedForCentric ? "bg-emerald-50" : "bg-white"}`}
+                              onClick={group.lockedForCentric ? (event) => { event.currentTarget.select(); copyForCentric(choice.description, "Modifier description"); } : undefined}
+                              className={`h-10 w-full min-w-0 resize-y rounded-md border border-slate-300 px-2 py-1 text-xs font-normal leading-4 outline-none focus:border-emerald-500 ${group.lockedForCentric ? "cursor-copy bg-emerald-50" : "bg-white"}`}
                             />
                           </td>
                           <td className="border-b border-slate-400 px-2 py-0.5">
@@ -1940,7 +1966,8 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               value={choice.mrn || ""}
                               onChange={(event) => updateModifierChoice(group.id, choice.id, { mrn: event.target.value })}
                               readOnly={Boolean(group.lockedForCentric)}
-                              className={`w-full min-w-0 rounded-md border border-slate-300 px-2 py-1 font-mono text-xs font-normal outline-none focus:border-emerald-500 ${group.lockedForCentric ? "bg-emerald-50" : "bg-white"}`}
+                              onClick={group.lockedForCentric ? (event) => { event.currentTarget.select(); copyForCentric(choice.mrn, "Modifier MRN"); } : undefined}
+                              className={`w-full min-w-0 rounded-md border border-slate-300 px-2 py-1 font-mono text-xs font-normal outline-none focus:border-emerald-500 ${group.lockedForCentric ? "cursor-copy bg-emerald-50" : "bg-white"}`}
                             />
                           </td>
                           <td className="border-b border-slate-400 px-2 py-0.5">
@@ -1949,7 +1976,8 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               value={choice.calories || ""}
                               onChange={(event) => updateModifierChoice(group.id, choice.id, { calories: event.target.value })}
                               readOnly={Boolean(group.lockedForCentric)}
-                              className={`w-full min-w-0 rounded-md border border-slate-300 px-2 py-1 text-xs font-normal outline-none focus:border-emerald-500 ${group.lockedForCentric ? "bg-emerald-50" : "bg-white"}`}
+                              onClick={group.lockedForCentric ? (event) => { event.currentTarget.select(); copyForCentric(choice.calories, "Modifier calories"); } : undefined}
+                              className={`w-full min-w-0 rounded-md border border-slate-300 px-2 py-1 text-xs font-normal outline-none focus:border-emerald-500 ${group.lockedForCentric ? "cursor-copy bg-emerald-50" : "bg-white"}`}
                             />
                           </td>
                           <td className="border-b border-slate-400 px-2 py-0.5">
@@ -2030,6 +2058,23 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
           }}
           onDelete={confirmDelete}
         />
+      )}
+      {leaveMenuPrompt && (
+        <Modal title="Unreported flags on this menu" onClose={cancelLeaveCurrentMenu}>
+          <div className="space-y-4">
+            <p className="text-sm font-semibold leading-6 text-slate-700">
+              Exiting this menu with unreported flags. Do you wish to continue? Leaving clears the {Array.isArray(selectedMenu?.flags) ? selectedMenu.flags.length : 0} saved flag{(Array.isArray(selectedMenu?.flags) ? selectedMenu.flags.length : 0) === 1 ? "" : "s"} on this menu — use Report flags first if you still need to send them.
+            </p>
+            <div className="flex flex-wrap justify-end gap-2">
+              <button type="button" onClick={cancelLeaveCurrentMenu} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-black text-slate-800 hover:bg-slate-100">
+                Stay on this menu
+              </button>
+              <button type="button" onClick={confirmLeaveCurrentMenu} className="inline-flex items-center gap-2 rounded-lg border border-amber-700 bg-amber-600 px-4 py-2 text-sm font-black text-white hover:bg-amber-700">
+                Leave and clear flags
+              </button>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   );

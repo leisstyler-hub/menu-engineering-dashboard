@@ -360,7 +360,7 @@ test("SSMT builder locks at a readable maximized desktop width and shows more me
     };
   });
   expect(builderMetrics.width).toBeGreaterThanOrEqual(2520);
-  expect(builderMetrics.width).toBeLessThanOrEqual(2700);
+  expect(builderMetrics.width).toBeLessThanOrEqual(2780);
   expect(builderMetrics.firstRowHeight).toBeLessThanOrEqual(82);
   expect(builderMetrics.visibleRows).toBeGreaterThanOrEqual(10);
   expect(builderMetrics.scrollWidth).toBeLessThanOrEqual(builderMetrics.clientWidth + 4);
