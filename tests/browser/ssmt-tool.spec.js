@@ -237,7 +237,12 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
   await expect(page.getByRole("columnheader", { name: "SEA price" })).toBeVisible();
   await expect(page.getByRole("columnheader", { name: "Category", exact: true })).toBeVisible();
   await expect(page.getByRole("columnheader", { name: "Secondary category" })).toBeVisible();
+  await expect(page.getByRole("columnheader", { name: "Scan & Pay" })).toBeVisible();
   await expect(page.getByRole("columnheader", { name: "Area prices" })).toBeVisible();
+
+  const scanPayInput = page.getByLabel(/Scan and Pay UPC for/i).first();
+  await scanPayInput.fill("012345678905");
+  await expect(scanPayInput).toHaveValue("012345678905");
 
   const fixyInput = page.getByLabel(/Fixy for/i).first();
   await fixyInput.fill("station a");
