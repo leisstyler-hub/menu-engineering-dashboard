@@ -461,6 +461,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const [flagNote, setFlagNote] = useState("");
   const [reportedFlag, setReportedFlag] = useState(null);
   const [leaveMenuPrompt, setLeaveMenuPrompt] = useState(null);
+  const [clearFlagsPrompt, setClearFlagsPrompt] = useState(false);
   const [copiedModifierNotice, setCopiedModifierNotice] = useState("");
   const [copiedFieldNotice, setCopiedFieldNotice] = useState("");
   const [modifierClipboardSlots, setModifierClipboardSlots] = useState(EMPTY_MODIFIER_CLIPBOARD_SLOTS);
@@ -838,6 +839,14 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   };
 
   const cancelLeaveCurrentMenu = () => setLeaveMenuPrompt(null);
+
+  // Manually clear all saved flags on the current menu (report-only data).
+  // Guarded by a confirm modal so a click can't wipe unreported flags by accident.
+  const clearSelectedMenuFlags = () => {
+    updateSelectedMenu({ flags: [] });
+    setReportedFlag(null);
+    setClearFlagsPrompt(false);
+  };
 
   const createNewMenu = () => {
     const name = newMenuName.trim();
@@ -1588,9 +1597,14 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
               {selectedMenuFlags.length > 0 && (
                 <div className="mt-3 flex flex-col gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-bold text-amber-950 sm:flex-row sm:items-center sm:justify-between">
                   <span>{selectedMenuFlags.length} saved flag{selectedMenuFlags.length === 1 ? "" : "s"} on this menu.</span>
-                  <a href={selectedFlagReportHref} className="inline-flex items-center justify-center gap-2 rounded-lg border border-amber-700 bg-white px-3 py-2 text-xs font-black text-amber-900 hover:bg-amber-100">
-                    <Mail size={14} /> Report flags ({selectedMenuFlags.length})
-                  </a>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <a href={selectedFlagReportHref} className="inline-flex items-center justify-center gap-2 rounded-lg border border-amber-700 bg-white px-3 py-2 text-xs font-black text-amber-900 hover:bg-amber-100">
+                      <Mail size={14} /> Report flags ({selectedMenuFlags.length})
+                    </a>
+                    <button type="button" onClick={() => setClearFlagsPrompt(true)} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-400 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-slate-100">
+                      <Trash2 size={14} /> Clear flags
+                    </button>
+                  </div>
                 </div>
               )}
             </section>
@@ -2082,6 +2096,23 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
               </button>
               <button type="button" onClick={confirmLeaveCurrentMenu} className="inline-flex items-center gap-2 rounded-lg border border-amber-700 bg-amber-600 px-4 py-2 text-sm font-black text-white hover:bg-amber-700">
                 Leave and clear flags
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+      {clearFlagsPrompt && (
+        <Modal title="Clear flags on this menu" onClose={() => setClearFlagsPrompt(false)}>
+          <div className="space-y-4">
+            <p className="text-sm font-semibold leading-6 text-slate-700">
+              Clear all {selectedMenuFlags.length} saved flag{selectedMenuFlags.length === 1 ? "" : "s"} on {selectedMenu.name}? Flags are report-only and are not sent anywhere by clearing — use Report flags first if you still need to email them. This cannot be undone.
+            </p>
+            <div className="flex flex-wrap justify-end gap-2">
+              <button type="button" onClick={() => setClearFlagsPrompt(false)} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-black text-slate-800 hover:bg-slate-100">
+                Keep flags
+              </button>
+              <button type="button" onClick={clearSelectedMenuFlags} className="inline-flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-950 px-4 py-2 text-sm font-black text-white hover:bg-slate-800">
+                <Trash2 size={16} /> Clear flags
               </button>
             </div>
           </div>
