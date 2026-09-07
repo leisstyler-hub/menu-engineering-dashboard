@@ -171,6 +171,11 @@ const SSMT_SUBMENU_PALETTES = [
   },
 ];
 const SSMT_AREA_PRICE_GRID_CLASS = "grid w-full min-w-0 grid-cols-8 gap-1 text-[11px] font-bold leading-3 text-slate-700";
+// Prices are stored with a currency symbol (e.g. "$12.10"). When copying a
+// locked price for Centric, IT wants just the number + decimal point ("12.10").
+function priceDigitsOnly(value) {
+  return String(value || "").replace(/[^0-9.]/g, "");
+}
 const EMPTY_SSMT_DATA = {
   areaOrder: [],
   workflowPhases: ["Culinary draft", "Experience review", "IT programming", "IT complete"],
@@ -395,14 +400,16 @@ function compareMenuNames(a, b) {
   return String(a.name || "").localeCompare(String(b.name || ""), undefined, { sensitivity: "base" });
 }
 
-function groupMenusByType(menus = []) {
+function groupMenusByType(menus = [], showHidden = false) {
+  const isHibernated = (menu) => menu.hidden || menuIsAutoHibernated(menu);
+  const activeMenus = menus.filter((menu) => !isHibernated(menu));
   const groups = MENU_TYPE_ORDER.map((type) => ({
     type,
     ...MENU_TYPE_STYLES[type],
-    menus: menus.filter((menu) => menu.type === type).sort(compareMenuNames),
+    menus: activeMenus.filter((menu) => menu.type === type).sort(compareMenuNames),
   }));
   const knownTypes = new Set(MENU_TYPE_ORDER);
-  const otherMenus = menus.filter((menu) => !knownTypes.has(menu.type)).sort(compareMenuNames);
+  const otherMenus = activeMenus.filter((menu) => !knownTypes.has(menu.type)).sort(compareMenuNames);
   if (otherMenus.length) {
     groups.push({
       type: "Other",
@@ -411,6 +418,19 @@ function groupMenusByType(menus = []) {
       badgeClass: "bg-slate-700 text-white",
       itemClass: "hover:border-slate-400 hover:bg-slate-100",
       menus: otherMenus,
+    });
+  }
+  // Sixth bucket: hibernated/expired menus collected on their own, shown only
+  // when "Show hibernated" is on. They no longer bleed into their type buckets.
+  if (showHidden) {
+    const hibernatedMenus = menus.filter(isHibernated).sort(compareMenuNames);
+    groups.push({
+      type: "Hibernated",
+      label: "Hibernated",
+      groupClass: "border-slate-400 bg-slate-200/70",
+      badgeClass: "bg-slate-800 text-white",
+      itemClass: "border-slate-200 hover:border-slate-500 hover:bg-slate-100",
+      menus: hibernatedMenus,
     });
   }
   return groups;
@@ -727,7 +747,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
     if (!query) return availableMenus;
     return availableMenus.filter((menu) => `${menu.name} ${menu.type}`.toLowerCase().includes(query));
   }, [menus, search, showHiddenMenus]);
-  const menuGroups = useMemo(() => groupMenusByType(visibleMenus), [visibleMenus]);
+  const menuGroups = useMemo(() => groupMenusByType(visibleMenus, showHiddenMenus), [visibleMenus, showHiddenMenus]);
 
   const downstreamReadyCount = menus.filter((menu) => ["Core", "Global"].includes(menu.type) && menu.phase === "IT complete").length;
   const promotionCount = menus.filter((menu) => menu.type === "Promotion").length;
@@ -975,6 +995,14 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const moveMenuToType = (menuId, type) => {
     if (!menuId || !type) return;
     setMenus((current) => current.map((menu) => (menu.id === menuId ? { ...menu, type, hidden: false } : menu)));
+    setDraggedMenuId("");
+  };
+
+  // Dropping a menu onto the Hibernated bucket hibernates it (rather than
+  // corrupting its type to "Hibernated").
+  const hibernateMenu = (menuId) => {
+    if (!menuId) return;
+    setMenus((current) => current.map((menu) => (menu.id === menuId ? { ...menu, hidden: true } : menu)));
     setDraggedMenuId("");
   };
 
@@ -1569,7 +1597,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                     data-testid={`ssmt-menu-group-${group.type}`}
                     data-menu-type={group.type}
                     onDragOver={(event) => event.preventDefault()}
-                    onDrop={() => moveMenuToType(draggedMenuId, group.type)}
+                    onDrop={() => (group.type === "Hibernated" ? hibernateMenu(draggedMenuId) : moveMenuToType(draggedMenuId, group.type))}
                     className={`flex max-h-[52vh] min-h-0 flex-col rounded-lg border p-3 ${group.groupClass}`}
                   >
                     <div className="mb-2 flex items-center justify-between gap-2">
@@ -1942,10 +1970,11 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                                   type="button"
                                   aria-label={`Copy ${area} price for ${item.label || item.name || "item"}`}
                                   disabled={!item.lockedForCentric || !item.areaPrices?.[area]}
-                                  onClick={() => copyForCentric(item.areaPrices?.[area], `${area} price`)}
-                                  className="min-w-0 rounded border border-slate-300 bg-white px-1 py-0.5 text-left disabled:cursor-not-allowed disabled:text-slate-700 disabled:opacity-100 enabled:cursor-copy enabled:border-emerald-400 enabled:bg-emerald-50 enabled:hover:bg-emerald-100"
+                                  onClick={() => copyForCentric(priceDigitsOnly(item.areaPrices?.[area]), `${area} price`)}
+                                  className="flex min-w-0 flex-col items-center rounded border border-slate-300 bg-white px-1 py-0.5 text-center disabled:cursor-not-allowed disabled:text-slate-700 disabled:opacity-100 enabled:cursor-copy enabled:border-emerald-400 enabled:bg-emerald-50 enabled:hover:bg-emerald-100"
                                 >
-                                  <span className="font-black text-slate-500">{area}</span> {item.areaPrices?.[area] || "TBD"}
+                                  <span className="font-black text-slate-500">{area}</span>
+                                  <span>{item.areaPrices?.[area] || "TBD"}</span>
                                 </button>
                               ))}
                             </div>
@@ -2156,8 +2185,9 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                           <td className="border-b border-slate-400 px-2 py-0.5">
                             <div className={SSMT_AREA_PRICE_GRID_CLASS}>
                               {ssmtData.areaOrder.map((area) => (
-                                <span key={area} className="min-w-0 rounded border border-slate-300 bg-white px-1 py-0.5">
-                                  <span className="font-black text-slate-500">{area}</span> {choice.areaPrices?.[area] || "TBD"}
+                                <span key={area} className="flex min-w-0 flex-col items-center rounded border border-slate-300 bg-white px-1 py-0.5 text-center">
+                                  <span className="font-black text-slate-500">{area}</span>
+                                  <span>{choice.areaPrices?.[area] || "TBD"}</span>
                                 </span>
                               ))}
                             </div>

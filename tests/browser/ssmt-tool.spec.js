@@ -74,7 +74,7 @@ test("SSMT opens behind passcode and separates pricing from menu building", asyn
   const areaPriceCell = page.getByLabel(/Area prices for/i).first();
   const expectedAreas = ["AUS", "BNA", "BOS", "BWI", "DEN", "IAD", "JFK", "LAX", "SAN", "SNA", "SEA", "SJC", "WAS", "YVR", "YYZ", "MCO"];
   const renderedAreas = await areaPriceCell.locator("button").evaluateAll((buttons) =>
-    buttons.map((button) => button.textContent.trim().split(/\s+/)[0])
+    buttons.map((button) => button.querySelector("span")?.textContent.trim() || "")
   );
   expect(renderedAreas).toEqual(expectedAreas);
   expect(renderedAreas.some((area) => /^\+\d+$/.test(area))).toBe(false);
@@ -415,11 +415,13 @@ test("SSMT item locks enable Centric copy fields and gate phase advancement", as
 
   const seaPriceButton = page.getByRole("button", { name: /Copy SEA price for CENTRIC PASTE ITEM/i });
   const seaPriceText = await seaPriceButton.evaluate((node) => node.textContent.match(/\$[0-9.]+/)?.[0] || "");
+  expect(seaPriceText).toMatch(/^\$/); // display keeps the currency symbol
   await expect(page.getByLabel("SEA price for CENTRIC PASTE ITEM", { exact: true })).toBeDisabled();
   await expect(page.getByRole("button", { name: /Delete item CENTRIC PASTE ITEM/i })).toBeDisabled();
   await seaPriceButton.click();
   await expect(page.getByText(/SEA price copied for Centric/i)).toBeVisible();
-  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(seaPriceText);
+  // Copy strips the $ — Centric wants just the number + decimal point.
+  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(seaPriceText.replace(/[^0-9.]/g, ""));
 
   await page.getByRole("button", { name: /Lock item NEW ITEM/i }).click();
   await expect(phasePanel.getByText(/2 of 2 item rows locked/i)).toBeVisible();
@@ -1068,6 +1070,49 @@ test("SSMT second flag click on a flagged item prompts edit or clear", async ({ 
     .getByRole("button", { name: /Clear flag/i })
     .click();
   await expect(page.getByRole("button", { name: /Edit or clear flag/i })).toHaveCount(0);
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("SSMT collects hibernated menus into a sixth bucket shown on demand", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const menuName = `Hibernate Bucket ${Date.now()}`;
+  await page.goto("/");
+
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByLabel(/SSMT passcode/i).fill("0411");
+  await page.getByRole("button", { name: /unlock ssmt/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+  await expect(page.getByText(/Loading current SSMT seed data/i)).toHaveCount(0, { timeout: 20_000 });
+
+  // Create a fresh Core menu, then return to the selector grid.
+  await page.getByLabel(/New menu name/i).fill(menuName);
+  await page.getByLabel(/New menu type/i).selectOption("Core");
+  await page.getByRole("button", { name: /Create menu/i }).click();
+  await expect(page.getByRole("heading", { name: menuName })).toBeVisible();
+  await page.getByRole("button", { name: /Back to menu selection/i }).click();
+
+  const coreGroup = page.getByTestId("ssmt-menu-group-Core");
+  const card = page.locator(`[data-menu-name="${menuName}"]`).locator("xpath=ancestor::div[1]");
+  // Starts active in the Core bucket; no sixth bucket exists yet.
+  await expect(coreGroup.locator(`[data-menu-name="${menuName}"]`)).toBeVisible();
+  await expect(page.getByTestId("ssmt-menu-group-Hibernated")).toHaveCount(0);
+
+  // Hibernate it — with "Show hibernated" off it drops out of view entirely.
+  await card.getByRole("button", { name: "Hibernate", exact: true }).click();
+  await expect(page.locator(`[data-menu-name="${menuName}"]`)).toHaveCount(0);
+
+  // Turning on "Show hibernated" reveals a dedicated sixth bucket holding it,
+  // and it no longer bleeds into the Core bucket.
+  await page.getByRole("checkbox", { name: /Show hibernated menus/i }).check();
+  const hibernatedGroup = page.getByTestId("ssmt-menu-group-Hibernated");
+  await expect(hibernatedGroup).toBeVisible();
+  await expect(hibernatedGroup.locator(`[data-menu-name="${menuName}"]`)).toBeVisible();
+  await expect(coreGroup.locator(`[data-menu-name="${menuName}"]`)).toHaveCount(0);
+
+  const order = await page.getByTestId(/ssmt-menu-group-/).evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-menu-type")));
+  expect(order[order.length - 1]).toBe("Hibernated");
 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
