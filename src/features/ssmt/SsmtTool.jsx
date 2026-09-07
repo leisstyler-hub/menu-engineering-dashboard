@@ -75,23 +75,101 @@ const MENU_TYPE_STYLES = {
     itemClass: "border-fuchsia-100 hover:border-fuchsia-500 hover:bg-fuchsia-50",
   },
 };
-const SSMT_BUILDER_SECTION_ROW_STYLES = {
-  main: {
-    rowClass: "odd:bg-sky-50 even:bg-sky-100/60",
-    cellBorderClass: "border-sky-200",
-    handleClass: "text-sky-700",
-  },
-  submenu: {
-    rowClass: "odd:bg-emerald-50 even:bg-emerald-100/60",
-    cellBorderClass: "border-emerald-200",
-    handleClass: "text-emerald-700",
-  },
-  divider: {
-    rowClass: "odd:bg-violet-50 even:bg-violet-100/60",
-    cellBorderClass: "border-violet-200",
-    handleClass: "text-violet-700",
-  },
+// Items before any divider/sub menu inherit this "main" tone.
+const SSMT_BUILDER_MAIN_PALETTE = {
+  itemRowClass: "odd:bg-sky-50 even:bg-sky-100/60",
+  itemCellBorderClass: "border-sky-200",
+  itemHandleClass: "text-sky-700",
 };
+// Dividers rotate through these 4 colors (1-2-3-4-1-2...) within a single menu;
+// items under a divider inherit that divider's color so sections read by color.
+// Palette index 0 keeps the original violet so it stays the "first divider" color.
+const SSMT_DIVIDER_PALETTES = [
+  {
+    headerRowClass: "bg-violet-50",
+    headerGripClass: "border-violet-300 text-violet-800",
+    headerCellBorderClass: "border-violet-300",
+    headerBoxClass: "border-violet-400 bg-violet-50",
+    badgeClass: "bg-violet-700",
+    itemRowClass: "odd:bg-violet-50 even:bg-violet-100/60",
+    itemCellBorderClass: "border-violet-200",
+    itemHandleClass: "text-violet-700",
+  },
+  {
+    headerRowClass: "bg-rose-50",
+    headerGripClass: "border-rose-300 text-rose-800",
+    headerCellBorderClass: "border-rose-300",
+    headerBoxClass: "border-rose-400 bg-rose-50",
+    badgeClass: "bg-rose-700",
+    itemRowClass: "odd:bg-rose-50 even:bg-rose-100/60",
+    itemCellBorderClass: "border-rose-200",
+    itemHandleClass: "text-rose-700",
+  },
+  {
+    headerRowClass: "bg-amber-50",
+    headerGripClass: "border-amber-300 text-amber-800",
+    headerCellBorderClass: "border-amber-300",
+    headerBoxClass: "border-amber-400 bg-amber-50",
+    badgeClass: "bg-amber-700",
+    itemRowClass: "odd:bg-amber-50 even:bg-amber-100/60",
+    itemCellBorderClass: "border-amber-200",
+    itemHandleClass: "text-amber-700",
+  },
+  {
+    headerRowClass: "bg-cyan-50",
+    headerGripClass: "border-cyan-300 text-cyan-800",
+    headerCellBorderClass: "border-cyan-300",
+    headerBoxClass: "border-cyan-400 bg-cyan-50",
+    badgeClass: "bg-cyan-700",
+    itemRowClass: "odd:bg-cyan-50 even:bg-cyan-100/60",
+    itemCellBorderClass: "border-cyan-200",
+    itemHandleClass: "text-cyan-700",
+  },
+];
+// Sub menus rotate through their own 4 colors, independent of the divider rotation.
+// Palette index 0 keeps the original emerald so it stays the "first sub menu" color.
+const SSMT_SUBMENU_PALETTES = [
+  {
+    headerRowClass: "bg-emerald-50",
+    headerGripClass: "border-emerald-300 text-emerald-800",
+    headerCellBorderClass: "border-emerald-300",
+    headerBoxClass: "border-emerald-400 bg-emerald-50",
+    badgeClass: "bg-emerald-700",
+    itemRowClass: "odd:bg-emerald-50 even:bg-emerald-100/60",
+    itemCellBorderClass: "border-emerald-200",
+    itemHandleClass: "text-emerald-700",
+  },
+  {
+    headerRowClass: "bg-indigo-50",
+    headerGripClass: "border-indigo-300 text-indigo-800",
+    headerCellBorderClass: "border-indigo-300",
+    headerBoxClass: "border-indigo-400 bg-indigo-50",
+    badgeClass: "bg-indigo-700",
+    itemRowClass: "odd:bg-indigo-50 even:bg-indigo-100/60",
+    itemCellBorderClass: "border-indigo-200",
+    itemHandleClass: "text-indigo-700",
+  },
+  {
+    headerRowClass: "bg-fuchsia-50",
+    headerGripClass: "border-fuchsia-300 text-fuchsia-800",
+    headerCellBorderClass: "border-fuchsia-300",
+    headerBoxClass: "border-fuchsia-400 bg-fuchsia-50",
+    badgeClass: "bg-fuchsia-700",
+    itemRowClass: "odd:bg-fuchsia-50 even:bg-fuchsia-100/60",
+    itemCellBorderClass: "border-fuchsia-200",
+    itemHandleClass: "text-fuchsia-700",
+  },
+  {
+    headerRowClass: "bg-orange-50",
+    headerGripClass: "border-orange-300 text-orange-800",
+    headerCellBorderClass: "border-orange-300",
+    headerBoxClass: "border-orange-400 bg-orange-50",
+    badgeClass: "bg-orange-700",
+    itemRowClass: "odd:bg-orange-50 even:bg-orange-100/60",
+    itemCellBorderClass: "border-orange-200",
+    itemHandleClass: "text-orange-700",
+  },
+];
 const SSMT_AREA_PRICE_GRID_CLASS = "grid w-full min-w-0 grid-cols-8 gap-1 text-[11px] font-bold leading-3 text-slate-700";
 const EMPTY_SSMT_DATA = {
   areaOrder: [],
@@ -454,6 +532,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const [showHiddenMenus, setShowHiddenMenus] = useState(false);
   const [modifierDialog, setModifierDialog] = useState(null);
   const [flagDialog, setFlagDialog] = useState(null);
+  const [flagActionDialog, setFlagActionDialog] = useState(null);
   const [deleteRequest, setDeleteRequest] = useState(null);
   const [deleteConfirmed, setDeleteConfirmed] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
@@ -1159,19 +1238,69 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
     }
   };
 
+  // Return the saved flag for an item on the current menu, if any.
+  const existingFlagForItem = (item) =>
+    (Array.isArray(selectedMenu?.flags) ? selectedMenu.flags : []).find(
+      (flag) => flag.itemId && item?.id && flag.itemId === item.id,
+    ) || null;
+
+  // Clicking Flag on an already-flagged item asks whether to edit or clear it;
+  // clicking Flag on an unflagged item opens a fresh flag dialog as before.
+  const openFlagForItem = (item) => {
+    const existing = existingFlagForItem(item);
+    if (existing) {
+      setFlagActionDialog({ item, flag: existing });
+      return;
+    }
+    setFlagReason("Description correction");
+    setFlagNote("");
+    setFlagDialog({ item });
+  };
+
+  const editExistingFlag = () => {
+    const { item, flag } = flagActionDialog || {};
+    if (!item || !flag) return;
+    setFlagReason(flag.reason || "Description correction");
+    setFlagNote(flag.note || "");
+    setFlagDialog({ item, editingFlagId: flag.id });
+    setFlagActionDialog(null);
+  };
+
+  const clearExistingFlag = () => {
+    const flag = flagActionDialog?.flag;
+    if (!flag) {
+      setFlagActionDialog(null);
+      return;
+    }
+    const nextFlags = (selectedMenu.flags || []).filter((candidate) => candidate.id !== flag.id);
+    updateSelectedMenu({ flags: nextFlags, editSignal: nextFlags.length > 0 });
+    if (nextFlags.length === 0) setReportedFlag(null);
+    setFlagActionDialog(null);
+  };
+
   const saveFlag = () => {
     const item = flagDialog?.item;
+    const editingFlagId = flagDialog?.editingFlagId;
     const itemName = item?.label || item?.name || "Selected row";
     const createdAt = new Date().toISOString();
-    const flag = {
-      id: `flag-${selectedMenu.id}-${Date.now()}`,
-      itemId: item?.id || "",
-      itemName,
-      reason: flagReason,
-      note: flagNote,
-      createdAt,
-    };
-    const nextFlags = [...(selectedMenu.flags || []), flag];
+    const existingFlags = selectedMenu.flags || [];
+    let nextFlags;
+    if (editingFlagId) {
+      // Editing an item's existing flag replaces it in place rather than adding a duplicate.
+      nextFlags = existingFlags.map((flag) =>
+        flag.id === editingFlagId ? { ...flag, itemName, reason: flagReason, note: flagNote } : flag,
+      );
+    } else {
+      const flag = {
+        id: `flag-${selectedMenu.id}-${Date.now()}`,
+        itemId: item?.id || "",
+        itemName,
+        reason: flagReason,
+        note: flagNote,
+        createdAt,
+      };
+      nextFlags = [...existingFlags, flag];
+    }
     updateSelectedMenu({
       flags: nextFlags,
       editSignal: true,
@@ -1665,10 +1794,18 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                     {(() => {
                       const visibleBuilderRows = selectedMenu.items.slice(0, 80);
                       let activeSectionTone = "main";
+                      let activePalette = SSMT_BUILDER_MAIN_PALETTE;
+                      let dividerColorIndex = 0;
+                      let submenuColorIndex = 0;
                       return visibleBuilderRows.map((item) => (
                       item.recordType === "divider" ? (
                         (() => {
                           const isSubmenu = item.dividerKind === "submenu";
+                          const palette = isSubmenu
+                            ? SSMT_SUBMENU_PALETTES[submenuColorIndex % SSMT_SUBMENU_PALETTES.length]
+                            : SSMT_DIVIDER_PALETTES[dividerColorIndex % SSMT_DIVIDER_PALETTES.length];
+                          if (isSubmenu) submenuColorIndex += 1; else dividerColorIndex += 1;
+                          activePalette = palette;
                           activeSectionTone = isSubmenu ? "submenu" : "divider";
                           return (
                         <tr
@@ -1679,20 +1816,16 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                           onDragStart={() => setDraggedRowId(item.id)}
                           onDragOver={(event) => event.preventDefault()}
                           onDrop={() => moveRow(draggedRowId, item.id)}
-                          className={isSubmenu ? "bg-emerald-50 text-slate-950" : "bg-violet-50 text-slate-950"}
+                          className={`${palette.headerRowClass} text-slate-950`}
                         >
-                          <td className={`border-b px-2 py-2 ${isSubmenu ? "border-emerald-300 text-emerald-800" : "border-violet-300 text-violet-800"}`}><GripVertical size={16} /></td>
-                          <td colSpan={10} className={`border-b px-2 py-2 ${isSubmenu ? "border-emerald-300" : "border-violet-300"}`}>
+                          <td className={`border-b px-2 py-2 ${palette.headerGripClass}`}><GripVertical size={16} /></td>
+                          <td colSpan={10} className={`border-b px-2 py-2 ${palette.headerCellBorderClass}`}>
                             <div
                               data-testid={`${isSubmenu ? "ssmt-builder-section-submenu" : "ssmt-builder-section-divider"}-${item.id}`}
-                              className={`flex flex-col gap-2 rounded-lg border p-2 md:flex-row md:items-center md:justify-between ${
-                                isSubmenu
-                                  ? "border-emerald-400 bg-emerald-50"
-                                  : "border-violet-400 bg-violet-50"
-                              }`}
+                              className={`flex flex-col gap-2 rounded-lg border p-2 md:flex-row md:items-center md:justify-between ${palette.headerBoxClass}`}
                             >
                               <label className="flex flex-1 flex-col gap-1 md:flex-row md:items-center">
-                                <span className={`inline-flex items-center rounded-full px-2 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-white ${isSubmenu ? "bg-emerald-700" : "bg-violet-700"}`}>
+                                <span className={`inline-flex items-center rounded-full px-2 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-white ${palette.badgeClass}`}>
                                   {isSubmenu ? "Sub Menu" : "Divider"}
                                 </span>
                                 <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">{isSubmenu ? "Title" : "Title"}</span>
@@ -1709,8 +1842,8 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                       ) : (
                         (() => {
                           const sectionToneName = activeSectionTone;
-                          const sectionTone = SSMT_BUILDER_SECTION_ROW_STYLES[sectionToneName] || SSMT_BUILDER_SECTION_ROW_STYLES.main;
-                          const builderCellClass = `border-b ${sectionTone.cellBorderClass} px-2 py-1`;
+                          const sectionTone = activePalette;
+                          const builderCellClass = `border-b ${sectionTone.itemCellBorderClass} px-2 py-1`;
                           return (
                         <tr
                           key={item.id}
@@ -1721,9 +1854,9 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                           onDragStart={() => setDraggedRowId(item.id)}
                           onDragOver={(event) => event.preventDefault()}
                           onDrop={() => moveRow(draggedRowId, item.id)}
-                          className={`align-top ${sectionTone.rowClass} ${item.lockedForCentric ? "outline outline-1 -outline-offset-1 outline-emerald-500" : ""}`}
+                          className={`align-top ${sectionTone.itemRowClass} ${item.lockedForCentric ? "outline outline-1 -outline-offset-1 outline-emerald-500" : ""}`}
                         >
-                          <td className={`${builderCellClass} ${sectionTone.handleClass}`}><GripVertical size={16} /></td>
+                          <td className={`${builderCellClass} ${sectionTone.itemHandleClass}`}><GripVertical size={16} /></td>
                           <td className={builderCellClass}>
                             <input
                               aria-label={`Fixy for ${item.label || item.name || "item"}`}
@@ -1826,8 +1959,8 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               <button type="button" onClick={() => updateItem(item.id, { lockedForCentric: !item.lockedForCentric })} className={`inline-flex items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-xs font-black ${item.lockedForCentric ? "border-emerald-700 bg-emerald-700 text-white hover:bg-emerald-800" : "border-slate-300 bg-slate-50 text-slate-800 hover:bg-slate-100"}`} aria-label={`${item.lockedForCentric ? "Unlock" : "Lock"} item ${item.label || item.name || "item"}`}>
                                 {item.lockedForCentric ? <Lock size={14} /> : <Unlock size={14} />} {item.lockedForCentric ? "Locked" : "Lock"}
                               </button>
-                              <button type="button" aria-label="Flag for change" onClick={() => setFlagDialog({ item })} className="inline-flex items-center justify-center gap-1 rounded-md border border-amber-300 bg-amber-50 px-2 py-1.5 text-xs font-black text-amber-900 hover:bg-amber-100">
-                                <Flag size={14} /> Flag
+                              <button type="button" aria-label={existingFlagForItem(item) ? `Edit or clear flag for ${item.label || item.name || "item"}` : "Flag for change"} onClick={() => openFlagForItem(item)} className={`inline-flex items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-xs font-black ${existingFlagForItem(item) ? "border-amber-600 bg-amber-500 text-white hover:bg-amber-600" : "border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100"}`}>
+                                <Flag size={14} /> {existingFlagForItem(item) ? "Flagged" : "Flag"}
                               </button>
                               <button type="button" onClick={() => requestDelete({ type: "item", id: item.id, name: item.label || item.name || "item" })} disabled={Boolean(item.lockedForCentric)} className="inline-flex items-center justify-center gap-1 rounded-md border border-red-200 bg-red-50 px-2 py-1.5 text-xs font-black text-red-800 hover:bg-red-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400" aria-label={`Delete item ${item.label || item.name || "item"}`}>
                                 <Trash2 size={14} /> Del
@@ -2048,8 +2181,29 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
         </Modal>
       )}
 
+      {flagActionDialog && (
+        <Modal title="This item is already flagged" onClose={() => setFlagActionDialog(null)}>
+          <div className="space-y-4">
+            <p className="text-sm font-bold text-slate-700">
+              {flagActionDialog.item?.label || flagActionDialog.item?.name || "This item"} already has a saved flag ({flagActionDialog.flag?.reason || "no reason"}). Do you want to edit it or clear it?
+            </p>
+            <div className="flex flex-wrap justify-end gap-2">
+              <button type="button" onClick={() => setFlagActionDialog(null)} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-black text-slate-800 hover:bg-slate-100">
+                Cancel
+              </button>
+              <button type="button" onClick={clearExistingFlag} className="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-black text-red-800 hover:bg-red-100">
+                <Trash2 size={16} /> Clear flag
+              </button>
+              <button type="button" onClick={editExistingFlag} className="inline-flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-950 px-4 py-2 text-sm font-black text-white hover:bg-slate-800">
+                <Flag size={16} /> Edit flag
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
       {flagDialog && (
-        <Modal title="Flag for change" onClose={() => setFlagDialog(null)}>
+        <Modal title={flagDialog.editingFlagId ? "Edit item flag" : "Flag for change"} onClose={() => setFlagDialog(null)}>
           <div className="space-y-4">
             <p className="text-sm font-bold text-slate-700">Save this item flag on the SSMT menu. Use Report flags after one or more flags are saved to open the Tyler/Alex email draft.</p>
             <label className="block">
@@ -2063,7 +2217,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
               <textarea value={flagNote} onChange={(event) => setFlagNote(event.target.value)} className="mt-2 h-28 w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-3 text-sm font-semibold" />
             </label>
             <button type="button" onClick={saveFlag} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 py-3 text-sm font-black text-white hover:bg-slate-800">
-              <Flag size={18} /> Save flag and report
+              <Flag size={18} /> {flagDialog.editingFlagId ? "Update flag" : "Save flag and report"}
             </button>
           </div>
         </Modal>

@@ -991,6 +991,88 @@ test("SSMT builder uses polished grouped sections and keeps modifier group title
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
+test("SSMT dividers and sub menus rotate through distinct colors on one menu", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await page.setViewportSize({ width: 1680, height: 950 });
+  await page.goto("/");
+
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByLabel(/SSMT passcode/i).fill("0411");
+  await page.getByRole("button", { name: /unlock ssmt/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+  await page.getByRole("button", { name: /^The Daily/i }).click();
+
+  await page.getByRole("button", { name: /Add divider/i }).click();
+  await page.getByRole("button", { name: /Add divider/i }).click();
+  await page.getByRole("button", { name: /Add sub menu/i }).click();
+  await page.getByRole("button", { name: /Add sub menu/i }).click();
+
+  const dividerBorders = await page
+    .getByTestId(/ssmt-builder-section-divider/)
+    .evaluateAll((nodes) => nodes.map((node) => getComputedStyle(node).borderColor));
+  const submenuBorders = await page
+    .getByTestId(/ssmt-builder-section-submenu/)
+    .evaluateAll((nodes) => nodes.map((node) => getComputedStyle(node).borderColor));
+
+  // First divider keeps violet-400; second rotates to rose-400.
+  expect(dividerBorders[0]).toBe("rgb(167, 139, 250)");
+  expect(dividerBorders[1]).toBe("rgb(251, 113, 133)");
+  expect(dividerBorders[0]).not.toBe(dividerBorders[1]);
+  // First sub menu keeps emerald-400; second rotates to indigo-400.
+  expect(submenuBorders[0]).toBe("rgb(52, 211, 153)");
+  expect(submenuBorders[1]).toBe("rgb(129, 140, 248)");
+  expect(submenuBorders[0]).not.toBe(submenuBorders[1]);
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("SSMT second flag click on a flagged item prompts edit or clear", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await page.setViewportSize({ width: 1680, height: 950 });
+  await page.goto("/");
+
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByLabel(/SSMT passcode/i).fill("0411");
+  await page.getByRole("button", { name: /unlock ssmt/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+  await page.getByRole("button", { name: /^The Daily/i }).click();
+
+  // First flag on an item saves normally.
+  await page.getByRole("button", { name: /Flag for change/i }).first().click();
+  const flagDialog = page.getByRole("dialog", { name: /Flag for change/i });
+  await expect(flagDialog).toBeVisible();
+  await flagDialog.getByRole("button", { name: /Save flag and report/i }).click();
+
+  // The item now shows a flagged state; clicking Flag again offers edit or clear.
+  const flaggedButton = page.getByRole("button", { name: /Edit or clear flag/i }).first();
+  await expect(flaggedButton).toBeVisible();
+  await flaggedButton.click();
+
+  const actionDialog = page.getByRole("dialog", { name: /already flagged/i });
+  await expect(actionDialog).toBeVisible();
+  await expect(actionDialog.getByRole("button", { name: /Edit flag/i })).toBeVisible();
+  await expect(actionDialog.getByRole("button", { name: /Clear flag/i })).toBeVisible();
+
+  // Edit opens the flag editor in update mode without adding a duplicate.
+  await actionDialog.getByRole("button", { name: /Edit flag/i }).click();
+  const editDialog = page.getByRole("dialog", { name: /Edit item flag/i });
+  await expect(editDialog).toBeVisible();
+  await editDialog.getByRole("button", { name: /Update flag/i }).click();
+  await expect(page.getByRole("button", { name: /Edit or clear flag/i })).toHaveCount(1);
+
+  // Second click again, this time clear the flag.
+  await page.getByRole("button", { name: /Edit or clear flag/i }).first().click();
+  await page
+    .getByRole("dialog", { name: /already flagged/i })
+    .getByRole("button", { name: /Clear flag/i })
+    .click();
+  await expect(page.getByRole("button", { name: /Edit or clear flag/i })).toHaveCount(0);
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
 test("Menu Audit describes SSMT app and Webtrition sources without old Excel as ongoing truth", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   await page.goto("/");
