@@ -79,6 +79,10 @@ test("SSMT opens behind passcode and separates pricing from menu building", asyn
   expect(renderedAreas).toEqual(expectedAreas);
   expect(renderedAreas.some((area) => /^\+\d+$/.test(area))).toBe(false);
 
+  const caloriesInput = page.getByLabel(/Calories for/i).first();
+  await caloriesInput.fill("540");
+  await expect(caloriesInput).toHaveValue("540");
+
   await page.getByRole("button", { name: /view modifiers/i }).first().click();
   const modifierDialog = page.getByRole("dialog", { name: /modifier/i });
   await expect(modifierDialog).toBeVisible();
@@ -239,6 +243,12 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
   await expect(page.getByRole("columnheader", { name: "Secondary category" })).toBeVisible();
   await expect(page.getByRole("columnheader", { name: "Scan & Pay" })).toBeVisible();
   await expect(page.getByRole("columnheader", { name: "Area prices" })).toBeVisible();
+  await expect(page.getByRole("columnheader", { name: "Calories" })).toBeVisible();
+  const builderHeaderOrder = await page.getByRole("columnheader").allInnerTexts();
+  expect(builderHeaderOrder.map((text) => text.toUpperCase())).toEqual([
+    "MOVE", "FIXY", "LABEL", "DESCRIPTION", "MRN", "CALORIES",
+    "SEA PRICE", "CATEGORY", "SECONDARY CATEGORY", "SCAN & PAY", "AREA PRICES", "ACTIONS",
+  ]);
 
   const scanPayInput = page.getByLabel(/Scan and Pay UPC for/i).first();
   await scanPayInput.fill("012345678905");

@@ -1806,17 +1806,17 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                     <col className="w-[320px]" />
                     <col className="w-[450px]" />
                     <col className="w-[112px]" />
+                    <col className="w-[72px]" />
                     <col className="w-[170px]" />
                     <col className="w-[118px]" />
                     <col className="w-[128px]" />
                     <col className="w-[150px]" />
                     <col className="w-[490px]" />
-                    <col className="w-[72px]" />
                     <col className="w-[160px]" />
                   </colgroup>
                   <thead className="sticky top-0 z-10 bg-slate-100 text-xs font-black uppercase tracking-[0.12em] text-slate-600 shadow-sm">
                     <tr>
-                      {["Move", "Fixy", "Label", "Description", "MRN", "SEA price", "Category", "Secondary category", "Scan & Pay", "Area prices", "Calories", "Actions"].map((header) => (
+                      {["Move", "Fixy", "Label", "Description", "MRN", "Calories", "SEA price", "Category", "Secondary category", "Scan & Pay", "Area prices", "Actions"].map((header) => (
                         <th key={header} className="border-b border-slate-400 px-2 py-1.5">{header}</th>
                       ))}
                     </tr>
@@ -1928,6 +1928,21 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               className={`w-full rounded-md border border-slate-300 px-2 py-1 font-mono text-xs font-bold outline-none focus:border-emerald-500 ${item.lockedForCentric ? "cursor-copy bg-emerald-50 text-slate-950" : "bg-white"}`}
                             />
                           </td>
+                          <td className={`${builderCellClass} font-bold text-slate-700`}>
+                            {selectedMenu.type === "Promotion" ? (
+                              <input
+                                aria-label={`Calories for ${item.label || item.name || "item"}`}
+                                value={item.calories || ""}
+                                onChange={(event) => updateItem(item.id, { calories: event.target.value })}
+                                onClick={() => copyLockedField(item, item.calories, "Calories")}
+                                readOnly={Boolean(item.lockedForCentric)}
+                                placeholder="TBD"
+                                className={`w-full rounded-md border border-slate-300 px-2 py-1 text-xs font-bold outline-none focus:border-emerald-500 ${item.lockedForCentric ? "cursor-copy bg-emerald-50 text-slate-950" : "bg-white"}`}
+                              />
+                            ) : (
+                              "N/A"
+                            )}
+                          </td>
                           <td className={builderCellClass}>
                             <select
                               aria-label={`SEA price for ${item.label || item.name || "item"}`}
@@ -1993,7 +2008,6 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               ))}
                             </div>
                           </td>
-                          <td className={`${builderCellClass} font-bold text-slate-700`}>{selectedMenu.type === "Promotion" ? item.calories || "TBD" : "N/A"}</td>
                           <td className={builderCellClass}>
                             <div className="grid grid-cols-2 gap-1">
                               <button type="button" aria-label={`View modifiers Mods (${modifierCountForItem(item, ssmtData.modifierGroups)})`} onClick={() => openModifierDialog(item)} className="inline-flex items-center justify-center gap-1 rounded-md border border-green-800 bg-green-700 px-2 py-1.5 text-xs font-black text-white shadow-sm hover:bg-green-800">
