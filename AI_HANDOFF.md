@@ -1,6 +1,6 @@
 # AI Handoff
 
-Last updated: September 7, 2026
+Last updated: September 9, 2026
 
 Current live version: `2026.09.07.003-ssmt-hibernate-bucket-and-prices`
 
