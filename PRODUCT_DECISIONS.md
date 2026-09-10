@@ -17,6 +17,8 @@ The reviewed workbook `docs/gl-mapping/Alex_Transfer_Tool_GL_Mapping_Reviewed.xl
 
 Rejected alternatives: creator-only visibility; omitting copy support; treating titles as unique only within one browser; fabricating proportional G/L dollar allocations from ingredient-name counts; submitting transfers through the Culinary Platform; requiring a new database schema for the first draft.
 
+Implementation status note: application commit `cbe93ec9ad077e363a5d90c289998cbe7ca520d0` is LIVE as version `2026.09.10.001-transfer-tool-draft`. Vercel production status `Fj1we3LnUgC1YiDKKMwjquYq147n` completed successfully, the public bundle contains the version stamp, and production Playwright passed the Transfer Tool and landing-section specs 4/4. No Supabase schema migration or manual production-data write occurred.
+
 ### 2026-08-28 - Platform Home tool sections and SSMT modifier usability
 Tyler approved reorganizing Platform Home as a tool hub with two visible sections. `Chef Tools` should show, in order: `Neighborhood Rotations`, `Menu Library`, `Menu Engineering`, `Menu Cross Utilization Tool`, and `Webtrition`. `Programming & Auditing` should show, in order: `SSMT`, `Menu Projects`, `Menu Audit Tool`, and `Lean Tool`. This is a grouping/order refinement only; it does not approve a broader Platform Home redesign, workflow-category replacement, tool rename, or navigation behavior change.
 
