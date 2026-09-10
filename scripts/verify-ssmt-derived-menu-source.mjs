@@ -55,11 +55,24 @@ const workspace = {
       activeEnd: "2026-01-01",
       items: [{ id: "holiday-item", label: "HOLIDAY ITEM", category: "Entree" }],
     },
+    {
+      id: "menu-smoke-test-ordering-1788211094930",
+      name: "Smoke Test Ordering 1788211094930",
+      type: "Core",
+      phase: "IT complete",
+      hidden: false,
+      items: [{ id: "smoke-item", label: "NEW ITEM", category: "Entree" }],
+    },
   ],
 };
 
 const derivedRows = deriveSsmtOperatingRows(workspace, { today });
 assert.equal(derivedRows.length, 2, "Only IT-complete non-hidden downstream SSMT rows should be derived.");
+assert.equal(
+  derivedRows.some((row) => /smoke.?test/i.test(row.menu) || /smoke.?test/i.test(row.masterMenuName)),
+  false,
+  "Smoke-test menus leaked into the shared workspace must never surface in the downstream feed."
+);
 assert.deepEqual(
   derivedRows.map((row) => row.menu),
   ["AMZ: Cafe Express Soups", "AMZ: Cafe Express Curated Sandwiches"],

@@ -1,6 +1,11 @@
 import { loadSsmtWorkspaceFromSharedStorage } from "./ssmtWorkspaceStorage.js";
 
 const DOWNSTREAM_MENU_TYPES = new Set(["Core", "Global", "Menu Library"]);
+// Browser smoke tests create throwaway "Smoke Test Ordering ..." Core menus that
+// have leaked into the shared SSMT workspace and surfaced as selectable menus in
+// the Menu Library / Neighborhood Rotations feed. Keep these out of the downstream
+// feed regardless of what remains in the workspace data. See ARCHITECTURE_RULES.md.
+const SMOKE_TEST_MENU_PATTERN = /smoke.?test/i;
 
 function cleanText(value) {
   return String(value ?? "").trim();
@@ -37,7 +42,8 @@ export function isSsmtDownstreamMenu(menu = {}, today = new Date()) {
   return DOWNSTREAM_MENU_TYPES.has(menu.type)
     && menu.phase === "IT complete"
     && !menu.hidden
-    && !menuIsAutoHibernated(menu, today);
+    && !menuIsAutoHibernated(menu, today)
+    && !SMOKE_TEST_MENU_PATTERN.test(cleanText(menu.name));
 }
 
 export function ssmtDerivedMenuEntries(rows = []) {

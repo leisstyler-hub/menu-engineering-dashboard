@@ -123,7 +123,10 @@ test("SSMT opens behind passcode and separates pricing from menu building", asyn
 
 test("SSMT groups menus by type and supports row editing, ordering, and saved phase status", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
-  const smokeMenuName = `Smoke Test Ordering ${Date.now()}`;
+  // Downstream-visible throwaway menu. Must NOT match the /smoke.?test/i filter in
+  // ssmtDerivedMenuSource.js, since this test asserts the menu reaches the
+  // downstream preview once it is IT complete. Deleted on teardown below.
+  const orderingMenuName = `Ordering Regression ${Date.now()}`;
   await page.goto("/");
 
   await page.getByRole("button", { name: /open ssmt/i }).click();
@@ -195,22 +198,22 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
     "Yakisoba",
   ]));
 
-  await page.getByLabel(/New menu name/i).fill(smokeMenuName);
+  await page.getByLabel(/New menu name/i).fill(orderingMenuName);
   await page.getByLabel(/New menu type/i).selectOption("Core");
   await page.getByRole("button", { name: /Create menu/i }).click();
-  await expect(page.getByRole("heading", { name: smokeMenuName })).toBeVisible();
+  await expect(page.getByRole("heading", { name: orderingMenuName })).toBeVisible();
 
   await page.getByRole("button", { name: /Lock item NEW ITEM/i }).click();
   await page.getByLabel(/Phase/i).selectOption("IT complete");
   await page.getByRole("button", { name: /Back to menu selection/i }).click();
-  await page.locator(`[data-menu-name="${smokeMenuName}"]`).click();
+  await page.locator(`[data-menu-name="${orderingMenuName}"]`).click();
   await expect(page.getByLabel(/Phase/i)).toHaveValue("IT complete");
   await expect(page.getByTestId("ssmt-workspace-sync")).toContainText(/Shared SSMT workspace saved/i, { timeout: 20_000 });
 
   await page.reload();
   await page.getByRole("button", { name: /open ssmt/i }).click();
   await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
-  await page.locator(`[data-menu-name="${smokeMenuName}"]`).click();
+  await page.locator(`[data-menu-name="${orderingMenuName}"]`).click();
   await expect(page.getByLabel(/Phase/i)).toHaveValue("IT complete");
 
   await page.getByRole("button", { name: /Unlock item NEW ITEM/i }).click();
@@ -269,7 +272,7 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
 
   await page.getByRole("button", { name: /Lock item BETA ITEM/i }).click();
   await page.getByLabel(/Current SSMT phase/i).selectOption("IT complete");
-  await expect(page.getByTestId("ssmt-derived-source-preview")).toContainText(`AMZ: ${smokeMenuName} - Curated Sandwiches`);
+  await expect(page.getByTestId("ssmt-derived-source-preview")).toContainText(`AMZ: ${orderingMenuName} - Curated Sandwiches`);
 
   await submenuRow.getByRole("button", { name: /Delete sub menu/i }).click();
   await page.getByRole("dialog", { name: /Delete sub menu/i }).getByLabel(/Confirm delete Curated Sandwiches/i).check();
@@ -283,6 +286,19 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
   await itemDeleteDialog.getByLabel(/Confirm delete ALPHA ITEM/i).check();
   await itemDeleteDialog.getByRole("button", { name: "Delete item", exact: true }).click();
   await expect(page.getByLabel(/Item label/i).first()).toHaveValue("BETA ITEM");
+
+  // Teardown: delete this throwaway menu so it does not leak into the shared SSMT
+  // workspace (a single live Supabase row). Post-deploy live runs write to prod,
+  // so without this cleanup every run left a permanent "IT complete" Core menu
+  // that surfaced in the Menu Library / Neighborhood Rotations selectors. Mirrors
+  // the sibling test's cleanup of its own "Smoke Test Promo Menu".
+  await page.getByRole("button", { name: /Delete menu/i }).click();
+  const deleteDialog = page.getByRole("dialog", { name: /Delete menu/i });
+  await deleteDialog.getByLabel(/Retype menu name/i).fill(orderingMenuName);
+  await expect(deleteDialog.getByRole("button", { name: "Delete menu", exact: true })).toBeEnabled();
+  await deleteDialog.getByRole("button", { name: "Delete menu", exact: true }).click();
+  await expect(page.getByRole("heading", { name: orderingMenuName })).toHaveCount(0);
+  await expect(page.getByTestId("ssmt-workspace-sync")).toContainText(/Shared SSMT workspace saved/i, { timeout: 20_000 });
 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
