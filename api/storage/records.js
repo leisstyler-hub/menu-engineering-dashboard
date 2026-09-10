@@ -4,6 +4,7 @@ import {
   getBackboneToolFromContext,
   normalizeBackboneRows,
 } from "../../src/integrations/storage/backboneRecords.js";
+import { CAFE_UNITS } from "../../src/shared/cafeUnits.js";
 import { gzipSync, gunzipSync } from "node:zlib";
 
 const DEFAULT_SUPABASE_URL = "https://pzilyzqhatthctgsjwtt.supabase.co";
@@ -16,6 +17,50 @@ const DEFAULT_SUPABASE_WRITE_TIMEOUT_MS = 25000;
 const SSMT_WORKSPACE_RECORD_ID = "ssmt|workspace|current";
 const SSMT_LEGACY_WORKSPACE_RECORD_ID = "ssmt|workspace|current-v2";
 const SSMT_WORKSPACE_ENCODING = "gzip-base64-json-v1";
+
+function normalizeTransferTitle(value = "") {
+  return String(value).normalize("NFKC").trim().replace(/\s+/g, " ").toLocaleLowerCase("en-US");
+}
+
+function transferRecordId(title = "") {
+  return `transfer|${encodeURIComponent(normalizeTransferTitle(title))}`;
+}
+
+const TRANSFER_UNITS = new Set(CAFE_UNITS.map(({ cafe }) => cafe));
+
+function isTransferRecord(record = {}) {
+  return String(record["Record Type"] || "") === "Transfer" || String(record["Record ID"] || "").startsWith("transfer|");
+}
+
+function validateTransferRecord(record = {}) {
+  const title = String(record.title || "").trim();
+  if (title.length < 3 || title.length > 100) return "Transfer title must be between 3 and 100 characters.";
+  if (String(record["Record Type"] || "") !== "Transfer" || String(record["Record ID"] || "") !== transferRecordId(title)) {
+    return "Transfer title and record identity do not match.";
+  }
+  if (!TRANSFER_UNITS.has(record.departingUnit) || !TRANSFER_UNITS.has(record.receivingUnit) || record.departingUnit === record.receivingUnit) {
+    return "Transfer units are invalid or identical.";
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(record.transferDate || "")) || Number.isNaN(Date.parse(`${record.transferDate}T00:00:00Z`))) {
+    return "Transfer date is invalid.";
+  }
+  if (!Array.isArray(record.items) || record.items.length === 0) return "A transfer requires at least one item.";
+  if (record.items.some((item) => !item?.catalogId || !item?.menu || !item?.item || !Number.isInteger(Number(item.quantity)) || Number(item.quantity) < 1 || !Number.isFinite(Number(item.itemWasteCost)) || Number(item.itemWasteCost) < 0)) {
+    return "Every transfer item requires catalog identity, a positive whole-number count, and a valid Item + Waste Cost.";
+  }
+  const expectedTotal = record.items.reduce((sum, item) => sum + (Number(item.quantity) * Number(item.itemWasteCost)), 0);
+  if (!Number.isFinite(Number(record.totalValue)) || Math.abs(Number(record.totalValue) - expectedTotal) > 0.000001) {
+    return "Transfer total does not match its item counts and costs.";
+  }
+  return "";
+}
+
+function transferWriteValidation(records = [], context = {}) {
+  const containsTransfer = records.some(isTransferRecord) || getBackboneToolFromContext(context) === "transfers";
+  if (!containsTransfer) return "";
+  if (records.length !== 1 || getBackboneToolFromContext(context) !== "transfers") return "A single transfer record with transfer context is required.";
+  return validateTransferRecord(records[0]);
+}
 
 function cleanUrl(value = "") {
   return String(value || "").trim().replace(/\/+$/, "");
@@ -253,7 +298,7 @@ async function loadRecords(req, res) {
   const params = {
     select: "record_id,updated_at,retain_until,record_payload",
     tool: `eq.${databaseTool}`,
-    record_id: tool === "ssmt" ? `eq.${SSMT_WORKSPACE_RECORD_ID}` : undefined,
+    record_id: tool === "ssmt" ? `eq.${SSMT_WORKSPACE_RECORD_ID}` : tool === "transfers" ? "like.transfer|*" : undefined,
     visible_in_dashboard: includeHidden ? undefined : "eq.true",
     order: "updated_at.desc",
   };
@@ -266,6 +311,9 @@ async function loadRecords(req, res) {
     }
     if (tool === "ssmt") {
       return String(record["Record Type"] || "") === "SSMT Workspace" || String(record["Record ID"] || "").startsWith("ssmt|");
+    }
+    if (tool === "transfers") {
+      return String(record["Record Type"] || "") === "Transfer" && String(record["Record ID"] || "").startsWith("transfer|");
     }
     return true;
   });
@@ -282,7 +330,9 @@ async function loadRecords(req, res) {
     count: records.length,
     message: healthOnly
       ? "Supabase secure storage endpoint is ready."
-      : `Loaded ${records.length} ${toolLabel} record${records.length === 1 ? "" : "s"} from Supabase.`,
+      : tool === "transfers"
+        ? `Loaded ${records.length} transfer record${records.length === 1 ? "" : "s"} from Supabase.`
+        : `Loaded ${records.length} ${toolLabel} record${records.length === 1 ? "" : "s"} from Supabase.`,
   });
 }
 
@@ -290,6 +340,16 @@ async function upsertRecords(req, res) {
   const { records = [], context = {} } = req.body || {};
   if (!Array.isArray(records) || records.length === 0) {
     return res.status(400).json({ ok: false, message: "No records supplied." });
+  }
+
+  const transferValidationError = transferWriteValidation(records, context);
+  if (transferValidationError) return res.status(400).json({ ok: false, message: transferValidationError });
+  if (getBackboneToolFromContext(context) === "transfers") {
+    const record = records[0];
+    const existing = await supabaseFetch(`app_records?${queryString({ select: "record_id,record_payload", record_id: `eq.${record["Record ID"]}`, limit: "1" })}`);
+    if (!existing?.length) return res.status(409).json({ ok: false, message: "Transfer no longer exists. Copy it into a new globally unique title." });
+    const existingTitle = String(existing[0]?.record_payload?.title || "");
+    if (existingTitle !== String(record.title || "")) return res.status(409).json({ ok: false, message: "Saved transfer titles are immutable. Copy the transfer to use a new title." });
   }
 
   const packedRecords = getBackboneToolFromContext(context) === "ssmt"
@@ -329,6 +389,33 @@ async function upsertRecords(req, res) {
     deletedStale,
     message: `Saved ${rows.length} row${rows.length === 1 ? "" : "s"} to Supabase${rawRows.length - rows.length ? ` after skipping ${rawRows.length - rows.length} duplicate row instance${rawRows.length - rows.length === 1 ? "" : "s"}` : ""}${deletedStale ? ` and removed ${deletedStale} stale row${deletedStale === 1 ? "" : "s"}` : ""}.`,
   });
+}
+
+async function createTransfer(req, res) {
+  const { records = [], context = {} } = req.body || {};
+  if (!Array.isArray(records)) return res.status(400).json({ ok: false, message: "A single transfer record is required." });
+  const validationError = transferWriteValidation(records, context);
+  if (validationError) return res.status(400).json({ ok: false, message: validationError });
+  const record = records[0];
+  const expectedId = record["Record ID"];
+  const existing = await supabaseFetch(`app_records?${queryString({ select: "record_id", record_id: `eq.${expectedId}`, limit: "1" })}`);
+  if (existing?.length) {
+    return res.status(409).json({ ok: false, message: "That transfer title already exists. Titles must be globally unique." });
+  }
+  const rows = buildBackboneRows(records, context);
+  try {
+    await supabaseFetch("app_records", {
+      method: "POST",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify(rows),
+    }, DEFAULT_SUPABASE_WRITE_TIMEOUT_MS);
+  } catch (error) {
+    if (error.statusCode === 409) {
+      return res.status(409).json({ ok: false, message: "That transfer title already exists. Titles must be globally unique." });
+    }
+    throw error;
+  }
+  return res.status(201).json({ ok: true, source: "supabase", tool: "transfers", synced: 1, message: "Created shared transfer draft." });
 }
 
 async function deleteRecords(req, res) {
@@ -374,6 +461,7 @@ export default async function handler(req, res) {
 
     if (req.body?.action === "cleanupExpiredRecords") return await cleanupExpiredRecords(res);
     if (req.body?.action === "deleteRecords") return await deleteRecords(req, res);
+    if (req.body?.action === "createTransfer") return await createTransfer(req, res);
     if (req.body?.action !== "upsertRecords") {
       return res.status(400).json({ ok: false, message: "Unsupported action." });
     }

@@ -10,6 +10,13 @@ When a mission produces an approved product decision, Scribe adds an entry below
 
 ## Decisions
 
+### 2026-09-10 - Shared draft Transfer Tool with item-level cost and reviewed G/L guidance
+Alex approved replacing the earlier Transfer Tool concept with a shared draft builder on Platform Home. A transfer has a globally unique title, departing unit, receiving unit, date, and any number of menu-scoped item lines. Each line uses the Culinary Platform’s current Item + Waste Cost, accepts an item count, and calculates line value. All users may see and search all saved transfers. A saved transfer can be copied into a new draft whose title must be unique and whose item costs refresh from the current catalog. Excel export is required; the tool is reference-only and does not submit to S4.
+
+The reviewed workbook `docs/gl-mapping/Alex_Transfer_Tool_GL_Mapping_Reviewed.xlsx` remains authoritative for ingredient-to-G/L classification. Because no ingredient price index is available, the current tool must not invent ingredient-level or G/L-level dollar splits. It instead shows the applicable reviewed G/L codes, categories, and mapped ingredients beside the full item-level cost. Requesting Admin / Admin of Record: Alex Neuse.
+
+Rejected alternatives: creator-only visibility; omitting copy support; treating titles as unique only within one browser; fabricating proportional G/L dollar allocations from ingredient-name counts; submitting transfers through the Culinary Platform; requiring a new database schema for the first draft.
+
 ### 2026-08-28 - Platform Home tool sections and SSMT modifier usability
 Tyler approved reorganizing Platform Home as a tool hub with two visible sections. `Chef Tools` should show, in order: `Neighborhood Rotations`, `Menu Library`, `Menu Engineering`, `Menu Cross Utilization Tool`, and `Webtrition`. `Programming & Auditing` should show, in order: `SSMT`, `Menu Projects`, `Menu Audit Tool`, and `Lean Tool`. This is a grouping/order refinement only; it does not approve a broader Platform Home redesign, workflow-category replacement, tool rename, or navigation behavior change.
 

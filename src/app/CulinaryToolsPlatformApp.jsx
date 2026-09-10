@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect, useState } from "react";
-import { BarChart3, BookOpen, CalendarRange, ClipboardCheck, FileSpreadsheet, FolderKanban, Home } from "lucide-react";
+import { ArrowRightLeft, BarChart3, BookOpen, CalendarRange, ClipboardCheck, FileSpreadsheet, FolderKanban, Home } from "lucide-react";
 import LandingPage from "./LandingPage.jsx";
 import { addToolBreadcrumb, setActiveToolContext } from "../shared/monitoring/sentry.jsx";
 
@@ -39,6 +39,7 @@ const MenuAuditTool = lazyWithStaleBundleReload(() => import("../features/menu-a
 const SmartsheetHealth = lazyWithStaleBundleReload(() => import("../features/smartsheet-health/SmartsheetHealth.jsx"));
 const MenuCrossUtilizationTool = lazyWithStaleBundleReload(() => import("../features/menu-cross-utilization/MenuCrossUtilizationTool.jsx"));
 const SsmtTool = lazyWithStaleBundleReload(() => import("../features/ssmt/SsmtTool.jsx"));
+const TransferTool = lazyWithStaleBundleReload(() => import("../features/transfer-tool/TransferTool.jsx"));
 
 export default function CulinaryToolsPlatformApp() {
   const [activeTool, setActiveTool] = useState("home");
@@ -129,6 +130,17 @@ export default function CulinaryToolsPlatformApp() {
     );
   }
 
+  if (activeTool === "transferTool") {
+    return (
+      <>
+        <Suspense fallback={<ToolLoading title="Opening Transfer Tool" />}>
+          <TransferTool onBackToPlatform={() => setActiveTool("home")} onOpenSmartsheetHealth={openSmartsheetHealth} />
+        </Suspense>
+        <MobileToolNav activeTool={activeTool} setActiveTool={setActiveTool} />
+      </>
+    );
+  }
+
   if (activeTool === "ladleCompliance") {
     return (
       <>
@@ -171,6 +183,7 @@ export default function CulinaryToolsPlatformApp() {
       onOpenSsmtTool={() => setActiveTool("ssmtTool")}
       onOpenLeanTool={() => setActiveTool("leanTool")}
       onOpenMenuCrossUtilization={() => setActiveTool("menuCrossUtilization")}
+      onOpenTransferTool={() => setActiveTool("transferTool")}
       onOpenSmartsheetHealth={openSmartsheetHealth}
     />
   );
@@ -199,6 +212,7 @@ function MobileToolNav({ activeTool, setActiveTool }) {
     { key: "ssmtTool", label: "SSMT", icon: FileSpreadsheet },
     { key: "menuAuditTool", label: "Audit", icon: ClipboardCheck },
     { key: "neighborhoodRotations", label: "Rotations", icon: CalendarRange },
+    { key: "transferTool", label: "Transfers", icon: ArrowRightLeft },
   ];
 
   return (

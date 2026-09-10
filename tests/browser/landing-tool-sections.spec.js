@@ -22,6 +22,7 @@ test("home screen groups tools under Chef Tools and Programming & Auditing in th
       heading: "Chef Tools",
       tools: [
         "Neighborhood Rotations",
+        "Transfer Tool",
         "Menu Library",
         "Menu Engineering",
         "Menu Cross Utilization Tool",

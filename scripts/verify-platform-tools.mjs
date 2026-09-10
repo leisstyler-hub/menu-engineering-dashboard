@@ -23,6 +23,9 @@ const logoPath = join(root, "public", "webtrition-logo.png");
   "Webtrition",
   "https://www.webtrition.com/ui/#/",
   "Open Webtrition",
+  "Transfer Tool",
+  "Open Transfer Tool",
+  "onOpenTransferTool",
   "/webtrition-logo.png",
   "window.open",
 ].forEach((needle) => {

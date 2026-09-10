@@ -45,6 +45,7 @@ export function getBackboneToolFromContext(context = {}) {
     .join(" ")
     .toLowerCase();
   if (text.includes("ssmt") || text.includes("sea standard menu template")) return "ssmt";
+  if (text.includes("transfer")) return "transfers";
   if (text.includes("menuproject") || text.includes("menu project")) return "menuProjects";
   if (text.includes("lean")) return "lean";
   return "rotation";
@@ -57,6 +58,7 @@ export function getBackboneDatabaseToolFromContext(context = {}) {
   // schema migration expands the physical tool enum.
   if (tool === "menuProjects") return "rotation";
   if (tool === "ssmt") return "rotation";
+  if (tool === "transfers") return "rotation";
   return tool;
 }
 

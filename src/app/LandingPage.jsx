@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ArrowRight, BarChart3, BookOpen, CalendarRange, ClipboardCheck, Database, FileSpreadsheet, FolderKanban, Home, ListChecks, PieChart, Settings, Shuffle, Smartphone, Sparkles, TrendingUp, Utensils, Wrench } from "lucide-react";
+import { ArrowRight, ArrowRightLeft, BarChart3, BookOpen, CalendarRange, ClipboardCheck, Database, FileSpreadsheet, FolderKanban, Home, ListChecks, PieChart, Settings, Shuffle, Smartphone, Sparkles, TrendingUp, Utensils, Wrench } from "lucide-react";
 
 import CHANGELOG_TEXT from "../../CHANGELOG.md?raw";
 import DASHBOARD_SUMMARY from "../data/dashboardSummary.json";
@@ -213,7 +213,7 @@ function downloadTrustLayerGapList(rows) {
   URL.revokeObjectURL(url);
 }
 
-export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodRotations, onOpenRecipeDatabase, onOpenMenuProjects, onOpenMenuAuditTool, onOpenSsmtTool, onOpenLeanTool, onOpenMenuCrossUtilization, onOpenSmartsheetHealth }) {
+export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodRotations, onOpenRecipeDatabase, onOpenMenuProjects, onOpenMenuAuditTool, onOpenSsmtTool, onOpenLeanTool, onOpenMenuCrossUtilization, onOpenTransferTool, onOpenSmartsheetHealth }) {
   const {
     totalItems,
     menuCount,
@@ -337,6 +337,16 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
       icon: Shuffle,
       tone: "amber",
       meta: "Menu planner"
+    },
+    transferTool: {
+      title: "Transfer Tool",
+      eyebrow: "Draft",
+      description: "Build shared inter-cafe transfers with current Item + Waste Cost, reviewed G/L guidance, reusable copies, and Excel export.",
+      action: "Open Transfer Tool",
+      onOpen: onOpenTransferTool,
+      icon: ArrowRightLeft,
+      tone: "violet",
+      meta: "Transfer reference"
     }
   };
   const toolSections = [
@@ -344,6 +354,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
       title: "Chef Tools",
       tools: [
         toolMap.neighborhoodRotations,
+        toolMap.transferTool,
         toolMap.menuLibrary,
         toolMap.menuEngineering,
         toolMap.menuCrossUtilization,
@@ -410,7 +421,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
               Built for quick chef decisions: choose the workstream, check status, and move straight into the active tool.
             </p>
             <div className="mt-5 grid grid-cols-2 gap-3">
-              <Metric label="Tools" value="9" />
+              <Metric label="Tools" value="10" />
               <Metric label="Menu items" value={totalItems.toLocaleString()} />
               <Metric label="Menus" value={menuCount} />
               <Metric label="Costed items" value={costedItems.toLocaleString()} />
@@ -581,7 +592,7 @@ function MobileLanding({
   onOpenSmartsheetHealth,
 }) {
   const metricTiles = [
-    { label: "Tools", value: "9", icon: Wrench, tone: "bg-[#fff7e7] text-[#8a621b]" },
+    { label: "Tools", value: "10", icon: Wrench, tone: "bg-[#fff7e7] text-[#8a621b]" },
     { label: "Menu Items", value: totalItems.toLocaleString(), icon: Utensils, tone: "bg-[#eaf8f2] text-emerald-700" },
     { label: "Menus", value: menuCount, icon: ListChecks, tone: "bg-[#edf5ff] text-sky-700" },
     { label: "Costed Items", value: costedItems.toLocaleString(), icon: Database, tone: "bg-[#f0eefb] text-indigo-700" },
@@ -778,6 +789,7 @@ function MobileToolCard({ title, eyebrow, description, action, onOpen, icon: Ico
     "Webtrition": "External",
     "Lean Tool": "New",
     "Menu Cross Utilization Tool": "New",
+    "Transfer Tool": "Draft",
   };
 
   return (
