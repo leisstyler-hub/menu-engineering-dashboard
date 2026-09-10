@@ -1,3 +1,7 @@
+## 2026-09-09
+
+- [Sep 9] Published `docs/gl-mapping/Alex_Transfer_Tool_GL_Mapping_Reviewed.xlsx`, Alex’s editable reviewed G/L mapping resource for the future Transfer Tool. It contains 1,021 unique Menu Library leaf ingredients and 21,867 source-detail lines. Alex reviewed all 362 first-pass flags: 125 approved mapping changes are applied and 237 entries are accepted, including blank review rows treated as acceptance. The workbook preserves source menu/recipe/component-path traceability and yellow future-override fields. This is resource-only: no application code, production data, Supabase data, Smartsheet data, deployment, or app-version change.
+
 # Changelog
 
 ## 2026-09-07
