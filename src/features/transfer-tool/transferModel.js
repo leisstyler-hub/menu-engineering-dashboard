@@ -15,16 +15,16 @@ export const transferTotal = (items = []) => items.reduce((sum, item) => {
 export function refreshCopiedItems(items = [], catalogItems = []) {
   const catalogById = new Map(catalogItems.map((item) => [item.id, item]));
   return items.map((item) => {
+    const { glGroups: _ignoredGlGroups, ...itemWithoutGl } = item;
     const latest = catalogById.get(item.catalogId);
     return latest ? {
-      ...item,
+      ...itemWithoutGl,
       menu: latest.menu,
       item: latest.item,
       mrn: latest.mrn,
       portion: latest.portion,
       itemWasteCost: latest.itemWasteCost,
-      glGroups: latest.glGroups,
-    } : item;
+    } : itemWithoutGl;
   });
 }
 

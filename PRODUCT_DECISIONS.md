@@ -10,10 +10,10 @@ When a mission produces an approved product decision, Scribe adds an entry below
 
 ## Decisions
 
-### 2026-09-10 - Shared draft Transfer Tool with item-level cost and reviewed G/L guidance
+### 2026-09-10 - Shared draft Transfer Tool with item-level cost
 Alex approved replacing the earlier Transfer Tool concept with a shared draft builder on Platform Home. A transfer has a globally unique title, departing unit, receiving unit, date, and any number of menu-scoped item lines. Each line uses the Culinary Platform’s current Item + Waste Cost, accepts an item count, and calculates line value. All users may see and search all saved transfers. A saved transfer can be copied into a new draft whose title must be unique and whose item costs refresh from the current catalog. Excel export is required; the tool is reference-only and does not submit to S4.
 
-The reviewed workbook `docs/gl-mapping/Alex_Transfer_Tool_GL_Mapping_Reviewed.xlsx` remains authoritative for ingredient-to-G/L classification. Because no ingredient price index is available, the current tool must not invent ingredient-level or G/L-level dollar splits. It instead shows the applicable reviewed G/L codes, categories, and mapped ingredients beside the full item-level cost. Requesting Admin / Admin of Record: Alex Neuse.
+The reviewed workbook `docs/gl-mapping/Alex_Transfer_Tool_GL_Mapping_Reviewed.xlsx` remains a documentation resource for possible future ingredient-to-G/L work. Because no ingredient price index is available, Alex directed that the current Transfer Tool eliminate its G/L breakdown entirely. The UI, saved line payload, generated catalog, and Excel export should contain only item-level Item + Waste Cost economics until ingredient pricing becomes available. Requesting Admin / Admin of Record: Alex Neuse.
 
 Rejected alternatives: creator-only visibility; omitting copy support; treating titles as unique only within one browser; fabricating proportional G/L dollar allocations from ingredient-name counts; submitting transfers through the Culinary Platform; requiring a new database schema for the first draft.
 

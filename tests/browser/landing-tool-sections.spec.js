@@ -35,6 +35,10 @@ test("home screen groups tools under Chef Tools and Programming & Auditing in th
     },
   ]);
 
+  const transferTile = page.locator('article[data-tool-title="Transfer Tool"]');
+  await expect(transferTile).toContainText("current Item + Waste Cost");
+  await expect(transferTile).not.toContainText("G/L");
+
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });

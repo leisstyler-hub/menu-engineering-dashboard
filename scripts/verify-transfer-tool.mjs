@@ -8,7 +8,7 @@ const read = (path) => readFileSync(join(root, path), "utf8");
 const fail = (message) => { console.error(`Transfer Tool verification failed: ${message}`); process.exit(1); };
 
 if (CATALOG.menus.length !== 53 || CATALOG.items.length < 1483) fail("catalog does not cover the current menu/item source");
-if (!CATALOG.items.every((item) => item.menu && item.item && Object.hasOwn(item, "itemWasteCost") && Array.isArray(item.glGroups))) fail("catalog contains malformed rows");
+if (!CATALOG.items.every((item) => item.menu && item.item && Object.hasOwn(item, "itemWasteCost") && !Object.hasOwn(item, "glGroups"))) fail("catalog contains malformed or legacy G/L rows");
 if (transferRecordId(" My  Transfer ") !== "transfer|my%20transfer") fail("title identity is not deterministic");
 if (normalizeTransferTitle(" MY   TRANSFER ") !== "my transfer") fail("title normalization is not case/space insensitive");
 if (transferTotal([{ quantity: 2, itemWasteCost: 1.234 }]) !== 2.468) fail("extended transfer value is incorrect");
@@ -22,7 +22,8 @@ const storage = read("src/features/transfer-tool/transferStorage.js");
 const component = read("src/features/transfer-tool/TransferTool.jsx");
 for (const marker of ["createTransfer", "Titles must be globally unique", "like.transfer|*"]) if (!api.includes(marker)) fail(`API is missing ${marker}`);
 for (const marker of ["createTransfer", "tool: \"transfers\"", "/api/recipe-library?scope=all", "row.trueCost"]) if (!storage.includes(marker)) fail(`storage client is missing ${marker}`);
-for (const marker of ["Item + Waste Cost", "G/L Breakdown", "Copy Transfer", "Export Excel", "DRAFT"]) if (!component.includes(marker)) fail(`UI is missing ${marker}`);
+for (const marker of ["Item + Waste Cost", "Copy Transfer", "Export Excel", "DRAFT"]) if (!component.includes(marker)) fail(`UI is missing ${marker}`);
+for (const removedMarker of ["G/L Breakdown", "GlBreakdown", "reviewed mapping"]) if (component.includes(removedMarker)) fail(`UI still contains ${removedMarker}`);
 
 console.log(`Transfer Tool verification passed: ${CATALOG.menus.length} menus, ${CATALOG.items.length} menu-scoped cost records.`);
 

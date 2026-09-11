@@ -341,7 +341,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
     transferTool: {
       title: "Transfer Tool",
       eyebrow: "Draft",
-      description: "Build shared inter-cafe transfers with current Item + Waste Cost, reviewed G/L guidance, reusable copies, and Excel export.",
+      description: "Build shared inter-cafe transfers with current Item + Waste Cost, reusable copies, and Excel export.",
       action: "Open Transfer Tool",
       onOpen: onOpenTransferTool,
       icon: ArrowRightLeft,

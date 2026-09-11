@@ -10,7 +10,16 @@ const existingTransfer = {
   receivingUnit: "Nessie",
   transferDate: "2026-09-08",
   updatedAt: "2026-09-08T12:00:00.000Z",
-  items: [{ catalogId: "amz: ohana|huli huli chicken|33065.1|1 piece", menu: "AMZ: Ohana", item: "Huli Huli Chicken", mrn: "33065.1", portion: "1 piece", itemWasteCost: 1.5, quantity: 2, glGroups: [] }],
+  items: [{
+    catalogId: "amz: ohana|huli huli chicken|33065.1|1 piece",
+    menu: "AMZ: Ohana",
+    item: "Huli Huli Chicken",
+    mrn: "33065.1",
+    portion: "1 piece",
+    itemWasteCost: 1.5,
+    quantity: 2,
+    glGroups: [{ gl: "4111001", name: "Legacy mapping", amount: 1.5 }],
+  }],
 };
 
 async function mockTransferStorage(page) {
@@ -36,7 +45,8 @@ test("Transfer Tool creates, costs, saves, copies, searches, and exports a share
   await expect(tile.getByText("Draft", { exact: true })).toBeVisible();
   await tile.getByRole("button", { name: "Open Transfer Tool" }).click();
   await expect(page.getByRole("heading", { name: "Transfer Tool" })).toBeVisible();
-  await expect(page.getByText(/classification guidance and do not allocate dollars/i)).toBeVisible();
+  await expect(page.getByText(/Item \+ Waste Cost is live from the platform catalog/i)).toBeVisible();
+  await expect(page.getByText(/G\/L Breakdown/i)).toHaveCount(0);
 
   await page.getByLabel("Globally unique title").fill("QA Dawson to Nessie");
   await page.getByLabel("Departing unit").selectOption("Dawson");
@@ -48,8 +58,6 @@ test("Transfer Tool creates, costs, saves, copies, searches, and exports a share
   const transferTable = page.getByRole("table");
   await expect(transferTable.getByText("$2.50", { exact: true })).toBeVisible();
   await expect(page.getByTestId("transfer-total")).toHaveText("$5.00");
-  await expect(transferTable.getByText(/4111003 · Meat\/Poultry/)).toBeVisible();
-  await expect(transferTable.getByText(/4111012 · Fresh Produce\/Salad/)).toBeVisible();
 
   await page.getByRole("button", { name: "Save Draft" }).click();
   await expect(page.getByText(/Saved to shared storage/)).toBeVisible();
@@ -57,18 +65,17 @@ test("Transfer Tool creates, costs, saves, copies, searches, and exports a share
   expect(writes[0].action).toBe("createTransfer");
   expect(writes[0].records[0]["Record ID"]).toBe("transfer|qa%20dawson%20to%20nessie");
   expect(writes[0].records[0].items[0]).toMatchObject({ menu: "AMZ: Ohana", item: "Huli Huli Chicken", itemWasteCost: 2.5, quantity: 2 });
+  expect(writes[0].records[0].items[0]).not.toHaveProperty("glGroups");
 
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "Export Excel" }).click();
   const download = await downloadPromise;
   const path = await download.path();
   const workbook = XLSX.readFile(path);
-  expect(workbook.SheetNames).toEqual(["Transfer", "G-L Reference"]);
+  expect(workbook.SheetNames).toEqual(["Transfer"]);
   const transferRows = XLSX.utils.sheet_to_json(workbook.Sheets.Transfer, { header: 1 });
   expect(transferRows.flat()).toContain("Huli Huli Chicken");
-  const glRows = XLSX.utils.sheet_to_json(workbook.Sheets["G-L Reference"], { header: 1 });
-  expect(glRows.flat()).toContain("4111003");
-  expect(glRows.flat()).toContain("Not allocated — ingredient price index unavailable");
+  expect(transferRows.flat()).not.toContain("G/L Breakdown");
 
   await page.getByRole("button", { name: "Copy Transfer" }).click();
   await expect(page.getByLabel("Globally unique title")).toHaveValue("");
@@ -79,6 +86,10 @@ test("Transfer Tool creates, costs, saves, copies, searches, and exports a share
   await expect(page.getByRole("heading", { name: "Existing Transfer" })).toBeVisible();
   await page.getByRole("heading", { name: "Existing Transfer" }).locator("xpath=ancestor::article").getByRole("button", { name: "Copy" }).click();
   await expect(page.getByTestId("transfer-total")).toHaveText("$5.00");
+  await page.getByLabel("Globally unique title").fill("Legacy transfer sanitized");
+  await page.getByRole("button", { name: "Save Draft" }).click();
+  expect(writes).toHaveLength(2);
+  expect(writes[1].records[0].items[0]).not.toHaveProperty("glGroups");
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });

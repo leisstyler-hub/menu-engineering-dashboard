@@ -18,7 +18,7 @@ const today = () => {
 };
 
 const lineId = () => globalThis.crypto?.randomUUID?.() || `line-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-const blankLine = () => ({ lineId: lineId(), menu: "", catalogId: "", item: "", mrn: "", portion: "", itemWasteCost: null, quantity: 1, glGroups: [] });
+const blankLine = () => ({ lineId: lineId(), menu: "", catalogId: "", item: "", mrn: "", portion: "", itemWasteCost: null, quantity: 1 });
 const blankDraft = () => ({ recordId: "", title: "", departingUnit: "", receivingUnit: "", transferDate: today(), items: [blankLine()], createdAt: "" });
 
 function recordDate(record) {
@@ -33,7 +33,7 @@ function toDraft(record) {
     receivingUnit: record.receivingUnit || "",
     transferDate: record.transferDate || today(),
     createdAt: record.createdAt || "",
-    items: Array.isArray(record.items) && record.items.length ? record.items.map((item) => ({ ...item, lineId: lineId() })) : [blankLine()],
+    items: Array.isArray(record.items) && record.items.length ? record.items.map(({ glGroups: _ignoredGlGroups, ...item }) => ({ ...item, lineId: lineId() })) : [blankLine()],
   };
 }
 
@@ -98,7 +98,7 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
     items: current.items.map((line) => line.lineId === lineIdValue ? { ...line, ...patch } : line),
   }));
 
-  const chooseMenu = (line, menu) => updateLine(line.lineId, { menu, catalogId: "", item: "", mrn: "", portion: "", itemWasteCost: null, glGroups: [] });
+  const chooseMenu = (line, menu) => updateLine(line.lineId, { menu, catalogId: "", item: "", mrn: "", portion: "", itemWasteCost: null });
   const chooseItem = (line, catalogId) => {
     if (!costsReady) return;
     const selected = catalogById.get(catalogId);
@@ -109,8 +109,7 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
       mrn: selected.mrn,
       portion: selected.portion,
       itemWasteCost: selected.itemWasteCost,
-      glGroups: selected.glGroups,
-    } : { catalogId: "", item: "", mrn: "", portion: "", itemWasteCost: null, glGroups: [] });
+    } : { catalogId: "", item: "", mrn: "", portion: "", itemWasteCost: null });
     setErrors((current) => ({ ...current, items: undefined }));
   };
 
@@ -144,7 +143,7 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
     if (Object.keys(validation).length) return;
     setSaving(true);
     const now = new Date().toISOString();
-    const completeItems = draft.items.filter((item) => item.catalogId).map(({ lineId: _, ...item }) => ({ ...item, quantity: Number(item.quantity) }));
+    const completeItems = draft.items.filter((item) => item.catalogId).map(({ lineId: _, glGroups: _ignoredGlGroups, ...item }) => ({ ...item, quantity: Number(item.quantity) }));
     const recordId = draft.recordId || transferRecordId(draft.title);
     const record = {
       "Record ID": recordId,
@@ -205,7 +204,7 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
               </div>
               <h1 className="mt-2 text-3xl font-black md:text-5xl">Transfer Tool</h1>
               <p className="mt-3 max-w-4xl text-sm font-semibold leading-6 text-slate-600">
-                Build and save a reference transfer, then export it to Excel for separate entry in S4. Item + Waste Cost is live from the platform catalog; G/L codes are classification guidance and do not allocate dollars by ingredient.
+                Build and save a reference transfer, then export it to Excel for separate entry in S4. Item + Waste Cost is live from the platform catalog.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -266,15 +265,14 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
                       <Field label="Item"><select aria-label={`Mobile item ${index + 1}`} value={line.catalogId} disabled={!line.menu || !costsReady} onChange={(event) => chooseItem(line, event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 font-semibold disabled:bg-slate-100"><option value="">{costsReady ? "Select item" : "Waiting for live costs"}</option>{choices.map((item) => <option key={item.id} value={item.id}>{item.item}{item.mrn ? ` · ${item.mrn}` : ""}{item.portion ? ` · ${item.portion}` : ""}</option>)}</select></Field>
                       <div className="grid grid-cols-2 gap-3"><div><p className="text-xs font-black uppercase text-slate-500">Item + Waste Cost</p><p className="mt-1 text-lg font-black">{line.itemWasteCost == null ? "Unavailable" : money(line.itemWasteCost)}</p></div><Field label="Item count"><input aria-label={`Mobile item count ${index + 1}`} type="number" min="1" step="1" value={line.quantity} onChange={(event) => updateLine(line.lineId, { quantity: event.target.value })} className="w-full rounded-lg border border-slate-300 px-3 py-2 font-semibold" /></Field></div>
                       <p className="text-sm font-black text-emerald-700">Line value {Number.isFinite(lineValue) ? money(lineValue) : "—"}</p>
-                      <GlBreakdown groups={line.glGroups} selected={Boolean(line.catalogId)} />
                     </article>
                   );
                 })}
               </div>
               <div className="hidden max-w-full overflow-x-auto md:block">
-                <table className="min-w-[1080px] w-full text-left text-sm">
+                <table className="min-w-[780px] w-full text-left text-sm">
                   <thead className="bg-slate-950 text-white">
-                    <tr><th className="p-3">Menu</th><th className="p-3">Item</th><th className="p-3">Item + Waste Cost</th><th className="p-3">Item Count</th><th className="p-3">G/L Breakdown</th><th className="p-3"><span className="sr-only">Remove</span></th></tr>
+                    <tr><th className="p-3">Menu</th><th className="p-3">Item</th><th className="p-3">Item + Waste Cost</th><th className="p-3">Item Count</th><th className="p-3"><span className="sr-only">Remove</span></th></tr>
                   </thead>
                   <tbody>
                     {draft.items.map((line, index) => {
@@ -286,7 +284,6 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
                           <td className="w-[290px] p-3"><select aria-label={`Item ${index + 1}`} value={line.catalogId} disabled={!line.menu || !costsReady} onChange={(event) => chooseItem(line, event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 font-semibold disabled:bg-slate-100"><option value="">{costsReady ? "Select item" : "Waiting for live costs"}</option>{choices.map((item) => <option key={item.id} value={item.id}>{item.item}{item.mrn ? ` · ${item.mrn}` : ""}{item.portion ? ` · ${item.portion}` : ""}</option>)}</select>{line.catalogId && <p className="mt-2 text-xs font-semibold text-slate-500">MRN {line.mrn || "unavailable"} · {line.portion || "portion unavailable"}</p>}</td>
                           <td className="w-[150px] p-3"><p className="text-lg font-black">{line.itemWasteCost == null ? "Unavailable" : money(line.itemWasteCost)}</p><p className="mt-1 text-xs font-semibold text-slate-500">snapshotted on save</p></td>
                           <td className="w-[150px] p-3"><input aria-label={`Item count ${index + 1}`} type="number" min="1" step="1" value={line.quantity} onChange={(event) => updateLine(line.lineId, { quantity: event.target.value })} className="w-24 rounded-lg border border-slate-300 px-3 py-2 font-semibold" /><p className="mt-2 text-xs font-black text-emerald-700">Line value {Number.isFinite(lineValue) ? money(lineValue) : "—"}</p></td>
-                          <td className="min-w-[300px] p-3"><GlBreakdown groups={line.glGroups} selected={Boolean(line.catalogId)} /></td>
                           <td className="p-3"><button type="button" aria-label={`Remove item ${index + 1}`} onClick={() => setDraft((current) => ({ ...current, items: current.items.length === 1 ? [blankLine()] : current.items.filter((item) => item.lineId !== line.lineId) }))} className="rounded-lg border border-rose-200 bg-rose-50 p-2 text-rose-700 hover:bg-rose-100"><Trash2 size={16} /></button></td>
                         </tr>
                       );
@@ -295,7 +292,7 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
                 </table>
               </div>
               <div className="flex flex-col gap-2 border-t border-slate-200 bg-slate-50 p-5 sm:flex-row sm:items-end sm:justify-between">
-                <p className="max-w-2xl text-xs font-semibold leading-5 text-slate-500">G/L categories come from Alex’s reviewed mapping. The tool intentionally does not divide line value among categories until an ingredient price index exists.</p>
+                <p className="max-w-2xl text-xs font-semibold leading-5 text-slate-500">Each line uses the current Item + Waste Cost verified from the Menu Library.</p>
                 <div className="text-right"><p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Transfer value</p><p data-testid="transfer-total" className="text-3xl font-black">{money(transferTotal(draft.items))}</p></div>
               </div>
             </section>
@@ -333,10 +330,4 @@ function Field({ label, error, children }) {
 
 function UnitField({ label, value, onChange, error }) {
   return <Field label={label} error={error}><select aria-label={label} value={value} onChange={(event) => onChange(event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-semibold"><option value="">Choose unit</option>{Object.entries(CAFE_UNITS.reduce((groups, unit) => ({ ...groups, [unit.district]: [...(groups[unit.district] || []), unit.cafe] }), {})).map(([district, cafes]) => <optgroup key={district} label={district}>{cafes.map((cafe) => <option key={cafe} value={cafe}>{cafe}</option>)}</optgroup>)}</select></Field>;
-}
-
-function GlBreakdown({ groups = [], selected }) {
-  if (!selected) return <p className="text-sm font-semibold text-slate-400">Select an item</p>;
-  if (!groups.length) return <p className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs font-bold text-slate-600">No mapped G/L beyond excluded water/ice.</p>;
-  return <div className="space-y-2">{groups.map((group) => <details key={`${group.code}-${group.category}`} className="rounded-lg border border-sky-200 bg-sky-50 p-2"><summary className="cursor-pointer text-xs font-black text-sky-950">{group.code} · {group.category} · {group.ingredients.length} ingredient{group.ingredients.length === 1 ? "" : "s"}</summary><p className="mt-2 text-xs font-semibold leading-5 text-slate-600">{group.ingredients.join(", ")}</p></details>)}</div>;
 }
