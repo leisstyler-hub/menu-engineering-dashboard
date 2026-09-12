@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ArrowRight, ArrowRightLeft, BarChart3, BookOpen, CalendarRange, ClipboardCheck, Database, FileSpreadsheet, FolderKanban, Home, ListChecks, PieChart, Settings, Shuffle, Smartphone, Sparkles, TrendingUp, Utensils, Wrench } from "lucide-react";
+import { ArrowRight, ArrowRightLeft, BarChart3, BookOpen, CalendarRange, ChevronDown, ClipboardCheck, Database, FileSpreadsheet, FolderKanban, Home, ListChecks, PieChart, Settings, Shuffle, Smartphone, Sparkles, TrendingUp, Utensils, Wrench } from "lucide-react";
 
 import CHANGELOG_TEXT from "../../CHANGELOG.md?raw";
 import DASHBOARD_SUMMARY from "../data/dashboardSummary.json";
@@ -413,31 +413,8 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
           </div>
         </header>
 
-        <main className="grid grid-cols-1 gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
-          <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Operations Console</p>
-            <h2 className="mt-2 text-3xl font-bold">Plan, price, and audit menus from one workspace.</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-600">
-              Built for quick chef decisions: choose the workstream, check status, and move straight into the active tool.
-            </p>
-            <div className="mt-5 grid grid-cols-2 gap-3">
-              <Metric label="Tools" value="10" />
-              <Metric label="Menu items" value={totalItems.toLocaleString()} />
-              <Metric label="Menus" value={menuCount} />
-              <Metric label="Costed items" value={costedItems.toLocaleString()} />
-            </div>
-            <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4">
-              <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
-                <Database size={16} />
-                MenuWorks dataset
-              </div>
-              <p className="mt-2 text-sm text-slate-600">
-                Item details, pricing, allergens, and review warnings are surfaced where they affect selections.
-              </p>
-            </div>
-          </aside>
-
-          <section className="space-y-5">
+        <main className="flex flex-col gap-4">
+          <section className="space-y-4">
             <section className="space-y-5">
               {toolSections.map((section) => (
                 <section key={section.title} data-testid="landing-tool-section" className="space-y-3">
@@ -445,7 +422,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
                     <h2 className="text-2xl font-black tracking-normal text-slate-950">{section.title}</h2>
                     <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">{section.tools.length} tools</span>
                   </div>
-                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+                  <div className={`grid grid-cols-2 gap-3 md:grid-cols-3 ${section.tools.length === 4 ? "xl:grid-cols-4" : "xl:grid-cols-3 2xl:grid-cols-6"}`}>
                     {section.tools.map((tool) => (
                       <ToolCard key={tool.title} {...tool} />
                     ))}
@@ -454,6 +431,14 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
               ))}
             </section>
 
+            <LandingAccordion
+              testId="platform-intelligence"
+              icon={BarChart3}
+              eyebrow="Metrics, trends, and opportunities"
+              title="Platform Intelligence"
+              description="Operational analytics at a glance"
+            >
+            <div className="space-y-4">
             <section className="grid grid-cols-1 gap-4 xl:grid-cols-[1.1fr_0.9fr]">
               <DashboardPanel icon={PieChart} eyebrow="Menu Intelligence" title="Diet Mix">
                 <DietDonut counts={dietCounts} total={totalItems} />
@@ -561,7 +546,41 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
                 ))}
               </div>
             </section>
+            </div>
+            </LandingAccordion>
           </section>
+
+          <LandingAccordion
+            testId="operations-console"
+            icon={Settings}
+            eyebrow="Workspace summary"
+            title="Operations Console"
+            description="Tool counts and source-data status"
+          >
+            <div className="grid gap-4 xl:grid-cols-[1fr_1.2fr]">
+              <div>
+                <h3 className="text-2xl font-bold">Plan, price, and audit menus from one workspace.</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Built for quick chef decisions: choose the workstream, check status, and move straight into the active tool.
+                </p>
+                <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+                  <Metric label="Tools" value={String(tools.length)} />
+                  <Metric label="Menu items" value={totalItems.toLocaleString()} />
+                  <Metric label="Menus" value={menuCount} />
+                  <Metric label="Costed items" value={costedItems.toLocaleString()} />
+                </div>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                  <Database size={16} />
+                  MenuWorks dataset
+                </div>
+                <p className="mt-2 text-sm text-slate-600">
+                  Item details, pricing, allergens, and review warnings are surfaced where they affect selections.
+                </p>
+              </div>
+            </div>
+          </LandingAccordion>
         </main>
       </div>
     </div>
@@ -624,17 +643,11 @@ function MobileLanding({
       </header>
 
       <main className="mobile-app-content">
-        <section className="mobile-kpi-grid" aria-label="Platform summary">
-          {metricTiles.map((tile) => (
-            <MobileMetricTile key={tile.label} {...tile} />
-          ))}
-        </section>
-
         <section className="space-y-5" aria-label="Tools">
           {(toolSections?.length ? toolSections : [{ title: "Tools", tools }]).map((section) => (
             <section key={section.title} data-testid="landing-mobile-tool-section" className="space-y-3">
               <h2 className="text-xl font-black text-slate-950">{section.title}</h2>
-              <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
                 {section.tools.map((tool) => (
                   <MobileToolCard key={tool.title} {...tool} />
                 ))}
@@ -643,7 +656,15 @@ function MobileLanding({
           ))}
         </section>
 
-        <section className="mobile-data-stack" aria-label="Platform intelligence">
+        <LandingAccordion
+          testId="mobile-platform-intelligence"
+          icon={BarChart3}
+          eyebrow="Metrics and trends"
+          title="Platform Intelligence"
+          description="Operational analytics at a glance"
+          compact
+        >
+        <section className="mobile-data-stack" aria-label="Platform intelligence details">
           <MobileDataPanel icon={Database} eyebrow="Trust Layer" title="Data Confidence">
             <MobileProgressRow label="Recipe cost" value={costCoverage} tone="emerald" />
             <MobileProgressRow label="Price-required" value={priceCoverage} tone="sky" />
@@ -699,6 +720,33 @@ function MobileLanding({
             </div>
           </MobileDataPanel>
         </section>
+        </LandingAccordion>
+
+        <LandingAccordion
+          testId="mobile-operations-console"
+          icon={Settings}
+          eyebrow="Workspace summary"
+          title="Operations Console"
+          description="Tool counts and source-data status"
+          compact
+        >
+          <section className="space-y-3" aria-label="Operations console details">
+            <div className="mobile-kpi-grid">
+              {metricTiles.map((tile) => (
+                <MobileMetricTile key={tile.label} {...tile} />
+              ))}
+            </div>
+            <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+              <div className="flex items-center gap-2 text-sm font-black text-slate-950">
+                <Database size={16} />
+                MenuWorks dataset
+              </div>
+              <p className="mt-2 text-xs font-semibold leading-5 text-slate-600">
+                Item details, pricing, allergens, and review warnings are surfaced where they affect selections.
+              </p>
+            </div>
+          </section>
+        </LandingAccordion>
       </main>
 
       <nav className="mobile-bottom-nav" aria-label="Mobile tools navigation">
@@ -715,6 +763,32 @@ function MobileLanding({
         ))}
       </nav>
     </div>
+  );
+}
+
+function LandingAccordion({ testId, icon: Icon, eyebrow, title, description, compact = false, className = "", children }) {
+  return (
+    <details
+      data-testid={testId}
+      className={`group rounded-lg border border-slate-200 bg-white shadow-sm ${className}`}
+    >
+      <summary className={`flex cursor-pointer list-none items-center justify-between gap-3 rounded-lg outline-none transition hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 ${compact ? "p-4" : "px-5 py-4"}`}>
+        <div className="flex min-w-0 items-center gap-3">
+          <span className={`flex shrink-0 items-center justify-center rounded-lg border border-sky-200 bg-sky-50 text-sky-800 ${compact ? "h-9 w-9" : "h-10 w-10"}`}>
+            <Icon size={compact ? 17 : 19} />
+          </span>
+          <span className="min-w-0">
+            <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">{eyebrow}</span>
+            <span className={`mt-0.5 block font-black text-slate-950 ${compact ? "text-base" : "text-lg"}`}>{title}</span>
+            <span className="mt-0.5 block text-xs font-semibold text-slate-500">{description}</span>
+          </span>
+        </div>
+        <ChevronDown aria-hidden="true" className="shrink-0 text-slate-600 transition-transform duration-200 group-open:rotate-180" size={20} />
+      </summary>
+      <div className={`border-t border-slate-200 ${compact ? "p-3" : "p-5"}`}>
+        {children}
+      </div>
+    </details>
   );
 }
 
@@ -794,22 +868,20 @@ function MobileToolCard({ title, eyebrow, description, action, onOpen, icon: Ico
 
   return (
     <button type="button" onClick={onOpen} data-tool-title={title} className="mobile-tool-card">
-      <div className={`mobile-tool-icon ${logo ? "mobile-tool-logo-icon" : ""} ${tones[tone]}`}>
-        {logo ? <img src={logo} alt={`${title} logo`} className="tool-card-logo" /> : <Icon size={21} />}
+      <div className="flex items-start justify-between gap-2">
+        <div className={`mobile-tool-icon ${logo ? "mobile-tool-logo-icon" : ""} ${tones[tone]}`}>
+          {logo ? <img src={logo} alt={`${title} logo`} className="tool-card-logo" /> : <Icon size={20} />}
+        </div>
+        <span className="mobile-status-chip">{chipLabels[title] || eyebrow}</span>
       </div>
       <div className="min-w-0 flex-1 text-left">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">{meta}</p>
-            <h2 className="mt-1 truncate text-lg font-black text-slate-950">{title}</h2>
-          </div>
-          <span className="mobile-status-chip">{chipLabels[title] || eyebrow}</span>
-        </div>
-        <p className="mt-2 line-clamp-2 text-sm font-semibold leading-5 text-slate-500">{description}</p>
-        <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-sm font-black text-slate-950">
-          <span>{action}</span>
-          <ArrowRight size={18} />
-        </div>
+        <p className="text-[9px] font-black uppercase tracking-[0.12em] text-slate-400">{meta}</p>
+        <h2 className="mt-1 line-clamp-2 text-sm font-black leading-5 text-slate-950">{title}</h2>
+        <p className="mt-2 line-clamp-3 text-xs font-semibold leading-4 text-slate-500">{description}</p>
+      </div>
+      <div className="flex items-center justify-end border-t border-slate-100 pt-2 text-slate-950">
+        <span className="sr-only">{action}</span>
+        <ArrowRight size={16} />
       </div>
     </button>
   );
@@ -1117,21 +1189,21 @@ function ToolCard({ title, eyebrow, description, action, onOpen, icon: Icon, ton
   };
 
   return (
-    <article data-tool-title={title} className="flex min-h-[292px] flex-col justify-between rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <article data-tool-title={title} className="flex min-h-[220px] min-w-0 flex-col justify-between overflow-hidden rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md">
       <div>
         <div className="flex items-start justify-between gap-3">
-          <div className={`flex h-11 ${logo ? "w-28 px-2" : "w-11"} items-center justify-center rounded-lg border ${tones[tone]}`}>
-            {logo ? <img src={logo} alt={`${title} logo`} className="tool-card-logo" /> : <Icon size={21} />}
+          <div className={`flex h-10 ${logo ? "w-24 px-2" : "w-10"} shrink-0 items-center justify-center rounded-lg border ${tones[tone]}`}>
+            {logo ? <img src={logo} alt={`${title} logo`} className="tool-card-logo" /> : <Icon size={20} />}
           </div>
-          <span className={`rounded-full border px-3 py-1 text-xs font-bold ${tones[tone]}`}>{eyebrow}</span>
+          <span className={`max-w-[8rem] rounded-full border px-2.5 py-1 text-[10px] font-black leading-none ${tones[tone]}`}>{eyebrow}</span>
         </div>
-        <p className="mt-6 text-xs font-bold uppercase tracking-[0.16em] text-slate-500">{meta}</p>
-        <h2 className="mt-2 text-2xl font-bold tracking-normal">{title}</h2>
-        <p className="mt-3 text-sm leading-6 text-slate-600">{description}</p>
+        <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">{meta}</p>
+        <h2 className="mt-1.5 text-xl font-bold leading-6 tracking-normal">{title}</h2>
+        <p className="mt-2 line-clamp-3 text-sm leading-5 text-slate-600">{description}</p>
       </div>
       <button
         onClick={onOpen}
-        className="mt-6 inline-flex w-full items-center justify-between rounded-lg bg-slate-950 px-4 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+        className="mt-4 inline-flex w-full items-center justify-between rounded-lg bg-slate-950 px-3 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
       >
         {action}
         <ArrowRight size={18} />

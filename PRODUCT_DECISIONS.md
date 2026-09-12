@@ -10,6 +10,11 @@ When a mission produces an approved product decision, Scribe adds an entry below
 
 ## Decisions
 
+### 2026-09-11 - Compact Grid platform home
+Alex selected Option A, `Compact Grid`, for the Culinary Tools Platform home page. All existing tools remain directly accessible: six cards under Chef Tools and four cards under Programming & Auditing. Desktop uses a compact full-width grid; mobile uses a matching two-column compact grid. Platform Intelligence and Operations Console move beneath the tools, remain collapsed by default, and reveal their existing information when activated. Existing tool routes and mobile navigation remain intact. Requesting Admin / Admin of Record: Alex Neuse.
+
+Rejected alternatives: Option B Command Center; Option C Priority Rows; a single-column mobile tool list; permanently expanded analytics.
+
 ### 2026-09-10 - Shared draft Transfer Tool with item-level cost
 Alex approved replacing the earlier Transfer Tool concept with a shared draft builder on Platform Home. A transfer has a globally unique title, departing unit, receiving unit, date, and any number of menu-scoped item lines. Each line uses the Culinary Platform’s current Item + Waste Cost, accepts an item count, and calculates line value. All users may see and search all saved transfers. A saved transfer can be copied into a new draft whose title must be unique and whose item costs refresh from the current catalog. Excel export is required; the tool is reference-only and does not submit to S4.
 

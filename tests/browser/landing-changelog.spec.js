@@ -7,6 +7,10 @@ test("home changelog shows compact release summaries that stay inside the card",
   await page.setViewportSize({ width: 1440, height: 1100 });
   await page.goto("/");
 
+  const platformIntelligence = page.getByTestId("platform-intelligence");
+  await expect(platformIntelligence).not.toHaveAttribute("open", "");
+  await platformIntelligence.locator("summary").click();
+
   const changelogPanel = page
     .getByRole("heading", { name: "Latest Changelog" })
     .locator("xpath=ancestor::section[1]");
@@ -15,7 +19,7 @@ test("home changelog shows compact release summaries that stay inside the card",
   await expect(page.getByText(/public production bundle contains version/)).toHaveCount(0);
 
   const firstSummary = changelogPanel.getByTestId("landing-changelog-summary").first();
-  await expect(firstSummary).toContainText(/Menu Cross Utilization|Changelog/i);
+  await expect(firstSummary).toContainText(/Compact Grid/i);
   const summaryText = (await firstSummary.innerText()).trim();
   expect(summaryText.length).toBeLessThanOrEqual(150);
 
