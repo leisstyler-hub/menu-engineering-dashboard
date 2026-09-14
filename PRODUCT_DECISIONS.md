@@ -10,6 +10,11 @@ When a mission produces an approved product decision, Scribe adds an entry below
 
 ## Decisions
 
+### 2026-09-14 - Compass One Culinary branding and entrance
+Tyler approved the generated Compass One Culinary logo concept and requested using it for the mobile home-screen app icon and the website entrance. The approved direction is modern, professional, smooth, and understated: briefly show the centered logo, move two fine horizontal lines inward to mask it away, and immediately separate them to reveal the website. The complete entrance should last 1-1.2 seconds, run once per browser session, and skip reduced-motion preferences. Preserve the lowercase wordmark, gold circle, white lettering, and spaced CULINARY subtitle; adapt the composition for square app icons without distortion. The implementation uses a clean SVG recreation of the approved concept. Tyler explicitly authorized execution and deployment in the Codex task: "ok i actually want you to execute this deploy - go". Requesting Admin / Admin of Record / Release-Authorized Admin: Tyler.
+
+Rejected alternatives: retro television styling, static, sound, harsh flashing, dramatic glow, a pulse or pause at the center, and a longer 1.6-1.8 second entrance. No backend or operational data changes are part of this approval.
+
 ### 2026-09-11 - Compact Grid platform home
 Alex selected Option A, `Compact Grid`, for the Culinary Tools Platform home page. All existing tools remain directly accessible: six cards under Chef Tools and four cards under Programming & Auditing. Desktop uses a compact full-width grid; mobile uses a matching two-column compact grid. Platform Intelligence and Operations Console move beneath the tools, remain collapsed by default, and reveal their existing information when activated. Existing tool routes and mobile navigation remain intact. Requesting Admin / Admin of Record: Alex Neuse.
 

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Compass One Culinary">
+  <rect width="512" height="512" fill="#151719"/>
+  <g font-family="Arial, Helvetica, sans-serif" text-anchor="middle">
+    <text x="256" y="156" fill="#fafafa" font-size="82" font-weight="600" letter-spacing="-3">compass</text>
+    <circle cx="256" cy="268" r="93" fill="#b99b55"/>
+    <text x="253" y="302" fill="#fff" font-size="107" letter-spacing="-3">one</text>
+    <text x="261" y="402" fill="#b99b55" font-size="29" letter-spacing="9">CULINARY</text>
+  </g>
+</svg>

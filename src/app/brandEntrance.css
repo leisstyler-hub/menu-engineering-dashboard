@@ -1,0 +1,51 @@
+.brand-entrance {
+  --brand-ink: #151719;
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  overflow: hidden;
+  pointer-events: none;
+  contain: strict;
+}
+
+.brand-entrance__backdrop,
+.brand-entrance__logo { position: absolute; inset: 0; }
+.brand-entrance__backdrop { background: var(--brand-ink); }
+.brand-entrance__logo { display: grid; place-items: center; }
+.brand-entrance__logo img { width: min(78vw, 580px); height: auto; opacity: 0; }
+.brand-entrance__panel {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  background: var(--brand-ink);
+  transform: scaleY(0);
+}
+.brand-entrance__panel--top { top: 0; transform-origin: top; }
+.brand-entrance__panel--bottom { bottom: 0; transform-origin: bottom; }
+.brand-entrance__line {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: #c3ad7c;
+}
+.brand-entrance__line--top { top: 0; }
+.brand-entrance__line--bottom { bottom: 0; }
+.brand-entrance--ready .brand-entrance__panel { animation: brand-panels 1200ms cubic-bezier(.76, 0, .24, 1) both; }
+.brand-entrance--ready .brand-entrance__backdrop,
+.brand-entrance--ready .brand-entrance__logo { animation: brand-hide-center 1200ms linear both; }
+.brand-entrance--ready .brand-entrance__logo img { animation: brand-logo-in 1200ms ease-out both; }
+.brand-entrance--ready .brand-entrance__line--top { animation: brand-line-top 1200ms cubic-bezier(.76, 0, .24, 1) both; }
+.brand-entrance--ready .brand-entrance__line--bottom { animation: brand-line-bottom 1200ms cubic-bezier(.76, 0, .24, 1) both; }
+
+@keyframes brand-logo-in { 0% { opacity: 0; } 16%, 100% { opacity: 1; } }
+@keyframes brand-panels { 0%, 22%, 100% { transform: scaleY(0); } 52% { transform: scaleY(1); } }
+@keyframes brand-hide-center { 0%, 51.99% { visibility: visible; } 52%, 100% { visibility: hidden; } }
+@keyframes brand-line-top { 0%, 22%, 100% { transform: translateY(0); } 52% { transform: translateY(calc(50vh - .5px)); } }
+@keyframes brand-line-bottom { 0%, 22%, 100% { transform: translateY(0); } 52% { transform: translateY(calc(-50vh + .5px)); } }
+@supports (height: 100dvh) {
+  @keyframes brand-line-top { 0%, 22%, 100% { transform: translateY(0); } 52% { transform: translateY(calc(50dvh - .5px)); } }
+  @keyframes brand-line-bottom { 0%, 22%, 100% { transform: translateY(0); } 52% { transform: translateY(calc(-50dvh + .5px)); } }
+}
+@media (prefers-reduced-motion: reduce) { .brand-entrance { display: none; } }
