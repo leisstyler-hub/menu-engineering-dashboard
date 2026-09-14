@@ -10,6 +10,9 @@ When a mission produces an approved product decision, Scribe adds an entry below
 
 ## Decisions
 
+### 2026-09-14 - Installed-mobile branding correction
+After sharing an Android startup screenshot, Tyler requested removing the stacked logo, using the approved horizontal logo for the phone icon, and smoothing mobile startup. This supersedes the earlier square stacked app-icon interpretation: icon generation must derive the same unchanged horizontal artwork into the square canvas without rearranging the wordmark. Installed-app mode should avoid presenting another website logo after the operating system's native splash and instead use a short outward reveal. Normal browser entrance remains unchanged. Native splash rendering belongs to the browser/OS; browser emulation cannot establish physical-device startup behavior. Requesting Admin / Admin of Record / Release-Authorized Admin: Tyler. This correction and deployment remain within the explicitly authorized branding task.
+
 ### 2026-09-14 - Compass One Culinary branding and entrance
 Tyler approved the generated Compass One Culinary logo concept and requested using it for the mobile home-screen app icon and the website entrance. The approved direction is modern, professional, smooth, and understated: briefly show the centered logo, move two fine horizontal lines inward to mask it away, and immediately separate them to reveal the website. The complete entrance should last 1-1.2 seconds, run once per browser session, and skip reduced-motion preferences. Preserve the lowercase wordmark, gold circle, white lettering, and spaced CULINARY subtitle; adapt the composition for square app icons without distortion. The implementation uses a clean SVG recreation of the approved concept. Tyler explicitly authorized execution and deployment in the Codex task: "ok i actually want you to execute this deploy - go". Requesting Admin / Admin of Record / Release-Authorized Admin: Tyler.
 

@@ -155,3 +155,76 @@ test("mobile app and browser icon references decode at their declared sizes", as
     expect(icon.src).toContain("v=");
   }
 });
+
+for (const installedMode of ["standalone", "minimal-ui", "ios"]) {
+  test(`installed launch ${installedMode} reveals tools without a second logo`, async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.addInitScript((mode) => {
+      if (mode === "ios") Object.defineProperty(navigator, "standalone", { value: true });
+      else {
+        const original = window.matchMedia.bind(window);
+        window.matchMedia = query => {
+          const result = original(query);
+          if (query.includes(`display-mode: ${mode}`)) Object.defineProperty(result, "matches", { value: true });
+          return result;
+        };
+      }
+    }, installedMode);
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    const entrance = page.getByTestId("brand-entrance");
+    await expect(entrance).toBeVisible();
+    expect(await entrance.locator("img, .brand-entrance__logo, .brand-entrance__backdrop").count()).toBe(0);
+    const positions = await page.evaluate(() => {
+      const animations = document.getAnimations();
+      animations.forEach(animation => { animation.pause(); animation.currentTime = 0; });
+      const top = document.querySelector('.brand-entrance__line--top');
+      const bottom = document.querySelector('.brand-entrance__line--bottom');
+      const start = { top: top.getBoundingClientRect().y, bottom: bottom.getBoundingClientRect().y };
+      animations.forEach(animation => { animation.currentTime = 300; });
+      const mid = { top: top.getBoundingClientRect().y, bottom: bottom.getBoundingClientRect().y };
+      const durations = animations.map(animation => animation.effect.getTiming().duration);
+      animations.forEach(animation => animation.play());
+      return { start, mid, durations };
+    });
+    expect(Math.abs(positions.start.top - positions.start.bottom)).toBeLessThan(1);
+    expect(positions.mid.top).toBeLessThan(positions.start.top);
+    expect(positions.mid.bottom).toBeGreaterThan(positions.start.bottom);
+    expect(positions.durations.length).toBeGreaterThan(0);
+    expect(positions.durations.every(duration => duration === 600)).toBe(true);
+    await expect(entrance).toHaveCount(0, { timeout: 1200 });
+    await expect(page.getByTestId("mobile-platform-intelligence")).toBeVisible();
+    await page.reload();
+    await expect(entrance).toHaveCount(0);
+  });
+}
+
+
+test("installed app icon preserves the approved horizontal logo composition", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  const comparison = await page.evaluate(async () => {
+    async function load(src) { const image = new Image(); image.src = src; await image.decode(); return image; }
+    const [source, actual] = await Promise.all([load('/brand/compass-one-culinary.svg'), load('/android-chrome-512x512.png')]);
+    const canvas = document.createElement('canvas'); canvas.width = canvas.height = 512;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    context.fillStyle = '#151719'; context.fillRect(0, 0, 512, 512);
+    // The approved horizontal artwork is centered with 9% side padding; never restack its words.
+    const width = 420;
+    const height = width * source.naturalHeight / source.naturalWidth;
+    context.drawImage(source, (512 - width) / 2, (512 - height) / 2, width, height);
+    const expected = context.getImageData(0, 0, 512, 512).data;
+    context.clearRect(0, 0, 512, 512); context.drawImage(actual, 0, 0);
+    const rendered = context.getImageData(0, 0, 512, 512).data;
+    let difference = 0; let minX = 512, maxX = 0, minY = 512, maxY = 0;
+    for (let pixel = 0; pixel < rendered.length; pixel += 4) {
+      for (let channel = 0; channel < 3; channel++) difference += Math.abs(expected[pixel + channel] - rendered[pixel + channel]);
+      if (rendered[pixel] > 100 && rendered[pixel + 1] > 80) {
+        const x = (pixel / 4) % 512, y = Math.floor(pixel / 4 / 512);
+        minX = Math.min(minX, x); maxX = Math.max(maxX, x); minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+      }
+    }
+    return { meanDifference: difference / (512 * 512 * 3), artworkAspect: (maxX - minX) / (maxY - minY) };
+  });
+  expect(comparison.artworkAspect).toBeGreaterThan(2.7);
+  expect(comparison.meanDifference).toBeLessThan(1.5);
+});

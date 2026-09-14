@@ -7,7 +7,14 @@ const root = resolve(import.meta.dirname, "..");
 const browser = await chromium.launch();
 try {
   const page = await browser.newPage({ deviceScaleFactor: 1 });
-  const icon = await readFile(resolve(root, "public/brand/compass-one-culinary-icon.svg"), "utf8");
+  // One approved lockup for both web and OS launch surfaces. Do not rearrange its words.
+  const logo = await readFile(resolve(root, "public/brand/compass-one-culinary.svg"), "utf8");
+  const artwork = logo.replace(/^<svg\b[^>]*>/, "").replace(/<\/svg>\s*$/, "").trim();
+  const icon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Compass One Culinary">
+  <rect width="512" height="512" fill="#151719"/>
+  <g transform="translate(46 186.7) scale(.42)">${artwork}</g>
+</svg>\n`;
+  await writeFile(resolve(root, "public/brand/compass-one-culinary-icon.svg"), icon);
   for (const [size, filename] of [[180, "apple-touch-icon.png"], [192, "android-chrome-192x192.png"], [512, "android-chrome-512x512.png"]]) {
     await page.setViewportSize({ width: size, height: size });
     await page.setContent(`<style>body{margin:0}svg{display:block;width:100vw;height:100vh}</style>${icon}`);

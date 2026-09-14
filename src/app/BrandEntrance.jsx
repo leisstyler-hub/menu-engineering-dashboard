@@ -3,6 +3,12 @@ import "./brandEntrance.css";
 
 const SESSION_KEY = "culinaryToolsBrandEntranceSeen";
 
+function isInstalledApp() {
+  return window.matchMedia("(display-mode: standalone)").matches
+    || window.matchMedia("(display-mode: minimal-ui)").matches
+    || window.navigator.standalone === true;
+}
+
 function shouldShowEntrance() {
   try {
     return !window.matchMedia("(prefers-reduced-motion: reduce)").matches
@@ -14,8 +20,9 @@ function shouldShowEntrance() {
 }
 
 export default function BrandEntrance() {
+  const [installed] = useState(isInstalledApp);
   const [visible, setVisible] = useState(shouldShowEntrance);
-  const [ready, setReady] = useState(false);
+  const [ready, setReady] = useState(installed);
 
   useEffect(() => {
     if (!visible) return undefined;
@@ -45,18 +52,21 @@ export default function BrandEntrance() {
 
   return (
     <div
-      className={`brand-entrance${ready ? " brand-entrance--ready" : ""}`}
+      className={`brand-entrance${ready ? " brand-entrance--ready" : ""}${installed ? " brand-entrance--installed" : ""}`}
       data-testid="brand-entrance"
       aria-hidden="true"
       onAnimationEnd={(event) => {
-        if (event.animationName === "brand-line-top") setVisible(false);
+        if (event.animationName === "brand-line-top" || event.animationName === "brand-line-top-reveal") setVisible(false);
       }}
     >
-      <div className="brand-entrance__backdrop" />
-      <div className="brand-entrance__logo">
-        <img src="/brand/compass-one-culinary.svg" alt="" width="1000" height="330"
-          fetchPriority="high" decoding="sync" onLoad={() => setReady(true)} onError={() => setVisible(false)} />
-      </div>
+      {/* Installed apps already show the OS logo splash. A second web logo overlaps it. */}
+      {!installed && <>
+        <div className="brand-entrance__backdrop" />
+        <div className="brand-entrance__logo">
+          <img src="/brand/compass-one-culinary.svg" alt="" width="1000" height="330"
+            fetchPriority="high" decoding="sync" onLoad={() => setReady(true)} onError={() => setVisible(false)} />
+        </div>
+      </>}
       <div className="brand-entrance__panel brand-entrance__panel--top" />
       <div className="brand-entrance__panel brand-entrance__panel--bottom" />
       <div className="brand-entrance__line brand-entrance__line--top" />

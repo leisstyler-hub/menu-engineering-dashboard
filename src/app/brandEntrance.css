@@ -39,13 +39,23 @@
 .brand-entrance--ready .brand-entrance__line--top { animation: brand-line-top 1200ms cubic-bezier(.76, 0, .24, 1) both; }
 .brand-entrance--ready .brand-entrance__line--bottom { animation: brand-line-bottom 1200ms cubic-bezier(.76, 0, .24, 1) both; }
 
+/* The OS splash provides the logo in installed mode; only reveal the website here. */
+.brand-entrance--installed .brand-entrance__panel { animation: brand-panels-reveal 600ms cubic-bezier(.76, 0, .24, 1) both; }
+.brand-entrance--installed .brand-entrance__line--top { animation: brand-line-top-reveal 600ms cubic-bezier(.76, 0, .24, 1) both; }
+.brand-entrance--installed .brand-entrance__line--bottom { animation: brand-line-bottom-reveal 600ms cubic-bezier(.76, 0, .24, 1) both; }
+
 @keyframes brand-logo-in { 0% { opacity: 0; } 16%, 100% { opacity: 1; } }
 @keyframes brand-panels { 0%, 22%, 100% { transform: scaleY(0); } 52% { transform: scaleY(1); } }
 @keyframes brand-hide-center { 0%, 51.99% { visibility: visible; } 52%, 100% { visibility: hidden; } }
 @keyframes brand-line-top { 0%, 22%, 100% { transform: translateY(0); } 52% { transform: translateY(calc(50vh - .5px)); } }
 @keyframes brand-line-bottom { 0%, 22%, 100% { transform: translateY(0); } 52% { transform: translateY(calc(-50vh + .5px)); } }
+@keyframes brand-panels-reveal { from { transform: scaleY(1); } to { transform: scaleY(0); } }
+@keyframes brand-line-top-reveal { from { transform: translateY(calc(50vh - .5px)); } to { transform: translateY(0); } }
+@keyframes brand-line-bottom-reveal { from { transform: translateY(calc(-50vh + .5px)); } to { transform: translateY(0); } }
 @supports (height: 100dvh) {
   @keyframes brand-line-top { 0%, 22%, 100% { transform: translateY(0); } 52% { transform: translateY(calc(50dvh - .5px)); } }
   @keyframes brand-line-bottom { 0%, 22%, 100% { transform: translateY(0); } 52% { transform: translateY(calc(-50dvh + .5px)); } }
+  @keyframes brand-line-top-reveal { from { transform: translateY(calc(50dvh - .5px)); } to { transform: translateY(0); } }
+  @keyframes brand-line-bottom-reveal { from { transform: translateY(calc(-50dvh + .5px)); } to { transform: translateY(0); } }
 }
 @media (prefers-reduced-motion: reduce) { .brand-entrance { display: none; } }
