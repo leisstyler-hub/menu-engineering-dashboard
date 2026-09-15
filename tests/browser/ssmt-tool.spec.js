@@ -29,6 +29,12 @@ test("SSMT opens behind passcode and separates pricing from menu building", asyn
   await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
   await expect(page.getByRole("heading", { name: /^Menu Selector$/ })).toBeVisible();
   await expect(page.getByText(/Loading current SSMT seed data/i)).toHaveCount(0, { timeout: 20_000 });
+  await expect(page.getByTestId("ssmt-phase-count-Culinary draft")).toContainText("Culinary draft");
+  await expect(page.getByTestId("ssmt-phase-count-Experience review")).toContainText("Experience review");
+  await expect(page.getByTestId("ssmt-phase-count-IT programming")).toContainText("IT programming");
+  await expect(page.getByTestId("ssmt-phase-count-IT complete")).toContainText("IT complete");
+  await expect(page.getByText(/Core\/Global IT complete/i)).toHaveCount(0);
+  await expect(page.getByText(/Needs completion/i).first()).toBeVisible();
   await page.getByLabel(/New menu name/i).fill("Smoke Test Promo Menu");
   await page.getByLabel(/New menu type/i).selectOption("Promotion");
   await page.getByRole("button", { name: /Create menu/i }).click();
@@ -37,6 +43,7 @@ test("SSMT opens behind passcode and separates pricing from menu building", asyn
   await expect(page.getByRole("button", { name: /Back to menu selection/i })).toBeVisible();
   await expect(page.getByRole("button", { name: /Pricing table/i })).toBeVisible();
   await expect(page.getByRole("button", { name: /Delete menu/i })).toBeVisible();
+  await expect(page.getByText(/Pending IT complete/i)).toHaveCount(0);
 
   await page.getByLabel(/Active start/i).fill("2026-09-01");
   await page.getByLabel(/Active end/i).fill("2026-09-30");
@@ -249,8 +256,8 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
   await expect(page.getByRole("columnheader", { name: "Calories" })).toBeVisible();
   const builderHeaderOrder = await page.getByRole("columnheader").allInnerTexts();
   expect(builderHeaderOrder.map((text) => text.toUpperCase())).toEqual([
-    "MOVE", "FIXY", "LABEL", "DESCRIPTION", "MRN", "PHOTO LINK", "CALORIES",
-    "SEA PRICE", "CATEGORY", "SECONDARY CATEGORY", "SCAN & PAY", "AREA PRICES", "ACTIONS",
+    "MOVE", "FIXY", "LABEL", "DESCRIPTION", "MRN", "CALORIES",
+    "SEA PRICE", "CATEGORY", "SECONDARY CATEGORY", "SCAN & PAY", "PHOTO LINK", "AREA PRICES", "ACTIONS",
   ]);
 
   const scanPayInput = page.getByLabel(/Scan and Pay UPC for/i).first();

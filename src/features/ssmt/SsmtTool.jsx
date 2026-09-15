@@ -757,6 +757,10 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const historicalCount = menus.filter((menu) => ["Thompson Hospitality", "Promotion"].includes(menu.type)).length;
   const flaggedMenus = menus.filter((menu) => menu.editSignal || (Array.isArray(menu.flags) && menu.flags.length));
   const hiddenMenuCount = menus.filter((menu) => menu.hidden || menuIsAutoHibernated(menu)).length;
+  const phaseCounts = ssmtData.workflowPhases.map((phase) => ({
+    phase,
+    count: visibleMenus.filter((menu) => menu.phase === phase).length,
+  }));
   const menuTypes = ssmtData.menuTypes?.length ? ssmtData.menuTypes : DEFAULT_MENU_TYPES;
   const showActiveDates = activeDatesRequired(selectedMenu.type);
   const selectedItemRows = (selectedMenu.items || []).filter((item) => item.recordType !== "divider");
@@ -1587,11 +1591,15 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                   IT Department: {flaggedMenus.length} menu{flaggedMenus.length === 1 ? " has" : "s have"} been flagged for edit.
                 </div>
               )}
-              <div className="mt-4 grid gap-2 text-xs font-bold text-slate-700 sm:grid-cols-4">
-                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"><span className="font-black text-slate-950">{downstreamReadyCount}</span> Core/Global IT complete</div>
-                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"><span className="font-black text-slate-950">{totalItemFlagCount || flaggedMenus.length}</span> item/menu flags</div>
-                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"><span className="font-black text-slate-950">{hiddenMenuCount}</span> hibernated/expired</div>
-                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"><span className="font-black text-slate-950">{visibleMenus.length}</span> visible menus</div>
+              <div className="mt-4 grid grid-cols-2 gap-1.5 text-[11px] font-bold text-slate-700 sm:grid-cols-4 md:grid-cols-7">
+                {phaseCounts.map(({ phase, count }) => (
+                  <div key={phase} data-testid={`ssmt-phase-count-${phase}`} className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5"><span className="font-black text-slate-950">{count}</span> {phase}</div>
+                ))}
+                <div className={`rounded-lg border px-2 py-1.5 ${(totalItemFlagCount || flaggedMenus.length) ? "border-amber-300 bg-amber-50 text-amber-950" : "border-slate-200 bg-slate-50"}`}>
+                  <span className={`font-black ${(totalItemFlagCount || flaggedMenus.length) ? "text-amber-950" : "text-slate-950"}`}>{totalItemFlagCount || flaggedMenus.length}</span> needs attention
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5"><span className="font-black text-slate-950">{hiddenMenuCount}</span> hibernated/expired</div>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5"><span className="font-black text-slate-950">{visibleMenus.length}</span> visible menus</div>
               </div>
               <div data-testid="ssmt-menu-selector-grid" className="mt-4 grid gap-2 lg:grid-cols-4 xl:grid-cols-5">
                 {menuGroups.map((group) => (
@@ -1608,7 +1616,11 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                       <span className={`rounded px-2 py-1 text-[11px] font-black ${group.badgeClass}`}>{group.menus.length}</span>
                     </div>
                     <div className="grid min-h-0 gap-1 overflow-y-auto pr-1">
-                      {group.menus.map((menu) => (
+                      {group.menus.map((menu) => {
+                        const needsEdits = Boolean(menu.editSignal || (Array.isArray(menu.flags) && menu.flags.length));
+                        const isComplete = menu.phase === "IT complete";
+                        const workSignal = needsEdits ? "Needs edits" : isComplete ? "Complete" : "Needs completion";
+                        return (
                         <div
                           key={menu.id}
                           draggable
@@ -1617,11 +1629,12 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                         >
                           <button type="button" data-menu-name={menu.name} onClick={() => openMenu(menu.id)} className="block w-full text-left">
                             <span className="block whitespace-normal break-words text-sm font-black leading-4 text-slate-950">{menu.name}</span>
-                            <span className="mt-1 flex flex-wrap gap-1 text-[11px] font-bold text-slate-600">
+                            <span className="mt-1 flex flex-wrap items-center gap-1 text-[11px] font-bold text-slate-600">
                               <span>{menu.type}</span>
                               <span>{menu.phase}</span>
                               {Array.isArray(menu.flags) && menu.flags.length > 0 && <span>{menu.flags.length} flags</span>}
                               {(menu.hidden || menuIsAutoHibernated(menu)) && <span>Hibernated</span>}
+                              <span className={`rounded px-1.5 py-0.5 font-black ${needsEdits ? "bg-amber-200 text-amber-950" : isComplete ? "bg-emerald-100 text-emerald-900" : "bg-rose-100 text-rose-900"}`}>{workSignal}</span>
                             </span>
                           </button>
                           <button
@@ -1632,7 +1645,8 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                             {menu.hidden ? "Restore" : "Hibernate"}
                           </button>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </section>
                 ))}
@@ -1745,10 +1759,6 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                     Active dates are only required for Promotion and Thompson Hospitality menus.
                   </div>
                 )}
-                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-slate-700">
-                  <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Completed</p>
-                  <p className="mt-1">{selectedMenu.completedAt ? new Date(selectedMenu.completedAt).toLocaleString() : "Pending IT complete"}</p>
-                </div>
                 <label className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-black text-amber-950">
                   <input type="checkbox" checked={Boolean(selectedMenu.editSignal)} onChange={(event) => updateSelectedMenu({ editSignal: event.target.checked, status: event.target.checked ? "Edit / resubmission needed" : selectedMenu.phase })} />
                   Edit signal
@@ -1807,18 +1817,18 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                     <col className="w-[320px]" />
                     <col className="w-[450px]" />
                     <col className="w-[112px]" />
-                    <col className="w-[220px]" />
                     <col className="w-[72px]" />
                     <col className="w-[170px]" />
                     <col className="w-[118px]" />
                     <col className="w-[128px]" />
                     <col className="w-[150px]" />
+                    <col className="w-[220px]" />
                     <col className="w-[490px]" />
                     <col className="w-[160px]" />
                   </colgroup>
                   <thead className="sticky top-0 z-10 bg-slate-100 text-xs font-black uppercase tracking-[0.12em] text-slate-600 shadow-sm">
                     <tr>
-                      {["Move", "Fixy", "Label", "Description", "MRN", "Photo link", "Calories", "SEA price", "Category", "Secondary category", "Scan & Pay", "Area prices", "Actions"].map((header) => (
+                      {["Move", "Fixy", "Label", "Description", "MRN", "Calories", "SEA price", "Category", "Secondary category", "Scan & Pay", "Photo link", "Area prices", "Actions"].map((header) => (
                         <th key={header} className="border-b border-slate-400 px-2 py-1.5">{header}</th>
                       ))}
                     </tr>
@@ -1930,15 +1940,6 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               className={`w-full rounded-md border border-slate-300 px-2 py-1 font-mono text-xs font-bold outline-none focus:border-emerald-500 ${item.lockedForCentric ? "cursor-copy bg-emerald-50 text-slate-950" : "bg-white"}`}
                             />
                           </td>
-                          <td className={builderCellClass}>
-                            <input
-                              aria-label={`Photo link for ${item.label || item.name || "item"}`}
-                              value={item.photoLink || ""}
-                              onChange={(event) => updateItem(item.id, { photoLink: event.target.value })}
-                              placeholder="Link to source photo"
-                              className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-semibold outline-none focus:border-emerald-500"
-                            />
-                          </td>
                           <td className={`${builderCellClass} font-bold text-slate-700`}>
                             {selectedMenu.type === "Promotion" ? (
                               <input
@@ -2000,6 +2001,15 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               readOnly={Boolean(item.lockedForCentric)}
                               placeholder="UPC"
                               className={`w-full rounded-md border border-slate-300 px-2 py-1 font-mono text-xs font-bold outline-none focus:border-emerald-500 ${item.lockedForCentric ? "cursor-copy bg-emerald-50 text-slate-950" : "bg-white"}`}
+                            />
+                          </td>
+                          <td className={builderCellClass}>
+                            <input
+                              aria-label={`Photo link for ${item.label || item.name || "item"}`}
+                              value={item.photoLink || ""}
+                              onChange={(event) => updateItem(item.id, { photoLink: event.target.value })}
+                              placeholder="Link to source photo"
+                              className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-semibold outline-none focus:border-emerald-500"
                             />
                           </td>
                           <td className={builderCellClass}>
