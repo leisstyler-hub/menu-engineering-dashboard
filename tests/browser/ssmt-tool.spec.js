@@ -249,7 +249,7 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
   await expect(page.getByRole("columnheader", { name: "Calories" })).toBeVisible();
   const builderHeaderOrder = await page.getByRole("columnheader").allInnerTexts();
   expect(builderHeaderOrder.map((text) => text.toUpperCase())).toEqual([
-    "MOVE", "FIXY", "LABEL", "DESCRIPTION", "MRN", "CALORIES",
+    "MOVE", "FIXY", "LABEL", "DESCRIPTION", "MRN", "PHOTO LINK", "CALORIES",
     "SEA PRICE", "CATEGORY", "SECONDARY CATEGORY", "SCAN & PAY", "AREA PRICES", "ACTIONS",
   ]);
 
@@ -392,7 +392,7 @@ test("SSMT builder locks at a readable maximized desktop width and shows more me
   });
   expect(builderMetrics.width).toBeGreaterThanOrEqual(2520);
   expect(builderMetrics.width).toBeLessThanOrEqual(2780);
-  expect(builderMetrics.firstRowHeight).toBeLessThanOrEqual(82);
+  expect(builderMetrics.firstRowHeight).toBeLessThanOrEqual(83);
   expect(builderMetrics.visibleRows).toBeGreaterThanOrEqual(10);
   expect(builderMetrics.scrollWidth).toBeLessThanOrEqual(builderMetrics.clientWidth + 4);
 
@@ -439,6 +439,13 @@ test("SSMT item locks enable Centric copy fields and gate phase advancement", as
   await expect(phasePanel.getByText(/1 of 2 item rows locked/i)).toBeVisible();
   await expect(page.getByLabel(/MRN for CENTRIC PASTE ITEM/i)).toHaveAttribute("readonly", "");
   await expect(firstPriceButton).toBeEnabled();
+
+  // Photo Link is IT-reference metadata, not part of the Centric lock/copy workflow —
+  // it must stay editable even after the item locks for Centric.
+  const photoLinkInput = page.getByLabel(/Photo link for CENTRIC PASTE ITEM/i);
+  await expect(photoLinkInput).not.toHaveAttribute("readonly");
+  await photoLinkInput.fill("https://example.com/photos/centric-paste-item.jpg");
+  await expect(photoLinkInput).toHaveValue("https://example.com/photos/centric-paste-item.jpg");
 
   await page.getByLabel(/MRN for CENTRIC PASTE ITEM/i).click();
   await expect(page.getByText(/MRN copied for Centric/i)).toBeVisible();
@@ -558,6 +565,12 @@ test("SSMT loads and saves item lock state through shared storage", async ({ pag
 
   await page.getByRole("button", { name: /Unlock item REMOTE LOCKED ITEM/i }).click();
   await expect(page.getByTestId("ssmt-phase-panel").getByText(/0 of 1 item rows locked/i)).toBeVisible();
+
+  const photoLinkInput = page.getByLabel(/Photo link for REMOTE LOCKED ITEM/i);
+  await expect(photoLinkInput).toHaveValue("");
+  await photoLinkInput.fill("https://example.com/photos/remote-locked-item.jpg");
+  await expect(photoLinkInput).toHaveValue("https://example.com/photos/remote-locked-item.jpg");
+
   await page.getByRole("button", { name: /Save menu/i }).click();
 
   await expect.poll(() => {
@@ -568,6 +581,15 @@ test("SSMT loads and saves item lock state through shared storage", async ({ pag
       ?.items?.find((item) => item.id === "shared-lock-item")
       ?.lockedForCentric;
   }).toBe(false);
+
+  await expect.poll(() => {
+    const record = savedBodies
+      .flatMap((body) => body?.records || [])
+      .find((candidate) => candidate?.["Record ID"] === "ssmt|workspace|current");
+    return record?.menus?.find((menu) => menu.id === "shared-lock-menu")
+      ?.items?.find((item) => item.id === "shared-lock-item")
+      ?.photoLink;
+  }).toBe("https://example.com/photos/remote-locked-item.jpg");
 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);

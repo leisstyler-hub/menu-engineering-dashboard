@@ -458,6 +458,7 @@ function createBlankItem(menuId, areaOrder, index = 1) {
     name: "NEW ITEM",
     description: "",
     mrn: "",
+    photoLink: "",
     category: "",
     fohColumn: "",
     secondaryCategory: "",
@@ -1806,6 +1807,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                     <col className="w-[320px]" />
                     <col className="w-[450px]" />
                     <col className="w-[112px]" />
+                    <col className="w-[220px]" />
                     <col className="w-[72px]" />
                     <col className="w-[170px]" />
                     <col className="w-[118px]" />
@@ -1816,7 +1818,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                   </colgroup>
                   <thead className="sticky top-0 z-10 bg-slate-100 text-xs font-black uppercase tracking-[0.12em] text-slate-600 shadow-sm">
                     <tr>
-                      {["Move", "Fixy", "Label", "Description", "MRN", "Calories", "SEA price", "Category", "Secondary category", "Scan & Pay", "Area prices", "Actions"].map((header) => (
+                      {["Move", "Fixy", "Label", "Description", "MRN", "Photo link", "Calories", "SEA price", "Category", "Secondary category", "Scan & Pay", "Area prices", "Actions"].map((header) => (
                         <th key={header} className="border-b border-slate-400 px-2 py-1.5">{header}</th>
                       ))}
                     </tr>
@@ -1850,7 +1852,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                           className={`${palette.headerRowClass} text-slate-950`}
                         >
                           <td className={`border-b px-2 py-2 ${palette.headerGripClass}`}><GripVertical size={16} /></td>
-                          <td colSpan={11} className={`border-b px-2 py-2 ${palette.headerCellBorderClass}`}>
+                          <td colSpan={12} className={`border-b px-2 py-2 ${palette.headerCellBorderClass}`}>
                             <div
                               data-testid={`${isSubmenu ? "ssmt-builder-section-submenu" : "ssmt-builder-section-divider"}-${item.id}`}
                               className={`flex flex-col gap-2 rounded-lg border p-2 md:flex-row md:items-center md:justify-between ${palette.headerBoxClass}`}
@@ -1926,6 +1928,15 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               onClick={() => copyLockedField(item, item.mrn, "MRN")}
                               readOnly={Boolean(item.lockedForCentric)}
                               className={`w-full rounded-md border border-slate-300 px-2 py-1 font-mono text-xs font-bold outline-none focus:border-emerald-500 ${item.lockedForCentric ? "cursor-copy bg-emerald-50 text-slate-950" : "bg-white"}`}
+                            />
+                          </td>
+                          <td className={builderCellClass}>
+                            <input
+                              aria-label={`Photo link for ${item.label || item.name || "item"}`}
+                              value={item.photoLink || ""}
+                              onChange={(event) => updateItem(item.id, { photoLink: event.target.value })}
+                              placeholder="Link to source photo"
+                              className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-semibold outline-none focus:border-emerald-500"
                             />
                           </td>
                           <td className={`${builderCellClass} font-bold text-slate-700`}>
