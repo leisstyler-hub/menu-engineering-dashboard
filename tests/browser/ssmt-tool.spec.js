@@ -379,7 +379,9 @@ test("SSMT Fixy field keeps Peruvian Shrimp readable", async ({ page }) => {
   await fixyInput.fill("Peruvian Shrimp");
   await expect(fixyInput).toHaveValue("Peruvian Shrimp");
   const fixyWidth = await fixyInput.evaluate((node) => node.getBoundingClientRect().width);
-  expect(fixyWidth).toBeGreaterThanOrEqual(160);
+  const photoLinkWidth = await page.getByLabel(/Photo link for/i).first().evaluate((node) => node.getBoundingClientRect().width);
+  expect(fixyWidth).toBeGreaterThanOrEqual(215);
+  expect(fixyWidth - photoLinkWidth).toBeGreaterThanOrEqual(50);
 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
