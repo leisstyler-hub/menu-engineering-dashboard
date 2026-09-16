@@ -2,7 +2,9 @@
 
 Last updated: September 16, 2026
 
-Current live version: `2026.09.16.002-ssmt-fixy-link-widths`
+Current release candidate: `2026.09.16.003-ssmt-menu-system-names`
+
+Latest process update: September 16, 2026 implemented Tyler's SSMT menu identity controls as version `2026.09.16.003-ssmt-menu-system-names`. The primary SSMT Menu name is now read-only by default and becomes editable only through an explicit `Edit` action, with `Done` returning it to the protected state. Each menu also has separate editable `Centric menu name` and `Webtrition Master Menu name` reference fields. Both fields persist inside the existing shared `ssmt|workspace|current` workspace record; no schema or manual production-data change is involved. The existing SSMT menu name remains the operating name for downstream derivation and Centric export filenames, while the two new fields are reference-only. Browser coverage first failed against the always-editable behavior, then passed 8/8 and proved the reference fields reach the shared save payload. Continued solo Chief mission requested by Tyler. Release state: IMPLEMENTED.
 
 Current deployed-but-not-live version: none.
 

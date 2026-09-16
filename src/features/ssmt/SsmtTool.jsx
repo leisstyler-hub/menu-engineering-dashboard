@@ -11,6 +11,7 @@ import {
   ListChecks,
   Lock,
   Mail,
+  Pencil,
   Plus,
   Save,
   Search,
@@ -199,6 +200,8 @@ function normalizeDescription(value) {
 function cloneMenu(menu) {
   return {
     ...menu,
+    centricMenuName: menu.centricMenuName || "",
+    webtritionMasterMenuName: menu.webtritionMasterMenuName || "",
     flags: Array.isArray(menu.flags) ? menu.flags.map((flag) => ({ ...flag })) : [],
     items: (menu.items || []).map((item) => ({
       ...item,
@@ -480,6 +483,8 @@ function createMenuRecord(name, type, areaOrder) {
   return {
     id: menuId,
     name,
+    centricMenuName: "",
+    webtritionMasterMenuName: "",
     sourceSheet: "Created in SSMT",
     includeReason: "Created in SSMT",
     type,
@@ -568,6 +573,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const [copiedFieldNotice, setCopiedFieldNotice] = useState("");
   const [modifierClipboardSlots, setModifierClipboardSlots] = useState(EMPTY_MODIFIER_CLIPBOARD_SLOTS);
   const [phaseBlocker, setPhaseBlocker] = useState("");
+  const [menuNameEditing, setMenuNameEditing] = useState(false);
   const [draggedRowId, setDraggedRowId] = useState("");
   const [draggedMenuId, setDraggedMenuId] = useState("");
   const [draggedModifierGroupId, setDraggedModifierGroupId] = useState("");
@@ -739,6 +745,10 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [modifierDialog]);
+
+  useEffect(() => {
+    setMenuNameEditing(false);
+  }, [selectedMenuId]);
 
   const selectedMenu = menus.find((menu) => menu.id === selectedMenuId) || menus[0] || { id: "loading", name: "Loading SSMT", type: "Core", phase: "Culinary draft", items: [] };
   const selectedPrice = ssmtData.priceBook.find((row) => row.id === selectedPriceId) || ssmtData.priceBook[0];
@@ -1731,15 +1741,47 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
               </div>
               <div className="mt-3 grid gap-2 md:grid-cols-4">
                 <label className="grid gap-1 text-sm font-bold text-slate-700 md:col-span-2">
-                  <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Menu name</span>
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Menu name</span>
+                    <button
+                      type="button"
+                      aria-label={menuNameEditing ? "Done editing menu name" : "Edit menu name"}
+                      onClick={() => setMenuNameEditing((current) => !current)}
+                      className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2 py-1 text-[11px] font-black text-slate-700 hover:bg-slate-100"
+                    >
+                      {menuNameEditing ? <Save size={12} /> : <Pencil size={12} />}
+                      {menuNameEditing ? "Done" : "Edit"}
+                    </button>
+                  </span>
                   <input
                     aria-label="Menu name"
                     value={selectedMenu.name || ""}
+                    readOnly={!menuNameEditing}
                     onChange={(event) => updateSelectedMenu({ name: event.target.value })}
                     onBlur={(event) => {
                       const cleanedName = event.target.value.trim();
                       if (cleanedName) updateSelectedMenu({ name: cleanedName });
                     }}
+                    className={`rounded-lg border border-slate-300 px-3 py-2 font-bold outline-none focus:border-emerald-500 ${menuNameEditing ? "bg-white" : "cursor-default bg-slate-100 text-slate-700"}`}
+                  />
+                </label>
+                <label className="grid gap-1 text-sm font-bold text-slate-700">
+                  <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Centric menu name</span>
+                  <input
+                    aria-label="Centric menu name"
+                    value={selectedMenu.centricMenuName || ""}
+                    onChange={(event) => updateSelectedMenu({ centricMenuName: event.target.value })}
+                    placeholder="Enter Centric name"
+                    className="rounded-lg border border-slate-300 bg-white px-3 py-2 font-bold outline-none focus:border-emerald-500"
+                  />
+                </label>
+                <label className="grid gap-1 text-sm font-bold text-slate-700">
+                  <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Webtrition Master Menu name</span>
+                  <input
+                    aria-label="Webtrition Master Menu name"
+                    value={selectedMenu.webtritionMasterMenuName || ""}
+                    onChange={(event) => updateSelectedMenu({ webtritionMasterMenuName: event.target.value })}
+                    placeholder="Enter Webtrition name"
                     className="rounded-lg border border-slate-300 bg-white px-3 py-2 font-bold outline-none focus:border-emerald-500"
                   />
                 </label>

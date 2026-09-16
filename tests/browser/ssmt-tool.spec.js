@@ -734,7 +734,7 @@ test("SSMT manual saves recover failed shared saves and keep flags plus modifier
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
-test("SSMT selected menu names are editable and persist into export plus downstream preview", async ({ page }) => {
+test("SSMT menu names require edit mode and cross-system reference names persist", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   const savedBodies = [];
   const smokeMenuName = `Editable Name SSMT ${Date.now()}`;
@@ -770,7 +770,13 @@ test("SSMT selected menu names are editable and persist into export plus downstr
   await page.getByLabel(/New menu type/i).selectOption("Core");
   await page.getByRole("button", { name: /Create menu/i }).click();
 
-  await page.getByLabel(/Menu name/i).fill(renamedMenuName);
+  await expect(page.getByLabel(/^Menu name$/i)).toHaveAttribute("readonly", "");
+  await page.getByRole("button", { name: /Edit menu name/i }).click();
+  await page.getByLabel(/^Menu name$/i).fill(renamedMenuName);
+  await page.getByRole("button", { name: /Done editing menu name/i }).click();
+  await expect(page.getByLabel(/^Menu name$/i)).toHaveAttribute("readonly", "");
+  await page.getByLabel(/Centric menu name/i).fill("Centric Reference Name");
+  await page.getByLabel(/Webtrition Master Menu name/i).fill("Webtrition Master Reference");
   await expect(page.getByRole("heading", { name: renamedMenuName })).toBeVisible();
   await page.getByRole("button", { name: /Lock item NEW ITEM/i }).click();
   await page.getByLabel(/Current SSMT phase/i).selectOption("IT complete");
@@ -782,8 +788,15 @@ test("SSMT selected menu names are editable and persist into export plus downstr
       .flatMap((body) => body?.records || [])
       .reverse()
       .find((candidate) => candidate?.["Record ID"] === "ssmt|workspace|current");
-    return record?.menus?.some((menu) => menu.name === renamedMenuName) || false;
-  }).toBe(true);
+    const savedMenu = record?.menus?.find((menu) => menu.name === renamedMenuName);
+    return savedMenu ? {
+      centricMenuName: savedMenu.centricMenuName,
+      webtritionMasterMenuName: savedMenu.webtritionMasterMenuName,
+    } : null;
+  }).toEqual({
+    centricMenuName: "Centric Reference Name",
+    webtritionMasterMenuName: "Webtrition Master Reference",
+  });
 
   const [download] = await Promise.all([
     page.waitForEvent("download"),
