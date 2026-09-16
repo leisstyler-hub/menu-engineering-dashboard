@@ -265,10 +265,8 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
   await expect(scanPayInput).toHaveValue("012345678905");
 
   const fixyInput = page.getByLabel(/Fixy for/i).first();
-  await fixyInput.fill("Peruvian Shrimp");
-  await expect(fixyInput).toHaveValue("Peruvian Shrimp");
-  const fixyWidth = await fixyInput.evaluate((node) => node.getBoundingClientRect().width);
-  expect(fixyWidth).toBeGreaterThanOrEqual(160);
+  await fixyInput.fill("station a");
+  await expect(fixyInput).toHaveValue("station a");
   const mrnInput = page.getByLabel(/MRN for/i).first();
   await mrnInput.fill("123456.78");
   await expect(mrnInput).toHaveValue("123456.78");
@@ -361,6 +359,27 @@ test("SSMT selector and builder keep dense records and wide tables usable withou
   await descriptionInput.fill("fire roasted poblano chicken layered with avocado crema, crisp vegetables, pickled onions, and a citrus chile finish");
   const descriptionFits = await descriptionInput.evaluate((node) => node.scrollHeight <= node.clientHeight + 4);
   expect(descriptionFits).toBe(true);
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("SSMT Fixy field keeps Peruvian Shrimp readable", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByLabel(/SSMT passcode/i).fill("0411");
+  await page.getByRole("button", { name: /unlock ssmt/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+  await page.getByRole("button", { name: /^The Daily/i }).click();
+
+  const fixyInput = page.getByLabel(/Fixy for/i).first();
+  await fixyInput.fill("Peruvian Shrimp");
+  await expect(fixyInput).toHaveValue("Peruvian Shrimp");
+  const fixyWidth = await fixyInput.evaluate((node) => node.getBoundingClientRect().width);
+  expect(fixyWidth).toBeGreaterThanOrEqual(160);
 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
