@@ -1109,7 +1109,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
       setModifierClipboardSlots((current) => normalizeModifierClipboardSlots(current).map((slot, index) => (
         index === slotIndex ? { ...slot, group: groupCopy, savedAt } : slot
       )));
-      setCopiedModifierNotice(`${group.name || "Modifier group"} copied to modifier clipboard.`);
+      setCopiedModifierNotice(`${group.name || "Modifier group"} saved to slot ${slotIndex + 1}.`);
       return currentDialog;
     });
   };
@@ -1239,11 +1239,8 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
       const nextChoice = { ...choice, ...normalizedPatch };
       const priceRow = findPriceRow(priceBook, nextChoice.priceSelectorId);
       if (Object.prototype.hasOwnProperty.call(patch, "priceSelectorId")) {
-        const isZeroPrice = priceRow && priceNumber(rowSeaPrice(priceRow)) === 0;
-        nextChoice.price = isZeroPrice ? "0.00" : (priceRow?.areas?.SEA || "");
-        nextChoice.areaPrices = isZeroPrice
-          ? Object.fromEntries(areaOrder.map((area) => [area, "0.00"]))
-          : (priceRow?.areas || blankAreaPrices(areaOrder));
+        nextChoice.price = priceRow?.areas?.SEA || "";
+        nextChoice.areaPrices = priceRow?.areas || blankAreaPrices(areaOrder);
       }
       return normalizeModifierChoice(nextChoice, areaOrder, priceBook);
     };
@@ -2235,9 +2232,6 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                     </button>
                     <button type="button" onClick={() => requestDelete({ type: "modifier-group", id: group.id, name: group.name })} disabled={Boolean(group.lockedForCentric)} className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-black text-red-800 hover:bg-red-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400">
                       <Trash2 size={14} /> Delete modifier group
-                    </button>
-                    <button type="button" onClick={() => saveModifierGroupToClipboardSlot(group, 0)} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-black text-slate-800 hover:bg-slate-100">
-                      <Copy size={14} /> Copy group to clipboard
                     </button>
                     {modifierClipboardSlots.map((slot, index) => (
                       <button key={slot.id} type="button" onClick={() => saveModifierGroupToClipboardSlot(group, index)} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-black text-slate-800 hover:bg-slate-100">

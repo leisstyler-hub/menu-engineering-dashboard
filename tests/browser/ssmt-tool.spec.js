@@ -886,6 +886,10 @@ test("SSMT modifier groups are editable with typed group metadata and line-level
   const modifierFreePricingRow = page.getByRole("row", { name: /Modifier Free/i });
   await modifierFreePricingRow.getByLabel(/SEA price for/i).fill("0.00");
   await expect(modifierFreePricingRow.locator("td").first()).toHaveText("$0.00 - Modifier Free");
+  const otherAreas = ["AUS", "BNA", "BOS", "BWI", "DEN", "IAD", "JFK", "LAX", "SAN", "SNA", "SJC", "WAS", "YVR", "YYZ", "MCO"];
+  for (const area of otherAreas) {
+    await modifierFreePricingRow.getByLabel(new RegExp(`^${area} price for`, "i")).fill("$0.00");
+  }
   await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
   await page.getByLabel(/New menu name/i).fill("Smoke Test Modifiers");
   await page.getByLabel(/New menu type/i).selectOption("Core");
@@ -935,7 +939,7 @@ test("SSMT modifier groups are editable with typed group metadata and line-level
   await modifierDialog.getByLabel(/Modifier price/i).last().selectOption({ label: "$0.00 - Modifier Free" });
   const zeroPriceAreaValues = await editableGroup.locator("tbody tr").last().locator("td").nth(5).locator("span > span:last-child").allTextContents();
   expect(zeroPriceAreaValues).toHaveLength(16);
-  expect(zeroPriceAreaValues.every((value) => value === "0.00")).toBe(true);
+  expect(zeroPriceAreaValues.every((value) => Number(value.replace(/[$,]/g, "")) === 0)).toBe(true);
   await modifierDialog.getByLabel(/Modifier price/i).last().selectOption({ label: "$2.55 - Core Side / Global Side" });
   await expect(modifierDialog.getByLabel(/Modifier name/i).last()).toHaveValue("chile crisp");
 
@@ -948,8 +952,8 @@ test("SSMT modifier groups are editable with typed group metadata and line-level
   await expect(editableGroup.locator(":scope > div").first()).toHaveClass(/bg-amber-100/);
   await expect(editableGroup.locator(":scope > div").first().locator("span").first()).toHaveClass(/bg-amber-700/);
   await editableGroup.getByRole("button", { name: /Unlock modifier group Sauce Rules/i }).click();
-  await editableGroup.getByRole("button", { name: /Copy group to clipboard/i }).click();
-  await expect(modifierDialog.getByText(/Sauce Rules copied to modifier clipboard/i)).toBeVisible();
+  await editableGroup.getByRole("button", { name: /Save group to slot 1/i }).click();
+  await expect(modifierDialog.getByText(/Sauce Rules saved to slot 1/i)).toBeVisible();
   await page.keyboard.press("Escape");
 
   await page.getByRole("button", { name: /Add item/i }).click();
