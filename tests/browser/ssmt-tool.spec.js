@@ -910,6 +910,11 @@ test("SSMT modifier groups are editable with typed group metadata and line-level
   await expect(editableGroup).toHaveClass(/border-amber-400/);
   await expect(editableGroup.getByLabel(/Minimum selections/i)).toHaveValue("0");
   await expect(editableGroup.getByLabel(/Maximum selections/i)).toHaveValue("3");
+  const minLabelBox = await editableGroup.getByText("Min selections", { exact: true }).boundingBox();
+  const maxLabelBox = await editableGroup.getByText("Max selections", { exact: true }).boundingBox();
+  const addModifierButtonBox = await editableGroup.getByRole("button", { name: /Add modifier item line/i }).boundingBox();
+  expect(minLabelBox.x + minLabelBox.width).toBeLessThanOrEqual(maxLabelBox.x);
+  expect(addModifierButtonBox.y).toBeGreaterThan(maxLabelBox.y + maxLabelBox.height);
 
   const modifierPriceOptions = await modifierDialog.getByLabel(/Modifier price/i).last().locator("option").evaluateAll((options) => options.slice(1).map((option) => ({ label: option.textContent.trim(), kind: option.dataset.priceKind })));
   const firstNonModifierIndex = modifierPriceOptions.findIndex((option) => option.kind === "standard");

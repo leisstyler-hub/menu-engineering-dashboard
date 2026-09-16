@@ -2182,7 +2182,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                 onDrop={() => moveModifierGroup(draggedModifierGroupId, group.id)}
                 className={`overflow-hidden rounded-lg border ${group.lockedForCentric ? "border-emerald-600 bg-emerald-50" : `${typeStyle.borderClass} ${typeStyle.cardClass}`}`}
               >
-                <div className={`grid gap-3 border-b p-3 lg:grid-cols-[auto_minmax(220px,1fr)_170px_110px_110px_auto] lg:items-end ${
+                <div className={`grid gap-3 border-b p-3 lg:grid-cols-[auto_minmax(240px,1fr)_170px_130px_130px] lg:items-end ${
                   group.lockedForCentric ? "border-emerald-300 bg-emerald-100/70" : typeStyle.headerClass
                 }`}>
                   <span className={`inline-flex h-10 w-10 items-center justify-center rounded-full text-white shadow-sm ${group.lockedForCentric ? "bg-emerald-700" : typeStyle.iconClass}`} title={`${modifierType} modifier group`}>
@@ -2210,15 +2210,15 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                       {MODIFIER_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
                     </select>
                   </label>
-                  <label className="grid gap-1">
-                    <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Minimum selections</span>
-                    <input type="number" min="0" aria-label="Minimum selections" value={group.minQty ?? ""} onChange={(event) => updateModifierGroup(group.id, { minQty: event.target.value })} readOnly={Boolean(group.lockedForCentric)} className={`rounded-md border border-slate-300 px-2.5 py-1.5 text-xs font-black outline-none focus:border-emerald-500 ${group.lockedForCentric ? "cursor-copy bg-emerald-50" : "bg-white"}`} />
+                  <label className="grid min-w-0 gap-1">
+                    <span className="block max-w-full whitespace-normal text-[10px] font-black uppercase leading-3 tracking-[0.08em] text-slate-500">Min selections</span>
+                    <input type="number" min="0" aria-label="Minimum selections" value={group.minQty ?? ""} onChange={(event) => updateModifierGroup(group.id, { minQty: event.target.value })} readOnly={Boolean(group.lockedForCentric)} className={`w-full min-w-0 rounded-md border border-slate-300 px-2.5 py-1.5 text-xs font-black outline-none focus:border-emerald-500 ${group.lockedForCentric ? "cursor-copy bg-emerald-50" : "bg-white"}`} />
                   </label>
-                  <label className="grid gap-1">
-                    <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Maximum selections</span>
-                    <input type="number" min="0" aria-label="Maximum selections" value={group.maxQty ?? ""} onChange={(event) => updateModifierGroup(group.id, { maxQty: event.target.value })} readOnly={Boolean(group.lockedForCentric)} className={`rounded-md border border-slate-300 px-2.5 py-1.5 text-xs font-black outline-none focus:border-emerald-500 ${group.lockedForCentric ? "cursor-copy bg-emerald-50" : "bg-white"}`} />
+                  <label className="grid min-w-0 gap-1">
+                    <span className="block max-w-full whitespace-normal text-[10px] font-black uppercase leading-3 tracking-[0.08em] text-slate-500">Max selections</span>
+                    <input type="number" min="0" aria-label="Maximum selections" value={group.maxQty ?? ""} onChange={(event) => updateModifierGroup(group.id, { maxQty: event.target.value })} readOnly={Boolean(group.lockedForCentric)} className={`w-full min-w-0 rounded-md border border-slate-300 px-2.5 py-1.5 text-xs font-black outline-none focus:border-emerald-500 ${group.lockedForCentric ? "cursor-copy bg-emerald-50" : "bg-white"}`} />
                   </label>
-                  <div className="flex flex-wrap justify-end gap-2">
+                  <div className="flex flex-wrap gap-2 lg:col-start-2 lg:col-span-4 lg:justify-start">
                     <button type="button" onClick={() => addModifierChoice(group.id)} disabled={Boolean(group.lockedForCentric)} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-black text-slate-800 hover:bg-slate-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400">
                       <Plus size={14} /> Add modifier item line
                     </button>
