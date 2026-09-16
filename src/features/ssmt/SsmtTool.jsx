@@ -332,8 +332,17 @@ function priceNumber(value) {
   return Number.isFinite(number) ? number : -1;
 }
 
+function priceSelectorLabel(seaPrice, category) {
+  const numericPrice = Number.parseFloat(String(seaPrice || "").replace(/[$,]/g, ""));
+  const displayPrice = Number.isFinite(numericPrice) ? `$${numericPrice.toFixed(2)}` : String(seaPrice || "").trim();
+  const cleanCategory = String(category || "Pricing row").trim().replace(/^(?:\$?\d+(?:\.\d{1,2})?\s*)+(?:-\s*)/, "");
+  return `${displayPrice} - ${cleanCategory || "Pricing row"}`;
+}
+
 function rowSeaPrice(price = {}) {
-  return price.areas?.SEA || price.seaPrice || price.price || price.selectorLabel || "";
+  const storedPrice = price.areas?.SEA || price.seaPrice || price.price;
+  if (storedPrice) return storedPrice;
+  return String(price.selectorLabel || "").match(/^\s*\$?\d+(?:\.\d+)?/)?.[0] || "";
 }
 
 function comparePricesHighToLow(a, b) {
@@ -922,7 +931,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
       id,
       category,
       example: "Created in SSMT",
-      selectorLabel: `${normalizedSeaPrice} - ${category}`,
+      selectorLabel: priceSelectorLabel(normalizedSeaPrice, category),
       modifierOnly: newPriceModifierOnly || isModifierFree,
       areas,
     };
@@ -942,7 +951,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
         const seaPrice = next.areas?.SEA || rowSeaPrice(next);
         return {
           ...next,
-          selectorLabel: `${seaPrice || ""} - ${next.category || price.category || "Pricing row"}`,
+          selectorLabel: priceSelectorLabel(seaPrice, next.category || price.category),
         };
       }),
     }));
@@ -2183,12 +2192,11 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                 onDragStart={() => setDraggedModifierGroupId(group.id)}
                 onDragOver={(event) => event.preventDefault()}
                 onDrop={() => moveModifierGroup(draggedModifierGroupId, group.id)}
-                className={`overflow-hidden rounded-lg border ${group.lockedForCentric ? "border-emerald-600 bg-emerald-50" : `${typeStyle.borderClass} ${typeStyle.cardClass}`}`}
+                className={`overflow-hidden rounded-lg border ${typeStyle.borderClass} ${typeStyle.cardClass}`}
+                style={group.lockedForCentric ? { borderColor: "#059669", borderWidth: "2px" } : undefined}
               >
-                <div className={`grid gap-3 border-b p-3 lg:grid-cols-[auto_minmax(240px,1fr)_170px_130px_130px] lg:items-end ${
-                  group.lockedForCentric ? "border-emerald-300 bg-emerald-100/70" : typeStyle.headerClass
-                }`}>
-                  <span className={`inline-flex h-10 w-10 items-center justify-center rounded-full text-white shadow-sm ${group.lockedForCentric ? "bg-emerald-700" : typeStyle.iconClass}`} title={`${modifierType} modifier group`}>
+                <div className={`grid gap-3 border-b p-3 lg:grid-cols-[auto_minmax(240px,1fr)_170px_130px_130px] lg:items-end ${typeStyle.headerClass}`}>
+                  <span className={`inline-flex h-10 w-10 items-center justify-center rounded-full text-white shadow-sm ${typeStyle.iconClass}`} title={`${modifierType} modifier group`}>
                     <ModifierTypeIcon size={19} />
                   </span>
                   <label className="grid gap-1">

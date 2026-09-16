@@ -883,6 +883,9 @@ test("SSMT modifier groups are editable with typed group metadata and line-level
   await page.getByLabel(/New SEA price/i).fill("$0.00");
   await page.getByLabel(/New price modifier only/i).check();
   await page.getByRole("button", { name: /Add pricing row/i }).click();
+  const modifierFreePricingRow = page.getByRole("row", { name: /Modifier Free/i });
+  await modifierFreePricingRow.getByLabel(/SEA price for/i).fill("0.00");
+  await expect(modifierFreePricingRow.locator("td").first()).toHaveText("$0.00 - Modifier Free");
   await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
   await page.getByLabel(/New menu name/i).fill("Smoke Test Modifiers");
   await page.getByLabel(/New menu type/i).selectOption("Core");
@@ -941,6 +944,9 @@ test("SSMT modifier groups are editable with typed group metadata and line-level
   await expect(modifierDialog.getByLabel(/Modifier MRN/i).last()).toHaveValue("123456.78");
   await editableGroup.getByRole("button", { name: /Lock modifier group Sauce Rules/i }).click();
   await expect(editableGroup.getByLabel(/Modifier group name/i)).toHaveAttribute("readonly", "");
+  await expect(editableGroup).toHaveCSS("border-color", "rgb(5, 150, 105)");
+  await expect(editableGroup.locator(":scope > div").first()).toHaveClass(/bg-amber-100/);
+  await expect(editableGroup.locator(":scope > div").first().locator("span").first()).toHaveClass(/bg-amber-700/);
   await editableGroup.getByRole("button", { name: /Unlock modifier group Sauce Rules/i }).click();
   await editableGroup.getByRole("button", { name: /Copy group to clipboard/i }).click();
   await expect(modifierDialog.getByText(/Sauce Rules copied to modifier clipboard/i)).toBeVisible();
