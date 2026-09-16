@@ -383,6 +383,11 @@ function modifierCountForItem(item = {}, modifierGroups = []) {
   return matchedModifierGroupsForItem(item, modifierGroups).length;
 }
 
+function modifiersReadyForItem(item = {}, modifierGroups = []) {
+  const matched = matchedModifierGroupsForItem(item, modifierGroups);
+  return matched.every((group) => Boolean(group.lockedForCentric));
+}
+
 function modifierGroupMatchesItemRef(group = {}, ref = "") {
   const cleanRef = String(ref || "").trim();
   if (!cleanRef) return false;
@@ -2119,12 +2124,20 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                           </td>
                           <td className={builderCellClass}>
                             <div className="grid grid-cols-2 gap-1">
-                              <button type="button" aria-label={`View modifiers Mods (${modifierCountForItem(item, ssmtData.modifierGroups)})`} onClick={() => openModifierDialog(item)} className="inline-flex items-center justify-center gap-1 rounded-md border border-green-800 bg-green-700 px-2 py-1.5 text-xs font-black text-white shadow-sm hover:bg-green-800">
-                                <Tags size={14} /> Mods ({modifierCountForItem(item, ssmtData.modifierGroups)})
-                              </button>
-                              <button type="button" onClick={() => updateItem(item.id, { lockedForCentric: !item.lockedForCentric })} className={`inline-flex items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-xs font-black ${item.lockedForCentric ? "border-emerald-700 bg-emerald-700 text-white hover:bg-emerald-800" : "border-slate-300 bg-slate-50 text-slate-800 hover:bg-slate-100"}`} aria-label={`${item.lockedForCentric ? "Unlock" : "Lock"} item ${item.label || item.name || "item"}`}>
-                                {item.lockedForCentric ? <Lock size={14} /> : <Unlock size={14} />} {item.lockedForCentric ? "Locked" : "Lock"}
-                              </button>
+                              {(() => {
+                                const modsReady = modifiersReadyForItem(item, ssmtData.modifierGroups);
+                                const lockBlocked = !item.lockedForCentric && !modsReady;
+                                return (
+                                  <>
+                                    <button type="button" aria-label={`View modifiers Mods (${modifierCountForItem(item, ssmtData.modifierGroups)}), ${modsReady ? "all locked" : "not all locked"}`} onClick={() => openModifierDialog(item)} className={`inline-flex items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-xs font-black text-white shadow-sm ${modsReady ? "border-green-800 bg-green-700 hover:bg-green-800" : "border-red-800 bg-red-600 hover:bg-red-700"}`}>
+                                      <Tags size={14} /> Mods ({modifierCountForItem(item, ssmtData.modifierGroups)})
+                                    </button>
+                                    <button type="button" onClick={() => updateItem(item.id, { lockedForCentric: !item.lockedForCentric })} disabled={lockBlocked} title={lockBlocked ? "Lock all modifier groups for this item first" : undefined} className={`inline-flex items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-xs font-black ${item.lockedForCentric ? "border-emerald-700 bg-emerald-700 text-white hover:bg-emerald-800" : "border-slate-300 bg-slate-50 text-slate-800 hover:bg-slate-100"} disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400`} aria-label={`${item.lockedForCentric ? "Unlock" : "Lock"} item ${item.label || item.name || "item"}${lockBlocked ? " (locked out until all modifier groups are locked)" : ""}`}>
+                                      {item.lockedForCentric ? <Lock size={14} /> : <Unlock size={14} />} {item.lockedForCentric ? "Locked" : "Lock"}
+                                    </button>
+                                  </>
+                                );
+                              })()}
                               <button type="button" aria-label={existingFlagForItem(item) ? `Edit or clear flag for ${item.label || item.name || "item"}` : "Flag for change"} onClick={() => openFlagForItem(item)} className={`inline-flex items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-xs font-black ${existingFlagForItem(item) ? "border-amber-600 bg-amber-500 text-white hover:bg-amber-600" : "border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100"}`}>
                                 <Flag size={14} /> {existingFlagForItem(item) ? "Flagged" : "Flag"}
                               </button>

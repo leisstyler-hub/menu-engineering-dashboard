@@ -982,6 +982,53 @@ test("SSMT modifier groups are editable with typed group metadata and line-level
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
+test("SSMT Mods badge turns red/green with modifier group lock state and gates item locking", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/");
+
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByLabel(/SSMT passcode/i).fill("0411");
+  await page.getByRole("button", { name: /unlock ssmt/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+  await page.getByLabel(/New menu name/i).fill("Mods Gate Test");
+  await page.getByLabel(/New menu type/i).selectOption("Core");
+  await page.getByRole("button", { name: /Create menu/i }).click();
+
+  const itemRow = page
+    .locator("tr[data-row-kind='item']")
+    .filter({ has: page.getByRole("button", { name: /Lock item NEW ITEM/i }) })
+    .first();
+  const modsButton = itemRow.getByRole("button", { name: /View modifiers Mods \(0\)/i });
+  const lockButton = itemRow.getByRole("button", { name: /Lock item NEW ITEM/i });
+
+  await expect(modsButton).toHaveClass(/bg-green-700/);
+  await expect(lockButton).toBeEnabled();
+
+  await modsButton.click();
+  const modifierDialog = page.getByRole("dialog", { name: /modifier/i });
+  await modifierDialog.getByRole("button", { name: /Add modifier group/i }).click();
+  await modifierDialog.getByLabel(/Modifier group name/i).last().fill("Choose Sauce");
+  await page.keyboard.press("Escape");
+
+  const modsButtonAfterAdd = itemRow.getByRole("button", { name: /View modifiers Mods \(1\)/i });
+  await expect(modsButtonAfterAdd).toHaveClass(/bg-red-600/);
+  await expect(lockButton).toBeDisabled();
+
+  await modsButtonAfterAdd.click();
+  const reopenedDialog = page.getByRole("dialog", { name: /modifier/i });
+  await reopenedDialog.getByRole("button", { name: /Lock modifier group Choose Sauce/i }).click();
+  await page.keyboard.press("Escape");
+
+  await expect(modsButtonAfterAdd).toHaveClass(/bg-green-700/);
+  await expect(lockButton).toBeEnabled();
+  await lockButton.click();
+  await expect(itemRow.getByRole("button", { name: /Unlock item NEW ITEM/i })).toBeVisible();
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
 test("SSMT Mods badge counts only reliably-linked groups, not stale free-text refs", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   await page.setViewportSize({ width: 1800, height: 950 });
