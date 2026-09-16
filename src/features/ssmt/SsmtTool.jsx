@@ -1219,7 +1219,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   };
 
   const updateModifierChoice = (groupId, choiceId, patch) => {
-    const normalizePatch = (choice, priceBook = ssmtData.priceBook) => {
+    const normalizePatch = (choice, priceBook = ssmtData.priceBook, areaOrder = ssmtData.areaOrder) => {
       const normalizedPatch = { ...patch };
       if (Object.prototype.hasOwnProperty.call(normalizedPatch, "label")) {
         normalizedPatch.label = normalizeDescription(normalizedPatch.label);
@@ -1230,16 +1230,19 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
       const nextChoice = { ...choice, ...normalizedPatch };
       const priceRow = findPriceRow(priceBook, nextChoice.priceSelectorId);
       if (Object.prototype.hasOwnProperty.call(patch, "priceSelectorId")) {
-        nextChoice.price = priceRow?.areas?.SEA || "";
-        nextChoice.areaPrices = priceRow?.areas || blankAreaPrices(ssmtData.areaOrder);
+        const isZeroPrice = priceRow && priceNumber(rowSeaPrice(priceRow)) === 0;
+        nextChoice.price = isZeroPrice ? "0.00" : (priceRow?.areas?.SEA || "");
+        nextChoice.areaPrices = isZeroPrice
+          ? Object.fromEntries(areaOrder.map((area) => [area, "0.00"]))
+          : (priceRow?.areas || blankAreaPrices(areaOrder));
       }
-      return normalizeModifierChoice(nextChoice, ssmtData.areaOrder, priceBook);
+      return normalizeModifierChoice(nextChoice, areaOrder, priceBook);
     };
     setSsmtData((current) => ({
       ...current,
       modifierGroups: current.modifierGroups.map((group) => (
         group.id === groupId
-          ? { ...group, choices: group.choices.map((choice) => (choice.id === choiceId ? normalizePatch(choice, current.priceBook) : choice)) }
+          ? { ...group, choices: group.choices.map((choice) => (choice.id === choiceId ? normalizePatch(choice, current.priceBook, current.areaOrder) : choice)) }
           : group
       )),
     }));

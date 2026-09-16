@@ -879,8 +879,8 @@ test("SSMT modifier groups are editable with typed group metadata and line-level
   await page.getByLabel(/SSMT passcode/i).fill("0411");
   await page.getByRole("button", { name: /unlock ssmt/i }).click();
   await page.getByRole("button", { name: "Pricing Structure", exact: true }).click();
-  await page.getByLabel(/New pricing category/i).fill("Modifier Test Price");
-  await page.getByLabel(/New SEA price/i).fill("$0.75");
+  await page.getByLabel(/New pricing category/i).fill("Modifier Free");
+  await page.getByLabel(/New SEA price/i).fill("$0.00");
   await page.getByLabel(/New price modifier only/i).check();
   await page.getByRole("button", { name: /Add pricing row/i }).click();
   await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
@@ -929,6 +929,10 @@ test("SSMT modifier groups are editable with typed group metadata and line-level
   await modifierDialog.getByLabel(/Modifier description/i).last().fill("spicy crunchy oil");
   await modifierDialog.getByLabel(/Modifier MRN/i).last().fill("123456.78");
   await modifierDialog.getByLabel(/Modifier calories/i).last().fill("80");
+  await modifierDialog.getByLabel(/Modifier price/i).last().selectOption({ label: "$0.00 - Modifier Free" });
+  const zeroPriceAreaValues = await editableGroup.locator("tbody tr").last().locator("td").nth(5).locator("span > span:last-child").allTextContents();
+  expect(zeroPriceAreaValues).toHaveLength(16);
+  expect(zeroPriceAreaValues.every((value) => value === "0.00")).toBe(true);
   await modifierDialog.getByLabel(/Modifier price/i).last().selectOption({ label: "$2.55 - Core Side / Global Side" });
   await expect(modifierDialog.getByLabel(/Modifier name/i).last()).toHaveValue("chile crisp");
 
