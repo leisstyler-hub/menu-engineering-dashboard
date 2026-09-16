@@ -128,6 +128,43 @@ test("SSMT opens behind passcode and separates pricing from menu building", asyn
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
+test("SSMT moving a menu to a different bucket stays responsive through the debounced autosave", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const bucketMenuName = "BUCKET MOVE TEST MENU";
+  await page.goto("/");
+
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByLabel(/SSMT passcode/i).fill("0411");
+  await page.getByRole("button", { name: /unlock ssmt/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+  await page.getByLabel(/New menu name/i).fill(bucketMenuName);
+  await page.getByLabel(/New menu type/i).selectOption("Core");
+  await page.getByRole("button", { name: /Create menu/i }).click();
+  await expect(page.getByRole("heading", { name: bucketMenuName })).toBeVisible();
+  await page.getByRole("button", { name: /Back to menu selection/i }).click();
+
+  const coreGroup = page.getByTestId("ssmt-menu-group-Core");
+  await expect(coreGroup.locator(`[data-menu-name="${bucketMenuName}"]`)).toBeVisible();
+
+  const menuCard = coreGroup.locator(`[data-menu-name="${bucketMenuName}"]`).locator("xpath=ancestor::div[@draggable='true']");
+  await menuCard.getByRole("button", { name: /^Hibernate$/ }).click();
+  await expect(coreGroup.locator(`[data-menu-name="${bucketMenuName}"]`)).toHaveCount(0);
+
+  await page.getByLabel(/Show hibernated menus/i).check();
+  const hibernatedGroup = page.getByTestId("ssmt-menu-group-Hibernated");
+  await expect(hibernatedGroup.locator(`[data-menu-name="${bucketMenuName}"]`)).toBeVisible();
+
+  // Bucket moves flow through the same debounced local-cache and shared-save effects that every
+  // other edit does; the page must stay interactive through and after both settle, immediately
+  // after the move (this is what "the app freezes" would fail on).
+  await expect(page.getByRole("button", { name: "Menu Selector / New Menu", exact: true })).toBeEnabled();
+  await expect(page.getByTestId("ssmt-workspace-sync")).toContainText(/Shared SSMT workspace saved/i, { timeout: 20_000 });
+  await expect(page.getByRole("heading", { name: /^Menu Selector$/ })).toBeVisible();
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
 test("SSMT groups menus by type and supports row editing, ordering, and saved phase status", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   // Downstream-visible throwaway menu. Must NOT match the /smoke.?test/i filter in

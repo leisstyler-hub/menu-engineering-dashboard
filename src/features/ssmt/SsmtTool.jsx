@@ -61,6 +61,12 @@ const MODIFIER_TYPE_STYLES = {
 };
 const MODIFIER_CLIPBOARD_SLOT_COUNT = 4;
 const AUTO_SHARED_SAVE_DELAY_MS = 10000;
+// The workspace has grown large (500+ modifier groups, 90+ menus): serializing it to JSON for
+// the local cache write and the shared-save change check is expensive enough now to visibly
+// freeze the UI if it runs synchronously on every keystroke/drag. Debouncing it off the
+// immediate interaction fixes that without changing when saves actually happen.
+const LOCAL_CACHE_DEBOUNCE_MS = 500;
+const SHARED_SAVE_SIGNATURE_DEBOUNCE_MS = 500;
 const EMPTY_MODIFIER_CLIPBOARD_SLOTS = Array.from({ length: MODIFIER_CLIPBOARD_SLOT_COUNT }, (_, index) => ({
   id: `slot-${index + 1}`,
   label: `Slot ${index + 1}`,
@@ -650,6 +656,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const workspaceLoadedRef = useRef(false);
   const skipInitialSharedSaveRef = useRef(true);
   const lastSharedSaveSignatureRef = useRef("");
+  const pendingSharedSaveTimersRef = useRef({ debounce: null, save: null });
   const modifierClipboard = modifierClipboardSlots.find((slot) => slot.group)?.group || null;
 
   const buildWorkspaceSnapshot = (overrides = {}) => ({
@@ -762,44 +769,61 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   }, []);
 
   useEffect(() => {
-    if (dataStatus !== "ready" || !menus.length) return;
-    const workspace = buildWorkspaceSnapshot();
-    writeLocalStorageJson(WORKSPACE_STORAGE_KEY, workspace, { clearOnQuota: true });
+    if (dataStatus !== "ready" || !menus.length) return undefined;
+    const timer = window.setTimeout(() => {
+      const workspace = buildWorkspaceSnapshot();
+      writeLocalStorageJson(WORKSPACE_STORAGE_KEY, workspace, { clearOnQuota: true });
+    }, LOCAL_CACHE_DEBOUNCE_MS);
+    return () => window.clearTimeout(timer);
   }, [dataStatus, menus, selectedMenuId, ssmtData.priceBook, ssmtData.modifierGroups, modifierClipboardSlots]);
 
   useEffect(() => {
-    if (dataStatus !== "ready" || !menus.length) return;
-    const workspace = buildWorkspaceSnapshot();
-    const sharedSignature = workspaceSharedSignature(workspace);
-    if (sharedSignature === lastSharedSaveSignatureRef.current) return;
-    if (!workspaceLoadedRef.current) return;
+    if (dataStatus !== "ready" || !menus.length) return undefined;
+    // Consumed synchronously (not inside the debounce below) so it reliably skips exactly the
+    // one render right after loading existing shared data, regardless of how quickly further
+    // real edits follow — a debounced check here could merge that first real edit into the same
+    // window as the load and skip it too.
     if (skipInitialSharedSaveRef.current) {
       skipInitialSharedSaveRef.current = false;
-      return;
+      return undefined;
     }
-    setWorkspaceSync((current) => ({
-      ...current,
-      state: "saving",
-      message: "Saving shared SSMT workspace after idle edits...",
-    }));
-    const saveTimer = window.setTimeout(async () => {
-      try {
-        const result = await saveSsmtWorkspaceToSharedStorage(workspace);
-        lastSharedSaveSignatureRef.current = sharedSignature;
-        setWorkspaceSync({
-          state: "synced",
-          source: result.source || "supabase",
-          message: "Shared SSMT workspace saved.",
-        });
-      } catch (error) {
-        setWorkspaceSync({
-          state: "fallback",
-          source: "local",
-          message: `${error.message || "Shared SSMT workspace save failed."} This browser kept a local cache.`,
-        });
-      }
-    }, AUTO_SHARED_SAVE_DELAY_MS);
-    return () => window.clearTimeout(saveTimer);
+    const timers = pendingSharedSaveTimersRef.current;
+    if (timers.debounce) window.clearTimeout(timers.debounce);
+    if (timers.save) window.clearTimeout(timers.save);
+
+    timers.debounce = window.setTimeout(() => {
+      const workspace = buildWorkspaceSnapshot();
+      const sharedSignature = workspaceSharedSignature(workspace);
+      if (sharedSignature === lastSharedSaveSignatureRef.current) return;
+      if (!workspaceLoadedRef.current) return;
+      setWorkspaceSync((current) => ({
+        ...current,
+        state: "saving",
+        message: "Saving shared SSMT workspace after idle edits...",
+      }));
+      timers.save = window.setTimeout(async () => {
+        try {
+          const result = await saveSsmtWorkspaceToSharedStorage(workspace);
+          lastSharedSaveSignatureRef.current = sharedSignature;
+          setWorkspaceSync({
+            state: "synced",
+            source: result.source || "supabase",
+            message: "Shared SSMT workspace saved.",
+          });
+        } catch (error) {
+          setWorkspaceSync({
+            state: "fallback",
+            source: "local",
+            message: `${error.message || "Shared SSMT workspace save failed."} This browser kept a local cache.`,
+          });
+        }
+      }, AUTO_SHARED_SAVE_DELAY_MS);
+    }, SHARED_SAVE_SIGNATURE_DEBOUNCE_MS);
+
+    return () => {
+      if (timers.debounce) window.clearTimeout(timers.debounce);
+      if (timers.save) window.clearTimeout(timers.save);
+    };
   }, [dataStatus, menus, ssmtData.priceBook, ssmtData.modifierGroups, modifierClipboardSlots]);
 
   useEffect(() => {
