@@ -379,13 +379,35 @@ function matchedModifierGroupsForItem(item = {}, modifierGroups = []) {
     .slice(0, 4);
 }
 
-function modifierCountForItem(item = {}, modifierGroups = []) {
-  return matchedModifierGroupsForItem(item, modifierGroups).length;
+// Building the item-row Mods badge/gate by filtering the full modifierGroups array per item
+// is O(items x modifierGroups) and gets slow once modifierGroups grows into the hundreds (a
+// large menu's items table was re-scanning all of them on every keystroke). This index turns
+// each item's lookup into O(refs), where refs is the item's own (small, <=4) modifierGroups list.
+function buildModifierGroupIndex(modifierGroups = []) {
+  const byId = new Map();
+  const byName = new Map();
+  for (const group of modifierGroups) {
+    if (group?.id) byId.set(group.id, group);
+    const name = String(group?.name || "").trim().toLowerCase();
+    if (name) byName.set(name, group);
+  }
+  return { byId, byName };
 }
 
-function modifiersReadyForItem(item = {}, modifierGroups = []) {
-  const matched = matchedModifierGroupsForItem(item, modifierGroups);
-  return matched.every((group) => Boolean(group.lockedForCentric));
+function matchedModifierGroupsForItemIndexed(item = {}, index = { byId: new Map(), byName: new Map() }) {
+  const refs = Array.isArray(item.modifierGroups) ? item.modifierGroups : [];
+  const matched = [];
+  const seen = new Set();
+  for (const ref of refs) {
+    const cleanRef = String(ref || "").trim();
+    if (!cleanRef) continue;
+    const group = index.byId.get(cleanRef) || index.byName.get(cleanRef.toLowerCase());
+    if (group && !seen.has(group)) {
+      seen.add(group);
+      matched.push(group);
+    }
+  }
+  return matched.slice(0, 4);
 }
 
 function modifierGroupMatchesItemRef(group = {}, ref = "") {
@@ -797,6 +819,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const selectedPrice = ssmtData.priceBook.find((row) => row.id === selectedPriceId) || ssmtData.priceBook[0];
   const itemPriceOptions = useMemo(() => sortPricesForItemSelector(ssmtData.priceBook), [ssmtData.priceBook]);
   const modifierPriceOptions = useMemo(() => sortPricesForModifierSelector(ssmtData.priceBook), [ssmtData.priceBook]);
+  const modifierGroupIndex = useMemo(() => buildModifierGroupIndex(ssmtData.modifierGroups), [ssmtData.modifierGroups]);
   const visibleMenus = useMemo(() => {
     const query = search.trim().toLowerCase();
     const availableMenus = menus.filter((menu) => menuIsVisible(menu, showHiddenMenus));
@@ -2125,12 +2148,14 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                           <td className={builderCellClass}>
                             <div className="grid grid-cols-2 gap-1">
                               {(() => {
-                                const modsReady = modifiersReadyForItem(item, ssmtData.modifierGroups);
+                                const matchedGroups = matchedModifierGroupsForItemIndexed(item, modifierGroupIndex);
+                                const modsCount = matchedGroups.length;
+                                const modsReady = matchedGroups.every((group) => Boolean(group.lockedForCentric));
                                 const lockBlocked = !item.lockedForCentric && !modsReady;
                                 return (
                                   <>
-                                    <button type="button" aria-label={`View modifiers Mods (${modifierCountForItem(item, ssmtData.modifierGroups)}), ${modsReady ? "all locked" : "not all locked"}`} onClick={() => openModifierDialog(item)} className={`inline-flex items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-xs font-black text-white shadow-sm ${modsReady ? "border-green-800 bg-green-700 hover:bg-green-800" : "border-red-800 bg-red-600 hover:bg-red-700"}`}>
-                                      <Tags size={14} /> Mods ({modifierCountForItem(item, ssmtData.modifierGroups)})
+                                    <button type="button" aria-label={`View modifiers Mods (${modsCount}), ${modsReady ? "all locked" : "not all locked"}`} onClick={() => openModifierDialog(item)} className={`inline-flex items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-xs font-black text-white shadow-sm ${modsReady ? "border-green-800 bg-green-700 hover:bg-green-800" : "border-red-800 bg-red-600 hover:bg-red-700"}`}>
+                                      <Tags size={14} /> Mods ({modsCount})
                                     </button>
                                     <button type="button" onClick={() => updateItem(item.id, { lockedForCentric: !item.lockedForCentric })} disabled={lockBlocked} title={lockBlocked ? "Lock all modifier groups for this item first" : undefined} className={`inline-flex items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-xs font-black ${item.lockedForCentric ? "border-emerald-700 bg-emerald-700 text-white hover:bg-emerald-800" : "border-slate-300 bg-slate-50 text-slate-800 hover:bg-slate-100"} disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400`} aria-label={`${item.lockedForCentric ? "Unlock" : "Lock"} item ${item.label || item.name || "item"}${lockBlocked ? " (locked out until all modifier groups are locked)" : ""}`}>
                                       {item.lockedForCentric ? <Lock size={14} /> : <Unlock size={14} />} {item.lockedForCentric ? "Locked" : "Lock"}

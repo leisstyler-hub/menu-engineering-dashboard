@@ -178,19 +178,22 @@ async function invokeRecipeLibrary(query) {
   return { statusCode, body };
 }
 
+// SSMT-into-Menu-Library sync is intentionally gated off (ENABLE_SSMT_MENU_LIBRARY_SYNC in
+// api/recipe-library.js) until Tyler explicitly authorizes the wiring — see
+// project-ssmt-single-source-of-truth. While disabled, the API must ignore IT-complete SSMT
+// rows entirely and keep serving the existing MenuWorks/Supabase-backed rows unchanged.
 try {
   const summary = await invokeRecipeLibrary({ scope: "summary" });
   assert.equal(summary.statusCode, 200);
-  assert.equal(summary.body.source, "supabase-recipe-items+ssmt-derived");
-  assert.equal(summary.body.ssmtDerivedRows, 2);
-  assert(summary.body.menus.some((entry) => entry.menu === "AMZ: Cafe Express Curated Sandwiches" && entry.count === 1));
+  assert.equal(summary.body.source, "supabase-recipe-items", "SSMT sync is gated off, so the source must not carry a +ssmt-derived suffix.");
+  assert.equal(summary.body.ssmtDerivedRows, 0);
 
   const selected = await invokeRecipeLibrary({ scope: "menu", menu: "AMZ: Cafe Express Curated Sandwiches" });
   assert.equal(selected.statusCode, 200);
   assert.deepEqual(
     selected.body.rows.map((row) => row.item || row.displayName),
-    ["TURKEY CLUB"],
-    "Recipe Library menu scope should return SSMT rows for an SSMT-owned submenu."
+    ["OLD SANDWICH"],
+    "While SSMT sync is gated off, Recipe Library must keep serving its existing MenuWorks-backed row, not an SSMT-derived one."
   );
 } finally {
   globalThis.fetch = originalFetch;

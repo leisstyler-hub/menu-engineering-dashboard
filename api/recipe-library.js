@@ -10,6 +10,10 @@ const SUPABASE_BATCH_SIZE = 250;
 const SUPABASE_READ_PAGE_SIZE = 1000;
 const DEFAULT_SUPABASE_TIMEOUT_MS = 8000;
 const SSMT_WORKSPACE_ENCODING = "gzip-base64-json-v1";
+// SSMT is meant to eventually author Menu Library directly, but that wiring is not yet
+// authorized (Tyler, 2026-09-04 and reaffirmed 2026-09-16): SSMT should not populate Menu
+// Library until he explicitly turns this on. See ARCHITECTURE_RULES.md / AI_HANDOFF.md.
+const ENABLE_SSMT_MENU_LIBRARY_SYNC = false;
 const DOCUMENT_BUCKETS = {
   "item-photo": "item-photos",
   "plating-guide": "plating-guides",
@@ -570,7 +574,7 @@ export default async function handler(req, res) {
 async function handleGet(req, res) {
   const [supabaseRead, ssmtRead] = await Promise.all([
     loadSupabaseRecipeRows(),
-    loadSsmtOperatingRows(),
+    ENABLE_SSMT_MENU_LIBRARY_SYNC ? loadSsmtOperatingRows() : Promise.resolve({ ok: true, rows: [], message: "" }),
   ]);
   const usesSupabaseRows = supabaseRead.ok && supabaseRead.rows.length;
   const baseRows = usesSupabaseRows ? supabaseRead.rows : await loadMenuWorksFallbackRows();
