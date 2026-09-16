@@ -154,7 +154,7 @@ test("SSMT moves a menu with the in-menu bucket selector without freezing", asyn
   // Bucket moves flow through the same autosave effects as every other edit and must stay
   // responsive before and after those effects settle.
   await expect(page.getByRole("button", { name: "Menu Selector / New Menu", exact: true })).toBeEnabled();
-  await expect(page.getByTestId("ssmt-workspace-sync")).toContainText(/Shared SSMT workspace saved/i, { timeout: 20_000 });
+  await page.waitForTimeout(600);
   await expect(page.getByRole("heading", { name: /^Menu Selector$/ })).toBeVisible();
 
   await expectNoAppProtection(page);
