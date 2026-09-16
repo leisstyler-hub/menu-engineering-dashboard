@@ -1,1 +1,1 @@
-export const APP_VERSION_STAMP = "2026.09.15.002-ssmt-workflow-signals";
+export const APP_VERSION_STAMP = "2026.09.16.001-ssmt-fixy-width";

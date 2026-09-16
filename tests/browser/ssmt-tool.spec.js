@@ -265,8 +265,10 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
   await expect(scanPayInput).toHaveValue("012345678905");
 
   const fixyInput = page.getByLabel(/Fixy for/i).first();
-  await fixyInput.fill("station a");
-  await expect(fixyInput).toHaveValue("station a");
+  await fixyInput.fill("Peruvian Shrimp");
+  await expect(fixyInput).toHaveValue("Peruvian Shrimp");
+  const fixyWidth = await fixyInput.evaluate((node) => node.getBoundingClientRect().width);
+  expect(fixyWidth).toBeGreaterThanOrEqual(160);
   const mrnInput = page.getByLabel(/MRN for/i).first();
   await mrnInput.fill("123456.78");
   await expect(mrnInput).toHaveValue("123456.78");

@@ -1813,7 +1813,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                 <table className="w-full min-w-[2680px] table-fixed border-collapse text-left text-xs">
                   <colgroup>
                     <col className="w-[46px]" />
-                    <col className="w-[125px]" />
+                    <col className="w-[180px]" />
                     <col className="w-[320px]" />
                     <col className="w-[450px]" />
                     <col className="w-[112px]" />
