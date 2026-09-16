@@ -858,6 +858,21 @@ test("SSMT selected-menu export downloads a Centric-shaped workbook", async ({ p
 test("SSMT modifier groups are editable with typed group metadata and line-level pricing fields", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   await page.setViewportSize({ width: 1440, height: 950 });
+  await page.addInitScript(() => {
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+  });
+  await page.route("**/api/storage/records**", async (route) => {
+    if (route.request().method() === "GET") {
+      await route.fulfill({ json: { ok: true, source: "supabase", records: [] } });
+      return;
+    }
+    if (route.request().method() === "POST") {
+      await route.fulfill({ json: { ok: true, source: "supabase", synced: 1, message: "Saved 1 row to Supabase." } });
+      return;
+    }
+    await route.continue();
+  });
   await page.goto("/");
 
   await page.getByRole("button", { name: /open ssmt/i }).click();
