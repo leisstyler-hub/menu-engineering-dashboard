@@ -682,6 +682,10 @@ test("SSMT manual saves recover failed shared saves and keep flags plus modifier
   await modifierDialog.getByLabel(/Modifier name/i).last().fill("Chile Crisp");
   await modifierDialog.getByRole("button", { name: /Save group to slot 1/i }).click();
   await expect(modifierDialog.getByText(/Slot 1: Sauce Rules/i)).toBeVisible();
+  await modifierDialog.getByRole("button", { name: /Clear slot 1/i }).click();
+  await expect(modifierDialog.getByText(/Slot 1: Empty slot/i)).toBeVisible();
+  await modifierDialog.getByRole("button", { name: /Save group to slot 1/i }).click();
+  await expect(modifierDialog.getByText(/Slot 1: Sauce Rules/i)).toBeVisible();
   await modifierDialog.getByRole("button", { name: /Save modifiers/i }).click();
   await expect(page.getByTestId("ssmt-workspace-sync")).toContainText(/Shared SSMT workspace saved/i, { timeout: 20_000 });
   await page.keyboard.press("Escape");

@@ -1114,6 +1114,14 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
     });
   };
 
+  const clearModifierClipboardSlot = (slotIndex) => {
+    const clearedName = modifierClipboardSlots[slotIndex]?.group?.name || "Modifier group";
+    setModifierClipboardSlots((current) => normalizeModifierClipboardSlots(current).map((slot, index) => (
+      index === slotIndex ? { ...slot, group: null, savedAt: "" } : slot
+    )));
+    setCopiedModifierNotice(`${clearedName} cleared from slot ${slotIndex + 1}.`);
+  };
+
   const pasteModifierGroup = (groupToPaste = modifierClipboard) => {
     if (!groupToPaste || !modifierDialog?.item) return;
     const baseName = groupToPaste.name || "Pasted modifier group";
@@ -2163,9 +2171,14 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                 <div key={slot.id} className="rounded-lg border border-slate-300 bg-white p-2 text-xs font-bold text-slate-700">
                   <p className="font-black text-slate-950">{slot.label}: {slot.group?.name || "Empty slot"}</p>
                   {slot.group ? (
-                    <button type="button" onClick={() => pasteModifierGroup(slot.group)} className="mt-2 inline-flex w-full items-center justify-center gap-1 rounded-md border border-emerald-700 bg-emerald-700 px-2 py-1 text-[11px] font-black text-white hover:bg-emerald-800">
-                      <Copy size={13} /> Paste slot {index + 1}
-                    </button>
+                    <div className="mt-2 flex items-stretch gap-1">
+                      <button type="button" onClick={() => pasteModifierGroup(slot.group)} className="inline-flex w-3/4 items-center justify-center gap-1 rounded-md border border-emerald-700 bg-emerald-700 px-2 py-1 text-[11px] font-black text-white hover:bg-emerald-800">
+                        <Copy size={13} /> Paste slot {index + 1}
+                      </button>
+                      <button type="button" onClick={() => clearModifierClipboardSlot(index)} aria-label={`Clear slot ${index + 1}`} className="inline-flex w-1/4 items-center justify-center rounded-md border border-red-300 bg-red-50 px-2 py-1 text-[11px] font-black text-red-800 hover:bg-red-100">
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
                   ) : (
                     <p className="mt-2 text-[11px] text-slate-500">Save a group here.</p>
                   )}
