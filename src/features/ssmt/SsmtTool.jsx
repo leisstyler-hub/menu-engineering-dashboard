@@ -36,6 +36,29 @@ const DEFAULT_MENU_TYPES = ["Core", "Global", "Menu Library", "Thompson Hospital
 const ACTIVE_DATE_MENU_TYPES = ["Promotion", "Thompson Hospitality"];
 const MENU_TYPE_ORDER = ["Core", "Global", "Menu Library", "Promotion", "Thompson Hospitality"];
 const MODIFIER_TYPES = ["Force", "Remove", "Addition"];
+const MODIFIER_TYPE_STYLES = {
+  Force: {
+    borderClass: "border-violet-400",
+    cardClass: "bg-violet-50",
+    headerClass: "border-violet-300 bg-violet-100/80",
+    iconClass: "bg-violet-700",
+    Icon: ShieldCheck,
+  },
+  Remove: {
+    borderClass: "border-rose-400",
+    cardClass: "bg-rose-50",
+    headerClass: "border-rose-300 bg-rose-100/80",
+    iconClass: "bg-rose-700",
+    Icon: X,
+  },
+  Addition: {
+    borderClass: "border-amber-400",
+    cardClass: "bg-amber-50",
+    headerClass: "border-amber-300 bg-amber-100/80",
+    iconClass: "bg-amber-700",
+    Icon: Plus,
+  },
+};
 const MODIFIER_CLIPBOARD_SLOT_COUNT = 4;
 const AUTO_SHARED_SAVE_DELAY_MS = 10000;
 const EMPTY_MODIFIER_CLIPBOARD_SLOTS = Array.from({ length: MODIFIER_CLIPBOARD_SLOT_COUNT }, (_, index) => ({
@@ -319,6 +342,12 @@ function comparePricesHighToLow(a, b) {
   return String(a.selectorLabel || a.category || "").localeCompare(String(b.selectorLabel || b.category || ""), undefined, { sensitivity: "base" });
 }
 
+function comparePricesLowToHigh(a, b) {
+  const byValue = priceNumber(rowSeaPrice(a)) - priceNumber(rowSeaPrice(b));
+  if (byValue !== 0) return byValue;
+  return String(a.selectorLabel || a.category || "").localeCompare(String(b.selectorLabel || b.category || ""), undefined, { sensitivity: "base" });
+}
+
 function sortPricesForItemSelector(priceBook = []) {
   return [...priceBook].sort((a, b) => {
     if (Boolean(a.modifierOnly) !== Boolean(b.modifierOnly)) return a.modifierOnly ? 1 : -1;
@@ -329,7 +358,7 @@ function sortPricesForItemSelector(priceBook = []) {
 function sortPricesForModifierSelector(priceBook = []) {
   return [...priceBook].sort((a, b) => {
     if (Boolean(a.modifierOnly) !== Boolean(b.modifierOnly)) return a.modifierOnly ? -1 : 1;
-    return comparePricesHighToLow(a, b);
+    return comparePricesLowToHigh(a, b);
   });
 }
 
@@ -2138,21 +2167,26 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
             {!modifierDialog.groups.length && (
               <p className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm font-bold text-slate-600">No modifier groups attached.</p>
             )}
-            {modifierDialog.groups.map((group) => (
+            {modifierDialog.groups.map((group) => {
+              const modifierType = modifierTypeForGroup(group);
+              const typeStyle = MODIFIER_TYPE_STYLES[modifierType] || MODIFIER_TYPE_STYLES.Addition;
+              const ModifierTypeIcon = typeStyle.Icon;
+              return (
               <section
                 key={group.id}
                 data-testid={`ssmt-modifier-group-${group.id}`}
+                data-modifier-type={modifierType}
                 draggable
                 onDragStart={() => setDraggedModifierGroupId(group.id)}
                 onDragOver={(event) => event.preventDefault()}
                 onDrop={() => moveModifierGroup(draggedModifierGroupId, group.id)}
-                className={`overflow-hidden rounded-lg border ${group.lockedForCentric ? "border-emerald-600 bg-emerald-50" : "border-sky-200 bg-white"}`}
+                className={`overflow-hidden rounded-lg border ${group.lockedForCentric ? "border-emerald-600 bg-emerald-50" : `${typeStyle.borderClass} ${typeStyle.cardClass}`}`}
               >
-                <div className={`grid gap-3 border-b p-3 lg:grid-cols-[auto_minmax(220px,1fr)_170px_auto] lg:items-end ${
-                  group.lockedForCentric ? "border-emerald-300 bg-emerald-100/70" : "border-sky-200 bg-sky-50"
+                <div className={`grid gap-3 border-b p-3 lg:grid-cols-[auto_minmax(220px,1fr)_170px_110px_110px_auto] lg:items-end ${
+                  group.lockedForCentric ? "border-emerald-300 bg-emerald-100/70" : typeStyle.headerClass
                 }`}>
-                  <span className={`inline-flex h-10 w-10 items-center justify-center rounded-full text-white shadow-sm ${group.lockedForCentric ? "bg-emerald-700" : "bg-sky-700"}`}>
-                    <Tags size={19} />
+                  <span className={`inline-flex h-10 w-10 items-center justify-center rounded-full text-white shadow-sm ${group.lockedForCentric ? "bg-emerald-700" : typeStyle.iconClass}`} title={`${modifierType} modifier group`}>
+                    <ModifierTypeIcon size={19} />
                   </span>
                   <label className="grid gap-1">
                     <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Modifier group name</span>
@@ -2168,13 +2202,21 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                     <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Modifier group type</span>
                     <select
                       aria-label="Modifier group type"
-                      value={modifierTypeForGroup(group)}
+                      value={modifierType}
                       onChange={(event) => updateModifierGroup(group.id, { modifierType: event.target.value })}
                       disabled={Boolean(group.lockedForCentric)}
                       className="rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-black"
                     >
                       {MODIFIER_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
                     </select>
+                  </label>
+                  <label className="grid gap-1">
+                    <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Minimum selections</span>
+                    <input type="number" min="0" aria-label="Minimum selections" value={group.minQty ?? ""} onChange={(event) => updateModifierGroup(group.id, { minQty: event.target.value })} readOnly={Boolean(group.lockedForCentric)} className={`rounded-md border border-slate-300 px-2.5 py-1.5 text-xs font-black outline-none focus:border-emerald-500 ${group.lockedForCentric ? "cursor-copy bg-emerald-50" : "bg-white"}`} />
+                  </label>
+                  <label className="grid gap-1">
+                    <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Maximum selections</span>
+                    <input type="number" min="0" aria-label="Maximum selections" value={group.maxQty ?? ""} onChange={(event) => updateModifierGroup(group.id, { maxQty: event.target.value })} readOnly={Boolean(group.lockedForCentric)} className={`rounded-md border border-slate-300 px-2.5 py-1.5 text-xs font-black outline-none focus:border-emerald-500 ${group.lockedForCentric ? "cursor-copy bg-emerald-50" : "bg-white"}`} />
                   </label>
                   <div className="flex flex-wrap justify-end gap-2">
                     <button type="button" onClick={() => addModifierChoice(group.id)} disabled={Boolean(group.lockedForCentric)} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-black text-slate-800 hover:bg-slate-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400">
@@ -2268,7 +2310,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                             >
                               <option value="">Select price</option>
                               {modifierPriceOptions.map((price) => (
-                                <option key={price.id} value={price.id}>{price.selectorLabel}</option>
+                                <option key={price.id} value={price.id} data-price-kind={price.modifierOnly ? "modifier" : "standard"}>{price.selectorLabel}</option>
                               ))}
                             </select>
                             <p className="mt-0.5 text-[10px] font-bold leading-3 text-slate-500">{choice.price || "TBD"}</p>
@@ -2297,7 +2339,8 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                   )}
                 </div>
               </section>
-            ))}
+              );
+            })}
           </div>
         </Modal>
       )}

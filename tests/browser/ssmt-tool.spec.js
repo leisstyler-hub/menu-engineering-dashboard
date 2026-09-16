@@ -863,10 +863,19 @@ test("SSMT modifier groups are editable with typed group metadata and line-level
   await page.getByRole("button", { name: /open ssmt/i }).click();
   await page.getByLabel(/SSMT passcode/i).fill("0411");
   await page.getByRole("button", { name: /unlock ssmt/i }).click();
+  await page.getByRole("button", { name: "Pricing Structure", exact: true }).click();
+  await page.getByLabel(/New pricing category/i).fill("Modifier Test Price");
+  await page.getByLabel(/New SEA price/i).fill("$0.75");
+  await page.getByLabel(/New price modifier only/i).check();
+  await page.getByRole("button", { name: /Add pricing row/i }).click();
   await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
   await page.getByLabel(/New menu name/i).fill("Smoke Test Modifiers");
   await page.getByLabel(/New menu type/i).selectOption("Core");
   await page.getByRole("button", { name: /Create menu/i }).click();
+
+  const itemPriceLabels = await page.getByLabel(/SEA price for/i).first().locator("option").evaluateAll((options) => options.slice(1).map((option) => option.textContent.trim()));
+  const itemNonModifierPrices = itemPriceLabels.filter((label) => !/modifier/i.test(label)).map((label) => Number(label.match(/\$([0-9.]+)/)?.[1])).filter(Number.isFinite);
+  expect(itemNonModifierPrices).toEqual([...itemNonModifierPrices].sort((left, right) => right - left));
 
   await expect(page.getByRole("button", { name: /mods \(0\)/i }).first()).toBeVisible();
   await page.getByRole("button", { name: /mods \(0\)/i }).first().click();
@@ -878,6 +887,23 @@ test("SSMT modifier groups are editable with typed group metadata and line-level
 
   await modifierDialog.getByLabel(/Modifier group name/i).last().fill("Sauce Rules");
   await modifierDialog.getByLabel(/Modifier group type/i).last().selectOption("Addition");
+  await modifierDialog.getByLabel(/Minimum selections/i).last().fill("0");
+  await modifierDialog.getByLabel(/Maximum selections/i).last().fill("3");
+
+  const editableGroup = modifierDialog.getByTestId(/ssmt-modifier-group/).last();
+  await expect(editableGroup).toHaveAttribute("data-modifier-type", "Addition");
+  await expect(editableGroup).toHaveClass(/border-amber-400/);
+  await expect(editableGroup.getByLabel(/Minimum selections/i)).toHaveValue("0");
+  await expect(editableGroup.getByLabel(/Maximum selections/i)).toHaveValue("3");
+
+  const modifierPriceOptions = await modifierDialog.getByLabel(/Modifier price/i).last().locator("option").evaluateAll((options) => options.slice(1).map((option) => ({ label: option.textContent.trim(), kind: option.dataset.priceKind })));
+  const firstNonModifierIndex = modifierPriceOptions.findIndex((option) => option.kind === "standard");
+  expect(firstNonModifierIndex).toBeGreaterThan(0);
+  expect(modifierPriceOptions.slice(0, firstNonModifierIndex).every((option) => option.kind === "modifier")).toBe(true);
+  for (const priceGroup of [modifierPriceOptions.slice(0, firstNonModifierIndex), modifierPriceOptions.slice(firstNonModifierIndex)]) {
+    const values = priceGroup.map(({ label }) => Number(label.match(/\$([0-9.]+)/)?.[1])).filter(Number.isFinite);
+    expect(values).toEqual([...values].sort((left, right) => left - right));
+  }
 
   await modifierDialog.getByLabel(/Modifier name/i).last().fill("Chile Crisp");
   await modifierDialog.getByLabel(/Modifier description/i).last().fill("spicy crunchy oil");
@@ -886,7 +912,6 @@ test("SSMT modifier groups are editable with typed group metadata and line-level
   await modifierDialog.getByLabel(/Modifier price/i).last().selectOption({ label: "$2.55 - Core Side / Global Side" });
   await expect(modifierDialog.getByLabel(/Modifier name/i).last()).toHaveValue("chile crisp");
 
-  const editableGroup = modifierDialog.getByTestId(/ssmt-modifier-group/).last();
   await expect(editableGroup).toContainText("AUS");
   await expect(editableGroup).toContainText("MCO");
   await expect(modifierDialog.getByLabel(/Modifier MRN/i).last()).toHaveValue("123456.78");

@@ -1,1 +1,1 @@
-export const APP_VERSION_STAMP = "2026.09.16.003-ssmt-menu-system-names";
+export const APP_VERSION_STAMP = "2026.09.16.004-ssmt-modifier-rules";
