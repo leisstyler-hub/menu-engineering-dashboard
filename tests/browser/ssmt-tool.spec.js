@@ -128,7 +128,7 @@ test("SSMT opens behind passcode and separates pricing from menu building", asyn
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
-test("SSMT moving a menu to a different bucket stays responsive through the debounced autosave", async ({ page }) => {
+test("SSMT moves a menu with the in-menu bucket selector without freezing", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   const bucketMenuName = "BUCKET MOVE TEST MENU";
   await page.goto("/");
@@ -141,22 +141,18 @@ test("SSMT moving a menu to a different bucket stays responsive through the debo
   await page.getByLabel(/New menu type/i).selectOption("Core");
   await page.getByRole("button", { name: /Create menu/i }).click();
   await expect(page.getByRole("heading", { name: bucketMenuName })).toBeVisible();
+  const moveStartedAt = Date.now();
+  await page.getByLabel(/Menu bucket/i).selectOption("Global");
+  expect(Date.now() - moveStartedAt).toBeLessThan(1_000);
   await page.getByRole("button", { name: /Back to menu selection/i }).click();
 
   const coreGroup = page.getByTestId("ssmt-menu-group-Core");
-  await expect(coreGroup.locator(`[data-menu-name="${bucketMenuName}"]`)).toBeVisible();
-
-  const menuCard = coreGroup.locator(`[data-menu-name="${bucketMenuName}"]`).locator("xpath=ancestor::div[@draggable='true']");
-  await menuCard.getByRole("button", { name: /^Hibernate$/ }).click();
+  const globalGroup = page.getByTestId("ssmt-menu-group-Global");
   await expect(coreGroup.locator(`[data-menu-name="${bucketMenuName}"]`)).toHaveCount(0);
+  await expect(globalGroup.locator(`[data-menu-name="${bucketMenuName}"]`)).toBeVisible();
 
-  await page.getByLabel(/Show hibernated menus/i).check();
-  const hibernatedGroup = page.getByTestId("ssmt-menu-group-Hibernated");
-  await expect(hibernatedGroup.locator(`[data-menu-name="${bucketMenuName}"]`)).toBeVisible();
-
-  // Bucket moves flow through the same debounced local-cache and shared-save effects that every
-  // other edit does; the page must stay interactive through and after both settle, immediately
-  // after the move (this is what "the app freezes" would fail on).
+  // Bucket moves flow through the same autosave effects as every other edit and must stay
+  // responsive before and after those effects settle.
   await expect(page.getByRole("button", { name: "Menu Selector / New Menu", exact: true })).toBeEnabled();
   await expect(page.getByTestId("ssmt-workspace-sync")).toContainText(/Shared SSMT workspace saved/i, { timeout: 20_000 });
   await expect(page.getByRole("heading", { name: /^Menu Selector$/ })).toBeVisible();

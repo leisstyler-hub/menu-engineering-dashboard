@@ -645,9 +645,8 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const [modifierClipboardSlots, setModifierClipboardSlots] = useState(EMPTY_MODIFIER_CLIPBOARD_SLOTS);
   const [phaseBlocker, setPhaseBlocker] = useState("");
   const [menuNameEditing, setMenuNameEditing] = useState(false);
-  const [draggedRowId, setDraggedRowId] = useState("");
-  const [draggedMenuId, setDraggedMenuId] = useState("");
-  const [draggedModifierGroupId, setDraggedModifierGroupId] = useState("");
+  const draggedRowIdRef = useRef("");
+  const draggedModifierGroupIdRef = useRef("");
   const [workspaceSync, setWorkspaceSync] = useState({
     state: "loading",
     source: "local",
@@ -1102,7 +1101,6 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const moveMenuToType = (menuId, type) => {
     if (!menuId || !type) return;
     setMenus((current) => current.map((menu) => (menu.id === menuId ? { ...menu, type, hidden: false } : menu)));
-    setDraggedMenuId("");
   };
 
   // Dropping a menu onto the Hibernated bucket hibernates it (rather than
@@ -1110,7 +1108,6 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const hibernateMenu = (menuId) => {
     if (!menuId) return;
     setMenus((current) => current.map((menu) => (menu.id === menuId ? { ...menu, hidden: true } : menu)));
-    setDraggedMenuId("");
   };
 
   const moveRow = (sourceId, targetId) => {
@@ -1125,7 +1122,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
       nextItems.splice(targetIndex, 0, moved);
       return { ...menu, items: nextItems };
     }));
-    setDraggedRowId("");
+    draggedRowIdRef.current = "";
   };
 
   const deleteSelectedMenu = (menuId) => {
@@ -1214,7 +1211,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
     };
     setModifierDialog((current) => current ? { ...current, groups: reorder(current.groups) } : current);
     setSsmtData((current) => ({ ...current, modifierGroups: reorder(current.modifierGroups) }));
-    setDraggedModifierGroupId("");
+    draggedModifierGroupIdRef.current = "";
   };
 
   const toggleModifierGroupLock = (groupId) => {
@@ -1715,8 +1712,6 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                     key={group.type}
                     data-testid={`ssmt-menu-group-${group.type}`}
                     data-menu-type={group.type}
-                    onDragOver={(event) => event.preventDefault()}
-                    onDrop={() => (group.type === "Hibernated" ? hibernateMenu(draggedMenuId) : moveMenuToType(draggedMenuId, group.type))}
                     className={`flex max-h-[52vh] min-h-0 flex-col rounded-lg border p-3 ${group.groupClass}`}
                   >
                     <div className="mb-2 flex items-center justify-between gap-2">
@@ -1731,8 +1726,6 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                         return (
                         <div
                           key={menu.id}
-                          draggable
-                          onDragStart={() => setDraggedMenuId(menu.id)}
                           className={`rounded-lg border bg-white p-2 text-left shadow-sm ${group.itemClass}`}
                         >
                           <button type="button" data-menu-name={menu.name} onClick={() => openMenu(menu.id)} className="block w-full text-left">
@@ -1838,6 +1831,18 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                 <span className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-slate-700">Type: {selectedMenu.type}</span>
               </div>
               <div className="mt-3 grid gap-2 md:grid-cols-4">
+                <label className="grid gap-1 text-sm font-bold text-slate-700">
+                  <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Menu bucket</span>
+                  <select
+                    aria-label="Menu bucket"
+                    value={selectedMenu.hidden || menuIsAutoHibernated(selectedMenu) ? "Hibernated" : selectedMenu.type}
+                    onChange={(event) => (event.target.value === "Hibernated" ? hibernateMenu(selectedMenu.id) : moveMenuToType(selectedMenu.id, event.target.value))}
+                    className="rounded-lg border border-slate-300 bg-white px-3 py-2 font-bold outline-none focus:border-emerald-500"
+                  >
+                    {menuTypes.map((type) => <option key={type} value={type}>{type}</option>)}
+                    <option value="Hibernated">Hibernated</option>
+                  </select>
+                </label>
                 <label className="grid gap-1 text-sm font-bold text-slate-700 md:col-span-2">
                   <span className="flex items-center justify-between gap-2">
                     <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Menu name</span>
@@ -1996,9 +2001,9 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                           data-testid={`${isSubmenu ? "ssmt-row-submenu" : "ssmt-row-divider"}-${item.id}`}
                           data-row-kind={isSubmenu ? "submenu" : "divider"}
                           draggable
-                          onDragStart={() => setDraggedRowId(item.id)}
+                          onDragStart={() => { draggedRowIdRef.current = item.id; }}
                           onDragOver={(event) => event.preventDefault()}
-                          onDrop={() => moveRow(draggedRowId, item.id)}
+                          onDrop={() => moveRow(draggedRowIdRef.current, item.id)}
                           className={`${palette.headerRowClass} text-slate-950`}
                         >
                           <td className={`border-b px-2 py-2 ${palette.headerGripClass}`}><GripVertical size={16} /></td>
@@ -2034,9 +2039,9 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                           data-row-kind="item"
                           data-section-tone={sectionToneName}
                           draggable
-                          onDragStart={() => setDraggedRowId(item.id)}
+                          onDragStart={() => { draggedRowIdRef.current = item.id; }}
                           onDragOver={(event) => event.preventDefault()}
-                          onDrop={() => moveRow(draggedRowId, item.id)}
+                          onDrop={() => moveRow(draggedRowIdRef.current, item.id)}
                           className={`align-top ${sectionTone.itemRowClass} ${item.lockedForCentric ? "outline outline-1 -outline-offset-1 outline-emerald-500" : ""}`}
                         >
                           <td className={`${builderCellClass} ${sectionTone.itemHandleClass}`}><GripVertical size={16} /></td>
@@ -2261,9 +2266,9 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                 data-testid={`ssmt-modifier-group-${group.id}`}
                 data-modifier-type={modifierType}
                 draggable
-                onDragStart={() => setDraggedModifierGroupId(group.id)}
+                onDragStart={() => { draggedModifierGroupIdRef.current = group.id; }}
                 onDragOver={(event) => event.preventDefault()}
-                onDrop={() => moveModifierGroup(draggedModifierGroupId, group.id)}
+                onDrop={() => moveModifierGroup(draggedModifierGroupIdRef.current, group.id)}
                 className={`overflow-hidden rounded-lg border ${typeStyle.borderClass} ${typeStyle.cardClass}`}
                 style={group.lockedForCentric ? { borderColor: "#059669", borderWidth: "2px" } : undefined}
               >
