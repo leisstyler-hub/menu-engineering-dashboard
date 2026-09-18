@@ -236,6 +236,7 @@ function cloneMenu(menu) {
       ...item,
       lockedForCentric: Boolean(item.lockedForCentric),
       secondaryCategory: item.secondaryCategory || item.reportingCategorySecondary || "",
+      dietaryPreference: item.dietaryPreference || "",
       scanPayUpc: item.scanPayUpc || "",
       areaPrices: { ...(item.areaPrices || {}) },
       modifierGroups: [...(item.modifierGroups || [])],
@@ -536,6 +537,7 @@ function createBlankItem(menuId, areaOrder, index = 1) {
     category: "",
     fohColumn: "",
     secondaryCategory: "",
+    dietaryPreference: "",
     scanPayUpc: "",
     brandMenu: "",
     calories: "",
@@ -1960,20 +1962,21 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                     <col className="w-[46px]" />
                     <col className="w-[240px]" />
                     <col className="w-[320px]" />
-                    <col className="w-[450px]" />
+                    <col className="w-[400px]" />
                     <col className="w-[112px]" />
                     <col className="w-[72px]" />
                     <col className="w-[170px]" />
                     <col className="w-[118px]" />
                     <col className="w-[128px]" />
+                    <col className="w-[130px]" />
                     <col className="w-[150px]" />
                     <col className="w-[160px]" />
-                    <col className="w-[490px]" />
-                    <col className="w-[160px]" />
+                    <col className="w-[430px]" />
+                    <col className="w-[140px]" />
                   </colgroup>
                   <thead className="sticky top-0 z-10 bg-slate-100 text-xs font-black uppercase tracking-[0.12em] text-slate-600 shadow-sm">
                     <tr>
-                      {["Move", "Fixy", "Label", "Description", "MRN", "Calories", "SEA price", "Category", "Secondary category", "Scan & Pay", "Photo link", "Area prices", "Actions"].map((header) => (
+                      {["Move", "Fixy", "Label", "Description", "MRN", "Calories", "SEA price", "Category", "Secondary category", "Vegan / Vegetarian", "Scan & Pay", "Photo link", "Area prices", "Actions"].map((header) => (
                         <th key={header} className="border-b border-slate-400 px-2 py-1.5">{header}</th>
                       ))}
                     </tr>
@@ -2136,6 +2139,19 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               readOnly={Boolean(item.lockedForCentric)}
                               className={`w-full rounded-md border border-slate-300 px-2 py-1 text-xs font-bold outline-none focus:border-emerald-500 ${item.lockedForCentric ? "cursor-copy bg-emerald-50 text-slate-950" : "bg-white"}`}
                             />
+                          </td>
+                          <td className={builderCellClass}>
+                            <select
+                              aria-label={`Vegan or vegetarian for ${item.label || item.name || "item"}`}
+                              value={item.dietaryPreference || ""}
+                              onChange={(event) => updateItem(item.id, { dietaryPreference: event.target.value })}
+                              disabled={Boolean(item.lockedForCentric)}
+                              className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-bold text-slate-900 disabled:cursor-not-allowed disabled:bg-emerald-50 disabled:text-slate-950"
+                            >
+                              <option value="">Blank</option>
+                              <option value="Vegan">Vegan</option>
+                              <option value="Vegetarian">Vegetarian</option>
+                            </select>
                           </td>
                           <td className={builderCellClass}>
                             <input

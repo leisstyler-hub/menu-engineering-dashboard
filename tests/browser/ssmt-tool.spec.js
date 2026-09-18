@@ -290,7 +290,7 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
   const builderHeaderOrder = await page.getByRole("columnheader").allInnerTexts();
   expect(builderHeaderOrder.map((text) => text.toUpperCase())).toEqual([
     "MOVE", "FIXY", "LABEL", "DESCRIPTION", "MRN", "CALORIES",
-    "SEA PRICE", "CATEGORY", "SECONDARY CATEGORY", "SCAN & PAY", "PHOTO LINK", "AREA PRICES", "ACTIONS",
+    "SEA PRICE", "CATEGORY", "SECONDARY CATEGORY", "VEGAN / VEGETARIAN", "SCAN & PAY", "PHOTO LINK", "AREA PRICES", "ACTIONS",
   ]);
 
   const scanPayInput = page.getByLabel(/Scan and Pay UPC for/i).first();
@@ -634,6 +634,11 @@ test("SSMT loads and saves item lock state through shared storage", async ({ pag
   await photoLinkInput.fill("https://example.com/photos/remote-locked-item.jpg");
   await expect(photoLinkInput).toHaveValue("https://example.com/photos/remote-locked-item.jpg");
 
+  const dietaryPreferenceSelect = page.getByLabel(/Vegan or vegetarian for REMOTE LOCKED ITEM/i);
+  await expect(dietaryPreferenceSelect).toHaveValue("");
+  await dietaryPreferenceSelect.selectOption("Vegan");
+  await expect(dietaryPreferenceSelect).toHaveValue("Vegan");
+
   await page.getByRole("button", { name: /Save menu/i }).click();
 
   await expect.poll(() => {
@@ -653,6 +658,15 @@ test("SSMT loads and saves item lock state through shared storage", async ({ pag
       ?.items?.find((item) => item.id === "shared-lock-item")
       ?.photoLink;
   }).toBe("https://example.com/photos/remote-locked-item.jpg");
+
+  await expect.poll(() => {
+    const record = savedBodies
+      .flatMap((body) => body?.records || [])
+      .find((candidate) => candidate?.["Record ID"] === "ssmt|workspace|current");
+    return record?.menus?.find((menu) => menu.id === "shared-lock-menu")
+      ?.items?.find((item) => item.id === "shared-lock-item")
+      ?.dietaryPreference;
+  }).toBe("Vegan");
 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
