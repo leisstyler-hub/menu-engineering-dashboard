@@ -277,7 +277,7 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
   await submenuRow.getByLabel(/Sub menu title/i).fill("Curated Sandwiches");
   await submenuRow.dragTo(page.getByTestId(/ssmt-row-item/).nth(1));
   const submenuBackground = await submenuRow.evaluate((node) => getComputedStyle(node).backgroundColor);
-  expect(submenuBackground).toBe("rgb(236, 253, 245)");
+  expect(submenuBackground).toBe("rgb(239, 246, 255)");
 
   await expect(page.getByRole("columnheader", { name: "Fixy" })).toBeVisible();
   await expect(page.getByRole("columnheader", { name: "FOH / Fixy" })).toHaveCount(0);
@@ -1242,12 +1242,12 @@ test("SSMT builder uses polished grouped sections and keeps modifier group title
     };
   });
   expect(sectionMetrics.mainBorder).toBe("rgb(125, 211, 252)");
-  expect(sectionMetrics.submenuBorder).toBe("rgb(52, 211, 153)");
-  expect(sectionMetrics.dividerBorder).toBe("rgb(167, 139, 250)");
+  expect(sectionMetrics.submenuBorder).toBe("rgb(96, 165, 250)");
+  expect(sectionMetrics.dividerBorder).toBe("rgb(251, 113, 133)");
   expect(Number.parseFloat(sectionMetrics.mainRadius)).toBeLessThanOrEqual(8);
   expect(sectionMetrics.mainItem).toMatchObject({ tone: "main", border: "rgb(186, 230, 253)" });
-  expect(sectionMetrics.submenuItem).toMatchObject({ tone: "submenu", border: "rgb(167, 243, 208)" });
-  expect(sectionMetrics.dividerItem).toMatchObject({ tone: "divider", border: "rgb(221, 214, 254)" });
+  expect(sectionMetrics.submenuItem).toMatchObject({ tone: "submenu", border: "rgb(191, 219, 254)" });
+  expect(sectionMetrics.dividerItem).toMatchObject({ tone: "divider", border: "rgb(254, 205, 211)" });
 
   await page.getByRole("button", { name: /view modifiers/i }).first().click();
   const modifierDialog = page.getByRole("dialog", { name: /modifier/i });
@@ -1272,10 +1272,10 @@ test("SSMT dividers and sub menus rotate through distinct colors on one menu", a
   await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
   await page.getByRole("button", { name: /^The Daily/i }).click();
 
-  await page.getByRole("button", { name: /Add divider/i }).click();
-  await page.getByRole("button", { name: /Add divider/i }).click();
-  await page.getByRole("button", { name: /Add sub menu/i }).click();
-  await page.getByRole("button", { name: /Add sub menu/i }).click();
+  for (let index = 0; index < 4; index += 1) {
+    await page.getByRole("button", { name: /Add divider/i }).click();
+    await page.getByRole("button", { name: /Add sub menu/i }).click();
+  }
 
   const dividerBorders = await page
     .getByTestId(/ssmt-builder-section-divider/)
@@ -1284,14 +1284,18 @@ test("SSMT dividers and sub menus rotate through distinct colors on one menu", a
     .getByTestId(/ssmt-builder-section-submenu/)
     .evaluateAll((nodes) => nodes.map((node) => getComputedStyle(node).borderColor));
 
-  // First divider keeps violet-400; second rotates to rose-400.
-  expect(dividerBorders[0]).toBe("rgb(167, 139, 250)");
-  expect(dividerBorders[1]).toBe("rgb(251, 113, 133)");
-  expect(dividerBorders[0]).not.toBe(dividerBorders[1]);
-  // First sub menu keeps emerald-400; second rotates to indigo-400.
-  expect(submenuBorders[0]).toBe("rgb(52, 211, 153)");
-  expect(submenuBorders[1]).toBe("rgb(129, 140, 248)");
-  expect(submenuBorders[0]).not.toBe(submenuBorders[1]);
+  expect(dividerBorders).toEqual([
+    "rgb(251, 113, 133)",
+    "rgb(251, 191, 36)",
+    "rgb(251, 146, 60)",
+    "rgb(232, 121, 249)",
+  ]);
+  expect(submenuBorders).toEqual([
+    "rgb(96, 165, 250)",
+    "rgb(129, 140, 248)",
+    "rgb(167, 139, 250)",
+    "rgb(34, 211, 238)",
+  ]);
 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);

@@ -111,20 +111,10 @@ const SSMT_BUILDER_MAIN_PALETTE = {
   itemCellBorderClass: "border-sky-200",
   itemHandleClass: "text-sky-700",
 };
-// Dividers rotate through these 4 colors (1-2-3-4-1-2...) within a single menu;
-// items under a divider inherit that divider's color so sections read by color.
-// Palette index 0 keeps the original violet so it stays the "first divider" color.
+// Dividers use warm structural colors, while sub menus use cool structural colors.
+// Keeping both groups out of the green family prevents them from blending with
+// SSMT completion, lock, save, dietary, and modifier-readiness status colors.
 const SSMT_DIVIDER_PALETTES = [
-  {
-    headerRowClass: "bg-violet-50",
-    headerGripClass: "border-violet-300 text-violet-800",
-    headerCellBorderClass: "border-violet-300",
-    headerBoxClass: "border-violet-400 bg-violet-50",
-    badgeClass: "bg-violet-700",
-    itemRowClass: "odd:bg-violet-50 even:bg-violet-100/60",
-    itemCellBorderClass: "border-violet-200",
-    itemHandleClass: "text-violet-700",
-  },
   {
     headerRowClass: "bg-rose-50",
     headerGripClass: "border-rose-300 text-rose-800",
@@ -146,28 +136,37 @@ const SSMT_DIVIDER_PALETTES = [
     itemHandleClass: "text-amber-700",
   },
   {
-    headerRowClass: "bg-cyan-50",
-    headerGripClass: "border-cyan-300 text-cyan-800",
-    headerCellBorderClass: "border-cyan-300",
-    headerBoxClass: "border-cyan-400 bg-cyan-50",
-    badgeClass: "bg-cyan-700",
-    itemRowClass: "odd:bg-cyan-50 even:bg-cyan-100/60",
-    itemCellBorderClass: "border-cyan-200",
-    itemHandleClass: "text-cyan-700",
+    headerRowClass: "bg-orange-50",
+    headerGripClass: "border-orange-300 text-orange-800",
+    headerCellBorderClass: "border-orange-300",
+    headerBoxClass: "border-orange-400 bg-orange-50",
+    badgeClass: "bg-orange-700",
+    itemRowClass: "odd:bg-orange-50 even:bg-orange-100/60",
+    itemCellBorderClass: "border-orange-200",
+    itemHandleClass: "text-orange-700",
+  },
+  {
+    headerRowClass: "bg-fuchsia-50",
+    headerGripClass: "border-fuchsia-300 text-fuchsia-800",
+    headerCellBorderClass: "border-fuchsia-300",
+    headerBoxClass: "border-fuchsia-400 bg-fuchsia-50",
+    badgeClass: "bg-fuchsia-700",
+    itemRowClass: "odd:bg-fuchsia-50 even:bg-fuchsia-100/60",
+    itemCellBorderClass: "border-fuchsia-200",
+    itemHandleClass: "text-fuchsia-700",
   },
 ];
-// Sub menus rotate through their own 4 colors, independent of the divider rotation.
-// Palette index 0 keeps the original emerald so it stays the "first sub menu" color.
+// Sub menus rotate independently through the cool palette.
 const SSMT_SUBMENU_PALETTES = [
   {
-    headerRowClass: "bg-emerald-50",
-    headerGripClass: "border-emerald-300 text-emerald-800",
-    headerCellBorderClass: "border-emerald-300",
-    headerBoxClass: "border-emerald-400 bg-emerald-50",
-    badgeClass: "bg-emerald-700",
-    itemRowClass: "odd:bg-emerald-50 even:bg-emerald-100/60",
-    itemCellBorderClass: "border-emerald-200",
-    itemHandleClass: "text-emerald-700",
+    headerRowClass: "bg-blue-50",
+    headerGripClass: "border-blue-300 text-blue-800",
+    headerCellBorderClass: "border-blue-300",
+    headerBoxClass: "border-blue-400 bg-blue-50",
+    badgeClass: "bg-blue-700",
+    itemRowClass: "odd:bg-blue-50 even:bg-blue-100/60",
+    itemCellBorderClass: "border-blue-200",
+    itemHandleClass: "text-blue-700",
   },
   {
     headerRowClass: "bg-indigo-50",
@@ -180,24 +179,24 @@ const SSMT_SUBMENU_PALETTES = [
     itemHandleClass: "text-indigo-700",
   },
   {
-    headerRowClass: "bg-fuchsia-50",
-    headerGripClass: "border-fuchsia-300 text-fuchsia-800",
-    headerCellBorderClass: "border-fuchsia-300",
-    headerBoxClass: "border-fuchsia-400 bg-fuchsia-50",
-    badgeClass: "bg-fuchsia-700",
-    itemRowClass: "odd:bg-fuchsia-50 even:bg-fuchsia-100/60",
-    itemCellBorderClass: "border-fuchsia-200",
-    itemHandleClass: "text-fuchsia-700",
+    headerRowClass: "bg-violet-50",
+    headerGripClass: "border-violet-300 text-violet-800",
+    headerCellBorderClass: "border-violet-300",
+    headerBoxClass: "border-violet-400 bg-violet-50",
+    badgeClass: "bg-violet-700",
+    itemRowClass: "odd:bg-violet-50 even:bg-violet-100/60",
+    itemCellBorderClass: "border-violet-200",
+    itemHandleClass: "text-violet-700",
   },
   {
-    headerRowClass: "bg-orange-50",
-    headerGripClass: "border-orange-300 text-orange-800",
-    headerCellBorderClass: "border-orange-300",
-    headerBoxClass: "border-orange-400 bg-orange-50",
-    badgeClass: "bg-orange-700",
-    itemRowClass: "odd:bg-orange-50 even:bg-orange-100/60",
-    itemCellBorderClass: "border-orange-200",
-    itemHandleClass: "text-orange-700",
+    headerRowClass: "bg-cyan-50",
+    headerGripClass: "border-cyan-300 text-cyan-800",
+    headerCellBorderClass: "border-cyan-300",
+    headerBoxClass: "border-cyan-400 bg-cyan-50",
+    badgeClass: "bg-cyan-700",
+    itemRowClass: "odd:bg-cyan-50 even:bg-cyan-100/60",
+    itemCellBorderClass: "border-cyan-200",
+    itemHandleClass: "text-cyan-700",
   },
 ];
 const SSMT_AREA_PRICE_GRID_CLASS = "grid w-full min-w-0 grid-cols-8 gap-1 text-[11px] font-bold leading-3 text-slate-700";
