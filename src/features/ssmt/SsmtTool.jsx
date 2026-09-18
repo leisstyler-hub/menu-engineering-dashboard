@@ -1222,6 +1222,15 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
     updateModifierGroup(groupId, { lockedForCentric: !group?.lockedForCentric });
   };
 
+  const updateModifierGroupDraft = (groupId, patch) => {
+    setModifierDialog((current) => current ? {
+      ...current,
+      groups: current.groups.map((group) => (
+        group.id === groupId ? { ...group, ...patch } : group
+      )),
+    } : current);
+  };
+
   const updateModifierGroup = (groupId, patch) => {
     const existingGroup = ssmtData.modifierGroups.find((group) => group.id === groupId)
       || modifierDialog?.groups.find((group) => group.id === groupId)
@@ -2309,7 +2318,11 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                     <input
                       aria-label="Modifier group name"
                       value={group.name}
-                      onChange={(event) => updateModifierGroup(group.id, { name: event.target.value })}
+                      onChange={(event) => updateModifierGroupDraft(group.id, { name: event.target.value })}
+                      onBlur={(event) => updateModifierGroup(group.id, { name: event.target.value })}
+                      onKeyDown={(event) => {
+                        if (event.key === "Escape") updateModifierGroup(group.id, { name: event.currentTarget.value });
+                      }}
                       readOnly={Boolean(group.lockedForCentric)}
                       className={`rounded-md border border-slate-300 px-2.5 py-1.5 text-xs font-black outline-none focus:border-emerald-500 ${group.lockedForCentric ? "cursor-copy bg-emerald-50" : "bg-white"}`}
                     />

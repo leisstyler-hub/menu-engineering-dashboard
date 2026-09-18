@@ -735,7 +735,12 @@ test("SSMT manual saves recover failed shared saves and keep flags plus modifier
   await expect(modifierDialog.getByText(/Empty slot/i)).toHaveCount(4);
 
   await modifierDialog.getByRole("button", { name: /Add modifier group/i }).click();
-  await modifierDialog.getByLabel(/Modifier group name/i).last().fill("Sauce Rules");
+  const modifierGroupName = modifierDialog.getByLabel(/Modifier group name/i).last();
+  await modifierGroupName.fill("");
+  const renameStartedAt = Date.now();
+  await modifierGroupName.pressSequentially("Sauce Rules", { delay: 20 });
+  expect(Date.now() - renameStartedAt).toBeLessThan(1_500);
+  await modifierGroupName.blur();
   await modifierDialog.getByLabel(/Modifier name/i).last().fill("Chile Crisp");
   await modifierDialog.getByRole("button", { name: /Save group to slot 1/i }).click();
   await expect(modifierDialog.getByText(/Slot 1: Sauce Rules/i)).toBeVisible();
