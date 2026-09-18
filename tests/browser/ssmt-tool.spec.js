@@ -289,7 +289,7 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
   await expect(page.getByRole("columnheader", { name: "Calories" })).toBeVisible();
   const builderHeaderOrder = await page.getByRole("columnheader").allInnerTexts();
   expect(builderHeaderOrder.map((text) => text.toUpperCase())).toEqual([
-    "MOVE", "FIXY", "LABEL", "DESCRIPTION", "MRN", "CALORIES",
+    "MOVE", "DIET", "FIXY", "LABEL", "DESCRIPTION", "MRN", "CALORIES",
     "SEA PRICE", "CATEGORY", "SECONDARY CATEGORY", "VEGAN / VEGETARIAN", "SCAN & PAY", "PHOTO LINK", "AREA PRICES", "ACTIONS",
   ]);
 
@@ -636,8 +636,18 @@ test("SSMT loads and saves item lock state through shared storage", async ({ pag
 
   const dietaryPreferenceSelect = page.getByLabel(/Vegan or vegetarian for REMOTE LOCKED ITEM/i);
   await expect(dietaryPreferenceSelect).toHaveValue("");
+  await expect(dietaryPreferenceSelect.locator('option[value=""]')).toHaveText("");
+  await expect(page.getByLabel(/Dietary tag for REMOTE LOCKED ITEM/i)).toHaveCount(0);
   await dietaryPreferenceSelect.selectOption("Vegan");
   await expect(dietaryPreferenceSelect).toHaveValue("Vegan");
+  const veganBadge = page.getByLabel(/Dietary tag for REMOTE LOCKED ITEM: Vegan/i);
+  await expect(veganBadge).toHaveText("VN");
+  await expect(veganBadge).toHaveClass(/bg-emerald-600/);
+  await dietaryPreferenceSelect.selectOption("Vegetarian");
+  const vegetarianBadge = page.getByLabel(/Dietary tag for REMOTE LOCKED ITEM: Vegetarian/i);
+  await expect(vegetarianBadge).toHaveText("V");
+  await expect(vegetarianBadge).toHaveClass(/bg-lime-300/);
+  await dietaryPreferenceSelect.selectOption("Vegan");
 
   await page.getByRole("button", { name: /Save menu/i }).click();
 

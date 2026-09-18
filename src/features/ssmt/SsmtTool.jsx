@@ -1960,6 +1960,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                 <table className="w-full min-w-[2680px] table-fixed border-collapse text-left text-xs">
                   <colgroup>
                     <col className="w-[46px]" />
+                    <col className="w-[52px]" />
                     <col className="w-[240px]" />
                     <col className="w-[320px]" />
                     <col className="w-[400px]" />
@@ -1976,7 +1977,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                   </colgroup>
                   <thead className="sticky top-0 z-10 bg-slate-100 text-xs font-black uppercase tracking-[0.12em] text-slate-600 shadow-sm">
                     <tr>
-                      {["Move", "Fixy", "Label", "Description", "MRN", "Calories", "SEA price", "Category", "Secondary category", "Vegan / Vegetarian", "Scan & Pay", "Photo link", "Area prices", "Actions"].map((header) => (
+                      {["Move", "Diet", "Fixy", "Label", "Description", "MRN", "Calories", "SEA price", "Category", "Secondary category", "Vegan / Vegetarian", "Scan & Pay", "Photo link", "Area prices", "Actions"].map((header) => (
                         <th key={header} className="border-b border-slate-400 px-2 py-1.5">{header}</th>
                       ))}
                     </tr>
@@ -2010,7 +2011,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                           className={`${palette.headerRowClass} text-slate-950`}
                         >
                           <td className={`border-b px-2 py-2 ${palette.headerGripClass}`}><GripVertical size={16} /></td>
-                          <td colSpan={12} className={`border-b px-2 py-2 ${palette.headerCellBorderClass}`}>
+                          <td colSpan={13} className={`border-b px-2 py-2 ${palette.headerCellBorderClass}`}>
                             <div
                               data-testid={`${isSubmenu ? "ssmt-builder-section-submenu" : "ssmt-builder-section-divider"}-${item.id}`}
                               className={`flex flex-col gap-2 rounded-lg border p-2 md:flex-row md:items-center md:justify-between ${palette.headerBoxClass}`}
@@ -2048,6 +2049,17 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                           className={`align-top ${sectionTone.itemRowClass} ${item.lockedForCentric ? "outline outline-1 -outline-offset-1 outline-emerald-500" : ""}`}
                         >
                           <td className={`${builderCellClass} ${sectionTone.itemHandleClass}`}><GripVertical size={16} /></td>
+                          <td className={`${builderCellClass} text-center`}>
+                            {item.dietaryPreference ? (
+                              <span
+                                aria-label={`Dietary tag for ${item.label || item.name || "item"}: ${item.dietaryPreference}`}
+                                title={item.dietaryPreference}
+                                className={`inline-flex h-7 w-7 items-center justify-center rounded-full border-2 text-[10px] font-black ${item.dietaryPreference === "Vegan" ? "border-emerald-800 bg-emerald-600 text-white" : "border-lime-700 bg-lime-300 text-lime-950"}`}
+                              >
+                                {item.dietaryPreference === "Vegan" ? "VN" : "V"}
+                              </span>
+                            ) : null}
+                          </td>
                           <td className={builderCellClass}>
                             <input
                               aria-label={`Fixy for ${item.label || item.name || "item"}`}
@@ -2148,7 +2160,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               disabled={Boolean(item.lockedForCentric)}
                               className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-bold text-slate-900 disabled:cursor-not-allowed disabled:bg-emerald-50 disabled:text-slate-950"
                             >
-                              <option value="">Blank</option>
+                              <option value=""></option>
                               <option value="Vegan">Vegan</option>
                               <option value="Vegetarian">Vegetarian</option>
                             </select>
