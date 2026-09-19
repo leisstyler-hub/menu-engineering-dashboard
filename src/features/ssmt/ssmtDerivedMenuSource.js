@@ -79,58 +79,45 @@ export function deriveSsmtOperatingRows(workspace = {}, { today = new Date() } =
   const menus = Array.isArray(workspace.menus) ? workspace.menus : [];
   const rows = [];
   menus.filter((menu) => isSsmtDownstreamMenu(menu, today)).forEach((menu) => {
-    let currentSubmenuId = "";
+    let currentSubmenu = "";
     let currentCategory = "";
-    const submenuNamesById = new Map((menu.items || [])
-      .filter((item) => item?.recordType === "divider" && item.dividerKind === "submenu")
-      .map((item) => [item.id, cleanText(item.title)]));
     (menu.items || []).forEach((item, index) => {
       if (item?.recordType === "divider") {
         const title = cleanText(item.title);
-        if (item.dividerKind === "submenu") {
-          currentSubmenuId = item.id;
-        }
+        if (item.dividerKind === "submenu") currentSubmenu = title;
         currentCategory = title || currentCategory;
         return;
       }
+      const rowMenu = currentSubmenu
+        ? normalizeSubmenuForApp(menu.name, currentSubmenu)
+        : normalizeMenuForApp(menu.name);
       const label = cleanText(item.label || item.name);
-      if (!label) return;
+      if (!rowMenu || !label) return;
       const category = cleanText(item.category) || cleanText(currentCategory) || "Entree";
-      const primaryMembership = submenuNamesById.has(currentSubmenuId)
-        ? [{ submenuId: currentSubmenuId, submenu: submenuNamesById.get(currentSubmenuId), isAdditional: false }]
-        : [{ submenuId: "", submenu: "", isAdditional: false }];
-      const additionalMemberships = [...new Set(Array.isArray(item.additionalSubmenuIds) ? item.additionalSubmenuIds : [])]
-        .filter((submenuId) => submenuId !== currentSubmenuId && submenuNamesById.has(submenuId))
-        .map((submenuId) => ({ submenuId, submenu: submenuNamesById.get(submenuId), isAdditional: true }));
-      [...primaryMembership, ...additionalMemberships].forEach(({ submenuId, submenu, isAdditional }) => {
-        const rowMenu = submenu ? normalizeSubmenuForApp(menu.name, submenu) : normalizeMenuForApp(menu.name);
-        if (!rowMenu) return;
-        const membershipSuffix = isAdditional ? `-${submenuId}` : "";
-        rows.push({
-          id: `ssmt-${menu.id || menu.name}-${item.id || index}${membershipSuffix}`,
-          item_key: `ssmt:${menu.id || menu.name}:${item.id || index}${membershipSuffix}`,
-          menu: rowMenu,
-          masterMenu: normalizeMenuForApp(menu.name),
-          masterMenuName: cleanText(menu.name),
-          submenu,
-          station: submenu || cleanText(item.secondaryCategory || item.reportingCategorySecondary || category) || "SSMT",
-          item: label,
-          recipeName: label,
-          displayName: label,
-          description: cleanText(item.description),
-          enticingDescription: cleanText(item.description),
-          mrn: cleanText(item.mrn),
-          MRN: cleanText(item.mrn),
-          category,
-          recipeCategory: cleanText(item.secondaryCategory || item.reportingCategorySecondary || category),
-          price: priceNumber(item.seaPrice || item.price),
-          trueCost: null,
-          calories: cleanText(item.calories),
-          areaPrices: item.areaPrices || {},
-          plannerSelectorGroup: cleanText(item.secondaryCategory || item.reportingCategorySecondary),
-          dataSource: "ssmt-derived-menu",
-          __ssmtOperatingMenu: true,
-        });
+      rows.push({
+        id: `ssmt-${menu.id || menu.name}-${item.id || index}`,
+        item_key: `ssmt:${menu.id || menu.name}:${item.id || index}`,
+        menu: rowMenu,
+        masterMenu: normalizeMenuForApp(menu.name),
+        masterMenuName: cleanText(menu.name),
+        submenu: currentSubmenu,
+        station: currentSubmenu || cleanText(item.secondaryCategory || item.reportingCategorySecondary || category) || "SSMT",
+        item: label,
+        recipeName: label,
+        displayName: label,
+        description: cleanText(item.description),
+        enticingDescription: cleanText(item.description),
+        mrn: cleanText(item.mrn),
+        MRN: cleanText(item.mrn),
+        category,
+        recipeCategory: cleanText(item.secondaryCategory || item.reportingCategorySecondary || category),
+        price: priceNumber(item.seaPrice || item.price),
+        trueCost: null,
+        calories: cleanText(item.calories),
+        areaPrices: item.areaPrices || {},
+        plannerSelectorGroup: cleanText(item.secondaryCategory || item.reportingCategorySecondary),
+        dataSource: "ssmt-derived-menu",
+        __ssmtOperatingMenu: true,
       });
     });
   });
