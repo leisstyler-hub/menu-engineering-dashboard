@@ -20,6 +20,8 @@ const existingTransfer = {
     portion: "1 piece",
     itemWasteCost: 1.5,
     quantity: 2,
+    fromGlAccount: "4111001",
+    toGlAccount: "4111002",
     glGroups: [{ gl: "4111001", name: "Legacy mapping", amount: 1.5 }],
   }],
 };
@@ -65,8 +67,8 @@ test("Transfer Tool creates, costs, saves, copies, searches, and exports a share
   await page.getByLabel("Menu 1", { exact: true }).selectOption("AMZ: Ohana");
   await page.getByLabel("Item 1", { exact: true }).selectOption({ label: "Huli Huli Chicken · 33065.1 · 1 piece" });
   await page.getByLabel("Item count 1", { exact: true }).fill("2");
-  await page.getByRole("textbox", { name: "From G/L 1", exact: true }).fill("4111001");
-  await page.getByRole("textbox", { name: "To G/L 1", exact: true }).fill("4111002");
+  await page.getByLabel("From G/L 1", { exact: true }).selectOption("4111003");
+  await page.getByLabel("To G/L 1", { exact: true }).selectOption("4111004");
   await page.getByLabel("Event ID").fill("EVENT-42");
   await expect(page.getByLabel("Receiving profit center")).toHaveValue("30159");
   await expect(page.getByLabel("Receiving profit center")).toHaveAttribute("readonly", "");
@@ -82,7 +84,7 @@ test("Transfer Tool creates, costs, saves, copies, searches, and exports a share
   expect(writes[0].records[0]["Record ID"]).toBe("transfer|qa%20dawson%20to%20nessie");
   expect(writes[0].records[0].items[0]).toMatchObject({ menu: "AMZ: Ohana", item: "Huli Huli Chicken", itemWasteCost: 2.5, quantity: 2 });
   expect(writes[0].records[0]).toMatchObject({ s4ExportVersion: 1, departingProfitCenter: "28676", receivingProfitCenter: "30159", eventId: "EVENT-42" });
-  expect(writes[0].records[0].items[0]).toMatchObject({ fromGlAccount: "4111001", toGlAccount: "4111002", description: "Huli Huli Chicken - QA Dawson to Nessie" });
+  expect(writes[0].records[0].items[0]).toMatchObject({ fromGlAccount: "4111003", toGlAccount: "4111004", description: "Huli Huli Chicken - QA Dawson to Nessie" });
   expect(writes[0].records[0].items[0]).not.toHaveProperty("glGroups");
 
   const downloadPromise = page.waitForEvent("download");
@@ -92,7 +94,7 @@ test("Transfer Tool creates, costs, saves, copies, searches, and exports a share
   const workbook = XLSX.readFile(path);
   expect(workbook.SheetNames).toEqual(["Template", "Guidelines"]);
   const transferRows = XLSX.utils.sheet_to_json(workbook.Sheets.Template, { header: 1 });
-  expect(transferRows[1]).toEqual(["4111001", "30159", "4111002", "Huli Huli Chicken - QA Dawson to Nessie", 5, "EVENT-42"]);
+  expect(transferRows[1]).toEqual(["4111003", "30159", "4111004", "Huli Huli Chicken - QA Dawson to Nessie", 5, "EVENT-42"]);
 
   await page.getByRole("button", { name: "Copy Transfer" }).click();
   await expect(page.getByLabel("Globally unique title")).toHaveValue("");
@@ -108,8 +110,8 @@ test("Transfer Tool creates, costs, saves, copies, searches, and exports a share
   await expect(page.getByTestId("transfer-total")).toHaveText("$5.00");
   await page.getByLabel("Globally unique title").fill("Legacy transfer sanitized");
   await page.getByLabel("Transfer date").fill("2026-09-11");
-  await page.getByRole("textbox", { name: "From G/L 1", exact: true }).fill("4111001");
-  await page.getByRole("textbox", { name: "To G/L 1", exact: true }).fill("4111002");
+  await page.getByLabel("From G/L 1", { exact: true }).selectOption("4111010");
+  await page.getByLabel("To G/L 1", { exact: true }).selectOption("4111012");
   await page.getByRole("button", { name: "Save Draft" }).click();
   expect(writes).toHaveLength(2);
   expect(writes[1].records[0].items[0]).not.toHaveProperty("glGroups");
@@ -172,6 +174,55 @@ test("Transfer Tool locks the completed current-cafe profit-center mappings", as
   }
 });
 
+test("Transfer Tool offers the approved S4 G/L catalog for every line", async ({ page }) => {
+  await mockTransferStorage(page);
+  await openTool(page, /open transfer tool/i, /^Transfer Tool$/);
+  await page.getByLabel("Menu 1", { exact: true }).selectOption("AMZ: Ohana");
+  await page.getByLabel("Item 1", { exact: true }).selectOption({ label: "Huli Huli Chicken · 33065.1 · 1 piece" });
+  const fromGl = page.getByLabel("From G/L 1", { exact: true });
+  const toGl = page.getByLabel("To G/L 1", { exact: true });
+  await expect(fromGl).toHaveRole("combobox");
+  await expect(toGl).toHaveRole("combobox");
+  await expect(fromGl.locator("option")).toHaveText([
+    "Choose G/L",
+    "4111003 — Meat/Poultry",
+    "4111004 — Seafood",
+    "4111005 — Grocery/Storeroom",
+    "4111006 — Dairy",
+    "4111009 — Frozen",
+    "4111010 — Bakery",
+    "4111011 — Prepared Foods",
+    "4111012 — Fresh Produce/Salad",
+    "4112002 — Non Alcoholic Beverages",
+  ]);
+  await fromGl.selectOption("4111010");
+  await toGl.selectOption("4111012");
+  await expect(fromGl).toHaveValue("4111010");
+  await expect(toGl).toHaveValue("4111012");
+});
+
+test("Transfer Tool preserves legacy saved G/L values without allowing them to spread", async ({ page }) => {
+  const writes = await mockTransferStorage(page);
+  await openTool(page, /open transfer tool/i, /^Transfer Tool$/);
+  const existingCard = page.locator("article").filter({ hasText: "Existing Transfer" });
+  await existingCard.getByRole("button", { name: "Open" }).click();
+
+  const legacyFrom = page.getByLabel("From G/L 1", { exact: true });
+  const legacyTo = page.getByLabel("To G/L 1", { exact: true });
+  await expect(legacyFrom).toHaveValue("4111001");
+  await expect(legacyTo).toHaveValue("4111002");
+  await expect(legacyFrom.locator('option[value="4111001"]')).toHaveText("4111001 — Saved value");
+  await expect(page.getByRole("button", { name: "Copy From G/L 1 down" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Copy To G/L 1 down" })).toBeDisabled();
+
+  await page.getByRole("button", { name: "Save Draft" }).click();
+  expect(writes.at(-1).records[0].items[0]).toMatchObject({ fromGlAccount: "4111001", toGlAccount: "4111002" });
+
+  await page.getByRole("button", { name: "Copy Transfer" }).click();
+  await expect(page.getByLabel("From G/L 1", { exact: true })).toHaveValue("");
+  await expect(page.getByLabel("To G/L 1", { exact: true })).toHaveValue("");
+});
+
 test("Transfer Tool stages legacy saved transfers and exports one exact S4 workbook per transfer in a ZIP without writes", async ({ page }) => {
   const writes = await mockTransferStorage(page);
   await openTool(page, /open transfer tool/i, /^Transfer Tool$/);
@@ -179,14 +230,14 @@ test("Transfer Tool stages legacy saved transfers and exports one exact S4 workb
   await page.getByLabel("Select Second Transfer for batch export").check();
   await expect(page.getByRole("heading", { name: "Complete S4 fields" })).toBeVisible();
   const existingStage = page.locator("details").filter({ hasText: "Existing Transfer" });
-  await existingStage.getByText("Existing Transfer needs S4 fields").click();
-  await existingStage.getByLabel("Mobile From G/L 1").fill("4111001");
-  await existingStage.getByLabel("Mobile To G/L 1").fill("4111002");
+  await existingStage.locator("summary").click();
+  await existingStage.getByLabel("Mobile From G/L 1").selectOption("4111003");
+  await existingStage.getByLabel("Mobile To G/L 1").selectOption("4111004");
   await page.getByLabel("Existing Transfer event ID").fill("BATCH-7");
   const secondStage = page.locator("details").filter({ hasText: "Second Transfer" });
-  await secondStage.getByText("Second Transfer needs S4 fields").click();
-  await secondStage.getByLabel("Mobile From G/L 1").fill("4111003");
-  await secondStage.getByLabel("Mobile To G/L 1").fill("4111004");
+  await secondStage.locator("summary").click();
+  await secondStage.getByLabel("Mobile From G/L 1").selectOption("4111010");
+  await secondStage.getByLabel("Mobile To G/L 1").selectOption("4111012");
   await page.getByLabel("Second Transfer event ID").fill("BATCH-8");
   await expect(page.getByLabel("Existing Transfer receiving profit center")).toHaveValue("30159");
   await expect(page.getByLabel("Second Transfer receiving profit center")).toHaveValue("28676");
@@ -202,11 +253,11 @@ test("Transfer Tool stages legacy saved transfers and exports one exact S4 workb
   const workbook = XLSX.read(workbookBytes, { type: "buffer" });
   expect(workbook.SheetNames).toEqual(["Template", "Guidelines"]);
   const rows = XLSX.utils.sheet_to_json(workbook.Sheets.Template, { header: 1 });
-  expect(rows[1]).toEqual(["4111001", "30159", "4111002", "Huli Huli Chicken - Existing Transfer", 3, "BATCH-7"]);
+  expect(rows[1]).toEqual(["4111003", "30159", "4111004", "Huli Huli Chicken - Existing Transfer", 3, "BATCH-7"]);
   const secondWorkbookBytes = await zip.file(workbookNames[1]).async("nodebuffer");
   const secondWorkbook = XLSX.read(secondWorkbookBytes, { type: "buffer" });
   const secondRows = XLSX.utils.sheet_to_json(secondWorkbook.Sheets.Template, { header: 1 });
-  expect(secondRows[1]).toEqual(["4111003", "28676", "4111004", "Huli Huli Chicken - Second Transfer", 3, "BATCH-8"]);
+  expect(secondRows[1]).toEqual(["4111010", "28676", "4111012", "Huli Huli Chicken - Second Transfer", 3, "BATCH-8"]);
   expect(writes).toHaveLength(0);
 });
 

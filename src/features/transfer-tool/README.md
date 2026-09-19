@@ -10,7 +10,7 @@ The Transfer Tool is explicitly labeled `DRAFT`. It builds shared reference tran
 - `scripts/build-transfer-tool-catalog.mjs` emits the menu-scoped `src/data/transferToolCatalog.json` cost catalog. Run it with `--check` in release verification.
 - Repeated item names stay isolated by menu, MRN, and portion.
 - Missing costs display as unavailable and block saving that line.
-- The chef enters a seven-digit From G/L and To G/L on each selected item. These are transfer-entry fields, not ingredient-level classifications.
+- The chef selects a seven-digit From G/L and To G/L on each selected item from the approved S4 catalog in `s4GlAccounts.js`. Dropdown labels show both code and category. A saved legacy value outside the current catalog remains visible on its original record so opening or exporting an older transfer does not discard data. Legacy values cannot be copied down, and Copy Transfer clears them so new assignments come only from the approved catalog.
 - Café profit-center snapshots come from `cafeProfitCenters.js`. All current Platform cafés have a five-digit mapping; a future unmapped receiving café still requires manual entry. The departing profit center remains internal because S4 derives departure from the signed-in unit.
 
 ## Persistence

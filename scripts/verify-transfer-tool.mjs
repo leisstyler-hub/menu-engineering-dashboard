@@ -5,6 +5,7 @@ import JSZip from "jszip";
 import CATALOG from "../src/data/transferToolCatalog.json" with { type: "json" };
 import { buildS4Workbook, S4_TEMPLATE_SHA256 } from "../src/features/transfer-tool/transferExport.js";
 import { cafeProfitCenter } from "../src/features/transfer-tool/cafeProfitCenters.js";
+import { S4_GL_ACCOUNTS } from "../src/features/transfer-tool/s4GlAccounts.js";
 import { defaultTransferDescription, normalizeTransferTitle, refreshCopiedItems, S4_EXPORT_VERSION, transferRecordId, transferTotal, validateS4Transfer, validateTransfer } from "../src/features/transfer-tool/transferModel.js";
 import { CAFE_UNITS } from "../src/shared/cafeUnits.js";
 
@@ -19,6 +20,8 @@ if (normalizeTransferTitle(" MY   TRANSFER ") !== "my transfer") fail("title nor
 if (transferTotal([{ quantity: 2, itemWasteCost: 1.234 }]) !== 2.468) fail("extended transfer value is incorrect");
 if (cafeProfitCenter("Dawson") !== "28676" || cafeProfitCenter("Astra") !== "62844" || cafeProfitCenter("Eclipse") !== "62100" || cafeProfitCenter("LAX78") !== "64002" || cafeProfitCenter("SNA3") !== "44280") fail("cafe profit-center mapping is incorrect");
 if (!CAFE_UNITS.every(({ cafe }) => /^\d{5}$/.test(cafeProfitCenter(cafe)))) fail("one or more current cafés are missing a five-digit profit center");
+const expectedGlAccounts = ["4111003|Meat/Poultry", "4111004|Seafood", "4111005|Grocery/Storeroom", "4111006|Dairy", "4111009|Frozen", "4111010|Bakery", "4111011|Prepared Foods", "4111012|Fresh Produce/Salad", "4112002|Non Alcoholic Beverages"];
+if (S4_GL_ACCOUNTS.map(({ code, category }) => `${code}|${category}`).join(",") !== expectedGlAccounts.join(",")) fail("approved S4 G/L dropdown catalog is incomplete or changed");
 if (defaultTransferDescription("Tuna Sandwich", "Dawson to Nessie").length > 50) fail("default descriptions are not capped at 50 characters");
 const refreshed = refreshCopiedItems([{ catalogId: CATALOG.items[0].id, itemWasteCost: 999 }], CATALOG.items);
 if (refreshed[0].itemWasteCost === 999) fail("copied transfers do not refresh current cost");
@@ -30,7 +33,7 @@ const storage = read("src/features/transfer-tool/transferStorage.js");
 const component = read("src/features/transfer-tool/TransferTool.jsx");
 for (const marker of ["createTransfer", "Titles must be globally unique", "like.transfer|*"]) if (!api.includes(marker)) fail(`API is missing ${marker}`);
 for (const marker of ["createTransfer", "tool: \"transfers\"", "/api/recipe-library?scope=all", "row.trueCost"]) if (!storage.includes(marker)) fail(`storage client is missing ${marker}`);
-for (const marker of ["Item + Waste Cost", "Copy Transfer", "Export S4 Excel", "Batch export staging", "DRAFT"]) if (!component.includes(marker)) fail(`UI is missing ${marker}`);
+for (const marker of ["Item + Waste Cost", "Copy Transfer", "Export S4 Excel", "Batch export staging", "Choose G/L", "S4_GL_ACCOUNTS", "DRAFT"]) if (!component.includes(marker)) fail(`UI is missing ${marker}`);
 for (const removedMarker of ["G/L Breakdown", "GlBreakdown", "reviewed mapping"]) if (component.includes(removedMarker)) fail(`UI still contains ${removedMarker}`);
 
 console.log(`Transfer Tool verification passed: ${CATALOG.menus.length} menus, ${CATALOG.items.length} menu-scoped cost records.`);

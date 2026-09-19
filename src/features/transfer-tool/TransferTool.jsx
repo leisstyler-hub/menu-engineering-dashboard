@@ -9,6 +9,7 @@ import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
 import { cafeProfitCenter } from "./cafeProfitCenters.js";
 import { exportTransferWorkbook, exportTransferZip } from "./transferExport.js";
+import { S4_GL_ACCOUNTS, S4_GL_ACCOUNT_CODES } from "./s4GlAccounts.js";
 import { defaultTransferDescription, normalizeTransferTitle, refreshCopiedItems, S4_EXPORT_VERSION, transferRecordId, transferTotal, validateS4Transfer, validateTransfer } from "./transferModel.js";
 import { loadTransfers, refreshTransferCatalogCosts, saveTransfer } from "./transferStorage.js";
 
@@ -154,6 +155,8 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
     const refreshedItems = refreshCopiedItems(source.items || [], catalogItems).map((item) => ({
       ...item,
       lineId: lineId(),
+      fromGlAccount: S4_GL_ACCOUNT_CODES.has(item.fromGlAccount) ? item.fromGlAccount : "",
+      toGlAccount: S4_GL_ACCOUNT_CODES.has(item.toGlAccount) ? item.toGlAccount : "",
       description: item.descriptionIsAuto === false ? item.description : defaultTransferDescription(item.item, ""),
       descriptionIsAuto: item.descriptionIsAuto ?? true,
     }));
@@ -248,6 +251,7 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
 
   const copyGlDown = (index, field) => {
     const value = draft.items[index]?.[field] || "";
+    if (!S4_GL_ACCOUNT_CODES.has(value)) return;
     setDraft((current) => ({ ...current, items: current.items.map((item, itemIndex) => itemIndex >= index && item.catalogId ? { ...item, [field]: value } : item) }));
   };
 
@@ -456,13 +460,32 @@ function UnitField({ label, value, onChange, error }) {
 
 function S4LineFields({ line, index, mobile = false, onChange, onCopyDown }) {
   return (
-    <div className={`grid gap-3 ${mobile ? "grid-cols-1" : "pt-3 md:grid-cols-[minmax(120px,0.7fr)_minmax(120px,0.7fr)_minmax(240px,2fr)_auto]"}`}>
-      <div><span className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">From G/L</span><div className="mt-2 flex gap-1"><input aria-label={`${mobile ? "Mobile " : ""}From G/L ${index + 1}`} inputMode="numeric" maxLength={7} value={line.fromGlAccount || ""} onChange={(event) => onChange({ fromGlAccount: event.target.value.replace(/\D/g, "").slice(0, 7) })} className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 font-semibold" />{onCopyDown && <button type="button" aria-label={`Copy From G/L ${index + 1} down`} onClick={() => onCopyDown(index, "fromGlAccount")} className="rounded-lg border border-slate-300 px-2 text-xs font-black">↓</button>}</div></div>
-      <div><span className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">To G/L</span><div className="mt-2 flex gap-1"><input aria-label={`${mobile ? "Mobile " : ""}To G/L ${index + 1}`} inputMode="numeric" maxLength={7} value={line.toGlAccount || ""} onChange={(event) => onChange({ toGlAccount: event.target.value.replace(/\D/g, "").slice(0, 7) })} className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 font-semibold" />{onCopyDown && <button type="button" aria-label={`Copy To G/L ${index + 1} down`} onClick={() => onCopyDown(index, "toGlAccount")} className="rounded-lg border border-slate-300 px-2 text-xs font-black">↓</button>}</div></div>
+    <div className={`grid gap-3 ${mobile ? "grid-cols-1" : "pt-3 md:grid-cols-[minmax(170px,0.9fr)_minmax(170px,0.9fr)_minmax(240px,2fr)_auto]"}`}>
+      <GlAccountField label="From G/L" value={line.fromGlAccount} index={index} mobile={mobile} onChange={(value) => onChange({ fromGlAccount: value })} onCopyDown={onCopyDown ? () => onCopyDown(index, "fromGlAccount") : null} />
+      <GlAccountField label="To G/L" value={line.toGlAccount} index={index} mobile={mobile} onChange={(value) => onChange({ toGlAccount: value })} onCopyDown={onCopyDown ? () => onCopyDown(index, "toGlAccount") : null} />
       <Field label="Description">
         <input aria-label={`${mobile ? "Mobile " : ""}Description ${index + 1}`} maxLength={50} value={line.description || ""} onChange={(event) => onChange({ description: event.target.value, descriptionIsAuto: false })} className="w-full rounded-lg border border-slate-300 px-3 py-2 font-semibold" />
       </Field>
       <div className="self-end pb-2 text-xs font-bold text-slate-500">{String(line.description || "").length}/50</div>
+    </div>
+  );
+}
+
+function GlAccountField({ label, value = "", index, mobile, onChange, onCopyDown }) {
+  const savedOutsideCatalog = value && !S4_GL_ACCOUNT_CODES.has(value);
+  const copyAllowed = S4_GL_ACCOUNT_CODES.has(value);
+  const ariaLabel = `${mobile ? "Mobile " : ""}${label} ${index + 1}`;
+  return (
+    <div>
+      <span className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">{label}</span>
+      <div className="mt-2 flex gap-1">
+        <select aria-label={ariaLabel} value={value} onChange={(event) => onChange(event.target.value)} className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm font-semibold">
+          <option value="">Choose G/L</option>
+          {savedOutsideCatalog && <option value={value}>{value} — Saved value</option>}
+          {S4_GL_ACCOUNTS.map(({ code, category }) => <option key={code} value={code}>{code} — {category}</option>)}
+        </select>
+        {onCopyDown && <button type="button" aria-label={`Copy ${label} ${index + 1} down`} title={copyAllowed ? `Copy ${label} down` : "Choose an approved G/L before copying down"} disabled={!copyAllowed} onClick={onCopyDown} className="rounded-lg border border-slate-300 px-2 text-xs font-black disabled:cursor-not-allowed disabled:opacity-40">↓</button>}
+      </div>
     </div>
   );
 }
@@ -472,6 +495,7 @@ function BatchTransferEditor({ transfer, onChange }) {
   const updateLine = (index, patchValue) => onChange((current) => ({ ...current, items: current.items.map((line, lineIndex) => lineIndex === index ? { ...line, ...patchValue } : line) }));
   const copyDown = (index, field) => onChange((current) => {
     const value = current.items[index]?.[field] || "";
+    if (!S4_GL_ACCOUNT_CODES.has(value)) return current;
     return { ...current, items: current.items.map((line, lineIndex) => lineIndex >= index && line.catalogId ? { ...line, [field]: value } : line) };
   });
   const validation = validateS4Transfer(transfer);
