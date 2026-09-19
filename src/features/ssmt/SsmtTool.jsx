@@ -156,7 +156,8 @@ const SSMT_DIVIDER_PALETTES = [
     itemHandleClass: "text-fuchsia-700",
   },
 ];
-// Sub menus rotate independently through the cool palette.
+// Sub menus use the cool palette. A shared structural-section index below advances
+// for every divider or sub menu so adjacent sections always change color.
 const SSMT_SUBMENU_PALETTES = [
   {
     headerRowClass: "bg-blue-50",
@@ -1995,16 +1996,15 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                       const visibleBuilderRows = selectedMenu.items.slice(0, 80);
                       let activeSectionTone = "main";
                       let activePalette = SSMT_BUILDER_MAIN_PALETTE;
-                      let dividerColorIndex = 0;
-                      let submenuColorIndex = 0;
+                      let sectionColorIndex = 0;
                       return visibleBuilderRows.map((item) => (
                       item.recordType === "divider" ? (
                         (() => {
                           const isSubmenu = item.dividerKind === "submenu";
                           const palette = isSubmenu
-                            ? SSMT_SUBMENU_PALETTES[submenuColorIndex % SSMT_SUBMENU_PALETTES.length]
-                            : SSMT_DIVIDER_PALETTES[dividerColorIndex % SSMT_DIVIDER_PALETTES.length];
-                          if (isSubmenu) submenuColorIndex += 1; else dividerColorIndex += 1;
+                            ? SSMT_SUBMENU_PALETTES[sectionColorIndex % SSMT_SUBMENU_PALETTES.length]
+                            : SSMT_DIVIDER_PALETTES[sectionColorIndex % SSMT_DIVIDER_PALETTES.length];
+                          sectionColorIndex += 1;
                           activePalette = palette;
                           activeSectionTone = isSubmenu ? "submenu" : "divider";
                           return (
