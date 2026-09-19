@@ -344,6 +344,171 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
+// This test runs entirely against a mocked "**/api/storage/records**" route — never the
+// real shared Supabase workspace. A 2026-09-19 incident showed a browser test that hit the
+// live SSMT record directly (goto "/" + real Save) can save mid-load state over
+// ssmt|workspace|current and wipe bucket/phase assignments and Divider/Sub Menu rows in
+// production. See ARCHITECTURE_RULES.md / GOVERNANCE.md: verification must use isolated
+// fixtures, never the live record.
+test("SSMT shares one item across multiple sub menus without duplicating its saved record", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const savedBodies = [];
+  const sharedSubmenuFixture = () => ({
+    id: "shared-submenu-menu",
+    name: "Shared Submenu Fixture",
+    centricMenuName: "",
+    webtritionMasterMenuName: "",
+    sourceSheet: "Shared storage test",
+    includeReason: "Created in SSMT",
+    type: "Core",
+    phase: "IT complete",
+    status: "Draft",
+    activeStart: "",
+    activeEnd: "",
+    completedAt: "",
+    editSignal: false,
+    flags: [],
+    downstreamEligibleAfter: "IT complete",
+    items: [
+      { id: "submenu-amaz", recordType: "divider", dividerKind: "submenu", title: "Amaz Lebanese" },
+      {
+        id: "shared-mezze",
+        label: "SHARED MEZZE",
+        name: "SHARED MEZZE",
+        description: "",
+        mrn: "111111.11",
+        category: "Entree",
+        fohColumn: "IT 1",
+        secondaryCategory: "",
+        brandMenu: "",
+        calories: "",
+        priceSelectorId: "",
+        seaPrice: "$8.00",
+        workbookSeaPrice: "",
+        priceReviewStatus: "Pricing structure match",
+        areaPrices: { AUS: "$8.00", SEA: "$8.00", MCO: "$8.00" },
+        modifierGroups: [],
+        additionalSubmenuIds: [],
+        lockedForCentric: false,
+      },
+      { id: "submenu-persian", recordType: "divider", dividerKind: "submenu", title: "Persian" },
+      {
+        id: "persian-rice",
+        label: "PERSIAN RICE",
+        name: "PERSIAN RICE",
+        description: "",
+        mrn: "222222.22",
+        category: "Entree",
+        fohColumn: "IT 1",
+        secondaryCategory: "",
+        brandMenu: "",
+        calories: "",
+        priceSelectorId: "",
+        seaPrice: "$7.00",
+        workbookSeaPrice: "",
+        priceReviewStatus: "Pricing structure match",
+        areaPrices: { AUS: "$7.00", SEA: "$7.00", MCO: "$7.00" },
+        modifierGroups: [],
+        additionalSubmenuIds: [],
+        lockedForCentric: false,
+      },
+    ],
+  });
+  let currentMenus = [sharedSubmenuFixture()];
+
+  await page.addInitScript(() => {
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+  });
+  await page.route("**/api/storage/records**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (request.method() === "GET" && url.searchParams.get("tool") === "SSMT") {
+      await route.fulfill({
+        json: {
+          ok: true,
+          source: "supabase",
+          records: [
+            {
+              "Record ID": "ssmt|workspace|current",
+              "Record Type": "SSMT Workspace",
+              Status: "Shared",
+              menus: currentMenus,
+              priceBook: [],
+              modifierGroups: [],
+              selectedMenuId: "shared-submenu-menu",
+              updatedAt: "2026-09-19T06:00:00.000Z",
+            },
+          ],
+        },
+      });
+      return;
+    }
+    if (request.method() === "POST") {
+      const body = request.postDataJSON();
+      savedBodies.push(body);
+      const savedRecord = (body?.records || []).find((candidate) => candidate?.["Record ID"] === "ssmt|workspace|current");
+      if (savedRecord?.menus) currentMenus = savedRecord.menus;
+      await route.fulfill({ json: { ok: true, source: "supabase", synced: 1, message: "Saved 1 row to Supabase." } });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByLabel(/SSMT passcode/i).fill("0411");
+  await page.getByRole("button", { name: /unlock ssmt/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+  await page.getByRole("button", { name: /^Shared Submenu Fixture/i }).click();
+  await expect(page.getByRole("heading", { name: /^Shared Submenu Fixture$/ })).toBeVisible();
+
+  const lebaneseSection = page.getByTestId(/ssmt-builder-section-submenu/).nth(0);
+  const persianSection = page.getByTestId(/ssmt-builder-section-submenu/).nth(1);
+  await expect(lebaneseSection).toContainText("1 item");
+  await expect(lebaneseSection).not.toContainText("shared");
+  await expect(persianSection).toContainText("1 item");
+  await expect(page.getByTestId("ssmt-derived-source-preview")).toContainText("AMZ: Shared Submenu Fixture - Amaz Lebanese (1)");
+  await expect(page.getByTestId("ssmt-derived-source-preview")).toContainText("AMZ: Shared Submenu Fixture - Persian (1)");
+
+  await page.getByRole("button", { name: /Also in for SHARED MEZZE/i }).click();
+  await expect(page.getByRole("checkbox", { name: /Persian/i })).not.toBeChecked();
+  await page.getByRole("checkbox", { name: /Persian/i }).check();
+  await page.getByRole("button", { name: /Close Also in sub menus/i }).click();
+
+  await expect(lebaneseSection).toContainText("1 item · 1 shared");
+  await expect(persianSection).toContainText("2 items · 1 shared");
+  expect(await page.getByLabel("Item label").evaluateAll((inputs) => inputs.filter((input) => input.value === "SHARED MEZZE").length)).toBe(2);
+  await expect(page.getByTestId("ssmt-derived-source-preview")).toContainText("AMZ: Shared Submenu Fixture - Amaz Lebanese (1)");
+  await expect(page.getByTestId("ssmt-derived-source-preview")).toContainText("AMZ: Shared Submenu Fixture - Persian (2)");
+
+  await page.getByRole("button", { name: /Save menu/i }).click();
+  await expect(page.getByTestId("ssmt-workspace-sync")).toContainText(/Shared SSMT workspace saved/i, { timeout: 20_000 });
+
+  await expect.poll(() => {
+    const record = savedBodies
+      .flatMap((body) => body?.records || [])
+      .find((candidate) => candidate?.["Record ID"] === "ssmt|workspace|current");
+    return record?.menus?.find((menu) => menu.id === "shared-submenu-menu")
+      ?.items?.find((item) => item.id === "shared-mezze")
+      ?.additionalSubmenuIds;
+  }).toEqual(["submenu-persian"]);
+
+  await page.reload();
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByLabel(/SSMT passcode/i).fill("0411");
+  await page.getByRole("button", { name: /unlock ssmt/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+  await page.getByRole("button", { name: /^Shared Submenu Fixture/i }).click();
+  expect(await page.getByLabel("Item label").evaluateAll((inputs) => inputs.filter((input) => input.value === "SHARED MEZZE").length)).toBe(2);
+  await page.getByRole("button", { name: /Also in for SHARED MEZZE/i }).first().click();
+  await expect(page.getByRole("checkbox", { name: /Persian/i })).toBeChecked();
+  await page.getByRole("button", { name: /Close Also in sub menus/i }).click();
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
 test("SSMT selector and builder keep dense records and wide tables usable without bottom-only scrolling", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   await page.setViewportSize({ width: 1440, height: 900 });
