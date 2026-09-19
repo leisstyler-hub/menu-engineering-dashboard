@@ -344,6 +344,66 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
+test("SSMT shares one item across multiple sub menus without duplicating its saved record", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const menuName = `Shared Submenu Regression ${Date.now()}`;
+  await page.goto("/");
+
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByLabel(/SSMT passcode/i).fill("0411");
+  await page.getByRole("button", { name: /unlock ssmt/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+  await page.getByLabel(/New menu name/i).fill(menuName);
+  await page.getByLabel(/New menu type/i).selectOption("Core");
+  await page.getByRole("button", { name: /Create menu/i }).click();
+
+  await page.getByRole("button", { name: /Add sub menu/i }).click();
+  await page.getByLabel(/Sub menu title/i).fill("Amaz Lebanese");
+  await page.getByTestId(/ssmt-row-submenu/).dragTo(page.getByTestId(/ssmt-row-item/));
+  await page.getByLabel(/Item label/i).fill("shared mezze");
+
+  await page.getByRole("button", { name: /Add sub menu/i }).click();
+  await page.getByLabel(/Sub menu title/i).nth(1).fill("Persian");
+  await page.getByRole("button", { name: /Add item/i }).click();
+  await page.getByLabel(/Item label/i).last().fill("persian rice");
+
+  await page.getByRole("button", { name: /Also in for SHARED MEZZE/i }).click();
+  await page.getByRole("checkbox", { name: /Persian/i }).check();
+  await page.getByRole("button", { name: /Close Also in sub menus/i }).click();
+
+  const lebaneseSection = page.getByTestId(/ssmt-builder-section-submenu/).nth(0);
+  const persianSection = page.getByTestId(/ssmt-builder-section-submenu/).nth(1);
+  await expect(lebaneseSection).toContainText("1 item");
+  await expect(persianSection).toContainText("2 items");
+  await expect(persianSection).toContainText("1 shared");
+  expect(await page.getByLabel("Item label").evaluateAll((inputs) => inputs.filter((input) => input.value === "SHARED MEZZE").length)).toBe(2);
+
+  await page.getByRole("button", { name: /Lock item SHARED MEZZE/i }).first().click();
+  await page.getByRole("button", { name: /Lock item PERSIAN RICE/i }).click();
+  await page.getByLabel(/Current SSMT phase/i).selectOption("IT complete");
+  await expect(page.getByTestId("ssmt-derived-source-preview")).toContainText(`AMZ: ${menuName} - Amaz Lebanese (1)`);
+  await expect(page.getByTestId("ssmt-derived-source-preview")).toContainText(`AMZ: ${menuName} - Persian (2)`);
+  await expect(page.getByTestId("ssmt-workspace-sync")).toContainText(/Shared SSMT workspace saved/i, { timeout: 20_000 });
+
+  await page.reload();
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+  await page.locator(`[data-menu-name="${menuName}"]`).click();
+  expect(await page.getByLabel("Item label").evaluateAll((inputs) => inputs.filter((input) => input.value === "SHARED MEZZE").length)).toBe(2);
+  await page.getByRole("button", { name: /Also in for SHARED MEZZE/i }).first().click();
+  await expect(page.getByRole("checkbox", { name: /Persian/i })).toBeChecked();
+  await page.getByRole("button", { name: /Close Also in sub menus/i }).click();
+
+  await page.getByRole("button", { name: /Delete menu/i }).click();
+  const deleteDialog = page.getByRole("dialog", { name: /Delete menu/i });
+  await deleteDialog.getByLabel(/Retype menu name/i).fill(menuName);
+  await deleteDialog.getByRole("button", { name: "Delete menu", exact: true }).click();
+  await expect(page.getByTestId("ssmt-workspace-sync")).toContainText(/Shared SSMT workspace saved/i, { timeout: 20_000 });
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
 test("SSMT selector and builder keep dense records and wide tables usable without bottom-only scrolling", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   await page.setViewportSize({ width: 1440, height: 900 });

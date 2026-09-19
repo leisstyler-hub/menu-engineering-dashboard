@@ -226,6 +226,49 @@ function normalizeDescription(value) {
   return String(value || "").toLowerCase();
 }
 
+function submenuMembershipModel(items = []) {
+  const submenuRows = items.filter((item) => item.recordType === "divider" && item.dividerKind === "submenu");
+  const submenuIds = new Set(submenuRows.map((item) => item.id));
+  const primaryByItemId = new Map();
+  let currentSubmenuId = "";
+  items.forEach((item) => {
+    if (item.recordType === "divider" && item.dividerKind === "submenu") currentSubmenuId = item.id;
+    else if (item.recordType !== "divider") primaryByItemId.set(item.id, currentSubmenuId);
+  });
+  const membershipsForItem = (item) => [...new Set([
+    primaryByItemId.get(item.id),
+    ...(Array.isArray(item.additionalSubmenuIds) ? item.additionalSubmenuIds : []),
+  ].filter((submenuId) => submenuIds.has(submenuId)))];
+  return { submenuRows, primaryByItemId, membershipsForItem };
+}
+
+function builderRowsWithSharedMembership(items = []) {
+  const model = submenuMembershipModel(items);
+  const sharedBySubmenuId = new Map(model.submenuRows.map((submenu) => [submenu.id, []]));
+  items.filter((item) => item.recordType !== "divider").forEach((item) => {
+    const primarySubmenuId = model.primaryByItemId.get(item.id);
+    model.membershipsForItem(item).forEach((submenuId) => {
+      if (submenuId !== primarySubmenuId) sharedBySubmenuId.get(submenuId)?.push(item);
+    });
+  });
+  const rows = [];
+  let activeSubmenuId = "";
+  const appendSharedRows = () => {
+    (sharedBySubmenuId.get(activeSubmenuId) || []).forEach((item) => {
+      rows.push({ ...item, _renderKey: `${item.id}-shared-${activeSubmenuId}`, _sharedTargetSubmenuId: activeSubmenuId });
+    });
+  };
+  items.forEach((item) => {
+    if (item.recordType === "divider" && item.dividerKind === "submenu") {
+      appendSharedRows();
+      activeSubmenuId = item.id;
+    }
+    rows.push(item);
+  });
+  appendSharedRows();
+  return rows;
+}
+
 function cloneMenu(menu) {
   return {
     ...menu,
@@ -238,6 +281,7 @@ function cloneMenu(menu) {
       secondaryCategory: item.secondaryCategory || item.reportingCategorySecondary || "",
       dietaryPreference: item.dietaryPreference || "",
       scanPayUpc: item.scanPayUpc || "",
+      additionalSubmenuIds: Array.isArray(item.additionalSubmenuIds) ? [...item.additionalSubmenuIds] : [],
       areaPrices: { ...(item.areaPrices || {}) },
       modifierGroups: [...(item.modifierGroups || [])],
     })),
@@ -547,6 +591,7 @@ function createBlankItem(menuId, areaOrder, index = 1) {
     priceReviewStatus: "Unpriced",
     areaPrices: blankAreaPrices(areaOrder),
     modifierGroups: [],
+    additionalSubmenuIds: [],
     lockedForCentric: false,
   };
 }
@@ -647,6 +692,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const [modifierClipboardSlots, setModifierClipboardSlots] = useState(EMPTY_MODIFIER_CLIPBOARD_SLOTS);
   const [phaseBlocker, setPhaseBlocker] = useState("");
   const [menuNameEditing, setMenuNameEditing] = useState(false);
+  const [submenuMembershipItemId, setSubmenuMembershipItemId] = useState("");
   const draggedRowIdRef = useRef("");
   const draggedModifierGroupIdRef = useRef("");
   const [workspaceSync, setWorkspaceSync] = useState({
@@ -865,6 +911,8 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const menuTypes = ssmtData.menuTypes?.length ? ssmtData.menuTypes : DEFAULT_MENU_TYPES;
   const showActiveDates = activeDatesRequired(selectedMenu.type);
   const selectedItemRows = (selectedMenu.items || []).filter((item) => item.recordType !== "divider");
+  const selectedSubmenuMemberships = useMemo(() => submenuMembershipModel(selectedMenu.items || []), [selectedMenu]);
+  const submenuMembershipItem = selectedItemRows.find((item) => item.id === submenuMembershipItemId) || null;
   const selectedDerivedRows = useMemo(() => deriveSsmtOperatingRows({ menus: [selectedMenu] }), [selectedMenu]);
   const selectedDerivedMenus = useMemo(() => ssmtDerivedMenuEntries(selectedDerivedRows), [selectedDerivedRows]);
   const selectedMenuFlags = Array.isArray(selectedMenu.flags) ? selectedMenu.flags : [];
@@ -902,6 +950,17 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
         items: menu.items.map((item) => (item.id === itemId ? { ...item, ...patch } : item)),
       };
     }));
+  };
+
+  const toggleAdditionalSubmenu = (itemId, submenuId, checked) => {
+    const item = selectedItemRows.find((candidate) => candidate.id === itemId);
+    if (!item) return;
+    const currentIds = Array.isArray(item.additionalSubmenuIds) ? item.additionalSubmenuIds : [];
+    updateItem(itemId, {
+      additionalSubmenuIds: checked
+        ? [...new Set([...currentIds, submenuId])]
+        : currentIds.filter((candidateId) => candidateId !== submenuId),
+    });
   };
 
   const updateDivider = (dividerId, patch) => {
@@ -1090,7 +1149,15 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const deleteItem = (itemId) => {
     setMenus((current) => current.map((menu) => {
       if (menu.id !== selectedMenu.id) return menu;
-      return { ...menu, items: menu.items.filter((item) => item.id !== itemId) };
+      return {
+        ...menu,
+        items: menu.items
+          .filter((item) => item.id !== itemId)
+          .map((item) => item.recordType === "divider" ? item : {
+            ...item,
+            additionalSubmenuIds: (Array.isArray(item.additionalSubmenuIds) ? item.additionalSubmenuIds : []).filter((submenuId) => submenuId !== itemId),
+          }),
+      };
     }));
   };
 
@@ -1993,7 +2060,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                   </thead>
                   <tbody data-testid="ssmt-builder-body">
                     {(() => {
-                      const visibleBuilderRows = selectedMenu.items.slice(0, 80);
+                      const visibleBuilderRows = builderRowsWithSharedMembership(selectedMenu.items.slice(0, 80));
                       let activeSectionTone = "main";
                       let activePalette = SSMT_BUILDER_MAIN_PALETTE;
                       let sectionColorIndex = 0;
@@ -2001,6 +2068,10 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                       item.recordType === "divider" ? (
                         (() => {
                           const isSubmenu = item.dividerKind === "submenu";
+                          const submenuItems = isSubmenu
+                            ? selectedItemRows.filter((candidate) => selectedSubmenuMemberships.membershipsForItem(candidate).includes(item.id))
+                            : [];
+                          const sharedItemCount = submenuItems.filter((candidate) => selectedSubmenuMemberships.membershipsForItem(candidate).length > 1).length;
                           const palette = isSubmenu
                             ? SSMT_SUBMENU_PALETTES[sectionColorIndex % SSMT_SUBMENU_PALETTES.length]
                             : SSMT_DIVIDER_PALETTES[sectionColorIndex % SSMT_DIVIDER_PALETTES.length];
@@ -2030,6 +2101,11 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                                 </span>
                                 <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">{isSubmenu ? "Title" : "Title"}</span>
                                 <input aria-label={isSubmenu ? "Sub menu title" : "Divider title"} value={item.title} onChange={(event) => updateDivider(item.id, event.target.value)} className="min-w-[260px] rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-black text-slate-950 outline-none focus:border-emerald-500" />
+                                {isSubmenu && (
+                                  <span className="text-xs font-black text-slate-700">
+                                    {submenuItems.length} item{submenuItems.length === 1 ? "" : "s"}{sharedItemCount ? ` · ${sharedItemCount} shared` : ""}
+                                  </span>
+                                )}
                               </label>
                               <button type="button" onClick={() => requestDelete({ type: isSubmenu ? "submenu" : "divider", id: item.id, name: item.title || (isSubmenu ? "sub menu" : "divider") })} className="inline-flex items-center justify-center gap-1 rounded-md border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-black text-red-800 hover:bg-red-100" aria-label={isSubmenu ? `Delete sub menu ${item.title || "sub menu"}` : `Delete divider ${item.title || "divider"}`}>
                                 <Trash2 size={13} /> Delete
@@ -2046,12 +2122,12 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                           const builderCellClass = `border-b ${sectionTone.itemCellBorderClass} px-2 py-1`;
                           return (
                         <tr
-                          key={item.id}
+                          key={item._renderKey || item.id}
                           data-testid={`ssmt-row-item-${item.id}`}
                           data-row-kind="item"
                           data-section-tone={sectionToneName}
-                          draggable
-                          onDragStart={() => { draggedRowIdRef.current = item.id; }}
+                          draggable={!item._sharedTargetSubmenuId}
+                          onDragStart={() => { if (!item._sharedTargetSubmenuId) draggedRowIdRef.current = item.id; }}
                           onDragOver={(event) => event.preventDefault()}
                           onDrop={() => moveRow(draggedRowIdRef.current, item.id)}
                           className={`align-top ${sectionTone.itemRowClass} ${item.lockedForCentric ? "outline outline-1 -outline-offset-1 outline-emerald-500" : ""}`}
@@ -2212,6 +2288,16 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                           </td>
                           <td className={builderCellClass}>
                             <div className="grid grid-cols-2 gap-1">
+                              {selectedSubmenuMemberships.submenuRows.length > 1 && (
+                                <button
+                                  type="button"
+                                  aria-label={`Also in for ${item.label || item.name || "item"}`}
+                                  onClick={() => setSubmenuMembershipItemId(item.id)}
+                                  className="col-span-2 inline-flex items-center justify-center gap-1 rounded-md border border-indigo-300 bg-indigo-50 px-2 py-1.5 text-xs font-black text-indigo-900 hover:bg-indigo-100"
+                                >
+                                  <ListChecks size={14} /> Also in ({selectedSubmenuMemberships.membershipsForItem(item).length})
+                                </button>
+                              )}
                               {(() => {
                                 const matchedGroups = matchedModifierGroupsForItemIndexed(item, modifierGroupIndex);
                                 const modsCount = matchedGroups.length;
@@ -2249,6 +2335,38 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
           </main>
         )}
       </div>
+
+      {submenuMembershipItem && (
+        <Modal title="Also in sub menus" onClose={() => setSubmenuMembershipItemId("")}>
+          <div className="space-y-3">
+            <p className="text-sm font-semibold leading-6 text-slate-700">
+              {submenuMembershipItem.label || submenuMembershipItem.name} stays one item record. Select every Sub Menu where it should appear and be counted.
+            </p>
+            <div className="grid gap-2">
+              {selectedSubmenuMemberships.submenuRows.map((submenu) => {
+                const isPrimary = selectedSubmenuMemberships.primaryByItemId.get(submenuMembershipItem.id) === submenu.id;
+                const isChecked = selectedSubmenuMemberships.membershipsForItem(submenuMembershipItem).includes(submenu.id);
+                return (
+                  <label key={submenu.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-black text-slate-800">
+                    <span>{submenu.title || "Untitled sub menu"}</span>
+                    <span className="flex items-center gap-2">
+                      {isPrimary && <span className="text-xs font-bold text-slate-500">Primary</span>}
+                      <input
+                        type="checkbox"
+                        aria-label={submenu.title || "Untitled sub menu"}
+                        checked={isChecked}
+                        disabled={isPrimary}
+                        onChange={(event) => toggleAdditionalSubmenu(submenuMembershipItem.id, submenu.id, event.target.checked)}
+                        className="h-4 w-4 accent-indigo-700"
+                      />
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {modifierDialog && (
         <Modal title="Modifier detail" size="wide" onClose={() => setModifierDialog(null)}>
