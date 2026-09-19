@@ -153,6 +153,25 @@ test("Transfer Tool gates stale costs during delayed or failed live refresh", as
   await expect(page.getByRole("button", { name: "Copy Transfer" })).toBeDisabled();
 });
 
+test("Transfer Tool locks the completed current-cafe profit-center mappings", async ({ page }) => {
+  await mockTransferStorage(page);
+  await openTool(page, /open transfer tool/i, /^Transfer Tool$/);
+  const completedMappings = [
+    ["Astra", "62844"],
+    ["Eclipse", "62100"],
+    ["LAX22", "55128"],
+    ["LAX35", "59264"],
+    ["LAX75", "60181"],
+    ["LAX78", "64002"],
+    ["SNA3", "44280"],
+  ];
+  for (const [cafe, profitCenter] of completedMappings) {
+    await page.getByLabel("Receiving unit").selectOption(cafe);
+    await expect(page.getByLabel("Receiving profit center")).toHaveValue(profitCenter);
+    await expect(page.getByLabel("Receiving profit center")).toHaveAttribute("readonly", "");
+  }
+});
+
 test("Transfer Tool stages legacy saved transfers and exports one exact S4 workbook per transfer in a ZIP without writes", async ({ page }) => {
   const writes = await mockTransferStorage(page);
   await openTool(page, /open transfer tool/i, /^Transfer Tool$/);

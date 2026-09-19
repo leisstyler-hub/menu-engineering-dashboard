@@ -337,7 +337,7 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
                 </Field>
                 <Field label="Receiving profit center" error={errors.receivingProfitCenter}>
                   <input aria-label="Receiving profit center" inputMode="numeric" maxLength={5} value={draft.receivingProfitCenter} readOnly={Boolean(cafeProfitCenter(draft.receivingUnit))} onChange={(event) => setField("receivingProfitCenter", event.target.value.replace(/\D/g, "").slice(0, 5))} placeholder={draft.receivingUnit ? "Enter 5 digits" : "Choose receiving unit"} className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-semibold read-only:bg-slate-100" />
-                  <span className="mt-1 block text-xs font-semibold text-slate-500">Mapped cafés are locked. Unmapped cafés require manual entry.</span>
+                  <span className="mt-1 block text-xs font-semibold text-slate-500">Current cafés are mapped and locked. A future unmapped café requires manual entry.</span>
                 </Field>
                 <Field label="Event ID (optional)" error={errors.eventId}>
                   <input aria-label="Event ID" maxLength={18} value={draft.eventId} onChange={(event) => setField("eventId", event.target.value)} placeholder="Applied to every line" className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-semibold" />

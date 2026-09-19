@@ -9,10 +9,17 @@ export const CAFE_PROFIT_CENTERS = Object.freeze({
   Moby: "28671",
   Commissary: "28675",
   Atlas: "35983",
+  Astra: "62844",
   Bingo: "53170",
   Sonic: "62102",
   Blueshift: "56746",
+  Eclipse: "62100",
   Grace: "53172",
+  LAX22: "55128",
+  LAX35: "59264",
+  LAX75: "60181",
+  LAX78: "64002",
+  SNA3: "44280",
 });
 
 export const cafeProfitCenter = (cafe = "") => CAFE_PROFIT_CENTERS[String(cafe || "").trim()] || "";

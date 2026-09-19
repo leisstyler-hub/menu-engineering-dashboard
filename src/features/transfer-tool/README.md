@@ -11,7 +11,7 @@ The Transfer Tool is explicitly labeled `DRAFT`. It builds shared reference tran
 - Repeated item names stay isolated by menu, MRN, and portion.
 - Missing costs display as unavailable and block saving that line.
 - The chef enters a seven-digit From G/L and To G/L on each selected item. These are transfer-entry fields, not ingredient-level classifications.
-- Café profit-center snapshots come from `cafeProfitCenters.js`. Unmapped receiving cafés require a manual five-digit profit center; the departing profit center remains internal because S4 derives departure from the signed-in unit.
+- Café profit-center snapshots come from `cafeProfitCenters.js`. All current Platform cafés have a five-digit mapping; a future unmapped receiving café still requires manual entry. The departing profit center remains internal because S4 derives departure from the signed-in unit.
 
 ## Persistence
 
