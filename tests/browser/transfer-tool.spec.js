@@ -223,11 +223,31 @@ test("Transfer Tool preserves legacy saved G/L values without allowing them to s
   await expect(page.getByLabel("To G/L 1", { exact: true })).toHaveValue("");
 });
 
+test("Transfer Tool deletes one saved draft after one confirmation", async ({ page }) => {
+  const writes = await mockTransferStorage(page);
+  await openTool(page, /open transfer tool/i, /^Transfer Tool$/);
+  const existingCard = page.locator("article").filter({ hasText: "Existing Transfer" });
+  await expect(existingCard.getByText("Include in batch export", { exact: true })).toBeVisible();
+  let confirmations = 0;
+  page.on("dialog", async (dialog) => {
+    confirmations += 1;
+    expect(dialog.type()).toBe("confirm");
+    expect(dialog.message()).toBe('Delete saved transfer "Existing Transfer"? This cannot be undone.');
+    await dialog.accept();
+  });
+  await existingCard.getByRole("button", { name: "Delete Existing Transfer" }).click();
+  await expect(existingCard).toHaveCount(0);
+  expect(confirmations).toBe(1);
+  expect(writes.at(-1)).toMatchObject({ action: "deleteTransfer", recordId: "transfer|existing%20transfer", context: { tool: "transfers" } });
+  await expect(page.getByText("Deleted Existing Transfer from shared saved transfers.")).toBeVisible();
+});
+
 test("Transfer Tool stages legacy saved transfers and exports one exact S4 workbook per transfer in a ZIP without writes", async ({ page }) => {
   const writes = await mockTransferStorage(page);
   await openTool(page, /open transfer tool/i, /^Transfer Tool$/);
-  await page.getByLabel("Select Existing Transfer for batch export").check();
-  await page.getByLabel("Select Second Transfer for batch export").check();
+  await expect(page.getByText(/Use each card’s “Include in batch export” checkbox/i)).toBeVisible();
+  await page.getByLabel("Include Existing Transfer in batch export").check();
+  await page.getByLabel("Include Second Transfer in batch export").check();
   await expect(page.getByRole("heading", { name: "Complete S4 fields" })).toBeVisible();
   const existingStage = page.locator("details").filter({ hasText: "Existing Transfer" });
   await existingStage.locator("summary").click();
@@ -244,7 +264,7 @@ test("Transfer Tool stages legacy saved transfers and exports one exact S4 workb
   expect(writes).toHaveLength(0);
 
   const downloadPromise = page.waitForEvent("download");
-  await page.getByRole("button", { name: "Export selected as ZIP (2)" }).click();
+  await page.getByRole("button", { name: "Download selected transfers (2)" }).click();
   const download = await downloadPromise;
   const zip = await JSZip.loadAsync(await readFile(await download.path()));
   const workbookNames = Object.keys(zip.files).filter((name) => name.endsWith(".xlsx"));

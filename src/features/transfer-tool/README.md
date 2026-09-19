@@ -2,7 +2,7 @@
 
 ## Scope
 
-The Transfer Tool is explicitly labeled `DRAFT`. It builds shared reference transfers for later manual entry in S4; it does not submit, approve, post, delete, or reconcile S4 transactions.
+The Transfer Tool is explicitly labeled `DRAFT`. It builds shared reference transfers for later manual entry in S4; it does not submit, approve, post, or reconcile S4 transactions. A saved Culinary Platform transfer draft can be deleted through a transfer-scoped API action after one browser confirmation.
 
 ## Data authority
 
@@ -18,6 +18,8 @@ The Transfer Tool is explicitly labeled `DRAFT`. It builds shared reference tran
 Each transfer is one `Transfer` payload in the existing Supabase `app_records` backbone. The physical tool value remains `rotation` for compatibility with the deployed enum; the logical API scope is `transfers` and filters by `transfer|*` record ids. No schema migration is required.
 
 New records use the `createTransfer` API action. Their record id is derived from a case-insensitive, whitespace-normalized title. The endpoint preflights and performs a create-only insert, so database uniqueness on `record_id` is the authoritative global title guard. Existing records use normal upsert. Saved titles are locked. Copy Transfer clears identity, title, and Event ID, resets the date to today, retains line G/L choices and manually edited descriptions, regenerates automatic descriptions, and refreshes catalog costs.
+
+Saved-history cards use an explicit `Include in batch export` checkbox. Selected records can be staged and downloaded as one ZIP. Delete requires one `window.confirm` prompt and calls the transfer-only `deleteTransfer` API action; success removes the record from history and any batch selection, and resets the editor if that record was open.
 
 ## S4 export
 

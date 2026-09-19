@@ -11,7 +11,7 @@ import { cafeProfitCenter } from "./cafeProfitCenters.js";
 import { exportTransferWorkbook, exportTransferZip } from "./transferExport.js";
 import { S4_GL_ACCOUNTS, S4_GL_ACCOUNT_CODES } from "./s4GlAccounts.js";
 import { defaultTransferDescription, normalizeTransferTitle, refreshCopiedItems, S4_EXPORT_VERSION, transferRecordId, transferTotal, validateS4Transfer, validateTransfer } from "./transferModel.js";
-import { loadTransfers, refreshTransferCatalogCosts, saveTransfer } from "./transferStorage.js";
+import { deleteTransfer, loadTransfers, refreshTransferCatalogCosts, saveTransfer } from "./transferStorage.js";
 
 const today = () => {
   const date = new Date();
@@ -61,6 +61,7 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
   const [costStatus, setCostStatus] = useState({ state: "loading", message: "Verifying live Item + Waste Costs…" });
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [deletingTransferId, setDeletingTransferId] = useState("");
   const [batchDrafts, setBatchDrafts] = useState({});
   const [batchError, setBatchError] = useState("");
   const costsReady = costStatus.state === "ready";
@@ -268,6 +269,31 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
     setBatchError("");
   };
 
+  const removeSavedTransfer = async (record) => {
+    const id = record["Record ID"] || record.recordId;
+    if (!id || deletingTransferId) return;
+    if (!window.confirm(`Delete saved transfer "${record.title}"? This cannot be undone.`)) return;
+    setDeletingTransferId(id);
+    try {
+      await deleteTransfer(id);
+      setTransfers((current) => current.filter((item) => (item["Record ID"] || item.recordId) !== id));
+      setBatchDrafts((current) => {
+        const next = { ...current };
+        delete next[id];
+        return next;
+      });
+      if (draft.recordId === id) {
+        setDraft(blankDraft());
+        setErrors({});
+      }
+      setStatus({ tone: "saved", message: `Deleted ${record.title} from shared saved transfers.` });
+    } catch (error) {
+      setStatus({ tone: "error", message: error.message || "Unable to delete the saved transfer." });
+    } finally {
+      setDeletingTransferId("");
+    }
+  };
+
   const updateBatch = (recordId, updater) => setBatchDrafts((current) => ({ ...current, [recordId]: updater(current[recordId]) }));
 
   const exportBatch = async () => {
@@ -412,7 +438,11 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
           <aside className="h-fit rounded-lg border border-slate-200 bg-white p-5 shadow-sm xl:sticky xl:top-5">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Shared history</p>
             <h2 className="mt-1 text-2xl font-black">Saved transfers</h2>
-            <button type="button" disabled={exporting || !Object.keys(batchDrafts).length} onClick={exportBatch} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-black text-sky-900 disabled:cursor-not-allowed disabled:opacity-50"><Download size={15} /> Export selected as ZIP ({Object.keys(batchDrafts).length})</button>
+            <div className="mt-3 rounded-lg border border-sky-200 bg-sky-50 p-3">
+              <p className="text-xs font-black uppercase tracking-[0.12em] text-sky-900">Batch Excel export</p>
+              <p className="mt-1 text-xs font-semibold leading-5 text-sky-800">Use each card’s “Include in batch export” checkbox to combine multiple saved transfers into one ZIP.</p>
+              <button type="button" disabled={exporting || !Object.keys(batchDrafts).length} onClick={exportBatch} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-sky-300 bg-white px-3 py-2 text-xs font-black text-sky-950 disabled:cursor-not-allowed disabled:opacity-50"><Download size={15} /> Download selected transfers ({Object.keys(batchDrafts).length})</button>
+            </div>
             {batchError && <p role="alert" className="mt-2 rounded-lg border border-rose-200 bg-rose-50 p-2 text-xs font-bold text-rose-800">{batchError}</p>}
             <label className="mt-4 flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2"><Search size={16} className="text-slate-400" /><span className="sr-only">Search transfers</span><input aria-label="Search transfers" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Title, unit, menu, item" className="min-w-0 flex-1 border-0 p-0 text-sm font-semibold outline-none" /></label>
             <p className={`mt-3 rounded-lg border p-3 text-xs font-bold ${status.tone === "error" ? "border-rose-200 bg-rose-50 text-rose-800" : status.tone === "saved" ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-slate-200 bg-slate-50 text-slate-600"}`}>{status.message}</p>
@@ -421,10 +451,11 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
                 const id = record["Record ID"] || record.recordId;
                 return (
                   <article key={id} className="rounded-lg border border-slate-200 p-4">
-                    <div className="flex items-start justify-between gap-2"><label className="flex min-w-0 items-start gap-2"><input aria-label={`Select ${record.title} for batch export`} type="checkbox" checked={Boolean(batchDrafts[id])} onChange={() => toggleBatch(record)} className="mt-1 h-4 w-4 shrink-0" /><span className="font-black">{record.title}</span></label><span className="rounded-full bg-amber-50 px-2 py-1 text-[10px] font-black text-amber-800">DRAFT</span></div>
+                    <div className="flex items-start justify-between gap-2"><span className="min-w-0 font-black">{record.title}</span><span className="rounded-full bg-amber-50 px-2 py-1 text-[10px] font-black text-amber-800">DRAFT</span></div>
                     <p className="mt-2 flex items-center gap-2 text-xs font-bold text-slate-600"><ArrowRightLeft size={14} /> {record.departingUnit} → {record.receivingUnit}</p>
                     <p className="mt-2 text-xs font-semibold text-slate-500">{record.transferDate} · {(record.items || []).length} item{(record.items || []).length === 1 ? "" : "s"} · {money(transferTotal(record.items))}</p>
-                    <div className="mt-3 grid grid-cols-2 gap-2"><button type="button" onClick={() => { const opened = toDraft(record); setDraft(costsReady ? { ...opened, items: refreshCopiedItems(opened.items, catalogItems) } : opened); setErrors({}); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="rounded-lg bg-slate-950 px-3 py-2 text-xs font-black text-white">Open</button><button type="button" disabled={!costsReady} onClick={() => copyTransfer(record)} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-black disabled:cursor-not-allowed disabled:opacity-50">Copy</button></div>
+                    <label className={`mt-3 flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-xs font-black ${batchDrafts[id] ? "border-sky-400 bg-sky-50 text-sky-950" : "border-slate-200 bg-slate-50 text-slate-700"}`}><input aria-label={`Include ${record.title} in batch export`} type="checkbox" checked={Boolean(batchDrafts[id])} onChange={() => toggleBatch(record)} className="h-4 w-4 shrink-0 accent-sky-700" /><span>Include in batch export</span></label>
+                    <div className="mt-3 grid grid-cols-3 gap-2"><button type="button" onClick={() => { const opened = toDraft(record); setDraft(costsReady ? { ...opened, items: refreshCopiedItems(opened.items, catalogItems) } : opened); setErrors({}); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="rounded-lg bg-slate-950 px-3 py-2 text-xs font-black text-white">Open</button><button type="button" disabled={!costsReady} onClick={() => copyTransfer(record)} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-black disabled:cursor-not-allowed disabled:opacity-50">Copy</button><button type="button" aria-label={`Delete ${record.title}`} disabled={Boolean(deletingTransferId)} onClick={() => removeSavedTransfer(record)} className="inline-flex items-center justify-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-black text-rose-800 disabled:cursor-not-allowed disabled:opacity-50"><Trash2 size={14} /> Delete</button></div>
                   </article>
                 );
               })}

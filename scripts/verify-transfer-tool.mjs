@@ -31,9 +31,9 @@ if (!duplicateErrors.title) fail("duplicate global title validation is missing")
 const api = read("api/storage/records.js");
 const storage = read("src/features/transfer-tool/transferStorage.js");
 const component = read("src/features/transfer-tool/TransferTool.jsx");
-for (const marker of ["createTransfer", "Titles must be globally unique", "like.transfer|*"]) if (!api.includes(marker)) fail(`API is missing ${marker}`);
-for (const marker of ["createTransfer", "tool: \"transfers\"", "/api/recipe-library?scope=all", "row.trueCost"]) if (!storage.includes(marker)) fail(`storage client is missing ${marker}`);
-for (const marker of ["Item + Waste Cost", "Copy Transfer", "Export S4 Excel", "Batch export staging", "Choose G/L", "S4_GL_ACCOUNTS", "DRAFT"]) if (!component.includes(marker)) fail(`UI is missing ${marker}`);
+for (const marker of ["createTransfer", "deleteTransfer", "Titles must be globally unique", "like.transfer|*"]) if (!api.includes(marker)) fail(`API is missing ${marker}`);
+for (const marker of ["createTransfer", "deleteTransfer", "tool: \"transfers\"", "/api/recipe-library?scope=all", "row.trueCost"]) if (!storage.includes(marker)) fail(`storage client is missing ${marker}`);
+for (const marker of ["Item + Waste Cost", "Copy Transfer", "Export S4 Excel", "Batch export staging", "Include in batch export", "Delete saved transfer", "Choose G/L", "S4_GL_ACCOUNTS", "DRAFT"]) if (!component.includes(marker)) fail(`UI is missing ${marker}`);
 for (const removedMarker of ["G/L Breakdown", "GlBreakdown", "reviewed mapping"]) if (component.includes(removedMarker)) fail(`UI still contains ${removedMarker}`);
 
 console.log(`Transfer Tool verification passed: ${CATALOG.menus.length} menus, ${CATALOG.items.length} menu-scoped cost records.`);
@@ -144,8 +144,34 @@ try {
 
   const invalidS4 = await invoke({ action: "upsertRecords", records: [{ ...s4Record, receivingProfitCenter: "" }], context: { tool: "transfers" } });
   if (invalidS4.statusCode !== 400 || !/profit center/i.test(invalidS4.payload?.message || "")) fail("versioned S4 transfer accepted missing receiving profit center");
+
+  let deleteCalls = 0;
+  globalThis.fetch = async (url, options = {}) => {
+    const href = String(url);
+    if (options.method === "DELETE") {
+      deleteCalls += 1;
+      return { ok: true, status: 204, text: async () => "" };
+    }
+    if (href.includes("parent_record_id") || href.includes("record_id=like.")) return { ok: true, status: 200, text: async () => "[]" };
+    if (href.includes("record_id=eq.")) return { ok: true, status: 200, text: async () => JSON.stringify([{ record_id: record["Record ID"] }]) };
+    throw new Error(`Unexpected transfer delete fetch: ${href}`);
+  };
+  const deleted = await invoke({ action: "deleteTransfer", recordId: record["Record ID"], context: { tool: "transfers" } });
+  if (deleted.statusCode !== 200 || deleteCalls !== 1 || deleted.payload?.action !== "deleteTransfer") fail("transfer-only delete did not remove exactly one saved transfer");
+
+  globalThis.fetch = async () => { throw new Error("Invalid transfer delete must be rejected before storage access."); };
+  const invalidDeletes = [
+    { recordId: "rotation|unsafe", context: { tool: "rotation" } },
+    { recordId: ["transfer|one", "transfer|two"], context: { tool: "transfers" } },
+    { recordId: "transfer|", context: { tool: "transfers" } },
+    { recordId: "transfer|one|two", context: { tool: "transfers" } },
+  ];
+  for (const invalidDeleteRequest of invalidDeletes) {
+    const invalidDelete = await invoke({ action: "deleteTransfer", ...invalidDeleteRequest });
+    if (invalidDelete.statusCode !== 400 || !/transfer context/i.test(invalidDelete.payload?.message || "")) fail("transfer delete accepted invalid, multiple, or empty identity/context");
+  }
 } finally {
   globalThis.fetch = originalFetch;
 }
 
-console.log("Transfer Tool create/update API invariant verification passed.");
+console.log("Transfer Tool create/update/delete API invariant verification passed.");

@@ -452,6 +452,26 @@ async function deleteRecords(req, res) {
   });
 }
 
+async function deleteTransfer(req, res) {
+  const rawRecordId = req.body?.recordId;
+  const recordId = typeof rawRecordId === "string" ? rawRecordId.trim() : "";
+  if (getBackboneToolFromContext(req.body?.context) !== "transfers" || !/^transfer\|[^|]+$/.test(recordId)) {
+    return res.status(400).json({ ok: false, message: "A valid transfer record and transfer context are required for delete." });
+  }
+
+  const recordFamilyIds = await findRecordFamilyIds([recordId]);
+  const deletedIds = recordFamilyIds.length ? recordFamilyIds : [recordId];
+  const deleted = await deleteRecordIds(deletedIds);
+  return res.status(200).json({
+    ok: true,
+    source: "supabase",
+    action: "deleteTransfer",
+    deleted,
+    recordId,
+    message: "Deleted the saved transfer draft.",
+  });
+}
+
 async function cleanupExpiredRecords(res) {
   const payload = await supabaseFetch("rpc/cleanup_expired_app_records", {
     method: "POST",
@@ -474,6 +494,7 @@ export default async function handler(req, res) {
     }
 
     if (req.body?.action === "cleanupExpiredRecords") return await cleanupExpiredRecords(res);
+    if (req.body?.action === "deleteTransfer") return await deleteTransfer(req, res);
     if (req.body?.action === "deleteRecords") return await deleteRecords(req, res);
     if (req.body?.action === "createTransfer") return await createTransfer(req, res);
     if (req.body?.action !== "upsertRecords") {
