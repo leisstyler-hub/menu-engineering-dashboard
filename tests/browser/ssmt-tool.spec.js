@@ -353,6 +353,17 @@ test("SSMT shares one item across multiple sub menus without duplicating its sav
   await page.getByLabel(/SSMT passcode/i).fill("0411");
   await page.getByRole("button", { name: /unlock ssmt/i }).click();
   await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+  const staleMenus = page.locator('[data-menu-name^="Shared Submenu Regression"]');
+  while (await staleMenus.count()) {
+    const staleMenuName = await staleMenus.first().getAttribute("data-menu-name");
+    await staleMenus.first().click();
+    await page.getByRole("button", { name: /Delete menu/i }).click();
+    const staleDeleteDialog = page.getByRole("dialog", { name: /Delete menu/i });
+    await staleDeleteDialog.getByLabel(/Retype menu name/i).fill(staleMenuName);
+    await staleDeleteDialog.getByRole("button", { name: "Delete menu", exact: true }).click();
+    await page.getByRole("button", { name: /Save SSMT workspace/i }).click();
+    await expect(page.getByTestId("ssmt-workspace-sync")).toContainText(/Shared SSMT workspace saved/i, { timeout: 20_000 });
+  }
   await page.getByLabel(/New menu name/i).fill(menuName);
   await page.getByLabel(/New menu type/i).selectOption("Core");
   await page.getByRole("button", { name: /Create menu/i }).click();
@@ -383,6 +394,7 @@ test("SSMT shares one item across multiple sub menus without duplicating its sav
   await page.getByLabel(/Current SSMT phase/i).selectOption("IT complete");
   await expect(page.getByTestId("ssmt-derived-source-preview")).toContainText(`AMZ: ${menuName} - Amaz Lebanese (1)`);
   await expect(page.getByTestId("ssmt-derived-source-preview")).toContainText(`AMZ: ${menuName} - Persian (2)`);
+  await page.getByRole("button", { name: /Save SSMT workspace/i }).click();
   await expect(page.getByTestId("ssmt-workspace-sync")).toContainText(/Shared SSMT workspace saved/i, { timeout: 20_000 });
 
   await page.reload();
@@ -398,6 +410,7 @@ test("SSMT shares one item across multiple sub menus without duplicating its sav
   const deleteDialog = page.getByRole("dialog", { name: /Delete menu/i });
   await deleteDialog.getByLabel(/Retype menu name/i).fill(menuName);
   await deleteDialog.getByRole("button", { name: "Delete menu", exact: true }).click();
+  await page.getByRole("button", { name: /Save SSMT workspace/i }).click();
   await expect(page.getByTestId("ssmt-workspace-sync")).toContainText(/Shared SSMT workspace saved/i, { timeout: 20_000 });
 
   await expectNoAppProtection(page);
