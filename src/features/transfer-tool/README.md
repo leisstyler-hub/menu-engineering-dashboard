@@ -10,13 +10,23 @@ The Transfer Tool is explicitly labeled `DRAFT`. It builds shared reference tran
 - `scripts/build-transfer-tool-catalog.mjs` emits the menu-scoped `src/data/transferToolCatalog.json` cost catalog. Run it with `--check` in release verification.
 - Repeated item names stay isolated by menu, MRN, and portion.
 - Missing costs display as unavailable and block saving that line.
-- G/L classification and ingredient-level pricing are outside the tool until Alex supplies an ingredient price index.
+- The chef enters a seven-digit From G/L and To G/L on each selected item. These are transfer-entry fields, not ingredient-level classifications.
+- Café profit-center snapshots come from `cafeProfitCenters.js`. Unmapped receiving cafés require a manual five-digit profit center; the departing profit center remains internal because S4 derives departure from the signed-in unit.
 
 ## Persistence
 
 Each transfer is one `Transfer` payload in the existing Supabase `app_records` backbone. The physical tool value remains `rotation` for compatibility with the deployed enum; the logical API scope is `transfers` and filters by `transfer|*` record ids. No schema migration is required.
 
-New records use the `createTransfer` API action. Their record id is derived from a case-insensitive, whitespace-normalized title. The endpoint preflights and performs a create-only insert, so database uniqueness on `record_id` is the authoritative global title guard. Existing records use normal upsert. Saved titles are locked; Copy Transfer clears identity/title, retains units/items, sets today’s date, and refreshes catalog costs.
+New records use the `createTransfer` API action. Their record id is derived from a case-insensitive, whitespace-normalized title. The endpoint preflights and performs a create-only insert, so database uniqueness on `record_id` is the authoritative global title guard. Existing records use normal upsert. Saved titles are locked. Copy Transfer clears identity, title, and Event ID, resets the date to today, retains line G/L choices and manually edited descriptions, regenerates automatic descriptions, and refreshes catalog costs.
+
+## S4 export
+
+- `public/templates/ExpenseTransfer_Between_PC_Template.xlsx` is the exact S4 source template. `scripts/verify-transfer-tool.mjs` guards its SHA-256 hash.
+- The export code patches only `xl/worksheets/sheet1.xml` with JSZip. It retains the Template and Guidelines tabs and all other workbook package parts.
+- One selected item becomes one S4 row: From G/L, receiving profit center, To G/L, editable description (50 characters), quantity × Item + Waste Cost rounded to two decimal places, and the transfer Event ID (18 characters).
+- One transfer may contain at most 450 exported item lines. Text cells are emitted as inline strings, preventing user-entered text from becoming formulas.
+- Saved transfers can be selected and completed in a batch staging area, then downloaded as a ZIP containing one exact-template workbook per transfer. Staging does not save records or refresh stored costs.
+- Legacy transfer records remain readable and writable. The server enforces the added S4 fields only when `s4ExportVersion` is present.
 
 ## Verification
 

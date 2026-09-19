@@ -48,6 +48,20 @@ function validateTransferRecord(record = {}) {
   if (record.items.some((item) => !item?.catalogId || !item?.menu || !item?.item || !Number.isInteger(Number(item.quantity)) || Number(item.quantity) < 1 || !Number.isFinite(Number(item.itemWasteCost)) || Number(item.itemWasteCost) < 0)) {
     return "Every transfer item requires catalog identity, a positive whole-number count, and a valid Item + Waste Cost.";
   }
+  if (record.s4ExportVersion) {
+    if (Number(record.s4ExportVersion) !== 1) return "Transfer S4 export version is unsupported.";
+    if (!/^\d{5}$/.test(String(record.receivingProfitCenter || ""))) return "A 5-digit receiving profit center is required for S4 export.";
+    if (record.departingProfitCenter && !/^\d{5}$/.test(String(record.departingProfitCenter))) return "Departing profit center snapshot is invalid.";
+    if (String(record.eventId || "").length > 18) return "Event ID cannot exceed 18 characters.";
+    if (record.items.length > 450) return "S4 transfers support no more than 450 item lines.";
+    if (record.items.some((item) => !/^\d{7}$/.test(String(item.fromGlAccount || "")) || !/^\d{7}$/.test(String(item.toGlAccount || "")))) {
+      return "Every S4 transfer item requires 7-digit From G/L and To G/L accounts.";
+    }
+    if (record.items.some((item) => !String(item.description || "").trim() || String(item.description).length > 50)) {
+      return "Every S4 transfer item requires a description of 50 characters or fewer.";
+    }
+    if (record.items.some((item) => !(Number(item.quantity) * Number(item.itemWasteCost) > 0))) return "Every S4 transfer amount must be greater than zero.";
+  }
   const expectedTotal = record.items.reduce((sum, item) => sum + (Number(item.quantity) * Number(item.itemWasteCost)), 0);
   if (!Number.isFinite(Number(record.totalValue)) || Math.abs(Number(record.totalValue) - expectedTotal) > 0.000001) {
     return "Transfer total does not match its item counts and costs.";

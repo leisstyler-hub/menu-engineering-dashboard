@@ -1,7 +1,11 @@
 import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { join } from "node:path";
+import JSZip from "jszip";
 import CATALOG from "../src/data/transferToolCatalog.json" with { type: "json" };
-import { normalizeTransferTitle, refreshCopiedItems, transferRecordId, transferTotal, validateTransfer } from "../src/features/transfer-tool/transferModel.js";
+import { buildS4Workbook, S4_TEMPLATE_SHA256 } from "../src/features/transfer-tool/transferExport.js";
+import { cafeProfitCenter } from "../src/features/transfer-tool/cafeProfitCenters.js";
+import { defaultTransferDescription, normalizeTransferTitle, refreshCopiedItems, S4_EXPORT_VERSION, transferRecordId, transferTotal, validateS4Transfer, validateTransfer } from "../src/features/transfer-tool/transferModel.js";
 
 const root = process.cwd();
 const read = (path) => readFileSync(join(root, path), "utf8");
@@ -12,6 +16,8 @@ if (!CATALOG.items.every((item) => item.menu && item.item && Object.hasOwn(item,
 if (transferRecordId(" My  Transfer ") !== "transfer|my%20transfer") fail("title identity is not deterministic");
 if (normalizeTransferTitle(" MY   TRANSFER ") !== "my transfer") fail("title normalization is not case/space insensitive");
 if (transferTotal([{ quantity: 2, itemWasteCost: 1.234 }]) !== 2.468) fail("extended transfer value is incorrect");
+if (cafeProfitCenter("Dawson") !== "28676" || cafeProfitCenter("Astra") !== "") fail("cafe profit-center mapping is incorrect");
+if (defaultTransferDescription("Tuna Sandwich", "Dawson to Nessie").length > 50) fail("default descriptions are not capped at 50 characters");
 const refreshed = refreshCopiedItems([{ catalogId: CATALOG.items[0].id, itemWasteCost: 999 }], CATALOG.items);
 if (refreshed[0].itemWasteCost === 999) fail("copied transfers do not refresh current cost");
 const duplicateErrors = validateTransfer({ title: " Existing ", departingUnit: "Dawson", receivingUnit: "Nessie", transferDate: "2026-09-10", items: [{ catalogId: "x", quantity: 1 }] }, [{ title: "existing" }]);
@@ -22,10 +28,36 @@ const storage = read("src/features/transfer-tool/transferStorage.js");
 const component = read("src/features/transfer-tool/TransferTool.jsx");
 for (const marker of ["createTransfer", "Titles must be globally unique", "like.transfer|*"]) if (!api.includes(marker)) fail(`API is missing ${marker}`);
 for (const marker of ["createTransfer", "tool: \"transfers\"", "/api/recipe-library?scope=all", "row.trueCost"]) if (!storage.includes(marker)) fail(`storage client is missing ${marker}`);
-for (const marker of ["Item + Waste Cost", "Copy Transfer", "Export Excel", "DRAFT"]) if (!component.includes(marker)) fail(`UI is missing ${marker}`);
+for (const marker of ["Item + Waste Cost", "Copy Transfer", "Export S4 Excel", "Batch export staging", "DRAFT"]) if (!component.includes(marker)) fail(`UI is missing ${marker}`);
 for (const removedMarker of ["G/L Breakdown", "GlBreakdown", "reviewed mapping"]) if (component.includes(removedMarker)) fail(`UI still contains ${removedMarker}`);
 
 console.log(`Transfer Tool verification passed: ${CATALOG.menus.length} menus, ${CATALOG.items.length} menu-scoped cost records.`);
+
+const templatePath = join(root, "public/templates/ExpenseTransfer_Between_PC_Template.xlsx");
+const templateBytes = readFileSync(templatePath);
+const templateHash = createHash("sha256").update(templateBytes).digest("hex").toUpperCase();
+if (templateHash !== S4_TEMPLATE_SHA256) fail(`S4 template hash changed: ${templateHash}`);
+const exportTransfer = {
+  title: "S4 Verification",
+  receivingProfitCenter: "30159",
+  eventId: "EVENT-1",
+  items: [{ catalogId: "x", quantity: 2, itemWasteCost: 1.23456, fromGlAccount: "4111001", toGlAccount: "4111002", description: "=Formula-like item" }],
+};
+if (Object.keys(validateS4Transfer(exportTransfer)).length) fail("valid S4 transfer was rejected");
+const exportedBytes = await buildS4Workbook(templateBytes, exportTransfer);
+const sourceZip = await JSZip.loadAsync(templateBytes);
+const exportZip = await JSZip.loadAsync(exportedBytes);
+for (const path of Object.keys(sourceZip.files)) {
+  if (!exportZip.file(path)) fail(`S4 export dropped template part ${path}`);
+  if (path === "xl/worksheets/sheet1.xml" || sourceZip.files[path].dir) continue;
+  const [sourcePart, exportPart] = await Promise.all([sourceZip.file(path).async("uint8array"), exportZip.file(path).async("uint8array")]);
+  if (Buffer.compare(Buffer.from(sourcePart), Buffer.from(exportPart)) !== 0) fail(`S4 export changed protected template part ${path}`);
+}
+const sheetXml = await exportZip.file("xl/worksheets/sheet1.xml").async("string");
+if (!sheetXml.includes('r="A2" t="inlineStr"') || !sheetXml.includes("=Formula-like item") || sheetXml.includes("<f>")) fail("S4 text cells are not safely emitted as inline strings");
+if (!sheetXml.includes('r="E2" t="n"><v>2.47</v>')) fail("S4 amount does not round quantity x cost to two decimal places");
+if ((sheetXml.match(/<row r="2"/g) || []).length !== 1) fail("S4 export did not create one row per transfer line");
+console.log(`S4 exact-template verification passed: ${templateHash}, sheet1-only patch, safe inline strings.`);
 
 process.env.SUPABASE_URL = "https://example.supabase.co";
 process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-key";
@@ -52,6 +84,14 @@ const record = {
   transferDate: "2026-09-10",
   items: [{ catalogId: "menu|item|mrn|portion", menu: "Menu", item: "Item", quantity: 2, itemWasteCost: 1.25 }],
   totalValue: 2.5,
+};
+const s4Record = {
+  ...record,
+  s4ExportVersion: S4_EXPORT_VERSION,
+  departingProfitCenter: "28676",
+  receivingProfitCenter: "30159",
+  eventId: "EVENT-1",
+  items: record.items.map((item) => ({ ...item, fromGlAccount: "4111001", toGlAccount: "4111002", description: "Item - verification" })),
 };
 try {
   let insertCalls = 0;
@@ -93,6 +133,12 @@ try {
   };
   const updated = await invoke({ action: "upsertRecords", records: [record], context: { tool: "transfers" } });
   if (updated.statusCode !== 200) fail("validated immutable-title transfer update did not save");
+
+  const validS4 = await invoke({ action: "upsertRecords", records: [s4Record], context: { tool: "transfers" } });
+  if (validS4.statusCode !== 200) fail("valid versioned S4 transfer did not save");
+
+  const invalidS4 = await invoke({ action: "upsertRecords", records: [{ ...s4Record, receivingProfitCenter: "" }], context: { tool: "transfers" } });
+  if (invalidS4.statusCode !== 400 || !/profit center/i.test(invalidS4.payload?.message || "")) fail("versioned S4 transfer accepted missing receiving profit center");
 } finally {
   globalThis.fetch = originalFetch;
 }
