@@ -1,6 +1,6 @@
 import JSZip from "jszip";
 
-import { S4_MAX_ROWS, trimToLength, validateS4Transfer } from "./transferModel.js";
+import { S4_MAX_ROWS, defaultTransferDescription, trimToLength, validateS4Transfer } from "./transferModel.js";
 
 export const S4_TEMPLATE_URL = "/templates/ExpenseTransfer_Between_PC_Template.xlsx";
 export const S4_TEMPLATE_SHA256 = "AD2AAA07280553F0FBB2B1F1A3DCE94101F478BB5A27AC7891A70F4BF80AE8E0";
@@ -27,14 +27,16 @@ export function transferZipFileName() {
 export function buildS4Rows(transfer = {}) {
   const errors = validateS4Transfer(transfer);
   if (Object.keys(errors).length) throw new Error(Object.values(errors)[0]);
-  return (transfer.items || []).filter((item) => item.catalogId).slice(0, S4_MAX_ROWS).map((line) => ({
-    fromGlAccount: String(line.fromGlAccount),
-    receivingProfitCenter: String(transfer.receivingProfitCenter),
-    toGlAccount: String(line.toGlAccount),
-    description: trimToLength(line.description, 50),
-    transferAmount: Number((Number(line.quantity) * Number(line.itemWasteCost)).toFixed(2)),
-    eventId: trimToLength(transfer.eventId, 18),
-  }));
+  return (transfer.items || []).filter((item) => item.catalogId).flatMap((line) => (
+    line.ingredientAllocations.map((allocation) => ({
+      fromGlAccount: String(allocation.glCode),
+      receivingProfitCenter: String(transfer.receivingProfitCenter),
+      toGlAccount: String(allocation.glCode),
+      description: defaultTransferDescription(`${line.item} ${allocation.ingredientName}`, transfer.title),
+      transferAmount: Number((Number(line.quantity) * Number(allocation.allocationPerPortion)).toFixed(2)),
+      eventId: trimToLength(transfer.eventId, 18),
+    }))
+  )).slice(0, S4_MAX_ROWS);
 }
 
 export async function buildS4Workbook(templateBytes, transfer) {

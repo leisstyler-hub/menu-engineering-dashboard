@@ -20,6 +20,19 @@ export async function refreshTransferCatalogCosts(catalogItems = []) {
   return { items, refreshed, source: payload.source || "Menu Library API" };
 }
 
+export async function loadIngredientAllocations(mrn) {
+  const response = await fetch(`/api/transfer-breakdown?mrn=${encodeURIComponent(String(mrn || ""))}`);
+  const payload = await readJson(response);
+  if (!response.ok || payload.ok === false || !Array.isArray(payload.components) || !payload.components.length) {
+    throw new Error(payload.message || "No priced ingredient allocation is available for this menu item.");
+  }
+  return {
+    components: payload.components,
+    allocationPerPortion: Number(payload.allocationPerPortion),
+    resource: payload.resource,
+  };
+}
+
 export async function loadTransfers() {
   const response = await fetch("/api/storage/records?tool=transfers&includeHidden=1");
   const payload = await readJson(response);

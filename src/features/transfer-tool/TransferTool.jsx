@@ -9,9 +9,8 @@ import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
 import { cafeProfitCenter } from "./cafeProfitCenters.js";
 import { exportTransferWorkbook, exportTransferZip } from "./transferExport.js";
-import { S4_GL_ACCOUNTS, S4_GL_ACCOUNT_CODES } from "./s4GlAccounts.js";
-import { defaultTransferDescription, normalizeTransferTitle, refreshCopiedItems, S4_EXPORT_VERSION, transferRecordId, transferTotal, validateS4Transfer, validateTransfer } from "./transferModel.js";
-import { deleteTransfer, loadTransfers, refreshTransferCatalogCosts, saveTransfer } from "./transferStorage.js";
+import { normalizeTransferTitle, refreshCopiedItems, S4_EXPORT_VERSION, transferRecordId, transferTotal, validateS4Transfer, validateTransfer } from "./transferModel.js";
+import { deleteTransfer, loadIngredientAllocations, loadTransfers, refreshTransferCatalogCosts, saveTransfer } from "./transferStorage.js";
 
 const today = () => {
   const date = new Date();
@@ -20,7 +19,7 @@ const today = () => {
 };
 
 const lineId = () => globalThis.crypto?.randomUUID?.() || `line-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-const blankLine = () => ({ lineId: lineId(), menu: "", catalogId: "", item: "", mrn: "", portion: "", itemWasteCost: null, quantity: 1, fromGlAccount: "", toGlAccount: "", description: "", descriptionIsAuto: true });
+const blankLine = () => ({ lineId: lineId(), menu: "", catalogId: "", item: "", mrn: "", portion: "", itemWasteCost: null, allocationPerPortion: null, ingredientAllocations: [], allocationStatus: "", allocationMessage: "", quantity: 1 });
 const blankDraft = () => ({ recordId: "", title: "", departingUnit: "", receivingUnit: "", departingProfitCenter: "", receivingProfitCenter: "", transferDate: today(), eventId: "", s4ExportVersion: S4_EXPORT_VERSION, items: [blankLine()], createdAt: "" });
 
 function recordDate(record) {
@@ -40,13 +39,13 @@ function toDraft(record) {
     eventId: record.eventId || "",
     s4ExportVersion: record.s4ExportVersion || "",
     createdAt: record.createdAt || "",
-    items: Array.isArray(record.items) && record.items.length ? record.items.map(({ glGroups: _ignoredGlGroups, ...item }) => ({
+    items: Array.isArray(record.items) && record.items.length ? record.items.map(({ glGroups: _ignoredGlGroups, fromGlAccount: _fromGlAccount, toGlAccount: _toGlAccount, description: _description, descriptionIsAuto: _descriptionIsAuto, ...item }) => ({
       ...item,
       lineId: lineId(),
-      fromGlAccount: item.fromGlAccount || "",
-      toGlAccount: item.toGlAccount || "",
-      description: item.description || defaultTransferDescription(item.item, title),
-      descriptionIsAuto: item.descriptionIsAuto ?? !item.description,
+      allocationPerPortion: Number(item.allocationPerPortion),
+      ingredientAllocations: Array.isArray(item.ingredientAllocations) ? item.ingredientAllocations : [],
+      allocationStatus: Array.isArray(item.ingredientAllocations) && item.ingredientAllocations.length ? "ready" : "missing",
+      allocationMessage: Array.isArray(item.ingredientAllocations) && item.ingredientAllocations.length ? "" : "This saved transfer predates automatic ingredient allocations. Copy it and reselect the menu item.",
     })) : [blankLine()],
   };
 }
@@ -110,7 +109,7 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
     setDraft((current) => ({
       ...current,
       [field]: value,
-      items: field === "title" ? current.items.map((item) => item.descriptionIsAuto ? { ...item, description: defaultTransferDescription(item.item, value) } : item) : current.items,
+      items: current.items,
     }));
     setErrors((current) => ({ ...current, [field]: undefined }));
   };
@@ -129,8 +128,8 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
     setErrors((current) => ({ ...current, items: undefined, s4Lines: undefined }));
   };
 
-  const chooseMenu = (line, menu) => updateLine(line.lineId, { menu, catalogId: "", item: "", mrn: "", portion: "", itemWasteCost: null, fromGlAccount: "", toGlAccount: "", description: "", descriptionIsAuto: true });
-  const chooseItem = (line, catalogId) => {
+  const chooseMenu = (line, menu) => updateLine(line.lineId, { ...blankLine(), lineId: line.lineId, menu });
+  const chooseItem = async (line, catalogId) => {
     if (!costsReady) return;
     const selected = catalogById.get(catalogId);
     updateLine(line.lineId, selected ? {
@@ -140,12 +139,24 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
       mrn: selected.mrn,
       portion: selected.portion,
       itemWasteCost: selected.itemWasteCost,
-      fromGlAccount: "",
-      toGlAccount: "",
-      description: defaultTransferDescription(selected.item, draft.title),
-      descriptionIsAuto: true,
-    } : { catalogId: "", item: "", mrn: "", portion: "", itemWasteCost: null, fromGlAccount: "", toGlAccount: "", description: "", descriptionIsAuto: true });
+      allocationPerPortion: null,
+      ingredientAllocations: [],
+      allocationStatus: "loading",
+      allocationMessage: "Loading ingredient allocation…",
+    } : { ...blankLine(), lineId: line.lineId, menu: line.menu });
     setErrors((current) => ({ ...current, items: undefined }));
+    if (!selected) return;
+    try {
+      const allocation = await loadIngredientAllocations(selected.mrn);
+      updateLine(line.lineId, {
+        allocationPerPortion: allocation.allocationPerPortion,
+        ingredientAllocations: allocation.components,
+        allocationStatus: "ready",
+        allocationMessage: "",
+      });
+    } catch (error) {
+      updateLine(line.lineId, { allocationPerPortion: null, ingredientAllocations: [], allocationStatus: "error", allocationMessage: error.message });
+    }
   };
 
   const copyTransfer = (source) => {
@@ -156,10 +167,8 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
     const refreshedItems = refreshCopiedItems(source.items || [], catalogItems).map((item) => ({
       ...item,
       lineId: lineId(),
-      fromGlAccount: S4_GL_ACCOUNT_CODES.has(item.fromGlAccount) ? item.fromGlAccount : "",
-      toGlAccount: S4_GL_ACCOUNT_CODES.has(item.toGlAccount) ? item.toGlAccount : "",
-      description: item.descriptionIsAuto === false ? item.description : defaultTransferDescription(item.item, ""),
-      descriptionIsAuto: item.descriptionIsAuto ?? true,
+      allocationStatus: Array.isArray(item.ingredientAllocations) && item.ingredientAllocations.length ? "ready" : "missing",
+      allocationMessage: Array.isArray(item.ingredientAllocations) && item.ingredientAllocations.length ? "" : "Reselect this menu item to load its current ingredient allocation.",
     }));
     setDraft({
       recordId: "",
@@ -250,12 +259,6 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
     }
   };
 
-  const copyGlDown = (index, field) => {
-    const value = draft.items[index]?.[field] || "";
-    if (!S4_GL_ACCOUNT_CODES.has(value)) return;
-    setDraft((current) => ({ ...current, items: current.items.map((item, itemIndex) => itemIndex >= index && item.catalogId ? { ...item, [field]: value } : item) }));
-  };
-
   const toggleBatch = (record) => {
     const id = record["Record ID"] || record.recordId;
     setBatchDrafts((current) => {
@@ -328,7 +331,7 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
               </div>
               <h1 className="mt-2 text-3xl font-black md:text-5xl">Transfer Tool</h1>
               <p className="mt-3 max-w-4xl text-sm font-semibold leading-6 text-slate-600">
-                Build and save a reference transfer, then export it to Excel for separate entry in S4. Item + Waste Cost is live from the platform catalog.
+                Build and save a reference transfer, then export it to Excel for separate entry in S4. Ingredient Costing 9.19.26 automatically assigns the per-portion G/L allocation.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -390,14 +393,14 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
               <div className="space-y-3 p-4 md:hidden">
                 {draft.items.map((line, index) => {
                   const choices = catalogByMenu.get(line.menu) || [];
-                  const lineValue = line.itemWasteCost == null ? null : Number(line.quantity) * Number(line.itemWasteCost);
+                  const lineValue = line.allocationPerPortion == null ? null : Number(line.quantity) * Number(line.allocationPerPortion);
                   return (
                     <article key={line.lineId} className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
                       <div className="flex items-center justify-between gap-2"><h3 className="font-black">Item {index + 1}</h3><button type="button" aria-label={`Remove mobile item ${index + 1}`} onClick={() => setDraft((current) => ({ ...current, items: current.items.length === 1 ? [blankLine()] : current.items.filter((item) => item.lineId !== line.lineId) }))} className="rounded-lg border border-rose-200 bg-rose-50 p-2 text-rose-700"><Trash2 size={16} /></button></div>
                       <Field label="Menu"><select aria-label={`Mobile menu ${index + 1}`} value={line.menu} onChange={(event) => chooseMenu(line, event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 font-semibold"><option value="">Select menu</option>{CATALOG.menus.map((menu) => <option key={menu} value={menu}>{menu}</option>)}</select></Field>
                       <Field label="Item"><select aria-label={`Mobile item ${index + 1}`} value={line.catalogId} disabled={!line.menu || !costsReady} onChange={(event) => chooseItem(line, event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 font-semibold disabled:bg-slate-100"><option value="">{costsReady ? "Select item" : "Waiting for live costs"}</option>{choices.map((item) => <option key={item.id} value={item.id}>{item.item}{item.mrn ? ` · ${item.mrn}` : ""}{item.portion ? ` · ${item.portion}` : ""}</option>)}</select></Field>
-                      <div className="grid grid-cols-2 gap-3"><div><p className="text-xs font-black uppercase text-slate-500">Item + Waste Cost</p><p className="mt-1 text-lg font-black">{line.itemWasteCost == null ? "Unavailable" : money(line.itemWasteCost)}</p></div><Field label="Item count"><input aria-label={`Mobile item count ${index + 1}`} type="number" min="1" step="1" value={line.quantity} onChange={(event) => updateLine(line.lineId, { quantity: event.target.value })} className="w-full rounded-lg border border-slate-300 px-3 py-2 font-semibold" /></Field></div>
-                      {line.catalogId && <S4LineFields line={line} index={index} mobile onChange={(patchValue) => updateLine(line.lineId, patchValue)} onCopyDown={copyGlDown} />}
+                      <div className="grid grid-cols-2 gap-3"><div><p className="text-xs font-black uppercase text-slate-500">G/L allocation / portion</p><p className="mt-1 text-lg font-black">{line.allocationPerPortion == null ? "Loading…" : money(line.allocationPerPortion)}</p></div><Field label="Item count"><input aria-label={`Mobile item count ${index + 1}`} type="number" min="1" step="1" value={line.quantity} onChange={(event) => updateLine(line.lineId, { quantity: event.target.value })} className="w-full rounded-lg border border-slate-300 px-3 py-2 font-semibold" /></Field></div>
+                      {line.catalogId && <IngredientAllocationList line={line} />}
                       <p className="text-sm font-black text-emerald-700">Line value {Number.isFinite(lineValue) ? money(lineValue) : "—"}</p>
                     </article>
                   );
@@ -406,22 +409,22 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
               <div className="hidden max-w-full overflow-x-auto md:block">
                 <table className="min-w-[780px] w-full text-left text-sm">
                   <thead className="bg-slate-950 text-white">
-                    <tr><th className="p-3">Menu</th><th className="p-3">Item</th><th className="p-3">Item + Waste Cost</th><th className="p-3">Item Count</th><th className="p-3"><span className="sr-only">Remove</span></th></tr>
+                    <tr><th className="p-3">Menu</th><th className="p-3">Item</th><th className="p-3">G/L allocation / portion</th><th className="p-3">Item Count</th><th className="p-3"><span className="sr-only">Remove</span></th></tr>
                   </thead>
                   <tbody>
                     {draft.items.map((line, index) => {
                       const choices = catalogByMenu.get(line.menu) || [];
-                      const lineValue = line.itemWasteCost == null ? null : Number(line.quantity) * Number(line.itemWasteCost);
+                  const lineValue = line.allocationPerPortion == null ? null : Number(line.quantity) * Number(line.allocationPerPortion);
                       return (
                         <React.Fragment key={line.lineId}>
                         <tr className="align-top">
                           <td className="w-[220px] p-3"><select aria-label={`Menu ${index + 1}`} value={line.menu} onChange={(event) => chooseMenu(line, event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 font-semibold"><option value="">Select menu</option>{CATALOG.menus.map((menu) => <option key={menu} value={menu}>{menu}</option>)}</select></td>
                           <td className="w-[290px] p-3"><select aria-label={`Item ${index + 1}`} value={line.catalogId} disabled={!line.menu || !costsReady} onChange={(event) => chooseItem(line, event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 font-semibold disabled:bg-slate-100"><option value="">{costsReady ? "Select item" : "Waiting for live costs"}</option>{choices.map((item) => <option key={item.id} value={item.id}>{item.item}{item.mrn ? ` · ${item.mrn}` : ""}{item.portion ? ` · ${item.portion}` : ""}</option>)}</select>{line.catalogId && <p className="mt-2 text-xs font-semibold text-slate-500">MRN {line.mrn || "unavailable"} · {line.portion || "portion unavailable"}</p>}</td>
-                          <td className="w-[150px] p-3"><p className="text-lg font-black">{line.itemWasteCost == null ? "Unavailable" : money(line.itemWasteCost)}</p><p className="mt-1 text-xs font-semibold text-slate-500">snapshotted on save</p></td>
+                          <td className="w-[150px] p-3"><p className="text-lg font-black">{line.allocationPerPortion == null ? "Loading…" : money(line.allocationPerPortion)}</p><p className="mt-1 text-xs font-semibold text-slate-500">G/L allocation / portion</p></td>
                           <td className="w-[150px] p-3"><input aria-label={`Item count ${index + 1}`} type="number" min="1" step="1" value={line.quantity} onChange={(event) => updateLine(line.lineId, { quantity: event.target.value })} className="w-24 rounded-lg border border-slate-300 px-3 py-2 font-semibold" /><p className="mt-2 text-xs font-black text-emerald-700">Line value {Number.isFinite(lineValue) ? money(lineValue) : "—"}</p></td>
                           <td className="p-3"><button type="button" aria-label={`Remove item ${index + 1}`} onClick={() => setDraft((current) => ({ ...current, items: current.items.length === 1 ? [blankLine()] : current.items.filter((item) => item.lineId !== line.lineId) }))} className="rounded-lg border border-rose-200 bg-rose-50 p-2 text-rose-700 hover:bg-rose-100"><Trash2 size={16} /></button></td>
                         </tr>
-                        {line.catalogId && <tr className="border-b border-slate-200 bg-slate-50 last:border-b-0"><td colSpan={5} className="px-3 pb-4"><S4LineFields line={line} index={index} onChange={(patchValue) => updateLine(line.lineId, patchValue)} onCopyDown={copyGlDown} /></td></tr>}
+                        {line.catalogId && <tr className="border-b border-slate-200 bg-slate-50 last:border-b-0"><td colSpan={5} className="px-3 pb-4"><IngredientAllocationList line={line} /></td></tr>}
                         </React.Fragment>
                       );
                     })}
@@ -429,7 +432,7 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
                 </table>
               </div>
               <div className="flex flex-col gap-2 border-t border-slate-200 bg-slate-50 p-5 sm:flex-row sm:items-end sm:justify-between">
-                <p className="max-w-2xl text-xs font-semibold leading-5 text-slate-500">Each line uses the current Item + Waste Cost verified from the Menu Library.</p>
+                <p className="max-w-2xl text-xs font-semibold leading-5 text-slate-500">Each selected item expands into its priced ingredient allocation. S4 receives one row per ingredient, with the mapped category automatically applied as both G/L accounts.</p>
                 <div className="text-right"><p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Transfer value</p><p data-testid="transfer-total" className="text-3xl font-black">{money(transferTotal(draft.items))}</p></div>
               </div>
             </section>
@@ -466,8 +469,8 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
         {Object.keys(batchDrafts).length > 0 && (
           <section className="rounded-lg border border-sky-200 bg-white p-5 shadow-sm">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-sky-700">Batch export staging</p>
-            <h2 className="mt-1 text-2xl font-black">Complete S4 fields</h2>
-            <p className="mt-2 text-sm font-semibold text-slate-600">These staging edits are used only for this ZIP. They do not save, update costs, or change shared transfers.</p>
+            <h2 className="mt-1 text-2xl font-black">Review ingredient allocations</h2>
+            <p className="mt-2 text-sm font-semibold text-slate-600">Each saved transfer exports one S4 row per priced ingredient. These staging edits only allow an Event ID for this ZIP.</p>
             <div className="mt-4 space-y-4">
               {Object.entries(batchDrafts).map(([recordId, transfer]) => (
                 <BatchTransferEditor key={recordId} transfer={transfer} onChange={(updater) => updateBatch(recordId, updater)} />
@@ -489,50 +492,18 @@ function UnitField({ label, value, onChange, error }) {
   return <Field label={label} error={error}><select aria-label={label} value={value} onChange={(event) => onChange(event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-semibold"><option value="">Choose unit</option>{Object.entries(CAFE_UNITS.reduce((groups, unit) => ({ ...groups, [unit.district]: [...(groups[unit.district] || []), unit.cafe] }), {})).map(([district, cafes]) => <optgroup key={district} label={district}>{cafes.map((cafe) => <option key={cafe} value={cafe}>{cafe}</option>)}</optgroup>)}</select></Field>;
 }
 
-function S4LineFields({ line, index, mobile = false, onChange, onCopyDown }) {
-  return (
-    <div className={`grid gap-3 ${mobile ? "grid-cols-1" : "pt-3 md:grid-cols-[minmax(170px,0.9fr)_minmax(170px,0.9fr)_minmax(240px,2fr)_auto]"}`}>
-      <GlAccountField label="From G/L" value={line.fromGlAccount} index={index} mobile={mobile} onChange={(value) => onChange({ fromGlAccount: value })} onCopyDown={onCopyDown ? () => onCopyDown(index, "fromGlAccount") : null} />
-      <GlAccountField label="To G/L" value={line.toGlAccount} index={index} mobile={mobile} onChange={(value) => onChange({ toGlAccount: value })} onCopyDown={onCopyDown ? () => onCopyDown(index, "toGlAccount") : null} />
-      <Field label="Description">
-        <input aria-label={`${mobile ? "Mobile " : ""}Description ${index + 1}`} maxLength={50} value={line.description || ""} onChange={(event) => onChange({ description: event.target.value, descriptionIsAuto: false })} className="w-full rounded-lg border border-slate-300 px-3 py-2 font-semibold" />
-      </Field>
-      <div className="self-end pb-2 text-xs font-bold text-slate-500">{String(line.description || "").length}/50</div>
-    </div>
-  );
-}
-
-function GlAccountField({ label, value = "", index, mobile, onChange, onCopyDown }) {
-  const savedOutsideCatalog = value && !S4_GL_ACCOUNT_CODES.has(value);
-  const copyAllowed = S4_GL_ACCOUNT_CODES.has(value);
-  const ariaLabel = `${mobile ? "Mobile " : ""}${label} ${index + 1}`;
-  return (
-    <div>
-      <span className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">{label}</span>
-      <div className="mt-2 flex gap-1">
-        <select aria-label={ariaLabel} value={value} onChange={(event) => onChange(event.target.value)} className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm font-semibold">
-          <option value="">Choose G/L</option>
-          {savedOutsideCatalog && <option value={value}>{value} — Saved value</option>}
-          {S4_GL_ACCOUNTS.map(({ code, category }) => <option key={code} value={code}>{code} — {category}</option>)}
-        </select>
-        {onCopyDown && <button type="button" aria-label={`Copy ${label} ${index + 1} down`} title={copyAllowed ? `Copy ${label} down` : "Choose an approved G/L before copying down"} disabled={!copyAllowed} onClick={onCopyDown} className="rounded-lg border border-slate-300 px-2 text-xs font-black disabled:cursor-not-allowed disabled:opacity-40">↓</button>}
-      </div>
-    </div>
-  );
+function IngredientAllocationList({ line }) {
+  if (line.allocationStatus === "loading") return <p className="pt-3 text-xs font-bold text-amber-800">Loading Ingredient Costing 9.19.26 allocation…</p>;
+  if (!line.ingredientAllocations?.length) return <p role="alert" className="pt-3 text-xs font-bold text-rose-800">{line.allocationMessage || "No priced ingredient allocation is available for this menu item."}</p>;
+  return <div className="mt-3 overflow-hidden rounded-lg border border-slate-200 bg-white"><p className="border-b border-slate-200 bg-slate-100 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-slate-600">Automatic ingredient G/L allocation</p><div className="divide-y divide-slate-100">{line.ingredientAllocations.map((allocation) => <div key={`${allocation.ingredientMrn}-${allocation.unit}`} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 px-3 py-2 text-xs"><div><p className="font-black">{allocation.ingredientName}</p><p className="text-slate-500">MRN {allocation.ingredientMrn} · {allocation.quantity} {allocation.unit} / {allocation.recipeYield} yield · {allocation.glCode}</p></div><p className="font-black text-slate-800">{money(allocation.allocationPerPortion)}</p></div>)}</div></div>;
 }
 
 function BatchTransferEditor({ transfer, onChange }) {
   const mappedProfitCenter = cafeProfitCenter(transfer.receivingUnit);
-  const updateLine = (index, patchValue) => onChange((current) => ({ ...current, items: current.items.map((line, lineIndex) => lineIndex === index ? { ...line, ...patchValue } : line) }));
-  const copyDown = (index, field) => onChange((current) => {
-    const value = current.items[index]?.[field] || "";
-    if (!S4_GL_ACCOUNT_CODES.has(value)) return current;
-    return { ...current, items: current.items.map((line, lineIndex) => lineIndex >= index && line.catalogId ? { ...line, [field]: value } : line) };
-  });
   const validation = validateS4Transfer(transfer);
   return (
     <details className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-      <summary className="cursor-pointer font-black">{transfer.title} <span className={`ml-2 text-xs ${Object.keys(validation).length ? "text-amber-700" : "text-emerald-700"}`}>{Object.keys(validation).length ? "needs S4 fields" : "ready"}</span></summary>
+      <summary className="cursor-pointer font-black">{transfer.title} <span className={`ml-2 text-xs ${Object.keys(validation).length ? "text-amber-700" : "text-emerald-700"}`}>{Object.keys(validation).length ? "needs ingredient allocations" : "ready"}</span></summary>
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         <Field label="Receiving profit center" error={validation.receivingProfitCenter}>
           <input aria-label={`${transfer.title} receiving profit center`} inputMode="numeric" maxLength={5} value={transfer.receivingProfitCenter || ""} readOnly={Boolean(mappedProfitCenter)} onChange={(event) => onChange((current) => ({ ...current, receivingProfitCenter: event.target.value.replace(/\D/g, "").slice(0, 5) }))} className="w-full rounded-lg border border-slate-300 px-3 py-2 font-semibold read-only:bg-slate-200" />
@@ -545,8 +516,8 @@ function BatchTransferEditor({ transfer, onChange }) {
       <div className="mt-3 space-y-3">
         {(transfer.items || []).map((line, sourceIndex) => ({ line, sourceIndex })).filter(({ line }) => line.catalogId).map(({ line, sourceIndex }, displayIndex) => (
           <div key={line.lineId || `${line.catalogId}-${sourceIndex}`} className="rounded-lg border border-slate-200 bg-white p-3">
-            <p className="font-black">{line.item} <span className="text-xs text-slate-500">{money(Number(line.quantity) * Number(line.itemWasteCost))}</span></p>
-            <S4LineFields line={line} index={displayIndex} mobile onChange={(patchValue) => updateLine(sourceIndex, patchValue)} onCopyDown={(_, field) => copyDown(sourceIndex, field)} />
+            <p className="font-black">{line.item} <span className="text-xs text-slate-500">{money(Number(line.quantity) * Number(line.allocationPerPortion))}</span></p>
+            <IngredientAllocationList line={line} />
           </div>
         ))}
       </div>

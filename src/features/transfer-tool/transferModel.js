@@ -21,14 +21,14 @@ export const defaultTransferDescription = (itemName = "", reference = "") => {
 
 export const transferTotal = (items = []) => items.reduce((sum, item) => {
   const quantity = Number(item.quantity);
-  const cost = Number(item.itemWasteCost);
+  const cost = Number(item.allocationPerPortion);
   return sum + (Number.isFinite(quantity) && Number.isFinite(cost) ? quantity * cost : 0);
 }, 0);
 
 export function refreshCopiedItems(items = [], catalogItems = []) {
   const catalogById = new Map(catalogItems.map((item) => [item.id, item]));
   return items.map((item) => {
-    const { glGroups: _ignoredGlGroups, ...itemWithoutGl } = item;
+    const { glGroups: _ignoredGlGroups, fromGlAccount: _fromGlAccount, toGlAccount: _toGlAccount, ...itemWithoutGl } = item;
     const latest = catalogById.get(item.catalogId);
     return latest ? {
       ...itemWithoutGl,
@@ -48,16 +48,11 @@ export function validateS4Transfer(transfer = {}) {
     errors.receivingProfitCenter = "Enter a 5-digit receiving profit center.";
   }
   if (String(transfer.eventId || "").length > 18) errors.eventId = "Event ID cannot exceed 18 characters.";
-  if (items.length > S4_MAX_ROWS) errors.items = `S4 exports support up to ${S4_MAX_ROWS} item lines.`;
-  if (items.some((item) => !/^\d{7}$/.test(String(item.fromGlAccount || "")) || !/^\d{7}$/.test(String(item.toGlAccount || "")))) {
-    errors.s4Lines = "Every selected item needs 7-digit From G/L and To G/L accounts.";
-  }
-  if (items.some((item) => {
-    const description = String(item.description || "").trim();
-    return !description || description.length > 50;
-  })) errors.s4Lines = "Every selected item needs a description of 50 characters or fewer.";
-  if (items.some((item) => !(Number(item.quantity) * Number(item.itemWasteCost) > 0))) {
-    errors.s4Lines = "Every S4 line needs a transfer amount greater than zero.";
+  const allocations = items.flatMap((item) => Array.isArray(item.ingredientAllocations) ? item.ingredientAllocations : []);
+  if (allocations.length > S4_MAX_ROWS) errors.items = `S4 exports support up to ${S4_MAX_ROWS} ingredient lines.`;
+  if (items.some((item) => !Array.isArray(item.ingredientAllocations) || !item.ingredientAllocations.length)) errors.s4Lines = "Every selected item needs a priced ingredient allocation before it can export.";
+  if (allocations.some((allocation) => !/^\d{7}$/.test(String(allocation.glCode || "")) || !(Number(allocation.allocationPerPortion) > 0))) {
+    errors.s4Lines = "Every ingredient allocation needs an approved G/L code and amount greater than zero.";
   }
   return errors;
 }
@@ -76,9 +71,7 @@ export function validateTransfer(draft, transfers = []) {
   if (!draft.transferDate) errors.transferDate = "Choose a transfer date.";
   const completeItems = (draft.items || []).filter((item) => item.catalogId);
   if (!completeItems.length) errors.items = "Add at least one menu item.";
-  if (completeItems.some((item) => item.itemWasteCost == null || !Number.isFinite(Number(item.itemWasteCost)))) {
-    errors.items = "Every selected item needs an Item + Waste Cost before this transfer can be saved.";
-  }
+  if (completeItems.some((item) => item.itemWasteCost == null || !Number.isFinite(Number(item.itemWasteCost)))) errors.items = "Every selected item needs an Item + Waste Cost before this transfer can be saved.";
   if (completeItems.some((item) => !Number.isInteger(Number(item.quantity)) || Number(item.quantity) < 1)) {
     errors.items = "Every item count must be a whole number of 1 or more.";
   }

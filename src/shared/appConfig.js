@@ -1,1 +1,1 @@
-export const APP_VERSION_STAMP = "2026.09.19.005-transfer-delete-batch-labels";
+export const APP_VERSION_STAMP = "2026.09.20.001-transfer-ingredient-gl";

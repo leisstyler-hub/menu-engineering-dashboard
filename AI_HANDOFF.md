@@ -1,5 +1,13 @@
 # AI Handoff
 
+Last updated: September 20, 2026
+
+Current release candidate: `2026.09.20.001-transfer-ingredient-gl`
+
+Transfer Tool now uses the approved Ingredient Snapshot workflow. `public/resources/Ingredient_Costing_9.19.26.xlsx` is the downloadable source resource (SHA-256 `57D6675F11F6D6E968B4BFA242844380BE8FB7B26CEDDC888B7528EE1201EFC8`). `scripts/build-ingredient-costing-lookup.mjs` derives `api/data/ingredientCosting91926.json`, a server-only lookup covering 1,132 current transfer-catalog recipe MRNs. It reads direct AP/EP ingredient rows, excludes water/ice, takes the first one-unit matching MRN/unit source observation as the standardized price basis, and calculates each per-portion allocation as ingredient quantity / recipe yield × unit price. The browser requests only the selected recipe through `/api/transfer-breakdown`; the 24 MB workbook is not in the client bundle.
+
+The Transfer Tool no longer exposes manual From/To G/L selectors. A selected recipe line stores its `ingredientAllocations`; save/export require a non-empty allocation with a 7-digit mapped G/L and positive per-portion amount. S4 export expands each selected menu item into ingredient rows, places each allocation G/L in both S4 G/L fields, and rounds count × allocation to cents. Legacy saved transfers remain readable but cannot be exported until copied/reselected to obtain allocations. Required verification includes `node scripts/build-ingredient-costing-lookup.mjs --check`, `node scripts/verify-transfer-tool.mjs`, focused transfer browser coverage, `pnpm run verify`, production build, and post-deploy live version/API checks. No Supabase schema or policy change is required: allocation snapshots persist in the established `app_records` transfer payload.
+
 Last updated: September 19, 2026
 
 Current live version: `2026.09.19.004-transfer-gl-dropdowns`
