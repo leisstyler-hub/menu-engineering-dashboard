@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { join } from "node:path";
 import JSZip from "jszip";
 import CATALOG from "../src/data/transferToolCatalog.json" with { type: "json" };
+import INGREDIENT_COSTING_LOOKUP from "../api/data/ingredientCosting91926.json" with { type: "json" };
 import { buildS4Workbook, S4_TEMPLATE_SHA256 } from "../src/features/transfer-tool/transferExport.js";
 import { cafeProfitCenter } from "../src/features/transfer-tool/cafeProfitCenters.js";
 import { defaultTransferDescription, normalizeTransferTitle, refreshCopiedItems, S4_EXPORT_VERSION, transferRecordId, transferTotal, validateS4Transfer, validateTransfer } from "../src/features/transfer-tool/transferModel.js";
@@ -14,6 +15,11 @@ const fail = (message) => { console.error(`Transfer Tool verification failed: ${
 
 if (CATALOG.menus.length !== 53 || CATALOG.items.length < 1483) fail("catalog does not cover the current menu/item source");
 if (!CATALOG.items.every((item) => item.menu && item.item && Object.hasOwn(item, "itemWasteCost") && !Object.hasOwn(item, "glGroups"))) fail("catalog contains malformed or legacy G/L rows");
+const caprese = INGREDIENT_COSTING_LOOKUP.recipes["34303.45"];
+const capreseMozzarella = caprese?.components?.find((component) => component.ingredientMrn === "7776");
+if (capreseMozzarella?.unitPrice !== 0.32 || capreseMozzarella?.allocationPerPortion !== 1.28 || !caprese?.unpricedComponents?.some((component) => component.ingredientMrn === "7552")) {
+  fail("ingredient lookup must use canonical Ingredient: unit prices and retain unpriced source gaps");
+}
 if (transferRecordId(" My  Transfer ") !== "transfer|my%20transfer") fail("title identity is not deterministic");
 if (normalizeTransferTitle(" MY   TRANSFER ") !== "my transfer") fail("title normalization is not case/space insensitive");
 if (transferTotal([{ quantity: 2, allocationPerPortion: 1.234 }]) !== 2.468) fail("ingredient allocation total is incorrect");

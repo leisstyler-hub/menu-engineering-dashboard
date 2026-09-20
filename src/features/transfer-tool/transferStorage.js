@@ -23,11 +23,13 @@ export async function refreshTransferCatalogCosts(catalogItems = []) {
 export async function loadIngredientAllocations(mrn) {
   const response = await fetch(`/api/transfer-breakdown?mrn=${encodeURIComponent(String(mrn || ""))}`);
   const payload = await readJson(response);
-  if (!response.ok || payload.ok === false || !Array.isArray(payload.components) || !payload.components.length) {
-    throw new Error(payload.message || "No priced ingredient allocation is available for this menu item.");
+  if (!response.ok || payload.ok === false || (!Array.isArray(payload.components) && !Array.isArray(payload.unpricedComponents))) {
+    throw new Error(payload.message || "No ingredient mapping is available for this menu item.");
   }
   return {
     components: payload.components,
+    unpricedComponents: payload.unpricedComponents || [],
+    pricingComplete: payload.pricingComplete === true,
     allocationPerPortion: Number(payload.allocationPerPortion),
     resource: payload.resource,
   };

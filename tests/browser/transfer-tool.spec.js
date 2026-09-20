@@ -21,7 +21,7 @@ async function mockTransferStorage(page) {
   await page.route("**/api/recipe-library?scope=all", (route) => route.fulfill({ json: { ok: true, source: "test-live-menu-library", rows: [{ menu: "AMZ: Ohana", item: "Huli Huli Chicken", mrn: "33065.1", portion: "1 piece", trueCost: 2.5 }] } }));
   await page.route("**/api/transfer-breakdown?mrn=*", (route) => {
     const mrn = new URL(route.request().url()).searchParams.get("mrn");
-    return mrn === "33065.1" ? route.fulfill({ json: { ok: true, components: allocations, allocationPerPortion: 2.5, resource: { title: "Ingredient Costing 9.19.26" } } }) : route.fulfill({ status: 404, json: { ok: false, message: "No priced ingredient allocation is available for this menu item." } });
+    return mrn === "33065.1" ? route.fulfill({ json: { ok: true, components: allocations, unpricedComponents: [], pricingComplete: true, allocationPerPortion: 2.5, resource: { title: "Ingredient Costing 9.19.26" } } }) : route.fulfill({ status: 404, json: { ok: false, message: "No ingredient mapping is available for this menu item." } });
   });
   await page.route("**/api/storage/records**", async (route) => {
     if (route.request().method() === "GET") return route.fulfill({ json: { ok: true, records: [existingTransfer, secondTransfer] } });
@@ -60,11 +60,11 @@ test("Transfer Tool expands a selected item into automatic ingredient G/L rows a
   await expectNoAppProtection(page); expectNoUnexpectedPageErrors(pageErrors);
 });
 
-test("Transfer Tool blocks an item with no priced ingredient allocation", async ({ page }) => {
+test("Transfer Tool blocks an item with no ingredient mapping", async ({ page }) => {
   await mockTransferStorage(page); await openTool(page, /open transfer tool/i, /^Transfer Tool$/);
   await page.getByLabel("Menu 1", { exact: true }).selectOption("AMZ: Ohana");
   await page.getByLabel("Item 1", { exact: true }).selectOption({ label: "Blistered Green Beans · 176734 · 4 ounce" });
-  await expect(page.locator('[role="alert"]').filter({ hasText: "No priced ingredient allocation is available" }).last()).toBeVisible();
+  await expect(page.locator('[role="alert"]').filter({ hasText: "No ingredient mapping is available" }).last()).toBeVisible();
   await page.getByLabel("Globally unique title").fill("Missing allocation"); await page.getByLabel("Departing unit").selectOption("Dawson"); await page.getByLabel("Receiving unit").selectOption("Nessie");
   await page.getByRole("button", { name: "Save Draft" }).click();
   await expect(page.getByText(/needs a priced ingredient allocation/i)).toBeVisible();

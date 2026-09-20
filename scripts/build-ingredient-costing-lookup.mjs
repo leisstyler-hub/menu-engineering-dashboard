@@ -38,9 +38,16 @@ function isDirectIngredient(row) {
     && ["AP", "EP"].includes(text(row["AP/EP/Rec"]).toLocaleUpperCase("en-US"));
 }
 
+function isCanonicalIngredientPrice(row, ingredientAmount, recipeYield) {
+  return text(row["Recipe Name"]).startsWith("Ingredient:")
+    && ingredientAmount?.quantity === 1
+    && Number(recipeYield) === 1;
+}
+
 function selectedUnitPrice(candidates = []) {
-  // The snapshot is ordered intentionally. The first direct, one-unit AP/EP
-  // observation is the current standardized price basis for an MRN/unit pair.
+  // Only canonical Ingredient: recipes represent standardized ingredient prices.
+  // A menu recipe's Recipe Portion Cost is its whole-portion cost, not the
+  // price of the ingredient on that row.
   return candidates[0] || null;
 }
 
@@ -74,7 +81,7 @@ function main() {
         excluded: excludedIngredients.has(normalizedName),
       };
       recipeRows.push(base);
-      if (ingredientAmount.quantity === 1 && base.unitPrice != null && !base.excluded) {
+      if (isCanonicalIngredientPrice(row, ingredientAmount, base.recipeYield) && base.unitPrice != null && !base.excluded) {
         const key = `${ingredientMrn}|${ingredientAmount.unit}`;
         const candidates = unitPriceCandidates.get(key) || [];
         candidates.push(base);
@@ -85,39 +92,55 @@ function main() {
 
   const catalogMrns = new Set(CATALOG.items.map((item) => mrn(item.mrn)).filter(Boolean));
   const recipes = {};
+  const addComponent = (recipeMrn, row, key, component) => {
+    const current = recipes[recipeMrn] || { recipeName: row.recipeName, components: [], unpricedComponents: [], seen: new Set() };
+    if (!current.seen.has(key)) {
+      current.seen.add(key);
+      component.allocationPerPortion == null ? current.unpricedComponents.push(component) : current.components.push(component);
+    }
+    recipes[recipeMrn] = current;
+  };
+
   for (const row of recipeRows) {
     if (!catalogMrns.has(row.recipeMrn) || row.excluded || !Number.isFinite(row.recipeYield) || row.recipeYield <= 0 || !/^\d{7}$/.test(row.glCode)) continue;
     const priceBasis = selectedUnitPrice(unitPriceCandidates.get(`${row.ingredientMrn}|${row.unit}`));
-    if (!priceBasis) continue;
-    const allocation = Number((row.quantity / row.recipeYield * priceBasis.unitPrice).toFixed(4));
-    if (!(allocation > 0)) continue;
-    const current = recipes[row.recipeMrn] || { recipeName: row.recipeName, components: [], seen: new Set() };
     const componentKey = [row.ingredientMrn, row.quantity, row.unit, row.recipeYield, row.glCode].join("|");
-    if (!current.seen.has(componentKey)) {
-      current.seen.add(componentKey);
-      current.components.push({
+    if (!priceBasis) {
+      addComponent(row.recipeMrn, row, componentKey, {
         ingredientMrn: row.ingredientMrn,
         ingredientName: row.ingredientName,
         quantity: row.quantity,
         unit: row.unit,
         recipeYield: row.recipeYield,
-        unitPrice: priceBasis.unitPrice,
         glCode: row.glCode,
-        allocationPerPortion: allocation,
+        allocationPerPortion: null,
       });
+      continue;
     }
-    recipes[row.recipeMrn] = current;
+    const allocation = Number((row.quantity / row.recipeYield * priceBasis.unitPrice).toFixed(4));
+    if (!(allocation > 0)) continue;
+    addComponent(row.recipeMrn, row, componentKey, {
+      ingredientMrn: row.ingredientMrn,
+      ingredientName: row.ingredientName,
+      quantity: row.quantity,
+      unit: row.unit,
+      recipeYield: row.recipeYield,
+      unitPrice: priceBasis.unitPrice,
+      glCode: row.glCode,
+      allocationPerPortion: allocation,
+    });
   }
 
   const compactRecipes = Object.fromEntries(Object.entries(recipes).map(([recipeMrn, recipe]) => [recipeMrn, {
     recipeName: recipe.recipeName,
     components: recipe.components.sort((a, b) => a.ingredientName.localeCompare(b.ingredientName)),
+    unpricedComponents: recipe.unpricedComponents.sort((a, b) => a.ingredientName.localeCompare(b.ingredientName)),
   }]));
   const payload = {
     resource: {
       title: "Ingredient Costing 9.19.26",
       file: "/resources/Ingredient_Costing_9.19.26.xlsx",
-      lookupMethod: "First direct one-unit AP/EP observation for the ingredient MRN and matching unit.",
+      lookupMethod: "Canonical Ingredient: recipe with the same ingredient MRN and unit (one-unit, yield-one standard price).",
     },
     recipes: compactRecipes,
   };

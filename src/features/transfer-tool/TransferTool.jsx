@@ -148,11 +148,13 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
     if (!selected) return;
     try {
       const allocation = await loadIngredientAllocations(selected.mrn);
+      const ingredientAllocations = [...allocation.components, ...allocation.unpricedComponents];
+      const pricingComplete = allocation.pricingComplete;
       updateLine(line.lineId, {
-        allocationPerPortion: allocation.allocationPerPortion,
-        ingredientAllocations: allocation.components,
-        allocationStatus: "ready",
-        allocationMessage: "",
+        allocationPerPortion: pricingComplete ? allocation.allocationPerPortion : null,
+        ingredientAllocations,
+        allocationStatus: pricingComplete ? "ready" : "error",
+        allocationMessage: pricingComplete ? "" : "This recipe has ingredient G/L mappings, but one or more matching canonical Ingredient: unit prices are missing. The transfer cannot be costed or exported until that source gap is resolved.",
       });
     } catch (error) {
       updateLine(line.lineId, { allocationPerPortion: null, ingredientAllocations: [], allocationStatus: "error", allocationMessage: error.message });
@@ -494,8 +496,8 @@ function UnitField({ label, value, onChange, error }) {
 
 function IngredientAllocationList({ line }) {
   if (line.allocationStatus === "loading") return <p className="pt-3 text-xs font-bold text-amber-800">Loading Ingredient Costing 9.19.26 allocation…</p>;
-  if (!line.ingredientAllocations?.length) return <p role="alert" className="pt-3 text-xs font-bold text-rose-800">{line.allocationMessage || "No priced ingredient allocation is available for this menu item."}</p>;
-  return <div className="mt-3 overflow-hidden rounded-lg border border-slate-200 bg-white"><p className="border-b border-slate-200 bg-slate-100 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-slate-600">Automatic ingredient G/L allocation</p><div className="divide-y divide-slate-100">{line.ingredientAllocations.map((allocation) => <div key={`${allocation.ingredientMrn}-${allocation.unit}`} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 px-3 py-2 text-xs"><div><p className="font-black">{allocation.ingredientName}</p><p className="text-slate-500">MRN {allocation.ingredientMrn} · {allocation.quantity} {allocation.unit} / {allocation.recipeYield} yield · {allocation.glCode}</p></div><p className="font-black text-slate-800">{money(allocation.allocationPerPortion)}</p></div>)}</div></div>;
+  if (!line.ingredientAllocations?.length) return <p role="alert" className="pt-3 text-xs font-bold text-rose-800">{line.allocationMessage || "No ingredient mapping is available for this menu item."}</p>;
+  return <div className="mt-3 overflow-hidden rounded-lg border border-slate-200 bg-white"><p className="border-b border-slate-200 bg-slate-100 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-slate-600">Automatic ingredient G/L allocation</p>{line.allocationMessage && <p role="alert" className="border-b border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-900">{line.allocationMessage}</p>}<div className="divide-y divide-slate-100">{line.ingredientAllocations.map((allocation) => <div key={`${allocation.ingredientMrn}-${allocation.unit}`} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 px-3 py-2 text-xs"><div><p className="font-black">{allocation.ingredientName}</p><p className="text-slate-500">MRN {allocation.ingredientMrn} · {allocation.quantity} {allocation.unit} / {allocation.recipeYield} yield · {allocation.glCode}</p></div><p className="font-black text-slate-800">{Number.isFinite(Number(allocation.allocationPerPortion)) ? money(allocation.allocationPerPortion) : "Price source needed"}</p></div>)}</div></div>;
 }
 
 function BatchTransferEditor({ transfer, onChange }) {
