@@ -24,6 +24,19 @@ const signatureTokenAliases = new Map([
   ["cheeses", "cheese"], ["leaves", "leaf"], ["onions", "onion"],
   ["peppers", "pepper"], ["chiles", "chile"], ["chilies", "chile"],
 ]);
+// These words are useful for a strict form match but cannot establish that two
+// ingredients are the same food. The substitute tier needs a real food-name
+// anchor (arugula-to-arugula, milk-to-milk), never a generic match such as
+// sauce-to-sauce or oil-to-oil.
+const substituteGenericTokens = new Set([
+  "ingredient", "food", "product", "spice", "sauce", "base", "mix", "blend",
+  "oil", "cheese", "bread", "flavor", "style", "liquid", "dry", "whole",
+  "ground", "coarse", "fine", "chopped", "diced", "minced", "sliced",
+  "shredded", "grated", "peeled", "julienne", "fresh", "frozen", "raw",
+  "baby", "large", "small", "leaf", "clove", "red", "white", "green",
+  "black", "light", "dark", "thin", "thick", "long", "short", "round",
+  "canned", "pasteurized", "boneless", "skinless", "bulk",
+]);
 
 const text = (value) => String(value ?? "").trim();
 const mrn = (value) => text(value).replace(/^'/, "");
@@ -78,6 +91,21 @@ function matchingIngredientForm(targetSignature, candidateSignature) {
   // ingredient name that adds a supplier or packaging descriptor. Do not use
   // a generic one-token match (for example, just "tomato").
   return candidate.length >= 2 && candidate.every((token) => target.has(token));
+}
+
+function substituteScore(targetSignature, candidateSignature) {
+  const target = signatureTokens(targetSignature).filter((token) => !substituteGenericTokens.has(token));
+  const candidate = signatureTokens(candidateSignature).filter((token) => !substituteGenericTokens.has(token));
+  if (!target.length || !candidate.length) return 0;
+  const candidateSet = new Set(candidate);
+  const shared = target.filter((token) => candidateSet.has(token));
+  // A substitute requires at least one non-generic ingredient-name token.
+  // This intentionally permits a close food/form match while rejecting broad
+  // category-only substitutions such as "oil" or "sauce".
+  if (!shared.length) return 0;
+  const coverage = shared.length / target.length;
+  const precision = shared.length / candidate.length;
+  return Number((shared.length * 100 + coverage * 10 + precision).toFixed(4));
 }
 
 function supportsShreddedCheeseDensity(signature) {
@@ -254,6 +282,18 @@ function main() {
   }
 
   const catalogMrns = new Set(CATALOG.items.map((item) => mrn(item.mrn)).filter(Boolean));
+  const canonicalCandidatesByAnchor = new Map();
+  for (const candidate of canonicalPriceCandidates) {
+    const anchors = new Set([
+      ...signatureTokens(candidate.canonicalSignature),
+      ...signatureTokens(candidate.ingredientSignature),
+    ].filter((token) => !substituteGenericTokens.has(token)));
+    for (const anchor of anchors) {
+      const candidates = canonicalCandidatesByAnchor.get(anchor) || [];
+      candidates.push(candidate);
+      canonicalCandidatesByAnchor.set(anchor, candidates);
+    }
+  }
   const recipes = {};
   const addComponent = (recipeMrn, row, key, component) => {
     const current = recipes[recipeMrn] || { recipeName: row.recipeName, components: [], unpricedComponents: [], seen: new Set() };
@@ -278,7 +318,33 @@ function main() {
     const matched = selectedUnitPrice(formMatches, row.unit, { allowSliceEach: allowsSliceEach, ingredientForm: targetSignature });
     if (matched) return { priceBasis: matched, source: "normalized ingredient form", allowsSliceEach };
     const inferred = selectedUnitPrice(directCandidates.filter((candidate) => candidate.sourceType === "snapshot residual inference"), row.unit, { ingredientForm: targetSignature });
-    return inferred ? { priceBasis: inferred, source: "exact MRN" } : null;
+    if (inferred) return { priceBasis: inferred, source: "exact MRN" };
+
+    // Last price-source tier: a named, unit-convertible Ingredient Snapshot
+    // candidate with the closest real ingredient-name anchor. This is not an
+    // exact canonical price, so it is carried through to the UI as a chef
+    // review flag instead of being presented as an exact match.
+    const targetAnchors = signatureTokens(targetSignature).filter((token) => !substituteGenericTokens.has(token));
+    const candidatePool = new Map();
+    for (const anchor of targetAnchors) {
+      for (const candidate of canonicalCandidatesByAnchor.get(anchor) || []) {
+        candidatePool.set(`${candidate.recipeMrn}|${candidate.ingredientMrn}|${candidate.unit}`, candidate);
+      }
+    }
+    const substituteCandidates = [...candidatePool.values()]
+      .map((candidate) => ({
+        ...candidate,
+        substituteScore: Math.max(
+          substituteScore(targetSignature, candidate.canonicalSignature),
+          substituteScore(targetSignature, candidate.ingredientSignature),
+        ),
+      }))
+      .filter((candidate) => candidate.substituteScore > 0)
+      .sort((a, b) => b.substituteScore - a.substituteScore
+        || a.canonicalSignature.localeCompare(b.canonicalSignature)
+        || a.ingredientMrn.localeCompare(b.ingredientMrn));
+    const substitute = selectedUnitPrice(substituteCandidates, row.unit, { ingredientForm: targetSignature });
+    return substitute ? { priceBasis: substitute, source: "substitute ingredient-name match", isSubstitutePrice: true } : null;
   };
 
   for (const row of recipeRows) {
@@ -318,12 +384,15 @@ function main() {
         ? `Ingredient Snapshot residual price (${priceBasis.observationCount} source recipes).`
         : source.source === "exact MRN"
         ? "Canonical Ingredient: price reference."
+        : source.source === "substitute ingredient-name match"
+        ? `Substitute price used: closest Ingredient Snapshot name match (${priceBasis.recipeName.replace(/^Ingredient:\s*/i, "")}).`
         : "Canonical normalized ingredient-form price reference."}${supportsShreddedCheeseDensity(ingredientSignature(row.ingredientName)) && unitKey(row.unit) !== unitKey(priceBasis.unit)
         ? " Shredded/grated cheese uses 4 tablespoons per ounce."
         : ""}${ingredientDensityOuncesPerCup(ingredientSignature(row.ingredientName)) != null && unitKey(row.unit) !== unitKey(priceBasis.unit)
         ? " Uses the standardized ingredient-form density conversion."
         : ""}`,
       glCode: row.glCode,
+      isSubstitutePrice: Boolean(source.isSubstitutePrice),
       allocationPerPortion: allocation,
     });
   }
@@ -337,7 +406,7 @@ function main() {
     resource: {
       title: "Ingredient Costing 9.19.26",
       file: "/resources/Ingredient_Costing_9.19.26.xlsx",
-      lookupMethod: "Canonical Ingredient: price references, using exact MRN first and then high-confidence normalized ingredient-form matching. Includes standard volume/weight/metric conversions, explicitly matched slice/each forms, shredded/grated cheese at 4 tablespoons per ounce, and form-limited avocado/butter density conversions. When a flat source recipe has exactly one unresolved component and every other component is canonically priced, a repeated source-recipe residual may supply that component's unit price; ordinary menu rows are never used directly as an ingredient price.",
+      lookupMethod: "Canonical Ingredient: price references, using exact MRN first and then high-confidence normalized ingredient-form matching. Includes standard volume/weight/metric conversions, explicitly matched slice/each forms, shredded/grated cheese at 4 tablespoons per ounce, and form-limited avocado/butter density conversions. When exact pricing is unavailable, a clearly labeled substitute may use the closest unit-convertible Ingredient Snapshot name match with a real food-name anchor; generic category matches are rejected. When a flat source recipe has exactly one unresolved component and every other component is canonically priced, a repeated source-recipe residual may supply that component's unit price; ordinary menu rows are never used directly as an ingredient price.",
     },
     recipes: compactRecipes,
   };

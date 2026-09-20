@@ -9,7 +9,7 @@ import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
 import { cafeProfitCenter } from "./cafeProfitCenters.js";
 import { exportTransferWorkbook, exportTransferZip } from "./transferExport.js";
-import { normalizeTransferTitle, refreshCopiedItems, S4_EXPORT_VERSION, transferRecordId, transferTotal, validateS4Transfer, validateTransfer } from "./transferModel.js";
+import { balanceIngredientAllocations, normalizeTransferTitle, refreshCopiedItems, S4_EXPORT_VERSION, transferRecordId, transferTotal, validateS4Transfer, validateTransfer } from "./transferModel.js";
 import { deleteTransfer, loadIngredientAllocations, loadTransfers, refreshTransferCatalogCosts, saveTransfer } from "./transferStorage.js";
 
 const today = () => {
@@ -19,7 +19,7 @@ const today = () => {
 };
 
 const lineId = () => globalThis.crypto?.randomUUID?.() || `line-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-const blankLine = () => ({ lineId: lineId(), menu: "", catalogId: "", item: "", mrn: "", portion: "", itemWasteCost: null, allocationPerPortion: null, ingredientAllocations: [], allocationStatus: "", allocationMessage: "", quantity: 1 });
+const blankLine = () => ({ lineId: lineId(), menu: "", catalogId: "", item: "", mrn: "", portion: "", itemWasteCost: null, allocationPerPortion: null, ingredientAllocations: [], unpricedComponents: [], allocationStatus: "", allocationMessage: "", quantity: 1 });
 const blankDraft = () => ({ recordId: "", title: "", departingUnit: "", receivingUnit: "", departingProfitCenter: "", receivingProfitCenter: "", transferDate: today(), eventId: "", s4ExportVersion: S4_EXPORT_VERSION, items: [blankLine()], createdAt: "" });
 
 function recordDate(record) {
@@ -44,6 +44,7 @@ function toDraft(record) {
       lineId: lineId(),
       allocationPerPortion: Number(item.allocationPerPortion),
       ingredientAllocations: Array.isArray(item.ingredientAllocations) ? item.ingredientAllocations : [],
+      unpricedComponents: Array.isArray(item.unpricedComponents) ? item.unpricedComponents : [],
       allocationStatus: Array.isArray(item.ingredientAllocations) && item.ingredientAllocations.length ? "ready" : "missing",
       allocationMessage: Array.isArray(item.ingredientAllocations) && item.ingredientAllocations.length ? "" : "This saved transfer predates automatic ingredient allocations. Copy it and reselect the menu item.",
     })) : [blankLine()],
@@ -141,6 +142,7 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
       itemWasteCost: selected.itemWasteCost,
       allocationPerPortion: null,
       ingredientAllocations: [],
+      unpricedComponents: [],
       allocationStatus: "loading",
       allocationMessage: "Loading ingredient allocation…",
     } : { ...blankLine(), lineId: line.lineId, menu: line.menu });
@@ -148,16 +150,27 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
     if (!selected) return;
     try {
       const allocation = await loadIngredientAllocations(selected.mrn);
-      const ingredientAllocations = [...allocation.components, ...allocation.unpricedComponents];
-      const pricingComplete = allocation.pricingComplete;
+      const balanced = balanceIngredientAllocations({
+        components: allocation.components,
+        unpricedComponents: allocation.unpricedComponents,
+        itemWasteCost: selected.itemWasteCost,
+      });
+      const substituteCount = balanced.ingredientAllocations.filter((component) => component.isSubstitutePrice).length;
+      const pricingComplete = balanced.pricingComplete;
+      const allocationMessage = [
+        substituteCount ? `${substituteCount} substitute Ingredient Snapshot price${substituteCount === 1 ? " was" : "s were"} used; review the flagged component${substituteCount === 1 ? "" : "s"} below.` : "",
+        balanced.residualCost > 0 ? `${money(balanced.residualCost)} was assigned to 4111011 Prepared Foods so this transfer equals the current Item + Waste Cost of ${money(balanced.targetCost)}. Review the unpriced source component${allocation.unpricedComponents.length === 1 ? "" : "s"} below.` : "",
+        !pricingComplete ? "This recipe has ingredient G/L mappings, but its current Item + Waste Cost cannot supply a positive Prepared Foods balance for the remaining unpriced component. The transfer cannot be costed or exported until reviewed." : "",
+      ].filter(Boolean).join(" ");
       updateLine(line.lineId, {
-        allocationPerPortion: pricingComplete ? allocation.allocationPerPortion : null,
-        ingredientAllocations,
+        allocationPerPortion: pricingComplete ? balanced.allocationPerPortion : null,
+        ingredientAllocations: balanced.ingredientAllocations,
+        unpricedComponents: balanced.unpricedComponents,
         allocationStatus: pricingComplete ? "ready" : "error",
-        allocationMessage: pricingComplete ? "" : "This recipe has ingredient G/L mappings, but one or more matching canonical Ingredient: unit prices are missing. The transfer cannot be costed or exported until that source gap is resolved.",
+        allocationMessage,
       });
     } catch (error) {
-      updateLine(line.lineId, { allocationPerPortion: null, ingredientAllocations: [], allocationStatus: "error", allocationMessage: error.message });
+      updateLine(line.lineId, { allocationPerPortion: null, ingredientAllocations: [], unpricedComponents: [], allocationStatus: "error", allocationMessage: error.message });
     }
   };
 
@@ -497,7 +510,7 @@ function UnitField({ label, value, onChange, error }) {
 function IngredientAllocationList({ line }) {
   if (line.allocationStatus === "loading") return <p className="pt-3 text-xs font-bold text-amber-800">Loading Ingredient Costing 9.19.26 allocation…</p>;
   if (!line.ingredientAllocations?.length) return <p role="alert" className="pt-3 text-xs font-bold text-rose-800">{line.allocationMessage || "No ingredient mapping is available for this menu item."}</p>;
-  return <div className="mt-3 overflow-hidden rounded-lg border border-slate-200 bg-white"><p className="border-b border-slate-200 bg-slate-100 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-slate-600">Automatic ingredient G/L allocation</p>{line.allocationMessage && <p role="alert" className="border-b border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-900">{line.allocationMessage}</p>}<div className="divide-y divide-slate-100">{line.ingredientAllocations.map((allocation) => <div key={`${allocation.ingredientMrn}-${allocation.unit}`} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 px-3 py-2 text-xs"><div><p className="font-black">{allocation.ingredientName}</p><p className="text-slate-500">MRN {allocation.ingredientMrn} · {allocation.quantity} {allocation.unit} / {allocation.recipeYield} yield · {allocation.glCode}{allocation.priceSourceMrn && allocation.priceSourceMrn !== allocation.ingredientMrn ? ` · price source MRN ${allocation.priceSourceMrn}` : ""}</p></div><p className="font-black text-slate-800">{Number.isFinite(Number(allocation.allocationPerPortion)) ? money(allocation.allocationPerPortion) : "Price source needed"}</p></div>)}</div></div>;
+  return <div className="mt-3 overflow-hidden rounded-lg border border-slate-200 bg-white"><p className="border-b border-slate-200 bg-slate-100 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-slate-600">Automatic ingredient G/L allocation</p>{line.allocationMessage && <p role="alert" className="border-b border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-900">{line.allocationMessage}</p>}<div className="divide-y divide-slate-100">{line.ingredientAllocations.map((allocation, index) => <div key={`${allocation.ingredientMrn}-${allocation.unit}-${index}`} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 px-3 py-2 text-xs"><div><p className="font-black">{allocation.ingredientName}</p><p className="text-slate-500">MRN {allocation.ingredientMrn} · {allocation.quantity} {allocation.unit} / {allocation.recipeYield} yield · {allocation.glCode}{allocation.priceSourceMrn && allocation.priceSourceMrn !== allocation.ingredientMrn ? ` · price source MRN ${allocation.priceSourceMrn}` : ""}</p>{allocation.isSubstitutePrice && <p className="mt-1 font-bold text-amber-800">Substitute price used — {allocation.priceSourceNote}</p>}{allocation.isResidualCostBalance && <p className="mt-1 font-bold text-amber-800">Prepared Foods cost balance — {allocation.priceSourceNote}</p>}</div><p className="font-black text-slate-800">{Number.isFinite(Number(allocation.allocationPerPortion)) ? money(allocation.allocationPerPortion) : "Price source needed"}</p></div>)}{(line.unpricedComponents || []).map((component, index) => <div key={`unpriced-${component.ingredientMrn}-${component.unit}-${index}`} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 bg-amber-50 px-3 py-2 text-xs"><div><p className="font-black">{component.ingredientName}</p><p className="text-slate-500">MRN {component.ingredientMrn} · {component.quantity} {component.unit} / {component.recipeYield} yield · source price unresolved</p><p className="mt-1 font-bold text-amber-800">Covered by the Prepared Foods cost balance adjustment above.</p></div><p className="font-black text-amber-900">Review</p></div>)}</div></div>;
 }
 
 function BatchTransferEditor({ transfer, onChange }) {

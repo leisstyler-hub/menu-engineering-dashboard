@@ -8,6 +8,7 @@ export const transferRecordId = (title) => `transfer|${encodeURIComponent(normal
 
 export const S4_EXPORT_VERSION = 1;
 export const S4_MAX_ROWS = 450;
+export const PREPARED_FOODS_GL_CODE = "4111011";
 
 export const trimToLength = (value = "", maxLength = 50) => String(value ?? "").normalize("NFKC").trim().slice(0, maxLength);
 
@@ -24,6 +25,38 @@ export const transferTotal = (items = []) => items.reduce((sum, item) => {
   const cost = Number(item.allocationPerPortion);
   return sum + (Number.isFinite(quantity) && Number.isFinite(cost) ? quantity * cost : 0);
 }, 0);
+
+const rounded = (value) => Number(Number(value).toFixed(4));
+
+export function balanceIngredientAllocations({ components = [], unpricedComponents = [], itemWasteCost }) {
+  const pricedComponents = components.filter((component) => Number(component?.allocationPerPortion) > 0);
+  const knownCost = rounded(pricedComponents.reduce((sum, component) => sum + Number(component.allocationPerPortion), 0));
+  const targetCost = Number(itemWasteCost);
+  const canBalance = unpricedComponents.length > 0 && Number.isFinite(targetCost) && targetCost > knownCost;
+  const residualCost = canBalance ? rounded(targetCost - knownCost) : 0;
+  const residualAllocation = residualCost > 0 ? {
+    ingredientMrn: "prepared-foods-cost-balance",
+    ingredientName: "Cost balance adjustment",
+    quantity: 1,
+    unit: "portion",
+    recipeYield: 1,
+    unitPrice: residualCost,
+    glCode: PREPARED_FOODS_GL_CODE,
+    allocationPerPortion: residualCost,
+    isResidualCostBalance: true,
+    priceSourceNote: "Prepared Foods adjustment so the transfer equals the current Item + Waste Cost; unpriced source components remain listed for chef review.",
+  } : null;
+  const ingredientAllocations = residualAllocation ? [...pricedComponents, residualAllocation] : pricedComponents;
+  const allocationPerPortion = rounded(ingredientAllocations.reduce((sum, component) => sum + Number(component.allocationPerPortion), 0));
+  return {
+    ingredientAllocations,
+    unpricedComponents,
+    allocationPerPortion,
+    pricingComplete: pricedComponents.length > 0 && (unpricedComponents.length === 0 || Boolean(residualAllocation)),
+    residualCost,
+    targetCost: Number.isFinite(targetCost) ? targetCost : null,
+  };
+}
 
 export function refreshCopiedItems(items = [], catalogItems = []) {
   const catalogById = new Map(catalogItems.map((item) => [item.id, item]));

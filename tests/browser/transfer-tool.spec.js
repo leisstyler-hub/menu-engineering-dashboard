@@ -15,13 +15,13 @@ const existingTransfer = {
 };
 const secondTransfer = { ...existingTransfer, "Record ID": "transfer|second%20transfer", title: "Second Transfer", departingUnit: "Nessie", receivingUnit: "Dawson", updatedAt: "2026-09-07T12:00:00.000Z" };
 
-async function mockTransferStorage(page) {
+async function mockTransferStorage(page, { huliComponents = allocations, huliUnpricedComponents = [], huliCost = 2.5 } = {}) {
   const writes = [];
   await page.route("**/api/traffic/weekly", (route) => route.fulfill({ json: { ok: true, status: "live", days: [], totalVisitors: 0 } }));
-  await page.route("**/api/recipe-library?scope=all", (route) => route.fulfill({ json: { ok: true, source: "test-live-menu-library", rows: [{ menu: "AMZ: Ohana", item: "Huli Huli Chicken", mrn: "33065.1", portion: "1 piece", trueCost: 2.5 }] } }));
+  await page.route("**/api/recipe-library?scope=all", (route) => route.fulfill({ json: { ok: true, source: "test-live-menu-library", rows: [{ menu: "AMZ: Ohana", item: "Huli Huli Chicken", mrn: "33065.1", portion: "1 piece", trueCost: huliCost }] } }));
   await page.route("**/api/transfer-breakdown?mrn=*", (route) => {
     const mrn = new URL(route.request().url()).searchParams.get("mrn");
-    return mrn === "33065.1" ? route.fulfill({ json: { ok: true, components: allocations, unpricedComponents: [], pricingComplete: true, allocationPerPortion: 2.5, resource: { title: "Ingredient Costing 9.19.26" } } }) : route.fulfill({ status: 404, json: { ok: false, message: "No ingredient mapping is available for this menu item." } });
+    return mrn === "33065.1" ? route.fulfill({ json: { ok: true, components: huliComponents, unpricedComponents: huliUnpricedComponents, pricingComplete: huliUnpricedComponents.length === 0, allocationPerPortion: huliComponents.reduce((sum, component) => sum + Number(component.allocationPerPortion || 0), 0), resource: { title: "Ingredient Costing 9.19.26" } } }) : route.fulfill({ status: 404, json: { ok: false, message: "No ingredient mapping is available for this menu item." } });
   });
   await page.route("**/api/storage/records**", async (route) => {
     if (route.request().method() === "GET") return route.fulfill({ json: { ok: true, records: [existingTransfer, secondTransfer] } });
@@ -58,6 +58,24 @@ test("Transfer Tool expands a selected item into automatic ingredient G/L rows a
     ["4111005", "30159", "4111005", "Huli Huli Chicken Soy Sauce - QA Dawson to Nessie", 2, "EVENT-42"],
   ]);
   await expectNoAppProtection(page); expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("Transfer Tool flags substitute prices and balances unresolved component cost to Prepared Foods", async ({ page }) => {
+  const huliComponents = [{ ingredientMrn: "substitute", ingredientName: "Arugula", quantity: 1, unit: "ounce", recipeYield: 1, unitPrice: 2.2, glCode: "4111012", allocationPerPortion: 2.2, isSubstitutePrice: true, priceSourceMrn: "source-arugula", priceSourceNote: "Substitute price used: closest Ingredient Snapshot name match (Arugula)." }];
+  const huliUnpricedComponents = [{ ingredientMrn: "missing", ingredientName: "Chef sauce", quantity: 1, unit: "ounce", recipeYield: 1, glCode: "4111011", allocationPerPortion: null }];
+  const writes = await mockTransferStorage(page, { huliComponents, huliUnpricedComponents, huliCost: 2.5 });
+  await openTool(page, /open transfer tool/i, /^Transfer Tool$/);
+  await page.getByLabel("Globally unique title").fill("QA Substitute and balance");
+  await page.getByLabel("Departing unit").selectOption("Dawson");
+  await page.getByLabel("Receiving unit").selectOption("Nessie");
+  await page.getByLabel("Menu 1", { exact: true }).selectOption("AMZ: Ohana");
+  await page.getByLabel("Item 1", { exact: true }).selectOption({ label: "Huli Huli Chicken · 33065.1 · 1 piece" });
+  await expect(page.getByText(/Substitute price used/i).last()).toBeVisible();
+  await expect(page.getByText(/Prepared Foods cost balance/i).last()).toBeVisible();
+  await expect(page.getByTestId("transfer-total")).toHaveText("$2.50");
+  await page.getByRole("button", { name: "Save Draft" }).click();
+  const savedAllocations = writes[0].records[0].items[0].ingredientAllocations;
+  expect(savedAllocations).toEqual(expect.arrayContaining([expect.objectContaining({ isSubstitutePrice: true }), expect.objectContaining({ isResidualCostBalance: true, glCode: "4111011", allocationPerPortion: 0.3 })]));
 });
 
 test("Transfer Tool blocks an item with no ingredient mapping", async ({ page }) => {

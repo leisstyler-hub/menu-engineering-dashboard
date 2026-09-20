@@ -6,7 +6,7 @@ import CATALOG from "../src/data/transferToolCatalog.json" with { type: "json" }
 import INGREDIENT_COSTING_LOOKUP from "../api/data/ingredientCosting91926.json" with { type: "json" };
 import { buildS4Workbook, S4_TEMPLATE_SHA256 } from "../src/features/transfer-tool/transferExport.js";
 import { cafeProfitCenter } from "../src/features/transfer-tool/cafeProfitCenters.js";
-import { defaultTransferDescription, normalizeTransferTitle, refreshCopiedItems, S4_EXPORT_VERSION, transferRecordId, transferTotal, validateS4Transfer, validateTransfer } from "../src/features/transfer-tool/transferModel.js";
+import { balanceIngredientAllocations, defaultTransferDescription, normalizeTransferTitle, PREPARED_FOODS_GL_CODE, refreshCopiedItems, S4_EXPORT_VERSION, transferRecordId, transferTotal, validateS4Transfer, validateTransfer } from "../src/features/transfer-tool/transferModel.js";
 import { CAFE_UNITS } from "../src/shared/cafeUnits.js";
 
 const root = process.cwd();
@@ -27,6 +27,18 @@ const bltaAvocado = blta?.components?.find((component) => component.ingredientMr
 if (capreseMozzarella?.unitPrice !== 0.32 || capreseMozzarella?.allocationPerPortion !== 1.28 || capreseTomato?.priceSourceMrn !== "16479" || capreseTomato?.allocationPerPortion !== 0.18 || pintoBeans?.allocationPerPortion !== 0.08 || caesarParmesan?.allocationPerPortion !== 0.24 || caesarRomaine?.priceSourceMrn !== "3756" || caesarRomaine?.allocationPerPortion !== 0.29 || caesar?.unpricedComponents?.length !== 0 || bltaAvocado?.priceSourceMrn !== "276" || bltaAvocado?.priceSourceUnit !== "cup" || bltaAvocado?.allocationPerPortion !== 0.3728 || blta?.unpricedComponents?.length !== 0) {
   fail("ingredient lookup must use canonical prices, structural source inference, normalized ingredient-form matching, and approved unit conversions");
 }
+const substituteComponents = Object.values(INGREDIENT_COSTING_LOOKUP.recipes).flatMap((recipe) => recipe.components || []).filter((component) => component.isSubstitutePrice);
+if (!substituteComponents.length || substituteComponents.some((component) => !/Substitute price used/i.test(component.priceSourceNote || ""))) {
+  fail("ingredient lookup must expose clearly labeled, name-anchored substitute prices when an exact price is unavailable");
+}
+const balancedAllocation = balanceIngredientAllocations({
+  components: [{ ingredientMrn: "known", ingredientName: "Known ingredient", glCode: "4111005", allocationPerPortion: 2.2 }],
+  unpricedComponents: [{ ingredientMrn: "missing", ingredientName: "Missing ingredient", glCode: "4111012", allocationPerPortion: null }],
+  itemWasteCost: 2.3,
+});
+if (!balancedAllocation.pricingComplete || balancedAllocation.allocationPerPortion !== 2.3 || balancedAllocation.residualCost !== 0.1 || balancedAllocation.ingredientAllocations.at(-1)?.glCode !== PREPARED_FOODS_GL_CODE || !balancedAllocation.ingredientAllocations.at(-1)?.isResidualCostBalance) {
+  fail("unpriced components must retain the Item + Waste Cost through a Prepared Foods cost balance adjustment");
+}
 if (transferRecordId(" My  Transfer ") !== "transfer|my%20transfer") fail("title identity is not deterministic");
 if (normalizeTransferTitle(" MY   TRANSFER ") !== "my transfer") fail("title normalization is not case/space insensitive");
 if (transferTotal([{ quantity: 2, allocationPerPortion: 1.234 }]) !== 2.468) fail("ingredient allocation total is incorrect");
@@ -43,7 +55,7 @@ const storage = read("src/features/transfer-tool/transferStorage.js");
 const component = read("src/features/transfer-tool/TransferTool.jsx");
 for (const marker of ["createTransfer", "deleteTransfer", "Titles must be globally unique", "like.transfer|*"]) if (!api.includes(marker)) fail(`API is missing ${marker}`);
 for (const marker of ["createTransfer", "deleteTransfer", "tool: \"transfers\"", "/api/recipe-library?scope=all", "row.trueCost"]) if (!storage.includes(marker)) fail(`storage client is missing ${marker}`);
-for (const marker of ["Ingredient Costing 9.19.26", "Automatic ingredient G/L allocation", "Export S4 Excel", "Batch export staging", "Include in batch export", "Delete saved transfer", "DRAFT"]) if (!component.includes(marker)) fail(`UI is missing ${marker}`);
+for (const marker of ["Ingredient Costing 9.19.26", "Automatic ingredient G/L allocation", "Substitute price used", "Prepared Foods cost balance", "Export S4 Excel", "Batch export staging", "Include in batch export", "Delete saved transfer", "DRAFT"]) if (!component.includes(marker)) fail(`UI is missing ${marker}`);
 for (const removedMarker of ["G/L Breakdown", "S4_GL_ACCOUNTS", "Choose G/L"]) if (component.includes(removedMarker)) fail(`UI still contains retired manual G/L UI ${removedMarker}`);
 
 console.log(`Transfer Tool verification passed: ${CATALOG.menus.length} menus, ${CATALOG.items.length} menu-scoped cost records.`);
