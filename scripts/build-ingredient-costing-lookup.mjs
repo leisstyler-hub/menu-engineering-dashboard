@@ -8,8 +8,8 @@ const root = process.cwd();
 const sourcePath = resolve(root, "public/resources/Ingredient_Costing_9.19.26.xlsx");
 const outputPath = resolve(root, "api/data/ingredientCosting91926.json");
 const excludedIngredients = new Set(["water", "ice"]);
-const volumeUnitsInTablespoons = new Map([["cup", 16], ["floz", 2], ["tbsp", 1], ["tsp", 1 / 3]]);
-const weightUnitsInOunces = new Map([["pound", 16], ["ounce", 1]]);
+const volumeUnitsInTablespoons = new Map([["gallon", 256], ["quart", 64], ["pint", 32], ["cup", 16], ["floz", 2], ["tbsp", 1], ["tsp", 1 / 3], ["liter", 67.628], ["ml", 0.067628]]);
+const weightUnitsInOunces = new Map([["pound", 16], ["ounce", 1], ["kg", 35.273962], ["g", 0.035273962]]);
 // These descriptors do not distinguish the food or its usable form. They are
 // intentionally narrow: a form such as chopped, shredded, sliced, or diced
 // remains part of the signature and must agree before a cross-MRN reference is
@@ -50,7 +50,7 @@ function parseIngredientAmount(value) {
 
 function unitKey(value) {
   const unit = text(value).toLocaleLowerCase("en-US");
-  return new Map([["cups", "cup"], ["ounces", "ounce"], ["pounds", "pound"], ["tablespoon", "tbsp"], ["tablespoons", "tbsp"], ["teaspoon", "tsp"], ["teaspoons", "tsp"], ["fl oz", "floz"], ["fluid ounce", "floz"], ["fluid ounces", "floz"]]).get(unit) || unit;
+  return new Map([["cups", "cup"], ["ounces", "ounce"], ["pounds", "pound"], ["tablespoon", "tbsp"], ["tablespoons", "tbsp"], ["teaspoon", "tsp"], ["teaspoons", "tsp"], ["fl oz", "floz"], ["fluid ounce", "floz"], ["fluid ounces", "floz"], ["grams", "g"], ["gram", "g"], ["kilograms", "kg"], ["kilogram", "kg"], ["milliliters", "ml"], ["milliliter", "ml"], ["liters", "liter"], ["litres", "liter"], ["quarts", "quart"], ["pints", "pint"], ["gallons", "gallon"]]).get(unit) || unit;
 }
 
 function ingredientSignature(value) {
@@ -85,6 +85,16 @@ function supportsShreddedCheeseDensity(signature) {
   return tokens.has("cheese") && (tokens.has("shredded") || tokens.has("grated"));
 }
 
+function ingredientDensityOuncesPerCup(signature) {
+  const tokens = new Set(signatureTokens(signature));
+  // Culinary standard usable yield for sliced/diced avocado. This applies to
+  // the ingredient form, never to guacamole, avocado pulp, or an arbitrary
+  // packaged avocado product.
+  if (tokens.has("avocado") && (tokens.has("sliced") || tokens.has("diced"))) return 5.15;
+  if (tokens.has("butter")) return 8;
+  return null;
+}
+
 function convertAmount(amount, fromUnit, toUnit, { allowSliceEach = false, ingredientForm = "" } = {}) {
   const from = unitKey(fromUnit);
   const to = unitKey(toUnit);
@@ -97,6 +107,11 @@ function convertAmount(amount, fromUnit, toUnit, { allowSliceEach = false, ingre
   if (supportsShreddedCheeseDensity(ingredientForm)) {
     if (weightUnitsInOunces.has(from) && volumeUnitsInTablespoons.has(to)) return amount * weightUnitsInOunces.get(from) * 4 / volumeUnitsInTablespoons.get(to);
     if (volumeUnitsInTablespoons.has(from) && weightUnitsInOunces.has(to)) return amount * volumeUnitsInTablespoons.get(from) / 4 / weightUnitsInOunces.get(to);
+  }
+  const density = ingredientDensityOuncesPerCup(ingredientForm);
+  if (density != null) {
+    if (weightUnitsInOunces.has(from) && volumeUnitsInTablespoons.has(to)) return amount * weightUnitsInOunces.get(from) * 16 / density / volumeUnitsInTablespoons.get(to);
+    if (volumeUnitsInTablespoons.has(from) && weightUnitsInOunces.has(to)) return amount * volumeUnitsInTablespoons.get(from) * density / 16 / weightUnitsInOunces.get(to);
   }
   if (allowSliceEach && ((from === "slice" && to === "each") || (from === "each" && to === "slice"))) return amount;
   return null;
@@ -128,6 +143,8 @@ function main() {
   const recipeRows = [];
   const unitPriceCandidates = new Map();
   const canonicalPriceCandidates = [];
+  const sourceRecipeRows = new Map();
+  const sourceRecipeMeta = new Map();
 
   for (const sheetName of workbook.SheetNames) {
     if (sheetName === "_Source Map") continue;
@@ -136,6 +153,11 @@ function main() {
       const ingredientMrn = mrn(row["Ingredient MRN"]);
       const recipeMrn = mrn(row["Recipe MRN"]);
       const ingredientAmount = parseIngredientAmount(row["Ingredient Amount"]);
+      if (recipeMrn) {
+        const meta = sourceRecipeMeta.get(recipeMrn) || { hasNestedRows: false };
+        if (!isDirectIngredient(row)) meta.hasNestedRows = true;
+        sourceRecipeMeta.set(recipeMrn, meta);
+      }
       if (!ingredientMrn || !recipeMrn || !ingredientAmount || !isDirectIngredient(row)) continue;
       const ingredientName = text(row["Ingredient Name"]);
       const normalizedName = ingredientName.toLocaleLowerCase("en-US");
@@ -154,6 +176,9 @@ function main() {
         excluded: excludedIngredients.has(normalizedName),
       };
       recipeRows.push(base);
+      const sourceRows = sourceRecipeRows.get(recipeMrn) || [];
+      sourceRows.push({ ...base, isDirect: isDirectIngredient(row), totalCost: Number.isFinite(cost) && cost > 0 ? cost : null });
+      sourceRecipeRows.set(recipeMrn, sourceRows);
       if (isCanonicalIngredientPrice(row, base.recipeYield) && base.unitPrice != null && !base.excluded) {
         const candidates = unitPriceCandidates.get(ingredientMrn) || [];
         candidates.push(base);
@@ -165,6 +190,67 @@ function main() {
         });
       }
     }
+  }
+
+  // A source recipe total is never used as an ingredient price directly. It
+  // can, however, resolve one missing component when the recipe is a flat
+  // ingredient-only build and every other component has a canonical price.
+  // This creates a source-backed residual price, not a menu-cost fallback.
+  const exactPriceBasis = (row) => selectedUnitPrice(unitPriceCandidates.get(row.ingredientMrn), row.unit, { ingredientForm: ingredientSignature(row.ingredientName) });
+  const residualObservations = new Map();
+  for (const [sourceRecipeMrn, sourceRows] of sourceRecipeRows) {
+    if (!sourceRows.length || sourceRecipeMeta.get(sourceRecipeMrn)?.hasNestedRows || !sourceRows.every((row) => row.totalCost != null)) continue;
+    const totalCost = sourceRows[0].totalCost;
+    if (!sourceRows.every((row) => row.totalCost === totalCost)) continue;
+    let knownCost = 0;
+    const unknown = [];
+    for (const row of sourceRows) {
+      const priceBasis = exactPriceBasis(row);
+      if (!priceBasis) {
+        unknown.push(row);
+        continue;
+      }
+      const sourceQuantity = convertAmount(row.quantity / row.recipeYield, row.unit, priceBasis.unit, { ingredientForm: ingredientSignature(row.ingredientName) });
+      if (sourceQuantity == null) {
+        unknown.push(row);
+        continue;
+      }
+      knownCost += sourceQuantity / priceBasis.quantity * priceBasis.unitPrice * priceBasis.recipeYield;
+    }
+    const unknownKeys = [...new Set(unknown.map((row) => `${row.ingredientMrn}|${unitKey(row.unit)}`))];
+    if (unknownKeys.length !== 1 || !unknown.length) continue;
+    const unknownAmount = unknown.reduce((sum, row) => sum + row.quantity / row.recipeYield, 0);
+    const residual = totalCost - knownCost;
+    if (!(unknownAmount > 0) || !(residual > 0)) continue;
+    const key = unknownKeys[0];
+    const observations = residualObservations.get(key) || [];
+    observations.push({ unitPrice: residual / unknownAmount, row: unknown[0] });
+    residualObservations.set(key, observations);
+  }
+  for (const [key, observations] of residualObservations) {
+    // One component in a flat single-ingredient recipe is an exact derivation;
+    // otherwise require repeated independent recipe observations and use their
+    // median to avoid one atypical recipe setting a catalog-wide price.
+    const values = observations.map(({ unitPrice }) => unitPrice).filter((value) => Number.isFinite(value) && value > 0).sort((a, b) => a - b);
+    const minimumObservations = observations[0].row.recipeName.startsWith("Ingredient:") ? 1 : 2;
+    if (values.length < minimumObservations) continue;
+    const median = values[Math.floor(values.length / 2)];
+    const relativeSpread = (values.at(-1) - values[0]) / median;
+    if (values.length > 1 && relativeSpread > 0.2) continue;
+    const row = observations[0].row;
+    const candidate = {
+      ...row,
+      recipeYield: 1,
+      quantity: 1,
+      unit: unitKey(row.unit),
+      unitPrice: Number(median.toFixed(6)),
+      sourceType: "snapshot residual inference",
+      observationCount: values.length,
+      relativeSpread: Number(relativeSpread.toFixed(4)),
+    };
+    const candidates = unitPriceCandidates.get(row.ingredientMrn) || [];
+    candidates.push(candidate);
+    unitPriceCandidates.set(row.ingredientMrn, candidates);
   }
 
   const catalogMrns = new Set(CATALOG.items.map((item) => mrn(item.mrn)).filter(Boolean));
@@ -180,7 +266,8 @@ function main() {
 
   const priceBasisFor = (row) => {
     const targetSignature = ingredientSignature(row.ingredientName);
-    const direct = selectedUnitPrice(unitPriceCandidates.get(row.ingredientMrn), row.unit, { ingredientForm: targetSignature });
+    const directCandidates = unitPriceCandidates.get(row.ingredientMrn) || [];
+    const direct = selectedUnitPrice(directCandidates.filter((candidate) => candidate.sourceType !== "snapshot residual inference"), row.unit, { ingredientForm: targetSignature });
     if (direct) return { priceBasis: direct, source: "exact MRN" };
 
     const formMatches = canonicalPriceCandidates.filter((candidate) => (
@@ -189,7 +276,9 @@ function main() {
     ));
     const allowsSliceEach = targetSignature.includes("slice") && formMatches.some((candidate) => candidate.canonicalSignature.includes("slice") || candidate.ingredientSignature.includes("slice"));
     const matched = selectedUnitPrice(formMatches, row.unit, { allowSliceEach: allowsSliceEach, ingredientForm: targetSignature });
-    return matched ? { priceBasis: matched, source: "normalized ingredient form", allowsSliceEach } : null;
+    if (matched) return { priceBasis: matched, source: "normalized ingredient form", allowsSliceEach };
+    const inferred = selectedUnitPrice(directCandidates.filter((candidate) => candidate.sourceType === "snapshot residual inference"), row.unit, { ingredientForm: targetSignature });
+    return inferred ? { priceBasis: inferred, source: "exact MRN" } : null;
   };
 
   for (const row of recipeRows) {
@@ -225,10 +314,14 @@ function main() {
       unitPrice,
       priceSourceMrn: priceBasis.ingredientMrn,
       priceSourceUnit: priceBasis.unit,
-      priceSourceNote: `${source.source === "exact MRN"
+      priceSourceNote: `${priceBasis.sourceType === "snapshot residual inference"
+        ? `Ingredient Snapshot residual price (${priceBasis.observationCount} source recipes).`
+        : source.source === "exact MRN"
         ? "Canonical Ingredient: price reference."
         : "Canonical normalized ingredient-form price reference."}${supportsShreddedCheeseDensity(ingredientSignature(row.ingredientName)) && unitKey(row.unit) !== unitKey(priceBasis.unit)
         ? " Shredded/grated cheese uses 4 tablespoons per ounce."
+        : ""}${ingredientDensityOuncesPerCup(ingredientSignature(row.ingredientName)) != null && unitKey(row.unit) !== unitKey(priceBasis.unit)
+        ? " Uses the standardized ingredient-form density conversion."
         : ""}`,
       glCode: row.glCode,
       allocationPerPortion: allocation,
@@ -244,7 +337,7 @@ function main() {
     resource: {
       title: "Ingredient Costing 9.19.26",
       file: "/resources/Ingredient_Costing_9.19.26.xlsx",
-      lookupMethod: "Canonical Ingredient: price references, using exact MRN first and then high-confidence normalized ingredient-form matching. Includes cup/tablespoon/teaspoon/fluid-ounce, pound/ounce, slice/each conversions when the matched ingredient form explicitly identifies a slice, and the standard 4-tablespoons-per-ounce conversion for shredded/grated cheese.",
+      lookupMethod: "Canonical Ingredient: price references, using exact MRN first and then high-confidence normalized ingredient-form matching. Includes standard volume/weight/metric conversions, explicitly matched slice/each forms, shredded/grated cheese at 4 tablespoons per ounce, and form-limited avocado/butter density conversions. When a flat source recipe has exactly one unresolved component and every other component is canonically priced, a repeated source-recipe residual may supply that component's unit price; ordinary menu rows are never used directly as an ingredient price.",
     },
     recipes: compactRecipes,
   };

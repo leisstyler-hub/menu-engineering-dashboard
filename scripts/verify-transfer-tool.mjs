@@ -22,8 +22,10 @@ const pintoBeans = INGREDIENT_COSTING_LOOKUP.recipes["157816"]?.components?.find
 const caesar = INGREDIENT_COSTING_LOOKUP.recipes["37311.43"];
 const caesarParmesan = caesar?.components?.find((component) => component.ingredientMrn === "1648");
 const caesarRomaine = caesar?.components?.find((component) => component.ingredientMrn === "3760");
-if (capreseMozzarella?.unitPrice !== 0.32 || capreseMozzarella?.allocationPerPortion !== 1.28 || capreseTomato?.priceSourceMrn !== "16479" || capreseTomato?.allocationPerPortion !== 0.18 || pintoBeans?.allocationPerPortion !== 0.08 || caesarParmesan?.allocationPerPortion !== 0.24 || caesarRomaine?.priceSourceMrn !== "3756" || caesarRomaine?.allocationPerPortion !== 0.29 || caesar?.unpricedComponents?.length !== 0) {
-  fail("ingredient lookup must use canonical prices, normalized ingredient-form matching, and approved unit conversions");
+const blta = INGREDIENT_COSTING_LOOKUP.recipes["9182.8"];
+const bltaAvocado = blta?.components?.find((component) => component.ingredientMrn === "276");
+if (capreseMozzarella?.unitPrice !== 0.32 || capreseMozzarella?.allocationPerPortion !== 1.28 || capreseTomato?.priceSourceMrn !== "16479" || capreseTomato?.allocationPerPortion !== 0.18 || pintoBeans?.allocationPerPortion !== 0.08 || caesarParmesan?.allocationPerPortion !== 0.24 || caesarRomaine?.priceSourceMrn !== "3756" || caesarRomaine?.allocationPerPortion !== 0.29 || caesar?.unpricedComponents?.length !== 0 || bltaAvocado?.priceSourceMrn !== "276" || bltaAvocado?.priceSourceUnit !== "cup" || bltaAvocado?.allocationPerPortion !== 0.3728 || blta?.unpricedComponents?.length !== 0) {
+  fail("ingredient lookup must use canonical prices, structural source inference, normalized ingredient-form matching, and approved unit conversions");
 }
 if (transferRecordId(" My  Transfer ") !== "transfer|my%20transfer") fail("title identity is not deterministic");
 if (normalizeTransferTitle(" MY   TRANSFER ") !== "my transfer") fail("title normalization is not case/space insensitive");
