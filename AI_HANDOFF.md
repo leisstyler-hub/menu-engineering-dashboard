@@ -2,11 +2,13 @@
 
 Last updated: September 20, 2026
 
-Current release candidate: `2026.09.20.002-transfer-canonical-unit-costs`
+Current live version: `2026.09.20.002-transfer-canonical-unit-costs` (application commit `305b812cf2cea9a8a88066977cd84a4db9fb1673`; Vercel production deployment `dpl_62ratbc8rnNQeS8qkGiSScYEtwbo` is `READY`).
 
 Transfer Tool now uses the approved Ingredient Snapshot workflow. `public/resources/Ingredient_Costing_9.19.26.xlsx` is the downloadable source resource (SHA-256 `57D6675F11F6D6E968B4BFA242844380BE8FB7B26CEDDC888B7528EE1201EFC8`). `scripts/build-ingredient-costing-lookup.mjs` derives `api/data/ingredientCosting91926.json`, a server-only lookup over the current transfer-catalog recipe MRNs. It reads direct AP/EP ingredient rows, excludes water/ice, and accepts a unit price only from a matching, one-unit/yield-one canonical `Ingredient:` recipe; ordinary menu rows repeat a whole-recipe `Recipe Portion Cost` and must never be used as an ingredient price. The browser requests only the selected recipe through `/api/transfer-breakdown`; the 24 MB workbook is not in the client bundle.
 
 The former `.001` lookup was invalid: it selected the first matching menu row and therefore treated another menu item's total portion cost as an ingredient unit price. The `.002` canonical-price fix prevents that. It also retains unmatched ingredients as visible source gaps and blocks costed S4 export instead of fabricating a price. Example: Caprese on Ciabatta MRN `34303.45` correctly costs its four ounces of mozzarella at `4 × $0.32 = $1.28` in Dairy and its ciabatta at `$0.72` in Bakery; basil-by-tablespoon, balsamic-glaze-by-tablespoon, and tomato-by-slice lack canonical matching price rows and keep that recipe blocked until a valid price source is added.
+
+Live acceptance on September 20 confirmed the public app asset contains the `.002` version marker and `GET /api/transfer-breakdown?mrn=34303.45` returns the canonical mozzarella and ciabatta allocations above, with the three exact unmatched components and `pricingComplete: false`.
 
 The Transfer Tool no longer exposes manual From/To G/L selectors. A selected recipe line stores its `ingredientAllocations`; save/export require a non-empty allocation with a 7-digit mapped G/L and positive per-portion amount. S4 export expands each selected menu item into ingredient rows, places each allocation G/L in both S4 G/L fields, and rounds count × allocation to cents. Legacy saved transfers remain readable but cannot be exported until copied/reselected to obtain allocations. Required verification includes `node scripts/build-ingredient-costing-lookup.mjs --check`, `node scripts/verify-transfer-tool.mjs`, focused transfer browser coverage, `pnpm run verify`, production build, and post-deploy live version/API checks. No Supabase schema or policy change is required: allocation snapshots persist in the established `app_records` transfer payload.
 
