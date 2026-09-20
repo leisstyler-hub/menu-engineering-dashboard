@@ -500,13 +500,13 @@
           "quantity": 1,
           "unit": "ounce",
           "recipeYield": 1,
-          "unitPrice": 0.18,
-          "priceSourceMrn": "1673",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Cheese, Provolone, Sliced, 1 oz).",
+          "unitPrice": 0.22,
+          "priceSourceMrn": "1639",
+          "priceSourceUnit": "pound",
+          "priceSourceNote": "Substitute price used: approved Cheese, Cheddar, Sharp, Loaf, Shredded reference (MRN 1639). Approved dairy substitute until a canonical Blue Cheese Crumbles price is available.",
           "glCode": "4111006",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.18
+          "allocationPerPortion": 0.22
         },
         {
           "ingredientMrn": "2294",
@@ -1003,32 +1003,18 @@
           "allocationPerPortion": 0.0106
         },
         {
-          "ingredientMrn": "1378",
-          "ingredientName": "Celery, Fresh, Small Diced, 1/4\"",
-          "quantity": 8,
-          "unit": "ounce",
-          "recipeYield": 17,
-          "unitPrice": 0.6075,
-          "priceSourceMrn": "56430",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tri Color Bell Pepper Blend).",
-          "glCode": "4111012",
-          "isSubstitutePrice": true,
-          "allocationPerPortion": 0.2859
-        },
-        {
           "ingredientMrn": "1924",
           "ingredientName": "Corn Starch, 100% Pure",
           "quantity": 6,
           "unit": "tbsp",
           "recipeYield": 17,
-          "unitPrice": 0.14,
-          "priceSourceMrn": "70057",
-          "priceSourceUnit": "tbsp",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Hummus, Traditional, Grecian Delight, Frozen).",
+          "unitPrice": 0.265,
+          "priceSourceMrn": "10928",
+          "priceSourceUnit": "floz",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Syrup, Maple, 100%).",
           "glCode": "4111005",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.0494
+          "allocationPerPortion": 0.0935
         },
         {
           "ingredientMrn": "2893",
@@ -1157,7 +1143,17 @@
           "allocationPerPortion": 0.064
         }
       ],
-      "unpricedComponents": []
+      "unpricedComponents": [
+        {
+          "ingredientMrn": "1378",
+          "ingredientName": "Celery, Fresh, Small Diced, 1/4\"",
+          "quantity": 8,
+          "unit": "ounce",
+          "recipeYield": 17,
+          "glCode": "4111012",
+          "allocationPerPortion": null
+        }
+      ]
     },
     "13170": {
       "recipeName": "Ingredient: Blueberries, Fresh",
@@ -4209,27 +4205,13 @@
           "quantity": 4,
           "unit": "ounce",
           "recipeYield": 16,
-          "unitPrice": 0.6075,
-          "priceSourceMrn": "56430",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tri Color Bell Pepper Blend).",
+          "unitPrice": 0.1187,
+          "priceSourceMrn": "1314",
+          "priceSourceUnit": "pound",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Carrots, Baby, Whole, Fresh).",
           "glCode": "4111005",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.1519
-        },
-        {
-          "ingredientMrn": "1378",
-          "ingredientName": "Celery, Fresh, Small Diced, 1/4\"",
-          "quantity": 4,
-          "unit": "ounce",
-          "recipeYield": 16,
-          "unitPrice": 0.6075,
-          "priceSourceMrn": "56430",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tri Color Bell Pepper Blend).",
-          "glCode": "4111012",
-          "isSubstitutePrice": true,
-          "allocationPerPortion": 0.1519
+          "allocationPerPortion": 0.0297
         },
         {
           "ingredientMrn": "2883",
@@ -4318,6 +4300,15 @@
       ],
       "unpricedComponents": [
         {
+          "ingredientMrn": "1378",
+          "ingredientName": "Celery, Fresh, Small Diced, 1/4\"",
+          "quantity": 4,
+          "unit": "ounce",
+          "recipeYield": 16,
+          "glCode": "4111012",
+          "allocationPerPortion": null
+        },
+        {
           "ingredientMrn": "7528",
           "ingredientName": "Thyme, Fresh, Sprig",
           "quantity": 4,
@@ -4351,27 +4342,13 @@
           "quantity": 8,
           "unit": "ounce",
           "recipeYield": 20,
-          "unitPrice": 0.6075,
-          "priceSourceMrn": "56430",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tri Color Bell Pepper Blend).",
+          "unitPrice": 0.1187,
+          "priceSourceMrn": "1314",
+          "priceSourceUnit": "pound",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Carrots, Baby, Whole, Fresh).",
           "glCode": "4111005",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.243
-        },
-        {
-          "ingredientMrn": "1378",
-          "ingredientName": "Celery, Fresh, Small Diced, 1/4\"",
-          "quantity": 8,
-          "unit": "ounce",
-          "recipeYield": 20,
-          "unitPrice": 0.6075,
-          "priceSourceMrn": "56430",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tri Color Bell Pepper Blend).",
-          "glCode": "4111012",
-          "isSubstitutePrice": true,
-          "allocationPerPortion": 0.243
+          "allocationPerPortion": 0.0475
         },
         {
           "ingredientMrn": "2883",
@@ -4501,6 +4478,15 @@
         }
       ],
       "unpricedComponents": [
+        {
+          "ingredientMrn": "1378",
+          "ingredientName": "Celery, Fresh, Small Diced, 1/4\"",
+          "quantity": 8,
+          "unit": "ounce",
+          "recipeYield": 20,
+          "glCode": "4111012",
+          "allocationPerPortion": null
+        },
         {
           "ingredientMrn": "7143",
           "ingredientName": "Sage, Fresh, Chopped",
@@ -5582,20 +5568,6 @@
           "allocationPerPortion": 0.7
         },
         {
-          "ingredientMrn": "3770",
-          "ingredientName": "Lettuce, Iceberg, Fresh, Pre-Shredded, 1/8\"",
-          "quantity": 3,
-          "unit": "ounce",
-          "recipeYield": 1,
-          "unitPrice": 0.6075,
-          "priceSourceMrn": "4286",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tri Color Bell Pepper Blend).",
-          "glCode": "4111012",
-          "isSubstitutePrice": true,
-          "allocationPerPortion": 1.8225
-        },
-        {
           "ingredientMrn": "7164",
           "ingredientName": "Salad Dressing, Ranch, Ken's, Bulk",
           "quantity": 2,
@@ -5638,7 +5610,17 @@
           "allocationPerPortion": 0.44
         }
       ],
-      "unpricedComponents": []
+      "unpricedComponents": [
+        {
+          "ingredientMrn": "3770",
+          "ingredientName": "Lettuce, Iceberg, Fresh, Pre-Shredded, 1/8\"",
+          "quantity": 3,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "glCode": "4111012",
+          "allocationPerPortion": null
+        }
+      ]
     },
     "69553": {
       "recipeName": "Ingredient: Sausage Patty, Meatless, Vegetarian, 1.34 oz",
@@ -9191,13 +9173,13 @@
           "quantity": 1,
           "unit": "tbsp",
           "recipeYield": 12,
-          "unitPrice": 0.14,
-          "priceSourceMrn": "70057",
-          "priceSourceUnit": "tbsp",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Hummus, Traditional, Grecian Delight, Frozen).",
+          "unitPrice": 0.265,
+          "priceSourceMrn": "10928",
+          "priceSourceUnit": "floz",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Syrup, Maple, 100%).",
           "glCode": "4111005",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.0117
+          "allocationPerPortion": 0.0221
         },
         {
           "ingredientMrn": "7204",
@@ -11620,13 +11602,13 @@
           "quantity": 10,
           "unit": "pound",
           "recipeYield": 30,
-          "unitPrice": 4.32,
-          "priceSourceMrn": "11357",
-          "priceSourceUnit": "pound",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Cheese, Mozzarella, Part Skim, Sliced).",
+          "unitPrice": 2.56,
+          "priceSourceMrn": "35285",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tofu, Extra Firm, Fresh, Sliced).",
           "glCode": "4111012",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 1.44
+          "allocationPerPortion": 0.8533
         }
       ],
       "unpricedComponents": []
@@ -12254,13 +12236,13 @@
           "quantity": 2,
           "unit": "each",
           "recipeYield": 32,
-          "unitPrice": 0.02,
-          "priceSourceMrn": "4253",
+          "unitPrice": 0.39,
+          "priceSourceMrn": "126453",
           "priceSourceUnit": "each",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Onions, Red, Fresh, Each Ring, 1/4\").",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Appetizer, Phyllo Roll, Roasted Red Pepper, Mini, 1 oz, Select).",
           "glCode": "4111012",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.0013
+          "allocationPerPortion": 0.0244
         },
         {
           "ingredientMrn": "7711",
@@ -15559,20 +15541,6 @@
           "allocationPerPortion": 0.0771
         },
         {
-          "ingredientMrn": "7105",
-          "ingredientName": "Radish, Fresh, Sliced, 1/8\"",
-          "quantity": 15,
-          "unit": "ounce",
-          "recipeYield": 48,
-          "unitPrice": 0.6075,
-          "priceSourceMrn": "4286",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tri Color Bell Pepper Blend).",
-          "glCode": "4111012",
-          "isSubstitutePrice": true,
-          "allocationPerPortion": 0.1898
-        },
-        {
           "ingredientMrn": "33902",
           "ingredientName": "Salmon, Steelhead, Sashimi, Sushi Grade*/Parasite Treated, Frozen",
           "quantity": 12,
@@ -15595,6 +15563,15 @@
           "unit": "pound",
           "recipeYield": 48,
           "glCode": "4111005",
+          "allocationPerPortion": null
+        },
+        {
+          "ingredientMrn": "7105",
+          "ingredientName": "Radish, Fresh, Sliced, 1/8\"",
+          "quantity": 15,
+          "unit": "ounce",
+          "recipeYield": 48,
+          "glCode": "4111012",
           "allocationPerPortion": null
         },
         {
@@ -17438,13 +17415,13 @@
           "quantity": 1,
           "unit": "pound",
           "recipeYield": 28,
-          "unitPrice": 4.32,
-          "priceSourceMrn": "11357",
-          "priceSourceUnit": "pound",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Cheese, Mozzarella, Part Skim, Sliced).",
+          "unitPrice": 9.72,
+          "priceSourceMrn": "6267",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tri Color Bell Pepper Blend).",
           "glCode": "4111012",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.1543
+          "allocationPerPortion": 0.3471
         },
         {
           "ingredientMrn": "54292",
@@ -17508,13 +17485,13 @@
           "quantity": 1,
           "unit": "pound",
           "recipeYield": 28,
-          "unitPrice": 1.12,
-          "priceSourceMrn": "176627",
+          "unitPrice": 7.92,
+          "priceSourceMrn": "4286",
           "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Potatoes, FC, Diced, 1/2\").",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Red & Yellow Bell Pepper Blend).",
           "glCode": "4111012",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.04
+          "allocationPerPortion": 0.2829
         },
         {
           "ingredientMrn": "7466",
@@ -17522,13 +17499,13 @@
           "quantity": 1,
           "unit": "pound",
           "recipeYield": 28,
-          "unitPrice": 1.12,
-          "priceSourceMrn": "176627",
+          "unitPrice": 2.56,
+          "priceSourceMrn": "7531",
           "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Potatoes, FC, Diced, 1/2\").",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tofu, Regular, Sliced).",
           "glCode": "4111012",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.04
+          "allocationPerPortion": 0.0914
         }
       ],
       "unpricedComponents": [
@@ -19919,13 +19896,13 @@
           "quantity": 12,
           "unit": "ounce",
           "recipeYield": 64,
-          "unitPrice": 0.07,
-          "priceSourceMrn": "176627",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Potatoes, FC, Diced, 1/2\").",
+          "unitPrice": 0.0667,
+          "priceSourceMrn": "1222",
+          "priceSourceUnit": "pound",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Cantaloupe, 3\" Pieces, Fresh, Cup, 6 oz).",
           "glCode": "4111012",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.0131
+          "allocationPerPortion": 0.0125
         },
         {
           "ingredientMrn": "2893",
@@ -27096,13 +27073,13 @@
           "quantity": 3,
           "unit": "each",
           "recipeYield": 31,
-          "unitPrice": 0.1,
-          "priceSourceMrn": "7546",
+          "unitPrice": 0.33,
+          "priceSourceMrn": "2317",
           "priceSourceUnit": "each",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tomatoes, Each Slice, 1/2\", Fresh).",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (English Muffin, Plain, 2 oz).",
           "glCode": "4111005",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.0097
+          "allocationPerPortion": 0.0319
         },
         {
           "ingredientMrn": "2893",
@@ -29411,23 +29388,19 @@
           "glCode": "4111004",
           "isSubstitutePrice": false,
           "allocationPerPortion": 1.88
-        },
+        }
+      ],
+      "unpricedComponents": [
         {
           "ingredientMrn": "10622",
           "ingredientName": "Wonton, Wrappers, 3.5'', Twin Marquis",
           "quantity": 24,
           "unit": "each",
           "recipeYield": 24,
-          "unitPrice": 1.12,
-          "priceSourceMrn": "9122",
-          "priceSourceUnit": "each",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Flatbread, White, 5.3 oz).",
           "glCode": "4111005",
-          "isSubstitutePrice": true,
-          "allocationPerPortion": 1.12
+          "allocationPerPortion": null
         }
-      ],
-      "unpricedComponents": []
+      ]
     },
     "154359": {
       "recipeName": "RA LaChino San Choy Shrimp Lettuce Wraps",
@@ -30058,13 +30031,13 @@
           "quantity": 2.25,
           "unit": "pound",
           "recipeYield": 24,
-          "unitPrice": 4.32,
-          "priceSourceMrn": "11357",
-          "priceSourceUnit": "pound",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Cheese, Mozzarella, Part Skim, Sliced).",
+          "unitPrice": 2.56,
+          "priceSourceMrn": "35285",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tofu, Extra Firm, Fresh, Sliced).",
           "glCode": "4111012",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.405
+          "allocationPerPortion": 0.24
         },
         {
           "ingredientMrn": "123492",
@@ -31358,20 +31331,6 @@
       "recipeName": "RA Global Grains Falafel Bowl",
       "components": [
         {
-          "ingredientMrn": "130502",
-          "ingredientName": "Cucumbers, English, Fresh, Diced, Small, 1/4\"",
-          "quantity": 12,
-          "unit": "ounce",
-          "recipeYield": 6,
-          "unitPrice": 0.6075,
-          "priceSourceMrn": "56430",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tri Color Bell Pepper Blend).",
-          "glCode": "4111005",
-          "isSubstitutePrice": true,
-          "allocationPerPortion": 1.215
-        },
-        {
           "ingredientMrn": "4189",
           "ingredientName": "Olives, Kalamata, Pitted, Empress",
           "quantity": 3,
@@ -31414,7 +31373,17 @@
           "allocationPerPortion": 0.21
         }
       ],
-      "unpricedComponents": []
+      "unpricedComponents": [
+        {
+          "ingredientMrn": "130502",
+          "ingredientName": "Cucumbers, English, Fresh, Diced, Small, 1/4\"",
+          "quantity": 12,
+          "unit": "ounce",
+          "recipeYield": 6,
+          "glCode": "4111005",
+          "allocationPerPortion": null
+        }
+      ]
     },
     "157275": {
       "recipeName": "RA Global Grains Chicken, Quinoa Fajita Bowl",
@@ -31636,20 +31605,6 @@
       "recipeName": "EUR: Carne Asada Torta",
       "components": [
         {
-          "ingredientMrn": "16289",
-          "ingredientName": "Avocado, Fresh, Sliced, 1/4\"",
-          "quantity": 3,
-          "unit": "slice",
-          "recipeYield": 1,
-          "unitPrice": 0.06,
-          "priceSourceMrn": "11400",
-          "priceSourceUnit": "slice",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tomatoes, Roma, Each Slice, 1/4\", Fresh).",
-          "glCode": "4111012",
-          "isSubstitutePrice": true,
-          "allocationPerPortion": 0.18
-        },
-        {
           "ingredientMrn": "169551",
           "ingredientName": "Beans, Pinto, Pouch",
           "quantity": 2,
@@ -31748,7 +31703,17 @@
           "allocationPerPortion": 0.12
         }
       ],
-      "unpricedComponents": []
+      "unpricedComponents": [
+        {
+          "ingredientMrn": "16289",
+          "ingredientName": "Avocado, Fresh, Sliced, 1/4\"",
+          "quantity": 3,
+          "unit": "slice",
+          "recipeYield": 1,
+          "glCode": "4111012",
+          "allocationPerPortion": null
+        }
+      ]
     },
     "157988": {
       "recipeName": "EUR: Ember Roasted Cabbage",
@@ -32795,13 +32760,13 @@
           "quantity": 1,
           "unit": "each",
           "recipeYield": 15,
-          "unitPrice": 0.02,
-          "priceSourceMrn": "4253",
+          "unitPrice": 0.39,
+          "priceSourceMrn": "126453",
           "priceSourceUnit": "each",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Onions, Red, Fresh, Each Ring, 1/4\").",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Appetizer, Phyllo Roll, Roasted Red Pepper, Mini, 1 oz, Select).",
           "glCode": "4111012",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.0013
+          "allocationPerPortion": 0.026
         },
         {
           "ingredientMrn": "7411",
@@ -33153,13 +33118,13 @@
           "quantity": 3,
           "unit": "each",
           "recipeYield": 24,
-          "unitPrice": 0.02,
-          "priceSourceMrn": "4253",
+          "unitPrice": 0.39,
+          "priceSourceMrn": "126453",
           "priceSourceUnit": "each",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Onions, Red, Fresh, Each Ring, 1/4\").",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Appetizer, Phyllo Roll, Roasted Red Pepper, Mini, 1 oz, Select).",
           "glCode": "4111005",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.0025
+          "allocationPerPortion": 0.0488
         },
         {
           "ingredientMrn": "49464",
@@ -34126,34 +34091,6 @@
       "recipeName": "THJV Grilled Vegetables",
       "components": [
         {
-          "ingredientMrn": "54681",
-          "ingredientName": "Eggplant, Fresh, Sliced, 1/2\"",
-          "quantity": 3,
-          "unit": "each",
-          "recipeYield": 24,
-          "unitPrice": 0.1,
-          "priceSourceMrn": "7546",
-          "priceSourceUnit": "each",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tomatoes, Each Slice, 1/2\", Fresh).",
-          "glCode": "4111012",
-          "isSubstitutePrice": true,
-          "allocationPerPortion": 0.0125
-        },
-        {
-          "ingredientMrn": "165977",
-          "ingredientName": "Mushrooms, Portobello, Fresh, Sliced, 1/2\"",
-          "quantity": 6,
-          "unit": "each",
-          "recipeYield": 24,
-          "unitPrice": 0.1,
-          "priceSourceMrn": "7546",
-          "priceSourceUnit": "each",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tomatoes, Each Slice, 1/2\", Fresh).",
-          "glCode": "4111005",
-          "isSubstitutePrice": true,
-          "allocationPerPortion": 0.025
-        },
-        {
           "ingredientMrn": "15323",
           "ingredientName": "Oil, Olive, Extra Virgin",
           "quantity": 3,
@@ -34187,13 +34124,13 @@
           "quantity": 3,
           "unit": "each",
           "recipeYield": 24,
-          "unitPrice": 0.1,
-          "priceSourceMrn": "7546",
+          "unitPrice": 0.39,
+          "priceSourceMrn": "126453",
           "priceSourceUnit": "each",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tomatoes, Each Slice, 1/2\", Fresh).",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Appetizer, Phyllo Roll, Roasted Red Pepper, Mini, 1 oz, Select).",
           "glCode": "4111012",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.0125
+          "allocationPerPortion": 0.0488
         },
         {
           "ingredientMrn": "7411",
@@ -34236,20 +34173,6 @@
           "glCode": "4111012",
           "isSubstitutePrice": true,
           "allocationPerPortion": 0.0437
-        },
-        {
-          "ingredientMrn": "7461",
-          "ingredientName": "Squash, Zucchini, Fresh, Sliced, 1/2\"",
-          "quantity": 3,
-          "unit": "each",
-          "recipeYield": 24,
-          "unitPrice": 0.1,
-          "priceSourceMrn": "7546",
-          "priceSourceUnit": "each",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tomatoes, Each Slice, 1/2\", Fresh).",
-          "glCode": "4111012",
-          "isSubstitutePrice": true,
-          "allocationPerPortion": 0.0125
         }
       ],
       "unpricedComponents": [
@@ -34258,6 +34181,33 @@
           "ingredientName": "Asparagus, Fresh",
           "quantity": 3,
           "unit": "pound",
+          "recipeYield": 24,
+          "glCode": "4111012",
+          "allocationPerPortion": null
+        },
+        {
+          "ingredientMrn": "54681",
+          "ingredientName": "Eggplant, Fresh, Sliced, 1/2\"",
+          "quantity": 3,
+          "unit": "each",
+          "recipeYield": 24,
+          "glCode": "4111012",
+          "allocationPerPortion": null
+        },
+        {
+          "ingredientMrn": "165977",
+          "ingredientName": "Mushrooms, Portobello, Fresh, Sliced, 1/2\"",
+          "quantity": 6,
+          "unit": "each",
+          "recipeYield": 24,
+          "glCode": "4111005",
+          "allocationPerPortion": null
+        },
+        {
+          "ingredientMrn": "7461",
+          "ingredientName": "Squash, Zucchini, Fresh, Sliced, 1/2\"",
+          "quantity": 3,
+          "unit": "each",
           "recipeYield": 24,
           "glCode": "4111012",
           "allocationPerPortion": null
@@ -43016,13 +42966,13 @@
           "quantity": 8,
           "unit": "each",
           "recipeYield": 40,
-          "unitPrice": 0.02,
-          "priceSourceMrn": "4253",
+          "unitPrice": 0.33,
+          "priceSourceMrn": "135053",
           "priceSourceUnit": "each",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Onions, Red, Fresh, Each Ring, 1/4\").",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Bagel, Jalapeno Cheddar, LaMarca, 5oz, Fresh).",
           "glCode": "4111012",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.004
+          "allocationPerPortion": 0.066
         },
         {
           "ingredientMrn": "7411",
@@ -43815,20 +43765,6 @@
           "allocationPerPortion": 0.0163
         },
         {
-          "ingredientMrn": "2097",
-          "ingredientName": "Cucumbers, Fresh, Peeled, Small Diced, 1/4\"",
-          "quantity": 1,
-          "unit": "pound",
-          "recipeYield": 48,
-          "unitPrice": 9.72,
-          "priceSourceMrn": "56430",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tri Color Bell Pepper Blend).",
-          "glCode": "4111005",
-          "isSubstitutePrice": true,
-          "allocationPerPortion": 0.2025
-        },
-        {
           "ingredientMrn": "12218",
           "ingredientName": "Nectar, Agave",
           "quantity": 1.25,
@@ -43885,7 +43821,17 @@
           "allocationPerPortion": 0.0453
         }
       ],
-      "unpricedComponents": []
+      "unpricedComponents": [
+        {
+          "ingredientMrn": "2097",
+          "ingredientName": "Cucumbers, Fresh, Peeled, Small Diced, 1/4\"",
+          "quantity": 1,
+          "unit": "pound",
+          "recipeYield": 48,
+          "glCode": "4111005",
+          "allocationPerPortion": null
+        }
+      ]
     },
     "199128": {
       "recipeName": "AMZ: Green Goddess Pistachio Salad",
@@ -43919,20 +43865,6 @@
           "allocationPerPortion": 0.44
         },
         {
-          "ingredientMrn": "3756",
-          "ingredientName": "Lettuce, Romaine, Fresh, Chopped, 1\"",
-          "quantity": 4,
-          "unit": "ounce",
-          "recipeYield": 1,
-          "unitPrice": 0.1533,
-          "priceSourceMrn": "1075",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Bread, White, Sliced, 1.5 oz).",
-          "glCode": "4111012",
-          "isSubstitutePrice": true,
-          "allocationPerPortion": 0.6133
-        },
-        {
           "ingredientMrn": "4221",
           "ingredientName": "Nuts, Pistachio",
           "quantity": 0.5,
@@ -43961,7 +43893,17 @@
           "allocationPerPortion": 0.29
         }
       ],
-      "unpricedComponents": []
+      "unpricedComponents": [
+        {
+          "ingredientMrn": "3756",
+          "ingredientName": "Lettuce, Romaine, Fresh, Chopped, 1\"",
+          "quantity": 4,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "glCode": "4111012",
+          "allocationPerPortion": null
+        }
+      ]
     },
     "199214": {
       "recipeName": "AMZ: FF: Plant-Based Cashew Ricotta & Grape Flatbread",
@@ -44129,20 +44071,6 @@
       "recipeName": "AMZ: Apple Farro Arugula Salad",
       "components": [
         {
-          "ingredientMrn": "105",
-          "ingredientName": "Apples, Granny Smith, Fresh, Peeled, Cored, Small Diced, 1/4\"",
-          "quantity": 3,
-          "unit": "ounce",
-          "recipeYield": 1,
-          "unitPrice": 0.6075,
-          "priceSourceMrn": "56430",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tri Color Bell Pepper Blend).",
-          "glCode": "4111012",
-          "isSubstitutePrice": true,
-          "allocationPerPortion": 1.8225
-        },
-        {
           "ingredientMrn": "454",
           "ingredientName": "Basil, Fresh, Chiffonade Cut",
           "quantity": 1,
@@ -44200,6 +44128,15 @@
         }
       ],
       "unpricedComponents": [
+        {
+          "ingredientMrn": "105",
+          "ingredientName": "Apples, Granny Smith, Fresh, Peeled, Cored, Small Diced, 1/4\"",
+          "quantity": 3,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "glCode": "4111012",
+          "allocationPerPortion": null
+        },
         {
           "ingredientMrn": "3771",
           "ingredientName": "Lettuce, Arugula, Baby, Fresh",
@@ -46001,27 +45938,13 @@
           "quantity": 6,
           "unit": "ounce",
           "recipeYield": 16,
-          "unitPrice": 0.6075,
-          "priceSourceMrn": "56430",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tri Color Bell Pepper Blend).",
+          "unitPrice": 0.1187,
+          "priceSourceMrn": "1314",
+          "priceSourceUnit": "pound",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Carrots, Baby, Whole, Fresh).",
           "glCode": "4111005",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.2278
-        },
-        {
-          "ingredientMrn": "1378",
-          "ingredientName": "Celery, Fresh, Small Diced, 1/4\"",
-          "quantity": 6,
-          "unit": "ounce",
-          "recipeYield": 16,
-          "unitPrice": 0.6075,
-          "priceSourceMrn": "56430",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tri Color Bell Pepper Blend).",
-          "glCode": "4111012",
-          "isSubstitutePrice": true,
-          "allocationPerPortion": 0.2278
+          "allocationPerPortion": 0.0445
         },
         {
           "ingredientMrn": "15323",
@@ -46108,7 +46031,17 @@
           "allocationPerPortion": 0.0067
         }
       ],
-      "unpricedComponents": []
+      "unpricedComponents": [
+        {
+          "ingredientMrn": "1378",
+          "ingredientName": "Celery, Fresh, Small Diced, 1/4\"",
+          "quantity": 6,
+          "unit": "ounce",
+          "recipeYield": 16,
+          "glCode": "4111012",
+          "allocationPerPortion": null
+        }
+      ]
     },
     "11076.6": {
       "recipeName": "EUR:  Mushroom & Wild Rice Soup (base)",
@@ -48512,20 +48445,6 @@
           "allocationPerPortion": 0.18
         },
         {
-          "ingredientMrn": "2097",
-          "ingredientName": "Cucumbers, Fresh, Peeled, Small Diced, 1/4\"",
-          "quantity": 12,
-          "unit": "ounce",
-          "recipeYield": 12,
-          "unitPrice": 0.6075,
-          "priceSourceMrn": "56430",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tri Color Bell Pepper Blend).",
-          "glCode": "4111005",
-          "isSubstitutePrice": true,
-          "allocationPerPortion": 0.6075
-        },
-        {
           "ingredientMrn": "3539",
           "ingredientName": "Juice, Lemon, Fresh Pressed",
           "quantity": 2,
@@ -48625,6 +48544,15 @@
         }
       ],
       "unpricedComponents": [
+        {
+          "ingredientMrn": "2097",
+          "ingredientName": "Cucumbers, Fresh, Peeled, Small Diced, 1/4\"",
+          "quantity": 12,
+          "unit": "ounce",
+          "recipeYield": 12,
+          "glCode": "4111005",
+          "allocationPerPortion": null
+        },
         {
           "ingredientMrn": "3760",
           "ingredientName": "Lettuce, Romaine, Fresh, Chopped",
@@ -49350,13 +49278,13 @@
           "quantity": 8,
           "unit": "ounce",
           "recipeYield": 4,
-          "unitPrice": 0.1533,
-          "priceSourceMrn": "1075",
+          "unitPrice": 0.25,
+          "priceSourceMrn": "1218",
           "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Bread, White, Sliced, 1.5 oz).",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Candies, Reese's Pieces).",
           "glCode": "4111012",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.3067
+          "allocationPerPortion": 0.5
         },
         {
           "ingredientMrn": "1680",
@@ -49378,13 +49306,13 @@
           "quantity": 2,
           "unit": "tsp",
           "recipeYield": 4,
-          "unitPrice": 8.32,
-          "priceSourceMrn": "4208",
-          "priceSourceUnit": "tsp",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Sausage, Brat, Plant-Based, Beyond Meat).",
+          "unitPrice": 0.0883,
+          "priceSourceMrn": "10928",
+          "priceSourceUnit": "floz",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Syrup, Maple, 100%).",
           "glCode": "4111005",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 4.16
+          "allocationPerPortion": 0.0442
         },
         {
           "ingredientMrn": "120457",
@@ -49492,13 +49420,13 @@
           "quantity": 2,
           "unit": "tsp",
           "recipeYield": 4,
-          "unitPrice": 8.32,
-          "priceSourceMrn": "4208",
-          "priceSourceUnit": "tsp",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Sausage, Brat, Plant-Based, Beyond Meat).",
+          "unitPrice": 0.0883,
+          "priceSourceMrn": "10928",
+          "priceSourceUnit": "floz",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Syrup, Maple, 100%).",
           "glCode": "4111005",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 4.16
+          "allocationPerPortion": 0.0442
         },
         {
           "ingredientMrn": "120457",
@@ -49668,13 +49596,13 @@
           "quantity": 3,
           "unit": "tbsp",
           "recipeYield": 24,
-          "unitPrice": 0.14,
-          "priceSourceMrn": "70057",
-          "priceSourceUnit": "tbsp",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Hummus, Traditional, Grecian Delight, Frozen).",
+          "unitPrice": 0.265,
+          "priceSourceMrn": "10928",
+          "priceSourceUnit": "floz",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Syrup, Maple, 100%).",
           "glCode": "4111005",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.0175
+          "allocationPerPortion": 0.0331
         },
         {
           "ingredientMrn": "2893",
@@ -52685,13 +52613,13 @@
           "quantity": 6,
           "unit": "ounce",
           "recipeYield": 10,
-          "unitPrice": 0.6075,
-          "priceSourceMrn": "56430",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tri Color Bell Pepper Blend).",
+          "unitPrice": 0.1187,
+          "priceSourceMrn": "1314",
+          "priceSourceUnit": "pound",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Carrots, Baby, Whole, Fresh).",
           "glCode": "4111005",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.3645
+          "allocationPerPortion": 0.0713
         },
         {
           "ingredientMrn": "1634",
@@ -54717,20 +54645,6 @@
           "allocationPerPortion": 0.063
         },
         {
-          "ingredientMrn": "2097",
-          "ingredientName": "Cucumbers, Fresh, Peeled, Small Diced, 1/4\"",
-          "quantity": 10,
-          "unit": "ounce",
-          "recipeYield": 25,
-          "unitPrice": 0.6075,
-          "priceSourceMrn": "56430",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tri Color Bell Pepper Blend).",
-          "glCode": "4111005",
-          "isSubstitutePrice": true,
-          "allocationPerPortion": 0.243
-        },
-        {
           "ingredientMrn": "3755",
           "ingredientName": "Lettuce, Romaine, Individual Leaf, Fresh",
           "quantity": 25,
@@ -54844,6 +54758,15 @@
         }
       ],
       "unpricedComponents": [
+        {
+          "ingredientMrn": "2097",
+          "ingredientName": "Cucumbers, Fresh, Peeled, Small Diced, 1/4\"",
+          "quantity": 10,
+          "unit": "ounce",
+          "recipeYield": 25,
+          "glCode": "4111005",
+          "allocationPerPortion": null
+        },
         {
           "ingredientMrn": "4304",
           "ingredientName": "Pasta, Macaroni, Elbow, Barilla, Dry",
@@ -57184,13 +57107,13 @@
           "quantity": 1,
           "unit": "ounce",
           "recipeYield": 1,
-          "unitPrice": 0.18,
-          "priceSourceMrn": "1673",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Cheese, Provolone, Sliced, 1 oz).",
+          "unitPrice": 0.22,
+          "priceSourceMrn": "1639",
+          "priceSourceUnit": "pound",
+          "priceSourceNote": "Substitute price used: approved Cheese, Cheddar, Sharp, Loaf, Shredded reference (MRN 1639). Approved dairy substitute until a canonical Blue Cheese Crumbles price is available.",
           "glCode": "4111006",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.18
+          "allocationPerPortion": 0.22
         },
         {
           "ingredientMrn": "2259",
@@ -57270,13 +57193,13 @@
           "quantity": 1,
           "unit": "ounce",
           "recipeYield": 1,
-          "unitPrice": 0.18,
-          "priceSourceMrn": "1673",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Cheese, Provolone, Sliced, 1 oz).",
+          "unitPrice": 0.22,
+          "priceSourceMrn": "1639",
+          "priceSourceUnit": "pound",
+          "priceSourceNote": "Substitute price used: approved Cheese, Cheddar, Sharp, Loaf, Shredded reference (MRN 1639). Approved dairy substitute until a canonical Blue Cheese Crumbles price is available.",
           "glCode": "4111006",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.18
+          "allocationPerPortion": 0.22
         },
         {
           "ingredientMrn": "2259",
@@ -58738,20 +58661,6 @@
           "allocationPerPortion": 0.24
         },
         {
-          "ingredientMrn": "165971",
-          "ingredientName": "Lettuce, Romaine, Fresh, Chopped, 1/2\"",
-          "quantity": 2,
-          "unit": "ounce",
-          "recipeYield": 1,
-          "unitPrice": 0.07,
-          "priceSourceMrn": "176627",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Potatoes, FC, Diced, 1/2\").",
-          "glCode": "4111012",
-          "isSubstitutePrice": true,
-          "allocationPerPortion": 0.14
-        },
-        {
           "ingredientMrn": "16270",
           "ingredientName": "Onions, Red, Fresh, Slivered, Thin",
           "quantity": 0.5,
@@ -58816,6 +58725,15 @@
           "unit": "ounce",
           "recipeYield": 1,
           "glCode": "4111005",
+          "allocationPerPortion": null
+        },
+        {
+          "ingredientMrn": "165971",
+          "ingredientName": "Lettuce, Romaine, Fresh, Chopped, 1/2\"",
+          "quantity": 2,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "glCode": "4111012",
           "allocationPerPortion": null
         }
       ]
@@ -61847,20 +61765,6 @@
           "allocationPerPortion": 0.29
         },
         {
-          "ingredientMrn": "130502",
-          "ingredientName": "Cucumbers, English, Fresh, Diced, Small, 1/4\"",
-          "quantity": 8,
-          "unit": "ounce",
-          "recipeYield": 8,
-          "unitPrice": 0.6075,
-          "priceSourceMrn": "56430",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tri Color Bell Pepper Blend).",
-          "glCode": "4111005",
-          "isSubstitutePrice": true,
-          "allocationPerPortion": 0.6075
-        },
-        {
           "ingredientMrn": "165988",
           "ingredientName": "Onions, Red, Fresh, Diced, 1/4\"",
           "quantity": 4,
@@ -61918,6 +61822,15 @@
         }
       ],
       "unpricedComponents": [
+        {
+          "ingredientMrn": "130502",
+          "ingredientName": "Cucumbers, English, Fresh, Diced, Small, 1/4\"",
+          "quantity": 8,
+          "unit": "ounce",
+          "recipeYield": 8,
+          "glCode": "4111005",
+          "allocationPerPortion": null
+        },
         {
           "ingredientMrn": "130394",
           "ingredientName": "Jackfruit, Green, Dragonfly, Canned, Drained, Rinsed",
@@ -63109,13 +63022,13 @@
           "quantity": 2,
           "unit": "ounce",
           "recipeYield": 1,
-          "unitPrice": 0.18,
-          "priceSourceMrn": "1673",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Cheese, Provolone, Sliced, 1 oz).",
+          "unitPrice": 0.22,
+          "priceSourceMrn": "1639",
+          "priceSourceUnit": "pound",
+          "priceSourceNote": "Substitute price used: approved Cheese, Cheddar, Sharp, Loaf, Shredded reference (MRN 1639). Approved dairy substitute until a canonical Blue Cheese Crumbles price is available.",
           "glCode": "4111006",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.36
+          "allocationPerPortion": 0.44
         },
         {
           "ingredientMrn": "77587",
@@ -63679,20 +63592,6 @@
           "allocationPerPortion": 0.1188
         },
         {
-          "ingredientMrn": "1378",
-          "ingredientName": "Celery, Fresh, Small Diced, 1/4\"",
-          "quantity": 24,
-          "unit": "ounce",
-          "recipeYield": 24,
-          "unitPrice": 0.6075,
-          "priceSourceMrn": "56430",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tri Color Bell Pepper Blend).",
-          "glCode": "4111012",
-          "isSubstitutePrice": true,
-          "allocationPerPortion": 0.6075
-        },
-        {
           "ingredientMrn": "1614",
           "ingredientName": "Cheese, Blue, Crumbles, Great Lakes",
           "quantity": 3,
@@ -63701,7 +63600,7 @@
           "unitPrice": 3.52,
           "priceSourceMrn": "1639",
           "priceSourceUnit": "pound",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Cheese, Cheddar, Sharp, Loaf, Shredded).",
+          "priceSourceNote": "Substitute price used: approved Cheese, Cheddar, Sharp, Loaf, Shredded reference (MRN 1639). Approved dairy substitute until a canonical Blue Cheese Crumbles price is available.",
           "glCode": "4111006",
           "isSubstitutePrice": true,
           "allocationPerPortion": 0.44
@@ -63726,13 +63625,13 @@
           "quantity": 36,
           "unit": "ounce",
           "recipeYield": 24,
-          "unitPrice": 0.31,
-          "priceSourceMrn": "45407",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Chicken, Blazing Buffalo, Sliced).",
+          "unitPrice": 0.12,
+          "priceSourceMrn": "7179",
+          "priceSourceUnit": "floz",
+          "priceSourceNote": "Canonical Ingredient: price reference. Approved Frank's RedHot Buffalo Wing Sauce conversion: 1 fluid ounce = 1 ounce.",
           "glCode": "4111005",
-          "isSubstitutePrice": true,
-          "allocationPerPortion": 0.465
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.18
         },
         {
           "ingredientMrn": "7580",
@@ -63750,6 +63649,15 @@
         }
       ],
       "unpricedComponents": [
+        {
+          "ingredientMrn": "1378",
+          "ingredientName": "Celery, Fresh, Small Diced, 1/4\"",
+          "quantity": 24,
+          "unit": "ounce",
+          "recipeYield": 24,
+          "glCode": "4111012",
+          "allocationPerPortion": null
+        },
         {
           "ingredientMrn": "3758",
           "ingredientName": "Lettuce, Romaine, Fresh, Shredded",
@@ -66676,13 +66584,13 @@
           "quantity": 0.5,
           "unit": "cup",
           "recipeYield": 128,
-          "unitPrice": 1.56,
-          "priceSourceMrn": "16265",
-          "priceSourceUnit": "cup",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Asparagus, 1\" Pieces, Fresh).",
+          "unitPrice": 1.92,
+          "priceSourceMrn": "7974",
+          "priceSourceUnit": "tsp",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Seasoning, Montreal Steak Rub).",
           "glCode": "4111003",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.0061
+          "allocationPerPortion": 0.0075
         },
         {
           "ingredientMrn": "7391",
@@ -67518,13 +67426,13 @@
           "quantity": 5,
           "unit": "floz",
           "recipeYield": 200,
-          "unitPrice": 0.195,
-          "priceSourceMrn": "16265",
-          "priceSourceUnit": "cup",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Asparagus, 1\" Pieces, Fresh).",
+          "unitPrice": 0.24,
+          "priceSourceMrn": "7974",
+          "priceSourceUnit": "tsp",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Seasoning, Montreal Steak Rub).",
           "glCode": "4111003",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.0049
+          "allocationPerPortion": 0.006
         },
         {
           "ingredientMrn": "7371",
@@ -67764,13 +67672,13 @@
           "quantity": 0.25,
           "unit": "tsp",
           "recipeYield": 6,
-          "unitPrice": 8.32,
-          "priceSourceMrn": "4208",
-          "priceSourceUnit": "tsp",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Sausage, Brat, Plant-Based, Beyond Meat).",
+          "unitPrice": 0.0883,
+          "priceSourceMrn": "10928",
+          "priceSourceUnit": "floz",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Syrup, Maple, 100%).",
           "glCode": "4111005",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.3467
+          "allocationPerPortion": 0.0037
         },
         {
           "ingredientMrn": "2893",
@@ -72456,20 +72364,6 @@
           "glCode": "4111005",
           "isSubstitutePrice": true,
           "allocationPerPortion": 0.0014
-        },
-        {
-          "ingredientMrn": "10622",
-          "ingredientName": "Wonton, Wrappers, 3.5'', Twin Marquis",
-          "quantity": 48,
-          "unit": "each",
-          "recipeYield": 16,
-          "unitPrice": 1.12,
-          "priceSourceMrn": "9122",
-          "priceSourceUnit": "each",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Flatbread, White, 5.3 oz).",
-          "glCode": "4111005",
-          "isSubstitutePrice": true,
-          "allocationPerPortion": 3.36
         }
       ],
       "unpricedComponents": [
@@ -72489,6 +72383,15 @@
           "unit": "ounce",
           "recipeYield": 16,
           "glCode": "4111012",
+          "allocationPerPortion": null
+        },
+        {
+          "ingredientMrn": "10622",
+          "ingredientName": "Wonton, Wrappers, 3.5'', Twin Marquis",
+          "quantity": 48,
+          "unit": "each",
+          "recipeYield": 16,
+          "glCode": "4111005",
           "allocationPerPortion": null
         }
       ]
@@ -73382,13 +73285,13 @@
           "quantity": 8,
           "unit": "ounce",
           "recipeYield": 64,
-          "unitPrice": 0.09,
-          "priceSourceMrn": "64508",
+          "unitPrice": 0.264,
+          "priceSourceMrn": "9006",
           "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Bagel, Multigrain, 3.75 oz).",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Wonton, Strips, Baked).",
           "glCode": "4111005",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.0112
+          "allocationPerPortion": 0.033
         }
       ],
       "unpricedComponents": []
@@ -78076,20 +77979,6 @@
           "allocationPerPortion": 0.16
         },
         {
-          "ingredientMrn": "56177",
-          "ingredientName": "Cucumbers, English, Fresh, Diced, 1/2\"",
-          "quantity": 12,
-          "unit": "ounce",
-          "recipeYield": 12,
-          "unitPrice": 0.07,
-          "priceSourceMrn": "176627",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Potatoes, FC, Diced, 1/2\").",
-          "glCode": "4111005",
-          "isSubstitutePrice": true,
-          "allocationPerPortion": 0.07
-        },
-        {
           "ingredientMrn": "3539",
           "ingredientName": "Juice, Lemon, Fresh Pressed",
           "quantity": 2,
@@ -78162,6 +78051,15 @@
       ],
       "unpricedComponents": [
         {
+          "ingredientMrn": "56177",
+          "ingredientName": "Cucumbers, English, Fresh, Diced, 1/2\"",
+          "quantity": 12,
+          "unit": "ounce",
+          "recipeYield": 12,
+          "glCode": "4111005",
+          "allocationPerPortion": null
+        },
+        {
           "ingredientMrn": "58802",
           "ingredientName": "Spice, Sumac, Ground",
           "quantity": 1,
@@ -78210,20 +78108,6 @@
           "allocationPerPortion": 0.2375
         },
         {
-          "ingredientMrn": "130502",
-          "ingredientName": "Cucumbers, English, Fresh, Diced, Small, 1/4\"",
-          "quantity": 2,
-          "unit": "ounce",
-          "recipeYield": 1,
-          "unitPrice": 0.6075,
-          "priceSourceMrn": "56430",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tri Color Bell Pepper Blend).",
-          "glCode": "4111005",
-          "isSubstitutePrice": true,
-          "allocationPerPortion": 1.215
-        },
-        {
           "ingredientMrn": "118307",
           "ingredientName": "Lettuce, Mix, Arcadian Harvest, Classic",
           "quantity": 1,
@@ -78266,7 +78150,17 @@
           "allocationPerPortion": 0.12
         }
       ],
-      "unpricedComponents": []
+      "unpricedComponents": [
+        {
+          "ingredientMrn": "130502",
+          "ingredientName": "Cucumbers, English, Fresh, Diced, Small, 1/4\"",
+          "quantity": 2,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "glCode": "4111005",
+          "allocationPerPortion": null
+        }
+      ]
     },
     "121533.1": {
       "recipeName": "RA Chickle Pickled Cucumbers",
@@ -78580,13 +78474,13 @@
           "quantity": 1,
           "unit": "ounce",
           "recipeYield": 1,
-          "unitPrice": 0.6075,
-          "priceSourceMrn": "4286",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tri Color Bell Pepper Blend).",
+          "unitPrice": 0.06,
+          "priceSourceMrn": "7652",
+          "priceSourceUnit": "pound",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Watermelon, Cubed, Fresh).",
           "glCode": "4111012",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.6075
+          "allocationPerPortion": 0.06
         }
       ],
       "unpricedComponents": []
@@ -80355,13 +80249,13 @@
           "quantity": 1,
           "unit": "ounce",
           "recipeYield": 1,
-          "unitPrice": 0.18,
-          "priceSourceMrn": "1673",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Cheese, Provolone, Sliced, 1 oz).",
+          "unitPrice": 0.22,
+          "priceSourceMrn": "1639",
+          "priceSourceUnit": "pound",
+          "priceSourceNote": "Substitute price used: approved Cheese, Cheddar, Sharp, Loaf, Shredded reference (MRN 1639). Approved dairy substitute until a canonical Blue Cheese Crumbles price is available.",
           "glCode": "4111006",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.18
+          "allocationPerPortion": 0.22
         },
         {
           "ingredientMrn": "130348",
@@ -80690,13 +80584,13 @@
           "quantity": 3,
           "unit": "pound",
           "recipeYield": 12,
-          "unitPrice": 0.7,
-          "priceSourceMrn": "86624",
+          "unitPrice": 1.0667,
+          "priceSourceMrn": "1222",
           "priceSourceUnit": "pound",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Grain, Whole Grain, 9 Blend).",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Cantaloupe, 3\" Pieces, Fresh, Cup, 6 oz).",
           "glCode": "4111010",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.175
+          "allocationPerPortion": 0.2667
         },
         {
           "ingredientMrn": "7495",
@@ -81097,13 +80991,13 @@
           "quantity": 16,
           "unit": "ounce",
           "recipeYield": 12,
-          "unitPrice": 0.6075,
-          "priceSourceMrn": "56430",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tri Color Bell Pepper Blend).",
+          "unitPrice": 0.1187,
+          "priceSourceMrn": "1314",
+          "priceSourceUnit": "pound",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Carrots, Baby, Whole, Fresh).",
           "glCode": "4111005",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.81
+          "allocationPerPortion": 0.1583
         },
         {
           "ingredientMrn": "2264",
@@ -82351,13 +82245,13 @@
           "quantity": 2,
           "unit": "pound",
           "recipeYield": 60,
-          "unitPrice": 9.72,
-          "priceSourceMrn": "56430",
+          "unitPrice": 2.56,
+          "priceSourceMrn": "7531",
           "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tri Color Bell Pepper Blend).",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tofu, Regular, Sliced).",
           "glCode": "4111012",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.324
+          "allocationPerPortion": 0.0853
         }
       ],
       "unpricedComponents": []
@@ -88685,13 +88579,13 @@
           "quantity": 12,
           "unit": "ounce",
           "recipeYield": 18,
-          "unitPrice": 0.6075,
-          "priceSourceMrn": "56430",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tri Color Bell Pepper Blend).",
+          "unitPrice": 0.1187,
+          "priceSourceMrn": "1314",
+          "priceSourceUnit": "pound",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Carrots, Baby, Whole, Fresh).",
           "glCode": "4111005",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.405
+          "allocationPerPortion": 0.0792
         },
         {
           "ingredientMrn": "158759",
@@ -89647,20 +89541,6 @@
       "recipeName": "AMZ: Carne Asada Torta (SJC Core Grill)",
       "components": [
         {
-          "ingredientMrn": "16289",
-          "ingredientName": "Avocado, Fresh, Sliced, 1/4\"",
-          "quantity": 3,
-          "unit": "slice",
-          "recipeYield": 1,
-          "unitPrice": 0.06,
-          "priceSourceMrn": "11400",
-          "priceSourceUnit": "slice",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tomatoes, Roma, Each Slice, 1/4\", Fresh).",
-          "glCode": "4111012",
-          "isSubstitutePrice": true,
-          "allocationPerPortion": 0.18
-        },
-        {
           "ingredientMrn": "123258",
           "ingredientName": "Ham, Deluxe, Deli, Boar's Head",
           "quantity": 2,
@@ -89680,13 +89560,13 @@
           "quantity": 2,
           "unit": "each",
           "recipeYield": 1,
-          "unitPrice": 0.02,
-          "priceSourceMrn": "4253",
+          "unitPrice": 0.33,
+          "priceSourceMrn": "135053",
           "priceSourceUnit": "each",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Onions, Red, Fresh, Each Ring, 1/4\").",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Bagel, Jalapeno Cheddar, LaMarca, 5oz, Fresh).",
           "glCode": "4111012",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.04
+          "allocationPerPortion": 0.66
         },
         {
           "ingredientMrn": "43229",
@@ -89704,6 +89584,15 @@
         }
       ],
       "unpricedComponents": [
+        {
+          "ingredientMrn": "16289",
+          "ingredientName": "Avocado, Fresh, Sliced, 1/4\"",
+          "quantity": 3,
+          "unit": "slice",
+          "recipeYield": 1,
+          "glCode": "4111012",
+          "allocationPerPortion": null
+        },
         {
           "ingredientMrn": "151981",
           "ingredientName": "Cheese, Oaxaca, Wisconsin Cheese Co",
@@ -91723,13 +91612,13 @@
           "quantity": 1,
           "unit": "ounce",
           "recipeYield": 1,
-          "unitPrice": 0.6075,
-          "priceSourceMrn": "56430",
+          "unitPrice": 0.16,
+          "priceSourceMrn": "7531",
           "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tri Color Bell Pepper Blend).",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tofu, Regular, Sliced).",
           "glCode": "4111012",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.6075
+          "allocationPerPortion": 0.16
         }
       ],
       "unpricedComponents": []
@@ -92306,13 +92195,13 @@
           "quantity": 3,
           "unit": "pound",
           "recipeYield": 12,
-          "unitPrice": 1.0667,
-          "priceSourceMrn": "1222",
-          "priceSourceUnit": "pound",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Cantaloupe, 3\" Pieces, Fresh, Cup, 6 oz).",
+          "unitPrice": 4.224,
+          "priceSourceMrn": "9006",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Wonton, Strips, Baked).",
           "glCode": "4111012",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.2667
+          "allocationPerPortion": 1.056
         }
       ],
       "unpricedComponents": []
@@ -93299,20 +93188,6 @@
           "allocationPerPortion": 0.12
         },
         {
-          "ingredientMrn": "3756",
-          "ingredientName": "Lettuce, Romaine, Fresh, Chopped, 1\"",
-          "quantity": 3,
-          "unit": "ounce",
-          "recipeYield": 2,
-          "unitPrice": 0.1533,
-          "priceSourceMrn": "1075",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Bread, White, Sliced, 1.5 oz).",
-          "glCode": "4111012",
-          "isSubstitutePrice": true,
-          "allocationPerPortion": 0.23
-        },
-        {
           "ingredientMrn": "13796",
           "ingredientName": "Salad Dressing, Caesar, Creamy, Ken's, Bulk",
           "quantity": 1.5,
@@ -93327,7 +93202,17 @@
           "allocationPerPortion": 0.1425
         }
       ],
-      "unpricedComponents": []
+      "unpricedComponents": [
+        {
+          "ingredientMrn": "3756",
+          "ingredientName": "Lettuce, Romaine, Fresh, Chopped, 1\"",
+          "quantity": 3,
+          "unit": "ounce",
+          "recipeYield": 2,
+          "glCode": "4111012",
+          "allocationPerPortion": null
+        }
+      ]
     },
     "24060.44": {
       "recipeName": "EUR: Chicken Caesar Salad (Dressing in Cup)",
@@ -99760,23 +99645,18 @@
     },
     "121533.2": {
       "recipeName": "RA Chickle Pickled Radish",
-      "components": [
+      "components": [],
+      "unpricedComponents": [
         {
           "ingredientMrn": "7105",
           "ingredientName": "Radish, Fresh, Sliced, 1/8\"",
           "quantity": 5,
           "unit": "pound",
           "recipeYield": 60,
-          "unitPrice": 9.72,
-          "priceSourceMrn": "4286",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tri Color Bell Pepper Blend).",
           "glCode": "4111012",
-          "isSubstitutePrice": true,
-          "allocationPerPortion": 0.81
+          "allocationPerPortion": null
         }
-      ],
-      "unpricedComponents": []
+      ]
     },
     "63080.2": {
       "recipeName": "Ingredient: Radish, Watermelon, Sliced, Fresh",

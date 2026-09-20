@@ -22,29 +22,33 @@ export const defaultTransferDescription = (itemName = "", reference = "") => {
 
 export const transferTotal = (items = []) => items.reduce((sum, item) => {
   const quantity = Number(item.quantity);
-  const cost = Number(item.allocationPerPortion);
+  // The menu card's current Item + Waste Cost is the transfer value. Ingredient
+  // allocations explain how that value is distributed across G/L accounts.
+  const cost = Number(item.itemWasteCost);
   return sum + (Number.isFinite(quantity) && Number.isFinite(cost) ? quantity * cost : 0);
 }, 0);
 
 const rounded = (value) => Number(Number(value).toFixed(4));
 
-export function balanceIngredientAllocations({ components = [], unpricedComponents = [], itemWasteCost }) {
+export function balanceIngredientAllocations({ components = [], unpricedComponents = [], itemWasteCost, residualGlCode = "" }) {
   const pricedComponents = components.filter((component) => Number(component?.allocationPerPortion) > 0);
-  const knownCost = rounded(pricedComponents.reduce((sum, component) => sum + Number(component.allocationPerPortion), 0));
+  const mappedAllocationPerPortion = rounded(pricedComponents.reduce((sum, component) => sum + Number(component.allocationPerPortion), 0));
   const targetCost = Number(itemWasteCost);
-  const canBalance = unpricedComponents.length > 0 && Number.isFinite(targetCost) && targetCost > knownCost;
-  const residualCost = canBalance ? rounded(targetCost - knownCost) : 0;
-  const residualAllocation = residualCost > 0 ? {
-    ingredientMrn: "prepared-foods-cost-balance",
-    ingredientName: "Cost balance adjustment",
+  const residualCost = Number.isFinite(targetCost) && targetCost > mappedAllocationPerPortion
+    ? rounded(targetCost - mappedAllocationPerPortion)
+    : 0;
+  const allocationExceedsItemCost = Number.isFinite(targetCost) && mappedAllocationPerPortion > targetCost;
+  const residualAllocation = residualCost > 0 && residualGlCode ? {
+    ingredientMrn: "chef-reviewed-cost-balance",
+    ingredientName: "Chef-reviewed cost balance",
     quantity: 1,
     unit: "portion",
     recipeYield: 1,
     unitPrice: residualCost,
-    glCode: PREPARED_FOODS_GL_CODE,
+    glCode: residualGlCode,
     allocationPerPortion: residualCost,
     isResidualCostBalance: true,
-    priceSourceNote: "Prepared Foods adjustment so the transfer equals the current Item + Waste Cost; unpriced source components remain listed for chef review.",
+    priceSourceNote: "Chef-selected G/L allocation for the portion of the current Item + Waste Cost not covered by mapped ingredient prices.",
   } : null;
   const ingredientAllocations = residualAllocation ? [...pricedComponents, residualAllocation] : pricedComponents;
   const allocationPerPortion = rounded(ingredientAllocations.reduce((sum, component) => sum + Number(component.allocationPerPortion), 0));
@@ -52,8 +56,11 @@ export function balanceIngredientAllocations({ components = [], unpricedComponen
     ingredientAllocations,
     unpricedComponents,
     allocationPerPortion,
-    pricingComplete: pricedComponents.length > 0 && (unpricedComponents.length === 0 || Boolean(residualAllocation)),
+    mappedAllocationPerPortion,
+    pricingComplete: pricedComponents.length > 0 && !allocationExceedsItemCost && (residualCost === 0 || Boolean(residualAllocation)),
     residualCost,
+    residualGlCode,
+    allocationExceedsItemCost,
     targetCost: Number.isFinite(targetCost) ? targetCost : null,
   };
 }
@@ -87,6 +94,12 @@ export function validateS4Transfer(transfer = {}) {
   if (allocations.some((allocation) => !/^\d{7}$/.test(String(allocation.glCode || "")) || !(Number(allocation.allocationPerPortion) > 0))) {
     errors.s4Lines = "Every ingredient allocation needs an approved G/L code and amount greater than zero.";
   }
+  if (items.some((item) => Number(item.residualCost) > 0 && !item.residualGlCode)) {
+    errors.s4Lines = "Choose one chef-reviewed G/L code for every remaining Item + Waste Cost before export.";
+  }
+  if (items.some((item) => Number(item.mappedAllocationPerPortion) > Number(item.itemWasteCost))) {
+    errors.s4Lines = "A mapped ingredient allocation exceeds its current Item + Waste Cost and needs source review before export.";
+  }
   return errors;
 }
 
@@ -105,6 +118,8 @@ export function validateTransfer(draft, transfers = []) {
   const completeItems = (draft.items || []).filter((item) => item.catalogId);
   if (!completeItems.length) errors.items = "Add at least one menu item.";
   if (completeItems.some((item) => item.itemWasteCost == null || !Number.isFinite(Number(item.itemWasteCost)))) errors.items = "Every selected item needs an Item + Waste Cost before this transfer can be saved.";
+  if (completeItems.some((item) => Number(item.residualCost) > 0 && !item.residualGlCode)) errors.items = "Choose one chef-reviewed G/L code for every remaining Item + Waste Cost before saving.";
+  if (completeItems.some((item) => Number(item.mappedAllocationPerPortion) > Number(item.itemWasteCost))) errors.items = "A mapped ingredient allocation exceeds its current Item + Waste Cost and needs source review before saving.";
   if (completeItems.some((item) => !Number.isInteger(Number(item.quantity)) || Number(item.quantity) < 1)) {
     errors.items = "Every item count must be a whole number of 1 or more.";
   }

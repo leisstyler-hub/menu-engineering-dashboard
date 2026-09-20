@@ -6,7 +6,7 @@ import CATALOG from "../src/data/transferToolCatalog.json" with { type: "json" }
 import INGREDIENT_COSTING_LOOKUP from "../api/data/ingredientCosting91926.json" with { type: "json" };
 import { buildS4Workbook, S4_TEMPLATE_SHA256 } from "../src/features/transfer-tool/transferExport.js";
 import { cafeProfitCenter } from "../src/features/transfer-tool/cafeProfitCenters.js";
-import { balanceIngredientAllocations, defaultTransferDescription, normalizeTransferTitle, PREPARED_FOODS_GL_CODE, refreshCopiedItems, S4_EXPORT_VERSION, transferRecordId, transferTotal, validateS4Transfer, validateTransfer } from "../src/features/transfer-tool/transferModel.js";
+import { balanceIngredientAllocations, defaultTransferDescription, normalizeTransferTitle, refreshCopiedItems, S4_EXPORT_VERSION, transferRecordId, transferTotal, validateS4Transfer, validateTransfer } from "../src/features/transfer-tool/transferModel.js";
 import { CAFE_UNITS } from "../src/shared/cafeUnits.js";
 
 const root = process.cwd();
@@ -25,6 +25,10 @@ const caesarRomaine = caesar?.components?.find((component) => component.ingredie
 const blta = INGREDIENT_COSTING_LOOKUP.recipes["9182.8"];
 const bltaAvocado = blta?.components?.find((component) => component.ingredientMrn === "276");
 const arcadianComponents = Object.values(INGREDIENT_COSTING_LOOKUP.recipes).flatMap((recipe) => recipe.components || []).filter((component) => component.ingredientMrn === "118307");
+const buffalo = INGREDIENT_COSTING_LOOKUP.recipes["9282.10"];
+const buffaloBlueCheese = buffalo?.components?.find((component) => component.ingredientMrn === "1614");
+const buffaloFranks = buffalo?.components?.find((component) => component.ingredientMrn === "7179");
+const buffaloCelery = buffalo?.unpricedComponents?.find((component) => component.ingredientMrn === "1378");
 if (capreseMozzarella?.unitPrice !== 0.32 || capreseMozzarella?.allocationPerPortion !== 1.28 || capreseTomato?.priceSourceMrn !== "16479" || capreseTomato?.allocationPerPortion !== 0.18 || pintoBeans?.allocationPerPortion !== 0.08 || caesarParmesan?.allocationPerPortion !== 0.24 || caesarRomaine?.priceSourceMrn !== "3756" || caesarRomaine?.allocationPerPortion !== 0.29 || caesar?.unpricedComponents?.length !== 0 || bltaAvocado?.priceSourceMrn !== "276" || bltaAvocado?.priceSourceUnit !== "cup" || bltaAvocado?.allocationPerPortion !== 0.3728 || blta?.unpricedComponents?.length !== 0) {
   fail("ingredient lookup must use canonical prices, structural source inference, normalized ingredient-form matching, and approved unit conversions");
 }
@@ -35,17 +39,29 @@ if (!substituteComponents.length || substituteComponents.some((component) => !/S
 if (!arcadianComponents.length || arcadianComponents.some((component) => component.priceSourceMrn !== "3753" || component.unitPrice !== 0.59 || !/approved.*Spring \(Mesclun\).*1 cup = 1 ounce/i.test(component.priceSourceNote || "")) || arcadianComponents.some((component) => component.priceSourceMrn === "87650")) {
   fail("Arcadian Classic Mix must use the approved Spring Mesclun source MRN 3753 and never Spam");
 }
+if (buffaloBlueCheese?.priceSourceMrn !== "1639" || !/approved dairy substitute/i.test(buffaloBlueCheese.priceSourceNote || "") || buffaloFranks?.priceSourceMrn !== "7179" || buffaloFranks?.priceSourceUnit !== "floz" || buffaloFranks?.allocationPerPortion !== 0.18 || !/1 fluid ounce = 1 ounce/i.test(buffaloFranks.priceSourceNote || "") || !buffaloCelery) {
+  fail("approved Blue Cheese substitution, Frank's exact price conversion, and category-safe substitute matching are not enforced");
+}
 const balancedAllocation = balanceIngredientAllocations({
   components: [{ ingredientMrn: "known", ingredientName: "Known ingredient", glCode: "4111005", allocationPerPortion: 2.2 }],
   unpricedComponents: [{ ingredientMrn: "missing", ingredientName: "Missing ingredient", glCode: "4111012", allocationPerPortion: null }],
   itemWasteCost: 2.3,
 });
-if (!balancedAllocation.pricingComplete || balancedAllocation.allocationPerPortion !== 2.3 || balancedAllocation.residualCost !== 0.1 || balancedAllocation.ingredientAllocations.at(-1)?.glCode !== PREPARED_FOODS_GL_CODE || !balancedAllocation.ingredientAllocations.at(-1)?.isResidualCostBalance) {
-  fail("unpriced components must retain the Item + Waste Cost through a Prepared Foods cost balance adjustment");
+if (balancedAllocation.pricingComplete || balancedAllocation.allocationPerPortion !== 2.2 || balancedAllocation.residualCost !== 0.1 || balancedAllocation.ingredientAllocations.some((component) => component.isResidualCostBalance)) {
+  fail("a positive unallocated Item + Waste Cost must require a chef G/L selection");
+}
+const chefReviewedBalance = balanceIngredientAllocations({
+  components: [{ ingredientMrn: "known", ingredientName: "Known ingredient", glCode: "4111005", allocationPerPortion: 2.2 }],
+  unpricedComponents: [{ ingredientMrn: "missing", ingredientName: "Missing ingredient", glCode: "4111012", allocationPerPortion: null }],
+  itemWasteCost: 2.3,
+  residualGlCode: "4111012",
+});
+if (!chefReviewedBalance.pricingComplete || chefReviewedBalance.allocationPerPortion !== 2.3 || chefReviewedBalance.ingredientAllocations.at(-1)?.glCode !== "4111012" || !chefReviewedBalance.ingredientAllocations.at(-1)?.isResidualCostBalance) {
+  fail("chef-selected G/L must allocate the positive remaining Item + Waste Cost");
 }
 if (transferRecordId(" My  Transfer ") !== "transfer|my%20transfer") fail("title identity is not deterministic");
 if (normalizeTransferTitle(" MY   TRANSFER ") !== "my transfer") fail("title normalization is not case/space insensitive");
-if (transferTotal([{ quantity: 2, allocationPerPortion: 1.234 }]) !== 2.468) fail("ingredient allocation total is incorrect");
+if (transferTotal([{ quantity: 2, itemWasteCost: 1.234, allocationPerPortion: 8 }]) !== 2.468) fail("transfer total must use the menu card Item + Waste Cost");
 if (cafeProfitCenter("Dawson") !== "28676" || cafeProfitCenter("Astra") !== "62844" || cafeProfitCenter("Eclipse") !== "62100" || cafeProfitCenter("LAX78") !== "64002" || cafeProfitCenter("SNA3") !== "44280") fail("cafe profit-center mapping is incorrect");
 if (!CAFE_UNITS.every(({ cafe }) => /^\d{5}$/.test(cafeProfitCenter(cafe)))) fail("one or more current cafés are missing a five-digit profit center");
 if (defaultTransferDescription("Tuna Sandwich", "Dawson to Nessie").length > 50) fail("default descriptions are not capped at 50 characters");
@@ -59,8 +75,8 @@ const storage = read("src/features/transfer-tool/transferStorage.js");
 const component = read("src/features/transfer-tool/TransferTool.jsx");
 for (const marker of ["createTransfer", "deleteTransfer", "Titles must be globally unique", "like.transfer|*"]) if (!api.includes(marker)) fail(`API is missing ${marker}`);
 for (const marker of ["createTransfer", "deleteTransfer", "tool: \"transfers\"", "/api/recipe-library?scope=all", "row.trueCost"]) if (!storage.includes(marker)) fail(`storage client is missing ${marker}`);
-for (const marker of ["Ingredient Costing 9.19.26", "Automatic ingredient G/L allocation", "Substitute price used", "Prepared Foods cost balance", "Export S4 Excel", "Batch export staging", "Include in batch export", "Delete saved transfer", "DRAFT"]) if (!component.includes(marker)) fail(`UI is missing ${marker}`);
-for (const removedMarker of ["G/L Breakdown", "S4_GL_ACCOUNTS", "Choose G/L"]) if (component.includes(removedMarker)) fail(`UI still contains retired manual G/L UI ${removedMarker}`);
+for (const marker of ["Ingredient Costing 9.19.26", "Automatic ingredient G/L allocation / portion", "Substitute price used", "Chef-reviewed balance", "Item + Waste Cost / portion", "Chef-reviewed G/L", "Export S4 Excel", "Batch export staging", "Include in batch export", "Delete saved transfer", "DRAFT"]) if (!component.includes(marker)) fail(`UI is missing ${marker}`);
+for (const removedMarker of ["G/L Breakdown", "Prepared Foods cost balance"]) if (component.includes(removedMarker)) fail(`UI still contains retired automatic balance UI ${removedMarker}`);
 
 console.log(`Transfer Tool verification passed: ${CATALOG.menus.length} menus, ${CATALOG.items.length} menu-scoped cost records.`);
 

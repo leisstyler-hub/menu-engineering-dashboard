@@ -60,7 +60,7 @@ test("Transfer Tool expands a selected item into automatic ingredient G/L rows a
   await expectNoAppProtection(page); expectNoUnexpectedPageErrors(pageErrors);
 });
 
-test("Transfer Tool flags substitute prices and balances unresolved component cost to Prepared Foods", async ({ page }) => {
+test("Transfer Tool requires chef G/L review before balancing unresolved component cost", async ({ page }) => {
   const huliComponents = [{ ingredientMrn: "substitute", ingredientName: "Arugula", quantity: 1, unit: "ounce", recipeYield: 1, unitPrice: 2.2, glCode: "4111012", allocationPerPortion: 2.2, isSubstitutePrice: true, priceSourceMrn: "source-arugula", priceSourceNote: "Substitute price used: closest Ingredient Snapshot name match (Arugula)." }];
   const huliUnpricedComponents = [{ ingredientMrn: "missing", ingredientName: "Chef sauce", quantity: 1, unit: "ounce", recipeYield: 1, glCode: "4111011", allocationPerPortion: null }];
   const writes = await mockTransferStorage(page, { huliComponents, huliUnpricedComponents, huliCost: 2.5 });
@@ -71,11 +71,14 @@ test("Transfer Tool flags substitute prices and balances unresolved component co
   await page.getByLabel("Menu 1", { exact: true }).selectOption("AMZ: Ohana");
   await page.getByLabel("Item 1", { exact: true }).selectOption({ label: "Huli Huli Chicken · 33065.1 · 1 piece" });
   await expect(page.getByText(/Substitute price used/i).last()).toBeVisible();
-  await expect(page.getByText(/Prepared Foods cost balance/i).last()).toBeVisible();
+  await expect(page.getByText(/Selecting one G\/L is the chef/i).last()).toBeVisible();
   await expect(page.getByTestId("transfer-total")).toHaveText("$2.50");
   await page.getByRole("button", { name: "Save Draft" }).click();
+  await expect(page.getByText(/Choose one chef-reviewed G\/L code/i).last()).toBeVisible();
+  await page.getByLabel("Chef-reviewed G/L for Huli Huli Chicken").last().selectOption("4111012");
+  await page.getByRole("button", { name: "Save Draft" }).click();
   const savedAllocations = writes[0].records[0].items[0].ingredientAllocations;
-  expect(savedAllocations).toEqual(expect.arrayContaining([expect.objectContaining({ isSubstitutePrice: true }), expect.objectContaining({ isResidualCostBalance: true, glCode: "4111011", allocationPerPortion: 0.3 })]));
+  expect(savedAllocations).toEqual(expect.arrayContaining([expect.objectContaining({ isSubstitutePrice: true }), expect.objectContaining({ isResidualCostBalance: true, glCode: "4111012", allocationPerPortion: 0.3 })]));
 });
 
 test("Transfer Tool blocks an item with no ingredient mapping", async ({ page }) => {
