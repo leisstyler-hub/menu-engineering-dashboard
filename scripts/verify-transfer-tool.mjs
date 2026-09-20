@@ -24,12 +24,16 @@ const caesarParmesan = caesar?.components?.find((component) => component.ingredi
 const caesarRomaine = caesar?.components?.find((component) => component.ingredientMrn === "3760");
 const blta = INGREDIENT_COSTING_LOOKUP.recipes["9182.8"];
 const bltaAvocado = blta?.components?.find((component) => component.ingredientMrn === "276");
+const arcadianComponents = Object.values(INGREDIENT_COSTING_LOOKUP.recipes).flatMap((recipe) => recipe.components || []).filter((component) => component.ingredientMrn === "118307");
 if (capreseMozzarella?.unitPrice !== 0.32 || capreseMozzarella?.allocationPerPortion !== 1.28 || capreseTomato?.priceSourceMrn !== "16479" || capreseTomato?.allocationPerPortion !== 0.18 || pintoBeans?.allocationPerPortion !== 0.08 || caesarParmesan?.allocationPerPortion !== 0.24 || caesarRomaine?.priceSourceMrn !== "3756" || caesarRomaine?.allocationPerPortion !== 0.29 || caesar?.unpricedComponents?.length !== 0 || bltaAvocado?.priceSourceMrn !== "276" || bltaAvocado?.priceSourceUnit !== "cup" || bltaAvocado?.allocationPerPortion !== 0.3728 || blta?.unpricedComponents?.length !== 0) {
   fail("ingredient lookup must use canonical prices, structural source inference, normalized ingredient-form matching, and approved unit conversions");
 }
 const substituteComponents = Object.values(INGREDIENT_COSTING_LOOKUP.recipes).flatMap((recipe) => recipe.components || []).filter((component) => component.isSubstitutePrice);
 if (!substituteComponents.length || substituteComponents.some((component) => !/Substitute price used/i.test(component.priceSourceNote || ""))) {
   fail("ingredient lookup must expose clearly labeled, name-anchored substitute prices when an exact price is unavailable");
+}
+if (!arcadianComponents.length || arcadianComponents.some((component) => component.priceSourceMrn !== "3753" || component.unitPrice !== 0.59 || !/approved.*Spring \(Mesclun\).*1 cup = 1 ounce/i.test(component.priceSourceNote || "")) || arcadianComponents.some((component) => component.priceSourceMrn === "87650")) {
+  fail("Arcadian Classic Mix must use the approved Spring Mesclun source MRN 3753 and never Spam");
 }
 const balancedAllocation = balanceIngredientAllocations({
   components: [{ ingredientMrn: "known", ingredientName: "Known ingredient", glCode: "4111005", allocationPerPortion: 2.2 }],

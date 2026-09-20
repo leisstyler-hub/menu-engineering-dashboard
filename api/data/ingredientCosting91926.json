@@ -2,7 +2,7 @@
   "resource": {
     "title": "Ingredient Costing 9.19.26",
     "file": "/resources/Ingredient_Costing_9.19.26.xlsx",
-    "lookupMethod": "Canonical Ingredient: price references, using exact MRN first and then high-confidence normalized ingredient-form matching. Includes standard volume/weight/metric conversions, explicitly matched slice/each forms, shredded/grated cheese at 4 tablespoons per ounce, and form-limited avocado/butter density conversions. When exact pricing is unavailable, a clearly labeled substitute may use the closest unit-convertible Ingredient Snapshot name match with a real food-name anchor; generic category matches are rejected. When a flat source recipe has exactly one unresolved component and every other component is canonically priced, a repeated source-recipe residual may supply that component's unit price; ordinary menu rows are never used directly as an ingredient price."
+    "lookupMethod": "Canonical Ingredient: price references, using exact MRN first and then high-confidence normalized ingredient-form matching. Includes standard volume/weight/metric conversions, explicitly matched slice/each forms, shredded/grated cheese at 4 tablespoons per ounce, form-limited avocado/butter density conversions, and the approved Arcadian Classic Mix-to-Spring Mesclun substitution (1 cup raw leafy greens = 1 ounce). When exact pricing is unavailable, a clearly labeled substitute may use the closest unit-convertible Ingredient Snapshot name match with a real food-name anchor; generic category matches are rejected. When a flat source recipe has exactly one unresolved component and every other component is canonically priced, a repeated source-recipe residual may supply that component's unit price; ordinary menu rows are never used directly as an ingredient price."
   },
   "recipes": {
     "1105": {
@@ -20098,20 +20098,6 @@
           "glCode": "4111010",
           "isSubstitutePrice": true,
           "allocationPerPortion": 0.5
-        },
-        {
-          "ingredientMrn": "16043",
-          "ingredientName": "Sauce, Barbecue, Kansas City Classic",
-          "quantity": 32,
-          "unit": "ounce",
-          "recipeYield": 10,
-          "unitPrice": 0.24,
-          "priceSourceMrn": "87650",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Spam).",
-          "glCode": "4111005",
-          "isSubstitutePrice": true,
-          "allocationPerPortion": 0.768
         }
       ],
       "unpricedComponents": [
@@ -20120,6 +20106,15 @@
           "ingredientName": "Jackfruit, Green, Dragonfly, Canned, Drained, Rinsed",
           "quantity": 3,
           "unit": "pound",
+          "recipeYield": 10,
+          "glCode": "4111005",
+          "allocationPerPortion": null
+        },
+        {
+          "ingredientMrn": "16043",
+          "ingredientName": "Sauce, Barbecue, Kansas City Classic",
+          "quantity": 32,
+          "unit": "ounce",
           "recipeYield": 10,
           "glCode": "4111005",
           "allocationPerPortion": null
@@ -23577,20 +23572,6 @@
           "allocationPerPortion": 0.3308
         },
         {
-          "ingredientMrn": "16043",
-          "ingredientName": "Sauce, Barbecue, Kansas City Classic",
-          "quantity": 2,
-          "unit": "pound",
-          "recipeYield": 32,
-          "unitPrice": 3.84,
-          "priceSourceMrn": "87650",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Spam).",
-          "glCode": "4111005",
-          "isSubstitutePrice": true,
-          "allocationPerPortion": 0.24
-        },
-        {
           "ingredientMrn": "7637",
           "ingredientName": "Vinegar, White",
           "quantity": 1,
@@ -23605,7 +23586,17 @@
           "allocationPerPortion": 0.15
         }
       ],
-      "unpricedComponents": []
+      "unpricedComponents": [
+        {
+          "ingredientMrn": "16043",
+          "ingredientName": "Sauce, Barbecue, Kansas City Classic",
+          "quantity": 2,
+          "unit": "pound",
+          "recipeYield": 32,
+          "glCode": "4111005",
+          "allocationPerPortion": null
+        }
+      ]
     },
     "143103": {
       "recipeName": "EUR: Peanut Satay Sauce",
@@ -27875,13 +27866,13 @@
           "quantity": 5,
           "unit": "tbsp",
           "recipeYield": 5,
-          "unitPrice": 0.125,
-          "priceSourceMrn": "80821",
+          "unitPrice": 0.145,
+          "priceSourceMrn": "80820",
           "priceSourceUnit": "floz",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Coffee Syrup, Almond).",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Coffee Syrup, Classic).",
           "glCode": "4111005",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.125
+          "allocationPerPortion": 0.145
         },
         {
           "ingredientMrn": "7645",
@@ -37546,13 +37537,13 @@
           "quantity": 1.75,
           "unit": "ounce",
           "recipeYield": 1,
-          "unitPrice": 0.24,
-          "priceSourceMrn": "87650",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Spam).",
+          "unitPrice": 0.59,
+          "priceSourceMrn": "3753",
+          "priceSourceUnit": "cup",
+          "priceSourceNote": "Substitute price used: approved Lettuce, Salad Mix, Spring (Mesclun) reference (MRN 3753). Approved raw leafy-greens conversion: 1 cup = 1 ounce.",
           "glCode": "4111012",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.42
+          "allocationPerPortion": 1.0325
         },
         {
           "ingredientMrn": "7106",
@@ -37840,13 +37831,13 @@
           "quantity": 3,
           "unit": "ounce",
           "recipeYield": 12,
-          "unitPrice": 0.24,
-          "priceSourceMrn": "87650",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Spam).",
+          "unitPrice": 0.59,
+          "priceSourceMrn": "3753",
+          "priceSourceUnit": "cup",
+          "priceSourceNote": "Substitute price used: approved Lettuce, Salad Mix, Spring (Mesclun) reference (MRN 3753). Approved raw leafy-greens conversion: 1 cup = 1 ounce.",
           "glCode": "4111012",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.06
+          "allocationPerPortion": 0.1475
         },
         {
           "ingredientMrn": "7703",
@@ -44908,13 +44899,13 @@
           "quantity": 32,
           "unit": "ounce",
           "recipeYield": 10,
-          "unitPrice": 0.24,
-          "priceSourceMrn": "87650",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Spam).",
+          "unitPrice": 0.59,
+          "priceSourceMrn": "3753",
+          "priceSourceUnit": "cup",
+          "priceSourceNote": "Substitute price used: approved Lettuce, Salad Mix, Spring (Mesclun) reference (MRN 3753). Approved raw leafy-greens conversion: 1 cup = 1 ounce.",
           "glCode": "4111012",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.768
+          "allocationPerPortion": 1.888
         }
       ],
       "unpricedComponents": []
@@ -54901,13 +54892,13 @@
           "quantity": 2,
           "unit": "ounce",
           "recipeYield": 1,
-          "unitPrice": 0.24,
-          "priceSourceMrn": "87650",
+          "unitPrice": 0.115,
+          "priceSourceMrn": "61974",
           "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Spam).",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Bagel, Sesame Seed, 4 oz, Fresh).",
           "glCode": "4111005",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.48
+          "allocationPerPortion": 0.23
         },
         {
           "ingredientMrn": "3758",
@@ -55229,13 +55220,13 @@
           "quantity": 2,
           "unit": "ounce",
           "recipeYield": 1,
-          "unitPrice": 0.24,
-          "priceSourceMrn": "87650",
+          "unitPrice": 0.115,
+          "priceSourceMrn": "61974",
           "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Spam).",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Bagel, Sesame Seed, 4 oz, Fresh).",
           "glCode": "4111005",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.48
+          "allocationPerPortion": 0.23
         },
         {
           "ingredientMrn": "3758",
@@ -55343,13 +55334,13 @@
           "quantity": 2,
           "unit": "ounce",
           "recipeYield": 1,
-          "unitPrice": 0.24,
-          "priceSourceMrn": "87650",
+          "unitPrice": 0.115,
+          "priceSourceMrn": "61974",
           "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Spam).",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Bagel, Sesame Seed, 4 oz, Fresh).",
           "glCode": "4111005",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.48
+          "allocationPerPortion": 0.23
         },
         {
           "ingredientMrn": "3758",
@@ -55821,13 +55812,13 @@
           "quantity": 2,
           "unit": "ounce",
           "recipeYield": 1,
-          "unitPrice": 0.24,
-          "priceSourceMrn": "87650",
+          "unitPrice": 0.115,
+          "priceSourceMrn": "61974",
           "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Spam).",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Bagel, Sesame Seed, 4 oz, Fresh).",
           "glCode": "4111005",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.48
+          "allocationPerPortion": 0.23
         },
         {
           "ingredientMrn": "3758",
@@ -55935,13 +55926,13 @@
           "quantity": 2,
           "unit": "ounce",
           "recipeYield": 1,
-          "unitPrice": 0.24,
-          "priceSourceMrn": "87650",
+          "unitPrice": 0.115,
+          "priceSourceMrn": "61974",
           "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Spam).",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Bagel, Sesame Seed, 4 oz, Fresh).",
           "glCode": "4111005",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.48
+          "allocationPerPortion": 0.23
         },
         {
           "ingredientMrn": "3758",
@@ -56063,13 +56054,13 @@
           "quantity": 6,
           "unit": "ounce",
           "recipeYield": 12,
-          "unitPrice": 0.24,
-          "priceSourceMrn": "87650",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Spam).",
+          "unitPrice": 0.59,
+          "priceSourceMrn": "3753",
+          "priceSourceUnit": "cup",
+          "priceSourceNote": "Substitute price used: approved Lettuce, Salad Mix, Spring (Mesclun) reference (MRN 3753). Approved raw leafy-greens conversion: 1 cup = 1 ounce.",
           "glCode": "4111012",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.12
+          "allocationPerPortion": 0.295
         },
         {
           "ingredientMrn": "7552",
@@ -57615,13 +57606,13 @@
           "quantity": 1.125,
           "unit": "ounce",
           "recipeYield": 1,
-          "unitPrice": 0.24,
-          "priceSourceMrn": "87650",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Spam).",
+          "unitPrice": 0.59,
+          "priceSourceMrn": "3753",
+          "priceSourceUnit": "cup",
+          "priceSourceNote": "Substitute price used: approved Lettuce, Salad Mix, Spring (Mesclun) reference (MRN 3753). Approved raw leafy-greens conversion: 1 cup = 1 ounce.",
           "glCode": "4111012",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.27
+          "allocationPerPortion": 0.6637
         },
         {
           "ingredientMrn": "228203",
@@ -57877,13 +57868,13 @@
           "quantity": 1,
           "unit": "ounce",
           "recipeYield": 1,
-          "unitPrice": 0.24,
-          "priceSourceMrn": "87650",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Spam).",
+          "unitPrice": 0.59,
+          "priceSourceMrn": "3753",
+          "priceSourceUnit": "cup",
+          "priceSourceNote": "Substitute price used: approved Lettuce, Salad Mix, Spring (Mesclun) reference (MRN 3753). Approved raw leafy-greens conversion: 1 cup = 1 ounce.",
           "glCode": "4111012",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.24
+          "allocationPerPortion": 0.59
         },
         {
           "ingredientMrn": "7403",
@@ -59278,13 +59269,13 @@
           "quantity": 8,
           "unit": "ounce",
           "recipeYield": 15,
-          "unitPrice": 0.24,
-          "priceSourceMrn": "87650",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Spam).",
+          "unitPrice": 0.59,
+          "priceSourceMrn": "3753",
+          "priceSourceUnit": "cup",
+          "priceSourceNote": "Substitute price used: approved Lettuce, Salad Mix, Spring (Mesclun) reference (MRN 3753). Approved raw leafy-greens conversion: 1 cup = 1 ounce.",
           "glCode": "4111012",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.128
+          "allocationPerPortion": 0.3147
         },
         {
           "ingredientMrn": "15491",
@@ -61757,13 +61748,13 @@
           "quantity": 1.75,
           "unit": "ounce",
           "recipeYield": 1,
-          "unitPrice": 0.24,
-          "priceSourceMrn": "87650",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Spam).",
+          "unitPrice": 0.59,
+          "priceSourceMrn": "3753",
+          "priceSourceUnit": "cup",
+          "priceSourceNote": "Substitute price used: approved Lettuce, Salad Mix, Spring (Mesclun) reference (MRN 3753). Approved raw leafy-greens conversion: 1 cup = 1 ounce.",
           "glCode": "4111012",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.42
+          "allocationPerPortion": 1.0325
         },
         {
           "ingredientMrn": "228203",
@@ -78238,13 +78229,13 @@
           "quantity": 1,
           "unit": "ounce",
           "recipeYield": 1,
-          "unitPrice": 0.24,
-          "priceSourceMrn": "87650",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Spam).",
+          "unitPrice": 0.59,
+          "priceSourceMrn": "3753",
+          "priceSourceUnit": "cup",
+          "priceSourceNote": "Substitute price used: approved Lettuce, Salad Mix, Spring (Mesclun) reference (MRN 3753). Approved raw leafy-greens conversion: 1 cup = 1 ounce.",
           "glCode": "4111012",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.24
+          "allocationPerPortion": 0.59
         },
         {
           "ingredientMrn": "96707",
@@ -93183,13 +93174,13 @@
           "quantity": 1.75,
           "unit": "ounce",
           "recipeYield": 1,
-          "unitPrice": 0.24,
-          "priceSourceMrn": "87650",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Spam).",
+          "unitPrice": 0.59,
+          "priceSourceMrn": "3753",
+          "priceSourceUnit": "cup",
+          "priceSourceNote": "Substitute price used: approved Lettuce, Salad Mix, Spring (Mesclun) reference (MRN 3753). Approved raw leafy-greens conversion: 1 cup = 1 ounce.",
           "glCode": "4111012",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.42
+          "allocationPerPortion": 1.0325
         },
         {
           "ingredientMrn": "7689",
@@ -97949,13 +97940,13 @@
           "quantity": 24,
           "unit": "ounce",
           "recipeYield": 12,
-          "unitPrice": 0.08,
-          "priceSourceMrn": "93940",
+          "unitPrice": 0.07,
+          "priceSourceMrn": "176627",
           "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Coffee Syrup, Frappuccino, Creme, Starbucks).",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Potatoes, FC, Diced, 1/2\").",
           "glCode": "4111005",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.16
+          "allocationPerPortion": 0.14
         }
       ],
       "unpricedComponents": [
@@ -99577,23 +99568,19 @@
           "glCode": "4111010",
           "isSubstitutePrice": true,
           "allocationPerPortion": 0.26
-        },
+        }
+      ],
+      "unpricedComponents": [
         {
           "ingredientMrn": "16043",
           "ingredientName": "Sauce, Barbecue, Kansas City Classic",
           "quantity": 24,
           "unit": "ounce",
           "recipeYield": 12,
-          "unitPrice": 0.24,
-          "priceSourceMrn": "87650",
-          "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Spam).",
           "glCode": "4111005",
-          "isSubstitutePrice": true,
-          "allocationPerPortion": 0.48
+          "allocationPerPortion": null
         }
-      ],
-      "unpricedComponents": []
+      ]
     },
     "175362.1": {
       "recipeName": "EXC: Ciudad: Pork Al Pastor",
@@ -101197,13 +101184,13 @@
           "quantity": 2,
           "unit": "ounce",
           "recipeYield": 1,
-          "unitPrice": 0.08,
-          "priceSourceMrn": "93940",
+          "unitPrice": 0.07,
+          "priceSourceMrn": "176627",
           "priceSourceUnit": "ounce",
-          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Coffee Syrup, Frappuccino, Creme, Starbucks).",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Potatoes, FC, Diced, 1/2\").",
           "glCode": "4111005",
           "isSubstitutePrice": true,
-          "allocationPerPortion": 0.16
+          "allocationPerPortion": 0.14
         }
       ],
       "unpricedComponents": []

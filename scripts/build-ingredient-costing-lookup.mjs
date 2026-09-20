@@ -36,6 +36,18 @@ const substituteGenericTokens = new Set([
   "baby", "large", "small", "leaf", "clove", "red", "white", "green",
   "black", "light", "dark", "thin", "thick", "long", "short", "round",
   "canned", "pasteurized", "boneless", "skinless", "bulk",
+  "classic",
+]);
+// Registered culinary substitutions are intentionally narrow. They exist for
+// approved ingredient families whose commercial label does not share enough
+// useful tokens with the canonical Snapshot record to be safely inferred.
+const approvedIngredientSubstitutions = new Map([
+  ["118307", {
+    priceSourceMrn: "3753",
+    name: "Lettuce, Salad Mix, Spring (Mesclun)",
+    conversionNote: "Approved raw leafy-greens conversion: 1 cup = 1 ounce.",
+    allowLeafyGreensCupOunce: true,
+  }],
 ]);
 
 const text = (value) => String(value ?? "").trim();
@@ -123,7 +135,7 @@ function ingredientDensityOuncesPerCup(signature) {
   return null;
 }
 
-function convertAmount(amount, fromUnit, toUnit, { allowSliceEach = false, ingredientForm = "" } = {}) {
+function convertAmount(amount, fromUnit, toUnit, { allowSliceEach = false, allowLeafyGreensCupOunce = false, ingredientForm = "" } = {}) {
   const from = unitKey(fromUnit);
   const to = unitKey(toUnit);
   if (from === to) return amount;
@@ -142,6 +154,7 @@ function convertAmount(amount, fromUnit, toUnit, { allowSliceEach = false, ingre
     if (volumeUnitsInTablespoons.has(from) && weightUnitsInOunces.has(to)) return amount * volumeUnitsInTablespoons.get(from) * density / 16 / weightUnitsInOunces.get(to);
   }
   if (allowSliceEach && ((from === "slice" && to === "each") || (from === "each" && to === "slice"))) return amount;
+  if (allowLeafyGreensCupOunce && ((from === "cup" && to === "ounce") || (from === "ounce" && to === "cup"))) return amount;
   return null;
 }
 
@@ -157,13 +170,13 @@ function isCanonicalIngredientPrice(row, recipeYield) {
     && Number(recipeYield) > 0;
 }
 
-function selectedUnitPrice(candidates = [], requestedUnit, { allowSliceEach = false, ingredientForm = "" } = {}) {
+function selectedUnitPrice(candidates = [], requestedUnit, { allowSliceEach = false, allowLeafyGreensCupOunce = false, ingredientForm = "" } = {}) {
   // Only canonical Ingredient: recipes represent standardized ingredient prices.
   // A menu recipe's Recipe Portion Cost is its whole-portion cost, not the
   // price of the ingredient on that row.
   const exact = candidates.find((candidate) => unitKey(candidate.unit) === unitKey(requestedUnit));
   if (exact) return exact;
-  return candidates.find((candidate) => convertAmount(1, requestedUnit, candidate.unit, { allowSliceEach, ingredientForm }) != null) || null;
+  return candidates.find((candidate) => convertAmount(1, requestedUnit, candidate.unit, { allowSliceEach, allowLeafyGreensCupOunce, ingredientForm }) != null) || null;
 }
 
 function main() {
@@ -320,6 +333,17 @@ function main() {
     const inferred = selectedUnitPrice(directCandidates.filter((candidate) => candidate.sourceType === "snapshot residual inference"), row.unit, { ingredientForm: targetSignature });
     if (inferred) return { priceBasis: inferred, source: "exact MRN" };
 
+    const approvedSubstitution = approvedIngredientSubstitutions.get(row.ingredientMrn);
+    if (approvedSubstitution) {
+      const approvedCandidate = canonicalPriceCandidates.find((candidate) => candidate.ingredientMrn === approvedSubstitution.priceSourceMrn);
+      const approvedPrice = selectedUnitPrice(approvedCandidate ? [approvedCandidate] : [], row.unit, {
+        ingredientForm: targetSignature,
+        allowLeafyGreensCupOunce: approvedSubstitution.allowLeafyGreensCupOunce,
+      });
+      if (!approvedPrice) throw new Error(`Approved substitute source MRN ${approvedSubstitution.priceSourceMrn} is unavailable or cannot convert ${row.ingredientName}.`);
+      return { priceBasis: approvedPrice, source: "approved ingredient substitution", isSubstitutePrice: true, approvedSubstitution };
+    }
+
     // Last price-source tier: a named, unit-convertible Ingredient Snapshot
     // candidate with the closest real ingredient-name anchor. This is not an
     // exact canonical price, so it is carried through to the UI as a chef
@@ -365,10 +389,10 @@ function main() {
       continue;
     }
     const requestedQuantity = row.quantity / row.recipeYield;
-    const sourceQuantity = convertAmount(requestedQuantity, row.unit, priceBasis.unit, { allowSliceEach: Boolean(source.allowsSliceEach), ingredientForm: ingredientSignature(row.ingredientName) });
+    const sourceQuantity = convertAmount(requestedQuantity, row.unit, priceBasis.unit, { allowSliceEach: Boolean(source.allowsSliceEach), allowLeafyGreensCupOunce: Boolean(source.approvedSubstitution?.allowLeafyGreensCupOunce), ingredientForm: ingredientSignature(row.ingredientName) });
     const sourceUnitCost = priceBasis.unitPrice * priceBasis.recipeYield / priceBasis.quantity;
     const allocation = Number((sourceQuantity / priceBasis.quantity * priceBasis.unitPrice * priceBasis.recipeYield).toFixed(4));
-    const oneRequestedUnitInSource = convertAmount(1, row.unit, priceBasis.unit, { allowSliceEach: Boolean(source.allowsSliceEach), ingredientForm: ingredientSignature(row.ingredientName) });
+    const oneRequestedUnitInSource = convertAmount(1, row.unit, priceBasis.unit, { allowSliceEach: Boolean(source.allowsSliceEach), allowLeafyGreensCupOunce: Boolean(source.approvedSubstitution?.allowLeafyGreensCupOunce), ingredientForm: ingredientSignature(row.ingredientName) });
     const unitPrice = Number((oneRequestedUnitInSource * sourceUnitCost).toFixed(4));
     if (!(allocation > 0)) continue;
     addComponent(row.recipeMrn, row, componentKey, {
@@ -386,6 +410,8 @@ function main() {
         ? "Canonical Ingredient: price reference."
         : source.source === "substitute ingredient-name match"
         ? `Substitute price used: closest Ingredient Snapshot name match (${priceBasis.recipeName.replace(/^Ingredient:\s*/i, "")}).`
+        : source.source === "approved ingredient substitution"
+        ? `Substitute price used: approved ${source.approvedSubstitution.name} reference (MRN ${source.approvedSubstitution.priceSourceMrn}). ${source.approvedSubstitution.conversionNote}`
         : "Canonical normalized ingredient-form price reference."}${supportsShreddedCheeseDensity(ingredientSignature(row.ingredientName)) && unitKey(row.unit) !== unitKey(priceBasis.unit)
         ? " Shredded/grated cheese uses 4 tablespoons per ounce."
         : ""}${ingredientDensityOuncesPerCup(ingredientSignature(row.ingredientName)) != null && unitKey(row.unit) !== unitKey(priceBasis.unit)
@@ -406,7 +432,7 @@ function main() {
     resource: {
       title: "Ingredient Costing 9.19.26",
       file: "/resources/Ingredient_Costing_9.19.26.xlsx",
-      lookupMethod: "Canonical Ingredient: price references, using exact MRN first and then high-confidence normalized ingredient-form matching. Includes standard volume/weight/metric conversions, explicitly matched slice/each forms, shredded/grated cheese at 4 tablespoons per ounce, and form-limited avocado/butter density conversions. When exact pricing is unavailable, a clearly labeled substitute may use the closest unit-convertible Ingredient Snapshot name match with a real food-name anchor; generic category matches are rejected. When a flat source recipe has exactly one unresolved component and every other component is canonically priced, a repeated source-recipe residual may supply that component's unit price; ordinary menu rows are never used directly as an ingredient price.",
+      lookupMethod: "Canonical Ingredient: price references, using exact MRN first and then high-confidence normalized ingredient-form matching. Includes standard volume/weight/metric conversions, explicitly matched slice/each forms, shredded/grated cheese at 4 tablespoons per ounce, form-limited avocado/butter density conversions, and the approved Arcadian Classic Mix-to-Spring Mesclun substitution (1 cup raw leafy greens = 1 ounce). When exact pricing is unavailable, a clearly labeled substitute may use the closest unit-convertible Ingredient Snapshot name match with a real food-name anchor; generic category matches are rejected. When a flat source recipe has exactly one unresolved component and every other component is canonically priced, a repeated source-recipe residual may supply that component's unit price; ordinary menu rows are never used directly as an ingredient price.",
     },
     recipes: compactRecipes,
   };
