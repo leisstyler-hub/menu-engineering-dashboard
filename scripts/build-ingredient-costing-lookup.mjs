@@ -8,6 +8,11 @@ const root = process.cwd();
 const sourcePath = resolve(root, "public/resources/Ingredient_Costing_9.19.26.xlsx");
 const outputPath = resolve(root, "api/data/ingredientCosting91926.json");
 const excludedIngredients = new Set(["water", "ice"]);
+const canonicalAliases = new Map([
+  ["7552", { sourceMrn: "16479", note: "Canonical fresh 1/4-inch tomato-slice reference." }],
+]);
+const volumeUnitsInTablespoons = new Map([["cup", 16], ["floz", 2], ["tbsp", 1], ["tsp", 1 / 3]]);
+const weightUnitsInOunces = new Map([["pound", 16], ["ounce", 1]]);
 
 const text = (value) => String(value ?? "").trim();
 const mrn = (value) => text(value).replace(/^'/, "");
@@ -32,23 +37,40 @@ function parseIngredientAmount(value) {
   return Number.isFinite(quantity) && quantity > 0 && unit ? { quantity, unit } : null;
 }
 
+function unitKey(value) {
+  const unit = text(value).toLocaleLowerCase("en-US");
+  return new Map([["cups", "cup"], ["ounces", "ounce"], ["pounds", "pound"], ["tablespoon", "tbsp"], ["tablespoons", "tbsp"], ["teaspoon", "tsp"], ["teaspoons", "tsp"], ["fl oz", "floz"], ["fluid ounce", "floz"], ["fluid ounces", "floz"]]).get(unit) || unit;
+}
+
+function convertAmount(amount, fromUnit, toUnit, { allowSliceEach = false } = {}) {
+  const from = unitKey(fromUnit);
+  const to = unitKey(toUnit);
+  if (from === to) return amount;
+  if (volumeUnitsInTablespoons.has(from) && volumeUnitsInTablespoons.has(to)) return amount * volumeUnitsInTablespoons.get(from) / volumeUnitsInTablespoons.get(to);
+  if (weightUnitsInOunces.has(from) && weightUnitsInOunces.has(to)) return amount * weightUnitsInOunces.get(from) / weightUnitsInOunces.get(to);
+  if (allowSliceEach && ((from === "slice" && to === "each") || (from === "each" && to === "slice"))) return amount;
+  return null;
+}
+
 function isDirectIngredient(row) {
   return text(row["Usage Type"]).toLocaleLowerCase("en-US") === "ingredient"
     && text(row.Level) === "1"
     && ["AP", "EP"].includes(text(row["AP/EP/Rec"]).toLocaleUpperCase("en-US"));
 }
 
-function isCanonicalIngredientPrice(row, ingredientAmount, recipeYield) {
+function isCanonicalIngredientPrice(row, recipeYield) {
   return text(row["Recipe Name"]).startsWith("Ingredient:")
-    && ingredientAmount?.quantity === 1
-    && Number(recipeYield) === 1;
+    && Number.isFinite(Number(recipeYield))
+    && Number(recipeYield) > 0;
 }
 
-function selectedUnitPrice(candidates = []) {
+function selectedUnitPrice(candidates = [], requestedUnit, allowSliceEach = false) {
   // Only canonical Ingredient: recipes represent standardized ingredient prices.
   // A menu recipe's Recipe Portion Cost is its whole-portion cost, not the
   // price of the ingredient on that row.
-  return candidates[0] || null;
+  const exact = candidates.find((candidate) => unitKey(candidate.unit) === unitKey(requestedUnit));
+  if (exact) return exact;
+  return candidates.find((candidate) => convertAmount(1, requestedUnit, candidate.unit, { allowSliceEach }) != null) || null;
 }
 
 function main() {
@@ -81,11 +103,10 @@ function main() {
         excluded: excludedIngredients.has(normalizedName),
       };
       recipeRows.push(base);
-      if (isCanonicalIngredientPrice(row, ingredientAmount, base.recipeYield) && base.unitPrice != null && !base.excluded) {
-        const key = `${ingredientMrn}|${ingredientAmount.unit}`;
-        const candidates = unitPriceCandidates.get(key) || [];
+      if (isCanonicalIngredientPrice(row, base.recipeYield) && base.unitPrice != null && !base.excluded) {
+        const candidates = unitPriceCandidates.get(ingredientMrn) || [];
         candidates.push(base);
-        unitPriceCandidates.set(key, candidates);
+        unitPriceCandidates.set(ingredientMrn, candidates);
       }
     }
   }
@@ -103,7 +124,9 @@ function main() {
 
   for (const row of recipeRows) {
     if (!catalogMrns.has(row.recipeMrn) || row.excluded || !Number.isFinite(row.recipeYield) || row.recipeYield <= 0 || !/^\d{7}$/.test(row.glCode)) continue;
-    const priceBasis = selectedUnitPrice(unitPriceCandidates.get(`${row.ingredientMrn}|${row.unit}`));
+    const alias = canonicalAliases.get(row.ingredientMrn);
+    const priceSourceMrn = alias?.sourceMrn || row.ingredientMrn;
+    const priceBasis = selectedUnitPrice(unitPriceCandidates.get(priceSourceMrn), row.unit, Boolean(alias));
     const componentKey = [row.ingredientMrn, row.quantity, row.unit, row.recipeYield, row.glCode].join("|");
     if (!priceBasis) {
       addComponent(row.recipeMrn, row, componentKey, {
@@ -117,7 +140,12 @@ function main() {
       });
       continue;
     }
-    const allocation = Number((row.quantity / row.recipeYield * priceBasis.unitPrice).toFixed(4));
+    const requestedQuantity = row.quantity / row.recipeYield;
+    const sourceQuantity = convertAmount(requestedQuantity, row.unit, priceBasis.unit, { allowSliceEach: Boolean(alias) });
+    const sourceUnitCost = priceBasis.unitPrice * priceBasis.recipeYield / priceBasis.quantity;
+    const allocation = Number((sourceQuantity / priceBasis.quantity * priceBasis.unitPrice * priceBasis.recipeYield).toFixed(4));
+    const oneRequestedUnitInSource = convertAmount(1, row.unit, priceBasis.unit, { allowSliceEach: Boolean(alias) });
+    const unitPrice = Number((oneRequestedUnitInSource * sourceUnitCost).toFixed(4));
     if (!(allocation > 0)) continue;
     addComponent(row.recipeMrn, row, componentKey, {
       ingredientMrn: row.ingredientMrn,
@@ -125,7 +153,10 @@ function main() {
       quantity: row.quantity,
       unit: row.unit,
       recipeYield: row.recipeYield,
-      unitPrice: priceBasis.unitPrice,
+      unitPrice,
+      priceSourceMrn,
+      priceSourceUnit: priceBasis.unit,
+      priceSourceNote: alias?.note || "Canonical Ingredient: price reference.",
       glCode: row.glCode,
       allocationPerPortion: allocation,
     });
@@ -140,7 +171,7 @@ function main() {
     resource: {
       title: "Ingredient Costing 9.19.26",
       file: "/resources/Ingredient_Costing_9.19.26.xlsx",
-      lookupMethod: "Canonical Ingredient: recipe with the same ingredient MRN and unit (one-unit, yield-one standard price).",
+      lookupMethod: "Canonical Ingredient: price reference, with cup/tablespoon/teaspoon/fluid-ounce and pound/ounce conversions. Tomato MRN 7552 uses the documented canonical 1/4-inch tomato-slice alias MRN 16479.",
     },
     recipes: compactRecipes,
   };
