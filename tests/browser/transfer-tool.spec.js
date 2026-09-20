@@ -71,7 +71,7 @@ test("Transfer Tool requires chef G/L review before balancing unresolved compone
   await page.getByLabel("Menu 1", { exact: true }).selectOption("AMZ: Ohana");
   await page.getByLabel("Item 1", { exact: true }).selectOption({ label: "Huli Huli Chicken · 33065.1 · 1 piece" });
   await expect(page.getByText(/Substitute price used/i).last()).toBeVisible();
-  await expect(page.getByText(/Selecting one G\/L is the chef/i).last()).toBeVisible();
+  await expect(page.getByText(/Chef review · remaining \$0\.30/i).last()).toBeVisible();
   await expect(page.getByTestId("transfer-total")).toHaveText("$2.50");
   await page.getByRole("button", { name: "Save Draft" }).click();
   await expect(page.getByText(/Choose one chef-reviewed G\/L code/i).last()).toBeVisible();

@@ -168,7 +168,7 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
       const pricingComplete = balanced.pricingComplete;
       const allocationMessage = [
         substituteCount ? `${substituteCount} substitute Ingredient Snapshot price${substituteCount === 1 ? " was" : "s were"} used; review the flagged component${substituteCount === 1 ? "" : "s"} below.` : "",
-        balanced.residualCost > 0 ? `${money(balanced.residualCost)} remains unallocated. Choose one chef-reviewed G/L below before saving or exporting so this transfer equals the current Item + Waste Cost of ${money(balanced.targetCost)}.` : "",
+        balanced.residualCost > 0 ? `${money(balanced.residualCost)} remains unallocated. Choose one chef-reviewed G/L in the item-cost area before saving or exporting so this transfer equals the current Item + Waste Cost of ${money(balanced.targetCost)}.` : "",
         balanced.allocationExceedsItemCost ? `Mapped ingredient cost of ${money(balanced.mappedAllocationPerPortion)} exceeds the current Item + Waste Cost of ${money(balanced.targetCost)}. Review the source before saving or exporting.` : "",
         !pricingComplete && !balanced.residualCost && !balanced.allocationExceedsItemCost ? "This recipe has ingredient G/L mappings but no positive allocation available for export." : "",
       ].filter(Boolean).join(" ");
@@ -312,7 +312,7 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
     const substituteCount = components.filter((component) => component.isSubstitutePrice).length;
     const allocationMessage = [
       substituteCount ? `${substituteCount} substitute Ingredient Snapshot price${substituteCount === 1 ? " was" : "s were"} used; review the flagged component${substituteCount === 1 ? "" : "s"} below.` : "",
-      balanced.residualCost > 0 && !residualGlCode ? `${money(balanced.residualCost)} remains unallocated. Choose one chef-reviewed G/L below before saving or exporting.` : "",
+      balanced.residualCost > 0 && !residualGlCode ? `${money(balanced.residualCost)} remains unallocated. Choose one chef-reviewed G/L in the item-cost area before saving or exporting.` : "",
       balanced.residualCost > 0 && residualGlCode ? `${money(balanced.residualCost)} is allocated to the chef-selected G/L so the transfer equals the current Item + Waste Cost.` : "",
       balanced.allocationExceedsItemCost ? `Mapped ingredient cost of ${money(balanced.mappedAllocationPerPortion)} exceeds the current Item + Waste Cost of ${money(balanced.targetCost)}. Review the source before saving or exporting.` : "",
     ].filter(Boolean).join(" ");
@@ -455,8 +455,8 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
                       <div className="flex items-center justify-between gap-2"><h3 className="font-black">Item {index + 1}</h3><button type="button" aria-label={`Remove mobile item ${index + 1}`} onClick={() => setDraft((current) => ({ ...current, items: current.items.length === 1 ? [blankLine()] : current.items.filter((item) => item.lineId !== line.lineId) }))} className="rounded-lg border border-rose-200 bg-rose-50 p-2 text-rose-700"><Trash2 size={16} /></button></div>
                       <Field label="Menu"><select aria-label={`Mobile menu ${index + 1}`} value={line.menu} onChange={(event) => chooseMenu(line, event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 font-semibold"><option value="">Select menu</option>{CATALOG.menus.map((menu) => <option key={menu} value={menu}>{menu}</option>)}</select></Field>
                       <Field label="Item"><select aria-label={`Mobile item ${index + 1}`} value={line.catalogId} disabled={!line.menu || !costsReady} onChange={(event) => chooseItem(line, event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 font-semibold disabled:bg-slate-100"><option value="">{costsReady ? "Select item" : "Waiting for live costs"}</option>{choices.map((item) => <option key={item.id} value={item.id}>{item.item}{item.mrn ? ` · ${item.mrn}` : ""}{item.portion ? ` · ${item.portion}` : ""}</option>)}</select></Field>
-                      <div className="grid grid-cols-2 gap-3"><div><p className="text-xs font-black uppercase text-slate-500">Item + Waste Cost / portion</p><p className="mt-1 text-lg font-black">{Number.isFinite(Number(line.itemWasteCost)) ? money(line.itemWasteCost) : "Loading…"}</p></div><Field label="Item count"><input aria-label={`Mobile item count ${index + 1}`} type="number" min="1" step="1" value={line.quantity} onChange={(event) => updateLine(line.lineId, { quantity: event.target.value })} className="w-full rounded-lg border border-slate-300 px-3 py-2 font-semibold" /></Field></div>
-                      {line.catalogId && <IngredientAllocationList line={line} onChooseResidualGl={chooseResidualGl} />}
+                      <div className="grid grid-cols-2 gap-3"><ChefReviewCost line={line} onChooseResidualGl={chooseResidualGl} /><Field label="Item count"><input aria-label={`Mobile item count ${index + 1}`} type="number" min="1" step="1" value={line.quantity} onChange={(event) => updateLine(line.lineId, { quantity: event.target.value })} className="w-full rounded-lg border border-slate-300 px-3 py-2 font-semibold" /></Field></div>
+                      {line.catalogId && <IngredientAllocationList line={line} />}
                       <p className="text-sm font-black text-emerald-700">Line value {Number.isFinite(lineValue) ? money(lineValue) : "—"}</p>
                     </article>
                   );
@@ -465,7 +465,7 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
               <div className="hidden max-w-full overflow-x-auto md:block">
                 <table className="min-w-[780px] w-full text-left text-sm">
                   <thead className="bg-slate-950 text-white">
-                    <tr><th className="p-3">Menu</th><th className="p-3">Item</th><th className="p-3">Item + Waste Cost / portion</th><th className="p-3">Item Count</th><th className="p-3"><span className="sr-only">Remove</span></th></tr>
+                    <tr><th className="p-3">Menu</th><th className="p-3">Item</th><th className="p-3">Item cost / review</th><th className="p-3">Item Count</th><th className="p-3"><span className="sr-only">Remove</span></th></tr>
                   </thead>
                   <tbody>
                     {draft.items.map((line, index) => {
@@ -476,11 +476,11 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
                         <tr className="align-top">
                           <td className="w-[220px] p-3"><select aria-label={`Menu ${index + 1}`} value={line.menu} onChange={(event) => chooseMenu(line, event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 font-semibold"><option value="">Select menu</option>{CATALOG.menus.map((menu) => <option key={menu} value={menu}>{menu}</option>)}</select></td>
                           <td className="w-[290px] p-3"><select aria-label={`Item ${index + 1}`} value={line.catalogId} disabled={!line.menu || !costsReady} onChange={(event) => chooseItem(line, event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 font-semibold disabled:bg-slate-100"><option value="">{costsReady ? "Select item" : "Waiting for live costs"}</option>{choices.map((item) => <option key={item.id} value={item.id}>{item.item}{item.mrn ? ` · ${item.mrn}` : ""}{item.portion ? ` · ${item.portion}` : ""}</option>)}</select>{line.catalogId && <p className="mt-2 text-xs font-semibold text-slate-500">MRN {line.mrn || "unavailable"} · {line.portion || "portion unavailable"}</p>}</td>
-                          <td className="w-[150px] p-3"><p className="text-lg font-black">{Number.isFinite(Number(line.itemWasteCost)) ? money(line.itemWasteCost) : "Loading…"}</p><p className="mt-1 text-xs font-semibold text-slate-500">Item + Waste Cost / portion</p></td>
+                          <td className="w-[250px] p-3"><ChefReviewCost line={line} onChooseResidualGl={chooseResidualGl} /></td>
                           <td className="w-[150px] p-3"><input aria-label={`Item count ${index + 1}`} type="number" min="1" step="1" value={line.quantity} onChange={(event) => updateLine(line.lineId, { quantity: event.target.value })} className="w-24 rounded-lg border border-slate-300 px-3 py-2 font-semibold" /><p className="mt-2 text-xs font-black text-emerald-700">Line value {Number.isFinite(lineValue) ? money(lineValue) : "—"}</p></td>
                           <td className="p-3"><button type="button" aria-label={`Remove item ${index + 1}`} onClick={() => setDraft((current) => ({ ...current, items: current.items.length === 1 ? [blankLine()] : current.items.filter((item) => item.lineId !== line.lineId) }))} className="rounded-lg border border-rose-200 bg-rose-50 p-2 text-rose-700 hover:bg-rose-100"><Trash2 size={16} /></button></td>
                         </tr>
-                        {line.catalogId && <tr className="border-b border-slate-200 bg-slate-50 last:border-b-0"><td colSpan={5} className="px-3 pb-4"><IngredientAllocationList line={line} onChooseResidualGl={chooseResidualGl} /></td></tr>}
+                        {line.catalogId && <tr className="border-b border-slate-200 bg-slate-50 last:border-b-0"><td colSpan={5} className="px-3 pb-4"><IngredientAllocationList line={line} /></td></tr>}
                         </React.Fragment>
                       );
                     })}
@@ -548,18 +548,31 @@ function UnitField({ label, value, onChange, error }) {
   return <Field label={label} error={error}><select aria-label={label} value={value} onChange={(event) => onChange(event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-semibold"><option value="">Choose unit</option>{Object.entries(CAFE_UNITS.reduce((groups, unit) => ({ ...groups, [unit.district]: [...(groups[unit.district] || []), unit.cafe] }), {})).map(([district, cafes]) => <optgroup key={district} label={district}>{cafes.map((cafe) => <option key={cafe} value={cafe}>{cafe}</option>)}</optgroup>)}</select></Field>;
 }
 
-function IngredientAllocationList({ line, onChooseResidualGl = () => {} }) {
+function ChefReviewCost({ line, onChooseResidualGl }) {
+  const hasRemainingCost = Number(line.residualCost) > 0;
+  return <div>
+    <p className="text-lg font-black">{Number.isFinite(Number(line.itemWasteCost)) ? money(line.itemWasteCost) : "Loading…"}</p>
+    <p className="mt-1 text-xs font-semibold text-slate-500">Item + Waste Cost / portion</p>
+    {hasRemainingCost && <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2">
+      <p className="text-[10px] font-black uppercase tracking-[0.1em] text-amber-900">Chef review · remaining {money(line.residualCost)}</p>
+      <label className="mt-1 block"><span className="sr-only">Chef-reviewed G/L for {line.item}</span><select aria-label={`Chef-reviewed G/L for ${line.item}`} value={line.residualGlCode || ""} onChange={(event) => onChooseResidualGl(line, event.target.value)} className="w-full rounded-md border border-amber-300 bg-white px-2 py-1.5 text-xs font-black text-slate-900"><option value="">Choose remaining-cost G/L</option>{S4_GL_ACCOUNTS.map((account) => <option key={account.code} value={account.code}>{account.code} · {account.category}</option>)}</select></label>
+      {!line.residualGlCode && <p className="mt-1 text-[10px] font-bold leading-4 text-amber-900">Choose one G/L to approve this remaining cost.</p>}
+      {line.residualGlCode && <p className="mt-1 text-[10px] font-bold leading-4 text-emerald-800">Chef-reviewed G/L selected.</p>}
+    </div>}
+  </div>;
+}
+
+function IngredientAllocationList({ line }) {
   if (line.allocationStatus === "loading") return <p className="pt-3 text-xs font-bold text-amber-800">Loading Ingredient Costing 9.19.26 allocation…</p>;
   if (!line.ingredientAllocations?.length) return <p role="alert" className="pt-3 text-xs font-bold text-rose-800">{line.allocationMessage || "No ingredient mapping is available for this menu item."}</p>;
   return <div className="mt-3 overflow-hidden rounded-lg border border-slate-200 bg-white">
     <p className="border-b border-slate-200 bg-slate-100 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-slate-600">Automatic ingredient G/L allocation / portion</p>
     {line.allocationMessage && <p role="alert" className="border-b border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-900">{line.allocationMessage}</p>}
     <div className="divide-y divide-slate-100">{line.ingredientAllocations.map((allocation, index) => <div key={`${allocation.ingredientMrn}-${allocation.unit}-${index}`} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 px-3 py-2 text-xs"><div><p className="font-black">{allocation.ingredientName}</p><p className="text-slate-500">MRN {allocation.ingredientMrn} · {allocation.quantity} {allocation.unit} / {allocation.recipeYield} yield · {allocation.glCode}{allocation.priceSourceMrn && allocation.priceSourceMrn !== allocation.ingredientMrn ? ` · price source MRN ${allocation.priceSourceMrn}` : ""}</p>{allocation.isSubstitutePrice && <p className="mt-1 font-bold text-amber-800">Substitute price used — {allocation.priceSourceNote}</p>}{allocation.isResidualCostBalance && <p className="mt-1 font-bold text-emerald-800">Chef-reviewed balance — {allocation.priceSourceNote}</p>}</div><p className="font-black text-slate-800">{Number.isFinite(Number(allocation.allocationPerPortion)) ? money(allocation.allocationPerPortion) : "Price source needed"}</p></div>)}
-    {(line.unpricedComponents || []).map((component, index) => <div key={`unpriced-${component.ingredientMrn}-${component.unit}-${index}`} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 bg-amber-50 px-3 py-2 text-xs"><div><p className="font-black">{component.ingredientName}</p><p className="text-slate-500">MRN {component.ingredientMrn} · {component.quantity} {component.unit} / {component.recipeYield} yield · source price unresolved</p><p className="mt-1 font-bold text-amber-800">No direct price was found; review the residual allocation below.</p></div><p className="font-black text-amber-900">Review</p></div>)}</div>
+    {(line.unpricedComponents || []).map((component, index) => <div key={`unpriced-${component.ingredientMrn}-${component.unit}-${index}`} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 bg-amber-50 px-3 py-2 text-xs"><div><p className="font-black">{component.ingredientName}</p><p className="text-slate-500">MRN {component.ingredientMrn} · {component.quantity} {component.unit} / {component.recipeYield} yield · source price unresolved</p><p className="mt-1 font-bold text-amber-800">No direct price was found; use the chef-reviewed remaining-cost selection above.</p></div><p className="font-black text-amber-900">Review</p></div>)}</div>
     <div className={`border-t p-3 ${line.residualCost > 0 ? "border-amber-200 bg-amber-50" : "border-slate-200 bg-slate-50"}`}>
-      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_220px] md:items-end"><div><p className="text-xs font-black uppercase tracking-[0.12em] text-slate-600">Chef review: remaining item cost</p><p className="mt-1 text-xs font-semibold text-slate-600">Item + Waste Cost {money(line.itemWasteCost)} · mapped ingredient allocation {money(line.mappedAllocationPerPortion || 0)} · remaining {money(line.residualCost || 0)}</p></div>{line.residualCost > 0 && <label className="block"><span className="sr-only">Chef-reviewed G/L for {line.item}</span><select aria-label={`Chef-reviewed G/L for ${line.item}`} value={line.residualGlCode || ""} onChange={(event) => onChooseResidualGl(line, event.target.value)} className="w-full rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm font-black text-slate-900"><option value="">Choose remaining-cost G/L</option>{S4_GL_ACCOUNTS.map((account) => <option key={account.code} value={account.code}>{account.code} · {account.category}</option>)}</select></label>}</div>
-      {line.residualCost > 0 && !line.residualGlCode && <p className="mt-2 text-xs font-bold text-amber-900">Selecting one G/L is the chef’s review approval. Saving and export stay blocked until a selection is made.</p>}
-      {line.residualCost > 0 && line.residualGlCode && <p className="mt-2 text-xs font-bold text-emerald-800">Chef-reviewed G/L selected. The remaining cost is included in the export allocation.</p>}
+      <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-600">G/L allocation reconciliation</p>
+      <p className="mt-1 text-xs font-semibold text-slate-600">Item + Waste Cost {money(line.itemWasteCost)} · mapped ingredient allocation {money(line.mappedAllocationPerPortion || 0)} · remaining {money(line.residualCost || 0)}{line.residualCost > 0 ? ". The chef-review selection is in the item-cost column above." : "."}</p>
       {line.allocationExceedsItemCost && <p className="mt-2 text-xs font-bold text-rose-800">Mapped ingredient allocation exceeds the current Item + Waste Cost. This line cannot be saved or exported until its source pricing is corrected.</p>}
     </div>
   </div>;
