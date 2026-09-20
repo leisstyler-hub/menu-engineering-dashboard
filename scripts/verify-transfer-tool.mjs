@@ -19,8 +19,11 @@ const caprese = INGREDIENT_COSTING_LOOKUP.recipes["34303.45"];
 const capreseMozzarella = caprese?.components?.find((component) => component.ingredientMrn === "7776");
 const capreseTomato = caprese?.components?.find((component) => component.ingredientMrn === "7552");
 const pintoBeans = INGREDIENT_COSTING_LOOKUP.recipes["157816"]?.components?.find((component) => component.ingredientMrn === "169551");
-if (capreseMozzarella?.unitPrice !== 0.32 || capreseMozzarella?.allocationPerPortion !== 1.28 || capreseTomato?.priceSourceMrn !== "16479" || capreseTomato?.allocationPerPortion !== 0.18 || pintoBeans?.allocationPerPortion !== 0.08) {
-  fail("ingredient lookup must use canonical prices, explicit tomato aliasing, and approved unit conversions");
+const caesar = INGREDIENT_COSTING_LOOKUP.recipes["37311.43"];
+const caesarParmesan = caesar?.components?.find((component) => component.ingredientMrn === "1648");
+const caesarRomaine = caesar?.components?.find((component) => component.ingredientMrn === "3760");
+if (capreseMozzarella?.unitPrice !== 0.32 || capreseMozzarella?.allocationPerPortion !== 1.28 || capreseTomato?.priceSourceMrn !== "16479" || capreseTomato?.allocationPerPortion !== 0.18 || pintoBeans?.allocationPerPortion !== 0.08 || caesarParmesan?.allocationPerPortion !== 0.24 || caesarRomaine?.priceSourceMrn !== "3756" || caesarRomaine?.allocationPerPortion !== 0.29 || caesar?.unpricedComponents?.length !== 0) {
+  fail("ingredient lookup must use canonical prices, normalized ingredient-form matching, and approved unit conversions");
 }
 if (transferRecordId(" My  Transfer ") !== "transfer|my%20transfer") fail("title identity is not deterministic");
 if (normalizeTransferTitle(" MY   TRANSFER ") !== "my transfer") fail("title normalization is not case/space insensitive");

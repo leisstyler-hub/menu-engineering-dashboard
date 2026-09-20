@@ -1,1 +1,1 @@
-export const APP_VERSION_STAMP = "2026.09.20.003-transfer-unit-conversions";
+export const APP_VERSION_STAMP = "2026.09.20.004-transfer-canonical-matching";

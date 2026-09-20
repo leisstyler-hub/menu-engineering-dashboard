@@ -8,11 +8,22 @@ const root = process.cwd();
 const sourcePath = resolve(root, "public/resources/Ingredient_Costing_9.19.26.xlsx");
 const outputPath = resolve(root, "api/data/ingredientCosting91926.json");
 const excludedIngredients = new Set(["water", "ice"]);
-const canonicalAliases = new Map([
-  ["7552", { sourceMrn: "16479", note: "Canonical fresh 1/4-inch tomato-slice reference." }],
-]);
 const volumeUnitsInTablespoons = new Map([["cup", 16], ["floz", 2], ["tbsp", 1], ["tsp", 1 / 3]]);
 const weightUnitsInOunces = new Map([["pound", 16], ["ounce", 1]]);
+// These descriptors do not distinguish the food or its usable form. They are
+// intentionally narrow: a form such as chopped, shredded, sliced, or diced
+// remains part of the signature and must agree before a cross-MRN reference is
+// accepted.
+const nonCanonicalDescriptors = new Set([
+  "ingredient", "fresh", "frozen", "bulk", "fancy", "pre", "each", "brand",
+  "sales", "foodservice", "food", "product", "pack", "case", "bag", "box",
+  "can", "bottle", "jar", "pouch", "rtb", "rte", "ap", "ep",
+]);
+const signatureTokenAliases = new Map([
+  ["tomatoes", "tomato"], ["potatoes", "potato"], ["berries", "berry"],
+  ["cheeses", "cheese"], ["leaves", "leaf"], ["onions", "onion"],
+  ["peppers", "pepper"], ["chiles", "chile"], ["chilies", "chile"],
+]);
 
 const text = (value) => String(value ?? "").trim();
 const mrn = (value) => text(value).replace(/^'/, "");
@@ -42,12 +53,51 @@ function unitKey(value) {
   return new Map([["cups", "cup"], ["ounces", "ounce"], ["pounds", "pound"], ["tablespoon", "tbsp"], ["tablespoons", "tbsp"], ["teaspoon", "tsp"], ["teaspoons", "tsp"], ["fl oz", "floz"], ["fluid ounce", "floz"], ["fluid ounces", "floz"]]).get(unit) || unit;
 }
 
-function convertAmount(amount, fromUnit, toUnit, { allowSliceEach = false } = {}) {
+function ingredientSignature(value) {
+  const tokens = text(value)
+    .toLocaleLowerCase("en-US")
+    .replace(/\bpre[-\s]/g, "")
+    .replace(/[^a-z0-9/]+/g, " ")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((token) => signatureTokenAliases.get(token) || token)
+    .filter((token) => !nonCanonicalDescriptors.has(token));
+  return [...new Set(tokens)].sort().join("|");
+}
+
+function signatureTokens(signature) {
+  return signature ? signature.split("|") : [];
+}
+
+function matchingIngredientForm(targetSignature, candidateSignature) {
+  if (!targetSignature || !candidateSignature) return false;
+  if (targetSignature === candidateSignature) return true;
+  const target = new Set(signatureTokens(targetSignature));
+  const candidate = signatureTokens(candidateSignature);
+  // A longer, form-specific canonical reference may be embedded in an
+  // ingredient name that adds a supplier or packaging descriptor. Do not use
+  // a generic one-token match (for example, just "tomato").
+  return candidate.length >= 2 && candidate.every((token) => target.has(token));
+}
+
+function supportsShreddedCheeseDensity(signature) {
+  const tokens = new Set(signatureTokens(signature));
+  return tokens.has("cheese") && (tokens.has("shredded") || tokens.has("grated"));
+}
+
+function convertAmount(amount, fromUnit, toUnit, { allowSliceEach = false, ingredientForm = "" } = {}) {
   const from = unitKey(fromUnit);
   const to = unitKey(toUnit);
   if (from === to) return amount;
   if (volumeUnitsInTablespoons.has(from) && volumeUnitsInTablespoons.has(to)) return amount * volumeUnitsInTablespoons.get(from) / volumeUnitsInTablespoons.get(to);
   if (weightUnitsInOunces.has(from) && weightUnitsInOunces.has(to)) return amount * weightUnitsInOunces.get(from) / weightUnitsInOunces.get(to);
+  // Culinary standard for loose shredded/grated cheese: 1 ounce = 1/4 cup
+  // (4 tablespoons). It is applied only when the food-form signature retains
+  // both "cheese" and "shredded" or "grated".
+  if (supportsShreddedCheeseDensity(ingredientForm)) {
+    if (weightUnitsInOunces.has(from) && volumeUnitsInTablespoons.has(to)) return amount * weightUnitsInOunces.get(from) * 4 / volumeUnitsInTablespoons.get(to);
+    if (volumeUnitsInTablespoons.has(from) && weightUnitsInOunces.has(to)) return amount * volumeUnitsInTablespoons.get(from) / 4 / weightUnitsInOunces.get(to);
+  }
   if (allowSliceEach && ((from === "slice" && to === "each") || (from === "each" && to === "slice"))) return amount;
   return null;
 }
@@ -64,19 +114,20 @@ function isCanonicalIngredientPrice(row, recipeYield) {
     && Number(recipeYield) > 0;
 }
 
-function selectedUnitPrice(candidates = [], requestedUnit, allowSliceEach = false) {
+function selectedUnitPrice(candidates = [], requestedUnit, { allowSliceEach = false, ingredientForm = "" } = {}) {
   // Only canonical Ingredient: recipes represent standardized ingredient prices.
   // A menu recipe's Recipe Portion Cost is its whole-portion cost, not the
   // price of the ingredient on that row.
   const exact = candidates.find((candidate) => unitKey(candidate.unit) === unitKey(requestedUnit));
   if (exact) return exact;
-  return candidates.find((candidate) => convertAmount(1, requestedUnit, candidate.unit, { allowSliceEach }) != null) || null;
+  return candidates.find((candidate) => convertAmount(1, requestedUnit, candidate.unit, { allowSliceEach, ingredientForm }) != null) || null;
 }
 
 function main() {
   const workbook = XLSX.readFile(sourcePath, { raw: false });
   const recipeRows = [];
   const unitPriceCandidates = new Map();
+  const canonicalPriceCandidates = [];
 
   for (const sheetName of workbook.SheetNames) {
     if (sheetName === "_Source Map") continue;
@@ -107,6 +158,11 @@ function main() {
         const candidates = unitPriceCandidates.get(ingredientMrn) || [];
         candidates.push(base);
         unitPriceCandidates.set(ingredientMrn, candidates);
+        canonicalPriceCandidates.push({
+          ...base,
+          canonicalSignature: ingredientSignature(base.recipeName.replace(/^Ingredient:\s*/i, "")),
+          ingredientSignature: ingredientSignature(base.ingredientName),
+        });
       }
     }
   }
@@ -122,11 +178,24 @@ function main() {
     recipes[recipeMrn] = current;
   };
 
+  const priceBasisFor = (row) => {
+    const targetSignature = ingredientSignature(row.ingredientName);
+    const direct = selectedUnitPrice(unitPriceCandidates.get(row.ingredientMrn), row.unit, { ingredientForm: targetSignature });
+    if (direct) return { priceBasis: direct, source: "exact MRN" };
+
+    const formMatches = canonicalPriceCandidates.filter((candidate) => (
+      matchingIngredientForm(targetSignature, candidate.canonicalSignature)
+      || matchingIngredientForm(targetSignature, candidate.ingredientSignature)
+    ));
+    const allowsSliceEach = targetSignature.includes("slice") && formMatches.some((candidate) => candidate.canonicalSignature.includes("slice") || candidate.ingredientSignature.includes("slice"));
+    const matched = selectedUnitPrice(formMatches, row.unit, { allowSliceEach: allowsSliceEach, ingredientForm: targetSignature });
+    return matched ? { priceBasis: matched, source: "normalized ingredient form", allowsSliceEach } : null;
+  };
+
   for (const row of recipeRows) {
     if (!catalogMrns.has(row.recipeMrn) || row.excluded || !Number.isFinite(row.recipeYield) || row.recipeYield <= 0 || !/^\d{7}$/.test(row.glCode)) continue;
-    const alias = canonicalAliases.get(row.ingredientMrn);
-    const priceSourceMrn = alias?.sourceMrn || row.ingredientMrn;
-    const priceBasis = selectedUnitPrice(unitPriceCandidates.get(priceSourceMrn), row.unit, Boolean(alias));
+    const source = priceBasisFor(row);
+    const priceBasis = source?.priceBasis;
     const componentKey = [row.ingredientMrn, row.quantity, row.unit, row.recipeYield, row.glCode].join("|");
     if (!priceBasis) {
       addComponent(row.recipeMrn, row, componentKey, {
@@ -141,10 +210,10 @@ function main() {
       continue;
     }
     const requestedQuantity = row.quantity / row.recipeYield;
-    const sourceQuantity = convertAmount(requestedQuantity, row.unit, priceBasis.unit, { allowSliceEach: Boolean(alias) });
+    const sourceQuantity = convertAmount(requestedQuantity, row.unit, priceBasis.unit, { allowSliceEach: Boolean(source.allowsSliceEach), ingredientForm: ingredientSignature(row.ingredientName) });
     const sourceUnitCost = priceBasis.unitPrice * priceBasis.recipeYield / priceBasis.quantity;
     const allocation = Number((sourceQuantity / priceBasis.quantity * priceBasis.unitPrice * priceBasis.recipeYield).toFixed(4));
-    const oneRequestedUnitInSource = convertAmount(1, row.unit, priceBasis.unit, { allowSliceEach: Boolean(alias) });
+    const oneRequestedUnitInSource = convertAmount(1, row.unit, priceBasis.unit, { allowSliceEach: Boolean(source.allowsSliceEach), ingredientForm: ingredientSignature(row.ingredientName) });
     const unitPrice = Number((oneRequestedUnitInSource * sourceUnitCost).toFixed(4));
     if (!(allocation > 0)) continue;
     addComponent(row.recipeMrn, row, componentKey, {
@@ -154,9 +223,13 @@ function main() {
       unit: row.unit,
       recipeYield: row.recipeYield,
       unitPrice,
-      priceSourceMrn,
+      priceSourceMrn: priceBasis.ingredientMrn,
       priceSourceUnit: priceBasis.unit,
-      priceSourceNote: alias?.note || "Canonical Ingredient: price reference.",
+      priceSourceNote: `${source.source === "exact MRN"
+        ? "Canonical Ingredient: price reference."
+        : "Canonical normalized ingredient-form price reference."}${supportsShreddedCheeseDensity(ingredientSignature(row.ingredientName)) && unitKey(row.unit) !== unitKey(priceBasis.unit)
+        ? " Shredded/grated cheese uses 4 tablespoons per ounce."
+        : ""}`,
       glCode: row.glCode,
       allocationPerPortion: allocation,
     });
@@ -171,7 +244,7 @@ function main() {
     resource: {
       title: "Ingredient Costing 9.19.26",
       file: "/resources/Ingredient_Costing_9.19.26.xlsx",
-      lookupMethod: "Canonical Ingredient: price reference, with cup/tablespoon/teaspoon/fluid-ounce and pound/ounce conversions. Tomato MRN 7552 uses the documented canonical 1/4-inch tomato-slice alias MRN 16479.",
+      lookupMethod: "Canonical Ingredient: price references, using exact MRN first and then high-confidence normalized ingredient-form matching. Includes cup/tablespoon/teaspoon/fluid-ounce, pound/ounce, slice/each conversions when the matched ingredient form explicitly identifies a slice, and the standard 4-tablespoons-per-ounce conversion for shredded/grated cheese.",
     },
     recipes: compactRecipes,
   };
