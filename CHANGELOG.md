@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-21
+
+- [Sep 21, 5:58 PM] Prepared `2026.09.21.001-transfer-cost-ceiling`. Item + Waste Cost is now the absolute per-portion Transfer Tool cost ceiling. If mapped ingredient G/L costs exceed it, every mapped allocation is reduced by one common percentage until the adjusted sum exactly equals Item + Waste Cost; original mapped values remain visible for audit. Eight-decimal allocation precision keeps tiny real ingredient costs positive, and reopened/copied lines discard stale cap metadata before recalculating against the current item cost. S4 cent rounding is reconciled within each item so exported rows equal item count × Item + Waste Cost exactly, while client and server guards reject non-reconciled versioned transfers. Allocation details now default to a compact collapsed summary for multi-line transfers, with all ingredient, source, G/L, substitute, adjustment, unresolved, and reconciliation details preserved on expansion; the positive-gap chef review is a smaller inline control. Full `pnpm run verify`, all 475 real over-mapped catalog cases, a true cent-correction export, both server reconciliation directions, and focused browser coverage 7/7 passed; independent Reviewer and Verifier approved. Release state: PREPARED.
+
 ## 2026-09-20
 
 - Published `2026.09.20.009-transfer-review-banner`: moved the chef-reviewed remaining-cost G/L selector out of the ingredient allocation panel and into the line’s Item + Waste Cost area. The compact mild-amber review block keeps the remaining dollar amount and selected G/L visually aligned with the other top-line costs; the lower panel now only reconciles the ingredient subtotal and points back to that selection.

@@ -59,6 +59,12 @@ function validateTransferRecord(record = {}) {
     if (allocations.some((allocation) => !/^\d{7}$/.test(String(allocation.glCode || "")) || !(Number(allocation.allocationPerPortion) > 0))) {
       return "Every ingredient allocation requires an approved G/L code and a positive amount.";
     }
+    if (record.items.some((item) => {
+      const allocated = item.ingredientAllocations.reduce((sum, allocation) => sum + Number(allocation.allocationPerPortion || 0), 0);
+      return Math.abs(allocated - Number(item.itemWasteCost)) >= 0.0001;
+    })) {
+      return "Every ingredient allocation must equal its Item + Waste Cost; mapped G/L costs may never exceed the item cost.";
+    }
   }
   const expectedTotal = record.items.reduce((sum, item) => sum + (Number(item.quantity) * (Array.isArray(item.ingredientAllocations) ? item.ingredientAllocations.reduce((allocationSum, allocation) => allocationSum + Number(allocation.allocationPerPortion || 0), 0) : 0)), 0);
   if (!Number.isFinite(Number(record.totalValue)) || Math.abs(Number(record.totalValue) - expectedTotal) > 0.000001) {

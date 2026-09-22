@@ -10,6 +10,12 @@ When a mission produces an approved product decision, Scribe adds an entry below
 
 ## Decisions
 
+### 2026-09-21 - Item + Waste Cost is the absolute Transfer Tool allocation ceiling
+
+Alex established an absolute Transfer Tool rule: the current menu-card Item + Waste Cost is the authoritative per-portion transfer cost. If the sum of mapped ingredient G/L costs is higher, every mapped allocation is reduced by the same percentage until their sum equals Item + Waste Cost; no mapped or exported total may exceed that cost. The original source allocation remains visible for audit, and S4 cent rounding must reconcile back to the exact item-count × Item + Waste Cost total. A positive gap below Item + Waste Cost still uses the existing chef-selected residual G/L review. The server must reject a saved versioned transfer whose allocation does not equal Item + Waste Cost. Allocation details remain available but are collapsed into a compact per-line summary by default so transfers with ten or more items remain usable. Requesting Admin / Admin of Record: Alex Neuse.
+
+Rejected alternative: blocking an over-mapped item for source review without producing a usable transfer line.
+
 ### 2026-09-19 - S4-shaped Transfer Tool export
 
 Alex approved upgrading the shared draft Transfer Tool to export the exact S4 `ExpenseTransfer_Between_PC_Template.xlsx` form. Each selected menu item is one transfer row with chef-entered From G/L and To G/L accounts, an editable description defaulted from item plus transfer title and capped at 50 characters, and Transfer Amount calculated as Item + Waste Cost multiplied by item count and rounded to two decimal places. A transfer-level optional Event ID is editable and repeated on every exported row. Receiving cafés use the café/cost-center mapping from Alex’s attached regional workbook; stale personnel names and positions are not product data, the source workbook is not bundled, and unmapped cafés require a manual receiving profit center. Departing profit center remains internal because S4 uses the signed-in unit.

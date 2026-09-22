@@ -41,6 +41,8 @@ test("Transfer Tool expands a selected item into automatic ingredient G/L rows a
   await page.getByLabel("Menu 1", { exact: true }).selectOption("AMZ: Ohana");
   await page.getByLabel("Item 1", { exact: true }).selectOption({ label: "Huli Huli Chicken · 33065.1 · 1 piece" });
   await expect(page.getByText("Automatic ingredient G/L allocation").last()).toBeVisible();
+  await expect(page.getByText("Chicken Thigh").last()).not.toBeVisible();
+  await page.locator("details").filter({ hasText: "Automatic ingredient G/L allocation" }).last().locator("summary").click();
   await expect(page.getByText("Chicken Thigh").last()).toBeVisible();
   await expect(page.getByText("4111003").last()).toBeVisible();
   await page.getByLabel("Item count 1", { exact: true }).fill("2");
@@ -70,8 +72,9 @@ test("Transfer Tool requires chef G/L review before balancing unresolved compone
   await page.getByLabel("Receiving unit").selectOption("Nessie");
   await page.getByLabel("Menu 1", { exact: true }).selectOption("AMZ: Ohana");
   await page.getByLabel("Item 1", { exact: true }).selectOption({ label: "Huli Huli Chicken · 33065.1 · 1 piece" });
+  await page.locator("details").filter({ hasText: "Automatic ingredient G/L allocation" }).last().locator("summary").click();
   await expect(page.getByText(/Substitute price used/i).last()).toBeVisible();
-  await expect(page.getByText(/Chef review · remaining \$0\.30/i).last()).toBeVisible();
+  await expect(page.getByText(/Review \$0\.30/i).last()).toBeVisible();
   await expect(page.getByTestId("transfer-total")).toHaveText("$2.50");
   await page.getByRole("button", { name: "Save Draft" }).click();
   await expect(page.getByText(/Choose one chef-reviewed G\/L code/i).last()).toBeVisible();
@@ -79,6 +82,31 @@ test("Transfer Tool requires chef G/L review before balancing unresolved compone
   await page.getByRole("button", { name: "Save Draft" }).click();
   const savedAllocations = writes[0].records[0].items[0].ingredientAllocations;
   expect(savedAllocations).toEqual(expect.arrayContaining([expect.objectContaining({ isSubstitutePrice: true }), expect.objectContaining({ isResidualCostBalance: true, glCode: "4111012", allocationPerPortion: 0.3 })]));
+});
+
+test("Transfer Tool proportionally caps every mapped G/L at Item + Waste Cost", async ({ page }) => {
+  const overMappedComponents = [
+    { ingredientMrn: "protein", ingredientName: "Sandwich protein", quantity: 1, unit: "portion", recipeYield: 1, unitPrice: 2, glCode: "4111003", allocationPerPortion: 2 },
+    { ingredientMrn: "produce", ingredientName: "Sandwich produce", quantity: 1, unit: "portion", recipeYield: 1, unitPrice: 1, glCode: "4111012", allocationPerPortion: 1 },
+  ];
+  const writes = await mockTransferStorage(page, { huliComponents: overMappedComponents, huliCost: 2.45 });
+  await openTool(page, /open transfer tool/i, /^Transfer Tool$/);
+  await page.getByLabel("Globally unique title").fill("QA item cost ceiling");
+  await page.getByLabel("Departing unit").selectOption("Dawson");
+  await page.getByLabel("Receiving unit").selectOption("Nessie");
+  await page.getByLabel("Menu 1", { exact: true }).selectOption("AMZ: Ohana");
+  await page.getByLabel("Item 1", { exact: true }).selectOption({ label: "Huli Huli Chicken · 33065.1 · 1 piece" });
+  const allocationDetails = page.locator("details").filter({ hasText: "Automatic ingredient G/L allocation" }).last();
+  await expect(allocationDetails.locator("summary")).toContainText("Scaled to Item + Waste Cost");
+  await allocationDetails.locator("summary").click();
+  await expect(allocationDetails).toContainText("Mapped ingredient cost was $3.00");
+  await expect(allocationDetails).toContainText("source $2.00 → mapped $1.63");
+  await page.getByRole("button", { name: "Save Draft" }).click();
+  const savedLine = writes[0].records[0].items[0];
+  expect(savedLine.allocationWasScaled).toBe(true);
+  expect(savedLine.sourceMappedAllocationPerPortion).toBe(3);
+  expect(Number(savedLine.ingredientAllocations.reduce((sum, allocation) => sum + allocation.allocationPerPortion, 0).toFixed(4))).toBe(2.45);
+  expect(savedLine.ingredientAllocations.every((allocation, index) => allocation.allocationPerPortion < overMappedComponents[index].allocationPerPortion)).toBe(true);
 });
 
 test("Transfer Tool blocks an item with no ingredient mapping", async ({ page }) => {
@@ -101,8 +129,8 @@ test("Transfer Tool batch export uses stored automatic allocations without write
   const writes = await mockTransferStorage(page); await openTool(page, /open transfer tool/i, /^Transfer Tool$/);
   await page.getByLabel("Include Existing Transfer in batch export").check(); await page.getByLabel("Include Second Transfer in batch export").check();
   await expect(page.getByRole("heading", { name: "Review ingredient allocations" })).toBeVisible();
-  await page.locator("details").filter({ hasText: "Existing Transfer" }).locator("summary").click();
-  await page.locator("details").filter({ hasText: "Second Transfer" }).locator("summary").click();
+  await page.locator("details").filter({ hasText: "Existing Transfer" }).locator("summary").first().click();
+  await page.locator("details").filter({ hasText: "Second Transfer" }).locator("summary").first().click();
   await page.getByLabel("Existing Transfer event ID").fill("BATCH-7"); await page.getByLabel("Second Transfer event ID").fill("BATCH-8");
   const downloadPromise = page.waitForEvent("download"); await page.getByRole("button", { name: "Download selected transfers (2)" }).click();
   const zip = await JSZip.loadAsync(await readFile(await (await downloadPromise).path()));

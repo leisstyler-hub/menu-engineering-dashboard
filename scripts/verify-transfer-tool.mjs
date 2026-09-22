@@ -4,9 +4,9 @@ import { join } from "node:path";
 import JSZip from "jszip";
 import CATALOG from "../src/data/transferToolCatalog.json" with { type: "json" };
 import INGREDIENT_COSTING_LOOKUP from "../api/data/ingredientCosting91926.json" with { type: "json" };
-import { buildS4Workbook, S4_TEMPLATE_SHA256 } from "../src/features/transfer-tool/transferExport.js";
+import { buildS4Rows, buildS4Workbook, S4_TEMPLATE_SHA256 } from "../src/features/transfer-tool/transferExport.js";
 import { cafeProfitCenter } from "../src/features/transfer-tool/cafeProfitCenters.js";
-import { balanceIngredientAllocations, defaultTransferDescription, normalizeTransferTitle, refreshCopiedItems, S4_EXPORT_VERSION, transferRecordId, transferTotal, validateS4Transfer, validateTransfer } from "../src/features/transfer-tool/transferModel.js";
+import { balanceIngredientAllocations, defaultTransferDescription, normalizeTransferItemAllocations, normalizeTransferTitle, refreshCopiedItems, S4_EXPORT_VERSION, transferRecordId, transferTotal, validateS4Transfer, validateTransfer } from "../src/features/transfer-tool/transferModel.js";
 import { CAFE_UNITS } from "../src/shared/cafeUnits.js";
 
 const root = process.cwd();
@@ -59,6 +59,37 @@ const chefReviewedBalance = balanceIngredientAllocations({
 if (!chefReviewedBalance.pricingComplete || chefReviewedBalance.allocationPerPortion !== 2.3 || chefReviewedBalance.ingredientAllocations.at(-1)?.glCode !== "4111012" || !chefReviewedBalance.ingredientAllocations.at(-1)?.isResidualCostBalance) {
   fail("chef-selected G/L must allocate the positive remaining Item + Waste Cost");
 }
+const cappedAllocation = balanceIngredientAllocations({
+  components: [
+    { ingredientMrn: "protein", ingredientName: "Protein", glCode: "4111003", allocationPerPortion: 2 },
+    { ingredientMrn: "produce", ingredientName: "Produce", glCode: "4111012", allocationPerPortion: 1 },
+  ],
+  itemWasteCost: 2.45,
+});
+if (!cappedAllocation.pricingComplete || !cappedAllocation.allocationWasScaled || cappedAllocation.sourceMappedAllocationPerPortion !== 3 || cappedAllocation.allocationPerPortion !== 2.45 || cappedAllocation.ingredientAllocations.some((component) => !(component.allocationPerPortion < component.sourceAllocationPerPortion)) || Math.abs(cappedAllocation.ingredientAllocations[0].allocationScaleFactor - (2.45 / 3)) > 0.000001) {
+  fail("ingredient allocations above Item + Waste Cost must be reduced by one even percentage and reconcile exactly to the item cost");
+}
+const restoredAllocation = normalizeTransferItemAllocations({
+  itemWasteCost: 2.45,
+  ingredientAllocations: cappedAllocation.ingredientAllocations,
+  residualGlCode: "4111012",
+}, 3.5);
+if (restoredAllocation.allocationWasScaled || restoredAllocation.ingredientAllocations.some((component) => component.isProportionallyAdjusted || component.allocationScaleFactor) || restoredAllocation.mappedAllocationPerPortion !== 3 || restoredAllocation.residualCost !== 0.5) {
+  fail("reopened or copied allocations must clear stale cap metadata when the current Item + Waste Cost no longer requires scaling");
+}
+let scaledCatalogItems = 0;
+for (const item of CATALOG.items) {
+  const recipe = INGREDIENT_COSTING_LOOKUP.recipes[String(item.mrn)];
+  if (!recipe?.components?.length || !(Number(item.itemWasteCost) > 0)) continue;
+  const sourceTotal = recipe.components.reduce((sum, component) => sum + Number(component.allocationPerPortion || 0), 0);
+  if (!(sourceTotal > Number(item.itemWasteCost))) continue;
+  scaledCatalogItems += 1;
+  const balanced = balanceIngredientAllocations({ components: recipe.components, itemWasteCost: item.itemWasteCost });
+  if (!balanced.pricingComplete || balanced.ingredientAllocations.some((component) => !(Number(component.allocationPerPortion) > 0))) {
+    fail(`catalog scaling made ${item.menu} / ${item.item} unsaveable or reduced a positive mapped ingredient to zero`);
+  }
+}
+if (!scaledCatalogItems) fail("catalog scaling regression did not exercise any real over-mapped menu items");
 if (transferRecordId(" My  Transfer ") !== "transfer|my%20transfer") fail("title identity is not deterministic");
 if (normalizeTransferTitle(" MY   TRANSFER ") !== "my transfer") fail("title normalization is not case/space insensitive");
 if (transferTotal([{ quantity: 2, itemWasteCost: 1.234, allocationPerPortion: 8 }]) !== 2.468) fail("transfer total must use the menu card Item + Waste Cost");
@@ -75,7 +106,7 @@ const storage = read("src/features/transfer-tool/transferStorage.js");
 const component = read("src/features/transfer-tool/TransferTool.jsx");
 for (const marker of ["createTransfer", "deleteTransfer", "Titles must be globally unique", "like.transfer|*"]) if (!api.includes(marker)) fail(`API is missing ${marker}`);
 for (const marker of ["createTransfer", "deleteTransfer", "tool: \"transfers\"", "/api/recipe-library?scope=all", "row.trueCost"]) if (!storage.includes(marker)) fail(`storage client is missing ${marker}`);
-for (const marker of ["Ingredient Costing 9.19.26", "Automatic ingredient G/L allocation / portion", "Substitute price used", "Chef-reviewed balance", "Chef review · remaining", "Item + Waste Cost / portion", "Chef-reviewed G/L", "Export S4 Excel", "Batch export staging", "Include in batch export", "Delete saved transfer", "DRAFT"]) if (!component.includes(marker)) fail(`UI is missing ${marker}`);
+for (const marker of ["Ingredient Costing 9.19.26", "Automatic ingredient G/L allocation", "Scaled to Item + Waste Cost", "Item-cost cap applied", "Substitute price used", "Chef-reviewed balance", "Item + Waste / portion", "Chef-reviewed G/L", "Export S4 Excel", "Batch export staging", "Include in batch export", "Delete saved transfer", "DRAFT"]) if (!component.includes(marker)) fail(`UI is missing ${marker}`);
 for (const removedMarker of ["G/L Breakdown", "Prepared Foods cost balance"]) if (component.includes(removedMarker)) fail(`UI still contains retired automatic balance UI ${removedMarker}`);
 
 console.log(`Transfer Tool verification passed: ${CATALOG.menus.length} menus, ${CATALOG.items.length} menu-scoped cost records.`);
@@ -104,6 +135,26 @@ const sheetXml = await exportZip.file("xl/worksheets/sheet1.xml").async("string"
 if (!sheetXml.includes('r="A2" t="inlineStr"') || !sheetXml.includes("=Formula-like item") || sheetXml.includes("<f>")) fail("S4 text cells are not safely emitted as inline strings");
 if (!sheetXml.includes('r="E2" t="n"><v>2.47</v>')) fail("S4 amount does not round quantity x cost to two decimal places");
 if ((sheetXml.match(/<row r="2"/g) || []).length !== 1) fail("S4 export did not create one row per transfer line");
+const cappedExportRows = buildS4Rows({
+  title: "Capped Export",
+  receivingProfitCenter: "30159",
+  items: [{ catalogId: "capped", item: "Capped sandwich", quantity: 1, itemWasteCost: 2.45, allocationPerPortion: 2.45, ingredientAllocations: cappedAllocation.ingredientAllocations }],
+});
+if (Number(cappedExportRows.reduce((sum, row) => sum + row.transferAmount, 0).toFixed(2)) !== 2.45) fail("S4 row rounding may not exceed or undershoot Item + Waste Cost");
+const correctedExportRows = buildS4Rows({
+  title: "Cent Correction",
+  receivingProfitCenter: "30159",
+  items: [{
+    catalogId: "cent-correction",
+    item: "Three-way allocation",
+    quantity: 1,
+    itemWasteCost: 0.9999,
+    ingredientAllocations: ["4111001", "4111002", "4111003"].map((glCode, index) => ({ ingredientMrn: String(index + 1), ingredientName: `Ingredient ${index + 1}`, glCode, allocationPerPortion: 0.3333 })),
+  }],
+});
+if (correctedExportRows.reduce((sum, row) => sum + Math.round(row.transferAmount * 100), 0) !== 100 || correctedExportRows.every((row) => row.transferAmount === 0.33)) {
+  fail("S4 cent reconciliation did not correct an independently rounded multi-row line to the Item + Waste Cost");
+}
 console.log(`S4 exact-template verification passed: ${templateHash}, sheet1-only patch, safe inline strings.`);
 
 process.env.SUPABASE_URL = "https://example.supabase.co";
@@ -186,6 +237,20 @@ try {
 
   const invalidS4 = await invoke({ action: "upsertRecords", records: [{ ...s4Record, receivingProfitCenter: "" }], context: { tool: "transfers" } });
   if (invalidS4.statusCode !== 400 || !/profit center/i.test(invalidS4.payload?.message || "")) fail("versioned S4 transfer accepted missing receiving profit center");
+
+  const overAllocatedS4 = await invoke({ action: "upsertRecords", records: [{
+    ...s4Record,
+    items: [{ ...s4Record.items[0], ingredientAllocations: [{ ...s4Record.items[0].ingredientAllocations[0], allocationPerPortion: 1.5 }] }],
+    totalValue: 3,
+  }], context: { tool: "transfers" } });
+  if (overAllocatedS4.statusCode !== 400 || !/may never exceed/i.test(overAllocatedS4.payload?.message || "")) fail("server accepted a mapped G/L total above Item + Waste Cost");
+
+  const underAllocatedS4 = await invoke({ action: "upsertRecords", records: [{
+    ...s4Record,
+    items: [{ ...s4Record.items[0], ingredientAllocations: [{ ...s4Record.items[0].ingredientAllocations[0], allocationPerPortion: 1 }] }],
+    totalValue: 2,
+  }], context: { tool: "transfers" } });
+  if (underAllocatedS4.statusCode !== 400 || !/must equal/i.test(underAllocatedS4.payload?.message || "")) fail("server accepted a mapped G/L total below Item + Waste Cost");
 
   let deleteCalls = 0;
   globalThis.fetch = async (url, options = {}) => {

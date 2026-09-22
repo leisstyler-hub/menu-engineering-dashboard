@@ -9,7 +9,7 @@ import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
 import { cafeProfitCenter } from "./cafeProfitCenters.js";
 import { exportTransferWorkbook, exportTransferZip } from "./transferExport.js";
-import { balanceIngredientAllocations, normalizeTransferTitle, refreshCopiedItems, S4_EXPORT_VERSION, transferRecordId, transferTotal, validateS4Transfer, validateTransfer } from "./transferModel.js";
+import { balanceIngredientAllocations, normalizeTransferItemAllocations, normalizeTransferTitle, refreshCopiedItems, S4_EXPORT_VERSION, transferRecordId, transferTotal, validateS4Transfer, validateTransfer } from "./transferModel.js";
 import { S4_GL_ACCOUNTS } from "./s4GlAccounts.js";
 import { deleteTransfer, loadIngredientAllocations, loadTransfers, refreshTransferCatalogCosts, saveTransfer } from "./transferStorage.js";
 
@@ -20,7 +20,7 @@ const today = () => {
 };
 
 const lineId = () => globalThis.crypto?.randomUUID?.() || `line-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-const blankLine = () => ({ lineId: lineId(), menu: "", catalogId: "", item: "", mrn: "", portion: "", itemWasteCost: null, allocationPerPortion: null, mappedAllocationPerPortion: null, residualCost: 0, residualGlCode: "", allocationExceedsItemCost: false, ingredientAllocations: [], unpricedComponents: [], allocationStatus: "", allocationMessage: "", quantity: 1 });
+const blankLine = () => ({ lineId: lineId(), menu: "", catalogId: "", item: "", mrn: "", portion: "", itemWasteCost: null, allocationPerPortion: null, mappedAllocationPerPortion: null, sourceMappedAllocationPerPortion: null, allocationScaleFactor: 1, allocationWasScaled: false, residualCost: 0, residualGlCode: "", allocationExceedsItemCost: false, ingredientAllocations: [], unpricedComponents: [], allocationStatus: "", allocationMessage: "", quantity: 1 });
 const blankDraft = () => ({ recordId: "", title: "", departingUnit: "", receivingUnit: "", departingProfitCenter: "", receivingProfitCenter: "", transferDate: today(), eventId: "", s4ExportVersion: S4_EXPORT_VERSION, items: [blankLine()], createdAt: "" });
 
 function recordDate(record) {
@@ -41,15 +41,8 @@ function toDraft(record) {
     s4ExportVersion: record.s4ExportVersion || "",
     createdAt: record.createdAt || "",
     items: Array.isArray(record.items) && record.items.length ? record.items.map(({ glGroups: _ignoredGlGroups, fromGlAccount: _fromGlAccount, toGlAccount: _toGlAccount, description: _description, descriptionIsAuto: _descriptionIsAuto, ...item }) => ({
-      ...item,
+      ...normalizeTransferItemAllocations(item),
       lineId: lineId(),
-      allocationPerPortion: Number(item.allocationPerPortion),
-      mappedAllocationPerPortion: Number.isFinite(Number(item.mappedAllocationPerPortion)) ? Number(item.mappedAllocationPerPortion) : Number(item.allocationPerPortion),
-      residualCost: Number(item.residualCost) || 0,
-      residualGlCode: item.residualGlCode || "",
-      allocationExceedsItemCost: Boolean(item.allocationExceedsItemCost),
-      ingredientAllocations: Array.isArray(item.ingredientAllocations) ? item.ingredientAllocations : [],
-      unpricedComponents: Array.isArray(item.unpricedComponents) ? item.unpricedComponents : [],
       allocationStatus: Array.isArray(item.ingredientAllocations) && item.ingredientAllocations.length ? "ready" : "missing",
       allocationMessage: Array.isArray(item.ingredientAllocations) && item.ingredientAllocations.length ? "" : "This saved transfer predates automatic ingredient allocations. Copy it and reselect the menu item.",
     })) : [blankLine()],
@@ -147,6 +140,9 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
       itemWasteCost: selected.itemWasteCost,
       allocationPerPortion: null,
       mappedAllocationPerPortion: null,
+      sourceMappedAllocationPerPortion: null,
+      allocationScaleFactor: 1,
+      allocationWasScaled: false,
       residualCost: 0,
       residualGlCode: "",
       allocationExceedsItemCost: false,
@@ -168,13 +164,16 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
       const pricingComplete = balanced.pricingComplete;
       const allocationMessage = [
         substituteCount ? `${substituteCount} substitute Ingredient Snapshot price${substituteCount === 1 ? " was" : "s were"} used; review the flagged component${substituteCount === 1 ? "" : "s"} below.` : "",
+        balanced.allocationWasScaled ? `Mapped ingredient cost was ${money(balanced.sourceMappedAllocationPerPortion)}. Every mapped G/L was reduced by ${((1 - balanced.allocationScaleFactor) * 100).toFixed(1)}% so the allocation equals the Item + Waste Cost of ${money(balanced.targetCost)}.` : "",
         balanced.residualCost > 0 ? `${money(balanced.residualCost)} remains unallocated. Choose one chef-reviewed G/L in the item-cost area before saving or exporting so this transfer equals the current Item + Waste Cost of ${money(balanced.targetCost)}.` : "",
-        balanced.allocationExceedsItemCost ? `Mapped ingredient cost of ${money(balanced.mappedAllocationPerPortion)} exceeds the current Item + Waste Cost of ${money(balanced.targetCost)}. Review the source before saving or exporting.` : "",
-        !pricingComplete && !balanced.residualCost && !balanced.allocationExceedsItemCost ? "This recipe has ingredient G/L mappings but no positive allocation available for export." : "",
+        !pricingComplete && !balanced.residualCost ? "This recipe has ingredient G/L mappings but no positive allocation available for export." : "",
       ].filter(Boolean).join(" ");
       updateLine(line.lineId, {
         allocationPerPortion: pricingComplete ? balanced.allocationPerPortion : null,
         mappedAllocationPerPortion: balanced.mappedAllocationPerPortion,
+        sourceMappedAllocationPerPortion: balanced.sourceMappedAllocationPerPortion,
+        allocationScaleFactor: balanced.allocationScaleFactor,
+        allocationWasScaled: balanced.allocationWasScaled,
         residualCost: balanced.residualCost,
         residualGlCode: "",
         allocationExceedsItemCost: balanced.allocationExceedsItemCost,
@@ -314,11 +313,14 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
       substituteCount ? `${substituteCount} substitute Ingredient Snapshot price${substituteCount === 1 ? " was" : "s were"} used; review the flagged component${substituteCount === 1 ? "" : "s"} below.` : "",
       balanced.residualCost > 0 && !residualGlCode ? `${money(balanced.residualCost)} remains unallocated. Choose one chef-reviewed G/L in the item-cost area before saving or exporting.` : "",
       balanced.residualCost > 0 && residualGlCode ? `${money(balanced.residualCost)} is allocated to the chef-selected G/L so the transfer equals the current Item + Waste Cost.` : "",
-      balanced.allocationExceedsItemCost ? `Mapped ingredient cost of ${money(balanced.mappedAllocationPerPortion)} exceeds the current Item + Waste Cost of ${money(balanced.targetCost)}. Review the source before saving or exporting.` : "",
+      balanced.allocationWasScaled ? `Mapped ingredient cost was ${money(balanced.sourceMappedAllocationPerPortion)}. Every mapped G/L was reduced by ${((1 - balanced.allocationScaleFactor) * 100).toFixed(1)}% to match Item + Waste Cost.` : "",
     ].filter(Boolean).join(" ");
     updateLine(line.lineId, {
       allocationPerPortion: balanced.pricingComplete ? balanced.allocationPerPortion : null,
       mappedAllocationPerPortion: balanced.mappedAllocationPerPortion,
+      sourceMappedAllocationPerPortion: balanced.sourceMappedAllocationPerPortion,
+      allocationScaleFactor: balanced.allocationScaleFactor,
+      allocationWasScaled: balanced.allocationWasScaled,
       residualCost: balanced.residualCost,
       residualGlCode,
       allocationExceedsItemCost: balanced.allocationExceedsItemCost,
@@ -550,32 +552,34 @@ function UnitField({ label, value, onChange, error }) {
 
 function ChefReviewCost({ line, onChooseResidualGl }) {
   const hasRemainingCost = Number(line.residualCost) > 0;
-  return <div>
-    <p className="text-lg font-black">{Number.isFinite(Number(line.itemWasteCost)) ? money(line.itemWasteCost) : "Loading…"}</p>
-    <p className="mt-1 text-xs font-semibold text-slate-500">Item + Waste Cost / portion</p>
-    {hasRemainingCost && <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2">
-      <p className="text-[10px] font-black uppercase tracking-[0.1em] text-amber-900">Chef review · remaining {money(line.residualCost)}</p>
-      <label className="mt-1 block"><span className="sr-only">Chef-reviewed G/L for {line.item}</span><select aria-label={`Chef-reviewed G/L for ${line.item}`} value={line.residualGlCode || ""} onChange={(event) => onChooseResidualGl(line, event.target.value)} className="w-full rounded-md border border-amber-300 bg-white px-2 py-1.5 text-xs font-black text-slate-900"><option value="">Choose remaining-cost G/L</option>{S4_GL_ACCOUNTS.map((account) => <option key={account.code} value={account.code}>{account.code} · {account.category}</option>)}</select></label>
-      {!line.residualGlCode && <p className="mt-1 text-[10px] font-bold leading-4 text-amber-900">Choose one G/L to approve this remaining cost.</p>}
-      {line.residualGlCode && <p className="mt-1 text-[10px] font-bold leading-4 text-emerald-800">Chef-reviewed G/L selected.</p>}
-    </div>}
+  return <div className="space-y-1.5">
+    <div className="flex items-baseline gap-2"><p className="text-lg font-black">{Number.isFinite(Number(line.itemWasteCost)) ? money(line.itemWasteCost) : "Loading…"}</p><p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">Item + Waste / portion</p></div>
+    {hasRemainingCost && <label className="flex min-w-0 items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-2 py-1.5">
+      <span className="shrink-0 text-[10px] font-black uppercase tracking-[0.08em] text-amber-900">Review {money(line.residualCost)}</span>
+      <select aria-label={`Chef-reviewed G/L for ${line.item}`} value={line.residualGlCode || ""} onChange={(event) => onChooseResidualGl(line, event.target.value)} className="min-w-0 flex-1 rounded border border-amber-300 bg-white px-1.5 py-1 text-[11px] font-black text-slate-900"><option value="">Choose G/L</option>{S4_GL_ACCOUNTS.map((account) => <option key={account.code} value={account.code}>{account.code} · {account.category}</option>)}</select>
+      <span className={`shrink-0 text-[10px] font-black ${line.residualGlCode ? "text-emerald-700" : "text-amber-900"}`}>{line.residualGlCode ? "Approved" : "Required"}</span>
+    </label>}
   </div>;
 }
 
 function IngredientAllocationList({ line }) {
   if (line.allocationStatus === "loading") return <p className="pt-3 text-xs font-bold text-amber-800">Loading Ingredient Costing 9.19.26 allocation…</p>;
   if (!line.ingredientAllocations?.length) return <p role="alert" className="pt-3 text-xs font-bold text-rose-800">{line.allocationMessage || "No ingredient mapping is available for this menu item."}</p>;
-  return <div className="mt-3 overflow-hidden rounded-lg border border-slate-200 bg-white">
-    <p className="border-b border-slate-200 bg-slate-100 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-slate-600">Automatic ingredient G/L allocation / portion</p>
-    {line.allocationMessage && <p role="alert" className="border-b border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-900">{line.allocationMessage}</p>}
-    <div className="divide-y divide-slate-100">{line.ingredientAllocations.map((allocation, index) => <div key={`${allocation.ingredientMrn}-${allocation.unit}-${index}`} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 px-3 py-2 text-xs"><div><p className="font-black">{allocation.ingredientName}</p><p className="text-slate-500">MRN {allocation.ingredientMrn} · {allocation.quantity} {allocation.unit} / {allocation.recipeYield} yield · {allocation.glCode}{allocation.priceSourceMrn && allocation.priceSourceMrn !== allocation.ingredientMrn ? ` · price source MRN ${allocation.priceSourceMrn}` : ""}</p>{allocation.isSubstitutePrice && <p className="mt-1 font-bold text-amber-800">Substitute price used — {allocation.priceSourceNote}</p>}{allocation.isResidualCostBalance && <p className="mt-1 font-bold text-emerald-800">Chef-reviewed balance — {allocation.priceSourceNote}</p>}</div><p className="font-black text-slate-800">{Number.isFinite(Number(allocation.allocationPerPortion)) ? money(allocation.allocationPerPortion) : "Price source needed"}</p></div>)}
+  const requiresReview = Number(line.residualCost) > 0 && !line.residualGlCode;
+  const summaryTone = requiresReview ? "text-amber-800" : "text-emerald-700";
+  return <details className="mt-2 overflow-hidden rounded-md border border-slate-200 bg-white">
+    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 bg-slate-100 px-3 py-2 text-xs [&::-webkit-details-marker]:hidden">
+      <span className="min-w-0 font-black uppercase tracking-[0.1em] text-slate-700">Automatic ingredient G/L allocation <span className="font-semibold normal-case tracking-normal text-slate-500">· {line.ingredientAllocations.length} mapped row{line.ingredientAllocations.length === 1 ? "" : "s"}{line.unpricedComponents?.length ? ` · ${line.unpricedComponents.length} unresolved` : ""}</span></span>
+      <span className={`shrink-0 font-black ${summaryTone}`}>{line.allocationWasScaled ? "Scaled to Item + Waste Cost" : requiresReview ? "Chef review needed" : `${money(line.allocationPerPortion)} reconciled`}</span>
+    </summary>
+    {line.allocationMessage && <p role="alert" className="border-t border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-900">{line.allocationMessage}</p>}
+    <div className="divide-y divide-slate-100">{line.ingredientAllocations.map((allocation, index) => <div key={`${allocation.ingredientMrn}-${allocation.unit}-${index}`} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 px-3 py-1.5 text-xs"><div><p className="font-black">{allocation.ingredientName}</p><p className="text-slate-500">MRN {allocation.ingredientMrn} · {allocation.quantity} {allocation.unit} / {allocation.recipeYield} yield · {allocation.glCode}{allocation.priceSourceMrn && allocation.priceSourceMrn !== allocation.ingredientMrn ? ` · price source MRN ${allocation.priceSourceMrn}` : ""}</p>{allocation.isProportionallyAdjusted && <p className="mt-0.5 font-bold text-sky-800">Item-cost cap applied · source {money(allocation.sourceAllocationPerPortion)} → mapped {money(allocation.allocationPerPortion)}</p>}{allocation.isSubstitutePrice && <p className="mt-0.5 font-bold text-amber-800">Substitute price used — {allocation.priceSourceNote}</p>}{allocation.isResidualCostBalance && <p className="mt-0.5 font-bold text-emerald-800">Chef-reviewed balance — {allocation.priceSourceNote}</p>}</div><p className="font-black text-slate-800">{Number.isFinite(Number(allocation.allocationPerPortion)) ? money(allocation.allocationPerPortion) : "Price source needed"}</p></div>)}
     {(line.unpricedComponents || []).map((component, index) => <div key={`unpriced-${component.ingredientMrn}-${component.unit}-${index}`} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 bg-amber-50 px-3 py-2 text-xs"><div><p className="font-black">{component.ingredientName}</p><p className="text-slate-500">MRN {component.ingredientMrn} · {component.quantity} {component.unit} / {component.recipeYield} yield · source price unresolved</p><p className="mt-1 font-bold text-amber-800">No direct price was found; use the chef-reviewed remaining-cost selection above.</p></div><p className="font-black text-amber-900">Review</p></div>)}</div>
-    <div className={`border-t p-3 ${line.residualCost > 0 ? "border-amber-200 bg-amber-50" : "border-slate-200 bg-slate-50"}`}>
+    <div className={`border-t px-3 py-2 ${line.residualCost > 0 ? "border-amber-200 bg-amber-50" : "border-slate-200 bg-slate-50"}`}>
       <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-600">G/L allocation reconciliation</p>
-      <p className="mt-1 text-xs font-semibold text-slate-600">Item + Waste Cost {money(line.itemWasteCost)} · mapped ingredient allocation {money(line.mappedAllocationPerPortion || 0)} · remaining {money(line.residualCost || 0)}{line.residualCost > 0 ? ". The chef-review selection is in the item-cost column above." : "."}</p>
-      {line.allocationExceedsItemCost && <p className="mt-2 text-xs font-bold text-rose-800">Mapped ingredient allocation exceeds the current Item + Waste Cost. This line cannot be saved or exported until its source pricing is corrected.</p>}
+      <p className="mt-1 text-xs font-semibold text-slate-600">Item + Waste Cost {money(line.itemWasteCost)} · mapped allocation {money(line.mappedAllocationPerPortion || 0)} · remaining {money(line.residualCost || 0)}{line.allocationWasScaled ? ` · original mapped cost ${money(line.sourceMappedAllocationPerPortion)}` : ""}{line.residualCost > 0 ? ". Chef review is in the item-cost column." : "."}</p>
     </div>
-  </div>;
+  </details>;
 }
 
 function BatchTransferEditor({ transfer, onChange }) {

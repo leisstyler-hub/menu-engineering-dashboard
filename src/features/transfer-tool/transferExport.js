@@ -28,15 +28,38 @@ export function buildS4Rows(transfer = {}) {
   const errors = validateS4Transfer(transfer);
   if (Object.keys(errors).length) throw new Error(Object.values(errors)[0]);
   return (transfer.items || []).filter((item) => item.catalogId).flatMap((line) => (
-    line.ingredientAllocations.map((allocation) => ({
+    reconcileLineAmounts(line).map(({ allocation, transferAmount }) => ({
       fromGlAccount: String(allocation.glCode),
       receivingProfitCenter: String(transfer.receivingProfitCenter),
       toGlAccount: String(allocation.glCode),
       description: defaultTransferDescription(`${line.item} ${allocation.ingredientName}`, transfer.title),
-      transferAmount: Number((Number(line.quantity) * Number(allocation.allocationPerPortion)).toFixed(2)),
+      transferAmount,
       eventId: trimToLength(transfer.eventId, 18),
     }))
   )).slice(0, S4_MAX_ROWS);
+}
+
+function reconcileLineAmounts(line) {
+  const targetCents = Math.round(Number(line.quantity) * Number(line.itemWasteCost) * 100);
+  const amounts = line.ingredientAllocations.map((allocation) => ({
+    allocation,
+    cents: Math.round(Number(line.quantity) * Number(allocation.allocationPerPortion) * 100),
+  }));
+  let difference = targetCents - amounts.reduce((sum, amount) => sum + amount.cents, 0);
+  const adjustmentOrder = amounts
+    .map((amount, index) => ({ index, cents: amount.cents }))
+    .sort((left, right) => right.cents - left.cents);
+  let cursor = 0;
+  while (difference !== 0 && adjustmentOrder.length) {
+    const target = amounts[adjustmentOrder[cursor % adjustmentOrder.length].index];
+    const step = difference > 0 ? 1 : -1;
+    if (target.cents + step >= 0) {
+      target.cents += step;
+      difference -= step;
+    }
+    cursor += 1;
+  }
+  return amounts.map(({ allocation, cents }) => ({ allocation, transferAmount: cents / 100 }));
 }
 
 export async function buildS4Workbook(templateBytes, transfer) {
