@@ -42,7 +42,8 @@ test("Transfer Tool expands a selected item into automatic ingredient G/L rows a
   await page.getByLabel("Item 1", { exact: true }).selectOption({ label: "Huli Huli Chicken · 33065.1 · 1 piece" });
   await expect(page.getByText("Automatic ingredient G/L allocation").last()).toBeVisible();
   await expect(page.getByText("Chicken Thigh").last()).not.toBeVisible();
-  await page.locator("details").filter({ hasText: "Automatic ingredient G/L allocation" }).last().locator("summary").click();
+  const allocationDetails = page.locator("details").filter({ hasText: "Automatic ingredient G/L allocation" }).last();
+  await allocationDetails.locator("summary").click();
   await expect(page.getByText("Chicken Thigh").last()).toBeVisible();
   await expect(page.getByText("4111003").last()).toBeVisible();
   await page.getByLabel("Item count 1", { exact: true }).fill("2");
@@ -72,13 +73,23 @@ test("Transfer Tool requires chef G/L review before balancing unresolved compone
   await page.getByLabel("Receiving unit").selectOption("Nessie");
   await page.getByLabel("Menu 1", { exact: true }).selectOption("AMZ: Ohana");
   await page.getByLabel("Item 1", { exact: true }).selectOption({ label: "Huli Huli Chicken · 33065.1 · 1 piece" });
-  await page.locator("details").filter({ hasText: "Automatic ingredient G/L allocation" }).last().locator("summary").click();
+  const allocationDetails = page.locator("details").filter({ hasText: "Automatic ingredient G/L allocation" }).last();
+  await allocationDetails.locator("summary").click();
   await expect(page.getByText(/Substitute price used/i).last()).toBeVisible();
   await expect(page.getByText(/Review \$0\.30/i).last()).toBeVisible();
   await expect(page.getByTestId("transfer-total")).toHaveText("$2.50");
   await page.getByRole("button", { name: "Save Draft" }).click();
   await expect(page.getByText(/Choose one chef-reviewed G\/L code/i).last()).toBeVisible();
   await page.getByLabel("Chef-reviewed G/L for Huli Huli Chicken").last().selectOption("4111012");
+  await expect(page.getByLabel("Chef-reviewed G/L for Huli Huli Chicken")).toHaveCount(0);
+  await expect(page.getByText(/is allocated to the chef-selected G\/L/i)).toHaveCount(0);
+  await expect(page.getByText("G/L allocation reconciliation", { exact: true })).toHaveCount(0);
+  const approvedRows = allocationDetails.getByTestId("gl-allocation-row");
+  await expect(approvedRows).toHaveCount(2);
+  for (const row of await approvedRows.all()) {
+    await expect(row).toHaveAttribute("data-approved", "true");
+    await expect(row).toHaveClass(/bg-emerald-50/);
+  }
   await page.getByRole("button", { name: "Save Draft" }).click();
   const savedAllocations = writes[0].records[0].items[0].ingredientAllocations;
   expect(savedAllocations).toEqual(expect.arrayContaining([expect.objectContaining({ isSubstitutePrice: true }), expect.objectContaining({ isResidualCostBalance: true, glCode: "4111012", allocationPerPortion: 0.3 })]));
