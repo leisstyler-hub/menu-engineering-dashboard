@@ -48,6 +48,12 @@ function validateTransferRecord(record = {}) {
   if (record.items.some((item) => !item?.catalogId || !item?.menu || !item?.item || !Number.isInteger(Number(item.quantity)) || Number(item.quantity) < 1 || !Number.isFinite(Number(item.itemWasteCost)) || Number(item.itemWasteCost) < 0)) {
     return "Every transfer item requires catalog identity, a positive whole-number count, and a valid Item + Waste Cost.";
   }
+  if (record.items.some((item) => Array.isArray(item.unpricedComponents)
+    && item.unpricedComponents.length > 0
+    && !(Array.isArray(item.ingredientAllocations)
+      && item.ingredientAllocations.some((allocation) => allocation?.isResidualCostBalance && Number(allocation.allocationPerPortion) > 0)))) {
+    return "Every unresolved recipe component requires a chef-reviewed G/L allocation.";
+  }
   if (record.s4ExportVersion) {
     if (Number(record.s4ExportVersion) !== 1) return "Transfer S4 export version is unsupported.";
     if (!/^\d{5}$/.test(String(record.receivingProfitCenter || ""))) return "A 5-digit receiving profit center is required for S4 export.";

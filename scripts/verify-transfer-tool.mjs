@@ -29,6 +29,9 @@ const buffalo = INGREDIENT_COSTING_LOOKUP.recipes["9282.10"];
 const buffaloBlueCheese = buffalo?.components?.find((component) => component.ingredientMrn === "1614");
 const buffaloFranks = buffalo?.components?.find((component) => component.ingredientMrn === "7179");
 const buffaloCelery = buffalo?.unpricedComponents?.find((component) => component.ingredientMrn === "1378");
+const brisketSandwich = INGREDIENT_COSTING_LOOKUP.recipes["10379.3"];
+const brisketProtein = brisketSandwich?.unpricedComponents?.find((component) => component.ingredientMrn === "36857");
+const brisketPepperoncini = brisketSandwich?.components?.find((component) => component.ingredientMrn === "7400");
 if (capreseMozzarella?.unitPrice !== 0.32 || capreseMozzarella?.allocationPerPortion !== 1.28 || capreseTomato?.priceSourceMrn !== "16479" || capreseTomato?.allocationPerPortion !== 0.18 || pintoBeans?.allocationPerPortion !== 0.08 || caesarParmesan?.allocationPerPortion !== 0.24 || caesarRomaine?.priceSourceMrn !== "3756" || caesarRomaine?.allocationPerPortion !== 0.29 || caesar?.unpricedComponents?.length !== 0 || bltaAvocado?.priceSourceMrn !== "276" || bltaAvocado?.priceSourceUnit !== "cup" || bltaAvocado?.allocationPerPortion !== 0.3728 || blta?.unpricedComponents?.length !== 0) {
   fail("ingredient lookup must use canonical prices, structural source inference, normalized ingredient-form matching, and approved unit conversions");
 }
@@ -41,6 +44,52 @@ if (!arcadianComponents.length || arcadianComponents.some((component) => compone
 }
 if (buffaloBlueCheese?.priceSourceMrn !== "1639" || !/approved dairy substitute/i.test(buffaloBlueCheese.priceSourceNote || "") || buffaloFranks?.priceSourceMrn !== "7179" || buffaloFranks?.priceSourceUnit !== "floz" || buffaloFranks?.allocationPerPortion !== 0.18 || !/1 fluid ounce = 1 ounce/i.test(buffaloFranks.priceSourceNote || "") || !buffaloCelery) {
   fail("approved Blue Cheese substitution, Frank's exact price conversion, and category-safe substitute matching are not enforced");
+}
+if (!brisketProtein?.residualAttributionEligible || brisketSandwich.components.some((component) => component.priceSourceMrn === "76270") || brisketPepperoncini?.priceSourceMrn !== "7400" || brisketPepperoncini?.allocationPerPortion !== 0.04) {
+  fail("brisket must reject beef-pho broth pricing while pepperoncini uses its exact MRN and approved unit conversion");
+}
+const brisketCatalogItem = CATALOG.items.find((item) => item.mrn === "10379.3");
+const brisketBalanced = balanceIngredientAllocations({
+  components: brisketSandwich.components,
+  unpricedComponents: brisketSandwich.unpricedComponents,
+  itemWasteCost: brisketCatalogItem?.itemWasteCost,
+});
+const attributedBrisket = brisketBalanced.ingredientAllocations.find((component) => component.ingredientMrn === "36857");
+if (!brisketBalanced.pricingComplete || brisketBalanced.residualCost !== 0 || brisketBalanced.unpricedComponents.length || brisketBalanced.allocationPerPortion !== brisketCatalogItem.itemWasteCost || !attributedBrisket?.isItemCostResidualAttribution || attributedBrisket.glCode !== "4111003" || attributedBrisket.allocationPerPortion !== 4.041) {
+  fail("the sole unresolved brisket component must receive the exact authoritative Item + Waste Cost remainder on its recipe-mapped meat G/L");
+}
+const lowerCostBrisket = normalizeTransferItemAllocations({
+  catalogId: brisketCatalogItem.id,
+  itemWasteCost: brisketCatalogItem.itemWasteCost,
+  ingredientAllocations: brisketBalanced.ingredientAllocations,
+  unpricedComponents: brisketBalanced.unpricedComponents,
+}, 1);
+if (lowerCostBrisket.pricingComplete || lowerCostBrisket.residualCost !== 0 || !lowerCostBrisket.unpricedComponents.some((component) => component.ingredientMrn === "36857") || lowerCostBrisket.ingredientAllocations.some((component) => component.ingredientMrn === "36857")) {
+  fail("a reopened or copied residual-attributed line must block when its lower current cost leaves no positive amount for the unresolved component");
+}
+const lowerCostBrisketTransfer = {
+  title: "Lower Cost Brisket",
+  departingUnit: "Dawson",
+  receivingUnit: "Nessie",
+  receivingProfitCenter: "30159",
+  transferDate: "2026-09-22",
+  s4ExportVersion: S4_EXPORT_VERSION,
+  items: [{ ...lowerCostBrisket, quantity: 1 }],
+};
+if (!validateTransfer(lowerCostBrisketTransfer).items || !validateS4Transfer(lowerCostBrisketTransfer).s4Lines) {
+  fail("client validation must reject a lower-cost copied line with an uncovered recipe component");
+}
+let catalogAutomaticAttributions = 0;
+let catalogChefReviews = 0;
+for (const item of CATALOG.items) {
+  const recipe = INGREDIENT_COSTING_LOOKUP.recipes[String(item.mrn)];
+  if (!recipe) continue;
+  const balanced = balanceIngredientAllocations({ components: recipe.components, unpricedComponents: recipe.unpricedComponents, itemWasteCost: item.itemWasteCost });
+  if (balanced.itemCostResidualAttribution > 0) catalogAutomaticAttributions += 1;
+  if (balanced.residualCost > 0) catalogChefReviews += 1;
+}
+if (catalogAutomaticAttributions < 250 || catalogChefReviews > 650) {
+  fail(`recipe-aware residual attribution coverage regressed (${catalogAutomaticAttributions} automatic; ${catalogChefReviews} chef reviews)`);
 }
 const balancedAllocation = balanceIngredientAllocations({
   components: [{ ingredientMrn: "known", ingredientName: "Known ingredient", glCode: "4111005", allocationPerPortion: 2.2 }],
@@ -58,6 +107,17 @@ const chefReviewedBalance = balanceIngredientAllocations({
 });
 if (!chefReviewedBalance.pricingComplete || chefReviewedBalance.allocationPerPortion !== 2.3 || chefReviewedBalance.ingredientAllocations.at(-1)?.glCode !== "4111012" || !chefReviewedBalance.ingredientAllocations.at(-1)?.isResidualCostBalance) {
   fail("chef-selected G/L must allocate the positive remaining Item + Waste Cost");
+}
+const zeroResidualMultipleUnpriced = balanceIngredientAllocations({
+  components: [{ ingredientMrn: "known", ingredientName: "Known ingredient", glCode: "4111005", allocationPerPortion: 2.5 }],
+  unpricedComponents: [
+    { ingredientMrn: "missing-1", ingredientName: "Missing ingredient 1", glCode: "4111012", allocationPerPortion: null },
+    { ingredientMrn: "missing-2", ingredientName: "Missing ingredient 2", glCode: "4111003", allocationPerPortion: null },
+  ],
+  itemWasteCost: 2.45,
+});
+if (zeroResidualMultipleUnpriced.pricingComplete || zeroResidualMultipleUnpriced.residualCost !== 0 || zeroResidualMultipleUnpriced.unpricedComponents.length !== 2) {
+  fail("multiple unresolved components must block even when priced components already consume the Item + Waste Cost ceiling");
 }
 const cappedAllocation = balanceIngredientAllocations({
   components: [
@@ -141,6 +201,14 @@ const cappedExportRows = buildS4Rows({
   items: [{ catalogId: "capped", item: "Capped sandwich", quantity: 1, itemWasteCost: 2.45, allocationPerPortion: 2.45, ingredientAllocations: cappedAllocation.ingredientAllocations }],
 });
 if (Number(cappedExportRows.reduce((sum, row) => sum + row.transferAmount, 0).toFixed(2)) !== 2.45) fail("S4 row rounding may not exceed or undershoot Item + Waste Cost");
+const brisketExportRows = buildS4Rows({
+  title: "Brisket Residual Attribution",
+  receivingProfitCenter: "30159",
+  items: [{ catalogId: brisketCatalogItem.id, item: brisketCatalogItem.item, quantity: 1, itemWasteCost: brisketCatalogItem.itemWasteCost, ingredientAllocations: brisketBalanced.ingredientAllocations }],
+});
+if (brisketExportRows.reduce((sum, row) => sum + Math.round(row.transferAmount * 100), 0) !== 511 || !brisketExportRows.some((row) => row.fromGlAccount === "4111003" && row.transferAmount === 4.04)) {
+  fail("brisket residual attribution must export on Meat/Poultry and reconcile exactly to $5.11");
+}
 const correctedExportRows = buildS4Rows({
   title: "Cent Correction",
   receivingProfitCenter: "30159",
@@ -237,6 +305,12 @@ try {
 
   const invalidS4 = await invoke({ action: "upsertRecords", records: [{ ...s4Record, receivingProfitCenter: "" }], context: { tool: "transfers" } });
   if (invalidS4.statusCode !== 400 || !/profit center/i.test(invalidS4.payload?.message || "")) fail("versioned S4 transfer accepted missing receiving profit center");
+
+  const unresolvedS4 = await invoke({ action: "upsertRecords", records: [{
+    ...s4Record,
+    items: [{ ...s4Record.items[0], unpricedComponents: [{ ingredientMrn: "missing", ingredientName: "Missing ingredient" }] }],
+  }], context: { tool: "transfers" } });
+  if (unresolvedS4.statusCode !== 400 || !/unresolved recipe component/i.test(unresolvedS4.payload?.message || "")) fail("server accepted an unresolved recipe component without a chef-reviewed G/L allocation");
 
   const overAllocatedS4 = await invoke({ action: "upsertRecords", records: [{
     ...s4Record,

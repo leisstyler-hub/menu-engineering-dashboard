@@ -1,1 +1,1 @@
-export const APP_VERSION_STAMP = "2026.09.21.002-transfer-review-complete";
+export const APP_VERSION_STAMP = "2026.09.22.001-transfer-recipe-matching";

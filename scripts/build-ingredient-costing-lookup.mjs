@@ -38,6 +38,31 @@ const substituteGenericTokens = new Set([
   "canned", "pasteurized", "boneless", "skinless", "bulk",
   "classic", "buffalo",
 ]);
+// Supplier, brand, and commercial-label words are evidence about provenance,
+// not ingredient identity. They must never make two different foods look like
+// a close substitute (for example Pepperoncini and Cornichons solely because
+// both happen to say American Roland).
+const substituteSupplierTokens = new Set([
+  "american", "roland", "passport", "austin", "blues", "hormel", "boar",
+  "head", "great", "lakes", "tribeca", "oven", "lawry", "select", "smithfield",
+  "chef", "francisco", "monin", "kettle", "cuisine", "campbell", "rich",
+  "fontanini", "windsor", "kronos", "woodstock", "blount", "true", "foods", "fc", "rtu",
+]);
+// These product/preparation identities are mutually meaningful. If both sides
+// carry one and none agree, the candidate is a different food—not a price
+// substitute. This prevents BBQ brisket from becoming corned beef or broth.
+const substituteProductTokens = new Set([
+  "brisket", "steak", "pepperoncini", "thyme", "arugula", "romaine", "avocado",
+]);
+const substitutePreparationTokens = new Set([
+  "raw", "bbq", "broth", "stock", "soup", "corned", "pastrami", "bologna",
+  "sausage", "meatball", "patty", "hotdog", "chili", "juice", "syrup",
+  "dressing", "puree", "jam", "jelly", "marmalade", "pickle",
+]);
+const substituteWeakIdentityTokens = new Set([
+  "beef", "pork", "chicken", "turkey", "fish", "seafood", "pepper", "cheese",
+  "rice", "noodle", "bean", "fruit", "vegetable", "herb", "seasoning", "salad",
+]);
 // Registered culinary substitutions are intentionally narrow. They exist for
 // approved ingredient families whose commercial label does not share enough
 // useful tokens with the canonical Snapshot record to be safely inferred.
@@ -58,6 +83,7 @@ const approvedIngredientSubstitutions = new Map([
 // conversion would fabricate a density for unrelated foods.
 const approvedIngredientUnitConversions = new Map([
   ["7179", { allowFluidOunceOunce: true, conversionNote: "Approved Frank's RedHot Buffalo Wing Sauce conversion: 1 fluid ounce = 1 ounce." }],
+  ["7400", { allowTablespoonOunce: true, conversionNote: "Approved pepperoncini conversion: 2 tablespoons = 1 ounce." }],
 ]);
 
 const text = (value) => String(value ?? "").trim();
@@ -116,15 +142,25 @@ function matchingIngredientForm(targetSignature, candidateSignature) {
 }
 
 function substituteScore(targetSignature, candidateSignature) {
-  const target = signatureTokens(targetSignature).filter((token) => !substituteGenericTokens.has(token));
-  const candidate = signatureTokens(candidateSignature).filter((token) => !substituteGenericTokens.has(token));
+  const usefulToken = (token) => !substituteGenericTokens.has(token) && !substituteSupplierTokens.has(token) && !/^\d+$/.test(token);
+  const target = signatureTokens(targetSignature).filter(usefulToken);
+  const candidate = signatureTokens(candidateSignature).filter(usefulToken);
+  const targetAll = signatureTokens(targetSignature);
+  const candidateAll = signatureTokens(candidateSignature);
   if (!target.length || !candidate.length) return 0;
   const candidateSet = new Set(candidate);
   const shared = target.filter((token) => candidateSet.has(token));
-  // A substitute requires at least one non-generic ingredient-name token.
-  // This intentionally permits a close food/form match while rejecting broad
-  // category-only substitutions such as "oil" or "sauce".
+  const targetProducts = target.filter((token) => substituteProductTokens.has(token));
+  const candidateProducts = candidate.filter((token) => substituteProductTokens.has(token));
+  if (targetProducts.length && candidateProducts.length && !targetProducts.some((token) => candidateProducts.includes(token))) return 0;
+  const targetPreparation = targetAll.filter((token) => substitutePreparationTokens.has(token));
+  const candidatePreparation = candidateAll.filter((token) => substitutePreparationTokens.has(token));
+  if (targetPreparation.length && candidatePreparation.length && !targetPreparation.some((token) => candidatePreparation.includes(token))) return 0;
+  // A single distinctive food word (thyme, arugula, pepperoncini) may establish
+  // identity. Broad species/category words cannot do so by themselves: "beef"
+  // alone cannot map brisket to broth, and supplier names never count.
   if (!shared.length) return 0;
+  if (shared.length === 1 && substituteWeakIdentityTokens.has(shared[0])) return 0;
   const coverage = shared.length / target.length;
   const precision = shared.length / candidate.length;
   return Number((shared.length * 100 + coverage * 10 + precision).toFixed(4));
@@ -145,7 +181,7 @@ function ingredientDensityOuncesPerCup(signature) {
   return null;
 }
 
-function convertAmount(amount, fromUnit, toUnit, { allowSliceEach = false, allowLeafyGreensCupOunce = false, allowFluidOunceOunce = false, ingredientForm = "" } = {}) {
+function convertAmount(amount, fromUnit, toUnit, { allowSliceEach = false, allowLeafyGreensCupOunce = false, allowFluidOunceOunce = false, allowTablespoonOunce = false, ingredientForm = "" } = {}) {
   const from = unitKey(fromUnit);
   const to = unitKey(toUnit);
   if (from === to) return amount;
@@ -166,6 +202,8 @@ function convertAmount(amount, fromUnit, toUnit, { allowSliceEach = false, allow
   if (allowSliceEach && ((from === "slice" && to === "each") || (from === "each" && to === "slice"))) return amount;
   if (allowLeafyGreensCupOunce && ((from === "cup" && to === "ounce") || (from === "ounce" && to === "cup"))) return amount;
   if (allowFluidOunceOunce && ((from === "floz" && to === "ounce") || (from === "ounce" && to === "floz"))) return amount;
+  if (allowTablespoonOunce && from === "ounce" && to === "tbsp") return amount * 2;
+  if (allowTablespoonOunce && from === "tbsp" && to === "ounce") return amount / 2;
   return null;
 }
 
@@ -181,13 +219,13 @@ function isCanonicalIngredientPrice(row, recipeYield) {
     && Number(recipeYield) > 0;
 }
 
-function selectedUnitPrice(candidates = [], requestedUnit, { allowSliceEach = false, allowLeafyGreensCupOunce = false, allowFluidOunceOunce = false, ingredientForm = "" } = {}) {
+function selectedUnitPrice(candidates = [], requestedUnit, { allowSliceEach = false, allowLeafyGreensCupOunce = false, allowFluidOunceOunce = false, allowTablespoonOunce = false, ingredientForm = "" } = {}) {
   // Only canonical Ingredient: recipes represent standardized ingredient prices.
   // A menu recipe's Recipe Portion Cost is its whole-portion cost, not the
   // price of the ingredient on that row.
   const exact = candidates.find((candidate) => unitKey(candidate.unit) === unitKey(requestedUnit));
   if (exact) return exact;
-  return candidates.find((candidate) => convertAmount(1, requestedUnit, candidate.unit, { allowSliceEach, allowLeafyGreensCupOunce, allowFluidOunceOunce, ingredientForm }) != null) || null;
+  return candidates.find((candidate) => convertAmount(1, requestedUnit, candidate.unit, { allowSliceEach, allowLeafyGreensCupOunce, allowFluidOunceOunce, allowTablespoonOunce, ingredientForm }) != null) || null;
 }
 
 function main() {
@@ -332,7 +370,7 @@ function main() {
     const targetSignature = ingredientSignature(row.ingredientName);
     const directCandidates = unitPriceCandidates.get(row.ingredientMrn) || [];
     const approvedUnitConversion = approvedIngredientUnitConversions.get(row.ingredientMrn);
-    const direct = selectedUnitPrice(directCandidates.filter((candidate) => candidate.sourceType !== "snapshot residual inference"), row.unit, { ingredientForm: targetSignature, allowFluidOunceOunce: approvedUnitConversion?.allowFluidOunceOunce });
+    const direct = selectedUnitPrice(directCandidates.filter((candidate) => candidate.sourceType !== "snapshot residual inference"), row.unit, { ingredientForm: targetSignature, allowFluidOunceOunce: approvedUnitConversion?.allowFluidOunceOunce, allowTablespoonOunce: approvedUnitConversion?.allowTablespoonOunce });
     if (direct) return { priceBasis: direct, source: "exact MRN", approvedUnitConversion };
 
     const formMatches = canonicalPriceCandidates.filter((candidate) => (
@@ -342,7 +380,7 @@ function main() {
     const allowsSliceEach = targetSignature.includes("slice") && formMatches.some((candidate) => candidate.canonicalSignature.includes("slice") || candidate.ingredientSignature.includes("slice"));
     const matched = selectedUnitPrice(formMatches, row.unit, { allowSliceEach: allowsSliceEach, ingredientForm: targetSignature, allowFluidOunceOunce: approvedUnitConversion?.allowFluidOunceOunce });
     if (matched) return { priceBasis: matched, source: "normalized ingredient form", allowsSliceEach };
-    const inferred = selectedUnitPrice(directCandidates.filter((candidate) => candidate.sourceType === "snapshot residual inference"), row.unit, { ingredientForm: targetSignature, allowFluidOunceOunce: approvedUnitConversion?.allowFluidOunceOunce });
+    const inferred = selectedUnitPrice(directCandidates.filter((candidate) => candidate.sourceType === "snapshot residual inference"), row.unit, { ingredientForm: targetSignature, allowFluidOunceOunce: approvedUnitConversion?.allowFluidOunceOunce, allowTablespoonOunce: approvedUnitConversion?.allowTablespoonOunce });
     if (inferred) return { priceBasis: inferred, source: "exact MRN", approvedUnitConversion };
 
     const approvedSubstitution = approvedIngredientSubstitutions.get(row.ingredientMrn);
@@ -396,15 +434,16 @@ function main() {
         unit: row.unit,
         recipeYield: row.recipeYield,
         glCode: row.glCode,
+        residualAttributionEligible: true,
         allocationPerPortion: null,
       });
       continue;
     }
     const requestedQuantity = row.quantity / row.recipeYield;
-    const sourceQuantity = convertAmount(requestedQuantity, row.unit, priceBasis.unit, { allowSliceEach: Boolean(source.allowsSliceEach), allowLeafyGreensCupOunce: Boolean(source.approvedSubstitution?.allowLeafyGreensCupOunce), allowFluidOunceOunce: Boolean(source.approvedUnitConversion?.allowFluidOunceOunce), ingredientForm: ingredientSignature(row.ingredientName) });
+    const sourceQuantity = convertAmount(requestedQuantity, row.unit, priceBasis.unit, { allowSliceEach: Boolean(source.allowsSliceEach), allowLeafyGreensCupOunce: Boolean(source.approvedSubstitution?.allowLeafyGreensCupOunce), allowFluidOunceOunce: Boolean(source.approvedUnitConversion?.allowFluidOunceOunce), allowTablespoonOunce: Boolean(source.approvedUnitConversion?.allowTablespoonOunce), ingredientForm: ingredientSignature(row.ingredientName) });
     const sourceUnitCost = priceBasis.unitPrice * priceBasis.recipeYield / priceBasis.quantity;
     const allocation = Number((sourceQuantity / priceBasis.quantity * priceBasis.unitPrice * priceBasis.recipeYield).toFixed(4));
-    const oneRequestedUnitInSource = convertAmount(1, row.unit, priceBasis.unit, { allowSliceEach: Boolean(source.allowsSliceEach), allowLeafyGreensCupOunce: Boolean(source.approvedSubstitution?.allowLeafyGreensCupOunce), allowFluidOunceOunce: Boolean(source.approvedUnitConversion?.allowFluidOunceOunce), ingredientForm: ingredientSignature(row.ingredientName) });
+    const oneRequestedUnitInSource = convertAmount(1, row.unit, priceBasis.unit, { allowSliceEach: Boolean(source.allowsSliceEach), allowLeafyGreensCupOunce: Boolean(source.approvedSubstitution?.allowLeafyGreensCupOunce), allowFluidOunceOunce: Boolean(source.approvedUnitConversion?.allowFluidOunceOunce), allowTablespoonOunce: Boolean(source.approvedUnitConversion?.allowTablespoonOunce), ingredientForm: ingredientSignature(row.ingredientName) });
     const unitPrice = Number((oneRequestedUnitInSource * sourceUnitCost).toFixed(4));
     if (!(allocation > 0)) continue;
     addComponent(row.recipeMrn, row, componentKey, {
@@ -444,7 +483,7 @@ function main() {
     resource: {
       title: "Ingredient Costing 9.19.26",
       file: "/resources/Ingredient_Costing_9.19.26.xlsx",
-      lookupMethod: "Canonical Ingredient: price references, using exact MRN first and then high-confidence normalized ingredient-form matching. Includes standard volume/weight/metric conversions, explicitly matched slice/each forms, shredded/grated cheese at 4 tablespoons per ounce, form-limited avocado/butter density conversions, and the approved Arcadian Classic Mix-to-Spring Mesclun substitution (1 cup raw leafy greens = 1 ounce). When exact pricing is unavailable, a clearly labeled substitute may use the closest unit-convertible Ingredient Snapshot name match with a real food-name anchor; generic category matches are rejected. When a flat source recipe has exactly one unresolved component and every other component is canonically priced, a repeated source-recipe residual may supply that component's unit price; ordinary menu rows are never used directly as an ingredient price.",
+      lookupMethod: "Canonical Ingredient: price references, using exact MRN first and then high-confidence normalized ingredient-form matching. Includes standard volume/weight/metric conversions, explicitly matched slice/each forms, shredded/grated cheese at 4 tablespoons per ounce, form-limited avocado/butter density conversions, and approved named substitutions. Fallback substitutes require strong food-identity overlap, exclude supplier/brand words, and reject conflicting product or preparation types. When exact pricing is unavailable, a single unresolved recipe component may receive the authoritative Item + Waste Cost remainder at runtime on its existing mapped G/L; multiple unresolved components still require chef review. Ordinary menu rows are never used directly as ingredient prices.",
     },
     recipes: compactRecipes,
   };

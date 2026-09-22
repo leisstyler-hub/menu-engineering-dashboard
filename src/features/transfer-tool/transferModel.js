@@ -31,6 +31,11 @@ export const transferTotal = (items = []) => items.reduce((sum, item) => {
 const rounded = (value) => Number(Number(value).toFixed(4));
 const allocationRounded = (value) => Number(Number(value).toFixed(8));
 const allocationTotal = (allocations = []) => rounded(allocations.reduce((sum, allocation) => sum + Number(allocation?.allocationPerPortion || 0), 0));
+const hasChefResidualAllocation = (item = {}) => Array.isArray(item.ingredientAllocations)
+  && item.ingredientAllocations.some((allocation) => allocation?.isResidualCostBalance && Number(allocation.allocationPerPortion) > 0);
+const hasUncoveredRecipeComponents = (item = {}) => Array.isArray(item.unpricedComponents)
+  && item.unpricedComponents.length > 0
+  && !hasChefResidualAllocation(item);
 
 function scaleAllocationsToCost(components, targetCost, sourceTotal) {
   if (!(targetCost > 0) || !(sourceTotal > targetCost)) {
@@ -71,9 +76,24 @@ export function balanceIngredientAllocations({ components = [], unpricedComponen
   const scaled = scaleAllocationsToCost(pricedComponents, targetCost, sourceMappedAllocationPerPortion);
   const mappedComponents = scaled.components;
   const mappedAllocationPerPortion = allocationTotal(mappedComponents);
-  const residualCost = Number.isFinite(targetCost) && targetCost > mappedAllocationPerPortion
+  let residualCost = Number.isFinite(targetCost) && targetCost > mappedAllocationPerPortion
     ? rounded(targetCost - mappedAllocationPerPortion)
     : 0;
+  let remainingUnpricedComponents = unpricedComponents;
+  let itemCostResidualAttribution = null;
+  const soleUnpricedComponent = unpricedComponents.length === 1 ? unpricedComponents[0] : null;
+  if (residualCost > 0 && soleUnpricedComponent?.residualAttributionEligible && /^\d{7}$/.test(String(soleUnpricedComponent.glCode || ""))) {
+    const quantityPerPortion = Number(soleUnpricedComponent.quantity) / Number(soleUnpricedComponent.recipeYield);
+    itemCostResidualAttribution = {
+      ...soleUnpricedComponent,
+      unitPrice: quantityPerPortion > 0 ? rounded(residualCost / quantityPerPortion) : residualCost,
+      allocationPerPortion: residualCost,
+      isItemCostResidualAttribution: true,
+      priceSourceNote: "Item + Waste Cost residual attribution: this was the recipe's only unresolved priced component, so it receives the exact remaining item cost on its existing mapped G/L.",
+    };
+    remainingUnpricedComponents = [];
+    residualCost = 0;
+  }
   const residualAllocation = residualCost > 0 && residualGlCode ? {
     ingredientMrn: "chef-reviewed-cost-balance",
     ingredientName: "Chef-reviewed cost balance",
@@ -86,19 +106,28 @@ export function balanceIngredientAllocations({ components = [], unpricedComponen
     isResidualCostBalance: true,
     priceSourceNote: "Chef-selected G/L allocation for the portion of the current Item + Waste Cost not covered by mapped ingredient prices.",
   } : null;
-  const ingredientAllocations = residualAllocation ? [...mappedComponents, residualAllocation] : mappedComponents;
+  const ingredientAllocations = [
+    ...mappedComponents,
+    ...(itemCostResidualAttribution ? [itemCostResidualAttribution] : []),
+    ...(residualAllocation ? [residualAllocation] : []),
+  ];
   const allocationPerPortion = allocationTotal(ingredientAllocations);
   return {
     ingredientAllocations,
-    unpricedComponents,
+    unpricedComponents: remainingUnpricedComponents,
     allocationPerPortion,
     mappedAllocationPerPortion,
     sourceMappedAllocationPerPortion,
     allocationScaleFactor: scaled.allocationScaleFactor,
     allocationWasScaled: scaled.allocationWasScaled,
-    pricingComplete: mappedComponents.length > 0 && targetCost > 0 && (residualCost === 0 || Boolean(residualAllocation)) && Math.abs(allocationPerPortion - targetCost) < 0.0001,
+    pricingComplete: ingredientAllocations.length > 0
+      && targetCost > 0
+      && (remainingUnpricedComponents.length === 0 || Boolean(residualAllocation))
+      && (residualCost === 0 || Boolean(residualAllocation))
+      && Math.abs(allocationPerPortion - targetCost) < 0.0001,
     residualCost,
     residualGlCode,
+    itemCostResidualAttribution: itemCostResidualAttribution?.allocationPerPortion || 0,
     allocationExceedsItemCost: false,
     targetCost: Number.isFinite(targetCost) ? targetCost : null,
   };
@@ -107,8 +136,18 @@ export function balanceIngredientAllocations({ components = [], unpricedComponen
 export function normalizeTransferItemAllocations(item = {}, nextItemWasteCost = item.itemWasteCost) {
   const allocations = Array.isArray(item.ingredientAllocations) ? item.ingredientAllocations : [];
   if (!allocations.length) return { ...item, itemWasteCost: nextItemWasteCost };
+  const attributedComponents = allocations.filter((allocation) => allocation.isItemCostResidualAttribution).map((allocation) => {
+    const {
+      allocationPerPortion: _oldAllocation,
+      isItemCostResidualAttribution: _oldAttribution,
+      priceSourceNote: _oldNote,
+      unitPrice: _oldUnitPrice,
+      ...sourceComponent
+    } = allocation;
+    return { ...sourceComponent, residualAttributionEligible: true, allocationPerPortion: null };
+  });
   const balanced = balanceIngredientAllocations({
-    components: allocations.filter((allocation) => !allocation.isResidualCostBalance).map((allocation) => {
+    components: allocations.filter((allocation) => !allocation.isResidualCostBalance && !allocation.isItemCostResidualAttribution).map((allocation) => {
       const {
         allocationScaleFactor: _oldFactor,
         isProportionallyAdjusted: _oldFlag,
@@ -120,7 +159,7 @@ export function normalizeTransferItemAllocations(item = {}, nextItemWasteCost = 
         allocationPerPortion: Number(sourceAllocationPerPortion ?? allocation.allocationPerPortion),
       };
     }),
-    unpricedComponents: Array.isArray(item.unpricedComponents) ? item.unpricedComponents : [],
+    unpricedComponents: [...(Array.isArray(item.unpricedComponents) ? item.unpricedComponents : []), ...attributedComponents],
     itemWasteCost: nextItemWasteCost,
     residualGlCode: item.residualGlCode || "",
   });
@@ -163,6 +202,9 @@ export function validateS4Transfer(transfer = {}) {
   if (items.some((item) => Number(item.residualCost) > 0 && !item.residualGlCode)) {
     errors.s4Lines = "Choose one chef-reviewed G/L code for every remaining Item + Waste Cost before export.";
   }
+  if (!errors.s4Lines && items.some(hasUncoveredRecipeComponents)) {
+    errors.s4Lines = "Every unresolved recipe component must be covered by a chef-reviewed G/L allocation before export.";
+  }
   if (!errors.s4Lines && items.some((item) => Math.abs(allocationTotal(item.ingredientAllocations) - Number(item.itemWasteCost)) >= 0.0001)) {
     errors.s4Lines = "Every ingredient allocation must equal its current Item + Waste Cost before export.";
   }
@@ -185,6 +227,7 @@ export function validateTransfer(draft, transfers = []) {
   if (!completeItems.length) errors.items = "Add at least one menu item.";
   if (completeItems.some((item) => item.itemWasteCost == null || !Number.isFinite(Number(item.itemWasteCost)))) errors.items = "Every selected item needs an Item + Waste Cost before this transfer can be saved.";
   if (completeItems.some((item) => Number(item.residualCost) > 0 && !item.residualGlCode)) errors.items = "Choose one chef-reviewed G/L code for every remaining Item + Waste Cost before saving.";
+  if (!errors.items && completeItems.some(hasUncoveredRecipeComponents)) errors.items = "Every unresolved recipe component must be covered by a chef-reviewed G/L allocation before saving.";
   if (!errors.items && completeItems.some((item) => Math.abs(allocationTotal(item.ingredientAllocations) - Number(item.itemWasteCost)) >= 0.0001)) errors.items = "Every ingredient allocation must equal its current Item + Waste Cost before saving.";
   if (completeItems.some((item) => !Number.isInteger(Number(item.quantity)) || Number(item.quantity) < 1)) {
     errors.items = "Every item count must be a whole number of 1 or more.";

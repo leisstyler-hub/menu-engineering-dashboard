@@ -95,6 +95,26 @@ test("Transfer Tool requires chef G/L review before balancing unresolved compone
   expect(savedAllocations).toEqual(expect.arrayContaining([expect.objectContaining({ isSubstitutePrice: true }), expect.objectContaining({ isResidualCostBalance: true, glCode: "4111012", allocationPerPortion: 0.3 })]));
 });
 
+test("Transfer Tool assigns one unresolved recipe component the authoritative item-cost remainder", async ({ page }) => {
+  const pricedComponents = [{ ingredientMrn: "bread", ingredientName: "Demi baguette", quantity: 1, unit: "each", recipeYield: 1, unitPrice: 1.07, glCode: "4111010", allocationPerPortion: 1.07 }];
+  const unresolvedProtein = [{ ingredientMrn: "36857", ingredientName: "Beef, Brisket, BBQ, Sliced", quantity: 6, unit: "pound", recipeYield: 24, glCode: "4111003", residualAttributionEligible: true, allocationPerPortion: null }];
+  const writes = await mockTransferStorage(page, { huliComponents: pricedComponents, huliUnpricedComponents: unresolvedProtein, huliCost: 5.111 });
+  await openTool(page, /open transfer tool/i, /^Transfer Tool$/);
+  await page.getByLabel("Globally unique title").fill("QA residual attribution");
+  await page.getByLabel("Departing unit").selectOption("Dawson");
+  await page.getByLabel("Receiving unit").selectOption("Nessie");
+  await page.getByLabel("Menu 1", { exact: true }).selectOption("AMZ: Ohana");
+  await page.getByLabel("Item 1", { exact: true }).selectOption({ label: "Huli Huli Chicken · 33065.1 · 1 piece" });
+  await expect(page.getByLabel("Chef-reviewed G/L for Huli Huli Chicken")).toHaveCount(0);
+  const allocationDetails = page.locator("details").filter({ hasText: "Automatic ingredient G/L allocation" }).last();
+  await allocationDetails.locator("summary").click();
+  await expect(allocationDetails.getByText(/Item \+ Waste residual/i)).toBeVisible();
+  await expect(allocationDetails.getByText(/\$4\.04/).first()).toBeVisible();
+  await page.getByRole("button", { name: "Save Draft" }).click();
+  const attributed = writes[0].records[0].items[0].ingredientAllocations.find((component) => component.ingredientMrn === "36857");
+  expect(attributed).toMatchObject({ glCode: "4111003", allocationPerPortion: 4.041, isItemCostResidualAttribution: true });
+});
+
 test("Transfer Tool proportionally caps every mapped G/L at Item + Waste Cost", async ({ page }) => {
   const overMappedComponents = [
     { ingredientMrn: "protein", ingredientName: "Sandwich protein", quantity: 1, unit: "portion", recipeYield: 1, unitPrice: 2, glCode: "4111003", allocationPerPortion: 2 },
