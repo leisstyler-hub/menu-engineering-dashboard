@@ -597,7 +597,7 @@ function createBlankItem(menuId, areaOrder, index = 1) {
 }
 
 function createMenuRecord(name, type, areaOrder) {
-  const menuId = `menu-${slugify(name)}-${Date.now()}`;
+  const menuId = `menu-${slugify(name)}-${globalThis.crypto.randomUUID()}`;
   return {
     id: menuId,
     name,
@@ -672,6 +672,9 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const [search, setSearch] = useState("");
   const [newMenuName, setNewMenuName] = useState("");
   const [newMenuType, setNewMenuType] = useState("Core");
+  const [newMenuNotice, setNewMenuNotice] = useState("");
+  const [isCreatingMenu, setIsCreatingMenu] = useState(false);
+  const isCreatingMenuRef = useRef(false);
   const [newPriceCategory, setNewPriceCategory] = useState("");
   const [newPriceSea, setNewPriceSea] = useState("");
   const [newPriceModifierOnly, setNewPriceModifierOnly] = useState(false);
@@ -1115,8 +1118,17 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   };
 
   const createNewMenu = () => {
+    if (isCreatingMenuRef.current) return;
     const name = newMenuName.trim();
     if (!name) return;
+    const normalizedName = menuKey({ name });
+    if (menus.some((menu) => menuKey(menu) === normalizedName)) {
+      setNewMenuNotice(`A menu named "${name}" already exists.`);
+      return;
+    }
+    isCreatingMenuRef.current = true;
+    setIsCreatingMenu(true);
+    setNewMenuNotice("");
     const menu = createMenuRecord(name, newMenuType, ssmtData.areaOrder);
     setMenus((current) => [...current, menu]);
     setSelectedMenuId(menu.id);
@@ -1124,6 +1136,12 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
     setNewMenuType(menuTypes[0] || "Core");
     setActiveView("editor");
   };
+
+  useEffect(() => {
+    if (activeView !== "menus") return;
+    isCreatingMenuRef.current = false;
+    setIsCreatingMenu(false);
+  }, [activeView]);
 
   const addDivider = () => {
     setMenus((current) => current.map((menu) => {
@@ -1838,7 +1856,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
               <div className="mt-4 space-y-3">
                 <label className="grid gap-1 text-sm font-bold text-slate-700">
                   <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">New menu name</span>
-                  <input aria-label="New menu name" value={newMenuName} onChange={(event) => setNewMenuName(event.target.value)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 font-bold outline-none focus:border-emerald-500" />
+                  <input aria-label="New menu name" value={newMenuName} onChange={(event) => { setNewMenuName(event.target.value); setNewMenuNotice(""); }} className="rounded-lg border border-slate-300 bg-white px-3 py-2 font-bold outline-none focus:border-emerald-500" />
                 </label>
                 <label className="grid gap-1 text-sm font-bold text-slate-700">
                   <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">New menu type</span>
@@ -1846,7 +1864,8 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                     {menuTypes.map((type) => <option key={type} value={type}>{type}</option>)}
                   </select>
                 </label>
-                <button type="button" onClick={createNewMenu} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 py-3 text-sm font-black text-white hover:bg-slate-800">
+                {newMenuNotice && <p role="alert" className="text-sm font-bold text-rose-700">{newMenuNotice}</p>}
+                <button type="button" onClick={createNewMenu} disabled={isCreatingMenu} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 py-3 text-sm font-black text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60">
                   <Plus size={18} /> Create menu
                 </button>
               </div>

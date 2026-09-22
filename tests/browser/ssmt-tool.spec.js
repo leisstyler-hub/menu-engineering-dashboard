@@ -1584,3 +1584,81 @@ test("Menu Audit describes SSMT app and Webtrition sources without old Excel as 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
+
+
+test("SSMT blocks duplicate menu names and rapid double-submit with mocked storage", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const existingMenu = {
+    id: "menu-existing",
+    name: "Existing Menu",
+    type: "Core",
+    phase: "Culinary draft",
+    status: "Draft",
+    items: [],
+    flags: [],
+  };
+  let currentMenus = [existingMenu];
+
+  await page.addInitScript(() => {
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+  });
+  await page.route("**/api/storage/records**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (request.method() === "GET" && url.searchParams.get("tool") === "SSMT") {
+      await route.fulfill({
+        json: {
+          ok: true,
+          source: "supabase",
+          records: [{
+            "Record ID": "ssmt|workspace|current",
+            "Record Type": "SSMT Workspace",
+            Status: "Shared",
+            menus: currentMenus,
+            priceBook: [],
+            modifierGroups: [],
+            modifierClipboardSlots: [],
+            selectedMenuId: "menu-existing",
+            updatedAt: "2026-09-22T14:00:00.000Z",
+          }],
+        },
+      });
+      return;
+    }
+    if (request.method() === "POST") {
+      const body = request.postDataJSON();
+      const savedRecord = (body?.records || []).find((candidate) => candidate?.["Record ID"] === "ssmt|workspace|current");
+      if (savedRecord?.menus) currentMenus = savedRecord.menus;
+      await route.fulfill({ json: { ok: true, source: "supabase", synced: 1, message: "Saved 1 row to Supabase." } });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByLabel(/SSMT passcode/i).fill("0411");
+  await page.getByRole("button", { name: /unlock ssmt/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+  await expect(page.getByText(/Loading current SSMT seed data/i)).toHaveCount(0, { timeout: 20_000 });
+
+  await page.getByLabel(/New menu name/i).fill("  existing menu  ");
+  await page.getByRole("button", { name: /Create menu/i }).click();
+  await expect(page.getByRole("alert")).toHaveText('A menu named "existing menu" already exists.');
+  await expect(page.locator('[data-menu-name="Existing Menu"]')).toHaveCount(1);
+  await expect(page.getByRole("heading", { name: /^Menu Selector$/ })).toBeVisible();
+
+  const uniqueName = "Rapid Submit Menu";
+  await page.getByLabel(/New menu name/i).fill(uniqueName);
+  await page.getByRole("button", { name: /Create menu/i }).evaluate((button) => {
+    button.click();
+    button.click();
+  });
+  await expect(page.getByRole("heading", { name: uniqueName })).toBeVisible();
+  await page.getByRole("button", { name: /Back to menu selection/i }).click();
+  await expect(page.locator(`[data-menu-name="${uniqueName}"]`)).toHaveCount(1);
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
