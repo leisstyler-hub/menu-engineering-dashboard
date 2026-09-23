@@ -276,3 +276,29 @@ test("curated menu banner and dish photo load together for Anisa", async ({ page
   await expect(dishPhoto).toBeVisible({ timeout: 20_000 });
   await expect(dishPhoto).toHaveAttribute("src", "/assets/recipe-library/anisa/zaffron-ember-chicken-plate.jpg");
 });
+
+
+test("Menu Library orders category sections as entrees, sides, sub recipes, then extensions", async ({ page }) => {
+  await page.addInitScript(() => {
+    const categories = ["Extension", "Subrecipe", "Side", "Entree"];
+    window.localStorage.setItem("culinaryToolsMenuEngineeringItems_v3", JSON.stringify(categories.map((category, index) => ({
+      id: `ordered-category-${index}`,
+      mrn: `ORDER-${index}`,
+      menu: "Ordering Menu",
+      station: "Menu Library",
+      category,
+      recipeName: `${category} Item`,
+      displayName: `${category} Item`,
+      item: `${category} Item`,
+      price: category === "Entree" ? 10 : 2,
+      trueCost: 1,
+    }))));
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: /open library/i }).click();
+  await expect(page.getByRole("heading", { name: /^Menu Library$/ })).toBeVisible({ timeout: 20_000 });
+
+  const sectionOrder = await page.locator("main section h3").evaluateAll((headings) => headings.map((heading) => heading.textContent.trim()));
+  expect(sectionOrder).toEqual(["Entree", "Side", "Subrecipe", "Extension"]);
+});

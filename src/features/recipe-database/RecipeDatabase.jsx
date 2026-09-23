@@ -194,14 +194,11 @@ function categoryLabel(row) {
 
 function categoryRank(category = "") {
   const normalized = String(category).toLowerCase();
-  if (normalized.includes("carved proteins")) return 1;
-  if (normalized.includes("sandwich")) return 2;
-  if (normalized.includes("entree")) return 3;
-  if (normalized.includes("vegetable carvery")) return 4;
-  if (normalized.includes("side")) return 5;
-  if (normalized.includes("sub")) return 6;
-  if (normalized.includes("extension")) return 7;
-  return 7;
+  if (normalized.includes("entree") || normalized.includes("carved proteins") || normalized.includes("sandwich")) return 1;
+  if (normalized.includes("side") || normalized.includes("vegetable carvery")) return 2;
+  if (normalized.includes("sub")) return 3;
+  if (normalized.includes("extension")) return 4;
+  return 5;
 }
 
 function foodCost(row) {
