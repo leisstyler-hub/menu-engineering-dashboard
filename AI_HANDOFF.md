@@ -1,6 +1,6 @@
 # AI Handoff
 
-Current release candidate: `2026.09.22.004-menu-library-category-order`. Menu Library renders category bands as Entrees, Sides, Sub Recipes, then Extensions; Carved Proteins/Sandwiches are entree-band categories and Vegetable Carvery is a side-band category. The focused ordering regression passed; the only broader Menu Library failure is the known unrelated 5-vs-6 property-tile count. Release state: PREPARED.
+Current live version: `2026.09.22.004-menu-library-category-order` (application commit `0a6ab81`). Menu Library renders category bands as Entrees, Sides, Sub Recipes, then Extensions; Carved Proteins/Sandwiches are entree-band categories and Vegetable Carvery is a side-band category. The focused ordering regression passed; the only broader Menu Library failure is the known unrelated 5-vs-6 property-tile count. Release state: LIVE.
 
 Current live version: `2026.09.22.003-ssmt-amz-seed-dedupe` (application commit `5c0da63`). Seed/workspace menu identity now strips the display-only `AMZ:` prefix before matching, preventing completed AMZ-prefixed menus from regenerating plain seed duplicates on load and autosave. Focused mocked-storage browser coverage and adjacent SSMT guards passed. Release state: LIVE.
 
