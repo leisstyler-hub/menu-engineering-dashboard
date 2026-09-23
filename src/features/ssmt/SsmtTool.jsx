@@ -340,7 +340,7 @@ function workspaceSharedSignature(workspace = {}) {
 }
 
 function menuKey(menu = {}) {
-  return String(menu.name || menu.id || "").trim().toLowerCase();
+  return String(menu.name || menu.id || "").trim().replace(/^amz:\s*/i, "").toLowerCase();
 }
 
 function mergeWorkspaceMenusWithSeed(workspaceMenus = [], seedMenus = [], { applySeedTypes = false } = {}) {

@@ -1589,8 +1589,8 @@ test("Menu Audit describes SSMT app and Webtrition sources without old Excel as 
 test("SSMT blocks duplicate menu names and rapid double-submit with mocked storage", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   const existingMenu = {
-    id: "menu-existing",
-    name: "Existing Menu",
+    id: "menu-andes",
+    name: "AMZ: Andes",
     type: "Core",
     phase: "Culinary draft",
     status: "Draft",
@@ -1619,7 +1619,7 @@ test("SSMT blocks duplicate menu names and rapid double-submit with mocked stora
             priceBook: [],
             modifierGroups: [],
             modifierClipboardSlots: [],
-            selectedMenuId: "menu-existing",
+            selectedMenuId: "menu-andes",
             updatedAt: "2026-09-22T14:00:00.000Z",
           }],
         },
@@ -1643,10 +1643,10 @@ test("SSMT blocks duplicate menu names and rapid double-submit with mocked stora
   await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
   await expect(page.getByText(/Loading current SSMT seed data/i)).toHaveCount(0, { timeout: 20_000 });
 
-  await page.getByLabel(/New menu name/i).fill("  existing menu  ");
+  await page.getByLabel(/New menu name/i).fill("  andes  ");
   await page.getByRole("button", { name: /Create menu/i }).click();
-  await expect(page.getByRole("alert")).toHaveText('A menu named "existing menu" already exists.');
-  await expect(page.locator('[data-menu-name="Existing Menu"]')).toHaveCount(1);
+  await expect(page.getByRole("alert")).toHaveText('A menu named "andes" already exists.');
+  await expect(page.locator('[data-menu-name="AMZ: Andes"]')).toHaveCount(1);
   await expect(page.getByRole("heading", { name: /^Menu Selector$/ })).toBeVisible();
 
   const uniqueName = "Rapid Submit Menu";
