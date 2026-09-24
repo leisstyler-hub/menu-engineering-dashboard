@@ -1,4 +1,6 @@
 # Changelog
+- [Sep 24, 7:24 AM] Published SSMT tier pricing as version `2026.09.24.001-ssmt-tier-pricing` at application commit `99ea8c4`. Each pricing row can switch from 16 independent area prices to two Tier prices; AUS, BNA, YVR, and YYZ use Tier 2 and the other 12 areas use Tier 1. Enabling tier mode preserves a backup of the row?s prior 16 area values, and disabling it restores them. Existing rows and menus remain unchanged until tier mode is selected. Menu Builder layout is unchanged, while its existing selector uses the Tier 1-backed SEA price and generated area values. Full SSMT browser coverage passed 22/22 and the production build passed. Production serves `/assets/index-PUdKO7OY.js` with the exact version marker. Solo Chief mission requested and release-authorized by Tyler. Release state: LIVE.
+
 
 ## 2026-09-22
 

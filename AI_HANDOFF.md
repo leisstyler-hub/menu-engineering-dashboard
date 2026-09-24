@@ -1,4 +1,6 @@
 # AI Handoff
+Current live version: `2026.09.24.001-ssmt-tier-pricing` (application commit `99ea8c4`). Each Pricing Structure row now has an optional Tier pricing checkbox. Tier mode replaces the 16 editable area cells with Tier 1 and Tier 2 inputs, stores the prior area values for lossless restoration, and fills AUS/BNA/YVR/YYZ from Tier 2 while the other 12 areas use Tier 1. The Menu Builder layout is unchanged; its existing price selector uses the Tier 1-backed SEA value and copies the generated 16-area map. Existing menus and pricing rows are not migrated or rewritten unless an admin enables tier mode on that row. Full local SSMT browser coverage passed 22/22, including reversible switching and exact representative area mapping; production build passed; the public asset `/assets/index-PUdKO7OY.js` contains the exact version marker. Release state: LIVE.
+
 
 Current live version: `2026.09.22.004-menu-library-category-order` (application commit `0a6ab81`). Menu Library renders category bands as Entrees, Sides, Sub Recipes, then Extensions; Carved Proteins/Sandwiches are entree-band categories and Vegetable Carvery is a side-band category. The focused ordering regression passed; the only broader Menu Library failure is the known unrelated 5-vs-6 property-tile count. Release state: LIVE.
 
