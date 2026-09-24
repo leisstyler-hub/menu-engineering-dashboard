@@ -26,6 +26,19 @@ test("SSMT opens behind passcode and separates pricing from menu building", asyn
   await page.getByRole("button", { name: /Add pricing row/i }).click();
   await expect(page.getByText("$12.34 - Smoke test price")).toBeVisible();
 
+  await page.getByLabel("Tier pricing for $12.34 - Smoke test price").check();
+  await expect(page.getByLabel(/Tier 1 price for .*Smoke test price/)).toHaveValue("$12.34");
+  await expect(page.getByLabel(/Tier 2 price for .*Smoke test price/)).toHaveValue("");
+  await page.getByLabel(/Tier 1 price for .*Smoke test price/).fill("10.00");
+  await page.getByLabel(/Tier 2 price for .*Smoke test price/).fill("12.00");
+  await expect(page.getByText("$10.00 - Smoke test price")).toBeVisible();
+  await page.getByLabel("Tier pricing for $10.00 - Smoke test price").uncheck();
+  await expect(page.getByLabel("SEA price for $12.34 - Smoke test price")).toHaveValue("$12.34");
+  await expect(page.getByLabel("AUS price for $12.34 - Smoke test price")).toHaveValue("");
+  await page.getByLabel("Tier pricing for $12.34 - Smoke test price").check();
+  await expect(page.getByLabel(/Tier 1 price for .*Smoke test price/)).toHaveValue("10.00");
+  await expect(page.getByLabel(/Tier 2 price for .*Smoke test price/)).toHaveValue("12.00");
+
   await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
   await expect(page.getByRole("heading", { name: /^Menu Selector$/ })).toBeVisible();
   await expect(page.getByText(/Loading current SSMT seed data/i)).toHaveCount(0, { timeout: 20_000 });
@@ -74,7 +87,7 @@ test("SSMT opens behind passcode and separates pricing from menu building", asyn
   await expect(fixyInput).toHaveValue("GRILL 1");
 
   await expect(page.getByLabel(/SEA price for/i).first()).toBeVisible();
-  await page.getByLabel(/SEA price for/i).first().selectOption({ label: "$12.34 - Smoke test price" });
+  await page.getByLabel(/SEA price for/i).first().selectOption({ label: "$10.00 - Smoke test price" });
   await expect(page.getByLabel(/SEA price for/i).first()).not.toHaveValue("");
   await expect(page.getByLabel(/Area prices for/i).first()).toContainText("AUS");
   await expect(page.getByLabel(/Area prices for/i).first()).toContainText("MCO");
@@ -85,6 +98,13 @@ test("SSMT opens behind passcode and separates pricing from menu building", asyn
   );
   expect(renderedAreas).toEqual(expectedAreas);
   expect(renderedAreas.some((area) => /^\+\d+$/.test(area))).toBe(false);
+  const renderedAreaPrices = await areaPriceCell.locator("button").evaluateAll((buttons) =>
+    Object.fromEntries(buttons.map((button) => {
+      const spans = button.querySelectorAll("span");
+      return [spans[0]?.textContent.trim() || "", spans[1]?.textContent.trim() || ""];
+    }))
+  );
+  expect(renderedAreaPrices).toMatchObject({ AUS: "12.00", BNA: "12.00", YVR: "12.00", YYZ: "12.00", SEA: "10.00", MCO: "10.00" });
 
   const caloriesInput = page.getByLabel(/Calories for/i).first();
   await caloriesInput.fill("540");

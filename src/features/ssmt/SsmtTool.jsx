@@ -36,6 +36,7 @@ const DEFAULT_MENU_TYPES = ["Core", "Global", "Menu Library", "Thompson Hospital
 const ACTIVE_DATE_MENU_TYPES = ["Promotion", "Thompson Hospitality"];
 const MENU_TYPE_ORDER = ["Core", "Global", "Menu Library", "Promotion", "Thompson Hospitality"];
 const MODIFIER_TYPES = ["Force", "Remove", "Addition"];
+const TIER_2_AREAS = new Set(["AUS", "BNA", "YVR", "YYZ"]);
 const MODIFIER_TYPE_STYLES = {
   Force: {
     borderClass: "border-violet-400",
@@ -372,6 +373,17 @@ function metricValue(value) {
 
 function blankAreaPrices(areaOrder = []) {
   return Object.fromEntries(areaOrder.map((area) => [area, ""]));
+}
+
+function tierAreas(areaOrder = [], tier1Price = "", tier2Price = "") {
+  return Object.fromEntries(areaOrder.map((area) => [area, TIER_2_AREAS.has(area) ? tier2Price : tier1Price]));
+}
+
+function normalizePricingRow(price = {}, areaOrder = []) {
+  if (!price.tierPricing) return price;
+  const tier1Price = price.tier1Price ?? price.areas?.SEA ?? "";
+  const tier2Price = price.tier2Price ?? price.areas?.AUS ?? "";
+  return { ...price, tierPricing: true, tier1Price, tier2Price, areas: tierAreas(areaOrder, tier1Price, tier2Price) };
 }
 
 function findPriceRow(priceBook, priceId) {
@@ -785,7 +797,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
           : payload.menus;
         const storedPriceBook = Array.isArray(workspace.priceBook) && workspace.priceBook.length ? workspace.priceBook : payload.priceBook;
         const storedModifierGroups = Array.isArray(workspace.modifierGroups) && workspace.modifierGroups.length ? workspace.modifierGroups : payload.modifierGroups;
-        const priceBook = storedPriceBook;
+        const priceBook = storedPriceBook.map((price) => normalizePricingRow(price, payload.areaOrder));
         const modifierGroups = storedModifierGroups.map((group) => normalizeModifierGroup(group, payload.areaOrder, priceBook));
         const clipboardSlots = normalizeModifierClipboardSlots(workspace.modifierClipboardSlots);
         lastSharedSaveSignatureRef.current = workspaceSharedSignature({
@@ -1079,6 +1091,42 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
         [area]: value,
       },
     });
+  };
+
+  const toggleTierPricing = (priceId, enabled) => {
+    setSsmtData((current) => ({
+      ...current,
+      priceBook: current.priceBook.map((price) => {
+        if (price.id !== priceId) return price;
+        if (!enabled) {
+          const areas = price.areaPricingBackup || price.areas || blankAreaPrices(current.areaOrder);
+          return { ...price, tierPricing: false, areas, selectorLabel: priceSelectorLabel(areas.SEA || rowSeaPrice(price), price.category) };
+        }
+        const tier1Price = price.tier1Price ?? price.areas?.SEA ?? "";
+        const tier2Price = price.tier2Price ?? price.areas?.AUS ?? "";
+        return {
+          ...price,
+          tierPricing: true,
+          tier1Price,
+          tier2Price,
+          areaPricingBackup: price.areaPricingBackup || { ...(price.areas || blankAreaPrices(current.areaOrder)) },
+          areas: tierAreas(current.areaOrder, tier1Price, tier2Price),
+          selectorLabel: priceSelectorLabel(tier1Price, price.category),
+        };
+      }),
+    }));
+  };
+
+  const updateTierPrice = (priceId, tier, value) => {
+    setSsmtData((current) => ({
+      ...current,
+      priceBook: current.priceBook.map((price) => {
+        if (price.id !== priceId) return price;
+        const tier1Price = tier === 1 ? value : (price.tier1Price || "");
+        const tier2Price = tier === 2 ? value : (price.tier2Price || "");
+        return { ...price, tier1Price, tier2Price, areas: tierAreas(current.areaOrder, tier1Price, tier2Price), selectorLabel: priceSelectorLabel(tier1Price, price.category) };
+      }),
+    }));
   };
 
   const openMenu = (menuId) => {
@@ -1733,6 +1781,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                     <tr>
                       <th className="border-b border-slate-200 px-4 py-3">SEA price + category</th>
                       <th className="border-b border-slate-200 px-4 py-3">Modifier only</th>
+                      <th className="border-b border-slate-200 px-4 py-3">Tier pricing</th>
                       {ssmtData.areaOrder.map((area) => <th key={area} className="border-b border-slate-200 px-4 py-3">{area}</th>)}
                     </tr>
                   </thead>
@@ -1748,15 +1797,20 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                             aria-label={`Modifier only price ${price.selectorLabel}`}
                           />
                         </td>
-                        {ssmtData.areaOrder.map((area) => (
+                        <td className="border-b border-slate-100 px-4 py-3">
+                          <input type="checkbox" checked={Boolean(price.tierPricing)} onChange={(event) => toggleTierPricing(price.id, event.target.checked)} aria-label={`Tier pricing for ${price.selectorLabel}`} />
+                        </td>
+                        {price.tierPricing ? (
+                          <td colSpan={ssmtData.areaOrder.length} className="border-b border-slate-100 px-3 py-2">
+                            <div className="grid gap-2 sm:grid-cols-[160px_160px_minmax(320px,1fr)] sm:items-end">
+                              <label className="grid gap-1 text-xs font-black text-slate-700">Tier 1 price<input aria-label={`Tier 1 price for ${price.selectorLabel}`} value={price.tier1Price || ""} onChange={(event) => updateTierPrice(price.id, 1, event.target.value)} placeholder="0.00" className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-semibold outline-none focus:border-emerald-500" /></label>
+                              <label className="grid gap-1 text-xs font-black text-slate-700">Tier 2 price<input aria-label={`Tier 2 price for ${price.selectorLabel}`} value={price.tier2Price || ""} onChange={(event) => updateTierPrice(price.id, 2, event.target.value)} placeholder="0.00" className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-semibold outline-none focus:border-emerald-500" /></label>
+                              <p className="pb-1 text-xs font-bold text-slate-500">Tier 2: AUS, BNA, YVR, YYZ. All other areas use Tier 1.</p>
+                            </div>
+                          </td>
+                        ) : ssmtData.areaOrder.map((area) => (
                           <td key={area} className="border-b border-slate-100 px-2 py-2">
-                            <input
-                              aria-label={`${area} price for ${price.selectorLabel}`}
-                              value={price.areas?.[area] || ""}
-                              onChange={(event) => updatePricingArea(price.id, area, event.target.value)}
-                              placeholder="0.00"
-                              className="w-full min-w-[72px] rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 outline-none focus:border-emerald-500"
-                            />
+                            <input aria-label={`${area} price for ${price.selectorLabel}`} value={price.areas?.[area] || ""} onChange={(event) => updatePricingArea(price.id, area, event.target.value)} placeholder="0.00" className="w-full min-w-[72px] rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 outline-none focus:border-emerald-500" />
                           </td>
                         ))}
                       </tr>

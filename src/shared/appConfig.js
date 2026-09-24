@@ -1,1 +1,1 @@
-export const APP_VERSION_STAMP = "2026.09.22.004-menu-library-category-order";
+export const APP_VERSION_STAMP = "2026.09.24.001-ssmt-tier-pricing";
