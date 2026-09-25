@@ -1276,6 +1276,47 @@ test("SSMT Mods badge turns red/green with modifier group lock state and gates i
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
+test("SSMT keeps ten modifier groups attached after save, close, and reopen", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/");
+
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByLabel(/SSMT passcode/i).fill("0411");
+  await page.getByRole("button", { name: /unlock ssmt/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+  await page.getByLabel(/New menu name/i).fill("Ten Modifier Groups Test");
+  await page.getByLabel(/New menu type/i).selectOption("Core");
+  await page.getByRole("button", { name: /Create menu/i }).click();
+
+  const itemRow = page
+    .locator("tr[data-row-kind='item']")
+    .filter({ has: page.getByRole("button", { name: /Lock item NEW ITEM/i }) })
+    .first();
+  await itemRow.getByRole("button", { name: /View modifiers Mods \(0\)/i }).click();
+
+  const modifierDialog = page.getByRole("dialog", { name: /modifier/i });
+  for (let groupNumber = 1; groupNumber <= 10; groupNumber += 1) {
+    await modifierDialog.getByRole("button", { name: /Add modifier group/i }).click();
+    const groupName = modifierDialog.getByLabel(/Modifier group name/i).last();
+    await groupName.fill(`Modifier Group ${groupNumber}`);
+    await groupName.blur();
+  }
+
+  await expect(modifierDialog.getByLabel(/Modifier group name/i)).toHaveCount(10);
+  await modifierDialog.getByRole("button", { name: /Save modifiers/i }).click();
+  await page.keyboard.press("Escape");
+  await expect(itemRow.getByRole("button", { name: /View modifiers Mods \(10\)/i })).toBeVisible();
+
+  await itemRow.getByRole("button", { name: /View modifiers Mods \(10\)/i }).click();
+  const reopenedDialog = page.getByRole("dialog", { name: /modifier/i });
+  await expect(reopenedDialog.getByLabel(/Modifier group name/i)).toHaveCount(10);
+  await expect(reopenedDialog.getByLabel(/Modifier group name/i).last()).toHaveValue("Modifier Group 10");
+  await expect(reopenedDialog.getByRole("button", { name: /Add modifier group/i })).toBeDisabled();
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
 test("SSMT Mods badge counts only reliably-linked groups, not stale free-text refs", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   await page.setViewportSize({ width: 1800, height: 950 });

@@ -61,6 +61,7 @@ const MODIFIER_TYPE_STYLES = {
   },
 };
 const MODIFIER_CLIPBOARD_SLOT_COUNT = 4;
+const MAX_MODIFIER_GROUPS_PER_ITEM = 10;
 const AUTO_SHARED_SAVE_DELAY_MS = 10000;
 // The workspace has grown large (500+ modifier groups, 90+ menus): serializing it to JSON for
 // the local cache write and the shared-save change check is expensive enough now to visibly
@@ -438,14 +439,13 @@ function matchedModifierGroupsForItem(item = {}, modifierGroups = []) {
   if (!Array.isArray(modifierGroups)) return [];
   const refs = Array.isArray(item.modifierGroups) ? item.modifierGroups : [];
   return modifierGroups
-    .filter((group) => refs.some((ref) => modifierGroupMatchesItemRef(group, ref)))
-    .slice(0, 4);
+    .filter((group) => refs.some((ref) => modifierGroupMatchesItemRef(group, ref)));
 }
 
 // Building the item-row Mods badge/gate by filtering the full modifierGroups array per item
 // is O(items x modifierGroups) and gets slow once modifierGroups grows into the hundreds (a
 // large menu's items table was re-scanning all of them on every keystroke). This index turns
-// each item's lookup into O(refs), where refs is the item's own (small, <=4) modifierGroups list.
+// each item's lookup into O(refs), where refs is the item's own small modifierGroups list.
 function buildModifierGroupIndex(modifierGroups = []) {
   const byId = new Map();
   const byName = new Map();
@@ -470,7 +470,7 @@ function matchedModifierGroupsForItemIndexed(item = {}, index = { byId: new Map(
       matched.push(group);
     }
   }
-  return matched.slice(0, 4);
+  return matched;
 }
 
 function modifierGroupMatchesItemRef(group = {}, ref = "") {
@@ -1307,7 +1307,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   };
 
   const pasteModifierGroup = (groupToPaste = modifierClipboard) => {
-    if (!groupToPaste || !modifierDialog?.item) return;
+    if (!groupToPaste || !modifierDialog?.item || modifierDialog.groups.length >= MAX_MODIFIER_GROUPS_PER_ITEM) return;
     const baseName = groupToPaste.name || "Pasted modifier group";
     const nextName = baseName;
     const groupId = `${groupToPaste.id || "modifier-clipboard"}-paste-${Date.now()}`;
@@ -1401,7 +1401,8 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   };
 
   const addModifierGroup = () => {
-    const group = createBlankModifierGroup(modifierDialog?.item, ssmtData.areaOrder);
+    if (!modifierDialog?.item || modifierDialog.groups.length >= MAX_MODIFIER_GROUPS_PER_ITEM) return;
+    const group = createBlankModifierGroup(modifierDialog.item, ssmtData.areaOrder);
     setSsmtData((current) => ({ ...current, modifierGroups: [...current.modifierGroups, group] }));
     if (modifierDialog?.item?.id) {
       updateItem(modifierDialog.item.id, { modifierGroups: [...(modifierDialog.item.modifierGroups || []), group.id] });
@@ -2451,11 +2452,11 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                   <Save size={14} /> Save modifiers
                 </button>
                 {modifierClipboard && (
-                  <button type="button" onClick={() => pasteModifierGroup()} className="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-700 bg-emerald-700 px-3 py-2 text-xs font-black text-white hover:bg-emerald-800">
+                  <button type="button" onClick={() => pasteModifierGroup()} disabled={modifierDialog.groups.length >= MAX_MODIFIER_GROUPS_PER_ITEM} className="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-700 bg-emerald-700 px-3 py-2 text-xs font-black text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-400">
                     <Copy size={14} /> Paste modifier group
                   </button>
                 )}
-                <button type="button" onClick={addModifierGroup} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-black text-slate-800 hover:bg-slate-100">
+                <button type="button" onClick={addModifierGroup} disabled={modifierDialog.groups.length >= MAX_MODIFIER_GROUPS_PER_ITEM} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-black text-slate-800 hover:bg-slate-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400">
                   <Plus size={14} /> Add modifier group
                 </button>
               </div>
@@ -2466,7 +2467,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                   <p className="font-black text-slate-950">{slot.label}: {slot.group?.name || "Empty slot"}</p>
                   {slot.group ? (
                     <div className="mt-2 flex items-stretch gap-1">
-                      <button type="button" onClick={() => pasteModifierGroup(slot.group)} className="inline-flex w-3/4 items-center justify-center gap-1 rounded-md border border-emerald-700 bg-emerald-700 px-2 py-1 text-[11px] font-black text-white hover:bg-emerald-800">
+                      <button type="button" onClick={() => pasteModifierGroup(slot.group)} disabled={modifierDialog.groups.length >= MAX_MODIFIER_GROUPS_PER_ITEM} className="inline-flex w-3/4 items-center justify-center gap-1 rounded-md border border-emerald-700 bg-emerald-700 px-2 py-1 text-[11px] font-black text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-400">
                         <Copy size={13} /> Paste slot {index + 1}
                       </button>
                       <button type="button" onClick={() => clearModifierClipboardSlot(index)} aria-label={`Clear slot ${index + 1}`} className="inline-flex w-1/4 items-center justify-center rounded-md border border-red-300 bg-red-50 px-2 py-1 text-[11px] font-black text-red-800 hover:bg-red-100">
