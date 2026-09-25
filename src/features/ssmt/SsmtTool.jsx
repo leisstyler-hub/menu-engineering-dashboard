@@ -918,10 +918,30 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const promotionCount = menus.filter((menu) => menu.type === "Promotion").length;
   const historicalCount = menus.filter((menu) => ["Thompson Hospitality", "Promotion"].includes(menu.type)).length;
   const flaggedMenus = menus.filter((menu) => menu.editSignal || (Array.isArray(menu.flags) && menu.flags.length));
-  const hiddenMenuCount = menus.filter((menu) => menu.hidden || menuIsAutoHibernated(menu)).length;
-  const phaseCounts = ssmtData.workflowPhases.map((phase) => ({
-    phase,
-    count: visibleMenus.filter((menu) => menu.phase === phase).length,
+  const handoffQueues = [
+    {
+      phase: "Experience review",
+      eyebrow: "Step 1",
+      title: "Experience Team",
+      emptyMessage: "No menus are waiting for Experience Department review.",
+      panelClass: "border-violet-300 bg-violet-50",
+      badgeClass: "bg-violet-700 text-white",
+      buttonClass: "border-violet-200 hover:border-violet-500 hover:bg-violet-100",
+      icon: ClipboardCheck,
+    },
+    {
+      phase: "IT programming",
+      eyebrow: "Step 2",
+      title: "IT Team",
+      emptyMessage: "No menus are waiting for IT programming.",
+      panelClass: "border-sky-300 bg-sky-50",
+      badgeClass: "bg-sky-700 text-white",
+      buttonClass: "border-sky-200 hover:border-sky-500 hover:bg-sky-100",
+      icon: ShieldCheck,
+    },
+  ].map((queue) => ({
+    ...queue,
+    menus: visibleMenus.filter((menu) => menu.phase === queue.phase),
   }));
   const menuTypes = ssmtData.menuTypes?.length ? ssmtData.menuTypes : DEFAULT_MENU_TYPES;
   const showActiveDates = activeDatesRequired(selectedMenu.type);
@@ -931,7 +951,6 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const selectedDerivedRows = useMemo(() => deriveSsmtOperatingRows({ menus: [selectedMenu] }), [selectedMenu]);
   const selectedDerivedMenus = useMemo(() => ssmtDerivedMenuEntries(selectedDerivedRows), [selectedDerivedRows]);
   const selectedMenuFlags = Array.isArray(selectedMenu.flags) ? selectedMenu.flags : [];
-  const totalItemFlagCount = menus.reduce((sum, menu) => sum + (Array.isArray(menu.flags) ? menu.flags.length : 0), 0);
   const selectedFlagReportHref = buildFlagReportMailto({
     menu: selectedMenu,
     flags: selectedMenuFlags,
@@ -1825,7 +1844,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
 
         {activeView === "menus" && (
           <main className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
-            <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <section data-testid="ssmt-menu-selector" className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Existing records</p>
@@ -1847,15 +1866,37 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                   IT Department: {flaggedMenus.length} menu{flaggedMenus.length === 1 ? " has" : "s have"} been flagged for edit.
                 </div>
               )}
-              <div className="mt-4 grid grid-cols-2 gap-1.5 text-[11px] font-bold text-slate-700 sm:grid-cols-4 md:grid-cols-7">
-                {phaseCounts.map(({ phase, count }) => (
-                  <div key={phase} data-testid={`ssmt-phase-count-${phase}`} className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5"><span className="font-black text-slate-950">{count}</span> {phase}</div>
-                ))}
-                <div className={`rounded-lg border px-2 py-1.5 ${(totalItemFlagCount || flaggedMenus.length) ? "border-amber-300 bg-amber-50 text-amber-950" : "border-slate-200 bg-slate-50"}`}>
-                  <span className={`font-black ${(totalItemFlagCount || flaggedMenus.length) ? "text-amber-950" : "text-slate-950"}`}>{totalItemFlagCount || flaggedMenus.length}</span> needs attention
-                </div>
-                <div className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5"><span className="font-black text-slate-950">{hiddenMenuCount}</span> hibernated/expired</div>
-                <div className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5"><span className="font-black text-slate-950">{visibleMenus.length}</span> visible menus</div>
+              <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                {handoffQueues.map((queue) => {
+                  const QueueIcon = queue.icon;
+                  return (
+                    <section key={queue.phase} data-testid={`ssmt-handoff-${queue.phase}`} className={`rounded-xl border p-4 ${queue.panelClass}`}>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3">
+                          <span className={`rounded-lg p-2 ${queue.badgeClass}`}><QueueIcon size={20} /></span>
+                          <div>
+                            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">{queue.eyebrow}</p>
+                            <h3 className="mt-0.5 text-xl font-black text-slate-950">{queue.title}</h3>
+                            <p className="mt-1 text-sm font-bold text-slate-700">{queue.menus.length} {queue.menus.length === 1 ? "menu" : "menus"} ready for {queue.phase === "Experience review" ? "Experience Department review" : "IT programming"}</p>
+                          </div>
+                        </div>
+                        <span className={`min-w-9 rounded-full px-3 py-1 text-center text-sm font-black ${queue.badgeClass}`}>{queue.menus.length}</span>
+                      </div>
+                      {queue.menus.length ? (
+                        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                          {queue.menus.map((menu) => (
+                            <button key={menu.id} type="button" onClick={() => openMenu(menu.id)} className={`rounded-lg border bg-white px-3 py-2 text-left shadow-sm transition ${queue.buttonClass}`}>
+                              <span className="block text-sm font-black text-slate-950">{menu.name}</span>
+                              <span className="mt-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500">{menu.type} · Open menu</span>
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="mt-3 rounded-lg border border-dashed border-slate-300 bg-white/70 px-3 py-3 text-sm font-bold text-slate-600">{queue.emptyMessage}</p>
+                      )}
+                    </section>
+                  );
+                })}
               </div>
               <div data-testid="ssmt-menu-selector-grid" className="mt-4 grid gap-2 lg:grid-cols-4 xl:grid-cols-5">
                 {menuGroups.map((group) => (
@@ -1863,7 +1904,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                     key={group.type}
                     data-testid={`ssmt-menu-group-${group.type}`}
                     data-menu-type={group.type}
-                    className={`flex max-h-[52vh] min-h-0 flex-col rounded-lg border p-3 ${group.groupClass}`}
+                    className={`flex max-h-[38vh] min-h-0 flex-col rounded-lg border p-3 ${group.groupClass}`}
                   >
                     <div className="mb-2 flex items-center justify-between gap-2">
                       <h3 className="text-sm font-black text-slate-950">{group.label}</h3>

@@ -42,10 +42,9 @@ test("SSMT opens behind passcode and separates pricing from menu building", asyn
   await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
   await expect(page.getByRole("heading", { name: /^Menu Selector$/ })).toBeVisible();
   await expect(page.getByText(/Loading current SSMT seed data/i)).toHaveCount(0, { timeout: 20_000 });
-  await expect(page.getByTestId("ssmt-phase-count-Culinary draft")).toContainText("Culinary draft");
-  await expect(page.getByTestId("ssmt-phase-count-Experience review")).toContainText("Experience review");
-  await expect(page.getByTestId("ssmt-phase-count-IT programming")).toContainText("IT programming");
-  await expect(page.getByTestId("ssmt-phase-count-IT complete")).toContainText("IT complete");
+  await expect(page.getByTestId("ssmt-handoff-Experience review").getByRole("heading", { name: /Experience Team/i })).toBeVisible();
+  await expect(page.getByTestId("ssmt-handoff-IT programming").getByRole("heading", { name: /IT Team/i })).toBeVisible();
+  await expect(page.getByTestId(/ssmt-phase-count-/)).toHaveCount(0);
   await expect(page.getByText(/Core\/Global IT complete/i)).toHaveCount(0);
   await expect(page.getByText(/Needs completion/i).first()).toBeVisible();
   await page.getByLabel(/New menu name/i).fill("Smoke Test Promo Menu");
@@ -181,6 +180,45 @@ test("SSMT moves a menu with the in-menu bucket selector without freezing", asyn
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
+test("SSMT shows clickable Experience and IT handoff queues below the selector", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const handoffMenus = [
+    { id: "experience-handoff", name: "Experience Handoff Menu", type: "Core", phase: "Experience review", status: "Experience review", items: [] },
+    { id: "it-handoff", name: "IT Handoff Menu", type: "Global", phase: "IT programming", status: "IT programming", items: [] },
+    { id: "draft-menu", name: "Draft Menu", type: "Core", phase: "Culinary draft", status: "Culinary draft", items: [] },
+  ];
+  await page.addInitScript(() => { window.localStorage.clear(); window.sessionStorage.clear(); });
+  await page.route("**/api/storage/records**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (request.method() === "GET" && url.searchParams.get("tool") === "SSMT") {
+      await route.fulfill({ json: { ok: true, source: "supabase", records: [{ "Record ID": "ssmt|workspace|current", "Record Type": "SSMT Workspace", Status: "Shared", menus: handoffMenus, priceBook: [], modifierGroups: [], selectedMenuId: "draft-menu", updatedAt: "2026-09-24T18:00:00.000Z" }] } });
+      return;
+    }
+    if (request.method() === "POST") { await route.fulfill({ json: { ok: true, source: "supabase", synced: 1 } }); return; }
+    await route.continue();
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByLabel(/SSMT passcode/i).fill("0411");
+  await page.getByRole("button", { name: /unlock ssmt/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+  const selector = page.getByTestId("ssmt-menu-selector");
+  const experienceQueue = selector.getByTestId("ssmt-handoff-Experience review");
+  const itQueue = selector.getByTestId("ssmt-handoff-IT programming");
+  await expect(experienceQueue.getByRole("heading", { name: /Experience Team/i })).toBeVisible();
+  await expect(experienceQueue.getByText(/1 menu ready for Experience Department review/i)).toBeVisible();
+  await expect(itQueue.getByRole("heading", { name: /IT Team/i })).toBeVisible();
+  await expect(itQueue.getByText(/1 menu ready for IT programming/i)).toBeVisible();
+  await expect(selector.getByTestId(/ssmt-phase-count-/)).toHaveCount(0);
+  await experienceQueue.getByRole("button", { name: /Experience Handoff Menu/i }).click();
+  await expect(page.getByRole("heading", { name: "Experience Handoff Menu" })).toBeVisible();
+  await page.getByRole("button", { name: /Back to menu selection/i }).click();
+  await itQueue.getByRole("button", { name: /IT Handoff Menu/i }).click();
+  await expect(page.getByRole("heading", { name: "IT Handoff Menu" })).toBeVisible();
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
 test("SSMT groups menus by type and supports row editing, ordering, and saved phase status", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   // Downstream-visible throwaway menu. Must NOT match the /smoke.?test/i filter in
