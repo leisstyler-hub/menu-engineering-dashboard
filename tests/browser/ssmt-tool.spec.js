@@ -1279,6 +1279,13 @@ test("SSMT Mods badge turns red/green with modifier group lock state and gates i
 test("SSMT keeps ten modifier groups attached after save, close, and reopen", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   await page.setViewportSize({ width: 1440, height: 950 });
+  await page.route("**/api/storage/records**", async (route) => {
+    if (route.request().method() === "GET") {
+      await route.fulfill({ json: { ok: true, source: "supabase", records: [] } });
+      return;
+    }
+    await route.fulfill({ json: { ok: true, source: "supabase", synced: 1, message: "Saved 1 row to Supabase." } });
+  });
   await page.goto("/");
 
   await page.getByRole("button", { name: /open ssmt/i }).click();
