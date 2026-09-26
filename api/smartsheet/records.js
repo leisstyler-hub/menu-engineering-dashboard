@@ -58,7 +58,7 @@ function columnMapByTitle(sheet) {
 }
 
 function tastingCell(column, value) {
-  if (column.type === "MULTI_PICKLIST") {
+  if (column.type === "MULTI_PICKLIST" || (column.type === "PICKLIST" && column.version === 2)) {
     const values = Array.isArray(value) ? value : [value];
     return {
       columnId: column.id,
@@ -66,7 +66,7 @@ function tastingCell(column, value) {
     };
   }
 
-  if (column.type === "MULTI_CONTACT_LIST") {
+  if (column.type === "MULTI_CONTACT_LIST" || (column.type === "CONTACT_LIST" && column.version === 2)) {
     const values = (Array.isArray(value) ? value : [value])
       .map((entry) => String(entry ?? "").trim())
       .filter(Boolean)
@@ -240,7 +240,7 @@ export default async function handler(req, res) {
         sheetId,
         sheetName: sheet.name || "",
         columns: (sheet.columns || []).map((column) => column.title),
-        columnDetails: (sheet.columns || []).map(({ id, title, type, systemColumnType }) => ({ id, title, type, systemColumnType })),
+        columnDetails: (sheet.columns || []).map(({ id, title, type, version, systemColumnType }) => ({ id, title, type, version, systemColumnType })),
         records,
         count: records.length,
         message: `Loaded ${records.length} row${records.length === 1 ? "" : "s"} from Smartsheet.`,
@@ -400,7 +400,7 @@ export default async function handler(req, res) {
         sheetName: sheet.name || "",
         autoCreatedColumns: missingColumns,
         columns: (sheet.columns || []).map((column) => column.title),
-        columnDetails: (sheet.columns || []).map(({ id, title, type, systemColumnType }) => ({ id, title, type, systemColumnType })),
+        columnDetails: (sheet.columns || []).map(({ id, title, type, version, systemColumnType }) => ({ id, title, type, version, systemColumnType })),
         message: missingColumns.length
           ? `Added ${missingColumns.length} missing Smartsheet column${missingColumns.length === 1 ? "" : "s"}.`
           : "Smartsheet already has the expected columns.",
@@ -425,7 +425,7 @@ export default async function handler(req, res) {
         deletedColumns: cleanup.deletedColumns,
         skippedColumns: cleanup.skippedColumns,
         columns: (sheet.columns || []).map((column) => column.title),
-        columnDetails: (sheet.columns || []).map(({ id, title, type, systemColumnType }) => ({ id, title, type, systemColumnType })),
+        columnDetails: (sheet.columns || []).map(({ id, title, type, version, systemColumnType }) => ({ id, title, type, version, systemColumnType })),
         message: cleanup.deletedColumns.length
           ? `Deleted ${cleanup.deletedColumns.length} empty Smartsheet column${cleanup.deletedColumns.length === 1 ? "" : "s"}.`
           : "No empty Smartsheet columns were deleted.",
