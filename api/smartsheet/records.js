@@ -423,20 +423,7 @@ export default async function handler(req, res) {
         const workflow = await smartsheetFetch(`/sheets/${sheetId}/automationrules/${workflowId}`);
         const updated = await smartsheetFetch(`/sheets/${sheetId}/automationrules/${workflowId}`, {
           method: "PUT",
-          body: JSON.stringify({
-            action: {
-              type: workflow.action.type,
-              recipientColumnIds: workflow.action.recipientColumnIds,
-              frequency: "HOURLY",
-              subject: workflow.action.subject,
-              message: workflow.action.message,
-              includedColumnIds: workflow.action.includedColumnIds,
-              includeAllColumns: workflow.action.includeAllColumns,
-              includeAttachments: workflow.action.includeAttachments,
-              includeDiscussions: workflow.action.includeDiscussions,
-              notifyAllSharedUsers: workflow.action.notifyAllSharedUsers,
-            },
-          }),
+          body: JSON.stringify({ action: { ...workflow.action, frequency: "HOURLY" } }),
         });
         return res.status(200).json({
           ok: true,
