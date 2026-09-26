@@ -247,7 +247,7 @@ export default async function handler(req, res) {
     if (req.method === "GET" && useCafeTastingSheet && String(req.query?.diagnostic || "") === "row") {
       const rowId = String(req.query?.rowId || "");
       if (!rowId) return res.status(400).json({ ok: false, message: "rowId query param required" });
-      const rowDetail = await smartsheetFetch(`/sheets/${sheetId}/rows/${rowId}?include=objectValue`);
+      const rowDetail = await smartsheetFetch(`/sheets/${sheetId}/rows/${rowId}?include=objectValue,attachments`);
       return res.status(200).json({ ok: true, sheetId, row: rowDetail });
     }
 
