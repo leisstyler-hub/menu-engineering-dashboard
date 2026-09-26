@@ -446,8 +446,13 @@ export default async function handler(req, res) {
         tastingCell(tastingColumnDefinitions.get(columnName), value));
 
       const routingSheetId = process.env.SMARTSHEET_CAFE_TASTING_ROUTING_SHEET_ID;
-      const chefContactColumn = tastingColumnDefinitions.get("Chef Contact");
-      const directorContactColumn = tastingColumnDefinitions.get("Director Contact");
+      const rawChefContactColumn = tastingColumnDefinitions.get("Chef Contact");
+      const rawDirectorContactColumn = tastingColumnDefinitions.get("Director Contact");
+      // Smartsheet rejects any direct cell write to a column with a column-level formula
+      // ("You cannot edit cells with Column Formula"), so only attempt the resolved-contact
+      // write when the column is not itself a formula column.
+      const chefContactColumn = rawChefContactColumn && !rawChefContactColumn.formula ? rawChefContactColumn : null;
+      const directorContactColumn = rawDirectorContactColumn && !rawDirectorContactColumn.formula ? rawDirectorContactColumn : null;
       if (routingSheetId && (chefContactColumn || directorContactColumn)) {
         const routingSheet = await smartsheetFetch(`/sheets/${routingSheetId}?include=objectValue`);
         const routingColumns = columnMapByTitle(routingSheet);
