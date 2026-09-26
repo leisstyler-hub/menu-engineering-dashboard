@@ -324,6 +324,47 @@ export default async function handler(req, res) {
 
     if (useCafeTastingSheet && req.method === "POST") {
       const { action, record = {} } = req.body || {};
+      if (action === "addAlertTrackingColumn") {
+        const columnTitle = "Chef/Director Alert Sent";
+        let trackingSheet = await smartsheetFetch(`/sheets/${sheetId}`);
+        let trackingColumns = columnMapByTitle(trackingSheet);
+        let columnCreated = false;
+
+        if (!trackingColumns.has(columnTitle)) {
+          await smartsheetFetch(`/sheets/${sheetId}/columns`, {
+            method: "POST",
+            body: JSON.stringify([{ title: columnTitle, type: "CHECKBOX", index: (trackingSheet.columns || []).length }]),
+          });
+          trackingSheet = await smartsheetFetch(`/sheets/${sheetId}`);
+          trackingColumns = columnMapByTitle(trackingSheet);
+          columnCreated = true;
+        }
+
+        const columnId = trackingColumns.get(columnTitle);
+        const rowsToCheck = (trackingSheet.rows || [])
+          .filter((row) => {
+            const cell = (row.cells || []).find((entry) => String(entry.columnId) === String(columnId));
+            return cell?.value !== true;
+          })
+          .map((row) => ({ id: row.id, cells: [{ columnId, value: true, strict: false }] }));
+
+        for (let index = 0; index < rowsToCheck.length; index += 400) {
+          const chunk = rowsToCheck.slice(index, index + 400);
+          await smartsheetFetch(`/sheets/${sheetId}/rows`, { method: "PUT", body: JSON.stringify(chunk) });
+        }
+
+        return res.status(200).json({
+          ok: true,
+          action,
+          sheetId,
+          columnCreated,
+          columnId,
+          checkedRows: rowsToCheck.length,
+          totalRows: (trackingSheet.rows || []).length,
+          message: `${columnCreated ? "Created" : "Found"} "${columnTitle}" and checked it on ${rowsToCheck.length} existing row${rowsToCheck.length === 1 ? "" : "s"}.`,
+        });
+      }
+
       if (action !== "addTastingSubmission") {
         return res.status(400).json({ ok: false, message: "Unsupported Cafe Tasting action" });
       }
