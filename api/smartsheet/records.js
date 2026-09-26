@@ -325,7 +325,7 @@ export default async function handler(req, res) {
         return res.status(400).json({ ok: false, message: "Missing required tasting values", missingColumns: missingValues });
       }
 
-      const tastingSheet = await smartsheetFetch(`/sheets/${sheetId}`);
+      const tastingSheet = await smartsheetFetch(`/sheets/${sheetId}?include=objectValue`);
       const tastingColumns = columnMapByTitle(tastingSheet);
       const tastingColumnDefinitions = new Map((tastingSheet.columns || []).map((column) => [column.title, column]));
       const missingColumns = Object.keys(normalizedRecord).filter((columnName) => !tastingColumns.has(columnName));
