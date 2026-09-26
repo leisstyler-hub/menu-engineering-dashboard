@@ -236,6 +236,11 @@ export default async function handler(req, res) {
   }
 
   try {
+    if (req.method === "GET" && useCafeTastingSheet && String(req.query?.diagnostic || "") === "workflows") {
+      const workflows = await smartsheetFetch(`/sheets/${sheetId}/workflows`);
+      return res.status(200).json({ ok: true, sheetId, workflows: workflows.data || workflows });
+    }
+
     if (req.method === "GET") {
       const diagnosticColumns = useCafeTastingSheet && String(req.query?.diagnostic || "") === "columns";
       const sheet = await smartsheetFetch(`/sheets/${sheetId}${diagnosticColumns ? "?include=objectValue" : ""}`);
