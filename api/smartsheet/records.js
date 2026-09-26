@@ -58,22 +58,28 @@ function columnMapByTitle(sheet) {
 }
 
 function tastingCell(column, value) {
+  if (Array.isArray(column.contactOptions)) {
+    const isMulti = column.type === "MULTI_CONTACT_LIST";
+    const contacts = (Array.isArray(value) ? value : [value])
+      .map((entry) => String(entry ?? "").trim())
+      .filter(Boolean)
+      .map((email) => ({ objectType: "CONTACT", email }));
+    if (!contacts.length) {
+      return { columnId: column.id, value: "", strict: false };
+    }
+    return {
+      columnId: column.id,
+      objectValue: isMulti
+        ? { objectType: "MULTI_CONTACT_LIST", values: contacts }
+        : contacts[0],
+    };
+  }
+
   if (column.type === "MULTI_PICKLIST" || (column.type === "PICKLIST" && column.version === 2)) {
     const values = Array.isArray(value) ? value : [value];
     return {
       columnId: column.id,
       objectValue: { objectType: "MULTI_PICKLIST", values: values.filter((entry) => String(entry ?? "").trim()) },
-    };
-  }
-
-  if (column.type === "MULTI_CONTACT_LIST" || (column.type === "CONTACT_LIST" && column.version === 2)) {
-    const values = (Array.isArray(value) ? value : [value])
-      .map((entry) => String(entry ?? "").trim())
-      .filter(Boolean)
-      .map((email) => ({ objectType: "CONTACT", email }));
-    return {
-      columnId: column.id,
-      objectValue: { objectType: "MULTI_CONTACT_LIST", values },
     };
   }
 
