@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ArrowRight, ArrowRightLeft, BarChart3, BookOpen, CalendarRange, ChevronDown, ClipboardCheck, Database, FileSpreadsheet, FolderKanban, Home, ListChecks, PieChart, Settings, Shuffle, Smartphone, Sparkles, TrendingUp, Utensils, Wrench } from "lucide-react";
+import { ArrowRight, ArrowRightLeft, BarChart3, BookOpen, CalendarRange, ChevronDown, Camera, ClipboardCheck, Database, FileSpreadsheet, FolderKanban, Home, ListChecks, PieChart, Settings, Shuffle, Smartphone, Sparkles, TrendingUp, Utensils, Wrench } from "lucide-react";
 
 import CHANGELOG_TEXT from "../../CHANGELOG.md?raw";
 import DASHBOARD_SUMMARY from "../data/dashboardSummary.json";
@@ -213,7 +213,7 @@ function downloadTrustLayerGapList(rows) {
   URL.revokeObjectURL(url);
 }
 
-export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodRotations, onOpenRecipeDatabase, onOpenMenuProjects, onOpenMenuAuditTool, onOpenSsmtTool, onOpenLeanTool, onOpenMenuCrossUtilization, onOpenTransferTool, onOpenSmartsheetHealth }) {
+export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodRotations, onOpenRecipeDatabase, onOpenMenuProjects, onOpenMenuAuditTool, onOpenSsmtTool, onOpenLeanTool, onOpenMenuCrossUtilization, onOpenTransferTool, onOpenCafeTasting, onOpenSmartsheetHealth }) {
   const {
     totalItems,
     menuCount,
@@ -307,6 +307,16 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
       tone: "sky",
       meta: "IT menu audit"
     },
+    cafeTasting: {
+      title: "Cafe Tasting Form",
+      eyebrow: "New",
+      description: "Build a plate from the Menu Library, weigh it, rate presentation and taste, and submit straight to Smartsheet.",
+      action: "Open Tasting Form",
+      onOpen: onOpenCafeTasting,
+      icon: Camera,
+      tone: "lime",
+      meta: "Field tasting"
+    },
     webtrition: {
       title: "Webtrition",
       eyebrow: "External",
@@ -368,6 +378,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
         toolMap.menuProjects,
         toolMap.menuAudit,
         toolMap.leanTool,
+        toolMap.cafeTasting,
       ],
     },
   ];
@@ -611,7 +622,7 @@ function MobileLanding({
   onOpenSmartsheetHealth,
 }) {
   const metricTiles = [
-    { label: "Tools", value: "10", icon: Wrench, tone: "bg-[#fff7e7] text-[#8a621b]" },
+    { label: "Tools", value: "11", icon: Wrench, tone: "bg-[#fff7e7] text-[#8a621b]" },
     { label: "Menu Items", value: totalItems.toLocaleString(), icon: Utensils, tone: "bg-[#eaf8f2] text-emerald-700" },
     { label: "Menus", value: menuCount, icon: ListChecks, tone: "bg-[#edf5ff] text-sky-700" },
     { label: "Costed Items", value: costedItems.toLocaleString(), icon: Database, tone: "bg-[#f0eefb] text-indigo-700" },

@@ -40,9 +40,16 @@ const SmartsheetHealth = lazyWithStaleBundleReload(() => import("../features/sma
 const MenuCrossUtilizationTool = lazyWithStaleBundleReload(() => import("../features/menu-cross-utilization/MenuCrossUtilizationTool.jsx"));
 const SsmtTool = lazyWithStaleBundleReload(() => import("../features/ssmt/SsmtTool.jsx"));
 const TransferTool = lazyWithStaleBundleReload(() => import("../features/transfer-tool/TransferTool.jsx"));
+const CafeTastingForm = lazyWithStaleBundleReload(() => import("../features/cafe-tasting/CafeTastingForm.jsx"));
 
 export default function CulinaryToolsPlatformApp() {
-  const [activeTool, setActiveTool] = useState("home");
+  const [activeTool, setActiveTool] = useState(() => {
+    if (typeof window !== "undefined") {
+      const requestedTool = new URLSearchParams(window.location.search).get("tool");
+      if (requestedTool === "cafeTasting") return "cafeTasting";
+    }
+    return "home";
+  });
   const openSmartsheetHealth = () => setActiveTool("smartsheetHealth");
 
   useEffect(() => {
@@ -152,6 +159,16 @@ export default function CulinaryToolsPlatformApp() {
     );
   }
 
+  if (activeTool === "cafeTasting") {
+    return (
+      <>
+        <Suspense fallback={<ToolLoading title="Opening Cafe Tasting Form" />}>
+          <CafeTastingForm onBackToPlatform={() => setActiveTool("home")} />
+        </Suspense>
+      </>
+    );
+  }
+
   if (activeTool === "leanTool") {
     return (
       <>
@@ -182,6 +199,7 @@ export default function CulinaryToolsPlatformApp() {
       onOpenMenuAuditTool={() => setActiveTool("menuAuditTool")}
       onOpenSsmtTool={() => setActiveTool("ssmtTool")}
       onOpenLeanTool={() => setActiveTool("leanTool")}
+      onOpenCafeTasting={() => setActiveTool("cafeTasting")}
       onOpenMenuCrossUtilization={() => setActiveTool("menuCrossUtilization")}
       onOpenTransferTool={() => setActiveTool("transferTool")}
       onOpenSmartsheetHealth={openSmartsheetHealth}

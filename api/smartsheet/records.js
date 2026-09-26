@@ -329,6 +329,40 @@ export default async function handler(req, res) {
 
     if (useCafeTastingSheet && req.method === "POST") {
       const { action, record = {} } = req.body || {};
+      if (action === "uploadTastingPhoto") {
+        const { rowId = "", fileName = "photo.jpg", dataBase64 = "" } = req.body || {};
+        if (!rowId) {
+          return res.status(400).json({ ok: false, message: "rowId is required" });
+        }
+        const match = /^data:([^;]+);base64,(.+)$/.exec(String(dataBase64));
+        if (!match) {
+          return res.status(400).json({ ok: false, message: "dataBase64 must be a base64 data URL" });
+        }
+        const [, contentType, base64Payload] = match;
+        const buffer = Buffer.from(base64Payload, "base64");
+        const maxBytes = 15 * 1024 * 1024;
+        if (buffer.length > maxBytes) {
+          return res.status(400).json({ ok: false, message: "Photo is too large (15MB limit)" });
+        }
+        const safeFileName = String(fileName).replace(/[^a-zA-Z0-9._-]/g, "_") || "photo.jpg";
+        const attachment = await smartsheetFetch(`/sheets/${sheetId}/rows/${rowId}/attachments`, {
+          method: "POST",
+          headers: {
+            "Content-Type": contentType,
+            "Content-Disposition": `attachment; filename="${safeFileName}"`,
+          },
+          body: buffer,
+        });
+        return res.status(201).json({
+          ok: true,
+          action,
+          sheetId,
+          rowId,
+          attachmentId: attachment?.result?.id || attachment?.id || null,
+          message: `Uploaded photo to row ${rowId}.`,
+        });
+      }
+
       if (action === "addAlertTrackingColumn") {
         const columnTitle = "Chef/Director Alert Sent";
         let trackingSheet = await smartsheetFetch(`/sheets/${sheetId}`);
