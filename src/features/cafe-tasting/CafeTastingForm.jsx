@@ -100,6 +100,26 @@ function itemLabel(row) {
   return `${name}${portion}`;
 }
 
+const ITEM_CATEGORY_ORDER = ["Entree", "Sides", "Sub Recipes", "Extensions", "Other"];
+
+function itemCategoryLabel(row) {
+  const category = String(row?.category || row?.category_group || "").trim().toLowerCase();
+  if (category === "entree") return "Entree";
+  if (category === "side") return "Sides";
+  if (category === "subrecipe" || category === "sub recipe") return "Sub Recipes";
+  if (category === "extension") return "Extensions";
+  return "Other";
+}
+
+function groupVisibleMenuItems(rows) {
+  const visible = new Map();
+  rows.forEach((row) => {
+    const key = itemLabel(row).trim().toLowerCase();
+    if (!visible.has(key)) visible.set(key, row);
+  });
+  return ITEM_CATEGORY_ORDER.map((label) => ({ label, rows: Array.from(visible.values()).filter((row) => itemCategoryLabel(row) === label).sort((a, b) => itemLabel(a).localeCompare(itemLabel(b))) })).filter((group) => group.rows.length);
+}
+
 async function fetchJson(url, options) {
   const response = await fetch(url, options);
   const payload = await response.json().catch(() => null);
@@ -221,6 +241,8 @@ export default function CafeTastingForm({ onBackToPlatform }) {
     if (!match) return { found: false };
     return { found: true, chef: match["Chef Contact"] || "", director: match["Director Contact"] || "" };
   }, [cafeName, routes]);
+
+  const groupedMenuItems = useMemo(() => groupVisibleMenuItems(menuItems), [menuItems]);
 
   const autoDishName = useMemo(() => slots
     .filter((slot) => slot.raw)
@@ -381,21 +403,6 @@ export default function CafeTastingForm({ onBackToPlatform }) {
                 <datalist id="cafe-name-options">
                   {cafeOptions.map((option) => <option key={option} value={option} />)}
                 </datalist>
-                {routingPreview ? (
-                  routingPreview.found ? (
-                    <p className="mt-1 text-xs font-semibold text-emerald-700">
-                      Will notify: {routingPreview.chef || "no chef contact"}{routingPreview.director ? ` · ${routingPreview.director}` : ""}
-                    </p>
-                  ) : (
-                    <p className="mt-1 text-xs font-semibold text-amber-600">No routing set up for this cafe yet — no one will be emailed.</p>
-                  )
-                ) : null}
-              </Field>
-              <Field label="Station Name">
-                <select value={stationName} onChange={(event) => { setStationTouched(true); setStationName(event.target.value); }} className={inputClass} required>
-                  <option value="">Select a station</option>
-                  {stationOptions.map((option) => <option key={option} value={option}>{option}</option>)}
-                </select>
               </Field>
               <div className="sm:col-span-2">
                 <span className="text-sm font-bold text-slate-700">Tasters</span>
@@ -418,6 +425,14 @@ export default function CafeTastingForm({ onBackToPlatform }) {
               </select>
             </Field>
 
+            <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-100 p-4">
+              <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Submission Info</p>
+              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div><p className="text-xs font-bold text-slate-500">Station</p><p className="mt-1 text-sm font-black text-slate-800">{stationName || "Select a menu"}</p></div>
+                <div><p className="text-xs font-bold text-slate-500">Email Routing</p>{routingPreview ? routingPreview.found ? <p className="mt-1 text-sm font-black text-slate-800">{routingPreview.chef || "No chef contact"}{routingPreview.director ? ` ? ${routingPreview.director}` : ""}</p> : <p className="mt-1 text-sm font-bold text-amber-700">No routing set up for this cafe</p> : <p className="mt-1 text-sm font-bold text-slate-500">Select a cafe</p>}</div>
+              </div>
+            </div>
+
             <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
               {slots.map((slot, index) => (
                 <Field key={index} label={index === 0 ? "Entree / Item 1" : `Item ${index + 1}`}>
@@ -428,10 +443,14 @@ export default function CafeTastingForm({ onBackToPlatform }) {
                     disabled={!selectedMenu || menuItemsLoading}
                   >
                     <option value="">{menuItemsLoading ? "Loading items…" : "None"}</option>
-                    {menuItems.map((row) => {
-                      const key = String(row.item_key ?? row.id);
-                      return <option key={key} value={key}>{itemLabel(row)}</option>;
-                    })}
+                    {groupedMenuItems.map((group) => (
+                      <optgroup key={group.label} label={group.label}>
+                        {group.rows.map((row) => {
+                          const key = String(row.item_key ?? row.id);
+                          return <option key={key} value={key}>{itemLabel(row)}</option>;
+                        })}
+                      </optgroup>
+                    ))}
                   </select>
                 </Field>
               ))}
