@@ -418,21 +418,6 @@ export default async function handler(req, res) {
         });
       }
 
-      if (action === "setTastingNotificationHourly") {
-        const workflowId = "966644802578308";
-        const workflow = await smartsheetFetch(`/sheets/${sheetId}/automationrules/${workflowId}`);
-        const updated = await smartsheetFetch(`/sheets/${sheetId}/automationrules/${workflowId}`, {
-          method: "PUT",
-          body: JSON.stringify({ action: { ...workflow.action, frequency: "HOURLY" } }),
-        });
-        return res.status(200).json({
-          ok: true,
-          action,
-          workflowId,
-          previousFrequency: workflow.action?.frequency || null,
-          workflow: updated.result || updated,
-        });
-      }
       if (action !== "addTastingSubmission") {
         return res.status(400).json({ ok: false, message: "Unsupported Cafe Tasting action" });
       }
