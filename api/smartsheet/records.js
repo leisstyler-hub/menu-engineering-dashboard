@@ -2,6 +2,7 @@
 // Required environment variables:
 // - SMARTSHEET_ACCESS_TOKEN
 // - SMARTSHEET_SHEET_ID
+// - SMARTSHEET_CAFE_TASTING_SHEET_ID (read-only Cafe Tasting access)
 // Supports:
 // - GET: load rows from Smartsheet for app read/Executive View
 // - POST action=upsertRecords: add/update rows by Record ID
@@ -183,10 +184,21 @@ async function deleteRowsByRecordFamily(sheetId, sheet, recordIds = [], recordId
 
 export default async function handler(req, res) {
   const requestedTool = req.query?.tool || req.body?.context?.tool || "";
+  const requestedDataset = String(req.query?.dataset || "").trim().toLowerCase();
+  const useCafeTastingSheet = requestedDataset === "cafe-tasting";
   const useLeanSheet = String(requestedTool).toLowerCase().includes("lean") && process.env.SMARTSHEET_LEAN_SHEET_ID;
-  const sheetId = useLeanSheet ? process.env.SMARTSHEET_LEAN_SHEET_ID : process.env.SMARTSHEET_SHEET_ID;
+  const sheetId = useCafeTastingSheet
+    ? process.env.SMARTSHEET_CAFE_TASTING_SHEET_ID
+    : useLeanSheet
+      ? process.env.SMARTSHEET_LEAN_SHEET_ID
+      : process.env.SMARTSHEET_SHEET_ID;
   if (!sheetId) {
-    return res.status(500).json({ ok: false, message: useLeanSheet ? "Missing SMARTSHEET_LEAN_SHEET_ID environment variable" : "Missing SMARTSHEET_SHEET_ID environment variable" });
+    const missingVariable = useCafeTastingSheet
+      ? "SMARTSHEET_CAFE_TASTING_SHEET_ID"
+      : useLeanSheet
+        ? "SMARTSHEET_LEAN_SHEET_ID"
+        : "SMARTSHEET_SHEET_ID";
+    return res.status(500).json({ ok: false, message: `Missing ${missingVariable} environment variable` });
   }
 
   try {
@@ -204,6 +216,11 @@ export default async function handler(req, res) {
         count: records.length,
         message: `Loaded ${records.length} row${records.length === 1 ? "" : "s"} from Smartsheet.`,
       });
+    }
+
+    if (useCafeTastingSheet) {
+      res.setHeader("Allow", "GET");
+      return res.status(405).json({ ok: false, message: "Cafe Tasting access is read-only" });
     }
 
     if (req.method !== "POST") {
