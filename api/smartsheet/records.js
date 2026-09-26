@@ -241,6 +241,13 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true, sheetId, workflows: workflows.data || workflows });
     }
 
+    if (req.method === "GET" && useCafeTastingSheet && String(req.query?.diagnostic || "") === "row") {
+      const rowId = String(req.query?.rowId || "");
+      if (!rowId) return res.status(400).json({ ok: false, message: "rowId query param required" });
+      const rowDetail = await smartsheetFetch(`/sheets/${sheetId}/rows/${rowId}?include=objectValue`);
+      return res.status(200).json({ ok: true, sheetId, row: rowDetail });
+    }
+
     if (req.method === "GET") {
       const diagnosticColumns = useCafeTastingSheet && String(req.query?.diagnostic || "") === "columns";
       const sheet = await smartsheetFetch(`/sheets/${sheetId}${diagnosticColumns ? "?include=objectValue" : ""}`);
