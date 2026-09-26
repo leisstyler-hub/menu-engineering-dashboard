@@ -73,6 +73,15 @@ function contactCell(columnId, value) {
   return objectValue ? { columnId, objectValue } : { columnId, value: "", strict: false };
 }
 
+function contactEmailsFromCell(cell) {
+  const objectValue = cell?.objectValue;
+  if (objectValue?.objectType === "MULTI_CONTACT_LIST") {
+    return (objectValue.values || []).map((entry) => String(entry?.email || "").trim()).filter(Boolean);
+  }
+  if (objectValue?.email) return [String(objectValue.email).trim()].filter(Boolean);
+  return String(cell?.value || "").split(/[;,]/).map((entry) => entry.trim()).filter(Boolean);
+}
+
 function tastingCell(column, value) {
   if (Array.isArray(column.contactOptions)) {
     return contactCell(column.id, value);
@@ -453,12 +462,12 @@ export default async function handler(req, res) {
       const routingSheetId = process.env.SMARTSHEET_CAFE_TASTING_ROUTING_SHEET_ID;
       const rawChefContactColumn = tastingColumnDefinitions.get("Chef Contact");
       const rawDirectorContactColumn = tastingColumnDefinitions.get("Director Contact");
-      // Smartsheet rejects any direct cell write to a column with a column-level formula
-      // ("You cannot edit cells with Column Formula"), so only attempt the resolved-contact
-      // write when the column is not itself a formula column.
       const chefContactColumn = rawChefContactColumn && !rawChefContactColumn.formula ? rawChefContactColumn : null;
       const directorContactColumn = rawDirectorContactColumn && !rawDirectorContactColumn.formula ? rawDirectorContactColumn : null;
-      if (routingSheetId && (chefContactColumn || directorContactColumn)) {
+      const requiresDirectNotification = Boolean(rawChefContactColumn?.formula || rawDirectorContactColumn?.formula);
+      let notificationRecipients = [];
+
+      if (routingSheetId) {
         const routingSheet = await smartsheetFetch(`/sheets/${routingSheetId}?include=objectValue`);
         const routingColumns = columnMapByTitle(routingSheet);
         const routingCafeColumnId = routingColumns.get("Cafe");
@@ -468,6 +477,10 @@ export default async function handler(req, res) {
           const routingCell = (title) => (routingRow.cells || []).find((cell) => String(cell.columnId) === String(routingColumns.get(title)));
           const routingChefCell = routingCell("Chef Contact");
           const routingDirectorCell = routingCell("Director Contact");
+          notificationRecipients = Array.from(new Set([
+            ...contactEmailsFromCell(routingChefCell),
+            ...contactEmailsFromCell(routingDirectorCell),
+          ]));
           if (chefContactColumn && routingChefCell?.objectValue) {
             cells.push({ columnId: chefContactColumn.id, objectValue: routingChefCell.objectValue });
           }
@@ -481,6 +494,47 @@ export default async function handler(req, res) {
         method: "POST",
         body: JSON.stringify([{ toBottom: true, cells }]),
       });
+      const rowId = created?.result?.[0]?.id || created?.[0]?.id || null;
+      let notificationSent = null;
+      let notificationError = "";
+
+      if (requiresDirectNotification && rowId && notificationRecipients.length) {
+        const notificationColumnTitles = [
+          "Date", "Cafe Name", "Station Name", "Dish Name", "Taster",
+          "5. Strengths", "5. Opportunities",
+          "1. Plate Appeal", "1. Plate Arrangement", "1. Plate Edges", "1. Garnish", "1. Plating Notes",
+          "2.Target_Portion_Display", "2.Actual_Portion_Display", "2.Variance_Display",
+          "2. Protein Portion", "2. Side 1 Portion", "2. Side 2 Portion", "2. Sauce Portion", "2. Portion Notes",
+          "3. Temperature", "3. Doneness", "3. Seasoning", "3. Flavor Balance", "3. Texture", "3. Overall Taste", "3. Taste Notes",
+          "4. Cooking Method", "4. Ingredients", "4. Correct Sides", "4. Substitutions", "4. Recipe Notes",
+        ];
+        try {
+          await smartsheetFetch(`/sheets/${sheetId}/rows/emails`, {
+            method: "POST",
+            body: JSON.stringify({
+              sendTo: notificationRecipients.map((email) => ({ email })),
+              subject: `New Café Tasting Submission – ${normalizedRecord["Dish Name"]} @ ${normalizedRecord["Cafe Name"]}`,
+              message: "A new tasting submission has been completed for your café.",
+              ccMe: false,
+              rowIds: [rowId],
+              columnIds: notificationColumnTitles.map((title) => tastingColumns.get(title)).filter(Boolean),
+              includeAttachments: true,
+              includeDiscussions: false,
+            }),
+          });
+          notificationSent = true;
+          const alertSentColumn = tastingColumnDefinitions.get("Chef/Director Alert Sent");
+          if (alertSentColumn) {
+            await smartsheetFetch(`/sheets/${sheetId}/rows`, {
+              method: "PUT",
+              body: JSON.stringify([{ id: rowId, cells: [{ columnId: alertSentColumn.id, value: true, strict: false }] }]),
+            });
+          }
+        } catch (error) {
+          notificationSent = false;
+          notificationError = error.message;
+        }
+      }
 
       return res.status(201).json({
         ok: true,
@@ -488,7 +542,10 @@ export default async function handler(req, res) {
         sheetId,
         cafe: normalizedRecord["Cafe Name"],
         dish: normalizedRecord["Dish Name"],
-        rowId: created?.result?.[0]?.id || created?.[0]?.id || null,
+        rowId,
+        notificationSent,
+        notificationRecipients,
+        ...(notificationError ? { notificationError } : {}),
         message: `Added Cafe Tasting submission for ${normalizedRecord["Cafe Name"]}.`,
       });
     }

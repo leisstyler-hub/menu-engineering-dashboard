@@ -45,5 +45,12 @@ try{
  const postRequest3=requests3.find((r)=>r.options.method==="POST");
  const payload3=JSON.parse(postRequest3.options.body);
  assert(!payload3[0].cells.some((cell)=>cell.columnId===7||cell.columnId===8),"must never attempt to write a formula-locked Chef/Director Contact cell");
- console.log("Cafe Tasting formula-column skip verification passed.");
+ const emailRequest3=requests3.find((request)=>request.url.endsWith("/sheets/tasting-sheet/rows/emails"));
+ assert(emailRequest3,"formula-locked recipient columns must use the direct row-email endpoint");
+ const emailPayload3=JSON.parse(emailRequest3.options.body);
+ assert.deepEqual(emailPayload3.sendTo,[{email:"chef@compass-usa.com"}]);
+ assert.deepEqual(emailPayload3.rowIds,[789]);
+ assert.equal(res3.body.notificationSent,true);
+ assert.deepEqual(res3.body.notificationRecipients,["chef@compass-usa.com"]);
+ console.log("Cafe Tasting formula-column direct-email verification passed.");
 }finally{globalThis.fetch=originalFetch;if(originalEnv.token===undefined)delete process.env.SMARTSHEET_ACCESS_TOKEN;else process.env.SMARTSHEET_ACCESS_TOKEN=originalEnv.token;if(originalEnv.sheet===undefined)delete process.env.SMARTSHEET_CAFE_TASTING_SHEET_ID;else process.env.SMARTSHEET_CAFE_TASTING_SHEET_ID=originalEnv.sheet;if(originalEnv.routing===undefined)delete process.env.SMARTSHEET_CAFE_TASTING_ROUTING_SHEET_ID;else process.env.SMARTSHEET_CAFE_TASTING_ROUTING_SHEET_ID=originalEnv.routing;}
