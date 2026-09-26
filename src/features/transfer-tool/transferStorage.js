@@ -24,7 +24,10 @@ export async function loadIngredientAllocations(mrn) {
   const response = await fetch(`/api/transfer-breakdown?mrn=${encodeURIComponent(String(mrn || ""))}`);
   const payload = await readJson(response);
   if (!response.ok || payload.ok === false || (!Array.isArray(payload.components) && !Array.isArray(payload.unpricedComponents))) {
-    throw new Error(payload.message || "No ingredient mapping is available for this menu item.");
+    const error = new Error(payload.message || (response.status === 404 ? "No ingredient mapping is available for this menu item." : "Ingredient mapping could not be verified."));
+    error.status = response.status;
+    error.code = response.status === 404 ? "TRANSFER_MAPPING_NOT_FOUND" : "TRANSFER_MAPPING_UNAVAILABLE";
+    throw error;
   }
   return {
     components: payload.components,

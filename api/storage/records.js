@@ -27,6 +27,7 @@ function transferRecordId(title = "") {
 }
 
 const TRANSFER_UNITS = new Set(CAFE_UNITS.map(({ cafe }) => cafe));
+const PREPARED_FOODS_GL_CODE = "4111011";
 
 function isTransferRecord(record = {}) {
   return String(record["Record Type"] || "") === "Transfer" || String(record["Record ID"] || "").startsWith("transfer|");
@@ -64,6 +65,12 @@ function validateTransferRecord(record = {}) {
     if (record.items.some((item) => !Array.isArray(item.ingredientAllocations) || !item.ingredientAllocations.length)) return "Every S4 transfer item requires a priced ingredient allocation.";
     if (allocations.some((allocation) => !/^\d{7}$/.test(String(allocation.glCode || "")) || !(Number(allocation.allocationPerPortion) > 0))) {
       return "Every ingredient allocation requires an approved G/L code and a positive amount.";
+    }
+    if (allocations.some((allocation) => allocation?.isPreparedFoodsFallback && String(allocation.glCode || "") !== PREPARED_FOODS_GL_CODE)) {
+      return `Prepared Foods fallback allocations must use ${PREPARED_FOODS_GL_CODE}.`;
+    }
+    if (record.items.some((item) => item.ingredientAllocations?.some((allocation) => allocation?.isPreparedFoodsFallback) && item.ingredientAllocations.length !== 1)) {
+      return "A Prepared Foods fallback must be the item's only G/L allocation.";
     }
     if (record.items.some((item) => {
       const allocated = item.ingredientAllocations.reduce((sum, allocation) => sum + Number(allocation.allocationPerPortion || 0), 0);

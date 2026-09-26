@@ -15,13 +15,16 @@ const existingTransfer = {
 };
 const secondTransfer = { ...existingTransfer, "Record ID": "transfer|second%20transfer", title: "Second Transfer", departingUnit: "Nessie", receivingUnit: "Dawson", updatedAt: "2026-09-07T12:00:00.000Z" };
 
-async function mockTransferStorage(page, { huliComponents = allocations, huliUnpricedComponents = [], huliCost = 2.5 } = {}) {
+async function mockTransferStorage(page, { huliComponents = allocations, huliUnpricedComponents = [], huliCost = 2.5, missingMappingStatus = 404 } = {}) {
   const writes = [];
   await page.route("**/api/traffic/weekly", (route) => route.fulfill({ json: { ok: true, status: "live", days: [], totalVisitors: 0 } }));
-  await page.route("**/api/recipe-library?scope=all", (route) => route.fulfill({ json: { ok: true, source: "test-live-menu-library", rows: [{ menu: "AMZ: Ohana", item: "Huli Huli Chicken", mrn: "33065.1", portion: "1 piece", trueCost: huliCost }] } }));
+  await page.route("**/api/recipe-library?scope=all", (route) => route.fulfill({ json: { ok: true, source: "test-live-menu-library", rows: [
+    { menu: "AMZ: Ohana", item: "Huli Huli Chicken", mrn: "33065.1", portion: "1 piece", trueCost: huliCost },
+    { menu: "AMZ: Lotus", item: "Blistered Green Beans", mrn: "176734", portion: "4 ounce", trueCost: 0.752 },
+  ] } }));
   await page.route("**/api/transfer-breakdown?mrn=*", (route) => {
     const mrn = new URL(route.request().url()).searchParams.get("mrn");
-    return mrn === "33065.1" ? route.fulfill({ json: { ok: true, components: huliComponents, unpricedComponents: huliUnpricedComponents, pricingComplete: huliUnpricedComponents.length === 0, allocationPerPortion: huliComponents.reduce((sum, component) => sum + Number(component.allocationPerPortion || 0), 0), resource: { title: "Ingredient Costing 9.19.26" } } }) : route.fulfill({ status: 404, json: { ok: false, message: "No ingredient mapping is available for this menu item." } });
+    return mrn === "33065.1" ? route.fulfill({ json: { ok: true, components: huliComponents, unpricedComponents: huliUnpricedComponents, pricingComplete: huliUnpricedComponents.length === 0, allocationPerPortion: huliComponents.reduce((sum, component) => sum + Number(component.allocationPerPortion || 0), 0), resource: { title: "Ingredient Costing 9.19.26" } } }) : route.fulfill({ status: missingMappingStatus, json: { ok: false, message: missingMappingStatus === 404 ? "No ingredient mapping is available for this menu item." : "Ingredient mapping service is temporarily unavailable." } });
   });
   await page.route("**/api/storage/records**", async (route) => {
     if (route.request().method() === "GET") return route.fulfill({ json: { ok: true, records: [existingTransfer, secondTransfer] } });
@@ -140,14 +143,36 @@ test("Transfer Tool proportionally caps every mapped G/L at Item + Waste Cost", 
   expect(savedLine.ingredientAllocations.every((allocation, index) => allocation.allocationPerPortion < overMappedComponents[index].allocationPerPortion)).toBe(true);
 });
 
-test("Transfer Tool blocks an item with no ingredient mapping", async ({ page }) => {
-  await mockTransferStorage(page); await openTool(page, /open transfer tool/i, /^Transfer Tool$/);
-  await page.getByLabel("Menu 1", { exact: true }).selectOption("AMZ: Ohana");
+test("Transfer Tool exports an unmapped item through the approved Prepared Foods fallback", async ({ page }) => {
+  const writes = await mockTransferStorage(page); await openTool(page, /open transfer tool/i, /^Transfer Tool$/);
+  await page.getByLabel("Menu 1", { exact: true }).selectOption("AMZ: Lotus");
   await page.getByLabel("Item 1", { exact: true }).selectOption({ label: "Blistered Green Beans · 176734 · 4 ounce" });
-  await expect(page.locator('[role="alert"]').filter({ hasText: "No ingredient mapping is available" }).last()).toBeVisible();
-  await page.getByLabel("Globally unique title").fill("Missing allocation"); await page.getByLabel("Departing unit").selectOption("Dawson"); await page.getByLabel("Receiving unit").selectOption("Nessie");
+  await expect(page.getByText("Prepared Foods G/L fallback").last()).toBeVisible();
+  const fallbackDetails = page.locator("details").filter({ hasText: "Prepared Foods G/L fallback" }).last();
+  await expect(fallbackDetails.locator("summary")).toContainText("Approved fallback");
+  await fallbackDetails.locator("summary").click();
+  await expect(fallbackDetails).toContainText("4111011");
+  await expect(fallbackDetails.getByTestId("gl-allocation-row")).toHaveClass(/bg-emerald-50/);
+  await page.getByLabel("Globally unique title").fill("Prepared Foods fallback"); await page.getByLabel("Departing unit").selectOption("Dawson"); await page.getByLabel("Receiving unit").selectOption("Nessie");
+  await page.getByRole("button", { name: "Save Draft" }).click();
+  expect(writes[0].records[0].items[0].ingredientAllocations).toEqual([expect.objectContaining({ glCode: "4111011", allocationPerPortion: 0.752, isPreparedFoodsFallback: true })]);
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export S4 Excel" }).click();
+  const workbook = XLSX.readFile(await (await downloadPromise).path());
+  const rows = XLSX.utils.sheet_to_json(workbook.Sheets.Template, { header: 1 });
+  expect(rows[1]).toEqual(["4111011", "30159", "4111011", "Blistered Green Beans Pr - Prepared Foods fallback", 0.75, ""]);
+});
+
+test("Transfer Tool does not use the Prepared Foods fallback during a mapping-service failure", async ({ page }) => {
+  const writes = await mockTransferStorage(page, { missingMappingStatus: 500 }); await openTool(page, /open transfer tool/i, /^Transfer Tool$/);
+  await page.getByLabel("Menu 1", { exact: true }).selectOption("AMZ: Lotus");
+  await page.getByLabel("Item 1", { exact: true }).selectOption({ label: "Blistered Green Beans · 176734 · 4 ounce" });
+  await expect(page.getByText(/mapping service is temporarily unavailable.*fallback is not used/i).last()).toBeVisible();
+  await expect(page.getByText("Prepared Foods G/L fallback")).toHaveCount(0);
+  await page.getByLabel("Globally unique title").fill("Service failure stays blocked"); await page.getByLabel("Departing unit").selectOption("Dawson"); await page.getByLabel("Receiving unit").selectOption("Nessie");
   await page.getByRole("button", { name: "Save Draft" }).click();
   await expect(page.getByText(/needs a priced ingredient allocation/i)).toBeVisible();
+  expect(writes).toHaveLength(0);
 });
 
 test("Transfer Tool retains the current cafe profit-center mappings", async ({ page }) => {

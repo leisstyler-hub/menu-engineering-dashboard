@@ -6,7 +6,7 @@ import CATALOG from "../src/data/transferToolCatalog.json" with { type: "json" }
 import INGREDIENT_COSTING_LOOKUP from "../api/data/ingredientCosting91926.json" with { type: "json" };
 import { buildS4Rows, buildS4Workbook, S4_TEMPLATE_SHA256 } from "../src/features/transfer-tool/transferExport.js";
 import { cafeProfitCenter } from "../src/features/transfer-tool/cafeProfitCenters.js";
-import { balanceIngredientAllocations, defaultTransferDescription, normalizeTransferItemAllocations, normalizeTransferTitle, refreshCopiedItems, S4_EXPORT_VERSION, transferRecordId, transferTotal, validateS4Transfer, validateTransfer } from "../src/features/transfer-tool/transferModel.js";
+import { applyPreparedFoodsFallback, balanceIngredientAllocations, defaultTransferDescription, normalizeTransferItemAllocations, normalizeTransferTitle, PREPARED_FOODS_GL_CODE, refreshCopiedItems, S4_EXPORT_VERSION, transferRecordId, transferTotal, validateS4Transfer, validateTransfer } from "../src/features/transfer-tool/transferModel.js";
 import { CAFE_UNITS } from "../src/shared/cafeUnits.js";
 
 const root = process.cwd();
@@ -119,6 +119,21 @@ const zeroResidualMultipleUnpriced = balanceIngredientAllocations({
 if (zeroResidualMultipleUnpriced.pricingComplete || zeroResidualMultipleUnpriced.residualCost !== 0 || zeroResidualMultipleUnpriced.unpricedComponents.length !== 2) {
   fail("multiple unresolved components must block even when priced components already consume the Item + Waste Cost ceiling");
 }
+const preparedFoodsFallback = applyPreparedFoodsFallback(2.45, "Incomplete ingredient pricing");
+if (!preparedFoodsFallback?.pricingComplete || preparedFoodsFallback.ingredientAllocations.length !== 1 || preparedFoodsFallback.ingredientAllocations[0].glCode !== PREPARED_FOODS_GL_CODE || preparedFoodsFallback.ingredientAllocations[0].allocationPerPortion !== 2.45 || preparedFoodsFallback.unpricedComponents.length) {
+  fail("approved Prepared Foods fallback must assign the full Item + Waste Cost to one 4111011 allocation");
+}
+if (applyPreparedFoodsFallback(0, "Missing Item + Waste") || applyPreparedFoodsFallback(null, "Missing Item + Waste")) {
+  fail("Prepared Foods fallback must never invent a missing or zero Item + Waste Cost");
+}
+const refreshedFallback = normalizeTransferItemAllocations({
+  catalogId: "fallback",
+  itemWasteCost: 2.45,
+  ...preparedFoodsFallback,
+}, 3.1);
+if (refreshedFallback.ingredientAllocations.length !== 1 || refreshedFallback.ingredientAllocations[0].glCode !== PREPARED_FOODS_GL_CODE || refreshedFallback.ingredientAllocations[0].allocationPerPortion !== 3.1 || refreshedFallback.allocationPerPortion !== 3.1) {
+  fail("copied or reopened Prepared Foods fallbacks must refresh to the current Item + Waste Cost");
+}
 const cappedAllocation = balanceIngredientAllocations({
   components: [
     { ingredientMrn: "protein", ingredientName: "Protein", glCode: "4111003", allocationPerPortion: 2 },
@@ -165,8 +180,9 @@ const api = read("api/storage/records.js");
 const storage = read("src/features/transfer-tool/transferStorage.js");
 const component = read("src/features/transfer-tool/TransferTool.jsx");
 for (const marker of ["createTransfer", "deleteTransfer", "Titles must be globally unique", "like.transfer|*"]) if (!api.includes(marker)) fail(`API is missing ${marker}`);
-for (const marker of ["createTransfer", "deleteTransfer", "tool: \"transfers\"", "/api/recipe-library?scope=all", "row.trueCost"]) if (!storage.includes(marker)) fail(`storage client is missing ${marker}`);
+for (const marker of ["createTransfer", "deleteTransfer", "tool: \"transfers\"", "/api/recipe-library?scope=all", "row.trueCost", "TRANSFER_MAPPING_NOT_FOUND", "TRANSFER_MAPPING_UNAVAILABLE"]) if (!storage.includes(marker)) fail(`storage client is missing ${marker}`);
 for (const marker of ["Ingredient Costing 9.19.26", "Automatic ingredient G/L allocation", "Scaled to Item + Waste Cost", "Item-cost cap applied", "Substitute price used", "Chef-reviewed balance", "Item + Waste / portion", "Chef-reviewed G/L", "Export S4 Excel", "Batch export staging", "Include in batch export", "Delete saved transfer", "DRAFT"]) if (!component.includes(marker)) fail(`UI is missing ${marker}`);
+for (const marker of ["Prepared Foods G/L fallback", "Approved Prepared Foods fallback", "4111011 Prepared Foods"]) if (!component.includes(marker)) fail(`UI is missing ${marker}`);
 for (const removedMarker of ["G/L Breakdown", "Prepared Foods cost balance"]) if (component.includes(removedMarker)) fail(`UI still contains retired automatic balance UI ${removedMarker}`);
 
 console.log(`Transfer Tool verification passed: ${CATALOG.menus.length} menus, ${CATALOG.items.length} menu-scoped cost records.`);
@@ -325,6 +341,20 @@ try {
     totalValue: 2,
   }], context: { tool: "transfers" } });
   if (underAllocatedS4.statusCode !== 400 || !/must equal/i.test(underAllocatedS4.payload?.message || "")) fail("server accepted a mapped G/L total below Item + Waste Cost");
+
+  const preparedFoodsS4 = await invoke({ action: "upsertRecords", records: [{
+    ...s4Record,
+    items: [{ ...s4Record.items[0], ingredientAllocations: preparedFoodsFallback.ingredientAllocations, itemWasteCost: 2.45 }],
+    totalValue: 4.9,
+  }], context: { tool: "transfers" } });
+  if (preparedFoodsS4.statusCode !== 200) fail("server rejected the approved 4111011 Prepared Foods fallback");
+
+  const invalidPreparedFoodsS4 = await invoke({ action: "upsertRecords", records: [{
+    ...s4Record,
+    items: [{ ...s4Record.items[0], ingredientAllocations: [{ ...preparedFoodsFallback.ingredientAllocations[0], glCode: "4111005" }], itemWasteCost: 2.45 }],
+    totalValue: 4.9,
+  }], context: { tool: "transfers" } });
+  if (invalidPreparedFoodsS4.statusCode !== 400 || !/4111011/i.test(invalidPreparedFoodsS4.payload?.message || "")) fail("server accepted a Prepared Foods fallback on the wrong G/L");
 
   let deleteCalls = 0;
   globalThis.fetch = async (url, options = {}) => {

@@ -10,6 +10,12 @@ When a mission produces an approved product decision, Scribe adds an entry below
 
 ## Decisions
 
+### 2026-09-23 - Prepared Foods is the approved Transfer Tool fallback G/L
+
+Alex approved `4111011 — Prepared Foods` as the automatic fallback for current and future Transfer Tool items whose ingredient mapping is explicitly absent (404), or whose incomplete source pricing retains unresolved components after mapped prices consume the full Item + Waste Cost. The fallback is one row for the full authoritative Item + Waste Cost, uses `4111011` in both S4 G/L fields, is visibly identified as a fallback, and replaces rather than mixes with partial ingredient allocations. A mapping-service 5xx, malformed response, or network/transport failure remains blocked and is never treated as an absent mapping. Existing exact ingredient mappings, sole-component Item + Waste residual attribution, proportional cost ceilings, and positive-remainder chef review remain preferred when they can produce a complete allocation. The fallback never fabricates a price: an item without a finite positive Item + Waste Cost remains blocked until that authoritative cost exists. No Supabase schema, policy, source-authority, or production-data rewrite is approved. Requesting Admin / Admin of Record: Alex Neuse.
+
+Rejected alternatives: calling the account “Product Cost,” silently exporting partial mappings, or inventing a dollar value for a zero/unpriced item.
+
 ### 2026-09-21 - Item + Waste Cost is the absolute Transfer Tool allocation ceiling
 
 Alex established an absolute Transfer Tool rule: the current menu-card Item + Waste Cost is the authoritative per-portion transfer cost. If the sum of mapped ingredient G/L costs is higher, every mapped allocation is reduced by the same percentage until their sum equals Item + Waste Cost; no mapped or exported total may exceed that cost. The original source allocation remains visible for audit, and S4 cent rounding must reconcile back to the exact item-count × Item + Waste Cost total. A positive gap below Item + Waste Cost still uses the existing chef-selected residual G/L review. The server must reject a saved versioned transfer whose allocation does not equal Item + Waste Cost. Allocation details remain available but are collapsed into a compact per-line summary by default so transfers with ten or more items remain usable. Requesting Admin / Admin of Record: Alex Neuse.
