@@ -224,6 +224,61 @@ export default async function handler(req, res) {
       });
     }
 
+    if (useCafeTastingRoutingSheet && req.method === "POST") {
+      const { action, cafe = "", chefContact = "", directorContact = "" } = req.body || {};
+      if (action !== "addRoutingRoute") {
+        return res.status(400).json({ ok: false, message: "Unsupported routing-table action" });
+      }
+
+      const normalizedCafe = String(cafe).trim();
+      const normalizedChefContact = String(chefContact).trim();
+      const normalizedDirectorContact = String(directorContact).trim();
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!normalizedCafe) {
+        return res.status(400).json({ ok: false, message: "Cafe is required" });
+      }
+      if (normalizedChefContact && !emailPattern.test(normalizedChefContact)) {
+        return res.status(400).json({ ok: false, message: "Chef Contact must be a valid email address" });
+      }
+      if (normalizedDirectorContact && !emailPattern.test(normalizedDirectorContact)) {
+        return res.status(400).json({ ok: false, message: "Director Contact must be a valid email address" });
+      }
+
+      const routingSheet = await smartsheetFetch(`/sheets/${sheetId}`);
+      const routingColumns = columnMapByTitle(routingSheet);
+      const requiredRoutingColumns = ["Cafe", "Chef Contact", "Director Contact"];
+      const missingRoutingColumns = requiredRoutingColumns.filter((title) => !routingColumns.has(title));
+      if (missingRoutingColumns.length) {
+        return res.status(400).json({ ok: false, message: "Routing table is missing required columns", missingColumns: missingRoutingColumns });
+      }
+
+      const cafeColumnId = routingColumns.get("Cafe");
+      const duplicate = (routingSheet.rows || []).some((row) => String(getCellValue(row, cafeColumnId)).trim().toLowerCase() === normalizedCafe.toLowerCase());
+      if (duplicate) {
+        return res.status(409).json({ ok: false, message: `Routing already exists for ${normalizedCafe}` });
+      }
+
+      const created = await smartsheetFetch(`/sheets/${sheetId}/rows`, {
+        method: "POST",
+        body: JSON.stringify([{ toBottom: true, cells: [
+          { columnId: cafeColumnId, value: normalizedCafe, strict: false },
+          { columnId: routingColumns.get("Chef Contact"), value: normalizedChefContact, strict: false },
+          { columnId: routingColumns.get("Director Contact"), value: normalizedDirectorContact, strict: false },
+        ] }]),
+      });
+
+      return res.status(201).json({
+        ok: true,
+        action,
+        sheetId,
+        cafe: normalizedCafe,
+        chefContact: normalizedChefContact,
+        directorContact: normalizedDirectorContact,
+        rowId: created?.result?.[0]?.id || created?.[0]?.id || null,
+        message: `Added routing row for ${normalizedCafe}.`,
+      });
+    }
+
     if (useCafeTastingSheet || useCafeTastingRoutingSheet) {
       res.setHeader("Allow", "GET");
       return res.status(405).json({ ok: false, message: "Cafe Tasting access is read-only" });
