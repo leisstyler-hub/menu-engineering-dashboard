@@ -231,7 +231,8 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === "GET") {
-      const sheet = await smartsheetFetch(`/sheets/${sheetId}`);
+      const diagnosticColumns = useCafeTastingSheet && String(req.query?.diagnostic || "") === "columns";
+      const sheet = await smartsheetFetch(`/sheets/${sheetId}${diagnosticColumns ? "?include=objectValue" : ""}`);
       const columnsById = new Map((sheet.columns || []).map((column) => [String(column.id), column.title]));
       const records = (sheet.rows || []).map((row) => rowToRecord(row, columnsById));
 
@@ -241,6 +242,7 @@ export default async function handler(req, res) {
         sheetName: sheet.name || "",
         columns: (sheet.columns || []).map((column) => column.title),
         columnDetails: (sheet.columns || []).map(({ id, title, type, version, systemColumnType }) => ({ id, title, type, version, systemColumnType })),
+        ...(diagnosticColumns ? { rawColumns: sheet.columns || [] } : {}),
         records,
         count: records.length,
         message: `Loaded ${records.length} row${records.length === 1 ? "" : "s"} from Smartsheet.`,
