@@ -279,6 +279,66 @@ export default async function handler(req, res) {
       });
     }
 
+    if (useCafeTastingSheet && req.method === "POST") {
+      const { action, record = {} } = req.body || {};
+      if (action !== "addTastingSubmission") {
+        return res.status(400).json({ ok: false, message: "Unsupported Cafe Tasting action" });
+      }
+
+      const allowedColumns = [
+        "Date", "Cafe Name", "Station Name", "Dish Name", "Taster",
+        "1. Plate Appeal", "1. Plate Arrangement", "1. Plate Edges", "1. Garnish", "1. Plating Notes",
+        "2.Target_Portion", "2.Actual_Portion", "2. Protein Portion", "2. Side 1 Portion", "2. Side 2 Portion", "2. Sauce Portion", "2. Portion Notes",
+        "3. Temperature", "3. Doneness", "3. Seasoning", "3. Flavor Balance", "3. Texture", "3. Overall Taste", "3. Taste Notes",
+        "4. Cooking Method", "4. Ingredients", "4. Correct Sides", "4. Substitutions", "4. Recipe Notes",
+        "5. Strengths", "5. Opportunities",
+      ];
+      const requiredColumns = ["Date", "Cafe Name", "Station Name", "Dish Name", "Taster"];
+      const normalizedRecord = Object.fromEntries(allowedColumns
+        .filter((columnName) => Object.hasOwn(record, columnName))
+        .map((columnName) => [columnName, record[columnName]]));
+      const missingValues = requiredColumns.filter((columnName) => !String(normalizedRecord[columnName] ?? "").trim());
+      if (missingValues.length) {
+        return res.status(400).json({ ok: false, message: "Missing required tasting values", missingColumns: missingValues });
+      }
+
+      const tastingSheet = await smartsheetFetch(`/sheets/${sheetId}`);
+      const tastingColumns = columnMapByTitle(tastingSheet);
+      const missingColumns = Object.keys(normalizedRecord).filter((columnName) => !tastingColumns.has(columnName));
+      if (missingColumns.length) {
+        return res.status(400).json({ ok: false, message: "Cafe Tasting sheet is missing submitted columns", missingColumns });
+      }
+
+      const cafeColumnId = tastingColumns.get("Cafe Name");
+      const dishColumnId = tastingColumns.get("Dish Name");
+      const duplicate = (tastingSheet.rows || []).some((row) =>
+        String(getCellValue(row, cafeColumnId)).trim().toLowerCase() === String(normalizedRecord["Cafe Name"]).trim().toLowerCase()
+        && String(getCellValue(row, dishColumnId)).trim().toLowerCase() === String(normalizedRecord["Dish Name"]).trim().toLowerCase());
+      if (duplicate) {
+        return res.status(409).json({ ok: false, message: "This Cafe Tasting test submission already exists" });
+      }
+
+      const cells = Object.entries(normalizedRecord).map(([columnName, value]) => ({
+        columnId: tastingColumns.get(columnName),
+        value: value ?? "",
+        strict: false,
+      }));
+      const created = await smartsheetFetch(`/sheets/${sheetId}/rows`, {
+        method: "POST",
+        body: JSON.stringify([{ toBottom: true, cells }]),
+      });
+
+      return res.status(201).json({
+        ok: true,
+        action,
+        sheetId,
+        cafe: normalizedRecord["Cafe Name"],
+        dish: normalizedRecord["Dish Name"],
+        rowId: created?.result?.[0]?.id || created?.[0]?.id || null,
+        message: `Added Cafe Tasting submission for ${normalizedRecord["Cafe Name"]}.`,
+      });
+    }
+
     if (useCafeTastingSheet || useCafeTastingRoutingSheet) {
       res.setHeader("Allow", "GET");
       return res.status(405).json({ ok: false, message: "Cafe Tasting access is read-only" });

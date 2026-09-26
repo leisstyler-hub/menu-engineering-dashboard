@@ -30,9 +30,8 @@ try {
   globalThis.fetch = async () => { writeFetchCalled = true; throw new Error("Cafe Tasting write path must not call Smartsheet"); };
   const writeResponse = responseRecorder();
   await handler({ method: "POST", query: { dataset: "cafe-tasting" }, body: { action: "upsertRecords" } }, writeResponse);
-  assert.equal(writeResponse.statusCode, 405);
-  assert.equal(writeResponse.headers.Allow, "GET");
-  assert.equal(writeResponse.body.message, "Cafe Tasting access is read-only");
+  assert.equal(writeResponse.statusCode, 400);
+  assert.equal(writeResponse.body.message, "Unsupported Cafe Tasting action");
   assert.equal(writeFetchCalled, false);
   console.log("Cafe Tasting and routing-table read-only Smartsheet selector verification passed.");
 } finally {
