@@ -3,6 +3,7 @@
 // - SMARTSHEET_ACCESS_TOKEN
 // - SMARTSHEET_SHEET_ID
 // - SMARTSHEET_CAFE_TASTING_SHEET_ID (read-only Cafe Tasting access)
+// - SMARTSHEET_CAFE_TASTING_ROUTING_SHEET_ID (read-only routing-table access)
 // Supports:
 // - GET: load rows from Smartsheet for app read/Executive View
 // - POST action=upsertRecords: add/update rows by Record ID
@@ -186,15 +187,20 @@ export default async function handler(req, res) {
   const requestedTool = req.query?.tool || req.body?.context?.tool || "";
   const requestedDataset = String(req.query?.dataset || "").trim().toLowerCase();
   const useCafeTastingSheet = requestedDataset === "cafe-tasting";
+  const useCafeTastingRoutingSheet = requestedDataset === "cafe-tasting-routing";
   const useLeanSheet = String(requestedTool).toLowerCase().includes("lean") && process.env.SMARTSHEET_LEAN_SHEET_ID;
-  const sheetId = useCafeTastingSheet
-    ? process.env.SMARTSHEET_CAFE_TASTING_SHEET_ID
+  const sheetId = useCafeTastingRoutingSheet
+    ? process.env.SMARTSHEET_CAFE_TASTING_ROUTING_SHEET_ID
+    : useCafeTastingSheet
+      ? process.env.SMARTSHEET_CAFE_TASTING_SHEET_ID
     : useLeanSheet
       ? process.env.SMARTSHEET_LEAN_SHEET_ID
       : process.env.SMARTSHEET_SHEET_ID;
   if (!sheetId) {
-    const missingVariable = useCafeTastingSheet
-      ? "SMARTSHEET_CAFE_TASTING_SHEET_ID"
+    const missingVariable = useCafeTastingRoutingSheet
+      ? "SMARTSHEET_CAFE_TASTING_ROUTING_SHEET_ID"
+      : useCafeTastingSheet
+        ? "SMARTSHEET_CAFE_TASTING_SHEET_ID"
       : useLeanSheet
         ? "SMARTSHEET_LEAN_SHEET_ID"
         : "SMARTSHEET_SHEET_ID";
@@ -218,7 +224,7 @@ export default async function handler(req, res) {
       });
     }
 
-    if (useCafeTastingSheet) {
+    if (useCafeTastingSheet || useCafeTastingRoutingSheet) {
       res.setHeader("Allow", "GET");
       return res.status(405).json({ ok: false, message: "Cafe Tasting access is read-only" });
     }
