@@ -221,7 +221,10 @@ export default function CafeTastingForm({ onBackToPlatform }) {
     return map;
   }, [schema]);
 
-  const cafeOptions = useMemo(() => columnByTitle.get("Cafe Name")?.options || [], [columnByTitle]);
+  const cafeOptions = useMemo(() => Array.from(new Set(routes
+    .map((route) => String(route.Cafe || "").trim())
+    .filter(Boolean)))
+    .sort((left, right) => left.localeCompare(right)), [routes]);
   const stationOptions = useMemo(() => columnByTitle.get("Station Name")?.options || [], [columnByTitle]);
   const tasterOptions = useMemo(() => columnByTitle.get("Taster")?.contactOptions || [], [columnByTitle]);
   const optionsFor = (title) => columnByTitle.get(title)?.options || [];
@@ -313,8 +316,8 @@ export default function CafeTastingForm({ onBackToPlatform }) {
       "5. Strengths": strengths,
       "5. Opportunities": opportunities,
     };
-    if (targetPortion !== "") record["2.Target_Portion"] = String(targetPortion);
-    if (actualPortion !== "") record["2.Actual_Portion"] = String(actualPortion);
+    if (targetPortion !== "") record["2.Target_Portion"] = Number(targetPortion);
+    if (actualPortion !== "") record["2.Actual_Portion"] = Number(actualPortion);
 
     setSubmitting(true);
     try {
@@ -392,17 +395,15 @@ export default function CafeTastingForm({ onBackToPlatform }) {
                 <input type="date" value={date} onChange={(event) => setDate(event.target.value)} className={inputClass} required />
               </Field>
               <Field label="Cafe Name">
-                <input
-                  list="cafe-name-options"
+                <select
                   value={cafeName}
                   onChange={(event) => setCafeName(event.target.value)}
                   className={inputClass}
-                  placeholder="Start typing a cafe"
                   required
-                />
-                <datalist id="cafe-name-options">
-                  {cafeOptions.map((option) => <option key={option} value={option} />)}
-                </datalist>
+                >
+                  <option value="">Select a cafe</option>
+                  {cafeOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                </select>
               </Field>
               <div className="sm:col-span-2">
                 <span className="text-sm font-bold text-slate-700">Tasters</span>

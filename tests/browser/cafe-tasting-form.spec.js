@@ -17,7 +17,8 @@ test("Cafe Tasting groups and deduplicates items and shows inferred submission i
   ] } }));
 
   await page.goto("/?tool=cafeTasting");
-  await page.getByLabel("Cafe Name").fill("test cafe");
+  await expect(page.getByLabel("Cafe Name").locator("option")).toHaveText(["Select a cafe", "test cafe"]);
+  await page.getByLabel("Cafe Name").selectOption("test cafe");
   await page.getByLabel("Menu").selectOption("AMZ: Greens & Grains");
 
   const selector = page.getByLabel("Entree / Item 1");
