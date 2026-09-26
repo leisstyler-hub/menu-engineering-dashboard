@@ -64,8 +64,8 @@ const lowerCostBrisket = normalizeTransferItemAllocations({
   ingredientAllocations: brisketBalanced.ingredientAllocations,
   unpricedComponents: brisketBalanced.unpricedComponents,
 }, 1);
-if (lowerCostBrisket.pricingComplete || lowerCostBrisket.residualCost !== 0 || !lowerCostBrisket.unpricedComponents.some((component) => component.ingredientMrn === "36857") || lowerCostBrisket.ingredientAllocations.some((component) => component.ingredientMrn === "36857")) {
-  fail("a reopened or copied residual-attributed line must block when its lower current cost leaves no positive amount for the unresolved component");
+if (!lowerCostBrisket.pricingComplete || lowerCostBrisket.residualCost !== 0 || !lowerCostBrisket.unpricedComponents.some((component) => component.ingredientMrn === "36857") || lowerCostBrisket.ingredientAllocations.some((component) => component.ingredientMrn === "36857")) {
+  fail("a reopened or copied line with no positive residual must preserve unresolved source detail without inventing a zero-dollar fallback");
 }
 const lowerCostBrisketTransfer = {
   title: "Lower Cost Brisket",
@@ -76,8 +76,8 @@ const lowerCostBrisketTransfer = {
   s4ExportVersion: S4_EXPORT_VERSION,
   items: [{ ...lowerCostBrisket, quantity: 1 }],
 };
-if (!validateTransfer(lowerCostBrisketTransfer).items || !validateS4Transfer(lowerCostBrisketTransfer).s4Lines) {
-  fail("client validation must reject a lower-cost copied line with an uncovered recipe component");
+if (validateTransfer(lowerCostBrisketTransfer).items || validateS4Transfer(lowerCostBrisketTransfer).s4Lines) {
+  fail("client validation must accept an exactly reconciled line while retaining zero-dollar unresolved source detail");
 }
 let catalogAutomaticAttributions = 0;
 let catalogChefReviews = 0;
@@ -96,17 +96,35 @@ const balancedAllocation = balanceIngredientAllocations({
   unpricedComponents: [{ ingredientMrn: "missing", ingredientName: "Missing ingredient", glCode: "4111012", allocationPerPortion: null }],
   itemWasteCost: 2.3,
 });
-if (balancedAllocation.pricingComplete || balancedAllocation.allocationPerPortion !== 2.2 || balancedAllocation.residualCost !== 0.1 || balancedAllocation.ingredientAllocations.some((component) => component.isResidualCostBalance)) {
-  fail("a positive unallocated Item + Waste Cost must require a chef G/L selection");
+if (!balancedAllocation.pricingComplete || balancedAllocation.allocationPerPortion !== 2.3 || balancedAllocation.residualCost !== 0 || balancedAllocation.ingredientAllocations.at(-1)?.glCode !== PREPARED_FOODS_GL_CODE || !balancedAllocation.ingredientAllocations.at(-1)?.isPreparedFoodsFallback || balancedAllocation.ingredientAllocations.at(-1)?.allocationPerPortion !== 0.1) {
+  fail("a positive unallocated Item + Waste Cost must automatically receive one Prepared Foods fallback row");
 }
-const chefReviewedBalance = balanceIngredientAllocations({
+const missingGlAllocation = balanceIngredientAllocations({
+  components: [
+    { ingredientMrn: "mapped", ingredientName: "Mapped ingredient", glCode: "4111005", allocationPerPortion: 1.25 },
+    { ingredientMrn: "unmapped", ingredientName: "Unmapped ingredient", glCode: "", allocationPerPortion: 0.75 },
+  ],
+  itemWasteCost: 2,
+});
+if (!missingGlAllocation.pricingComplete || missingGlAllocation.ingredientAllocations[0]?.glCode !== "4111005" || missingGlAllocation.ingredientAllocations[0]?.isPreparedFoodsFallback || missingGlAllocation.ingredientAllocations[1]?.glCode !== PREPARED_FOODS_GL_CODE || !missingGlAllocation.ingredientAllocations[1]?.isPreparedFoodsFallback || missingGlAllocation.allocationPerPortion !== 2) {
+  fail("a positive component without an approved automatic G/L must default individually to Prepared Foods without changing valid automatic mappings");
+}
+const invalidResidualGlAllocation = balanceIngredientAllocations({
+  components: [{ ingredientMrn: "mapped", ingredientName: "Mapped ingredient", glCode: "4111005", allocationPerPortion: 1 }],
+  unpricedComponents: [{ ingredientMrn: "invalid-residual", ingredientName: "Invalid residual G/L", glCode: "9999999", allocationPerPortion: null, residualAttributionEligible: true }],
+  itemWasteCost: 2,
+});
+if (!invalidResidualGlAllocation.pricingComplete || invalidResidualGlAllocation.ingredientAllocations.at(-1)?.glCode !== PREPARED_FOODS_GL_CODE || !invalidResidualGlAllocation.ingredientAllocations.at(-1)?.isPreparedFoodsFallback || invalidResidualGlAllocation.ingredientAllocations.at(-1)?.isItemCostResidualAttribution || invalidResidualGlAllocation.ingredientAllocations.at(-1)?.allocationPerPortion !== 1) {
+  fail("a sole unresolved remainder with an unapproved seven-digit recipe G/L must use the Prepared Foods fallback path");
+}
+const overriddenFallbackBalance = balanceIngredientAllocations({
   components: [{ ingredientMrn: "known", ingredientName: "Known ingredient", glCode: "4111005", allocationPerPortion: 2.2 }],
   unpricedComponents: [{ ingredientMrn: "missing", ingredientName: "Missing ingredient", glCode: "4111012", allocationPerPortion: null }],
   itemWasteCost: 2.3,
-  residualGlCode: "4111012",
+  fallbackGlCode: "4111012",
 });
-if (!chefReviewedBalance.pricingComplete || chefReviewedBalance.allocationPerPortion !== 2.3 || chefReviewedBalance.ingredientAllocations.at(-1)?.glCode !== "4111012" || !chefReviewedBalance.ingredientAllocations.at(-1)?.isResidualCostBalance) {
-  fail("chef-selected G/L must allocate the positive remaining Item + Waste Cost");
+if (!overriddenFallbackBalance.pricingComplete || overriddenFallbackBalance.allocationPerPortion !== 2.3 || overriddenFallbackBalance.ingredientAllocations.at(-1)?.glCode !== "4111012" || !overriddenFallbackBalance.ingredientAllocations.at(-1)?.isPreparedFoodsFallback) {
+  fail("an approved fallback-row G/L override must change only the G/L while preserving the positive remainder");
 }
 const zeroResidualMultipleUnpriced = balanceIngredientAllocations({
   components: [{ ingredientMrn: "known", ingredientName: "Known ingredient", glCode: "4111005", allocationPerPortion: 2.5 }],
@@ -116,8 +134,8 @@ const zeroResidualMultipleUnpriced = balanceIngredientAllocations({
   ],
   itemWasteCost: 2.45,
 });
-if (zeroResidualMultipleUnpriced.pricingComplete || zeroResidualMultipleUnpriced.residualCost !== 0 || zeroResidualMultipleUnpriced.unpricedComponents.length !== 2) {
-  fail("multiple unresolved components must block even when priced components already consume the Item + Waste Cost ceiling");
+if (!zeroResidualMultipleUnpriced.pricingComplete || zeroResidualMultipleUnpriced.residualCost !== 0 || zeroResidualMultipleUnpriced.unpricedComponents.length !== 2 || zeroResidualMultipleUnpriced.ingredientAllocations.some((component) => component.isPreparedFoodsFallback)) {
+  fail("multiple unresolved components with no remaining dollars must stay as source notes without inventing zero-dollar fallback rows");
 }
 const preparedFoodsFallback = applyPreparedFoodsFallback(2.45, "Incomplete ingredient pricing");
 if (!preparedFoodsFallback?.pricingComplete || preparedFoodsFallback.ingredientAllocations.length !== 1 || preparedFoodsFallback.ingredientAllocations[0].glCode !== PREPARED_FOODS_GL_CODE || preparedFoodsFallback.ingredientAllocations[0].allocationPerPortion !== 2.45 || preparedFoodsFallback.unpricedComponents.length) {
@@ -134,6 +152,14 @@ const refreshedFallback = normalizeTransferItemAllocations({
 if (refreshedFallback.ingredientAllocations.length !== 1 || refreshedFallback.ingredientAllocations[0].glCode !== PREPARED_FOODS_GL_CODE || refreshedFallback.ingredientAllocations[0].allocationPerPortion !== 3.1 || refreshedFallback.allocationPerPortion !== 3.1) {
   fail("copied or reopened Prepared Foods fallbacks must refresh to the current Item + Waste Cost");
 }
+const refreshedOverriddenFallback = normalizeTransferItemAllocations({
+  catalogId: "fallback-override",
+  itemWasteCost: 2.45,
+  ...applyPreparedFoodsFallback(2.45, "Incomplete ingredient pricing", "4111012"),
+}, 3.1);
+if (refreshedOverriddenFallback.ingredientAllocations[0]?.glCode !== "4111012" || refreshedOverriddenFallback.ingredientAllocations[0]?.allocationPerPortion !== 3.1) {
+  fail("fallback-row G/L overrides must survive reopen, copy, and current-cost refresh normalization");
+}
 const cappedAllocation = balanceIngredientAllocations({
   components: [
     { ingredientMrn: "protein", ingredientName: "Protein", glCode: "4111003", allocationPerPortion: 2 },
@@ -149,7 +175,7 @@ const restoredAllocation = normalizeTransferItemAllocations({
   ingredientAllocations: cappedAllocation.ingredientAllocations,
   residualGlCode: "4111012",
 }, 3.5);
-if (restoredAllocation.allocationWasScaled || restoredAllocation.ingredientAllocations.some((component) => component.isProportionallyAdjusted || component.allocationScaleFactor) || restoredAllocation.mappedAllocationPerPortion !== 3 || restoredAllocation.residualCost !== 0.5) {
+if (restoredAllocation.allocationWasScaled || restoredAllocation.ingredientAllocations.filter((component) => !component.isPreparedFoodsFallback).some((component) => component.isProportionallyAdjusted || component.allocationScaleFactor) || restoredAllocation.mappedAllocationPerPortion !== 3 || restoredAllocation.residualCost !== 0 || restoredAllocation.ingredientAllocations.at(-1)?.allocationPerPortion !== 0.5) {
   fail("reopened or copied allocations must clear stale cap metadata when the current Item + Waste Cost no longer requires scaling");
 }
 let scaledCatalogItems = 0;
@@ -181,7 +207,7 @@ const storage = read("src/features/transfer-tool/transferStorage.js");
 const component = read("src/features/transfer-tool/TransferTool.jsx");
 for (const marker of ["createTransfer", "deleteTransfer", "Titles must be globally unique", "like.transfer|*"]) if (!api.includes(marker)) fail(`API is missing ${marker}`);
 for (const marker of ["createTransfer", "deleteTransfer", "tool: \"transfers\"", "/api/recipe-library?scope=all", "row.trueCost", "TRANSFER_MAPPING_NOT_FOUND", "TRANSFER_MAPPING_UNAVAILABLE"]) if (!storage.includes(marker)) fail(`storage client is missing ${marker}`);
-for (const marker of ["Ingredient Costing 9.19.26", "Automatic ingredient G/L allocation", "Scaled to Item + Waste Cost", "Item-cost cap applied", "Substitute price used", "Chef-reviewed balance", "Item + Waste / portion", "Chef-reviewed G/L", "Export S4 Excel", "Batch export staging", "Include in batch export", "Delete saved transfer", "DRAFT"]) if (!component.includes(marker)) fail(`UI is missing ${marker}`);
+for (const marker of ["Ingredient Costing 9.19.26", "Automatic ingredient G/L allocation", "Scaled to Item + Waste Cost", "Item-cost cap applied", "Substitute price used", "Item + Waste / portion", "Fallback G/L for", "Export S4 Excel", "Batch export staging", "Include in batch export", "Delete saved transfer", "DRAFT"]) if (!component.includes(marker)) fail(`UI is missing ${marker}`);
 for (const marker of ["Prepared Foods G/L fallback", "Approved Prepared Foods fallback", "4111011 Prepared Foods"]) if (!component.includes(marker)) fail(`UI is missing ${marker}`);
 for (const removedMarker of ["G/L Breakdown", "Prepared Foods cost balance"]) if (component.includes(removedMarker)) fail(`UI still contains retired automatic balance UI ${removedMarker}`);
 
@@ -195,7 +221,7 @@ const exportTransfer = {
   title: "S4 Verification",
   receivingProfitCenter: "30159",
   eventId: "EVENT-1",
-  items: [{ catalogId: "x", item: "=Formula-like item", quantity: 2, itemWasteCost: 1.23456, allocationPerPortion: 1.23456, ingredientAllocations: [{ ingredientMrn: "1", ingredientName: "ingredient", glCode: "4111001", allocationPerPortion: 1.23456 }] }],
+  items: [{ catalogId: "x", item: "=Formula-like item", quantity: 2, itemWasteCost: 1.23456, allocationPerPortion: 1.23456, ingredientAllocations: [{ ingredientMrn: "1", ingredientName: "ingredient", glCode: "4111005", allocationPerPortion: 1.23456 }] }],
 };
 if (Object.keys(validateS4Transfer(exportTransfer)).length) fail("valid S4 transfer was rejected");
 const exportedBytes = await buildS4Workbook(templateBytes, exportTransfer);
@@ -233,7 +259,7 @@ const correctedExportRows = buildS4Rows({
     item: "Three-way allocation",
     quantity: 1,
     itemWasteCost: 0.9999,
-    ingredientAllocations: ["4111001", "4111002", "4111003"].map((glCode, index) => ({ ingredientMrn: String(index + 1), ingredientName: `Ingredient ${index + 1}`, glCode, allocationPerPortion: 0.3333 })),
+    ingredientAllocations: ["4111003", "4111004", "4111005"].map((glCode, index) => ({ ingredientMrn: String(index + 1), ingredientName: `Ingredient ${index + 1}`, glCode, allocationPerPortion: 0.3333 })),
   }],
 });
 if (correctedExportRows.reduce((sum, row) => sum + Math.round(row.transferAmount * 100), 0) !== 100 || correctedExportRows.every((row) => row.transferAmount === 0.33)) {
@@ -322,11 +348,11 @@ try {
   const invalidS4 = await invoke({ action: "upsertRecords", records: [{ ...s4Record, receivingProfitCenter: "" }], context: { tool: "transfers" } });
   if (invalidS4.statusCode !== 400 || !/profit center/i.test(invalidS4.payload?.message || "")) fail("versioned S4 transfer accepted missing receiving profit center");
 
-  const unresolvedS4 = await invoke({ action: "upsertRecords", records: [{
+  const disclosureOnlyS4 = await invoke({ action: "upsertRecords", records: [{
     ...s4Record,
     items: [{ ...s4Record.items[0], unpricedComponents: [{ ingredientMrn: "missing", ingredientName: "Missing ingredient" }] }],
   }], context: { tool: "transfers" } });
-  if (unresolvedS4.statusCode !== 400 || !/unresolved recipe component/i.test(unresolvedS4.payload?.message || "")) fail("server accepted an unresolved recipe component without a chef-reviewed G/L allocation");
+  if (disclosureOnlyS4.statusCode !== 200) fail("server rejected an exactly reconciled line that retains unresolved source detail without a positive remaining cost");
 
   const overAllocatedS4 = await invoke({ action: "upsertRecords", records: [{
     ...s4Record,
@@ -351,10 +377,17 @@ try {
 
   const invalidPreparedFoodsS4 = await invoke({ action: "upsertRecords", records: [{
     ...s4Record,
-    items: [{ ...s4Record.items[0], ingredientAllocations: [{ ...preparedFoodsFallback.ingredientAllocations[0], glCode: "4111005" }], itemWasteCost: 2.45 }],
+    items: [{ ...s4Record.items[0], ingredientAllocations: [{ ...preparedFoodsFallback.ingredientAllocations[0], glCode: "9999999" }], itemWasteCost: 2.45 }],
     totalValue: 4.9,
   }], context: { tool: "transfers" } });
-  if (invalidPreparedFoodsS4.statusCode !== 400 || !/4111011/i.test(invalidPreparedFoodsS4.payload?.message || "")) fail("server accepted a Prepared Foods fallback on the wrong G/L");
+  if (invalidPreparedFoodsS4.statusCode !== 400 || !/approved G\/L/i.test(invalidPreparedFoodsS4.payload?.message || "")) fail("server accepted a fallback override outside the approved S4 G/L allowlist");
+
+  const overriddenPreparedFoodsS4 = await invoke({ action: "upsertRecords", records: [{
+    ...s4Record,
+    items: [{ ...s4Record.items[0], ingredientAllocations: [{ ...preparedFoodsFallback.ingredientAllocations[0], glCode: "4111012" }], itemWasteCost: 2.45 }],
+    totalValue: 4.9,
+  }], context: { tool: "transfers" } });
+  if (overriddenPreparedFoodsS4.statusCode !== 200) fail("server rejected an allowlisted fallback-row G/L override with an unchanged exact total");
 
   let deleteCalls = 0;
   globalThis.fetch = async (url, options = {}) => {

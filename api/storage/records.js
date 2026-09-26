@@ -5,6 +5,7 @@ import {
   normalizeBackboneRows,
 } from "../../src/integrations/storage/backboneRecords.js";
 import { CAFE_UNITS } from "../../src/shared/cafeUnits.js";
+import { S4_GL_ACCOUNT_CODES } from "../../src/features/transfer-tool/s4GlAccounts.js";
 import { gzipSync, gunzipSync } from "node:zlib";
 
 const DEFAULT_SUPABASE_URL = "https://pzilyzqhatthctgsjwtt.supabase.co";
@@ -27,7 +28,6 @@ function transferRecordId(title = "") {
 }
 
 const TRANSFER_UNITS = new Set(CAFE_UNITS.map(({ cafe }) => cafe));
-const PREPARED_FOODS_GL_CODE = "4111011";
 
 function isTransferRecord(record = {}) {
   return String(record["Record Type"] || "") === "Transfer" || String(record["Record ID"] || "").startsWith("transfer|");
@@ -49,12 +49,6 @@ function validateTransferRecord(record = {}) {
   if (record.items.some((item) => !item?.catalogId || !item?.menu || !item?.item || !Number.isInteger(Number(item.quantity)) || Number(item.quantity) < 1 || !Number.isFinite(Number(item.itemWasteCost)) || Number(item.itemWasteCost) < 0)) {
     return "Every transfer item requires catalog identity, a positive whole-number count, and a valid Item + Waste Cost.";
   }
-  if (record.items.some((item) => Array.isArray(item.unpricedComponents)
-    && item.unpricedComponents.length > 0
-    && !(Array.isArray(item.ingredientAllocations)
-      && item.ingredientAllocations.some((allocation) => allocation?.isResidualCostBalance && Number(allocation.allocationPerPortion) > 0)))) {
-    return "Every unresolved recipe component requires a chef-reviewed G/L allocation.";
-  }
   if (record.s4ExportVersion) {
     if (Number(record.s4ExportVersion) !== 1) return "Transfer S4 export version is unsupported.";
     if (!/^\d{5}$/.test(String(record.receivingProfitCenter || ""))) return "A 5-digit receiving profit center is required for S4 export.";
@@ -63,14 +57,8 @@ function validateTransferRecord(record = {}) {
     const allocations = record.items.flatMap((item) => Array.isArray(item.ingredientAllocations) ? item.ingredientAllocations : []);
     if (allocations.length > 450) return "S4 transfers support no more than 450 ingredient lines.";
     if (record.items.some((item) => !Array.isArray(item.ingredientAllocations) || !item.ingredientAllocations.length)) return "Every S4 transfer item requires a priced ingredient allocation.";
-    if (allocations.some((allocation) => !/^\d{7}$/.test(String(allocation.glCode || "")) || !(Number(allocation.allocationPerPortion) > 0))) {
+    if (allocations.some((allocation) => !S4_GL_ACCOUNT_CODES.has(String(allocation.glCode || "")) || !(Number(allocation.allocationPerPortion) > 0))) {
       return "Every ingredient allocation requires an approved G/L code and a positive amount.";
-    }
-    if (allocations.some((allocation) => allocation?.isPreparedFoodsFallback && String(allocation.glCode || "") !== PREPARED_FOODS_GL_CODE)) {
-      return `Prepared Foods fallback allocations must use ${PREPARED_FOODS_GL_CODE}.`;
-    }
-    if (record.items.some((item) => item.ingredientAllocations?.some((allocation) => allocation?.isPreparedFoodsFallback) && item.ingredientAllocations.length !== 1)) {
-      return "A Prepared Foods fallback must be the item's only G/L allocation.";
     }
     if (record.items.some((item) => {
       const allocated = item.ingredientAllocations.reduce((sum, allocation) => sum + Number(allocation.allocationPerPortion || 0), 0);

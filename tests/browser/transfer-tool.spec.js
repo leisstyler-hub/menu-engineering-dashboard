@@ -66,7 +66,7 @@ test("Transfer Tool expands a selected item into automatic ingredient G/L rows a
   await expectNoAppProtection(page); expectNoUnexpectedPageErrors(pageErrors);
 });
 
-test("Transfer Tool requires chef G/L review before balancing unresolved component cost", async ({ page }) => {
+test("Transfer Tool automatically balances positive residual cost and allows only its fallback G/L to change", async ({ page }) => {
   const huliComponents = [{ ingredientMrn: "substitute", ingredientName: "Arugula", quantity: 1, unit: "ounce", recipeYield: 1, unitPrice: 2.2, glCode: "4111012", allocationPerPortion: 2.2, isSubstitutePrice: true, priceSourceMrn: "source-arugula", priceSourceNote: "Substitute price used: closest Ingredient Snapshot name match (Arugula)." }];
   const huliUnpricedComponents = [{ ingredientMrn: "missing", ingredientName: "Chef sauce", quantity: 1, unit: "ounce", recipeYield: 1, glCode: "4111011", allocationPerPortion: null }];
   const writes = await mockTransferStorage(page, { huliComponents, huliUnpricedComponents, huliCost: 2.5 });
@@ -79,23 +79,19 @@ test("Transfer Tool requires chef G/L review before balancing unresolved compone
   const allocationDetails = page.locator("details").filter({ hasText: "Automatic ingredient G/L allocation" }).last();
   await allocationDetails.locator("summary").click();
   await expect(page.getByText(/Substitute price used/i).last()).toBeVisible();
-  await expect(page.getByText(/Review \$0\.30/i).last()).toBeVisible();
+  await expect(allocationDetails).toContainText(/\$0\.30 without an automatic approved G\/L defaulted to 4111011 Prepared Foods/i);
   await expect(page.getByTestId("transfer-total")).toHaveText("$2.50");
-  await page.getByRole("button", { name: "Save Draft" }).click();
-  await expect(page.getByText(/Choose one chef-reviewed G\/L code/i).last()).toBeVisible();
-  await page.getByLabel("Chef-reviewed G/L for Huli Huli Chicken").last().selectOption("4111012");
-  await expect(page.getByLabel("Chef-reviewed G/L for Huli Huli Chicken")).toHaveCount(0);
-  await expect(page.getByText(/is allocated to the chef-selected G\/L/i)).toHaveCount(0);
-  await expect(page.getByText("G/L allocation reconciliation", { exact: true })).toHaveCount(0);
-  const approvedRows = allocationDetails.getByTestId("gl-allocation-row");
-  await expect(approvedRows).toHaveCount(2);
-  for (const row of await approvedRows.all()) {
-    await expect(row).toHaveAttribute("data-approved", "true");
-    await expect(row).toHaveClass(/bg-emerald-50/);
-  }
+  const allocationRows = allocationDetails.getByTestId("gl-allocation-row");
+  await expect(allocationRows).toHaveCount(2);
+  await expect(allocationRows.nth(0).locator("select")).toHaveCount(0);
+  await expect(allocationRows.nth(1)).toHaveClass(/bg-emerald-50/);
+  const fallbackGl = page.getByLabel("Fallback G/L for Huli Huli Chicken row 2").last();
+  await expect(fallbackGl).toHaveValue("4111011");
+  await fallbackGl.selectOption("4111004");
   await page.getByRole("button", { name: "Save Draft" }).click();
   const savedAllocations = writes[0].records[0].items[0].ingredientAllocations;
-  expect(savedAllocations).toEqual(expect.arrayContaining([expect.objectContaining({ isSubstitutePrice: true }), expect.objectContaining({ isResidualCostBalance: true, glCode: "4111012", allocationPerPortion: 0.3 })]));
+  expect(savedAllocations).toEqual(expect.arrayContaining([expect.objectContaining({ isSubstitutePrice: true, glCode: "4111012", allocationPerPortion: 2.2 }), expect.objectContaining({ isPreparedFoodsFallback: true, isResidualCostFallback: true, glCode: "4111004", allocationPerPortion: 0.3 })]));
+  expect(Number(savedAllocations.reduce((sum, allocation) => sum + allocation.allocationPerPortion, 0).toFixed(4))).toBe(2.5);
 });
 
 test("Transfer Tool assigns one unresolved recipe component the authoritative item-cost remainder", async ({ page }) => {
@@ -153,14 +149,17 @@ test("Transfer Tool exports an unmapped item through the approved Prepared Foods
   await fallbackDetails.locator("summary").click();
   await expect(fallbackDetails).toContainText("4111011");
   await expect(fallbackDetails.getByTestId("gl-allocation-row")).toHaveClass(/bg-emerald-50/);
+  const fallbackGl = page.getByLabel("Fallback G/L for Blistered Green Beans row 1").last();
+  await expect(fallbackGl).toHaveValue("4111011");
+  await fallbackGl.selectOption("4111005");
   await page.getByLabel("Globally unique title").fill("Prepared Foods fallback"); await page.getByLabel("Departing unit").selectOption("Dawson"); await page.getByLabel("Receiving unit").selectOption("Nessie");
   await page.getByRole("button", { name: "Save Draft" }).click();
-  expect(writes[0].records[0].items[0].ingredientAllocations).toEqual([expect.objectContaining({ glCode: "4111011", allocationPerPortion: 0.752, isPreparedFoodsFallback: true })]);
+  expect(writes[0].records[0].items[0].ingredientAllocations).toEqual([expect.objectContaining({ glCode: "4111005", allocationPerPortion: 0.752, isPreparedFoodsFallback: true })]);
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "Export S4 Excel" }).click();
   const workbook = XLSX.readFile(await (await downloadPromise).path());
   const rows = XLSX.utils.sheet_to_json(workbook.Sheets.Template, { header: 1 });
-  expect(rows[1]).toEqual(["4111011", "30159", "4111011", "Blistered Green Beans Pr - Prepared Foods fallback", 0.75, ""]);
+  expect(rows[1]).toEqual(["4111005", "30159", "4111005", "Blistered Green Beans Pr - Prepared Foods fallback", 0.75, ""]);
 });
 
 test("Transfer Tool does not use the Prepared Foods fallback during a mapping-service failure", async ({ page }) => {

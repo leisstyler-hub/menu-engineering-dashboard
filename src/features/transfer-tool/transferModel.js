@@ -1,3 +1,5 @@
+import { S4_GL_ACCOUNT_CODES } from "./s4GlAccounts.js";
+
 export const normalizeTransferTitle = (value = "") => String(value)
   .normalize("NFKC")
   .trim()
@@ -32,18 +34,10 @@ export const transferTotal = (items = []) => items.reduce((sum, item) => {
 const rounded = (value) => Number(Number(value).toFixed(4));
 const allocationRounded = (value) => Number(Number(value).toFixed(8));
 const allocationTotal = (allocations = []) => rounded(allocations.reduce((sum, allocation) => sum + Number(allocation?.allocationPerPortion || 0), 0));
-const hasChefResidualAllocation = (item = {}) => Array.isArray(item.ingredientAllocations)
-  && item.ingredientAllocations.some((allocation) => allocation?.isResidualCostBalance && Number(allocation.allocationPerPortion) > 0);
-const hasPreparedFoodsFallback = (item = {}) => Array.isArray(item.ingredientAllocations)
-  && item.ingredientAllocations.some((allocation) => allocation?.isPreparedFoodsFallback && Number(allocation.allocationPerPortion) > 0);
-const hasUncoveredRecipeComponents = (item = {}) => Array.isArray(item.unpricedComponents)
-  && item.unpricedComponents.length > 0
-  && !hasChefResidualAllocation(item)
-  && !hasPreparedFoodsFallback(item);
-
-export function createPreparedFoodsFallback(itemWasteCost, fallbackReason = "Complete ingredient G/L pricing is unavailable.") {
+export function createPreparedFoodsFallback(itemWasteCost, fallbackReason = "Complete ingredient G/L pricing is unavailable.", glCode = PREPARED_FOODS_GL_CODE) {
   const targetCost = Number(itemWasteCost);
   if (!Number.isFinite(targetCost) || !(targetCost > 0)) return null;
+  const approvedGlCode = S4_GL_ACCOUNT_CODES.has(String(glCode)) ? String(glCode) : PREPARED_FOODS_GL_CODE;
   return {
     ingredientMrn: "prepared-foods-fallback",
     ingredientName: "Prepared Foods fallback",
@@ -51,16 +45,17 @@ export function createPreparedFoodsFallback(itemWasteCost, fallbackReason = "Com
     unit: "portion",
     recipeYield: 1,
     unitPrice: targetCost,
-    glCode: PREPARED_FOODS_GL_CODE,
+    glCode: approvedGlCode,
     allocationPerPortion: targetCost,
     isPreparedFoodsFallback: true,
     fallbackReason,
-    priceSourceNote: `Approved fallback: the full authoritative Item + Waste Cost is assigned to ${PREPARED_FOODS_GL_CODE} ${PREPARED_FOODS_GL_LABEL}.`,
+    fallbackDefaultGlCode: PREPARED_FOODS_GL_CODE,
+    priceSourceNote: `Approved fallback: this positive cost defaults to ${PREPARED_FOODS_GL_CODE} ${PREPARED_FOODS_GL_LABEL}${approvedGlCode === PREPARED_FOODS_GL_CODE ? "" : ` and was overridden to ${approvedGlCode}`}.`,
   };
 }
 
-export function applyPreparedFoodsFallback(itemWasteCost, fallbackReason) {
-  const fallback = createPreparedFoodsFallback(itemWasteCost, fallbackReason);
+export function applyPreparedFoodsFallback(itemWasteCost, fallbackReason, glCode = PREPARED_FOODS_GL_CODE) {
+  const fallback = createPreparedFoodsFallback(itemWasteCost, fallbackReason, glCode);
   if (!fallback) return null;
   return {
     ingredientAllocations: [fallback],
@@ -113,8 +108,19 @@ function scaleAllocationsToCost(components, targetCost, sourceTotal) {
   return { components: scaled, allocationScaleFactor, allocationWasScaled: true };
 }
 
-export function balanceIngredientAllocations({ components = [], unpricedComponents = [], itemWasteCost, residualGlCode = "" }) {
-  const pricedComponents = components.filter((component) => Number(component?.allocationPerPortion) > 0);
+export function balanceIngredientAllocations({ components = [], unpricedComponents = [], itemWasteCost, residualGlCode = "", fallbackGlCode = "" }) {
+  const approvedFallbackGl = S4_GL_ACCOUNT_CODES.has(String(fallbackGlCode || residualGlCode)) ? String(fallbackGlCode || residualGlCode) : PREPARED_FOODS_GL_CODE;
+  const pricedComponents = components.filter((component) => Number(component?.allocationPerPortion) > 0).map((component) => {
+    if (S4_GL_ACCOUNT_CODES.has(String(component.glCode || ""))) return component;
+    return {
+      ...component,
+      glCode: approvedFallbackGl,
+      isPreparedFoodsFallback: true,
+      fallbackDefaultGlCode: PREPARED_FOODS_GL_CODE,
+      fallbackReason: "The mapped positive amount did not include an approved S4 G/L.",
+      priceSourceNote: `Approved fallback: this positive amount defaults to ${PREPARED_FOODS_GL_CODE} ${PREPARED_FOODS_GL_LABEL}.`,
+    };
+  });
   const sourceMappedAllocationPerPortion = allocationTotal(pricedComponents);
   const targetCost = Number(itemWasteCost);
   const scaled = scaleAllocationsToCost(pricedComponents, targetCost, sourceMappedAllocationPerPortion);
@@ -126,7 +132,7 @@ export function balanceIngredientAllocations({ components = [], unpricedComponen
   let remainingUnpricedComponents = unpricedComponents;
   let itemCostResidualAttribution = null;
   const soleUnpricedComponent = unpricedComponents.length === 1 ? unpricedComponents[0] : null;
-  if (residualCost > 0 && soleUnpricedComponent?.residualAttributionEligible && /^\d{7}$/.test(String(soleUnpricedComponent.glCode || ""))) {
+  if (residualCost > 0 && soleUnpricedComponent?.residualAttributionEligible && S4_GL_ACCOUNT_CODES.has(String(soleUnpricedComponent.glCode || ""))) {
     const quantityPerPortion = Number(soleUnpricedComponent.quantity) / Number(soleUnpricedComponent.recipeYield);
     itemCostResidualAttribution = {
       ...soleUnpricedComponent,
@@ -138,18 +144,15 @@ export function balanceIngredientAllocations({ components = [], unpricedComponen
     remainingUnpricedComponents = [];
     residualCost = 0;
   }
-  const residualAllocation = residualCost > 0 && residualGlCode ? {
-    ingredientMrn: "chef-reviewed-cost-balance",
-    ingredientName: "Chef-reviewed cost balance",
-    quantity: 1,
-    unit: "portion",
-    recipeYield: 1,
-    unitPrice: residualCost,
-    glCode: residualGlCode,
-    allocationPerPortion: residualCost,
-    isResidualCostBalance: true,
-    priceSourceNote: "Chef-selected G/L allocation for the portion of the current Item + Waste Cost not covered by mapped ingredient prices.",
-  } : null;
+  const residualAllocation = residualCost > 0
+    ? createPreparedFoodsFallback(residualCost, "The positive Item + Waste Cost remainder has no automatic approved G/L.", approvedFallbackGl)
+    : null;
+  if (residualAllocation) {
+    residualAllocation.ingredientMrn = "prepared-foods-residual-fallback";
+    residualAllocation.ingredientName = "Prepared Foods residual fallback";
+    residualAllocation.isResidualCostFallback = true;
+    residualCost = 0;
+  }
   const ingredientAllocations = [
     ...mappedComponents,
     ...(itemCostResidualAttribution ? [itemCostResidualAttribution] : []),
@@ -166,11 +169,10 @@ export function balanceIngredientAllocations({ components = [], unpricedComponen
     allocationWasScaled: scaled.allocationWasScaled,
     pricingComplete: ingredientAllocations.length > 0
       && targetCost > 0
-      && (remainingUnpricedComponents.length === 0 || Boolean(residualAllocation))
-      && (residualCost === 0 || Boolean(residualAllocation))
+      && residualCost === 0
       && Math.abs(allocationPerPortion - targetCost) < 0.0001,
     residualCost,
-    residualGlCode,
+    residualGlCode: "",
     itemCostResidualAttribution: itemCostResidualAttribution?.allocationPerPortion || 0,
     allocationExceedsItemCost: false,
     targetCost: Number.isFinite(targetCost) ? targetCost : null,
@@ -180,8 +182,10 @@ export function balanceIngredientAllocations({ components = [], unpricedComponen
 export function normalizeTransferItemAllocations(item = {}, nextItemWasteCost = item.itemWasteCost) {
   const allocations = Array.isArray(item.ingredientAllocations) ? item.ingredientAllocations : [];
   if (!allocations.length) return { ...item, itemWasteCost: nextItemWasteCost };
-  if (allocations.some((allocation) => allocation?.isPreparedFoodsFallback)) {
-    const fallback = applyPreparedFoodsFallback(nextItemWasteCost, item.fallbackReason || allocations.find((allocation) => allocation?.isPreparedFoodsFallback)?.fallbackReason);
+  const existingFallback = allocations.find((allocation) => allocation?.isPreparedFoodsFallback || allocation?.isResidualCostBalance);
+  const fullItemFallback = allocations.find((allocation) => allocation?.ingredientMrn === "prepared-foods-fallback");
+  if (allocations.length === 1 && fullItemFallback) {
+    const fallback = applyPreparedFoodsFallback(nextItemWasteCost, item.fallbackReason || fullItemFallback.fallbackReason, fullItemFallback.glCode);
     return fallback ? {
       ...item,
       itemWasteCost: nextItemWasteCost,
@@ -207,7 +211,7 @@ export function normalizeTransferItemAllocations(item = {}, nextItemWasteCost = 
     return { ...sourceComponent, residualAttributionEligible: true, allocationPerPortion: null };
   });
   const balanced = balanceIngredientAllocations({
-    components: allocations.filter((allocation) => !allocation.isResidualCostBalance && !allocation.isItemCostResidualAttribution).map((allocation) => {
+    components: allocations.filter((allocation) => !allocation.isResidualCostBalance && !allocation.isResidualCostFallback && !allocation.isItemCostResidualAttribution).map((allocation) => {
       const {
         allocationScaleFactor: _oldFactor,
         isProportionallyAdjusted: _oldFlag,
@@ -221,7 +225,7 @@ export function normalizeTransferItemAllocations(item = {}, nextItemWasteCost = 
     }),
     unpricedComponents: [...(Array.isArray(item.unpricedComponents) ? item.unpricedComponents : []), ...attributedComponents],
     itemWasteCost: nextItemWasteCost,
-    residualGlCode: item.residualGlCode || "",
+    fallbackGlCode: allocations.find((allocation) => allocation?.isResidualCostFallback)?.glCode || existingFallback?.glCode || item.residualGlCode || PREPARED_FOODS_GL_CODE,
   });
   return {
     ...item,
@@ -256,20 +260,11 @@ export function validateS4Transfer(transfer = {}) {
   const allocations = items.flatMap((item) => Array.isArray(item.ingredientAllocations) ? item.ingredientAllocations : []);
   if (allocations.length > S4_MAX_ROWS) errors.items = `S4 exports support up to ${S4_MAX_ROWS} ingredient lines.`;
   if (items.some((item) => !Array.isArray(item.ingredientAllocations) || !item.ingredientAllocations.length)) errors.s4Lines = "Every selected item needs a priced ingredient allocation before it can export.";
-  if (allocations.some((allocation) => !/^\d{7}$/.test(String(allocation.glCode || "")) || !(Number(allocation.allocationPerPortion) > 0))) {
+  if (allocations.some((allocation) => !S4_GL_ACCOUNT_CODES.has(String(allocation.glCode || "")) || !(Number(allocation.allocationPerPortion) > 0))) {
     errors.s4Lines = "Every ingredient allocation needs an approved G/L code and amount greater than zero.";
-  }
-  if (allocations.some((allocation) => allocation?.isPreparedFoodsFallback && String(allocation.glCode || "") !== PREPARED_FOODS_GL_CODE)) {
-    errors.s4Lines = `Prepared Foods fallback allocations must use ${PREPARED_FOODS_GL_CODE}.`;
-  }
-  if (!errors.s4Lines && items.some((item) => item.ingredientAllocations?.some((allocation) => allocation?.isPreparedFoodsFallback) && item.ingredientAllocations.length !== 1)) {
-    errors.s4Lines = "A Prepared Foods fallback must be the item's only G/L allocation.";
   }
   if (items.some((item) => Number(item.residualCost) > 0 && !item.residualGlCode)) {
     errors.s4Lines = "Choose one chef-reviewed G/L code for every remaining Item + Waste Cost before export.";
-  }
-  if (!errors.s4Lines && items.some(hasUncoveredRecipeComponents)) {
-    errors.s4Lines = "Every unresolved recipe component must be covered by a chef-reviewed G/L allocation before export.";
   }
   if (!errors.s4Lines && items.some((item) => Math.abs(allocationTotal(item.ingredientAllocations) - Number(item.itemWasteCost)) >= 0.0001)) {
     errors.s4Lines = "Every ingredient allocation must equal its current Item + Waste Cost before export.";
@@ -293,7 +288,6 @@ export function validateTransfer(draft, transfers = []) {
   if (!completeItems.length) errors.items = "Add at least one menu item.";
   if (completeItems.some((item) => item.itemWasteCost == null || !Number.isFinite(Number(item.itemWasteCost)))) errors.items = "Every selected item needs an Item + Waste Cost before this transfer can be saved.";
   if (completeItems.some((item) => Number(item.residualCost) > 0 && !item.residualGlCode)) errors.items = "Choose one chef-reviewed G/L code for every remaining Item + Waste Cost before saving.";
-  if (!errors.items && completeItems.some(hasUncoveredRecipeComponents)) errors.items = "Every unresolved recipe component must be covered by a chef-reviewed G/L allocation before saving.";
   if (!errors.items && completeItems.some((item) => Math.abs(allocationTotal(item.ingredientAllocations) - Number(item.itemWasteCost)) >= 0.0001)) errors.items = "Every ingredient allocation must equal its current Item + Waste Cost before saving.";
   if (completeItems.some((item) => !Number.isInteger(Number(item.quantity)) || Number(item.quantity) < 1)) {
     errors.items = "Every item count must be a whole number of 1 or more.";
