@@ -240,6 +240,7 @@ export default async function handler(req, res) {
         sheetId,
         sheetName: sheet.name || "",
         columns: (sheet.columns || []).map((column) => column.title),
+        columnDetails: (sheet.columns || []).map(({ id, title, type, systemColumnType }) => ({ id, title, type, systemColumnType })),
         records,
         count: records.length,
         message: `Loaded ${records.length} row${records.length === 1 ? "" : "s"} from Smartsheet.`,
@@ -399,6 +400,7 @@ export default async function handler(req, res) {
         sheetName: sheet.name || "",
         autoCreatedColumns: missingColumns,
         columns: (sheet.columns || []).map((column) => column.title),
+        columnDetails: (sheet.columns || []).map(({ id, title, type, systemColumnType }) => ({ id, title, type, systemColumnType })),
         message: missingColumns.length
           ? `Added ${missingColumns.length} missing Smartsheet column${missingColumns.length === 1 ? "" : "s"}.`
           : "Smartsheet already has the expected columns.",
@@ -423,6 +425,7 @@ export default async function handler(req, res) {
         deletedColumns: cleanup.deletedColumns,
         skippedColumns: cleanup.skippedColumns,
         columns: (sheet.columns || []).map((column) => column.title),
+        columnDetails: (sheet.columns || []).map(({ id, title, type, systemColumnType }) => ({ id, title, type, systemColumnType })),
         message: cleanup.deletedColumns.length
           ? `Deleted ${cleanup.deletedColumns.length} empty Smartsheet column${cleanup.deletedColumns.length === 1 ? "" : "s"}.`
           : "No empty Smartsheet columns were deleted.",
