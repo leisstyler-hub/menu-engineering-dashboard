@@ -271,8 +271,8 @@ export default async function handler(req, res) {
     }
 
     if (useCafeTastingRoutingSheet && req.method === "POST") {
-      const { action, cafe = "", chefContact = [], directorContact = [] } = req.body || {};
-      if (action !== "addRoutingRoute") {
+      const { action, rowId = "", cafe = "", chefContact = [], directorContact = [] } = req.body || {};
+      if (!["addRoutingRoute", "updateRoutingRoute"].includes(action)) {
         return res.status(400).json({ ok: false, message: "Unsupported routing-table action" });
       }
 
@@ -301,29 +301,34 @@ export default async function handler(req, res) {
       }
 
       const cafeColumnId = routingColumns.get("Cafe");
-      const duplicate = (routingSheet.rows || []).some((row) => String(getCellValue(row, cafeColumnId)).trim().toLowerCase() === normalizedCafe.toLowerCase());
+      const duplicate = (routingSheet.rows || []).some((row) => String(row.id) !== String(rowId) && String(getCellValue(row, cafeColumnId)).trim().toLowerCase() === normalizedCafe.toLowerCase());
       if (duplicate) {
         return res.status(409).json({ ok: false, message: `Routing already exists for ${normalizedCafe}` });
       }
 
-      const created = await smartsheetFetch(`/sheets/${sheetId}/rows`, {
-        method: "POST",
-        body: JSON.stringify([{ toBottom: true, cells: [
-          { columnId: cafeColumnId, value: normalizedCafe, strict: false },
-          contactCell(routingColumns.get("Chef Contact"), normalizedChefContacts),
-          contactCell(routingColumns.get("Director Contact"), normalizedDirectorContacts),
-        ] }]),
+      const cells = [
+        { columnId: cafeColumnId, value: normalizedCafe, strict: false },
+        contactCell(routingColumns.get("Chef Contact"), normalizedChefContacts),
+        contactCell(routingColumns.get("Director Contact"), normalizedDirectorContacts),
+      ];
+      const updating = action === "updateRoutingRoute";
+      if (updating && !(routingSheet.rows || []).some((row) => String(row.id) === String(rowId))) {
+        return res.status(404).json({ ok: false, message: "Routing row was not found" });
+      }
+      const saved = await smartsheetFetch(`/sheets/${sheetId}/rows`, {
+        method: updating ? "PUT" : "POST",
+        body: JSON.stringify([updating ? { id: rowId, cells } : { toBottom: true, cells }]),
       });
 
-      return res.status(201).json({
+      return res.status(updating ? 200 : 201).json({
         ok: true,
         action,
         sheetId,
         cafe: normalizedCafe,
         chefContact: normalizedChefContacts,
         directorContact: normalizedDirectorContacts,
-        rowId: created?.result?.[0]?.id || created?.[0]?.id || null,
-        message: `Added routing row for ${normalizedCafe}.`,
+        rowId: saved?.result?.[0]?.id || saved?.[0]?.id || rowId || null,
+        message: `${updating ? "Updated" : "Added"} routing row for ${normalizedCafe}.`,
       });
     }
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Camera, Loader2, Settings2 } from "lucide-react";
+import { ArrowLeft, Camera, Loader2, Plus, Settings2, X } from "lucide-react";
 import { getRecipeLibraryPhoto } from "../../data/recipeLibraryAssets.js";
 import { normalizeRecipeLibraryItem } from "../recipe-database/recipeLibraryModel.js";
 
@@ -11,12 +11,61 @@ const FIVE_OPTION_FIELDS = ["3. Temperature", "3. Doneness", "3. Seasoning", "3.
 const ALIGNED_OPTION_FIELDS = ["4. Cooking Method", "4. Ingredients", "4. Correct Sides", "4. Substitutions"];
 const RATING_FIELDS = [...TWO_OPTION_FIELDS, ...PORTION_OPTION_FIELDS, ...FIVE_OPTION_FIELDS, ...ALIGNED_OPTION_FIELDS];
 
-const NOTE_FIELDS = [
-  { key: "1. Plating Notes", label: "Plating Notes" },
-  { key: "2. Portion Notes", label: "Portion Notes" },
-  { key: "3. Taste Notes", label: "Taste Notes" },
-  { key: "4. Recipe Notes", label: "Recipe Notes" },
+// Mirrors the section names already used in the "Reporting Automation to Chef/Director"
+// email template, so the form reads the same way the resulting email does.
+const RATING_SECTIONS = [
+  { number: 1, title: "Visual Presentation", fields: TWO_OPTION_FIELDS, noteKey: "1. Plating Notes", noteLabel: "Plating Notes", badge: "bg-sky-100 text-sky-700", border: "border-sky-200" },
+  { number: 2, title: "Portion Accuracy", fields: PORTION_OPTION_FIELDS, noteKey: "2. Portion Notes", noteLabel: "Portion Notes", badge: "bg-amber-100 text-amber-700", border: "border-amber-200" },
+  { number: 3, title: "Taste & Seasoning", fields: FIVE_OPTION_FIELDS, noteKey: "3. Taste Notes", noteLabel: "Taste Notes", badge: "bg-rose-100 text-rose-700", border: "border-rose-200" },
+  { number: 4, title: "Menu Alignment", fields: ALIGNED_OPTION_FIELDS, noteKey: "4. Recipe Notes", noteLabel: "Recipe Notes", badge: "bg-violet-100 text-violet-700", border: "border-violet-200" },
 ];
+
+const NOTE_FIELDS = RATING_SECTIONS.map((section) => ({ key: section.noteKey, label: section.noteLabel }));
+
+// Best-guess keyword -> Station Name mapping from the menu name. Menu Library menu names
+// are cafe-specific rotation names (e.g. "AMZ: Andes"), not the fixed Station Name list, so
+// this is a heuristic starting point -- Station stays visible and editable so it can be
+// corrected when the guess misses.
+const STATION_KEYWORDS = [
+  ["breakfast", "Breakfast"],
+  ["fish", "Fish Market"],
+  ["salt & char", "Salt & Char"],
+  ["salt and char", "Salt & Char"],
+  ["street eats", "Street Eats"],
+  ["taco", "Taco Total"],
+  ["yakisoba", "WOK"],
+  ["teriyaki", "WOK"],
+  ["wok", "WOK"],
+  ["pizza", "Pizza"],
+  ["flatbread", "Pizza"],
+  ["pho", "Noodles"],
+  ["chiang mai", "Noodles"],
+  ["noodle", "Noodles"],
+  ["greens & grains", "Salad"],
+  ["greens and grains", "Salad"],
+  ["global grains", "Salad"],
+  ["salad", "Salad"],
+  ["sandwich", "Deli"],
+  ["paninoteca", "Deli"],
+  ["carvery", "Grill"],
+  ["bbq", "Grill"],
+  ["grill", "Grill"],
+  ["bibimbowl", "Glo-Bowl"],
+  ["bowl inc", "Glo-Bowl"],
+  ["q bowl", "Glo-Bowl"],
+  ["poke", "Glo-Bowl"],
+  ["market window", "Market Window"],
+  ["smoothie", "Market Window"],
+  ["roti", "Roti"],
+];
+
+function guessStationFromMenu(menu, stationOptions) {
+  if (!menu) return "";
+  const normalized = menu.toLowerCase();
+  const match = STATION_KEYWORDS.find(([keyword]) => normalized.includes(keyword));
+  const guess = match ? match[1] : "Global";
+  return stationOptions.length && !stationOptions.includes(guess) ? "" : guess;
+}
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
@@ -81,7 +130,8 @@ export default function CafeTastingForm({ onBackToPlatform }) {
   const [date, setDate] = useState(todayIso());
   const [cafeName, setCafeName] = useState("");
   const [stationName, setStationName] = useState("");
-  const [taster, setTaster] = useState("");
+  const [stationTouched, setStationTouched] = useState(false);
+  const [tasters, setTasters] = useState([]);
   const [dishName, setDishName] = useState("");
   const [dishNameTouched, setDishNameTouched] = useState(false);
   const [actualPortion, setActualPortion] = useState("");
@@ -182,6 +232,12 @@ export default function CafeTastingForm({ onBackToPlatform }) {
     if (!dishNameTouched) setDishName(autoDishName);
   }, [autoDishName, dishNameTouched]);
 
+  const autoStation = useMemo(() => guessStationFromMenu(selectedMenu, stationOptions), [selectedMenu, stationOptions]);
+
+  useEffect(() => {
+    if (!stationTouched) setStationName(autoStation);
+  }, [autoStation, stationTouched]);
+
   function updateSlot(index, itemKey) {
     const row = menuItems.find((candidate) => String(candidate.item_key ?? candidate.id) === itemKey) || null;
     setSlots((current) => current.map((slot, slotIndex) => (slotIndex === index ? { itemKey, raw: row } : slot)));
@@ -200,6 +256,8 @@ export default function CafeTastingForm({ onBackToPlatform }) {
   function resetForNextDish() {
     setSlots(emptySlots());
     setSelectedMenu("");
+    setStationName("");
+    setStationTouched(false);
     setMenuItems([]);
     setDishName("");
     setDishNameTouched(false);
@@ -217,8 +275,8 @@ export default function CafeTastingForm({ onBackToPlatform }) {
     setSubmitError("");
     setSubmitSuccess(null);
 
-    if (!cafeName.trim() || !stationName || !dishName.trim() || !taster) {
-      setSubmitError("Cafe, Station, Dish, and Taster are required.");
+    if (!cafeName.trim() || !stationName || !dishName.trim() || !tasters.length) {
+      setSubmitError("Cafe, Station, Dish, and at least one Taster are required.");
       return;
     }
 
@@ -227,7 +285,7 @@ export default function CafeTastingForm({ onBackToPlatform }) {
       "Cafe Name": cafeName.trim(),
       "Station Name": stationName,
       "Dish Name": dishName.trim(),
-      Taster: taster,
+      Taster: tasters,
       ...ratings,
       ...notes,
       "5. Strengths": strengths,
@@ -277,20 +335,20 @@ export default function CafeTastingForm({ onBackToPlatform }) {
           </button>
           <button
             type="button"
-            onClick={() => setShowRouting((current) => !current)}
+            onClick={() => setShowRouting(true)}
             className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50"
           >
-            <Settings2 size={16} /> {showRouting ? "Hide Routing" : "Manage Routing"}
+            <Settings2 size={16} /> Manage Routing
           </button>
         </div>
 
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
           <p className="text-xs font-black uppercase tracking-[0.14em] text-[#b99b55]">Programming &amp; Auditing</p>
           <h1 className="mt-1 text-2xl font-black text-slate-950">Cafe Tasting Form</h1>
-          <p className="mt-1 text-sm font-medium text-slate-500">Build the plate, weigh it, and submit straight to the Cafe Tasting Submission Worksheet.</p>
+          <p className="mt-1 text-sm font-medium text-slate-500">Taste the plate, capture clear feedback, and submit it straight to the Cafe Tasting Submission Worksheet.</p>
         </div>
 
-        {showRouting ? <RoutingManager onRoutesChanged={setRoutes} /> : null}
+        {showRouting ? <RoutingManager onRoutesChanged={setRoutes} onClose={() => setShowRouting(false)} /> : null}
 
         {schemaError ? (
           <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-700">{schemaError}</div>
@@ -334,26 +392,27 @@ export default function CafeTastingForm({ onBackToPlatform }) {
                 ) : null}
               </Field>
               <Field label="Station Name">
-                <select value={stationName} onChange={(event) => setStationName(event.target.value)} className={inputClass} required>
+                <select value={stationName} onChange={(event) => { setStationTouched(true); setStationName(event.target.value); }} className={inputClass} required>
                   <option value="">Select a station</option>
                   {stationOptions.map((option) => <option key={option} value={option}>{option}</option>)}
                 </select>
               </Field>
-              <Field label="Taster">
-                <select value={taster} onChange={(event) => setTaster(event.target.value)} className={inputClass} required>
-                  <option value="">Select a taster</option>
-                  {tasterOptions.map((option) => (
-                    <option key={option.email} value={option.email}>{option.name || option.email}</option>
-                  ))}
-                </select>
-              </Field>
+              <div className="sm:col-span-2">
+                <span className="text-sm font-bold text-slate-700">Tasters</span>
+                <div className="mt-1 grid grid-cols-1 gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-2">
+                  {tasterOptions.map((option) => {
+                    const checked = tasters.includes(option.email);
+                    return <label key={option.email} className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2 text-sm font-semibold ${checked ? "border-emerald-300 bg-emerald-50 text-emerald-900" : "border-slate-200 bg-white text-slate-700"}`}><input type="checkbox" checked={checked} onChange={() => setTasters((current) => checked ? current.filter((email) => email !== option.email) : [...current, option.email])} className="h-4 w-4 accent-emerald-600" />{option.name || option.email}</label>;
+                  })}
+                </div>
+              </div>
             </div>
           </section>
 
           <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-black text-slate-950">Build the Plate</h2>
+            <h2 className="text-lg font-black text-slate-950">What are you Tasting?</h2>
             <Field label="Menu">
-              <select value={selectedMenu} onChange={(event) => { setSelectedMenu(event.target.value); setSlots(emptySlots()); }} className={inputClass}>
+              <select value={selectedMenu} onChange={(event) => { setSelectedMenu(event.target.value); setStationTouched(false); setSlots(emptySlots()); }} className={inputClass}>
                 <option value="">Select a menu</option>
                 {menus.map((menu) => <option key={menu} value={menu}>{menu}</option>)}
               </select>
@@ -430,29 +489,26 @@ export default function CafeTastingForm({ onBackToPlatform }) {
             </div>
           </section>
 
-          <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-black text-slate-950">Presentation &amp; Ratings</h2>
-            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {RATING_FIELDS.map((field) => (
-                <RatingSelect key={field} field={field} value={ratings[field]} options={ratingOptionsFor(field, optionsFor)} onChange={(value) => setRatings((current) => ({ ...current, [field]: value }))} />
-              ))}
-            </div>
-            <div className="mt-3 grid grid-cols-1 gap-3">
-              {NOTE_FIELDS.map(({ key, label }) => (
-                <Field key={key} label={label}>
-                  <textarea value={notes[key]} onChange={(event) => setNotes((current) => ({ ...current, [key]: event.target.value }))} className={`${inputClass} min-h-[70px]`} />
-                </Field>
-              ))}
-            </div>
-          </section>
+          {RATING_SECTIONS.map((section) => (
+            <section key={section.number} className={`rounded-3xl border bg-white p-5 shadow-sm ${section.border}`}>
+              <div className="flex items-center gap-3">
+                <span className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-black ${section.badge}`}>{section.number}</span>
+                <h2 className="text-lg font-black text-slate-950">{section.title}</h2>
+              </div>
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {section.fields.map((field) => <RatingSelect key={field} field={field} value={ratings[field]} options={ratingOptionsFor(field, optionsFor)} onChange={(value) => setRatings((current) => ({ ...current, [field]: value }))} />)}
+              </div>
+              <div className="mt-4 border-t border-slate-100 pt-4"><Field label={section.noteLabel}><textarea value={notes[section.noteKey]} onChange={(event) => setNotes((current) => ({ ...current, [section.noteKey]: event.target.value }))} className={`${inputClass} min-h-[84px]`} /></Field></div>
+            </section>
+          ))}
 
           <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-lg font-black text-slate-950">Summary &amp; Photo</h2>
             <div className="mt-3 grid grid-cols-1 gap-3">
-              <Field label="Strengths">
+              <Field label="What's Working:">
                 <textarea value={strengths} onChange={(event) => setStrengths(event.target.value)} className={`${inputClass} min-h-[70px]`} />
               </Field>
-              <Field label="Opportunities">
+              <Field label="What can be improved:">
                 <textarea value={opportunities} onChange={(event) => setOpportunities(event.target.value)} className={`${inputClass} min-h-[70px]`} />
               </Field>
               <Field label="Photo (optional, 1 max)">
@@ -512,7 +568,11 @@ function Field({ label, children }) {
 
 const inputClass = "rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-900 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100";
 
-function RoutingManager({ onRoutesChanged }) {
+function splitEmails(value) {
+  return String(value || "").split(/[;,]/).map((email) => email.trim()).filter(Boolean);
+}
+
+function RoutingManager({ onRoutesChanged, onClose }) {
   const [routes, setRoutes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -522,6 +582,7 @@ function RoutingManager({ onRoutesChanged }) {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [saveSuccess, setSaveSuccess] = useState("");
+  const [drafts, setDrafts] = useState({});
 
   function loadRoutes() {
     setLoading(true);
@@ -529,6 +590,7 @@ function RoutingManager({ onRoutesChanged }) {
       .then((payload) => {
         const records = payload.records || [];
         setRoutes(records);
+        setDrafts(Object.fromEntries(records.map((route) => [route.__smartsheetRowId, { cafe: route.Cafe || "", chefContact: splitEmails(route["Chef Contact"]).join(", "), directorContact: splitEmails(route["Director Contact"]).join(", ") }])));
         onRoutesChanged?.(records);
       })
       .catch((error) => setLoadError(error.message))
@@ -573,10 +635,26 @@ function RoutingManager({ onRoutesChanged }) {
     setList(list.map((entry, entryIndex) => (entryIndex === index ? value : entry)));
   }
 
+  async function saveRoute(rowId) {
+    const draft = drafts[rowId];
+    setSaveError("");
+    setSaveSuccess("");
+    setSaving(true);
+    try {
+      await fetchJson("/api/smartsheet/records?dataset=cafe-tasting-routing", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "updateRoutingRoute", rowId, cafe: draft.cafe, chefContact: splitEmails(draft.chefContact), directorContact: splitEmails(draft.directorContact) }) });
+      setSaveSuccess(`Saved routing for ${draft.cafe}.`);
+      loadRoutes();
+    } catch (error) {
+      setSaveError(error.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-lg font-black text-slate-950">Routing Table</h2>
-      <p className="mt-1 text-sm font-medium text-slate-500">Controls who gets the Chef/Director email alert for each cafe.</p>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/50 p-0 backdrop-blur-sm sm:items-center sm:p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+      <section role="dialog" aria-modal="true" aria-labelledby="routing-title" className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-t-3xl border border-slate-200 bg-white p-5 shadow-2xl sm:rounded-3xl sm:p-6">
+        <div className="flex items-start justify-between gap-4"><div><h2 id="routing-title" className="text-lg font-black text-slate-950">Routing Table</h2><p className="mt-1 text-sm font-medium text-slate-500">Controls who gets the Chef/Director email alert for each cafe.</p></div><button type="button" onClick={onClose} aria-label="Close routing table" className="rounded-full border border-slate-200 p-2 text-slate-500 hover:bg-slate-100"><X size={18} /></button></div>
 
       {saveError ? <div className="mt-3 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700">{saveError}</div> : null}
       {saveSuccess ? <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-700">{saveSuccess}</div> : null}
@@ -603,15 +681,18 @@ function RoutingManager({ onRoutesChanged }) {
         {!loading && !loadError ? (
           <ul className="flex flex-col gap-2">
             {routes.map((route) => (
-              <li key={route.__smartsheetRowId} className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-sm">
-                <span className="font-bold text-slate-800">{route.Cafe}</span>
-                <span className="text-slate-500"> — Chef: {route["Chef Contact"] || "none"} · Director: {route["Director Contact"] || "none"}</span>
+              <li key={route.__smartsheetRowId} className="grid grid-cols-1 gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-[1fr_1.3fr_1.3fr_auto] sm:items-end">
+                <Field label="Cafe"><input className={inputClass} value={drafts[route.__smartsheetRowId]?.cafe || ""} onChange={(event) => setDrafts((current) => ({ ...current, [route.__smartsheetRowId]: { ...current[route.__smartsheetRowId], cafe: event.target.value } }))} /></Field>
+                <Field label="Chef email(s)"><input className={inputClass} value={drafts[route.__smartsheetRowId]?.chefContact || ""} onChange={(event) => setDrafts((current) => ({ ...current, [route.__smartsheetRowId]: { ...current[route.__smartsheetRowId], chefContact: event.target.value } }))} placeholder="Separate with commas" /></Field>
+                <Field label="Director email(s)"><input className={inputClass} value={drafts[route.__smartsheetRowId]?.directorContact || ""} onChange={(event) => setDrafts((current) => ({ ...current, [route.__smartsheetRowId]: { ...current[route.__smartsheetRowId], directorContact: event.target.value } }))} placeholder="Separate with commas" /></Field>
+                <button type="button" disabled={saving} onClick={() => saveRoute(route.__smartsheetRowId)} className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-black text-white hover:bg-emerald-700 disabled:opacity-60">Save</button>
               </li>
             ))}
           </ul>
         ) : null}
       </div>
-    </section>
+      </section>
+    </div>
   );
 }
 
@@ -634,7 +715,7 @@ function EmailListField({ label, emails, setEmails, updateEmailList }) {
         onClick={() => setEmails([...emails, ""])}
         className="w-fit text-xs font-black uppercase tracking-wide text-emerald-700 hover:text-emerald-800"
       >
-        + Add another email
+        <Plus size={14} className="inline" /> Add another email
       </button>
     </div>
   );

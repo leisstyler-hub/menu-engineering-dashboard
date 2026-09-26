@@ -28,6 +28,18 @@ try{
  assert.deepEqual(payload2[0].cells[1].objectValue,{objectType:"MULTI_CONTACT_LIST",values:[{objectType:"CONTACT",email:"a@compass-usa.com"},{objectType:"CONTACT",email:"b@compass-usa.com"}]});
  assert.deepEqual(payload2[0].cells[2].objectValue,{objectType:"CONTACT",email:"c@compass-usa.com"});
 
+ globalThis.fetch=async(url,options={})=>{
+  requests.push({url:String(url),options});
+  if(options.method==="PUT") return new Response(JSON.stringify({result:[{id:77}]}),{status:200});
+  return new Response(JSON.stringify({name:"Routing Table",columns:[{id:1,title:"Cafe"},{id:2,title:"Chef Contact"},{id:3,title:"Director Contact"}],rows:[{id:77,cells:[{columnId:1,value:"existing cafe"}]}]}),{status:200});
+ };
+ const updateRes=response();
+ await handler({method:"POST",query:{dataset:"cafe-tasting-routing"},body:{action:"updateRoutingRoute",rowId:77,cafe:"existing cafe",chefContact:["newchef@compass-usa.com"],directorContact:["director@compass-usa.com"]}},updateRes);
+ assert.equal(updateRes.statusCode,200);
+ const updateRequest=requests.at(-1);
+ assert.equal(updateRequest.options.method,"PUT");
+ assert.deepEqual(JSON.parse(updateRequest.options.body),[{id:77,cells:[{columnId:1,value:"existing cafe",strict:false},{columnId:2,objectValue:{objectType:"CONTACT",email:"newchef@compass-usa.com"}},{columnId:3,objectValue:{objectType:"CONTACT",email:"director@compass-usa.com"}}]}]);
+
  const res3=response();
  await handler({method:"POST",query:{dataset:"cafe-tasting-routing"},body:{action:"addRoutingRoute",cafe:"bad cafe",chefContact:["not-an-email"],directorContact:[]}},res3);
  assert.equal(res3.statusCode,400);
