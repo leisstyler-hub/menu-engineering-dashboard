@@ -237,7 +237,7 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === "GET" && useCafeTastingSheet && String(req.query?.diagnostic || "") === "workflows") {
-      const workflows = await smartsheetFetch(`/sheets/${sheetId}/workflows`);
+      const workflows = await smartsheetFetch(`/sheets/${sheetId}/automationrules`);
       return res.status(200).json({ ok: true, sheetId, workflows: workflows.data || workflows });
     }
 
