@@ -19,7 +19,20 @@ try{
  assert.equal(requests.length,2);
  assert.equal(requests[1].url,"https://api.smartsheet.com/2.0/sheets/routing-sheet/rows");
  const payload=JSON.parse(requests[1].options.body);
- assert.deepEqual(payload,[{toBottom:true,cells:[{columnId:1,value:"test cafe",strict:false},{columnId:2,value:"tyler.leiss@compass-usa.com",strict:false},{columnId:3,value:"",strict:false}]}]);
+ assert.deepEqual(payload,[{toBottom:true,cells:[{columnId:1,value:"test cafe",strict:false},{columnId:2,objectValue:{objectType:"CONTACT",email:"tyler.leiss@compass-usa.com"}},{columnId:3,value:"",strict:false}]}]);
+
+ const res2=response();
+ await handler({method:"POST",query:{dataset:"cafe-tasting-routing"},body:{action:"addRoutingRoute",cafe:"multi cafe",chefContact:["a@compass-usa.com","b@compass-usa.com"],directorContact:["c@compass-usa.com"]}},res2);
+ assert.equal(res2.statusCode,201);
+ const payload2=JSON.parse(requests[3].options.body);
+ assert.deepEqual(payload2[0].cells[1].objectValue,{objectType:"MULTI_CONTACT_LIST",values:[{objectType:"CONTACT",email:"a@compass-usa.com"},{objectType:"CONTACT",email:"b@compass-usa.com"}]});
+ assert.deepEqual(payload2[0].cells[2].objectValue,{objectType:"CONTACT",email:"c@compass-usa.com"});
+
+ const res3=response();
+ await handler({method:"POST",query:{dataset:"cafe-tasting-routing"},body:{action:"addRoutingRoute",cafe:"bad cafe",chefContact:["not-an-email"],directorContact:[]}},res3);
+ assert.equal(res3.statusCode,400);
+ assert.deepEqual(res3.body.invalidEmails,["not-an-email"]);
+
  console.log("Cafe Tasting routing-table write verification passed.");
 }finally{
  globalThis.fetch=originalFetch;

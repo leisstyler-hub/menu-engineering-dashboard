@@ -57,22 +57,25 @@ function columnMapByTitle(sheet) {
   return map;
 }
 
+function contactsObjectValue(value) {
+  const contacts = (Array.isArray(value) ? value : [value])
+    .map((entry) => String(entry ?? "").trim())
+    .filter(Boolean)
+    .map((email) => ({ objectType: "CONTACT", email }));
+  if (!contacts.length) return null;
+  return contacts.length > 1
+    ? { objectType: "MULTI_CONTACT_LIST", values: contacts }
+    : contacts[0];
+}
+
+function contactCell(columnId, value) {
+  const objectValue = contactsObjectValue(value);
+  return objectValue ? { columnId, objectValue } : { columnId, value: "", strict: false };
+}
+
 function tastingCell(column, value) {
   if (Array.isArray(column.contactOptions)) {
-    const isMulti = column.type === "MULTI_CONTACT_LIST";
-    const contacts = (Array.isArray(value) ? value : [value])
-      .map((entry) => String(entry ?? "").trim())
-      .filter(Boolean)
-      .map((email) => ({ objectType: "CONTACT", email }));
-    if (!contacts.length) {
-      return { columnId: column.id, value: "", strict: false };
-    }
-    return {
-      columnId: column.id,
-      objectValue: isMulti
-        ? { objectType: "MULTI_CONTACT_LIST", values: contacts }
-        : contacts[0],
-    };
+    return contactCell(column.id, value);
   }
 
   if (column.type === "MULTI_PICKLIST" || (column.type === "PICKLIST" && column.version === 2)) {
@@ -268,23 +271,25 @@ export default async function handler(req, res) {
     }
 
     if (useCafeTastingRoutingSheet && req.method === "POST") {
-      const { action, cafe = "", chefContact = "", directorContact = "" } = req.body || {};
+      const { action, cafe = "", chefContact = [], directorContact = [] } = req.body || {};
       if (action !== "addRoutingRoute") {
         return res.status(400).json({ ok: false, message: "Unsupported routing-table action" });
       }
 
       const normalizedCafe = String(cafe).trim();
-      const normalizedChefContact = String(chefContact).trim();
-      const normalizedDirectorContact = String(directorContact).trim();
+      const normalizedChefContacts = (Array.isArray(chefContact) ? chefContact : [chefContact]).map((entry) => String(entry ?? "").trim()).filter(Boolean);
+      const normalizedDirectorContacts = (Array.isArray(directorContact) ? directorContact : [directorContact]).map((entry) => String(entry ?? "").trim()).filter(Boolean);
       const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!normalizedCafe) {
         return res.status(400).json({ ok: false, message: "Cafe is required" });
       }
-      if (normalizedChefContact && !emailPattern.test(normalizedChefContact)) {
-        return res.status(400).json({ ok: false, message: "Chef Contact must be a valid email address" });
+      const invalidChefContacts = normalizedChefContacts.filter((email) => !emailPattern.test(email));
+      if (invalidChefContacts.length) {
+        return res.status(400).json({ ok: false, message: "Chef Contact must be a valid email address", invalidEmails: invalidChefContacts });
       }
-      if (normalizedDirectorContact && !emailPattern.test(normalizedDirectorContact)) {
-        return res.status(400).json({ ok: false, message: "Director Contact must be a valid email address" });
+      const invalidDirectorContacts = normalizedDirectorContacts.filter((email) => !emailPattern.test(email));
+      if (invalidDirectorContacts.length) {
+        return res.status(400).json({ ok: false, message: "Director Contact must be a valid email address", invalidEmails: invalidDirectorContacts });
       }
 
       const routingSheet = await smartsheetFetch(`/sheets/${sheetId}`);
@@ -305,8 +310,8 @@ export default async function handler(req, res) {
         method: "POST",
         body: JSON.stringify([{ toBottom: true, cells: [
           { columnId: cafeColumnId, value: normalizedCafe, strict: false },
-          { columnId: routingColumns.get("Chef Contact"), value: normalizedChefContact, strict: false },
-          { columnId: routingColumns.get("Director Contact"), value: normalizedDirectorContact, strict: false },
+          contactCell(routingColumns.get("Chef Contact"), normalizedChefContacts),
+          contactCell(routingColumns.get("Director Contact"), normalizedDirectorContacts),
         ] }]),
       });
 
@@ -315,8 +320,8 @@ export default async function handler(req, res) {
         action,
         sheetId,
         cafe: normalizedCafe,
-        chefContact: normalizedChefContact,
-        directorContact: normalizedDirectorContact,
+        chefContact: normalizedChefContacts,
+        directorContact: normalizedDirectorContacts,
         rowId: created?.result?.[0]?.id || created?.[0]?.id || null,
         message: `Added routing row for ${normalizedCafe}.`,
       });
@@ -405,6 +410,29 @@ export default async function handler(req, res) {
 
       const cells = Object.entries(normalizedRecord).map(([columnName, value]) =>
         tastingCell(tastingColumnDefinitions.get(columnName), value));
+
+      const routingSheetId = process.env.SMARTSHEET_CAFE_TASTING_ROUTING_SHEET_ID;
+      const chefContactColumn = tastingColumnDefinitions.get("Chef Contact");
+      const directorContactColumn = tastingColumnDefinitions.get("Director Contact");
+      if (routingSheetId && (chefContactColumn || directorContactColumn)) {
+        const routingSheet = await smartsheetFetch(`/sheets/${routingSheetId}?include=objectValue`);
+        const routingColumns = columnMapByTitle(routingSheet);
+        const routingCafeColumnId = routingColumns.get("Cafe");
+        const routingRow = routingCafeColumnId && (routingSheet.rows || []).find((row) =>
+          String(getCellValue(row, routingCafeColumnId)).trim().toLowerCase() === String(normalizedRecord["Cafe Name"]).trim().toLowerCase());
+        if (routingRow) {
+          const routingCell = (title) => (routingRow.cells || []).find((cell) => String(cell.columnId) === String(routingColumns.get(title)));
+          const routingChefCell = routingCell("Chef Contact");
+          const routingDirectorCell = routingCell("Director Contact");
+          if (chefContactColumn && routingChefCell?.objectValue) {
+            cells.push({ columnId: chefContactColumn.id, objectValue: routingChefCell.objectValue });
+          }
+          if (directorContactColumn && routingDirectorCell?.objectValue) {
+            cells.push({ columnId: directorContactColumn.id, objectValue: routingDirectorCell.objectValue });
+          }
+        }
+      }
+
       const created = await smartsheetFetch(`/sheets/${sheetId}/rows`, {
         method: "POST",
         body: JSON.stringify([{ toBottom: true, cells }]),
