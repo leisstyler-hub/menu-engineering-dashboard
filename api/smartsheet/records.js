@@ -57,6 +57,28 @@ function columnMapByTitle(sheet) {
   return map;
 }
 
+function tastingCell(column, value) {
+  if (column.type === "MULTI_PICKLIST") {
+    const values = Array.isArray(value) ? value : [value];
+    return {
+      columnId: column.id,
+      objectValue: { objectType: "MULTI_PICKLIST", values: values.filter((entry) => String(entry ?? "").trim()) },
+    };
+  }
+
+  if (column.type === "MULTI_CONTACT_LIST") {
+    const values = (Array.isArray(value) ? value : [value])
+      .map((entry) => String(entry ?? "").trim())
+      .filter(Boolean)
+      .map((email) => ({ objectType: "CONTACT", email }));
+    return {
+      columnId: column.id,
+      objectValue: { objectType: "MULTI_CONTACT_LIST", values },
+    };
+  }
+
+  return { columnId: column.id, value: value ?? "", strict: false };
+}
 function getCellValue(row, columnId) {
   const cell = (row.cells || []).find((entry) => String(entry.columnId) === String(columnId));
   return cell?.displayValue ?? cell?.value ?? "";
@@ -304,6 +326,7 @@ export default async function handler(req, res) {
 
       const tastingSheet = await smartsheetFetch(`/sheets/${sheetId}`);
       const tastingColumns = columnMapByTitle(tastingSheet);
+      const tastingColumnDefinitions = new Map((tastingSheet.columns || []).map((column) => [column.title, column]));
       const missingColumns = Object.keys(normalizedRecord).filter((columnName) => !tastingColumns.has(columnName));
       if (missingColumns.length) {
         return res.status(400).json({ ok: false, message: "Cafe Tasting sheet is missing submitted columns", missingColumns });
@@ -318,11 +341,8 @@ export default async function handler(req, res) {
         return res.status(409).json({ ok: false, message: "This Cafe Tasting test submission already exists" });
       }
 
-      const cells = Object.entries(normalizedRecord).map(([columnName, value]) => ({
-        columnId: tastingColumns.get(columnName),
-        value: value ?? "",
-        strict: false,
-      }));
+      const cells = Object.entries(normalizedRecord).map(([columnName, value]) =>
+        tastingCell(tastingColumnDefinitions.get(columnName), value));
       const created = await smartsheetFetch(`/sheets/${sheetId}/rows`, {
         method: "POST",
         body: JSON.stringify([{ toBottom: true, cells }]),
