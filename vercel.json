@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    { "path": "/api/cafe-tasting/email-ready-queue", "schedule": "0 20 * * 1-5" },
+    { "path": "/api/cafe-tasting/email-ready-queue", "schedule": "0 21 * * 1-5" },
+    { "path": "/api/cafe-tasting/email-ready-queue", "schedule": "0 0 * * 2-6" },
+    { "path": "/api/cafe-tasting/email-ready-queue", "schedule": "0 1 * * 2-6" }
+  ]
+}
