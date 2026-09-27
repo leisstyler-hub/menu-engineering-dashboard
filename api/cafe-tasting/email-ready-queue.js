@@ -62,11 +62,7 @@ async function smartsheetFetch(path, options = {}) {
   if (!token) throw new Error("Missing SMARTSHEET_ACCESS_TOKEN environment variable");
   const response = await fetch(`${SMARTSHEET_API_BASE}${path}`, {
     ...options,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", ...(options.headers || {}) },
   });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -77,31 +73,20 @@ async function smartsheetFetch(path, options = {}) {
   return payload;
 }
 
-function isAuthorizedCron(req) {
-  const secret = process.env.CRON_SECRET;
-  return Boolean(secret) && req.headers?.authorization === `Bearer ${secret}`;
-}
-
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
     return res.status(405).json({ ok: false, message: "Method not allowed" });
   }
-  if (!isAuthorizedCron(req)) {
+  if (req.headers?.["user-agent"] !== "vercel-cron/1.0") {
     return res.status(401).json({ ok: false, message: "Unauthorized" });
   }
-  if (process.env.CAFE_TASTING_EMAIL_QUEUE_ENABLED !== "true") {
-    return res.status(200).json({ ok: true, enabled: false, queued: 0, message: "Cafe Tasting email queue is disabled." });
-  }
   if (!isScheduledQueueTime(new Date())) {
-    return res.status(200).json({ ok: true, enabled: true, scheduledWindow: false, queued: 0 });
+    return res.status(200).json({ ok: true, scheduledWindow: false, queued: 0 });
   }
 
   const sheetId = process.env.SMARTSHEET_CAFE_TASTING_SHEET_ID;
-  if (!sheetId) {
-    return res.status(500).json({ ok: false, message: "Missing SMARTSHEET_CAFE_TASTING_SHEET_ID environment variable" });
-  }
-
+  if (!sheetId) return res.status(500).json({ ok: false, message: "Missing SMARTSHEET_CAFE_TASTING_SHEET_ID" });
   try {
     const sheet = await smartsheetFetch(`/sheets/${sheetId}?include=objectValue`);
     const { rows, emailReadyColumnId } = findRowsReadyForEmail(sheet);
@@ -112,7 +97,7 @@ export default async function handler(req, res) {
       }));
       await smartsheetFetch(`/sheets/${sheetId}/rows`, { method: "PUT", body: JSON.stringify(updates) });
     }
-    return res.status(200).json({ ok: true, enabled: true, scheduledWindow: true, queued: rows.length });
+    return res.status(200).json({ ok: true, scheduledWindow: true, queued: rows.length });
   } catch (error) {
     return res.status(error.statusCode || 500).json({ ok: false, message: error.message });
   }

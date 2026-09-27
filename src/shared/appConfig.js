@@ -1,1 +1,1 @@
-export const APP_VERSION_STAMP = "2026.09.26.004-transfer-gl-defaults";
+export const APP_VERSION_STAMP = "2026.09.27.001-cafe-tasting-scheduled-email";

@@ -464,7 +464,6 @@ export default async function handler(req, res) {
       const rawDirectorContactColumn = tastingColumnDefinitions.get("Director Contact");
       const chefContactColumn = rawChefContactColumn && !rawChefContactColumn.formula ? rawChefContactColumn : null;
       const directorContactColumn = rawDirectorContactColumn && !rawDirectorContactColumn.formula ? rawDirectorContactColumn : null;
-      const requiresDirectNotification = Boolean(rawChefContactColumn?.formula || rawDirectorContactColumn?.formula);
       let notificationRecipients = [];
 
       if (routingSheetId) {
@@ -495,47 +494,6 @@ export default async function handler(req, res) {
         body: JSON.stringify([{ toBottom: true, cells }]),
       });
       const rowId = created?.result?.[0]?.id || created?.[0]?.id || null;
-      let notificationSent = null;
-      let notificationError = "";
-
-      if (requiresDirectNotification && rowId && notificationRecipients.length) {
-        const notificationColumnTitles = [
-          "Date", "Cafe Name", "Station Name", "Dish Name", "Taster",
-          "5. Strengths", "5. Opportunities",
-          "1. Plate Appeal", "1. Plate Arrangement", "1. Plate Edges", "1. Garnish", "1. Plating Notes",
-          "2.Target_Portion_Display", "2.Actual_Portion_Display", "2.Variance_Display",
-          "2. Protein Portion", "2. Side 1 Portion", "2. Side 2 Portion", "2. Sauce Portion", "2. Portion Notes",
-          "3. Temperature", "3. Doneness", "3. Seasoning", "3. Flavor Balance", "3. Texture", "3. Overall Taste", "3. Taste Notes",
-          "4. Cooking Method", "4. Ingredients", "4. Correct Sides", "4. Substitutions", "4. Recipe Notes",
-        ];
-        try {
-          await smartsheetFetch(`/sheets/${sheetId}/rows/emails`, {
-            method: "POST",
-            body: JSON.stringify({
-              sendTo: notificationRecipients.map((email) => ({ email })),
-              subject: `New Café Tasting Submission – ${normalizedRecord["Dish Name"]} @ ${normalizedRecord["Cafe Name"]}`,
-              message: "A new tasting submission has been completed for your café.",
-              ccMe: false,
-              rowIds: [rowId],
-              columnIds: notificationColumnTitles.map((title) => tastingColumns.get(title)).filter(Boolean),
-              includeAttachments: true,
-              includeDiscussions: false,
-            }),
-          });
-          notificationSent = true;
-          const alertSentColumn = tastingColumnDefinitions.get("Chef/Director Alert Sent");
-          if (alertSentColumn) {
-            await smartsheetFetch(`/sheets/${sheetId}/rows`, {
-              method: "PUT",
-              body: JSON.stringify([{ id: rowId, cells: [{ columnId: alertSentColumn.id, value: true, strict: false }] }]),
-            });
-          }
-        } catch (error) {
-          notificationSent = false;
-          notificationError = error.message;
-        }
-      }
-
       return res.status(201).json({
         ok: true,
         action,
@@ -543,9 +501,8 @@ export default async function handler(req, res) {
         cafe: normalizedRecord["Cafe Name"],
         dish: normalizedRecord["Dish Name"],
         rowId,
-        notificationSent,
+        notificationSent: null,
         notificationRecipients,
-        ...(notificationError ? { notificationError } : {}),
         message: `Added Cafe Tasting submission for ${normalizedRecord["Cafe Name"]}.`,
       });
     }
