@@ -377,6 +377,40 @@ export default async function handler(req, res) {
         });
       }
 
+      if (action === "addEmailReadyColumn") {
+        const columnTitle = "Email Ready";
+        let emailReadySheet = await smartsheetFetch(`/sheets/${sheetId}`);
+        let emailReadyColumns = columnMapByTitle(emailReadySheet);
+        let columnCreated = false;
+
+        if (!emailReadyColumns.has(columnTitle)) {
+          await smartsheetFetch(`/sheets/${sheetId}/columns`, {
+            method: "POST",
+            body: JSON.stringify([{ title: columnTitle, type: "CHECKBOX", index: (emailReadySheet.columns || []).length }]),
+          });
+          emailReadySheet = await smartsheetFetch(`/sheets/${sheetId}`);
+          emailReadyColumns = columnMapByTitle(emailReadySheet);
+          columnCreated = true;
+        }
+
+        const columnId = emailReadyColumns.get(columnTitle);
+        const checkedRows = (emailReadySheet.rows || []).filter((row) => {
+          const cell = (row.cells || []).find((entry) => String(entry.columnId) === String(columnId));
+          return cell?.value === true;
+        }).length;
+
+        return res.status(200).json({
+          ok: true,
+          action,
+          sheetId,
+          columnCreated,
+          columnId,
+          type: "CHECKBOX",
+          checkedRows,
+          totalRows: (emailReadySheet.rows || []).length,
+          message: `${columnCreated ? "Created" : "Found"} "${columnTitle}" with existing rows left unchecked.`,
+        });
+      }
       if (action === "addAlertTrackingColumn") {
         const columnTitle = "Chef/Director Alert Sent";
         let trackingSheet = await smartsheetFetch(`/sheets/${sheetId}`);
