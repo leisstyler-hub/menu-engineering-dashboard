@@ -1,9 +1,34 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Camera, Loader2, Plus, Settings2, X } from "lucide-react";
+import { ArrowLeft, Camera, Download, Loader2, Plus, Settings2, Smartphone, X } from "lucide-react";
 import { getRecipeLibraryPhoto } from "../../data/recipeLibraryAssets.js";
 import { normalizeRecipeLibraryItem } from "../recipe-database/recipeLibraryModel.js";
 
 const SLOT_COUNT = 4;
+const INSTALL_SESSION_KEY = "cafeTastingInstallPromptSeen";
+const INSTALL_DISMISSED_KEY = "cafeTastingInstallPromptDismissed";
+
+function isInstalledApp() {
+  return window.matchMedia("(display-mode: standalone)").matches
+    || window.matchMedia("(display-mode: minimal-ui)").matches
+    || window.navigator.standalone === true;
+}
+
+function isMobileOrTablet() {
+  return window.matchMedia("(max-width: 1024px), (pointer: coarse)").matches;
+}
+
+function isIosDevice() {
+  return /iPad|iPhone|iPod/.test(window.navigator.userAgent)
+    || (window.navigator.platform === "MacIntel" && window.navigator.maxTouchPoints > 1);
+}
+
+function storageHas(storage, key) {
+  try { return storage.getItem(key) === "true"; } catch { return false; }
+}
+
+function storageSet(storage, key) {
+  try { storage.setItem(key, "true"); } catch {}
+}
 
 const TWO_OPTION_FIELDS = ["1. Plate Appeal", "1. Plate Arrangement", "1. Plate Edges", "1. Garnish"];
 const PORTION_OPTION_FIELDS = ["2. Protein Portion", "2. Side 1 Portion", "2. Side 2 Portion", "2. Sauce Portion"];
@@ -168,7 +193,32 @@ export default function CafeTastingForm({ onBackToPlatform }) {
 
   const [showRouting, setShowRouting] = useState(false);
   const [routes, setRoutes] = useState([]);
+  const [installEligible, setInstallEligible] = useState(() => isMobileOrTablet() && !isInstalledApp());
+  const [showInstallSuggestion, setShowInstallSuggestion] = useState(() => isMobileOrTablet()
+    && !isInstalledApp()
+    && !storageHas(window.sessionStorage, INSTALL_SESSION_KEY)
+    && !storageHas(window.localStorage, INSTALL_DISMISSED_KEY));
+  const [showInstallHelp, setShowInstallHelp] = useState(false);
+  const [deferredInstallPrompt, setDeferredInstallPrompt] = useState(null);
 
+  useEffect(() => {
+    const onBeforeInstallPrompt = (event) => {
+      event.preventDefault();
+      setDeferredInstallPrompt(event);
+    };
+    const onInstalled = () => {
+      setInstallEligible(false);
+      setShowInstallSuggestion(false);
+      setShowInstallHelp(false);
+      setDeferredInstallPrompt(null);
+    };
+    window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+    window.addEventListener("appinstalled", onInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+      window.removeEventListener("appinstalled", onInstalled);
+    };
+  }, []);
   useEffect(() => {
     let cancelled = false;
     fetchJson("/api/smartsheet/records?dataset=cafe-tasting&diagnostic=columns")
@@ -345,6 +395,30 @@ export default function CafeTastingForm({ onBackToPlatform }) {
     }
   }
 
+  function dismissInstallForSession() {
+    storageSet(window.sessionStorage, INSTALL_SESSION_KEY);
+    setShowInstallSuggestion(false);
+  }
+
+  function dismissInstallForever() {
+    storageSet(window.localStorage, INSTALL_DISMISSED_KEY);
+    setShowInstallSuggestion(false);
+  }
+
+  async function requestInstall() {
+    if (!deferredInstallPrompt) {
+      setShowInstallHelp(true);
+      return;
+    }
+    await deferredInstallPrompt.prompt();
+    const choice = await deferredInstallPrompt.userChoice.catch(() => null);
+    setDeferredInstallPrompt(null);
+    if (choice?.outcome === "accepted") {
+      setInstallEligible(false);
+      setShowInstallSuggestion(false);
+    }
+  }
+
   const referencePhoto = itemPhoto(slots[0]?.raw);
 
   return (
@@ -368,10 +442,39 @@ export default function CafeTastingForm({ onBackToPlatform }) {
         </div>
 
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-xs font-black uppercase tracking-[0.14em] text-[#b99b55]">Programming &amp; Auditing</p>
-          <h1 className="mt-1 text-2xl font-black text-slate-950">Cafe Tasting Form</h1>
-          <p className="mt-1 text-sm font-medium text-slate-500">Taste the plate, capture clear feedback, and submit it straight to the Cafe Tasting Submission Worksheet.</p>
+          <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
+            <div className="min-w-0 flex-1">
+              <img src="/brand/compass-one-culinary.svg" alt="Compass One Culinary" className="h-auto w-[190px] max-w-full" width="1000" height="330" />
+              <p className="mt-4 text-xs font-black uppercase tracking-[0.14em] text-[#b99b55]">Programming &amp; Auditing</p>
+              <h1 className="mt-1 text-2xl font-black text-slate-950">Cafe Tasting Form</h1>
+              <p className="mt-1 text-sm font-medium text-slate-500">Taste the plate, capture clear feedback, and submit it straight to the Cafe Tasting Submission Worksheet.</p>
+            </div>
+            {installEligible ? (
+              <button type="button" onClick={requestInstall} className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100">
+                <Download size={14} /> Install app
+              </button>
+            ) : null}
+          </div>
         </div>
+
+        {showInstallSuggestion ? (
+          <aside className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 shadow-sm" aria-label="Cafe Tasting install recommendation">
+            <div className="flex items-start gap-3">
+              <Smartphone size={20} className="mt-0.5 shrink-0 text-emerald-700" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-black text-slate-900">Keep Cafe Tasting handy</p>
+                <p className="mt-0.5 text-xs font-medium leading-5 text-slate-600">Add this form to your home screen for quicker tasting rounds.</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button type="button" onClick={requestInstall} className="rounded-full bg-emerald-700 px-3 py-2 text-xs font-black text-white hover:bg-emerald-800">Add to Home Screen</button>
+                  <button type="button" onClick={dismissInstallForSession} className="rounded-full border border-emerald-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-emerald-100">Not now</button>
+                  <button type="button" onClick={dismissInstallForever} className="px-2 py-2 text-xs font-bold text-slate-500 underline-offset-4 hover:text-slate-700 hover:underline">Don't ask again</button>
+                </div>
+              </div>
+            </div>
+          </aside>
+        ) : null}
+
+        {showInstallHelp ? <InstallHelpDialog ios={isIosDevice()} onClose={() => setShowInstallHelp(false)} /> : null}
 
         {showRouting ? <RoutingManager onRoutesChanged={setRoutes} onClose={() => setShowRouting(false)} /> : null}
 
@@ -590,6 +693,26 @@ const inputClass = "rounded-xl border border-slate-200 bg-white px-3 py-2 text-s
 
 function splitEmails(value) {
   return String(value || "").split(/[;,]/).map((email) => email.trim()).filter(Boolean);
+}
+
+function InstallHelpDialog({ ios, onClose }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 p-3 sm:items-center" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+      <section role="dialog" aria-modal="true" aria-labelledby="install-cafe-tasting-title" className="w-full max-w-sm rounded-3xl bg-white p-5 shadow-2xl">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-[#b99b55]">Compass One Culinary</p>
+            <h2 id="install-cafe-tasting-title" className="mt-1 text-xl font-black text-slate-950">Install Cafe Tasting</h2>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close install instructions" className="rounded-full border border-slate-200 p-2 text-slate-500 hover:bg-slate-50"><X size={16} /></button>
+        </div>
+        <p className="mt-4 text-sm font-medium leading-6 text-slate-600">
+          {ios ? <>Tap <strong>Share</strong> in Safari, then choose <strong>Add to Home Screen</strong>.</> : <>Open your browser menu, then choose <strong>Install app</strong> or <strong>Add to Home Screen</strong>.</>}
+        </p>
+        <button type="button" onClick={onClose} className="mt-5 w-full rounded-2xl bg-slate-950 px-4 py-3 text-sm font-black text-white hover:bg-slate-800">Done</button>
+      </section>
+    </div>
+  );
 }
 
 function RoutingManager({ onRoutesChanged, onClose }) {
