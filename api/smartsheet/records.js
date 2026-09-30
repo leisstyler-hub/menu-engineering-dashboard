@@ -75,11 +75,14 @@ function contactCell(columnId, value) {
 
 function contactEmailsFromCell(cell) {
   const objectValue = cell?.objectValue;
-  if (objectValue?.objectType === "MULTI_CONTACT_LIST") {
-    return (objectValue.values || []).map((entry) => String(entry?.email || "").trim()).filter(Boolean);
-  }
-  if (objectValue?.email) return [String(objectValue.email).trim()].filter(Boolean);
-  return String(cell?.value || "").split(/[;,]/).map((entry) => entry.trim()).filter(Boolean);
+  const values = objectValue?.objectType === "MULTI_CONTACT_LIST"
+    ? (objectValue.values || []).map((entry) => entry?.email)
+    : objectValue?.email
+      ? [objectValue.email]
+      : String(cell?.value || "").split(/[;,]/);
+  return values
+    .map((entry) => String(entry || "").trim())
+    .filter((entry) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(entry));
 }
 
 function tastingCell(column, value) {
@@ -480,11 +483,13 @@ export default async function handler(req, res) {
             ...contactEmailsFromCell(routingChefCell),
             ...contactEmailsFromCell(routingDirectorCell),
           ]));
-          if (chefContactColumn && routingChefCell?.objectValue) {
-            cells.push({ columnId: chefContactColumn.id, objectValue: routingChefCell.objectValue });
+          const chefEmails = contactEmailsFromCell(routingChefCell);
+          const directorEmails = contactEmailsFromCell(routingDirectorCell);
+          if (chefContactColumn && chefEmails.length) {
+            cells.push(contactCell(chefContactColumn.id, chefEmails));
           }
-          if (directorContactColumn && routingDirectorCell?.objectValue) {
-            cells.push({ columnId: directorContactColumn.id, objectValue: routingDirectorCell.objectValue });
+          if (directorContactColumn && directorEmails.length) {
+            cells.push(contactCell(directorContactColumn.id, directorEmails));
           }
         }
       }

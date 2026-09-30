@@ -25,8 +25,23 @@ try{
  const postRequest=requests2.find((r)=>r.options.method==="POST");
  const payload2=JSON.parse(postRequest.options.body);
  const chefCell=payload2[0].cells.find((cell)=>cell.columnId===7);
- assert.deepEqual(chefCell.objectValue,{objectType:"CONTACT",email:"chef@compass-usa.com",name:"Chef Person"},"resolved routing contact should be written directly onto the row instead of left to the sheet's own formula");
+ assert.deepEqual(chefCell.objectValue,{objectType:"CONTACT",email:"chef@compass-usa.com"},"validated routing email should be written directly onto the row instead of left to the sheet's own formula");
  console.log("Cafe Tasting routing-contact resolution verification passed.");
+
+const requestsWithNameOnlyRoute=[];
+globalThis.fetch=async(url,options={})=>{
+ requestsWithNameOnlyRoute.push({url:String(url),options});
+ const u=String(url);
+ if(options.method==="POST")return new Response(JSON.stringify({result:[{id:457}]}),{status:200});
+ if(u.includes("routing-sheet")) return new Response(JSON.stringify({name:"Routing Table",columns:[{id:101,title:"Cafe"},{id:102,title:"Chef Contact"},{id:103,title:"Director Contact"}],rows:[{id:1,cells:[{columnId:101,value:"test cafe"},{columnId:102,value:"Tyler Leiss",objectValue:{objectType:"CONTACT",email:"Tyler Leiss",name:"Tyler Leiss"}}]}]}),{status:200});
+ return new Response(JSON.stringify({name:"Cafe Tasting Submission Worksheet",columns:titles.map((title,index)=>{if(title==="Taster")return{id:index+1,title,type:"TEXT_NUMBER",version:1,contactOptions:[{email:"tyler.leiss@compass-usa.com"}]};if(title==="Chef Contact"||title==="Director Contact")return{id:index+1,title,type:"CONTACT_LIST",version:0,contactOptions:[{email:"chef@compass-usa.com"}]};return{id:index+1,title,type:title==="1. Plate Appeal"?"PICKLIST":"TEXT_NUMBER",version:title==="1. Plate Appeal"?2:0};}),rows:[]}),{status:200});
+};
+const nameOnlyRouteResponse=response();await handler({method:"POST",query:{dataset:"cafe-tasting"},body:{action:"addTastingSubmission",record:{Date:"2026-09-25","Cafe Name":"test cafe","Station Name":"Global","Dish Name":"AUTOMATION TEST 2B",Taster:"tyler.leiss@compass-usa.com","1. Plate Appeal":"Met Standard"}}},nameOnlyRouteResponse);
+assert.equal(nameOnlyRouteResponse.statusCode,201,"a name-only routing contact must not block the tasting submission");
+const nameOnlyPayload=JSON.parse(requestsWithNameOnlyRoute.find((request)=>request.options.method==="POST").options.body);
+assert(!nameOnlyPayload[0].cells.some((cell)=>cell.columnId===7),"invalid name-only routing contacts must be omitted from contact cells");
+assert.deepEqual(nameOnlyRouteResponse.body.notificationRecipients,[],"invalid name-only routing contacts must not be reported as email recipients");
+console.log("Cafe Tasting name-only routing-contact verification passed.");
 
  // Regression guard: Smartsheet rejects any direct cell write to a column that has a
  // column-level formula ("You cannot edit cells with Column Formula"), which is how the
