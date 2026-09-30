@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Camera, Download, Loader2, Plus, Settings2, Smartphone, X } from "lucide-react";
+import { ArrowLeft, Camera, CheckCircle2, Download, Loader2, Plus, Settings2, Smartphone, X } from "lucide-react";
 import { getRecipeLibraryPhoto } from "../../data/recipeLibraryAssets.js";
 import { normalizeRecipeLibraryItem } from "../recipe-database/recipeLibraryModel.js";
 
@@ -329,6 +329,9 @@ export default function CafeTastingForm({ onBackToPlatform }) {
   }
 
   function resetForNextDish() {
+    setDate(todayIso());
+    setCafeName("");
+    setTasters([]);
     setSlots(emptySlots());
     setSelectedMenu("");
     setStationName("");
@@ -343,6 +346,13 @@ export default function CafeTastingForm({ onBackToPlatform }) {
     setOpportunities("");
     setPhotoFile(null);
     setPhotoPreview("");
+  }
+
+  function startNewSubmission() {
+    resetForNextDish();
+    setSubmitError("");
+    setSubmitSuccess(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   async function handleSubmit(event) {
@@ -386,8 +396,17 @@ export default function CafeTastingForm({ onBackToPlatform }) {
         });
       }
 
-      setSubmitSuccess({ cafe: record["Cafe Name"], dish: record["Dish Name"] });
-      resetForNextDish();
+      setSubmitSuccess({
+        rowId: result.rowId || "",
+        date: record.Date,
+        cafe: record["Cafe Name"],
+        station: record["Station Name"],
+        dish: record["Dish Name"],
+        tasters: tasterOptions
+          .filter((option) => record.Taster.includes(option.email))
+          .map((option) => option.name || option.email),
+        photoUploaded: Boolean(photoFile && result.rowId),
+      });
     } catch (error) {
       setSubmitError(error.message || "Submission failed.");
     } finally {
@@ -420,6 +439,48 @@ export default function CafeTastingForm({ onBackToPlatform }) {
   }
 
   const referencePhoto = itemPhoto(slots[0]?.raw);
+
+  if (submitSuccess) {
+    return (
+      <div className="min-h-screen bg-[#f4f8f7] px-3 py-5 text-slate-950 sm:px-4 sm:py-8">
+        <main className="mx-auto flex max-w-2xl flex-col gap-4">
+          <button type="button" onClick={onBackToPlatform} className="inline-flex w-fit items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50">
+            <ArrowLeft size={16} /> Platform Home
+          </button>
+
+          <section className="overflow-hidden rounded-3xl border border-emerald-200 bg-white shadow-sm">
+            <div className="bg-emerald-700 px-5 py-6 text-white sm:px-7">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 size={34} aria-hidden="true" />
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-100">Cafe Tasting</p>
+                  <h1 className="mt-1 text-2xl font-black">Tasting submitted</h1>
+                </div>
+              </div>
+              <p className="mt-3 text-sm font-semibold text-emerald-50">Your tasting report was saved successfully.</p>
+            </div>
+
+            <div className="p-5 sm:p-7">
+              <img src="/brand/compass-one-culinary.svg" alt="Compass One Culinary" className="h-auto w-[180px] max-w-full" width="1000" height="330" />
+              <h2 className="mt-6 text-lg font-black text-slate-950">Submission report</h2>
+              <dl className="mt-3 grid grid-cols-1 gap-3 rounded-2xl bg-slate-50 p-4 sm:grid-cols-2">
+                <ReportDetail label="Dish" value={submitSuccess.dish} />
+                <ReportDetail label="Cafe" value={submitSuccess.cafe} />
+                <ReportDetail label="Station" value={submitSuccess.station} />
+                <ReportDetail label="Date" value={submitSuccess.date} />
+                <ReportDetail label="Taster(s)" value={submitSuccess.tasters.join(", ") || "Recorded"} />
+                <ReportDetail label="Photo" value={submitSuccess.photoUploaded ? "Uploaded" : "Not included"} />
+              </dl>
+              {submitSuccess.rowId ? <p className="mt-3 text-xs font-semibold text-slate-400">Submission reference: {submitSuccess.rowId}</p> : null}
+              <button type="button" onClick={startNewSubmission} className="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-emerald-600 px-6 py-4 text-base font-black text-white shadow-sm hover:bg-emerald-700">
+                Make another submission
+              </button>
+            </div>
+          </section>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f4f8f7] pb-16 text-slate-950">
@@ -546,7 +607,7 @@ export default function CafeTastingForm({ onBackToPlatform }) {
                     className={inputClass}
                     disabled={!selectedMenu || menuItemsLoading}
                   >
-                    <option value="">{menuItemsLoading ? "Loading items…" : "None"}</option>
+                    <option value="">{menuItemsLoading ? "Loading itemsâ€¦" : "None"}</option>
                     {groupedMenuItems.map((group) => (
                       <optgroup key={group.label} label={group.label}>
                         {group.rows.map((row) => {
@@ -651,10 +712,19 @@ export default function CafeTastingForm({ onBackToPlatform }) {
             className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-6 py-4 text-base font-black text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60"
           >
             {submitting ? <Loader2 size={18} className="animate-spin" /> : null}
-            {submitting ? "Submitting…" : "Submit Tasting"}
+            {submitting ? "Submittingâ€¦" : "Submit Tasting"}
           </button>
         </form>
       </div>
+    </div>
+  );
+}
+
+function ReportDetail({ label, value }) {
+  return (
+    <div>
+      <dt className="text-xs font-black uppercase tracking-wide text-slate-400">{label}</dt>
+      <dd className="mt-1 text-sm font-black text-slate-800">{value}</dd>
     </div>
   );
 }
@@ -814,12 +884,12 @@ function RoutingManager({ onRoutesChanged, onClose }) {
           disabled={saving}
           className="sm:col-span-2 inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 text-sm font-black text-white hover:bg-slate-800 disabled:opacity-60"
         >
-          {saving ? "Adding…" : "Add Cafe to Routing Table"}
+          {saving ? "Addingâ€¦" : "Add Cafe to Routing Table"}
         </button>
       </form>
 
       <div className="mt-5 border-t border-slate-100 pt-4">
-        {loading ? <p className="text-sm font-semibold text-slate-500">Loading routing table…</p> : null}
+        {loading ? <p className="text-sm font-semibold text-slate-500">Loading routing tableâ€¦</p> : null}
         {loadError ? <p className="text-sm font-semibold text-rose-600">{loadError}</p> : null}
         {!loading && !loadError ? (
           <ul className="flex flex-col gap-2">

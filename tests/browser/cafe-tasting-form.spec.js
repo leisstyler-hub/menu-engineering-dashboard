@@ -102,3 +102,41 @@ test("Cafe Tasting gives iPad home-screen instructions when native install is un
   await expect(dialog).toContainText("Share");
   await expect(dialog).toContainText("Add to Home Screen");
 });
+
+test("Cafe Tasting shows a submission report before starting a fresh tasting", async ({ page }) => {
+  await prepareCafeTastingPage(page);
+  await page.route("**/api/smartsheet/records?dataset=cafe-tasting&diagnostic=columns", (route) => route.fulfill({ json: { ok: true, rawColumns: [
+    { title: "Station Name", options: ["Salad"] },
+    { title: "Taster", contactOptions: [{ email: "one@example.com", name: "One" }] },
+  ] } }));
+  await page.route("**/api/smartsheet/records?dataset=cafe-tasting-routing", (route) => route.fulfill({ json: { ok: true, records: [{ Cafe: "test cafe" }] } }));
+  await page.route("**/api/recipe-library?scope=summary", (route) => route.fulfill({ json: { menus: [{ menu: "AMZ: Greens & Grains" }] } }));
+  await page.route("**/api/recipe-library?scope=menu*", (route) => route.fulfill({ json: { rows: [] } }));
+  await page.route("**/api/smartsheet/records?dataset=cafe-tasting", async (route) => {
+    if (route.request().method() === "POST") {
+      await route.fulfill({ status: 201, json: { ok: true, rowId: "row-123" } });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.goto("/?tool=cafeTasting");
+  await page.getByLabel("Cafe Name").selectOption("test cafe");
+  await page.getByText("One", { exact: true }).click();
+  await page.getByLabel("Menu").selectOption("AMZ: Greens & Grains");
+  await page.getByLabel("Dish Name").fill("Submission Report Test");
+  await page.getByRole("button", { name: "Submit Tasting" }).click();
+
+  await expect(page.getByRole("heading", { name: "Tasting submitted" })).toBeVisible();
+  await expect(page.getByText("Submission Report Test", { exact: true })).toBeVisible();
+  await expect(page.getByText("test cafe", { exact: true })).toBeVisible();
+  await expect(page.getByText("Salad", { exact: true })).toBeVisible();
+  await expect(page.getByText("One", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Submit Tasting" })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Make another submission" }).click();
+  await expect(page.getByRole("button", { name: "Submit Tasting" })).toBeVisible();
+  await expect(page.getByLabel("Cafe Name")).toHaveValue("");
+  await expect(page.getByLabel("Dish Name")).toHaveValue("");
+  await expect(page.getByText("One", { exact: true })).not.toHaveClass(/emerald/);
+});
