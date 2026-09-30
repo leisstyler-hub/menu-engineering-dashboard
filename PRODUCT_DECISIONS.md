@@ -10,6 +10,12 @@ When a mission produces an approved product decision, Scribe adds an entry below
 
 ## Decisions
 
+### 2026-09-29 - Cafe Tasting successful-submission report
+
+Tyler approved replacing the inline Cafe Tasting success banner with a dedicated post-save screen. The screen appears only after the tasting row and any selected photo finish saving, summarizes the submitted dish, cafe, station, date, tasters, photo status, and row reference, and provides `Make another submission` to return to a fully reset form. Submission failures remain on the form with the existing error. The change does not alter the Smartsheet submission contract, routing, scheduler, email workflow, schema, source authority, or production data. Requesting Admin / Approving Admin / Admin of Record: Tyler.
+
+Rejected alternatives: showing success before an optional photo finishes uploading, keeping the form visible behind an inline success banner, or carrying prior cafe/taster values into a supposedly fresh submission.
+
 ### 2026-09-28 - Cafe Tasting mobile home-screen recommendation
 
 Tyler approved a discreet mobile/tablet recommendation to install Cafe Tasting on the device home screen, reusing the approved Compass One Culinary identity. Dismissing with `Not now` suppresses the recommendation for the current browser session; `Don't ask again` persists across later visits in that browser. A small manual install control remains available after dismissal, while installed standalone/minimal-ui/iOS-PWA mode shows no install recommendation. The existing global branded entrance remains the only animated intro; Cafe Tasting adds the same logo to its own header without replaying the animation. The tasting workflow, form fields, routing, Smartsheet/email behavior, schemas, navigation, and source authority remain unchanged. Requesting Admin / Approving Admin / Admin of Record: Tyler.
