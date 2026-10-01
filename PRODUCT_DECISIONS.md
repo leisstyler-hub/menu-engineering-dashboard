@@ -10,6 +10,12 @@ When a mission produces an approved product decision, Scribe adds an entry below
 
 ## Decisions
 
+### 2026-09-30 - AMZ: Deli Core menu source and initial production scope
+
+Alex approved `Deli Item Index For Real.csv` as the MenuWorks item, cost, portion, nutrition, ingredient, and allergen source for the new `AMZ: Deli Core` menu, with `SEA Standard Menu Template (1).xlsx` supplying the chef-facing item descriptions by exact MRN. Initial scope is restricted to `Curated Sandwiches` and `Regional Spotlights - Deli`; BYO ingredients, Deli Sides, blank/combined rows, and any item without authoritative Menu Item Cost are omitted. This produces 41 costed items: 27 Curated Sandwiches and 14 Regional Spotlights. MRNs `134362.15` and `141826` remain intentionally absent until authoritative costs are supplied. MRN `105146.3` uses the exact-MRN SSMT description from `CAFE EXPRESS` because the SSMT `DELI CORE` sheet has no matching row; the similar Deli Core concept with MRN `123937` is not substituted. Supabase `recipe_items` is the shared production source of truth, while the same source-controlled rows remain in the server fallback and generated Transfer Tool/ingredient-cost catalogs so Menu Library, Menu Audit, Cafe Tasting, Transfer Tool, and other Recipe Library consumers remain consistent. Requesting Admin / Admin of Record / Release-Authorized Admin: Alex Neuse.
+
+Rejected alternatives: importing the full 177-row report, including BYO or Deli Sides, fabricating the two missing costs, matching descriptions by similar item name instead of exact MRN, or creating tool-specific copies of the menu.
+
 ### 2026-09-29 - Cafe Tasting successful-submission report
 
 Tyler approved replacing the inline Cafe Tasting success banner with a dedicated post-save screen. The screen appears only after the tasting row and any selected photo finish saving, summarizes the submitted dish, cafe, station, date, tasters, photo status, and row reference, and provides `Make another submission` to return to a fully reset form. Submission failures remain on the form with the existing error. The change does not alter the Smartsheet submission contract, routing, scheduler, email workflow, schema, source authority, or production data. Requesting Admin / Approving Admin / Admin of Record: Tyler.

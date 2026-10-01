@@ -18,6 +18,7 @@
     "AMZ: Chiang Mai",
     "AMZ: Ciudad",
     "AMZ: Cypress",
+    "AMZ: Deli Core",
     "AMZ: Fish Market",
     "AMZ: Fresh Five",
     "AMZ: Greens & Grains",
@@ -4721,6 +4722,334 @@
       "mrn": "35089.6",
       "portion": "1/2 cup",
       "itemWasteCost": 0.506
+    },
+    {
+      "id": "amz: deli core|balsamic mushroom caprese|174949|1 sandwich",
+      "menu": "AMZ: Deli Core",
+      "item": "Balsamic Mushroom Caprese",
+      "mrn": "174949",
+      "portion": "1 sandwich",
+      "itemWasteCost": 4.441
+    },
+    {
+      "id": "amz: deli core|banh mi ham sandwich|37394.7|1 sandwich",
+      "menu": "AMZ: Deli Core",
+      "item": "Banh Mi Ham Sandwich",
+      "mrn": "37394.7",
+      "portion": "1 sandwich",
+      "itemWasteCost": 3.078
+    },
+    {
+      "id": "amz: deli core|blackend shrimp po boy|77597.9|1 each",
+      "menu": "AMZ: Deli Core",
+      "item": "Blackend Shrimp Po Boy",
+      "mrn": "77597.9",
+      "portion": "1 each",
+      "itemWasteCost": 2.621
+    },
+    {
+      "id": "amz: deli core|buffalo chicken wrap|9282.7|1 each",
+      "menu": "AMZ: Deli Core",
+      "item": "Buffalo Chicken Wrap",
+      "mrn": "9282.7",
+      "portion": "1 each",
+      "itemWasteCost": 3.006
+    },
+    {
+      "id": "amz: deli core|cajun turkey|76682.6|1 sandwich",
+      "menu": "AMZ: Deli Core",
+      "item": "Cajun Turkey",
+      "mrn": "76682.6",
+      "portion": "1 sandwich",
+      "itemWasteCost": 3.806
+    },
+    {
+      "id": "amz: deli core|caprese chicken on telera|104208.27|1 each",
+      "menu": "AMZ: Deli Core",
+      "item": "Caprese Chicken on Telera",
+      "mrn": "104208.27",
+      "portion": "1 each",
+      "itemWasteCost": 3.037
+    },
+    {
+      "id": "amz: deli core|charred eggplant, shaved parmesan, arugula, smoky romesco on rustico ciabatta|134036.4|1 sandwich",
+      "menu": "AMZ: Deli Core",
+      "item": "Charred Eggplant, Shaved Parmesan, Arugula, Smoky Romesco on Rustico Ciabatta",
+      "mrn": "134036.4",
+      "portion": "1 sandwich",
+      "itemWasteCost": 1.3
+    },
+    {
+      "id": "amz: deli core|chicken artichoke pesto sandwich|37007.1|1 sandwich",
+      "menu": "AMZ: Deli Core",
+      "item": "Chicken Artichoke Pesto Sandwich",
+      "mrn": "37007.1",
+      "portion": "1 sandwich",
+      "itemWasteCost": 2.766
+    },
+    {
+      "id": "amz: deli core|chicken caesar wrap|37311.43|1 wrap",
+      "menu": "AMZ: Deli Core",
+      "item": "Chicken Caesar Wrap",
+      "mrn": "37311.43",
+      "portion": "1 wrap",
+      "itemWasteCost": 4.139
+    },
+    {
+      "id": "amz: deli core|chimichurri steak sandwich|105146.3|1 sandwich",
+      "menu": "AMZ: Deli Core",
+      "item": "Chimichurri Steak Sandwich",
+      "mrn": "105146.3",
+      "portion": "1 sandwich",
+      "itemWasteCost": 3.858
+    },
+    {
+      "id": "amz: deli core|corned beef, pastrami & swiss melt|70178|1 sandwich",
+      "menu": "AMZ: Deli Core",
+      "item": "Corned Beef, Pastrami & Swiss Melt",
+      "mrn": "70178",
+      "portion": "1 sandwich",
+      "itemWasteCost": 3.349
+    },
+    {
+      "id": "amz: deli core|crispy buffalo chicken wrap|132547.5|1 sandwich",
+      "menu": "AMZ: Deli Core",
+      "item": "Crispy Buffalo Chicken Wrap",
+      "mrn": "132547.5",
+      "portion": "1 sandwich",
+      "itemWasteCost": 3.026
+    },
+    {
+      "id": "amz: deli core|cuban|32415|1 sandwich",
+      "menu": "AMZ: Deli Core",
+      "item": "Cuban",
+      "mrn": "32415",
+      "portion": "1 sandwich",
+      "itemWasteCost": 2.34
+    },
+    {
+      "id": "amz: deli core|green california crunch sandwich|142803|1 sandwich",
+      "menu": "AMZ: Deli Core",
+      "item": "Green California Crunch Sandwich",
+      "mrn": "142803",
+      "portion": "1 sandwich",
+      "itemWasteCost": 3.723
+    },
+    {
+      "id": "amz: deli core|italian grinder|76623.4|1 sandwich",
+      "menu": "AMZ: Deli Core",
+      "item": "Italian Grinder",
+      "mrn": "76623.4",
+      "portion": "1 sandwich",
+      "itemWasteCost": 4.306
+    },
+    {
+      "id": "amz: deli core|mediterranean falafel wrap|102969|1 serving(s)",
+      "menu": "AMZ: Deli Core",
+      "item": "Mediterranean Falafel Wrap",
+      "mrn": "102969",
+      "portion": "1 serving(s)",
+      "itemWasteCost": 3.515
+    },
+    {
+      "id": "amz: deli core|mediterranean sandwich|174951|1 sandwich",
+      "menu": "AMZ: Deli Core",
+      "item": "Mediterranean Sandwich",
+      "mrn": "174951",
+      "portion": "1 sandwich",
+      "itemWasteCost": 2.777
+    },
+    {
+      "id": "amz: deli core|mediterranean turkey wrap|190990|1 wrap",
+      "menu": "AMZ: Deli Core",
+      "item": "Mediterranean Turkey Wrap",
+      "mrn": "190990",
+      "portion": "1 wrap",
+      "itemWasteCost": 2.995
+    },
+    {
+      "id": "amz: deli core|muffaletta|144636|1 sandwich",
+      "menu": "AMZ: Deli Core",
+      "item": "Muffaletta",
+      "mrn": "144636",
+      "portion": "1 sandwich",
+      "itemWasteCost": 2.517
+    },
+    {
+      "id": "amz: deli core|philly cheesesteak|63749.12|1 sandwich",
+      "menu": "AMZ: Deli Core",
+      "item": "Philly Cheesesteak",
+      "mrn": "63749.12",
+      "portion": "1 sandwich",
+      "itemWasteCost": 3.068
+    },
+    {
+      "id": "amz: deli core|portobello provolone wrap|16392|1 each",
+      "menu": "AMZ: Deli Core",
+      "item": "Portobello Provolone Wrap",
+      "mrn": "16392",
+      "portion": "1 each",
+      "itemWasteCost": 2.475
+    },
+    {
+      "id": "amz: deli core|portobello reuben|38489.4|1 each",
+      "menu": "AMZ: Deli Core",
+      "item": "Portobello Reuben",
+      "mrn": "38489.4",
+      "portion": "1 each",
+      "itemWasteCost": 3.786
+    },
+    {
+      "id": "amz: deli core|roast beef and cheddar sandwich|34303.46|1 sandwich",
+      "menu": "AMZ: Deli Core",
+      "item": "Roast Beef and Cheddar Sandwich",
+      "mrn": "34303.46",
+      "portion": "1 sandwich",
+      "itemWasteCost": 3.37
+    },
+    {
+      "id": "amz: deli core|roast beef florentine sandwich|37154.1|1 sandwich",
+      "menu": "AMZ: Deli Core",
+      "item": "Roast Beef Florentine Sandwich",
+      "mrn": "37154.1",
+      "portion": "1 sandwich",
+      "itemWasteCost": 3.037
+    },
+    {
+      "id": "amz: deli core|roast beef sandwich, muenster, horseradish cream, onion roll|136164.1|1 sandwich",
+      "menu": "AMZ: Deli Core",
+      "item": "Roast Beef Sandwich, Muenster, Horseradish Cream, Onion Roll",
+      "mrn": "136164.1",
+      "portion": "1 sandwich",
+      "itemWasteCost": 4.462
+    },
+    {
+      "id": "amz: deli core|roast beef, brie sandwich|134362.37|1 sandwich",
+      "menu": "AMZ: Deli Core",
+      "item": "Roast Beef, Brie Sandwich",
+      "mrn": "134362.37",
+      "portion": "1 sandwich",
+      "itemWasteCost": 3.973
+    },
+    {
+      "id": "amz: deli core|sausage and peppers hoagie|18714.1|1 sandwich",
+      "menu": "AMZ: Deli Core",
+      "item": "Sausage and Peppers Hoagie",
+      "mrn": "18714.1",
+      "portion": "1 sandwich",
+      "itemWasteCost": 2.818
+    },
+    {
+      "id": "amz: deli core|shrimp salad sandwich|129693.5|1 each",
+      "menu": "AMZ: Deli Core",
+      "item": "Shrimp Salad Sandwich",
+      "mrn": "129693.5",
+      "portion": "1 each",
+      "itemWasteCost": 2.246
+    },
+    {
+      "id": "amz: deli core|southwest chipotle steak sandwich|16992|1 sandwich",
+      "menu": "AMZ: Deli Core",
+      "item": "Southwest Chipotle Steak Sandwich",
+      "mrn": "16992",
+      "portion": "1 sandwich",
+      "itemWasteCost": 7.249
+    },
+    {
+      "id": "amz: deli core|southwest grilled chicken wrap|85656.3|1 each",
+      "menu": "AMZ: Deli Core",
+      "item": "Southwest Grilled Chicken Wrap",
+      "mrn": "85656.3",
+      "portion": "1 each",
+      "itemWasteCost": 2.818
+    },
+    {
+      "id": "amz: deli core|thai eggplant sub|195115|1 each",
+      "menu": "AMZ: Deli Core",
+      "item": "Thai Eggplant Sub",
+      "mrn": "195115",
+      "portion": "1 each",
+      "itemWasteCost": 2.558
+    },
+    {
+      "id": "amz: deli core|the rachel|84262|1 sandwich",
+      "menu": "AMZ: Deli Core",
+      "item": "the Rachel",
+      "mrn": "84262",
+      "portion": "1 sandwich",
+      "itemWasteCost": 2.787
+    },
+    {
+      "id": "amz: deli core|the reuben|84262.1|1 sandwich",
+      "menu": "AMZ: Deli Core",
+      "item": "the Reuben",
+      "mrn": "84262.1",
+      "portion": "1 sandwich",
+      "itemWasteCost": 4.482
+    },
+    {
+      "id": "amz: deli core|tuna salad on croissant, dill pickle aioli|170114|1 sandwich",
+      "menu": "AMZ: Deli Core",
+      "item": "Tuna Salad on Croissant, Dill Pickle Aioli",
+      "mrn": "170114",
+      "portion": "1 sandwich",
+      "itemWasteCost": 2.454
+    },
+    {
+      "id": "amz: deli core|turkey apple brie sandwich|37001.21|1 sandwich",
+      "menu": "AMZ: Deli Core",
+      "item": "Turkey Apple Brie Sandwich",
+      "mrn": "37001.21",
+      "portion": "1 sandwich",
+      "itemWasteCost": 2.569
+    },
+    {
+      "id": "amz: deli core|turkey avocado club|148838.3|1 sandwich",
+      "menu": "AMZ: Deli Core",
+      "item": "Turkey Avocado Club",
+      "mrn": "148838.3",
+      "portion": "1 sandwich",
+      "itemWasteCost": 4.316
+    },
+    {
+      "id": "amz: deli core|turkey bacon and brie croissant|135023|1 sandwich",
+      "menu": "AMZ: Deli Core",
+      "item": "Turkey Bacon and Brie Croissant",
+      "mrn": "135023",
+      "portion": "1 sandwich",
+      "itemWasteCost": 6.053
+    },
+    {
+      "id": "amz: deli core|turkey bacon chipotle panini|64199|1 each",
+      "menu": "AMZ: Deli Core",
+      "item": "Turkey Bacon Chipotle Panini",
+      "mrn": "64199",
+      "portion": "1 each",
+      "itemWasteCost": 3.338
+    },
+    {
+      "id": "amz: deli core|tuscan vegetable sandwich|108987|1 sandwich",
+      "menu": "AMZ: Deli Core",
+      "item": "Tuscan Vegetable Sandwich",
+      "mrn": "108987",
+      "portion": "1 sandwich",
+      "itemWasteCost": 2.153
+    },
+    {
+      "id": "amz: deli core|vegetable cuban style hoagie|32415.12|1 sandwich",
+      "menu": "AMZ: Deli Core",
+      "item": "Vegetable Cuban Style Hoagie",
+      "mrn": "32415.12",
+      "portion": "1 sandwich",
+      "itemWasteCost": 1.903
+    },
+    {
+      "id": "amz: deli core|waldorf chicken salad croissant|161945|1 serving(s)",
+      "menu": "AMZ: Deli Core",
+      "item": "Waldorf Chicken Salad Croissant",
+      "mrn": "161945",
+      "portion": "1 serving(s)",
+      "itemWasteCost": 3.037
     },
     {
       "id": "amz: fish market|baja grilled fish taco|84484.1|2 each",

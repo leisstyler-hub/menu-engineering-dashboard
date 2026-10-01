@@ -657,6 +657,11 @@ async function handlePost(req, res) {
     return;
   }
 
+  if (action === "auditRecipeMenuScope") {
+    await handleAuditRecipeMenuScope(req, res, body);
+    return;
+  }
+
   if (action !== "backfillRecipeItems") {
     sendJson(res, 400, { ok: false, message: "Unsupported Recipe Library action." });
     return;
@@ -685,6 +690,47 @@ async function handlePost(req, res) {
       ok: false,
       source: "supabase-recipe-items",
       message: error.message || "Recipe Library Supabase backfill failed.",
+      detail: error.payload || null,
+    });
+  }
+}
+
+async function handleAuditRecipeMenuScope(req, res, body) {
+  if (!isAuthorized(req, body)) {
+    sendJson(res, 401, { ok: false, message: "Auditing a Recipe Library menu scope requires the admin code." });
+    return;
+  }
+
+  const menu = String(body?.menu || "").trim();
+  if (!menu) {
+    sendJson(res, 400, { ok: false, message: "Recipe Library menu-scope audit needs an exact menu name." });
+    return;
+  }
+
+  try {
+    const params = new URLSearchParams({
+      select: "item_key,mrn,menu,station,display_name,visible_in_library,source_data_version,source_file_name,updated_at",
+      menu: `eq.${menu}`,
+      order: "item_key.asc",
+    });
+    const rows = await supabaseFetch(`recipe_items?${params.toString()}`);
+    const normalizedRows = Array.isArray(rows) ? rows : [];
+    const visibleCount = normalizedRows.filter((row) => row?.visible_in_library !== false).length;
+
+    sendJson(res, 200, {
+      ok: true,
+      source: "supabase-recipe-items",
+      menu,
+      count: normalizedRows.length,
+      visibleCount,
+      hiddenCount: normalizedRows.length - visibleCount,
+      rows: normalizedRows,
+    });
+  } catch (error) {
+    sendJson(res, error.status || 500, {
+      ok: false,
+      source: "supabase-recipe-items",
+      message: error.message || "Recipe Library menu-scope audit failed.",
       detail: error.payload || null,
     });
   }

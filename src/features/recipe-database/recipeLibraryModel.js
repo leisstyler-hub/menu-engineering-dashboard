@@ -193,6 +193,8 @@ export function itemTrustStatus(row = {}) {
 }
 
 export function recipeLibraryItemKey(row) {
+  const explicitItemKey = textValue(row, "item_key");
+  if (explicitItemKey) return explicitItemKey;
   if (row?.id != null && row?.id !== "") return `row:${row.id}`;
   const mrn = textValue(row, "mrn", "MRN");
   const menu = textValue(row, "menu").toLowerCase();

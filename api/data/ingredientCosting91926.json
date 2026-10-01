@@ -1221,6 +1221,93 @@
       ],
       "unpricedComponents": []
     },
+    "16392": {
+      "recipeName": "EUR: Portobello Mushroom and Provolone Wrap",
+      "components": [
+        {
+          "ingredientMrn": "148538",
+          "ingredientName": "Cheese, Provolone, Pre-Sliced, .5 oz, Great Lakes",
+          "quantity": 1,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "unitPrice": 0.18,
+          "priceSourceMrn": "1673",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Canonical normalized ingredient-form price reference.",
+          "glCode": "4111006",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.18
+        },
+        {
+          "ingredientMrn": "4295",
+          "ingredientName": "Onions, Red, Fresh, Sliced, 1/8\", Each Slice",
+          "quantity": 1,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "unitPrice": 0.03,
+          "priceSourceMrn": "217803",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Onions, White, Slivered).",
+          "glCode": "4111012",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.03
+        },
+        {
+          "ingredientMrn": "16253",
+          "ingredientName": "Peppers, Red, Roasted, Whole, Empress, Canned, Drained",
+          "quantity": 0.5,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "unitPrice": 0.34,
+          "priceSourceMrn": "76889",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Roasted Garlic).",
+          "glCode": "4111005",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.17
+        },
+        {
+          "ingredientMrn": "7552",
+          "ingredientName": "Tomatoes, Fresh, Each Slice, 1/4\"",
+          "quantity": 3,
+          "unit": "each",
+          "recipeYield": 1,
+          "unitPrice": 0.06,
+          "priceSourceMrn": "16479",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Canonical normalized ingredient-form price reference.",
+          "glCode": "4111005",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.18
+        },
+        {
+          "ingredientMrn": "7582",
+          "ingredientName": "Tortilla Wrap, Tomato Basil, 12'', Ole Mexican",
+          "quantity": 1,
+          "unit": "each",
+          "recipeYield": 1,
+          "unitPrice": 0.44,
+          "priceSourceMrn": "7582",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111010",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.44
+        }
+      ],
+      "unpricedComponents": [
+        {
+          "ingredientMrn": "8061",
+          "ingredientName": "Spinach, Baby, Fresh",
+          "quantity": 0.25,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "glCode": "4111012",
+          "residualAttributionEligible": true,
+          "allocationPerPortion": null
+        }
+      ]
+    },
     "16811": {
       "recipeName": "EUR: Garden Side Salad",
       "components": [
@@ -1265,6 +1352,68 @@
           "allocationPerPortion": null
         }
       ]
+    },
+    "16992": {
+      "recipeName": "EUR: Southwest Chipotle Mayo Steak Sandwich",
+      "components": [
+        {
+          "ingredientMrn": "9126",
+          "ingredientName": "Beef, Flat Iron Steak, Raw",
+          "quantity": 40,
+          "unit": "ounce",
+          "recipeYield": 10,
+          "unitPrice": 0.5,
+          "priceSourceMrn": "39910",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Beef, Philly Steak, Sliced 4 oz).",
+          "glCode": "4111003",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 2
+        },
+        {
+          "ingredientMrn": "148538",
+          "ingredientName": "Cheese, Provolone, Pre-Sliced, .5 oz, Great Lakes",
+          "quantity": 20,
+          "unit": "slice",
+          "recipeYield": 10,
+          "unitPrice": 0.11,
+          "priceSourceMrn": "148538",
+          "priceSourceUnit": "slice",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111006",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.22
+        },
+        {
+          "ingredientMrn": "18069",
+          "ingredientName": "Peppers, Banana, Rings, Bay Valley",
+          "quantity": 10,
+          "unit": "ounce",
+          "recipeYield": 10,
+          "unitPrice": 0.1,
+          "priceSourceMrn": "357",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Banana, Chips, Dried).",
+          "glCode": "4111012",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.1
+        },
+        {
+          "ingredientMrn": "121635",
+          "ingredientName": "Roll, Sub, White, Sliced, 6'', 2.3 oz, Burry, Frozen",
+          "quantity": 10,
+          "unit": "each",
+          "recipeYield": 10,
+          "unitPrice": 0.43,
+          "priceSourceMrn": "121635",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111010",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.43
+        }
+      ],
+      "unpricedComponents": []
     },
     "17442": {
       "recipeName": "EUR: Balsamic Roasted Brussels Sprouts",
@@ -5786,6 +5935,110 @@
           "allocationPerPortion": null
         }
       ]
+    },
+    "70178": {
+      "recipeName": "EUR: Corned Beef Pastrami Melt on Rye",
+      "components": [
+        {
+          "ingredientMrn": "68097",
+          "ingredientName": "Beef, Corned, Natural Choice",
+          "quantity": 2,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "unitPrice": 0.68,
+          "priceSourceMrn": "97049",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Beef, Roast Beef, Rare, USDA Choice, All Natural).",
+          "glCode": "4111003",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 1.36
+        },
+        {
+          "ingredientMrn": "4335",
+          "ingredientName": "Beef, Pastrami, Hormel",
+          "quantity": 1,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "unitPrice": 0.61,
+          "priceSourceMrn": "4335",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111003",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.61
+        },
+        {
+          "ingredientMrn": "227703",
+          "ingredientName": "Bread, Rye, Sliced, 2 oz, Tribeca Oven, Frozen",
+          "quantity": 2,
+          "unit": "slice",
+          "recipeYield": 1,
+          "unitPrice": 0.46,
+          "priceSourceMrn": "227703",
+          "priceSourceUnit": "slice",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111010",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.92
+        },
+        {
+          "ingredientMrn": "228015",
+          "ingredientName": "Cheese, Swiss, Fancy, Loaf, Great Lakes, Sliced",
+          "quantity": 2,
+          "unit": "slice",
+          "recipeYield": 1,
+          "unitPrice": 0.11,
+          "priceSourceMrn": "228015",
+          "priceSourceUnit": "slice",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111006",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.22
+        },
+        {
+          "ingredientMrn": "81134",
+          "ingredientName": "Mayonnaise, Light, Kraft",
+          "quantity": 1,
+          "unit": "tbsp",
+          "recipeYield": 1,
+          "unitPrice": 0.08,
+          "priceSourceMrn": "81134",
+          "priceSourceUnit": "tbsp",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111005",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.08
+        },
+        {
+          "ingredientMrn": "4143",
+          "ingredientName": "Mustard, Creole, McCormick",
+          "quantity": 2,
+          "unit": "tsp",
+          "recipeYield": 1,
+          "unitPrice": 0.02,
+          "priceSourceMrn": "4143",
+          "priceSourceUnit": "tsp",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111005",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.04
+        },
+        {
+          "ingredientMrn": "4236",
+          "ingredientName": "Onions, Green, Scallion, Bunch, Fresh, Diced, Fine",
+          "quantity": 1,
+          "unit": "tsp",
+          "recipeYield": 1,
+          "unitPrice": 0.02,
+          "priceSourceMrn": "7383",
+          "priceSourceUnit": "tsp",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Spice, Onion Powder).",
+          "glCode": "4111012",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.02
+        }
+      ],
+      "unpricedComponents": []
     },
     "70829": {
       "recipeName": "EUR: Brined Garlic Sage Pork Chops",
@@ -19598,6 +19851,51 @@
       ],
       "unpricedComponents": []
     },
+    "135023": {
+      "recipeName": "EURNA: Roasted Turkey, Bacon, and Brie Croissant Sandwich",
+      "components": [
+        {
+          "ingredientMrn": "7774",
+          "ingredientName": "Cheese, Brie, President",
+          "quantity": 1,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "unitPrice": 0.38,
+          "priceSourceMrn": "7774",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111006",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.38
+        },
+        {
+          "ingredientMrn": "155704",
+          "ingredientName": "Croissant, Butter, Sliced, 3 oz, Pillsbury, Frozen",
+          "quantity": 3,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "unitPrice": 0.1533,
+          "priceSourceMrn": "1075",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Bread, White, Sliced, 1.5 oz).",
+          "glCode": "4111009",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.46
+        }
+      ],
+      "unpricedComponents": [
+        {
+          "ingredientMrn": "3771",
+          "ingredientName": "Lettuce, Arugula, Baby, Fresh",
+          "quantity": 0.5,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "glCode": "4111012",
+          "residualAttributionEligible": true,
+          "allocationPerPortion": null
+        }
+      ]
+    },
     "135046": {
       "recipeName": "EURNA: Polenta Frita",
       "components": [
@@ -23338,6 +23636,201 @@
         }
       ]
     },
+    "142803": {
+      "recipeName": "RA Green California Crunch Sandwich, Mozzarella, Yogurt Herb Dressing",
+      "components": [
+        {
+          "ingredientMrn": "16289",
+          "ingredientName": "Avocado, Fresh, Sliced, 1/4\"",
+          "quantity": 0.5,
+          "unit": "each",
+          "recipeYield": 2,
+          "unitPrice": 0.84,
+          "priceSourceMrn": "241",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Avocado, Quartered, Fresh).",
+          "glCode": "4111012",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.21
+        },
+        {
+          "ingredientMrn": "457",
+          "ingredientName": "Basil, Fresh, Chopped",
+          "quantity": 0.25,
+          "unit": "cup",
+          "recipeYield": 2,
+          "unitPrice": 1.92,
+          "priceSourceMrn": "457",
+          "priceSourceUnit": "tsp",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111012",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.24
+        },
+        {
+          "ingredientMrn": "135054",
+          "ingredientName": "Bread, Multigrain, Pullman, Loaf, Sliced, LaMarca, 1.3 oz, Fresh",
+          "quantity": 4,
+          "unit": "slice",
+          "recipeYield": 2,
+          "unitPrice": 0.17,
+          "priceSourceMrn": "135054",
+          "priceSourceUnit": "slice",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111010",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.34
+        },
+        {
+          "ingredientMrn": "7776",
+          "ingredientName": "Cheese, Mozzarella, Log, Pre-Sliced, .6 oz, Galbani, Fresh",
+          "quantity": 2,
+          "unit": "ounce",
+          "recipeYield": 2,
+          "unitPrice": 0.32,
+          "priceSourceMrn": "7776",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111006",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.32
+        },
+        {
+          "ingredientMrn": "1769",
+          "ingredientName": "Chives, Fresh, Chopped",
+          "quantity": 0.25,
+          "unit": "cup",
+          "recipeYield": 2,
+          "unitPrice": 1.92,
+          "priceSourceMrn": "1769",
+          "priceSourceUnit": "tsp",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111005",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.24
+        },
+        {
+          "ingredientMrn": "49614",
+          "ingredientName": "Cucumbers, English, Fresh",
+          "quantity": 0.25,
+          "unit": "each",
+          "recipeYield": 2,
+          "unitPrice": 0.33,
+          "priceSourceMrn": "2317",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (English Muffin, Plain, 2 oz).",
+          "glCode": "4111005",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.0413
+        },
+        {
+          "ingredientMrn": "3539",
+          "ingredientName": "Juice, Lemon, Fresh Pressed",
+          "quantity": 1,
+          "unit": "each",
+          "recipeYield": 2,
+          "unitPrice": 0.18,
+          "priceSourceMrn": "3783",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Lemon, Wedge (1/6), Fresh).",
+          "glCode": "4111012",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.09
+        },
+        {
+          "ingredientMrn": "3774",
+          "ingredientName": "Lemon, Fresh, Zest, Grated",
+          "quantity": 1,
+          "unit": "tbsp",
+          "recipeYield": 2,
+          "unitPrice": 0.05,
+          "priceSourceMrn": "3533",
+          "priceSourceUnit": "tbsp",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Juice, Lemon).",
+          "glCode": "4111012",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.025
+        },
+        {
+          "ingredientMrn": "74098",
+          "ingredientName": "Lettuce, Boston Bibb, Individual Leaf, Fresh",
+          "quantity": 4,
+          "unit": "each",
+          "recipeYield": 2,
+          "unitPrice": 0.07,
+          "priceSourceMrn": "74098",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111012",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.14
+        },
+        {
+          "ingredientMrn": "11302",
+          "ingredientName": "Micro Green, Spectrum Mix",
+          "quantity": 0.5,
+          "unit": "cup",
+          "recipeYield": 2,
+          "unitPrice": 0.77,
+          "priceSourceMrn": "110056",
+          "priceSourceUnit": "cup",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Pretzels, Chocolate, Micro Mini).",
+          "glCode": "4111005",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.1925
+        },
+        {
+          "ingredientMrn": "7105",
+          "ingredientName": "Radish, Fresh, Sliced, 1/8\"",
+          "quantity": 0.5,
+          "unit": "cup",
+          "recipeYield": 2,
+          "unitPrice": 1.16,
+          "priceSourceMrn": "7105",
+          "priceSourceUnit": "cup",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111012",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.29
+        },
+        {
+          "ingredientMrn": "89422",
+          "ingredientName": "Yogurt, Plain, Greek, Fat Free, Chobani, Bulk",
+          "quantity": 0.5,
+          "unit": "cup",
+          "recipeYield": 2,
+          "unitPrice": 0.68,
+          "priceSourceMrn": "7678",
+          "priceSourceUnit": "cup",
+          "priceSourceNote": "Canonical normalized ingredient-form price reference.",
+          "glCode": "4111006",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.17
+        }
+      ],
+      "unpricedComponents": [
+        {
+          "ingredientMrn": "7391",
+          "ingredientName": "Spice, Pepper, Black, Ground, Fine",
+          "quantity": 0.5,
+          "unit": "tsp",
+          "recipeYield": 2,
+          "glCode": "4111005",
+          "residualAttributionEligible": true,
+          "allocationPerPortion": null
+        },
+        {
+          "ingredientMrn": "7391",
+          "ingredientName": "Spice, Pepper, Black, Ground, Fine",
+          "quantity": 1,
+          "unit": "tbsp",
+          "recipeYield": 2,
+          "glCode": "4111005",
+          "residualAttributionEligible": true,
+          "allocationPerPortion": null
+        }
+      ]
+    },
     "142988": {
       "recipeName": "EURNA: Memphis Style BBQ Sauce",
       "components": [
@@ -24630,6 +25123,96 @@
           "glCode": "4111005",
           "isSubstitutePrice": true,
           "allocationPerPortion": 0.0081
+        }
+      ],
+      "unpricedComponents": []
+    },
+    "144636": {
+      "recipeName": "RA Muffaletta Sandwich",
+      "components": [
+        {
+          "ingredientMrn": "1001",
+          "ingredientName": "Bread, French, Loaf, 17 oz, Frozen, LaBrea",
+          "quantity": 0.125,
+          "unit": "each",
+          "recipeYield": 1,
+          "unitPrice": 0.205,
+          "priceSourceMrn": "2831",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (French Toast Sticks, .88 oz, Frozen).",
+          "glCode": "4111010",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.0256
+        },
+        {
+          "ingredientMrn": "106566",
+          "ingredientName": "Cheese, Mozzarella, Pre-Sliced, .9 oz, Galbani, Fresh",
+          "quantity": 28,
+          "unit": "g",
+          "recipeYield": 1,
+          "unitPrice": 0.0113,
+          "priceSourceMrn": "7776",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Canonical normalized ingredient-form price reference.",
+          "glCode": "4111006",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.3161
+        },
+        {
+          "ingredientMrn": "1670",
+          "ingredientName": "Cheese, Provolone, Loaf, Great Lakes, Sliced, .75 oz",
+          "quantity": 28,
+          "unit": "g",
+          "recipeYield": 1,
+          "unitPrice": 0.0063,
+          "priceSourceMrn": "1670",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111006",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.1778
+        },
+        {
+          "ingredientMrn": "123258",
+          "ingredientName": "Ham, Deluxe, Deli, Boar's Head",
+          "quantity": 28,
+          "unit": "g",
+          "recipeYield": 1,
+          "unitPrice": 0.0106,
+          "priceSourceMrn": "45405",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Pork, Ham, Maple Glazed, Deli, Boar's Head, Sliced).",
+          "glCode": "4111003",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.2963
+        },
+        {
+          "ingredientMrn": "33154",
+          "ingredientName": "Pork, Mortadella, Deli, Smithfield, Fresh",
+          "quantity": 28,
+          "unit": "g",
+          "recipeYield": 1,
+          "unitPrice": 0.0162,
+          "priceSourceMrn": "33154",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111003",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.4543
+        },
+        {
+          "ingredientMrn": "7174",
+          "ingredientName": "Salami, Genoa, Magnifico",
+          "quantity": 28,
+          "unit": "g",
+          "recipeYield": 1,
+          "unitPrice": 0.0145,
+          "priceSourceMrn": "7173",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Salami, Genoa, Sliced).",
+          "glCode": "4111003",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.4049
         }
       ],
       "unpricedComponents": []
@@ -31873,6 +32456,103 @@
       ],
       "unpricedComponents": []
     },
+    "161945": {
+      "recipeName": "MAX Waldorf Chicken Salad Croissant",
+      "components": [
+        {
+          "ingredientMrn": "1731",
+          "ingredientName": "Chicken, Pulled, Dark/White, 65/35, Low Sodium, Tyson, FC",
+          "quantity": 3,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "unitPrice": 0.4,
+          "priceSourceMrn": "70096",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Chicken, Pulled, Smoked, Austin Blues, FC).",
+          "glCode": "4111003",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 1.2
+        },
+        {
+          "ingredientMrn": "119643",
+          "ingredientName": "Croissant, Butter, Curved, 3 oz, Pillsbury",
+          "quantity": 1,
+          "unit": "each",
+          "recipeYield": 1,
+          "unitPrice": 1.33,
+          "priceSourceMrn": "119643",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111006",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 1.33
+        },
+        {
+          "ingredientMrn": "3755",
+          "ingredientName": "Lettuce, Romaine, Individual Leaf, Fresh",
+          "quantity": 1,
+          "unit": "each",
+          "recipeYield": 1,
+          "unitPrice": 0.11,
+          "priceSourceMrn": "3755",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111012",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.11
+        },
+        {
+          "ingredientMrn": "3809",
+          "ingredientName": "Mayonnaise, Real, Hellmann's",
+          "quantity": 2,
+          "unit": "tbsp",
+          "recipeYield": 1,
+          "unitPrice": 0.09,
+          "priceSourceMrn": "227085",
+          "priceSourceUnit": "tbsp",
+          "priceSourceNote": "Canonical normalized ingredient-form price reference.",
+          "glCode": "4111005",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.18
+        },
+        {
+          "ingredientMrn": "4211",
+          "ingredientName": "Nuts, Walnuts, Halves & Pieces, Chopped",
+          "quantity": 0.5,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "unitPrice": 0.525,
+          "priceSourceMrn": "4211",
+          "priceSourceUnit": "pound",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111005",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.2625
+        }
+      ],
+      "unpricedComponents": [
+        {
+          "ingredientMrn": "50977",
+          "ingredientName": "Celery, Fresh, Diced",
+          "quantity": 0.5,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "glCode": "4111012",
+          "residualAttributionEligible": true,
+          "allocationPerPortion": null
+        },
+        {
+          "ingredientMrn": "58783",
+          "ingredientName": "Pears, Anjou, 135 Count, Fresh, Diced",
+          "quantity": 1,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "glCode": "4111005",
+          "residualAttributionEligible": true,
+          "allocationPerPortion": null
+        }
+      ]
+    },
     "161990": {
       "recipeName": "THJV Cubano",
       "components": [
@@ -33703,6 +34383,54 @@
       ],
       "unpricedComponents": []
     },
+    "170114": {
+      "recipeName": "RA Tuna Salad Sandwich, Croissant, Dill Pickle Aioli",
+      "components": [
+        {
+          "ingredientMrn": "121363",
+          "ingredientName": "Croissant, Plain, The Bread Guy Bakery, Large, 2.8 oz",
+          "quantity": 1,
+          "unit": "each",
+          "recipeYield": 1,
+          "unitPrice": 0.96,
+          "priceSourceMrn": "121363",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111010",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.96
+        },
+        {
+          "ingredientMrn": "52929",
+          "ingredientName": "Lettuce, Romaine, Torn, Bite Size, Fresh",
+          "quantity": 0.5,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "unitPrice": 0.4225,
+          "priceSourceMrn": "49679",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Trail Mix, Fruit and Nut).",
+          "glCode": "4111012",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.2112
+        },
+        {
+          "ingredientMrn": "7552",
+          "ingredientName": "Tomatoes, Fresh, Each Slice, 1/4\"",
+          "quantity": 2,
+          "unit": "slice",
+          "recipeYield": 1,
+          "unitPrice": 0.06,
+          "priceSourceMrn": "16479",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Canonical normalized ingredient-form price reference.",
+          "glCode": "4111005",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.12
+        }
+      ],
+      "unpricedComponents": []
+    },
     "171040": {
       "recipeName": "THJV JT BBQ Chicken Thighs",
       "components": [
@@ -34127,6 +34855,47 @@
         }
       ],
       "unpricedComponents": [
+        {
+          "ingredientMrn": "3771",
+          "ingredientName": "Lettuce, Arugula, Baby, Fresh",
+          "quantity": 0.5,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "glCode": "4111012",
+          "residualAttributionEligible": true,
+          "allocationPerPortion": null
+        }
+      ]
+    },
+    "174951": {
+      "recipeName": "EURNA: Mediterranean Focaccia Sandwich",
+      "components": [
+        {
+          "ingredientMrn": "16270",
+          "ingredientName": "Onions, Red, Fresh, Slivered, Thin",
+          "quantity": 0.5,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "unitPrice": 0.03,
+          "priceSourceMrn": "217803",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Onions, White, Slivered).",
+          "glCode": "4111012",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.015
+        }
+      ],
+      "unpricedComponents": [
+        {
+          "ingredientMrn": "2106",
+          "ingredientName": "Cucumbers, Fresh, Peeled, Sliced, 1/4\"",
+          "quantity": 1,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "glCode": "4111005",
+          "residualAttributionEligible": true,
+          "allocationPerPortion": null
+        },
         {
           "ingredientMrn": "3771",
           "ingredientName": "Lettuce, Arugula, Baby, Fresh",
@@ -43087,6 +43856,40 @@
           "allocationPerPortion": null
         }
       ]
+    },
+    "195115": {
+      "recipeName": "AMZ: Thai Basil Eggplant Sub",
+      "components": [
+        {
+          "ingredientMrn": "24857",
+          "ingredientName": "Basil, Thai, Fresh",
+          "quantity": 0.25,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "unitPrice": 0.37,
+          "priceSourceMrn": "97076",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Sauce, Curry, Green, Thai Style, Passport).",
+          "glCode": "4111012",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.0925
+        },
+        {
+          "ingredientMrn": "7131",
+          "ingredientName": "Roll, Hoagie, 6'', Sliced, 2.5 oz, Rotella",
+          "quantity": 1,
+          "unit": "each",
+          "recipeYield": 1,
+          "unitPrice": 0.47,
+          "priceSourceMrn": "7131",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111010",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.47
+        }
+      ],
+      "unpricedComponents": []
     },
     "195285": {
       "recipeName": "AMZ: Steelhead Trout Chowder Bread Bowl",
@@ -55604,6 +56407,51 @@
       ],
       "unpricedComponents": []
     },
+    "77597.9": {
+      "recipeName": "EUR: Blackened Shrimp Po Boy with Avocado and Spicy Slaw",
+      "components": [
+        {
+          "ingredientMrn": "121635",
+          "ingredientName": "Roll, Sub, White, Sliced, 6'', 2.3 oz, Burry, Frozen",
+          "quantity": 1,
+          "unit": "each",
+          "recipeYield": 1,
+          "unitPrice": 0.43,
+          "priceSourceMrn": "121635",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111010",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.43
+        },
+        {
+          "ingredientMrn": "7552",
+          "ingredientName": "Tomatoes, Fresh, Each Slice, 1/4\"",
+          "quantity": 2,
+          "unit": "each",
+          "recipeYield": 1,
+          "unitPrice": 0.06,
+          "priceSourceMrn": "16479",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Canonical normalized ingredient-form price reference.",
+          "glCode": "4111005",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.12
+        }
+      ],
+      "unpricedComponents": [
+        {
+          "ingredientMrn": "276",
+          "ingredientName": "Avocado, Fresh, Sliced",
+          "quantity": 4,
+          "unit": "slice",
+          "recipeYield": 1,
+          "glCode": "4111012",
+          "residualAttributionEligible": true,
+          "allocationPerPortion": null
+        }
+      ]
+    },
     "104208.27": {
       "recipeName": "EUR: Caprese Chicken Sandwich on Telera (Coffee Bar)",
       "components": [
@@ -55857,6 +56705,65 @@
       ],
       "unpricedComponents": []
     },
+    "129693.5": {
+      "recipeName": "EUR: New England Shrimp Salad Sandwich",
+      "components": [
+        {
+          "ingredientMrn": "76619",
+          "ingredientName": "Bun, Hot Dog, Brioche, Macrina, 2 oz",
+          "quantity": 12,
+          "unit": "each",
+          "recipeYield": 12,
+          "unitPrice": 0.18,
+          "priceSourceMrn": "1118",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Bun, Hot Dog, White, 1.5 oz).",
+          "glCode": "4111010",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.18
+        },
+        {
+          "ingredientMrn": "7943",
+          "ingredientName": "Butter, Unsalted",
+          "quantity": 12,
+          "unit": "tbsp",
+          "recipeYield": 12,
+          "unitPrice": 0.08,
+          "priceSourceMrn": "7943",
+          "priceSourceUnit": "tbsp",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111006",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.08
+        },
+        {
+          "ingredientMrn": "7552",
+          "ingredientName": "Tomatoes, Fresh, Each Slice, 1/4\"",
+          "quantity": 6,
+          "unit": "ounce",
+          "recipeYield": 12,
+          "unitPrice": 0.105,
+          "priceSourceMrn": "7548",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tomatoes, Julienne Sliced, Fresh).",
+          "glCode": "4111005",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.0525
+        }
+      ],
+      "unpricedComponents": [
+        {
+          "ingredientMrn": "3770",
+          "ingredientName": "Lettuce, Iceberg, Fresh, Pre-Shredded, 1/8\"",
+          "quantity": 3,
+          "unit": "ounce",
+          "recipeYield": 12,
+          "glCode": "4111012",
+          "residualAttributionEligible": true,
+          "allocationPerPortion": null
+        }
+      ]
+    },
     "77597.14": {
       "recipeName": "EUR: Red Hook Shrimp Po Boy with Cajun Mayo",
       "components": [
@@ -55974,6 +56881,68 @@
           "glCode": "4111005",
           "isSubstitutePrice": false,
           "allocationPerPortion": 0.12
+        }
+      ],
+      "unpricedComponents": []
+    },
+    "9282.7": {
+      "recipeName": "EUR: Signature Grilled Buffalo Chicken Wrap",
+      "components": [
+        {
+          "ingredientMrn": "1614",
+          "ingredientName": "Cheese, Blue, Crumbles, Great Lakes",
+          "quantity": 1.5,
+          "unit": "pound",
+          "recipeYield": 24,
+          "unitPrice": 3.52,
+          "priceSourceMrn": "1639",
+          "priceSourceUnit": "pound",
+          "priceSourceNote": "Substitute price used: approved Cheese, Cheddar, Sharp, Loaf, Shredded reference (MRN 1639). Approved dairy substitute until a canonical Blue Cheese Crumbles price is available.",
+          "glCode": "4111006",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.22
+        },
+        {
+          "ingredientMrn": "7179",
+          "ingredientName": "Sauce, Buffalo Wing, Franks RedHot",
+          "quantity": 36,
+          "unit": "floz",
+          "recipeYield": 24,
+          "unitPrice": 0.12,
+          "priceSourceMrn": "7179",
+          "priceSourceUnit": "floz",
+          "priceSourceNote": "Canonical Ingredient: price reference. Approved Frank's RedHot Buffalo Wing Sauce conversion: 1 fluid ounce = 1 ounce.",
+          "glCode": "4111005",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.18
+        },
+        {
+          "ingredientMrn": "7552",
+          "ingredientName": "Tomatoes, Fresh, Each Slice, 1/4\"",
+          "quantity": 48,
+          "unit": "slice",
+          "recipeYield": 24,
+          "unitPrice": 0.06,
+          "priceSourceMrn": "16479",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Canonical normalized ingredient-form price reference.",
+          "glCode": "4111005",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.12
+        },
+        {
+          "ingredientMrn": "7580",
+          "ingredientName": "Tortilla Wrap, Flour, 12'', Ole Mexican",
+          "quantity": 24,
+          "unit": "each",
+          "recipeYield": 24,
+          "unitPrice": 0.35,
+          "priceSourceMrn": "7580",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111010",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.35
         }
       ],
       "unpricedComponents": []
@@ -56351,6 +57320,145 @@
         }
       ],
       "unpricedComponents": []
+    },
+    "37007.1": {
+      "recipeName": "RA Chicken, Artichoke Pesto, Mozzarella, Tomato Sandwich",
+      "components": [
+        {
+          "ingredientMrn": "196",
+          "ingredientName": "Artichoke, Hearts, Quartered, Canned",
+          "quantity": 0.5,
+          "unit": "cup",
+          "recipeYield": 16,
+          "unitPrice": 0.92,
+          "priceSourceMrn": "52463",
+          "priceSourceUnit": "cup",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Artichoke, Hearts, Chopped, Canned).",
+          "glCode": "4111012",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.0288
+        },
+        {
+          "ingredientMrn": "457",
+          "ingredientName": "Basil, Fresh, Chopped",
+          "quantity": 1.5,
+          "unit": "tbsp",
+          "recipeYield": 16,
+          "unitPrice": 0.12,
+          "priceSourceMrn": "457",
+          "priceSourceUnit": "tsp",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111012",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.0112
+        },
+        {
+          "ingredientMrn": "7936",
+          "ingredientName": "Bun, Ciabatta, 4.5 oz, Unsliced, La Brea, Frozen",
+          "quantity": 16,
+          "unit": "each",
+          "recipeYield": 16,
+          "unitPrice": 0.9,
+          "priceSourceMrn": "7936",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111010",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.9
+        },
+        {
+          "ingredientMrn": "7776",
+          "ingredientName": "Cheese, Mozzarella, Log, Pre-Sliced, .6 oz, Galbani, Fresh",
+          "quantity": 12,
+          "unit": "ounce",
+          "recipeYield": 16,
+          "unitPrice": 0.32,
+          "priceSourceMrn": "7776",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111006",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.24
+        },
+        {
+          "ingredientMrn": "1648",
+          "ingredientName": "Cheese, Parmesan, Pre-Shredded, Fancy, Jvm Sales",
+          "quantity": 1,
+          "unit": "tbsp",
+          "recipeYield": 16,
+          "unitPrice": 0.06,
+          "priceSourceMrn": "1648",
+          "priceSourceUnit": "tbsp",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111006",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.0037
+        },
+        {
+          "ingredientMrn": "1713",
+          "ingredientName": "Chicken, Breast, Boneless, Skinless, 4 oz, Tyson, Raw",
+          "quantity": 16,
+          "unit": "each",
+          "recipeYield": 16,
+          "unitPrice": 1.1517,
+          "priceSourceMrn": "1713",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Ingredient Snapshot residual price (3 source recipes).",
+          "glCode": "4111003",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 1.1517
+        },
+        {
+          "ingredientMrn": "3762",
+          "ingredientName": "Lettuce, Leaf, Individual Leaf, Fresh",
+          "quantity": 16,
+          "unit": "each",
+          "recipeYield": 16,
+          "unitPrice": 0.08,
+          "priceSourceMrn": "3762",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111012",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.08
+        },
+        {
+          "ingredientMrn": "7552",
+          "ingredientName": "Tomatoes, Fresh, Each Slice, 1/4\"",
+          "quantity": 32,
+          "unit": "each",
+          "recipeYield": 16,
+          "unitPrice": 0.06,
+          "priceSourceMrn": "16479",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Canonical normalized ingredient-form price reference.",
+          "glCode": "4111005",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.12
+        }
+      ],
+      "unpricedComponents": [
+        {
+          "ingredientMrn": "7952",
+          "ingredientName": "Pan Coating, Canola, Grill and Sautee, Pam",
+          "quantity": 32,
+          "unit": "spray (1 sec/spray)",
+          "recipeYield": 16,
+          "glCode": "4111005",
+          "residualAttributionEligible": true,
+          "allocationPerPortion": null
+        },
+        {
+          "ingredientMrn": "7389",
+          "ingredientName": "Spice, Pepper, Black, Cracked",
+          "quantity": 2,
+          "unit": "tsp",
+          "recipeYield": 16,
+          "glCode": "4111005",
+          "residualAttributionEligible": true,
+          "allocationPerPortion": null
+        }
+      ]
     },
     "165741.11": {
       "recipeName": "EUR: Kachumbar Salad",
@@ -61749,6 +62857,89 @@
         }
       ]
     },
+    "85656.3": {
+      "recipeName": "EUR: Southwest Pickled Grilled Chicken Wrap",
+      "components": [
+        {
+          "ingredientMrn": "1253",
+          "ingredientName": "Carrots, Fresh, Grated",
+          "quantity": 0.5,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "unitPrice": 0.1187,
+          "priceSourceMrn": "1314",
+          "priceSourceUnit": "pound",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Carrots, Baby, Whole, Fresh).",
+          "glCode": "4111005",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.0594
+        },
+        {
+          "ingredientMrn": "1662",
+          "ingredientName": "Cheese, Monterey Jack, Cheddar, Pre-Shred, Feather",
+          "quantity": 1,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "unitPrice": 0.22,
+          "priceSourceMrn": "1675",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Cheese, Pepper Jack, Sliced).",
+          "glCode": "4111006",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.22
+        },
+        {
+          "ingredientMrn": "15490",
+          "ingredientName": "Tomatoes, Roma, Fresh, Small Diced, 1/4\"",
+          "quantity": 0.5,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "unitPrice": 0.105,
+          "priceSourceMrn": "7548",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Tomatoes, Julienne Sliced, Fresh).",
+          "glCode": "4111012",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.0525
+        },
+        {
+          "ingredientMrn": "36899",
+          "ingredientName": "Tortilla Wrap, Flour, Whole Wheat, 12'', Ole Mexican",
+          "quantity": 1,
+          "unit": "each",
+          "recipeYield": 1,
+          "unitPrice": 0.49,
+          "priceSourceMrn": "36899",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111010",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.49
+        }
+      ],
+      "unpricedComponents": [
+        {
+          "ingredientMrn": "53304",
+          "ingredientName": "Cabbage, Red, Fresh, Shredded",
+          "quantity": 0.5,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "glCode": "4111012",
+          "residualAttributionEligible": true,
+          "allocationPerPortion": null
+        },
+        {
+          "ingredientMrn": "3753",
+          "ingredientName": "Lettuce, Salad Mix, Spring (Mesclun)",
+          "quantity": 0.5,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "glCode": "4111012",
+          "residualAttributionEligible": true,
+          "allocationPerPortion": null
+        }
+      ]
+    },
     "78200.3": {
       "recipeName": "EURNA: Louie Salad Base (without protein)",
       "components": [
@@ -64827,6 +66018,124 @@
           "allocationPerPortion": null
         }
       ]
+    },
+    "37001.21": {
+      "recipeName": "AMZ: Turkey Apple Brie Sandwich on Baguette",
+      "components": [
+        {
+          "ingredientMrn": "53299",
+          "ingredientName": "Apples, Granny Smith, 88 Count, Fresh",
+          "quantity": 2,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "unitPrice": 0.0916,
+          "priceSourceMrn": "53299",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Ingredient Snapshot residual price (2 source recipes).",
+          "glCode": "4111012",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.1832
+        },
+        {
+          "ingredientMrn": "7774",
+          "ingredientName": "Cheese, Brie, President",
+          "quantity": 0.5,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "unitPrice": 0.38,
+          "priceSourceMrn": "7774",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111006",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.19
+        },
+        {
+          "ingredientMrn": "3190",
+          "ingredientName": "Honey, Bulk",
+          "quantity": 0.5,
+          "unit": "tsp",
+          "recipeYield": 1,
+          "unitPrice": 0.0667,
+          "priceSourceMrn": "3190",
+          "priceSourceUnit": "tbsp",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111005",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.0333
+        },
+        {
+          "ingredientMrn": "3533",
+          "ingredientName": "Juice, Lemon, Bulk",
+          "quantity": 0.5,
+          "unit": "tsp",
+          "recipeYield": 1,
+          "unitPrice": 0.09,
+          "priceSourceMrn": "3533",
+          "priceSourceUnit": "tsp",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111012",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.045
+        },
+        {
+          "ingredientMrn": "3762",
+          "ingredientName": "Lettuce, Leaf, Individual Leaf, Fresh",
+          "quantity": 1,
+          "unit": "each",
+          "recipeYield": 1,
+          "unitPrice": 0.08,
+          "priceSourceMrn": "3762",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111012",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.08
+        },
+        {
+          "ingredientMrn": "222540",
+          "ingredientName": "Mustard, Dijon, Grey Poupon",
+          "quantity": 0.5,
+          "unit": "tsp",
+          "recipeYield": 1,
+          "unitPrice": 0.06,
+          "priceSourceMrn": "222540",
+          "priceSourceUnit": "tsp",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111005",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.03
+        },
+        {
+          "ingredientMrn": "174386",
+          "ingredientName": "Roll, Demi Baguette, 4 oz, Tribeca Oven",
+          "quantity": 1,
+          "unit": "each",
+          "recipeYield": 1,
+          "unitPrice": 0.81,
+          "priceSourceMrn": "174386",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111010",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.81
+        },
+        {
+          "ingredientMrn": "54287",
+          "ingredientName": "Turkey, Breast, Deli, Smoked, Butterball",
+          "quantity": 4,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "unitPrice": 0.29,
+          "priceSourceMrn": "7606",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Turkey, Breast, Smoked, Deli, Sliced, Paper Thin).",
+          "glCode": "4111003",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 1.16
+        }
+      ],
+      "unpricedComponents": []
     },
     "2394.1": {
       "recipeName": "EUR: Turkey Ham & Swiss Monte Cristo",
@@ -78751,6 +80060,155 @@
         }
       ]
     },
+    "37394.7": {
+      "recipeName": "RA Banh Mi Ham Sandwich",
+      "components": [
+        {
+          "ingredientMrn": "1001",
+          "ingredientName": "Bread, French, Loaf, 17 oz, Frozen, LaBrea",
+          "quantity": 0.25,
+          "unit": "each",
+          "recipeYield": 1,
+          "unitPrice": 0.205,
+          "priceSourceMrn": "2831",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (French Toast Sticks, .88 oz, Frozen).",
+          "glCode": "4111010",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.0512
+        },
+        {
+          "ingredientMrn": "1276",
+          "ingredientName": "Carrots, Pre-Shredded, Fresh",
+          "quantity": 0.25,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "unitPrice": 0.1187,
+          "priceSourceMrn": "1314",
+          "priceSourceUnit": "pound",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Carrots, Baby, Whole, Fresh).",
+          "glCode": "4111005",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.0297
+        },
+        {
+          "ingredientMrn": "1781",
+          "ingredientName": "Cilantro, Fresh, Chopped",
+          "quantity": 2,
+          "unit": "tbsp",
+          "recipeYield": 1,
+          "unitPrice": 0.03,
+          "priceSourceMrn": "1755",
+          "priceSourceUnit": "tbsp",
+          "priceSourceNote": "Canonical normalized ingredient-form price reference.",
+          "glCode": "4111012",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.06
+        },
+        {
+          "ingredientMrn": "4208",
+          "ingredientName": "Oil, Canola, 100%, Gem",
+          "quantity": 1,
+          "unit": "tsp",
+          "recipeYield": 1,
+          "unitPrice": 8.36,
+          "priceSourceMrn": "4208",
+          "priceSourceUnit": "tsp",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111005",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 8.36
+        },
+        {
+          "ingredientMrn": "7703",
+          "ingredientName": "Peppers, Chili, Jalapeno, Fresh, Sliced",
+          "quantity": 0.25,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "unitPrice": 0.08,
+          "priceSourceMrn": "124710",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Peppers, Chili, Hatch Green, Chopped, Frozen).",
+          "glCode": "4111012",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.02
+        },
+        {
+          "ingredientMrn": "9159",
+          "ingredientName": "Pork, Ham, Boneless, Black Forest, Smithfield, Sliced, Thin",
+          "quantity": 3,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "unitPrice": 0.29,
+          "priceSourceMrn": "9159",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111003",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.87
+        },
+        {
+          "ingredientMrn": "7173",
+          "ingredientName": "Salami, Genoa, Magnifico, .5 oz, Sliced",
+          "quantity": 1,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "unitPrice": 0.41,
+          "priceSourceMrn": "7173",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111003",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.41
+        },
+        {
+          "ingredientMrn": "10615",
+          "ingredientName": "Sauce, Chili, Sweet Thai, American Roland",
+          "quantity": 1,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "unitPrice": 0.325,
+          "priceSourceMrn": "107150",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Sauce, Chili Garlic, Passport).",
+          "glCode": "4111005",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.325
+        }
+      ],
+      "unpricedComponents": [
+        {
+          "ingredientMrn": "1185",
+          "ingredientName": "Cabbage, Green, Fresh, Shredded",
+          "quantity": 1,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "glCode": "4111012",
+          "residualAttributionEligible": true,
+          "allocationPerPortion": null
+        },
+        {
+          "ingredientMrn": "1202",
+          "ingredientName": "Cabbage, Red, Pre-Shredded, Fresh",
+          "quantity": 0.25,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "glCode": "4111012",
+          "residualAttributionEligible": true,
+          "allocationPerPortion": null
+        },
+        {
+          "ingredientMrn": "15656",
+          "ingredientName": "Cucumbers, Seedless, Fresh",
+          "quantity": 1,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "glCode": "4111005",
+          "residualAttributionEligible": true,
+          "allocationPerPortion": null
+        }
+      ]
+    },
     "165741.13": {
       "recipeName": "EUR: Dakshin Kurma (Garbanzo Bean Cashew Curry)",
       "components": [
@@ -81526,6 +82984,89 @@
         }
       ]
     },
+    "134036.4": {
+      "recipeName": "RA Charred Eggplant, Shaved Parmesan, Arugula, Smoky Romesco on Rustic Ciabatta",
+      "components": [
+        {
+          "ingredientMrn": "126522",
+          "ingredientName": "Bun, Ciabatta, LaMarca, 4 oz",
+          "quantity": 19,
+          "unit": "each",
+          "recipeYield": 19,
+          "unitPrice": 0.94,
+          "priceSourceMrn": "1111",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Bun, Ciabatta, Sliced, 3.2 oz).",
+          "glCode": "4111010",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.94
+        },
+        {
+          "ingredientMrn": "33921",
+          "ingredientName": "Cheese, Parmesan, Shaved, Jvm Sales",
+          "quantity": 1.125,
+          "unit": "pound",
+          "recipeYield": 19,
+          "unitPrice": 4.42,
+          "priceSourceMrn": "122295",
+          "priceSourceUnit": "pound",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Soup, Parmesan Kale & Italian Sausage, Chef Francisco).",
+          "glCode": "4111006",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.2617
+        },
+        {
+          "ingredientMrn": "4208",
+          "ingredientName": "Oil, Canola, 100%, Gem",
+          "quantity": 0.3333333333333333,
+          "unit": "cup",
+          "recipeYield": 19,
+          "unitPrice": 401.28,
+          "priceSourceMrn": "4208",
+          "priceSourceUnit": "tsp",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111005",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 7.04
+        },
+        {
+          "ingredientMrn": "7411",
+          "ingredientName": "Salt, Kosher",
+          "quantity": 2,
+          "unit": "tbsp",
+          "recipeYield": 19,
+          "unitPrice": 0.24,
+          "priceSourceMrn": "96055",
+          "priceSourceUnit": "tsp",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Salt, Sea, Himalayan, Ground, Fine).",
+          "glCode": "4111005",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.0253
+        }
+      ],
+      "unpricedComponents": [
+        {
+          "ingredientMrn": "54681",
+          "ingredientName": "Eggplant, Fresh, Sliced, 1/2\"",
+          "quantity": 4.75,
+          "unit": "pound",
+          "recipeYield": 19,
+          "glCode": "4111012",
+          "residualAttributionEligible": true,
+          "allocationPerPortion": null
+        },
+        {
+          "ingredientMrn": "3771",
+          "ingredientName": "Lettuce, Arugula, Baby, Fresh",
+          "quantity": 2.375,
+          "unit": "ounce",
+          "recipeYield": 19,
+          "glCode": "4111012",
+          "residualAttributionEligible": true,
+          "allocationPerPortion": null
+        }
+      ]
+    },
     "39909.29": {
       "recipeName": "EURNA: Bacon, Egg and Cheese Breakfast Sandwich",
       "components": [
@@ -83063,6 +84604,159 @@
           "unit": "cup",
           "recipeYield": 20,
           "glCode": "4111005",
+          "residualAttributionEligible": true,
+          "allocationPerPortion": null
+        }
+      ]
+    },
+    "37154.1": {
+      "recipeName": "EUR: Roast Beef Florentine on Telera",
+      "components": [
+        {
+          "ingredientMrn": "466",
+          "ingredientName": "Basil, Fresh, Each Leaf",
+          "quantity": 12,
+          "unit": "each",
+          "recipeYield": 12,
+          "unitPrice": 0.01,
+          "priceSourceMrn": "466",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111012",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.01
+        },
+        {
+          "ingredientMrn": "1648",
+          "ingredientName": "Cheese, Parmesan, Pre-Shredded, Fancy, Jvm Sales",
+          "quantity": 4,
+          "unit": "tbsp",
+          "recipeYield": 12,
+          "unitPrice": 0.06,
+          "priceSourceMrn": "1648",
+          "priceSourceUnit": "tbsp",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111006",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.02
+        },
+        {
+          "ingredientMrn": "148538",
+          "ingredientName": "Cheese, Provolone, Pre-Sliced, .5 oz, Great Lakes",
+          "quantity": 12,
+          "unit": "slice",
+          "recipeYield": 12,
+          "unitPrice": 0.11,
+          "priceSourceMrn": "148538",
+          "priceSourceUnit": "slice",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111006",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.11
+        },
+        {
+          "ingredientMrn": "2892",
+          "ingredientName": "Garlic Cloves, Peeled, Fresh",
+          "quantity": 6,
+          "unit": "each",
+          "recipeYield": 12,
+          "unitPrice": 1.05,
+          "priceSourceMrn": "33731",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Bread, Naan, Garlic, 3 oz).",
+          "glCode": "4111012",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.525
+        },
+        {
+          "ingredientMrn": "71089",
+          "ingredientName": "Mayonnaise, Deluxe, Signature, Kraft, Bulk",
+          "quantity": 12,
+          "unit": "tbsp",
+          "recipeYield": 12,
+          "unitPrice": 0.09,
+          "priceSourceMrn": "71089",
+          "priceSourceUnit": "tbsp",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111005",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.09
+        },
+        {
+          "ingredientMrn": "169286",
+          "ingredientName": "Oil, Canola, 100%",
+          "quantity": 2,
+          "unit": "tbsp",
+          "recipeYield": 12,
+          "unitPrice": 0.055,
+          "priceSourceMrn": "169286",
+          "priceSourceUnit": "floz",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111005",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.0092
+        },
+        {
+          "ingredientMrn": "56431",
+          "ingredientName": "Peppers, Red, Roasted, Strips, American Roland, Canned, Drained",
+          "quantity": 12,
+          "unit": "ounce",
+          "recipeYield": 12,
+          "unitPrice": 0.34,
+          "priceSourceMrn": "76889",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Roasted Garlic).",
+          "glCode": "4111005",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.34
+        },
+        {
+          "ingredientMrn": "43229",
+          "ingredientName": "Roll, Telera, Sliced, 3 oz, La Brea",
+          "quantity": 12,
+          "unit": "each",
+          "recipeYield": 12,
+          "unitPrice": 0.51,
+          "priceSourceMrn": "43229",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111010",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.51
+        },
+        {
+          "ingredientMrn": "7411",
+          "ingredientName": "Salt, Kosher",
+          "quantity": 0.25,
+          "unit": "tsp",
+          "recipeYield": 12,
+          "unitPrice": 0.08,
+          "priceSourceMrn": "96055",
+          "priceSourceUnit": "tsp",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Salt, Sea, Himalayan, Ground, Fine).",
+          "glCode": "4111005",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.0017
+        }
+      ],
+      "unpricedComponents": [
+        {
+          "ingredientMrn": "7390",
+          "ingredientName": "Spice, Pepper, Black, Ground",
+          "quantity": 0.125,
+          "unit": "tsp",
+          "recipeYield": 12,
+          "glCode": "4111005",
+          "residualAttributionEligible": true,
+          "allocationPerPortion": null
+        },
+        {
+          "ingredientMrn": "8061",
+          "ingredientName": "Spinach, Baby, Fresh",
+          "quantity": 12,
+          "unit": "ounce",
+          "recipeYield": 12,
+          "glCode": "4111012",
           "residualAttributionEligible": true,
           "allocationPerPortion": null
         }
@@ -92408,6 +94102,65 @@
       ],
       "unpricedComponents": []
     },
+    "134362.37": {
+      "recipeName": "RA Roast Beef, Brie, Tomato, Cheese Sandwich",
+      "components": [
+        {
+          "ingredientMrn": "97049",
+          "ingredientName": "Beef, Roast Beef, Rare, USDA Choice, Deli, Capoff, Top Round, Natural Choice",
+          "quantity": 3.5,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "unitPrice": 0.68,
+          "priceSourceMrn": "97049",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111003",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 2.38
+        },
+        {
+          "ingredientMrn": "126610",
+          "ingredientName": "Bun, Brioche, LaMarca, 3 oz, La Marca",
+          "quantity": 1,
+          "unit": "each",
+          "recipeYield": 1,
+          "unitPrice": 0.49,
+          "priceSourceMrn": "126610",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Ingredient Snapshot residual price (2 source recipes).",
+          "glCode": "4111010",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.49
+        },
+        {
+          "ingredientMrn": "7774",
+          "ingredientName": "Cheese, Brie, President",
+          "quantity": 2,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "unitPrice": 0.38,
+          "priceSourceMrn": "7774",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111006",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.76
+        }
+      ],
+      "unpricedComponents": [
+        {
+          "ingredientMrn": "3763",
+          "ingredientName": "Lettuce, Leaf, Head, Fresh",
+          "quantity": 0.25,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "glCode": "4111012",
+          "residualAttributionEligible": true,
+          "allocationPerPortion": null
+        }
+      ]
+    },
     "34303.46": {
       "recipeName": "AMZ: Roast Beef & Cheddar Sandwich on White Bread",
       "components": [
@@ -94953,6 +96706,68 @@
         }
       ]
     },
+    "32415.12": {
+      "recipeName": "AMZ Vegetable Cuban Style Sandwich",
+      "components": [
+        {
+          "ingredientMrn": "151929",
+          "ingredientName": "Cheese, Swiss, Fancy, Loaf, Great Lakes",
+          "quantity": 2,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "unitPrice": 0.22,
+          "priceSourceMrn": "1694",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Canonical normalized ingredient-form price reference.",
+          "glCode": "4111006",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.44
+        },
+        {
+          "ingredientMrn": "4138",
+          "ingredientName": "Mustard, Yellow, French's",
+          "quantity": 2,
+          "unit": "tbsp",
+          "recipeYield": 1,
+          "unitPrice": 0.03,
+          "priceSourceMrn": "4138",
+          "priceSourceUnit": "tbsp",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111005",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.06
+        },
+        {
+          "ingredientMrn": "6968",
+          "ingredientName": "Pickles, Dill Hamburger Slices, Bay Valley",
+          "quantity": 4,
+          "unit": "each",
+          "recipeYield": 1,
+          "unitPrice": 0.025,
+          "priceSourceMrn": "6968",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111012",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.1
+        },
+        {
+          "ingredientMrn": "7131",
+          "ingredientName": "Roll, Hoagie, 6'', Sliced, 2.5 oz, Rotella",
+          "quantity": 1,
+          "unit": "each",
+          "recipeYield": 1,
+          "unitPrice": 0.47,
+          "priceSourceMrn": "7131",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111010",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.47
+        }
+      ],
+      "unpricedComponents": []
+    },
     "47957.10": {
       "recipeName": "Ingredient: Mustard, Yellow",
       "components": [
@@ -95704,6 +97519,96 @@
           "allocationPerPortion": null
         }
       ]
+    },
+    "63749.12": {
+      "recipeName": "AMZ: Philly Cheesesteak Sandwich",
+      "components": [
+        {
+          "ingredientMrn": "39910",
+          "ingredientName": "Beef, Steak, Philly, Sliced, 4 oz, Frozen",
+          "quantity": 3,
+          "unit": "pound",
+          "recipeYield": 12,
+          "unitPrice": 8,
+          "priceSourceMrn": "39910",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111003",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 2
+        },
+        {
+          "ingredientMrn": "148538",
+          "ingredientName": "Cheese, Provolone, Pre-Sliced, .5 oz, Great Lakes",
+          "quantity": 24,
+          "unit": "slice",
+          "recipeYield": 12,
+          "unitPrice": 0.11,
+          "priceSourceMrn": "148538",
+          "priceSourceUnit": "slice",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111006",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.22
+        },
+        {
+          "ingredientMrn": "169286",
+          "ingredientName": "Oil, Canola, 100%",
+          "quantity": 4,
+          "unit": "floz",
+          "recipeYield": 12,
+          "unitPrice": 0.11,
+          "priceSourceMrn": "169286",
+          "priceSourceUnit": "floz",
+          "priceSourceNote": "Canonical Ingredient: price reference.",
+          "glCode": "4111005",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.0367
+        },
+        {
+          "ingredientMrn": "7796",
+          "ingredientName": "Onions, Spanish, Fresh, Sliced, 1/4\"",
+          "quantity": 4,
+          "unit": "cup",
+          "recipeYield": 12,
+          "unitPrice": 0.32,
+          "priceSourceMrn": "4254",
+          "priceSourceUnit": "cup",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Onions, Red, Julienned, Fresh).",
+          "glCode": "4111012",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.1067
+        },
+        {
+          "ingredientMrn": "6267",
+          "ingredientName": "Peppers, Bell, Green, Fresh, Julienne Sliced",
+          "quantity": 4,
+          "unit": "cup",
+          "recipeYield": 12,
+          "unitPrice": 0.36,
+          "priceSourceMrn": "6518",
+          "priceSourceUnit": "cup",
+          "priceSourceNote": "Canonical normalized ingredient-form price reference.",
+          "glCode": "4111012",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.12
+        },
+        {
+          "ingredientMrn": "9155",
+          "ingredientName": "Roll, French, Crusty, 3 oz, Fresh",
+          "quantity": 12,
+          "unit": "each",
+          "recipeYield": 12,
+          "unitPrice": 0.66,
+          "priceSourceMrn": "120942",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Roll, French, Hero, 7\", Hudson Bread, 5.29 oz).",
+          "glCode": "4111010",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.66
+        }
+      ],
+      "unpricedComponents": []
     },
     "64908.6": {
       "recipeName": "AMZ: Southwest Burger",
@@ -99387,6 +101292,54 @@
           "glCode": "4111010",
           "isSubstitutePrice": false,
           "allocationPerPortion": 0.72
+        }
+      ],
+      "unpricedComponents": []
+    },
+    "18714.1": {
+      "recipeName": "EURNA: Italian Sausage and Peppers Hoagie",
+      "components": [
+        {
+          "ingredientMrn": "1672",
+          "ingredientName": "Cheese, Provolone, Loaf, Great Lakes, Julienne Sliced, 1 oz",
+          "quantity": 1.5,
+          "unit": "ounce",
+          "recipeYield": 1,
+          "unitPrice": 0.18,
+          "priceSourceMrn": "1673",
+          "priceSourceUnit": "ounce",
+          "priceSourceNote": "Canonical normalized ingredient-form price reference.",
+          "glCode": "4111006",
+          "isSubstitutePrice": false,
+          "allocationPerPortion": 0.27
+        },
+        {
+          "ingredientMrn": "76900",
+          "ingredientName": "Roll, Herb, 5 oz., Fresh",
+          "quantity": 1,
+          "unit": "each",
+          "recipeYield": 1,
+          "unitPrice": 0.47,
+          "priceSourceMrn": "21083",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Roll, Dinner, 1.5 oz).",
+          "glCode": "4111010",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 0.47
+        },
+        {
+          "ingredientMrn": "27855",
+          "ingredientName": "Sausage Link, Italian, Mild, 4:1, Fontanini, Frozen",
+          "quantity": 1,
+          "unit": "each",
+          "recipeYield": 1,
+          "unitPrice": 1.18,
+          "priceSourceMrn": "29125",
+          "priceSourceUnit": "each",
+          "priceSourceNote": "Substitute price used: closest Ingredient Snapshot name match (Italian Sausage Link, Hot, 4 oz).",
+          "glCode": "4111003",
+          "isSubstitutePrice": true,
+          "allocationPerPortion": 1.18
         }
       ],
       "unpricedComponents": []

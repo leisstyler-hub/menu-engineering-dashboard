@@ -1,97 +1,97 @@
 {
   "generatedFrom": "src/data/menuItems.json",
-  "totalItems": 1550,
-  "menuCount": 53,
-  "costedItems": 1493,
-  "complimentaryItems": 1069,
-  "priceRequiredItems": 481,
-  "pricedRequiredItems": 451,
+  "totalItems": 1591,
+  "menuCount": 54,
+  "costedItems": 1534,
+  "complimentaryItems": 1092,
+  "priceRequiredItems": 499,
+  "pricedRequiredItems": 469,
   "proteinPriceGaps": 24,
-  "allergenCoverage": 92,
+  "allergenCoverage": 93,
   "detailCoverage": 100,
   "costCoverage": 96,
   "priceCoverage": 94,
   "dietCounts": {
-    "Vegan": 471,
-    "Vegetarian": 449,
-    "Regular": 630
+    "Vegan": 472,
+    "Vegetarian": 457,
+    "Regular": 662
   },
   "categoryCounts": {
-    "entree": 860,
+    "entree": 901,
     "extension": 105,
     "side": 288,
     "subRecipe": 297
   },
   "recentItems": [
     {
-      "id": 1607,
-      "item": "Tuna Avocado Roll, Sesame",
-      "menu": "AMZ+RA: Sushi",
-      "station": "Sushi",
-      "price": null
+      "id": 1648,
+      "item": "Tuna Salad on Croissant, Dill Pickle Aioli",
+      "menu": "AMZ: Deli Core",
+      "station": "Curated Sandwiches",
+      "price": 9.9
     },
     {
-      "id": 1606,
-      "item": "Falafel Kale Salad",
-      "menu": "AMZ: Fresh Five",
-      "station": "Salad",
-      "price": 5
+      "id": 1647,
+      "item": "Roast Beef, Brie Sandwich",
+      "menu": "AMZ: Deli Core",
+      "station": "Curated Sandwiches",
+      "price": 9.9
     },
     {
-      "id": 1605,
-      "item": "Strawberry Farro Salad",
-      "menu": "AMZ: Fresh Five",
-      "station": "Salad",
-      "price": 5
+      "id": 1646,
+      "item": "Roast Beef Sandwich, Muenster, Horseradish Cream, Onion Roll",
+      "menu": "AMZ: Deli Core",
+      "station": "Curated Sandwiches",
+      "price": 9.9
     },
     {
-      "id": 1604,
-      "item": "Yam Barley Pecan Salad",
-      "menu": "AMZ: Fresh Five",
-      "station": "Hibernate",
-      "price": 5
+      "id": 1645,
+      "item": "Muffaletta",
+      "menu": "AMZ: Deli Core",
+      "station": "Regional Spotlights - Deli",
+      "price": 10.55
     },
     {
-      "id": 1603,
-      "item": "Quinoa and Roasted Beet Salad",
-      "menu": "AMZ: Fresh Five",
-      "station": "Hibernate",
-      "price": 2.55
+      "id": 1644,
+      "item": "Green California Crunch Sandwich",
+      "menu": "AMZ: Deli Core",
+      "station": "Curated Sandwiches",
+      "price": 8.95
     },
     {
-      "id": 1602,
-      "item": "Peanut Butter Jelly and Banana Sandwich",
-      "menu": "AMZ: Fresh Five",
-      "station": "Deli",
-      "price": 5
+      "id": 1643,
+      "item": "Chicken Artichoke Pesto Sandwich",
+      "menu": "AMZ: Deli Core",
+      "station": "Curated Sandwiches",
+      "price": 9.9
     },
     {
-      "id": 1601,
-      "item": "Mushroom Bacon Bean and Pea Salad",
-      "menu": "AMZ: Fresh Five",
-      "station": "Hibernate",
-      "price": 5
+      "id": 1642,
+      "item": "Charred Eggplant, Shaved Parmesan, Arugula, Smoky Romesco on Rustico Ciabatta",
+      "menu": "AMZ: Deli Core",
+      "station": "Curated Sandwiches",
+      "price": 8.95
     },
     {
-      "id": 1600,
-      "item": "Maple Tofu Barley Pecan Salad",
-      "menu": "AMZ: Fresh Five",
-      "station": "Hibernate",
-      "price": 5
+      "id": 1641,
+      "item": "Banh Mi Ham Sandwich",
+      "menu": "AMZ: Deli Core",
+      "station": "Regional Spotlights - Deli",
+      "price": 10.55
     },
     {
-      "id": 1599,
-      "item": "Edamame Cucumber Sandwich",
-      "menu": "AMZ: Fresh Five",
-      "station": "Deli",
-      "price": 5
+      "id": 1640,
+      "item": "Waldorf Chicken Salad Croissant",
+      "menu": "AMZ: Deli Core",
+      "station": "Curated Sandwiches",
+      "price": 9.9
     },
     {
-      "id": 1598,
-      "item": "Yakisoba Crunch Salad",
-      "menu": "AMZ: Fresh Five",
-      "station": "Salad",
-      "price": 5
+      "id": 1639,
+      "item": "the Reuben",
+      "menu": "AMZ: Deli Core",
+      "station": "Regional Spotlights - Deli",
+      "price": 9.9
     }
   ],
   "topMenus": [

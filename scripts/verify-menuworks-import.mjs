@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 
 const rows = JSON.parse(readFileSync("src/data/menuItems.json", "utf8"));
+const masterRows = rows.filter((row) => row.sourceDataVersion === "master-menus-2026-07-12");
 const rawArchivePath = "public/data/master-menus-raw-2026-07-12.json";
 
 function assert(condition, message) {
@@ -22,12 +23,11 @@ function assertNameMrn(name, expectedMrn) {
   assert(String(row.mrn) === expectedMrn, `Expected ${name} MRN ${expectedMrn}, found ${row.mrn}.`);
 }
 
-assert(rows.length === 1550, `Expected 1550 Master Menus rows after the July 12 import, found ${rows.length}.`);
+assert(masterRows.length === 1550, `Expected 1550 Master Menus rows after the July 12 import, found ${masterRows.length}.`);
 assert(rows.every((row) => /^AMZ(\+RA)?:/.test(String(row.menu || ""))), "Menu item data includes non-menu legal/footer rows.");
 assert(rows.every((row) => !String(row.mrn || "").includes("/")), "Recipe numbers were parsed as dates. CSV must be read in raw mode.");
 assert(rows.every((row) => !String(row.mrn || "").startsWith("'")), "Recipe numbers should not retain the MenuWorks leading apostrophe.");
-assert(rows.every((row) => row.sourceDataVersion === "master-menus-2026-07-12"), "Master Menus source version marker is missing or mixed.");
-assert(rows.every((row) => row.sourceFileName === "Master Menus 7-12-26.csv"), "Master Menus source file marker is missing.");
+assert(masterRows.every((row) => row.sourceFileName === "Master Menus 7-12-26.csv"), "Master Menus source file marker is missing.");
 
 assertNameMrn("Kachumbar Salad", "165741.11");
 assertNameMrn("Mango Sticky Rice", "182206.25");
