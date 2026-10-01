@@ -140,3 +140,54 @@ test("Cafe Tasting shows a submission report before starting a fresh tasting", a
   await expect(page.getByLabel("Dish Name")).toHaveValue("");
   await expect(page.getByText("One", { exact: true })).not.toHaveClass(/emerald/);
 });
+test("Cafe Tasting keeps a large phone photo below the serverless request limit", async ({ page }) => {
+  await prepareCafeTastingPage(page);
+  await page.route("**/api/smartsheet/records?dataset=cafe-tasting&diagnostic=columns", (route) => route.fulfill({ json: { ok: true, rawColumns: [
+    { title: "Station Name", options: ["Salad"] },
+    { title: "Taster", contactOptions: [{ email: "one@example.com", name: "One" }] },
+  ] } }));
+  await page.route("**/api/smartsheet/records?dataset=cafe-tasting-routing", (route) => route.fulfill({ json: { ok: true, records: [{ Cafe: "test cafe" }] } }));
+  await page.route("**/api/recipe-library?scope=summary", (route) => route.fulfill({ json: { menus: [{ menu: "AMZ: Greens & Grains" }] } }));
+  await page.route("**/api/recipe-library?scope=menu*", (route) => route.fulfill({ json: { rows: [] } }));
+  let uploadBody = "";
+  await page.route("**/api/smartsheet/records?dataset=cafe-tasting", async (route) => {
+    const body = route.request().postData() || "";
+    if (body.includes("uploadTastingPhoto")) {
+      uploadBody = body;
+      await route.fulfill({ status: 201, json: { ok: true, attachmentId: "attachment-123" } });
+      return;
+    }
+    await route.fulfill({ status: 201, json: { ok: true, rowId: "row-123" } });
+  });
+  await page.goto("/?tool=cafeTasting");
+  await page.getByLabel("Cafe Name").selectOption("test cafe");
+  await page.getByText("One", { exact: true }).click();
+  await page.getByLabel("Menu").selectOption("AMZ: Greens & Grains");
+  await page.getByLabel("Dish Name").fill("Large Photo Test");
+  const photo = await page.evaluate(async () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 1800;
+    canvas.height = 1800;
+    const context = canvas.getContext("2d");
+    const pixels = context.createImageData(canvas.width, canvas.height);
+    for (let index = 0; index < pixels.data.length; index += 4) {
+      const value = (index * 31 + Math.floor(index / 97)) % 256;
+      pixels.data[index] = value;
+      pixels.data[index + 1] = (value * 17) % 256;
+      pixels.data[index + 2] = (value * 47) % 256;
+      pixels.data[index + 3] = 255;
+    }
+    context.putImageData(pixels, 0, 0);
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+    return Array.from(new Uint8Array(await blob.arrayBuffer()));
+  });
+  await page.locator('input[type="file"][accept="image/*"]').setInputFiles({
+    name: "phone-photo.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(photo),
+  });
+  await page.getByRole("button", { name: "Submit Tasting" }).click();
+  await expect(page.getByRole("heading", { name: "Tasting submitted" })).toBeVisible();
+  expect(uploadBody.length).toBeLessThan(4_000_000);
+  expect(JSON.parse(uploadBody).dataBase64).toMatch(/^data:image\/jpeg;base64,/);
+});

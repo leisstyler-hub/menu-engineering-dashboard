@@ -163,6 +163,41 @@ function readFileAsDataUrl(file) {
   });
 }
 
+
+function loadPhoto(file) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    image.onload = () => { URL.revokeObjectURL(objectUrl); resolve(image); };
+    image.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error("Unable to prepare the selected photo.")); };
+    image.src = objectUrl;
+  });
+}
+
+function canvasToJpeg(canvas, quality) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("Unable to prepare the selected photo.")), "image/jpeg", quality);
+  });
+}
+
+async function preparePhotoUpload(file) {
+  const image = await loadPhoto(file);
+  const scale = Math.min(1, 1600 / Math.max(image.naturalWidth, image.naturalHeight));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+  canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+  canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
+  let quality = 0.82;
+  let dataUrl = "";
+  do {
+    dataUrl = await readFileAsDataUrl(await canvasToJpeg(canvas, quality));
+    quality -= 0.12;
+  } while (dataUrl.length > 3_500_000 && quality >= 0.46);
+  if (dataUrl.length > 3_500_000) throw new Error("The selected photo is too large to upload. Please choose a smaller photo.");
+  const baseName = file.name.replace(/\.[^.]+$/, "") || "photo";
+  return { dataUrl, fileName: `${baseName}.jpg` };
+}
+
 export default function CafeTastingForm({ onBackToPlatform }) {
   const [schema, setSchema] = useState(null);
   const [schemaError, setSchemaError] = useState("");
@@ -388,11 +423,11 @@ export default function CafeTastingForm({ onBackToPlatform }) {
       });
 
       if (photoFile && result.rowId) {
-        const dataUrl = await readFileAsDataUrl(photoFile);
+        const preparedPhoto = await preparePhotoUpload(photoFile);
         await fetchJson("/api/smartsheet/records?dataset=cafe-tasting", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "uploadTastingPhoto", rowId: result.rowId, fileName: photoFile.name, dataBase64: dataUrl }),
+          body: JSON.stringify({ action: "uploadTastingPhoto", rowId: result.rowId, fileName: preparedPhoto.fileName, dataBase64: preparedPhoto.dataUrl }),
         });
       }
 
