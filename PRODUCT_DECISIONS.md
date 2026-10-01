@@ -10,6 +10,12 @@ When a mission produces an approved product decision, Scribe adds an entry below
 
 ## Decisions
 
+### 2026-10-01 - East Global duplicate blocking is limited to the 108th tower group
+
+Tyler approved Jeremy's operational rule that East District cafes may reuse the same Global Menu when they are far enough apart. Duplicate blocking remains only within the 108th Avenue tower group: Bingo (SEA94), Grace (SEA104), and Sonic (SEA112). The existing East `AMZ: Balti` exemption remains in force, including within that tower group. All South and North duplicate behavior, station requirements, storage contracts, source authority, schemas, and production data remain unchanged. Requesting Admin / Approving Admin / Admin of Record / Release-Authorized Admin: Tyler. Operational request source: Jeremy Slagle, relayed by Tyler in the Culinary Tools Project thread.
+
+Rejected alternatives: disabling every East duplicate check, preserving district-wide East blocking, or inferring a broader duplicate-rule redesign.
+
 ### 2026-09-30 - AMZ: Deli Core menu source and initial production scope
 
 Alex approved `Deli Item Index For Real.csv` as the MenuWorks item, cost, portion, nutrition, ingredient, and allergen source for the new `AMZ: Deli Core` menu, with `SEA Standard Menu Template (1).xlsx` supplying the chef-facing item descriptions by exact MRN. Initial scope is restricted to `Curated Sandwiches` and `Regional Spotlights - Deli`; BYO ingredients, Deli Sides, blank/combined rows, and any item without authoritative Menu Item Cost are omitted. This produces 41 costed items: 27 Curated Sandwiches and 14 Regional Spotlights. MRNs `134362.15` and `141826` remain intentionally absent until authoritative costs are supplied. MRN `105146.3` uses the exact-MRN SSMT description from `CAFE EXPRESS` because the SSMT `DELI CORE` sheet has no matching row; the similar Deli Core concept with MRN `123937` is not substituted. Supabase `recipe_items` is the shared production source of truth, while the same source-controlled rows remain in the server fallback and generated Transfer Tool/ingredient-cost catalogs so Menu Library, Menu Audit, Cafe Tasting, Transfer Tool, and other Recipe Library consumers remain consistent. Requesting Admin / Admin of Record / Release-Authorized Admin: Alex Neuse.

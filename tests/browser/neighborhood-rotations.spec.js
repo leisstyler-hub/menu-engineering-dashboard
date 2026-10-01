@@ -9,7 +9,7 @@ const districts = {
   LAX: ["LAX22", "LAX35", "LAX75", "LAX78", "SNA3"],
 };
 
-const futureWeeks = ["Jul 13, 2026 - Jul 17, 2026", "Jul 20, 2026 - Jul 24, 2026"];
+const futureWeeks = ["Oct 5, 2026 - Oct 9, 2026", "Oct 12, 2026 - Oct 16, 2026"];
 const smokeMenuItems = [
   { menu: "AMZ: Breakfast", station: "Premium Mains", item: "Biscuits and Gravy", category: "entree", price: 9, trueCost: 1.0215 },
   { menu: "AMZ: Ohana", station: "Premium Mains", item: "Huli Huli Chicken", category: "entree", price: 11.75, trueCost: 3.45, calories: 410, enticingDescription: "Grilled island-style chicken.", allergens: "Soy" },
@@ -1430,7 +1430,7 @@ test("Grace Global shows a Wednesday-Tuesday cycle and save/reload recall keeps 
 
 test("East AMZ: Balti duplicate is exempt and does not block Astra from submitting alongside Bingo", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
-  const week = "Jul 13, 2026 - Jul 17, 2026";
+  const week = futureWeeks[0];
   const bingoParent = "rotation|balti-exempt|East|Bingo";
   const records = [
     rotationRecord({ id: bingoParent, type: "Rotation Header", cafe: "Bingo", week, district: "East", status: "Submitted" }),
@@ -1478,7 +1478,7 @@ test("East AMZ: Balti duplicate is exempt and does not block Astra from submitti
 
 test("North cafes may select the same Global Menu without a district duplicate blocker", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
-  const week = "Jul 20, 2026 - Jul 24, 2026";
+  const week = futureWeeks[1];
   const dawsonParent = "rotation|north-duplicate-allowed|North|Dawson";
   const records = [
     rotationRecord({ id: dawsonParent, type: "Rotation Header", cafe: "Dawson", week, district: "North", status: "Submitted" }),
@@ -1509,10 +1509,41 @@ test("North cafes may select the same Global Menu without a district duplicate b
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
-test("East non-Balti Global Menu duplicate still blocks submission (regression)", async ({ page }) => {
+test("East Global Menu duplicate outside the 108th tower group does not block Grace alongside Eclipse", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
-  const week = "Jul 20, 2026 - Jul 24, 2026";
-  const bingoParent = "rotation|non-balti-conflict|East|Bingo";
+  const week = futureWeeks[1];
+  const eclipseParent = "rotation|east-global-reuse|East|Eclipse";
+  const records = [
+    rotationRecord({ id: eclipseParent, type: "Rotation Header", cafe: "Eclipse", week, district: "East", status: "Submitted" }),
+    rotationRecord({ id: `${eclipseParent}|global-block`, parent: eclipseParent, type: "Global Block", cafe: "Eclipse", week, district: "East", stationKey: "global", menu: "AMZ: Ohana" }),
+    rotationRecord({ id: `${eclipseParent}|global-entree`, parent: eclipseParent, type: "Global Selection", cafe: "Eclipse", week, district: "East", stationKey: "global", selectionType: "Entrée", item: "Huli Huli Chicken", menu: "AMZ: Ohana" }),
+  ];
+  await stubEmptyRotationBackbone(page, { getStorageRecords: () => records });
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.locator("select").first().selectOption({ label: week });
+  await page.getByRole("button", { name: exactName("East") }).click();
+  await page.getByRole("button", { name: exactName("Grace") }).click();
+  await expect(page.getByRole("heading", { name: exactName("Grace") })).toBeVisible({ timeout: 20_000 });
+
+  const globalSection = page.getByRole("heading", { name: "Global Station" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await globalSection.locator("select").first().selectOption("AMZ: Ohana");
+  await globalSection.locator("select").nth(1).selectOption("Huli Huli Chicken");
+
+  const remote = page.getByLabel("Planner Remote Control");
+  await remote.getByRole("button", { name: "Expand", exact: true }).click();
+  const submitButton = remote.getByRole("button", { name: "Submit", exact: true });
+  await expect(submitButton).not.toHaveAttribute("title", /already selected|different Global Menu|duplicate/i);
+  await expect(page.getByText(/already selected by|choose a different global menu/i)).toHaveCount(0);
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("East 108th tower cafes still block the same non-Balti Global Menu", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const week = futureWeeks[1];
+  const bingoParent = "rotation|east-tower-conflict|East|Bingo";
   const records = [
     rotationRecord({ id: bingoParent, type: "Rotation Header", cafe: "Bingo", week, district: "East", status: "Submitted" }),
     rotationRecord({ id: `${bingoParent}|global-block`, parent: bingoParent, type: "Global Block", cafe: "Bingo", week, district: "East", stationKey: "global", menu: "AMZ: Ohana" }),
@@ -1523,14 +1554,12 @@ test("East non-Balti Global Menu duplicate still blocks submission (regression)"
   await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
   await page.locator("select").first().selectOption({ label: week });
   await page.getByRole("button", { name: exactName("East") }).click();
-  await page.getByRole("button", { name: exactName("Astra") }).click();
-  await expect(page.getByRole("heading", { name: exactName("Astra") })).toBeVisible({ timeout: 20_000 });
+  await page.getByRole("button", { name: exactName("Grace") }).click();
+  await expect(page.getByRole("heading", { name: exactName("Grace") })).toBeVisible({ timeout: 20_000 });
 
   const globalSection = page.getByRole("heading", { name: "Global Station" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
   await globalSection.locator("select").first().selectOption("AMZ: Ohana");
   await globalSection.locator("select").nth(1).selectOption("Huli Huli Chicken");
-  const freshFive = page.getByRole("heading", { name: "Fresh $5" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
-  await freshFive.locator("select").first().selectOption("Fresh 5 Black Bean Burger");
 
   const remote = page.getByLabel("Planner Remote Control");
   await remote.getByRole("button", { name: "Expand", exact: true }).click();

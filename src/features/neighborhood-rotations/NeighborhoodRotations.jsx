@@ -51,6 +51,13 @@ const MENU_CONFLICT_GROUPS = {
       cafes: ["Nitro", "Day 1", "Doppler"],
       note: "Nitro/Frontier, Day 1, and Doppler cannot run the same Global Menu. Re:Invent is an exception."
     }
+  ],
+  East: [
+    {
+      label: "East 108th tower rotation",
+      cafes: ["Bingo", "Grace", "Sonic"],
+      note: "Bingo (SEA94), Grace (SEA104), and Sonic (SEA112) cannot run the same Global Menu. Other East cafes may reuse it."
+    }
   ]
 };
 
