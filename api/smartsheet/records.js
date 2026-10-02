@@ -450,15 +450,6 @@ export default async function handler(req, res) {
         return res.status(400).json({ ok: false, message: "Cafe Tasting sheet is missing submitted columns", missingColumns });
       }
 
-      const cafeColumnId = tastingColumns.get("Cafe Name");
-      const dishColumnId = tastingColumns.get("Dish Name");
-      const duplicate = (tastingSheet.rows || []).some((row) =>
-        String(getCellValue(row, cafeColumnId)).trim().toLowerCase() === String(normalizedRecord["Cafe Name"]).trim().toLowerCase()
-        && String(getCellValue(row, dishColumnId)).trim().toLowerCase() === String(normalizedRecord["Dish Name"]).trim().toLowerCase());
-      if (duplicate) {
-        return res.status(409).json({ ok: false, message: "This Cafe Tasting test submission already exists" });
-      }
-
       const cells = Object.entries(normalizedRecord).map(([columnName, value]) =>
         tastingCell(tastingColumnDefinitions.get(columnName), value));
 
