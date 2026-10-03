@@ -23,6 +23,7 @@ test("home screen groups tools under Chef Tools and Programming & Auditing in th
       tools: [
         "Neighborhood Rotations",
         "Transfer Tool",
+        "Commissary Ordering Tool",
         "Menu Library",
         "Menu Engineering",
         "Menu Cross Utilization Tool",
@@ -31,7 +32,7 @@ test("home screen groups tools under Chef Tools and Programming & Auditing in th
     },
     {
       heading: "Programming & Auditing",
-      tools: ["SSMT", "Menu Projects", "Menu Audit Tool", "Lean Tool"],
+      tools: ["SSMT", "Menu Projects", "Menu Audit Tool", "Lean Tool", "Cafe Tasting Form"],
     },
   ]);
 
@@ -51,7 +52,8 @@ test("home screen groups tools under Chef Tools and Programming & Auditing in th
   expect(operationsTop).toBeGreaterThan(intelligenceTop);
 
   const semanticOrder = await page.evaluate(() => {
-    const lastTool = document.querySelectorAll("[data-tool-title]").item(9);
+    const tools = document.querySelectorAll("[data-tool-title]");
+    const lastTool = tools.item(tools.length - 1);
     const intelligence = document.querySelector('[data-testid="platform-intelligence"]');
     const operations = document.querySelector('[data-testid="operations-console"]');
     return {
@@ -79,7 +81,7 @@ test("mobile home uses a contained two-column compact grid with closed bottom ac
   await page.goto("/");
 
   const cards = page.locator(".mobile-tool-card");
-  await expect(cards).toHaveCount(10);
+  await expect(cards).toHaveCount(12);
   const first = await cards.nth(0).boundingBox();
   const second = await cards.nth(1).boundingBox();
   expect(Math.abs(first.y - second.y)).toBeLessThan(2);

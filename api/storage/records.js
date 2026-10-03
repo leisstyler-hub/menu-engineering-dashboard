@@ -6,6 +6,8 @@ import {
 } from "../../src/integrations/storage/backboneRecords.js";
 import { CAFE_UNITS } from "../../src/shared/cafeUnits.js";
 import { S4_GL_ACCOUNT_CODES } from "../../src/features/transfer-tool/s4GlAccounts.js";
+import { COMMISSARY_ORDER_ITEMS, COMMISSARY_RECEIVING_CAFES } from "../../src/features/commissary-ordering/commissaryCatalog.js";
+import { isWeekLocked } from "../../src/features/commissary-ordering/commissaryModel.js";
 import { gzipSync, gunzipSync } from "node:zlib";
 
 const DEFAULT_SUPABASE_URL = "https://pzilyzqhatthctgsjwtt.supabase.co";
@@ -79,6 +81,29 @@ function transferWriteValidation(records = [], context = {}) {
   if (!containsTransfer) return "";
   if (records.length !== 1 || getBackboneToolFromContext(context) !== "transfers") return "A single transfer record with transfer context is required.";
   return validateTransferRecord(records[0]);
+}
+
+const COMMISSARY_CAFES = new Set(COMMISSARY_RECEIVING_CAFES.map(({ name }) => name));
+const COMMISSARY_ITEM_IDS = new Set(COMMISSARY_ORDER_ITEMS.map(({ id }) => id));
+
+function commissaryWriteValidation(records = [], context = {}) {
+  if (getBackboneToolFromContext(context) !== "commissaryOrders") return "";
+  if (records.length !== 1) return "A single commissary cafe order is required.";
+  const record = records[0] || {};
+  if (record["Record Type"] !== "Commissary Order" || !COMMISSARY_CAFES.has(record.cafe)) return "The commissary cafe is invalid.";
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(record.weekStart || ""))) return "The commissary service week is invalid.";
+  const expectedId = `commissaryOrder|${record.cafe.toLowerCase()}|${record.weekStart}`;
+  if (record["Record ID"] !== expectedId) return "The commissary order identity is invalid.";
+  const quantities = record.quantities;
+  if (!quantities || typeof quantities !== "object" || Array.isArray(quantities)) return "Commissary delivery quantities are required.";
+  for (const [itemId, delivery] of Object.entries(quantities)) {
+    if (!COMMISSARY_ITEM_IDS.has(itemId)) return "The commissary order contains an unknown item.";
+    if (!delivery || [delivery.monday, delivery.wednesday].some((value) => !Number.isFinite(Number(value)) || Number(value) < 0)) {
+      return "Commissary quantities must be zero or positive numbers.";
+    }
+  }
+  if (isWeekLocked(record.weekStart, new Date())) return "This order is locked. Please contact commissary executive chef to adjust pars.";
+  return "";
 }
 
 function cleanUrl(value = "") {
@@ -317,7 +342,7 @@ async function loadRecords(req, res) {
   const params = {
     select: "record_id,updated_at,retain_until,record_payload",
     tool: `eq.${databaseTool}`,
-    record_id: tool === "ssmt" ? `eq.${SSMT_WORKSPACE_RECORD_ID}` : tool === "transfers" ? "like.transfer|*" : undefined,
+    record_id: tool === "ssmt" ? `eq.${SSMT_WORKSPACE_RECORD_ID}` : tool === "transfers" ? "like.transfer|*" : tool === "commissaryOrders" ? "like.commissaryOrder|*" : undefined,
     visible_in_dashboard: includeHidden ? undefined : "eq.true",
     order: "updated_at.desc",
   };
@@ -334,9 +359,12 @@ async function loadRecords(req, res) {
     if (tool === "transfers") {
       return String(record["Record Type"] || "") === "Transfer" && String(record["Record ID"] || "").startsWith("transfer|");
     }
+    if (tool === "commissaryOrders") {
+      return String(record["Record Type"] || "") === "Commissary Order" && String(record["Record ID"] || "").startsWith("commissaryOrder|");
+    }
     return true;
   });
-  const toolLabel = tool === "lean" ? "Lean" : tool === "menuProjects" ? "Menu Project" : tool === "ssmt" ? "SSMT" : "rotation";
+  const toolLabel = tool === "lean" ? "Lean" : tool === "menuProjects" ? "Menu Project" : tool === "ssmt" ? "SSMT" : tool === "commissaryOrders" ? "commissary order" : "rotation";
 
   return res.status(200).json({
     ok: true,
@@ -363,6 +391,8 @@ async function upsertRecords(req, res) {
 
   const transferValidationError = transferWriteValidation(records, context);
   if (transferValidationError) return res.status(400).json({ ok: false, message: transferValidationError });
+  const commissaryValidationError = commissaryWriteValidation(records, context);
+  if (commissaryValidationError) return res.status(400).json({ ok: false, message: commissaryValidationError });
   if (getBackboneToolFromContext(context) === "transfers") {
     const record = records[0];
     const existing = await supabaseFetch(`app_records?${queryString({ select: "record_id,record_payload", record_id: `eq.${record["Record ID"]}`, limit: "1" })}`);

@@ -10,6 +10,14 @@ When a mission produces an approved product decision, Scribe adds an entry below
 
 ## Decisions
 
+### 2026-10-03 - Draft Commissary Ordering Tool operating contract
+
+Alex approved a Draft Commissary Ordering Tool for Nessie and Cricket using the 41-item salad-bar costing workbook. A chef must select a cafe before seeing that cafe's order. Each service week has separate Monday delivery quantities for Monday-Wednesday service and Wednesday delivery quantities for Thursday-Friday service. Most items order by quart; source-noted dressing containers retain gallon, 5-liter, or 32-ounce units. Aleppo-Edamame uses MRN `176736`. The next eligible service week opens automatically and later weeks remain selectable. At 5:00 PM local Pacific time on the preceding Wednesday, the service week becomes read-only and directs changes to the commissary executive chef.
+
+After lock, the tool provides one combined initial prep BOM that rolls each item up for bulk production and retains per-cafe/per-delivery breakdowns. It also provides one exact-template S4 transfer workbook for each receiving cafe. The transfer covers Friday-Thursday, consolidates Monday and Wednesday quantities into one row per item, uses Commissary / SEA20 Cricket profit center `22472` as the fixed departing unit, and uses the selected cafe's existing receiving profit center. Because these are commissary-prepared finished items and no separate automatic ingredient mapping was approved, the existing `4111011 - Prepared Foods` fallback is applied to both S4 G/L fields while Item + Waste/container cost remains authoritative. Orders are shared Supabase records, not browser-local data. Requesting Admin / Approving Admin / Admin of Record / Release-Authorized Admin: Alex Neuse.
+
+Rejected alternatives: presenting both cafe rows simultaneously; flattening every source package to quarts; reopening a locked week from the browser; splitting Monday and Wednesday into separate S4 rows; changing the exact S4 template; or inventing ingredient-level BOM quantities not present in the approved source workbook.
+
 ### 2026-10-01 - East Global duplicate blocking is limited to the 108th tower group
 
 Tyler approved Jeremy's operational rule that East District cafes may reuse the same Global Menu when they are far enough apart. Duplicate blocking remains only within the 108th Avenue tower group: Bingo (SEA94), Grace (SEA104), and Sonic (SEA112). The existing East `AMZ: Balti` exemption remains in force, including within that tower group. All South and North duplicate behavior, station requirements, storage contracts, source authority, schemas, and production data remain unchanged. Requesting Admin / Approving Admin / Admin of Record / Release-Authorized Admin: Tyler. Operational request source: Jeremy Slagle, relayed by Tyler in the Culinary Tools Project thread.

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ArrowRight, ArrowRightLeft, BarChart3, BookOpen, CalendarRange, ChevronDown, Camera, ClipboardCheck, Database, FileSpreadsheet, FolderKanban, Home, ListChecks, PieChart, Settings, Shuffle, Smartphone, Sparkles, TrendingUp, Utensils, Wrench } from "lucide-react";
+import { ArrowRight, ArrowRightLeft, BarChart3, BookOpen, CalendarRange, ChevronDown, Camera, ClipboardCheck, Database, FileSpreadsheet, FolderKanban, Home, ListChecks, PackageCheck, PieChart, Settings, Shuffle, Smartphone, Sparkles, TrendingUp, Utensils, Wrench } from "lucide-react";
 
 import CHANGELOG_TEXT from "../../CHANGELOG.md?raw";
 import DASHBOARD_SUMMARY from "../data/dashboardSummary.json";
@@ -213,7 +213,7 @@ function downloadTrustLayerGapList(rows) {
   URL.revokeObjectURL(url);
 }
 
-export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodRotations, onOpenRecipeDatabase, onOpenMenuProjects, onOpenMenuAuditTool, onOpenSsmtTool, onOpenLeanTool, onOpenMenuCrossUtilization, onOpenTransferTool, onOpenCafeTasting, onOpenSmartsheetHealth }) {
+export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodRotations, onOpenRecipeDatabase, onOpenMenuProjects, onOpenMenuAuditTool, onOpenSsmtTool, onOpenLeanTool, onOpenMenuCrossUtilization, onOpenTransferTool, onOpenCommissaryOrdering, onOpenCafeTasting, onOpenSmartsheetHealth }) {
   const {
     totalItems,
     menuCount,
@@ -357,6 +357,16 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
       icon: ArrowRightLeft,
       tone: "violet",
       meta: "Transfer reference"
+    },
+    commissaryOrdering: {
+      title: "Commissary Ordering Tool",
+      eyebrow: "Draft",
+      description: "Order salad-bar production by cafe and delivery, then download locked prep BOM and S4 transfer workbooks.",
+      action: "Open Commissary Ordering",
+      onOpen: onOpenCommissaryOrdering,
+      icon: PackageCheck,
+      tone: "emerald",
+      meta: "Commissary pars"
     }
   };
   const toolSections = [
@@ -365,6 +375,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
       tools: [
         toolMap.neighborhoodRotations,
         toolMap.transferTool,
+        toolMap.commissaryOrdering,
         toolMap.menuLibrary,
         toolMap.menuEngineering,
         toolMap.menuCrossUtilization,

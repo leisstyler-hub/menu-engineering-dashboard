@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect, useState } from "react";
-import { ArrowRightLeft, BarChart3, BookOpen, CalendarRange, ClipboardCheck, FileSpreadsheet, FolderKanban, Home } from "lucide-react";
+import { ArrowRightLeft, BarChart3, BookOpen, CalendarRange, ClipboardCheck, FileSpreadsheet, FolderKanban, Home, PackageCheck } from "lucide-react";
 import LandingPage from "./LandingPage.jsx";
 import { addToolBreadcrumb, setActiveToolContext } from "../shared/monitoring/sentry.jsx";
 
@@ -41,6 +41,7 @@ const MenuCrossUtilizationTool = lazyWithStaleBundleReload(() => import("../feat
 const SsmtTool = lazyWithStaleBundleReload(() => import("../features/ssmt/SsmtTool.jsx"));
 const TransferTool = lazyWithStaleBundleReload(() => import("../features/transfer-tool/TransferTool.jsx"));
 const CafeTastingForm = lazyWithStaleBundleReload(() => import("../features/cafe-tasting/CafeTastingForm.jsx"));
+const CommissaryOrderingTool = lazyWithStaleBundleReload(() => import("../features/commissary-ordering/CommissaryOrderingTool.jsx"));
 
 export default function CulinaryToolsPlatformApp() {
   const [activeTool, setActiveTool] = useState(() => {
@@ -148,6 +149,17 @@ export default function CulinaryToolsPlatformApp() {
     );
   }
 
+  if (activeTool === "commissaryOrdering") {
+    return (
+      <>
+        <Suspense fallback={<ToolLoading title="Opening Commissary Ordering Tool" />}>
+          <CommissaryOrderingTool onBackToPlatform={() => setActiveTool("home")} onOpenSmartsheetHealth={openSmartsheetHealth} />
+        </Suspense>
+        <MobileToolNav activeTool={activeTool} setActiveTool={setActiveTool} />
+      </>
+    );
+  }
+
   if (activeTool === "ladleCompliance") {
     return (
       <>
@@ -202,6 +214,7 @@ export default function CulinaryToolsPlatformApp() {
       onOpenCafeTasting={() => setActiveTool("cafeTasting")}
       onOpenMenuCrossUtilization={() => setActiveTool("menuCrossUtilization")}
       onOpenTransferTool={() => setActiveTool("transferTool")}
+      onOpenCommissaryOrdering={() => setActiveTool("commissaryOrdering")}
       onOpenSmartsheetHealth={openSmartsheetHealth}
     />
   );
@@ -231,6 +244,7 @@ function MobileToolNav({ activeTool, setActiveTool }) {
     { key: "menuAuditTool", label: "Audit", icon: ClipboardCheck },
     { key: "neighborhoodRotations", label: "Rotations", icon: CalendarRange },
     { key: "transferTool", label: "Transfers", icon: ArrowRightLeft },
+    { key: "commissaryOrdering", label: "Commissary", icon: PackageCheck },
   ];
 
   return (

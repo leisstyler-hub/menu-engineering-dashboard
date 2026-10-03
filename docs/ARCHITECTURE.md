@@ -15,12 +15,14 @@ The app has three major feature areas:
 - `src/features/menu-engineering`
 - `src/features/neighborhood-rotations`
 - `src/features/ladle-compliance`
+- `src/features/commissary-ordering`
 
 Each feature now owns its current screen implementation:
 
 - `src/features/menu-engineering/MenuEngineeringDashboard.jsx`
 - `src/features/neighborhood-rotations/NeighborhoodRotations.jsx`
 - `src/features/ladle-compliance/LadleComplianceDashboard.jsx`
+- `src/features/commissary-ordering/CommissaryOrderingTool.jsx`
 
 Future behavior-preserving passes can split each feature internally into `components`, `calculations`, `constants`, and `data` modules.
 

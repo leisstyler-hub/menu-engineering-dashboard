@@ -1,0 +1,10 @@
+# Commissary Ordering Tool handoff
+
+The Draft Commissary Ordering Tool stores one shared Supabase order per receiving cafe and service week. Initial receiving cafes are Nessie and Cricket. Commissary (`SEA20 Cricket`, profit center `22472`) is the fixed departing unit.
+
+- Monday delivery covers Monday–Wednesday service; Wednesday delivery covers Thursday–Friday service.
+- The server and browser lock a service week at 5:00 PM `America/Los_Angeles` on the prior Wednesday.
+- Most items order by quart. Dressings retain the workbook's stated container unit: gallon by default, 5-liter container for Balsamic Vinegar, and 32-ounce bottle for Fat Free Italian.
+- Locked weeks expose a combined item-level prep BOM with per-cafe delivery breakdown and one exact-template S4 transfer workbook per cafe.
+- S4 exports consolidate both deliveries to one row per item, cover the Friday–Thursday accounting period, use the receiving cafe profit center, and apply the approved Prepared Foods G/L fallback (`4111011`).
+- Aleppo-Edamame uses MRN `176736` per the requesting admin.
