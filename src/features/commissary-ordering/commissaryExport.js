@@ -20,6 +20,30 @@ function downloadBytes(bytes, fileName, mimeType) {
 
 const moneyFormat = "$#,##0.00";
 
+function buildDeliveryMapWorksheet(records, delivery) {
+  const isMonday = delivery === "monday";
+  const rows = [
+    [`${isMonday ? "Monday" : "Wednesday"} Cafe Delivery Map`, "", "", "", "", "", ""],
+    [isMonday ? "Monday–Wednesday service" : "Thursday–Friday service", "", "", "", "", "", ""],
+    ["Cafe", "Item", "MRN", "Quantity", "Order unit", "Unit cost", "Extended cost"],
+    ...records.flatMap((record) => orderLinesForCafe(record)
+      .filter((line) => Number(line[delivery]) > 0)
+      .map((line) => [record.cafe, line.name, line.mrn, line[delivery], line.orderUnit, line.orderUnitCost, line[delivery] * line.orderUnitCost])),
+  ];
+  const worksheet = XLSX.utils.aoa_to_sheet(rows);
+  worksheet["!merges"] = [XLSX.utils.decode_range("A1:G1"), XLSX.utils.decode_range("A2:G2")];
+  worksheet["!cols"] = [18, 30, 14, 12, 20, 14, 16].map((wch) => ({ wch }));
+  worksheet["!freeze"] = { xSplit: 0, ySplit: 3, topLeftCell: "A4", activePane: "bottomLeft", state: "frozen" };
+  Object.keys(worksheet).filter((cell) => !cell.startsWith("!")).forEach((cell) => {
+    const decoded = XLSX.utils.decode_cell(cell);
+    worksheet[cell].s = decoded.r <= 2
+      ? { font: { bold: true, color: { rgb: decoded.r === 0 ? "FFFFFF" : "0F172A" } }, fill: { fgColor: { rgb: decoded.r === 0 ? "071125" : "E0F2FE" } }, alignment: { wrapText: true, vertical: "center" } }
+      : { alignment: { vertical: "top", wrapText: true } };
+    if (decoded.r > 2 && [5, 6].includes(decoded.c)) worksheet[cell].z = moneyFormat;
+  });
+  return worksheet;
+}
+
 export function buildCommissaryBomWorkbook(records, weekStart) {
   const rows = rolledUpItems(records);
   const worksheetRows = [
@@ -42,13 +66,6 @@ export function buildCommissaryBomWorkbook(records, weekStart) {
       row.total,
       row.total,
     ]),
-    [],
-    ["Per-unit delivery breakdown"],
-    ["Cafe", "Delivery", "Item", "MRN", "Quantity", "Order unit", "Unit cost", "Extended cost"],
-    ...records.flatMap((record) => orderLinesForCafe(record).flatMap((line) => [
-      [record.cafe, "Monday delivery (Mon–Wed service)", line.name, line.mrn, line.monday, line.orderUnit, line.orderUnitCost, line.monday * line.orderUnitCost],
-      [record.cafe, "Wednesday delivery (Thu–Fri service)", line.name, line.mrn, line.wednesday, line.orderUnit, line.orderUnitCost, line.wednesday * line.orderUnitCost],
-    ].filter((row) => row[4] > 0))),
   ];
   const worksheet = XLSX.utils.aoa_to_sheet(worksheetRows);
   worksheet["!merges"] = [XLSX.utils.decode_range("A1:F1"), XLSX.utils.decode_range("G1:I1"), XLSX.utils.decode_range("J1:N1"), XLSX.utils.decode_range("A2:N2")];
@@ -62,7 +79,9 @@ export function buildCommissaryBomWorkbook(records, weekStart) {
     if (row > 2 && [6, 7].includes(XLSX.utils.decode_cell(cell).c)) worksheet[cell].z = moneyFormat;
   });
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Ingredient Technique BOM");
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Consolidated Prep List");
+  XLSX.utils.book_append_sheet(workbook, buildDeliveryMapWorksheet(records, "monday"), "Monday Delivery Map");
+  XLSX.utils.book_append_sheet(workbook, buildDeliveryMapWorksheet(records, "wednesday"), "Wednesday Delivery Map");
   return workbook;
 }
 

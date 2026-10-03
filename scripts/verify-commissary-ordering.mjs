@@ -33,11 +33,14 @@ assert.equal(transfer.departingProfitCenter, "22472");
 assert.equal(transfer.transferDate, "2026-10-15");
 
 const bomWorkbook = buildCommissaryBomWorkbook([record], "2026-10-12");
-const bomSheet = bomWorkbook.Sheets["Ingredient Technique BOM"];
+assert.deepEqual(bomWorkbook.SheetNames, ["Consolidated Prep List", "Monday Delivery Map", "Wednesday Delivery Map"]);
+const bomSheet = bomWorkbook.Sheets["Consolidated Prep List"];
 const bomRows = XLSX.utils.sheet_to_json(bomSheet, { header: 1, defval: "" });
 assert.equal(bomRows[0][0], "Ingredient Technique BOM Tree");
-assert.ok(bomRows.some((row) => row[0] === "Per-unit delivery breakdown"));
-assert.ok(bomRows.some((row) => row[0] === "Nessie" && row[1].startsWith("Monday delivery") && row[2] === "Sliced Cucumber" && row[4] === 2));
+const mondayRows = XLSX.utils.sheet_to_json(bomWorkbook.Sheets["Monday Delivery Map"], { header: 1, defval: "" });
+const wednesdayRows = XLSX.utils.sheet_to_json(bomWorkbook.Sheets["Wednesday Delivery Map"], { header: 1, defval: "" });
+assert.ok(mondayRows.some((row) => row[0] === "Nessie" && row[1] === "Sliced Cucumber" && row[3] === 2));
+assert.ok(wednesdayRows.some((row) => row[0] === "Nessie" && row[1] === "Sliced Cucumber" && row[3] === 1));
 
 const templateBytes = await readFile(new URL("../public/templates/ExpenseTransfer_Between_PC_Template.xlsx", import.meta.url));
 const exportedBytes = await buildS4Workbook(templateBytes, transfer);
@@ -50,4 +53,4 @@ assert.ok(exportedRows.slice(1).every((row) => row[0] === "4111011" && row[1] ==
 const future = addDays("2026-10-12", 7);
 assert.equal(isWeekLocked(future, new Date("2026-10-08T00:01:00Z")), false);
 
-console.log("Commissary Ordering Tool verified: 41 items, Pacific cutoff, container units, Friday–Thursday S4 consolidation, and Prepared Foods fallback.");
+console.log("Commissary Ordering Tool verified: 41 items, Pacific cutoff, three-tab BOM, Friday–Thursday S4 consolidation, and Prepared Foods fallback.");

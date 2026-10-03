@@ -12,6 +12,9 @@ export const S4_EXPORT_VERSION = 1;
 export const S4_MAX_ROWS = 450;
 export const PREPARED_FOODS_GL_CODE = "4111011";
 export const PREPARED_FOODS_GL_LABEL = "Prepared Foods";
+const SOUP_PATTERN = /\bsoup\b/i;
+
+export const isSoupTransferItem = (item = {}) => SOUP_PATTERN.test(`${item.menu || ""} ${item.item || ""}`);
 
 export const trimToLength = (value = "", maxLength = 50) => String(value ?? "").normalize("NFKC").trim().slice(0, maxLength);
 
@@ -73,6 +76,47 @@ export function applyPreparedFoodsFallback(itemWasteCost, fallbackReason, glCode
     targetCost: fallback.allocationPerPortion,
     preparedFoodsFallback: true,
     fallbackReason,
+  };
+}
+
+export function applySoupPreparedFoodsAllocation(item = {}, itemWasteCost = item.itemWasteCost) {
+  const targetCost = Number(itemWasteCost);
+  if (!Number.isFinite(targetCost) || !(targetCost > 0)) return null;
+  const existing = Array.isArray(item.ingredientAllocations)
+    ? item.ingredientAllocations.find((allocation) => allocation?.isSoupPreparedFoodsDefault)
+    : null;
+  const overriddenGl = existing?.chefReviewedGlOverride && S4_GL_ACCOUNT_CODES.has(String(existing.glCode || ""))
+    ? String(existing.glCode)
+    : PREPARED_FOODS_GL_CODE;
+  const allocation = {
+    ingredientMrn: "soup-prepared-foods-default",
+    ingredientName: "Soup prepared-foods allocation",
+    quantity: 1,
+    unit: "portion",
+    recipeYield: 1,
+    unitPrice: targetCost,
+    glCode: overriddenGl,
+    automaticGlCode: PREPARED_FOODS_GL_CODE,
+    allocationPerPortion: targetCost,
+    isSoupPreparedFoodsDefault: true,
+    chefReviewedGlOverride: overriddenGl !== PREPARED_FOODS_GL_CODE,
+    priceSourceNote: `Soup items default to ${PREPARED_FOODS_GL_CODE} ${PREPARED_FOODS_GL_LABEL}.`,
+  };
+  return {
+    ingredientAllocations: [allocation],
+    unpricedComponents: [],
+    allocationPerPortion: targetCost,
+    mappedAllocationPerPortion: targetCost,
+    sourceMappedAllocationPerPortion: targetCost,
+    allocationScaleFactor: 1,
+    allocationWasScaled: false,
+    pricingComplete: true,
+    residualCost: 0,
+    residualGlCode: "",
+    itemCostResidualAttribution: 0,
+    allocationExceedsItemCost: false,
+    targetCost,
+    preparedFoodsFallback: false,
   };
 }
 
@@ -180,6 +224,10 @@ export function balanceIngredientAllocations({ components = [], unpricedComponen
 }
 
 export function normalizeTransferItemAllocations(item = {}, nextItemWasteCost = item.itemWasteCost) {
+  if (isSoupTransferItem(item)) {
+    const soupAllocation = applySoupPreparedFoodsAllocation(item, nextItemWasteCost);
+    return soupAllocation ? { ...item, itemWasteCost: nextItemWasteCost, ...soupAllocation, allocationStatus: "ready" } : { ...item, itemWasteCost: nextItemWasteCost };
+  }
   const allocations = Array.isArray(item.ingredientAllocations) ? item.ingredientAllocations : [];
   if (!allocations.length) return { ...item, itemWasteCost: nextItemWasteCost };
   const existingFallback = allocations.find((allocation) => allocation?.isPreparedFoodsFallback || allocation?.isResidualCostBalance);

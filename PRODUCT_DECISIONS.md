@@ -10,6 +10,12 @@ When a mission produces an approved product decision, Scribe adds an entry below
 
 ## Decisions
 
+### 2026-10-03 - Transfer G/L overrides and active-order commissary BOM
+
+Alex approved three linked operator controls. First, every Transfer Tool catalog item identified as soup by its menu or item name defaults its full authoritative Item + Waste Cost to one `4111011 — Prepared Foods` allocation instead of exporting ingredient-level mappings. Second, every automatic, fallback, residual, and soup G/L allocation row exposes the same approved S4 G/L dropdown after the chef expands the compact mapping; an override changes only the selected row's classification, preserves the row amount, and cannot change or exceed Item + Waste Cost. Saved-transfer batch staging supports the same temporary G/L overrides without modifying the saved record. Third, the Commissary Ordering Tool exposes a consolidated BOM from the active order screen. It combines current on-screen quantities for the selected cafe—including unsaved edits—with saved same-week orders from other cafes and exports one workbook with a consolidated prep-list tab, a Monday cafe-delivery map, and a Wednesday cafe-delivery map. Requesting Admin / Approving Admin / Admin of Record / Release-Authorized Admin: Alex Neuse.
+
+Rejected alternatives: retaining ingredient-level soup allocations by default; limiting chef overrides to Prepared Foods fallback rows; allowing an override to alter cost; requiring the active order to be saved or locked before generating the BOM; or combining Monday and Wednesday cafe mapping into one mixed delivery table.
+
 ### 2026-10-03 - Draft Commissary Ordering Tool operating contract
 
 Alex approved a Draft Commissary Ordering Tool for Nessie and Cricket using the 41-item salad-bar costing workbook. A chef must select a cafe before seeing that cafe's order. Each service week has separate Monday delivery quantities for Monday-Wednesday service and Wednesday delivery quantities for Thursday-Friday service. Most items order by quart; source-noted dressing containers retain gallon, 5-liter, or 32-ounce units. Aleppo-Edamame uses MRN `176736`. The next eligible service week opens automatically and later weeks remain selectable. At 5:00 PM local Pacific time on the preceding Wednesday, the service week becomes read-only and directs changes to the commissary executive chef.

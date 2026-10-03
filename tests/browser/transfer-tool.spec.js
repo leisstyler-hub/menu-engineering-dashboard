@@ -21,6 +21,7 @@ async function mockTransferStorage(page, { huliComponents = allocations, huliUnp
   await page.route("**/api/recipe-library?scope=all", (route) => route.fulfill({ json: { ok: true, source: "test-live-menu-library", rows: [
     { menu: "AMZ: Ohana", item: "Huli Huli Chicken", mrn: "33065.1", portion: "1 piece", trueCost: huliCost },
     { menu: "AMZ: Lotus", item: "Blistered Green Beans", mrn: "176734", portion: "4 ounce", trueCost: 0.752 },
+    { menu: "AMZ: Cafe Express Soup", item: "Baked Stuffed Potato Soup", mrn: "3505", portion: "12 floz", trueCost: 2.065 },
   ] } }));
   await page.route("**/api/transfer-breakdown?mrn=*", (route) => {
     const mrn = new URL(route.request().url()).searchParams.get("mrn");
@@ -48,25 +49,29 @@ test("Transfer Tool expands a selected item into automatic ingredient G/L rows a
   const allocationDetails = page.locator("details").filter({ hasText: "Automatic ingredient G/L allocation" }).last();
   await allocationDetails.locator("summary").click();
   await expect(page.getByText("Chicken Thigh").last()).toBeVisible();
-  await expect(page.getByText("4111003").last()).toBeVisible();
+  const proteinGl = page.getByLabel("G/L for Huli Huli Chicken row 1").last();
+  await expect(proteinGl).toHaveValue("4111003");
+  await proteinGl.selectOption("4111004");
+  await expect(allocationDetails.getByTestId("gl-allocation-row").first()).toHaveClass(/bg-emerald-50/);
   await page.getByLabel("Item count 1", { exact: true }).fill("2");
   await page.getByLabel("Event ID").fill("EVENT-42");
   await expect(page.getByTestId("transfer-total")).toHaveText("$5.00");
   await page.getByRole("button", { name: "Save Draft" }).click();
-  expect(writes[0].records[0].items[0]).toMatchObject({ allocationPerPortion: 2.5, ingredientAllocations: allocations, quantity: 2 });
+  expect(writes[0].records[0].items[0]).toMatchObject({ allocationPerPortion: 2.5, quantity: 2 });
+  expect(writes[0].records[0].items[0].ingredientAllocations[0]).toMatchObject({ glCode: "4111004", automaticGlCode: "4111003", chefReviewedGlOverride: true, allocationPerPortion: 1.5 });
   expect(writes[0].records[0].items[0]).not.toHaveProperty("fromGlAccount");
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "Export S4 Excel" }).click();
   const workbook = XLSX.readFile(await (await downloadPromise).path());
   const rows = XLSX.utils.sheet_to_json(workbook.Sheets.Template, { header: 1 });
   expect(rows.slice(1, 3)).toEqual([
-    ["4111003", "30159", "4111003", "Huli Huli Chicken Chicken Th - QA Dawson to Nessie", 3, "EVENT-42"],
+    ["4111004", "30159", "4111004", "Huli Huli Chicken Chicken Th - QA Dawson to Nessie", 3, "EVENT-42"],
     ["4111005", "30159", "4111005", "Huli Huli Chicken Soy Sauce - QA Dawson to Nessie", 2, "EVENT-42"],
   ]);
   await expectNoAppProtection(page); expectNoUnexpectedPageErrors(pageErrors);
 });
 
-test("Transfer Tool automatically balances positive residual cost and allows only its fallback G/L to change", async ({ page }) => {
+test("Transfer Tool automatically balances positive residual cost and allows every mapped G/L to change", async ({ page }) => {
   const huliComponents = [{ ingredientMrn: "substitute", ingredientName: "Arugula", quantity: 1, unit: "ounce", recipeYield: 1, unitPrice: 2.2, glCode: "4111012", allocationPerPortion: 2.2, isSubstitutePrice: true, priceSourceMrn: "source-arugula", priceSourceNote: "Substitute price used: closest Ingredient Snapshot name match (Arugula)." }];
   const huliUnpricedComponents = [{ ingredientMrn: "missing", ingredientName: "Chef sauce", quantity: 1, unit: "ounce", recipeYield: 1, glCode: "4111011", allocationPerPortion: null }];
   const writes = await mockTransferStorage(page, { huliComponents, huliUnpricedComponents, huliCost: 2.5 });
@@ -83,9 +88,9 @@ test("Transfer Tool automatically balances positive residual cost and allows onl
   await expect(page.getByTestId("transfer-total")).toHaveText("$2.50");
   const allocationRows = allocationDetails.getByTestId("gl-allocation-row");
   await expect(allocationRows).toHaveCount(2);
-  await expect(allocationRows.nth(0).locator("select")).toHaveCount(0);
+  await expect(allocationRows.nth(0).locator("select")).toHaveValue("4111012");
   await expect(allocationRows.nth(1)).toHaveClass(/bg-emerald-50/);
-  const fallbackGl = page.getByLabel("Fallback G/L for Huli Huli Chicken row 2").last();
+  const fallbackGl = page.getByLabel("G/L for Huli Huli Chicken row 2").last();
   await expect(fallbackGl).toHaveValue("4111011");
   await fallbackGl.selectOption("4111004");
   await page.getByRole("button", { name: "Save Draft" }).click();
@@ -149,7 +154,7 @@ test("Transfer Tool exports an unmapped item through the approved Prepared Foods
   await fallbackDetails.locator("summary").click();
   await expect(fallbackDetails).toContainText("4111011");
   await expect(fallbackDetails.getByTestId("gl-allocation-row")).toHaveClass(/bg-emerald-50/);
-  const fallbackGl = page.getByLabel("Fallback G/L for Blistered Green Beans row 1").last();
+  const fallbackGl = page.getByLabel("G/L for Blistered Green Beans row 1").last();
   await expect(fallbackGl).toHaveValue("4111011");
   await fallbackGl.selectOption("4111005");
   await page.getByLabel("Globally unique title").fill("Prepared Foods fallback"); await page.getByLabel("Departing unit").selectOption("Dawson"); await page.getByLabel("Receiving unit").selectOption("Nessie");
@@ -172,6 +177,21 @@ test("Transfer Tool does not use the Prepared Foods fallback during a mapping-se
   await page.getByRole("button", { name: "Save Draft" }).click();
   await expect(page.getByText(/needs a priced ingredient allocation/i)).toBeVisible();
   expect(writes).toHaveLength(0);
+});
+
+test("Transfer Tool maps every soup to Prepared Foods while allowing a chef override", async ({ page }) => {
+  const writes = await mockTransferStorage(page); await openTool(page, /open transfer tool/i, /^Transfer Tool$/);
+  await page.getByLabel("Menu 1", { exact: true }).selectOption("AMZ: Cafe Express Soup");
+  await page.getByLabel("Item 1", { exact: true }).selectOption({ label: "Baked Stuffed Potato Soup · 3505 · 12 floz" });
+  const soupDetails = page.locator("details").filter({ hasText: "Prepared Foods soup allocation" }).last();
+  await expect(soupDetails.locator("summary")).toContainText("Prepared Foods default");
+  await soupDetails.locator("summary").click();
+  const soupGl = page.getByLabel("G/L for Baked Stuffed Potato Soup row 1").last();
+  await expect(soupGl).toHaveValue("4111011");
+  await soupGl.selectOption("4111005");
+  await page.getByLabel("Globally unique title").fill("Soup G/L override"); await page.getByLabel("Departing unit").selectOption("Dawson"); await page.getByLabel("Receiving unit").selectOption("Nessie");
+  await page.getByRole("button", { name: "Save Draft" }).click();
+  expect(writes[0].records[0].items[0].ingredientAllocations).toEqual([expect.objectContaining({ isSoupPreparedFoodsDefault: true, automaticGlCode: "4111011", glCode: "4111005", chefReviewedGlOverride: true, allocationPerPortion: 2.065 })]);
 });
 
 test("Transfer Tool retains the current cafe profit-center mappings", async ({ page }) => {

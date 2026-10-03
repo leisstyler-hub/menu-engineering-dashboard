@@ -6,7 +6,7 @@ import CATALOG from "../src/data/transferToolCatalog.json" with { type: "json" }
 import INGREDIENT_COSTING_LOOKUP from "../api/data/ingredientCosting91926.json" with { type: "json" };
 import { buildS4Rows, buildS4Workbook, S4_TEMPLATE_SHA256 } from "../src/features/transfer-tool/transferExport.js";
 import { cafeProfitCenter } from "../src/features/transfer-tool/cafeProfitCenters.js";
-import { applyPreparedFoodsFallback, balanceIngredientAllocations, defaultTransferDescription, normalizeTransferItemAllocations, normalizeTransferTitle, PREPARED_FOODS_GL_CODE, refreshCopiedItems, S4_EXPORT_VERSION, transferRecordId, transferTotal, validateS4Transfer, validateTransfer } from "../src/features/transfer-tool/transferModel.js";
+import { applyPreparedFoodsFallback, applySoupPreparedFoodsAllocation, balanceIngredientAllocations, defaultTransferDescription, isSoupTransferItem, normalizeTransferItemAllocations, normalizeTransferTitle, PREPARED_FOODS_GL_CODE, refreshCopiedItems, S4_EXPORT_VERSION, transferRecordId, transferTotal, validateS4Transfer, validateTransfer } from "../src/features/transfer-tool/transferModel.js";
 import { CAFE_UNITS } from "../src/shared/cafeUnits.js";
 
 const root = process.cwd();
@@ -144,6 +144,12 @@ if (!preparedFoodsFallback?.pricingComplete || preparedFoodsFallback.ingredientA
 if (applyPreparedFoodsFallback(0, "Missing Item + Waste") || applyPreparedFoodsFallback(null, "Missing Item + Waste")) {
   fail("Prepared Foods fallback must never invent a missing or zero Item + Waste Cost");
 }
+const soupItem = CATALOG.items.find((item) => item.menu === "AMZ: Cafe Express Soup" && item.item === "Baked Stuffed Potato Soup");
+if (!soupItem || !isSoupTransferItem(soupItem)) fail("Cafe Express soup was not classified as soup");
+const soupAllocation = applySoupPreparedFoodsAllocation(soupItem);
+if (soupAllocation?.ingredientAllocations?.length !== 1 || soupAllocation.ingredientAllocations[0].glCode !== PREPARED_FOODS_GL_CODE || soupAllocation.allocationPerPortion !== soupItem.itemWasteCost) {
+  fail("soup Item + Waste Cost did not default completely to Prepared Foods");
+}
 const refreshedFallback = normalizeTransferItemAllocations({
   catalogId: "fallback",
   itemWasteCost: 2.45,
@@ -207,7 +213,7 @@ const storage = read("src/features/transfer-tool/transferStorage.js");
 const component = read("src/features/transfer-tool/TransferTool.jsx");
 for (const marker of ["createTransfer", "deleteTransfer", "Titles must be globally unique", "like.transfer|*"]) if (!api.includes(marker)) fail(`API is missing ${marker}`);
 for (const marker of ["createTransfer", "deleteTransfer", "tool: \"transfers\"", "/api/recipe-library?scope=all", "row.trueCost", "TRANSFER_MAPPING_NOT_FOUND", "TRANSFER_MAPPING_UNAVAILABLE"]) if (!storage.includes(marker)) fail(`storage client is missing ${marker}`);
-for (const marker of ["Ingredient Costing 9.19.26", "Automatic ingredient G/L allocation", "Scaled to Item + Waste Cost", "Item-cost cap applied", "Substitute price used", "Item + Waste / portion", "Fallback G/L for", "Export S4 Excel", "Batch export staging", "Include in batch export", "Delete saved transfer", "DRAFT"]) if (!component.includes(marker)) fail(`UI is missing ${marker}`);
+for (const marker of ["Ingredient Costing 9.19.26", "Automatic ingredient G/L allocation", "Prepared Foods soup allocation", "Scaled to Item + Waste Cost", "Item-cost cap applied", "Substitute price used", "Item + Waste / portion", "G/L for", "Export S4 Excel", "Batch export staging", "Include in batch export", "Delete saved transfer", "DRAFT"]) if (!component.includes(marker)) fail(`UI is missing ${marker}`);
 for (const marker of ["Prepared Foods G/L fallback", "Approved Prepared Foods fallback", "4111011 Prepared Foods"]) if (!component.includes(marker)) fail(`UI is missing ${marker}`);
 for (const removedMarker of ["G/L Breakdown", "Prepared Foods cost balance"]) if (component.includes(removedMarker)) fail(`UI still contains retired automatic balance UI ${removedMarker}`);
 

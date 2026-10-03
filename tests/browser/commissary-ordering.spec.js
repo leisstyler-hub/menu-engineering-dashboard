@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import XLSX from "xlsx";
 
 import { addDays, buildOrderRecord, emptyQuantities, firstOpenWeek } from "../../src/features/commissary-ordering/commissaryModel.js";
 import { COMMISSARY_ORDER_ITEMS } from "../../src/features/commissary-ordering/commissaryCatalog.js";
@@ -25,6 +26,7 @@ test("Commissary Ordering Tool requires cafe selection and saves separate delive
   await expect(page.getByRole("button", { name: /generate transfer/i })).toBeDisabled();
   await page.getByLabel("Monday delivery Sliced Cucumber quantity").fill("2");
   await page.getByLabel("Wednesday delivery Sliced Cucumber quantity").fill("1");
+  const cucumber = COMMISSARY_ORDER_ITEMS.find((row) => row.name === "Sliced Cucumber");
   const saveButton = page.getByRole("button", { name: /save shared order/i });
   const generateButton = page.getByRole("button", { name: /generate transfer/i });
   await expect(generateButton).toBeEnabled();
@@ -32,11 +34,18 @@ test("Commissary Ordering Tool requires cafe selection and saves separate delive
   const transferDownload = page.waitForEvent("download");
   await generateButton.click();
   expect((await transferDownload).suggestedFilename()).toMatch(/Commissary Salad Bar Nessie.*Expense Transfer\.xlsx/);
+  const bomDownload = page.waitForEvent("download");
+  await page.getByRole("button", { name: /generate consolidated bom/i }).click();
+  const bomWorkbook = XLSX.readFile(await (await bomDownload).path());
+  expect(bomWorkbook.SheetNames).toEqual(["Consolidated Prep List", "Monday Delivery Map", "Wednesday Delivery Map"]);
+  const mondayRows = XLSX.utils.sheet_to_json(bomWorkbook.Sheets["Monday Delivery Map"], { header: 1, defval: "" });
+  const wednesdayRows = XLSX.utils.sheet_to_json(bomWorkbook.Sheets["Wednesday Delivery Map"], { header: 1, defval: "" });
+  expect(mondayRows).toContainEqual(expect.arrayContaining(["Nessie", "Sliced Cucumber", cucumber.mrn, 2]));
+  expect(wednesdayRows).toContainEqual(expect.arrayContaining(["Nessie", "Sliced Cucumber", cucumber.mrn, 1]));
   await saveButton.click();
   await expect(page.getByText(/Nessie's order.*was saved/i)).toBeVisible();
   expect(writes).toHaveLength(1);
   expect(writes[0].context.tool).toBe("commissaryOrders");
-  const cucumber = COMMISSARY_ORDER_ITEMS.find((row) => row.name === "Sliced Cucumber");
   expect(writes[0].records[0].quantities[cucumber.id]).toEqual({ monday: 2, wednesday: 1 });
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
