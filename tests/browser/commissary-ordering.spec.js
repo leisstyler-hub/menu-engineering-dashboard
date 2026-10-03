@@ -36,8 +36,10 @@ test("Commissary Ordering Tool requires cafe selection and saves separate delive
   expect((await transferDownload).suggestedFilename()).toMatch(/Commissary Salad Bar Nessie.*Expense Transfer\.xlsx/);
   const bomDownload = page.waitForEvent("download");
   await page.getByRole("button", { name: /generate consolidated bom/i }).click();
-  const bomWorkbook = XLSX.readFile(await (await bomDownload).path());
+  const bomWorkbook = XLSX.readFile(await (await bomDownload).path(), { cellStyles: true });
   expect(bomWorkbook.SheetNames).toEqual(["Consolidated Prep List", "Monday Delivery Map", "Wednesday Delivery Map"]);
+  expect(bomWorkbook.Sheets["Consolidated Prep List"].A1.s.fgColor.rgb).toBe("17365D");
+  expect(bomWorkbook.Sheets["Monday Delivery Map"].A4.s.fgColor.rgb).toBe("D9EAF7");
   const mondayRows = XLSX.utils.sheet_to_json(bomWorkbook.Sheets["Monday Delivery Map"], { header: 1, defval: "" });
   const wednesdayRows = XLSX.utils.sheet_to_json(bomWorkbook.Sheets["Wednesday Delivery Map"], { header: 1, defval: "" });
   expect(mondayRows).toContainEqual(expect.arrayContaining(["Nessie", "Sliced Cucumber", cucumber.mrn, 2]));

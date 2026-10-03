@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import JSZip from "jszip";
 import * as XLSX from "xlsx";
+import BOM_XLSX from "xlsx-js-style";
 
 import { buildS4Rows, buildS4Workbook } from "../src/features/transfer-tool/transferExport.js";
 import { COMMISSARY_ORDER_ITEMS } from "../src/features/commissary-ordering/commissaryCatalog.js";
@@ -37,10 +39,28 @@ assert.deepEqual(bomWorkbook.SheetNames, ["Consolidated Prep List", "Monday Deli
 const bomSheet = bomWorkbook.Sheets["Consolidated Prep List"];
 const bomRows = XLSX.utils.sheet_to_json(bomSheet, { header: 1, defval: "" });
 assert.equal(bomRows[0][0], "Ingredient Technique BOM Tree");
+assert.equal(bomSheet.A1.s.fill.fgColor.rgb, "17365D", "BOM title should use the approved navy template band.");
+assert.equal(bomSheet.A3.s.font.color.rgb, "FFFFFF", "BOM column headers should use white text.");
+assert.equal(bomSheet.A4.s.fill.fgColor.rgb, "D9EAF7", "The first item in a category should use the blue section-row treatment.");
+assert.equal(bomSheet.A4.s.border.top.style, "medium", "Category starts should have a stronger top border.");
+assert.equal(bomSheet.N4.s.border.bottom.style, "thin", "Every generated BOM cell should retain formatted borders.");
+assert.equal(bomSheet["!autofilter"].ref, `A3:N${bomRows.length}`);
 const mondayRows = XLSX.utils.sheet_to_json(bomWorkbook.Sheets["Monday Delivery Map"], { header: 1, defval: "" });
 const wednesdayRows = XLSX.utils.sheet_to_json(bomWorkbook.Sheets["Wednesday Delivery Map"], { header: 1, defval: "" });
 assert.ok(mondayRows.some((row) => row[0] === "Nessie" && row[1] === "Sliced Cucumber" && row[3] === 2));
 assert.ok(wednesdayRows.some((row) => row[0] === "Nessie" && row[1] === "Sliced Cucumber" && row[3] === 1));
+const mondaySheet = bomWorkbook.Sheets["Monday Delivery Map"];
+assert.equal(mondaySheet.A1.s.fill.fgColor.rgb, "17365D");
+assert.equal(mondaySheet.A3.s.border.right.color.rgb, "FFFFFF", "Delivery headers should use the template's white border grid.");
+assert.equal(mondaySheet.A4.s.fill.fgColor.rgb, "D9EAF7", "The first cafe row should be visually grouped.");
+assert.equal(mondaySheet.G4.z, "$#,##0.00");
+const styledBomBytes = BOM_XLSX.write(bomWorkbook, { type: "array", bookType: "xlsx", cellStyles: true });
+const roundTripBom = BOM_XLSX.read(styledBomBytes, { type: "array", cellStyles: true });
+assert.equal(roundTripBom.Sheets["Consolidated Prep List"].A1.s.fgColor.rgb, "17365D", "The downloadable workbook must retain the title fill after serialization.");
+const bomArchive = await JSZip.loadAsync(styledBomBytes);
+const bomStyles = await bomArchive.file("xl/styles.xml").async("string");
+assert.match(bomStyles, /fgColor rgb="FF17365D"/, "The serialized workbook should contain the approved navy fill.");
+assert.match(bomStyles, /top style="medium"><color rgb="5B9BD5"/, "Cafe and category grouping borders must survive the download path.");
 
 const templateBytes = await readFile(new URL("../public/templates/ExpenseTransfer_Between_PC_Template.xlsx", import.meta.url));
 const exportedBytes = await buildS4Workbook(templateBytes, transfer);
