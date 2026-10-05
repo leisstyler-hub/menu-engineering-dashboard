@@ -1167,6 +1167,25 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
     setSsmtData((current) => ({ ...current, plannedPriceBook: null }));
     setPricingPlanMode(false);
   };
+  const restoreArchivedPriceBook = (archive) => {
+    const replacingPlan = Boolean(ssmtData.plannedPriceBook);
+    const warning = replacingPlan
+      ? "Replace the current planned price set with this archived table? You will still need to choose and confirm a new effective date."
+      : "Use this archived table as a new planned price set? You will still need to choose and confirm a new effective date.";
+    if (!window.confirm(warning)) return;
+    setSsmtData((current) => ({
+      ...current,
+      plannedPriceBook: {
+        effectiveDate: "",
+        createdAt: new Date().toISOString(),
+        sourceArchiveId: archive.id,
+        sourceArchiveEffectiveFrom: archive.effectiveFrom,
+        priceBook: clonePriceBook(archive.priceBook),
+      },
+    }));
+    setPricingPlanMode(true);
+    setShowPriceArchives(false);
+  };
   const updatePricingRow = (priceId, patch) => {
     setSsmtData((current) => ({
       ...current,
@@ -1847,15 +1866,20 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
         {activeView === "pricing" && (
           <main className="space-y-5">
             {plannedPricingNotice && <section data-testid="ssmt-pricing-warning" className="rounded-lg border-2 border-amber-400 bg-amber-50 p-4 text-base font-black text-amber-950">{plannedPricingNotice}</section>}
-            <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="flex flex-wrap items-center gap-2">
-                <button type="button" onClick={startPricingPlan} className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-black text-white">Planning New Price Increase</button>
-                {ssmtData.plannedPriceBook && <button type="button" onClick={() => setPricingPlanMode((current) => !current)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-black">{pricingPlanMode ? "View Active Prices" : "Edit Planned Prices"}</button>}
-                <button type="button" onClick={() => setShowPriceArchives((current) => !current)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-black">Price Table Archive ({ssmtData.priceBookArchives?.length || 0})</button>
-                {ssmtData.plannedPriceBook && <button type="button" onClick={deletePricingPlan} className="rounded-lg border border-rose-300 bg-rose-50 px-4 py-2 text-sm font-black text-rose-800">Delete Planned Price Set</button>}
+            <section data-testid="ssmt-price-increase-panel" className="rounded-xl border-2 border-emerald-300 bg-gradient-to-br from-emerald-50 via-white to-sky-50 p-6 shadow-md">
+              <div className="max-w-4xl">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-700">SSMT Price Increase Center</p>
+                <h2 className="mt-2 text-3xl font-black text-slate-950">Plan, launch, and safely roll back pricing</h2>
+                <p className="mt-3 text-base font-semibold leading-7 text-slate-700">Create and schedule a complete replacement price table without changing today&apos;s prices. The plan copies every active price, marks edits green, warns teams before launch, activates across SSMT on the confirmed date, and archives the outgoing table. If pricing needs to be reversed, select an archived table to create a guarded rollback plan and choose a new effective date.</p>
               </div>
-              {pricingPlanMode && ssmtData.plannedPriceBook && <div className="mt-4 rounded-lg border border-emerald-300 bg-emerald-50 p-4"><p className="font-black text-emerald-950">Editing planned prices. Green cells changed; gray cells still match active pricing.</p><label className="mt-3 grid max-w-xs gap-1 text-sm font-black">Effective date<input aria-label="Planned pricing effective date" type="date" min={localDateKey()} value={ssmtData.plannedPriceBook.effectiveDate || ""} onChange={(event) => setPlannedEffectiveDate(event.target.value)} className="rounded-lg border border-emerald-400 bg-white px-3 py-2" /></label></div>}
-              {showPriceArchives && <div data-testid="ssmt-price-archives" className="mt-4 space-y-2 rounded-lg border border-slate-300 bg-slate-50 p-4"><h3 className="text-lg font-black">Price Table Archive</h3>{(ssmtData.priceBookArchives || []).length === 0 ? <p className="text-sm font-bold text-slate-600">No prior price tables have gone out of effect yet.</p> : ssmtData.priceBookArchives.map((archive) => <details key={archive.id} className="rounded border border-slate-200 bg-white p-3"><summary className="cursor-pointer font-black">Effective {archive.effectiveFrom} through {archive.effectiveTo} � {archive.priceBook.length} rows</summary><p className="mt-2 text-sm font-semibold text-slate-600">Read-only historical price table retained for audit.</p></details>)}</div>}
+              <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                <button type="button" onClick={startPricingPlan} className="min-h-20 rounded-xl bg-emerald-700 px-6 py-4 text-left text-lg font-black text-white shadow-sm hover:bg-emerald-800">Planning New Price Increase<span className="mt-1 block text-sm font-bold text-emerald-100">Copy active pricing into a scheduled plan</span></button>
+                {ssmtData.plannedPriceBook && <button type="button" onClick={() => setPricingPlanMode((current) => !current)} className="min-h-20 rounded-xl border-2 border-sky-300 bg-sky-50 px-6 py-4 text-left text-lg font-black text-sky-950 hover:bg-sky-100">{pricingPlanMode ? "View Active Prices" : "Edit Planned Prices"}<span className="mt-1 block text-sm font-bold text-sky-700">Switch views without changing either table</span></button>}
+                <button type="button" onClick={() => setShowPriceArchives((current) => !current)} className="min-h-20 rounded-xl border-2 border-slate-300 bg-white px-6 py-4 text-left text-lg font-black text-slate-950 hover:bg-slate-50">Price Table Archive ({ssmtData.priceBookArchives?.length || 0})<span className="mt-1 block text-sm font-bold text-slate-600">Review history or plan a rollback</span></button>
+                {ssmtData.plannedPriceBook && <button type="button" onClick={deletePricingPlan} className="min-h-20 rounded-xl border-2 border-rose-300 bg-rose-50 px-6 py-4 text-left text-lg font-black text-rose-900 hover:bg-rose-100">Delete Planned Price Set<span className="mt-1 block text-sm font-bold text-rose-700">Keep current active pricing unchanged</span></button>}
+              </div>
+              {pricingPlanMode && ssmtData.plannedPriceBook && <div className="mt-5 rounded-xl border-2 border-emerald-300 bg-emerald-50 p-5"><p className="text-lg font-black text-emerald-950">Editing planned prices. Green cells changed; gray cells still match active pricing.</p>{ssmtData.plannedPriceBook.sourceArchiveId && <p className="mt-1 font-bold text-emerald-800">Rollback plan copied from the table that began {ssmtData.plannedPriceBook.sourceArchiveEffectiveFrom}.</p>}<label className="mt-4 grid max-w-sm gap-2 text-base font-black">Effective date<input aria-label="Planned pricing effective date" type="date" min={localDateKey()} value={ssmtData.plannedPriceBook.effectiveDate || ""} onChange={(event) => setPlannedEffectiveDate(event.target.value)} className="rounded-lg border-2 border-emerald-400 bg-white px-4 py-3 text-lg" /></label></div>}
+              {showPriceArchives && <div data-testid="ssmt-price-archives" className="mt-5 space-y-3 rounded-xl border-2 border-slate-300 bg-slate-50 p-5"><h3 className="text-2xl font-black">Price Table Archive</h3><p className="font-semibold text-slate-700">Archived tables remain read-only. Planning a rollback copies the selected table into a new scheduled plan; it never overwrites active prices immediately.</p>{(ssmtData.priceBookArchives || []).length === 0 ? <p className="text-sm font-bold text-slate-600">No prior price tables have gone out of effect yet.</p> : ssmtData.priceBookArchives.map((archive) => <details key={archive.id} className="rounded-lg border border-slate-200 bg-white p-4"><summary className="cursor-pointer text-base font-black">Effective {archive.effectiveFrom} through {archive.effectiveTo} · {archive.priceBook.length} rows</summary><p className="mt-3 text-sm font-semibold text-slate-600">Read-only historical price table retained for audit.</p><button type="button" onClick={() => restoreArchivedPriceBook(archive)} className="mt-3 rounded-lg border-2 border-amber-400 bg-amber-50 px-4 py-2 font-black text-amber-950 hover:bg-amber-100">Plan rollback to this price table</button></details>)}</div>}
             </section>
             <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">

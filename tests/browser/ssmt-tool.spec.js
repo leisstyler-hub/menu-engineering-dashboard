@@ -46,6 +46,8 @@ test("SSMT opens behind passcode and separates pricing from menu building", asyn
   await plannedSeaPrice.fill("19.99");
   await expect(plannedSeaPrice).toHaveClass(/bg-emerald-100/);
   await expect(page.getByTestId("ssmt-pricing-warning")).toContainText(/2099-12-31/);
+  await expect(page.getByTestId("ssmt-price-increase-panel")).toContainText(/schedule a complete replacement price table/i);
+  await expect(page.getByRole("button", { name: /Planning New Price Increase/i })).toHaveClass(/text-lg/);
   await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
   await expect(page.getByRole("heading", { name: /^Menu Selector$/ })).toBeVisible();
   await expect(page.getByText(/Loading current SSMT seed data/i)).toHaveCount(0, { timeout: 20_000 });
