@@ -39,6 +39,13 @@ test("SSMT opens behind passcode and separates pricing from menu building", asyn
   await expect(page.getByLabel(/Tier 1 price for .*Smoke test price/)).toHaveValue("10.00");
   await expect(page.getByLabel(/Tier 2 price for .*Smoke test price/)).toHaveValue("12.00");
 
+  await page.getByRole("button", { name: /Planning New Price Increase/i }).click();
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByLabel(/Planned pricing effective date/i).fill("2099-12-31");
+  const plannedSeaPrice = page.getByLabel(/^SEA price for /).first();
+  await plannedSeaPrice.fill("19.99");
+  await expect(plannedSeaPrice).toHaveClass(/bg-emerald-100/);
+  await expect(page.getByTestId("ssmt-pricing-warning")).toContainText(/2099-12-31/);
   await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
   await expect(page.getByRole("heading", { name: /^Menu Selector$/ })).toBeVisible();
   await expect(page.getByText(/Loading current SSMT seed data/i)).toHaveCount(0, { timeout: 20_000 });

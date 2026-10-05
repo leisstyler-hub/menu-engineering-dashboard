@@ -341,6 +341,40 @@ function workspaceSharedSignature(workspace = {}) {
   });
 }
 
+function clonePriceBook(priceBook = []) {
+  return priceBook.map((price) => ({ ...price, areas: { ...(price.areas || {}) } }));
+}
+
+function localDateKey(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function pricingCountdown(effectiveDate) {
+  const today = new Date(`${localDateKey()}T00:00:00`);
+  const launch = new Date(`${effectiveDate}T00:00:00`);
+  const days = Math.max(0, Math.ceil((launch - today) / 86400000));
+  return days === 0 ? "activates today" : `${days} day${days === 1 ? "" : "s"} until launch`;
+}
+
+function activateDuePricing(workspace = {}, today = localDateKey()) {
+  const plan = workspace.plannedPriceBook;
+  if (!plan?.effectiveDate || plan.effectiveDate > today || !Array.isArray(plan.priceBook)) return workspace;
+  return {
+    ...workspace,
+    priceBook: clonePriceBook(plan.priceBook),
+    priceBookEffectiveFrom: plan.effectiveDate,
+    plannedPriceBook: null,
+    priceBookArchives: [...(workspace.priceBookArchives || []), {
+      id: `price-archive-${Date.now()}`,
+      effectiveFrom: workspace.priceBookEffectiveFrom || "Original SSMT pricing",
+      effectiveTo: plan.effectiveDate,
+      priceBook: clonePriceBook(workspace.priceBook),
+    }],
+  };
+}
 function menuKey(menu = {}) {
   return String(menu.name || menu.id || "").trim().replace(/^amz:\s*/i, "").toLowerCase();
 }
@@ -690,6 +724,8 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const [newPriceCategory, setNewPriceCategory] = useState("");
   const [newPriceSea, setNewPriceSea] = useState("");
   const [newPriceModifierOnly, setNewPriceModifierOnly] = useState(false);
+  const [pricingPlanMode, setPricingPlanMode] = useState(false);
+  const [showPriceArchives, setShowPriceArchives] = useState(false);
   const [showHiddenMenus, setShowHiddenMenus] = useState(false);
   const [modifierDialog, setModifierDialog] = useState(null);
   const [flagDialog, setFlagDialog] = useState(null);
@@ -724,6 +760,9 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const buildWorkspaceSnapshot = (overrides = {}) => ({
     menus,
     priceBook: ssmtData.priceBook,
+    priceBookEffectiveFrom: ssmtData.priceBookEffectiveFrom || "",
+    plannedPriceBook: ssmtData.plannedPriceBook || null,
+    priceBookArchives: ssmtData.priceBookArchives || [],
     modifierGroups: ssmtData.modifierGroups,
     modifierClipboardSlots,
     selectedMenuId,
@@ -791,7 +830,9 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
             message: `${error.message || "Shared SSMT workspace unavailable."} Using this browser's saved SSMT cache.`,
           });
         }
-        const workspace = sharedWorkspace || stored || {};
+        const rawWorkspace = sharedWorkspace || stored || {};
+        const workspace = activateDuePricing(rawWorkspace);
+        const pricingActivated = Boolean(rawWorkspace.plannedPriceBook && !workspace.plannedPriceBook);
         const storedMenus = Array.isArray(workspace.menus) && workspace.menus.length
           ? mergeWorkspaceMenusWithSeed(workspace.menus, payload.menus, { applySeedTypes: !workspace.seedMenuTypeCorrectionsApplied })
           : payload.menus;
@@ -803,6 +844,9 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
         lastSharedSaveSignatureRef.current = workspaceSharedSignature({
           menus: storedMenus,
           priceBook,
+          priceBookEffectiveFrom: workspace.priceBookEffectiveFrom || "",
+          plannedPriceBook: workspace.plannedPriceBook || null,
+          priceBookArchives: workspace.priceBookArchives || [],
           modifierGroups,
           modifierClipboardSlots: clipboardSlots,
           seedMenuTypeCorrectionsApplied: true,
@@ -811,6 +855,9 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
           ...payload,
           menuTypes: mergeMenuTypes(payload.menuTypes),
           priceBook,
+          priceBookEffectiveFrom: workspace.priceBookEffectiveFrom || "",
+          plannedPriceBook: workspace.plannedPriceBook || null,
+          priceBookArchives: workspace.priceBookArchives || [],
           modifierGroups,
         });
         setMenus((current) => current.length ? current : storedMenus.map(cloneMenu));
@@ -819,6 +866,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
         setSelectedPriceId((current) => current || payload.priceBook[0]?.id || "");
         setNewMenuType(mergeMenuTypes(payload.menuTypes)[0] || "Core");
         workspaceLoadedRef.current = true;
+        skipInitialSharedSaveRef.current = !pricingActivated;
         setDataStatus("ready");
       } catch {
         if (!cancelled) setDataStatus("error");
@@ -837,7 +885,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
       writeLocalStorageJson(WORKSPACE_STORAGE_KEY, workspace, { clearOnQuota: true });
     }, LOCAL_CACHE_DEBOUNCE_MS);
     return () => window.clearTimeout(timer);
-  }, [dataStatus, menus, selectedMenuId, ssmtData.priceBook, ssmtData.modifierGroups, modifierClipboardSlots]);
+  }, [dataStatus, menus, selectedMenuId, ssmtData.priceBook, ssmtData.plannedPriceBook, ssmtData.priceBookArchives, ssmtData.modifierGroups, modifierClipboardSlots]);
 
   useEffect(() => {
     if (dataStatus !== "ready" || !menus.length) return undefined;
@@ -886,7 +934,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
       if (timers.debounce) window.clearTimeout(timers.debounce);
       if (timers.save) window.clearTimeout(timers.save);
     };
-  }, [dataStatus, menus, ssmtData.priceBook, ssmtData.modifierGroups, modifierClipboardSlots]);
+  }, [dataStatus, menus, ssmtData.priceBook, ssmtData.plannedPriceBook, ssmtData.priceBookArchives, ssmtData.modifierGroups, modifierClipboardSlots]);
 
   useEffect(() => {
     if (!modifierDialog) return undefined;
@@ -905,6 +953,9 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const selectedPrice = ssmtData.priceBook.find((row) => row.id === selectedPriceId) || ssmtData.priceBook[0];
   const itemPriceOptions = useMemo(() => sortPricesForItemSelector(ssmtData.priceBook), [ssmtData.priceBook]);
   const modifierPriceOptions = useMemo(() => sortPricesForModifierSelector(ssmtData.priceBook), [ssmtData.priceBook]);
+  const displayedPriceBook = pricingPlanMode && ssmtData.plannedPriceBook ? ssmtData.plannedPriceBook.priceBook : ssmtData.priceBook;
+  const displayedPriceOptions = useMemo(() => sortPricesForItemSelector(displayedPriceBook), [displayedPriceBook]);
+  const plannedPricingNotice = ssmtData.plannedPriceBook ? `New pricing launches ${ssmtData.plannedPriceBook.effectiveDate || "after a date is set"}${ssmtData.plannedPriceBook.effectiveDate ? ` � ${pricingCountdown(ssmtData.plannedPriceBook.effectiveDate)}` : ""}.` : "";
   const modifierGroupIndex = useMemo(() => buildModifierGroupIndex(ssmtData.modifierGroups), [ssmtData.modifierGroups]);
   const visibleMenus = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -1088,6 +1139,34 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
     setNewPriceModifierOnly(false);
   };
 
+  const startPricingPlan = () => {
+    setSsmtData((current) => ({ ...current, plannedPriceBook: current.plannedPriceBook || { effectiveDate: "", createdAt: new Date().toISOString(), priceBook: clonePriceBook(current.priceBook) } }));
+    setPricingPlanMode(true);
+  };
+
+  const updatePlannedPricing = (priceId, area, value) => {
+    setSsmtData((current) => ({ ...current, plannedPriceBook: { ...current.plannedPriceBook, priceBook: current.plannedPriceBook.priceBook.map((price) => price.id === priceId ? { ...price, areas: { ...(price.areas || {}), [area]: value }, selectorLabel: area === "SEA" ? priceSelectorLabel(value, price.category) : price.selectorLabel } : price) } }));
+  };
+
+  const updatePlannedTierPrice = (priceId, tier, value) => {
+    setSsmtData((current) => ({ ...current, plannedPriceBook: { ...current.plannedPriceBook, priceBook: current.plannedPriceBook.priceBook.map((price) => {
+      if (price.id !== priceId) return price;
+      const tier1Price = tier === 1 ? value : (price.tier1Price || "");
+      const tier2Price = tier === 2 ? value : (price.tier2Price || "");
+      return { ...price, tier1Price, tier2Price, areas: tierAreas(current.areaOrder, tier1Price, tier2Price), selectorLabel: priceSelectorLabel(tier1Price, price.category) };
+    }) } }));
+  };
+  const setPlannedEffectiveDate = (effectiveDate) => {
+    if (!effectiveDate || effectiveDate < localDateKey()) return;
+    if (!window.confirm(`This change will affect pricing in the SSMT on ${effectiveDate}. Continue?`)) return;
+    setSsmtData((current) => ({ ...current, plannedPriceBook: { ...current.plannedPriceBook, effectiveDate } }));
+  };
+
+  const deletePricingPlan = () => {
+    if (!window.confirm("Delete this planned price increase? The active price table will remain unchanged.")) return;
+    setSsmtData((current) => ({ ...current, plannedPriceBook: null }));
+    setPricingPlanMode(false);
+  };
   const updatePricingRow = (priceId, patch) => {
     setSsmtData((current) => ({
       ...current,
@@ -1767,6 +1846,17 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
 
         {activeView === "pricing" && (
           <main className="space-y-5">
+            {plannedPricingNotice && <section data-testid="ssmt-pricing-warning" className="rounded-lg border-2 border-amber-400 bg-amber-50 p-4 text-base font-black text-amber-950">{plannedPricingNotice}</section>}
+            <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex flex-wrap items-center gap-2">
+                <button type="button" onClick={startPricingPlan} className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-black text-white">Planning New Price Increase</button>
+                {ssmtData.plannedPriceBook && <button type="button" onClick={() => setPricingPlanMode((current) => !current)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-black">{pricingPlanMode ? "View Active Prices" : "Edit Planned Prices"}</button>}
+                <button type="button" onClick={() => setShowPriceArchives((current) => !current)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-black">Price Table Archive ({ssmtData.priceBookArchives?.length || 0})</button>
+                {ssmtData.plannedPriceBook && <button type="button" onClick={deletePricingPlan} className="rounded-lg border border-rose-300 bg-rose-50 px-4 py-2 text-sm font-black text-rose-800">Delete Planned Price Set</button>}
+              </div>
+              {pricingPlanMode && ssmtData.plannedPriceBook && <div className="mt-4 rounded-lg border border-emerald-300 bg-emerald-50 p-4"><p className="font-black text-emerald-950">Editing planned prices. Green cells changed; gray cells still match active pricing.</p><label className="mt-3 grid max-w-xs gap-1 text-sm font-black">Effective date<input aria-label="Planned pricing effective date" type="date" min={localDateKey()} value={ssmtData.plannedPriceBook.effectiveDate || ""} onChange={(event) => setPlannedEffectiveDate(event.target.value)} className="rounded-lg border border-emerald-400 bg-white px-3 py-2" /></label></div>}
+              {showPriceArchives && <div data-testid="ssmt-price-archives" className="mt-4 space-y-2 rounded-lg border border-slate-300 bg-slate-50 p-4"><h3 className="text-lg font-black">Price Table Archive</h3>{(ssmtData.priceBookArchives || []).length === 0 ? <p className="text-sm font-bold text-slate-600">No prior price tables have gone out of effect yet.</p> : ssmtData.priceBookArchives.map((archive) => <details key={archive.id} className="rounded border border-slate-200 bg-white p-3"><summary className="cursor-pointer font-black">Effective {archive.effectiveFrom} through {archive.effectiveTo} � {archive.priceBook.length} rows</summary><p className="mt-2 text-sm font-semibold text-slate-600">Read-only historical price table retained for audit.</p></details>)}</div>}
+            </section>
             <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                 <div>
@@ -1806,7 +1896,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {itemPriceOptions.map((price) => (
+                    {displayedPriceOptions.map((price) => (
                       <tr key={price.id} className="odd:bg-white even:bg-slate-50/70">
                         <td className="border-b border-slate-100 px-4 py-3 font-black text-slate-950">{price.selectorLabel}</td>
                         <td className="border-b border-slate-100 px-4 py-3">
@@ -1818,19 +1908,19 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                           />
                         </td>
                         <td className="border-b border-slate-100 px-4 py-3">
-                          <input type="checkbox" checked={Boolean(price.tierPricing)} onChange={(event) => toggleTierPricing(price.id, event.target.checked)} aria-label={`Tier pricing for ${price.selectorLabel}`} />
+                          <input type="checkbox" checked={Boolean(price.tierPricing)} onChange={(event) => toggleTierPricing(price.id, event.target.checked)} disabled={pricingPlanMode} aria-label={`Tier pricing for ${price.selectorLabel}`} />
                         </td>
                         {price.tierPricing ? (
                           <td colSpan={ssmtData.areaOrder.length} className="border-b border-slate-100 px-3 py-2">
                             <div className="grid gap-2 sm:grid-cols-[160px_160px_minmax(320px,1fr)] sm:items-end">
-                              <label className="grid gap-1 text-xs font-black text-slate-700">Tier 1 price<input aria-label={`Tier 1 price for ${price.selectorLabel}`} value={price.tier1Price || ""} onChange={(event) => updateTierPrice(price.id, 1, event.target.value)} placeholder="0.00" className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-semibold outline-none focus:border-emerald-500" /></label>
-                              <label className="grid gap-1 text-xs font-black text-slate-700">Tier 2 price<input aria-label={`Tier 2 price for ${price.selectorLabel}`} value={price.tier2Price || ""} onChange={(event) => updateTierPrice(price.id, 2, event.target.value)} placeholder="0.00" className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-semibold outline-none focus:border-emerald-500" /></label>
+                              <label className="grid gap-1 text-xs font-black text-slate-700">Tier 1 price<input aria-label={`Tier 1 price for ${price.selectorLabel}`} value={price.tier1Price || ""} onChange={(event) => pricingPlanMode ? updatePlannedTierPrice(price.id, 1, event.target.value) : updateTierPrice(price.id, 1, event.target.value)} placeholder="0.00" className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-semibold outline-none focus:border-emerald-500" /></label>
+                              <label className="grid gap-1 text-xs font-black text-slate-700">Tier 2 price<input aria-label={`Tier 2 price for ${price.selectorLabel}`} value={price.tier2Price || ""} onChange={(event) => pricingPlanMode ? updatePlannedTierPrice(price.id, 2, event.target.value) : updateTierPrice(price.id, 2, event.target.value)} placeholder="0.00" className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-semibold outline-none focus:border-emerald-500" /></label>
                               <p className="pb-1 text-xs font-bold text-slate-500">Tier 2: AUS, BNA, YVR, YYZ. All other areas use Tier 1.</p>
                             </div>
                           </td>
                         ) : ssmtData.areaOrder.map((area) => (
                           <td key={area} className="border-b border-slate-100 px-2 py-2">
-                            <input aria-label={`${area} price for ${price.selectorLabel}`} value={price.areas?.[area] || ""} onChange={(event) => updatePricingArea(price.id, area, event.target.value)} placeholder="0.00" className="w-full min-w-[72px] rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 outline-none focus:border-emerald-500" />
+                            <input aria-label={`${area} price for ${price.selectorLabel}`} value={price.areas?.[area] || ""} onChange={(event) => pricingPlanMode ? updatePlannedPricing(price.id, area, event.target.value) : updatePricingArea(price.id, area, event.target.value)} placeholder="0.00" className={`w-full min-w-[72px] rounded-md border px-2 py-1 text-xs font-semibold text-slate-700 outline-none focus:border-emerald-500 ${pricingPlanMode && (price.areas?.[area] || "") !== (ssmtData.priceBook.find((active) => active.id === price.id)?.areas?.[area] || "") ? "border-emerald-500 bg-emerald-100" : pricingPlanMode ? "border-slate-300 bg-slate-100" : "border-slate-300 bg-white"}`} />
                           </td>
                         ))}
                       </tr>
@@ -1861,6 +1951,9 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                   </label>
                 </div>
               </div>
+              {plannedPricingNotice && (
+                <div data-testid="ssmt-menu-pricing-warning" className="mt-4 rounded-lg border-2 border-amber-400 bg-amber-50 px-4 py-3 text-base font-black text-amber-950">{plannedPricingNotice}</div>
+              )}
               {flaggedMenus.length > 0 && (
                 <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-bold leading-5 text-amber-950">
                   IT Department: {flaggedMenus.length} menu{flaggedMenus.length === 1 ? " has" : "s have"} been flagged for edit.
