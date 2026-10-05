@@ -1,6 +1,69 @@
 import { expect, test } from "@playwright/test";
 import XLSX from "xlsx";
 import { collectUnexpectedPageErrors, expectNoAppProtection, expectNoUnexpectedPageErrors } from "./smoke-helpers.js";
+ test("SSMT start calendar pages by month while four menu buckets preserve legacy records", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+  const nextMonthDate = new Date(currentYear, currentMonth + 1, 1);
+  const dateKey = (year, month, day) => `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  const currentStart = dateKey(currentYear, currentMonth, 5);
+  const currentEnd = dateKey(currentYear, currentMonth, 8);
+  const nextStart = dateKey(nextMonthDate.getFullYear(), nextMonthDate.getMonth(), 2);
+  const nextEnd = dateKey(nextMonthDate.getFullYear(), nextMonthDate.getMonth(), 4);
+  const savedBodies = [];
+  const legacyModifier = { id: "legacy-modifier", name: "Legacy modifier", type: "Addition", items: [] };
+  const workspaceMenus = [
+    { id: "core-menu", name: "Core Menu", type: "Core", phase: "Culinary draft", items: [] },
+    { id: "legacy-library-menu", name: "Preserved Library Menu", type: "Menu Library", phase: "Culinary draft", items: [{ id: "legacy-item", name: "Legacy Item", modifierGroups: [legacyModifier] }] },
+    { id: "current-promo", name: "Current Month Promo", type: "Promotion", phase: "Culinary draft", activeStart: currentStart, activeEnd: currentEnd, items: [] },
+    { id: "next-promo", name: "Next Month Promo", type: "Promotion", phase: "Culinary draft", activeStart: nextStart, activeEnd: nextEnd, items: [] },
+    { id: "missing-end", name: "Missing End Promo", type: "Promotion", phase: "Culinary draft", activeStart: currentStart, activeEnd: "", items: [] },
+  ];
+  await page.addInitScript(() => { window.localStorage.clear(); window.sessionStorage.clear(); });
+  await page.route("**/api/storage/records**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (request.method() === "GET" && url.searchParams.get("tool") === "SSMT") {
+      await route.fulfill({ json: { ok: true, source: "supabase", records: [{ "Record ID": "ssmt|workspace|current", "Record Type": "SSMT Workspace", Status: "Shared", menus: workspaceMenus, menuTypes: ["Core", "Global", "Menu Library", "Promotion", "Thompson Hospitality"], priceBook: [], modifierGroups: [legacyModifier], selectedMenuId: "core-menu", updatedAt: "2026-10-05T20:00:00.000Z" }] } });
+      return;
+    }
+    if (request.method() === "POST") {
+      savedBodies.push(request.postDataJSON());
+      await route.fulfill({ json: { ok: true, source: "supabase", synced: 1, message: "Saved 1 row to Supabase." } });
+      return;
+    }
+    await route.continue();
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByLabel(/SSMT passcode/i).fill("0411");
+  await page.getByRole("button", { name: /unlock ssmt/i }).click();
+  const calendar = page.getByTestId("ssmt-promotion-calendar");
+  await expect(calendar).toBeVisible();
+  await expect(page.getByText(/^Calendar$/)).toHaveCount(0);
+  await expect(calendar.getByTestId(`ssmt-calendar-day-${currentStart}`)).toContainText("Current Month Promo");
+  await expect(calendar.getByTestId(`ssmt-calendar-day-${currentEnd}`)).toContainText("Current Month Promo");
+  await expect(calendar).not.toContainText("Missing End Promo");
+  await calendar.getByRole("button", { name: /next month/i }).click();
+  await expect(calendar.getByTestId(`ssmt-calendar-day-${nextStart}`)).toContainText("Next Month Promo");
+  await expect(calendar.getByTestId(`ssmt-calendar-day-${nextEnd}`)).toContainText("Next Month Promo");
+  await calendar.getByRole("button", { name: /previous month/i }).click();
+  await expect(calendar.getByTestId(`ssmt-calendar-day-${currentStart}`)).toContainText("Current Month Promo");
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+  await expect(page.getByTestId(/ssmt-menu-group-/)).toHaveCount(4);
+  await expect(page.getByTestId("ssmt-menu-group-Menu Library")).toHaveCount(0);
+  await expect(page.getByLabel(/New menu type/i).locator('option[value="Menu Library"]')).toHaveCount(0);
+  await expect(page.getByTestId("ssmt-menu-group-Core")).toHaveClass(/max-h-\[76vh\]/);
+  await page.getByRole("button", { name: /Save SSMT workspace/i }).click();
+  await expect.poll(() => savedBodies.length).toBeGreaterThan(0);
+  const savedRecord = savedBodies.flatMap((body) => body?.records || []).find((candidate) => candidate?.["Record ID"] === "ssmt|workspace|current");
+  expect(savedRecord?.menus?.find((menu) => menu.id === "legacy-library-menu")?.items?.[0]?.modifierGroups).toEqual([legacyModifier]);
+  expect(savedRecord?.modifierGroups).toContainEqual(expect.objectContaining({ id: legacyModifier.id, name: legacyModifier.name, type: legacyModifier.type }));
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
 
 test("SSMT opens behind passcode and separates pricing from menu building", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
@@ -250,23 +313,20 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
 
   const firstCoreGroup = page.getByTestId("ssmt-menu-group-Core");
   const globalGroup = page.getByTestId("ssmt-menu-group-Global");
-  const menuLibraryGroup = page.getByTestId("ssmt-menu-group-Menu Library");
   const promotionsGroup = page.getByTestId("ssmt-menu-group-Promotion");
   const thompsonGroup = page.getByTestId("ssmt-menu-group-Thompson Hospitality");
   await expect(firstCoreGroup).toBeVisible();
   await expect(globalGroup).toBeVisible();
-  await expect(menuLibraryGroup).toBeVisible();
   await expect(promotionsGroup).toBeVisible();
   await expect(thompsonGroup).toBeVisible();
 
   await expect(firstCoreGroup).toHaveClass(/border-emerald-400/);
   await expect(globalGroup).toHaveClass(/border-sky-400/);
-  await expect(menuLibraryGroup).toHaveClass(/border-violet-400/);
   await expect(promotionsGroup).toHaveClass(/border-amber-400/);
   await expect(thompsonGroup).toHaveClass(/border-fuchsia-400/);
 
   const groupOrder = await page.getByTestId(/ssmt-menu-group-/).evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-menu-type")));
-  expect(groupOrder).toEqual(["Core", "Global", "Menu Library", "Promotion", "Thompson Hospitality"]);
+  expect(groupOrder).toEqual(["Core", "Global", "Promotion", "Thompson Hospitality"]);
 
   const coreNames = await firstCoreGroup.locator("[data-menu-name]").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-menu-name")));
   expect([...coreNames].sort((a, b) => a.localeCompare(b))).toEqual(coreNames);
@@ -600,7 +660,7 @@ test("SSMT selector and builder keep dense records and wide tables usable withou
   for (const type of ["Core", "Global", "Promotion", "Thompson Hospitality"]) {
     const box = await page.getByTestId(`ssmt-menu-group-${type}`).boundingBox();
     expect(box?.y).toBeGreaterThanOrEqual(0);
-    expect((box?.y || 0) + (box?.height || 0)).toBeLessThanOrEqual(900);
+    expect(box?.height).toBeGreaterThanOrEqual(600);
   }
 
   await page.getByRole("button", { name: /^The Daily/i }).click();
@@ -1647,7 +1707,7 @@ test("SSMT second flag click on a flagged item prompts edit or clear", async ({ 
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
-test("SSMT collects hibernated menus into a sixth bucket shown on demand", async ({ page }) => {
+test("SSMT collects hibernated menus into a separate bucket shown on demand", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   const menuName = `Hibernate Bucket ${Date.now()}`;
   await page.goto("/");
@@ -1667,7 +1727,7 @@ test("SSMT collects hibernated menus into a sixth bucket shown on demand", async
 
   const coreGroup = page.getByTestId("ssmt-menu-group-Core");
   const card = page.locator(`[data-menu-name="${menuName}"]`).locator("xpath=ancestor::div[1]");
-  // Starts active in the Core bucket; no sixth bucket exists yet.
+  // Starts active in the Core bucket; no hibernated bucket exists yet.
   await expect(coreGroup.locator(`[data-menu-name="${menuName}"]`)).toBeVisible();
   await expect(page.getByTestId("ssmt-menu-group-Hibernated")).toHaveCount(0);
 
@@ -1675,7 +1735,7 @@ test("SSMT collects hibernated menus into a sixth bucket shown on demand", async
   await card.getByRole("button", { name: "Hibernate", exact: true }).click();
   await expect(page.locator(`[data-menu-name="${menuName}"]`)).toHaveCount(0);
 
-  // Turning on "Show hibernated" reveals a dedicated sixth bucket holding it,
+  // Turning on "Show hibernated" reveals a dedicated bucket holding it,
   // and it no longer bleeds into the Core bucket.
   await page.getByRole("checkbox", { name: /Show hibernated menus/i }).check();
   const hibernatedGroup = page.getByTestId("ssmt-menu-group-Hibernated");

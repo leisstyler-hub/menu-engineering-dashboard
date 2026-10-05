@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   CalendarDays,
+  ChevronLeft,
+  ChevronRight,
   ClipboardCheck,
   Copy,
   Download,
@@ -32,9 +34,9 @@ import { loadSsmtWorkspaceFromSharedStorage, saveSsmtWorkspaceToSharedStorage } 
 const PASSCODE = "0411";
 const UNLOCKED_KEY = "culinaryToolsSsmtUnlocked";
 const WORKSPACE_STORAGE_KEY = "culinaryToolsSsmtWorkspace_v1";
-const DEFAULT_MENU_TYPES = ["Core", "Global", "Menu Library", "Thompson Hospitality", "Promotion"];
+const DEFAULT_MENU_TYPES = ["Core", "Global", "Thompson Hospitality", "Promotion"];
 const ACTIVE_DATE_MENU_TYPES = ["Promotion", "Thompson Hospitality"];
-const MENU_TYPE_ORDER = ["Core", "Global", "Menu Library", "Promotion", "Thompson Hospitality"];
+const MENU_TYPE_ORDER = ["Core", "Global", "Promotion", "Thompson Hospitality"];
 const MODIFIER_TYPES = ["Force", "Remove", "Addition"];
 const TIER_2_AREAS = new Set(["AUS", "BNA", "YVR", "YYZ"]);
 const MODIFIER_TYPE_STYLES = {
@@ -568,7 +570,7 @@ function compareMenuNames(a, b) {
 
 function groupMenusByType(menus = [], showHidden = false) {
   const isHibernated = (menu) => menu.hidden || menuIsAutoHibernated(menu);
-  const activeMenus = menus.filter((menu) => !isHibernated(menu));
+  const activeMenus = menus.filter((menu) => !isHibernated(menu) && menu.type !== "Menu Library");
   const groups = MENU_TYPE_ORDER.map((type) => ({
     type,
     ...MENU_TYPE_STYLES[type],
@@ -586,10 +588,10 @@ function groupMenusByType(menus = [], showHidden = false) {
       menus: otherMenus,
     });
   }
-  // Sixth bucket: hibernated/expired menus collected on their own, shown only
+  // Hibernated/expired menus collect in a separate on-demand bucket, shown only
   // when "Show hibernated" is on. They no longer bleed into their type buckets.
   if (showHidden) {
-    const hibernatedMenus = menus.filter(isHibernated).sort(compareMenuNames);
+    const hibernatedMenus = menus.filter((menu) => menu.type !== "Menu Library" && isHibernated(menu)).sort(compareMenuNames);
     groups.push({
       type: "Hibernated",
       label: "Hibernated",
@@ -994,7 +996,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
     ...queue,
     menus: visibleMenus.filter((menu) => menu.phase === queue.phase),
   }));
-  const menuTypes = ssmtData.menuTypes?.length ? ssmtData.menuTypes : DEFAULT_MENU_TYPES;
+  const menuTypes = (ssmtData.menuTypes?.length ? ssmtData.menuTypes : DEFAULT_MENU_TYPES).filter((type) => type !== "Menu Library");
   const showActiveDates = activeDatesRequired(selectedMenu.type);
   const selectedItemRows = (selectedMenu.items || []).filter((item) => item.recordType !== "divider");
   const selectedSubmenuMemberships = useMemo(() => submenuMembershipModel(selectedMenu.items || []), [selectedMenu]);
@@ -1836,12 +1838,11 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
 
         {activeView === "home" && (
           <main className="space-y-5">
-            <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+            <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
               <Metric icon={ClipboardCheck} label="Parsed menus" value={metricValue(ssmtData.workbookStats.parsedMenuCount)} />
               <Metric icon={Tags} label="Pricing rows" value={metricValue(ssmtData.priceBook.length || ssmtData.workbookStats.parsedPricingRows)} />
               <Metric icon={Copy} label="Modifier groups" value={metricValue(ssmtData.workbookStats.parsedModifierGroupCount)} />
               <Metric icon={ShieldCheck} label="IT complete eligible" value={metricValue(downstreamReadyCount)} />
-              <Metric icon={CalendarDays} label="Calendar" value={`${metricValue(promotionCount)} promo`} />
             </section>
 
             <section className="grid gap-4 lg:grid-cols-2">
@@ -1856,6 +1857,8 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                 <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">Open an existing menu or create a new record by selecting the menu type first.</p>
               </button>
             </section>
+
+            <PromotionCalendar menus={menus} />
 
             <section className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm font-bold leading-6 text-amber-950">
               SSMT workbook input creates app records and review flags only. Webtrition Report Menu Index remains deletion authority; SSMT-only and Webtrition-only differences do not delete operational records without Webtrition confirmation.
@@ -2028,7 +2031,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                     key={group.type}
                     data-testid={`ssmt-menu-group-${group.type}`}
                     data-menu-type={group.type}
-                    className={`flex max-h-[38vh] min-h-0 flex-col rounded-lg border p-3 ${group.groupClass}`}
+                    className={`flex max-h-[76vh] min-h-0 flex-col rounded-lg border p-3 ${group.groupClass}`}
                   >
                     <div className="mb-2 flex items-center justify-between gap-2">
                       <h3 className="text-sm font-black text-slate-950">{group.label}</h3>
@@ -2922,6 +2925,53 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   );
 }
 
+function PromotionCalendar({ menus }) {
+  const [visibleMonth, setVisibleMonth] = useState(() => {
+    const today = new Date();
+    return new Date(today.getFullYear(), today.getMonth(), 1);
+  });
+  const scheduledPromotions = menus.filter((menu) => menu.type === "Promotion" && menu.activeStart && menu.activeEnd);
+  const firstVisibleDate = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1 - visibleMonth.getDay());
+  const calendarDays = Array.from({ length: 42 }, (_, index) => {
+    const date = new Date(firstVisibleDate);
+    date.setDate(firstVisibleDate.getDate() + index);
+    return date;
+  });
+  const localKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  const changeMonth = (offset) => setVisibleMonth((current) => new Date(current.getFullYear(), current.getMonth() + offset, 1));
+
+  return (
+    <section data-testid="ssmt-promotion-calendar" className="rounded-xl border border-purple-200 bg-white p-4 shadow-sm">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-purple-700">Promotion schedule</p>
+          <h2 className="mt-1 text-2xl font-black text-slate-950">{visibleMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" })}</h2>
+          <p className="mt-1 text-sm font-semibold text-slate-600">Only Promotion menus with both a start and end date appear.</p>
+        </div>
+        <div className="flex gap-2">
+          <button type="button" aria-label="Previous month" onClick={() => changeMonth(-1)} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-black text-slate-800 hover:bg-slate-100"><ChevronLeft size={18} /> Previous</button>
+          <button type="button" aria-label="Next month" onClick={() => changeMonth(1)} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-black text-slate-800 hover:bg-slate-100">Next <ChevronRight size={18} /></button>
+        </div>
+      </div>
+      <div className="mt-4 grid grid-cols-7 overflow-hidden rounded-lg border border-slate-200">
+        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => <div key={day} className="border-b border-slate-200 bg-slate-100 px-2 py-2 text-center text-xs font-black uppercase tracking-wide text-slate-600">{day}</div>)}
+        {calendarDays.map((date) => {
+          const key = localKey(date);
+          const dayPromotions = scheduledPromotions.filter((menu) => menu.activeStart <= key && menu.activeEnd >= key);
+          const inMonth = date.getMonth() === visibleMonth.getMonth();
+          return (
+            <div key={key} data-testid={`ssmt-calendar-day-${key}`} className={`min-h-28 border-b border-r border-slate-200 p-2 ${inMonth ? "bg-white" : "bg-slate-50 text-slate-400"}`}>
+              <span className="text-xs font-black">{date.getDate()}</span>
+              <div className="mt-1 space-y-1">
+                {dayPromotions.map((menu) => <div key={menu.id} className="rounded-md border border-purple-300 bg-purple-100 px-2 py-1 text-[11px] font-black leading-4 text-purple-950">{menu.name}</div>)}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
 function Metric({ icon: Icon, label, value }) {
   return (
     <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
