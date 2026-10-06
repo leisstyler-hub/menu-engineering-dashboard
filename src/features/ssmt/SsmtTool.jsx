@@ -1811,7 +1811,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f6f1] px-2 py-4 text-slate-950 md:px-3">
+    <div data-testid="ssmt-page" className="ssmt-tool-page min-h-screen bg-[#f5f6f1] px-2 py-4 text-slate-950 md:px-3">
       <div className="mx-auto w-full max-w-[2760px] space-y-3">
         <header className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">

@@ -1,1 +1,1 @@
-export const APP_VERSION_STAMP = "2026.10.05.006-ssmt-secondary-category";
+export const APP_VERSION_STAMP = "2026.10.05.007-ssmt-dark-theme";

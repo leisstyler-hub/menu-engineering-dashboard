@@ -1,6 +1,37 @@
 import { expect, test } from "@playwright/test";
 import XLSX from "xlsx";
 import { collectUnexpectedPageErrors, expectNoAppProtection, expectNoUnexpectedPageErrors } from "./smoke-helpers.js";
+
+test("SSMT uses a deliberate dark palette without changing light mode", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await page.addInitScript(() => {
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByLabel(/SSMT passcode/i).fill("0411");
+  await page.getByRole("button", { name: /unlock ssmt/i }).click();
+
+  const pageShell = page.getByTestId("ssmt-page");
+  const calendar = page.getByTestId("ssmt-promotion-calendar");
+  const pricingCard = page.getByRole("button", { name: /Pricing Structure View the pricing book/i });
+
+  await expect(pageShell).toHaveCSS("background-color", "rgb(245, 246, 241)");
+  await expect(calendar).toHaveCSS("background-color", "rgb(255, 255, 255)");
+
+  await page.locator("html").evaluate((element) => element.classList.add("dark"));
+  await expect(pageShell).toHaveCSS("background-color", "rgb(2, 6, 23)");
+  await expect(calendar).toHaveCSS("background-color", "rgb(15, 23, 42)");
+  await expect(calendar).toHaveCSS("border-color", "rgb(88, 28, 135)");
+  await expect(pricingCard).toHaveCSS("background-color", "rgb(15, 23, 42)");
+  await expect(pricingCard).toHaveCSS("border-color", "rgb(6, 95, 70)");
+  await expect(pricingCard).toHaveCSS("color", "rgb(248, 250, 252)");
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
  test("SSMT start calendar pages by month while four menu buckets preserve legacy records", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   const now = new Date();
