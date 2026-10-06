@@ -15,6 +15,36 @@ async function mockOrders(page, records = []) {
   return writes;
 }
 
+test("cafe and service-week controls stay separated at mobile, tablet, and desktop widths", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await mockOrders(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openTool(page, /open commissary ordering/i, /^Commissary Ordering Tool$/);
+
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 1024, height: 900 },
+    { width: 1440, height: 1000 },
+  ]) {
+    await page.setViewportSize(viewport);
+    const cafeBox = await page.getByLabel("Your cafe").boundingBox();
+    const weekBox = await page.getByLabel("Service week").boundingBox();
+    expect(cafeBox).not.toBeNull();
+    expect(weekBox).not.toBeNull();
+
+    const overlapWidth = Math.min(cafeBox.x + cafeBox.width, weekBox.x + weekBox.width) - Math.max(cafeBox.x, weekBox.x);
+    const overlapHeight = Math.min(cafeBox.y + cafeBox.height, weekBox.y + weekBox.height) - Math.max(cafeBox.y, weekBox.y);
+    expect(overlapWidth > 0 && overlapHeight > 0, `${viewport.width}px controls overlap`).toBe(false);
+    expect(cafeBox.x).toBeGreaterThanOrEqual(0);
+    expect(weekBox.x).toBeGreaterThanOrEqual(0);
+    expect(cafeBox.x + cafeBox.width).toBeLessThanOrEqual(viewport.width);
+    expect(weekBox.x + weekBox.width).toBeLessThanOrEqual(viewport.width);
+  }
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
 test("Commissary Ordering Tool requires cafe selection and saves separate delivery quantities", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   const writes = await mockOrders(page);

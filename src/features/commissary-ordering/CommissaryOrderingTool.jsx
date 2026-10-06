@@ -129,15 +129,15 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
 
       <main className="mx-auto max-w-[120rem] space-y-5 px-4 py-6 md:px-8">
         <section className="rounded-2xl border border-sky-200 bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
             <div>
               <div className="flex flex-wrap items-center gap-2"><p className="text-xs font-black uppercase tracking-[0.18em] text-sky-700">Commissary production</p><span className="rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-amber-900">Draft</span></div>
               <h1 className="mt-2 text-3xl font-black md:text-5xl">Commissary Ordering Tool</h1>
               <p className="mt-2 max-w-3xl text-sm font-semibold text-slate-600">Choose your cafe, then enter each delivery quantity. Orders lock at 5:00 PM local Pacific time on the Wednesday before service.</p>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="text-xs font-black uppercase tracking-[0.12em] text-slate-600">Your cafe<select aria-label="Your cafe" value={cafe} onChange={(event) => { setCafe(event.target.value); setNotice(""); setError(""); }} className="mt-1 block min-w-48 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-black text-slate-950"><option value="">Select cafe</option>{COMMISSARY_RECEIVING_CAFES.map((row) => <option key={row.name} value={row.name}>{row.name} Cafe · PC {row.profitCenter}</option>)}</select></label>
-              <label className="text-xs font-black uppercase tracking-[0.12em] text-slate-600">Service week<select aria-label="Service week" value={weekStart} onChange={(event) => { setWeekStart(event.target.value); setNotice(""); setError(""); }} className="mt-1 block min-w-48 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-black text-slate-950">{weeks.map((week) => <option key={week} value={week}>Week {weekLabel(week)}{isWeekLocked(week) ? " · locked" : ""}</option>)}</select></label>
+            <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 xl:w-auto xl:min-w-[30rem]">
+              <label className="min-w-0 text-xs font-black uppercase tracking-[0.12em] text-slate-600">Your cafe<select aria-label="Your cafe" value={cafe} onChange={(event) => { setCafe(event.target.value); setNotice(""); setError(""); }} className="mt-1 block w-full min-w-0 max-w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-black text-slate-950"><option value="">Select cafe</option>{COMMISSARY_RECEIVING_CAFES.map((row) => <option key={row.name} value={row.name}>{row.name} Cafe · PC {row.profitCenter}</option>)}</select></label>
+              <label className="min-w-0 text-xs font-black uppercase tracking-[0.12em] text-slate-600">Service week<select aria-label="Service week" value={weekStart} onChange={(event) => { setWeekStart(event.target.value); setNotice(""); setError(""); }} className="mt-1 block w-full min-w-0 max-w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-black text-slate-950">{weeks.map((week) => <option key={week} value={week}>Week {weekLabel(week)}{isWeekLocked(week) ? " · locked" : ""}</option>)}</select></label>
             </div>
           </div>
         </section>
