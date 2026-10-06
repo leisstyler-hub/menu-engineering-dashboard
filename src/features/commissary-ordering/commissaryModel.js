@@ -81,10 +81,13 @@ export function sanitizeQuantity(value) {
 }
 
 export function normalizeQuantities(quantities = {}) {
-  return Object.fromEntries(COMMISSARY_ORDER_ITEMS.map(({ id }) => [id, {
-    monday: sanitizeQuantity(quantities?.[id]?.monday),
-    wednesday: sanitizeQuantity(quantities?.[id]?.wednesday),
-  }]));
+  return Object.fromEntries(COMMISSARY_ORDER_ITEMS.map(({ id, legacyIds = [] }) => {
+    const source = quantities?.[id] || legacyIds.map((legacyId) => quantities?.[legacyId]).find(Boolean) || {};
+    return [id, {
+      monday: sanitizeQuantity(source.monday),
+      wednesday: sanitizeQuantity(source.wednesday),
+    }];
+  }));
 }
 
 export function buildOrderRecord({ cafe, weekStart, quantities, now = new Date() }) {
@@ -105,8 +108,9 @@ export function buildOrderRecord({ cafe, weekStart, quantities, now = new Date()
 }
 
 export function orderValue(quantities = {}) {
+  const normalized = normalizeQuantities(quantities);
   return COMMISSARY_ORDER_ITEMS.reduce((sum, row) => {
-    const delivery = quantities[row.id] || {};
+    const delivery = normalized[row.id];
     return sum + (sanitizeQuantity(delivery.monday) + sanitizeQuantity(delivery.wednesday)) * row.orderUnitCost;
   }, 0);
 }

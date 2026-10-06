@@ -27,7 +27,7 @@ const CHANGELOG_AUDIT_MARKERS = [
 ];
 
 function cleanChangelogText(text) {
-  return text.replace(/[`*_]/g, "").replace(/\s+/g, " ").trim();
+  return text.replace(/[`*_]/g, "").replace(/\bBOM\b/g, "Prep List").replace(/\s+/g, " ").trim();
 }
 
 function trimSummary(text, maxLength = CHANGELOG_SUMMARY_MAX_LENGTH) {
@@ -361,7 +361,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
     commissaryOrdering: {
       title: "Commissary Ordering Tool",
       eyebrow: "Draft",
-      description: "Order salad-bar production by cafe and delivery, then download locked prep BOM and S4 transfer workbooks.",
+      description: "Order salad-bar production by cafe and delivery, then download the locked Prep List and S4 transfer workbooks.",
       action: "Open Commissary Ordering",
       onOpen: onOpenCommissaryOrdering,
       icon: PackageCheck,

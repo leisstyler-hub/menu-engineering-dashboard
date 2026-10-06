@@ -21,11 +21,14 @@ test("Commissary Ordering Tool requires cafe selection and saves separate delive
   await openTool(page, /open commissary ordering/i, /^Commissary Ordering Tool$/);
   await expect(page.getByText("Select your cafe to begin")).toBeVisible();
   await page.getByLabel("Your cafe").selectOption("Nessie");
+  await expect(page.getByText("Frozen Peas", { exact: true })).toBeVisible();
+  await expect(page.getByText("Blanched Green Beans", { exact: true })).toHaveCount(0);
   await expect(page.getByText(/requires mixing/i)).toHaveCount(0);
   await expect(page.getByText(/new recipe/i)).toHaveCount(0);
   await expect(page.getByRole("button", { name: /generate transfer/i })).toBeDisabled();
   await page.getByLabel("Monday delivery Sliced Cucumber quantity").fill("2");
   await page.getByLabel("Wednesday delivery Sliced Cucumber quantity").fill("1");
+  await page.getByLabel("Monday delivery Frozen Peas quantity").fill("1.25");
   const cucumber = COMMISSARY_ORDER_ITEMS.find((row) => row.name === "Sliced Cucumber");
   const saveButton = page.getByRole("button", { name: /save shared order/i });
   const generateButton = page.getByRole("button", { name: /generate transfer/i });
@@ -33,16 +36,23 @@ test("Commissary Ordering Tool requires cafe selection and saves separate delive
   expect((await generateButton.boundingBox()).y).toBeGreaterThan((await saveButton.boundingBox()).y);
   const transferDownload = page.waitForEvent("download");
   await generateButton.click();
-  expect((await transferDownload).suggestedFilename()).toMatch(/Commissary Salad Bar Nessie.*Expense Transfer\.xlsx/);
+  const transferFile = await transferDownload;
+  expect(transferFile.suggestedFilename()).toMatch(/Commissary Salad Bar Nessie.*Expense Transfer\.xlsx/);
+  const transferWorkbook = XLSX.readFile(await transferFile.path());
+  const transferRows = XLSX.utils.sheet_to_json(transferWorkbook.Sheets[transferWorkbook.SheetNames[0]], { header: 1, defval: "" });
+  expect(transferRows).toContainEqual(expect.arrayContaining(["4111009", "30159", "4111009", expect.stringContaining("Frozen Peas"), 2.84]));
   const bomDownload = page.waitForEvent("download");
-  await page.getByRole("button", { name: /generate consolidated bom/i }).click();
-  const bomWorkbook = XLSX.readFile(await (await bomDownload).path(), { cellStyles: true });
+  await page.getByRole("button", { name: /generate prep list/i }).click();
+  const prepListFile = await bomDownload;
+  expect(prepListFile.suggestedFilename()).toMatch(/Commissary Salad Bar Prep List.*\.xlsx/);
+  const bomWorkbook = XLSX.readFile(await prepListFile.path(), { cellStyles: true });
   expect(bomWorkbook.SheetNames).toEqual(["Consolidated Prep List", "Monday Delivery Map", "Wednesday Delivery Map"]);
   expect(bomWorkbook.Sheets["Consolidated Prep List"].A1.s.fgColor.rgb).toBe("17365D");
   expect(bomWorkbook.Sheets["Monday Delivery Map"].A4.s.fgColor.rgb).toBe("D9EAF7");
   const mondayRows = XLSX.utils.sheet_to_json(bomWorkbook.Sheets["Monday Delivery Map"], { header: 1, defval: "" });
   const wednesdayRows = XLSX.utils.sheet_to_json(bomWorkbook.Sheets["Wednesday Delivery Map"], { header: 1, defval: "" });
   expect(mondayRows).toContainEqual(expect.arrayContaining(["Nessie", "Sliced Cucumber", cucumber.mrn, 2]));
+  expect(mondayRows).toContainEqual(expect.arrayContaining(["Nessie", "Frozen Peas", "4877", 1.25]));
   expect(wednesdayRows).toContainEqual(expect.arrayContaining(["Nessie", "Sliced Cucumber", cucumber.mrn, 1]));
   await saveButton.click();
   await expect(page.getByText(/Nessie's order.*was saved/i)).toBeVisible();
@@ -53,7 +63,7 @@ test("Commissary Ordering Tool requires cafe selection and saves separate delive
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
-test("locked commissary week is read-only and exposes BOM and exact-template S4 exports", async ({ page }) => {
+test("locked commissary week is read-only and exposes Prep List and exact-template S4 exports", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   const openWeek = firstOpenWeek();
   const lockedWeek = addDays(openWeek, -7);
@@ -67,7 +77,7 @@ test("locked commissary week is read-only and exposes BOM and exact-template S4 
   await expect(page.getByText("Ordering closed")).toBeVisible();
   await expect(page.getByText(/please contact commissary executive chef to adjust pars/i)).toBeVisible();
   await expect(page.getByLabel("Monday delivery Sliced Cucumber quantity")).toBeDisabled();
-  await expect(page.getByRole("button", { name: /download combined bom/i })).toBeEnabled();
+  await expect(page.getByRole("button", { name: /download combined prep list/i })).toBeEnabled();
   const transferDownload = page.waitForEvent("download");
   await page.getByRole("button", { name: /download nessie s4 transfer/i }).click();
   expect((await transferDownload).suggestedFilename()).toMatch(/Commissary Salad Bar Nessie.*Expense Transfer\.xlsx/);

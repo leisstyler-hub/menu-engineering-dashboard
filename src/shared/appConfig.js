@@ -1,1 +1,1 @@
-export const APP_VERSION_STAMP = "2026.10.05.007-ssmt-dark-theme";
+export const APP_VERSION_STAMP = "2026.10.06.001-commissary-peas-prep-list";

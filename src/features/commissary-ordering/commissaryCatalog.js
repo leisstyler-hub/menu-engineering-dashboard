@@ -9,7 +9,7 @@ export const COMMISSARY_RECEIVING_CAFES = Object.freeze([
   { name: "Cricket", profitCenter: "22472" },
 ]);
 
-const item = (category, name, mrn, itemWasteCost, orderUnit, orderUnitCost, notes = "") => ({
+const item = (category, name, mrn, itemWasteCost, orderUnit, orderUnitCost, notes = "", options = {}) => ({
   id: `commissary-${String(mrn).replace(/[^a-z0-9]/gi, "-").toLowerCase()}`,
   category,
   name,
@@ -19,6 +19,9 @@ const item = (category, name, mrn, itemWasteCost, orderUnit, orderUnitCost, note
   orderUnit,
   orderUnitCost,
   notes,
+  transferGlCode: options.transferGlCode || "4111011",
+  transferGlCategory: options.transferGlCategory || "Prepared Foods",
+  legacyIds: options.legacyIds || [],
 });
 
 export const COMMISSARY_ORDER_ITEMS = Object.freeze([
@@ -30,7 +33,7 @@ export const COMMISSARY_ORDER_ITEMS = Object.freeze([
   item("Toppings", "Tri-Color Quinoa", "55978.2", 0.146697, "quart", 0.146697 * 32),
   item("Toppings", "Herbed Bulgur", "144954", 0.09, "quart", 0.09 * 32),
   item("Toppings", "Blanched Broccoli", "16207.12", 0.26341, "quart", 0.26341 * 32, "Requires batch cooking"),
-  item("Toppings", "Blanched Green Beans", "9002.2", 0.400567, "quart", 0.400567 * 32, "Requires batch cooking"),
+  item("Toppings", "Frozen Peas", "4877", 2.27 / 32, "quart", 2.27, "", { transferGlCode: "4111009", transferGlCategory: "Frozen", legacyIds: ["commissary-9002-2"] }),
   item("Toppings", "Marinated Artichokes", "70850", 0.2, "quart", 0.2 * 32),
   item("Toppings", "Marinated Chickpeas", "62871.2", 0.134019, "quart", 0.134019 * 32),
   item("Toppings", "Aleppo-Edamame", "176736", 0.22, "quart", 0.22 * 32, "New recipe"),

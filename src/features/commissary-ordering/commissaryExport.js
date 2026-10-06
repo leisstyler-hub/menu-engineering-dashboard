@@ -19,7 +19,7 @@ function downloadBytes(bytes, fileName, mimeType) {
 }
 
 const moneyFormat = "$#,##0.00";
-const BOM_COLORS = {
+const PREP_LIST_COLORS = {
   navy: "17365D",
   blue: "5B9BD5",
   section: "D9EAF7",
@@ -31,7 +31,7 @@ const BOM_COLORS = {
   white: "FFFFFF",
 };
 
-const border = (color = BOM_COLORS.border, style = "thin") => ({
+const border = (color = PREP_LIST_COLORS.border, style = "thin") => ({
   top: { style, color: { rgb: color } },
   right: { style, color: { rgb: color } },
   bottom: { style, color: { rgb: color } },
@@ -47,28 +47,28 @@ function setCellStyle(worksheet, row, column, style, valueFormat) {
 
 function titleStyle(size = 15) {
   return {
-    font: { name: "Arial", sz: size, bold: true, color: { rgb: BOM_COLORS.white } },
-    fill: { patternType: "solid", fgColor: { rgb: BOM_COLORS.navy } },
+    font: { name: "Arial", sz: size, bold: true, color: { rgb: PREP_LIST_COLORS.white } },
+    fill: { patternType: "solid", fgColor: { rgb: PREP_LIST_COLORS.navy } },
     alignment: { wrapText: true, vertical: "center" },
-    border: border(BOM_COLORS.navy),
+    border: border(PREP_LIST_COLORS.navy),
   };
 }
 
 const headerStyle = {
-  font: { name: "Arial", sz: 10, bold: true, color: { rgb: BOM_COLORS.white } },
-  fill: { patternType: "solid", fgColor: { rgb: BOM_COLORS.navy } },
+  font: { name: "Arial", sz: 10, bold: true, color: { rgb: PREP_LIST_COLORS.white } },
+  fill: { patternType: "solid", fgColor: { rgb: PREP_LIST_COLORS.navy } },
   alignment: { wrapText: true, vertical: "center", horizontal: "center" },
-  border: border(BOM_COLORS.white),
+  border: border(PREP_LIST_COLORS.white),
 };
 
 function bodyStyle(fill, isGroupStart = false) {
   return {
-    font: { name: "Arial", sz: 10, color: { rgb: BOM_COLORS.text } },
+    font: { name: "Arial", sz: 10, color: { rgb: PREP_LIST_COLORS.text } },
     fill: { patternType: "solid", fgColor: { rgb: fill } },
     alignment: { vertical: "top", wrapText: true },
     border: {
       ...border(),
-      ...(isGroupStart ? { top: { style: "medium", color: { rgb: BOM_COLORS.blue } } } : {}),
+      ...(isGroupStart ? { top: { style: "medium", color: { rgb: PREP_LIST_COLORS.blue } } } : {}),
     },
   };
 }
@@ -97,19 +97,19 @@ function buildDeliveryMapWorksheet(records, delivery) {
     const cafe = row > 2 ? rows[row][0] : null;
     const isGroupStart = row > 2 && cafe !== previousCafe;
     if (isGroupStart) cafeBand += 1;
-    const fill = isGroupStart ? BOM_COLORS.section : cafeBand % 2 === 0 ? BOM_COLORS.detailAlt : BOM_COLORS.detail;
+    const fill = isGroupStart ? PREP_LIST_COLORS.section : cafeBand % 2 === 0 ? PREP_LIST_COLORS.detailAlt : PREP_LIST_COLORS.detail;
     for (let column = 0; column < 7; column += 1) {
       let style;
       if (row === 0) style = titleStyle();
       else if (row === 1) style = {
-        font: { name: "Arial", sz: 10, italic: true, color: { rgb: BOM_COLORS.muted } },
-        fill: { patternType: "solid", fgColor: { rgb: BOM_COLORS.detail } },
+        font: { name: "Arial", sz: 10, italic: true, color: { rgb: PREP_LIST_COLORS.muted } },
+        fill: { patternType: "solid", fgColor: { rgb: PREP_LIST_COLORS.detail } },
         alignment: { vertical: "center" },
-        border: border(BOM_COLORS.section),
+        border: border(PREP_LIST_COLORS.section),
       };
       else if (row === 2) style = headerStyle;
       else style = bodyStyle(fill, isGroupStart);
-      if (row > 2 && isGroupStart && column === 0) style = { ...style, font: { ...style.font, bold: true, color: { rgb: BOM_COLORS.navy } } };
+      if (row > 2 && isGroupStart && column === 0) style = { ...style, font: { ...style.font, bold: true, color: { rgb: PREP_LIST_COLORS.navy } } };
       setCellStyle(worksheet, row, column, style, row > 2 && [5, 6].includes(column) ? moneyFormat : undefined);
     }
     if (row > 2) previousCafe = cafe;
@@ -120,7 +120,7 @@ function buildDeliveryMapWorksheet(records, delivery) {
 export function buildCommissaryBomWorkbook(records, weekStart) {
   const rows = rolledUpItems(records);
   const worksheetRows = [
-    ["Ingredient Technique BOM Tree", "", "", "", "", "", "Portion Plan — Power Automate input area", "", "", "Calculation rows — maintain for Power Automate", "", "", "", ""],
+    ["Ingredient Technique Prep List", "", "", "", "", "", "Portion Plan — Power Automate input area", "", "", "Calculation rows — maintain for Power Automate", "", "", "", ""],
     [`Commissary salad bar · Week ${weekLabel(weekStart)}`, "", "", "", "", "", "", "", "", "", "", "", "", ""],
     ["Received ingredient / item", "Prep technique", "Subrecipe / component", "Finished dish", "Total quantity", "Order unit", "Finished dish", "Planned portions", "Current status", "Technique key", "Finished dish", "Normalized unit", "Required qty", "Planning quantity"],
     ...rows.map((row) => [
@@ -154,19 +154,19 @@ export function buildCommissaryBomWorkbook(records, weekStart) {
     const category = row > 2 ? worksheetRows[row][2] : null;
     const isGroupStart = row > 2 && category !== previousCategory;
     if (isGroupStart) categoryBand += 1;
-    const fill = isGroupStart ? BOM_COLORS.section : categoryBand % 2 === 0 ? BOM_COLORS.detailAlt : BOM_COLORS.detail;
+    const fill = isGroupStart ? PREP_LIST_COLORS.section : categoryBand % 2 === 0 ? PREP_LIST_COLORS.detailAlt : PREP_LIST_COLORS.detail;
     for (let column = 0; column < 14; column += 1) {
       let style;
       if (row === 0) style = titleStyle();
       else if (row === 1) style = {
-        font: { name: "Arial", sz: 10, italic: true, color: { rgb: BOM_COLORS.muted } },
-        fill: { patternType: "solid", fgColor: { rgb: BOM_COLORS.detail } },
+        font: { name: "Arial", sz: 10, italic: true, color: { rgb: PREP_LIST_COLORS.muted } },
+        fill: { patternType: "solid", fgColor: { rgb: PREP_LIST_COLORS.detail } },
         alignment: { vertical: "center" },
-        border: border(BOM_COLORS.section),
+        border: border(PREP_LIST_COLORS.section),
       };
       else if (row === 2) style = headerStyle;
       else style = bodyStyle(fill, isGroupStart);
-      if (row > 2 && isGroupStart && [0, 2].includes(column)) style = { ...style, font: { ...style.font, bold: true, color: { rgb: BOM_COLORS.navy } } };
+      if (row > 2 && isGroupStart && [0, 2].includes(column)) style = { ...style, font: { ...style.font, bold: true, color: { rgb: PREP_LIST_COLORS.navy } } };
       setCellStyle(worksheet, row, column, style);
     }
     if (row > 2) previousCategory = category;
@@ -180,7 +180,7 @@ export function buildCommissaryBomWorkbook(records, weekStart) {
 
 export function exportCommissaryBom(records, weekStart) {
   const bytes = XLSX.write(buildCommissaryBomWorkbook(records, weekStart), { type: "array", bookType: "xlsx", cellStyles: true });
-  downloadBytes(bytes, `Commissary Salad Bar BOM ${weekStart}.xlsx`, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  downloadBytes(bytes, `Commissary Salad Bar Prep List ${weekStart}.xlsx`, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 }
 
 export function buildCommissaryTransfer(record) {
@@ -203,9 +203,9 @@ export function buildCommissaryTransfer(record) {
       quantity: line.total,
       itemWasteCost: line.orderUnitCost,
       ingredientAllocations: [{
-        ingredientName: "Prepared Foods",
+        ingredientName: line.transferGlCategory || "Prepared Foods",
         ingredientMrn: line.mrn,
-        glCode: PREPARED_FOODS_GL,
+        glCode: line.transferGlCode || PREPARED_FOODS_GL,
         allocationPerPortion: line.orderUnitCost,
       }],
     })),
