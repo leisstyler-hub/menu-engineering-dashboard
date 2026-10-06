@@ -339,7 +339,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
       meta: "Field tracker"
     },
     menuCrossUtilization: {
-      title: "Menu Cross Utilization Tool",
+      title: "Menu Cross Utilization",
       eyebrow: "New",
       description: "See pillar strategy, per-menu ingredient overlap, and a pairwise matrix built from shopping-list data for menu planning.",
       action: "Open Cross Utilization",
@@ -349,7 +349,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
       meta: "Menu planner"
     },
     transferTool: {
-      title: "Transfer Tool",
+      title: "Transfer",
       eyebrow: "Draft",
       description: "Build shared inter-cafe transfers with current Item + Waste Cost, reusable copies, and S4-ready Excel or ZIP export.",
       action: "Open Transfer",
@@ -359,7 +359,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
       meta: "Transfer reference"
     },
     commissaryOrdering: {
-      title: "Commissary Ordering Tool",
+      title: "Commissary Ordering",
       eyebrow: "Draft",
       description: "Order salad-bar production by cafe and delivery, then download the locked Prep List and S4 transfer workbooks.",
       action: "Open Commissary Ordering",

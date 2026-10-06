@@ -39,8 +39,13 @@ test("SSMT uses a deliberate dark palette without changing light mode", async ({
   const currentMonth = now.getMonth();
   const nextMonthDate = new Date(currentYear, currentMonth + 1, 1);
   const dateKey = (year, month, day) => `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-  const currentStart = dateKey(currentYear, currentMonth, 5);
-  const currentEnd = dateKey(currentYear, currentMonth, 8);
+  const currentStart = dateKey(currentYear, currentMonth, 1);
+  const currentEnd = dateKey(currentYear, currentMonth, 14);
+  const currentRangeDates = Array.from({ length: 14 }, (_, index) => new Date(currentYear, currentMonth, index + 1));
+  const rangeWeekday = currentRangeDates.find((date) => ![0, 6].includes(date.getDay()));
+  const rangeWeekend = currentRangeDates.find((date) => [0, 6].includes(date.getDay()));
+  const rangeWeekdayKey = dateKey(rangeWeekday.getFullYear(), rangeWeekday.getMonth(), rangeWeekday.getDate());
+  const rangeWeekendKey = dateKey(rangeWeekend.getFullYear(), rangeWeekend.getMonth(), rangeWeekend.getDate());
   const recurringStart = dateKey(currentYear, currentMonth, 1);
   const recurringEnd = dateKey(currentYear, currentMonth, 28);
   const recurringThursdays = Array.from({ length: 28 }, (_, index) => new Date(currentYear, currentMonth, index + 1))
@@ -81,8 +86,8 @@ test("SSMT uses a deliberate dark palette without changing light mode", async ({
   const calendar = page.getByTestId("ssmt-promotion-calendar");
   await expect(calendar).toBeVisible();
   await expect(page.getByText(/^Calendar$/)).toHaveCount(0);
-  await expect(calendar.getByTestId(`ssmt-calendar-day-${currentStart}`)).toContainText("Current Month Promo");
-  await expect(calendar.getByTestId(`ssmt-calendar-day-${currentEnd}`)).toContainText("Current Month Promo");
+  await expect(calendar.getByTestId(`ssmt-calendar-day-${rangeWeekdayKey}`)).toContainText("Current Month Promo");
+  await expect(calendar.getByTestId(`ssmt-calendar-day-${rangeWeekendKey}`)).not.toContainText("Current Month Promo");
   await expect(calendar.getByTestId(`ssmt-calendar-day-${recurringThursdays[0]}`)).toContainText("Thursday Night Football");
   await expect(calendar.getByTestId(`ssmt-calendar-day-${skippedThursday}`)).not.toContainText("Thursday Night Football");
   await expect(calendar.getByTestId(`ssmt-calendar-day-${recurringThursdays[2]}`)).toContainText("Thursday Night Football");
@@ -91,7 +96,8 @@ test("SSMT uses a deliberate dark palette without changing light mode", async ({
   await expect(calendar.getByTestId(`ssmt-calendar-day-${nextStart}`)).toContainText("Next Month Promo");
   await expect(calendar.getByTestId(`ssmt-calendar-day-${nextEnd}`)).toContainText("Next Month Promo");
   await calendar.getByRole("button", { name: /previous month/i }).click();
-  await expect(calendar.getByTestId(`ssmt-calendar-day-${currentStart}`)).toContainText("Current Month Promo");
+  await expect(calendar.getByTestId(`ssmt-calendar-day-${rangeWeekdayKey}`)).toContainText("Current Month Promo");
+  await expect(calendar.getByTestId(`ssmt-calendar-day-${rangeWeekendKey}`)).not.toContainText("Current Month Promo");
   await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
   await expect(page.getByTestId(/ssmt-menu-group-/)).toHaveCount(4);
   await expect(page.getByTestId("ssmt-menu-group-Menu Library")).toHaveCount(0);

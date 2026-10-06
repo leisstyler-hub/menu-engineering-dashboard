@@ -26,11 +26,11 @@ test("home screen groups tools under Chef Tools and Programming & Auditing in th
       heading: "Chef Tools",
       tools: [
         "Neighborhood Rotations",
-        "Transfer Tool",
-        "Commissary Ordering Tool",
+        "Transfer",
+        "Commissary Ordering",
         "Menu Library",
         "Menu Engineering",
-        "Menu Cross Utilization Tool",
+        "Menu Cross Utilization",
         "Webtrition",
       ],
     },
@@ -40,7 +40,7 @@ test("home screen groups tools under Chef Tools and Programming & Auditing in th
     },
   ]);
 
-  const transferTile = page.locator('article[data-tool-title="Transfer Tool"]');
+  const transferTile = page.locator('article[data-tool-title="Transfer"]');
   await expect(transferTile).toContainText("current Item + Waste Cost");
   await expect(transferTile).not.toContainText("G/L");
 

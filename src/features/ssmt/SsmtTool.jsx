@@ -579,6 +579,7 @@ function promotionOccursOnDate(menu, dateKey, date) {
   if (dateKey < menu.activeStart || dateKey > menu.activeEnd) return false;
   const schedule = menu.promotionSchedule || {};
   if ((schedule.skippedDates || []).includes(dateKey)) return false;
+  if ([0, 6].includes(date.getDay())) return false;
   if (schedule.mode !== "weekly") return true;
   return (schedule.weekdays || []).includes(date.getDay());
 }
@@ -3047,7 +3048,7 @@ function PromotionCalendar({ menus }) {
         <div>
           <p className="text-xs font-black uppercase tracking-[0.18em] text-purple-700">Promotion schedule</p>
           <h2 className="mt-1 text-2xl font-black text-slate-950">{visibleMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" })}</h2>
-          <p className="mt-1 text-sm font-semibold text-slate-600">Only Promotion menus with both a start and end date appear.</p>
+          <p className="mt-1 text-sm font-semibold text-slate-600">Only Promotion menus with both a start and end date appear. Saturdays and Sundays are excluded.</p>
         </div>
         <div className="flex gap-2">
           <button type="button" aria-label="Previous month" onClick={() => changeMonth(-1)} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-black text-slate-800 hover:bg-slate-100"><ChevronLeft size={18} /> Previous</button>
