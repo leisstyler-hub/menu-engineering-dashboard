@@ -40,6 +40,7 @@ export function buildSsmtWorkspaceRecord(workspace = {}, updatedAt = new Date().
     "Updated At": updatedAt,
     "Visible In Dashboard": true,
     menus: Array.isArray(workspace.menus) ? workspace.menus : [],
+    deletedMenuKeys: Array.isArray(workspace.deletedMenuKeys) ? workspace.deletedMenuKeys : [],
     priceBook: Array.isArray(workspace.priceBook) ? workspace.priceBook : [],
     priceBookEffectiveFrom: workspace.priceBookEffectiveFrom || "",
     plannedPriceBook: workspace.plannedPriceBook || null,
@@ -59,6 +60,7 @@ export function workspaceFromRecord(record = null) {
   ) return null;
   return {
     menus: Array.isArray(record.menus) ? record.menus : [],
+    deletedMenuKeys: Array.isArray(record.deletedMenuKeys) ? record.deletedMenuKeys : [],
     priceBook: Array.isArray(record.priceBook) ? record.priceBook : [],
     priceBookEffectiveFrom: record.priceBookEffectiveFrom || "",
     plannedPriceBook: record.plannedPriceBook && typeof record.plannedPriceBook === "object" ? record.plannedPriceBook : null,

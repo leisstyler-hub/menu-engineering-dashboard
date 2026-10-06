@@ -69,7 +69,7 @@ test("SSMT uses a deliberate dark palette without changing light mode", async ({
     const request = route.request();
     const url = new URL(request.url());
     if (request.method() === "GET" && url.searchParams.get("tool") === "SSMT") {
-      await route.fulfill({ json: { ok: true, source: "supabase", records: [{ "Record ID": "ssmt|workspace|current", "Record Type": "SSMT Workspace", Status: "Shared", menus: workspaceMenus, menuTypes: ["Core", "Global", "Menu Library", "Promotion", "Thompson Hospitality"], priceBook: [], modifierGroups: [legacyModifier], selectedMenuId: "core-menu", updatedAt: "2026-10-05T20:00:00.000Z" }] } });
+      await route.fulfill({ json: { ok: true, source: "supabase", records: [{ "Record ID": "ssmt|workspace|current", "Record Type": "SSMT Workspace", Status: "Shared", menus: workspaceMenus, deletedMenuKeys: ["next month promo"], menuTypes: ["Core", "Global", "Menu Library", "Promotion", "Thompson Hospitality"], priceBook: [], modifierGroups: [legacyModifier], selectedMenuId: "core-menu", updatedAt: "2026-10-05T20:00:00.000Z" }] } });
       return;
     }
     if (request.method() === "POST") {
@@ -88,13 +88,15 @@ test("SSMT uses a deliberate dark palette without changing light mode", async ({
   await expect(page.getByText(/^Calendar$/)).toHaveCount(0);
   await expect(calendar.getByTestId(`ssmt-calendar-day-${rangeWeekdayKey}`)).toContainText("Current Month Promo");
   await expect(calendar.getByTestId(`ssmt-calendar-day-${rangeWeekendKey}`)).not.toContainText("Current Month Promo");
+  await calendar.getByRole("button", { name: "Current Month Promo" }).first().click();
+  await expect(page.getByRole("heading", { name: "Current Month Promo", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "SSMT Start", exact: true }).click();
   await expect(calendar.getByTestId(`ssmt-calendar-day-${recurringThursdays[0]}`)).toContainText("Thursday Night Football");
   await expect(calendar.getByTestId(`ssmt-calendar-day-${skippedThursday}`)).not.toContainText("Thursday Night Football");
   await expect(calendar.getByTestId(`ssmt-calendar-day-${recurringThursdays[2]}`)).toContainText("Thursday Night Football");
   await expect(calendar).not.toContainText("Missing End Promo");
   await calendar.getByRole("button", { name: /next month/i }).click();
-  await expect(calendar.getByTestId(`ssmt-calendar-day-${nextStart}`)).toContainText("Next Month Promo");
-  await expect(calendar.getByTestId(`ssmt-calendar-day-${nextEnd}`)).toContainText("Next Month Promo");
+  await expect(calendar).not.toContainText("Next Month Promo");
   await calendar.getByRole("button", { name: /previous month/i }).click();
   await expect(calendar.getByTestId(`ssmt-calendar-day-${rangeWeekdayKey}`)).toContainText("Current Month Promo");
   await expect(calendar.getByTestId(`ssmt-calendar-day-${rangeWeekendKey}`)).not.toContainText("Current Month Promo");

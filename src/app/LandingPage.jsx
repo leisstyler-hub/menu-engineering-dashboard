@@ -6,6 +6,8 @@ import DASHBOARD_SUMMARY from "../data/dashboardSummary.json";
 import CompassOneLogo from "../shared/ui/CompassOneLogo.jsx";
 import PlatformSettings from "../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../shared/ui/VersionStamp.jsx";
+import PromotionCalendar from "../features/ssmt/PromotionCalendar.jsx";
+import { loadSsmtWorkspaceFromSharedStorage } from "../features/ssmt/ssmtWorkspaceStorage.js";
 import { money } from "../shared/formatting.js";
 
 const CHANGELOG_SUMMARY_MAX_LENGTH = 146;
@@ -214,6 +216,21 @@ function downloadTrustLayerGapList(rows) {
 }
 
 export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodRotations, onOpenRecipeDatabase, onOpenMenuProjects, onOpenMenuAuditTool, onOpenSsmtTool, onOpenLeanTool, onOpenMenuCrossUtilization, onOpenTransferTool, onOpenCommissaryOrdering, onOpenCafeTasting, onOpenSmartsheetHealth }) {
+  const [promotionMenus, setPromotionMenus] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadSsmtWorkspaceFromSharedStorage()
+      .then((result) => {
+        if (!cancelled) setPromotionMenus(Array.isArray(result.workspace?.menus) ? result.workspace.menus : []);
+      })
+      .catch(() => {
+        if (!cancelled) setPromotionMenus([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const {
     totalItems,
     menuCount,
@@ -419,6 +436,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
         onOpenLeanTool={onOpenLeanTool}
         onOpenMenuCrossUtilization={onOpenMenuCrossUtilization}
         onOpenSmartsheetHealth={onOpenSmartsheetHealth}
+        promotionMenus={promotionMenus}
       />
 
       <div className="mx-auto hidden w-full max-w-[110rem] flex-col gap-5 px-5 py-5 md:flex md:px-8">
@@ -452,6 +470,8 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
                 </section>
               ))}
             </section>
+
+            <PromotionCalendar menus={promotionMenus} testId="landing-promotion-calendar" />
 
             <LandingAccordion
               testId="platform-intelligence"
@@ -631,6 +651,7 @@ function MobileLanding({
   onOpenLeanTool,
   onOpenMenuCrossUtilization,
   onOpenSmartsheetHealth,
+  promotionMenus,
 }) {
   const metricTiles = [
     { label: "Tools", value: "11", icon: Wrench, tone: "bg-[#fff7e7] text-[#8a621b]" },
@@ -677,6 +698,8 @@ function MobileLanding({
             </section>
           ))}
         </section>
+
+        <PromotionCalendar menus={promotionMenus} testId="mobile-landing-promotion-calendar" />
 
         <LandingAccordion
           testId="mobile-platform-intelligence"

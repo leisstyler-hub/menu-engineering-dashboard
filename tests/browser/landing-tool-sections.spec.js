@@ -79,6 +79,46 @@ test("home screen groups tools under Chef Tools and Programming & Auditing in th
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
+test("home shows the shared promotion calendar without opening password-protected SSMT menus", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const now = new Date();
+  const dateKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const workspaceMenus = [{ id: "landing-promo", name: "Landing Page Promo", type: "Promotion", activeStart: dateKey, activeEnd: dateKey, items: [] }];
+  await page.route("**/api/storage/records**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (request.method() === "GET" && url.searchParams.get("tool") === "SSMT") {
+      await route.fulfill({ json: { ok: true, source: "supabase", records: [{ "Record ID": "ssmt|workspace|current", menus: workspaceMenus }] } });
+      return;
+    }
+    await route.continue();
+  });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/");
+
+  const calendar = page.getByTestId("landing-promotion-calendar");
+  const programming = page.getByTestId("landing-tool-section").nth(1);
+  const intelligence = page.getByTestId("platform-intelligence");
+  await expect(calendar).toBeVisible();
+  await expect(calendar.getByText("Landing Page Promo", { exact: true })).toBeVisible();
+  const positions = await page.evaluate(() => {
+    const programmingSection = document.querySelectorAll('[data-testid="landing-tool-section"]')[1];
+    const calendarSection = document.querySelector('[data-testid="landing-promotion-calendar"]');
+    const intelligenceSection = document.querySelector('[data-testid="platform-intelligence"]');
+    return {
+      programmingBeforeCalendar: Boolean(programmingSection?.compareDocumentPosition(calendarSection) & Node.DOCUMENT_POSITION_FOLLOWING),
+      calendarBeforeIntelligence: Boolean(calendarSection?.compareDocumentPosition(intelligenceSection) & Node.DOCUMENT_POSITION_FOLLOWING),
+    };
+  });
+  expect(positions).toEqual({ programmingBeforeCalendar: true, calendarBeforeIntelligence: true });
+  await expect(calendar.getByRole("button", { name: "Landing Page Promo" })).toHaveCount(0);
+  await calendar.getByText("Landing Page Promo", { exact: true }).click();
+  await expect(page.getByText(/passcode required/i)).toHaveCount(0);
+  await expect(programming).toBeVisible();
+  await expect(intelligence).toBeVisible();
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
 test("mobile home uses a contained two-column compact grid with closed bottom accordions", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   await page.setViewportSize({ width: 320, height: 800 });
