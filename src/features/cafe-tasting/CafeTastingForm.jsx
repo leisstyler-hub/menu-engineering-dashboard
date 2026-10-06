@@ -4,6 +4,7 @@ import { getRecipeLibraryPhoto } from "../../data/recipeLibraryAssets.js";
 import { normalizeRecipeLibraryItem } from "../recipe-database/recipeLibraryModel.js";
 
 const SLOT_COUNT = 4;
+const MAX_PHOTO_COUNT = 3;
 const INSTALL_SESSION_KEY = "cafeTastingInstallPromptSeen";
 const INSTALL_DISMISSED_KEY = "cafeTastingInstallPromptDismissed";
 
@@ -180,8 +181,24 @@ function canvasToJpeg(canvas, quality) {
   });
 }
 
+function isHeicPhoto(file) {
+  const name = String(file?.name || "").toLowerCase();
+  const type = String(file?.type || "").toLowerCase();
+  return type === "image/heic" || type === "image/heif" || name.endsWith(".heic") || name.endsWith(".heif");
+}
+
+async function browserReadablePhoto(file) {
+  if (!isHeicPhoto(file)) return file;
+  const { default: heic2any } = await import("heic2any");
+  const converted = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.9 });
+  const jpeg = Array.isArray(converted) ? converted[0] : converted;
+  if (!(jpeg instanceof Blob)) throw new Error("Unable to convert the selected HEIC photo.");
+  return new File([jpeg], `${file.name.replace(/\.[^.]+$/, "") || "photo"}.jpg`, { type: "image/jpeg" });
+}
+
 async function preparePhotoUpload(file) {
-  const image = await loadPhoto(file);
+  const readableFile = await browserReadablePhoto(file);
+  const image = await loadPhoto(readableFile);
   const scale = Math.min(1, 1600 / Math.max(image.naturalWidth, image.naturalHeight));
   const canvas = document.createElement("canvas");
   canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
@@ -219,8 +236,9 @@ export default function CafeTastingForm({ onBackToPlatform }) {
   const [notes, setNotes] = useState(emptyNotes());
   const [strengths, setStrengths] = useState("");
   const [opportunities, setOpportunities] = useState("");
-  const [photoFile, setPhotoFile] = useState(null);
-  const [photoPreview, setPhotoPreview] = useState("");
+  const [photoFiles, setPhotoFiles] = useState([]);
+  const [photoPreviews, setPhotoPreviews] = useState([]);
+  const [photoError, setPhotoError] = useState("");
 
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -354,13 +372,18 @@ export default function CafeTastingForm({ onBackToPlatform }) {
   }
 
   function handlePhotoChange(event) {
-    const file = event.target.files?.[0] || null;
-    setPhotoFile(file);
-    if (file) {
-      readFileAsDataUrl(file).then(setPhotoPreview).catch(() => setPhotoPreview(""));
-    } else {
-      setPhotoPreview("");
+    const files = Array.from(event.target.files || []);
+    if (files.length > MAX_PHOTO_COUNT) {
+      setPhotoFiles([]);
+      setPhotoPreviews([]);
+      setPhotoError("Choose up to three photos.");
+      event.target.value = "";
+      return;
     }
+    setPhotoError("");
+    setPhotoFiles(files);
+    Promise.all(files.map((file) => readFileAsDataUrl(file).catch(() => "")))
+      .then(setPhotoPreviews);
   }
 
   function resetForNextDish() {
@@ -379,8 +402,9 @@ export default function CafeTastingForm({ onBackToPlatform }) {
     setNotes(emptyNotes());
     setStrengths("");
     setOpportunities("");
-    setPhotoFile(null);
-    setPhotoPreview("");
+    setPhotoFiles([]);
+    setPhotoPreviews([]);
+    setPhotoError("");
   }
 
   function startNewSubmission() {
@@ -422,13 +446,17 @@ export default function CafeTastingForm({ onBackToPlatform }) {
         body: JSON.stringify({ action: "addTastingSubmission", record }),
       });
 
-      if (photoFile && result.rowId) {
-        const preparedPhoto = await preparePhotoUpload(photoFile);
-        await fetchJson("/api/smartsheet/records?dataset=cafe-tasting", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "uploadTastingPhoto", rowId: result.rowId, fileName: preparedPhoto.fileName, dataBase64: preparedPhoto.dataUrl }),
-        });
+      let uploadedPhotoCount = 0;
+      if (photoFiles.length && result.rowId) {
+        for (const photoFile of photoFiles) {
+          const preparedPhoto = await preparePhotoUpload(photoFile);
+          await fetchJson("/api/smartsheet/records?dataset=cafe-tasting", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "uploadTastingPhoto", rowId: result.rowId, fileName: preparedPhoto.fileName, dataBase64: preparedPhoto.dataUrl }),
+          });
+          uploadedPhotoCount += 1;
+        }
       }
 
       setSubmitSuccess({
@@ -440,7 +468,7 @@ export default function CafeTastingForm({ onBackToPlatform }) {
         tasters: tasterOptions
           .filter((option) => record.Taster.includes(option.email))
           .map((option) => option.name || option.email),
-        photoUploaded: Boolean(photoFile && result.rowId),
+        photoCount: uploadedPhotoCount,
       });
     } catch (error) {
       setSubmitError(error.message || "Submission failed.");
@@ -504,7 +532,7 @@ export default function CafeTastingForm({ onBackToPlatform }) {
                 <ReportDetail label="Station" value={submitSuccess.station} />
                 <ReportDetail label="Date" value={submitSuccess.date} />
                 <ReportDetail label="Taster(s)" value={submitSuccess.tasters.join(", ") || "Recorded"} />
-                <ReportDetail label="Photo" value={submitSuccess.photoUploaded ? "Uploaded" : "Not included"} />
+                <ReportDetail label="Photos" value={submitSuccess.photoCount ? `${submitSuccess.photoCount} uploaded` : "Not included"} />
               </dl>
               {submitSuccess.rowId ? <p className="mt-3 text-xs font-semibold text-slate-400">Submission reference: {submitSuccess.rowId}</p> : null}
               <button type="button" onClick={startNewSubmission} className="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-emerald-600 px-6 py-4 text-base font-black text-white shadow-sm hover:bg-emerald-700">
@@ -730,13 +758,18 @@ export default function CafeTastingForm({ onBackToPlatform }) {
               <Field label="What can be improved:">
                 <textarea value={opportunities} onChange={(event) => setOpportunities(event.target.value)} className={`${inputClass} min-h-[70px]`} />
               </Field>
-              <Field label="Photo (optional, 1 max)">
+              <Field label="Photos (optional, 3 max)">
                 <label className="flex cursor-pointer items-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600">
                   <Camera size={18} />
-                  {photoFile ? photoFile.name : "Take or choose a photo"}
-                  <input type="file" accept="image/*" capture="environment" onChange={handlePhotoChange} className="hidden" />
+                  {photoFiles.length ? `${photoFiles.length} photo${photoFiles.length === 1 ? "" : "s"} selected` : "Take or choose photos"}
+                  <input type="file" accept="image/*,.heic,.heif,image/heic,image/heif" capture="environment" multiple onChange={handlePhotoChange} className="hidden" />
                 </label>
-                {photoPreview ? <img src={photoPreview} alt="Selected preview" className="mt-2 h-32 w-32 rounded-xl object-cover" /> : null}
+                {photoError ? <p className="mt-2 text-sm font-bold text-rose-600">{photoError}</p> : null}
+                {photoPreviews.length ? (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {photoPreviews.map((preview, index) => preview ? <img key={`${photoFiles[index]?.name}-${index}`} src={preview} alt={`Selected preview ${index + 1}`} className="h-32 w-32 rounded-xl object-cover" /> : null)}
+                  </div>
+                ) : null}
               </Field>
             </div>
           </section>

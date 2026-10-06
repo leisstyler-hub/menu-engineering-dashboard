@@ -11,6 +11,10 @@ test("home screen groups tools under Chef Tools and Programming & Auditing in th
 
   await expect(sections.nth(0).getByRole("heading", { name: "Chef Tools" })).toBeVisible();
   await expect(sections.nth(1).getByRole("heading", { name: "Programming & Auditing" })).toBeVisible();
+  await expect(sections.nth(0).getByRole("button", { name: "Open Transfer", exact: true })).toBeVisible();
+  await expect(sections.nth(0).getByRole("button", { name: "Open Commissary Ordering", exact: true })).toBeVisible();
+  await expect(sections.nth(0).getByRole("button", { name: "Open Cross Utilization", exact: true })).toBeVisible();
+  await expect(sections.nth(0).getByRole("button", { name: /Open .* Tool/ })).toHaveCount(0);
 
   const toolSections = await sections.evaluateAll((nodes) => nodes.map((section) => ({
     heading: section.querySelector("h2")?.textContent?.trim(),

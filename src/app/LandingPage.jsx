@@ -352,7 +352,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
       title: "Transfer Tool",
       eyebrow: "Draft",
       description: "Build shared inter-cafe transfers with current Item + Waste Cost, reusable copies, and S4-ready Excel or ZIP export.",
-      action: "Open Transfer Tool",
+      action: "Open Transfer",
       onOpen: onOpenTransferTool,
       icon: ArrowRightLeft,
       tone: "violet",

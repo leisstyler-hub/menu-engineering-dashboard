@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { expect, test } from "@playwright/test";
 async function prepareCafeTastingPage(page, { installed = false, ios = false } = {}) {
   await page.setViewportSize({ width: 820, height: 1180 });
@@ -140,7 +142,7 @@ test("Cafe Tasting shows a submission report before starting a fresh tasting", a
   await expect(page.getByLabel("Dish Name")).toHaveValue("");
   await expect(page.getByText("One", { exact: true })).not.toHaveClass(/emerald/);
 });
-test("Cafe Tasting keeps a large phone photo below the serverless request limit", async ({ page }) => {
+test("Cafe Tasting keeps up to three phone photos below the serverless request limit", async ({ page }) => {
   await prepareCafeTastingPage(page);
   await page.route("**/api/smartsheet/records?dataset=cafe-tasting&diagnostic=columns", (route) => route.fulfill({ json: { ok: true, rawColumns: [
     { title: "Station Name", options: ["Salad"] },
@@ -149,11 +151,11 @@ test("Cafe Tasting keeps a large phone photo below the serverless request limit"
   await page.route("**/api/smartsheet/records?dataset=cafe-tasting-routing", (route) => route.fulfill({ json: { ok: true, records: [{ Cafe: "test cafe" }] } }));
   await page.route("**/api/recipe-library?scope=summary", (route) => route.fulfill({ json: { menus: [{ menu: "AMZ: Greens & Grains" }] } }));
   await page.route("**/api/recipe-library?scope=menu*", (route) => route.fulfill({ json: { rows: [] } }));
-  let uploadBody = "";
+  const uploadBodies = [];
   await page.route("**/api/smartsheet/records?dataset=cafe-tasting", async (route) => {
     const body = route.request().postData() || "";
     if (body.includes("uploadTastingPhoto")) {
-      uploadBody = body;
+      uploadBodies.push(body);
       await route.fulfill({ status: 201, json: { ok: true, attachmentId: "attachment-123" } });
       return;
     }
@@ -181,13 +183,40 @@ test("Cafe Tasting keeps a large phone photo below the serverless request limit"
     const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
     return Array.from(new Uint8Array(await blob.arrayBuffer()));
   });
-  await page.locator('input[type="file"][accept="image/*"]').setInputFiles({
-    name: "phone-photo.png",
-    mimeType: "image/png",
-    buffer: Buffer.from(photo),
-  });
+  const photoInput = page.locator('input[type="file"]');
+  await expect(photoInput).toHaveAttribute("accept", /\.heic/);
+  await expect(photoInput).toHaveAttribute("multiple", "");
+  await photoInput.setInputFiles([
+    {
+      name: "iphone-sample.heic",
+      mimeType: "image/heic",
+      buffer: readFileSync(path.join(process.cwd(), "tests", "fixtures", "iphone-sample.heic")),
+    },
+    ...["two", "three"].map((name) => ({
+      name: `${name}.png`,
+      mimeType: "image/png",
+      buffer: Buffer.from(photo),
+    })),
+  ]);
+  await expect(page.getByText("3 photos selected", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Submit Tasting" }).click();
   await expect(page.getByRole("heading", { name: "Tasting submitted" })).toBeVisible();
-  expect(uploadBody.length).toBeLessThan(4_000_000);
-  expect(JSON.parse(uploadBody).dataBase64).toMatch(/^data:image\/jpeg;base64,/);
+  await expect(page.getByText("3 uploaded", { exact: true })).toBeVisible();
+  expect(uploadBodies).toHaveLength(3);
+  expect(JSON.parse(uploadBodies[0]).fileName).toBe("iphone-sample.jpg");
+  uploadBodies.forEach((uploadBody) => {
+    expect(uploadBody.length).toBeLessThan(4_000_000);
+    expect(JSON.parse(uploadBody).dataBase64).toMatch(/^data:image\/jpeg;base64,/);
+  });
+});
+
+test("Cafe Tasting rejects a fourth photo before submission", async ({ page }) => {
+  await prepareCafeTastingPage(page);
+  await page.goto("/?tool=cafeTasting");
+  await page.locator('input[type="file"]').setInputFiles([1, 2, 3, 4].map((index) => ({
+    name: `photo-${index}.jpg`,
+    mimeType: "image/jpeg",
+    buffer: Buffer.from([255, 216, 255, 217]),
+  })));
+  await expect(page.getByText("Choose up to three photos.", { exact: true })).toBeVisible();
 });
