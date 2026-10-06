@@ -97,9 +97,12 @@ test("home shows the shared promotion calendar without opening password-protecte
   await page.goto("/");
 
   const calendar = page.getByTestId("landing-promotion-calendar");
+  const today = calendar.getByTestId(`ssmt-calendar-day-${dateKey}`);
   const programming = page.getByTestId("landing-tool-section").nth(1);
   const intelligence = page.getByTestId("platform-intelligence");
   await expect(calendar).toBeVisible();
+  await expect(today).toHaveAttribute("aria-current", "date");
+  await expect(today).toHaveClass(/bg-purple-50/);
   await expect(calendar.getByText("Landing Page Promo", { exact: true })).toBeVisible();
   const positions = await page.evaluate(() => {
     const programmingSection = document.querySelectorAll('[data-testid="landing-tool-section"]')[1];

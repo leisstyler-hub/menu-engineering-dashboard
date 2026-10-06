@@ -46,8 +46,9 @@ export default function PromotionCalendar({ menus = [], onOpenMenu, testId = "ss
             const key = localKey(date);
             const dayPromotions = scheduledPromotions.filter((menu) => promotionOccursOnDate(menu, key, date));
             const inMonth = date.getMonth() === visibleMonth.getMonth();
+            const isToday = key === localKey(new Date());
             return (
-              <div key={key} data-testid={`ssmt-calendar-day-${key}`} className={`min-h-28 border-b border-r border-slate-200 p-2 ${inMonth ? "bg-white" : "bg-slate-50 text-slate-400"}`}>
+              <div key={key} data-testid={`ssmt-calendar-day-${key}`} aria-current={isToday ? "date" : undefined} className={`min-h-28 border-b border-r border-slate-200 p-2 ${isToday ? "bg-purple-50 ring-1 ring-inset ring-purple-200" : inMonth ? "bg-white" : "bg-slate-50 text-slate-400"}`}>
                 <span className="text-xs font-black">{date.getDate()}</span>
                 <div className="mt-1 space-y-1">
                   {dayPromotions.map((menu) => onOpenMenu ? (

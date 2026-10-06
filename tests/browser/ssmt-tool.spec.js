@@ -85,6 +85,10 @@ test("SSMT uses a deliberate dark palette without changing light mode", async ({
   await page.getByRole("button", { name: /unlock ssmt/i }).click();
   const calendar = page.getByTestId("ssmt-promotion-calendar");
   await expect(calendar).toBeVisible();
+  const todayKey = dateKey(currentYear, currentMonth, now.getDate());
+  const today = calendar.getByTestId(`ssmt-calendar-day-${todayKey}`);
+  await expect(today).toHaveAttribute("aria-current", "date");
+  await expect(today).toHaveClass(/bg-purple-50/);
   await expect(page.getByText(/^Calendar$/)).toHaveCount(0);
   await expect(calendar.getByTestId(`ssmt-calendar-day-${rangeWeekdayKey}`)).toContainText("Current Month Promo");
   await expect(calendar.getByTestId(`ssmt-calendar-day-${rangeWeekendKey}`)).not.toContainText("Current Month Promo");
