@@ -36,6 +36,15 @@ const UNLOCKED_KEY = "culinaryToolsSsmtUnlocked";
 const WORKSPACE_STORAGE_KEY = "culinaryToolsSsmtWorkspace_v1";
 const DEFAULT_MENU_TYPES = ["Core", "Global", "Thompson Hospitality", "Promotion"];
 const ACTIVE_DATE_MENU_TYPES = ["Promotion", "Thompson Hospitality"];
+const PROMOTION_WEEKDAYS = [
+  { value: 0, label: "Sunday" },
+  { value: 1, label: "Monday" },
+  { value: 2, label: "Tuesday" },
+  { value: 3, label: "Wednesday" },
+  { value: 4, label: "Thursday" },
+  { value: 5, label: "Friday" },
+  { value: 6, label: "Saturday" },
+];
 const MENU_TYPE_ORDER = ["Core", "Global", "Promotion", "Thompson Hospitality"];
 const MODIFIER_TYPES = ["Force", "Remove", "Addition"];
 const TIER_2_AREAS = new Set(["AUS", "BNA", "YVR", "YYZ"]);
@@ -564,6 +573,14 @@ function activeDatesRequired(type) {
   return ACTIVE_DATE_MENU_TYPES.includes(type);
 }
 
+function promotionOccursOnDate(menu, dateKey, date) {
+  if (menu.type !== "Promotion" || !menu.activeStart || !menu.activeEnd) return false;
+  if (dateKey < menu.activeStart || dateKey > menu.activeEnd) return false;
+  const schedule = menu.promotionSchedule || {};
+  if ((schedule.skippedDates || []).includes(dateKey)) return false;
+  if (schedule.mode !== "weekly") return true;
+  return (schedule.weekdays || []).includes(date.getDay());
+}
 function compareMenuNames(a, b) {
   return String(a.name || "").localeCompare(String(b.name || ""), undefined, { sensitivity: "base" });
 }
@@ -658,6 +675,7 @@ function createMenuRecord(name, type, areaOrder) {
     status: "Draft",
     activeStart: "",
     activeEnd: "",
+    promotionSchedule: { mode: "date-range", weekdays: [], skippedDates: [] },
     completedAt: "",
     editSignal: false,
     flags: [],
@@ -746,6 +764,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const [phaseBlocker, setPhaseBlocker] = useState("");
   const [menuNameEditing, setMenuNameEditing] = useState(false);
   const [submenuMembershipItemId, setSubmenuMembershipItemId] = useState("");
+  const [newSkippedPromotionDate, setNewSkippedPromotionDate] = useState("");
   const draggedRowIdRef = useRef("");
   const draggedModifierGroupIdRef = useRef("");
   const [workspaceSync, setWorkspaceSync] = useState({
@@ -1075,6 +1094,34 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
     setMenus((current) => current.map((menu) => (menu.id === selectedMenu.id ? { ...menu, ...patch } : menu)));
   };
 
+  const updatePromotionSchedule = (patch) => {
+    updateSelectedMenu({
+      promotionSchedule: {
+        mode: "date-range",
+        weekdays: [],
+        skippedDates: [],
+        ...(selectedMenu.promotionSchedule || {}),
+        ...patch,
+      },
+    });
+  };
+
+  const togglePromotionWeekday = (weekday, checked) => {
+    const weekdays = selectedMenu.promotionSchedule?.weekdays || [];
+    updatePromotionSchedule({
+      weekdays: checked
+        ? [...new Set([...weekdays, weekday])].sort((left, right) => left - right)
+        : weekdays.filter((value) => value !== weekday),
+    });
+  };
+
+  const addSkippedPromotionDate = () => {
+    if (!newSkippedPromotionDate) return;
+    updatePromotionSchedule({
+      skippedDates: [...new Set([...(selectedMenu.promotionSchedule?.skippedDates || []), newSkippedPromotionDate])].sort(),
+    });
+    setNewSkippedPromotionDate("");
+  };
   const updateSelectedMenuPhase = (phase) => {
     if (phaseIsBlocked(phase)) {
       setPhaseBlocker(`Lock all item rows before moving to ${phase}.`);
@@ -2218,6 +2265,48 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                       <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Active end</span>
                       <input type="date" aria-label="Active end" value={selectedMenu.activeEnd || ""} onChange={(event) => updateSelectedMenu({ activeEnd: event.target.value })} className="rounded-lg border border-slate-300 bg-white px-3 py-2 font-bold" />
                     </label>
+                    {selectedMenu.type === "Promotion" && (
+                      <div className="space-y-4 rounded-xl border-2 border-purple-300 bg-purple-50 p-4 md:col-span-4">
+                        <div className="grid gap-3 md:grid-cols-2">
+                          <label className="grid gap-1 text-sm font-bold text-purple-950">
+                            <span className="text-xs font-black uppercase tracking-[0.14em] text-purple-700">Promotion schedule</span>
+                            <select aria-label="Promotion schedule type" value={selectedMenu.promotionSchedule?.mode || "date-range"} onChange={(event) => updatePromotionSchedule({ mode: event.target.value })} className="rounded-lg border border-purple-300 bg-white px-3 py-2 font-black">
+                              <option value="date-range">Every day in date range</option>
+                              <option value="weekly">Repeat on selected weekdays</option>
+                            </select>
+                          </label>
+                          <p className="rounded-lg border border-purple-200 bg-white px-3 py-2 text-sm font-semibold leading-6 text-purple-950">Schedule settings change only when this promo appears on the calendar. Menu items and modifiers are not changed.</p>
+                        </div>
+                        {(selectedMenu.promotionSchedule?.mode || "date-range") === "weekly" && (
+                          <div>
+                            <p className="text-xs font-black uppercase tracking-[0.14em] text-purple-700">Repeat every</p>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {PROMOTION_WEEKDAYS.map((weekday) => (
+                                <label key={weekday.value} className="inline-flex items-center gap-2 rounded-lg border border-purple-300 bg-white px-3 py-2 text-sm font-black text-purple-950">
+                                  <input type="checkbox" aria-label={weekday.label} checked={(selectedMenu.promotionSchedule?.weekdays || []).includes(weekday.value)} onChange={(event) => togglePromotionWeekday(weekday.value, event.target.checked)} />
+                                  {weekday.label.slice(0, 3)}
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-xs font-black uppercase tracking-[0.14em] text-purple-700">Skipped dates</p>
+                          <div className="mt-2 flex flex-wrap items-end gap-2">
+                            <label className="grid gap-1 text-sm font-bold text-purple-950">
+                              <span>Skip a holiday or exception</span>
+                              <input type="date" aria-label="Skip promotion date" value={newSkippedPromotionDate} onChange={(event) => setNewSkippedPromotionDate(event.target.value)} className="rounded-lg border border-purple-300 bg-white px-3 py-2 font-bold" />
+                            </label>
+                            <button type="button" onClick={addSkippedPromotionDate} disabled={!newSkippedPromotionDate} className="rounded-lg bg-purple-700 px-4 py-2 font-black text-white disabled:cursor-not-allowed disabled:opacity-50">Add skipped date</button>
+                          </div>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {(selectedMenu.promotionSchedule?.skippedDates || []).map((date) => (
+                              <button key={date} type="button" aria-label={`Remove skipped date ${date}`} onClick={() => updatePromotionSchedule({ skippedDates: (selectedMenu.promotionSchedule?.skippedDates || []).filter((value) => value !== date) })} className="rounded-full border border-purple-300 bg-white px-3 py-1 text-xs font-black text-purple-950">{date} ×</button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <div className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-bold leading-6 text-sky-900 md:col-span-2">
@@ -2957,7 +3046,7 @@ function PromotionCalendar({ menus }) {
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => <div key={day} className="border-b border-slate-200 bg-slate-100 px-2 py-2 text-center text-xs font-black uppercase tracking-wide text-slate-600">{day}</div>)}
         {calendarDays.map((date) => {
           const key = localKey(date);
-          const dayPromotions = scheduledPromotions.filter((menu) => menu.activeStart <= key && menu.activeEnd >= key);
+          const dayPromotions = scheduledPromotions.filter((menu) => promotionOccursOnDate(menu, key, date));
           const inMonth = date.getMonth() === visibleMonth.getMonth();
           return (
             <div key={key} data-testid={`ssmt-calendar-day-${key}`} className={`min-h-28 border-b border-r border-slate-200 p-2 ${inMonth ? "bg-white" : "bg-slate-50 text-slate-400"}`}>

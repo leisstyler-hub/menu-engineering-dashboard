@@ -1,1 +1,1 @@
-export const APP_VERSION_STAMP = "2026.10.05.004-ssmt-promo-calendar";
+export const APP_VERSION_STAMP = "2026.10.05.005-ssmt-promo-recurrence";

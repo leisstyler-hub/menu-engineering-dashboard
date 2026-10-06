@@ -10,6 +10,12 @@ import { collectUnexpectedPageErrors, expectNoAppProtection, expectNoUnexpectedP
   const dateKey = (year, month, day) => `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
   const currentStart = dateKey(currentYear, currentMonth, 5);
   const currentEnd = dateKey(currentYear, currentMonth, 8);
+  const recurringStart = dateKey(currentYear, currentMonth, 1);
+  const recurringEnd = dateKey(currentYear, currentMonth, 28);
+  const recurringThursdays = Array.from({ length: 28 }, (_, index) => new Date(currentYear, currentMonth, index + 1))
+    .filter((date) => date.getDay() === 4)
+    .map((date) => dateKey(date.getFullYear(), date.getMonth(), date.getDate()));
+  const skippedThursday = recurringThursdays[1];
   const nextStart = dateKey(nextMonthDate.getFullYear(), nextMonthDate.getMonth(), 2);
   const nextEnd = dateKey(nextMonthDate.getFullYear(), nextMonthDate.getMonth(), 4);
   const savedBodies = [];
@@ -18,6 +24,7 @@ import { collectUnexpectedPageErrors, expectNoAppProtection, expectNoUnexpectedP
     { id: "core-menu", name: "Core Menu", type: "Core", phase: "Culinary draft", items: [] },
     { id: "legacy-library-menu", name: "Preserved Library Menu", type: "Menu Library", phase: "Culinary draft", items: [{ id: "legacy-item", name: "Legacy Item", modifierGroups: [legacyModifier] }] },
     { id: "current-promo", name: "Current Month Promo", type: "Promotion", phase: "Culinary draft", activeStart: currentStart, activeEnd: currentEnd, items: [] },
+    { id: "weekly-promo", name: "Thursday Night Football", type: "Promotion", phase: "Culinary draft", activeStart: recurringStart, activeEnd: recurringEnd, promotionSchedule: { mode: "weekly", weekdays: [4], skippedDates: [skippedThursday] }, items: [] },
     { id: "next-promo", name: "Next Month Promo", type: "Promotion", phase: "Culinary draft", activeStart: nextStart, activeEnd: nextEnd, items: [] },
     { id: "missing-end", name: "Missing End Promo", type: "Promotion", phase: "Culinary draft", activeStart: currentStart, activeEnd: "", items: [] },
   ];
@@ -45,6 +52,9 @@ import { collectUnexpectedPageErrors, expectNoAppProtection, expectNoUnexpectedP
   await expect(page.getByText(/^Calendar$/)).toHaveCount(0);
   await expect(calendar.getByTestId(`ssmt-calendar-day-${currentStart}`)).toContainText("Current Month Promo");
   await expect(calendar.getByTestId(`ssmt-calendar-day-${currentEnd}`)).toContainText("Current Month Promo");
+  await expect(calendar.getByTestId(`ssmt-calendar-day-${recurringThursdays[0]}`)).toContainText("Thursday Night Football");
+  await expect(calendar.getByTestId(`ssmt-calendar-day-${skippedThursday}`)).not.toContainText("Thursday Night Football");
+  await expect(calendar.getByTestId(`ssmt-calendar-day-${recurringThursdays[2]}`)).toContainText("Thursday Night Football");
   await expect(calendar).not.toContainText("Missing End Promo");
   await calendar.getByRole("button", { name: /next month/i }).click();
   await expect(calendar.getByTestId(`ssmt-calendar-day-${nextStart}`)).toContainText("Next Month Promo");
@@ -61,6 +71,48 @@ import { collectUnexpectedPageErrors, expectNoAppProtection, expectNoUnexpectedP
   const savedRecord = savedBodies.flatMap((body) => body?.records || []).find((candidate) => candidate?.["Record ID"] === "ssmt|workspace|current");
   expect(savedRecord?.menus?.find((menu) => menu.id === "legacy-library-menu")?.items?.[0]?.modifierGroups).toEqual([legacyModifier]);
   expect(savedRecord?.modifierGroups).toContainEqual(expect.objectContaining({ id: legacyModifier.id, name: legacyModifier.name, type: legacyModifier.type }));
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+test("SSMT promotion editor saves weekly recurrence without changing menu items or modifiers", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const savedBodies = [];
+  const preservedModifier = { id: "promo-modifier", name: "Cheese", type: "Addition", items: [{ id: "modifier-item", name: "Cheddar" }] };
+  const preservedItem = { id: "promo-item", name: "Football Burger", label: "Football Burger", modifierGroups: [preservedModifier] };
+  const workspaceMenus = [{ id: "promo-menu", name: "Thursday Night Football", type: "Promotion", phase: "Culinary draft", activeStart: "2026-10-01", activeEnd: "2026-12-31", items: [preservedItem] }];
+  await page.addInitScript(() => { window.localStorage.clear(); window.sessionStorage.clear(); });
+  await page.route("**/api/storage/records**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (request.method() === "GET" && url.searchParams.get("tool") === "SSMT") {
+      await route.fulfill({ json: { ok: true, source: "supabase", records: [{ "Record ID": "ssmt|workspace|current", "Record Type": "SSMT Workspace", Status: "Shared", menus: workspaceMenus, menuTypes: ["Core", "Global", "Promotion", "Thompson Hospitality"], priceBook: [], modifierGroups: [preservedModifier], selectedMenuId: "promo-menu", updatedAt: "2026-10-06T01:00:00.000Z" }] } });
+      return;
+    }
+    if (request.method() === "POST") {
+      savedBodies.push(request.postDataJSON());
+      await route.fulfill({ json: { ok: true, source: "supabase", synced: 1, message: "Saved 1 row to Supabase." } });
+      return;
+    }
+    await route.continue();
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByLabel(/SSMT passcode/i).fill("0411");
+  await page.getByRole("button", { name: /unlock ssmt/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+  await page.locator('button[data-menu-name="Thursday Night Football"]').click();
+  await page.getByLabel("Promotion schedule type").selectOption("weekly");
+  await page.getByLabel("Thursday").check();
+  await page.getByLabel("Skip promotion date").fill("2026-11-26");
+  await page.getByRole("button", { name: "Add skipped date" }).click();
+  await page.getByRole("button", { name: /Save SSMT workspace/i }).click();
+  await expect.poll(() => savedBodies.length).toBeGreaterThan(0);
+  const savedRecord = savedBodies.flatMap((body) => body?.records || []).find((candidate) => candidate?.["Record ID"] === "ssmt|workspace|current");
+  const savedMenu = savedRecord?.menus?.find((menu) => menu.id === "promo-menu");
+  expect(savedMenu?.promotionSchedule).toEqual({ mode: "weekly", weekdays: [4], skippedDates: ["2026-11-26"] });
+  expect(savedMenu?.items).toHaveLength(1);
+  expect(savedMenu?.items?.[0]).toEqual(expect.objectContaining({ id: preservedItem.id, name: preservedItem.name, label: preservedItem.label, modifierGroups: [preservedModifier] }));
+  expect(savedRecord?.modifierGroups).toContainEqual(expect.objectContaining({ id: preservedModifier.id, name: preservedModifier.name, type: preservedModifier.type, items: preservedModifier.items }));
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
