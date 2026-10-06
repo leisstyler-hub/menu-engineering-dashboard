@@ -36,6 +36,7 @@ const UNLOCKED_KEY = "culinaryToolsSsmtUnlocked";
 const WORKSPACE_STORAGE_KEY = "culinaryToolsSsmtWorkspace_v1";
 const DEFAULT_MENU_TYPES = ["Core", "Global", "Thompson Hospitality", "Promotion"];
 const ACTIVE_DATE_MENU_TYPES = ["Promotion", "Thompson Hospitality"];
+const SECONDARY_CATEGORY_OPTIONS = ["Entr\u00e9e", "Side", "Extension", "A La Carte"];
 const PROMOTION_WEEKDAYS = [
   { value: 0, label: "Sunday" },
   { value: 1, label: "Monday" },
@@ -2558,14 +2559,25 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                             />
                           </td>
                           <td className={builderCellClass}>
-                            <input
+                            <select
                               aria-label={`Secondary category for ${item.label || item.name || "item"}`}
                               value={item.secondaryCategory || item.reportingCategorySecondary || ""}
                               onChange={(event) => updateItem(item.id, { secondaryCategory: event.target.value, reportingCategorySecondary: event.target.value })}
                               onClick={() => copyLockedField(item, item.secondaryCategory || item.reportingCategorySecondary, "Secondary category")}
-                              readOnly={Boolean(item.lockedForCentric)}
-                              className={`w-full rounded-md border border-slate-300 px-2 py-1 text-xs font-bold outline-none focus:border-emerald-500 ${item.lockedForCentric ? "cursor-copy bg-emerald-50 text-slate-950" : "bg-white"}`}
-                            />
+                              disabled={Boolean(item.lockedForCentric)}
+                              className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-bold text-slate-900 disabled:cursor-not-allowed disabled:bg-emerald-50 disabled:text-slate-950"
+                            >
+                              <option value=""></option>
+                              {SECONDARY_CATEGORY_OPTIONS.map((option) => (
+                                <option key={option} value={option}>{option}</option>
+                              ))}
+                              {(item.secondaryCategory || item.reportingCategorySecondary)
+                                && !SECONDARY_CATEGORY_OPTIONS.includes(item.secondaryCategory || item.reportingCategorySecondary) && (
+                                  <option value={item.secondaryCategory || item.reportingCategorySecondary}>
+                                    {item.secondaryCategory || item.reportingCategorySecondary} (Legacy value)
+                                  </option>
+                                )}
+                            </select>
                           </td>
                           <td className={builderCellClass}>
                             <select

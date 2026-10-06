@@ -349,6 +349,81 @@ test("SSMT shows clickable Experience and IT handoff queues below the selector",
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
+test("SSMT secondary category dropdown preserves legacy values and only changes the selected item", async ({ page }) => {
+  const savedBodies = [];
+  const preservedModifier = { id: "legacy-category-modifier", name: "Legacy category modifier", type: "Addition", items: [{ id: "modifier-item", name: "Sauce" }] };
+  const legacyItem = {
+    id: "legacy-category-item",
+    name: "Legacy category item",
+    label: "Legacy category item",
+    secondaryCategory: "Grill Station",
+    reportingCategorySecondary: "Grill Station",
+    modifierGroups: [preservedModifier],
+  };
+  const untouchedItem = {
+    id: "untouched-category-item",
+    name: "Untouched category item",
+    label: "Untouched category item",
+    secondaryCategory: "Extension",
+    reportingCategorySecondary: "Extension",
+    modifierGroups: [],
+  };
+
+  await page.route("**/api/storage/records**", async (route) => {
+    const request = route.request();
+    if (request.method() === "GET") {
+      await route.fulfill({ json: { ok: true, source: "supabase", records: [{
+        "Record ID": "ssmt|workspace|current",
+        "Record Type": "SSMT Workspace",
+        Status: "Shared",
+        menus: [{ id: "legacy-category-menu", name: "Legacy Category Menu", type: "Core", phase: "Culinary draft", items: [legacyItem, untouchedItem] }],
+        menuTypes: ["Core", "Global", "Promotion", "Thompson Hospitality"],
+        priceBook: [],
+        modifierGroups: [preservedModifier],
+        selectedMenuId: "legacy-category-menu",
+        updatedAt: "2026-10-06T01:40:00.000Z",
+      }] } });
+      return;
+    }
+    if (request.method() === "POST") {
+      savedBodies.push(request.postDataJSON());
+      await route.fulfill({ json: { ok: true, source: "supabase", synced: 1, message: "Saved 1 row to Supabase." } });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByLabel(/SSMT passcode/i).fill("0411");
+  await page.getByRole("button", { name: /unlock ssmt/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+  await page.locator('[data-menu-name="Legacy Category Menu"]').click();
+
+  const legacySelect = page.getByLabel("Secondary category for Legacy category item");
+  await expect(legacySelect).toHaveValue("Grill Station");
+  await expect(legacySelect.locator("option")).toHaveText(["", "Entr\u00e9e", "Side", "Extension", "A La Carte", "Grill Station (Legacy value)"]);
+
+  await page.getByRole("button", { name: /Save SSMT workspace/i }).click();
+  await expect.poll(() => savedBodies.length).toBeGreaterThan(0);
+  const initialSavedRecord = savedBodies.flatMap((body) => body?.records || []).at(-1);
+  let savedRecord = initialSavedRecord;
+  expect(savedRecord?.menus?.[0]?.items?.[0]).toEqual(expect.objectContaining(legacyItem));
+  expect(savedRecord?.menus?.[0]?.items?.[0]?.modifierGroups).toEqual([preservedModifier]);
+
+  await legacySelect.selectOption("Side");
+  await page.getByRole("button", { name: /Save SSMT workspace/i }).click();
+  await expect.poll(() => savedBodies.flatMap((body) => body?.records || []).at(-1)?.menus?.[0]?.items?.[0]?.secondaryCategory).toBe("Side");
+  savedRecord = savedBodies.flatMap((body) => body?.records || []).at(-1);
+  expect(savedRecord?.menus?.[0]?.items?.[0]).toEqual(expect.objectContaining({
+    ...legacyItem,
+    secondaryCategory: "Side",
+    reportingCategorySecondary: "Side",
+  }));
+  expect(savedRecord?.menus?.[0]?.items?.[1]).toEqual(initialSavedRecord?.menus?.[0]?.items?.[1]);
+  expect(savedRecord?.modifierGroups).toEqual(initialSavedRecord?.modifierGroups);
+});
+
 test("SSMT groups menus by type and supports row editing, ordering, and saved phase status", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   // Downstream-visible throwaway menu. Must NOT match the /smoke.?test/i filter in
@@ -491,9 +566,9 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
   await expect(page.getByText(/^N\/A$/).first()).toBeVisible();
 
   await page.getByLabel(/Category for/i).first().fill("entree");
-  await page.getByLabel(/Secondary category for/i).first().fill("grill");
+  await page.getByLabel(/Secondary category for/i).first().selectOption("Side");
   await expect(page.getByLabel(/Category for/i).first()).toHaveValue("entree");
-  await expect(page.getByLabel(/Secondary category for/i).first()).toHaveValue("grill");
+  await expect(page.getByLabel(/Secondary category for/i).first()).toHaveValue("Side");
 
   await page.getByRole("button", { name: /Lock item BETA ITEM/i }).click();
   await page.getByLabel(/Current SSMT phase/i).selectOption("IT complete");
@@ -1244,7 +1319,7 @@ test("SSMT selected-menu export downloads a Centric-shaped workbook", async ({ p
   await page.getByLabel(/Description/i).first().fill("export ready description");
   await page.getByLabel(/MRN for/i).first().fill("321654.98");
   await page.getByLabel(/Category for/i).first().fill("Food");
-  await page.getByLabel(/Secondary category for/i).first().fill("Entree");
+  await page.getByLabel(/Secondary category for/i).first().selectOption("Entr\u00e9e");
   await page.getByLabel(/SEA price for/i).first().selectOption({ index: 1 });
 
   const [download] = await Promise.all([
