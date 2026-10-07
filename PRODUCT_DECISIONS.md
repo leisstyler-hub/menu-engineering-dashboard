@@ -18,7 +18,7 @@ Source: direct request and attached `MenuWorks_Menu_Item_a9880249-28ea-451e-aab2
 
 Rejected alternatives: appending the upload without retiring omitted Fresh Five rows; keeping historical Soup/Hibernate/side-choice rows visible inside Fresh Five; dropping abbreviated MenuWorks nutrition columns; changing source costs to force a positive margin; treating report footers as items.
 
-Implementation status note: prepared as `2026.10.06.007-fresh-five-menu-refresh`; production acceptance and live verification are pending.
+Implementation status note: live as `2026.10.06.007-fresh-five-menu-refresh` at application commit `c956294d678010b83e6fcb4a9a9b42bb00e1fea0` through successful Vercel production deployment `6899551804`. Protected acceptance wrote the 21 authoritative rows and hid 61 omitted visible rows; protected and public read-back returned exactly 21 active rows, and Menu Library, Transfer, and Cafe Tasting browser checks consumed the same live scope.
 
 ### 2026-10-06 - Commissary peas replacement, Frozen G/L, and Prep List terminology
 
