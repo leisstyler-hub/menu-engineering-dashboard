@@ -10,6 +10,16 @@ When a mission produces an approved product decision, Scribe adds an entry below
 
 ## Decisions
 
+### 2026-10-06 — Fresh Five MenuWorks export is complete replacement authority
+
+Alex approved the supplied October 6 MenuWorks Menu Item export as the complete current source for exact menu `AMZ: Fresh Five`. The 21 actual menu-item rows replace that menu's prior scope across Supabase and source-controlled fallbacks; any prior Fresh Five item absent from the upload is intentionally retired/hidden, and any future uploaded item is added. The five non-item report footer rows are not menu data. The imported metadata must retain exact MRNs, menu/station identity, portions, Item Cost plus Waste, Sell Price, descriptions, ingredients, nutrition, and allergen detail, and downstream tools must consume the same shared menu scope. The supplied Thai Fruit Salad cost above its `$5.00` selling price is retained and surfaced as a business warning rather than silently corrected.
+
+Source: direct request and attached `MenuWorks_Menu_Item_a9880249-28ea-451e-aab2-ac77029f2827 (1).csv` from Alex on 2026-10-06. Admin of Record: Alex Neuse.
+
+Rejected alternatives: appending the upload without retiring omitted Fresh Five rows; keeping historical Soup/Hibernate/side-choice rows visible inside Fresh Five; dropping abbreviated MenuWorks nutrition columns; changing source costs to force a positive margin; treating report footers as items.
+
+Implementation status note: prepared as `2026.10.06.007-fresh-five-menu-refresh`; production acceptance and live verification are pending.
+
 ### 2026-10-06 - Commissary peas replacement, Frozen G/L, and Prep List terminology
 
 Alex approved replacing Blanched Green Beans in the Commissary Ordering Tool with Frozen Peas, MRN `4877`, at an authoritative `$2.27` per quart. Frozen Peas use `4111009 — Frozen` on both S4 G/L fields in the generated commissary transfer; the other commissary items retain their existing `4111011 — Prepared Foods` mapping. Existing saved quantities under the retired green-bean item identifier resolve into the new peas slot so an open order does not lose entered pars. Current chef-facing buttons, headings, descriptions, workbook title, and workbook filename use `Prep List` instead of the retired acronym; internal implementation identifiers and historical release evidence remain intact. Requesting Admin / Approving Admin / Admin of Record / Release-Authorized Admin: Alex Neuse.

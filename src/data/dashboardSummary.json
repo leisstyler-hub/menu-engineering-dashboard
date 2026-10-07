@@ -1,28 +1,35 @@
 {
   "generatedFrom": "src/data/menuItems.json",
-  "totalItems": 1591,
+  "totalItems": 1531,
   "menuCount": 54,
-  "costedItems": 1534,
-  "complimentaryItems": 1092,
-  "priceRequiredItems": 499,
-  "pricedRequiredItems": 469,
+  "costedItems": 1475,
+  "complimentaryItems": 1062,
+  "priceRequiredItems": 469,
+  "pricedRequiredItems": 439,
   "proteinPriceGaps": 24,
-  "allergenCoverage": 93,
+  "allergenCoverage": 92,
   "detailCoverage": 100,
   "costCoverage": 96,
   "priceCoverage": 94,
   "dietCounts": {
-    "Vegan": 472,
-    "Vegetarian": 457,
-    "Regular": 662
+    "Vegan": 461,
+    "Vegetarian": 425,
+    "Regular": 645
   },
   "categoryCounts": {
-    "entree": 901,
+    "entree": 864,
     "extension": 105,
-    "side": 288,
-    "subRecipe": 297
+    "side": 273,
+    "subRecipe": 289
   },
   "recentItems": [
+    {
+      "id": 1649,
+      "item": "Chipotle Chicken Salad Sliders",
+      "menu": "AMZ: Fresh Five",
+      "station": "Deli",
+      "price": 5
+    },
     {
       "id": 1648,
       "item": "Tuna Salad on Croissant, Dill Pickle Aioli",
@@ -85,13 +92,6 @@
       "menu": "AMZ: Deli Core",
       "station": "Curated Sandwiches",
       "price": 9.9
-    },
-    {
-      "id": 1639,
-      "item": "the Reuben",
-      "menu": "AMZ: Deli Core",
-      "station": "Regional Spotlights - Deli",
-      "price": 9.9
     }
   ],
   "topMenus": [
@@ -108,16 +108,16 @@
       94
     ],
     [
-      "AMZ: Fresh Five",
-      81
-    ],
-    [
       "AMZ: Cafe Express Soup",
       70
     ],
     [
       "AMZ: Cafe Express Curated Sandwiches",
       59
+    ],
+    [
+      "AMZ: Fish Market",
+      51
     ]
   ]
 }

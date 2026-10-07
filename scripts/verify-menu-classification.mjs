@@ -34,7 +34,11 @@ const freshFiveRows = menuRows("AMZ: Fresh Five");
 const freshFiveStations = new Set(freshFiveRows.map((row) => row.station));
 assert(freshFiveStations.has("Grill"), "Fresh Five Grill station rows are missing.");
 assert(freshFiveStations.has("Salad"), "Fresh Five Salad station rows are missing.");
-assert(freshFiveStations.has("Soup"), "Fresh Five Soup station rows are missing.");
+assert(freshFiveStations.has("Deli"), "Fresh Five Deli station rows are missing.");
+assert(
+  JSON.stringify([...freshFiveStations].sort()) === JSON.stringify(["Deli", "Grill", "Salad"]),
+  "Fresh Five must contain only the Deli, Grill, and Salad stations in the approved replacement."
+);
 assert(
   freshFiveRows.filter((row) => row.station === "Grill").every((row) => row.category === "entree" && !/soup|salad|flatbread/i.test(name(row))),
   "Fresh Five Grill station must only contain Grill Fresh Five entree options."

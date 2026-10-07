@@ -23,7 +23,7 @@ function assertNameMrn(name, expectedMrn) {
   assert(String(row.mrn) === expectedMrn, `Expected ${name} MRN ${expectedMrn}, found ${row.mrn}.`);
 }
 
-assert(masterRows.length === 1550, `Expected 1550 Master Menus rows after the July 12 import, found ${masterRows.length}.`);
+assert(masterRows.length === 1469, `Expected 1469 retained Master Menus rows after the Fresh Five replacement, found ${masterRows.length}.`);
 assert(rows.every((row) => /^AMZ(\+RA)?:/.test(String(row.menu || ""))), "Menu item data includes non-menu legal/footer rows.");
 assert(rows.every((row) => !String(row.mrn || "").includes("/")), "Recipe numbers were parsed as dates. CSV must be read in raw mode.");
 assert(rows.every((row) => !String(row.mrn || "").startsWith("'")), "Recipe numbers should not retain the MenuWorks leading apostrophe.");
@@ -54,25 +54,7 @@ const jasmine = byMrn("5354.11");
 assert(jasmine, "Expected Jasmine Rice MRN 5354.11 to survive raw recipe-number import.");
 
 const hibernateRows = rows.filter((row) => row.menu === "AMZ: Fresh Five" && row.station === "Hibernate");
-assert(hibernateRows.length >= 40, `Expected at least 40 Fresh Five Hibernate rows, found ${hibernateRows.length}.`);
-assert(
-  hibernateRows.every((row) => row.effectiveDate === "2026-08-01"),
-  "Fresh Five Hibernate rows must be tagged with effectiveDate 2026-08-01."
-);
-
-const hibernateSandwich = hibernateRows.find((row) => String(row.recipeName || "").includes("Honey Buffalo Chickpea Chicken Sandwich"));
-assert(hibernateSandwich, "Expected Fresh Five Hibernate sandwich sample to be present.");
-assert(typeof hibernateSandwich.proteinG === "number" && hibernateSandwich.proteinG > 0, "Protein grams were not stored.");
-assert(typeof hibernateSandwich.sodiumMg === "number" && hibernateSandwich.sodiumMg > 0, "Sodium mg was not stored.");
-assert(typeof hibernateSandwich.carbsG === "number" && hibernateSandwich.carbsG > 0, "Carb grams were not stored.");
-assert(typeof hibernateSandwich.transFatG === "number", "Trans fat grams were not stored.");
-assert(hibernateSandwich.nutrition && typeof hibernateSandwich.nutrition === "object", "Nested nutrition object is missing.");
-assert(hibernateSandwich.nutritionDailyValues && typeof hibernateSandwich.nutritionDailyValues === "object", "Nutrition daily value details were not stored.");
-assert(hibernateSandwich.mealPatternContributions && typeof hibernateSandwich.mealPatternContributions === "object", "Meal pattern contribution details were not stored.");
-assert(hibernateSandwich.menuWorksRaw && typeof hibernateSandwich.menuWorksRaw === "object", "Useful raw MenuWorks row data was not retained.");
-assert(typeof hibernateSandwich.menuWorksRawArchivePath === "string" && hibernateSandwich.menuWorksRawArchivePath, "Full raw MenuWorks archive path is missing.");
-assert(hibernateSandwich.menuWorksRawArchivePath === "/data/master-menus-raw-2026-07-12.json", "Full raw Master Menus archive path is not current.");
-assert(typeof hibernateSandwich.menuItemRole === "string" && hibernateSandwich.menuItemRole, "Menu item role from Menu Item Notes is missing.");
+assert(hibernateRows.length === 0, "Fresh Five rows omitted from the approved replacement must not survive as Hibernate records.");
 assert(existsSync(rawArchivePath), "Full raw MenuWorks archive file is missing.");
 
 const rawArchive = JSON.parse(readFileSync(rawArchivePath, "utf8"));

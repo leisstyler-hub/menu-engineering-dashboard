@@ -76,7 +76,10 @@ const globalMenus = mapping.families.find((family) => family.id === "global-menu
 
 assert(grillCore && grillCore.status === "ready", `Grill Core mapping should be ready, got ${grillCore?.status}.`);
 assert(carvery && carvery.metrics.charredVegetables >= 9, "Carvery mapping should count charred vegetable options.");
-assert(freshFive && freshFive.metrics.stationCount >= 5, "Fresh Five mapping should report station coverage.");
+assert(
+  freshFive && freshFive.metrics.stationCount === 3 && JSON.stringify(freshFive.metrics.stationLabels) === JSON.stringify(["Deli", "Grill", "Salad"]),
+  "Fresh Five mapping should report the exact current Deli, Grill, and Salad station coverage."
+);
 assert(globalMenus && globalMenus.metrics.menuCount >= 15, "Global menu mapping should report loaded AMZ global menu count.");
 assert(mapping.summary.reviewRows >= 0 && mapping.summary.watchRows >= 0, "Recipe mapping audit should include trust review/watch counts.");
 assert(mapping.summary.menuCount >= 40, "Recipe mapping audit should report all loaded menu count, not just focus menus.");

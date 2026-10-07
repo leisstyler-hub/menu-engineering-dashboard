@@ -13,7 +13,7 @@ const root = process.cwd();
 const read = (path) => readFileSync(join(root, path), "utf8");
 const fail = (message) => { console.error(`Transfer Tool verification failed: ${message}`); process.exit(1); };
 
-if (CATALOG.menus.length !== 54 || CATALOG.items.length < 1524) fail("catalog does not cover the current menu/item source");
+if (CATALOG.menus.length !== 54 || CATALOG.items.length !== 1497) fail("catalog does not cover the current menu/item source");
 if (!CATALOG.items.every((item) => item.menu && item.item && Object.hasOwn(item, "itemWasteCost") && !Object.hasOwn(item, "glGroups"))) fail("catalog contains malformed or legacy G/L rows");
 const caprese = INGREDIENT_COSTING_LOOKUP.recipes["34303.45"];
 const capreseMozzarella = caprese?.components?.find((component) => component.ingredientMrn === "7776");

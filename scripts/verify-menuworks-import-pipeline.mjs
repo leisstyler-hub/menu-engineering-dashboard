@@ -64,8 +64,18 @@ const uploadRows = [
     "Sell Price": "2.55",
     "Menu Item Cost": "0.42",
     "Item + Waste Cost": "0.42",
-    "Calories": "80",
-    "Protein (g)": "2",
+    "KCAL": "80",
+    "PRO (g)": "2",
+    "Na (mg)": "120",
+    "CHO (g)": "14",
+    "DFIB (g)": "3",
+    "FAT (g)": "1.5",
+    "SatFAT (g)": "0.2",
+    "TransFAT (g)": "0",
+    "CHOL (mg)": "0",
+    "K (mg)": "210",
+    "Ca (mg)": "35",
+    "Fe (mg)": "1.2",
     "Enticing Description": "webtrition cucumber tomato salad",
     "Ingredients Common Name": "cucumber, tomato, onion",
     "Menu Item Notes": "A la carte and side choice",
@@ -103,6 +113,13 @@ assert(
   review.importedRows.some((row) => row.mrn === "182206.25"),
   "Imported MRNs must retain trailing precision as text."
 );
+const abbreviatedNutritionRow = review.importedRows.find((row) => row.mrn === "165741.11");
+assert(abbreviatedNutritionRow.calories === 80, "MenuWorks KCAL must populate calories.");
+assert(abbreviatedNutritionRow.protein_g === 2, "MenuWorks PRO (g) must populate protein.");
+assert(abbreviatedNutritionRow.sodium_mg === 120, "MenuWorks Na (mg) must populate sodium.");
+assert(abbreviatedNutritionRow.carbs_g === 14, "MenuWorks CHO (g) must populate carbohydrates.");
+assert(abbreviatedNutritionRow.fiber_g === 3, "MenuWorks DFIB (g) must populate fiber.");
+assert(abbreviatedNutritionRow.total_fat_g === 1.5, "MenuWorks FAT (g) must populate total fat.");
 
 const recipeDatabase = await import("node:fs").then(({ readFileSync }) => readFileSync("src/features/recipe-database/RecipeDatabase.jsx", "utf8"));
 assert(recipeDatabase.includes("acceptMenuWorksImport"), "Menu Library must call the server-side acceptMenuWorksImport action.");
