@@ -1,5 +1,12 @@
 # Product Decisions
 
+### 2026-10-07 - Nitro Global selection cycle starts Thursday
+
+Tyler approved changing Nitro Cafe's Global declaration cadence so each selected Monday-Friday display week shows the prior saved Nitro menu for Monday-Wednesday and the newly selected Nitro menu for Thursday-Friday. The selected menu then continues through the following Wednesday. The existing Nitro saved block identifiers remain unchanged for compatibility; this decision does not authorize a schema migration, historical rewrite, record deletion, source-authority change, or any cadence change for another cafe. Requesting Admin / Approving Admin / Admin of Record / Release-Authorized Admin: Tyler.
+
+Rejected alternatives: rewriting historical Nitro records; changing Doppler, Bingo, Grace, Re:Invent, or Blueshift cadence; treating the newly selected Nitro menu as Monday-Friday; or deleting the existing Nitro item-block data.
+
+
 Decision log for the Culinary Tools Platform. Records approved product/business decisions and rejected alternatives so they don't have to be re-litigated or re-discovered from conversation memory. Maintained by Scribe.
 
 This is a log of **approved** decisions only. Proposals, brainstorming, and Architect design options that were not approved by a Registered Admin do not belong here — see [MISSION_TEMPLATE.md](MISSION_TEMPLATE.md) for how a proposal becomes a decision. Standing system-architecture rules (data authority, storage rules, protected tool integrity rules) live in [ARCHITECTURE_RULES.md](ARCHITECTURE_RULES.md), not here, to avoid duplicating the same rule in two places.

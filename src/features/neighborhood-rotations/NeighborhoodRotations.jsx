@@ -1996,6 +1996,21 @@ function dayListLabel(days = []) {
 }
 
 function globalCycleConfig(cafe, week = "") {
+  if (cafe === "Nitro") {
+    return {
+      title: "Nitro Thursday-Wednesday Global Cycle",
+      summary: "Nitro changes Global every Thursday. Monday through Wednesday carry over from the prior Thursday cycle; Thursday starts the next cycle through the following Wednesday.",
+      chips: [
+        { label: "Mon-Wed", note: "carryover", tone: "indigo" },
+        { label: "Thu-Wed", note: "new cycle", tone: "sky" },
+      ],
+      blockType: "Thursday Cycle",
+      days: "Thursday, Friday, Next Monday, Next Tuesday, Next Wednesday",
+      startedPreviousWeek: true,
+      continuesNextWeek: true,
+      nextWeekCarryoverDays: "Next Monday, Next Tuesday, Next Wednesday",
+    };
+  }
   if (isWedTuesGlobalCafe(cafe)) {
     const cafeName = cafe || "This cafe";
     return {
@@ -2134,8 +2149,8 @@ function normalizeSplitGlobalBlocksForWeek(rotation = EMPTY_ROTATION, cafe = rot
 
 function nitroGlobalBlockLayout() {
   return [
-    { id: "nitroMonTue", title: "Monday + Tuesday Proteins", days: ["Monday", "Tuesday"], help: "Select the Global item mix Nitro runs before the Wednesday protein change." },
-    { id: "nitroWedFri", title: "Wednesday + Friday Proteins", days: ["Wednesday", "Thursday", "Friday"], help: "Select the Global item mix Nitro runs after the Wednesday protein change." }
+    { id: "nitroMonTue", title: "Thursday + Friday Proteins", days: ["Thursday", "Friday"], help: "Select the Global item mix Nitro runs when this cycle starts on Thursday." },
+    { id: "nitroWedFri", title: "Next Monday + Wednesday Proteins", days: ["Next Monday", "Next Tuesday", "Next Wednesday"], help: "Select the Global item mix Nitro carries into Monday through Wednesday of the following displayed week." }
   ];
 }
 
@@ -2328,6 +2343,28 @@ function wedTuesGlobalSummaryBlockLabels(rotation = {}, previousRotation = EMPTY
   return promoBlock ? [promoBlock, ...blocks.filter((block) => !promotionCoversBlock(rotation.promotionOverride, { days: block.id === "dopplerMonTue" ? ["Monday", "Tuesday"] : ["Wednesday", "Thursday", "Friday"] }))] : blocks;
 }
 
+function nitroGlobalSummaryBlockLabels(rotation = {}, previousRotation = EMPTY_ROTATION) {
+  const promoBlock = promotionSummaryBlock(rotation);
+  const carryover = carryoverGlobalBlock(previousRotation);
+  const blocks = [
+    {
+      id: "nitroMonWedCarryover",
+      title: "Monday-Wednesday",
+      menu: carryover?.menu || "Carryover pending",
+      isPending: !carryover?.menu,
+      isCarryover: true,
+    },
+    {
+      id: "nitroThuFri",
+      title: "Thursday + Friday",
+      menu: rotation.menu || "Not selected",
+      isPending: !rotation.menu,
+      isCarryover: false,
+    },
+  ];
+  return promoBlock ? [promoBlock, ...blocks.filter((block) => !promotionCoversBlock(rotation.promotionOverride, { days: block.id === "nitroMonWedCarryover" ? ["Monday", "Tuesday", "Wednesday"] : ["Thursday", "Friday"] }))] : blocks;
+}
+
 function rotationSummaryBlockLabels(rotation = {}, cafe = rotation?.cafe || "", week = rotation?.week || "", previousRotation = rotation?.previousRotation || EMPTY_ROTATION) {
   if (!cafeHasGlobalStation(cafe)) return [];
   const dawsonOverride = rotation.__dawsonMobyGlobalOverride;
@@ -2341,6 +2378,7 @@ function rotationSummaryBlockLabels(rotation = {}, cafe = rotation?.cafe || "", 
     }];
   }
   if (isSplitGlobalCafe(cafe)) return splitGlobalSummaryBlockLabels({ ...rotation, previousRotation }, cafe, week);
+  if (cafe === "Nitro") return nitroGlobalSummaryBlockLabels(rotation, previousRotation);
   if (isWedTuesGlobalCafe(cafe)) return wedTuesGlobalSummaryBlockLabels(rotation, previousRotation);
   const promoBlock = promotionSummaryBlock(rotation);
   if (promoBlock) return promotionCoversWeek(rotation.promotionOverride) ? [promoBlock] : [promoBlock, { id: "weekly", title: "Standard Global", menu: rotation.menu || "Not selected", isPending: !rotation.menu }];
@@ -5840,6 +5878,7 @@ function GlobalSection({ district, cafe, week, rotation, previousRotation, previ
 }
 
 function NitroGlobalSection({ week, rotation, menuOptions, updateRotation, promo, updatePromo, summary }) {
+  const cycle = globalCycleConfig("Nitro", week);
   const layout = nitroGlobalBlockLayout();
   const menuStationOptions = subConceptOptionsForMenu(rotation.menu);
   const setMenu = (menu) => {
@@ -5880,13 +5919,13 @@ function NitroGlobalSection({ week, rotation, menuOptions, updateRotation, promo
   };
 
   return (
-    <CollapsibleStation title="Global Station" eyebrow="Nitro Same-Menu Split" complete={stationComplete(rotation, "global", "Nitro")} defaultOpen={!stationComplete(rotation, "global", "Nitro")}>
+    <CollapsibleStation title="Global Station" eyebrow="Nitro Thursday-Wednesday Cycle" complete={stationComplete(rotation, "global", "Nitro")} defaultOpen={!stationComplete(rotation, "global", "Nitro")}>
       <div className="rounded-3xl border border-slate-200 bg-white p-4">
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.18em] text-slate-400 font-bold">Cycle Pattern</p>
-            <h4 className="text-xl font-bold mt-1">Nitro Wednesday Protein Change</h4>
-            <p className="mt-1 text-sm text-slate-500 max-w-3xl">Nitro keeps the same Global menu for the week, then changes the selected proteins/items starting Wednesday.</p>
+            <h4 className="text-xl font-bold mt-1">{cycle.title}</h4>
+            <p className="mt-1 text-sm text-slate-500 max-w-3xl">{cycle.summary}</p>
             <div className="mt-3 flex flex-wrap gap-2">
               {layout.map((block) => (
                 <span key={block.id} className={`rounded-full border px-3 py-1 text-xs font-bold ${cycleChipClass("sky")}`}>{block.title}</span>

@@ -288,6 +288,18 @@ if (!/if \(isWedTuesGlobalCafe\(cafe\)\) return wedTuesGlobalSummaryBlockLabels\
   fail("Doppler, Bingo, and Grace submitted/leadership summaries must share the Wednesday-Tuesday block labels.");
 }
 
+if (!/title: "Nitro Thursday-Wednesday Global Cycle"/.test(source) || !/Monday through Wednesday carry over from the prior Thursday cycle/.test(source)) {
+  fail("Nitro must use the Thursday-Wednesday Global cycle with Monday-Wednesday carryover.");
+}
+
+if (!/id: "nitroMonTue", title: "Thursday \+ Friday Proteins"/.test(source) || !/id: "nitroWedFri", title: "Next Monday \+ Wednesday Proteins"/.test(source)) {
+  fail("Nitro must preserve its saved block IDs while presenting the Thursday-Wednesday service cycle.");
+}
+
+if (!/if \(cafe === "Nitro"\) return nitroGlobalSummaryBlockLabels\(rotation, previousRotation\);/.test(source)) {
+  fail("Nitro submitted and leadership summaries must show prior Monday-Wednesday and current Thursday-Friday menus.");
+}
+
 if (!/Bingo: \{ fishMarket: 2, salad: 2, grillFreshFive: 2, saladFreshFive: 1 \}/.test(source)) {
   fail("Bingo must have a two-slot grillFreshFive station override.");
 }

@@ -697,6 +697,35 @@ function savedNitroRecords(menu, itemPrefix, count, source = "primary") {
   ];
 }
 
+function savedNitroRecordsForWeek({ menu, itemPrefix, parentId, week, weekStartDate, weekEndDate }) {
+  const overrides = {
+    parentId,
+    week,
+    cafe: "Nitro",
+    weekStartDate,
+    weekEndDate,
+  };
+  const blocks = [
+    ["nitroMonTue", "Monday + Tuesday Proteins"],
+    ["nitroWedFri", "Wednesday + Friday Proteins"],
+  ];
+  return [
+    {
+      ...baseRecord(parentId, SMARTSHEET_RECORD_TYPES.rotationHeader, "Submitted", overrides),
+      [SMARTSHEET_COLUMNS.savedEntryCount]: blocks.length,
+      [SMARTSHEET_COLUMNS.historyInclude]: true,
+    },
+    {
+      ...globalBlock("base", "Global", menu, 1, overrides),
+      [SMARTSHEET_COLUMNS.globalBlockId]: "",
+      [SMARTSHEET_COLUMNS.menuBlockLabel]: "",
+    },
+    ...blocks.flatMap(([blockId, title], blockIndex) => [
+      globalBlock(blockId, title, menu, blockIndex + 1, overrides),
+      selection(blockId, menu, `${itemPrefix} ${blockIndex + 1}`, 1, overrides),
+    ]),
+  ];
+}
 function savedNitroRecordsWithMismatchedCanonicalMenu() {
   const overrides = {
     parentId: nitroParentId,
@@ -1193,6 +1222,44 @@ test("Grace leadership card shows Monday-Tuesday carryover and Wednesday-Friday 
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
+test("Nitro shows prior menu Monday-Wednesday and selected menu Thursday-Friday", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const previousWeek = "Oct 5, 2026 - Oct 9, 2026";
+  const previousParentId = "rotation|2026-10-05|South|Nitro";
+  const previousRows = savedNitroRecordsForWeek({
+    menu: "AMZ: Anisa",
+    itemPrefix: "Anisa carryover item",
+    parentId: previousParentId,
+    week: previousWeek,
+    weekStartDate: "2026-10-05",
+    weekEndDate: "2026-10-09",
+  });
+  const currentRows = savedNitroRecordsForWeek({
+    menu: "AMZ: Ciudad",
+    itemPrefix: "Ciudad current item",
+    parentId: nitroParentId,
+    week: nitroWeek,
+    weekStartDate: "2026-10-12",
+    weekEndDate: "2026-10-16",
+  });
+  await stubRotationReads(page, [...previousRows, ...currentRows]);
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.getByRole("button", { name: /South/i }).click();
+  await page.getByRole("combobox").first().selectOption({ label: nitroWeek });
+  await page.getByRole("button", { name: /^Nitro$/i }).click();
+
+  const card = page.getByRole("button", { name: /Open Nitro planner/i }).first();
+  await expect(card).toContainText(/Monday-Wednesday[\s\S]*AMZ: Anisa[\s\S]*Thursday \+ Friday[\s\S]*AMZ: Ciudad/);
+  await card.click();
+  const recap = page.getByText("Submitted Menu Recap").locator("xpath=ancestor::section[1]");
+  await recap.getByLabel(/Edit and resubmit/i).click({ force: true, noWaitAfter: true });
+  await expect(page.getByText("Nitro Thursday-Wednesday Global Cycle")).toBeVisible();
+  await expect(page.getByText("Thursday + Friday Proteins").first()).toBeVisible();
+  await expect(page.getByText("Next Monday + Wednesday Proteins").first()).toBeVisible();
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
 test("Nitro recall uses current Supabase rows instead of stale Smartsheet child rows", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   const currentRows = savedNitroRecords("AMZ: Anisa", "Anisa item", 2, "current");
@@ -1206,7 +1273,7 @@ test("Nitro recall uses current Supabase rows instead of stale Smartsheet child 
 
   const recap = page.getByText("Submitted Menu Recap").locator("xpath=ancestor::section[1]");
   await expect(recap).toBeVisible({ timeout: 20_000 });
-  await expect(recap.getByText("AMZ: Anisa")).toHaveCount(3);
+  await expect(recap.getByText("AMZ: Anisa")).toHaveCount(2);
   await expect(recap.getByText("AMZ: Ciudad")).toHaveCount(0);
   await expect(recap.getByText(/Anisa item current/i)).toHaveCount(4);
   await expect(recap.getByText(/Ciudad item stale/i)).toHaveCount(0);
@@ -1234,7 +1301,7 @@ test("Nitro submitted recall ignores stale Draft children mixed into the Supabas
 
   const recap = page.getByText("Submitted Menu Recap").locator("xpath=ancestor::section[1]");
   await expect(recap).toBeVisible({ timeout: 20_000 });
-  await expect(recap.getByText("AMZ: Anisa")).toHaveCount(3);
+  await expect(recap.getByText("AMZ: Anisa")).toHaveCount(2);
   await expect(recap.getByText("AMZ: Ciudad")).toHaveCount(0);
   await expect(recap.getByText(/Anisa item current/i)).toHaveCount(4);
   await expect(recap.getByText(/Ciudad item stale/i)).toHaveCount(0);
