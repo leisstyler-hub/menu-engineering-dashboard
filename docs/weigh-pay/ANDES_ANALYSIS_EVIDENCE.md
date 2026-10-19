@@ -25,3 +25,10 @@ Three portfolio donut charts show menu qualification, category item counts and c
 - Broader browser limitations from the prior prototype remain documented in `ANDES_PROTOTYPE_EVIDENCE.md`. No fresh all-green full-browser result or independent clearance is claimed.
 
 Rollback: revert this application change to `93c62e0`, or restore the preceding READY production deployment `dpl_9H5pVeUooxZT3tUiix6jkuN6wDYo`. No database rollback needed. Stop on any source text/method leak, unexpected field in the projection, incorrect source arithmetic, changed operational data or failed acceptance gate.
+
+
+## Committed candidate and deployment blocker
+
+Application commit `b1d6ba047500f771bb8fd3dfceeb17c3b24a917b`. Full `npm run verify` and production build passed at this exact HEAD, followed by 10/10 W&P browser checks. Source-projection values were separately compared against every source-checked recipe/edge. Local proof: workspace `.scratch/ANDES_ANALYSIS_COMMITTED_VERIFY.log`, `.scratch/ANDES_ANALYSIS_COMMITTED_BROWSER.log`.
+
+Automatic approval review rejected the attempted production push, stating that available authorization covers implementation of this revised scope rather than explicit deployment. No retry, alternate deployment, schema action or import was attempted. Production remains at prior main `93c62e0`; this candidate is COMMITTED, not deployed, and requires explicit deployment approval. No independent Reviewer/Verifier/Scribe clearance is claimed under the solo instruction.
