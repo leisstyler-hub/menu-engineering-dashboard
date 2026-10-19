@@ -34,3 +34,8 @@ Remaining requirement: eliminate all missing-weight flags. Seventeen source vari
 ## Committed-state proof
 
 Application commit `3d8384ca5936fd81fbe0df7edde313de9512a4fd`. The same shell confirmed HEAD before and after full `npm run verify` (exit 0, includes production build) and `PLAYWRIGHT_BROWSERS_PATH=C:/Users/leiss/AppData/Local/ms-playwright node scripts/run-playwright.mjs menu-engineering` (exit 0, 11/11). Working tree was clean. Logs: workspace `.scratch/WP_WORKFLOW_COMMITTED_VERIFY.log` and `.scratch/WP_WORKFLOW_COMMITTED_BROWSER.log`. Revision is COMMITTED locally; no push, merge, deployment or operational write. Weight-resolution requirement remains open. No independent sign-off.
+
+
+## Deployment authorization
+
+Tyler explicitly authorized deploying this candidate in Buzz event 287cdde9c80104b8ddfba76e6d266053f8277c687b059b1d4c40ccbef90f560e at 2026-10-19T21:18:46Z. Authenticated identity matches active Release-Authorized entry in ADMIN_REGISTRY.md. Existing solo direction continues; independent clearance is not claimed. Release version 2026.10.19.003-wp-concept-workflow distinguishes the new behavior. Unverified mass remains unresolved; deploy approval does not authorize density assumptions. Previous production/main b2be6da is the rollback target.
