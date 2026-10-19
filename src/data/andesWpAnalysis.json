@@ -1,0 +1,360 @@
+{
+  "concept": "AMZ: Andes",
+  "basis": "Supplied Andes recipe cost snapshot; analysis only",
+  "sourceSha256": "b47bbce45b97311b1183bb3033a11d3f6aa351a721e232b6c7a3104525117842",
+  "recipes": [
+    {
+      "id": "page-2",
+      "mrn": "122251.4",
+      "name": "AMZ: Peruvian Stewed Tofu in Creamy Aji Pepper Sauce",
+      "portion": "8 ounce",
+      "massOz": 8,
+      "cost": 1.52,
+      "batchServings": 30,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-4",
+          "name": "EUR: Aji Amarillo Puree (scratch)",
+          "mrn": "176452",
+          "quantity": "3/4 cup"
+        }
+      ]
+    },
+    {
+      "id": "page-4",
+      "mrn": "176452",
+      "name": "EUR: Aji Amarillo Puree (scratch)",
+      "portion": "1/4 cup",
+      "massOz": null,
+      "cost": 2.05,
+      "batchServings": 3,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-5",
+      "mrn": "122252",
+      "name": "EUR: Aji Amarillo Dipping Sauce (Creamy Yellow Aji Pepper Sauce)",
+      "portion": "1 floz",
+      "massOz": null,
+      "cost": 0.37,
+      "batchServings": 36,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-6",
+          "name": "EUR: Aji Amarillo Puree (scratch)",
+          "mrn": "176452",
+          "quantity": "1 cup"
+        }
+      ]
+    },
+    {
+      "id": "page-6",
+      "mrn": "176452",
+      "name": "EUR: Aji Amarillo Puree (scratch)",
+      "portion": "1/4 cup",
+      "massOz": null,
+      "cost": 2.05,
+      "batchServings": 4,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-7",
+      "mrn": "122251",
+      "name": "EUR: Aji de Gallina (Peruvian Stewed Chicken in Creamy Aji Pepper Sauce)",
+      "portion": "8 ounce",
+      "massOz": 8,
+      "cost": 2.37,
+      "batchServings": 24,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-9",
+          "name": "EUR: Aji Amarillo Puree (scratch)",
+          "mrn": "176452",
+          "quantity": "3/4 cup"
+        }
+      ]
+    },
+    {
+      "id": "page-9",
+      "mrn": "176452",
+      "name": "EUR: Aji Amarillo Puree (scratch)",
+      "portion": "1/4 cup",
+      "massOz": null,
+      "cost": 2.05,
+      "batchServings": 3,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-10",
+      "mrn": "122256",
+      "name": "EUR: Arroz Chaufa (Peruvian Fried Rice)",
+      "portion": "1 cup",
+      "massOz": null,
+      "cost": 0.74,
+      "batchServings": 30,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-11",
+          "name": "EUR: Steamed White Rice",
+          "mrn": "28232.3",
+          "quantity": "3 qt, 3 cup"
+        }
+      ]
+    },
+    {
+      "id": "page-11",
+      "mrn": "28232.3",
+      "name": "EUR: Steamed White Rice",
+      "portion": "1/2 cup",
+      "massOz": null,
+      "cost": 0.08,
+      "batchServings": 30,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-12",
+      "mrn": "122254",
+      "name": "EUR: Crispy Peruvian Shrimp (Chicharron de Langostinos)",
+      "portion": "5 ounce",
+      "massOz": 5,
+      "cost": 1.57,
+      "batchServings": 34,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-13",
+          "name": "EUR: Aji Amarillo Puree (scratch)",
+          "mrn": "176452",
+          "quantity": "2 tbsp, 2-1/2 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-13",
+      "mrn": "176452",
+      "name": "EUR: Aji Amarillo Puree (scratch)",
+      "portion": "1/4 cup",
+      "massOz": null,
+      "cost": 2.05,
+      "batchServings": 1,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-14",
+      "mrn": "103294",
+      "name": "EUR: Fried Plantains",
+      "portion": "1/2 cup",
+      "massOz": null,
+      "cost": 0.52,
+      "batchServings": 1,
+      "topLevel": true,
+      "components": []
+    },
+    {
+      "id": "page-15",
+      "mrn": "122255",
+      "name": "EUR: Huacatay Dipping Sauce (Creamy Green Herb Sauce)",
+      "portion": "1 floz",
+      "massOz": null,
+      "cost": 0.43,
+      "batchServings": 18,
+      "topLevel": true,
+      "components": []
+    },
+    {
+      "id": "page-16",
+      "mrn": "8414.96",
+      "name": "EUR: Ingredient - Potatoes, French Fries, 3/8\", McCain",
+      "portion": "4 ounce",
+      "massOz": 4,
+      "cost": 0.43,
+      "batchServings": 1,
+      "topLevel": true,
+      "components": []
+    },
+    {
+      "id": "page-17",
+      "mrn": "122258",
+      "name": "EUR: Lomo Saltado (Peruvian Stir Fry Steak)",
+      "portion": "8 ounce",
+      "massOz": 8,
+      "cost": 2.96,
+      "batchServings": 36,
+      "topLevel": true,
+      "components": []
+    },
+    {
+      "id": "page-19",
+      "mrn": "122265",
+      "name": "EUR: Peruvian Almond Horchata Pudding with Pineapple",
+      "portion": "1 each",
+      "massOz": null,
+      "cost": 0.68,
+      "batchServings": 28,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-21",
+          "name": "EUR: Steamed Jasmine Rice",
+          "mrn": "5354.11",
+          "quantity": "1 qt"
+        }
+      ]
+    },
+    {
+      "id": "page-21",
+      "mrn": "5354.11",
+      "name": "EUR: Steamed Jasmine Rice",
+      "portion": "1/2 cup",
+      "massOz": null,
+      "cost": 0.15,
+      "batchServings": 8,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-22",
+      "mrn": "122257",
+      "name": "EUR: Peruvian Grilled Asparagus",
+      "portion": "4 ounce",
+      "massOz": 4,
+      "cost": 1.91,
+      "batchServings": 38,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-23",
+          "name": "EUR: Aji Amarillo Puree (scratch)",
+          "mrn": "176452",
+          "quantity": "2 tbsp, 1/4 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-23",
+      "mrn": "176452",
+      "name": "EUR: Aji Amarillo Puree (scratch)",
+      "portion": "1/4 cup",
+      "massOz": null,
+      "cost": 2.05,
+      "batchServings": 1,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-24",
+      "mrn": "122259",
+      "name": "EUR: Peruvian Roasted Potatoes",
+      "portion": "4 ounce",
+      "massOz": 4,
+      "cost": 0.28,
+      "batchServings": 10,
+      "topLevel": true,
+      "components": []
+    },
+    {
+      "id": "page-25",
+      "mrn": "122260",
+      "name": "EUR: Pollo a la Brasa (Peruvian Roasted Chicken)",
+      "portion": "1 piece",
+      "massOz": null,
+      "cost": 1.74,
+      "batchServings": 24,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-26",
+          "name": "EUR: Aji Amarillo Puree (scratch)",
+          "mrn": "176452",
+          "quantity": "1/2 cup"
+        }
+      ]
+    },
+    {
+      "id": "page-26",
+      "mrn": "176452",
+      "name": "EUR: Aji Amarillo Puree (scratch)",
+      "portion": "1/4 cup",
+      "massOz": null,
+      "cost": 2.05,
+      "batchServings": 2,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-27",
+      "mrn": "122262",
+      "name": "EUR: Salsa Criolla (Peruvian Salad)",
+      "portion": "4 ounce",
+      "massOz": 4,
+      "cost": 0.64,
+      "batchServings": 28,
+      "topLevel": true,
+      "components": []
+    },
+    {
+      "id": "page-28",
+      "mrn": "122263",
+      "name": "EUR: Solterito (Peruvian Chopped Corn Salad)",
+      "portion": "4 ounce",
+      "massOz": 4,
+      "cost": 0.6,
+      "batchServings": 22,
+      "topLevel": true,
+      "components": []
+    },
+    {
+      "id": "page-29",
+      "mrn": "122261",
+      "name": "EUR: Spicy Rocoto Dipping Sauce (Creamy Red Chili Sauce)",
+      "portion": "1 floz",
+      "massOz": null,
+      "cost": 0.22,
+      "batchServings": 24,
+      "topLevel": true,
+      "components": []
+    },
+    {
+      "id": "page-30",
+      "mrn": "5354.11",
+      "name": "EUR: Steamed Jasmine Rice",
+      "portion": "1 cup",
+      "massOz": null,
+      "cost": 0.31,
+      "batchServings": 36,
+      "topLevel": true,
+      "components": []
+    },
+    {
+      "id": "page-31",
+      "mrn": "51228.1",
+      "name": "EUR: Yucca Fries",
+      "portion": "4 ounce",
+      "massOz": 4,
+      "cost": 0.54,
+      "batchServings": 12,
+      "topLevel": true,
+      "components": []
+    },
+    {
+      "id": "page-32",
+      "mrn": "73825.2",
+      "name": "Quinoa, Cooked",
+      "portion": "1 cup",
+      "massOz": null,
+      "cost": 0.94,
+      "batchServings": 224,
+      "topLevel": true,
+      "components": []
+    }
+  ]
+}

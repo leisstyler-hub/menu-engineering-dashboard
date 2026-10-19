@@ -160,23 +160,27 @@ test('W&P overview and oz/lb scenario price update guidance and exported report 
  await expect(page.getByTestId('wp-item-row').first()).toContainText('Needs price');
 });
 
-test('private recipe details stay locked, then show isolated component guidance and blank pan',async({page})=>{
+test('Andes analysis opens without sign-in and exposes costs and charts without recipe content',async({page})=>{
  await setup(page);
- await page.route('**/api/private-recipes',route=>route.request().method()==='POST'?route.fulfill({json:{ok:true,accessToken:'fixture-token'}}):route.fulfill({json:{ok:true,variants:[{id:'fixture-parent',mrn:'0001.123456789',recipe_name:'Fixture Chicken Sandwich',category:'Entree',serving_cost:1,serving_mass_oz:8,serving_size_text:'8 oz',reconciliation_status:'validated',serving_pan:null},{id:'fixture-child',mrn:'0002.0',recipe_name:'Fixture Rice',category:'Side',serving_cost:.1,serving_mass_oz:4,serving_size_text:'4 oz',reconciliation_status:'validated'}],components:[{parent_variant_id:'fixture-parent',child_variant_id:'fixture-child',component_name:'Fixture Rice',source_quantity_text:'1 lb',position:1}],links:[{menu_item_identity:JSON.stringify(['Test Kitchen','0001.123456789',8]),recipe_variant_id:'fixture-parent',approved_at:'2026-10-19'}]}}));
  await page.getByRole('button',{name:'Weigh & Pay',exact:true}).click();
- await page.getByRole('button',{name:'Test Kitchen',exact:true}).click();
- const item=page.getByTestId('wp-item-row').filter({hasText:'Roast Chicken'});
- await item.getByText('Recipe & components',{exact:true}).click();
- await expect(item).toContainText('Sign in to private Andes recipes');
- await page.getByText('Private Andes recipes',{exact:true}).click();
- await page.getByLabel('Private recipe email').fill('fixture@example.test');
- await page.getByLabel('Private recipe password').fill('fixture-password');
- await page.getByRole('button',{name:'Sign in to recipes',exact:true}).click();
- await expect(item).toContainText('Fixture Chicken Sandwich');
- await expect(item).toContainText('Component guidance: Blocked');
- await expect(item.getByLabel('Serving pan for Fixture Chicken Sandwich')).toHaveText('\u00a0');
- await item.getByText('Fixture Rice · 1 lb',{exact:true}).click();
- await expect(item).toContainText('Component guidance: Allowed');
- await page.getByRole('button',{name:'Lock recipes',exact:true}).click();
- await expect(page.getByText('Fixture Chicken Sandwich',{exact:true})).toHaveCount(0);
+ await expect(page.getByRole('img',{name:'Menu qualification chart'})).toBeVisible();
+ await expect(page.getByLabel('Private recipe email')).toHaveCount(0);
+ const analysis=page.getByRole('region',{name:'Andes component analysis'});
+ await expect(analysis).toBeVisible();
+ await expect(analysis.getByRole('img',{name:'Andes economics chart'})).toBeVisible();
+ const tofu=analysis.getByTestId('andes-recipe').filter({has:page.getByRole('heading',{name:'AMZ: Peruvian Stewed Tofu in Creamy Aji Pepper Sauce',exact:true})});
+ await expect(tofu).toContainText('$1.5200');
+ await tofu.getByText('Component cost breakdown',{exact:true}).first().click();
+ await expect(tofu).toContainText('$0.2050');
+ await expect(tofu).toContainText('$1.3150');
+ await expect(tofu).toContainText('Needs weight');
+ await expect(tofu.getByLabel('Serving pan').first()).toHaveText('');
+ await expect(analysis.locator('a')).toHaveCount(0);
+ await expect(analysis).not.toContainText('HACCP');
+ await page.getByLabel('W&P selling price').fill('20');
+ await expect(tofu).toContainText('15.2%');
+ await page.screenshot({path:'../../.scratch/ANDES_ANALYSIS_DESKTOP.png',fullPage:true});
+ await page.setViewportSize({width:390,height:844});
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ await page.screenshot({path:'../../.scratch/ANDES_ANALYSIS_MOBILE.png',fullPage:true});
 });
