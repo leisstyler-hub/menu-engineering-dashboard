@@ -84,3 +84,40 @@ Final `npm run verify` passed all package guards, including both new prototype/i
 After application commit `bdd8a1f`, a direct PDF.js extraction of the original attachment was compared against every retained candidate source page. All retained page text agreed, and each linked component's parent usage amount agreed with its parent recipe source text. The local source reconciliation file records the source PDF hash and those checks. A source-checked inactive import package was then prepared locally at workspace `.scratch/wp-recipes/ANDES_INACTIVE_IMPORT_2026_10_19.sql`; it is confidential and intentionally absent from Git. No database connection was made. Source structure validation is distinct from culinary approval: categories remain blank, volume/count portions retain missing mass, and recipe guidance remains Review until service classification is approved. No item link or import batch is activated.
 
 The earlier candidate file remains unreviewed for traceability; the separate source-checked file supplies the inactive import preparation. App behavior, production schema and production data remain unchanged by this preparation. The remaining gate is explicit access policy plus review/authorization and isolated execution proof of the concrete schema/import; source text agreement is not production verification.
+
+
+## Authorized application deployment - 2026-10-19
+
+Tyler, authenticated Buzz identity `12fc010ae7314bd1bf75d7a74c296a93629c12a464ba2aaa406fee08a57d794d`, active Registered/Release-Authorized Admin in ADMIN_REGISTRY.md, explicitly requested deploy in event `9594dd1ea94de424088956027e16221bba274b53cf339f122e29325d5f601f4b` at 2026-10-19T15:42:04Z. Solo execution remained in effect. This authorized the application deployment; no schema execution, import, viewer enrollment or private endpoint activation was performed.
+
+Application commit `bdd8a1f`; released main head `9ad2db8acbc257cc00a2988cf1d45751534fb15a`. Fresh `npm run verify` passed all package guards and production build at this head. W&P browser suite passed 10/10 locally after selecting the installed Chromium 1228 directory; an initial run failed to launch because the first chosen directory contained Chromium 1234. The two existing generated JSON working-copy flags have no Git content diff and were excluded from publishing. Outgoing authors and committers were checked: Chief agent identity, no invented human attribution. Full-browser limitations from development remain documented above; no fresh all-green full-browser result is claimed.
+
+Vercel production deployment `dpl_7bKTbWiUsPsnhtqezqW92T69nMBo` is READY, production alias `project-d8v25.vercel.app`, correct project and Git SHA verified through authenticated deployment inspection. Rollback target: prior READY production deployment `dpl_8T4s2kAWJn1NVjx1vtBxQrX3dYV2` (main `06172be`). Revert application commit `bdd8a1f` for source rollback; no migration or operational data rollback is needed.
+
+Read-only actual-data browser check verified all 54 menu statuses at default $11.99/lb and again at $1/oz ($16/lb), overview counts, matching export price, session exception/reset, original Menu/Portfolio/back navigation, and mobile geometry. Private endpoint returned HTTP 503 with the disabled-access message and private no-store caching. Private counts remained Locked. No private content was accessed. Production results:
+
+```json
+{
+  "version": "2026.10.19.001-andes-private-prototype",
+  "entryAsset": "/assets/index-BawhTwc1.js",
+  "source": "supabase-recipe-items",
+  "sourceRows": 1531,
+  "menus": 54,
+  "statuses": {
+    "Fail": 24,
+    "Pass": 14,
+    "Conditional": 16
+  },
+  "missingInputs": 56,
+  "headerHeight": 172.25,
+  "mobileOverflow": false,
+  "privateEndpoint": "503 disabled, no-store",
+  "scenarioPricePerLb": 16,
+  "operationalWrites": 0,
+  "pageErrors": 0,
+  "exportBytes": 66766,
+  "checkedAt": "2026-10-19T15:47:42.533Z"
+}
+```
+
+Release state: PRODUCTION VERIFIED, pending independent Reviewer/Verifier/Scribe clearance. Chief performed checks directly under Tyler's solo instruction; self-review is not independent approval and LIVE is not claimed. Application publish began about 15:46 UTC; production acceptance completed 15:47:42Z. Release-record follow-up is documentation only and must be separately reconciled against its resulting deployment. Confidential source preparation stays outside Git and production.
