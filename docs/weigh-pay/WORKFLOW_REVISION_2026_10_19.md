@@ -39,3 +39,38 @@ Application commit `3d8384ca5936fd81fbe0df7edde313de9512a4fd`. The same shell co
 ## Deployment authorization
 
 Tyler explicitly authorized deploying this candidate in Buzz event 287cdde9c80104b8ddfba76e6d266053f8277c687b059b1d4c40ccbef90f560e at 2026-10-19T21:18:46Z. Authenticated identity matches active Release-Authorized entry in ADMIN_REGISTRY.md. Existing solo direction continues; independent clearance is not claimed. Release version 2026.10.19.003-wp-concept-workflow distinguishes the new behavior. Unverified mass remains unresolved; deploy approval does not authorize density assumptions. Previous production/main b2be6da is the rollback target.
+
+## Authorized production result
+
+PRODUCTION VERIFIED: 2026.10.19.003-wp-concept-workflow, release application head fe5bd5d05039abf2c403ce956739d0fc6ec93367 (workflow implementation 3d8384c). Vercel dpl_GqAjo8LA3K2FZHA82CyTNxHnk4xG READY, production target/alias and exact Git SHA verified. Full package verification/build passed at release head; local and production Menu Engineering browser suites 11/11 each. Actual-data read-only production verification covered 54 menus / 1531 rows, scenario pricing, Andes selection, three nested cards, export contents, session reset and mobile containment, zero operational writes/page errors. Unverified mass remains OPEN: 17 source variants, nine top-level; no density estimates authorized. Solo execution, no independent Reviewer/Verifier/Scribe clearance; LIVE is not claimed. Rollback preceding production dpl_E2TZzfmWGFLZEcoWULNtBbJX5THb / b2be6da. Details: docs/weigh-pay/WORKFLOW_REVISION_2026_10_19.md.
+
+Actual-data proof:
+```json
+{
+  "version": "2026.10.19.003-wp-concept-workflow",
+  "entryAsset": "/assets/index-DKrIs2xm.js",
+  "source": "supabase-recipe-items",
+  "sourceRows": 1531,
+  "menus": 54,
+  "statuses": {
+    "Fail": 24,
+    "Pass": 14,
+    "Conditional": 16
+  },
+  "missingInputs": 56,
+  "headerHeight": 172.25,
+  "mobileOverflow": false,
+  "andesRecipes": 21,
+  "sourceVariants": 27,
+  "subrecipeLinks": 8,
+  "privateDocuments": "not exposed",
+  "privateEndpoint": "503 disabled, no-store",
+  "scenarioPricePerLb": 16,
+  "operationalWrites": 0,
+  "pageErrors": 0,
+  "exportBytes": 27392,
+  "checkedAt": "2026-10-19T21:22:53.996Z"
+}
+```
+
+Logs in workspace .scratch: WP_WORKFLOW_PUBLISH.log (full committed verify/build and push), WP_WORKFLOW_RELEASE_LOCAL_BROWSER.log, WP_WORKFLOW_PRODUCTION_BROWSER.log, WP_WORKFLOW_ACTUAL_DATA.log. Request received 2026-10-19T21:18:46Z; production checks complete 21:22:54Z. Documentation reconciliation follows.
