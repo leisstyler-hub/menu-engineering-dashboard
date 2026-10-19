@@ -140,3 +140,43 @@ test('W&P exports all menus with safely escaped reference content and printable 
   await expect(page.getByRole('button', { name: 'Print / Save as PDF', exact: true })).toBeVisible();
   expect(await page.evaluate(() => window.BAD)).toBeUndefined();
 });
+
+test('W&P overview and oz/lb scenario price update guidance and exported report together', async ({page})=>{
+ await setup(page);
+ await page.getByRole('button',{name:'Weigh & Pay',exact:true}).click();
+ await expect(page.getByLabel('W&P overview')).toContainText('W&P qualified menus');
+ await page.getByLabel('W&P price unit').selectOption('oz');
+ await page.getByLabel('W&P selling price').fill('1');
+ await page.getByRole('button',{name:'Test Kitchen',exact:true}).click();
+ const download=page.waitForEvent('download');
+ await page.getByRole('button',{name:'Export menu package',exact:true}).click();
+ const zip=await JSZip.loadAsync(await readFile(await(await download).path()));
+ const snapshot=JSON.parse(await zip.file('calculation-snapshot.json').async('string'));
+ expect(snapshot.pricePerLb).toBe(16);
+ expect(await zip.file('guidance-report.html').async('string')).toContain('$16.000/lb');
+ await page.screenshot({path:'../../.scratch/wp-prototype-overview.png',fullPage:true});
+ await page.getByLabel('W&P selling price').fill('0');
+ await expect(page.getByRole('button',{name:'Export menu package',exact:true})).toBeDisabled();
+ await expect(page.getByTestId('wp-item-row').first()).toContainText('Needs price');
+});
+
+test('private recipe details stay locked, then show isolated component guidance and blank pan',async({page})=>{
+ await setup(page);
+ await page.route('**/api/private-recipes',route=>route.request().method()==='POST'?route.fulfill({json:{ok:true,accessToken:'fixture-token'}}):route.fulfill({json:{ok:true,variants:[{id:'fixture-parent',mrn:'0001.123456789',recipe_name:'Fixture Chicken Sandwich',category:'Entree',serving_cost:1,serving_mass_oz:8,serving_size_text:'8 oz',reconciliation_status:'validated',serving_pan:null},{id:'fixture-child',mrn:'0002.0',recipe_name:'Fixture Rice',category:'Side',serving_cost:.1,serving_mass_oz:4,serving_size_text:'4 oz',reconciliation_status:'validated'}],components:[{parent_variant_id:'fixture-parent',child_variant_id:'fixture-child',component_name:'Fixture Rice',source_quantity_text:'1 lb',position:1}],links:[{menu_item_identity:JSON.stringify(['Test Kitchen','0001.123456789',8]),recipe_variant_id:'fixture-parent',approved_at:'2026-10-19'}]}}));
+ await page.getByRole('button',{name:'Weigh & Pay',exact:true}).click();
+ await page.getByRole('button',{name:'Test Kitchen',exact:true}).click();
+ const item=page.getByTestId('wp-item-row').filter({hasText:'Roast Chicken'});
+ await item.getByText('Recipe & components',{exact:true}).click();
+ await expect(item).toContainText('Sign in to private Andes recipes');
+ await page.getByText('Private Andes recipes',{exact:true}).click();
+ await page.getByLabel('Private recipe email').fill('fixture@example.test');
+ await page.getByLabel('Private recipe password').fill('fixture-password');
+ await page.getByRole('button',{name:'Sign in to recipes',exact:true}).click();
+ await expect(item).toContainText('Fixture Chicken Sandwich');
+ await expect(item).toContainText('Component guidance: Blocked');
+ await expect(item.getByLabel('Serving pan for Fixture Chicken Sandwich')).toHaveText('\u00a0');
+ await item.getByText('Fixture Rice · 1 lb',{exact:true}).click();
+ await expect(item).toContainText('Component guidance: Allowed');
+ await page.getByRole('button',{name:'Lock recipes',exact:true}).click();
+ await expect(page.getByText('Fixture Chicken Sandwich',{exact:true})).toHaveCount(0);
+});

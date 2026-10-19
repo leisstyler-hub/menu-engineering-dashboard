@@ -1,6 +1,6 @@
 import JSZip from 'jszip';
 import * as XLSX from 'xlsx';
-import { WP_PRICE_PER_LB, WP_ITEM_FC_GATE, WP_MENU_PASS_GATE, WP_RULE_VERSION } from './weighPayModel.js';
+import { WP_PRICE_PER_LB, WP_ITEM_FC_GATE, WP_MENU_PASS_GATE, WP_RULE_VERSION, pricePerLb } from './weighPayModel.js';
 
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const money = value => value == null ? 'Not available' : `$${value.toFixed(3)}`;
@@ -10,10 +10,12 @@ const style = 'body{font:14px Arial,sans-serif;color:#182b35;max-width:1100px;ma
 const page = (title, body) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escape(title)}</title><style>${style}</style></head><body><button onclick="window.print()">Print / Save as PDF</button>${body}</body></html>`;
 
 export async function buildWeighPayPackage(menus, sourceInfo) {
+  const rate = pricePerLb(sourceInfo.pricePerLb ?? WP_PRICE_PER_LB);
+  if (!rate || menus.some(menu => menu.items.some(item => item.pricePerLb !== rate))) throw new Error('Export price does not match the evaluated guidance.');
   const zip = new JSZip();
   const exportedAt = new Date().toISOString();
-  const metadata = { pricePerLb: WP_PRICE_PER_LB, itemFoodCostGate: WP_ITEM_FC_GATE, menuPassGate: WP_MENU_PASS_GATE, ruleVersion: WP_RULE_VERSION, ...sourceInfo, exportedAt };
-  const heading = `<h1>Weigh &amp; Pay Guidance</h1><p>$11.99/lb · Item food-cost gate 40% · Menu pass gate 60%</p><p class="meta">Source: ${escape(sourceInfo.source)} · Read: ${escape(sourceInfo.loadedAt)} · Export: ${escape(exportedAt)}</p><p class="notice">Economic and service-fit guidance only. Use the listed allowed assortment, validate actual guest builds and obtain Culinary approval before service. Exceptions are session guidance, not source-record changes. A menu pass is not a forecast of aggregate café food cost.</p>`;
+  const metadata = { pricePerLb: rate, itemFoodCostGate: WP_ITEM_FC_GATE, menuPassGate: WP_MENU_PASS_GATE, ruleVersion: WP_RULE_VERSION, ...sourceInfo, exportedAt };
+  const heading = `<h1>Weigh &amp; Pay Guidance</h1><p>${money(rate)}/lb · Item food-cost gate 40% · Menu pass gate 60%</p><p class="meta">Source: ${escape(sourceInfo.source)} · Read: ${escape(sourceInfo.loadedAt)} · Export: ${escape(exportedAt)}</p><p class="notice">Economic and service-fit guidance only. Use the listed allowed assortment, validate actual guest builds and obtain Culinary approval before service. Exceptions are session guidance, not source-record changes. A menu pass is not a forecast of aggregate café food cost.</p>`;
   const matrix = `<table><thead><tr><th>Menu</th><th>Guidance</th><th>Allowed / Total</th><th>Pass rate</th><th>Calculated rate</th><th>Missing inputs</th></tr></thead><tbody>${menus.map(menu => `<tr><td>${escape(menu.menu)}</td><td>${menu.status}</td><td>${menu.allowed} / ${menu.total}</td><td>${percent(menu.passRate)}</td><td>${percent(menu.calculatedPassRate)}</td><td>${menu.missing}</td></tr>`).join('')}</tbody></table>`;
   const sections = menus.map(menu => `<section><h2>${escape(menu.menu)} — ${menu.status}</h2>${[...new Set(menu.items.map(item => item.category))].map(category => `<h3>${escape(category)}</h3><table><thead><tr><th>Item / MRN</th><th>Guidance</th><th>W&amp;P FC</th><th>Cost/lb</th><th>Margin/lb</th><th>Reason</th></tr></thead><tbody>${menu.items.filter(item => item.category === category).map(item => `<tr><td>${escape(item.item)}<br>${escape(item.mrn)}</td><td>${item.status}<br><small>Calculated: ${item.calculatedStatus}</small></td><td>${percent(item.foodCost)}</td><td>${money(item.costPerLb)}</td><td>${money(item.marginPerLb)}</td><td>${escape(notes(item))}</td></tr>`).join('')}</tbody></table>`).join('')}</section>`).join('');
   zip.file('guidance-report.html', page('Weigh & Pay Guidance', heading + matrix + sections));
@@ -22,7 +24,7 @@ export async function buildWeighPayPackage(menus, sourceInfo) {
   zip.file('calculation-snapshot.json', JSON.stringify({ ...metadata, menus }, null, 2));
   zip.file('README.txt', 'Open guidance-report.html or flash-cards.html in a browser and choose Print / Save as PDF. The workbook contains menu summaries and exact item identifiers. Session overrides are explicitly labeled and do not update shared source records. Missing inputs remain in the denominator. Fallback data is reference only.\n');
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(menus.map(menu => ({ Menu: menu.menu, Status: menu.status, Allowed: menu.allowed, Total: menu.total, 'Pass %': menu.passRate * 100, 'Calculated pass %': menu.calculatedPassRate * 100, 'Missing inputs': menu.missing, Source: sourceInfo.source, 'Read at': sourceInfo.loadedAt }))), 'Menus');
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(menus.map(menu => ({ Menu: menu.menu, Status: menu.status, Allowed: menu.allowed, Total: menu.total, 'Pass %': menu.passRate * 100, 'Calculated pass %': menu.calculatedPassRate * 100, 'Missing inputs': menu.missing, 'Price per lb': rate, Source: sourceInfo.source, 'Read at': sourceInfo.loadedAt }))), 'Menus');
   XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(menus.flatMap(menu => menu.items.map(item => ({ Menu: menu.menu, Category: item.category, Item: item.item, MRN: item.mrn, Status: item.status, 'Calculated status': item.calculatedStatus, 'True cost': item.cost, 'Weight oz': item.weightOz, 'W&P FC %': item.foodCost == null ? null : item.foodCost * 100, 'Cost per lb': item.costPerLb, 'Margin per lb': item.marginPerLb, Reason: notes(item) })))), 'Items');
   zip.file('menu-summary.xlsx', XLSX.write(workbook, { type: 'array', bookType: 'xlsx' }));
   return zip.generateAsync({ type: 'blob' });
