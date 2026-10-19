@@ -32,3 +32,16 @@ Rollback: revert this application change to `93c62e0`, or restore the preceding 
 Application commit `b1d6ba047500f771bb8fd3dfceeb17c3b24a917b`. Full `npm run verify` and production build passed at this exact HEAD, followed by 10/10 W&P browser checks. Source-projection values were separately compared against every source-checked recipe/edge. Local proof: workspace `.scratch/ANDES_ANALYSIS_COMMITTED_VERIFY.log`, `.scratch/ANDES_ANALYSIS_COMMITTED_BROWSER.log`.
 
 Automatic approval review rejected the attempted production push, stating that available authorization covers implementation of this revised scope rather than explicit deployment. No retry, alternate deployment, schema action or import was attempted. Production remains at prior main `93c62e0`; this candidate is COMMITTED, not deployed, and requires explicit deployment approval. No independent Reviewer/Verifier/Scribe clearance is claimed under the solo instruction.
+
+
+## Authorized production release — 2026-10-19
+
+Tyler explicitly authorized deployment in Buzz event `a74bc421685c67ba7d062e355e072be6b2e7d92676ca0cf2108438146231188f` at 2026-10-19T16:23:04Z. Authenticated Admin of Record: `12fc010ae7314bd1bf75d7a74c296a93629c12a464ba2aaa406fee08a57d794d`, active Registered / Release-Authorized Admin per ADMIN_REGISTRY.md. This resolves the preceding authorization blocker.
+
+Application `b1d6ba0`, released main `a579a9b0aa02c4fd34bbeb1a4485760beb02fafe`, version `2026.10.19.002-andes-component-analysis`. Production deployment `dpl_9sgY2QCtuPVQK2MbS1RFXpQKa9iN` is READY and the production alias resolves to its exact SHA. Entry `/assets/index-BWZEO69m.js` contains the version.
+
+The publish precheck initially rejected dirty-worktree markers; both generated files had zero content diff and refreshing the index left HEAD clean, with no new staged content. The standard pnpm wrapper then failed its non-TTY install prompt; the publisher ran the same complete `run verify` through the existing npm.cmd via PNPM_PATH, successfully, without skipping verification. Push was pinned to the exact clean candidate and main target.
+
+Production W&P browser suite passed 10/10 after an initial 9/10 run with one dashboard-navigation timeout. Separate actual-data browser proof matched all 54 menus / 1531 rows at default and $1/oz, checked direct Andes component breakdown ($0.2050 linked contribution / $1.3150 remaining), absent sign-in/document links, exports, refresh/reset, navigation and mobile containment. Zero operational writes and zero page errors; private document endpoint remains disabled (503/no-store). Production check completed 2026-10-19T16:27:06Z. Local logs: workspace `.scratch/ANDES_APPROVED_PUBLISH.log`, `.scratch/ANDES_APPROVED_PRODUCTION_BROWSER_FINAL.log`, `.scratch/ANDES_APPROVED_ACTUAL_DATA.log`; machine-readable proof `.scratch/wp/andes-analysis-production-proof.json`.
+
+Release state: PRODUCTION VERIFIED. Solo Chief execution continues; independent Reviewer/Verifier/Scribe clearance is unavailable and LIVE is not claimed. 56 operational menu inputs still lack cost or weight; broader pre-existing browser limitations remain. No schema/import, viewer enrollment, production data or Menu Library modification. Rollback: restore prior READY deployment `dpl_9H5pVeUooxZT3tUiix6jkuN6wDYo` or revert application `b1d6ba0`. No data migration to reverse.
