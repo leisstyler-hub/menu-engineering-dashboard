@@ -78,3 +78,9 @@ Full-suite failure names from this development run:
 - tests\browser\transfer-tool.spec.js:216:1 › Transfer Tool deletes one saved draft after one confirmation
 
 Final `npm run verify` passed all package guards, including both new prototype/import guards, and the Vite build. All 41 full-browser failure names are also present in the previous release evidence after trimming reporter whitespace; an unchanged-baseline rerun was not performed this turn. The full-suite run used the development snapshot before final small category/encoding safeguards; the affected W&P suite was rechecked after those changes. No broader all-green or independent approval is claimed.
+
+## Final private source preparation
+
+After application commit `bdd8a1f`, a direct PDF.js extraction of the original attachment was compared against every retained candidate source page. All retained page text agreed, and each linked component's parent usage amount agreed with its parent recipe source text. The local source reconciliation file records the source PDF hash and those checks. A source-checked inactive import package was then prepared locally at workspace `.scratch/wp-recipes/ANDES_INACTIVE_IMPORT_2026_10_19.sql`; it is confidential and intentionally absent from Git. No database connection was made. Source structure validation is distinct from culinary approval: categories remain blank, volume/count portions retain missing mass, and recipe guidance remains Review until service classification is approved. No item link or import batch is activated.
+
+The earlier candidate file remains unreviewed for traceability; the separate source-checked file supplies the inactive import preparation. App behavior, production schema and production data remain unchanged by this preparation. The remaining gate is explicit access policy plus review/authorization and isolated execution proof of the concrete schema/import; source text agreement is not production verification.
