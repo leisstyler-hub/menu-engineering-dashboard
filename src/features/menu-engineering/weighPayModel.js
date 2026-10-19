@@ -69,7 +69,7 @@ export function evaluateItem(row, override, options = {}) {
   const foodCost = missingCost || missingWeight || !rate ? null : cost / revenue;
   const economicsPass = foodCost != null && foodCost <= WP_ITEM_FC_GATE + 1e-12;
   const { reasons, reviews } = itemRestrictions(row);
-  if (rate && !missingCost && !missingWeight && !economicsPass) reasons.push('Above 40% W&P food cost');
+  if (rate && !missingCost && !missingWeight && !economicsPass) reasons.push('Above 40% True Food Cost');
   const calculatedStatus = !rate ? 'Needs price' : missingCost ? 'Needs cost' : missingWeight ? 'Needs weight' : reasons.length ? 'Blocked' : reviews.length ? 'Review' : 'Allowed';
   const validOverride = override && ['allow', 'block'].includes(override.decision) && String(override.reason || '').trim() ? { decision: override.decision, reason: String(override.reason).trim() } : null;
   const status = validOverride?.decision === 'block' ? 'Blocked by override' : validOverride?.decision === 'allow' && rate && !missingCost && !missingWeight ? 'Allowed by override' : calculatedStatus;

@@ -1,4 +1,7 @@
-## 2026-10-19 release follow-up
+## 2026-10-19
+
+- [Oct 19, 2:00 PM] Prepared local W&P workflow revision: Andes selection opens concept deep dive, repeated nested subrecipes consolidate for display, approved/unapproved guidance filters with Clear and True Food Cost labels added. Exports use dashboard-chart cover plus brand cards/concept charts and Data Audit; per-item cards, MRNs, guidance percentages, JSON and README removed from exports. Andes card uses supplied analysis separately from shared scoring. Source mass gaps remain unresolved pending verified equivalents or permission for labeled estimates; $/cup is shown where supported. No deployment or operational writes. Solo Chief; independent clearance unavailable. Evidence: `docs/weigh-pay/WORKFLOW_REVISION_2026_10_19.md`.
+ release follow-up
 
 - [Oct 19, 9:27 AM] Production verified `2026.10.19.002-andes-component-analysis` at application `b1d6ba0` / released main `a579a9b`, deployment `dpl_9sgY2QCtuPVQK2MbS1RFXpQKa9iN`. Tyler explicitly approved deployment. Direct Andes component analysis without sign-in and four donut charts are deployed. Full package verification/build, production W&P 10/10 and actual-data checks across 54 menus passed; zero operational writes/browser errors. Private documents remain disabled. Solo execution: independent clearance unavailable; LIVE is not claimed. See docs/weigh-pay/ANDES_ANALYSIS_EVIDENCE.md.
 

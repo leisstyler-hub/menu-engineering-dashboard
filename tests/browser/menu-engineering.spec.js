@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { openTool, collectUnexpectedPageErrors } from './smoke-helpers.js';
 
 const row = (id, item, extra = {}) => ({ id, item, menu: 'Test Kitchen', category: 'Entree', mrn: `000${id}.123456789`, price: 8, trueCost: 1, portionOz: 8, ...extra });
-const rows = [row(1, 'Roast Chicken'), row(2, 'Lentil Rice', { category: 'Side' }), row(3, 'Cauliflower Steak', { category: 'Side' }), row(4, 'Salmon'), row(5, 'Uncosted Vegetables', { trueCost: null }), row(1, 'Roast Chicken'), row(6, 'Unknown Portion', { menu: 'Incomplete Kitchen', portionOz: null, portion: '1 piece' })];
+const rows = [row(1, 'Roast Chicken'), row(2, 'Lentil Rice', { category: 'Side' }), row(3, 'Cauliflower Steak', { category: 'Side' }), row(4, 'Salmon'), row(5, 'Uncosted Vegetables', { trueCost: null }), row(1, 'Roast Chicken'), row(7,'Andes sample',{menu:'AMZ: Andes'}), row(6, 'Unknown Portion', { menu: 'Incomplete Kitchen', portionOz: null, portion: '1 piece' })];
 
 async function setup(page, source = 'supabase-recipe-items') {
   const writes = [];
@@ -54,9 +54,8 @@ test('W&P controls require Edit and a reason; export captures exceptions without
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Export menu package', exact: true }).click();
   const zip = await JSZip.loadAsync(await readFile(await (await download).path()));
-  expect(Object.keys(zip.files)).toEqual(expect.arrayContaining(['menu-summary.xlsx', 'guidance-report.html', 'flash-cards.html', 'calculation-snapshot.json', 'README.txt']));
-  const snapshot = JSON.parse(await zip.file('calculation-snapshot.json').async('string'));
-  expect(snapshot.menus[0].items.find(item => item.item === 'Salmon')).toMatchObject({ override: { decision: 'allow', reason: 'Approved limited assortment' }, mrn: '0004.123456789' });
+  expect(Object.keys(zip.files)).toEqual(expect.arrayContaining(['data-audit.xlsx', 'data-audit.html', 'flash-cards.html']));
+  expect(Object.keys(zip.files)).not.toEqual(expect.arrayContaining(['calculation-snapshot.json','README.txt']));
   expect(await zip.file('flash-cards.html').async('string')).toContain('Approved limited assortment');
   expect(writes).toEqual([]);
 });
@@ -121,7 +120,7 @@ test('W&P shows read failure and can recover through Refresh', async ({ page }) 
   await expect(page.getByRole('button', { name: 'Export all menus', exact: true })).toBeDisabled();
   await page.unroute('**/api/recipe-library?scope=all');
   await page.getByRole('button', { name: 'Refresh data', exact: true }).click();
-  await expect(page.getByTestId('wp-menu-row')).toHaveCount(2);
+  await expect(page.getByTestId('wp-menu-row')).toHaveCount(3);
 });
 
 test('W&P exports all menus with safely escaped reference content and printable cards', async ({ page }) => {
@@ -132,11 +131,11 @@ test('W&P exports all menus with safely escaped reference content and printable 
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Export all menus', exact: true }).click();
   const zip = await JSZip.loadAsync(await readFile(await (await download).path()));
-  const html = await zip.file('guidance-report.html').async('string');
+  const html = await zip.file('data-audit.html').async('string');
   expect(html).toContain('&lt;script&gt;');
   expect(html).not.toContain('<script>');
   await page.setContent(await zip.file('flash-cards.html').async('string'));
-  await expect(page.getByRole('heading', { name: unsafe.item, exact: true })).toBeVisible();
+  await expect(page.getByRole('listitem').filter({hasText:unsafe.item})).toBeVisible();
   await expect(page.getByRole('button', { name: 'Print / Save as PDF', exact: true })).toBeVisible();
   expect(await page.evaluate(() => window.BAD)).toBeUndefined();
 });
@@ -151,9 +150,7 @@ test('W&P overview and oz/lb scenario price update guidance and exported report 
  const download=page.waitForEvent('download');
  await page.getByRole('button',{name:'Export menu package',exact:true}).click();
  const zip=await JSZip.loadAsync(await readFile(await(await download).path()));
- const snapshot=JSON.parse(await zip.file('calculation-snapshot.json').async('string'));
- expect(snapshot.pricePerLb).toBe(16);
- expect(await zip.file('guidance-report.html').async('string')).toContain('$16.000/lb');
+ expect(await zip.file('data-audit.html').async('string')).toContain('$16.00/lb');
  await page.screenshot({path:'../../.scratch/wp-prototype-overview.png',fullPage:true});
  await page.getByLabel('W&P selling price').fill('0');
  await expect(page.getByRole('button',{name:'Export menu package',exact:true})).toBeDisabled();
@@ -165,16 +162,27 @@ test('Andes analysis opens without sign-in and exposes costs and charts without 
  await page.getByRole('button',{name:'Weigh & Pay',exact:true}).click();
  await expect(page.getByRole('img',{name:'Menu qualification chart'})).toBeVisible();
  await expect(page.getByLabel('Private recipe email')).toHaveCount(0);
+ await expect(page.getByRole('region',{name:'Andes component analysis'})).toHaveCount(0);
+ await page.getByRole('button',{name:'AMZ: Andes',exact:true}).click();
  const analysis=page.getByRole('region',{name:'Andes component analysis'});
  await expect(analysis).toBeVisible();
  await expect(analysis.getByRole('img',{name:'Andes economics chart'})).toBeVisible();
  const tofu=analysis.getByTestId('andes-recipe').filter({has:page.getByRole('heading',{name:'AMZ: Peruvian Stewed Tofu in Creamy Aji Pepper Sauce',exact:true})});
  await expect(tofu).toContainText('$1.5200');
+ await expect(tofu).toContainText('True Food Cost');
  await tofu.getByText('Component cost breakdown',{exact:true}).first().click();
  await expect(tofu).toContainText('$0.2050');
  await expect(tofu).toContainText('$1.3150');
  await expect(tofu).toContainText('Needs weight');
  await expect(tofu.getByLabel('Serving pan').first()).toHaveText('');
+ const exported=page.waitForEvent('download');
+ await page.getByRole('button',{name:'Export menu package',exact:true}).click();
+ const packageZip=await JSZip.loadAsync(await readFile(await(await exported).path()));
+ const cards=await packageZip.file('flash-cards.html').async('string');
+ expect((cards.match(/class="card"/g)||[]).length).toBe(1);
+ expect(cards).toContain('Supplied Andes recipe analysis snapshot');
+ expect(cards).toContain('Peruvian Stewed Tofu');
+ expect(cards).not.toContain('Andes sample');
  await expect(analysis.locator('a')).toHaveCount(0);
  await expect(analysis).not.toContainText('HACCP');
  await page.getByLabel('W&P selling price').fill('20');
@@ -183,4 +191,20 @@ test('Andes analysis opens without sign-in and exposes costs and charts without 
  await page.setViewportSize({width:390,height:844});
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await page.screenshot({path:'../../.scratch/ANDES_ANALYSIS_MOBILE.png',fullPage:true});
+});
+
+test('Andes selection replaces generic details, deduplicates components and clears approval filters',async({page})=>{
+ await setup(page);await page.getByRole('button',{name:'Weigh & Pay',exact:true}).click();
+ await page.getByRole('button',{name:'AMZ: Andes',exact:true}).click();
+ const analysis=page.getByRole('region',{name:'Andes component analysis'});
+ await expect(page.getByRole('button',{name:'Edit guidance',exact:true})).toHaveCount(0);
+ await analysis.getByRole('button',{name:'Nested subrecipes',exact:true}).click();
+ await expect(analysis.getByTestId('andes-recipe')).toHaveCount(3);
+ await expect(analysis).toContainText('$8.2000 / cup');
+ await analysis.getByRole('button',{name:'Show only approved recipes',exact:true}).click();
+ await expect(analysis.getByTestId('andes-recipe')).toHaveCount(0);
+ await analysis.getByRole('button',{name:'Clear filter',exact:true}).click();
+ await expect(analysis.getByTestId('andes-recipe')).toHaveCount(19);
+ await analysis.getByRole('button',{name:'Show only unapproved recipes',exact:true}).click();
+ const count=await analysis.getByTestId('andes-recipe').count();expect(count).toBeGreaterThan(0);expect(count).toBeLessThan(19);
 });
