@@ -29,3 +29,8 @@ Full package `npm run verify` including production build passed before the last 
 A captured operational snapshot exported 54 brand cards with three cover charts; Andes has one card with the 19 source dish variants rather than the operational generic rows. Cover and Andes card screenshots were visually inspected; printable HTML and a local PDF were generated. Screenshots: workspace `.scratch/wp/workflow-cover.png`, `.scratch/wp/workflow-andes-card.png`. Browser log `.scratch/WP_WORKFLOW_BROWSER.log`; full guards/build `.scratch/WP_WORKFLOW_VERIFY.log`.
 
 Remaining requirement: eliminate all missing-weight flags. Seventeen source variants (nine top-level) lack verified mass in the source projection. Added supported cost-per-cup calculation; no missing mass was fabricated. Asked Tyler whether to retain verified-only values or permit explicitly labeled density/yield estimates. This choice remains pending; silence is not approval. No production action or independent sign-off.
+
+
+## Committed-state proof
+
+Application commit `3d8384ca5936fd81fbe0df7edde313de9512a4fd`. The same shell confirmed HEAD before and after full `npm run verify` (exit 0, includes production build) and `PLAYWRIGHT_BROWSERS_PATH=C:/Users/leiss/AppData/Local/ms-playwright node scripts/run-playwright.mjs menu-engineering` (exit 0, 11/11). Working tree was clean. Logs: workspace `.scratch/WP_WORKFLOW_COMMITTED_VERIFY.log` and `.scratch/WP_WORKFLOW_COMMITTED_BROWSER.log`. Revision is COMMITTED locally; no push, merge, deployment or operational write. Weight-resolution requirement remains open. No independent sign-off.
