@@ -2,6 +2,10 @@ import { expect, test } from "@playwright/test";
 import XLSX from "xlsx";
 import { collectUnexpectedPageErrors, expectNoAppProtection, expectNoUnexpectedPageErrors } from "./smoke-helpers.js";
 
+test.beforeEach(async ({ page }) => {
+  await page.route("**/api/ssmt?action=status", route => route.fulfill({ json: {ok:true,enabled:false} }));
+});
+
 test("SSMT uses a deliberate dark palette without changing light mode", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   await page.addInitScript(() => {
@@ -221,6 +225,7 @@ test("SSMT opens behind passcode and separates pricing from menu building", asyn
   await expect(page.getByText(/Core\/Global IT complete/i)).toHaveCount(0);
   await expect(page.getByText(/Needs completion/i).first()).toBeVisible();
   await page.getByLabel(/New menu name/i).fill("Smoke Test Promo Menu");
+  await page.getByLabel("New menu FIXY designation", { exact: true }).fill("GRILL");
   await page.getByLabel(/New menu type/i).selectOption("Promotion");
   await page.getByRole("button", { name: /Create menu/i }).click();
 
@@ -330,6 +335,7 @@ test("SSMT moves a menu with the in-menu bucket selector without freezing", asyn
   await page.getByRole("button", { name: /unlock ssmt/i }).click();
   await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
   await page.getByLabel(/New menu name/i).fill(bucketMenuName);
+  await page.getByLabel("New menu FIXY designation", { exact: true }).fill("GRILL");
   await page.getByLabel(/New menu type/i).selectOption("Core");
   await page.getByRole("button", { name: /Create menu/i }).click();
   await expect(page.getByRole("heading", { name: bucketMenuName })).toBeVisible();
@@ -542,6 +548,7 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
   ]));
 
   await page.getByLabel(/New menu name/i).fill(orderingMenuName);
+  await page.getByLabel("New menu FIXY designation", { exact: true }).fill("GRILL");
   await page.getByLabel(/New menu type/i).selectOption("Core");
   await page.getByRole("button", { name: /Create menu/i }).click();
   await expect(page.getByRole("heading", { name: orderingMenuName })).toBeVisible();
@@ -942,6 +949,7 @@ test("SSMT item locks enable Centric copy fields and gate phase advancement", as
   await page.getByRole("button", { name: /unlock ssmt/i }).click();
   await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
   await page.getByLabel(/New menu name/i).fill("Centric Copy Lock Test");
+  await page.getByLabel("New menu FIXY designation", { exact: true }).fill("GRILL");
   await page.getByLabel(/New menu type/i).selectOption("Core");
   await page.getByRole("button", { name: /Create menu/i }).click();
   await page.getByRole("button", { name: /Add item/i }).click();
@@ -1188,6 +1196,7 @@ test("SSMT manual saves recover failed shared saves and keep flags plus modifier
 
   await expect(page.getByRole("button", { name: /Save SSMT workspace/i })).toBeVisible();
   await page.getByLabel(/New menu name/i).fill(smokeMenuName);
+  await page.getByLabel("New menu FIXY designation", { exact: true }).fill("GRILL");
   await page.getByLabel(/New menu type/i).selectOption("Core");
   await page.getByRole("button", { name: /Create menu/i }).click();
   await expect(page.getByRole("heading", { name: smokeMenuName })).toBeVisible();
@@ -1301,6 +1310,7 @@ test("SSMT menu names require edit mode and cross-system reference names persist
   await expect(page.getByText(/Loading current SSMT seed data/i)).toHaveCount(0, { timeout: 20_000 });
 
   await page.getByLabel(/New menu name/i).fill(smokeMenuName);
+  await page.getByLabel("New menu FIXY designation", { exact: true }).fill("GRILL");
   await page.getByLabel(/New menu type/i).selectOption("Core");
   await page.getByRole("button", { name: /Create menu/i }).click();
 
@@ -1355,6 +1365,7 @@ test("SSMT selected-menu export downloads a Centric-shaped workbook", async ({ p
   await page.getByRole("button", { name: /unlock ssmt/i }).click();
   await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
   await page.getByLabel(/New menu name/i).fill("Export Button Test");
+  await page.getByLabel("New menu FIXY designation", { exact: true }).fill("GRILL");
   await page.getByLabel(/New menu type/i).selectOption("Core");
   await page.getByRole("button", { name: /Create menu/i }).click();
 
@@ -1426,6 +1437,7 @@ test("SSMT modifier groups are editable with typed group metadata and line-level
   }
   await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
   await page.getByLabel(/New menu name/i).fill("Smoke Test Modifiers");
+  await page.getByLabel("New menu FIXY designation", { exact: true }).fill("GRILL");
   await page.getByLabel(/New menu type/i).selectOption("Core");
   await page.getByRole("button", { name: /Create menu/i }).click();
 
@@ -1522,6 +1534,7 @@ test("SSMT Mods badge turns red/green with modifier group lock state and gates i
   await page.getByRole("button", { name: /unlock ssmt/i }).click();
   await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
   await page.getByLabel(/New menu name/i).fill("Mods Gate Test");
+  await page.getByLabel("New menu FIXY designation", { exact: true }).fill("GRILL");
   await page.getByLabel(/New menu type/i).selectOption("Core");
   await page.getByRole("button", { name: /Create menu/i }).click();
 
@@ -1576,6 +1589,7 @@ test("SSMT keeps ten modifier groups attached after save, close, and reopen", as
   await page.getByRole("button", { name: /unlock ssmt/i }).click();
   await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
   await page.getByLabel(/New menu name/i).fill("Ten Modifier Groups Test");
+  await page.getByLabel("New menu FIXY designation", { exact: true }).fill("GRILL");
   await page.getByLabel(/New menu type/i).selectOption("Core");
   await page.getByRole("button", { name: /Create menu/i }).click();
 
@@ -1636,6 +1650,7 @@ test("SSMT Mods badge counts only reliably-linked groups, not stale free-text re
   // must make the badge read (1) after the dialog closes — guards against over-tightening the match.
   await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
   await page.getByLabel(/New menu name/i).fill("Badge Count Test");
+  await page.getByLabel("New menu FIXY designation", { exact: true }).fill("GRILL");
   await page.getByLabel(/New menu type/i).selectOption("Core");
   await page.getByRole("button", { name: /Create menu/i }).click();
 
@@ -1890,6 +1905,7 @@ test("SSMT collects hibernated menus into a separate bucket shown on demand", as
 
   // Create a fresh Core menu, then return to the selector grid.
   await page.getByLabel(/New menu name/i).fill(menuName);
+  await page.getByLabel("New menu FIXY designation", { exact: true }).fill("GRILL");
   await page.getByLabel(/New menu type/i).selectOption("Core");
   await page.getByRole("button", { name: /Create menu/i }).click();
   await expect(page.getByRole("heading", { name: menuName })).toBeVisible();
@@ -1995,6 +2011,7 @@ test("SSMT blocks duplicate menu names and rapid double-submit with mocked stora
   await expect(page.getByText(/Loading current SSMT seed data/i)).toHaveCount(0, { timeout: 20_000 });
 
   await page.getByLabel(/New menu name/i).fill("  andes  ");
+  await page.getByLabel("New menu FIXY designation", { exact: true }).fill("GRILL");
   await page.getByRole("button", { name: /Create menu/i }).click();
   await expect(page.getByRole("alert")).toHaveText('A menu named "andes" already exists.');
   await expect(page.locator('[data-menu-name="AMZ: Andes"]')).toHaveCount(1);
@@ -2002,6 +2019,7 @@ test("SSMT blocks duplicate menu names and rapid double-submit with mocked stora
 
   const uniqueName = "Rapid Submit Menu";
   await page.getByLabel(/New menu name/i).fill(uniqueName);
+  await page.getByLabel("New menu FIXY designation", { exact: true }).fill("GRILL");
   await page.getByRole("button", { name: /Create menu/i }).evaluate((button) => {
     button.click();
     button.click();

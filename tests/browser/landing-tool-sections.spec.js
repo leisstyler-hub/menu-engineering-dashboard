@@ -1,6 +1,10 @@
 import { expect, test } from "@playwright/test";
 import { collectUnexpectedPageErrors, expectNoAppProtection, expectNoUnexpectedPageErrors } from "./smoke-helpers.js";
 
+test.beforeEach(async ({ page }) => {
+  await page.route("**/api/ssmt?action=status", route => route.fulfill({ json: {ok:true,enabled:false} }));
+});
+
 test("home screen groups tools under Chef Tools and Programming & Auditing in the requested order", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   await page.setViewportSize({ width: 1440, height: 1000 });

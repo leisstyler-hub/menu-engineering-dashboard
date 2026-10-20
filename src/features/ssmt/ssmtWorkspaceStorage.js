@@ -1,3 +1,4 @@
+import { ssmtRequest } from "./ssmtClient.js";
 // Canonical shared-workspace record id. This is the live row that actually holds
 // the SSMT workspace; the app reads and writes it as the single source of truth.
 export const SSMT_WORKSPACE_RECORD_ID = "ssmt|workspace|current";
@@ -73,7 +74,12 @@ export function workspaceFromRecord(record = null) {
   };
 }
 
-export async function loadSsmtWorkspaceFromSharedStorage() {
+export async function loadSsmtWorkspaceFromSharedStorage({ accounts = false } = {}) {
+  if (accounts) {
+    const result = await ssmtRequest("workspace");
+    if (!result.revision || !Array.isArray(result.workspace?.menus)) throw new Error("Shared workspace is unavailable. Saving is blocked.");
+    return { ok: true, source: "supabase", workspace: result.workspace, revision: result.revision };
+  }
   const response = await fetchWithTimeout("/api/storage/records?tool=SSMT&includeHidden=1", {}, SHARED_LOAD_TIMEOUT_MS);
   const payload = await readJson(response);
   if (!response.ok || payload.ok === false) {
@@ -91,7 +97,12 @@ export async function loadSsmtWorkspaceFromSharedStorage() {
   };
 }
 
-export async function saveSsmtWorkspaceToSharedStorage(workspace = {}) {
+export async function saveSsmtWorkspaceToSharedStorage(workspace = {}, { accounts = false, revision = "" } = {}) {
+  if (accounts) {
+    if (!revision) throw new Error("Load the shared workspace successfully before saving.");
+    const result = await ssmtRequest("save", { workspace, revision });
+    return { ...result, source: "supabase" };
+  }
   const record = buildSsmtWorkspaceRecord(workspace);
   const response = await fetchWithTimeout("/api/storage/records", {
     method: "POST",
@@ -112,4 +123,12 @@ export async function saveSsmtWorkspaceToSharedStorage(workspace = {}) {
     ...payload,
     record,
   };
+}
+
+// Public Platform Home needs calendar metadata only, never private drafts or history.
+export async function loadSsmtPublicCalendar() {
+  const status = await ssmtRequest("status");
+  if (!status.enabled) return loadSsmtWorkspaceFromSharedStorage();
+  const result = await ssmtRequest("calendar");
+  return { workspace: { menus: result.menus || [] } };
 }

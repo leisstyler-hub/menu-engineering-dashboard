@@ -7,7 +7,7 @@ import CompassOneLogo from "../shared/ui/CompassOneLogo.jsx";
 import PlatformSettings from "../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../shared/ui/VersionStamp.jsx";
 import PromotionCalendar from "../features/ssmt/PromotionCalendar.jsx";
-import { loadSsmtWorkspaceFromSharedStorage } from "../features/ssmt/ssmtWorkspaceStorage.js";
+import { loadSsmtPublicCalendar } from "../features/ssmt/ssmtWorkspaceStorage.js";
 import { money } from "../shared/formatting.js";
 
 const CHANGELOG_SUMMARY_MAX_LENGTH = 146;
@@ -220,7 +220,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
 
   useEffect(() => {
     let cancelled = false;
-    loadSsmtWorkspaceFromSharedStorage()
+    loadSsmtPublicCalendar()
       .then((result) => {
         if (!cancelled) setPromotionMenus(Array.isArray(result.workspace?.menus) ? result.workspace.menus : []);
       })

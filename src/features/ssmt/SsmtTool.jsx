@@ -30,6 +30,13 @@ import { deriveSsmtOperatingRows, ssmtDerivedMenuEntries } from "./ssmtDerivedMe
 import PromotionCalendar from "./PromotionCalendar.jsx";
 import { loadSsmtWorkspaceFromSharedStorage, saveSsmtWorkspaceToSharedStorage } from "./ssmtWorkspaceStorage.js";
 
+import SsmtAccessGate from "./SsmtAccessGate.jsx";
+import SsmtReusePanel from "./SsmtReusePanel.jsx";
+
+export default function SsmtTool(props) {
+  return <SsmtAccessGate onBack={props.onBackToPlatform}>{member => <SsmtEditor key={member?.id || "legacy"} {...props} accountMember={member} />}</SsmtAccessGate>;
+}
+
 const PASSCODE = "0411";
 const UNLOCKED_KEY = "culinaryToolsSsmtUnlocked";
 const WORKSPACE_STORAGE_KEY = "culinaryToolsSsmtWorkspace_v1";
@@ -346,6 +353,9 @@ function workspaceSharedSignature(workspace = {}) {
   return JSON.stringify({
     menus: workspace.menus || [],
     priceBook: workspace.priceBook || [],
+    plannedPriceBook: workspace.plannedPriceBook || null,
+    priceBookArchives: workspace.priceBookArchives || [],
+    priceBookEffectiveFrom: workspace.priceBookEffectiveFrom || "",
     modifierGroups: workspace.modifierGroups || [],
     modifierClipboardSlots: workspace.modifierClipboardSlots || [],
     deletedMenuKeys: workspace.deletedMenuKeys || [],
@@ -499,7 +509,7 @@ function buildModifierGroupIndex(modifierGroups = []) {
   for (const group of modifierGroups) {
     if (group?.id) byId.set(group.id, group);
     const name = String(group?.name || "").trim().toLowerCase();
-    if (name) byName.set(name, group);
+    if (name && !group.independentCopy) byName.set(name, group);
   }
   return { byId, byName };
 }
@@ -529,6 +539,7 @@ function modifierGroupMatchesItemRef(group = {}, ref = "") {
   // (names like "2", "NO", "1", "Forced/Add/Remove?") to unrelated items, inflating the
   // Mods count against groups that were never really authored for that item.
   if (group.id === cleanRef) return true;
+  if (group.independentCopy) return false;
   const groupName = String(group.name || "").trim().toLowerCase();
   const refName = cleanRef.toLowerCase();
   return groupName !== "" && groupName === refName;
@@ -553,7 +564,7 @@ function normalizeModifierChoice(choice = {}, areaOrder = [], priceBook = []) {
     mrn: choice.mrn || "",
     calories: choice.calories || "",
     priceSelectorId,
-    price: choice.price || priceRow?.areas?.SEA || choice.priceSelector || "",
+    price: [choice.price, priceRow?.areas?.SEA, choice.priceSelector].find(value => value !== undefined && value !== null && value !== "") ?? "",
     areaPrices: choice.areaPrices || priceRow?.areas || blankAreaPrices(areaOrder),
   };
 }
@@ -716,12 +727,24 @@ function createBlankModifierGroup(item, areaOrder) {
   };
 }
 
-export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
+function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember }) {
+  const [reusePanel, setReusePanel] = useState(null);
+  const [newFixyDesignation, setNewFixyDesignation] = useState("");
+  const accountMode = Boolean(accountMember);
+  const saveInFlightRef = useRef(false);
+  const saveRequestedRef = useRef(false);
+  const mountedRef = useRef(true);
+  const accountRevisionRef = useRef("");
+  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
+  const latestWorkspaceRef = useRef(null);
+  const loadedWorkspaceRef = useRef({});
+  const conflictRef = useRef(false);
   const [ssmtData, setSsmtData] = useState(EMPTY_SSMT_DATA);
   const [dataStatus, setDataStatus] = useState("loading");
   const [passcode, setPasscode] = useState("");
   const [passcodeError, setPasscodeError] = useState("");
   const [unlocked, setUnlocked] = useState(() => {
+    if (accountMember) return true;
     if (typeof window === "undefined") return false;
     return window.sessionStorage.getItem(UNLOCKED_KEY) === "true";
   });
@@ -774,6 +797,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const modifierClipboard = modifierClipboardSlots.find((slot) => slot.group)?.group || null;
 
   const buildWorkspaceSnapshot = (overrides = {}) => ({
+    ...loadedWorkspaceRef.current,
     menus,
     deletedMenuKeys,
     priceBook: ssmtData.priceBook,
@@ -783,36 +807,41 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
     modifierGroups: ssmtData.modifierGroups,
     modifierClipboardSlots,
     selectedMenuId,
-    seedMenuTypeCorrectionsApplied: true,
+    seedMenuTypeCorrectionsApplied: accountMode ? loadedWorkspaceRef.current.seedMenuTypeCorrectionsApplied : true,
     updatedAt: new Date().toISOString(),
     ...overrides,
   });
 
+  latestWorkspaceRef.current = buildWorkspaceSnapshot();
   const manualSaveWorkspace = async (label = "SSMT workspace") => {
-    if (dataStatus !== "ready") return false;
-    const workspace = buildWorkspaceSnapshot();
-    writeLocalStorageJson(WORKSPACE_STORAGE_KEY, workspace, { clearOnQuota: true });
-    setWorkspaceSync((current) => ({
-      ...current,
-      state: "saving",
-      message: `Saving ${label} now...`,
-    }));
+    if (dataStatus !== "ready" || !mountedRef.current || conflictRef.current) return false;
+    if (saveInFlightRef.current) { saveRequestedRef.current = true; return false; }
+    const timers = pendingSharedSaveTimersRef.current;
+    if (timers.debounce) window.clearTimeout(timers.debounce);
+    if (timers.save) window.clearTimeout(timers.save);
+    saveInFlightRef.current = true;
+    const workspace = latestWorkspaceRef.current;
+    const submittedSignature = workspaceSharedSignature(workspace);
+    if (!accountMode) writeLocalStorageJson(WORKSPACE_STORAGE_KEY, workspace, { clearOnQuota: true });
+    setWorkspaceSync(current => ({...current,state:"saving",message:`Saving ${label} now...`}));
+    let saved = false;
     try {
-      const result = await saveSsmtWorkspaceToSharedStorage(workspace);
-      lastSharedSaveSignatureRef.current = workspaceSharedSignature(workspace);
-      setWorkspaceSync({
-        state: "synced",
-        source: result.source || "supabase",
-        message: `Shared SSMT workspace saved from ${label}.`,
-      });
+      const result = await saveSsmtWorkspaceToSharedStorage(workspace, {accounts:accountMode,revision:accountRevisionRef.current});
+      if (accountMode) accountRevisionRef.current = result.revision;
+      lastSharedSaveSignatureRef.current = submittedSignature;
+      setWorkspaceSync({state:"synced",source:result.source || "supabase",message:`Shared SSMT workspace saved from ${label}.`});
+      saved = true;
       return true;
     } catch (error) {
-      setWorkspaceSync({
-        state: "fallback",
-        source: "local",
-        message: `${error.message || "Shared SSMT workspace save failed."} This browser kept a local cache; fix the issue and press Save again.`,
-      });
+      if (error.status === 409) conflictRef.current = true;
+      setWorkspaceSync({state:"fallback",source:accountMode?"unsaved":"local",message:`${error.message || "Shared save failed."} ${accountMode ? "Your unsaved draft remains in this tab. Copy your changes before reloading or signing out." : "This browser kept a local cache; press Save again after recovery."}`});
       return false;
+    } finally {
+      saveInFlightRef.current = false;
+      if (saved && mountedRef.current && !conflictRef.current && (saveRequestedRef.current || workspaceSharedSignature(latestWorkspaceRef.current) !== submittedSignature)) {
+        timers.save = window.setTimeout(()=>manualSaveWorkspace("pending edits"),1000);
+      }
+      saveRequestedRef.current = false;
     }
   };
 
@@ -827,9 +856,10 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
         const stored = readLocalStorageJson(WORKSPACE_STORAGE_KEY, null);
         let sharedWorkspace = null;
         try {
-          const shared = await loadSsmtWorkspaceFromSharedStorage();
+          const shared = await loadSsmtWorkspaceFromSharedStorage({ accounts: accountMode });
           if (cancelled) return;
           sharedWorkspace = shared.workspace;
+          if (accountMode) accountRevisionRef.current = shared.revision;
           setWorkspaceSync(sharedWorkspace ? {
             state: "synced",
             source: shared.source || "supabase",
@@ -841,22 +871,25 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
           });
         } catch (error) {
           if (cancelled) return;
+          if (accountMode) throw error;
           setWorkspaceSync({
             state: "fallback",
             source: "local",
             message: `${error.message || "Shared SSMT workspace unavailable."} Using this browser's saved SSMT cache.`,
           });
         }
+        if (accountMode && !sharedWorkspace) throw new Error("Shared workspace is unavailable.");
         const rawWorkspace = sharedWorkspace || stored || {};
-        const workspace = activateDuePricing(rawWorkspace);
+        loadedWorkspaceRef.current = rawWorkspace;
+        const workspace = accountMember?.role === "Experience" ? rawWorkspace : activateDuePricing(rawWorkspace);
         const pricingActivated = Boolean(rawWorkspace.plannedPriceBook && !workspace.plannedPriceBook);
         const storedMenus = Array.isArray(workspace.menus)
-          ? mergeWorkspaceMenusWithSeed(workspace.menus, payload.menus, { applySeedTypes: !workspace.seedMenuTypeCorrectionsApplied, deletedMenuKeys: workspace.deletedMenuKeys || [] })
+          ? (accountMode ? workspace.menus : mergeWorkspaceMenusWithSeed(workspace.menus, payload.menus, { applySeedTypes: !workspace.seedMenuTypeCorrectionsApplied, deletedMenuKeys: workspace.deletedMenuKeys || [] }))
           : payload.menus;
         const storedPriceBook = Array.isArray(workspace.priceBook) && workspace.priceBook.length ? workspace.priceBook : payload.priceBook;
         const storedModifierGroups = Array.isArray(workspace.modifierGroups) && workspace.modifierGroups.length ? workspace.modifierGroups : payload.modifierGroups;
-        const priceBook = storedPriceBook.map((price) => normalizePricingRow(price, payload.areaOrder));
-        const modifierGroups = storedModifierGroups.map((group) => normalizeModifierGroup(group, payload.areaOrder, priceBook));
+        const priceBook = accountMode ? workspace.priceBook || [] : storedPriceBook.map((price) => normalizePricingRow(price, payload.areaOrder));
+        const modifierGroups = accountMode ? workspace.modifierGroups : storedModifierGroups.map((group) => normalizeModifierGroup(group, payload.areaOrder, priceBook));
         const clipboardSlots = normalizeModifierClipboardSlots(workspace.modifierClipboardSlots);
         lastSharedSaveSignatureRef.current = workspaceSharedSignature({
           menus: storedMenus,
@@ -877,7 +910,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
           priceBookArchives: workspace.priceBookArchives || [],
           modifierGroups,
         });
-        setMenus((current) => current.length ? current : storedMenus.map(cloneMenu));
+        setMenus((current) => current.length ? current : accountMode ? structuredClone(storedMenus) : storedMenus.map(cloneMenu));
         setDeletedMenuKeys(Array.isArray(workspace.deletedMenuKeys) ? workspace.deletedMenuKeys : []);
         setModifierClipboardSlots(clipboardSlots);
         setSelectedMenuId((current) => current || (storedMenus.some((menu) => menu.id === workspace.selectedMenuId) ? workspace.selectedMenuId : storedMenus[0]?.id || ""));
@@ -900,7 +933,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
     if (dataStatus !== "ready" || !menus.length) return undefined;
     const timer = window.setTimeout(() => {
       const workspace = buildWorkspaceSnapshot();
-      writeLocalStorageJson(WORKSPACE_STORAGE_KEY, workspace, { clearOnQuota: true });
+      if (!accountMode) writeLocalStorageJson(WORKSPACE_STORAGE_KEY, workspace, { clearOnQuota: true });
     }, LOCAL_CACHE_DEBOUNCE_MS);
     return () => window.clearTimeout(timer);
   }, [dataStatus, menus, selectedMenuId, ssmtData.priceBook, ssmtData.plannedPriceBook, ssmtData.priceBookArchives, ssmtData.modifierGroups, modifierClipboardSlots, deletedMenuKeys]);
@@ -923,29 +956,8 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
       const workspace = buildWorkspaceSnapshot();
       const sharedSignature = workspaceSharedSignature(workspace);
       if (sharedSignature === lastSharedSaveSignatureRef.current) return;
-      if (!workspaceLoadedRef.current) return;
-      setWorkspaceSync((current) => ({
-        ...current,
-        state: "saving",
-        message: "Saving shared SSMT workspace after idle edits...",
-      }));
-      timers.save = window.setTimeout(async () => {
-        try {
-          const result = await saveSsmtWorkspaceToSharedStorage(workspace);
-          lastSharedSaveSignatureRef.current = sharedSignature;
-          setWorkspaceSync({
-            state: "synced",
-            source: result.source || "supabase",
-            message: "Shared SSMT workspace saved.",
-          });
-        } catch (error) {
-          setWorkspaceSync({
-            state: "fallback",
-            source: "local",
-            message: `${error.message || "Shared SSMT workspace save failed."} This browser kept a local cache.`,
-          });
-        }
-      }, AUTO_SHARED_SAVE_DELAY_MS);
+      if (!workspaceLoadedRef.current || conflictRef.current) return;
+      timers.save = window.setTimeout(() => manualSaveWorkspace("idle edits"), AUTO_SHARED_SAVE_DELAY_MS);
     }, SHARED_SAVE_SIGNATURE_DEBOUNCE_MS);
 
     return () => {
@@ -1340,7 +1352,9 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
     isCreatingMenuRef.current = true;
     setIsCreatingMenu(true);
     setNewMenuNotice("");
-    const menu = createMenuRecord(name, newMenuType, ssmtData.areaOrder);
+    if (!newFixyDesignation.trim() || /[|\r\n]/.test(newFixyDesignation)) { setNewMenuNotice("Enter a valid FIXY designation for the new menu."); isCreatingMenuRef.current = false; setIsCreatingMenu(false); return; }
+    const menu = { ...createMenuRecord(name, newMenuType, ssmtData.areaOrder), fixyDesignation: newFixyDesignation.trim().toUpperCase() };
+    setNewFixyDesignation("");
     setDeletedMenuKeys((current) => current.filter((key) => key !== menuKey(menu)));
     setMenus((current) => [...current, menu]);
     setSelectedMenuId(menu.id);
@@ -1547,7 +1561,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
       ...current,
       item: {
         ...current.item,
-        modifierGroups: (current.item.modifierGroups || []).map((name) => (name === previousName ? nextName : name)),
+        modifierGroups: (current.item.modifierGroups || []).map((name) => (!existingGroup.independentCopy && name === previousName ? nextName : name)),
       },
       groups: current.groups.map((group) => (
         group.id === groupId
@@ -1555,12 +1569,12 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
           : group
       )),
     } : current);
-    if (Object.prototype.hasOwnProperty.call(patch, "name")) {
+    if (Object.prototype.hasOwnProperty.call(patch, "name") && !existingGroup.independentCopy) {
       setMenus((current) => current.map((menu) => ({
         ...menu,
         items: menu.items.map((item) => ({
           ...item,
-          modifierGroups: (item.modifierGroups || []).map((name) => (name === previousName ? nextName : name)),
+          modifierGroups: (item.modifierGroups || []).map((name) => (!existingGroup.independentCopy && name === previousName ? nextName : name)),
         })),
       })));
     }
@@ -1762,6 +1776,15 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
     setFlagNote("");
     setFlagReason("Description correction");
   };
+
+  if (accountMember?.role === "Experience") {
+    return <div className="mx-auto max-w-6xl space-y-3 p-4 text-slate-950"><button onClick={onBackToPlatform}>Back to Platform</button><h1 className="text-2xl font-black">SSMT — Experience review</h1>
+      <p>Edit descriptions and advance a menu to IT programming. {workspaceSync.message}</p>
+      {dataStatus === "ready" ? <><label>Menu<select aria-label="Experience menu" value={selectedMenu.id} onChange={e=>setSelectedMenuId(e.target.value)} className="ml-3 rounded border p-2">{menus.map(m=><option key={m.id} value={m.id}>{m.name}</option>)}</select></label>
+      <div className="space-y-2">{selectedMenu.items.filter(i=>i.rowType!=="divider").map(i=><label key={i.id} className="grid grid-cols-[minmax(120px,1fr)_3fr] gap-3 rounded border bg-white p-2"><strong>{i.label||i.name}</strong><textarea aria-label={`Description for ${i.label||i.name}`} value={i.description||""} onChange={e=>updateItem(i.id,{description:e.target.value})} className="rounded border p-2"/></label>)}</div>
+      <button className="rounded border bg-white p-2" onClick={()=>manualSaveWorkspace()}>Save SSMT workspace</button>
+      <button className="ml-3 rounded border bg-white p-2" disabled={!["Culinary draft","Experience review"].includes(selectedMenu.phase)||!allItemRowsLocked} onClick={()=>updateSelectedMenuPhase(selectedMenu.phase==="Culinary draft"?"Experience review":"IT programming")}>Advance menu</button>{phaseBlocker&&<p role="alert">{phaseBlocker}</p>}</>:<p>{dataStatus==="error"?"Shared workspace could not be loaded. No edits or saves are allowed.":"Loading shared SSMT workspace…"}</p>}</div>;
+  }
 
   if (!unlocked) {
     return (
@@ -2126,6 +2149,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
               <div className="mt-4 space-y-3">
                 <label className="grid gap-1 text-sm font-bold text-slate-700">
                   <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">New menu name</span>
+                  <input aria-label="New menu FIXY designation" placeholder="FIXY designation, e.g. GRILL" value={newFixyDesignation} onChange={e=>setNewFixyDesignation(e.target.value)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 font-bold" />
                   <input aria-label="New menu name" value={newMenuName} onChange={(event) => { setNewMenuName(event.target.value); setNewMenuNotice(""); }} className="rounded-lg border border-slate-300 bg-white px-3 py-2 font-bold outline-none focus:border-emerald-500" />
                 </label>
                 <label className="grid gap-1 text-sm font-bold text-slate-700">
@@ -2184,7 +2208,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                 <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-200">Status</p>
                 <p className="mt-1">{selectedMenu.status || selectedMenu.phase}</p>
                 {!allItemRowsLocked && <p className="mt-1 text-amber-200">Lock all item rows before moving to the next phase.</p>}
-                {phaseBlocker && <p className="mt-1 text-amber-200">{phaseBlocker}</p>}
+                {phaseBlocker && <p role="alert" className="mt-1 text-amber-200">{phaseBlocker}</p>}
               </div>
             </section>
 
@@ -2345,6 +2369,9 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
+                  <label className="text-xs font-bold">FIXY designation<input aria-label="Menu FIXY designation" placeholder="Required for FIXY/import" value={selectedMenu.fixyDesignation || ""} onChange={e=>updateSelectedMenu({fixyDesignation:e.target.value})} className="ml-2 rounded border p-2" /></label>
+                  <button type="button" className="rounded border bg-white px-3 py-2 text-sm font-bold" onClick={()=>setReusePanel({mode:"items"})}>Add from Menu</button>
+                  <button type="button" className="rounded border bg-white px-3 py-2 text-sm font-bold" onClick={()=>{if(!selectedMenu.fixyDesignation?.trim()){setPhaseBlocker("Enter this menu’s FIXY designation before generating.");return;}if(!selectedItemRows.length){setPhaseBlocker("This menu has zero items. Add an item before generating FIXY.");return;}setReusePanel({mode:"fixy",item:selectedItemRows[0]});}}>Generate FIXY</button>
                   <button type="button" onClick={addItem} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-black text-slate-800 hover:bg-slate-100">
                     <Plus size={16} /> Add item
                   </button>
@@ -2618,12 +2645,12 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                                   key={area}
                                   type="button"
                                   aria-label={`Copy ${area} price for ${item.label || item.name || "item"}`}
-                                  disabled={!item.lockedForCentric || !item.areaPrices?.[area]}
+                                  disabled={!item.lockedForCentric || (item.areaPrices?.[area] !== 0 && !item.areaPrices?.[area])}
                                   onClick={() => copyForCentric(priceDigitsOnly(item.areaPrices?.[area]), `${area} price`)}
                                   className="flex min-w-0 flex-col items-center rounded border border-slate-300 bg-white px-1 py-0.5 text-center disabled:cursor-not-allowed disabled:text-slate-700 disabled:opacity-100 enabled:cursor-copy enabled:border-emerald-400 enabled:bg-emerald-50 enabled:hover:bg-emerald-100"
                                 >
                                   <span className="font-black text-slate-500">{area}</span>
-                                  <span>{item.areaPrices?.[area] || "TBD"}</span>
+                                  <span>{item.areaPrices?.[area] === 0 ? 0 : item.areaPrices?.[area] || "TBD"}</span>
                                 </button>
                               ))}
                             </div>
@@ -2710,12 +2737,25 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
         </Modal>
       )}
 
+      {reusePanel && <SsmtReusePanel key={reusePanel.item?.id || reusePanel.mode} {...reusePanel} onChooseItem={item=>setReusePanel({mode:"fixy",item})} menus={menus} menu={selectedMenu} groups={ssmtData.modifierGroups} onClose={()=>setReusePanel(null)} onApply={result=>{
+        if (result.fixy) updateItem(reusePanel.item.id, {fohColumn:result.fixy});
+        else {
+          setSsmtData(current=>({...current,modifierGroups:[...current.modifierGroups,...result.groups]}));
+          if(result.items) updateSelectedMenu({items:[...selectedMenu.items,...result.items]});
+          else {
+            updateItem(reusePanel.item.id,{modifierGroups:[...(reusePanel.item.modifierGroups||[]),...result.groups.map(g=>g.id)]});
+            setModifierDialog(current=>current?{...current,item:{...current.item,modifierGroups:[...(current.item.modifierGroups||[]),...result.groups.map(g=>g.id)]},groups:[...current.groups,...result.groups]}:current);
+          }
+        }
+      }}/>}
+
       {modifierDialog && (
         <Modal title="Modifier detail" size="wide" onClose={() => setModifierDialog(null)}>
           <div className="space-y-3">
             <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
               <p className="text-sm font-semibold leading-6 text-slate-700">For {modifierDialog.item.label || modifierDialog.item.name}, copy places a modifier group on the SSMT clipboard for paste onto another item. Prices stay tied to Pricing Structure rows.</p>
               <div className="flex flex-wrap gap-2">
+                <button type="button" className="rounded border bg-white p-2 text-xs font-bold" disabled={Boolean(modifierDialog.item.lockedForCentric)} onClick={()=>setReusePanel({mode:"groups",item:modifierDialog.item})}>Load Modifier Groups</button>
                 <button type="button" onClick={() => manualSaveWorkspace("modifiers")} className="inline-flex items-center justify-center gap-2 rounded-lg border border-sky-700 bg-sky-700 px-3 py-2 text-xs font-black text-white hover:bg-sky-800">
                   <Save size={14} /> Save modifiers
                 </button>
@@ -2774,6 +2814,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                   </span>
                   <label className="grid gap-1">
                     <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Modifier group name</span>
+                    <label className="block text-xs">Shared search alias<input aria-label={`Shared alias for ${group.name}`} value={group.alias || ""} readOnly={Boolean(group.lockedForCentric)} onChange={e=>updateModifierGroupDraft(group.id,{alias:e.target.value})} onBlur={e=>updateModifierGroup(group.id,{alias:e.target.value})} className="ml-2 rounded border bg-white px-2 py-1" /></label>
                     <input
                       aria-label="Modifier group name"
                       value={group.name}
@@ -2905,7 +2946,7 @@ export default function SsmtTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
                               {ssmtData.areaOrder.map((area) => (
                                 <span key={area} className="flex min-w-0 flex-col items-center rounded border border-slate-300 bg-white px-1 py-0.5 text-center">
                                   <span className="font-black text-slate-500">{area}</span>
-                                  <span>{choice.areaPrices?.[area] || "TBD"}</span>
+                                  <span>{choice.areaPrices?.[area] === 0 ? 0 : choice.areaPrices?.[area] || "TBD"}</span>
                                 </span>
                               ))}
                             </div>

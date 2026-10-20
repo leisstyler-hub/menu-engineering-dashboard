@@ -1,3 +1,4 @@
+import { enabled as ssmtAccountsEnabled, guardLegacySsmtWrite, identity as ssmtIdentity } from "../../lib/ssmtServer.js";
 import {
   buildBackboneRows,
   getBackboneDatabaseToolFromContext,
@@ -362,6 +363,7 @@ async function loadRecords(req, res) {
     if (tool === "commissaryOrders") {
       return String(record["Record Type"] || "") === "Commissary Order" && String(record["Record ID"] || "").startsWith("commissaryOrder|");
     }
+    if (ssmtAccountsEnabled() && String(record["Record ID"] || record.__supabaseRecordId || "").startsWith("ssmt|")) return false;
     return true;
   });
   const toolLabel = tool === "lean" ? "Lean" : tool === "menuProjects" ? "Menu Project" : tool === "ssmt" ? "SSMT" : tool === "commissaryOrders" ? "commissary order" : "rotation";
@@ -522,6 +524,10 @@ async function cleanupExpiredRecords(res) {
 
 export default async function handler(req, res) {
   try {
+    if (ssmtAccountsEnabled()) {
+      if (req.method === "POST" && (guardLegacySsmtWrite(req.body) || req.body?.action === "cleanupExpiredRecords")) return res.status(403).json({ ok: false, message: "SSMT changes require the authenticated SSMT endpoint. Bulk cleanup is disabled while SSMT protection is active." });
+      if (req.method === "GET" && getBackboneToolFromContext({tool:req.query?.tool}) === "ssmt") await ssmtIdentity(req);
+    }
     if (req.method === "GET") return await loadRecords(req, res);
     if (req.method !== "POST") {
       res.setHeader("Allow", "GET, POST");

@@ -7,6 +7,9 @@ import "./index.css";
 import "./leanMobileFlow.css";
 import { initSentry, PlatformErrorBoundary } from "./shared/monitoring/sentry.jsx";
 
+import { captureSsmtAuthRedirect } from "./features/ssmt/ssmtAuthRedirect.js";
+
+captureSsmtAuthRedirect(window.location, window.history);
 initSentry();
 
 createRoot(document.getElementById("root")).render(

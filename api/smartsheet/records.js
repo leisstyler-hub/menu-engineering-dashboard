@@ -1,3 +1,4 @@
+import { enabled as ssmtAccountsEnabled, guardLegacySsmtWrite } from "../../lib/ssmtServer.js";
 // Vercel Serverless Function: /api/smartsheet/records
 // Required environment variables:
 // - SMARTSHEET_ACCESS_TOKEN
@@ -227,6 +228,7 @@ async function deleteRowsByRecordFamily(sheetId, sheet, recordIds = [], recordId
 }
 
 export default async function handler(req, res) {
+  if (ssmtAccountsEnabled() && req.method === "POST" && guardLegacySsmtWrite(req.body)) return res.status(403).json({ok:false,message:"SSMT saves require authenticated shared storage; no mirror fallback is allowed."});
   const requestedTool = req.query?.tool || req.body?.context?.tool || "";
   const requestedDataset = String(req.query?.dataset || "").trim().toLowerCase();
   const useCafeTastingSheet = requestedDataset === "cafe-tasting";
@@ -267,7 +269,7 @@ export default async function handler(req, res) {
       const diagnosticColumns = useCafeTastingSheet && String(req.query?.diagnostic || "") === "columns";
       const sheet = await smartsheetFetch(`/sheets/${sheetId}${diagnosticColumns ? "?include=objectValue" : ""}`);
       const columnsById = new Map((sheet.columns || []).map((column) => [String(column.id), column.title]));
-      const records = (sheet.rows || []).map((row) => rowToRecord(row, columnsById));
+      const records = (sheet.rows || []).map((row) => rowToRecord(row, columnsById)).filter(record => !ssmtAccountsEnabled() || !guardLegacySsmtWrite({ records: [record] }));
 
       return res.status(200).json({
         ok: true,

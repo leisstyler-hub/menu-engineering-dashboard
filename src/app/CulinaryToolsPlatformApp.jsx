@@ -46,7 +46,9 @@ const CommissaryOrderingTool = lazyWithStaleBundleReload(() => import("../featur
 export default function CulinaryToolsPlatformApp() {
   const [activeTool, setActiveTool] = useState(() => {
     if (typeof window !== "undefined") {
-      const requestedTool = new URLSearchParams(window.location.search).get("tool");
+      const query = new URLSearchParams(window.location.search);
+      if (query.get("ssmt") === "setup") return "ssmtTool";
+      const requestedTool = query.get("tool");
       if (requestedTool === "cafeTasting") return "cafeTasting";
     }
     return "home";

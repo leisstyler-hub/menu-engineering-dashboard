@@ -40,3 +40,7 @@ These rules protect specific tools from regressions that have recurred historica
 ## Change Control
 
 Changes to the rules in this file are architecture decisions and should go through Architect (design) and Reviewer (independent check) per [MISSION_TEMPLATE.md](MISSION_TEMPLATE.md), the same as any other product/architecture change. Scribe updates this file only after such a decision is recorded — see [PRODUCT_DECISIONS.md](PRODUCT_DECISIONS.md) for the decision log.
+
+## Prepared SSMT account boundary (2026-10-20, not activated)
+
+The development candidate adds a service-only membership/audit/backup boundary and atomic save RPC around the existing canonical row, preserving its ID and gzip payload. The generic storage and mirror routes reject SSMT writes only when the new account feature is explicitly activated; protected reads require verified membership, while Platform Home receives calendar metadata only. New tables/migration/enrollment are unapplied. This is candidate architecture, not a claim about current production. The approved naming reference and permission decisions live in [PRODUCT_DECISIONS.md](PRODUCT_DECISIONS.md), SSMT-2026-10-20; exact activation, verification and recovery are in [the activation package](docs/ssmt/ACTIVATION_AND_RECOVERY_2026_10_20.md). Existing operational source-authority and test-isolation rules above remain controlling.
