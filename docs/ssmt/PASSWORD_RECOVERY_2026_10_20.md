@@ -13,3 +13,5 @@ Evidence: tests/browser/ssmt-recovery.spec.js first produced 2 failures / 1 pass
 Rollback: previous production dpl_ExgMeMnaxroZU6mkHVTju2eeUtBD / 9776ad7. Keep all existing database audit guards/schema. No data restore needed for UI-only rollback.
 
 State before publish: IMPLEMENTED and locally verified. Real-user recovery completion is pending. Do not label LIVE without the required independent clearance.
+
+Deployment: application 8be2aa2fb0a4b6dcf760656b183f115a169da139, dpl_4BKZTfZtiRAhaBDXPJksdHE69nby READY, production alias confirmed by Vercel. Four deployed-bundle recovery checks passed with all API requests intercepted. Actual production GET status and expired-link screen verified separately with all mutations blocked; screenshot WORK_LOGS/SSMT_RECOVERY_PRODUCTION_2026_10_20.png. No real password or email was used by verification. State DEPLOYED; solo execution, independent clearance and real-user success pending.

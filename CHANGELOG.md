@@ -1,8 +1,8 @@
 ## 2026.10.20.002-ssmt-accounts-reuse ? DEPLOYED
 
-## 2026-10-20 - SSMT password recovery candidate
+## 2026-10-20 - SSMT password recovery correction
 
-- Unusable email reset links explain the recovery failure and offer a fresh reset email without asking for an old password. Valid recovery links still open password setup; redirect errors are removed before monitoring. Candidate only, not deployed; 44/44 affected browser checks and package verification passed; real-user confirmation and independent clearance pending.
+- Unusable email reset links explain the recovery failure and offer a fresh reset email without asking for an old password. Valid recovery links still open password setup; redirect errors are removed before monitoring. Deployed application 8be2aa2; 4/4 intercepted production recovery tests and actual production expired-link screen verified. 44/44 affected browser checks and package verification passed; real-user confirmation and independent clearance pending.
 
 Application a44ad8e / release dd2f16f deployed as dpl_87NAZFheUXPZU9VVRpjgyRSwB8Co. Account schema, initial Chef/Admin and audited canonical write guard activated; all 18 canonical row columns unchanged. Production access/calendar checks and nine intercepted acceptance tests passed. Supabase accepted setup/recovery email; real-user completion and independent Scribe reconciliation pending. LIVE not claimed. Full evidence: docs/ssmt/RELEASE_EXECUTION_2026_10_21.md.
 
