@@ -33,3 +33,13 @@ Picker screenshot: https://culinarytools.communities.buzz.xyz/media/6035a0495200
 ## Production authorization
 
 Tyler explicitly approved deployment at event `37777ddc0b9942cccd172e0fff07b9e8ed7cedd1be28eab071a29ae7faf169ea`, 2026-10-21T05:16:14Z. Changelog location confirmed in src/app/LandingPage.jsx: desktop Latest Changelog and mobile Changelog. Its parser accepts bullet entries only; added the concise missing bullet for this correction so the app can display it. Existing detailed record remains.
+
+## Deployment result
+
+DEPLOYED: `2026.10.20.007-ssmt-item-import-fix`, application `ac3ce761b320a6e7588737525d59f7d5c9ae263c`, release `11d65775fced18ac1fe679545cc23c933db5a0b3`. Explicit production approval event `37777ddc0b9942cccd172e0fff07b9e8ed7cedd1be28eab071a29ae7faf169ea`. Vercel `dpl_4PtF4yNe1y6GkXTEsZ8Bk9SW8wiC` READY with exact release SHA and canonical production alias. Actual asset `/assets/index-B6jk9hWP.js` contains the version. Full package verification/build and 20 server/domain checks passed; 46 local affected browser checks, 1 local changelog check and 19 deployed-bundle isolated account/recovery/changelog checks passed. Writes-blocked actual production home displays the new concise changelog entry. Signed-in SSMT change log is Activity History beside account controls. No production menu/account/schema writes. Real authenticated import acceptance remains unverified; functional tests use isolated data. Solo Chief; no independent clearance or Scribe LIVE signoff, no LIVE claim. Rollback: `92fa416` / prior app `368cabd`. Details: docs/ssmt/CHIANG_MAI_IMPORT_FIX_2026_10_20.md.
+
+Initial publish verification wrapper attempted an automatic pnpm install against the established linked dependency folder and was safely refused. Used the same full package verify through npm, without reinstalling dependencies. The temporary publish copy ignores unrelated untracked scratch files; it requires a clean tracked tree and retains upstream ancestry checks and exact push target. Both outgoing commits use the configured Chief identity; no signing/author overrides.
+
+Production screenshot/report: WORK_LOGS/SSMT_DEPLOYED_CHANGELOG_2026_10_20.png and WORK_LOGS/SSMT_CHIANG_PRODUCTION_2026_10_20.json. Every non-GET request was blocked for the actual production home check (2 blocked); all functional storage/API requests in the deployed account tests were intercepted. No operational writes. Historic missing entree modifier references remain unresolved rather than fabricated or deleted.
+
+Production approval received 2026-10-21T05:16:14Z; deployment created 05:19:12Z and READY 05:19:29Z. Production checks completed after READY. Solo execution throughout; durable records updated directly, no independent Scribe signoff.
