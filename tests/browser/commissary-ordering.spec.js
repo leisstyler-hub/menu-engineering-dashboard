@@ -45,6 +45,51 @@ test("cafe and service-week controls stay separated at mobile, tablet, and deskt
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
+test("ordering grid is the only horizontal slider and stops at the final item", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await mockOrders(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openTool(page, /open commissary ordering/i, /^Commissary Ordering Tool$/);
+  await page.getByLabel("Your cafe").selectOption("Nessie");
+  const scroller = page.getByRole("table").locator("..");
+  await expect(scroller).toBeVisible();
+
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 1024, height: 900 },
+    { width: 1440, height: 1000 },
+  ]) {
+    await page.setViewportSize(viewport);
+    const metrics = await page.evaluate(() => {
+      const horizontalScrollers = [...document.querySelectorAll("*")].filter((node) => {
+        const style = getComputedStyle(node);
+        const rect = node.getBoundingClientRect();
+        return ["auto", "scroll"].includes(style.overflowX)
+          && node.scrollWidth > node.clientWidth + 1
+          && rect.width > 10
+          && rect.height > 10;
+      });
+      return {
+        viewportWidth: document.documentElement.clientWidth,
+        documentWidth: document.documentElement.scrollWidth,
+        horizontalScrollerCount: horizontalScrollers.length,
+      };
+    });
+    expect(metrics.documentWidth, `${viewport.width}px document overflow`).toBe(metrics.viewportWidth);
+    expect(metrics.horizontalScrollerCount, `${viewport.width}px horizontal sliders`).toBe(1);
+
+    await scroller.evaluate((node) => { node.scrollLeft = node.scrollWidth - node.clientWidth; });
+    const scrollerBox = await scroller.boundingBox();
+    const finalHeaderBox = await page.getByRole("columnheader").last().boundingBox();
+    expect(scrollerBox).not.toBeNull();
+    expect(finalHeaderBox).not.toBeNull();
+    expect(Math.abs((finalHeaderBox.x + finalHeaderBox.width) - (scrollerBox.x + scrollerBox.width))).toBeLessThanOrEqual(1.5);
+  }
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
 test("Commissary Ordering Tool requires cafe selection and saves separate delivery quantities", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   const writes = await mockOrders(page);
