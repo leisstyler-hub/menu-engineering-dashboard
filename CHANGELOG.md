@@ -1,3 +1,7 @@
+## 2026.10.20.002-ssmt-accounts-reuse ? release preparation
+
+Integrated reviewed SSMT accounts/reuse candidate with current commissary scroll release; independent integration review approved and 44 browser tests passed. Approved additive account schema/enrollment executed without changing canonical menu data. Deployment and production verification remain pending; see docs/ssmt/RELEASE_EXECUTION_2026_10_21.md.
+
 ## 2026-10-20
 
 - [Oct 20, 2:09 PM] Prepared local SSMT accounts/reuse candidate `2026.10.20.001-ssmt-accounts-reuse`: invite-only identity and one-role permissions, readable saved activity history, atomic revision-checked save/audit/recovery snapshots, independent item/menu and modifier imports with prices/shared aliases, and FIXY designation plus match/review/generation previews. Existing menu designations remain blank; no rollout data rewrite, production workspace save, schema execution, invitation/enrollment or deployment occurred. SQL activation and initial-admin enrollment are prepared separately under the protected production-action gate. Solo Chief execution; no independent clearance. Evidence and recovery: docs/ssmt/ACCOUNTS_REUSE_BUILD_2026_10_20.md and docs/ssmt/ACTIVATION_AND_RECOVERY_2026_10_20.md.
