@@ -122,6 +122,8 @@ export function importItems(
   groups,
   allowCopies = false,
 ) {
+  if (source.phase !== "IT complete")
+    throw new Error("Only IT complete menus can supply imported items.");
   if (!text(destination.fixyDesignation))
     throw new Error("Enter the destination FIXY designation first.");
   const items = [],

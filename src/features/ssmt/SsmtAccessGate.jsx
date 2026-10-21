@@ -93,6 +93,12 @@ export default function SsmtAccessGate({ children, onBack }) {
       active = false;
     };
   }, []);
+  function clearRecoveryRoute() {
+    clearSsmtRedirectToken();
+    const url = new URL(window.location.href);
+    url.searchParams.delete("ssmt");
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+  }
   async function act(action) {
     setBusy(true);
     setMessage("");
@@ -109,6 +115,7 @@ export default function SsmtAccessGate({ children, onBack }) {
         setMember(result.member);
         setState("ready");
       } else if (action === "password") {
+        clearRecoveryRoute();
         setSetup(false);
         setMessage("Password updated.");
       } else setMessage(result.message);
@@ -122,7 +129,7 @@ export default function SsmtAccessGate({ children, onBack }) {
   if (state !== "ready" || setup)
     return (
       <main className="mx-auto my-8 max-w-lg space-y-4 rounded-xl border bg-white p-6 text-slate-950">
-        <button className={cls} onClick={onBack}>
+        <button className={cls} onClick={() => { clearRecoveryRoute(); onBack(); }}>
           Back to Platform
         </button>
         <h1 className="text-2xl font-black">
@@ -175,7 +182,7 @@ export default function SsmtAccessGate({ children, onBack }) {
                 className={cls}
                 type="button"
                 disabled={busy}
-                onClick={() => recovery ? setRecovery(false) : act("reset")}
+                onClick={() => recovery ? (clearRecoveryRoute(), setRecovery(false)) : act("reset")}
               >
                 {recovery ? "Back to sign in" : "Reset password"}
               </button>
@@ -220,7 +227,7 @@ export default function SsmtAccessGate({ children, onBack }) {
         </button>
       </div>
       {message && <p role="status" className="px-4 py-2 text-sm">{message}</p>}
-      {children(member)}
+      {children(member, member.isAdmin ? () => setPanel("members") : undefined)}
       {panel && <AccountPanel type={panel} onClose={() => setPanel("")} />}
     </>
   );
@@ -444,6 +451,9 @@ function MemberRow({ member: m, busy, onSave }) {
   return (
     <div className="flex flex-wrap items-center gap-3 rounded border p-3">
       <strong>{m.display_name || m.email}</strong>
+      <span className="text-sm">
+        Last sign-in: {m.last_sign_in_unavailable ? "Unavailable" : m.last_sign_in_at ? new Date(m.last_sign_in_at).toLocaleString() : "Never signed in"}
+      </span>
       <span>
         {m.email} • {m.active ? "Active" : "Revoked"}
       </span>

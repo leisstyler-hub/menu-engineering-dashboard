@@ -156,11 +156,24 @@ export default async function handler(req, res) {
     }
     if (action === "members") {
       if (!actor.is_admin) throw failure("Admin access is required.", 403);
+      const members = await service(
+        "ssmt_members?select=user_id,email,display_name,work_role,is_admin,active&order=email",
+      );
+      // Read Auth metadata only for registered SSMT members; never return Auth records.
+      const withSignIn = [];
+      for (let index = 0; index < members.length; index += 10) {
+        withSignIn.push(...await Promise.all(members.slice(index, index + 10).map(async member => {
+          try {
+            const user = await service(`admin/users/${encodeURIComponent(member.user_id)}`, {}, true);
+            return { ...member, last_sign_in_at: user.last_sign_in_at || null };
+          } catch {
+            return { ...member, last_sign_in_at: null, last_sign_in_unavailable: true };
+          }
+        })));
+      }
       return res.status(200).json({
         ok: true,
-        members: await service(
-          "ssmt_members?select=user_id,email,display_name,work_role,is_admin,active&order=email",
-        ),
+        members: withSignIn,
       });
     }
     if (action === "invite" || action === "member") {

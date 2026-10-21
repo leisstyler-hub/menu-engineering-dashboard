@@ -34,7 +34,7 @@ import SsmtAccessGate from "./SsmtAccessGate.jsx";
 import SsmtReusePanel from "./SsmtReusePanel.jsx";
 
 export default function SsmtTool(props) {
-  return <SsmtAccessGate onBack={props.onBackToPlatform}>{member => <SsmtEditor key={member?.id || "legacy"} {...props} accountMember={member} />}</SsmtAccessGate>;
+  return <SsmtAccessGate onBack={props.onBackToPlatform}>{(member, onOpenUserAdmin) => <SsmtEditor key={member?.id || "legacy"} {...props} accountMember={member} onOpenUserAdmin={onOpenUserAdmin} />}</SsmtAccessGate>;
 }
 
 const PASSCODE = "0411";
@@ -727,7 +727,7 @@ function createBlankModifierGroup(item, areaOrder) {
   };
 }
 
-function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember }) {
+function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, onOpenUserAdmin }) {
   const [reusePanel, setReusePanel] = useState(null);
   const [newFixyDesignation, setNewFixyDesignation] = useState("");
   const accountMode = Boolean(accountMember);
@@ -1848,7 +1848,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember })
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <PlatformSettings onOpenSmartsheetHealth={onOpenSmartsheetHealth} />
+              <PlatformSettings onOpenSmartsheetHealth={onOpenSmartsheetHealth} onOpenUserAdmin={onOpenUserAdmin} />
               <CompassOneLogo />
               <VersionStamp />
             </div>

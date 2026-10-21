@@ -41,6 +41,11 @@ export default function SsmtReusePanel({
     cafeSoup12Fo: false,
   });
   const [matchIndex, setMatchIndex] = useState("");
+  const sourceMenus = mode === "items" ? menus.filter(m => m.phase === "IT complete") : menus;
+  function itemIssue(candidate) {
+    try { replaceConcept(candidate.fohColumn, "REVIEW"); return ""; }
+    catch { return "Source FIXY missing or malformed. Correct it in the source menu before importing."; }
+  }
   const source = menus.find((m) => m.id === sourceId),
     sourceItem = source?.items.find((i) => i.id === sourceItemId);
   const catalog = useMemo(
@@ -177,13 +182,14 @@ export default function SsmtReusePanel({
                 <option value="">
                   {mode === "groups" ? "All menus" : "Select menu"}
                 </option>
-                {menus.map((m) => (
+                {sourceMenus.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.name}
                   </option>
                 ))}
               </select>
             </label>
+            {mode === "items" && <p className="text-sm">Only IT complete menus are available. Items need a valid source FIXY before importing.</p>}
             {mode === "groups" && (
               <>
                 <label className="block">
@@ -230,7 +236,7 @@ export default function SsmtReusePanel({
                       onClick={() => {
                         setSelected(
                           source.items
-                            .filter((i) => i.rowType !== "divider")
+                            .filter((i) => i.rowType !== "divider" && !itemIssue(i))
                             .map((i) => i.id),
                         );
                         setPreview(null);
@@ -245,12 +251,14 @@ export default function SsmtReusePanel({
                       <label key={i.id} className="block border-b py-2">
                         <input
                           type="checkbox"
+                          disabled={Boolean(itemIssue(i))}
                           checked={selected.includes(i.id)}
                           onChange={() => toggle(i.id)}
                         />{" "}
                         {i.label || i.name} —{" "}
                         {i.fohColumn || "FIXY missing: review required"} — price{" "}
                         {i.seaPrice ?? "blank"}{" "}
+                        {itemIssue(i) && <span className="block text-sm font-bold text-red-700">{itemIssue(i)}</span>}
                         {isDuplicateItem(i, menu) && (
                           <strong> • Duplicate: skipped by default</strong>
                         )}

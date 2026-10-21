@@ -1,4 +1,16 @@
 import {test,expect} from '@playwright/test';
+test('leaving recovery for Platform Home makes the next SSMT visit sign in', async ({page}) => {
+ await page.route('**/api/**', r => {
+  const action = new URL(r.request().url()).searchParams.get('action');
+  return r.fulfill({status: action === 'session' ? 401 : 200, json: action === 'session' ? {ok:false,message:'Sign in'} : {ok:true,enabled:true,menus:[]}});
+ });
+ await page.goto('/?ssmt=setup#token_hash=synthetic-recovery-hash&type=recovery');
+ await expect(page.getByRole('heading',{name:'SSMT Set your password'})).toBeVisible();
+ await page.getByRole('button',{name:'Back to Platform',exact:true}).click();
+ await page.getByRole('button',{name:/open ssmt/i}).click();
+ await expect(page.getByRole('heading',{name:'SSMT Sign in'})).toBeVisible();
+ await expect(page).not.toHaveURL(/ssmt=setup/);
+});
 test('email landing survives scanners and only verifies when a new password is submitted',async({page})=>{
  const actions=[];
  await page.route('**/api/**',r=>{

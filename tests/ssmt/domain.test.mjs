@@ -69,6 +69,10 @@ test("imports preserve exact values and independently clone all modifier data", 
     /designation/i,
   );
 });
+
+test("unfinished menus cannot supply imported items", () => {
+  assert.throws(() => importItems({ ...source, phase: "Culinary draft" }, target, ["i"], [group]), /IT complete/);
+});
 test("modifier loading independent of item identity and preserves rules and zero prices", () => {
   const loaded = loadGroups([group], [], false);
   assert.equal(loaded[0].minQty, "1");

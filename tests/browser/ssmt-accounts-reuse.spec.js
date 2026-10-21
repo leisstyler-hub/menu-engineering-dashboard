@@ -54,9 +54,11 @@ async function isolated(
     conflict = false,
     failLoad = false,
     extraGroups = false,
+    missingFixy = false,
   } = {},
 ) {
   let shared = workspace();
+  if (missingFixy) shared.menus[0].items.push({ ...structuredClone(item), id: "missing-fixy", label: "Missing Code Dish", name: "Missing Code Dish", fohColumn: "", mrn: "00999" });
   if (extraGroups) {
     shared.modifierGroups.push({
       id: "cheese",
@@ -107,6 +109,10 @@ async function isolated(
         json: { ok: false, message: "Sign in to SSMT." },
       });
     if (action === "login") return r.fulfill({ json: { ok: true, member } });
+    if (action === "members") return r.fulfill({ json: { ok: true, members: [
+      { user_id: "one", email: "chef@example.test", display_name: "Test Chef", work_role: "Chef", is_admin: true, active: true, last_sign_in_at: "2026-10-21T04:00:00Z" },
+      { user_id: "two", email: "new@example.test", work_role: "IT", is_admin: false, active: true, last_sign_in_at: null },
+    ] } });
     if (action === "workspace")
       return r.fulfill({
         status: failLoad ? 503 : 200,
@@ -184,6 +190,40 @@ async function openTarget(page) {
     .click();
   await page.locator('[data-menu-name="Target Menu"]').click();
 }
+
+test("admin Settings shows users and last sign-in; non-admins have no entry", async ({ page }) => {
+  await isolated(page);
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("button", { name: "User administration", exact: true }).click();
+  const panel = page.getByRole("dialog", { name: "Manage access" });
+  await expect(panel.getByText("Last sign-in:", { exact: false }).first()).toBeVisible();
+  await expect(panel.getByText("Never signed in", { exact: false })).toBeVisible();
+  await expect(panel.getByText(/Last sign-in:.*2026/)).toBeVisible();
+  await expect(panel.getByText("chef@example.test", { exact: false }).first()).toBeVisible();
+  await page.screenshot({ path: "C:/Users/leiss/.buzz/WORK_LOGS/SSMT_USER_ADMIN_2026_10_20.png" });
+  await panel.getByRole("button", { name: "Close", exact: true }).click();
+  await isolated(page, { role: "Experience" });
+  await expect(page.getByRole("button", { name: "Manage access", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "User administration", exact: true })).toHaveCount(0);
+});
+
+test("item import excludes unfinished menus and flags missing source FIXY before selection", async ({ page }) => {
+  await isolated(page, { missingFixy: true });
+  await openTarget(page);
+  await page.getByLabel("Menu FIXY designation", { exact: true }).fill("MFP DAY");
+  await page.getByRole("button", { name: "Add from Menu", exact: true }).click();
+  const panel = page.getByRole("dialog", { name: "Add from Menu" });
+  await expect(panel.getByLabel("Source menu").locator('option[value="target"]')).toHaveCount(0);
+  await panel.getByLabel("Source menu").selectOption("source");
+  await expect(panel.getByText("Smash Burger", { exact: false }).first()).toBeVisible();
+  await expect(panel.getByText("Source FIXY missing or malformed.", { exact: false })).toBeVisible();
+  await expect(panel.locator("label").filter({ hasText: "Missing Code Dish" }).getByRole("checkbox")).toBeDisabled();
+  await panel.getByRole("button", { name: "Select whole menu" }).click();
+  await panel.getByRole("button", { name: "Preview copies" }).click();
+  await expect(panel.getByRole("heading", { name: "Review before applying" })).toBeVisible();
+  await expect(panel.getByText("1 items / 1", { exact: false })).toBeVisible();
+  await page.screenshot({ path: "C:/Users/leiss/.buzz/WORK_LOGS/SSMT_IMPORT_PREFLIGHT_2026_10_20.png" });
+});
 test("accounts gate only SSMT and imports independent items, prices and modifiers", async ({
   page,
 }) => {

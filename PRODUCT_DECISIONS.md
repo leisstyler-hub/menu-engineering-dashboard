@@ -1,3 +1,7 @@
+### 2026-10-20 - SSMT admin discovery and completed import sources
+
+Status: approved. Requesting/Approving Admin and Admin of Record: Tyler, authenticated Buzz identity `12fc010ae7314bd1bf75d7a74c296a93629c12a464ba2aaa406fee08a57d794d`, approval event `837b2cb3e26cb5f1a9fb50fb3e1dce4ec76bcc1840eba384578d3fcce7000da9` at 2026-10-21T04:15:03Z, thread `38335605239a77c97aa9783f4d90b2baabefa63a5b67866e60fec77b0e242a43`. Admin-only User administration belongs in SSMT top-right Settings and shows registered SSMT users, roles, access status and recorded last sign-in. Absent timestamps show Never signed in; metadata failures are Unavailable. Add from Menu offers only IT complete source menus. Missing/malformed source FIXYs must be identified before selection without inventing missing classification or blocking valid selected items. Existing Manage access remains available. Additional navigation correction event `f4665fba07a2799b106923a6ae27ca5450d3761e0a54ee7c17d40bb1794f6584`: leaving recovery for Platform Home must clear setup routing so a normal SSMT visit reaches normal sign-in/session handling. Fresh recovery/invite emails still open Set your password. Request-access notifications are separate pending scope.
+
 # Product Decisions
 
 ### 2026-10-20 — SSMT-2026-10-20: invite-only accounts, reuse, and FIXY generation

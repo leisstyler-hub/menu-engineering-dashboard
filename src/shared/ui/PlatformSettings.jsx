@@ -9,7 +9,7 @@ function applyTheme(theme) {
   localStorage.setItem(THEME_STORAGE_KEY, theme);
 }
 
-export default function PlatformSettings({ onRefresh, onOpenSmartsheetHealth, label = "Settings" }) {
+export default function PlatformSettings({ onRefresh, onOpenSmartsheetHealth, onOpenUserAdmin, label = "Settings" }) {
   const [open, setOpen] = useState(false);
   const [theme, setTheme] = useState(() => {
     if (typeof window === "undefined") return "light";
@@ -62,6 +62,12 @@ export default function PlatformSettings({ onRefresh, onOpenSmartsheetHealth, la
             <p className="mt-1 text-sm font-bold text-slate-950">Display and quick actions</p>
           </div>
           <div className="p-2">
+            {onOpenUserAdmin && (
+              <button type="button" onClick={() => { setOpen(false); onOpenUserAdmin(); }}
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-left text-sm font-bold text-slate-700 hover:bg-slate-50">
+                User administration
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}

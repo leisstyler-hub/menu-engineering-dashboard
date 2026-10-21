@@ -18,6 +18,48 @@ function response() {
     },
   };
 }
+
+test("member listing exposes only sign-in metadata to verified admins", async () => {
+  const keys = ["SSMT_ACCOUNTS_ENABLED", "SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"];
+  const old = keys.map(k => process.env[k]);
+  const originalFetch = globalThis.fetch;
+  let admin = true, authReads = 0, unavailable = false;
+  Object.assign(process.env, { SSMT_ACCOUNTS_ENABLED: "true", SUPABASE_URL: "https://example.test", SUPABASE_SERVICE_ROLE_KEY: "test-key" });
+  globalThis.fetch = async url => {
+    const path = String(url);
+    let data;
+    if (path.endsWith("/auth/v1/user")) data = { id: "one" };
+    else if (path.includes("/auth/v1/admin/users/")) {
+      authReads++;
+      if (unavailable) return { ok: false, status: 503, json: async () => ({}) };
+      data = { id: "one", last_sign_in_at: "2026-10-21T04:00:00Z", secret_metadata: "must not escape" };
+    } else if (path.includes("ssmt_members?")) data = [{ user_id: "one", email: "one@example.test", active: true, is_admin: admin, work_role: "Chef" }];
+    else throw Error(`Unexpected URL ${path}`);
+    return { ok: true, json: async () => data };
+  };
+  try {
+    const req = { method: "GET", headers: { cookie: "__Host-ssmt=verified.token" }, query: { action: "members" } };
+    let res = response();
+    await handler(req, res);
+    assert.equal(res.code, 200);
+    assert.equal(res.body.members[0].last_sign_in_at, "2026-10-21T04:00:00Z");
+    assert.equal(JSON.stringify(res.body).includes("secret_metadata"), false);
+    assert.equal(authReads, 1);
+    unavailable = true;
+    res = response();
+    await handler(req, res);
+    assert.equal(res.code, 200);
+    assert.equal(res.body.members[0].last_sign_in_unavailable, true);
+    admin = false;
+    res = response();
+    await handler(req, res);
+    assert.equal(res.code, 403);
+    assert.equal(authReads, 2);
+  } finally {
+    globalThis.fetch = originalFetch;
+    keys.forEach((k, i) => old[i] === undefined ? delete process.env[k] : process.env[k] = old[i]);
+  }
+});
 test("SSMT API fails closed when inactive and never reads storage", async () => {
   const previous = process.env.SSMT_ACCOUNTS_ENABLED;
   delete process.env.SSMT_ACCOUNTS_ENABLED;
