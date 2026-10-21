@@ -1,3 +1,7 @@
+## 2026.10.20.002-ssmt-accounts-reuse ? DEPLOYED
+
+Application a44ad8e / release dd2f16f deployed as dpl_87NAZFheUXPZU9VVRpjgyRSwB8Co. Account schema, initial Chef/Admin and audited canonical write guard activated; all 18 canonical row columns unchanged. Production access/calendar checks and nine intercepted acceptance tests passed. Supabase accepted setup/recovery email; real-user completion and independent Scribe reconciliation pending. LIVE not claimed. Full evidence: docs/ssmt/RELEASE_EXECUTION_2026_10_21.md.
+
 ## 2026.10.20.002-ssmt-accounts-reuse ? release preparation
 
 Integrated reviewed SSMT accounts/reuse candidate with current commissary scroll release; independent integration review approved and 44 browser tests passed. Approved additive account schema/enrollment executed without changing canonical menu data. Deployment and production verification remain pending; see docs/ssmt/RELEASE_EXECUTION_2026_10_21.md.

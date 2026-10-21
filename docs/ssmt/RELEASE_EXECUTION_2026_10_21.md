@@ -17,3 +17,17 @@ Account-mode loading intentionally avoids legacy whole-workspace seed merging/lo
 Rollback preceding production: dpl_3f3eLU38QawM6kBakkefv38w5jrS / c868953c54262056c8eb62fb7ba4251d125a94b4. Preserve new tables/history/backups; retain audited write guard or keep older UI read-only. Do not remove the guard or restore historical data without separately approved recovery. See ACTIVATION_AND_RECOVERY_2026_10_20.md.
 
 Current state: release prepared, not yet pushed/deployed. Canonical write guard cutover and production proof remain pending. Real mailbox delivery/password choice is not verified. No independent Scribe clearance exists; do not claim LIVE without required durable-record reconciliation.
+
+## Executed production result
+
+State: DEPLOYED; bounded production checks passed. Full real-user setup/sign-in and independent Scribe reconciliation are still pending, so LIVE is not claimed.
+
+GitHub main release commit dd2f16f9562ae304bf7fdbb6ce9748072f578776 (docs after application a44ad8e). Vercel dpl_87NAZFheUXPZU9VVRpjgyRSwB8Co READY, production target and alias project-d8v25.vercel.app, Git SHA independently checked through Vercel. Version 2026.10.20.002-ssmt-accounts-reuse confirmed in /assets/index-DRczKgnU.js.
+
+Executed final ssmt-protect-workspace.sql cutover. Read-only pg_trigger check found exactly one enabled canonical guard. Initial member read-back: Chef, Admin true, active true; exactly one enrollment audit event. Raw post-cutover canonical row equals the fresh preflight row in all 18 columns: 88 menus, 2,361 stored rows, 872 modifier groups. No menu/item mutation was used for proof.
+
+Production GET proof: status 200/enabled true; anonymous session/workspace/history/members each 401; public calendar 200 with only calendar projection. Preceding deployment URL returned protection redirect 302 (only that URL checked; no universal historical-URL claim). Nine deployed-bundle account/reuse acceptance tests passed with all API mutations intercepted; these are not proof of a real authenticated production save. Local integrated 44/44 and package verify remain the independent functional/build evidence.
+
+Supabase accepted POST /recover for the reconciled existing account (200), redirect allowlisted to https://project-d8v25.vercel.app/?ssmt=setup. No duplicate account, no password set by Chief, no credential/link published. Inbox delivery, private password choice and real user sign-in remain unverified. Default provider email service has no custom SMTP configured; delivery success is not inferred from HTTP acceptance.
+
+Rollback: previous deployment/commit recorded above. Keep new schema/history/backups and canonical guard intact; an older UI must remain read-only unless separately approved rollback explicitly changes the safeguards. No data restore or guard removal was performed.
