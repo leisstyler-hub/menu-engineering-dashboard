@@ -273,10 +273,10 @@ test("accounts gate only SSMT and imports independent items, prices and modifier
   expect(imported.modifierGroups[0]).not.toBe("bread");
   expect(saved.menus[0].items[0].fohColumn).toBe(item.fohColumn);
   await page
-    .getByRole("button", { name: "Activity History", exact: true })
+    .getByRole("button", { name: "SSMT Change Log", exact: true })
     .click();
   await expect(
-    page.getByRole("dialog", { name: "Activity History" }),
+    page.getByRole("dialog", { name: "SSMT Change Log" }),
   ).toContainText("Test Chef");
 });
 test("FIXY preview requires explicit facts and applies only after confirmation", async ({
@@ -518,4 +518,24 @@ test("Chiang Mai picker hides sections, preflights real links and imports N/A de
   expect(destination.items[0].modifierGroups).toEqual([]);
   expect(saved.menus[0].items[1].modifierGroups).toEqual(["N/A"]);
   expect(saved.menus[0].items[1].fohColumn).toBe("R FSO | CHIANG MAI | Thai Banana Pancake SNK ");
+});
+
+
+test("SSMT change log and primary navigation are prominent and identify the active view", async ({ page }) => {
+  await isolated(page);
+  const history = page.getByRole("button", { name: "SSMT Change Log", exact: true });
+  await expect(history).toBeVisible();
+  expect((await history.boundingBox()).height).toBeGreaterThanOrEqual(48);
+  await history.click();
+  await expect(page.getByRole("dialog", { name: "SSMT Change Log", exact: true })).toContainText("Saved changes only");
+  await page.getByRole("dialog", { name: "SSMT Change Log", exact: true }).getByRole("button", { name: "Close", exact: true }).click();
+  for (const label of ["SSMT Start", "Pricing Structure", "Menu Selector / New Menu"]) {
+    const control=page.getByRole("button", { name: label, exact: true });
+    const box=await control.boundingBox();
+    expect(box.height).toBeGreaterThanOrEqual(56);
+    expect(box.width).toBeGreaterThanOrEqual(180);
+    await control.click();
+    await expect(control).toHaveAttribute("aria-pressed", "true");
+  }
+  await page.screenshot({path:"C:/Users/leiss/.buzz/WORK_LOGS/SSMT_PROMINENT_CONTROLS_2026_10_20.png"});
 });

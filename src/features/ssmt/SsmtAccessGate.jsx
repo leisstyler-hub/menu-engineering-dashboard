@@ -5,6 +5,7 @@ import {
   clearSsmtRedirectToken,
 } from "./ssmtAuthRedirect.js";
 import React, { useEffect, useState } from "react";
+import { History } from "lucide-react";
 import { ssmtRequest } from "./ssmtClient.js";
 const cls =
   "rounded border border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-900";
@@ -200,8 +201,8 @@ export default function SsmtAccessGate({ children, onBack }) {
           {member.role}
           {member.isAdmin ? " • Admin" : ""}
         </span>
-        <button className={cls} onClick={() => setPanel("history")}>
-          Activity History
+        <button className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border-2 border-indigo-700 bg-indigo-700 px-5 py-3 text-base font-black text-white shadow-sm hover:bg-indigo-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" onClick={() => setPanel("history")}>
+          <History size={22} aria-hidden="true" /> SSMT Change Log
         </button>
         {member.isAdmin && (
           <button className={cls} onClick={() => setPanel("members")}>
@@ -309,13 +310,13 @@ function AccountPanel({ type, onClose }) {
       ref={dialogRef}
       role="dialog"
       aria-modal="true"
-      aria-label={type === "history" ? "Activity History" : "Manage access"}
+      aria-label={type === "history" ? "SSMT Change Log" : "Manage access"}
       className="fixed inset-0 z-[100] overflow-y-auto bg-slate-950/60 p-4"
     >
       <section className="mx-auto my-6 max-w-5xl space-y-4 rounded-xl bg-white p-5 text-slate-950">
         <div className="flex justify-between">
           <h2 className="text-xl font-black">
-            {type === "history" ? "Activity History" : "Manage access"}
+            {type === "history" ? "SSMT Change Log" : "Manage access"}
           </h2>
           <button className={cls} onClick={onClose}>
             Close

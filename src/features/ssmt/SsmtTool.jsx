@@ -1855,17 +1855,17 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
           </div>
         </header>
 
-        <section className="flex flex-wrap gap-2 rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm">
-          <button type="button" onClick={() => requestLeaveCurrentMenu(() => setActiveView("home"))} className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-black ${activeView === "home" ? "bg-slate-950 text-white" : "bg-slate-50 text-slate-800 hover:bg-slate-100"}`}>
-            <ListChecks size={16} /> SSMT Start
+        <nav aria-label="SSMT sections" className="grid grid-cols-1 gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:grid-cols-3">
+          <button type="button" aria-pressed={activeView === "home"} onClick={() => requestLeaveCurrentMenu(() => setActiveView("home"))} className={`inline-flex min-h-14 items-center justify-center gap-3 rounded-lg border-2 px-5 py-4 text-base font-black shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${activeView === "home" ? "border-slate-950 bg-slate-950 text-white" : "border-slate-300 bg-slate-100 text-slate-900 hover:border-slate-500"}`}>
+            <ListChecks size={24} aria-hidden="true" /> SSMT Start
           </button>
-          <button type="button" onClick={() => requestLeaveCurrentMenu(() => setActiveView("pricing"))} className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-black ${activeView === "pricing" ? "bg-slate-950 text-white" : "bg-slate-50 text-slate-800 hover:bg-slate-100"}`}>
-            <DollarSign size={16} /> Pricing Structure
+          <button type="button" aria-pressed={activeView === "pricing"} onClick={() => requestLeaveCurrentMenu(() => setActiveView("pricing"))} className={`inline-flex min-h-14 items-center justify-center gap-3 rounded-lg border-2 px-5 py-4 text-base font-black shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${activeView === "pricing" ? "border-emerald-800 bg-emerald-800 text-white" : "border-emerald-500 bg-emerald-50 text-emerald-950 hover:border-emerald-700 hover:bg-emerald-100"}`}>
+            <DollarSign size={24} aria-hidden="true" /> Pricing Structure
           </button>
-          <button type="button" onClick={() => requestLeaveCurrentMenu(() => setActiveView("menus"))} className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-black ${activeView === "menus" ? "bg-slate-950 text-white" : "bg-slate-50 text-slate-800 hover:bg-slate-100"}`}>
-            <ClipboardCheck size={16} /> Menu Selector / New Menu
+          <button type="button" aria-pressed={activeView === "menus" || activeView === "editor"} onClick={() => requestLeaveCurrentMenu(() => setActiveView("menus"))} className={`inline-flex min-h-14 items-center justify-center gap-3 rounded-lg border-2 px-5 py-4 text-base font-black shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${activeView === "menus" || activeView === "editor" ? "border-sky-800 bg-sky-800 text-white" : "border-sky-500 bg-sky-50 text-sky-950 hover:border-sky-700 hover:bg-sky-100"}`}>
+            <ClipboardCheck size={24} aria-hidden="true" /> Menu Selector / New Menu
           </button>
-        </section>
+        </nav>
 
         {dataStatus !== "ready" && (
           <section className={`rounded-lg border p-4 text-sm font-bold leading-6 ${dataStatus === "error" ? "border-red-200 bg-red-50 text-red-800" : "border-sky-200 bg-sky-50 text-sky-900"}`}>
