@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from "react";
-import { ArrowLeft, Grid3x3, Info, LayoutList, Search } from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeft, Grid3x3, Info, LayoutList, Maximize2, Minimize2, Search } from "lucide-react";
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
 import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
@@ -60,6 +60,7 @@ export default function MenuCrossUtilizationTool({ onBackToPlatform, onOpenSmart
   const [search, setSearch] = useState("");
   const [pillarFilter, setPillarFilter] = useState("All pillars");
   const [selectedPair, setSelectedPair] = useState(null);
+  const [isMatrixExpanded, setIsMatrixExpanded] = useState(false);
 
   const menus = DATA.menus;
   const eligibleMenus = useMemo(() => menus.filter((menu) => menu.hasIngredientData).sort(menuSortByPillarThenName), [menus]);
@@ -106,7 +107,10 @@ export default function MenuCrossUtilizationTool({ onBackToPlatform, onOpenSmart
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={() => setView("overview")}
+            onClick={() => {
+              setView("overview");
+              setIsMatrixExpanded(false);
+            }}
             className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-bold ${view === "overview" ? "border-slate-950 bg-slate-950 text-white" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100"}`}
           >
             <LayoutList size={16} /> Pillar Strategy &amp; Menus
@@ -139,6 +143,8 @@ export default function MenuCrossUtilizationTool({ onBackToPlatform, onOpenSmart
             maxOverlap={maxOverlap}
             selectedPair={selectedPair}
             setSelectedPair={setSelectedPair}
+            isExpanded={isMatrixExpanded}
+            onToggleExpand={setIsMatrixExpanded}
           />
         )}
       </div>
@@ -263,25 +269,82 @@ function overlapColor(value, max) {
   return `rgba(185, 28, 28, ${alpha.toFixed(3)})`;
 }
 
-function PairwiseMatrix({ menus, pairs, maxOverlap, selectedPair, setSelectedPair }) {
+function PairwiseMatrix({ menus, pairs, maxOverlap, selectedPair, setSelectedPair, isExpanded, onToggleExpand }) {
   const groupedMenus = useMemo(() => groupedMenusByPillar(menus), [menus]);
+  const expandButtonRef = useRef(null);
+  const restoreButtonRef = useRef(null);
+  const hasMountedRef = useRef(false);
+
+  useEffect(() => {
+    if (!isExpanded) return undefined;
+    function handleKeyDown(event) {
+      if (event.key === "Escape") onToggleExpand(false);
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isExpanded, onToggleExpand]);
+
+  useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      return;
+    }
+    if (isExpanded) restoreButtonRef.current?.focus();
+    else expandButtonRef.current?.focus();
+  }, [isExpanded]);
+
   const cellFor = (a, b) => {
     if (a === b) return null;
     return findPair(pairs, a, b);
   };
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Pairwise Matrix</p>
-      <h2 className="mt-1 text-2xl font-black">Ingredient overlap by menu pair</h2>
-      <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-slate-600">
-        Hover a cell for a quick read, or click it for the full pair detail. Overlap is plain Jaccard on shared match keys (shared ingredients divided by union of ingredients). Chickle has no ingredient data and is excluded from this grid.
-      </p>
+    <section
+      className={
+        isExpanded
+          ? "fixed inset-0 z-50 flex flex-col overflow-auto bg-slate-50 p-5"
+          : "rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+      }
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Pairwise Matrix</p>
+          <h2 className="mt-1 text-2xl font-black">Ingredient overlap by menu pair</h2>
+          {isExpanded ? null : (
+            <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-slate-600">
+              Hover a cell for a quick read, or click it for the full pair detail. Overlap is plain Jaccard on shared match keys (shared ingredients divided by union of ingredients). Chickle has no ingredient data and is excluded from this grid.
+            </p>
+          )}
+        </div>
+        {isExpanded ? (
+          <button
+            ref={restoreButtonRef}
+            type="button"
+            onClick={() => onToggleExpand(false)}
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-950 bg-slate-950 px-4 py-2 text-sm font-bold text-white hover:bg-slate-800"
+          >
+            <Minimize2 size={16} /> Restore
+          </button>
+        ) : (
+          <button
+            ref={expandButtonRef}
+            type="button"
+            onClick={() => onToggleExpand(true)}
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-100"
+          >
+            <Maximize2 size={16} /> Expand
+          </button>
+        )}
+      </div>
 
-      <PillarCrossUseStrip pillars={DATA.pillars} menus={menus} />
+      {isExpanded ? null : <PillarCrossUseStrip pillars={DATA.pillars} menus={menus} />}
 
-      <div className="mt-4 grid grid-cols-1 items-stretch gap-4 2xl:grid-cols-[minmax(0,1fr)_400px]">
-        <div data-testid="pairwise-matrix-grid" className="overflow-auto rounded-lg border border-slate-200" style={{ maxHeight: 820 }}>
+      <div className="mt-4 grid min-h-0 flex-1 grid-cols-1 items-stretch gap-4 2xl:grid-cols-[minmax(0,1fr)_400px]">
+        <div
+          data-testid="pairwise-matrix-grid"
+          className="overflow-auto rounded-lg border border-slate-200"
+          style={{ maxHeight: isExpanded ? undefined : 820 }}
+        >
           <table className="border-collapse text-[11px]">
             <thead>
               <tr>

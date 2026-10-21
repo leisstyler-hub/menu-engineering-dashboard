@@ -113,6 +113,77 @@ test("Menu Cross Utilization Tool groups the pairwise matrix by pillar with self
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
+test("Menu Cross Utilization Tool pairwise matrix can expand to fill the browser and restore", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+
+  // 1440x900 is a common laptop viewport where the collapsed matrix's 820px
+  // cap mostly sits below the fold with zero page scroll, so the real proof
+  // of "more space" is visible height without scrolling, not raw box height.
+  const viewport = { width: 1440, height: 900 };
+  await page.setViewportSize(viewport);
+  await openTool(page, /open cross utilization/i, /^Menu Cross Utilization Tool$/);
+  await page.getByRole("button", { name: /open pairwise matrix/i }).click();
+
+  const matrixGrid = page.getByTestId("pairwise-matrix-grid");
+  const collapsedBox = await matrixGrid.boundingBox();
+  const collapsedVisibleHeight = Math.max(
+    0,
+    Math.min(collapsedBox.y + collapsedBox.height, viewport.height) - Math.max(collapsedBox.y, 0)
+  );
+
+  const expandButton = page.getByRole("button", { name: /^expand$/i });
+  await expect(expandButton).toBeVisible();
+  await expandButton.click();
+
+  const restoreButton = page.getByRole("button", { name: /^restore$/i });
+  await expect(restoreButton).toBeVisible();
+  await expect(restoreButton).toBeFocused();
+
+  const expandedBox = await matrixGrid.boundingBox();
+  expect(expandedBox.height).toBeGreaterThan(collapsedVisibleHeight + 100);
+  expect(expandedBox.width).toBeGreaterThanOrEqual(collapsedBox.width);
+
+  let horizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  expect(horizontalOverflow).toBeLessThanOrEqual(8);
+  let verticalOverflow = await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
+  expect(verticalOverflow).toBeLessThanOrEqual(8);
+
+  await page.getByTitle(/Andes × Cevicheria:/).click();
+  const detail = page.getByTestId("pair-detail-panel");
+  await expect(detail.getByRole("heading", { name: "Andes × Cevicheria" })).toBeVisible();
+
+  await page.keyboard.press("Escape");
+  await expect(expandButton).toBeVisible();
+  await expect(expandButton).toBeFocused();
+
+  const restoredBox = await matrixGrid.boundingBox();
+  expect(restoredBox.height).toBe(collapsedBox.height);
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("Menu Cross Utilization Tool expanded pairwise matrix stays usable on a narrow viewport", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openTool(page, /open cross utilization/i, /^Menu Cross Utilization Tool$/);
+  await page.getByRole("button", { name: /open pairwise matrix/i }).click();
+  await page.getByRole("button", { name: /^expand$/i }).click();
+
+  await expect(page.getByRole("button", { name: /^restore$/i })).toBeVisible();
+  await expect(page.getByTestId("pairwise-matrix-grid")).toBeVisible();
+
+  const horizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  expect(horizontalOverflow).toBeLessThanOrEqual(8);
+
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("button", { name: /^expand$/i })).toBeVisible();
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
 test("Menu Cross Utilization Tool stays usable on tablet and mobile viewports", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
 
