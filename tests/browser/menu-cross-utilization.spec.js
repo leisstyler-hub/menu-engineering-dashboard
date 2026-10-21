@@ -163,6 +163,75 @@ test("Menu Cross Utilization Tool pairwise matrix can expand to fill the browser
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
+test("Menu Cross Utilization Tool expanded pairwise matrix contains keyboard focus away from covered background controls", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+
+  await openTool(page, /open cross utilization/i, /^Menu Cross Utilization Tool$/);
+  await page.getByRole("button", { name: /open pairwise matrix/i }).click();
+  await page.getByTitle(/Andes × Cevicheria:/).click();
+  await page.getByRole("button", { name: /^expand$/i }).click();
+
+  const restoreButton = page.getByRole("button", { name: /^restore$/i });
+  await expect(restoreButton).toBeFocused();
+
+  const backgroundButtons = [
+    page.getByRole("button", { name: /back to platform/i }),
+    page.getByRole("button", { name: /^settings$/i }),
+    page.getByRole("button", { name: /pillar strategy & menus/i }),
+    page.getByRole("button", { name: /open pairwise matrix/i }),
+  ];
+
+  // Real containment, not merely an absence of tab stops: the background
+  // chrome is `inert`, so a direct, non-keyboard focus() call must still be
+  // refused by the browser and leave the Restore button focused.
+  for (const button of backgroundButtons) {
+    await button.evaluate((element) => element.focus());
+    await expect(restoreButton).toBeFocused();
+  }
+
+  // Repeated Tab/Shift+Tab, with a pair already selected, must never land on
+  // a covered background control. Restore is the only focusable element
+  // inside the expanded dialog, so Tab can legitimately leave focus on
+  // nothing (the browser has nowhere else to go) -- the invariant under test
+  // is that it never lands on a background button, not that Restore holds
+  // focus forever.
+  for (let i = 0; i < 5; i += 1) {
+    await page.keyboard.press("Tab");
+    for (const button of backgroundButtons) {
+      await expect(button).not.toBeFocused();
+    }
+  }
+  for (let i = 0; i < 5; i += 1) {
+    await page.keyboard.press("Shift+Tab");
+    for (const button of backgroundButtons) {
+      await expect(button).not.toBeFocused();
+    }
+  }
+
+  const detail = page.getByTestId("pair-detail-panel");
+  await expect(detail.getByRole("heading", { name: "Andes × Cevicheria" })).toBeVisible();
+
+  const expandedSection = page.locator('section[role="dialog"]');
+  await expect(expandedSection).toHaveAttribute("aria-modal", "true");
+  const bodyOverflowWhileExpanded = await page.evaluate(() => document.body.style.overflow);
+  expect(bodyOverflowWhileExpanded).toBe("hidden");
+
+  await page.keyboard.press("Escape");
+  const expandButton = page.getByRole("button", { name: /^expand$/i });
+  await expect(expandButton).toBeFocused();
+
+  // Restoring must lift containment: background chrome becomes focusable
+  // again and body scroll is unlocked.
+  const backToPlatform = page.getByRole("button", { name: /back to platform/i });
+  await backToPlatform.evaluate((element) => element.focus());
+  await expect(backToPlatform).toBeFocused();
+  const bodyOverflowAfterRestore = await page.evaluate(() => document.body.style.overflow);
+  expect(bodyOverflowAfterRestore).toBe("");
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
 test("Menu Cross Utilization Tool expanded pairwise matrix stays usable on a narrow viewport", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
 
