@@ -56,6 +56,11 @@ export const PROTEINS = {
   BF: "Beef",
   CHK: "Chicken",
 };
+export const isMenuItem = (item) => item.recordType !== "divider" && item.rowType !== "divider";
+// Legacy worksheets use N/A (and empty cells) to explicitly mean no modifiers.
+const modifierRefs = (item) => (item.modifierGroups || []).filter(
+  (ref) => typeof ref === "object" || (text(ref) && key(ref) !== "n/a"),
+);
 export function replaceConcept(fixy, designation) {
   if (!text(designation) || /[|\r\n]/.test(designation))
     throw new Error("Enter a valid destination FIXY designation.");
@@ -72,7 +77,7 @@ export function replaceConcept(fixy, designation) {
   return `${parts[0]} | ${text(designation).toUpperCase()} | ${parts[2]}`;
 }
 export function groupsForItem(item, groups, menu) {
-  return (item.modifierGroups || [])
+  return modifierRefs(item)
     .map((ref) => {
       if (typeof ref === "object") return ref;
       const exact = groups.find((g) => g.id === ref);
@@ -89,6 +94,16 @@ export function groupsForItem(item, groups, menu) {
       return scoped.length === 1 ? scoped[0] : undefined;
     })
     .filter(Boolean);
+}
+export function importItemIssue(item, groups, menu) {
+  try { replaceConcept(item.fohColumn, "REVIEW"); }
+  catch { return "Source FIXY missing or malformed. Correct it in the source menu before importing."; }
+  const missing = modifierRefs(item).filter(
+    (ref) => !groupsForItem({ modifierGroups: [ref] }, groups, menu).length,
+  );
+  return missing.length
+    ? `Missing or ambiguous modifier reference: ${missing.map(ref => typeof ref === "object" ? ref.name || ref.id : text(ref)).join(", ")}. Review the source item's modifiers before importing.`
+    : "";
 }
 export function loadGroups(groups, existing = [], allowCopies = false) {
   return groups
@@ -129,7 +144,7 @@ export function importItems(
   const items = [],
     copies = [];
   for (const original of source.items.filter(
-    (i) => i.rowType !== "divider" && itemIds.includes(i.id),
+    (i) => isMenuItem(i) && itemIds.includes(i.id),
   )) {
     if (
       !allowCopies &&
@@ -139,6 +154,8 @@ export function importItems(
       })
     )
       continue;
+    const issue = importItemIssue(original, groups, source);
+    if (issue) throw new Error(`${original.label || original.name}: ${issue} No items were imported.`);
     const item = clone(original);
     item.fohColumn = replaceConcept(
       item.fohColumn,
@@ -147,12 +164,7 @@ export function importItems(
     item.id = newId("item");
     item.lockedForCentric = false;
     item.additionalSubmenuIds = [];
-    const refs = original.modifierGroups || [];
     const matched = groupsForItem(original, groups, source);
-    if (matched.length !== refs.length)
-      throw new Error(
-        `Missing or ambiguous modifier reference for ${original.label || original.name}. No items were imported.`,
-      );
     const attached = loadGroups(matched, [], true);
     item.modifierGroups = attached.map((g) => g.id);
     item.importSource = { menuId: source.id, itemId: original.id };
@@ -168,7 +180,7 @@ export function approvedMatches(item, menus) {
       (menu.items || [])
         .filter(
           (i) =>
-            i.rowType !== "divider" &&
+            isMenuItem(i) &&
             text(i.fohColumn) &&
             ((item.mrn && text(i.mrn) === text(item.mrn)) ||
               key(i.label || i.name) === key(item.label || item.name)),
@@ -184,7 +196,7 @@ export function approvedMatches(item, menus) {
 export function generateFixy(item, menu, facts) {
   if (!text(menu.fixyDesignation) || /[|\r\n]/.test(menu.fixyDesignation))
     throw new Error("Enter this menu’s FIXY designation before generating.");
-  if (!(menu.items || []).some((i) => i.rowType !== "divider"))
+  if (!(menu.items || []).some(isMenuItem))
     throw new Error(
       "This menu has zero items. Add an item before generating FIXY.",
     );

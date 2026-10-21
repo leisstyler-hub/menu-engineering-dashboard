@@ -55,6 +55,7 @@ async function isolated(
     failLoad = false,
     extraGroups = false,
     missingFixy = false,
+    chiang = false,
   } = {},
 ) {
   let shared = workspace();
@@ -68,6 +69,15 @@ async function isolated(
       choices: [{ id: "cheddar", label: "Cheddar", mrn: "00099", price: 0 }],
     });
     shared.menus[0].items[0].modifierGroups.push("cheese");
+  }
+  if (chiang) {
+    shared.menus[0].name = "AMZ: Chiang Mai";
+    shared.menus[0].items = [
+      { id: "section", recordType: "divider", dividerKind: "submenu", name: "Desserts", modifierGroups: [] },
+      { ...structuredClone(item), id: "banana", label: "THAI BANANA PANCAKE", name: "THAI BANANA PANCAKE", mrn: "000123.10", fohColumn: "R FSO | CHIANG MAI | Thai Banana Pancake SNK ", seaPrice: "$3.85", modifierGroups: ["N/A"] },
+      { ...structuredClone(item), id: "mango", label: "MANGO STICKY RICE", name: "MANGO STICKY RICE", mrn: "000124.10", fohColumn: "R FSO | CHIANG MAI | Mango Sticky Rice SNK ", seaPrice: "$3.85", modifierGroups: ["N/A"] },
+      { ...structuredClone(item), id: "broken", label: "BROKEN SOURCE DISH", name: "BROKEN SOURCE DISH", mrn: "000125.10", modifierGroups: ["Missing sauce"] },
+    ];
   }
   const saves = [];
   const member = {
@@ -472,4 +482,40 @@ test("modifier selections survive typing a different alias", async ({
       .getByRole("dialog", { name: "Modifier detail" })
       .getByLabel("Modifier group name", { exact: true }),
   ).toHaveCount(2);
+});
+
+
+test("Chiang Mai picker hides sections, preflights real links and imports N/A desserts", async ({ page }) => {
+  const fixture = await isolated(page, { chiang: true });
+  await openTarget(page);
+  await page.getByLabel("Menu FIXY designation", { exact: true }).fill("CHAING MAI");
+  await page.getByRole("button", { name: "Add from Menu", exact: true }).click();
+  const panel = page.getByRole("dialog", { name: "Add from Menu", exact: true });
+  await panel.getByLabel("Source menu").selectOption("source");
+  await expect(panel).not.toContainText("FIXY missing");
+  await expect(panel.getByRole("checkbox")).toHaveCount(4);
+  await expect(panel.getByLabel("Import BROKEN SOURCE DISH", { exact: true })).toBeDisabled();
+  await expect(panel).toContainText("Missing sauce");
+  await expect(panel).toContainText("3 items");
+  await panel.getByLabel("Search items").fill("BANANA");
+  await expect(panel.getByLabel("Import MANGO STICKY RICE", { exact: true })).toHaveCount(0);
+  await panel.getByLabel("Search items").fill("");
+  await panel.getByRole("button", { name: "Select whole menu" }).click();
+  await expect(panel.getByLabel("Import THAI BANANA PANCAKE", { exact: true })).toBeChecked();
+  await expect(panel.getByLabel("Import MANGO STICKY RICE", { exact: true })).toBeChecked();
+  await page.screenshot({ path: "C:/Users/leiss/.buzz/WORK_LOGS/SSMT_CHIANG_PICKER_2026_10_20.png" });
+  await panel.getByRole("button", { name: "Preview copies" }).click();
+  await expect(panel.getByRole("alert")).toHaveCount(0);
+  await expect(panel).toContainText("2 items / 0 independent modifier groups");
+  await expect(panel).toContainText("R FSO | CHAING MAI | Thai Banana Pancake SNK");
+  await panel.getByRole("button", { name: "Apply copies" }).click();
+  await page.getByRole("button", { name: "Save SSMT workspace", exact: true }).click();
+  await expect.poll(() => fixture.saves.length).toBe(1);
+  const saved = fixture.getWorkspace(), destination = saved.menus.find(m => m.id === "target");
+  expect(destination.items).toHaveLength(2);
+  expect(destination.items[0].mrn).toBe("000123.10");
+  expect(destination.items[0].seaPrice).toBe("$3.85");
+  expect(destination.items[0].modifierGroups).toEqual([]);
+  expect(saved.menus[0].items[1].modifierGroups).toEqual(["N/A"]);
+  expect(saved.menus[0].items[1].fohColumn).toBe("R FSO | CHIANG MAI | Thai Banana Pancake SNK ");
 });

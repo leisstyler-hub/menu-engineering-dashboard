@@ -7,12 +7,18 @@ import {
   generateFixy,
   groupsForItem,
   importItems,
+  importItemIssue,
+  isMenuItem,
   isDuplicateItem,
   loadGroups,
   replaceConcept,
 } from "./ssmtReuse.js";
 const button =
   "rounded border border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-900 disabled:opacity-40";
+const formatPrice = (value) => {
+  const raw = String(value ?? "").trim().replace(/^\$/, "");
+  return raw && Number.isFinite(Number(raw)) ? `$${Number(raw).toFixed(2)}` : "\u2014";
+};
 const input =
   "w-full rounded border border-slate-300 bg-white p-2 text-slate-900";
 export default function SsmtReusePanel({
@@ -42,18 +48,20 @@ export default function SsmtReusePanel({
   });
   const [matchIndex, setMatchIndex] = useState("");
   const sourceMenus = mode === "items" ? menus.filter(m => m.phase === "IT complete") : menus;
-  function itemIssue(candidate) {
-    try { replaceConcept(candidate.fohColumn, "REVIEW"); return ""; }
-    catch { return "Source FIXY missing or malformed. Correct it in the source menu before importing."; }
-  }
   const source = menus.find((m) => m.id === sourceId),
     sourceItem = source?.items.find((i) => i.id === sourceItemId);
+  const sourceItems = useMemo(() => (source?.items || []).filter(isMenuItem).map(candidate => ({
+    item: candidate, issue: importItemIssue(candidate, groups, source),
+  })), [source, groups]);
+  const visibleItems = sourceItems.filter(({item}) => `${item.label || item.name || ""} ${item.fohColumn || ""}`.toLowerCase().includes(search.toLowerCase()));
+  const readyItems = sourceItems.filter(({item, issue}) => !issue && (allowCopies || !isDuplicateItem(item, menu)));
+  const blockedCount = sourceItems.filter(({issue}) => issue).length;
   const catalog = useMemo(
     () =>
       mode === "groups"
         ? menus.flatMap((m) =>
             (m.items || [])
-              .filter((i) => i.rowType !== "divider")
+              .filter(isMenuItem)
               .flatMap((i) =>
                 groupsForItem(i, groups, m).map((group) => ({
                   group,
@@ -83,6 +91,7 @@ export default function SsmtReusePanel({
   const matches = mode === "fixy" && item ? approvedMatches(item, menus) : [];
   const toggle = (id) => {
     setPreview(null);
+    setError("");
     setSelected((current) =>
       current.includes(id) ? current.filter((i) => i !== id) : [...current, id],
     );
@@ -94,6 +103,7 @@ export default function SsmtReusePanel({
         if (!source || !selected.length)
           throw new Error("Select a source menu and at least one item.");
         const result = importItems(source, menu, selected, groups, allowCopies);
+        if (!result.items.length) throw new Error("Selected items are already in the destination menu. Choose other items or explicitly allow additional copies.");
         setPreview(result);
       } else if (mode === "groups") {
         if (!selected.length)
@@ -113,7 +123,7 @@ export default function SsmtReusePanel({
           throw new Error("An item supports at most 10 modifier groups.");
         setPreview({ groups: loaded });
       } else {
-        if (!menu.items.some((i) => i.rowType !== "divider"))
+        if (!menu.items.some(isMenuItem))
           throw new Error(
             "This menu has zero items. Add an item before generating FIXY.",
           );
@@ -176,6 +186,8 @@ export default function SsmtReusePanel({
                   setSourceId(e.target.value);
                   setSourceItemId("");
                   setSelected([]);
+                  setError("");
+                  setSearch("");
                   setPreview(null);
                 }}
               >
@@ -189,7 +201,11 @@ export default function SsmtReusePanel({
                 ))}
               </select>
             </label>
-            {mode === "items" && <p className="text-sm">Only IT complete menus are available. Items need a valid source FIXY before importing.</p>}
+            {mode === "items" && <div className="space-y-3 text-sm">
+              <p>Copy items from an IT complete menu into <strong>{menu.name}</strong>. Destination designation: <strong>{menu.fixyDesignation || "Enter it on the destination menu"}</strong>.</p>
+              <label className="block font-bold">Search items<input aria-label="Search items" className={input} value={search} onChange={e => setSearch(e.target.value)} placeholder="Item name or FIXY" /></label>
+              {source && <p className="text-slate-600">{sourceItems.length} items / {readyItems.length} ready / {selected.length} selected{blockedCount > 0 && ` / ${blockedCount} need source corrections`}</p>}
+            </div>}
             {mode === "groups" && (
               <>
                 <label className="block">
@@ -206,7 +222,7 @@ export default function SsmtReusePanel({
                   >
                     <option value="">All items</option>
                     {source?.items
-                      .filter((i) => i.rowType !== "divider")
+                      .filter(isMenuItem)
                       .map((i) => (
                         <option key={i.id} value={i.id}>
                           {i.label || i.name}
@@ -230,40 +246,23 @@ export default function SsmtReusePanel({
             <div className="max-h-80 space-y-2 overflow-y-auto rounded border p-3">
               {mode === "items" ? (
                 <>
-                  {source && (
-                    <button
-                      className={button}
-                      onClick={() => {
-                        setSelected(
-                          source.items
-                            .filter((i) => i.rowType !== "divider" && !itemIssue(i))
-                            .map((i) => i.id),
-                        );
-                        setPreview(null);
-                      }}
-                    >
-                      Select whole menu
-                    </button>
-                  )}
-                  {source?.items
-                    .filter((i) => i.rowType !== "divider")
-                    .map((i) => (
-                      <label key={i.id} className="block border-b py-2">
-                        <input
-                          type="checkbox"
-                          disabled={Boolean(itemIssue(i))}
-                          checked={selected.includes(i.id)}
-                          onChange={() => toggle(i.id)}
-                        />{" "}
-                        {i.label || i.name} —{" "}
-                        {i.fohColumn || "FIXY missing: review required"} — price{" "}
-                        {i.seaPrice ?? "blank"}{" "}
-                        {itemIssue(i) && <span className="block text-sm font-bold text-red-700">{itemIssue(i)}</span>}
-                        {isDuplicateItem(i, menu) && (
-                          <strong> • Duplicate: skipped by default</strong>
-                        )}
-                      </label>
-                    ))}
+                  {source && <div className="mb-3 flex gap-2">
+                    <button className={button} disabled={!readyItems.length} onClick={() => { setSelected(readyItems.map(({item}) => item.id)); setPreview(null); setError(""); }}>Select whole menu</button>
+                    <button className={button} disabled={!selected.length} onClick={() => { setSelected([]); setPreview(null); setError(""); }}>Clear selection</button>
+                  </div>}
+                  <div className="grid grid-cols-[minmax(0,1fr)_72px] gap-x-3 border-b pb-2 text-xs font-bold uppercase tracking-wide text-slate-500"><span>Item / FIXY</span><span className="text-right">SEA price</span></div>
+                  {visibleItems.map(({item: i, issue}) => {
+                    const duplicate = !allowCopies && isDuplicateItem(i, menu);
+                    return <label key={i.id} className={`grid grid-cols-[20px_minmax(0,1fr)_72px] items-start gap-x-3 border-b py-3 ${issue || duplicate ? "bg-slate-50 text-slate-500" : "text-slate-900"}`}>
+                      <input className="mt-1" type="checkbox" aria-label={`Import ${i.label || i.name}`} disabled={Boolean(issue) || duplicate} checked={selected.includes(i.id)} onChange={() => toggle(i.id)} />
+                      <span className="min-w-0"><strong className="block text-sm">{i.label || i.name}</strong><span className="mt-1 block break-words text-xs text-slate-500">{i.fohColumn || "FIXY missing"}</span>
+                        {issue && <span className="mt-1 block text-xs text-amber-800">{issue}</span>}
+                        {duplicate && <span className="block text-xs">Already in destination / skipped</span>}
+                      </span>
+                      <span className="text-right text-sm tabular-nums">{formatPrice(i.seaPrice)}</span>
+                    </label>;
+                  })}
+                  {source && !visibleItems.length && <p className="py-4 text-sm text-slate-500">No matching items.</p>}
                 </>
               ) : (
                 candidates.map((c) => (
@@ -298,6 +297,8 @@ export default function SsmtReusePanel({
                 checked={allowCopies}
                 onChange={(e) => {
                   setAllowCopies(e.target.checked);
+                  setSelected([]);
+                  setError("");
                   setPreview(null);
                 }}
               />{" "}
@@ -318,7 +319,7 @@ export default function SsmtReusePanel({
                 }
               >
                 {menu.items
-                  .filter((i) => i.rowType !== "divider")
+                  .filter(isMenuItem)
                   .map((i) => (
                     <option key={i.id} value={i.id}>
                       {i.label || i.name}
@@ -421,7 +422,7 @@ export default function SsmtReusePanel({
             {error}
           </p>
         )}
-        <button className={button} onClick={prepare}>
+        <button className={button} onClick={prepare} disabled={mode === "items" && !selected.length}>
           Preview {mode === "fixy" ? "FIXY" : "copies"}
         </button>
         {preview && (

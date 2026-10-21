@@ -211,3 +211,23 @@ test("modifier-option deletions retain a readable snapshot and menu context", ()
   assert.equal(deletion.label, "Bun");
   assert.equal(deletion.menuNames[0], "Source");
 });
+
+
+test("Chiang Mai desserts with N/A modifier markers import without invented groups", () => {
+  const dessert = { ...item, id: "dessert", label: "THAI BANANA PANCAKE", fohColumn: "R FSO | CHIANG MAI | Thai Banana Pancake SNK ", modifierGroups: ["N/A", "", " n/a "] };
+  const result = importItems({ ...source, items: [dessert] }, { ...target, fixyDesignation: "CHAING MAI" }, ["dessert"], []);
+  assert.equal(result.items[0].fohColumn, "R FSO | CHAING MAI | Thai Banana Pancake SNK");
+  assert.deepEqual(result.items[0].modifierGroups, []);
+  assert.deepEqual(dessert.modifierGroups, ["N/A", "", " n/a "]);
+});
+
+test("SSMT recordType section rows are excluded from import and approved matches", () => {
+  const divider = { ...item, id: "section", recordType: "divider", rowType: undefined, label: "Desserts" };
+  const result = importItems({ ...source, items: [divider] }, target, ["section"], [group]);
+  assert.equal(result.items.length, 0);
+  assert.equal(approvedMatches(divider, [{ ...source, items: [divider] }]).length, 0);
+});
+
+test("real missing modifier references still block atomically and identify the reference", () => {
+  assert.throws(() => importItems({ ...source, items: [{ ...item, modifierGroups: ["Missing sauce"] }] }, target, ["i"], []), /Missing sauce/);
+});
