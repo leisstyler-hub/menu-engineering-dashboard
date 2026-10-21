@@ -56,6 +56,7 @@ async function isolated(
     extraGroups = false,
     missingFixy = false,
     chiang = false,
+    duplicateTarget = false,
   } = {},
 ) {
   let shared = workspace();
@@ -79,6 +80,7 @@ async function isolated(
       { ...structuredClone(item), id: "broken", label: "BROKEN SOURCE DISH", name: "BROKEN SOURCE DISH", mrn: "000125.10", modifierGroups: ["Missing sauce"] },
     ];
   }
+  if (duplicateTarget) shared.menus[1].items = [{ ...structuredClone(shared.menus[0].items.find(i => i.id === "banana")), id: "existing-banana" }];
   const saves = [];
   const member = {
     id: "test-user",
@@ -227,8 +229,13 @@ test("item import excludes unfinished menus and flags missing source FIXY before
   await panel.getByLabel("Source menu").selectOption("source");
   await expect(panel.getByText("Smash Burger", { exact: false }).first()).toBeVisible();
   await expect(panel.getByText("Source FIXY missing or malformed.", { exact: false })).toBeVisible();
-  await expect(panel.locator("label").filter({ hasText: "Missing Code Dish" }).getByRole("checkbox")).toBeDisabled();
-  await panel.getByRole("button", { name: "Select whole menu" }).click();
+  const missingCode = panel.getByLabel("Import Missing Code Dish", { exact: true });
+  await missingCode.focus();
+  await missingCode.press("Space");
+  await expect(missingCode).toBeChecked();
+  await panel.getByRole("button", { name: "Preview copies" }).click();
+  await expect(panel.getByRole("alert")).toContainText("Source FIXY missing or malformed");
+  await panel.getByRole("button", { name: "Select ready items" }).click();
   await panel.getByRole("button", { name: "Preview copies" }).click();
   await expect(panel.getByRole("heading", { name: "Review before applying" })).toBeVisible();
   await expect(panel.getByText("1 items / 1", { exact: false })).toBeVisible();
@@ -255,7 +262,7 @@ test("accounts gate only SSMT and imports independent items, prices and modifier
     .click();
   let dialog = page.getByRole("dialog", { name: "Add from Menu", exact: true });
   await dialog.getByLabel("Source menu").selectOption("source");
-  await dialog.getByRole("button", { name: "Select whole menu" }).click();
+  await dialog.getByRole("button", { name: "Select ready items" }).click();
   await dialog.getByRole("button", { name: "Preview copies" }).click();
   await expect(dialog).toContainText("R FBB | MFP DAY | SMASH BURGER ENT BF");
   await dialog.getByRole("button", { name: "Apply copies" }).click();
@@ -442,7 +449,7 @@ test("SSMT account controls and import preview stay contained on a phone", async
     exact: true,
   });
   await dialog.getByLabel("Source menu").selectOption("source");
-  await dialog.getByRole("button", { name: "Select whole menu" }).click();
+  await dialog.getByRole("button", { name: "Select ready items" }).click();
   await dialog.getByRole("button", { name: "Preview copies" }).click();
   await expect(dialog).toContainText("R FBB | GRILL | SMASH BURGER ENT BF");
   expect(
@@ -494,13 +501,19 @@ test("Chiang Mai picker hides sections, preflights real links and imports N/A de
   await panel.getByLabel("Source menu").selectOption("source");
   await expect(panel).not.toContainText("FIXY missing");
   await expect(panel.getByRole("checkbox")).toHaveCount(4);
-  await expect(panel.getByLabel("Import BROKEN SOURCE DISH", { exact: true })).toBeDisabled();
+  await panel.getByLabel("Import BROKEN SOURCE DISH", { exact: true }).check();
+  await expect(panel).toContainText("1 selected / 0 ready / 1 need source corrections");
+  await panel.getByRole("button", { name: "Preview copies" }).click();
+  await expect(panel.getByRole("alert")).toContainText("Missing sauce");
+  await expect(panel.getByRole("button", { name: "Apply copies" })).toHaveCount(0);
+  expect(fixture.saves).toHaveLength(0);
+  await panel.getByLabel("Import BROKEN SOURCE DISH", { exact: true }).uncheck();
   await expect(panel).toContainText("Missing sauce");
   await expect(panel).toContainText("3 items");
   await panel.getByLabel("Search items").fill("BANANA");
   await expect(panel.getByLabel("Import MANGO STICKY RICE", { exact: true })).toHaveCount(0);
   await panel.getByLabel("Search items").fill("");
-  await panel.getByRole("button", { name: "Select whole menu" }).click();
+  await panel.getByRole("button", { name: "Select ready items" }).click();
   await expect(panel.getByLabel("Import THAI BANANA PANCAKE", { exact: true })).toBeChecked();
   await expect(panel.getByLabel("Import MANGO STICKY RICE", { exact: true })).toBeChecked();
   await page.screenshot({ path: "C:/Users/leiss/.buzz/WORK_LOGS/SSMT_CHIANG_PICKER_2026_10_20.png" });
@@ -520,6 +533,31 @@ test("Chiang Mai picker hides sections, preflights real links and imports N/A de
   expect(saved.menus[0].items[1].fohColumn).toBe("R FSO | CHIANG MAI | Thai Banana Pancake SNK ");
 });
 
+test("item selection survives search and discloses duplicate skips before applying", async ({ page }) => {
+  const fixture = await isolated(page, { chiang: true, duplicateTarget: true });
+  await openTarget(page);
+  await page.getByLabel("Menu FIXY designation", { exact: true }).fill("DESTINATION");
+  await page.getByRole("button", { name: "Add from Menu", exact: true }).click();
+  const panel = page.getByRole("dialog", { name: "Add from Menu", exact: true });
+  await panel.getByLabel("Source menu").selectOption("source");
+  await panel.getByLabel("Import THAI BANANA PANCAKE", { exact: true }).check();
+  await panel.getByLabel("Search items").fill("MANGO");
+  const mango = panel.getByLabel("Import MANGO STICKY RICE", { exact: true });
+  await mango.focus();
+  await mango.press("Space");
+  await panel.getByLabel("Search items").fill("");
+  await expect(panel.getByLabel("Import THAI BANANA PANCAKE", { exact: true })).toBeChecked();
+  await expect(mango).toBeChecked();
+  await expect(panel).toContainText("2 selected / 1 ready / 0 need source corrections / 1 duplicates skipped");
+  await expect(panel).toContainText("Skipped duplicates: THAI BANANA PANCAKE");
+  await panel.getByRole("button", { name: "Preview copies" }).click();
+  await expect(panel).toContainText("1 items / 0 independent modifier groups");
+  await panel.getByRole("button", { name: "Apply copies" }).click();
+  await page.getByRole("button", { name: "Save SSMT workspace", exact: true }).click();
+  await expect.poll(() => fixture.saves.length).toBe(1);
+  expect(fixture.getWorkspace().menus.find(m => m.id === "target").items).toHaveLength(2);
+});
+
 
 test("SSMT change log and primary navigation are prominent and identify the active view", async ({ page }) => {
   await isolated(page);
@@ -529,13 +567,15 @@ test("SSMT change log and primary navigation are prominent and identify the acti
   await history.click();
   await expect(page.getByRole("dialog", { name: "SSMT Change Log", exact: true })).toContainText("Saved changes only");
   await page.getByRole("dialog", { name: "SSMT Change Log", exact: true }).getByRole("button", { name: "Close", exact: true }).click();
-  for (const label of ["SSMT Start", "Pricing Structure", "Menu Selector / New Menu"]) {
+  await expect(page.getByRole("button", { name: "SSMT Start", exact: true })).toHaveCount(0);
+  for (const label of ["Pricing Structure", "Menu Selector / New Menu"]) {
     const control=page.getByRole("button", { name: label, exact: true });
     const box=await control.boundingBox();
     expect(box.height).toBeGreaterThanOrEqual(56);
     expect(box.width).toBeGreaterThanOrEqual(180);
     await control.click();
-    await expect(control).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByRole("button", { name: label, exact: true })).toHaveAttribute("aria-pressed", "true");
+    await page.getByRole("button", { name: "Back to SSMT", exact: true }).click();
   }
   await page.screenshot({path:"C:/Users/leiss/.buzz/WORK_LOGS/SSMT_PROMINENT_CONTROLS_2026_10_20.png"});
 });

@@ -19,7 +19,7 @@ test("SSMT uses a deliberate dark palette without changing light mode", async ({
 
   const pageShell = page.getByTestId("ssmt-page");
   const calendar = page.getByTestId("ssmt-promotion-calendar");
-  const pricingCard = page.getByRole("button", { name: /Pricing Structure View the pricing book/i });
+  const pricingCard = page.getByRole("button", { name: "Pricing Structure", exact: true });
 
   await expect(pageShell).toHaveCSS("background-color", "rgb(245, 246, 241)");
   await expect(calendar).toHaveCSS("background-color", "rgb(255, 255, 255)");
@@ -28,9 +28,9 @@ test("SSMT uses a deliberate dark palette without changing light mode", async ({
   await expect(pageShell).toHaveCSS("background-color", "rgb(2, 6, 23)");
   await expect(calendar).toHaveCSS("background-color", "rgb(15, 23, 42)");
   await expect(calendar).toHaveCSS("border-color", "rgb(88, 28, 135)");
-  await expect(pricingCard).toHaveCSS("background-color", "rgb(15, 23, 42)");
-  await expect(pricingCard).toHaveCSS("border-color", "rgb(6, 95, 70)");
-  await expect(pricingCard).toHaveCSS("color", "rgb(248, 250, 252)");
+  await expect(pricingCard).toHaveCSS("background-color", "rgb(4, 120, 87)");
+  await expect(pricingCard).toHaveCSS("border-color", "rgb(4, 120, 87)");
+  await expect(pricingCard).toHaveCSS("color", "rgb(255, 255, 255)");
 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
@@ -98,7 +98,7 @@ test("SSMT uses a deliberate dark palette without changing light mode", async ({
   await expect(calendar.getByTestId(`ssmt-calendar-day-${rangeWeekendKey}`)).not.toContainText("Current Month Promo");
   await calendar.getByRole("button", { name: "Current Month Promo" }).first().click();
   await expect(page.getByRole("heading", { name: "Current Month Promo", exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "SSMT Start", exact: true }).click();
+  await page.getByRole("button", { name: "Back to SSMT", exact: true }).click();
   await expect(calendar.getByTestId(`ssmt-calendar-day-${recurringThursdays[0]}`)).toContainText("Thursday Night Football");
   await expect(calendar.getByTestId(`ssmt-calendar-day-${skippedThursday}`)).not.toContainText("Thursday Night Football");
   await expect(calendar.getByTestId(`ssmt-calendar-day-${recurringThursdays[2]}`)).toContainText("Thursday Night Football");
@@ -150,6 +150,7 @@ test("SSMT promotion editor saves weekly recurrence without changing menu items 
   await page.locator('button[data-menu-name="Thursday Night Football"]').click();
   await page.getByLabel("Promotion schedule type").selectOption("weekly");
   await page.getByLabel("Thursday").check();
+  await page.getByText("Skipped dates (0)", { exact: true }).click();
   await page.getByLabel("Skip promotion date").fill("2026-11-26");
   await page.getByRole("button", { name: "Add skipped date" }).click();
   await page.getByRole("button", { name: /Save SSMT workspace/i }).click();
@@ -230,8 +231,8 @@ test("SSMT opens behind passcode and separates pricing from menu building", asyn
   await page.getByRole("button", { name: /Create menu/i }).click();
 
   await expect(page.getByRole("heading", { name: /^Smoke Test Promo Menu$/ })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Back to menu selection/i })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Pricing table/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Menu Selector / New Menu", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Pricing Structure", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: /Delete menu/i })).toBeVisible();
   await expect(page.getByText(/Pending IT complete/i)).toHaveCount(0);
 
@@ -318,7 +319,8 @@ test("SSMT opens behind passcode and separates pricing from menu building", asyn
 
   await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
   await page.getByRole("button", { name: /^The Daily/i }).click();
-  await expect(page.getByText(/Active dates are only required for Promotion and Thompson Hospitality/i)).toBeVisible();
+  await expect(page.getByLabel("Active start", { exact: true })).toHaveCount(0);
+  await expect(page.getByTestId("ssmt-fixy-setup")).toBeVisible();
   await expect(page.getByText(/Workbook value needs pricing structure match/i).first()).toBeVisible();
 
   await expectNoAppProtection(page);
@@ -342,7 +344,7 @@ test("SSMT moves a menu with the in-menu bucket selector without freezing", asyn
   const moveStartedAt = Date.now();
   await page.getByLabel(/Menu bucket/i).selectOption("Global");
   expect(Date.now() - moveStartedAt).toBeLessThan(1_000);
-  await page.getByRole("button", { name: /Back to menu selection/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
 
   const coreGroup = page.getByTestId("ssmt-menu-group-Core");
   const globalGroup = page.getByTestId("ssmt-menu-group-Global");
@@ -392,7 +394,7 @@ test("SSMT shows clickable Experience and IT handoff queues below the selector",
   await expect(selector.getByTestId(/ssmt-phase-count-/)).toHaveCount(0);
   await experienceQueue.getByRole("button", { name: /Experience Handoff Menu/i }).click();
   await expect(page.getByRole("heading", { name: "Experience Handoff Menu" })).toBeVisible();
-  await page.getByRole("button", { name: /Back to menu selection/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
   await itQueue.getByRole("button", { name: /IT Handoff Menu/i }).click();
   await expect(page.getByRole("heading", { name: "IT Handoff Menu" })).toBeVisible();
   await expectNoAppProtection(page);
@@ -555,7 +557,7 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
 
   await page.getByRole("button", { name: /Lock item NEW ITEM/i }).click();
   await page.getByLabel(/Phase/i).selectOption("IT complete");
-  await page.getByRole("button", { name: /Back to menu selection/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
   await page.locator(`[data-menu-name="${orderingMenuName}"]`).click();
   await expect(page.getByLabel(/Phase/i)).toHaveValue("IT complete");
   await expect(page.getByTestId("ssmt-workspace-sync")).toContainText(/Shared SSMT workspace saved/i, { timeout: 20_000 });
@@ -654,7 +656,7 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
-// This test runs entirely against a mocked "**/api/storage/records**" route — never the
+// This test runs entirely against a mocked "**/api/storage/records**" route â€” never the
 // real shared Supabase workspace. A 2026-09-19 incident showed a browser test that hit the
 // live SSMT record directly (goto "/" + real Save) can save mid-load state over
 // ssmt|workspace|current and wipe bucket/phase assignments and Divider/Sub Menu rows in
@@ -786,8 +788,8 @@ test("SSMT shares one item across multiple sub menus without duplicating its sav
   await page.getByRole("checkbox", { name: /Persian/i }).check();
   await page.getByRole("button", { name: /Close Also in sub menus/i }).click();
 
-  await expect(lebaneseSection).toContainText("1 item · 1 shared");
-  await expect(persianSection).toContainText("2 items · 1 shared");
+  await expect(lebaneseSection).toContainText(/1 item.*1 shared/);
+  await expect(persianSection).toContainText(/2 items.*1 shared/);
   expect(await page.getByLabel("Item label").evaluateAll((inputs) => inputs.filter((input) => input.value === "SHARED MEZZE").length)).toBe(2);
   await expect(page.getByTestId("ssmt-derived-source-preview")).toContainText("AMZ: Shared Submenu Fixture - Amaz Lebanese (1)");
   await expect(page.getByTestId("ssmt-derived-source-preview")).toContainText("AMZ: Shared Submenu Fixture - Persian (2)");
@@ -979,7 +981,7 @@ test("SSMT item locks enable Centric copy fields and gate phase advancement", as
   await expect(page.getByLabel(/MRN for CENTRIC PASTE ITEM/i)).toHaveAttribute("readonly", "");
   await expect(firstPriceButton).toBeEnabled();
 
-  // Photo Link is IT-reference metadata, not part of the Centric lock/copy workflow —
+  // Photo Link is IT-reference metadata, not part of the Centric lock/copy workflow â€”
   // it must stay editable even after the item locks for Centric.
   const photoLinkInput = page.getByLabel(/Photo link for CENTRIC PASTE ITEM/i);
   await expect(photoLinkInput).not.toHaveAttribute("readonly");
@@ -997,7 +999,7 @@ test("SSMT item locks enable Centric copy fields and gate phase advancement", as
   await expect(page.getByRole("button", { name: /Delete item CENTRIC PASTE ITEM/i })).toBeDisabled();
   await seaPriceButton.click();
   await expect(page.getByText(/SEA price copied for Centric/i)).toBeVisible();
-  // Copy strips the $ — Centric wants just the number + decimal point.
+  // Copy strips the $ â€” Centric wants just the number + decimal point.
   await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(seaPriceText.replace(/[^0-9.]/g, ""));
 
   await page.getByRole("button", { name: /Lock item NEW ITEM/i }).click();
@@ -1348,7 +1350,7 @@ test("SSMT menu names require edit mode and cross-system reference names persist
   ]);
   expect(download.suggestedFilename()).toBe(`${renamedMenuName} SSMT Export.xlsx`);
 
-  await page.getByRole("button", { name: /Back to menu selection/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
   await expect(page.locator(`[data-menu-name="${renamedMenuName}"]`)).toBeVisible();
   await expect(page.locator(`[data-menu-name="${smokeMenuName}"]`)).toHaveCount(0);
 
@@ -1647,7 +1649,7 @@ test("SSMT Mods badge counts only reliably-linked groups, not stale free-text re
   await page.keyboard.press("Escape");
 
   // Fresh-build path must still count: a group created in the dialog is linked by id and
-  // must make the badge read (1) after the dialog closes — guards against over-tightening the match.
+  // must make the badge read (1) after the dialog closes â€” guards against over-tightening the match.
   await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
   await page.getByLabel(/New menu name/i).fill("Badge Count Test");
   await page.getByLabel("New menu FIXY designation", { exact: true }).fill("GRILL");
@@ -1909,7 +1911,7 @@ test("SSMT collects hibernated menus into a separate bucket shown on demand", as
   await page.getByLabel(/New menu type/i).selectOption("Core");
   await page.getByRole("button", { name: /Create menu/i }).click();
   await expect(page.getByRole("heading", { name: menuName })).toBeVisible();
-  await page.getByRole("button", { name: /Back to menu selection/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
 
   const coreGroup = page.getByTestId("ssmt-menu-group-Core");
   const card = page.locator(`[data-menu-name="${menuName}"]`).locator("xpath=ancestor::div[1]");
@@ -1917,7 +1919,7 @@ test("SSMT collects hibernated menus into a separate bucket shown on demand", as
   await expect(coreGroup.locator(`[data-menu-name="${menuName}"]`)).toBeVisible();
   await expect(page.getByTestId("ssmt-menu-group-Hibernated")).toHaveCount(0);
 
-  // Hibernate it — with "Show hibernated" off it drops out of view entirely.
+  // Hibernate it â€” with "Show hibernated" off it drops out of view entirely.
   await card.getByRole("button", { name: "Hibernate", exact: true }).click();
   await expect(page.locator(`[data-menu-name="${menuName}"]`)).toHaveCount(0);
 
@@ -2025,7 +2027,7 @@ test("SSMT blocks duplicate menu names and rapid double-submit with mocked stora
     button.click();
   });
   await expect(page.getByRole("heading", { name: uniqueName })).toBeVisible();
-  await page.getByRole("button", { name: /Back to menu selection/i }).click();
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
   await expect(page.locator(`[data-menu-name="${uniqueName}"]`)).toHaveCount(1);
 
   await expectNoAppProtection(page);

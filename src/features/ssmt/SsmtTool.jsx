@@ -1835,17 +1835,17 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
   return (
     <div data-testid="ssmt-page" className="ssmt-tool-page min-h-screen bg-[#f5f6f1] px-2 py-4 text-slate-950 md:px-3">
       <div className="mx-auto w-full max-w-[2760px] space-y-3">
-        <header className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+        <header className={`rounded-lg border border-slate-200 bg-white shadow-sm ${activeView === "editor" ? "p-3" : "p-4"}`}>
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-            <div>
+            <div className={activeView === "editor" ? "flex flex-wrap items-center gap-3" : ""}>
               <button onClick={() => requestLeaveCurrentMenu(onBackToPlatform)} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-bold text-slate-700 hover:bg-slate-100">
                 <ArrowLeft size={16} /> Back to Platform
               </button>
-              <p className="mt-3 text-xs font-black uppercase tracking-[0.22em] text-emerald-600">Culinary to IT programming</p>
-              <h1 className="mt-1 text-3xl font-black">SSMT</h1>
-              <p className="mt-2 max-w-4xl text-sm font-semibold leading-5 text-slate-600">
+              {activeView !== "editor" && <p className="mt-3 text-xs font-black uppercase tracking-[0.22em] text-emerald-600">Culinary to IT programming</p>}
+              <h1 className={activeView === "editor" ? "text-2xl font-black" : "mt-1 text-3xl font-black"}>SSMT</h1>
+              {activeView !== "editor" && <p className="mt-2 max-w-4xl text-sm font-semibold leading-5 text-slate-600">
                 Split pricing maintenance from menu programming so the menu editor has more working room for large Centric records.
-              </p>
+              </p>}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <PlatformSettings onOpenSmartsheetHealth={onOpenSmartsheetHealth} onOpenUserAdmin={onOpenUserAdmin} />
@@ -1855,17 +1855,17 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
           </div>
         </header>
 
-        <nav aria-label="SSMT sections" className="grid grid-cols-1 gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:grid-cols-3">
-          <button type="button" aria-pressed={activeView === "home"} onClick={() => requestLeaveCurrentMenu(() => setActiveView("home"))} className={`inline-flex min-h-14 items-center justify-center gap-3 rounded-lg border-2 px-5 py-4 text-base font-black shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${activeView === "home" ? "border-slate-950 bg-slate-950 text-white" : "border-slate-300 bg-slate-100 text-slate-900 hover:border-slate-500"}`}>
-            <ListChecks size={24} aria-hidden="true" /> SSMT Start
+        {activeView !== "home" && <nav aria-label="SSMT sections" className={`grid grid-cols-1 gap-2 rounded-xl border border-slate-200 bg-white shadow-sm sm:grid-cols-3 ${activeView === "editor" ? "p-2" : "p-3"}`}>
+          <button type="button" aria-pressed={activeView === "home"} onClick={() => requestLeaveCurrentMenu(() => setActiveView("home"))} className={`inline-flex items-center justify-center gap-3 rounded-lg border-2 text-base font-black shadow-sm ${activeView === "editor" ? "min-h-11 px-3 py-2" : "min-h-14 px-5 py-4"} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${activeView === "home" ? "border-slate-950 bg-slate-950 text-white" : "border-slate-300 bg-slate-100 text-slate-900 hover:border-slate-500"}`}>
+            <ListChecks size={24} aria-hidden="true" /> Back to SSMT
           </button>
-          <button type="button" aria-pressed={activeView === "pricing"} onClick={() => requestLeaveCurrentMenu(() => setActiveView("pricing"))} className={`inline-flex min-h-14 items-center justify-center gap-3 rounded-lg border-2 px-5 py-4 text-base font-black shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${activeView === "pricing" ? "border-emerald-800 bg-emerald-800 text-white" : "border-emerald-500 bg-emerald-50 text-emerald-950 hover:border-emerald-700 hover:bg-emerald-100"}`}>
+          <button type="button" aria-pressed={activeView === "pricing"} onClick={() => requestLeaveCurrentMenu(() => setActiveView("pricing"))} className={`inline-flex items-center justify-center gap-3 rounded-lg border-2 text-base font-black shadow-sm ${activeView === "editor" ? "min-h-11 px-3 py-2" : "min-h-14 px-5 py-4"} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${activeView === "pricing" ? "border-emerald-800 bg-emerald-800 text-white" : "border-emerald-500 bg-emerald-50 text-emerald-950 hover:border-emerald-700 hover:bg-emerald-100"}`}>
             <DollarSign size={24} aria-hidden="true" /> Pricing Structure
           </button>
-          <button type="button" aria-pressed={activeView === "menus" || activeView === "editor"} onClick={() => requestLeaveCurrentMenu(() => setActiveView("menus"))} className={`inline-flex min-h-14 items-center justify-center gap-3 rounded-lg border-2 px-5 py-4 text-base font-black shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${activeView === "menus" || activeView === "editor" ? "border-sky-800 bg-sky-800 text-white" : "border-sky-500 bg-sky-50 text-sky-950 hover:border-sky-700 hover:bg-sky-100"}`}>
+          <button type="button" aria-pressed={activeView === "menus" || activeView === "editor"} onClick={() => requestLeaveCurrentMenu(() => setActiveView("menus"))} className={`inline-flex items-center justify-center gap-3 rounded-lg border-2 text-base font-black shadow-sm ${activeView === "editor" ? "min-h-11 px-3 py-2" : "min-h-14 px-5 py-4"} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${activeView === "menus" || activeView === "editor" ? "border-sky-800 bg-sky-800 text-white" : "border-sky-500 bg-sky-50 text-sky-950 hover:border-sky-700 hover:bg-sky-100"}`}>
             <ClipboardCheck size={24} aria-hidden="true" /> Menu Selector / New Menu
           </button>
-        </nav>
+        </nav>}
 
         {dataStatus !== "ready" && (
           <section className={`rounded-lg border p-4 text-sm font-bold leading-6 ${dataStatus === "error" ? "border-red-200 bg-red-50 text-red-800" : "border-sky-200 bg-sky-50 text-sky-900"}`}>
@@ -1916,15 +1916,15 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
             </section>
 
             <section className="grid gap-4 lg:grid-cols-2">
-              <button type="button" onClick={() => setActiveView("pricing")} className="rounded-lg border border-emerald-200 bg-white p-6 text-left shadow-sm hover:border-emerald-400 hover:bg-emerald-50">
-                <DollarSign size={26} className="text-emerald-700" />
+              <button type="button" onClick={() => setActiveView("pricing")} aria-label="Pricing Structure" className="rounded-xl border-2 border-emerald-700 bg-emerald-700 p-6 text-left text-white shadow-md transition-colors hover:border-emerald-900 hover:bg-emerald-800 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-emerald-500">
+                <DollarSign size={30} aria-hidden="true" />
                 <h2 className="mt-4 text-2xl font-black">Pricing Structure</h2>
-                <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">View the pricing book, keep SEA price + category as the selector, and add controlled pricing rows when the table needs one.</p>
+                <p className="mt-2 text-sm font-semibold leading-6 text-white/90">View the pricing book, keep SEA price + category as the selector, and add controlled pricing rows when the table needs one.</p>
               </button>
-              <button type="button" onClick={() => setActiveView("menus")} className="rounded-lg border border-sky-200 bg-white p-6 text-left shadow-sm hover:border-sky-400 hover:bg-sky-50">
-                <ClipboardCheck size={26} className="text-sky-700" />
+              <button type="button" onClick={() => setActiveView("menus")} aria-label="Menu Selector / New Menu" className="rounded-xl border-2 border-sky-700 bg-sky-700 p-6 text-left text-white shadow-md transition-colors hover:border-sky-900 hover:bg-sky-800 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-sky-500">
+                <ClipboardCheck size={30} aria-hidden="true" />
                 <h2 className="mt-4 text-2xl font-black">Menu Selector / New Menu</h2>
-                <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">Open an existing menu or create a new record by selecting the menu type first.</p>
+                <p className="mt-2 text-sm font-semibold leading-6 text-white/90">Open an existing menu or create a new record by selecting the menu type first.</p>
               </button>
             </section>
 
@@ -2170,13 +2170,9 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
         {activeView === "editor" && (
           <main className="space-y-3">
             <section className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm">
-              <div className="flex flex-wrap gap-2">
-                <button type="button" onClick={() => requestLeaveCurrentMenu(() => setActiveView("menus"))} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-black text-slate-800 hover:bg-slate-100">
-                  <ArrowLeft size={16} /> Back to menu selection
-                </button>
-                <button type="button" onClick={() => requestLeaveCurrentMenu(() => setActiveView("pricing"))} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-black text-slate-800 hover:bg-slate-100">
-                  <DollarSign size={16} /> Pricing table
-                </button>
+              <div className="min-w-0">
+                <h2 className="text-xl font-black">{selectedMenu.name || "Unnamed menu"}</h2>
+                <p className="text-sm font-bold text-slate-600">{selectedMenu.type}</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <button type="button" onClick={() => manualSaveWorkspace("menu")} className="inline-flex items-center gap-2 rounded-lg border border-sky-700 bg-sky-700 px-3 py-1.5 text-sm font-black text-white hover:bg-sky-800">
@@ -2191,7 +2187,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
               </div>
             </section>
 
-            <section data-testid="ssmt-phase-panel" className="grid gap-3 rounded-lg border border-slate-400 bg-slate-950 p-3 text-white shadow-sm lg:grid-cols-[minmax(260px,1fr)_minmax(220px,0.7fr)_minmax(260px,1fr)] lg:items-end">
+            <section data-testid="ssmt-phase-panel" className="grid gap-2 rounded-lg border border-slate-400 bg-slate-950 p-2 text-white shadow-sm lg:grid-cols-[minmax(200px,1fr)_minmax(200px,1fr)_minmax(240px,1.3fr)_auto] lg:items-end">
               <label className="grid gap-1 text-sm font-bold">
                 <span className="text-xs font-black uppercase tracking-[0.16em] text-emerald-200">Current SSMT phase</span>
                 <select value={selectedMenu.phase} onChange={(event) => updateSelectedMenuPhase(event.target.value)} className="rounded-lg border border-emerald-300 bg-white px-3 py-2 text-base font-black text-slate-950">
@@ -2202,7 +2198,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
               </label>
               <div className="rounded-lg border border-white/20 bg-white/10 px-3 py-2">
                 <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-200">Item readiness</p>
-                <p className="mt-1 text-xl font-black">{lockedItemCount} of {selectedItemRows.length} item rows locked</p>
+                <p className="mt-1 text-base font-black">{lockedItemCount} of {selectedItemRows.length} item rows locked</p>
               </div>
               <div className="rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm font-bold leading-5">
                 <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-200">Status</p>
@@ -2210,31 +2206,15 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                 {!allItemRowsLocked && <p className="mt-1 text-amber-200">Lock all item rows before moving to the next phase.</p>}
                 {phaseBlocker && <p role="alert" className="mt-1 text-amber-200">{phaseBlocker}</p>}
               </div>
+                <label className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-black text-amber-950">
+                  <input type="checkbox" checked={Boolean(selectedMenu.editSignal)} onChange={(event) => updateSelectedMenu({ editSignal: event.target.checked, status: event.target.checked ? "Edit / resubmission needed" : selectedMenu.phase })} />
+                  Edit signal
+                </label>
             </section>
 
             <section className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                <div>
-                  <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Menu Record</p>
-                  <h2 className="mt-1 text-2xl font-black">{selectedMenu.name || "Unnamed menu"}</h2>
-                  <p className="mt-1 text-sm font-semibold text-slate-600">{selectedMenu.type} / {selectedMenu.phase} / availability after IT complete</p>
-                </div>
-                <span className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-slate-700">Type: {selectedMenu.type}</span>
-              </div>
-              <div className="mt-3 grid gap-2 md:grid-cols-4">
+              <div aria-label="Menu details" className="grid gap-2 md:grid-cols-2">
                 <label className="grid gap-1 text-sm font-bold text-slate-700">
-                  <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Menu bucket</span>
-                  <select
-                    aria-label="Menu bucket"
-                    value={selectedMenu.hidden || menuIsAutoHibernated(selectedMenu) ? "Hibernated" : selectedMenu.type}
-                    onChange={(event) => (event.target.value === "Hibernated" ? hibernateMenu(selectedMenu.id) : moveMenuToType(selectedMenu.id, event.target.value))}
-                    className="rounded-lg border border-slate-300 bg-white px-3 py-2 font-bold outline-none focus:border-emerald-500"
-                  >
-                    {menuTypes.map((type) => <option key={type} value={type}>{type}</option>)}
-                    <option value="Hibernated">Hibernated</option>
-                  </select>
-                </label>
-                <label className="grid gap-1 text-sm font-bold text-slate-700 md:col-span-2">
                   <span className="flex items-center justify-between gap-2">
                     <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Menu name</span>
                     <button
@@ -2260,6 +2240,18 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                   />
                 </label>
                 <label className="grid gap-1 text-sm font-bold text-slate-700">
+                  <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Menu bucket</span>
+                  <select
+                    aria-label="Menu bucket"
+                    value={selectedMenu.hidden || menuIsAutoHibernated(selectedMenu) ? "Hibernated" : selectedMenu.type}
+                    onChange={(event) => (event.target.value === "Hibernated" ? hibernateMenu(selectedMenu.id) : moveMenuToType(selectedMenu.id, event.target.value))}
+                    className="rounded-lg border border-slate-300 bg-white px-3 py-2 font-bold outline-none focus:border-emerald-500"
+                  >
+                    {menuTypes.map((type) => <option key={type} value={type}>{type}</option>)}
+                    <option value="Hibernated">Hibernated</option>
+                  </select>
+                </label>
+                <label className="grid gap-1 text-sm font-bold text-slate-700">
                   <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Centric menu name</span>
                   <input
                     aria-label="Centric menu name"
@@ -2279,8 +2271,9 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                     className="rounded-lg border border-slate-300 bg-white px-3 py-2 font-bold outline-none focus:border-emerald-500"
                   />
                 </label>
-                {showActiveDates ? (
-                  <>
+                {showActiveDates && (
+                  <section data-testid="ssmt-menu-schedule" className="grid gap-2 rounded-lg border border-purple-200 bg-purple-50 p-2 md:col-span-2 md:grid-cols-3">
+                    <h3 className="text-xs font-black uppercase tracking-[0.16em] text-purple-800 md:col-span-3">{selectedMenu.type === "Promotion" ? "Promotion schedule" : "Active dates"}</h3>
                     <label className="grid gap-1 text-sm font-bold text-slate-700">
                       <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Active start</span>
                       <input type="date" aria-label="Active start" value={selectedMenu.activeStart || ""} onChange={(event) => updateSelectedMenu({ activeStart: event.target.value })} className="rounded-lg border border-slate-300 bg-white px-3 py-2 font-bold" />
@@ -2290,8 +2283,8 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                       <input type="date" aria-label="Active end" value={selectedMenu.activeEnd || ""} onChange={(event) => updateSelectedMenu({ activeEnd: event.target.value })} className="rounded-lg border border-slate-300 bg-white px-3 py-2 font-bold" />
                     </label>
                     {selectedMenu.type === "Promotion" && (
-                      <div className="space-y-4 rounded-xl border-2 border-purple-300 bg-purple-50 p-4 md:col-span-4">
-                        <div className="grid gap-3 md:grid-cols-2">
+                      <div className="contents">
+                        <div className="grid gap-3">
                           <label className="grid gap-1 text-sm font-bold text-purple-950">
                             <span className="text-xs font-black uppercase tracking-[0.14em] text-purple-700">Promotion schedule</span>
                             <select aria-label="Promotion schedule type" value={selectedMenu.promotionSchedule?.mode || "date-range"} onChange={(event) => updatePromotionSchedule({ mode: event.target.value })} className="rounded-lg border border-purple-300 bg-white px-3 py-2 font-black">
@@ -2299,10 +2292,9 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                               <option value="weekly">Repeat on selected weekdays</option>
                             </select>
                           </label>
-                          <p className="rounded-lg border border-purple-200 bg-white px-3 py-2 text-sm font-semibold leading-6 text-purple-950">Schedule settings change only when this promo appears on the calendar. Menu items and modifiers are not changed.</p>
                         </div>
                         {(selectedMenu.promotionSchedule?.mode || "date-range") === "weekly" && (
-                          <div>
+                          <div className="md:col-span-2">
                             <p className="text-xs font-black uppercase tracking-[0.14em] text-purple-700">Repeat every</p>
                             <div className="mt-2 flex flex-wrap gap-2">
                               {PROMOTION_WEEKDAYS.map((weekday) => (
@@ -2314,8 +2306,8 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                             </div>
                           </div>
                         )}
-                        <div>
-                          <p className="text-xs font-black uppercase tracking-[0.14em] text-purple-700">Skipped dates</p>
+                        <details className="self-end rounded-lg border border-purple-200 bg-white p-2">
+                          <summary className="cursor-pointer text-sm font-black text-purple-900">Skipped dates ({(selectedMenu.promotionSchedule?.skippedDates || []).length})</summary>
                           <div className="mt-2 flex flex-wrap items-end gap-2">
                             <label className="grid gap-1 text-sm font-bold text-purple-950">
                               <span>Skip a holiday or exception</span>
@@ -2328,19 +2320,12 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                               <button key={date} type="button" aria-label={`Remove skipped date ${date}`} onClick={() => updatePromotionSchedule({ skippedDates: (selectedMenu.promotionSchedule?.skippedDates || []).filter((value) => value !== date) })} className="rounded-full border border-purple-300 bg-white px-3 py-1 text-xs font-black text-purple-950">{date} ×</button>
                             ))}
                           </div>
-                        </div>
+                        </details>
                       </div>
                     )}
-                  </>
-                ) : (
-                  <div className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-bold leading-6 text-sky-900 md:col-span-2">
-                    Active dates are only required for Promotion and Thompson Hospitality menus.
-                  </div>
+                  </section>
                 )}
-                <label className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-black text-amber-950">
-                  <input type="checkbox" checked={Boolean(selectedMenu.editSignal)} onChange={(event) => updateSelectedMenu({ editSignal: event.target.checked, status: event.target.checked ? "Edit / resubmission needed" : selectedMenu.phase })} />
-                  Edit signal
-                </label>
+
               </div>
               {selectedMenuFlags.length > 0 && (
                 <div className="mt-3 flex flex-col gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-bold text-amber-950 sm:flex-row sm:items-center sm:justify-between">
@@ -2357,21 +2342,26 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
               )}
             </section>
 
+            <section data-testid="ssmt-fixy-setup" aria-label="FIXY setup" className="rounded-lg border border-indigo-300 bg-indigo-50 p-2 shadow-sm">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                  <label className="grid w-full gap-1 text-sm font-black text-indigo-950 sm:max-w-md">FIXY designation<input aria-label="Menu FIXY designation" placeholder="Required for FIXY/import" value={selectedMenu.fixyDesignation || ""} onChange={e=>updateSelectedMenu({fixyDesignation:e.target.value})} className="min-h-11 w-full rounded-lg border border-indigo-300 bg-white px-3 py-2 text-base font-bold text-slate-950" /></label>
+                  <button type="button" className="min-h-11 rounded-lg border-2 border-indigo-700 bg-indigo-700 px-5 py-2 text-sm font-black text-white shadow-sm hover:bg-indigo-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" onClick={()=>{if(!selectedMenu.fixyDesignation?.trim()){setPhaseBlocker("Enter this menu’s FIXY designation before generating.");return;}if(!selectedItemRows.length){setPhaseBlocker("This menu has zero items. Add an item before generating FIXY.");return;}setReusePanel({mode:"fixy",item:selectedItemRows[0]});}}>Generate FIXY</button>
+              </div>
+              {!selectedMenu.fixyDesignation?.trim() && <p className="mt-2 text-sm font-bold text-indigo-900">Enter a FIXY designation before generating FIXY or importing items.</p>}
+            </section>
+
             <section data-testid="ssmt-builder-sections" className="overflow-hidden rounded-lg border border-sky-300 bg-white shadow-sm shadow-sky-100">
-              <div data-testid="ssmt-builder-section-main" className="m-3 flex flex-col gap-2 rounded-lg border border-sky-300 bg-gradient-to-r from-sky-50 to-white p-3 md:flex-row md:items-center md:justify-between">
+              <div data-testid="ssmt-builder-section-main" className="m-2 flex flex-col gap-2 rounded-lg border border-sky-300 bg-gradient-to-r from-sky-50 to-white p-2 md:flex-row md:items-center md:justify-between">
                 <div className="flex items-start gap-3">
                   <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-600 text-white shadow-sm">
                     <ListChecks size={20} />
                   </span>
                   <div>
-                    <p className="text-xs font-black uppercase tracking-[0.2em] text-sky-700">Menu Items</p>
-                    <h2 className="mt-1 text-xl font-black">Main Menu Items <span className="ml-1 text-base text-slate-700">Builder rows</span></h2>
+                    <h2 className="text-xl font-black">Main Menu Items <span className="ml-1 text-base text-slate-700">Builder rows</span></h2>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <label className="text-xs font-bold">FIXY designation<input aria-label="Menu FIXY designation" placeholder="Required for FIXY/import" value={selectedMenu.fixyDesignation || ""} onChange={e=>updateSelectedMenu({fixyDesignation:e.target.value})} className="ml-2 rounded border p-2" /></label>
                   <button type="button" className="rounded border bg-white px-3 py-2 text-sm font-bold" onClick={()=>setReusePanel({mode:"items"})}>Add from Menu</button>
-                  <button type="button" className="rounded border bg-white px-3 py-2 text-sm font-bold" onClick={()=>{if(!selectedMenu.fixyDesignation?.trim()){setPhaseBlocker("Enter this menu’s FIXY designation before generating.");return;}if(!selectedItemRows.length){setPhaseBlocker("This menu has zero items. Add an item before generating FIXY.");return;}setReusePanel({mode:"fixy",item:selectedItemRows[0]});}}>Generate FIXY</button>
                   <button type="button" onClick={addItem} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-black text-slate-800 hover:bg-slate-100">
                     <Plus size={16} /> Add item
                   </button>

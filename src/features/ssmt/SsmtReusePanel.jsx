@@ -56,6 +56,10 @@ export default function SsmtReusePanel({
   const visibleItems = sourceItems.filter(({item}) => `${item.label || item.name || ""} ${item.fohColumn || ""}`.toLowerCase().includes(search.toLowerCase()));
   const readyItems = sourceItems.filter(({item, issue}) => !issue && (allowCopies || !isDuplicateItem(item, menu)));
   const blockedCount = sourceItems.filter(({issue}) => issue).length;
+  const selectedItems = sourceItems.filter(({item}) => selected.includes(item.id));
+  const selectedIssues = selectedItems.filter(({issue}) => issue);
+  const selectedDuplicates = selectedItems.filter(({item}) => !allowCopies && isDuplicateItem(item, menu));
+  const selectedReadyCount = selectedItems.filter(({item, issue}) => !issue && (allowCopies || !isDuplicateItem(item, menu))).length;
   const catalog = useMemo(
     () =>
       mode === "groups"
@@ -102,6 +106,8 @@ export default function SsmtReusePanel({
       if (mode === "items") {
         if (!source || !selected.length)
           throw new Error("Select a source menu and at least one item.");
+        if (selectedIssues.length)
+          throw new Error(selectedIssues.map(({item, issue}) => `${item.label || item.name}: ${issue}`).join(" ") + " No items were imported. Uncheck these items to copy the ready selection, or correct their source menu first.");
         const result = importItems(source, menu, selected, groups, allowCopies);
         if (!result.items.length) throw new Error("Selected items are already in the destination menu. Choose other items or explicitly allow additional copies.");
         setPreview(result);
@@ -205,6 +211,10 @@ export default function SsmtReusePanel({
               <p>Copy items from an IT complete menu into <strong>{menu.name}</strong>. Destination designation: <strong>{menu.fixyDesignation || "Enter it on the destination menu"}</strong>.</p>
               <label className="block font-bold">Search items<input aria-label="Search items" className={input} value={search} onChange={e => setSearch(e.target.value)} placeholder="Item name or FIXY" /></label>
               {source && <p className="text-slate-600">{sourceItems.length} items / {readyItems.length} ready / {selected.length} selected{blockedCount > 0 && ` / ${blockedCount} need source corrections`}</p>}
+              {source && <p role="status" className="font-bold">{selected.length} selected / {selectedReadyCount} ready / {selectedIssues.length} need source corrections / {selectedDuplicates.length} duplicates skipped</p>}
+              {source && <p className="text-slate-600">Select any item to review it. Items with source errors cannot be copied until corrected; uncheck them to copy the ready items. Source menus and modifiers are never changed here.</p>}
+              {selectedIssues.length > 0 && <div className="rounded border border-amber-300 bg-amber-50 p-3"><strong>Source corrections needed before copying</strong>{selectedIssues.map(({item, issue}) => <p key={item.id} className="mt-1">{item.label || item.name}: {issue}</p>)}</div>}
+              {selectedDuplicates.length > 0 && <p className="rounded border border-slate-300 p-3">Skipped duplicates: {selectedDuplicates.map(({item}) => item.label || item.name).join(", ")}. Enable additional copies below to include them.</p>}
             </div>}
             {mode === "groups" && (
               <>
@@ -247,14 +257,14 @@ export default function SsmtReusePanel({
               {mode === "items" ? (
                 <>
                   {source && <div className="mb-3 flex gap-2">
-                    <button className={button} disabled={!readyItems.length} onClick={() => { setSelected(readyItems.map(({item}) => item.id)); setPreview(null); setError(""); }}>Select whole menu</button>
+                    <button className={button} disabled={!readyItems.length} onClick={() => { setSelected(readyItems.map(({item}) => item.id)); setPreview(null); setError(""); }}>Select ready items</button>
                     <button className={button} disabled={!selected.length} onClick={() => { setSelected([]); setPreview(null); setError(""); }}>Clear selection</button>
                   </div>}
                   <div className="grid grid-cols-[minmax(0,1fr)_72px] gap-x-3 border-b pb-2 text-xs font-bold uppercase tracking-wide text-slate-500"><span>Item / FIXY</span><span className="text-right">SEA price</span></div>
                   {visibleItems.map(({item: i, issue}) => {
                     const duplicate = !allowCopies && isDuplicateItem(i, menu);
                     return <label key={i.id} className={`grid grid-cols-[20px_minmax(0,1fr)_72px] items-start gap-x-3 border-b py-3 ${issue || duplicate ? "bg-slate-50 text-slate-500" : "text-slate-900"}`}>
-                      <input className="mt-1" type="checkbox" aria-label={`Import ${i.label || i.name}`} disabled={Boolean(issue) || duplicate} checked={selected.includes(i.id)} onChange={() => toggle(i.id)} />
+                      <input className="mt-1 h-5 w-5 cursor-pointer" type="checkbox" aria-label={`Import ${i.label || i.name}`} checked={selected.includes(i.id)} onChange={() => toggle(i.id)} />
                       <span className="min-w-0"><strong className="block text-sm">{i.label || i.name}</strong><span className="mt-1 block break-words text-xs text-slate-500">{i.fohColumn || "FIXY missing"}</span>
                         {issue && <span className="mt-1 block text-xs text-amber-800">{issue}</span>}
                         {duplicate && <span className="block text-xs">Already in destination / skipped</span>}
