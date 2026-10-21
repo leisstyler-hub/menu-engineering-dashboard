@@ -1,3 +1,7 @@
+﻿## 2026-10-20 - SSMT email password form
+
+Recovery/invitation email links now carry the token hash in a URL fragment, removed before monitoring and held only in module memory. Opening the link displays Set your password without verifying or consuming it; explicit password submission verifies the token, checks active membership and then uses the existing authenticated password endpoint. Expired/revoked links fail closed. Password success remains visible. Matching Supabase recovery/invite templates are prepared for activation after application deployment, with scoped rollback. No email, password, role, workspace or schema mutation used for tests. Solo Chief at Tyler's request; no independent clearance or LIVE claim. Evidence: docs/ssmt/EMAIL_RECOVERY_2026_10_20.md.
+
 ## 2026.10.20.002-ssmt-accounts-reuse ? DEPLOYED
 
 ## 2026-10-20 - SSMT reset email status candidate

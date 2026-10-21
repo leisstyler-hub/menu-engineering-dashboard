@@ -1,4 +1,23 @@
 import {test,expect} from '@playwright/test';
+test('email landing survives scanners and only verifies when a new password is submitted',async({page})=>{
+ const actions=[];
+ await page.route('**/api/**',r=>{
+  if(r.request().method()==='POST')actions.push(r.request().postDataJSON());
+  return r.fulfill({json:{ok:true,enabled:true,member:{id:'isolated',role:'Chef'}}});
+ });
+ for(let scan=0;scan<2;scan++){
+  await page.goto('about:blank');
+  await page.goto('/?ssmt=setup#token_hash=synthetic-recovery-hash&type=recovery');
+  await expect(page.getByRole('heading',{name:'SSMT Set your password'})).toBeVisible();
+  await expect(page.getByLabel('Email',{exact:true})).toHaveCount(0);
+  await expect(page).not.toHaveURL(/synthetic-recovery-hash/);
+  expect(actions).toEqual([]);
+ }
+ await page.getByLabel('New password').fill('Synthetic-password-123');
+ await page.getByRole('button',{name:'Set password',exact:true}).click();
+ await expect.poll(()=>actions).toEqual([{action:'exchange',tokenHash:'synthetic-recovery-hash',type:'recovery'},{action:'password',email:'',password:'Synthetic-password-123'}]);
+ await expect(page.getByText('Password updated.')).toBeVisible();
+});
 for (const hash of ['', '#error=access_denied&error_code=otp_expired']) {
  test(`recovery landing explains unusable link ${hash}`,async({page})=>{
   await page.route('**/api/**',r=>r.fulfill({json:{ok:true,enabled:true}}));

@@ -60,7 +60,17 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true, member: publicMember(member) });
     }
     if (action === "exchange") {
-      const member = await identity(req, req.body.accessToken);
+      let accessToken = req.body.accessToken;
+      if (req.body.tokenHash !== undefined) {
+        const { tokenHash, type } = req.body;
+        if (typeof tokenHash !== "string" || !/^[a-fA-F0-9]{40,128}$/.test(tokenHash) || !["recovery", "invite"].includes(type))
+          throw failure("This password link is invalid.");
+        const session = await service("verify", {
+          method: "POST", body: JSON.stringify({ token_hash: tokenHash, type }),
+        }, true).catch(() => { throw failure("This password link is expired or already used. Request a new email.", 401); });
+        accessToken = session?.access_token;
+      }
+      const member = await identity(req, accessToken);
       sessionCookie(res, member.token, 900);
       return res.status(200).json({ ok: true, member: publicMember(member) });
     }

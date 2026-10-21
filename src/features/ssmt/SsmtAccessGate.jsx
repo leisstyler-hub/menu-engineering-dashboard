@@ -1,6 +1,7 @@
 import { useSsmtDialog } from "./ssmtDialog.js";
 import {
   getSsmtRedirectToken,
+  getSsmtRecovery,
   clearSsmtRedirectToken,
 } from "./ssmtAuthRedirect.js";
 import React, { useEffect, useState } from "react";
@@ -28,6 +29,12 @@ export default function SsmtAccessGate({ children, onBack }) {
           return;
         }
         const accessToken = getSsmtRedirectToken();
+        if (getSsmtRecovery()) {
+          // Opening the email must not consume its token before password submission.
+          setSetup(true);
+          setState("ready");
+          return;
+        }
         if (accessToken) {
           window.history.replaceState(
             null,
@@ -90,6 +97,12 @@ export default function SsmtAccessGate({ children, onBack }) {
     setBusy(true);
     setMessage("");
     try {
+      const recoveryLink = getSsmtRecovery();
+      if (action === "password" && recoveryLink) {
+        const session = await ssmtRequest("exchange", recoveryLink);
+        clearSsmtRedirectToken();
+        setMember(session.member);
+      }
       const result = await ssmtRequest(action, { email, password });
       setPassword("");
       if (action === "login") {
@@ -206,6 +219,7 @@ export default function SsmtAccessGate({ children, onBack }) {
           Sign out
         </button>
       </div>
+      {message && <p role="status" className="px-4 py-2 text-sm">{message}</p>}
       {children(member)}
       {panel && <AccountPanel type={panel} onClose={() => setPanel("")} />}
     </>
