@@ -69,7 +69,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
     if (action === "reset") {
-      const email = String(req.body.email || "");
+      const email = String(req.body.email || "").trim().toLowerCase();
       if (email.length > 320 || !email.includes("@"))
         throw failure("Enter your invited email address.");
       // Generic response prevents account enumeration; Supabase applies recovery throttling.
@@ -81,11 +81,18 @@ export default async function handler(req, res) {
           `recover?redirect_to=${encodeURIComponent(`${process.env.SSMT_APP_ORIGIN}/?ssmt=setup`)}`,
           { method: "POST", body: JSON.stringify({ email }) },
           true,
-        ).catch(() => {});
+        ).catch((error) => {
+          throw failure(
+            error.statusCode === 429
+              ? "Password reset is temporarily rate limited. Please wait before requesting another email."
+              : "Password reset email is temporarily unavailable. Please try again later.",
+            error.statusCode === 429 ? 429 : 503,
+          );
+        });
       return res.status(200).json({
         ok: true,
         message:
-          "If the address is registered, a password-reset email will arrive.",
+          "If the address is registered, a password-reset email has been requested. Check your inbox and spam folder; delivery may be delayed.",
       });
     }
     if (action === "calendar") {

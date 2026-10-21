@@ -15,3 +15,14 @@ Rollback: previous production dpl_ExgMeMnaxroZU6mkHVTju2eeUtBD / 9776ad7. Keep a
 State before publish: IMPLEMENTED and locally verified. Real-user recovery completion is pending. Do not label LIVE without the required independent clearance.
 
 Deployment: application 8be2aa2fb0a4b6dcf760656b183f115a169da139, dpl_4BKZTfZtiRAhaBDXPJksdHE69nby READY, production alias confirmed by Vercel. Four deployed-bundle recovery checks passed with all API requests intercepted. Actual production GET status and expired-link screen verified separately with all mutations blocked; screenshot WORK_LOGS/SSMT_RECOVERY_PRODUCTION_2026_10_20.png. No real password or email was used by verification. State DEPLOYED; solo execution, independent clearance and real-user success pending.
+
+
+## Follow-up: missing email report
+
+Tyler event fe80df43401b7fe1a16272ed9775baf2756ac4f4adfcaeac33ae2d6029f0b3f5: newest email not received. Read-only existing-account checks confirmed active membership and normalized email; last recorded send initially 02:27:34Z. One requested direct recovery retry returned 200 and advanced recovery_sent_at to 2026-10-21T02:48:56.497898Z. Inbox delivery not verified. last_sign_in_at advanced to 02:49:03Z; email scanner is a hypothesis, not an established cause. Available auth audit query returned no entries. No account/password/role changes or operational writes were made.
+
+Confirmed API defect: recover errors were discarded by catch(() => {}), so provider failure returned success. Failing isolated test reproduced this path; correction normalizes email once and returns bounded 429/503 recovery failure messages. Unknown addresses retain generic replies and do not trigger recovery. Test cases cover normalized email, rate limiting, provider outage, acceptance and unregistered address. No credentials or links retained in test artifacts.
+
+Official references: https://supabase.com/docs/guides/auth/auth-smtp documents built-in mail limits and best-effort delivery. https://supabase.com/docs/guides/auth/auth-email-templates documents link-prefetch consumption. Neither establishes the cause of this account's missing email; no SMTP/template/security-policy change is authorized or made by this correction.
+
+Follow-up validation: original isolated test failed on unnormalized email/provider error suppression; 14/14 final domain/API tests passed, 13/13 affected recovery/accounts browser checks passed, full npm run verify including build passed. Source base d8362e2; only API reset branch, version and records changed; no schema/auth-policy/menu changes. Rollback d8362e2 retains the dedicated recovery screen. Solo review, no independent clearance.

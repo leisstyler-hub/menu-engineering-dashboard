@@ -1,5 +1,9 @@
 ## 2026.10.20.002-ssmt-accounts-reuse ? DEPLOYED
 
+## 2026-10-20 - SSMT reset email status candidate
+
+- Report recovery provider rate limits/outages instead of silently promising an email; normalize submitted email consistently. Candidate only; no delivery-success claim.
+
 ## 2026-10-20 - SSMT password recovery correction
 
 - Unusable email reset links explain the recovery failure and offer a fresh reset email without asking for an old password. Valid recovery links still open password setup; redirect errors are removed before monitoring. Deployed application 8be2aa2; 4/4 intercepted production recovery tests and actual production expired-link screen verified. 44/44 affected browser checks and package verification passed; real-user confirmation and independent clearance pending.
