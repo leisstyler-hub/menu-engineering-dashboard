@@ -11,3 +11,9 @@ Verification: new server regression initially failed before implementation; brow
 Activation order: deploy compatible app first; check production behavior with synthetic tokens and intercepted auth writes; then apply only recovery/invite template fields and read them back. Preserve original template fields in WORK_LOGS/SSMT_EMAIL_TEMPLATE_ROLLBACK_2026_10_20.json. No real recovery email is sent while rate limited. Existing consumed links cannot be restored; the user needs a fresh email after the provider cooldown. Actual inbox and password completion remain unverified.
 
 Rollback: restore both template fields first, then revert this application change to 60a40a4. Preserve all account/data guards and canonical workspace. No production-data rollback is needed because no operational data is written.
+
+## Executed release
+
+Application 2742fc75b6ab0bc07fd4d7a06a177278b16622a8 pushed after full verification; production deployment dpl_DqkgrUo16jmFKXsrR2W3V84YV4FZ READY with project-d8v25.vercel.app alias. Exact-commit domain/API rerun 15/15, local affected browser 14/14, final recovery browser 5/5 and intercepted production recovery 5/5. Actual production-status browser confirms password form/no email field, credentials removed and zero non-GET calls; screenshot WORK_LOGS/SSMT_EMAIL_PASSWORD_FORM_2026_10_20.png. Recovery/invite template PATCH then independent GET readback passed; allowlist, site URL, mail limit, SMTP, expiry and signup configuration unchanged. Scoped original-template backup WORK_LOGS/SSMT_EMAIL_TEMPLATE_ROLLBACK_2026_10_20.json. No real mail send or account/password/menu mutation. State DEPLOYED, actual inbox/password completion pending, no independent clearance or LIVE claim.
+
+Source reference: https://supabase.com/docs/guides/auth/auth-email-templates documents TokenHash, template Management API and mail-prefetch risks. Production auth config and timestamps were read directly; scanner attribution remains an inference.
