@@ -29,3 +29,7 @@ Full `npm run verify` passed on base HEAD `92fa416` plus this candidate: 20 serv
 Fresh-frame self-review confirmed no source mutation, no classification invention, exact MRN/price preservation, fail-closed missing group resolution, and shared UI/domain preflight. `git diff --check` passed. Only approved source/test/version/docs files are staged. Previous untracked scratch files remain untouched. No independent clearance is claimed; no production activity occurred.
 
 Picker screenshot: https://culinarytools.communities.buzz.xyz/media/6035a0495200fde4216170f3013d66c9eb9a9666925d4e2a9d47a35c34a404f0.png
+
+## Production authorization
+
+Tyler explicitly approved deployment at event `37777ddc0b9942cccd172e0fff07b9e8ed7cedd1be28eab071a29ae7faf169ea`, 2026-10-21T05:16:14Z. Changelog location confirmed in src/app/LandingPage.jsx: desktop Latest Changelog and mobile Changelog. Its parser accepts bullet entries only; added the concise missing bullet for this correction so the app can display it. Existing detailed record remains.
