@@ -15,7 +15,8 @@ export default function SsmtAccessGate({ children, onBack }) {
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false),
     [setup, setSetup] = useState(false),
-    [panel, setPanel] = useState("");
+    [panel, setPanel] = useState(""),
+    [recovery, setRecovery] = useState(() => new URLSearchParams(window.location.search).get("ssmt") === "setup");
   useEffect(() => {
     let active = true;
     (async () => {
@@ -33,13 +34,31 @@ export default function SsmtAccessGate({ children, onBack }) {
             "",
             `${window.location.pathname}${window.location.search}`,
           );
-          const result = await ssmtRequest("exchange", { accessToken });
+          let result;
+          try {
+            result = await ssmtRequest("exchange", { accessToken });
+          } catch (error) {
+            clearSsmtRedirectToken();
+            if (active) {
+              setRecovery(true);
+              setState("login");
+              setMessage(error.status === 401 || error.status === 403
+                ? "This reset link is expired or already used. Enter your email to request a new reset email."
+                : "The reset link could not be verified. Please try again or request a new reset email.");
+            }
+            return;
+          }
           clearSsmtRedirectToken();
           if (active) {
             setMember(result.member);
             setSetup(true);
             setState("ready");
           }
+          return;
+        }
+        if (recovery) {
+          setState("login");
+          setMessage("This reset link is expired, already used, or incomplete. Enter your email to request a new reset email, then open the newest link.");
           return;
         }
         try {
@@ -58,7 +77,7 @@ export default function SsmtAccessGate({ children, onBack }) {
         if (active) {
           setState("error");
           setMessage(
-            "SSMT account status could not be verified. Reload to retry.",
+            "SSMT access could not be verified. If you opened a reset email, request a new link from the sign-in screen.",
           );
         }
       }
@@ -94,7 +113,7 @@ export default function SsmtAccessGate({ children, onBack }) {
           Back to Platform
         </button>
         <h1 className="text-2xl font-black">
-          SSMT {setup ? "Set your password" : "Sign in"}
+          SSMT {setup ? "Set your password" : recovery ? "Reset your password" : "Sign in"}
         </h1>
         <p>
           Invite-only individual access. The rest of Culinary Tools remains
@@ -107,7 +126,7 @@ export default function SsmtAccessGate({ children, onBack }) {
             className="space-y-3"
             onSubmit={(e) => {
               e.preventDefault();
-              act(setup ? "password" : "login");
+              act(setup ? "password" : recovery ? "reset" : "login");
             }}
           >
             {!setup && (
@@ -123,7 +142,7 @@ export default function SsmtAccessGate({ children, onBack }) {
                 />
               </label>
             )}
-            <label className="block">
+            {(!recovery || setup) && <label className="block">
               {setup ? "New password" : "Password"}
               <input
                 className={`${cls} block w-full`}
@@ -134,18 +153,18 @@ export default function SsmtAccessGate({ children, onBack }) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
-            </label>
+            </label>}
             <button className={cls} disabled={busy}>
-              {setup ? "Set password" : "Sign in to SSMT"}
+              {setup ? "Set password" : recovery ? "Send new reset email" : "Sign in to SSMT"}
             </button>
             {!setup && (
               <button
                 className={cls}
                 type="button"
                 disabled={busy}
-                onClick={() => act("reset")}
+                onClick={() => recovery ? setRecovery(false) : act("reset")}
               >
-                Reset password
+                {recovery ? "Back to sign in" : "Reset password"}
               </button>
             )}
           </form>

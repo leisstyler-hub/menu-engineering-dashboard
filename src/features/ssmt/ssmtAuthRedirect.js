@@ -5,7 +5,8 @@ export function captureSsmtAuthRedirect(location, history) {
   if (query.get("ssmt") !== "setup") return;
   const fragment = new URLSearchParams(location.hash.slice(1));
   pendingToken = fragment.get("access_token") || "";
-  if (pendingToken)
+  // Recovery errors must not remain in the URL or silently turn into login.
+  if (location.hash)
     history.replaceState(null, "", `${location.pathname}${location.search}`);
 }
 export const getSsmtRedirectToken = () => pendingToken;
