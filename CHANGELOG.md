@@ -1,6 +1,6 @@
-## 2026-10-22 - Andes documented weight reconciliation candidate
+## 2026-10-22 - Andes documented weight reconciliation
 
-- [Oct 22, 12:01 PM] Corrected missing-weight handling in the Andes deep dive and exports using trusted shared item mass with exact MRN and matching portion. Costs remain labeled recipe snapshot values. Version `2026.10.22.002-andes-weight-reconciliation`; COMMITTED, not deployed. All 14 Menu Engineering browser checks and model guards pass. Full package gate remains blocked by unchanged stale catalog/lookup checks. Evidence: docs/ANDES_WEIGHT_RECONCILIATION_2026_10_22.md.
+- [Oct 22, 12:01 PM] Corrected missing-weight handling in the Andes deep dive and exports using trusted shared item mass with exact MRN and matching portion. Costs remain labeled recipe snapshot values. Version `2026.10.22.002-andes-weight-reconciliation`; PRODUCTION VERIFIED at 93229dc / dpl_9ETW4wHNZiP3exG8hgncXoP9AAQs. Full package/build and local/production Menu Engineering suites 14/14 pass. Actual Arroz/Plantains stored weights verified; eight unmatched nested variants remain unresolved. Generated checks normalize CRLF/LF without content changes. Solo Chief, no independent/Scribe LIVE sign-off. Evidence: docs/ANDES_WEIGHT_RECONCILIATION_2026_10_22.md.
 
 ## 2026-10-22 - Menu Engineering path choices
 

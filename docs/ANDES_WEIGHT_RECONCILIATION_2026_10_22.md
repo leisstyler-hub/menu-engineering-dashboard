@@ -16,3 +16,14 @@ State: COMMITTED, not deployed. Deployment blocked by package gates per RELEASE_
 ## Release continuation
 
 Tyler requested completion in event c382e4c04e4ed8382cd12448a976a5a5fe377657b18d096b8fea851923746004. Both stale-file errors were solely CRLF/LF differences: regeneration of both outputs produced zero Git content diff. The two generator check comparisons now normalize CRLF to LF, still detecting content drift. No catalog, ingredient prices or operational source content changed. Earlier blocking assessment is superseded after the full package rerun passes. Release target remains the existing project-d8v25 production app; rollback deployment dpl_DsdP2wkKAokc15BQZPmRSpXenDdS at 853d85c.
+
+
+## Production verification
+
+Released application/check commits 8ced06b + 93229dc (production SHA 93229dc7f35528541264d530238e6efc66b06a4b), version 2026.10.22.002-andes-weight-reconciliation. Full publisher package verification/build passed at this exact head, local Menu Engineering suite 14/14. Vercel dpl_9ETW4wHNZiP3exG8hgncXoP9AAQs READY for production; canonical asset /assets/index-DYOdWJg8.js has exact version. Settled production suite 14/14; initial run had one mobile path-navigation timeout (13/14), stable rerun passed without code changes.
+
+Real production browser at 2026-10-22T19:17:05.184Z verified Arroz Chaufa 6.6 oz and Fried Plantains 4.186 oz with Shared item data labels and parent status no longer Needs weight; all 19 dishes rendered. Desktop/mobile containment checked, zero page errors/operational writes. Evidence docs/ANDES_WEIGHT_PRODUCTION.json; screenshots/logs workspace .scratch/ANDES_WEIGHT_PRODUCTION_DESKTOP.png, ANDES_WEIGHT_PRODUCTION_MOBILE.png, ANDES_WEIGHT_LIVE_ACTUAL.log, ANDES_WEIGHT_LIVE_BROWSER_FINAL.log, ANDES_WEIGHT_PUBLISH.log. PowerShell legacy live-version polling has TLS receive failures; direct Node version check and real browser verification succeeded independently.
+
+State: PRODUCTION VERIFIED. Solo execution, no independent Reviewer/Verifier/Scribe LIVE sign-off. Eight unmatched nested subrecipe variants still need documented mass. Rollback restore dpl_DsdP2wkKAokc15BQZPmRSpXenDdS or revert app 8ced06b. No data migration or rollback.
+
+Timing: original fix request 18:56:40Z, initial app commit 19:01:21Z; completion request 19:13:09Z, production deployment created 19:16:14Z, real production proof 19:17:05Z, stable browser suite completed around 19:17:40Z. Earlier delay: line-ending failures were misclassified as stale data; regenerated output showed no Git content changes. No additional admin files were needed.
