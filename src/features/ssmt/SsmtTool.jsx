@@ -2804,7 +2804,6 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                   </span>
                   <label className="grid gap-1">
                     <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Modifier group name</span>
-                    <label className="block text-xs">Shared search alias<input aria-label={`Shared alias for ${group.name}`} value={group.alias || ""} readOnly={Boolean(group.lockedForCentric)} onChange={e=>updateModifierGroupDraft(group.id,{alias:e.target.value})} onBlur={e=>updateModifierGroup(group.id,{alias:e.target.value})} className="ml-2 rounded border bg-white px-2 py-1" /></label>
                     <input
                       aria-label="Modifier group name"
                       value={group.name}

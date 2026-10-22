@@ -1,5 +1,9 @@
 PRODUCTION VERIFIED: Pairwise expansion 2026.10.21.003-pairwise-expand, app daac2c0, deployment dpl_H9fhy2AotthBEPiBqktNN6BSmQAv READY. Full verify and local/production browser suites 21/21 passed. Chief solo release per Tyler; no independent final Scribe sign-off. Source: docs/PAIRWISE_EXPANSION_2026_10_21.md.
 
+## 2026-10-21 - Remove modifier search alias
+
+- [Oct 21, 9:36 PM] Removed Shared search alias from modifier editing and loading; search by group name. Existing saved data is retained. Solo Chief release; evidence: docs/ssmt/REMOVE_MODIFIER_ALIAS_2026_10_21.md.
+
 ## 2026-10-21 - Pairwise Matrix browser expansion
 
 - [Oct 21, 7:32 PM] Expanded Pairwise Matrix with Expand / Restore, readable cells and scrollable pair details on laptop, mobile and wide screens.

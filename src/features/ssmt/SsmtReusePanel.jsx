@@ -83,7 +83,7 @@ export default function SsmtReusePanel({
       (c) =>
         (!sourceId || c.menu.id === sourceId) &&
         (!sourceItemId || c.item.id === sourceItemId) &&
-        `${c.group.name} ${c.group.alias || ""}`
+        c.group.name
           .toLowerCase()
           .includes(search.toLowerCase()),
     )
@@ -241,7 +241,7 @@ export default function SsmtReusePanel({
                   </select>
                 </label>
                 <label className="block">
-                  Search group name or shared alias
+                  Search group name
                   <input
                     className={input}
                     value={search}
@@ -283,7 +283,6 @@ export default function SsmtReusePanel({
                       onChange={() => toggle(c.group.id)}
                     />{" "}
                     <strong>{c.group.name}</strong>{" "}
-                    {c.group.alias && `(${c.group.alias})`}
                     <span className="block text-sm">
                       {c.menu.name} / {c.item.label || c.item.name} •{" "}
                       {c.group.type} • min {c.group.minQty || "blank"} / max{" "}

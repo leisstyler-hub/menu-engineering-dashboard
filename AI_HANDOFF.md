@@ -1,3 +1,5 @@
+COMMITTED CANDIDATE: 2026.10.21.004-ssmt-remove-alias removes modifier shared alias controls/display/search without deleting stored data. Solo Chief per Tyler; full package verification and all 50 affected browser checks passed; deployment pending. See docs/ssmt/REMOVE_MODIFIER_ALIAS_2026_10_21.md.
+
 PRODUCTION VERIFIED: Pairwise expansion 2026.10.21.003-pairwise-expand, app daac2c0, deployment dpl_H9fhy2AotthBEPiBqktNN6BSmQAv READY. Full verify and local/production browser suites 21/21 passed. Chief solo release per Tyler; no independent final Scribe sign-off. Source: docs/PAIRWISE_EXPANSION_2026_10_21.md.
 
 Pairwise release candidate: 2026.10.21.003-pairwise-expand. Approved Expand / Restore design, keyboard containment and responsive detail scrolling; candidate 4911b8a independently reviewed and verified. Chief solo publish per Tyler; integrated current origin/main f47bdf6 without conflicts. Production verification completed; see docs/PAIRWISE_EXPANSION_2026_10_21.md. Evidence: docs/PAIRWISE_EXPANSION_2026_10_21.md.

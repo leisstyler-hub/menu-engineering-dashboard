@@ -311,10 +311,11 @@ test("FIXY preview requires explicit facts and applies only after confirmation",
   await dialog.getByRole("button", { name: "Apply FIXY" }).click();
   await expect(dialog).toHaveCount(0);
 });
-test("modifier loader works on a new item using shared alias search", async ({
+test("modifier loader uses group names and preserves all saved data without alias controls", async ({
   page,
 }) => {
-  await isolated(page);
+  const fixture = await isolated(page);
+  const before = structuredClone(fixture.getWorkspace());
   await openTarget(page);
   await page.getByRole("button", { name: "Add item", exact: true }).click();
   await page.getByRole("button", { name: /View modifiers Mods \(0\)/ }).click();
@@ -325,7 +326,11 @@ test("modifier loader works on a new item using shared alias search", async ({
     name: "Load Modifier Groups",
     exact: true,
   });
-  await dialog.getByLabel("Search group name or shared alias").fill("BREADS");
+  await dialog.getByLabel("Search group name").fill("Bread");
+  await dialog.getByLabel("Search group name").fill("BREADS");
+  await expect(dialog.getByText("Source Menu / Smash Burger", { exact: false })).toHaveCount(0);
+  await dialog.getByLabel("Search group name").fill("Bread");
+  await expect(dialog).not.toContainText("BREADS");
   await expect(dialog).toContainText("Source Menu / Smash Burger");
   await dialog.getByRole("checkbox").first().check();
   await dialog.getByRole("button", { name: "Preview copies" }).click();
@@ -335,6 +340,16 @@ test("modifier loader works on a new item using shared alias search", async ({
       .getByRole("dialog", { name: "Modifier detail" })
       .getByLabel("Modifier group name", { exact: true }),
   ).toHaveValue("Bread");
+  await expect(page.getByLabel(/Shared alias for/)).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Save SSMT workspace", exact: true }).click();
+  await expect.poll(() => fixture.saves.length).toBe(1);
+  const after = fixture.getWorkspace();
+  expect(after.modifierGroups.find(g => g.id === "bread")).toEqual(before.modifierGroups[0]);
+  expect(after.menus[0]).toEqual(before.menus[0]);
+  expect(after.priceBook).toEqual(before.priceBook);
+  expect(after.modifierGroups).toHaveLength(2);
+  expect(after.menus[1].items).toHaveLength(1);
 });
 test("Experience only sees descriptions/handoff and a failed shared load cannot save", async ({
   page,
@@ -463,7 +478,7 @@ test("SSMT account controls and import preview stay contained on a phone", async
   await expect(dialog).toHaveCount(0);
 });
 
-test("modifier selections survive typing a different alias", async ({
+test("modifier selections survive typing a different group name", async ({
   page,
 }) => {
   await isolated(page, { extraGroups: true });
@@ -477,9 +492,9 @@ test("modifier selections survive typing a different alias", async ({
     name: "Load Modifier Groups",
     exact: true,
   });
-  await dialog.getByLabel("Search group name or shared alias").fill("BREADS");
+  await dialog.getByLabel("Search group name").fill("Bread");
   await dialog.getByRole("checkbox").first().check();
-  await dialog.getByLabel("Search group name or shared alias").fill("CHEESE");
+  await dialog.getByLabel("Search group name").fill("CHEESE");
   await dialog.getByRole("checkbox").first().check();
   await dialog.getByRole("button", { name: "Preview copies" }).click();
   await expect(dialog).toContainText("2 independent modifier groups");

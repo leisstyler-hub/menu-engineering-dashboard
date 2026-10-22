@@ -355,3 +355,8 @@ Reasoning: a clear reading order and adjacent designation/generator make complet
 ## Pairwise browser expansion — 2026-10-21
 
 Status: Approved. Requesting/Approving Admin and Admin of Record: Tyler (Buzz 12fc010ae7314bd1bf75d7a74c296a93629c12a464ba2aaa406fee08a57d794d), approval 5756314d1d524d953b7cde8a7597a3a1f605fbc236e19d08a5a99455d869a674. Use available width and an Expand / Restore viewport workspace, preserving 44px cells, matrix grouping/scoring, accessible pair details, keyboard safety and Overview. Expanded mode may omit explanatory copy/summary to prioritize matrix space; normal view retains them. Below 1536px use bounded scrolling for matrix/details. Dynamic menu-index integration is separate and remains unapproved. Revisit if field usability requires it; source authority is unchanged.
+
+
+## SSMT-2026-10-21-ALIAS - Remove shared modifier search alias
+
+Approved by Tyler (Requesting/Approving Admin and Admin of Record), 2026-10-22T04:34:07Z, Buzz event 1f92341e601165ba0bad13852d4c84eb6637c5f508f58ed8fc0fdab1c48fcff2. Remove alias editing, display and search; retain group-name search and all stored data, including inert legacy alias properties. Supersedes only the shared-alias portion of SSMT-2026-10-20. Deleting legacy values or changing other modifier behavior is outside scope. Revisit with explicit Admin approval. Evidence: docs/ssmt/REMOVE_MODIFIER_ALIAS_2026_10_21.md.
