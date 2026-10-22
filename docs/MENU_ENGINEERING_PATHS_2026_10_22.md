@@ -10,4 +10,15 @@ Local verification: new 390px/1440px acceptance tests failed on baseline for abs
 
 Clean-frame self-review: diff changes only initial view state, choice cards, view guards and return navigation; matrix and W&P implementations unmodified. Button semantics, keyboard focus, geometry and both returns checked. No independent review/sign-off under solo instruction.
 
-Production evidence pending.
+## Release evidence
+
+App commit: 112b8c93980d1dc4a22db50db021f12eae8da57c. Full feature suite at committed HEAD passed 13/13 (8.9s). Remaining package commands after stale lookup all passed including build (FAILED_CHECKS []). Full package gate is not green due to two unchanged stale generated references.
+
+Published main with GitHub CLI token auth in memory, OpenSSL and secret redaction after normal push stalled. Attribution inspected: Chief runtime identity, no invented human/coauthor trailers. Production dpl_4G5MPZ3QNSAaUyP3exqJoBAWDSCF is READY at exact SHA and canonical alias. Asset /assets/index-K9Gmxypj.js has exact version. Actual-data browser: 54 W&P menus, both matrix modes/returns, mobile/desktop screenshots, zero page errors/overflow; non-GET API blocked (only traffic analytics attempted). See MENU_ENGINEERING_PATHS_PRODUCTION.json and production screenshots.
+
+Initial production suite started during alias transition: first case saw preceding screen (12 passed/1 failed). Stable production rerun passed 13/13 (10.7s), no app changes required.
+
+State: PRODUCTION VERIFIED. Solo Chief per Tyler; no independent reviewer/verifier or Scribe LIVE sign-off claimed. Rollback: revert 112b8c9 to baseline 87383d3 / prior READY dpl_8aqFAt3nd2UdFqUhELKa3D1YExN1, then check prior version.
+
+Timing UTC: request 17:43:21; pickup immediately; first app commit 17:50:13; publish about 17:51; Vercel created 17:51:16.808, READY 17:51:41.913; actual production proof 17:52:02.738; fixture proof completed about 17:53. No independent clearance under solo instruction. Delays: Windows argument forwarding, early server readiness, stale generated references and credential stall. Final records reconciled afterward.
+
