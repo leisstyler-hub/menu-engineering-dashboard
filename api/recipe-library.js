@@ -8,7 +8,7 @@ import { SSMT_WORKSPACE_RECORD_ID, workspaceFromRecord } from "../src/features/s
 const DEFAULT_SUPABASE_URL = "https://pzilyzqhatthctgsjwtt.supabase.co";
 const SUPABASE_BATCH_SIZE = 250;
 const SUPABASE_READ_PAGE_SIZE = 1000;
-const DEFAULT_SUPABASE_TIMEOUT_MS = 8000;
+const DEFAULT_SUPABASE_TIMEOUT_MS = 15000;
 const SSMT_WORKSPACE_ENCODING = "gzip-base64-json-v1";
 // SSMT is meant to eventually author Menu Library directly, but that wiring is not yet
 // authorized (Tyler, 2026-09-04 and reaffirmed 2026-09-16): SSMT should not populate Menu
@@ -304,7 +304,7 @@ async function loadSupabaseRecipeRows() {
     const rows = [];
     for (let offset = 0; offset < 50000; offset += SUPABASE_READ_PAGE_SIZE) {
       const params = new URLSearchParams({
-        select: "*",
+        select: "item_key,source_row_id,source_system,source_payload",
         visible_in_library: "eq.true",
         order: "menu.asc,station.asc,display_name.asc",
       });
@@ -314,7 +314,16 @@ async function loadSupabaseRecipeRows() {
           Range: `${offset}-${offset + SUPABASE_READ_PAGE_SIZE - 1}`,
         },
       });
-      const pageRows = Array.isArray(page) ? page : [];
+      let pageRows = Array.isArray(page) ? page : [];
+      // Current imports carry the complete row in source_payload. Avoid transferring
+      // duplicated raw/normalized columns; retain full-column compatibility for legacy rows.
+      if (pageRows.some((row) => !row.source_payload || !Object.keys(row.source_payload).length)) {
+        params.set("select", "*");
+        const legacyPage = await supabaseFetch(`recipe_items?${params.toString()}`, {
+          headers: { "Range-Unit": "items", Range: `${offset}-${offset + SUPABASE_READ_PAGE_SIZE - 1}` },
+        });
+        pageRows = Array.isArray(legacyPage) ? legacyPage : [];
+      }
       rows.push(...pageRows);
       if (pageRows.length < SUPABASE_READ_PAGE_SIZE) break;
     }
@@ -577,6 +586,7 @@ async function handleGet(req, res) {
     ENABLE_SSMT_MENU_LIBRARY_SYNC ? loadSsmtOperatingRows() : Promise.resolve({ ok: true, rows: [], message: "" }),
   ]);
   const usesSupabaseRows = supabaseRead.ok && supabaseRead.rows.length;
+  if (!usesSupabaseRows) res.setHeader("Cache-Control", "private, no-store");
   const baseRows = usesSupabaseRows ? supabaseRead.rows : await loadMenuWorksFallbackRows();
   const rows = ssmtRead.rows.length ? mergeSsmtRowsWithMenuWorksRows(baseRows, ssmtRead.rows) : baseRows;
   const sourceBase = usesSupabaseRows ? supabaseRead.source : "server-menuworks-json";

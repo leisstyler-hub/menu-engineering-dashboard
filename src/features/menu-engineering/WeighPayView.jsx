@@ -34,7 +34,7 @@ export default function WeighPayView() {
   useEffect(() => {
     const controller = new AbortController();
     let active = true;
-    const timeout = setTimeout(() => controller.abort(), 20000);
+    const timeout = setTimeout(() => controller.abort(), 45000);
     setData({ state: 'loading', rows: [], source: '', loadedAt: '', message: '' });
     setOverrides({}); setEditing(false);
     fetch('/api/recipe-library?scope=all', { cache: 'no-store', signal: controller.signal })
