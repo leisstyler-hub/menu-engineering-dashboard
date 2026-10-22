@@ -2,21 +2,25 @@ const readJson = (response) => response.json().catch(() => ({}));
 const normalize = (value) => String(value ?? "").normalize("NFKC").trim().replace(/\s+/g, " ").toLocaleLowerCase("en-US");
 const catalogId = (row) => [row.menu, row.item || row.displayName || row.recipeName, row.mrn, row.portion].map(normalize).join("|");
 
-export async function refreshTransferCatalogCosts(catalogItems = []) {
+export async function refreshTransferCatalogCosts() {
   const response = await fetch("/api/recipe-library?scope=all");
   const payload = await readJson(response);
   if (!response.ok || payload.ok === false || !Array.isArray(payload.rows)) throw new Error(payload.message || "Live Item + Waste Cost refresh is unavailable.");
-  const currentCosts = new Map();
+  if (!String(payload.source || "").startsWith("supabase-recipe-items")) throw new Error("Shared Supabase menu catalog is unavailable. Retry before creating a transfer.");
+  const unique = new Map();
   payload.rows.forEach((row) => {
+    const menu = String(row.menu || "").trim(), item = String(row.item || row.displayName || row.recipeName || "").trim();
+    if (!menu || !item) return;
     const value = row.trueCost;
-    if (value !== null && value !== undefined && value !== "" && Number.isFinite(Number(value))) currentCosts.set(catalogId(row), Number(value));
+    const cost = value !== null && value !== undefined && value !== "" && Number.isFinite(Number(value)) && Number(value) >= 0 ? Number(value) : null;
+    const id = catalogId(row);
+    const entry = { id, menu, item, mrn: String(row.mrn ?? ""), portion: String(row.portion || ""), itemWasteCost: cost };
+    const previous = unique.get(id);
+    if (previous && previous.itemWasteCost !== cost) entry.itemWasteCost = null;
+    unique.set(id, entry);
   });
-  let refreshed = 0;
-  const items = catalogItems.map((item) => {
-    if (!currentCosts.has(item.id)) return { ...item, itemWasteCost: null };
-    refreshed += 1;
-    return { ...item, itemWasteCost: currentCosts.get(item.id) };
-  });
+  const items = [...unique.values()].sort((a,b) => a.menu.localeCompare(b.menu) || a.item.localeCompare(b.item));
+  const refreshed = items.filter(item => item.itemWasteCost !== null).length;
   return { items, refreshed, source: payload.source || "Menu Library API" };
 }
 

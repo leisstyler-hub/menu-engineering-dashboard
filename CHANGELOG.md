@@ -1,3 +1,7 @@
+## 2026-10-22 - All-menu W&P component views and shared Transfer catalog
+
+- [Oct 22, 2:20 PM] IMPLEMENTED candidate 2026.10.22.004-shared-catalog-wp-menus: all menus receive component cards/charts/filters/exports; Transfer selectors use shared catalog membership. Source values, exact IDs and history preserved; unresolved economics stay explicit. No production writes or deployment. Solo Chief, no independent clearance. Evidence/release limits: docs/SHARED_CATALOG_WP_2026_10_22.md.
+
 ## 2026-10-22 - Complete shared index and Balti W&P
 
 - [Oct 22, 12:43 PM] Refreshed shared catalog from the complete menu-specific report: 1693 variants / 53 menus, exact MRNs and weights verified with backups. Added Balti bounded dish/component economics and brand export: 45 top-level dishes / 251 variants. Version 2026.10.22.003-menu-index-balti-guidance. Full package/build and local suite 15/15 passed; app PRODUCTION VERIFIED at 1060d53 / dpl_Dr4rVrLEEUvvnqeRVjFZVDTc9JF4; local/production combined suite 16/16 plus actual-data flow passed. Solo Chief, no independent/Scribe LIVE sign-off. Evidence docs/MENU_INDEX_BALTI_2026_10_22.md.

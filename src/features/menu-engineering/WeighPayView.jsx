@@ -3,10 +3,12 @@ import { evaluateMenus, pricePerLb, WP_PRICE_PER_LB } from './weighPayModel.js';
 
 import andesSource from '../../data/andesWpAnalysis.json';
 import baltiSource from '../../data/baltiWpAnalysis.json';
+import allMenusSource from '../../data/allMenusWpAnalysis.json';
+import { buildMenuAnalysisSource } from './menuAnalysisSource.js';
 import { analyzeAndes } from './andesAnalysisModel.js';
 import AndesAnalysis from './AndesAnalysis.jsx';
 import { PortfolioCharts } from './WeighPayCharts.jsx';
-const conceptSources={'AMZ: Andes':andesSource,'AMZ: Balti':baltiSource};
+
 
 const button = 'rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-50';
 const input = 'min-w-0 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm';
@@ -50,6 +52,7 @@ export default function WeighPayView() {
   const trusted = data.source.startsWith('supabase-recipe-items');
   const menus = useMemo(() => evaluateMenus(data.rows, overrides, { trusted, pricePerLb: rate }), [data.rows, overrides, trusted, rate]);
   const visible = menus.filter(menu => menu.menu.toLowerCase().includes(search.trim().toLowerCase()) && (statusFilter === 'All' || menu.status === statusFilter));
+  const conceptSources = useMemo(() => Object.fromEntries(menus.map(menu => [menu.menu, ({'AMZ: Andes':andesSource,'AMZ: Balti':baltiSource}[menu.menu] || buildMenuAnalysisSource(menu.menu, data.rows, allMenusSource, trusted))])), [menus, data.rows, trusted]);
   const selected = menus.find(menu => menu.menu === selectedMenu);
   const categories = selected ? [...new Set(selected.items.map(item => item.category))] : [];
   const exportPackage = async chosen => {
@@ -85,14 +88,14 @@ export default function WeighPayView() {
       </div>
       {!selected && menus.length > 0 && <p className="text-sm text-slate-500">Select a menu to see its assortment by category.</p>}
       {selected && conceptSources[selected.menu] && <div className="space-y-3"><button className={button} disabled={exporting||!rate} onClick={()=>exportPackage([selected])}>Export menu package</button><AndesAnalysis key={selected.menu} source={conceptSources[selected.menu]} rate={rate} sharedRows={data.rows} trusted={trusted}/></div>}
-      {selected && !conceptSources[selected.menu] && <div className="rounded-2xl border border-slate-200 bg-white p-4 space-y-4">
-        <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-xl font-bold">{selected.menu}</h2><p className="mt-1 text-sm text-slate-600">Calculated {percent(selected.calculatedPassRate)} · Current guidance {percent(selected.passRate)} · {selected.exceptions} exceptions</p></div><div className="flex flex-wrap gap-2"><button className={button} onClick={() => setEditing(value => !value)}>{editing ? 'Done editing' : 'Edit guidance'}</button><button className={button} disabled={exporting || !rate} onClick={() => exportPackage([selected])}>Export menu package</button></div></div>
+      {selected && !['AMZ: Andes','AMZ: Balti'].includes(selected.menu) && <details key={selected.menu} className="rounded-2xl border border-slate-200 bg-white p-4 space-y-4"><summary className="cursor-pointer text-sm font-semibold text-teal-800">Shared menu guidance and session adjustments</summary>
+        <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-xl font-bold">{selected.menu}</h2><p className="mt-1 text-sm text-slate-600">Calculated {percent(selected.calculatedPassRate)} · Current guidance {percent(selected.passRate)} · {selected.exceptions} exceptions</p></div><div className="flex flex-wrap gap-2"><button className={button} onClick={() => setEditing(value => !value)}>{editing ? 'Done editing' : 'Edit guidance'}</button><button className={button} disabled={exporting || !rate} onClick={() => exportPackage([selected])}>Export shared guidance</button></div></div>
         {selected.status === 'Conditional' && <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Conditional: check unresolved inputs, service reviews, session exceptions or source status before using this assortment.</p>}
         {editing && <p className="rounded-xl bg-slate-50 p-3 text-sm text-slate-600">Changes apply to this session and exports only. Refreshing data or leaving W&amp;P clears them. Allowing an exception requires valid cost and weight; it never hides the calculated result.</p>}
         <div className="flex flex-wrap gap-2" aria-label="Recipe approval filters">{[['approved','Show only approved recipes'],['unapproved','Show only unapproved recipes']].map(([value,label])=><button key={value} className={button} aria-pressed={approvalFilter===value} onClick={()=>setApprovalFilter(approvalFilter===value?'all':value)}>{label}</button>)}<button className={button} onClick={()=>{setApprovalFilter('all');setSearch('');setStatusFilter('All');}}>Clear filter</button></div>
         <p className="text-xs text-slate-500">Approved filter shows Allowed guidance, including explicit session exceptions. Culinary service approval remains separate.</p>
         {categories.map(category => <section key={category}><h3 className="mb-2 text-sm font-bold uppercase tracking-wide text-slate-600">{category}</h3><div className="space-y-2">{selected.items.filter(item => item.category === category && (approvalFilter==='all'||(approvalFilter==='approved'?item.status.startsWith('Allowed'):!item.status.startsWith('Allowed')))).map(item => <ItemRow key={item.key} item={item} editing={editing} onApply={override => setOverrides(previous => { const next = { ...previous }; if (override) next[item.key] = override; else delete next[item.key]; return next; })} />)}</div></section>)}
-      </div>}
+      </details>}
     </>}
   </section>;
 }

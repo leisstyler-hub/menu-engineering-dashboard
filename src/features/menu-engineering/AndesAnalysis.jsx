@@ -8,7 +8,7 @@ const tone=status=>status==='Within 40%'?'bg-teal-50 text-teal-800':status==='Ab
 export default function AndesAnalysis({rate,sharedRows=[],trusted=false,source=andesSource}) {
  const [search,setSearch]=useState(''),[scope,setScope]=useState('dishes'),[approval,setApproval]=useState('all');
  const all=useMemo(()=>analyzeAndes(source,rate,trusted?sharedRows:[]),[source,rate,sharedRows,trusted]);
- const concept=source.concept.replace(/^AMZ: /,'');
+ const concept=source.concept.replace(/^AMZ(?:\+RA)?: /,'');
  const dishes=all.filter(r=>r.topLevel),components=[...new Map(all.filter(r=>!r.topLevel).map(r=>[JSON.stringify([r.mrn,r.portion,r.cost,r.massOz]),r])).values()];
  const visible=(scope==='dishes'?dishes:components).filter(r=>(r.name+' '+r.mrn).toLowerCase().includes(search.toLowerCase()) && (approval==='all'||(approval==='approved'?r.economics==='Within 40%'&&!r.serviceReasons.length:r.economics!=='Within 40%'||r.serviceReasons.length>0)));
  const missing=all.filter(r=>r.economics==='Needs weight').length;
@@ -27,8 +27,9 @@ function RecipeCard({recipe,nested=false}) {
  const portionMeasure=measure(recipe.portion);
  const volumeCost=portionMeasure?.dimension==='volume'&&recipe.cost!=null?recipe.cost/portionMeasure.amount*48:null;
  return <article data-testid={nested?'andes-component':'andes-recipe'} className="min-w-0 rounded-xl border border-slate-200 bg-white p-4"><div className="flex flex-wrap justify-between gap-2"><div className="min-w-0"><h3 className="break-words text-sm font-bold">{recipe.name}</h3><p className="mt-1 text-xs text-slate-500">MRN {recipe.mrn} · {recipe.portion}</p></div><span className={`h-fit rounded-full px-2 py-1 text-xs font-semibold ${tone(recipe.economics)}`}>{recipe.economics}</span></div><div className="mt-3 grid grid-cols-3 gap-2 text-xs"><div><p className="text-slate-500">Serving cost</p><strong>{dollars(recipe.cost)}</strong></div><div><p className="text-slate-500">True Food Cost</p><strong>{pct(recipe.foodCost)}</strong></div><div><p className="text-slate-500">Cost / lb</p><strong>{recipe.massOz&&recipe.cost!=null?dollars(recipe.cost/recipe.massOz*16):'Weight not documented'}</strong></div></div>
- <p className="mt-3 text-xs text-slate-600">Cost source: Recipe snapshot; Weight source: {recipe.weightSource}{recipe.massOz?`; ${Number(recipe.massOz.toFixed(3))} oz`:''}</p>
+ <p className="mt-3 text-xs text-slate-600">Cost source: {recipe.costBasis||'Recipe snapshot'}; Weight source: {recipe.weightSource}{recipe.massOz?`; ${Number(recipe.massOz.toFixed(3))} oz`:''}</p>
  {volumeCost!=null&&!recipe.massOz&&<p className="mt-3 text-xs text-slate-600">Documented volume cost: {dollars(volumeCost)} / cup. Cost / lb requires a documented portion weight equivalent.</p>}
+ {recipe.linkStatus&&<p className="mt-2 text-xs text-slate-600">{recipe.linkStatus}</p>}
  {recipe.economics==='Needs weight'&&recipe.minimumOz!=null&&<p className="mt-3 text-xs text-amber-900">Measured serving needs at least {recipe.minimumOz.toFixed(2)} oz to meet 40% at this price. This threshold is not an estimated serving weight.</p>}
  <p className="mt-3 text-xs text-slate-600">Service: {recipe.serviceReasons.length?recipe.serviceReasons.join(' · '):'Category / service approval pending'}</p>
  <p className="mt-2 text-xs text-slate-500">Serving pan: <span aria-label="Serving pan" className="inline-block min-w-20 border-b border-slate-300"/></p>

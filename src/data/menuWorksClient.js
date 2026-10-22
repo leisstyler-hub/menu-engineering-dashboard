@@ -11,9 +11,6 @@ export function readStoredMenuWorksItems() {
 }
 
 export async function loadMenuWorksItemsFromApi() {
-  const stored = readStoredMenuWorksItems();
-  if (stored) return { rows: stored, source: "local-override" };
-
   const response = await fetch("/api/recipe-library?scope=all");
   const payload = await response.json().catch(() => null);
   if (!response.ok || !payload?.ok) {

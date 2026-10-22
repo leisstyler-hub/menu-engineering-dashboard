@@ -27,12 +27,14 @@ test('W&P evaluates all menus with the 60% gate, missing inputs and stored categ
   await expect(menu).toContainText('60.0%');
   await expect(menu.getByTestId('wp-menu-status')).toHaveText('Pass');
   await menu.getByRole('button', { name: 'Test Kitchen', exact: true }).click();
+  await page.getByText('Shared menu guidance and session adjustments',{exact:true}).click();
   await expect(page.getByRole('heading', { name: 'Side', exact: true })).toBeVisible();
   await expect(page.getByTestId('wp-item-row').filter({ hasText: 'Salmon' })).toContainText('Seafood');
   await expect(page.getByTestId('wp-item-row').filter({ hasText: 'Uncosted Vegetables' })).toContainText('Needs cost');
   await page.getByLabel('Search W&P menus').fill('Incomplete');
   await expect(page.getByTestId('wp-menu-row')).toHaveCount(1);
   await page.getByRole('button', { name: 'Incomplete Kitchen', exact: true }).click();
+  await page.getByText('Shared menu guidance and session adjustments',{exact:true}).click();
   await expect(page.getByTestId('wp-item-row')).toContainText('Needs weight');
   expect(writes).toEqual([]);
   expect(errors).toEqual([]);
@@ -42,6 +44,7 @@ test('W&P controls require Edit and a reason; export captures exceptions without
   const writes = await setup(page);
   await page.getByRole('button', { name: 'W&P Guidance', exact: true }).click();
   await page.getByRole('button', { name: 'Test Kitchen', exact: true }).click();
+  await page.getByText('Shared menu guidance and session adjustments',{exact:true}).click();
   await expect(page.getByLabel('Decision for Salmon')).toHaveCount(0);
   await page.getByRole('button', { name: 'Edit guidance', exact: true }).click();
   const salmon = page.getByTestId('wp-item-row').filter({ hasText: 'Salmon' });
@@ -90,6 +93,7 @@ test('W&P refreshes server data despite a browser override and clears session ex
   await page.getByRole('button', { name: 'W&P Guidance', exact: true }).click();
   await expect(page.getByTestId('wp-menu-row').filter({ hasText: 'Test Kitchen' })).toBeVisible();
   await page.getByRole('button', { name: 'Test Kitchen', exact: true }).click();
+  await page.getByText('Shared menu guidance and session adjustments',{exact:true}).click();
   await page.getByRole('button', { name: 'Edit guidance', exact: true }).click();
   const chicken = page.getByTestId('wp-item-row').filter({ hasText: 'Roast Chicken' });
   await chicken.getByLabel('Decision for Roast Chicken').selectOption('block');
@@ -105,6 +109,7 @@ test('W&P cannot turn missing cost into a pass through an override', async ({ pa
   await setup(page);
   await page.getByRole('button', { name: 'W&P Guidance', exact: true }).click();
   await page.getByRole('button', { name: 'Test Kitchen', exact: true }).click();
+  await page.getByText('Shared menu guidance and session adjustments',{exact:true}).click();
   await page.getByRole('button', { name: 'Edit guidance', exact: true }).click();
   const missing = page.getByTestId('wp-item-row').filter({ hasText: 'Uncosted Vegetables' });
   await missing.getByLabel('Decision for Uncosted Vegetables').selectOption('allow');
@@ -149,6 +154,7 @@ test('W&P overview and oz/lb scenario price update guidance and exported report 
  await page.getByLabel('W&P price unit').selectOption('oz');
  await page.getByLabel('W&P selling price').fill('1');
  await page.getByRole('button',{name:'Test Kitchen',exact:true}).click();
+ await page.getByText('Shared menu guidance and session adjustments',{exact:true}).click();
  const download=page.waitForEvent('download');
  await page.getByRole('button',{name:'Export menu package',exact:true}).click();
  const zip=await JSZip.loadAsync(await readFile(await(await download).path()));

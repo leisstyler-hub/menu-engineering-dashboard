@@ -44,3 +44,8 @@ Changes to the rules in this file are architecture decisions and should go throu
 ## Prepared SSMT account boundary (2026-10-20, not activated)
 
 The development candidate adds a service-only membership/audit/backup boundary and atomic save RPC around the existing canonical row, preserving its ID and gzip payload. The generic storage and mirror routes reject SSMT writes only when the new account feature is explicitly activated; protected reads require verified membership, while Platform Home receives calendar metadata only. New tables/migration/enrollment are unapplied. This is candidate architecture, not a claim about current production. The approved naming reference and permission decisions live in [PRODUCT_DECISIONS.md](PRODUCT_DECISIONS.md), SSMT-2026-10-20; exact activation, verification and recovery are in [the activation package](docs/ssmt/ACTIVATION_AND_RECOVERY_2026_10_20.md). Existing operational source-authority and test-isolation rules above remain controlling.
+
+
+## Shared catalog selector candidate (2026-10-22, not deployed)
+
+Transfer membership/current Item + Waste Cost use the shared Supabase-backed Recipe Library API. Bundled transfer membership remains historical reference only. Menu Matrix/Rotations do not initialize selectors from browser overrides; Rotations requests current rows on mount. Ingredient costing, historical records and eligibility retain established contracts. W&P adds bounded book-derived economics with explicit unresolved links. Approved direction: WP-2026-10-22 in PRODUCT_DECISIONS.md. Evidence: docs/SHARED_CATALOG_WP_2026_10_22.md.

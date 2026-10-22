@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import { ArrowLeft, AlertTriangle, CalendarDays, CheckCircle2, ChevronDown, ChevronUp, Clipboard, FileText, Printer, Save, Send, Upload, X } from "lucide-react";
 
-import { loadMenuWorksItemsFromApi, readStoredMenuWorksItems } from "../../data/menuWorksClient.js";
+import { loadMenuWorksItemsFromApi } from "../../data/menuWorksClient.js";
 import { NEIGHBORHOOD_ROTATIONS_STORAGE_KEY, SMARTSHEET_COLUMNS, SMARTSHEET_DATABASE_STORAGE_KEY, SMARTSHEET_RECORD_TYPES, SMARTSHEET_SELECTION_TYPES, STATION_SMARTSHEET_LABELS } from "../../integrations/smartsheet/contract.js";
 import { loadRecordsFromBackbone, syncRecordsToBackbone } from "../../integrations/storage/backboneClient.js";
 import { APP_VERSION_STAMP } from "../../shared/appConfig.js";
@@ -1517,7 +1517,7 @@ const GLOBAL_MENU_ROWS_CACHE = new Map();
 const SUB_CONCEPT_OPTIONS_CACHE = new Map();
 const STATION_POOL_CACHE = new Map();
 const BEST_ROW_BY_NAME_CACHE = new Map();
-let MENUWORKS_ITEMS = readStoredMenuWorksItems() || [];
+let MENUWORKS_ITEMS = [];
 
 function resetMenuWorksCaches(rows = []) {
   MENUWORKS_ITEMS = Array.isArray(rows) ? rows : [];
@@ -3388,7 +3388,6 @@ export default function NeighborhoodRotations({ onBackToPlatform, onOpenSmartshe
   }, [databaseLoadStatus.state, databaseRecords]);
 
   useEffect(() => {
-    if (MENUWORKS_ITEMS.length) return undefined;
     let isActive = true;
     loadMenuWorksItemsFromApi()
       .then(({ rows }) => {

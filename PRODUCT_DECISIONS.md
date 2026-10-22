@@ -370,3 +370,8 @@ Approved by Tyler (Requesting/Approving Admin and Admin of Record, identity in A
 ### 2026-10-22 - Complete shared index refresh and Balti W&P
 
 Approved by Tyler (Admin of Record, identity in ADMIN_REGISTRY.md), request df8643253d632503eb79192e9d55fed1d041a0953a8080d379d44c6c466c24f9 and replacement source a34dc9901040560c76ed51dcd643c1a83b6a8244e4ccd747222f753195eeb86e. The complete menu-specific index controls current shared membership and metadata, preserving cross-menu use and service/price variants; absent records are hidden with recovery. Older bundled subsets remain historical references and must not overwrite current shared data. Balti uses the Andes-style bounded recipe analysis with documented mass and brand export. Recipe privacy and source-unit uncertainty remain protected. Evidence docs/MENU_INDEX_BALTI_2026_10_22.md. Revisit on newer authoritative source or explicit admin direction.
+
+
+## WP-2026-10-22 - All-menu component views and connected catalog
+
+Approved by Tyler, Requesting/Approving Admin and Admin of Record (identity in ADMIN_REGISTRY.md), request 44827346f4b20cedc71cd06c9ca588416d52fe38098dc5e90edc6474044e6592 and confirmation 37b9cc8413e61268ccfa36ad60c24f9088c90cc6570dd7d1cb0d206bf6e93415 on 2026-10-22. Every W&P menu uses the Andes/Balti type of component view. Shared Supabase catalog selectors include new menus/items and changed MRNs. Preserve source information, exact identifiers, history, eligibility and recipe privacy. Uncertain economics remain explicit; full recipe storage stays deferred. Reject separate selectable Transfer membership and invented recipe economics. Revisit on new evidence or Admin direction. Candidate details: docs/SHARED_CATALOG_WP_2026_10_22.md.

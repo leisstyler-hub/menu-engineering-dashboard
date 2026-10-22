@@ -18,7 +18,7 @@ const secondTransfer = { ...existingTransfer, "Record ID": "transfer|second%20tr
 async function mockTransferStorage(page, { huliComponents = allocations, huliUnpricedComponents = [], huliCost = 2.5, missingMappingStatus = 404 } = {}) {
   const writes = [];
   await page.route("**/api/traffic/weekly", (route) => route.fulfill({ json: { ok: true, status: "live", days: [], totalVisitors: 0 } }));
-  await page.route("**/api/recipe-library?scope=all", (route) => route.fulfill({ json: { ok: true, source: "test-live-menu-library", rows: [
+  await page.route("**/api/recipe-library?scope=all", (route) => route.fulfill({ json: { ok: true, source: "supabase-recipe-items-test", rows: [
     { menu: "AMZ: Ohana", item: "Huli Huli Chicken", mrn: "33065.1", portion: "1 piece", trueCost: huliCost },
     { menu: "AMZ: Lotus", item: "Blistered Green Beans", mrn: "176734", portion: "4 ounce", trueCost: 0.752 },
     { menu: "AMZ: Cafe Express Soup", item: "Baked Stuffed Potato Soup", mrn: "3505", portion: "12 floz", trueCost: 2.065 },
@@ -38,7 +38,7 @@ async function mockTransferStorage(page, { huliComponents = allocations, huliUnp
 test("Transfer Tool expands a selected item into automatic ingredient G/L rows and exports them", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   const writes = await mockTransferStorage(page);
-  await openTool(page, /open transfer tool/i, /^Transfer Tool$/);
+  await openTool(page, /open transfer$/i, /^Transfer Tool$/);
   await page.getByLabel("Globally unique title").fill("QA Dawson to Nessie");
   await page.getByLabel("Departing unit").selectOption("Dawson");
   await page.getByLabel("Receiving unit").selectOption("Nessie");
@@ -75,7 +75,7 @@ test("Transfer Tool automatically balances positive residual cost and allows eve
   const huliComponents = [{ ingredientMrn: "substitute", ingredientName: "Arugula", quantity: 1, unit: "ounce", recipeYield: 1, unitPrice: 2.2, glCode: "4111012", allocationPerPortion: 2.2, isSubstitutePrice: true, priceSourceMrn: "source-arugula", priceSourceNote: "Substitute price used: closest Ingredient Snapshot name match (Arugula)." }];
   const huliUnpricedComponents = [{ ingredientMrn: "missing", ingredientName: "Chef sauce", quantity: 1, unit: "ounce", recipeYield: 1, glCode: "4111011", allocationPerPortion: null }];
   const writes = await mockTransferStorage(page, { huliComponents, huliUnpricedComponents, huliCost: 2.5 });
-  await openTool(page, /open transfer tool/i, /^Transfer Tool$/);
+  await openTool(page, /open transfer$/i, /^Transfer Tool$/);
   await page.getByLabel("Globally unique title").fill("QA Substitute and balance");
   await page.getByLabel("Departing unit").selectOption("Dawson");
   await page.getByLabel("Receiving unit").selectOption("Nessie");
@@ -103,7 +103,7 @@ test("Transfer Tool assigns one unresolved recipe component the authoritative it
   const pricedComponents = [{ ingredientMrn: "bread", ingredientName: "Demi baguette", quantity: 1, unit: "each", recipeYield: 1, unitPrice: 1.07, glCode: "4111010", allocationPerPortion: 1.07 }];
   const unresolvedProtein = [{ ingredientMrn: "36857", ingredientName: "Beef, Brisket, BBQ, Sliced", quantity: 6, unit: "pound", recipeYield: 24, glCode: "4111003", residualAttributionEligible: true, allocationPerPortion: null }];
   const writes = await mockTransferStorage(page, { huliComponents: pricedComponents, huliUnpricedComponents: unresolvedProtein, huliCost: 5.111 });
-  await openTool(page, /open transfer tool/i, /^Transfer Tool$/);
+  await openTool(page, /open transfer$/i, /^Transfer Tool$/);
   await page.getByLabel("Globally unique title").fill("QA residual attribution");
   await page.getByLabel("Departing unit").selectOption("Dawson");
   await page.getByLabel("Receiving unit").selectOption("Nessie");
@@ -125,7 +125,7 @@ test("Transfer Tool proportionally caps every mapped G/L at Item + Waste Cost", 
     { ingredientMrn: "produce", ingredientName: "Sandwich produce", quantity: 1, unit: "portion", recipeYield: 1, unitPrice: 1, glCode: "4111012", allocationPerPortion: 1 },
   ];
   const writes = await mockTransferStorage(page, { huliComponents: overMappedComponents, huliCost: 2.45 });
-  await openTool(page, /open transfer tool/i, /^Transfer Tool$/);
+  await openTool(page, /open transfer$/i, /^Transfer Tool$/);
   await page.getByLabel("Globally unique title").fill("QA item cost ceiling");
   await page.getByLabel("Departing unit").selectOption("Dawson");
   await page.getByLabel("Receiving unit").selectOption("Nessie");
@@ -145,7 +145,7 @@ test("Transfer Tool proportionally caps every mapped G/L at Item + Waste Cost", 
 });
 
 test("Transfer Tool exports an unmapped item through the approved Prepared Foods fallback", async ({ page }) => {
-  const writes = await mockTransferStorage(page); await openTool(page, /open transfer tool/i, /^Transfer Tool$/);
+  const writes = await mockTransferStorage(page); await openTool(page, /open transfer$/i, /^Transfer Tool$/);
   await page.getByLabel("Menu 1", { exact: true }).selectOption("AMZ: Lotus");
   await page.getByLabel("Item 1", { exact: true }).selectOption({ label: "Blistered Green Beans · 176734 · 4 ounce" });
   await expect(page.getByText("Prepared Foods G/L fallback").last()).toBeVisible();
@@ -168,7 +168,7 @@ test("Transfer Tool exports an unmapped item through the approved Prepared Foods
 });
 
 test("Transfer Tool does not use the Prepared Foods fallback during a mapping-service failure", async ({ page }) => {
-  const writes = await mockTransferStorage(page, { missingMappingStatus: 500 }); await openTool(page, /open transfer tool/i, /^Transfer Tool$/);
+  const writes = await mockTransferStorage(page, { missingMappingStatus: 500 }); await openTool(page, /open transfer$/i, /^Transfer Tool$/);
   await page.getByLabel("Menu 1", { exact: true }).selectOption("AMZ: Lotus");
   await page.getByLabel("Item 1", { exact: true }).selectOption({ label: "Blistered Green Beans · 176734 · 4 ounce" });
   await expect(page.getByText(/mapping service is temporarily unavailable.*fallback is not used/i).last()).toBeVisible();
@@ -180,7 +180,7 @@ test("Transfer Tool does not use the Prepared Foods fallback during a mapping-se
 });
 
 test("Transfer Tool maps every soup to Prepared Foods while allowing a chef override", async ({ page }) => {
-  const writes = await mockTransferStorage(page); await openTool(page, /open transfer tool/i, /^Transfer Tool$/);
+  const writes = await mockTransferStorage(page); await openTool(page, /open transfer$/i, /^Transfer Tool$/);
   await page.getByLabel("Menu 1", { exact: true }).selectOption("AMZ: Cafe Express Soup");
   await page.getByLabel("Item 1", { exact: true }).selectOption({ label: "Baked Stuffed Potato Soup · 3505 · 12 floz" });
   const soupDetails = page.locator("details").filter({ hasText: "Prepared Foods soup allocation" }).last();
@@ -195,13 +195,13 @@ test("Transfer Tool maps every soup to Prepared Foods while allowing a chef over
 });
 
 test("Transfer Tool retains the current cafe profit-center mappings", async ({ page }) => {
-  await mockTransferStorage(page); await openTool(page, /open transfer tool/i, /^Transfer Tool$/);
+  await mockTransferStorage(page); await openTool(page, /open transfer$/i, /^Transfer Tool$/);
   await page.getByLabel("Receiving unit").selectOption("Astra"); await expect(page.getByLabel("Receiving profit center")).toHaveValue("62844");
   await page.getByLabel("Receiving unit").selectOption("LAX78"); await expect(page.getByLabel("Receiving profit center")).toHaveValue("64002");
 });
 
 test("Transfer Tool batch export uses stored automatic allocations without writes", async ({ page }) => {
-  const writes = await mockTransferStorage(page); await openTool(page, /open transfer tool/i, /^Transfer Tool$/);
+  const writes = await mockTransferStorage(page); await openTool(page, /open transfer$/i, /^Transfer Tool$/);
   await page.getByLabel("Include Existing Transfer in batch export").check(); await page.getByLabel("Include Second Transfer in batch export").check();
   await expect(page.getByRole("heading", { name: "Review ingredient allocations" })).toBeVisible();
   await page.locator("details").filter({ hasText: "Existing Transfer" }).locator("summary").first().click();
@@ -214,7 +214,7 @@ test("Transfer Tool batch export uses stored automatic allocations without write
 });
 
 test("Transfer Tool deletes one saved draft after one confirmation", async ({ page }) => {
-  const writes = await mockTransferStorage(page); await openTool(page, /open transfer tool/i, /^Transfer Tool$/);
+  const writes = await mockTransferStorage(page); await openTool(page, /open transfer$/i, /^Transfer Tool$/);
   const existingCard = page.locator("article").filter({ hasText: "Existing Transfer" });
   page.on("dialog", (dialog) => dialog.accept()); await existingCard.getByRole("button", { name: "Delete Existing Transfer" }).click();
   await expect(existingCard).toHaveCount(0); expect(writes.at(-1)).toMatchObject({ action: "deleteTransfer", recordId: "transfer|existing%20transfer" });

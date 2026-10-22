@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, ArrowRightLeft, Copy, Download, Plus, Save, Search, Trash2 } from "lucide-react";
 
-import CATALOG from "../../data/transferToolCatalog.json";
 import { CAFE_UNITS } from "../../shared/cafeUnits.js";
 import { money } from "../../shared/formatting.js";
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
@@ -51,7 +50,7 @@ function toDraft(record) {
 
 export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
   const [transfers, setTransfers] = useState([]);
-  const [catalogItems, setCatalogItems] = useState(CATALOG.items);
+  const [catalogItems, setCatalogItems] = useState([]);
   const [draft, setDraft] = useState(blankDraft);
   const [query, setQuery] = useState("");
   const [errors, setErrors] = useState({});
@@ -64,11 +63,12 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
   const [batchError, setBatchError] = useState("");
   const costsReady = costStatus.state === "ready";
 
+  const catalogMenus = useMemo(() => [...new Set(catalogItems.map(item => item.menu))].sort(), [catalogItems]);
   const catalogByMenu = useMemo(() => {
-    const grouped = new Map(CATALOG.menus.map((menu) => [menu, []]));
+    const grouped = new Map(catalogMenus.map((menu) => [menu, []]));
     catalogItems.forEach((item) => grouped.get(item.menu)?.push(item));
     return grouped;
-  }, [catalogItems]);
+  }, [catalogItems, catalogMenus]);
   const catalogById = useMemo(() => new Map(catalogItems.map((item) => [item.id, item])), [catalogItems]);
 
   useEffect(() => {
@@ -81,7 +81,7 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
         setStatus({ tone: "ready", message: `${sorted.length} shared transfer${sorted.length === 1 ? "" : "s"} available.` });
       })
       .catch((error) => active && setStatus({ tone: "error", message: error.message }));
-    refreshTransferCatalogCosts(CATALOG.items)
+    refreshTransferCatalogCosts()
       .then((result) => {
         if (!active) return;
         setCatalogItems(result.items);
@@ -90,7 +90,7 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
       })
       .catch((error) => {
         if (!active) return;
-        setCatalogItems(CATALOG.items.map((item) => ({ ...item, itemWasteCost: null })));
+        setCatalogItems([]);
         setDraft((current) => ({ ...current, items: current.items.map((item) => item.catalogId ? { ...item, itemWasteCost: null } : item) }));
         setCostStatus({ state: "error", message: error.message || "Live Item + Waste Cost refresh is unavailable. Saving, copying, and export are blocked." });
       });
@@ -456,7 +456,7 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
                   return (
                     <article key={line.lineId} className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
                       <div className="flex items-center justify-between gap-2"><h3 className="font-black">Item {index + 1}</h3><button type="button" aria-label={`Remove mobile item ${index + 1}`} onClick={() => setDraft((current) => ({ ...current, items: current.items.length === 1 ? [blankLine()] : current.items.filter((item) => item.lineId !== line.lineId) }))} className="rounded-lg border border-rose-200 bg-rose-50 p-2 text-rose-700"><Trash2 size={16} /></button></div>
-                      <Field label="Menu"><select aria-label={`Mobile menu ${index + 1}`} value={line.menu} onChange={(event) => chooseMenu(line, event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 font-semibold"><option value="">Select menu</option>{CATALOG.menus.map((menu) => <option key={menu} value={menu}>{menu}</option>)}</select></Field>
+                      <Field label="Menu"><select aria-label={`Mobile menu ${index + 1}`} value={line.menu} onChange={(event) => chooseMenu(line, event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 font-semibold"><option value="">Select menu</option>{catalogMenus.map((menu) => <option key={menu} value={menu}>{menu}</option>)}</select></Field>
                       <Field label="Item"><select aria-label={`Mobile item ${index + 1}`} value={line.catalogId} disabled={!line.menu || !costsReady} onChange={(event) => chooseItem(line, event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 font-semibold disabled:bg-slate-100"><option value="">{costsReady ? "Select item" : "Waiting for live costs"}</option>{choices.map((item) => <option key={item.id} value={item.id}>{item.item}{item.mrn ? ` · ${item.mrn}` : ""}{item.portion ? ` · ${item.portion}` : ""}</option>)}</select></Field>
                       <div className="grid grid-cols-2 gap-3"><ChefReviewCost line={line} /><Field label="Item count"><input aria-label={`Mobile item count ${index + 1}`} type="number" min="1" step="1" value={line.quantity} onChange={(event) => updateLine(line.lineId, { quantity: event.target.value })} className="w-full rounded-lg border border-slate-300 px-3 py-2 font-semibold" /></Field></div>
                       {line.catalogId && <IngredientAllocationList line={line} onChooseAllocationGl={chooseAllocationGl} />}
@@ -477,7 +477,7 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
                       return (
                         <React.Fragment key={line.lineId}>
                         <tr className="align-top">
-                          <td className="w-[220px] p-3"><select aria-label={`Menu ${index + 1}`} value={line.menu} onChange={(event) => chooseMenu(line, event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 font-semibold"><option value="">Select menu</option>{CATALOG.menus.map((menu) => <option key={menu} value={menu}>{menu}</option>)}</select></td>
+                          <td className="w-[220px] p-3"><select aria-label={`Menu ${index + 1}`} value={line.menu} onChange={(event) => chooseMenu(line, event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 font-semibold"><option value="">Select menu</option>{catalogMenus.map((menu) => <option key={menu} value={menu}>{menu}</option>)}</select></td>
                           <td className="w-[290px] p-3"><select aria-label={`Item ${index + 1}`} value={line.catalogId} disabled={!line.menu || !costsReady} onChange={(event) => chooseItem(line, event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 font-semibold disabled:bg-slate-100"><option value="">{costsReady ? "Select item" : "Waiting for live costs"}</option>{choices.map((item) => <option key={item.id} value={item.id}>{item.item}{item.mrn ? ` · ${item.mrn}` : ""}{item.portion ? ` · ${item.portion}` : ""}</option>)}</select>{line.catalogId && <p className="mt-2 text-xs font-semibold text-slate-500">MRN {line.mrn || "unavailable"} · {line.portion || "portion unavailable"}</p>}</td>
                           <td className="w-[250px] p-3"><ChefReviewCost line={line} /></td>
                           <td className="w-[150px] p-3"><input aria-label={`Item count ${index + 1}`} type="number" min="1" step="1" value={line.quantity} onChange={(event) => updateLine(line.lineId, { quantity: event.target.value })} className="w-24 rounded-lg border border-slate-300 px-3 py-2 font-semibold" /><p className="mt-2 text-xs font-black text-emerald-700">Line value {Number.isFinite(lineValue) ? money(lineValue) : "—"}</p></td>

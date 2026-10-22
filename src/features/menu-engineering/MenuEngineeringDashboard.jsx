@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Search, Star, TrendingUp, HelpCircle, Dog, SlidersHorizontal, ChefHat, DollarSign } from "lucide-react";
 
-import { loadMenuWorksItemsFromApi, readStoredMenuWorksItems } from "../../data/menuWorksClient.js";
+import { loadMenuWorksItemsFromApi } from "../../data/menuWorksClient.js";
 import { money, pct, priceLabel, smartMenuEngineeringSort, titleCase } from "../../shared/formatting.js";
 import WeighPayView from "./WeighPayView.jsx";
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
@@ -53,7 +53,7 @@ const classConfig = {
 };
 
 function readStoredMenuItems() {
-  return readStoredMenuWorksItems() || [];
+  return [];
 }
 
 function coveragePct(value, total) {
