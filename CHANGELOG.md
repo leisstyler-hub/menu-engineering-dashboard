@@ -1,8 +1,10 @@
+PRODUCTION VERIFIED: Pairwise expansion 2026.10.21.003-pairwise-expand, app daac2c0, deployment dpl_H9fhy2AotthBEPiBqktNN6BSmQAv READY. Full verify and local/production browser suites 21/21 passed. Chief solo release per Tyler; no independent final Scribe sign-off. Source: docs/PAIRWISE_EXPANSION_2026_10_21.md.
+
 ## 2026-10-21 - Pairwise Matrix browser expansion
 
 - [Oct 21, 7:32 PM] Expanded Pairwise Matrix with Expand / Restore, readable cells and scrollable pair details on laptop, mobile and wide screens.
 
-Release candidate: 2026.10.21.003-pairwise-expand. Independent Reviewer and Verifier cleared application candidate 4911b8a; final integration preserves the newer Commissary release. Chief completes release solo per Tyler authorization 8b8e9e22b40bf1251c32934d7655cb082b7780f42cf725630e686c8ce40245e9. No data/source/scoring changes. Rollback: f47bdf6. Production verification pending.
+Release candidate: 2026.10.21.003-pairwise-expand. Independent Reviewer and Verifier cleared application candidate 4911b8a; final integration preserves the newer Commissary release. Chief completes release solo per Tyler authorization 8b8e9e22b40bf1251c32934d7655cb082b7780f42cf725630e686c8ce40245e9. No data/source/scoring changes. Rollback: f47bdf6. Production verification completed; see docs/PAIRWISE_EXPANSION_2026_10_21.md.
 
 ## 2026-10-21 - Commissary Prep List export layout
 
