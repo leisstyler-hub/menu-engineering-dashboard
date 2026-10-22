@@ -1,3 +1,7 @@
+## 2026-10-22 - Andes documented weight reconciliation candidate
+
+- [Oct 22, 12:01 PM] Corrected missing-weight handling in the Andes deep dive and exports using trusted shared item mass with exact MRN and matching portion. Costs remain labeled recipe snapshot values. Version `2026.10.22.002-andes-weight-reconciliation`; COMMITTED, not deployed. All 14 Menu Engineering browser checks and model guards pass. Full package gate remains blocked by unchanged stale catalog/lookup checks. Evidence: docs/ANDES_WEIGHT_RECONCILIATION_2026_10_22.md.
+
 ## 2026-10-22 - Menu Engineering path choices
 
 - [Oct 22, 10:46 AM] Made W&P Guidance and Menu Matrix prominent entry choices with return navigation, responsive cards and retained matrix views. Version `2026.10.22.001-menu-engineering-paths`; solo Chief per Tyler. Local Menu Engineering suite 13/13 and production build passed. Full package gate has unrelated pre-existing stale generated catalog/lookup checks. PRODUCTION VERIFIED: app 112b8c9, READY dpl_4G5MPZ3QNSAaUyP3exqJoBAWDSCF. Production suite 13/13 and actual 54-menu read flow passed without operational writes. Solo Chief; no independent/Scribe LIVE clearance. Evidence: docs/MENU_ENGINEERING_PATHS_2026_10_22.md.

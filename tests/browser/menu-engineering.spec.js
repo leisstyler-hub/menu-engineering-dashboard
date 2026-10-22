@@ -239,3 +239,25 @@ for (const width of [390, 1440]) {
     expect(writes).toEqual([]);
   });
 }
+
+test('Andes fills documented shared weights by exact MRN and portion in screen and export',async({page})=>{
+ const writes=await setup(page,'supabase-recipe-items');
+ await page.route('**/api/recipe-library**',route=>route.fulfill({json:{ok:true,source:'supabase-recipe-items',rows:[...rows,row(90,'Arroz Chaufa',{menu:'AMZ: Andes',mrn:'122256',portion:'1 cup',portionOz:6.6,trueCost:.626})]}}));
+ await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();
+ await page.getByRole('button',{name:'AMZ: Andes',exact:true}).click();
+ const analysis=page.getByRole('region',{name:'Andes component analysis'});
+ const rice=analysis.getByTestId('andes-recipe').filter({has:page.getByRole('heading',{name:'EUR: Arroz Chaufa (Peruvian Fried Rice)',exact:true})});
+ await expect(rice).toContainText('Weight source: Shared item data');
+ await expect(rice).toContainText('6.6 oz');
+ await expect(rice.locator(':scope > div').first()).toContainText('Within 40%');
+ await expect(rice).toContainText('$0.7400');
+ await analysis.getByRole('button',{name:'Nested subrecipes',exact:true}).click();
+ await expect(analysis).toContainText('Needs weight');
+ const downloadPromise=page.waitForEvent('download');
+ await page.getByRole('button',{name:'Export menu package',exact:true}).click();
+ const download=await downloadPromise;
+ const zip=await JSZip.loadAsync(await readFile(await download.path()));
+ const cards=await zip.file('flash-cards.html').async('string');
+ expect(cards).toContain('Missing snapshot weights use exact MRN and matching portion');
+ expect(writes).toEqual([]);
+});

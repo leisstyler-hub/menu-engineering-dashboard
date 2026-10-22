@@ -54,7 +54,7 @@ export default function WeighPayView() {
     setExporting(true); setExportError('');
     try {
       const { downloadWeighPayPackage } = await import('./weighPayExport.js');
-      await downloadWeighPayPackage(chosen, { source: data.source, loadedAt: data.loadedAt, trusted, sourceMessage: data.message, pricePerLb: rate, andesAnalysis: analyzeAndes(andesSource,rate).filter(r=>r.topLevel) });
+      await downloadWeighPayPackage(chosen, { source: data.source, loadedAt: data.loadedAt, trusted, sourceMessage: data.message, pricePerLb: rate, andesAnalysis: analyzeAndes(andesSource,rate,trusted?data.rows:[]).filter(r=>r.topLevel) });
     } catch (error) { setExportError(`Export failed: ${error.message}`); }
     finally { setExporting(false); }
   };
@@ -82,7 +82,7 @@ export default function WeighPayView() {
         {!visible.length && <p className="p-4 text-sm text-slate-500">{menus.length ? 'No menus match these filters.' : 'No menu items are available in the current source.'}</p>}
       </div>
       {!selected && menus.length > 0 && <p className="text-sm text-slate-500">Select a menu to see its assortment by category.</p>}
-      {selected && /(?:^|: )andes$/i.test(selected.menu) && <div className="space-y-3"><button className={button} disabled={exporting||!rate} onClick={()=>exportPackage([selected])}>Export menu package</button><AndesAnalysis rate={rate}/></div>}
+      {selected && /(?:^|: )andes$/i.test(selected.menu) && <div className="space-y-3"><button className={button} disabled={exporting||!rate} onClick={()=>exportPackage([selected])}>Export menu package</button><AndesAnalysis rate={rate} sharedRows={data.rows} trusted={trusted}/></div>}
       {selected && !/(?:^|: )andes$/i.test(selected.menu) && <div className="rounded-2xl border border-slate-200 bg-white p-4 space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-xl font-bold">{selected.menu}</h2><p className="mt-1 text-sm text-slate-600">Calculated {percent(selected.calculatedPassRate)} · Current guidance {percent(selected.passRate)} · {selected.exceptions} exceptions</p></div><div className="flex flex-wrap gap-2"><button className={button} onClick={() => setEditing(value => !value)}>{editing ? 'Done editing' : 'Edit guidance'}</button><button className={button} disabled={exporting || !rate} onClick={() => exportPackage([selected])}>Export menu package</button></div></div>
         {selected.status === 'Conditional' && <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Conditional: check unresolved inputs, service reviews, session exceptions or source status before using this assortment.</p>}

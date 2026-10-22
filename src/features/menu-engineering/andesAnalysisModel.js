@@ -1,4 +1,4 @@
-import { itemRestrictions, pricePerLb } from './weighPayModel.js';
+import { itemRestrictions, pricePerLb, portionWeightOz } from './weighPayModel.js';
 
 // Quantities compare only within one dimension. Volume is never treated as mass.
 export function measure(text) {
@@ -22,20 +22,34 @@ export function componentContribution(parent,edge,child) {
   const result=used.amount/serving.amount*child.cost/parent.batchServings;
   return Number.isFinite(result)?result:null;
 }
-export function analyzeAndes(data,rate) {
+// Never match by name or MRN alone: a recipe may have several serving variants.
+function sharedMass(recipe,rows,concept) {
+  const portion=measure(recipe.portion);
+  if(!portion)return null;
+  const matches=rows.filter(row=>String(row.menu||'')===concept&&String(row.mrn??'')===recipe.mrn).filter(row=>{
+    const candidate=measure(row.portion);
+    return candidate&&candidate.dimension===portion.dimension&&Math.abs(candidate.amount-portion.amount)<1e-9;
+  });
+  const weights=matches.map(portionWeightOz);
+  if(!weights.length||weights.some(w=>w==null)||weights.some(w=>Math.abs(w-weights[0])>1e-9))return null;
+  return weights[0];
+}
+export function analyzeAndes(data,rate,sharedRows=[]) {
   const recipes=data?.recipes||[],byId=new Map(recipes.map(r=>[r.id,r])),price=pricePerLb(rate);
   function visit(recipe,seen=[]) {
     if(!recipe)return {issue:'Component link needs review'};
     if(seen.includes(recipe.id)||seen.length>=8)return {issue:'Component cycle or depth needs review'};
     const cost=Number.isFinite(recipe.cost)&&recipe.cost>=0?recipe.cost:null;
-    const mass=Number.isFinite(recipe.massOz)&&recipe.massOz>0?recipe.massOz:null;
+    const snapshotMass=Number.isFinite(recipe.massOz)&&recipe.massOz>0?recipe.massOz:null;
+    const mass=snapshotMass??sharedMass(recipe,sharedRows,data.concept||'AMZ: Andes');
+    const weightSource=snapshotMass?'Recipe snapshot':mass?'Shared item data':'Not documented';
     const fc=price&&cost!==null&&mass?cost/(mass/16*price):null;
     const economics=!price?'Needs price':cost===null?'Needs cost':!mass?'Needs weight':fc<=.4+1e-12?'Within 40%':'Above 40%';
     const restriction=itemRestrictions({item:recipe.name,portion:recipe.portion});
     const components=(recipe.components||[]).map(edge=>{const child=byId.get(edge.childId);return {...edge,contribution:componentContribution(recipe,edge,child),analysis:visit(child,[...seen,recipe.id])};});
     const known=components.reduce((sum,c)=>sum+(c.contribution??0),0);
     const remainder=cost!==null&&components.every(c=>c.contribution!==null)&&known<=cost+1e-9?Math.max(0,cost-known):null;
-    return {...recipe,cost,massOz:mass,foodCost:fc,economics,minimumOz:price&&cost!==null?cost/(price*.4)*16:null,serviceReasons:[...restriction.reasons,...restriction.reviews],components,remainder};
+    return {...recipe,cost,massOz:mass,weightSource,foodCost:fc,economics,minimumOz:price&&cost!==null?cost/(price*.4)*16:null,serviceReasons:[...restriction.reasons,...restriction.reviews],components,remainder};
   }
   return recipes.map(recipe=>visit(recipe));
 }
