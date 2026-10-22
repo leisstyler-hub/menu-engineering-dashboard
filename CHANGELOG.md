@@ -1,3 +1,7 @@
+## 2026-10-22 - Complete shared index and Balti W&P
+
+- [Oct 22, 12:43 PM] Refreshed shared catalog from the complete menu-specific report: 1693 variants / 53 menus, exact MRNs and weights verified with backups. Added Balti bounded dish/component economics and brand export: 45 top-level dishes / 251 variants. Version 2026.10.22.003-menu-index-balti-guidance. Full package/build and local suite 15/15 passed; app production verification pending. Solo Chief, no independent/Scribe LIVE sign-off. Evidence docs/MENU_INDEX_BALTI_2026_10_22.md.
+
 ## 2026-10-22 - Andes documented weight reconciliation
 
 - [Oct 22, 12:01 PM] Corrected missing-weight handling in the Andes deep dive and exports using trusted shared item mass with exact MRN and matching portion. Costs remain labeled recipe snapshot values. Version `2026.10.22.002-andes-weight-reconciliation`; PRODUCTION VERIFIED at 93229dc / dpl_9ETW4wHNZiP3exG8hgncXoP9AAQs. Full package/build and local/production Menu Engineering suites 14/14 pass. Actual Arroz/Plantains stored weights verified; eight unmatched nested variants remain unresolved. Generated checks normalize CRLF/LF without content changes. Solo Chief, no independent/Scribe LIVE sign-off. Evidence: docs/ANDES_WEIGHT_RECONCILIATION_2026_10_22.md.

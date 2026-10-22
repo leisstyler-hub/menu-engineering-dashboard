@@ -1,3 +1,7 @@
+## 2026-10-22 - Shared index refreshed; Balti release candidate
+
+Shared catalog PRODUCTION VERIFIED: 1693 source variants / 53 menus from the replacement index; source fields verified. Backup/receipts: workspace WORK_LOGS/MENU_INDEX_BALTI_2026_10_22. Bundled historical references are unchanged and must not overwrite this shared catalog. Balti candidate 2026.10.22.003-menu-index-balti-guidance: 45 top-level dishes, 251 variants; model guards, full package/build and local Menu Engineering 15/15 pass. Solo Chief, no independent/Scribe sign-off. App release pending; docs/MENU_INDEX_BALTI_2026_10_22.md.
+
 ## 2026-10-22 - Andes documented weight reconciliation production verified
 
 PRODUCTION VERIFIED: `2026.10.22.002-andes-weight-reconciliation`, app/check head `93229dc`, READY deployment `dpl_9ETW4wHNZiP3exG8hgncXoP9AAQs`, asset `/assets/index-DYOdWJg8.js`. Exact MRN and equivalent portion reconcile missing snapshot mass from trusted shared Andes data; conflicts remain unresolved. Cost snapshot unchanged and provenance labeled in screen/export. All nine top-level gaps resolve, eight nested variants still require documented mass. Full package/build passed, local and settled production suite 14/14, actual production Arroz/Plantains weights verified without writes/errors. Earlier two stale-file errors were CRLF/LF comparisons, now normalized without generated-content changes. Solo Chief, no independent/Scribe LIVE sign-off. Evidence docs/ANDES_WEIGHT_RECONCILIATION_2026_10_22.md. Rollback dpl_DsdP2wkKAokc15BQZPmRSpXenDdS / 853d85c.

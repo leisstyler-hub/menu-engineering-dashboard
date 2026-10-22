@@ -365,3 +365,8 @@ Approved by Tyler (Requesting/Approving Admin and Admin of Record), 2026-10-22T0
 ## ME-2026-10-22 - Menu Engineering entry choices
 
 Approved by Tyler (Requesting/Approving Admin and Admin of Record, identity in ADMIN_REGISTRY.md), event 2a298d610cbb5e5f87e842810f54c5f84b260790066bb2f2d0068d7fe4ee05c4 at 2026-10-22T17:43:21Z. Implement and deploy prominent responsive W&P Guidance / Menu Matrix choices with returns. Matrix retains Menu View and Portfolio Menu View. Reason: W&P was hidden as a third tab. Calculations, exports, privacy and shared data remain unchanged. Platform Home stays a tool hub. Revisit on usability evidence or explicit Admin instruction. Solo Chief per request; no independent clearance claimed.
+
+
+### 2026-10-22 - Complete shared index refresh and Balti W&P
+
+Approved by Tyler (Admin of Record, identity in ADMIN_REGISTRY.md), request df8643253d632503eb79192e9d55fed1d041a0953a8080d379d44c6c466c24f9 and replacement source a34dc9901040560c76ed51dcd643c1a83b6a8244e4ccd747222f753195eeb86e. The complete menu-specific index controls current shared membership and metadata, preserving cross-menu use and service/price variants; absent records are hidden with recovery. Older bundled subsets remain historical references and must not overwrite current shared data. Balti uses the Andes-style bounded recipe analysis with documented mass and brand export. Recipe privacy and source-unit uncertainty remain protected. Evidence docs/MENU_INDEX_BALTI_2026_10_22.md. Revisit on newer authoritative source or explicit admin direction.
