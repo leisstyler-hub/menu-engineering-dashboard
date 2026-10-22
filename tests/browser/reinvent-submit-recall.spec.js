@@ -2,6 +2,11 @@ import { expect, test } from "@playwright/test";
 import { NEIGHBORHOOD_ROTATIONS_STORAGE_KEY, SMARTSHEET_COLUMNS, SMARTSHEET_RECORD_TYPES, SMARTSHEET_SELECTION_TYPES } from "../../src/integrations/smartsheet/contract.js";
 import { collectUnexpectedPageErrors, expectNoAppProtection, expectNoUnexpectedPageErrors, openTool } from "./smoke-helpers.js";
 
+// Fixed historical fixtures must remain inside the five-week selector lookback.
+test.beforeEach(async ({ page }) => {
+  await page.clock.setFixedTime(new Date("2026-08-10T12:00:00Z"));
+});
+
 const week = "Aug 17, 2026 - Aug 21, 2026";
 const parentId = `rotation|2026-08-17|South|Re:Invent`;
 const currentWeek = "Jul 20, 2026 - Jul 24, 2026";

@@ -1,6 +1,6 @@
 ## 2026-10-22 - All-menu W&P component views and shared Transfer catalog
 
-- [Oct 22, 2:20 PM] IMPLEMENTED candidate 2026.10.22.004-shared-catalog-wp-menus: all menus receive component cards/charts/filters/exports; Transfer selectors use shared catalog membership. Source values, exact IDs and history preserved; unresolved economics stay explicit. No production writes or deployment. Solo Chief, no independent clearance. Evidence/release limits: docs/SHARED_CATALOG_WP_2026_10_22.md.
+- [Oct 22, 2:20 PM] COMMITTED candidate 2026.10.22.004-shared-catalog-wp-menus (app a1a675b; package/build, 28 affected and 50 rotation browser checks passed): all menus receive component cards/charts/filters/exports; Transfer selectors use shared catalog membership. Source values, exact IDs and history preserved; unresolved economics stay explicit. No production writes or deployment. Solo Chief, no independent clearance. Evidence/release limits: docs/SHARED_CATALOG_WP_2026_10_22.md.
 
 ## 2026-10-22 - Complete shared index and Balti W&P
 

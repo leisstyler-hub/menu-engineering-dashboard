@@ -2,6 +2,11 @@ import { expect, test } from "@playwright/test";
 import { collectUnexpectedPageErrors, expectNoAppProtection, expectNoUnexpectedPageErrors, openTool } from "./smoke-helpers.js";
 import { SMARTSHEET_DATABASE_STORAGE_KEY } from "../../src/integrations/smartsheet/contract.js";
 
+// Fixed historical fixtures must remain inside the five-week selector lookback.
+test.beforeEach(async ({ page }) => {
+  await page.clock.setFixedTime(new Date("2026-08-10T12:00:00Z"));
+});
+
 const districts = {
   South: ["Doppler", "Day 1", "Nitro", "Re:Invent"],
   North: ["Dawson", "Nessie", "Cricket", "Moby", "Commissary", "Atlas"],
@@ -272,7 +277,7 @@ test("North Commissary cafe label stays inside its selector button", async ({ pa
     await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
     await page.getByRole("button", { name: exactName("North") }).click();
 
-    const button = page.getByRole("button", { name: exactName("Commissary") });
+    const button = page.getByRole("button", { name: exactName("Commissary") }).first();
     const label = button.getByText("Commissary", { exact: true });
     await expect(button).toBeVisible();
     const [buttonBox, labelBox, labelMetrics] = await Promise.all([
@@ -663,7 +668,7 @@ test("Teriyaki and Anisa Sub Recipe selections satisfy normalized plate builds",
   await page.getByRole("button", { name: exactName("Nitro") }).click();
   let global = page.getByRole("heading", { name: "Global Station" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
   await global.locator("select").first().selectOption("AMZ: House of Teriyaki");
-  const nitroBlock = global.getByRole("heading", { name: "Monday + Tuesday Proteins" }).locator("xpath=ancestor::div[contains(@class,'rounded-3xl')][1]");
+  const nitroBlock = global.getByRole("heading", { name: "Thursday + Friday Proteins" }).locator("xpath=ancestor::div[contains(@class,'rounded-3xl')][1]");
   const nitroPicker = (title) => nitroBlock.getByText(title, { exact: true }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
   await nitroPicker("Entrees").locator("select").first().selectOption({ label: "Chicken Teriyaki" });
   await nitroPicker("Sides").locator("select").first().selectOption({ label: "Cucumber Salad" });
