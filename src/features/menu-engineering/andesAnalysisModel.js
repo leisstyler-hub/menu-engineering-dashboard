@@ -2,10 +2,10 @@ import { itemRestrictions, pricePerLb, portionWeightOz } from './weighPayModel.j
 
 // Quantities compare only within one dimension. Volume is never treated as mass.
 export function measure(text) {
-  const units={tsp:['volume',1],tbsp:['volume',3],cup:['volume',48],qt:['volume',192],gal:['volume',768],floz:['volume',6],oz:['mass',1],ounce:['mass',1],lb:['mass',16],g:['mass',1/28.349523125],kg:['mass',1000/28.349523125],ea:['count',1],each:['count',1],piece:['count',1]};
+  const units={serving:['serving',1],tsp:['volume',1],tbsp:['volume',3],cup:['volume',48],pt:['volume',96],qt:['volume',192],gal:['volume',768],floz:['volume',6],oz:['mass',1],ounce:['mass',1],lb:['mass',16],g:['mass',1/28.349523125],kg:['mass',1000/28.349523125],ea:['count',1],each:['count',1],piece:['count',1]};
   let dimension=null,amount=0;
-  for(const part of String(text||'').toLowerCase().split(',')) {
-    const match=part.trim().match(/^(\d+(?:\.\d+)?(?:[- ]\d+\/\d+)?|\d+\/\d+)\s*(tsp|tbsp|cups?|qt|gal|fl\s*oz|ounces?|oz|lbs?|kg|g|ea|each|pieces?)$/);
+  for(const part of String(text||'').toLowerCase().replace(/serving\(s\)/g,'serving').replace(/\bquarts?\b/g,'qt').replace(/\bpints?\b/g,'pt').replace(/\bgallons?\b/g,'gal').split(',')) {
+    const match=part.trim().match(/^(\d+(?:\.\d+)?(?:[- ]\d+\/\d+)?|\d+\/\d+)\s*(tsp|tbsp|cups?|qt|pt|gal|servings?|fl\s*oz|ounces?|oz|lbs?|kg|g|ea|each|pieces?)$/);
     if(!match)return null;
     const n=match[1];let value;
     if(/^\d+[- ]\d+\//.test(n)){const [whole,num,den]=n.split(/[- /]/).map(Number);value=whole+num/den;}
@@ -42,7 +42,7 @@ export function analyzeAndes(data,rate,sharedRows=[]) {
     const cost=Number.isFinite(recipe.cost)&&recipe.cost>=0?recipe.cost:null;
     const snapshotMass=Number.isFinite(recipe.massOz)&&recipe.massOz>0?recipe.massOz:null;
     const mass=snapshotMass??sharedMass(recipe,sharedRows,data.concept||'AMZ: Andes');
-    const weightSource=snapshotMass?'Recipe snapshot':mass?'Shared item data':'Not documented';
+    const weightSource=snapshotMass?(recipe.massBasis||'Recipe snapshot'):mass?'Shared item data':'Not documented';
     const fc=price&&cost!==null&&mass?cost/(mass/16*price):null;
     const economics=!price?'Needs price':cost===null?'Needs cost':!mass?'Needs weight':fc<=.4+1e-12?'Within 40%':'Above 40%';
     const restriction=itemRestrictions({item:recipe.name,portion:recipe.portion});

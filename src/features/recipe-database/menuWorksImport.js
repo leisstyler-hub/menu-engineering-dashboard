@@ -136,7 +136,7 @@ function parseAllergenDetails(row) {
   return { allergenSummary: summary || null, allergenDetails, allergens };
 }
 
-function parseImportedMenuWorksRow(row, index) {
+export function parseImportedMenuWorksRow(row, index) {
   const menu = textValue(row, "Menu Name");
   const recipeName = textValue(row, "Recipe Name", "Menu Item");
   if (!menu || !recipeName || !/^(AMZ|AMZ\+RA|EUR|RA):/i.test(menu)) return null;

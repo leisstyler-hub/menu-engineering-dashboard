@@ -261,3 +261,12 @@ test('Andes fills documented shared weights by exact MRN and portion in screen a
  expect(cards).toContain('Missing snapshot weights use exact MRN and matching portion');
  expect(writes).toEqual([]);
 });
+
+test('Balti opens its recipe-derived deep dive and exports a Balti brand card',async({page})=>{
+ const writes=await setup(page);
+ await page.route('**/api/recipe-library**',r=>r.fulfill({json:{ok:true,source:'supabase-recipe-items',rows:[...rows,row(91,'Butter Chicken Plate',{menu:'AMZ: Balti',mrn:'212486.1',portion:'1 serving(s)',portionOz:17.206})]}}));
+ await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();await page.getByRole('button',{name:'AMZ: Balti',exact:true}).click();
+ const a=page.getByRole('region',{name:'Balti component analysis'});await expect(a).toBeVisible();await expect(a.getByTestId('andes-recipe')).toHaveCount(45);
+ const plate=a.getByTestId('andes-recipe').filter({has:page.getByRole('heading',{name:'AMZ: Butter Chicken (Murgh Makhani) Plate',exact:true})});await expect(plate).toContainText('17.206 oz');await expect(plate).toContainText('$3.0200');await plate.getByText('Component cost breakdown',{exact:true}).first().click();await expect(plate.getByTestId('andes-component').first()).toBeVisible();
+ const downloadPromise=page.waitForEvent('download');await page.getByRole('button',{name:'Export menu package',exact:true}).click();const download=await downloadPromise;const zip=await JSZip.loadAsync(await readFile(await download.path()));const cards=await zip.file('flash-cards.html').async('string');expect(cards).toContain('Supplied Balti recipe analysis snapshot');expect(cards).not.toContain('Recipe Book');expect(writes).toEqual([]);
+});

@@ -1,0 +1,836 @@
+{
+  "sourceRows": 1695,
+  "activeRows": 1693,
+  "menus": 53,
+  "sourceSha256": "05b84f93d25ffd812c693c517735aea300d1c69f699c3034e739ce2ca7b84f94",
+  "added": 227,
+  "removed": [
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Arugula and Beet Salad",
+      "mrn": "76761.14",
+      "portion": "1 serving(s)",
+      "station": "Curated Salads"
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Asian Chicken Almond Salad",
+      "mrn": "78060",
+      "portion": "1 serving(s)",
+      "station": "Curated Salads"
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Barley, Quinoa and Lentil Salad",
+      "mrn": "74723.4",
+      "portion": "1 serving(s)",
+      "station": "Curated Salads"
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Chef Salad",
+      "mrn": "16526.14",
+      "portion": "1 serving(s)",
+      "station": "Curated Salads"
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Cucumber and Kale Quinoa Salad",
+      "mrn": "141067.5",
+      "portion": "1 serving(s)",
+      "station": "Curated Salads"
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Korean Green Leaf Salad",
+      "mrn": "88312",
+      "portion": "1 serving(s)",
+      "station": "Curated Salads"
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Mezze Quinoa Bowl",
+      "mrn": "139434",
+      "portion": "1 serving(s)",
+      "station": "Curated Salads"
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Thai Salad",
+      "mrn": "150860",
+      "portion": "1 serving(s)",
+      "station": "Curated Salads"
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Vegan Protein Blast Salad",
+      "mrn": "83064",
+      "portion": "1 serving(s)",
+      "station": "Curated Salads"
+    },
+    {
+      "menu": "AMZ: Fresh Five",
+      "item": "Thai Fruit Salad",
+      "mrn": "135643.15",
+      "portion": "1 bowl",
+      "station": "Salad"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Apple Farro Arugula Salad",
+      "mrn": "200784",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Arugula and Beet Salad",
+      "mrn": "76761.14",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Asian Cashew Salad",
+      "mrn": "87152",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Asian Chicken Almond Salad",
+      "mrn": "78060",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Baja Crunch Salad",
+      "mrn": "114287.3",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Bbq Chop Salad",
+      "mrn": "191052",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Caesar Salad",
+      "mrn": "16373.2",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Chef Salad",
+      "mrn": "16526.14",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Chef Salad",
+      "mrn": "46859.21",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Chicken Caesar Salad",
+      "mrn": "24060.44",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Chopped Salad",
+      "mrn": "147426.2",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Classic Cobb Salad",
+      "mrn": "8374.6",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Cucumber and Kale Quinoa Salad",
+      "mrn": "141067.5",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Garden Salad",
+      "mrn": "191050",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Grain Medley",
+      "mrn": "211780",
+      "portion": "1 cup",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Greek Grains Salad",
+      "mrn": "11242.7",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Greek Salad",
+      "mrn": "11242.6",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Green Goddess Chopped Salad",
+      "mrn": "102917.4",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Green Goddess Pistachio Salad",
+      "mrn": "199128",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Half Greens, Half Grains",
+      "mrn": "210490",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Harvest Kale Almond Salad with Ranch",
+      "mrn": "145521.2",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Italian Antipasti Salad",
+      "mrn": "46859.23",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Korean Green Leaf Salad",
+      "mrn": "88312",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Latin Quinoa Salad",
+      "mrn": "9888.14",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Napa Peanut Sesame Soy Cabbage Salad",
+      "mrn": "200826",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Nicoise Bowl",
+      "mrn": "34133.9",
+      "portion": "1 bowl",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Nw Garden Salad",
+      "mrn": "134121.1",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Sesame Cashew Miso Crunch Salad",
+      "mrn": "191153",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Smoked Almond Cobb Salad",
+      "mrn": "191038",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Southwest Cobb Salad",
+      "mrn": "135542.4",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Southwest Grain Bowl",
+      "mrn": "214662",
+      "portion": "1 bowl",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Southwest Salad",
+      "mrn": "135542.3",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Spinach Strawberry Pistachio Salad",
+      "mrn": "67971.8",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Strawberry Farro Chicken Salad",
+      "mrn": "84322.1",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Thai Peanut Salad",
+      "mrn": "135643.12",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Thai Salad",
+      "mrn": "150860",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Turkey Cobb Salad",
+      "mrn": "8374",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Tuscan Salad",
+      "mrn": "34135.10",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Greens & Grains",
+      "item": "Vegan Protein Blast Salad",
+      "mrn": "83064",
+      "portion": "1 serving(s)",
+      "station": "Greens & Grains"
+    },
+    {
+      "menu": "AMZ: Grill Core",
+      "item": "Chili Cheese Dog",
+      "mrn": "163511.1",
+      "portion": "1 serving(s)",
+      "station": "Spotlights"
+    },
+    {
+      "menu": "AMZ: Salt & Char",
+      "item": "Grilled Chicken Breast",
+      "mrn": "144591.1",
+      "portion": "1 each",
+      "station": "Salt & Char"
+    },
+    {
+      "menu": "AMZ: Wok",
+      "item": "Green Sriracha",
+      "mrn": "176739",
+      "portion": "1-1/2 floz",
+      "station": "Japanese - Wok"
+    },
+    {
+      "menu": "AMZ: Wok",
+      "item": "Green Sriracha",
+      "mrn": "176739",
+      "portion": "1-1/2 floz",
+      "station": "Vietnamese - Wok"
+    },
+    {
+      "menu": "AMZ+RA: Paninoteca",
+      "item": "Veal, Pork & Beef Meatball with Tomato Sauce",
+      "mrn": "145932",
+      "portion": "3 piece",
+      "station": "RA PANINTOECA"
+    },
+    {
+      "menu": "AMZ+RA: Paninoteca",
+      "item": "Veal, Pork & Beef Meatball with Tomato Sauce",
+      "mrn": "145932",
+      "portion": "3 piece",
+      "station": "RA PANINTOECA"
+    }
+  ],
+  "mrnChanges": [
+    {
+      "menu": "AMZ: Fish Market",
+      "item": "French Fries",
+      "before": "8414",
+      "after": "8414.96"
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Chicken Caesar Salad",
+      "before": "24060.44",
+      "after": "24060.60"
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Italian Antipasti Salad",
+      "before": "46859.23",
+      "after": "46859.50"
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Classic Caesar Salad",
+      "before": "76761.4",
+      "after": "76761.18"
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Harvest Kale Almond Salad With Ranch",
+      "before": "145521.2",
+      "after": "145521.10"
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Spinach Strawberry Pistachio Salad",
+      "before": "67971.8",
+      "after": "67971.19"
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Strawberry Farro Chicken Salad",
+      "before": "84322.1",
+      "after": "84322.3"
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Turkey Cobb Salad",
+      "before": "8374",
+      "after": "8374.13"
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Tuscan Salad",
+      "before": "34135.10",
+      "after": "34135.11"
+    },
+    {
+      "menu": "AMZ: Andes",
+      "item": "French Fries",
+      "before": "8414",
+      "after": "8414.96"
+    }
+  ],
+  "weightChanges": [
+    {
+      "menu": "AMZ: House of Teriyaki",
+      "item": "Spicy Teriyaki Sauce",
+      "mrn": "83240",
+      "before": 2.228,
+      "after": 2.091
+    },
+    {
+      "menu": "AMZ: Taco Total",
+      "item": "Al Pastor Pork",
+      "mrn": "175362.1",
+      "before": 3.558,
+      "after": 3.538
+    },
+    {
+      "menu": "AMZ: Fish Market",
+      "item": "Miso Soy Black Cod",
+      "mrn": "189227.2",
+      "before": 17.905,
+      "after": 17.916
+    },
+    {
+      "menu": "AMZ: Fish Market",
+      "item": "French Fries",
+      "mrn": "8414.96",
+      "before": 5.384,
+      "after": 5
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Apple Farro Arugula Salad",
+      "mrn": "200784",
+      "before": 11.858,
+      "after": 15.069
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Baja Crunch Salad",
+      "mrn": "114287.3",
+      "before": 12.99,
+      "after": 13.675
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Bbq Chop Salad",
+      "mrn": "191052",
+      "before": 12.553,
+      "after": 13.237
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Chicken Caesar Salad",
+      "mrn": "24060.60",
+      "before": 10.496,
+      "after": 13
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Chopped Salad",
+      "mrn": "147426.2",
+      "before": 15.81,
+      "after": 15.527
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Italian Antipasti Salad",
+      "mrn": "46859.50",
+      "before": 13.715,
+      "after": 12.072
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Classic Caesar Salad",
+      "mrn": "76761.18",
+      "before": 16.285,
+      "after": 7.172
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Classic Cobb Salad",
+      "mrn": "8374.6",
+      "before": 13.213,
+      "after": 13.897
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Garden Salad",
+      "mrn": "191050",
+      "before": 15,
+      "after": 11.1
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Greek Grains Salad",
+      "mrn": "11242.7",
+      "before": 17.09,
+      "after": 12.91
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Greek Salad",
+      "mrn": "11242.6",
+      "before": 14.519,
+      "after": 10.697
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Green Goddess Chopped Salad",
+      "mrn": "102917.4",
+      "before": 12.924,
+      "after": 13.143
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Green Goddess Pistachio Salad",
+      "mrn": "199128",
+      "before": 12.37,
+      "after": 11.725
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Harvest Kale Almond Salad With Ranch",
+      "mrn": "145521.10",
+      "before": 8.974,
+      "after": 9.316
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Latin Quinoa Salad",
+      "mrn": "9888.14",
+      "before": 10.638,
+      "after": 11.274
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Napa Peanut Sesame Soy Cabbage Salad",
+      "mrn": "200826",
+      "before": 15.185,
+      "after": 12.448
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Sesame Cashew Miso Crunch Salad",
+      "mrn": "191153",
+      "before": 11.447,
+      "after": 10.385
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Smoked Almond Cobb Salad",
+      "mrn": "191038",
+      "before": 11.954,
+      "after": 13.949
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Southwest Cobb Salad",
+      "mrn": "135542.4",
+      "before": 14.004,
+      "after": 13.161
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Southwest Salad",
+      "mrn": "135542.3",
+      "before": 17.403,
+      "after": 13.703
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Spinach Strawberry Pistachio Salad",
+      "mrn": "67971.19",
+      "before": 5.25,
+      "after": 7
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Strawberry Farro Chicken Salad",
+      "mrn": "84322.3",
+      "before": 10.189,
+      "after": 17.111
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Thai Peanut Salad",
+      "mrn": "135643.12",
+      "before": 10.681,
+      "after": 10.803
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Turkey Cobb Salad",
+      "mrn": "8374.13",
+      "before": 11.739,
+      "after": 10.842
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Salads",
+      "item": "Tuscan Salad",
+      "mrn": "34135.11",
+      "before": 6.699,
+      "after": 7.3
+    },
+    {
+      "menu": "AMZ: Wok",
+      "item": "Soy Lemongrass Shredded Beef",
+      "mrn": "149894.1",
+      "before": 5.458,
+      "after": 5.483
+    },
+    {
+      "menu": "AMZ: Wok",
+      "item": "Spicy Teriyaki Sauce",
+      "mrn": "83240",
+      "before": 2.228,
+      "after": 2.091
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Sandwiches",
+      "item": "Turkey Avocado Club",
+      "mrn": "148838.3",
+      "before": 18.086,
+      "after": 17.846
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Sandwiches",
+      "item": "Crispy Chicken Sandwich",
+      "mrn": "77139.22",
+      "before": 12.767,
+      "after": 12.967
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Sandwiches",
+      "item": "Portobello Philly Sandwich",
+      "mrn": "84264.2",
+      "before": 13.151,
+      "after": 9.562
+    },
+    {
+      "menu": "AMZ: Grill Core",
+      "item": "Loaded Fries",
+      "mrn": "93309.42",
+      "before": 8.532,
+      "after": 8.722
+    },
+    {
+      "menu": "AMZ: Ciudad",
+      "item": "Beef Barbacoa Taco",
+      "mrn": "81582.7",
+      "before": 4.923,
+      "after": 4.9
+    },
+    {
+      "menu": "AMZ: Ciudad",
+      "item": "Carne Asada Tacos",
+      "mrn": "81582.9",
+      "before": 10.846,
+      "after": 10.8
+    },
+    {
+      "menu": "AMZ: Breakfast",
+      "item": "Biscuits And Gravy",
+      "mrn": "129795",
+      "before": 7.85,
+      "after": 7.805
+    },
+    {
+      "menu": "AMZ: Breakfast",
+      "item": "Bacon",
+      "mrn": "147718",
+      "before": 1.64,
+      "after": 1.312
+    },
+    {
+      "menu": "AMZ: Carvery",
+      "item": "Tomato Pinwheels",
+      "mrn": "173732.1",
+      "before": 2.431,
+      "after": 5.008
+    },
+    {
+      "menu": "AMZ: Carvery",
+      "item": "Country Gravy",
+      "mrn": "81538",
+      "before": 3.6,
+      "after": 3.601
+    },
+    {
+      "menu": "AMZ: Carvery",
+      "item": "Vegetarian Collard Greens",
+      "mrn": "103139.2",
+      "before": 0.651,
+      "after": 0.606
+    },
+    {
+      "menu": "AMZ: Andes",
+      "item": "French Fries",
+      "mrn": "8414.96",
+      "before": 4.307,
+      "after": 4
+    },
+    {
+      "menu": "AMZ: Pho",
+      "item": "Mushroom Lemongrass Coconut Pho",
+      "mrn": "176645.9",
+      "before": 24.22,
+      "after": 28.835
+    },
+    {
+      "menu": "AMZ: Street Eats",
+      "item": "Elote Salad",
+      "mrn": "144664",
+      "before": 3.591,
+      "after": 3.581
+    },
+    {
+      "menu": "AMZ+RA: Global Grains",
+      "item": "Cuban Mojo Pork Quinoa Bowl, Cilantro Lime Crema",
+      "mrn": "156945",
+      "before": 19.546,
+      "after": 19.484
+    },
+    {
+      "menu": "AMZ: Fresh Five",
+      "item": "Balsamic Tofu Quinoa Lentil Salad",
+      "mrn": "9888.16",
+      "before": 11.587,
+      "after": 16.738
+    },
+    {
+      "menu": "AMZ: Fresh Five",
+      "item": "Falafel Kale Salad",
+      "mrn": "29091.10",
+      "before": 4.267,
+      "after": 11.379
+    },
+    {
+      "menu": "AMZ: Fresh Five",
+      "item": "Summer Squash Salad",
+      "mrn": "140744.1",
+      "before": 8.61,
+      "after": 8
+    },
+    {
+      "menu": "AMZ: Fresh Five",
+      "item": "Yakisoba Crunch Salad",
+      "mrn": "78426.3",
+      "before": 9.86,
+      "after": 13.86
+    },
+    {
+      "menu": "AMZ: Fresh Five",
+      "item": "Lemon Pepper Bean And Pea Salad",
+      "mrn": "198522",
+      "before": 0.5,
+      "after": 15.688
+    },
+    {
+      "menu": "AMZ: Fresh Five",
+      "item": "Thai Chicken Rice Noodle Salad With Peanuts",
+      "mrn": "10908.11",
+      "before": 5.123,
+      "after": 14.435
+    },
+    {
+      "menu": "AMZ+RA: Sushi",
+      "item": "Cucumber Avocado Roll",
+      "mrn": "136205",
+      "before": 6.086,
+      "after": 4.835
+    },
+    {
+      "menu": "AMZ: Deli Core",
+      "item": "Turkey Apple Brie Sandwich",
+      "mrn": "37001.21",
+      "before": 10.986,
+      "after": 11.427
+    }
+  ]
+}

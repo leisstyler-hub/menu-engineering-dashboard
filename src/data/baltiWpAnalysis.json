@@ -1,0 +1,4193 @@
+{
+  "concept": "AMZ: Balti",
+  "basis": "Supplied Balti recipe cost snapshot; analysis only",
+  "sourceSha256": "81b79a1621f299401f691160c76125b1b7a4ba8c21a4eab97e854bcbaba6b4ce",
+  "recipes": [
+    {
+      "id": "page-2",
+      "mrn": "193119",
+      "name": "AMZ: Balti: Kale Poriyal",
+      "portion": "1/2 cup",
+      "massOz": 4.273,
+      "cost": 0.62,
+      "batchServings": 24.0,
+      "topLevel": true,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-3",
+      "mrn": "212486.1",
+      "name": "AMZ: Butter Chicken (Murgh Makhani) Plate",
+      "portion": "1 serving(s)",
+      "massOz": 17.206,
+      "cost": 3.02,
+      "batchServings": 1.0,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-7",
+          "mrn": "165741.21",
+          "name": "EUR: Jeera Rice (Cumin Seed)",
+          "quantity": "1 cup"
+        },
+        {
+          "childId": "page-6",
+          "mrn": "158745",
+          "name": "EUR: Grilled Garlic Naan",
+          "quantity": ""
+        },
+        {
+          "childId": "page-11",
+          "mrn": "81768",
+          "name": "EURNA: Spicy Cilantro Chutney",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-10",
+          "mrn": "81281",
+          "name": "EURNA: Raita Sauce",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-4",
+          "mrn": "165741.16",
+          "name": "EUR: Butter Chicken (Murgh Makhani)",
+          "quantity": "5 oz"
+        }
+      ],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-4",
+      "mrn": "165741.16",
+      "name": "EUR: Butter Chicken (Murgh Makhani)",
+      "portion": "3/4 cup",
+      "massOz": null,
+      "cost": 2.13,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-8",
+          "mrn": "165741.29",
+          "name": "EUR: Tikka Marinade",
+          "quantity": "1 tbsp, 1 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-6",
+      "mrn": "158745",
+      "name": "EUR: Grilled Garlic Naan",
+      "portion": "1 each",
+      "massOz": null,
+      "cost": 1.16,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-7",
+      "mrn": "165741.21",
+      "name": "EUR: Jeera Rice (Cumin Seed)",
+      "portion": "1 cup",
+      "massOz": 6.725,
+      "cost": 0.46,
+      "batchServings": null,
+      "topLevel": false,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-8",
+      "mrn": "165741.29",
+      "name": "EUR: Tikka Marinade",
+      "portion": "1 floz",
+      "massOz": null,
+      "cost": 0.52,
+      "batchServings": null,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-9",
+      "mrn": "84042.1",
+      "name": "EURNA: Ginger Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 0.9,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-10",
+      "mrn": "81281",
+      "name": "EURNA: Raita Sauce",
+      "portion": "1 ounce",
+      "massOz": 1.0,
+      "cost": 0.16,
+      "batchServings": 2.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-18",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "1/8 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-11",
+      "mrn": "81768",
+      "name": "EURNA: Spicy Cilantro Chutney",
+      "portion": "2 ounce",
+      "massOz": 2.0,
+      "cost": 0.14,
+      "batchServings": 3.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-12",
+      "mrn": "212486.4",
+      "name": "AMZ: Chicken Bhuna Masala Plate",
+      "portion": "1 serving(s)",
+      "massOz": 17.206,
+      "cost": 2.46,
+      "batchServings": 1.0,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-17",
+          "mrn": "165741.21",
+          "name": "EUR: Jeera Rice (Cumin Seed)",
+          "quantity": "1 cup"
+        },
+        {
+          "childId": "page-16",
+          "mrn": "158745",
+          "name": "EUR: Grilled Garlic Naan",
+          "quantity": ""
+        },
+        {
+          "childId": "page-20",
+          "mrn": "81768",
+          "name": "EURNA: Spicy Cilantro Chutney",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-19",
+          "mrn": "81281",
+          "name": "EURNA: Raita Sauce",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-13",
+          "mrn": "165741.15",
+          "name": "EUR: Chicken Bhuna Masala",
+          "quantity": "5 oz"
+        }
+      ],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-13",
+      "mrn": "165741.15",
+      "name": "EUR: Chicken Bhuna Masala",
+      "portion": "1 cup",
+      "massOz": null,
+      "cost": 2.03,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-15",
+          "mrn": "165741.4",
+          "name": "EUR: Dhaba Ginger Garlic Paste",
+          "quantity": "1/2 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-15",
+      "mrn": "165741.4",
+      "name": "EUR: Dhaba Ginger Garlic Paste",
+      "portion": "1 tbsp",
+      "massOz": null,
+      "cost": 0.1,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-16",
+      "mrn": "158745",
+      "name": "EUR: Grilled Garlic Naan",
+      "portion": "1 each",
+      "massOz": null,
+      "cost": 1.16,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-17",
+      "mrn": "165741.21",
+      "name": "EUR: Jeera Rice (Cumin Seed)",
+      "portion": "1 cup",
+      "massOz": 6.725,
+      "cost": 0.46,
+      "batchServings": null,
+      "topLevel": false,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-18",
+      "mrn": "84042.1",
+      "name": "EURNA: Ginger Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 0.9,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-19",
+      "mrn": "81281",
+      "name": "EURNA: Raita Sauce",
+      "portion": "1 ounce",
+      "massOz": 1.0,
+      "cost": 0.16,
+      "batchServings": 2.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-29",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "1/8 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-20",
+      "mrn": "81768",
+      "name": "EURNA: Spicy Cilantro Chutney",
+      "portion": "2 ounce",
+      "massOz": 2.0,
+      "cost": 0.14,
+      "batchServings": 3.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-21",
+      "mrn": "212486.7",
+      "name": "AMZ: Chicken Chettinad Plate",
+      "portion": "1 serving(s)",
+      "massOz": 17.206,
+      "cost": 2.94,
+      "batchServings": 1.0,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-28",
+          "mrn": "165741.21",
+          "name": "EUR: Jeera Rice (Cumin Seed)",
+          "quantity": "1 cup"
+        },
+        {
+          "childId": "page-27",
+          "mrn": "158745",
+          "name": "EUR: Grilled Garlic Naan",
+          "quantity": ""
+        },
+        {
+          "childId": "page-31",
+          "mrn": "81768",
+          "name": "EURNA: Spicy Cilantro Chutney",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-30",
+          "mrn": "81281",
+          "name": "EURNA: Raita Sauce",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-25",
+          "mrn": "165741.42",
+          "name": "EUR: Chicken Chettinad (With Cashews)",
+          "quantity": "5 oz"
+        }
+      ],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-22",
+      "mrn": "165741.31",
+      "name": "EUR: Chettinad Sauce (with Cashews)",
+      "portion": "1 floz",
+      "massOz": null,
+      "cost": 0.45,
+      "batchServings": 3.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-23",
+          "mrn": "165741.37",
+          "name": "EUR: Chettinad Spice Blend (With Cashews)",
+          "quantity": "3/4 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-23",
+      "mrn": "165741.37",
+      "name": "EUR: Chettinad Spice Blend (With Cashews)",
+      "portion": "1 tbsp",
+      "massOz": null,
+      "cost": 0.49,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-25",
+      "mrn": "165741.42",
+      "name": "EUR: Chicken Chettinad (With Cashews)",
+      "portion": "1 cup",
+      "massOz": null,
+      "cost": 2.27,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-22",
+          "mrn": "165741.31",
+          "name": "EUR: Chettinad Sauce (with Cashews)",
+          "quantity": "1/3 cup, 2 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-27",
+      "mrn": "158745",
+      "name": "EUR: Grilled Garlic Naan",
+      "portion": "1 each",
+      "massOz": null,
+      "cost": 1.16,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-28",
+      "mrn": "165741.21",
+      "name": "EUR: Jeera Rice (Cumin Seed)",
+      "portion": "1 cup",
+      "massOz": 6.725,
+      "cost": 0.46,
+      "batchServings": null,
+      "topLevel": false,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-29",
+      "mrn": "84042.1",
+      "name": "EURNA: Ginger Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 0.9,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-30",
+      "mrn": "81281",
+      "name": "EURNA: Raita Sauce",
+      "portion": "1 ounce",
+      "massOz": 1.0,
+      "cost": 0.16,
+      "batchServings": 2.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-37",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "1/8 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-31",
+      "mrn": "81768",
+      "name": "EURNA: Spicy Cilantro Chutney",
+      "portion": "2 ounce",
+      "massOz": 2.0,
+      "cost": 0.14,
+      "batchServings": 3.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-32",
+      "mrn": "212486.6",
+      "name": "AMZ: Chicken Coconut Curry Plate",
+      "portion": "1 serving(s)",
+      "massOz": 17.206,
+      "cost": 2.85,
+      "batchServings": 1.0,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-36",
+          "mrn": "165741.21",
+          "name": "EUR: Jeera Rice (Cumin Seed)",
+          "quantity": "1 cup"
+        },
+        {
+          "childId": "page-35",
+          "mrn": "158745",
+          "name": "EUR: Grilled Garlic Naan",
+          "quantity": ""
+        },
+        {
+          "childId": "page-39",
+          "mrn": "81768",
+          "name": "EURNA: Spicy Cilantro Chutney",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-38",
+          "mrn": "81281",
+          "name": "EURNA: Raita Sauce",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-33",
+          "mrn": "165741.43",
+          "name": "EUR: Chicken Coconut Curry",
+          "quantity": "5 oz"
+        }
+      ],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-33",
+      "mrn": "165741.43",
+      "name": "EUR: Chicken Coconut Curry",
+      "portion": "1 cup",
+      "massOz": null,
+      "cost": 2.05,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-35",
+      "mrn": "158745",
+      "name": "EUR: Grilled Garlic Naan",
+      "portion": "1 each",
+      "massOz": null,
+      "cost": 1.16,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-36",
+      "mrn": "165741.21",
+      "name": "EUR: Jeera Rice (Cumin Seed)",
+      "portion": "1 cup",
+      "massOz": 6.725,
+      "cost": 0.46,
+      "batchServings": null,
+      "topLevel": false,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-37",
+      "mrn": "84042.1",
+      "name": "EURNA: Ginger Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 0.9,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-38",
+      "mrn": "81281",
+      "name": "EURNA: Raita Sauce",
+      "portion": "1 ounce",
+      "massOz": 1.0,
+      "cost": 0.16,
+      "batchServings": 2.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-65",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "1/8 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-39",
+      "mrn": "81768",
+      "name": "EURNA: Spicy Cilantro Chutney",
+      "portion": "2 ounce",
+      "massOz": 2.0,
+      "cost": 0.14,
+      "batchServings": 3.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-40",
+      "mrn": "212486.10",
+      "name": "AMZ: Chicken Jalfrezi Plate",
+      "portion": "1 serving(s)",
+      "massOz": 17.206,
+      "cost": 2.86,
+      "batchServings": 1.0,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-42",
+          "mrn": "165741.21",
+          "name": "EUR: Jeera Rice (Cumin Seed)",
+          "quantity": "1 cup"
+        },
+        {
+          "childId": "page-41",
+          "mrn": "158745",
+          "name": "EUR: Grilled Garlic Naan",
+          "quantity": ""
+        },
+        {
+          "childId": "page-55",
+          "mrn": "81768",
+          "name": "EURNA: Spicy Cilantro Chutney",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-54",
+          "mrn": "81281",
+          "name": "EURNA: Raita Sauce",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-43",
+          "mrn": "147061.1",
+          "name": "EURNA: Balti Jalfrezi Chicken",
+          "quantity": "5 oz"
+        }
+      ],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-41",
+      "mrn": "158745",
+      "name": "EUR: Grilled Garlic Naan",
+      "portion": "1 each",
+      "massOz": null,
+      "cost": 1.16,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-42",
+      "mrn": "165741.21",
+      "name": "EUR: Jeera Rice (Cumin Seed)",
+      "portion": "1 cup",
+      "massOz": 6.725,
+      "cost": 0.46,
+      "batchServings": null,
+      "topLevel": false,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-43",
+      "mrn": "147061.1",
+      "name": "EURNA: Balti Jalfrezi Chicken",
+      "portion": "5 ounce",
+      "massOz": 5.0,
+      "cost": 1.47,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-44",
+          "mrn": "146960",
+          "name": "EURNA: Balti Jalfrezi Gravy",
+          "quantity": "3-3/4 oz"
+        },
+        {
+          "childId": "page-51",
+          "mrn": "146871",
+          "name": "EURNA: Laziz Chicken Kebab",
+          "quantity": "2-1/4 oz"
+        }
+      ]
+    },
+    {
+      "id": "page-44",
+      "mrn": "146960",
+      "name": "EURNA: Balti Jalfrezi Gravy",
+      "portion": "3 ounce",
+      "massOz": 3.0,
+      "cost": 0.54,
+      "batchServings": 2.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-57",
+          "mrn": "118611",
+          "name": "EURNA: Vegetable Masala Gravy",
+          "quantity": "3-1/4 oz"
+        },
+        {
+          "childId": "page-53",
+          "mrn": "84090",
+          "name": "EURNA: Mint Chutney",
+          "quantity": "1/3 oz"
+        },
+        {
+          "childId": "page-50",
+          "mrn": "146865",
+          "name": "EURNA: Jalfrezi Masala",
+          "quantity": "<1/8 oz"
+        }
+      ]
+    },
+    {
+      "id": "page-46",
+      "mrn": "84039",
+      "name": "EURNA: Fried Onion Paste",
+      "portion": "8 ounce",
+      "massOz": 8.0,
+      "cost": 0.69,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-47",
+      "mrn": "84041",
+      "name": "EURNA: Garam Masala",
+      "portion": "1 cup",
+      "massOz": null,
+      "cost": 7.07,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-48",
+      "mrn": "84042",
+      "name": "EURNA: Garlic Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 1.93,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-49",
+      "mrn": "84042.1",
+      "name": "EURNA: Ginger Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 0.9,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-50",
+      "mrn": "146865",
+      "name": "EURNA: Jalfrezi Masala",
+      "portion": "1 ounce",
+      "massOz": 1.0,
+      "cost": 1.35,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-51",
+      "mrn": "146871",
+      "name": "EURNA: Laziz Chicken Kebab",
+      "portion": "2 ounce",
+      "massOz": 2.0,
+      "cost": 0.65,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-49",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "<1/8 oz"
+        },
+        {
+          "childId": "page-48",
+          "mrn": "84042",
+          "name": "EURNA: Garlic Paste",
+          "quantity": "<1/8 oz"
+        },
+        {
+          "childId": "page-46",
+          "mrn": "84039",
+          "name": "EURNA: Fried Onion Paste",
+          "quantity": "1/8 oz"
+        }
+      ]
+    },
+    {
+      "id": "page-53",
+      "mrn": "84090",
+      "name": "EURNA: Mint Chutney",
+      "portion": "2 ounce",
+      "massOz": 2.0,
+      "cost": 1.37,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-56",
+          "mrn": "84044",
+          "name": "EURNA: Tamarind Sauce",
+          "quantity": "1/2 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-54",
+      "mrn": "81281",
+      "name": "EURNA: Raita Sauce",
+      "portion": "1 ounce",
+      "massOz": 1.0,
+      "cost": 0.16,
+      "batchServings": 2.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-65",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "1/8 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-55",
+      "mrn": "81768",
+      "name": "EURNA: Spicy Cilantro Chutney",
+      "portion": "2 ounce",
+      "massOz": 2.0,
+      "cost": 0.14,
+      "batchServings": 3.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-56",
+      "mrn": "84044",
+      "name": "EURNA: Tamarind Sauce",
+      "portion": "2 tbsp",
+      "massOz": null,
+      "cost": 0.39,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-57",
+      "mrn": "118611",
+      "name": "EURNA: Vegetable Masala Gravy",
+      "portion": "1 cup",
+      "massOz": null,
+      "cost": 0.62,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-107",
+          "mrn": "84042",
+          "name": "EURNA: Garlic Paste",
+          "quantity": "1-1/8 tsp"
+        },
+        {
+          "childId": "page-108",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "2-1/4 tsp"
+        },
+        {
+          "childId": "page-106",
+          "mrn": "84041",
+          "name": "EURNA: Garam Masala",
+          "quantity": "1/2 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-58",
+      "mrn": "212486.2",
+      "name": "AMZ: Chicken Korma Plate",
+      "portion": "1 serving(s)",
+      "massOz": 17.206,
+      "cost": 2.74,
+      "batchServings": 1.0,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-64",
+          "mrn": "165741.21",
+          "name": "EUR: Jeera Rice (Cumin Seed)",
+          "quantity": "1 cup"
+        },
+        {
+          "childId": "page-63",
+          "mrn": "158745",
+          "name": "EUR: Grilled Garlic Naan",
+          "quantity": ""
+        },
+        {
+          "childId": "page-67",
+          "mrn": "81768",
+          "name": "EURNA: Spicy Cilantro Chutney",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-66",
+          "mrn": "81281",
+          "name": "EURNA: Raita Sauce",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-60",
+          "mrn": "165741.2",
+          "name": "EUR: Chicken Korma",
+          "quantity": "5 oz"
+        }
+      ],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-59",
+      "mrn": "165741.1",
+      "name": "EUR: Cashew Korma Sauce",
+      "portion": "1 floz",
+      "massOz": null,
+      "cost": 0.29,
+      "batchServings": 2.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-60",
+      "mrn": "165741.2",
+      "name": "EUR: Chicken Korma",
+      "portion": "1 cup",
+      "massOz": null,
+      "cost": 1.81,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-59",
+          "mrn": "165741.1",
+          "name": "EUR: Cashew Korma Sauce",
+          "quantity": "1/4 cup"
+        },
+        {
+          "childId": "page-62",
+          "mrn": "165741.4",
+          "name": "EUR: Dhaba Ginger Garlic Paste",
+          "quantity": "1/4 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-62",
+      "mrn": "165741.4",
+      "name": "EUR: Dhaba Ginger Garlic Paste",
+      "portion": "1 tbsp",
+      "massOz": null,
+      "cost": 0.1,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-63",
+      "mrn": "158745",
+      "name": "EUR: Grilled Garlic Naan",
+      "portion": "1 each",
+      "massOz": null,
+      "cost": 1.16,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-64",
+      "mrn": "165741.21",
+      "name": "EUR: Jeera Rice (Cumin Seed)",
+      "portion": "1 cup",
+      "massOz": 6.725,
+      "cost": 0.46,
+      "batchServings": null,
+      "topLevel": false,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-65",
+      "mrn": "84042.1",
+      "name": "EURNA: Ginger Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 0.9,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-66",
+      "mrn": "81281",
+      "name": "EURNA: Raita Sauce",
+      "portion": "1 ounce",
+      "massOz": 1.0,
+      "cost": 0.16,
+      "batchServings": 2.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-75",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "1/8 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-67",
+      "mrn": "81768",
+      "name": "EURNA: Spicy Cilantro Chutney",
+      "portion": "2 ounce",
+      "massOz": 2.0,
+      "cost": 0.14,
+      "batchServings": 3.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-68",
+      "mrn": "212486.8",
+      "name": "AMZ: Chicken Moilee Plate",
+      "portion": "1 serving(s)",
+      "massOz": 17.206,
+      "cost": 2.3,
+      "batchServings": 1.0,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-72",
+          "mrn": "165741.21",
+          "name": "EUR: Jeera Rice (Cumin Seed)",
+          "quantity": "1 cup"
+        },
+        {
+          "childId": "page-71",
+          "mrn": "158745",
+          "name": "EUR: Grilled Garlic Naan",
+          "quantity": ""
+        },
+        {
+          "childId": "page-77",
+          "mrn": "81768",
+          "name": "EURNA: Spicy Cilantro Chutney",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-76",
+          "mrn": "81281",
+          "name": "EURNA: Raita Sauce",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-69",
+          "mrn": "59049.1",
+          "name": "EUR: Chicken Moilee",
+          "quantity": "5 oz"
+        }
+      ],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-69",
+      "mrn": "59049.1",
+      "name": "EUR: Chicken Moilee",
+      "portion": "1 cup",
+      "massOz": null,
+      "cost": 1.78,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-73",
+          "mrn": "59013",
+          "name": "EUR: Malai Chicken",
+          "quantity": "3-1/2 oz"
+        },
+        {
+          "childId": "page-70",
+          "mrn": "2035.4",
+          "name": "EUR: Chicken Stock (Low Sodium Base)",
+          "quantity": "2 tbsp, 1-3/4 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-70",
+      "mrn": "2035.4",
+      "name": "EUR: Chicken Stock (Low Sodium Base)",
+      "portion": "1 cup",
+      "massOz": null,
+      "cost": 0.14,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-71",
+      "mrn": "158745",
+      "name": "EUR: Grilled Garlic Naan",
+      "portion": "1 each",
+      "massOz": null,
+      "cost": 1.16,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-72",
+      "mrn": "165741.21",
+      "name": "EUR: Jeera Rice (Cumin Seed)",
+      "portion": "1 cup",
+      "massOz": 6.725,
+      "cost": 0.46,
+      "batchServings": null,
+      "topLevel": false,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-73",
+      "mrn": "59013",
+      "name": "EUR: Malai Chicken",
+      "portion": "4 ounce",
+      "massOz": 4.0,
+      "cost": 0.83,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-74",
+          "mrn": "59012",
+          "name": "EUR: Malai Marinade (Scratch)",
+          "quantity": "1 tbsp"
+        }
+      ]
+    },
+    {
+      "id": "page-74",
+      "mrn": "59012",
+      "name": "EUR: Malai Marinade (Scratch)",
+      "portion": "2 quart",
+      "massOz": null,
+      "cost": 9.39,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-75",
+      "mrn": "84042.1",
+      "name": "EURNA: Ginger Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 0.9,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-76",
+      "mrn": "81281",
+      "name": "EURNA: Raita Sauce",
+      "portion": "1 ounce",
+      "massOz": 1.0,
+      "cost": 0.16,
+      "batchServings": 2.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-84",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "1/8 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-77",
+      "mrn": "81768",
+      "name": "EURNA: Spicy Cilantro Chutney",
+      "portion": "2 ounce",
+      "massOz": 2.0,
+      "cost": 0.14,
+      "batchServings": 3.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-78",
+      "mrn": "212486.3",
+      "name": "AMZ: Chicken Palak Plate",
+      "portion": "1 serving(s)",
+      "massOz": 17.206,
+      "cost": 2.66,
+      "batchServings": 1.0,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-83",
+          "mrn": "165741.21",
+          "name": "EUR: Jeera Rice (Cumin Seed)",
+          "quantity": "1 cup"
+        },
+        {
+          "childId": "page-82",
+          "mrn": "158745",
+          "name": "EUR: Grilled Garlic Naan",
+          "quantity": ""
+        },
+        {
+          "childId": "page-86",
+          "mrn": "81768",
+          "name": "EURNA: Spicy Cilantro Chutney",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-85",
+          "mrn": "81281",
+          "name": "EURNA: Raita Sauce",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-79",
+          "mrn": "165741.14",
+          "name": "EUR: Chicken Palak (Spinach Curry)",
+          "quantity": "5 oz"
+        }
+      ],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-79",
+      "mrn": "165741.14",
+      "name": "EUR: Chicken Palak (Spinach Curry)",
+      "portion": "1 cup",
+      "massOz": null,
+      "cost": 1.9,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-81",
+          "mrn": "165741.4",
+          "name": "EUR: Dhaba Ginger Garlic Paste",
+          "quantity": "1/2 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-81",
+      "mrn": "165741.4",
+      "name": "EUR: Dhaba Ginger Garlic Paste",
+      "portion": "1 tbsp",
+      "massOz": null,
+      "cost": 0.1,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-82",
+      "mrn": "158745",
+      "name": "EUR: Grilled Garlic Naan",
+      "portion": "1 each",
+      "massOz": null,
+      "cost": 1.16,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-83",
+      "mrn": "165741.21",
+      "name": "EUR: Jeera Rice (Cumin Seed)",
+      "portion": "1 cup",
+      "massOz": 6.725,
+      "cost": 0.46,
+      "batchServings": null,
+      "topLevel": false,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-84",
+      "mrn": "84042.1",
+      "name": "EURNA: Ginger Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 0.9,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-85",
+      "mrn": "81281",
+      "name": "EURNA: Raita Sauce",
+      "portion": "1 ounce",
+      "massOz": 1.0,
+      "cost": 0.16,
+      "batchServings": 2.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-150",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "1/8 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-86",
+      "mrn": "81768",
+      "name": "EURNA: Spicy Cilantro Chutney",
+      "portion": "2 ounce",
+      "massOz": 2.0,
+      "cost": 0.14,
+      "batchServings": 3.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-87",
+      "mrn": "212486.9",
+      "name": "AMZ: Chicken Tikka Masala Plate",
+      "portion": "1 serving(s)",
+      "massOz": 17.206,
+      "cost": 2.71,
+      "batchServings": 1.0,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-89",
+          "mrn": "165741.21",
+          "name": "EUR: Jeera Rice (Cumin Seed)",
+          "quantity": "1 cup"
+        },
+        {
+          "childId": "page-88",
+          "mrn": "158745",
+          "name": "EUR: Grilled Garlic Naan",
+          "quantity": ""
+        },
+        {
+          "childId": "page-100",
+          "mrn": "81768",
+          "name": "EURNA: Spicy Cilantro Chutney",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-99",
+          "mrn": "81281",
+          "name": "EURNA: Raita Sauce",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-92",
+          "mrn": "84059",
+          "name": "EURNA: Chicken Tikka Masala",
+          "quantity": "5 oz"
+        }
+      ],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-88",
+      "mrn": "158745",
+      "name": "EUR: Grilled Garlic Naan",
+      "portion": "1 each",
+      "massOz": null,
+      "cost": 1.16,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-89",
+      "mrn": "165741.21",
+      "name": "EUR: Jeera Rice (Cumin Seed)",
+      "portion": "1 cup",
+      "massOz": 6.725,
+      "cost": 0.46,
+      "batchServings": null,
+      "topLevel": false,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-90",
+      "mrn": "84037",
+      "name": "EURNA: Boiled Onion Paste",
+      "portion": "8 ounce",
+      "massOz": 8.0,
+      "cost": 0.61,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-91",
+      "mrn": "84038",
+      "name": "EURNA: Cashew Nut Paste",
+      "portion": "8 ounce",
+      "massOz": 8.0,
+      "cost": 6.1,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-92",
+      "mrn": "84059",
+      "name": "EURNA: Chicken Tikka Masala",
+      "portion": "8 ounce",
+      "massOz": 8.0,
+      "cost": 2.12,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-101",
+          "mrn": "84048",
+          "name": "EURNA: Tikka Masala Gravy",
+          "quantity": "4-3/4 oz"
+        },
+        {
+          "childId": "page-98",
+          "mrn": "84052",
+          "name": "EURNA: Murga Tikka",
+          "quantity": "3-1/4 oz"
+        }
+      ]
+    },
+    {
+      "id": "page-93",
+      "mrn": "84039",
+      "name": "EURNA: Fried Onion Paste",
+      "portion": "8 ounce",
+      "massOz": 8.0,
+      "cost": 0.69,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-94",
+      "mrn": "84041",
+      "name": "EURNA: Garam Masala",
+      "portion": "1 cup",
+      "massOz": null,
+      "cost": 7.07,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-95",
+      "mrn": "84042",
+      "name": "EURNA: Garlic Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 1.93,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-96",
+      "mrn": "84042.1",
+      "name": "EURNA: Ginger Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 0.9,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-97",
+      "mrn": "84043",
+      "name": "EURNA: Meat Masala Spice",
+      "portion": "4 ounce",
+      "massOz": 4.0,
+      "cost": 5.56,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-98",
+      "mrn": "84052",
+      "name": "EURNA: Murga Tikka",
+      "portion": "3 ounce",
+      "massOz": 3.0,
+      "cost": 1.06,
+      "batchServings": 2.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-96",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "1-3/4 tsp"
+        },
+        {
+          "childId": "page-95",
+          "mrn": "84042",
+          "name": "EURNA: Garlic Paste",
+          "quantity": "1-3/4 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-99",
+      "mrn": "81281",
+      "name": "EURNA: Raita Sauce",
+      "portion": "1 ounce",
+      "massOz": 1.0,
+      "cost": 0.16,
+      "batchServings": 2.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-150",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "1/8 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-100",
+      "mrn": "81768",
+      "name": "EURNA: Spicy Cilantro Chutney",
+      "portion": "2 ounce",
+      "massOz": 2.0,
+      "cost": 0.14,
+      "batchServings": 3.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-101",
+      "mrn": "84048",
+      "name": "EURNA: Tikka Masala Gravy",
+      "portion": "5 ounce",
+      "massOz": 5.0,
+      "cost": 0.74,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-90",
+          "mrn": "84037",
+          "name": "EURNA: Boiled Onion Paste",
+          "quantity": "1-1/4 tsp"
+        },
+        {
+          "childId": "page-91",
+          "mrn": "84038",
+          "name": "EURNA: Cashew Nut Paste",
+          "quantity": "3/4 tsp"
+        },
+        {
+          "childId": "page-93",
+          "mrn": "84039",
+          "name": "EURNA: Fried Onion Paste",
+          "quantity": "1/2 tsp"
+        },
+        {
+          "childId": "page-97",
+          "mrn": "84043",
+          "name": "EURNA: Meat Masala Spice",
+          "quantity": "1/2 tsp"
+        },
+        {
+          "childId": "page-94",
+          "mrn": "84041",
+          "name": "EURNA: Garam Masala",
+          "quantity": "1/2 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-103",
+      "mrn": "212486.19",
+      "name": "AMZ: Coconut Mushroom Matar Plate",
+      "portion": "1 serving(s)",
+      "massOz": 17.206,
+      "cost": 2.11,
+      "batchServings": 1.0,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-105",
+          "mrn": "165741.21",
+          "name": "EUR: Jeera Rice (Cumin Seed)",
+          "quantity": "1 cup"
+        },
+        {
+          "childId": "page-104",
+          "mrn": "158745",
+          "name": "EUR: Grilled Garlic Naan",
+          "quantity": ""
+        },
+        {
+          "childId": "page-112",
+          "mrn": "81768",
+          "name": "EURNA: Spicy Cilantro Chutney",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-111",
+          "mrn": "81281",
+          "name": "EURNA: Raita Sauce",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-109",
+          "mrn": "118714",
+          "name": "EURNA: Mushroom Matar Coconut Masala",
+          "quantity": "5 oz"
+        }
+      ],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-104",
+      "mrn": "158745",
+      "name": "EUR: Grilled Garlic Naan",
+      "portion": "1 each",
+      "massOz": null,
+      "cost": 1.16,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-105",
+      "mrn": "165741.21",
+      "name": "EUR: Jeera Rice (Cumin Seed)",
+      "portion": "1 cup",
+      "massOz": 6.725,
+      "cost": 0.46,
+      "batchServings": null,
+      "topLevel": false,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-106",
+      "mrn": "84041",
+      "name": "EURNA: Garam Masala",
+      "portion": "1 cup",
+      "massOz": null,
+      "cost": 7.07,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-107",
+      "mrn": "84042",
+      "name": "EURNA: Garlic Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 1.93,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-108",
+      "mrn": "84042.1",
+      "name": "EURNA: Ginger Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 0.9,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-109",
+      "mrn": "118714",
+      "name": "EURNA: Mushroom Matar Coconut Masala",
+      "portion": "3/4 cup",
+      "massOz": null,
+      "cost": 1.13,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-113",
+          "mrn": "118611",
+          "name": "EURNA: Vegetable Masala Gravy",
+          "quantity": "1/4 cup"
+        }
+      ]
+    },
+    {
+      "id": "page-111",
+      "mrn": "81281",
+      "name": "EURNA: Raita Sauce",
+      "portion": "1 ounce",
+      "massOz": 1.0,
+      "cost": 0.16,
+      "batchServings": 2.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-150",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "1/8 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-112",
+      "mrn": "81768",
+      "name": "EURNA: Spicy Cilantro Chutney",
+      "portion": "2 ounce",
+      "massOz": 2.0,
+      "cost": 0.14,
+      "batchServings": 3.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-113",
+      "mrn": "118611",
+      "name": "EURNA: Vegetable Masala Gravy",
+      "portion": "1 cup",
+      "massOz": null,
+      "cost": 0.62,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-268",
+          "mrn": "84042",
+          "name": "EURNA: Garlic Paste",
+          "quantity": "1-1/8 tsp"
+        },
+        {
+          "childId": "page-269",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "2-1/4 tsp"
+        },
+        {
+          "childId": "page-119",
+          "mrn": "84041",
+          "name": "EURNA: Garam Masala",
+          "quantity": "1/2 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-114",
+      "mrn": "165741.111",
+      "name": "AMZ: Kachumbar Salad",
+      "portion": "1/2 cup",
+      "massOz": 4.551,
+      "cost": 0.77,
+      "batchServings": 24.0,
+      "topLevel": true,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-115",
+      "mrn": "212486.21",
+      "name": "AMZ: Lamb Rogan Josh Plate",
+      "portion": "1 serving(s)",
+      "massOz": 17.206,
+      "cost": 4.05,
+      "batchServings": 1.0,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-117",
+          "mrn": "165741.21",
+          "name": "EUR: Jeera Rice (Cumin Seed)",
+          "quantity": "1 cup"
+        },
+        {
+          "childId": "page-116",
+          "mrn": "158745",
+          "name": "EUR: Grilled Garlic Naan",
+          "quantity": ""
+        },
+        {
+          "childId": "page-127",
+          "mrn": "81768",
+          "name": "EURNA: Spicy Cilantro Chutney",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-124",
+          "mrn": "81281",
+          "name": "EURNA: Raita Sauce",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-118",
+          "mrn": "146987",
+          "name": "EURNA: Balti Rogan Josh Lamb",
+          "quantity": "5 oz"
+        }
+      ],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-116",
+      "mrn": "158745",
+      "name": "EUR: Grilled Garlic Naan",
+      "portion": "1 each",
+      "massOz": null,
+      "cost": 1.16,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-117",
+      "mrn": "165741.21",
+      "name": "EUR: Jeera Rice (Cumin Seed)",
+      "portion": "1 cup",
+      "massOz": 6.725,
+      "cost": 0.46,
+      "batchServings": null,
+      "topLevel": false,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-118",
+      "mrn": "146987",
+      "name": "EURNA: Balti Rogan Josh Lamb",
+      "portion": "5 ounce",
+      "massOz": 5.0,
+      "cost": 2.66,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-125",
+          "mrn": "146894",
+          "name": "EURNA: Rogan Josh Gravy",
+          "quantity": "3-1/4 oz"
+        },
+        {
+          "childId": "page-122",
+          "mrn": "84051.1",
+          "name": "EURNA: Marinated Lamb for Curries",
+          "quantity": "2 oz"
+        }
+      ]
+    },
+    {
+      "id": "page-119",
+      "mrn": "84041",
+      "name": "EURNA: Garam Masala",
+      "portion": "1 cup",
+      "massOz": null,
+      "cost": 7.07,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-120",
+      "mrn": "84042",
+      "name": "EURNA: Garlic Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 1.93,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-121",
+      "mrn": "84042.1",
+      "name": "EURNA: Ginger Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 0.9,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-122",
+      "mrn": "84051.1",
+      "name": "EURNA: Marinated Lamb for Curries",
+      "portion": "4 ounce",
+      "massOz": 4.0,
+      "cost": 4.38,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-121",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "1-1/4 tsp"
+        },
+        {
+          "childId": "page-120",
+          "mrn": "84042",
+          "name": "EURNA: Garlic Paste",
+          "quantity": "1-1/4 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-124",
+      "mrn": "81281",
+      "name": "EURNA: Raita Sauce",
+      "portion": "1 ounce",
+      "massOz": 1.0,
+      "cost": 0.16,
+      "batchServings": 2.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-150",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "1/8 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-125",
+      "mrn": "146894",
+      "name": "EURNA: Rogan Josh Gravy",
+      "portion": "3 ounce",
+      "massOz": 3.0,
+      "cost": 0.4,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-128",
+          "mrn": "118611",
+          "name": "EURNA: Vegetable Masala Gravy",
+          "quantity": "2-1/3 oz"
+        }
+      ]
+    },
+    {
+      "id": "page-127",
+      "mrn": "81768",
+      "name": "EURNA: Spicy Cilantro Chutney",
+      "portion": "2 ounce",
+      "massOz": 2.0,
+      "cost": 0.14,
+      "batchServings": 3.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-128",
+      "mrn": "118611",
+      "name": "EURNA: Vegetable Masala Gravy",
+      "portion": "1 cup",
+      "massOz": null,
+      "cost": 0.62,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-268",
+          "mrn": "84042",
+          "name": "EURNA: Garlic Paste",
+          "quantity": "1-1/8 tsp"
+        },
+        {
+          "childId": "page-269",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "2-1/4 tsp"
+        },
+        {
+          "childId": "page-267",
+          "mrn": "84041",
+          "name": "EURNA: Garam Masala",
+          "quantity": "1/2 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-129",
+      "mrn": "212486.20",
+      "name": "AMZ: Lamb Vindaloo Plate",
+      "portion": "1 serving(s)",
+      "massOz": 17.206,
+      "cost": 3.96,
+      "batchServings": 1.0,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-131",
+          "mrn": "165741.21",
+          "name": "EUR: Jeera Rice (Cumin Seed)",
+          "quantity": "1 cup"
+        },
+        {
+          "childId": "page-130",
+          "mrn": "158745",
+          "name": "EUR: Grilled Garlic Naan",
+          "quantity": ""
+        },
+        {
+          "childId": "page-140",
+          "mrn": "81768",
+          "name": "EURNA: Spicy Cilantro Chutney",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-139",
+          "mrn": "81281",
+          "name": "EURNA: Raita Sauce",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-135",
+          "mrn": "84062.2",
+          "name": "EURNA: Lamb Vindaloo (simplified)",
+          "quantity": "5 oz"
+        }
+      ],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-130",
+      "mrn": "158745",
+      "name": "EUR: Grilled Garlic Naan",
+      "portion": "1 each",
+      "massOz": null,
+      "cost": 1.16,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-131",
+      "mrn": "165741.21",
+      "name": "EUR: Jeera Rice (Cumin Seed)",
+      "portion": "1 cup",
+      "massOz": 6.725,
+      "cost": 0.46,
+      "batchServings": null,
+      "topLevel": false,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-132",
+      "mrn": "84041",
+      "name": "EURNA: Garam Masala",
+      "portion": "1 cup",
+      "massOz": null,
+      "cost": 7.07,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-133",
+      "mrn": "84042",
+      "name": "EURNA: Garlic Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 1.93,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-134",
+      "mrn": "84042.1",
+      "name": "EURNA: Ginger Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 0.9,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-135",
+      "mrn": "84062.2",
+      "name": "EURNA: Lamb Vindaloo (simplified)",
+      "portion": "8 ounce",
+      "massOz": 8.0,
+      "cost": 4.11,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-136",
+          "mrn": "84051.1",
+          "name": "EURNA: Marinated Lamb for Curries",
+          "quantity": "3-1/4 oz"
+        },
+        {
+          "childId": "page-142",
+          "mrn": "183708",
+          "name": "EURNA: Vindaloo Sauce (simplified)",
+          "quantity": "6-1/3 oz"
+        }
+      ]
+    },
+    {
+      "id": "page-136",
+      "mrn": "84051.1",
+      "name": "EURNA: Marinated Lamb for Curries",
+      "portion": "4 ounce",
+      "massOz": 4.0,
+      "cost": 4.38,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-121",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "1-1/4 tsp"
+        },
+        {
+          "childId": "page-120",
+          "mrn": "84042",
+          "name": "EURNA: Garlic Paste",
+          "quantity": "1-1/4 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-138",
+      "mrn": "84043",
+      "name": "EURNA: Meat Masala Spice",
+      "portion": "4 ounce",
+      "massOz": 4.0,
+      "cost": 5.56,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-139",
+      "mrn": "81281",
+      "name": "EURNA: Raita Sauce",
+      "portion": "1 ounce",
+      "massOz": 1.0,
+      "cost": 0.16,
+      "batchServings": 2.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-150",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "1/8 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-140",
+      "mrn": "81768",
+      "name": "EURNA: Spicy Cilantro Chutney",
+      "portion": "2 ounce",
+      "massOz": 2.0,
+      "cost": 0.14,
+      "batchServings": 3.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-141",
+      "mrn": "84044",
+      "name": "EURNA: Tamarind Sauce",
+      "portion": "2 tbsp",
+      "massOz": null,
+      "cost": 0.39,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-142",
+      "mrn": "183708",
+      "name": "EURNA: Vindaloo Sauce (simplified)",
+      "portion": "2 floz",
+      "massOz": null,
+      "cost": 0.21,
+      "batchServings": 3.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-132",
+          "mrn": "84041",
+          "name": "EURNA: Garam Masala",
+          "quantity": "<1/8 oz"
+        },
+        {
+          "childId": "page-138",
+          "mrn": "84043",
+          "name": "EURNA: Meat Masala Spice",
+          "quantity": "<1/8 oz"
+        },
+        {
+          "childId": "page-134",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "<1/8 oz"
+        },
+        {
+          "childId": "page-133",
+          "mrn": "84042",
+          "name": "EURNA: Garlic Paste",
+          "quantity": "<1/8 oz"
+        },
+        {
+          "childId": "page-141",
+          "mrn": "84044",
+          "name": "EURNA: Tamarind Sauce",
+          "quantity": "1/3 oz"
+        }
+      ]
+    },
+    {
+      "id": "page-144",
+      "mrn": "212486.12",
+      "name": "AMZ: Matar Paneer Plate",
+      "portion": "1 serving(s)",
+      "massOz": 17.206,
+      "cost": 2.82,
+      "batchServings": 1.0,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-147",
+          "mrn": "165741.21",
+          "name": "EUR: Jeera Rice (Cumin Seed)",
+          "quantity": "1 cup"
+        },
+        {
+          "childId": "page-146",
+          "mrn": "158745",
+          "name": "EUR: Grilled Garlic Naan",
+          "quantity": ""
+        },
+        {
+          "childId": "page-152",
+          "mrn": "81768",
+          "name": "EURNA: Spicy Cilantro Chutney",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-151",
+          "mrn": "81281",
+          "name": "EURNA: Raita Sauce",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-148",
+          "mrn": "165741.23",
+          "name": "EUR: Matar Paneer",
+          "quantity": "5 oz"
+        }
+      ],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-145",
+      "mrn": "165741.4",
+      "name": "EUR: Dhaba Ginger Garlic Paste",
+      "portion": "1 tbsp",
+      "massOz": null,
+      "cost": 0.1,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-146",
+      "mrn": "158745",
+      "name": "EUR: Grilled Garlic Naan",
+      "portion": "1 each",
+      "massOz": null,
+      "cost": 1.16,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-147",
+      "mrn": "165741.21",
+      "name": "EUR: Jeera Rice (Cumin Seed)",
+      "portion": "1 cup",
+      "massOz": 6.725,
+      "cost": 0.46,
+      "batchServings": null,
+      "topLevel": false,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-148",
+      "mrn": "165741.23",
+      "name": "EUR: Matar Paneer",
+      "portion": "1 cup",
+      "massOz": null,
+      "cost": 2.0,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-145",
+          "mrn": "165741.4",
+          "name": "EUR: Dhaba Ginger Garlic Paste",
+          "quantity": "1/2 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-150",
+      "mrn": "84042.1",
+      "name": "EURNA: Ginger Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 0.9,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-151",
+      "mrn": "81281",
+      "name": "EURNA: Raita Sauce",
+      "portion": "1 ounce",
+      "massOz": 1.0,
+      "cost": 0.16,
+      "batchServings": 2.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-159",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "1/8 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-152",
+      "mrn": "81768",
+      "name": "EURNA: Spicy Cilantro Chutney",
+      "portion": "2 ounce",
+      "massOz": 2.0,
+      "cost": 0.14,
+      "batchServings": 3.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-153",
+      "mrn": "212486.13",
+      "name": "AMZ: Palak Paneer Plate",
+      "portion": "1 serving(s)",
+      "massOz": 17.206,
+      "cost": 2.94,
+      "batchServings": 1.0,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-156",
+          "mrn": "165741.21",
+          "name": "EUR: Jeera Rice (Cumin Seed)",
+          "quantity": "1 cup"
+        },
+        {
+          "childId": "page-155",
+          "mrn": "158745",
+          "name": "EUR: Grilled Garlic Naan",
+          "quantity": ""
+        },
+        {
+          "childId": "page-161",
+          "mrn": "81768",
+          "name": "EURNA: Spicy Cilantro Chutney",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-160",
+          "mrn": "81281",
+          "name": "EURNA: Raita Sauce",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-157",
+          "mrn": "165741.5",
+          "name": "EUR: Palak Paneer",
+          "quantity": "5 oz"
+        }
+      ],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-154",
+      "mrn": "165741.4",
+      "name": "EUR: Dhaba Ginger Garlic Paste",
+      "portion": "1 tbsp",
+      "massOz": null,
+      "cost": 0.1,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-155",
+      "mrn": "158745",
+      "name": "EUR: Grilled Garlic Naan",
+      "portion": "1 each",
+      "massOz": null,
+      "cost": 1.16,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-156",
+      "mrn": "165741.21",
+      "name": "EUR: Jeera Rice (Cumin Seed)",
+      "portion": "1 cup",
+      "massOz": 6.725,
+      "cost": 0.46,
+      "batchServings": null,
+      "topLevel": false,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-157",
+      "mrn": "165741.5",
+      "name": "EUR: Palak Paneer",
+      "portion": "1 cup",
+      "massOz": null,
+      "cost": 2.23,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-154",
+          "mrn": "165741.4",
+          "name": "EUR: Dhaba Ginger Garlic Paste",
+          "quantity": "1/2 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-159",
+      "mrn": "84042.1",
+      "name": "EURNA: Ginger Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 0.9,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-160",
+      "mrn": "81281",
+      "name": "EURNA: Raita Sauce",
+      "portion": "1 ounce",
+      "massOz": 1.0,
+      "cost": 0.16,
+      "batchServings": 2.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-168",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "1/8 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-161",
+      "mrn": "81768",
+      "name": "EURNA: Spicy Cilantro Chutney",
+      "portion": "2 ounce",
+      "massOz": 2.0,
+      "cost": 0.14,
+      "batchServings": 3.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-162",
+      "mrn": "212486",
+      "name": "AMZ: Paneer Makhni Plate",
+      "portion": "1 serving(s)",
+      "massOz": 17.206,
+      "cost": 3.27,
+      "batchServings": 1.0,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-165",
+          "mrn": "165741.20",
+          "name": "EUR: Paneer Makhni",
+          "quantity": "5 oz"
+        },
+        {
+          "childId": "page-164",
+          "mrn": "165741.21",
+          "name": "EUR: Jeera Rice (Cumin Seed)",
+          "quantity": "1 cup"
+        },
+        {
+          "childId": "page-163",
+          "mrn": "158745",
+          "name": "EUR: Grilled Garlic Naan",
+          "quantity": ""
+        },
+        {
+          "childId": "page-170",
+          "mrn": "81768",
+          "name": "EURNA: Spicy Cilantro Chutney",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-169",
+          "mrn": "81281",
+          "name": "EURNA: Raita Sauce",
+          "quantity": "1-1/2 oz"
+        }
+      ],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-163",
+      "mrn": "158745",
+      "name": "EUR: Grilled Garlic Naan",
+      "portion": "1 each",
+      "massOz": null,
+      "cost": 1.16,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-164",
+      "mrn": "165741.21",
+      "name": "EUR: Jeera Rice (Cumin Seed)",
+      "portion": "1 cup",
+      "massOz": 6.725,
+      "cost": 0.46,
+      "batchServings": null,
+      "topLevel": false,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-165",
+      "mrn": "165741.20",
+      "name": "EUR: Paneer Makhni",
+      "portion": "3/4 cup",
+      "massOz": null,
+      "cost": 2.34,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-167",
+          "mrn": "165741.29",
+          "name": "EUR: Tikka Marinade",
+          "quantity": "2 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-167",
+      "mrn": "165741.29",
+      "name": "EUR: Tikka Marinade",
+      "portion": "1 floz",
+      "massOz": null,
+      "cost": 0.52,
+      "batchServings": null,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-168",
+      "mrn": "84042.1",
+      "name": "EURNA: Ginger Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 0.9,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-169",
+      "mrn": "81281",
+      "name": "EURNA: Raita Sauce",
+      "portion": "1 ounce",
+      "massOz": 1.0,
+      "cost": 0.16,
+      "batchServings": 2.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-175",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "1/8 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-170",
+      "mrn": "81768",
+      "name": "EURNA: Spicy Cilantro Chutney",
+      "portion": "2 ounce",
+      "massOz": 2.0,
+      "cost": 0.14,
+      "batchServings": 3.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-171",
+      "mrn": "212486.22",
+      "name": "AMZ: Roasted Tandoori Salmon Plate",
+      "portion": "1 serving(s)",
+      "massOz": 17.206,
+      "cost": 6.51,
+      "batchServings": 1.0,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-173",
+          "mrn": "165741.21",
+          "name": "EUR: Jeera Rice (Cumin Seed)",
+          "quantity": "1 cup"
+        },
+        {
+          "childId": "page-172",
+          "mrn": "158745",
+          "name": "EUR: Grilled Garlic Naan",
+          "quantity": ""
+        },
+        {
+          "childId": "page-177",
+          "mrn": "81768",
+          "name": "EURNA: Spicy Cilantro Chutney",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-176",
+          "mrn": "81281",
+          "name": "EURNA: Raita Sauce",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-174",
+          "mrn": "142401",
+          "name": "EUR: Roasted Tandoori Salmon",
+          "quantity": "5 oz"
+        }
+      ],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-172",
+      "mrn": "158745",
+      "name": "EUR: Grilled Garlic Naan",
+      "portion": "1 each",
+      "massOz": null,
+      "cost": 1.16,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-173",
+      "mrn": "165741.21",
+      "name": "EUR: Jeera Rice (Cumin Seed)",
+      "portion": "1 cup",
+      "massOz": 6.725,
+      "cost": 0.46,
+      "batchServings": null,
+      "topLevel": false,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-174",
+      "mrn": "142401",
+      "name": "EUR: Roasted Tandoori Salmon",
+      "portion": "1 each",
+      "massOz": null,
+      "cost": 4.02,
+      "batchServings": 2.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-175",
+      "mrn": "84042.1",
+      "name": "EURNA: Ginger Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 0.9,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-176",
+      "mrn": "81281",
+      "name": "EURNA: Raita Sauce",
+      "portion": "1 ounce",
+      "massOz": 1.0,
+      "cost": 0.16,
+      "batchServings": 2.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-184",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "1/8 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-177",
+      "mrn": "81768",
+      "name": "EURNA: Spicy Cilantro Chutney",
+      "portion": "2 ounce",
+      "massOz": 2.0,
+      "cost": 0.14,
+      "batchServings": 3.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-178",
+      "mrn": "212486.15",
+      "name": "AMZ: Shrimp Coconut Curry Plate",
+      "portion": "1 serving(s)",
+      "massOz": 17.206,
+      "cost": 3.33,
+      "batchServings": 1.0,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-182",
+          "mrn": "165741.21",
+          "name": "EUR: Jeera Rice (Cumin Seed)",
+          "quantity": "1 cup"
+        },
+        {
+          "childId": "page-181",
+          "mrn": "158745",
+          "name": "EUR: Grilled Garlic Naan",
+          "quantity": ""
+        },
+        {
+          "childId": "page-186",
+          "mrn": "81768",
+          "name": "EURNA: Spicy Cilantro Chutney",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-185",
+          "mrn": "81281",
+          "name": "EURNA: Raita Sauce",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-183",
+          "mrn": "165741.18",
+          "name": "EUR: Shrimp Coconut Curry",
+          "quantity": "5 oz"
+        }
+      ],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-179",
+      "mrn": "165741.4",
+      "name": "EUR: Dhaba Ginger Garlic Paste",
+      "portion": "1 tbsp",
+      "massOz": null,
+      "cost": 0.1,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-180",
+      "mrn": "165741.27",
+      "name": "EUR: Dhaba South Marinated Shrimp",
+      "portion": "7 each",
+      "massOz": null,
+      "cost": 1.44,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-188",
+          "mrn": "165741.4",
+          "name": "EUR: Dhaba Ginger Garlic Paste",
+          "quantity": "1/2 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-181",
+      "mrn": "158745",
+      "name": "EUR: Grilled Garlic Naan",
+      "portion": "1 each",
+      "massOz": null,
+      "cost": 1.16,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-182",
+      "mrn": "165741.21",
+      "name": "EUR: Jeera Rice (Cumin Seed)",
+      "portion": "1 cup",
+      "massOz": 6.725,
+      "cost": 0.46,
+      "batchServings": null,
+      "topLevel": false,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-183",
+      "mrn": "165741.18",
+      "name": "EUR: Shrimp Coconut Curry",
+      "portion": "3/4 cup",
+      "massOz": null,
+      "cost": 2.5,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-180",
+          "mrn": "165741.27",
+          "name": "EUR: Dhaba South Marinated Shrimp",
+          "quantity": "3-1/4 oz"
+        }
+      ]
+    },
+    {
+      "id": "page-184",
+      "mrn": "84042.1",
+      "name": "EURNA: Ginger Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 0.9,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-185",
+      "mrn": "81281",
+      "name": "EURNA: Raita Sauce",
+      "portion": "1 ounce",
+      "massOz": 1.0,
+      "cost": 0.16,
+      "batchServings": 2.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-194",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "1/8 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-186",
+      "mrn": "81768",
+      "name": "EURNA: Spicy Cilantro Chutney",
+      "portion": "2 ounce",
+      "massOz": 2.0,
+      "cost": 0.14,
+      "batchServings": 3.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-187",
+      "mrn": "212486.17",
+      "name": "AMZ: Shrimp Moilee Plate",
+      "portion": "1 serving(s)",
+      "massOz": 17.206,
+      "cost": 2.76,
+      "batchServings": 1.0,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-191",
+          "mrn": "165741.21",
+          "name": "EUR: Jeera Rice (Cumin Seed)",
+          "quantity": "1 cup"
+        },
+        {
+          "childId": "page-190",
+          "mrn": "158745",
+          "name": "EUR: Grilled Garlic Naan",
+          "quantity": ""
+        },
+        {
+          "childId": "page-196",
+          "mrn": "81768",
+          "name": "EURNA: Spicy Cilantro Chutney",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-195",
+          "mrn": "81281",
+          "name": "EURNA: Raita Sauce",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-192",
+          "mrn": "165741.28",
+          "name": "EUR: Shrimp Moilee",
+          "quantity": "5 oz"
+        }
+      ],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-188",
+      "mrn": "165741.4",
+      "name": "EUR: Dhaba Ginger Garlic Paste",
+      "portion": "1 tbsp",
+      "massOz": null,
+      "cost": 0.1,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-189",
+      "mrn": "165741.27",
+      "name": "EUR: Dhaba South Marinated Shrimp",
+      "portion": "7 each",
+      "massOz": null,
+      "cost": 1.44,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-190",
+      "mrn": "158745",
+      "name": "EUR: Grilled Garlic Naan",
+      "portion": "1 each",
+      "massOz": null,
+      "cost": 1.16,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-191",
+      "mrn": "165741.21",
+      "name": "EUR: Jeera Rice (Cumin Seed)",
+      "portion": "1 cup",
+      "massOz": 6.725,
+      "cost": 0.46,
+      "batchServings": null,
+      "topLevel": false,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-192",
+      "mrn": "165741.28",
+      "name": "EUR: Shrimp Moilee",
+      "portion": "3/4 cup",
+      "massOz": null,
+      "cost": 2.03,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-189",
+          "mrn": "165741.27",
+          "name": "EUR: Dhaba South Marinated Shrimp",
+          "quantity": "3-1/3 oz"
+        }
+      ]
+    },
+    {
+      "id": "page-194",
+      "mrn": "84042.1",
+      "name": "EURNA: Ginger Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 0.9,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-195",
+      "mrn": "81281",
+      "name": "EURNA: Raita Sauce",
+      "portion": "1 ounce",
+      "massOz": 1.0,
+      "cost": 0.16,
+      "batchServings": 2.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-204",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "1/8 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-196",
+      "mrn": "81768",
+      "name": "EURNA: Spicy Cilantro Chutney",
+      "portion": "2 ounce",
+      "massOz": 2.0,
+      "cost": 0.14,
+      "batchServings": 3.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-197",
+      "mrn": "212486.5",
+      "name": "AMZ: Spicy Andhra Chicken Curry Plate",
+      "portion": "1 serving(s)",
+      "massOz": 17.206,
+      "cost": 2.47,
+      "batchServings": 1.0,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-201",
+          "mrn": "165741.21",
+          "name": "EUR: Jeera Rice (Cumin Seed)",
+          "quantity": "1 cup"
+        },
+        {
+          "childId": "page-200",
+          "mrn": "158745",
+          "name": "EUR: Grilled Garlic Naan",
+          "quantity": ""
+        },
+        {
+          "childId": "page-206",
+          "mrn": "81768",
+          "name": "EURNA: Spicy Cilantro Chutney",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-205",
+          "mrn": "81281",
+          "name": "EURNA: Raita Sauce",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-202",
+          "mrn": "165741.17",
+          "name": "EUR: Spicy Andhras Chicken Curry",
+          "quantity": "5 oz"
+        }
+      ],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-198",
+      "mrn": "165741.25",
+      "name": "EUR: Andhras Spice Blend",
+      "portion": "1 tbsp",
+      "massOz": null,
+      "cost": 0.32,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-199",
+      "mrn": "165741.4",
+      "name": "EUR: Dhaba Ginger Garlic Paste",
+      "portion": "1 tbsp",
+      "massOz": null,
+      "cost": 0.1,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-200",
+      "mrn": "158745",
+      "name": "EUR: Grilled Garlic Naan",
+      "portion": "1 each",
+      "massOz": null,
+      "cost": 1.16,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-201",
+      "mrn": "165741.21",
+      "name": "EUR: Jeera Rice (Cumin Seed)",
+      "portion": "1 cup",
+      "massOz": 6.725,
+      "cost": 0.46,
+      "batchServings": null,
+      "topLevel": false,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-202",
+      "mrn": "165741.17",
+      "name": "EUR: Spicy Andhras Chicken Curry",
+      "portion": "1 cup",
+      "massOz": null,
+      "cost": 1.62,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-199",
+          "mrn": "165741.4",
+          "name": "EUR: Dhaba Ginger Garlic Paste",
+          "quantity": "3/4 tsp"
+        },
+        {
+          "childId": "page-198",
+          "mrn": "165741.25",
+          "name": "EUR: Andhras Spice Blend",
+          "quantity": "1 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-204",
+      "mrn": "84042.1",
+      "name": "EURNA: Ginger Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 0.9,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-205",
+      "mrn": "81281",
+      "name": "EURNA: Raita Sauce",
+      "portion": "1 ounce",
+      "massOz": 1.0,
+      "cost": 0.16,
+      "batchServings": 2.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-214",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "1/8 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-206",
+      "mrn": "81768",
+      "name": "EURNA: Spicy Cilantro Chutney",
+      "portion": "2 ounce",
+      "massOz": 2.0,
+      "cost": 0.14,
+      "batchServings": 3.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-207",
+      "mrn": "212486.14",
+      "name": "AMZ: Spicy Andhra Vegetable Curry Plate",
+      "portion": "1 serving(s)",
+      "massOz": 17.206,
+      "cost": 2.38,
+      "batchServings": 1.0,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-211",
+          "mrn": "165741.21",
+          "name": "EUR: Jeera Rice (Cumin Seed)",
+          "quantity": "1 cup"
+        },
+        {
+          "childId": "page-210",
+          "mrn": "158745",
+          "name": "EUR: Grilled Garlic Naan",
+          "quantity": ""
+        },
+        {
+          "childId": "page-216",
+          "mrn": "81768",
+          "name": "EURNA: Spicy Cilantro Chutney",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-215",
+          "mrn": "81281",
+          "name": "EURNA: Raita Sauce",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-212",
+          "mrn": "165741.33",
+          "name": "EUR: Spicy Andhras Vegetable Curry",
+          "quantity": "5 oz"
+        }
+      ],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-208",
+      "mrn": "165741.25",
+      "name": "EUR: Andhras Spice Blend",
+      "portion": "1 tbsp",
+      "massOz": null,
+      "cost": 0.32,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-209",
+      "mrn": "165741.4",
+      "name": "EUR: Dhaba Ginger Garlic Paste",
+      "portion": "1 tbsp",
+      "massOz": null,
+      "cost": 0.1,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-210",
+      "mrn": "158745",
+      "name": "EUR: Grilled Garlic Naan",
+      "portion": "1 each",
+      "massOz": null,
+      "cost": 1.16,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-211",
+      "mrn": "165741.21",
+      "name": "EUR: Jeera Rice (Cumin Seed)",
+      "portion": "1 cup",
+      "massOz": 6.725,
+      "cost": 0.46,
+      "batchServings": null,
+      "topLevel": false,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-212",
+      "mrn": "165741.33",
+      "name": "EUR: Spicy Andhras Vegetable Curry",
+      "portion": "1 cup",
+      "massOz": null,
+      "cost": 1.64,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-209",
+          "mrn": "165741.4",
+          "name": "EUR: Dhaba Ginger Garlic Paste",
+          "quantity": "3/4 tsp"
+        },
+        {
+          "childId": "page-208",
+          "mrn": "165741.25",
+          "name": "EUR: Andhras Spice Blend",
+          "quantity": "1-1/4 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-214",
+      "mrn": "84042.1",
+      "name": "EURNA: Ginger Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 0.9,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-215",
+      "mrn": "81281",
+      "name": "EURNA: Raita Sauce",
+      "portion": "1 ounce",
+      "massOz": 1.0,
+      "cost": 0.16,
+      "batchServings": 2.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-223",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "1/8 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-216",
+      "mrn": "81768",
+      "name": "EURNA: Spicy Cilantro Chutney",
+      "portion": "2 ounce",
+      "massOz": 2.0,
+      "cost": 0.14,
+      "batchServings": 3.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-217",
+      "mrn": "212486.18",
+      "name": "AMZ: Vegetable Cashew Kurma Plate",
+      "portion": "1 serving(s)",
+      "massOz": 17.206,
+      "cost": 2.29,
+      "batchServings": 1.0,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-220",
+          "mrn": "165741.21",
+          "name": "EUR: Jeera Rice (Cumin Seed)",
+          "quantity": "1 cup"
+        },
+        {
+          "childId": "page-219",
+          "mrn": "158745",
+          "name": "EUR: Grilled Garlic Naan",
+          "quantity": ""
+        },
+        {
+          "childId": "page-225",
+          "mrn": "81768",
+          "name": "EURNA: Spicy Cilantro Chutney",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-224",
+          "mrn": "81281",
+          "name": "EURNA: Raita Sauce",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-221",
+          "mrn": "165741.26",
+          "name": "EUR: Vegetable Kurma (With Cashews)",
+          "quantity": "5 oz"
+        }
+      ],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-218",
+      "mrn": "165741.1",
+      "name": "EUR: Cashew Korma Sauce",
+      "portion": "1 floz",
+      "massOz": null,
+      "cost": 0.29,
+      "batchServings": 3.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-219",
+      "mrn": "158745",
+      "name": "EUR: Grilled Garlic Naan",
+      "portion": "1 each",
+      "massOz": null,
+      "cost": 1.16,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-220",
+      "mrn": "165741.21",
+      "name": "EUR: Jeera Rice (Cumin Seed)",
+      "portion": "1 cup",
+      "massOz": 6.725,
+      "cost": 0.46,
+      "batchServings": null,
+      "topLevel": false,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-221",
+      "mrn": "165741.26",
+      "name": "EUR: Vegetable Kurma (With Cashews)",
+      "portion": "1 cup",
+      "massOz": null,
+      "cost": 1.55,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-218",
+          "mrn": "165741.1",
+          "name": "EUR: Cashew Korma Sauce",
+          "quantity": "2-1/2 oz"
+        }
+      ]
+    },
+    {
+      "id": "page-223",
+      "mrn": "84042.1",
+      "name": "EURNA: Ginger Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 0.9,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-224",
+      "mrn": "81281",
+      "name": "EURNA: Raita Sauce",
+      "portion": "1 ounce",
+      "massOz": 1.0,
+      "cost": 0.16,
+      "batchServings": 2.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-234",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "1/8 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-225",
+      "mrn": "81768",
+      "name": "EURNA: Spicy Cilantro Chutney",
+      "portion": "2 ounce",
+      "massOz": 2.0,
+      "cost": 0.14,
+      "batchServings": 3.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-226",
+      "mrn": "212486.16",
+      "name": "AMZ: Vegetable Chettinad Plate",
+      "portion": "1 serving(s)",
+      "massOz": 17.206,
+      "cost": 2.59,
+      "batchServings": 1.0,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-231",
+          "mrn": "165741.21",
+          "name": "EUR: Jeera Rice (Cumin Seed)",
+          "quantity": "1 cup"
+        },
+        {
+          "childId": "page-230",
+          "mrn": "158745",
+          "name": "EUR: Grilled Garlic Naan",
+          "quantity": ""
+        },
+        {
+          "childId": "page-236",
+          "mrn": "81768",
+          "name": "EURNA: Spicy Cilantro Chutney",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-235",
+          "mrn": "81281",
+          "name": "EURNA: Raita Sauce",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-232",
+          "mrn": "165741.32",
+          "name": "EUR: Vegetable Chettinad (With Cashews)",
+          "quantity": "5 oz"
+        }
+      ],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-227",
+      "mrn": "165741.31",
+      "name": "EUR: Chettinad Sauce (with Cashews)",
+      "portion": "1 floz",
+      "massOz": null,
+      "cost": 0.45,
+      "batchServings": 3.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-228",
+          "mrn": "165741.37",
+          "name": "EUR: Chettinad Spice Blend (With Cashews)",
+          "quantity": "3/4 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-228",
+      "mrn": "165741.37",
+      "name": "EUR: Chettinad Spice Blend (With Cashews)",
+      "portion": "1 tbsp",
+      "massOz": null,
+      "cost": 0.49,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-230",
+      "mrn": "158745",
+      "name": "EUR: Grilled Garlic Naan",
+      "portion": "1 each",
+      "massOz": null,
+      "cost": 1.16,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-231",
+      "mrn": "165741.21",
+      "name": "EUR: Jeera Rice (Cumin Seed)",
+      "portion": "1 cup",
+      "massOz": 6.725,
+      "cost": 0.46,
+      "batchServings": null,
+      "topLevel": false,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-232",
+      "mrn": "165741.32",
+      "name": "EUR: Vegetable Chettinad (With Cashews)",
+      "portion": "8 floz",
+      "massOz": null,
+      "cost": 2.1,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-227",
+          "mrn": "165741.31",
+          "name": "EUR: Chettinad Sauce (with Cashews)",
+          "quantity": "1/3 cup"
+        }
+      ]
+    },
+    {
+      "id": "page-234",
+      "mrn": "84042.1",
+      "name": "EURNA: Ginger Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 0.9,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-235",
+      "mrn": "81281",
+      "name": "EURNA: Raita Sauce",
+      "portion": "1 ounce",
+      "massOz": 1.0,
+      "cost": 0.16,
+      "batchServings": 2.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-243",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "1/8 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-236",
+      "mrn": "81768",
+      "name": "EURNA: Spicy Cilantro Chutney",
+      "portion": "2 ounce",
+      "massOz": 2.0,
+      "cost": 0.14,
+      "batchServings": 3.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-237",
+      "mrn": "212486.11",
+      "name": "AMZ: Vegetable Shahi Korma Plate",
+      "portion": "1 serving(s)",
+      "massOz": 17.206,
+      "cost": 2.24,
+      "batchServings": 1.0,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-240",
+          "mrn": "165741.21",
+          "name": "EUR: Jeera Rice (Cumin Seed)",
+          "quantity": "1 cup"
+        },
+        {
+          "childId": "page-239",
+          "mrn": "158745",
+          "name": "EUR: Grilled Garlic Naan",
+          "quantity": ""
+        },
+        {
+          "childId": "page-245",
+          "mrn": "81768",
+          "name": "EURNA: Spicy Cilantro Chutney",
+          "quantity": "1-1/2 oz"
+        },
+        {
+          "childId": "page-244",
+          "mrn": "81281",
+          "name": "EURNA: Raita Sauce",
+          "quantity": "1-1/2 oz"
+        }
+      ],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-238",
+      "mrn": "165741.1",
+      "name": "EUR: Cashew Korma Sauce",
+      "portion": "1 floz",
+      "massOz": null,
+      "cost": 0.29,
+      "batchServings": 2.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-239",
+      "mrn": "158745",
+      "name": "EUR: Grilled Garlic Naan",
+      "portion": "1 each",
+      "massOz": null,
+      "cost": 1.16,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-240",
+      "mrn": "165741.21",
+      "name": "EUR: Jeera Rice (Cumin Seed)",
+      "portion": "1 cup",
+      "massOz": 6.725,
+      "cost": 0.46,
+      "batchServings": null,
+      "topLevel": false,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-241",
+      "mrn": "165741.3",
+      "name": "EUR: Vegetable Shahi Korma (Cashews & Almonds)",
+      "portion": "1 cup",
+      "massOz": null,
+      "cost": 1.18,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-238",
+          "mrn": "165741.1",
+          "name": "EUR: Cashew Korma Sauce",
+          "quantity": "1-1/3 oz"
+        }
+      ]
+    },
+    {
+      "id": "page-243",
+      "mrn": "84042.1",
+      "name": "EURNA: Ginger Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 0.9,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-244",
+      "mrn": "81281",
+      "name": "EURNA: Raita Sauce",
+      "portion": "1 ounce",
+      "massOz": 1.0,
+      "cost": 0.16,
+      "batchServings": 2.0,
+      "topLevel": false,
+      "components": [
+        {
+          "childId": "page-279",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "1/8 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-245",
+      "mrn": "81768",
+      "name": "EURNA: Spicy Cilantro Chutney",
+      "portion": "2 ounce",
+      "massOz": 2.0,
+      "cost": 0.14,
+      "batchServings": 3.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-246",
+      "mrn": "164850",
+      "name": "EUR: Bhuna Dal",
+      "portion": "1/2 cup",
+      "massOz": 3.782,
+      "cost": 1.21,
+      "batchServings": 24.0,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-247",
+          "mrn": "165741.4",
+          "name": "EUR: Dhaba Ginger Garlic Paste",
+          "quantity": "2 tbsp"
+        }
+      ],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-247",
+      "mrn": "165741.4",
+      "name": "EUR: Dhaba Ginger Garlic Paste",
+      "portion": "1 tbsp",
+      "massOz": null,
+      "cost": 0.1,
+      "batchServings": 2.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-248",
+      "mrn": "165741.24",
+      "name": "EUR: Chana Masala",
+      "portion": "1/2 cup",
+      "massOz": 4.023,
+      "cost": 1.12,
+      "batchServings": 16.0,
+      "topLevel": true,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-249",
+      "mrn": "165741.13",
+      "name": "EUR: Dakshin Kurma (Garbanzo Bean Cashew Curry)",
+      "portion": "1/2 cup",
+      "massOz": 3.928,
+      "cost": 0.92,
+      "batchServings": 32.0,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-250",
+          "mrn": "165741.1",
+          "name": "EUR: Cashew Korma Sauce",
+          "quantity": "2 qt"
+        }
+      ],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-250",
+      "mrn": "165741.1",
+      "name": "EUR: Cashew Korma Sauce",
+      "portion": "1 floz",
+      "massOz": null,
+      "cost": 0.29,
+      "batchServings": 64.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-251",
+      "mrn": "165741.34",
+      "name": "EUR: Dhaba Basmati Rice",
+      "portion": "1 cup",
+      "massOz": 6.42,
+      "cost": 0.44,
+      "batchServings": 18.0,
+      "topLevel": true,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-252",
+      "mrn": "155592",
+      "name": "EUR: Grilled Naan",
+      "portion": "1 each",
+      "massOz": 4.603,
+      "cost": 1.02,
+      "batchServings": 1.0,
+      "topLevel": true,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-253",
+      "mrn": "165741.21",
+      "name": "EUR: Jeera Rice (Cumin Seed)",
+      "portion": "1 cup",
+      "massOz": 6.725,
+      "cost": 0.46,
+      "batchServings": 18.0,
+      "topLevel": true,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-254",
+      "mrn": "165741.19",
+      "name": "EUR: Lemon Cashew Rice",
+      "portion": "1 cup",
+      "massOz": 7.246,
+      "cost": 0.98,
+      "batchServings": 18.0,
+      "topLevel": true,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-256",
+      "mrn": "165741",
+      "name": "EUR: Oggrene Huli",
+      "portion": "1/2 cup",
+      "massOz": 4.395,
+      "cost": 1.49,
+      "batchServings": 18.0,
+      "topLevel": true,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-258",
+      "mrn": "165741.12",
+      "name": "EUR: Punjabi Rajma (Kidney Bean Curry)",
+      "portion": "1/2 cup",
+      "massOz": 4.214,
+      "cost": 0.8,
+      "batchServings": 16.0,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-260",
+          "mrn": "165741.4",
+          "name": "EUR: Dhaba Ginger Garlic Paste",
+          "quantity": "1/3 cup"
+        }
+      ],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-260",
+      "mrn": "165741.4",
+      "name": "EUR: Dhaba Ginger Garlic Paste",
+      "portion": "1 tbsp",
+      "massOz": null,
+      "cost": 0.1,
+      "batchServings": 6.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-261",
+      "mrn": "165741.9",
+      "name": "EUR: Spinach Dal",
+      "portion": "1/2 cup",
+      "massOz": 3.928,
+      "cost": 1.29,
+      "batchServings": 24.0,
+      "topLevel": true,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-262",
+      "mrn": "165741.30",
+      "name": "EUR: Taarka Dal",
+      "portion": "1/2 cup",
+      "massOz": 4.093,
+      "cost": 1.32,
+      "batchServings": 16.0,
+      "topLevel": true,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-263",
+      "mrn": "87890",
+      "name": "EUR: Tamarind-Date Chutney (Scratch)",
+      "portion": "2 ounce",
+      "massOz": 2.0,
+      "cost": 2.19,
+      "batchServings": 6.0,
+      "topLevel": true,
+      "components": []
+    },
+    {
+      "id": "page-264",
+      "mrn": "165741.22",
+      "name": "EUR: Vegetable Palao Rice",
+      "portion": "1 cup",
+      "massOz": 7.246,
+      "cost": 0.68,
+      "batchServings": 18.0,
+      "topLevel": true,
+      "components": [],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-266",
+      "mrn": "118677",
+      "name": "EURNA: Aloo Gobhi",
+      "portion": "1/2 cup",
+      "massOz": 5.252,
+      "cost": 0.63,
+      "batchServings": 8.0,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-270",
+          "mrn": "118611",
+          "name": "EURNA: Vegetable Masala Gravy",
+          "quantity": "1-1/3 cup"
+        }
+      ],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-267",
+      "mrn": "84041",
+      "name": "EURNA: Garam Masala",
+      "portion": "1 cup",
+      "massOz": null,
+      "cost": 7.07,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-268",
+      "mrn": "84042",
+      "name": "EURNA: Garlic Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 1.93,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-269",
+      "mrn": "84042.1",
+      "name": "EURNA: Ginger Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 0.9,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-270",
+      "mrn": "118611",
+      "name": "EURNA: Vegetable Masala Gravy",
+      "portion": "1 cup",
+      "massOz": null,
+      "cost": 0.62,
+      "batchServings": 2.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-271",
+      "mrn": "97343.4",
+      "name": "EURNA: Garlic Butter Naan",
+      "portion": "1 each",
+      "massOz": 4.593,
+      "cost": 0.99,
+      "batchServings": 36.0,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-272",
+          "mrn": "49211.1",
+          "name": "EURNA: Roasted Garlic Butter (No Parmesan)",
+          "quantity": "5-1/3 oz"
+        }
+      ],
+      "massBasis": "Supplied item index"
+    },
+    {
+      "id": "page-272",
+      "mrn": "49211.1",
+      "name": "EURNA: Roasted Garlic Butter (No Parmesan)",
+      "portion": "1 tbsp",
+      "massOz": null,
+      "cost": 0.08,
+      "batchServings": 11.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-273",
+      "mrn": "89516",
+      "name": "EURNA: Mango Chutney",
+      "portion": "2 ounce",
+      "massOz": 2.0,
+      "cost": 0.28,
+      "batchServings": 85.0,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-276",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "1/4 cup, 1 tbsp"
+        },
+        {
+          "childId": "page-275",
+          "mrn": "84042",
+          "name": "EURNA: Garlic Paste",
+          "quantity": "3 tbsp"
+        },
+        {
+          "childId": "page-274",
+          "mrn": "84041",
+          "name": "EURNA: Garam Masala",
+          "quantity": "1 tbsp"
+        }
+      ]
+    },
+    {
+      "id": "page-274",
+      "mrn": "84041",
+      "name": "EURNA: Garam Masala",
+      "portion": "1 cup",
+      "massOz": null,
+      "cost": 7.07,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-275",
+      "mrn": "84042",
+      "name": "EURNA: Garlic Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 1.93,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-276",
+      "mrn": "84042.1",
+      "name": "EURNA: Ginger Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 0.9,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-277",
+      "mrn": "105093",
+      "name": "EURNA: Mango Lassi",
+      "portion": "12 ounce",
+      "massOz": 12.0,
+      "cost": 1.42,
+      "batchServings": 30.0,
+      "topLevel": true,
+      "components": []
+    },
+    {
+      "id": "page-278",
+      "mrn": "81281",
+      "name": "EURNA: Raita Sauce",
+      "portion": "2 ounce",
+      "massOz": 2.0,
+      "cost": 0.32,
+      "batchServings": 108.0,
+      "topLevel": true,
+      "components": [
+        {
+          "childId": "page-279",
+          "mrn": "84042.1",
+          "name": "EURNA: Ginger Paste",
+          "quantity": "1 tbsp, 2 tsp"
+        }
+      ]
+    },
+    {
+      "id": "page-279",
+      "mrn": "84042.1",
+      "name": "EURNA: Ginger Paste",
+      "portion": "7 ounce",
+      "massOz": 7.0,
+      "cost": 0.9,
+      "batchServings": 1.0,
+      "topLevel": false,
+      "components": []
+    },
+    {
+      "id": "page-280",
+      "mrn": "81768",
+      "name": "EURNA: Spicy Cilantro Chutney",
+      "portion": "2 ounce",
+      "massOz": 2.0,
+      "cost": 0.14,
+      "batchServings": 12.0,
+      "topLevel": true,
+      "components": []
+    },
+    {
+      "id": "page-281",
+      "mrn": "127582.10",
+      "name": "Ingredient: Samosa, Vegetable, 3.5 oz, Select",
+      "portion": "1 each",
+      "massOz": 3.5,
+      "cost": 2.15,
+      "batchServings": 1.0,
+      "topLevel": true,
+      "components": [],
+      "massBasis": "Supplied item index"
+    }
+  ]
+}
