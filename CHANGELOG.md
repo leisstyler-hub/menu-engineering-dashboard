@@ -2,7 +2,7 @@ PRODUCTION VERIFIED: Pairwise expansion 2026.10.21.003-pairwise-expand, app daac
 
 ## 2026-10-21 - Remove modifier search alias
 
-- [Oct 21, 9:36 PM] Removed Shared search alias from modifier editing and loading; search by group name. Existing saved data is retained. Solo Chief release; evidence: docs/ssmt/REMOVE_MODIFIER_ALIAS_2026_10_21.md.
+- [Oct 21, 9:36 PM] Removed Shared search alias from modifier editing and loading; search by group name. Existing saved data is retained. PRODUCTION VERIFIED at app a6a5888 / deployment dpl_4T9yrphafrtdKDFSh8JmU33epbdR; full verification, 50 local browser checks and 14 production-bundle checks passed. No production data writes. Solo Chief release; evidence: docs/ssmt/REMOVE_MODIFIER_ALIAS_2026_10_21.md.
 
 ## 2026-10-21 - Pairwise Matrix browser expansion
 
