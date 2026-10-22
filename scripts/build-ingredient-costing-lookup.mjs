@@ -489,7 +489,7 @@ function main() {
   };
   const rendered = `${JSON.stringify(payload, null, 2)}\n`;
   if (process.argv.includes("--check")) {
-    if (readFileSync(outputPath, "utf8") !== rendered) throw new Error("Ingredient Costing lookup is stale. Run node scripts/build-ingredient-costing-lookup.mjs.");
+    if (readFileSync(outputPath, "utf8").replace(/\r\n/g, "\n") !== rendered) throw new Error("Ingredient Costing lookup is stale. Run node scripts/build-ingredient-costing-lookup.mjs.");
     console.log(`Ingredient Costing lookup is current: ${Object.keys(compactRecipes).length} recipes.`);
     return;
   }

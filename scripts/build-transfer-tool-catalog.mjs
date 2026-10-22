@@ -41,7 +41,7 @@ const output = `${JSON.stringify({
 }, null, 2)}\n`;
 
 if (checkOnly) {
-  const current = readFileSync(outputPath, "utf8");
+  const current = readFileSync(outputPath, "utf8").replace(/\r\n/g, "\n");
   if (current !== output) {
     console.error("Transfer Tool catalog is stale. Run node scripts/build-transfer-tool-catalog.mjs.");
     process.exit(1);

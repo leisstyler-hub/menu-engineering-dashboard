@@ -11,3 +11,8 @@ Read-only actual production input check HTTP 200 supabase-recipe-items: all nine
 Self-review: exact IDs, variant isolation, duplicate conflicts, trusted-source boundary, matching export, preserved snapshot costs, missing subrecipe uncertainty and no operational writes checked. No independent Reviewer/Verifier/Scribe clearance under solo instruction.
 
 State: COMMITTED, not deployed. Deployment blocked by package gates per RELEASE_RUNBOOK.md. Rollback: revert this candidate; no data rollback needed. Production remains previous 2026.10.22.001 release. Do not claim LIVE or production fixed.
+
+
+## Release continuation
+
+Tyler requested completion in event c382e4c04e4ed8382cd12448a976a5a5fe377657b18d096b8fea851923746004. Both stale-file errors were solely CRLF/LF differences: regeneration of both outputs produced zero Git content diff. The two generator check comparisons now normalize CRLF to LF, still detecting content drift. No catalog, ingredient prices or operational source content changed. Earlier blocking assessment is superseded after the full package rerun passes. Release target remains the existing project-d8v25 production app; rollback deployment dpl_DsdP2wkKAokc15BQZPmRSpXenDdS at 853d85c.
