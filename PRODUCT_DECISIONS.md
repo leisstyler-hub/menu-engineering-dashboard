@@ -360,3 +360,8 @@ Status: Approved. Requesting/Approving Admin and Admin of Record: Tyler (Buzz 12
 ## SSMT-2026-10-21-ALIAS - Remove shared modifier search alias
 
 Approved by Tyler (Requesting/Approving Admin and Admin of Record), 2026-10-22T04:34:07Z, Buzz event 1f92341e601165ba0bad13852d4c84eb6637c5f508f58ed8fc0fdab1c48fcff2. Remove alias editing, display and search; retain group-name search and all stored data, including inert legacy alias properties. Supersedes only the shared-alias portion of SSMT-2026-10-20. Deleting legacy values or changing other modifier behavior is outside scope. Revisit with explicit Admin approval. Evidence: docs/ssmt/REMOVE_MODIFIER_ALIAS_2026_10_21.md.
+
+
+## ME-2026-10-22 - Menu Engineering entry choices
+
+Approved by Tyler (Requesting/Approving Admin and Admin of Record, identity in ADMIN_REGISTRY.md), event 2a298d610cbb5e5f87e842810f54c5f84b260790066bb2f2d0068d7fe4ee05c4 at 2026-10-22T17:43:21Z. Implement and deploy prominent responsive W&P Guidance / Menu Matrix choices with returns. Matrix retains Menu View and Portfolio Menu View. Reason: W&P was hidden as a third tab. Calculations, exports, privacy and shared data remain unchanged. Platform Home stays a tool hub. Revisit on usability evidence or explicit Admin instruction. Solo Chief per request; no independent clearance claimed.

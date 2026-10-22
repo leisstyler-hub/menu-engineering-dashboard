@@ -21,7 +21,7 @@ async function setup(page, source = 'supabase-recipe-items') {
 test('W&P evaluates all menus with the 60% gate, missing inputs and stored categories', async ({ page }) => {
   const errors = collectUnexpectedPageErrors(page);
   const writes = await setup(page);
-  await page.getByRole('button', { name: 'Weigh & Pay', exact: true }).click();
+  await page.getByRole('button', { name: 'W&P Guidance', exact: true }).click();
   const menu = page.getByTestId('wp-menu-row').filter({ hasText: 'Test Kitchen' });
   await expect(menu).toContainText('3 / 5');
   await expect(menu).toContainText('60.0%');
@@ -40,7 +40,7 @@ test('W&P evaluates all menus with the 60% gate, missing inputs and stored categ
 
 test('W&P controls require Edit and a reason; export captures exceptions without writing data', async ({ page }) => {
   const writes = await setup(page);
-  await page.getByRole('button', { name: 'Weigh & Pay', exact: true }).click();
+  await page.getByRole('button', { name: 'W&P Guidance', exact: true }).click();
   await page.getByRole('button', { name: 'Test Kitchen', exact: true }).click();
   await expect(page.getByLabel('Decision for Salmon')).toHaveCount(0);
   await page.getByRole('button', { name: 'Edit guidance', exact: true }).click();
@@ -62,6 +62,7 @@ test('W&P controls require Edit and a reason; export captures exceptions without
 
 test('Menu Engineering retains Menu and Portfolio views with compact desktop and mobile controls', async ({ page }) => {
   await setup(page);
+  await page.getByRole('button', { name: 'Menu Matrix', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Menu View', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Portfolio Menu View', exact: true }).click();
   await expect(page.getByText('Test Kitchen', { exact: true }).last()).toBeVisible();
@@ -70,14 +71,15 @@ test('Menu Engineering retains Menu and Portfolio views with compact desktop and
   const header = await page.getByTestId('engineering-header').boundingBox();
   expect(header.height).toBeLessThan(260);
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole('button', { name: 'Weigh & Pay', exact: true }).click();
+  await page.getByRole('button', { name: 'Back to Menu Engineering choices' }).click();
+  await page.getByRole('button', { name: 'W&P Guidance', exact: true }).click();
   await expect(page.getByLabel('Search W&P menus')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 
 test('W&P labels fallback data as reference rather than shared approval', async ({ page }) => {
   await setup(page, 'server-menuworks-json');
-  await page.getByRole('button', { name: 'Weigh & Pay', exact: true }).click();
+  await page.getByRole('button', { name: 'W&P Guidance', exact: true }).click();
   await expect(page.getByText(/Fallback data.*reference only/i)).toBeVisible();
   await expect(page.getByTestId('wp-menu-row').first().getByTestId('wp-menu-status')).toHaveText('Conditional');
 });
@@ -85,7 +87,7 @@ test('W&P labels fallback data as reference rather than shared approval', async 
 test('W&P refreshes server data despite a browser override and clears session exceptions', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('culinaryToolsMenuEngineeringItems_v3', JSON.stringify([{ menu: 'Stale browser', item: 'Stale' }])));
   await setup(page);
-  await page.getByRole('button', { name: 'Weigh & Pay', exact: true }).click();
+  await page.getByRole('button', { name: 'W&P Guidance', exact: true }).click();
   await expect(page.getByTestId('wp-menu-row').filter({ hasText: 'Test Kitchen' })).toBeVisible();
   await page.getByRole('button', { name: 'Test Kitchen', exact: true }).click();
   await page.getByRole('button', { name: 'Edit guidance', exact: true }).click();
@@ -101,7 +103,7 @@ test('W&P refreshes server data despite a browser override and clears session ex
 
 test('W&P cannot turn missing cost into a pass through an override', async ({ page }) => {
   await setup(page);
-  await page.getByRole('button', { name: 'Weigh & Pay', exact: true }).click();
+  await page.getByRole('button', { name: 'W&P Guidance', exact: true }).click();
   await page.getByRole('button', { name: 'Test Kitchen', exact: true }).click();
   await page.getByRole('button', { name: 'Edit guidance', exact: true }).click();
   const missing = page.getByTestId('wp-item-row').filter({ hasText: 'Uncosted Vegetables' });
@@ -115,7 +117,7 @@ test('W&P cannot turn missing cost into a pass through an override', async ({ pa
 test('W&P shows read failure and can recover through Refresh', async ({ page }) => {
   await setup(page);
   await page.route('**/api/recipe-library?scope=all', route => route.fulfill({ status: 503, json: { ok: false, message: 'Shared source unavailable' } }));
-  await page.getByRole('button', { name: 'Weigh & Pay', exact: true }).click();
+  await page.getByRole('button', { name: 'W&P Guidance', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Shared source unavailable');
   await expect(page.getByRole('button', { name: 'Export all menus', exact: true })).toBeDisabled();
   await page.unroute('**/api/recipe-library?scope=all');
@@ -127,7 +129,7 @@ test('W&P exports all menus with safely escaped reference content and printable 
   await setup(page);
   const unsafe = { ...row(10, '<script>window.BAD=true</script>'), menu: 'Test & <Kitchen>', category: '<Sides>' };
   await page.route('**/api/recipe-library?scope=all', route => route.fulfill({ json: { ok: true, rows: [unsafe], source: 'supabase-recipe-items' } }));
-  await page.getByRole('button', { name: 'Weigh & Pay', exact: true }).click();
+  await page.getByRole('button', { name: 'W&P Guidance', exact: true }).click();
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Export all menus', exact: true }).click();
   const zip = await JSZip.loadAsync(await readFile(await (await download).path()));
@@ -142,7 +144,7 @@ test('W&P exports all menus with safely escaped reference content and printable 
 
 test('W&P overview and oz/lb scenario price update guidance and exported report together', async ({page})=>{
  await setup(page);
- await page.getByRole('button',{name:'Weigh & Pay',exact:true}).click();
+ await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();
  await expect(page.getByLabel('W&P overview')).toContainText('W&P qualified menus');
  await page.getByLabel('W&P price unit').selectOption('oz');
  await page.getByLabel('W&P selling price').fill('1');
@@ -159,7 +161,7 @@ test('W&P overview and oz/lb scenario price update guidance and exported report 
 
 test('Andes analysis opens without sign-in and exposes costs and charts without recipe content',async({page})=>{
  await setup(page);
- await page.getByRole('button',{name:'Weigh & Pay',exact:true}).click();
+ await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();
  await expect(page.getByRole('img',{name:'Menu qualification chart'})).toBeVisible();
  await expect(page.getByLabel('Private recipe email')).toHaveCount(0);
  await expect(page.getByRole('region',{name:'Andes component analysis'})).toHaveCount(0);
@@ -194,7 +196,7 @@ test('Andes analysis opens without sign-in and exposes costs and charts without 
 });
 
 test('Andes selection replaces generic details, deduplicates components and clears approval filters',async({page})=>{
- await setup(page);await page.getByRole('button',{name:'Weigh & Pay',exact:true}).click();
+ await setup(page);await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();
  await page.getByRole('button',{name:'AMZ: Andes',exact:true}).click();
  const analysis=page.getByRole('region',{name:'Andes component analysis'});
  await expect(page.getByRole('button',{name:'Edit guidance',exact:true})).toHaveCount(0);
@@ -208,3 +210,32 @@ test('Andes selection replaces generic details, deduplicates components and clea
  await analysis.getByRole('button',{name:'Show only unapproved recipes',exact:true}).click();
  const count=await analysis.getByTestId('andes-recipe').count();expect(count).toBeGreaterThan(0);expect(count).toBeLessThan(19);
 });
+
+for (const width of [390, 1440]) {
+  test(`Menu Engineering path choices and returns at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    const writes = await setup(page);
+    const guidance = page.getByRole('button', { name: 'W&P Guidance', exact: true });
+    const matrix = page.getByRole('button', { name: 'Menu Matrix', exact: true });
+    await expect(guidance).toBeVisible();
+    await expect(matrix).toBeVisible();
+    await expect(page.getByLabel('Search all engineering items')).toHaveCount(0);
+    const a = await guidance.boundingBox(), b = await matrix.boundingBox();
+    expect(a.width).toBeGreaterThan(200);
+    expect(width < 768 ? b.y > a.y + a.height : Math.abs(b.y - a.y) < 2).toBeTruthy();
+    await guidance.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByLabel('Search W&P menus')).toBeVisible();
+    await page.getByRole('button', { name: 'Back to Menu Engineering choices' }).click();
+    await matrix.click();
+    await expect(page.getByRole('button', { name: 'Menu View', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await page.getByRole('button', { name: 'Portfolio Menu View', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Portfolio Menu View', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await page.getByRole('button', { name: 'Back to Menu Engineering choices' }).click();
+    await expect(guidance).toBeVisible();
+    await expect(matrix).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
+    await page.screenshot({ path: `test-results/engineering-choices-${width}.png`, fullPage: true });
+    expect(writes).toEqual([]);
+  });
+}

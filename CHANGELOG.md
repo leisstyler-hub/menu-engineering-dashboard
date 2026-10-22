@@ -1,3 +1,7 @@
+## 2026-10-22 - Menu Engineering path choices
+
+- [Oct 22, 10:46 AM] Made W&P Guidance and Menu Matrix prominent entry choices with return navigation, responsive cards and retained matrix views. Version `2026.10.22.001-menu-engineering-paths`; solo Chief per Tyler. Local Menu Engineering suite 13/13 and production build passed. Full package gate has unrelated pre-existing stale generated catalog/lookup checks. Production proof pending.
+
 PRODUCTION VERIFIED: Pairwise expansion 2026.10.21.003-pairwise-expand, app daac2c0, deployment dpl_H9fhy2AotthBEPiBqktNN6BSmQAv READY. Full verify and local/production browser suites 21/21 passed. Chief solo release per Tyler; no independent final Scribe sign-off. Source: docs/PAIRWISE_EXPANSION_2026_10_21.md.
 
 ## 2026-10-21 - Remove modifier search alias

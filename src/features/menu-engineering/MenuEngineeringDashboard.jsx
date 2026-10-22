@@ -163,7 +163,7 @@ export default function MenuEngineeringDashboard({ onBackToPlatform, onOpenSmart
   const [selectedMenu, setSelectedMenu] = useState("");
   const [globalSearch, setGlobalSearch] = useState("");
   const [fillUnitsValue, setFillUnitsValue] = useState(5);
-  const [viewMode, setViewMode] = useState("operations");
+  const [viewMode, setViewMode] = useState("choices");
   const [targetMode, setTargetMode] = useState("foodCost");
   const [targetFoodCost, setTargetFoodCost] = useState(30);
   const [category, setCategory] = useState("All");
@@ -457,16 +457,25 @@ export default function MenuEngineeringDashboard({ onBackToPlatform, onOpenSmart
             </div>
             <div className="flex items-center gap-2"><PlatformSettings onOpenSmartsheetHealth={onOpenSmartsheetHealth} /><CompassOneLogo compact /></div>
           </div>
-          <nav aria-label="Menu Engineering modes" className="flex flex-wrap gap-2">
-            {[['operations', 'Menu View'], ['portfolio', 'Portfolio Menu View'], ['wp', 'Weigh & Pay']].map(([mode, label]) => <button key={mode} onClick={() => setViewMode(mode)} aria-pressed={viewMode === mode} className={`rounded-xl px-3 py-2 text-sm font-semibold border ${viewMode === mode ? 'bg-slate-900 text-white border-slate-900' : 'bg-white border-slate-300 text-slate-700'}`}>{label}</button>)}
-          </nav>
-          {viewMode !== 'wp' && <div className="flex flex-wrap gap-2">
+          {viewMode !== 'choices' && <button onClick={() => setViewMode('choices')} aria-label="Back to Menu Engineering choices" className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">Back to Menu Engineering choices</button>}
+          {['operations', 'portfolio'].includes(viewMode) && <nav aria-label="Menu Matrix views" className="flex flex-wrap gap-2">
+            {[['operations', 'Menu View'], ['portfolio', 'Portfolio Menu View']].map(([mode, label]) => <button key={mode} onClick={() => setViewMode(mode)} aria-pressed={viewMode === mode} className={`rounded-xl px-3 py-2 text-sm font-semibold border ${viewMode === mode ? 'bg-slate-900 text-white border-slate-900' : 'bg-white border-slate-300 text-slate-700'}`}>{label}</button>)}
+          </nav>}
+          {['operations', 'portfolio'].includes(viewMode) && <div className="flex flex-wrap gap-2">
             <div className="relative min-w-0 flex-1"><Search className="absolute left-3 top-2.5 text-slate-400" size={16} /><input aria-label="Search all engineering items" value={globalSearch} onChange={event => setGlobalSearch(event.target.value)} placeholder="Search item, MRN, menu…" className="w-full rounded-xl border border-slate-300 pl-9 pr-3 py-2 text-sm" /></div>
             <select aria-label="Select menu to view" value={activeSelectedMenu} onChange={event => { setSelectedMenu(event.target.value); setCategory('All'); }} className="min-w-0 w-full sm:w-auto sm:max-w-sm rounded-xl border border-slate-300 px-3 py-2 text-sm">{menus.map(menu => <option key={menu.menu} value={menu.menu}>{menu.menu} — {menu.count} items</option>)}</select>
           </div>}
         </header>
+        {viewMode === 'choices' && <section aria-label="Menu Engineering paths" className="grid grid-cols-1 gap-5 md:grid-cols-2">
+          <button type="button" onClick={() => setViewMode('wp')} aria-label="W&P Guidance" className="rounded-xl border-2 border-emerald-700 bg-emerald-700 p-6 text-left text-white shadow-md transition-colors hover:border-emerald-900 hover:bg-emerald-800 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-emerald-500">
+            <DollarSign size={32} aria-hidden="true" /><h2 className="mt-4 text-2xl font-black">W&amp;P Guidance</h2><p className="mt-2 text-sm leading-6">Explore Weigh &amp; Pay guidance, menu qualification and concept analysis.</p>
+          </button>
+          <button type="button" onClick={() => setViewMode('operations')} aria-label="Menu Matrix" className="rounded-xl border-2 border-sky-700 bg-sky-700 p-6 text-left text-white shadow-md transition-colors hover:border-sky-900 hover:bg-sky-800 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-sky-500">
+            <TrendingUp size={32} aria-hidden="true" /><h2 className="mt-4 text-2xl font-black">Menu Matrix</h2><p className="mt-2 text-sm leading-6">Review menu performance in Menu View and Portfolio Menu View.</p>
+          </button>
+        </section>}
         {viewMode === 'wp' && <WeighPayView />}
-        {viewMode !== 'wp' && <>
+        {['operations', 'portfolio'].includes(viewMode) && <>
         {menuItemsLoad.state !== "ready" && (
           <section className={`rounded-3xl border p-5 text-sm font-bold shadow-xl ${menuItemsLoad.state === "error" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-sky-200 bg-sky-50 text-sky-900"}`}>
             {menuItemsLoad.message}

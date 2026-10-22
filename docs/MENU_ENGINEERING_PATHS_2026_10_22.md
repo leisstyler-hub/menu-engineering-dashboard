@@ -1,0 +1,13 @@
+# Menu Engineering path choices
+
+Requesting/Approving Admin and Admin of Record: Tyler (identity in ADMIN_REGISTRY.md). Approval/deploy event: 2a298d610cbb5e5f87e842810f54c5f84b260790066bb2f2d0068d7fe4ee05c4 at 2026-10-22T17:43:21Z. Level 3 product change and authorized production action. Solo Chief owns all edits/checks; no independent or Scribe clearance claimed.
+
+Objective: expose W&P guidance through prominent entry choices. Before: operations opens with W&P hidden as third tab. After: green W&P Guidance and blue Menu Matrix cards, stacked mobile/side-by-side desktop, return from each, retained matrix tabs. Scope: dashboard presentation, acceptance tests, version/docs. Excludes API/storage/data/calculations/exports/recipe privacy or other navigation changes. Source authority: ARCHITECTURE_RULES.md. No operational writes.
+
+Sequence: red acceptance, implement, complete package and feature checks, clean-frame self-review, publish and production proof. Stop for relevant failures or expanded scope. Acceptance tests cover keyboard entry, both paths/returns, responsive geometry, matrix modes, W&P calculation/export regressions with API intercepted. Rollback: revert release to baseline 87383d3 (prior app a6a5888 / dpl_4T9yrphafrtdKDFSh8JmU33epbdR). Final state must distinguish production verification from independent LIVE clearance.
+
+Local verification: new 390px/1440px acceptance tests failed on baseline for absent W&P Guidance, then complete Menu Engineering suite passed 13/13 (`node node_modules/@playwright/test/cli.js test tests/browser/menu-engineering.spec.js --workers=1`, external local preview 4188). Desktop/mobile screenshots visually inspected, API intercepted, no operational writes. Production Vite build passed. Full `npm run verify` stopped at existing stale Transfer Tool catalog; continuing found existing stale Ingredient Costing lookup. Scripts and generated data match baseline (git diff --quiet HEAD -- scripts public/data). Remaining package commands were executed separately; final output recorded below. Corepack pnpm wrapper crashed while attempting dependency installation; npm/direct Node used instead. An early runner invocation lost arguments via its Windows shell and selected unrelated tests; direct Playwright CLI resolved this. An early browser attempt began before preview was ready; rerun used stable server. No broader-suite pass is claimed.
+
+Clean-frame self-review: diff changes only initial view state, choice cards, view guards and return navigation; matrix and W&P implementations unmodified. Button semantics, keyboard focus, geometry and both returns checked. No independent review/sign-off under solo instruction.
+
+Production evidence pending.
