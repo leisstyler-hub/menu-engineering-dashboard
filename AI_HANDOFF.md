@@ -1,6 +1,6 @@
 ## 2026-10-22 - Shared index refreshed; Balti release candidate
 
-Shared catalog PRODUCTION VERIFIED: 1693 source variants / 53 menus from the replacement index; source fields verified. Backup/receipts: workspace WORK_LOGS/MENU_INDEX_BALTI_2026_10_22. Bundled historical references are unchanged and must not overwrite this shared catalog. Balti candidate 2026.10.22.003-menu-index-balti-guidance: 45 top-level dishes, 251 variants; model guards, full package/build and local Menu Engineering 15/15 pass. Solo Chief, no independent/Scribe sign-off. App release pending; docs/MENU_INDEX_BALTI_2026_10_22.md.
+Shared catalog PRODUCTION VERIFIED: 1693 source variants / 53 menus from the replacement index; source fields verified. Backup/receipts: workspace WORK_LOGS/MENU_INDEX_BALTI_2026_10_22. Bundled historical references are unchanged and must not overwrite this shared catalog. Balti candidate 2026.10.22.003-menu-index-balti-guidance: 45 top-level dishes, 251 variants; model guards, full package/build and local Menu Engineering 15/15 pass. Solo Chief, no independent/Scribe sign-off. App PRODUCTION VERIFIED: 1060d53, READY dpl_Dr4rVrLEEUvvnqeRVjFZVDTc9JF4; canonical 1693-row reads, Balti flow, mobile containment, local/production combined suite 16/16 passed. Read path avoids duplicated database columns and never caches historical fallbacks. docs/MENU_INDEX_BALTI_2026_10_22.md.
 
 ## 2026-10-22 - Andes documented weight reconciliation production verified
 
