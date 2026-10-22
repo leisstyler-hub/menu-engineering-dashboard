@@ -121,8 +121,11 @@ test("Commissary Ordering Tool requires cafe selection and saves separate delive
   const prepListFile = await bomDownload;
   expect(prepListFile.suggestedFilename()).toMatch(/Commissary Salad Bar Prep List.*\.xlsx/);
   const bomWorkbook = XLSX.readFile(await prepListFile.path(), { cellStyles: true });
-  expect(bomWorkbook.SheetNames).toEqual(["Consolidated Prep List", "Monday Delivery Map", "Wednesday Delivery Map"]);
+  expect(bomWorkbook.SheetNames).toEqual(["Consolidated Prep List", "Monday Delivery Map", "Wednesday Delivery Map", "Power Automate"]);
   expect(bomWorkbook.Sheets["Consolidated Prep List"].A1.s.fgColor.rgb).toBe("17365D");
+  const prepRows = XLSX.utils.sheet_to_json(bomWorkbook.Sheets["Consolidated Prep List"], { header: 1, defval: "" });
+  expect(prepRows[2].slice(0, 3)).toEqual(["Ingredient / item", "Total quantity", "Order unit"]);
+  expect(bomWorkbook.Workbook.Sheets.find((sheet) => sheet.name === "Power Automate")?.Hidden).toBe(1);
   expect(bomWorkbook.Sheets["Monday Delivery Map"].A4.s.fgColor.rgb).toBe("D9EAF7");
   const mondayRows = XLSX.utils.sheet_to_json(bomWorkbook.Sheets["Monday Delivery Map"], { header: 1, defval: "" });
   const wednesdayRows = XLSX.utils.sheet_to_json(bomWorkbook.Sheets["Wednesday Delivery Map"], { header: 1, defval: "" });

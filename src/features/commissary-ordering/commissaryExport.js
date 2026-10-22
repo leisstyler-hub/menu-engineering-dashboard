@@ -120,42 +120,34 @@ function buildDeliveryMapWorksheet(records, delivery) {
 export function buildCommissaryBomWorkbook(records, weekStart) {
   const rows = rolledUpItems(records);
   const worksheetRows = [
-    ["Ingredient Technique Prep List", "", "", "", "", "", "Portion Plan — Power Automate input area", "", "", "Calculation rows — maintain for Power Automate", "", "", "", ""],
-    [`Commissary salad bar · Week ${weekLabel(weekStart)}`, "", "", "", "", "", "", "", "", "", "", "", "", ""],
-    ["Received ingredient / item", "Prep technique", "Subrecipe / component", "Finished dish", "Total quantity", "Order unit", "Finished dish", "Planned portions", "Current status", "Technique key", "Finished dish", "Normalized unit", "Required qty", "Planning quantity"],
+    ["Ingredient Technique Prep List", "", "", "", "", ""],
+    [`Commissary salad bar · Week ${weekLabel(weekStart)}`, "", "", "", "", ""],
+    ["Ingredient / item", "Total quantity", "Order unit", "Prep technique", "Subrecipe / component", "Finished dish"],
     ...rows.map((row) => [
       row.name,
+      row.total,
+      row.orderUnit,
       row.notes || row.category,
       row.category,
       row.name,
-      row.total,
-      row.orderUnit,
-      row.name,
-      row.total,
-      "Locked order",
-      `${row.category}|${row.id}`,
-      row.name,
-      row.orderUnit,
-      row.total,
-      row.total,
     ]),
   ];
   const worksheet = XLSX.utils.aoa_to_sheet(worksheetRows);
-  worksheet["!merges"] = [XLSX.utils.decode_range("A1:F1"), XLSX.utils.decode_range("G1:I1"), XLSX.utils.decode_range("J1:N1"), XLSX.utils.decode_range("A2:N2")];
-  worksheet["!cols"] = [30, 24, 22, 28, 14, 18, 28, 16, 18, 30, 28, 18, 14, 18].map((wch) => ({ wch }));
+  worksheet["!merges"] = [XLSX.utils.decode_range("A1:F1"), XLSX.utils.decode_range("A2:F2")];
+  worksheet["!cols"] = [30, 14, 18, 24, 22, 28].map((wch) => ({ wch }));
   worksheet["!freeze"] = { xSplit: 0, ySplit: 3, topLeftCell: "A4", activePane: "bottomLeft", state: "frozen" };
-  worksheet["!autofilter"] = { ref: `A3:N${Math.max(worksheetRows.length, 3)}` };
+  worksheet["!autofilter"] = { ref: `A3:F${Math.max(worksheetRows.length, 3)}` };
   worksheet["!margins"] = { left: 0.25, right: 0.25, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 };
   worksheet["!rows"] = worksheetRows.map((_, row) => ({ hpt: row === 0 ? 28 : row === 1 ? 22 : row === 2 ? 34 : 25 }));
 
   let previousCategory = null;
   let categoryBand = -1;
   for (let row = 0; row < worksheetRows.length; row += 1) {
-    const category = row > 2 ? worksheetRows[row][2] : null;
+    const category = row > 2 ? worksheetRows[row][4] : null;
     const isGroupStart = row > 2 && category !== previousCategory;
     if (isGroupStart) categoryBand += 1;
     const fill = isGroupStart ? PREP_LIST_COLORS.section : categoryBand % 2 === 0 ? PREP_LIST_COLORS.detailAlt : PREP_LIST_COLORS.detail;
-    for (let column = 0; column < 14; column += 1) {
+    for (let column = 0; column < 6; column += 1) {
       let style;
       if (row === 0) style = titleStyle();
       else if (row === 1) style = {
@@ -166,15 +158,66 @@ export function buildCommissaryBomWorkbook(records, weekStart) {
       };
       else if (row === 2) style = headerStyle;
       else style = bodyStyle(fill, isGroupStart);
-      if (row > 2 && isGroupStart && [0, 2].includes(column)) style = { ...style, font: { ...style.font, bold: true, color: { rgb: PREP_LIST_COLORS.navy } } };
+      if (row > 2 && isGroupStart && [0, 4].includes(column)) style = { ...style, font: { ...style.font, bold: true, color: { rgb: PREP_LIST_COLORS.navy } } };
       setCellStyle(worksheet, row, column, style);
     }
     if (row > 2) previousCategory = category;
   }
+
+  const automationRows = [
+    ["Portion Plan — Power Automate input area", "", "", "Calculation rows — maintain for Power Automate", "", "", "", ""],
+    [`Commissary salad bar · Week ${weekLabel(weekStart)}`, "", "", "", "", "", "", ""],
+    ["Finished dish", "Planned portions", "Current status", "Technique key", "Finished dish", "Normalized unit", "Required qty", "Planning quantity"],
+    ...rows.map((row) => [
+      row.name,
+      row.total,
+      "Locked order",
+      `${row.category}|${row.id}`,
+      row.name,
+      row.orderUnit,
+      row.total,
+      row.total,
+    ]),
+  ];
+  const automationWorksheet = XLSX.utils.aoa_to_sheet(automationRows);
+  automationWorksheet["!merges"] = [XLSX.utils.decode_range("A1:C1"), XLSX.utils.decode_range("D1:H1"), XLSX.utils.decode_range("A2:H2")];
+  automationWorksheet["!cols"] = [28, 16, 18, 30, 28, 18, 14, 18].map((wch) => ({ wch }));
+  automationWorksheet["!freeze"] = { xSplit: 0, ySplit: 3, topLeftCell: "A4", activePane: "bottomLeft", state: "frozen" };
+  automationWorksheet["!autofilter"] = { ref: `A3:H${Math.max(automationRows.length, 3)}` };
+  automationWorksheet["!margins"] = { left: 0.25, right: 0.25, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 };
+  automationWorksheet["!rows"] = automationRows.map((_, row) => ({ hpt: row === 0 ? 28 : row === 1 ? 22 : row === 2 ? 34 : 25 }));
+
+  let previousAutomationCategory = null;
+  let automationBand = -1;
+  for (let row = 0; row < automationRows.length; row += 1) {
+    const category = row > 2 ? String(automationRows[row][3]).split("|")[0] : null;
+    const isGroupStart = row > 2 && category !== previousAutomationCategory;
+    if (isGroupStart) automationBand += 1;
+    const fill = isGroupStart ? PREP_LIST_COLORS.section : automationBand % 2 === 0 ? PREP_LIST_COLORS.detailAlt : PREP_LIST_COLORS.detail;
+    for (let column = 0; column < 8; column += 1) {
+      let style;
+      if (row === 0) style = titleStyle();
+      else if (row === 1) style = {
+        font: { name: "Arial", sz: 10, italic: true, color: { rgb: PREP_LIST_COLORS.muted } },
+        fill: { patternType: "solid", fgColor: { rgb: PREP_LIST_COLORS.detail } },
+        alignment: { vertical: "center" },
+        border: border(PREP_LIST_COLORS.section),
+      };
+      else if (row === 2) style = headerStyle;
+      else style = bodyStyle(fill, isGroupStart);
+      if (row > 2 && isGroupStart && [0, 3].includes(column)) style = { ...style, font: { ...style.font, bold: true, color: { rgb: PREP_LIST_COLORS.navy } } };
+      setCellStyle(automationWorksheet, row, column, style);
+    }
+    if (row > 2) previousAutomationCategory = category;
+  }
+
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, "Consolidated Prep List");
   XLSX.utils.book_append_sheet(workbook, buildDeliveryMapWorksheet(records, "monday"), "Monday Delivery Map");
   XLSX.utils.book_append_sheet(workbook, buildDeliveryMapWorksheet(records, "wednesday"), "Wednesday Delivery Map");
+  XLSX.utils.book_append_sheet(workbook, automationWorksheet, "Power Automate");
+  workbook.Workbook ||= {};
+  workbook.Workbook.Sheets = workbook.SheetNames.map((name) => ({ name, Hidden: name === "Power Automate" ? 1 : 0 }));
   return workbook;
 }
 
