@@ -325,7 +325,7 @@ function PairwiseMatrix({ menus, pairs, maxOverlap, selectedPair, setSelectedPai
       aria-labelledby={isExpanded ? "pairwise-matrix-heading" : undefined}
       className={
         isExpanded
-          ? "fixed inset-0 z-50 flex flex-col overflow-auto bg-slate-50 p-5"
+          ? "fixed inset-0 z-50 flex flex-col bg-slate-50 p-5"
           : "rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
       }
     >
@@ -362,7 +362,12 @@ function PairwiseMatrix({ menus, pairs, maxOverlap, selectedPair, setSelectedPai
 
       {isExpanded ? null : <PillarCrossUseStrip pillars={DATA.pillars} menus={menus} />}
 
-      <div className="mt-4 grid min-h-0 flex-1 grid-cols-1 items-stretch gap-4 2xl:grid-cols-[minmax(0,1fr)_400px]">
+      <div
+        data-testid="pairwise-matrix-detail-row"
+        className={`mt-4 grid min-h-0 flex-1 grid-cols-1 items-stretch gap-4 2xl:grid-cols-[minmax(0,1fr)_400px] ${
+          isExpanded ? "grid-rows-[minmax(360px,1fr)_minmax(240px,1fr)] overflow-y-auto 2xl:grid-rows-none 2xl:overflow-visible" : ""
+        }`}
+      >
         <div
           data-testid="pairwise-matrix-grid"
           className="overflow-auto rounded-lg border border-slate-200"
@@ -431,7 +436,7 @@ function PairwiseMatrix({ menus, pairs, maxOverlap, selectedPair, setSelectedPai
           </table>
         </div>
 
-        <PairDetail pair={selectedPair} menus={menus} />
+        <PairDetail pair={selectedPair} menus={menus} isExpanded={isExpanded} />
       </div>
     </section>
   );
@@ -461,7 +466,7 @@ function PillarCrossUseStrip({ pillars, menus }) {
   );
 }
 
-function PairDetail({ pair, menus }) {
+function PairDetail({ pair, menus, isExpanded }) {
   if (!pair) {
     return (
       <aside className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5 text-sm font-semibold text-slate-500">
@@ -474,9 +479,11 @@ function PairDetail({ pair, menus }) {
   const menuA = menus.find((menu) => menu.name === pair.a);
   const menuB = menus.find((menu) => menu.name === pair.b);
   const shared = sharedIngredients(menus, pair.a, pair.b).map((key) => DATA.ingredientLabels[key]).sort();
+  const detailMinHeight = isExpanded ? "min-h-[240px] 2xl:min-h-[680px]" : "min-h-[680px]";
+  const sharedListMinHeight = isExpanded ? "min-h-[96px] 2xl:min-h-[320px]" : "min-h-[320px]";
 
   return (
-    <aside data-testid="pair-detail-panel" className="flex h-full min-h-[680px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <aside data-testid="pair-detail-panel" className={`flex h-full ${detailMinHeight} flex-col overflow-y-auto rounded-lg border border-slate-200 bg-white p-5 shadow-sm`}>
       <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Pair Detail</p>
       <h3 className="mt-1 text-xl font-black">{pair.a} × {pair.b}</h3>
 
@@ -494,7 +501,7 @@ function PairDetail({ pair, menus }) {
 
       <div className="mt-4 flex min-h-0 flex-1 flex-col">
         <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Shared ingredients ({shared.length})</p>
-        <div data-testid="pair-detail-shared-ingredients" className="mt-2 min-h-[320px] flex-1 space-y-1 overflow-y-auto pr-1">
+        <div data-testid="pair-detail-shared-ingredients" className={`mt-2 ${sharedListMinHeight} flex-1 space-y-1 overflow-y-auto pr-1`}>
           {shared.map((label) => (
             <p key={label} className="rounded-lg border border-slate-100 bg-slate-50 px-2 py-1 text-xs font-semibold text-slate-700">{label}</p>
           ))}
