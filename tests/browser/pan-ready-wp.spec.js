@@ -3,7 +3,7 @@ import {readFile} from 'node:fs/promises';
 import JSZip from 'jszip';
 import * as XLSX from 'xlsx';
 import {buildMenuAnalysisSource} from '../../src/features/menu-engineering/menuAnalysisSource.js';
-import {buildPortfolio} from '../../src/features/menu-engineering/wpPortfolioModel.js';
+import {buildPortfolio,includeWpMenu} from '../../src/features/menu-engineering/wpPortfolioModel.js';
 import {panReadyMenu} from '../../src/features/menu-engineering/panReadyModel.js';
 import {openTool,collectUnexpectedPageErrors} from './smoke-helpers.js';
 const rows=[{menu:'AMZ: Balti',item:'Butter Chicken Plate',mrn:'212486.1',portion:'1 serving(s)',portionOz:17.206,trueCost:3.02},{menu:'AMZ: Andes',item:'Tofu',mrn:'187686',portion:'8 oz',portionOz:8,trueCost:1.52}];
@@ -47,7 +47,7 @@ test('Saved current shared catalog opens every menu with matching servable count
   const payload=JSON.parse(await readFile(process.env.WP_CATALOG_SNAPSHOT,'utf8'));
   const library=JSON.parse(await readFile(new URL('../../src/data/allMenusWpAnalysis.json',import.meta.url),'utf8'));
   const specials=Object.fromEntries(await Promise.all([['AMZ: Andes','andes'],['AMZ: Balti','balti']].map(async([menu,file])=>[menu,JSON.parse(await readFile(new URL(`../../src/data/${file}WpAnalysis.json`,import.meta.url),'utf8'))])));
-  const menus=[...new Set(payload.rows.map(r=>r.menu))].filter(m=>!['AMZ: Deli Core','AMZ: Grill Core','AMZ: Salt & Char'].includes(m)),errors=collectUnexpectedPageErrors(page),writes=[];
+  const menus=[...new Set(payload.rows.map(r=>r.menu))].filter(includeWpMenu),errors=collectUnexpectedPageErrors(page),writes=[];
   await page.route('**/api/**',route=>{if(route.request().method()!=='GET'&&!route.request().url().includes('/traffic/'))writes.push(route.request().url());return route.fulfill({json:route.request().url().includes('recipe-library')?payload:{ok:true,records:[],rows:[]}});});
   await openTool(page,/open dashboard/i,/Menu Engineering/);
   await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();
