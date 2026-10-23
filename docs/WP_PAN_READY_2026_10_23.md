@@ -42,3 +42,9 @@ Self-review covered source membership (including Andes/Balti), classification pr
 - `git diff --check`: PASS. Build emits the existing Vercel directive/chunk-size advisories; no new build failure.
 
 Final self-review added explicit category guards for finished tofu/chicken in sauce (Proteins), a sauce recipe named for chicken (Sauces), and cauliflower steak (Vegetables). These rules prevent sauce words and culinary cut names from moving a servable food into the wrong category. Final committed-candidate check results and logs are retained in workspace WORK_LOGS/WP_PAN_READY_2026_10_23/RESULT.md.
+
+## Final state
+
+COMMITTED locally: application `b43ceac541861309434411b669cdd3fff5e018bb`, branch `chief/menu-engineering-paths`. Complete `npm run verify` PASS and affected browser suite 17/17 PASS at that exact commit (including all 53 current-menu selections). Workspace evidence: `WORK_LOGS/WP_PAN_READY_2026_10_23/FULL_VERIFY.log`, `BROWSER_VERIFY.log`, `COVERAGE.json`, `RESULT.md`, and desktop/mobile screenshots. No operational writes, push, merge or deployment. Final documentation-only record follows the app commit.
+
+Read-only coverage audit: 1693 current shared rows, 53 menus, 1190 projected servable component memberships/variants, 326 classification-review entries across menu memberships. These are not unique platform-wide food counts. Unclassified source names are not automatically shown as serving choices, and unresolved assemblies are not guessed. Coverage is recorded explicitly rather than claiming complete Culinary classification.
