@@ -27,15 +27,15 @@ test('W&P evaluates all menus with the 60% gate, missing inputs and stored categ
   await expect(menu).toContainText('60.0%');
   await expect(menu.getByTestId('wp-menu-status')).toHaveText('Pass');
   await menu.getByRole('button', { name: 'Test Kitchen', exact: true }).click();
-  await page.getByText('Shared menu guidance and session adjustments',{exact:true}).click();
-  await expect(page.getByRole('heading', { name: 'Side', exact: true })).toBeVisible();
+  await page.getByText('Servable component guidance and session adjustments',{exact:true}).click();
+  await expect(page.getByRole('heading', { name: 'Starches / grains', exact: true })).toBeVisible();
   await expect(page.getByTestId('wp-item-row').filter({ hasText: 'Salmon' })).toContainText('Seafood');
   await expect(page.getByTestId('wp-item-row').filter({ hasText: 'Uncosted Vegetables' })).toContainText('Needs cost');
   await page.getByLabel('Search W&P menus').fill('Incomplete');
   await expect(page.getByTestId('wp-menu-row')).toHaveCount(1);
   await page.getByRole('button', { name: 'Incomplete Kitchen', exact: true }).click();
-  await page.getByText('Shared menu guidance and session adjustments',{exact:true}).click();
-  await expect(page.getByTestId('wp-item-row')).toContainText('Needs weight');
+  await page.getByText('Servable component guidance and session adjustments',{exact:true}).click();
+  await expect(page.getByText('Classification review (1)',{exact:true})).toBeVisible();
   expect(writes).toEqual([]);
   expect(errors).toEqual([]);
 });
@@ -44,7 +44,7 @@ test('W&P controls require Edit and a reason; export captures exceptions without
   const writes = await setup(page);
   await page.getByRole('button', { name: 'W&P Guidance', exact: true }).click();
   await page.getByRole('button', { name: 'Test Kitchen', exact: true }).click();
-  await page.getByText('Shared menu guidance and session adjustments',{exact:true}).click();
+  await page.getByText('Servable component guidance and session adjustments',{exact:true}).click();
   await expect(page.getByLabel('Decision for Salmon')).toHaveCount(0);
   await page.getByRole('button', { name: 'Edit guidance', exact: true }).click();
   const salmon = page.getByTestId('wp-item-row').filter({ hasText: 'Salmon' });
@@ -93,7 +93,7 @@ test('W&P refreshes server data despite a browser override and clears session ex
   await page.getByRole('button', { name: 'W&P Guidance', exact: true }).click();
   await expect(page.getByTestId('wp-menu-row').filter({ hasText: 'Test Kitchen' })).toBeVisible();
   await page.getByRole('button', { name: 'Test Kitchen', exact: true }).click();
-  await page.getByText('Shared menu guidance and session adjustments',{exact:true}).click();
+  await page.getByText('Servable component guidance and session adjustments',{exact:true}).click();
   await page.getByRole('button', { name: 'Edit guidance', exact: true }).click();
   const chicken = page.getByTestId('wp-item-row').filter({ hasText: 'Roast Chicken' });
   await chicken.getByLabel('Decision for Roast Chicken').selectOption('block');
@@ -109,7 +109,7 @@ test('W&P cannot turn missing cost into a pass through an override', async ({ pa
   await setup(page);
   await page.getByRole('button', { name: 'W&P Guidance', exact: true }).click();
   await page.getByRole('button', { name: 'Test Kitchen', exact: true }).click();
-  await page.getByText('Shared menu guidance and session adjustments',{exact:true}).click();
+  await page.getByText('Servable component guidance and session adjustments',{exact:true}).click();
   await page.getByRole('button', { name: 'Edit guidance', exact: true }).click();
   const missing = page.getByTestId('wp-item-row').filter({ hasText: 'Uncosted Vegetables' });
   await missing.getByLabel('Decision for Uncosted Vegetables').selectOption('allow');
@@ -154,7 +154,7 @@ test('W&P overview and oz/lb scenario price update guidance and exported report 
  await page.getByLabel('W&P price unit').selectOption('oz');
  await page.getByLabel('W&P selling price').fill('1');
  await page.getByRole('button',{name:'Test Kitchen',exact:true}).click();
- await page.getByText('Shared menu guidance and session adjustments',{exact:true}).click();
+ await page.getByText('Servable component guidance and session adjustments',{exact:true}).click();
  const download=page.waitForEvent('download');
  await page.getByRole('button',{name:'Export menu package',exact:true}).click();
  const zip=await JSZip.loadAsync(await readFile(await(await download).path()));
@@ -163,58 +163,6 @@ test('W&P overview and oz/lb scenario price update guidance and exported report 
  await page.getByLabel('W&P selling price').fill('0');
  await expect(page.getByRole('button',{name:'Export menu package',exact:true})).toBeDisabled();
  await expect(page.getByTestId('wp-item-row').first()).toContainText('Needs price');
-});
-
-test('Andes analysis opens without sign-in and exposes costs and charts without recipe content',async({page})=>{
- await setup(page);
- await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();
- await expect(page.getByRole('img',{name:'Menu qualification chart'})).toBeVisible();
- await expect(page.getByLabel('Private recipe email')).toHaveCount(0);
- await expect(page.getByRole('region',{name:'Andes component analysis'})).toHaveCount(0);
- await page.getByRole('button',{name:'AMZ: Andes',exact:true}).click();
- const analysis=page.getByRole('region',{name:'Andes component analysis'});
- await expect(analysis).toBeVisible();
- await expect(analysis.getByRole('img',{name:'Andes economics chart'})).toBeVisible();
- const tofu=analysis.getByTestId('andes-recipe').filter({has:page.getByRole('heading',{name:'AMZ: Peruvian Stewed Tofu in Creamy Aji Pepper Sauce',exact:true})});
- await expect(tofu).toContainText('$1.5200');
- await expect(tofu).toContainText('True Food Cost');
- await tofu.getByText('Component cost breakdown',{exact:true}).first().click();
- await expect(tofu).toContainText('$0.2050');
- await expect(tofu).toContainText('$1.3150');
- await expect(tofu).toContainText('Needs weight');
- await expect(tofu.getByLabel('Serving pan').first()).toHaveText('');
- const exported=page.waitForEvent('download');
- await page.getByRole('button',{name:'Export menu package',exact:true}).click();
- const packageZip=await JSZip.loadAsync(await readFile(await(await exported).path()));
- const cards=await packageZip.file('flash-cards.html').async('string');
- expect((cards.match(/class="card"/g)||[]).length).toBe(1);
- expect(cards).toContain('Supplied Andes recipe analysis snapshot');
- expect(cards).toContain('Peruvian Stewed Tofu');
- expect(cards).not.toContain('Andes sample');
- await expect(analysis.locator('a')).toHaveCount(0);
- await expect(analysis).not.toContainText('HACCP');
- await page.getByLabel('W&P selling price').fill('20');
- await expect(tofu).toContainText('15.2%');
- await page.screenshot({path:'../../.scratch/ANDES_ANALYSIS_DESKTOP.png',fullPage:true});
- await page.setViewportSize({width:390,height:844});
- expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
- await page.screenshot({path:'../../.scratch/ANDES_ANALYSIS_MOBILE.png',fullPage:true});
-});
-
-test('Andes selection replaces generic details, deduplicates components and clears approval filters',async({page})=>{
- await setup(page);await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();
- await page.getByRole('button',{name:'AMZ: Andes',exact:true}).click();
- const analysis=page.getByRole('region',{name:'Andes component analysis'});
- await expect(page.getByRole('button',{name:'Edit guidance',exact:true})).toHaveCount(0);
- await analysis.getByRole('button',{name:'Nested subrecipes',exact:true}).click();
- await expect(analysis.getByTestId('andes-recipe')).toHaveCount(3);
- await expect(analysis).toContainText('$8.2000 / cup');
- await analysis.getByRole('button',{name:'Show only approved recipes',exact:true}).click();
- await expect(analysis.getByTestId('andes-recipe')).toHaveCount(0);
- await analysis.getByRole('button',{name:'Clear filter',exact:true}).click();
- await expect(analysis.getByTestId('andes-recipe')).toHaveCount(19);
- await analysis.getByRole('button',{name:'Show only unapproved recipes',exact:true}).click();
- const count=await analysis.getByTestId('andes-recipe').count();expect(count).toBeGreaterThan(0);expect(count).toBeLessThan(19);
 });
 
 for (const width of [390, 1440]) {
@@ -245,34 +193,3 @@ for (const width of [390, 1440]) {
     expect(writes).toEqual([]);
   });
 }
-
-test('Andes fills documented shared weights by exact MRN and portion in screen and export',async({page})=>{
- const writes=await setup(page,'supabase-recipe-items');
- await page.route('**/api/recipe-library**',route=>route.fulfill({json:{ok:true,source:'supabase-recipe-items',rows:[...rows,row(90,'Arroz Chaufa',{menu:'AMZ: Andes',mrn:'122256',portion:'1 cup',portionOz:6.6,trueCost:.626})]}}));
- await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();
- await page.getByRole('button',{name:'AMZ: Andes',exact:true}).click();
- const analysis=page.getByRole('region',{name:'Andes component analysis'});
- const rice=analysis.getByTestId('andes-recipe').filter({has:page.getByRole('heading',{name:'EUR: Arroz Chaufa (Peruvian Fried Rice)',exact:true})});
- await expect(rice).toContainText('Weight source: Shared item data');
- await expect(rice).toContainText('6.6 oz');
- await expect(rice.locator(':scope > div').first()).toContainText('Within 40%');
- await expect(rice).toContainText('$0.7400');
- await analysis.getByRole('button',{name:'Nested subrecipes',exact:true}).click();
- await expect(analysis).toContainText('Needs weight');
- const downloadPromise=page.waitForEvent('download');
- await page.getByRole('button',{name:'Export menu package',exact:true}).click();
- const download=await downloadPromise;
- const zip=await JSZip.loadAsync(await readFile(await download.path()));
- const cards=await zip.file('flash-cards.html').async('string');
- expect(cards).toContain('Missing snapshot weights use exact MRN and matching portion');
- expect(writes).toEqual([]);
-});
-
-test('Balti opens its recipe-derived deep dive and exports a Balti brand card',async({page})=>{
- const writes=await setup(page);
- await page.route('**/api/recipe-library**',r=>r.fulfill({json:{ok:true,source:'supabase-recipe-items',rows:[...rows,row(91,'Butter Chicken Plate',{menu:'AMZ: Balti',mrn:'212486.1',portion:'1 serving(s)',portionOz:17.206})]}}));
- await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();await page.getByRole('button',{name:'AMZ: Balti',exact:true}).click();
- const a=page.getByRole('region',{name:'Balti component analysis'});await expect(a).toBeVisible();await expect(a.getByTestId('andes-recipe')).toHaveCount(45);
- const plate=a.getByTestId('andes-recipe').filter({has:page.getByRole('heading',{name:'AMZ: Butter Chicken (Murgh Makhani) Plate',exact:true})});await expect(plate).toContainText('17.206 oz');await expect(plate).toContainText('$3.0200');await plate.getByText('Component cost breakdown',{exact:true}).first().click();await expect(plate.getByTestId('andes-component').first()).toBeVisible();
- const downloadPromise=page.waitForEvent('download');await page.getByRole('button',{name:'Export menu package',exact:true}).click();const download=await downloadPromise;const zip=await JSZip.loadAsync(await readFile(await download.path()));const cards=await zip.file('flash-cards.html').async('string');expect(cards).toContain('Supplied Balti recipe analysis snapshot');expect(cards).not.toContain('Recipe Book');expect(writes).toEqual([]);
-});

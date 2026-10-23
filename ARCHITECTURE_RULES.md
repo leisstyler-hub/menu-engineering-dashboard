@@ -49,3 +49,7 @@ The development candidate adds a service-only membership/audit/backup boundary a
 ## Shared catalog selector candidate (2026-10-22, not deployed)
 
 Transfer membership/current Item + Waste Cost use the shared Supabase-backed Recipe Library API. Bundled transfer membership remains historical reference only. Menu Matrix/Rotations do not initialize selectors from browser overrides; Rotations requests current rows on mount. Ingredient costing, historical records and eligibility retain established contracts. W&P adds bounded book-derived economics with explicit unresolved links. Approved direction: WP-2026-10-22 in PRODUCT_DECISIONS.md. Evidence: docs/SHARED_CATALOG_WP_2026_10_22.md.
+
+## W&P servable-component projection (2026-10-23)
+
+Current shared menu memberships are projected through exact-MRN/equivalent-portion recipe links. The same read-only servable components drive UI counts, qualification, ranking and exports. Source-linked assembly children are promoted; supporting prep stays nested; handhelds are excluded without decomposition. Unknown classifications remain review entries. Name-based categories do not replace Culinary approval. Source recipes, operational records and schemas are unchanged. Product authority: WP-2026-10-23 in PRODUCT_DECISIONS.md.

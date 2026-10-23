@@ -1,8 +1,8 @@
 // Approved W&P rules: PRODUCT_DECISIONS.md, 2026-10-13. Never writes source rows.
-export const WP_PRICE_PER_LB = 11.99;
+export const WP_PRICE_PER_LB = 11.20;
 export const WP_ITEM_FC_GATE = .4;
 export const WP_MENU_PASS_GATE = .6;
-export const WP_RULE_VERSION = '2026.10.13';
+export const WP_RULE_VERSION = '2026.10.23';
 
 function numeric(value) {
   if (value == null || typeof value === 'boolean' || String(value).trim() === '') return null;
@@ -52,10 +52,10 @@ export function itemRestrictions(row) {
   if (!plant && /\bpork tenderloin\b/.test(name)) reasons.push('Pork tenderloin exclusion');
   if (!plant && /\b(steak|sirloin|flank|ribeye|rib eye|filet mignon|brisket|roast beef|beef teriyaki|beef and broccoli|peking beef|beef shawarma|beef barbacoa|carne asada|beef bulgogi|shredded beef|corned beef)\b/.test(name)) reasons.push('Steak / whole-muscle beef exclusion');
   if (!plant && /\bbeef\b/.test(name) && !reasons.some(reason => reason.includes('beef'))) reviews.push('Beef cut / ground beef requires Culinary validation');
-  if (/\b(sandwich|sandwiches|naanwich|banh mi|handheld|burritos?|quesadillas?|tacos?|kathi roll|gyro|gyros|panini|wrap)\b/.test(name)) reasons.push('Handheld / constructed format stays fixed-price');
+  if (/\b(burgers?|sandwich|sandwiches|naanwich|banh mi|handheld|burritos?|quesadillas?|tacos?|kathi roll|gyro|gyros|panini|wrap)\b/.test(name)) reasons.push('Handheld / constructed format stays fixed-price');
   if (/soup/.test(name + ' ' + menu) && /\b(fl\s*oz|floz|fluid|cups?|ml|millilit|liters?|litres?|qt|quarts?)\b/.test(String(row.portion || '').toLowerCase())) reasons.push('Soup by volume stays fixed-price');
   if (/sub.?recipe|extension|sauce|topping|bread|beverage|retail|add.?on/.test(category)) reasons.push('Non-core add-on stays fixed-price');
-  if (/\b(balti|bibimbowl)\b/.test(menu)) reviews.push('Validate complete guest build / service format');
+  if (row.servingRole !== 'pan-ready' && /\b(balti|bibimbowl)\b/.test(menu)) reviews.push('Validate complete guest build / service format');
   return { reasons, reviews };
 }
 

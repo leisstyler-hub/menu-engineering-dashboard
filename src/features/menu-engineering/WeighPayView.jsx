@@ -1,13 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { evaluateMenus, pricePerLb, WP_PRICE_PER_LB } from './weighPayModel.js';
+import { pricePerLb, WP_PRICE_PER_LB } from './weighPayModel.js';
 
 import andesSource from '../../data/andesWpAnalysis.json';
 import baltiSource from '../../data/baltiWpAnalysis.json';
 import allMenusSource from '../../data/allMenusWpAnalysis.json';
 import { buildMenuAnalysisSource } from './menuAnalysisSource.js';
-import { analyzeAndes } from './andesAnalysisModel.js';
-import AndesAnalysis from './AndesAnalysis.jsx';
-import { PortfolioCharts } from './WeighPayCharts.jsx';
+import PanReadyAnalysis from './PanReadyAnalysis.jsx';
+import { panReadyMenu, assessPanReadyMenu } from './panReadyModel.js';
 
 
 const button = 'rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-50';
@@ -20,8 +19,8 @@ function Badge({ status, testId }) {
 }
 
 export default function WeighPayView() {
-  const [rateText, setRateText] = useState(String(WP_PRICE_PER_LB));
-  const [rateUnit, setRateUnit] = useState('lb');
+  const [rateText, setRateText] = useState((WP_PRICE_PER_LB/16).toFixed(2));
+  const [rateUnit, setRateUnit] = useState('oz');
   const rate = pricePerLb(rateText, rateUnit);
   const [data, setData] = useState({ state: 'loading', rows: [], source: '', loadedAt: '', message: '' });
   const [reload, setReload] = useState(0);
@@ -50,49 +49,52 @@ export default function WeighPayView() {
     return () => { active = false; clearTimeout(timeout); controller.abort(); };
   }, [reload]);
   const trusted = data.source.startsWith('supabase-recipe-items');
-  const menus = useMemo(() => evaluateMenus(data.rows, overrides, { trusted, pricePerLb: rate }), [data.rows, overrides, trusted, rate]);
-  const visible = menus.filter(menu => menu.menu.toLowerCase().includes(search.trim().toLowerCase()) && (statusFilter === 'All' || menu.status === statusFilter));
-  const conceptSources = useMemo(() => Object.fromEntries(menus.map(menu => [menu.menu, ({'AMZ: Andes':andesSource,'AMZ: Balti':baltiSource}[menu.menu] || buildMenuAnalysisSource(menu.menu, data.rows, allMenusSource, trusted))])), [menus, data.rows, trusted]);
+  const menuNames=useMemo(()=>[...new Set(data.rows.map(row=>String(row.menu||'Unassigned menu')))], [data.rows]);
+  const conceptSources=useMemo(()=>Object.fromEntries(menuNames.map(menu=>[menu,buildMenuAnalysisSource(menu,data.rows,{'AMZ: Andes':andesSource,'AMZ: Balti':baltiSource}[menu]||allMenusSource,trusted)])),[menuNames,data.rows,trusted]);
+  const projections = useMemo(() => Object.values(conceptSources).map(source=>panReadyMenu(source,rate,trusted?data.rows:[])),[conceptSources,rate,trusted,data.rows]);
+  const menus = useMemo(() => projections.map(p=>assessPanReadyMenu(p,rate,trusted,overrides)),[projections,overrides,trusted,rate]);
+  const visible=menus.filter(menu=>menu.menu.toLowerCase().includes(search.trim().toLowerCase())&&(statusFilter==='All'||menu.status===statusFilter));
   const selected = menus.find(menu => menu.menu === selectedMenu);
   const categories = selected ? [...new Set(selected.items.map(item => item.category))] : [];
   const exportPackage = async chosen => {
     setExporting(true); setExportError('');
     try {
       const { downloadWeighPayPackage } = await import('./weighPayExport.js');
-      await downloadWeighPayPackage(chosen, { source: data.source, loadedAt: data.loadedAt, trusted, sourceMessage: data.message, pricePerLb: rate, conceptAnalyses: Object.fromEntries(Object.entries(conceptSources).map(([menu,source])=>[menu,analyzeAndes(source,rate,trusted?data.rows:[]).filter(r=>r.topLevel)])) });
+      await downloadWeighPayPackage(chosen, { source: data.source, loadedAt: data.loadedAt, trusted, sourceMessage: data.message, pricePerLb: rate, conceptAnalyses: Object.fromEntries(projections.map(p=>[p.menu,p.items])), classificationReviews: Object.fromEntries(projections.map(p=>[p.menu,p.review])) });
     } catch (error) { setExportError(`Export failed: ${error.message}`); }
     finally { setExporting(false); }
   };
-  return <section className="space-y-4" aria-label="Weigh & Pay guidance">
+  return <section className="space-y-4 pb-24 md:pb-0" aria-label="Weigh & Pay guidance">
     <div className="rounded-2xl border border-slate-200 bg-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div><h2 className="text-xl font-bold">Weigh &amp; Pay guidance</h2><p className="mt-1 text-sm text-slate-600">{money(rate)}/lb · 40% item food cost · 60% of menu items must pass</p></div>
+        <div><h2 className="text-xl font-bold">Weigh &amp; Pay guidance</h2><p className="mt-1 text-sm text-slate-600">{money(rate)}/lb · 40% item food cost · 60% of servable components must pass</p></div>
         <div className="flex flex-wrap gap-2"><button className={button} disabled={data.state === 'loading'} onClick={() => setReload(value => value + 1)}>Refresh data</button><button className={button} disabled={!menus.length || exporting || !rate} onClick={() => exportPackage(menus)}>{exporting ? 'Preparing package…' : 'Export all menus'}</button></div>
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2"><label className="text-sm font-semibold" htmlFor="wp-price">W&amp;P selling price</label><input id="wp-price" aria-label="W&P selling price" className={`${input} w-28`} type="number" min="0.000001" step="any" value={rateText} onChange={e=>setRateText(e.target.value)}/><select aria-label="W&P price unit" className={input} value={rateUnit} onChange={e=>{const unit=e.target.value;setRateText(rate==null?'':String(unit==='oz'?rate/16:rate));setRateUnit(unit);}}><option value="lb">$/lb</option><option value="oz">$/oz</option></select><span className="text-xs text-slate-500">Session scenario · {rate==null?'Enter a positive price':`${money(rate)}/lb · $${(rate/16).toFixed(4)}/oz`}</span></div>
       {!rate&&<p role="alert" className="mt-2 text-sm text-amber-800">Enter a positive selling price to calculate or export guidance.</p>}
       {data.state === 'ready' && <p className={`mt-3 text-xs ${trusted ? 'text-slate-500' : 'font-semibold text-amber-800'}`}>{trusted ? `Shared Supabase data · ${data.source}` : `Fallback data — reference only · ${data.source}`} · Read {new Date(data.loadedAt).toLocaleString()}{data.message ? ` · ${data.message}` : ''}</p>}
-      <details className="mt-3 text-sm text-slate-600"><summary className="cursor-pointer font-semibold">Rules &amp; calculation</summary><p className="mt-2">True Food Cost = stored true cost / (stored portion weight in lb multiplied by the selected selling price). Missing cost/weight and blocked items remain in the denominator; duplicate item identities within each menu count once. A menu pass covers only its allowed assortment and does not predict aggregate café food cost.</p><p className="mt-2">Seafood, lamb/veal, steak/whole-muscle beef, pork tenderloin, handhelds, soup by volume and non-core add-ons stay off W&amp;P. Ground beef and complete guest builds require Culinary validation. Rules use stored categories and item names; review incomplete or ambiguous classifications before service.</p></details>
+      <details className="mt-3 text-sm text-slate-600"><summary className="cursor-pointer font-semibold">Rules &amp; calculation</summary><p className="mt-2">True Food Cost = stored true cost / (stored portion weight in lb multiplied by the selected selling price). Missing cost/weight and blocked items remain in the denominator; identical servable component variants within each menu count once. A menu pass covers only its allowed assortment and does not predict aggregate café food cost.</p><p className="mt-2">Seafood, lamb/veal, steak/whole-muscle beef, pork tenderloin, handhelds, soup by volume and non-core add-ons stay off W&amp;P. Ground beef and complete guest builds require Culinary validation. Rules use stored categories and item names; review incomplete or ambiguous classifications before service.</p></details>
     </div>
 
     {data.state === 'loading' && <p role="status" className="p-4 text-sm">Loading current shared menu data…</p>}
     {data.state === 'error' && <p role="alert" className="rounded-xl bg-amber-50 p-4 text-amber-900">{data.message}</p>}
     {exportError && <p role="alert" className="text-rose-800">{exportError}</p>}
     {data.state === 'ready' && <>
+      <p className="text-sm text-slate-600">Category counts, ranking and menu qualification use source-linked serving choices. Unresolved classifications keep guidance conditional.</p>
       <Overview menus={menus}/>
-      <PortfolioCharts menus={menus}/>
       <div className="flex flex-wrap gap-2"><input aria-label="Search W&P menus" className={`${input} flex-1`} placeholder="Search all menus" value={search} onChange={event => setSearch(event.target.value)} /><select aria-label="Filter W&P status" className={input} value={statusFilter} onChange={event => setStatusFilter(event.target.value)}>{['All', 'Pass', 'Conditional', 'Fail'].map(status => <option key={status}>{status}</option>)}</select></div>
       <div className="max-h-[420px] overflow-auto rounded-2xl border border-slate-200 bg-white">
         <table className="w-full text-left text-sm"><thead className="sticky top-0 bg-slate-100 text-xs text-slate-600"><tr><th className="p-3">Menu</th><th className="p-3">Guidance</th><th className="p-3">Allowed / Total</th><th className="p-3">Pass rate</th><th className="p-3">Needs inputs</th></tr></thead><tbody>{visible.map(menu => <tr key={menu.menu} data-testid="wp-menu-row" className={`border-t border-slate-100 ${menu.menu === selectedMenu ? 'bg-emerald-50/50' : ''}`}><td className="p-3"><button className="text-left font-semibold text-slate-900 underline decoration-slate-300 underline-offset-4" onClick={() => { setSelectedMenu(menu.menu); setEditing(false); setApprovalFilter('all'); }}>{menu.menu}</button></td><td className="p-3"><Badge status={menu.status} testId="wp-menu-status" /></td><td className="p-3 whitespace-nowrap">{menu.allowed} / {menu.total}</td><td className="p-3">{percent(menu.passRate)}</td><td className="p-3">{menu.missing}</td></tr>)}</tbody></table>
-        {!visible.length && <p className="p-4 text-sm text-slate-500">{menus.length ? 'No menus match these filters.' : 'No menu items are available in the current source.'}</p>}
+        {!visible.length && <p className="p-4 text-sm text-slate-500">{menus.length ? 'No menus match these filters.' : 'No servable components are available in the current source.'}</p>}
       </div>
       {!selected && menus.length > 0 && <p className="text-sm text-slate-500">Select a menu to see its assortment by category.</p>}
-      {selected && conceptSources[selected.menu] && <div className="space-y-3"><button className={button} disabled={exporting||!rate} onClick={()=>exportPackage([selected])}>Export menu package</button><AndesAnalysis key={selected.menu} source={conceptSources[selected.menu]} rate={rate} sharedRows={data.rows} trusted={trusted}/></div>}
-      {selected && !['AMZ: Andes','AMZ: Balti'].includes(selected.menu) && <details key={selected.menu} className="rounded-2xl border border-slate-200 bg-white p-4 space-y-4"><summary className="cursor-pointer text-sm font-semibold text-teal-800">Shared menu guidance and session adjustments</summary>
-        <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-xl font-bold">{selected.menu}</h2><p className="mt-1 text-sm text-slate-600">Calculated {percent(selected.calculatedPassRate)} · Current guidance {percent(selected.passRate)} · {selected.exceptions} exceptions</p></div><div className="flex flex-wrap gap-2"><button className={button} onClick={() => setEditing(value => !value)}>{editing ? 'Done editing' : 'Edit guidance'}</button><button className={button} disabled={exporting || !rate} onClick={() => exportPackage([selected])}>Export shared guidance</button></div></div>
+      {selected && conceptSources[selected.menu] && <div className="space-y-3"><button className={button} disabled={exporting||!rate} onClick={()=>exportPackage(menus.filter(m=>m.menu===selected.menu))}>Export menu package</button></div>}
+      <PanReadyAnalysis key={selectedMenu} projections={projections.filter(p=>visible.some(m=>m.menu===p.menu))} selectedMenu={selectedMenu} rate={rate||0}/>
+      {selected && !['AMZ: Andes','AMZ: Balti'].includes(selected.menu) && <details key={`adjustments:${selected.menu}`} className="rounded-2xl border border-slate-200 bg-white p-4 space-y-4"><summary className="cursor-pointer text-sm font-semibold text-teal-800">Servable component guidance and session adjustments</summary>
+        <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-xl font-bold">{selected.menu}</h2><p className="mt-1 text-sm text-slate-600">Calculated {percent(selected.calculatedPassRate)} · Current guidance {percent(selected.passRate)} · {selected.exceptions} exceptions</p></div><div className="flex flex-wrap gap-2"><button className={button} onClick={() => setEditing(value => !value)}>{editing ? 'Done editing' : 'Edit guidance'}</button><button className={button} disabled={exporting || !rate} onClick={() => exportPackage(menus.filter(m=>m.menu===selected.menu))}>Export shared guidance</button></div></div>
         {selected.status === 'Conditional' && <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Conditional: check unresolved inputs, service reviews, session exceptions or source status before using this assortment.</p>}
         {editing && <p className="rounded-xl bg-slate-50 p-3 text-sm text-slate-600">Changes apply to this session and exports only. Refreshing data or leaving W&amp;P clears them. Allowing an exception requires valid cost and weight; it never hides the calculated result.</p>}
-        <div className="flex flex-wrap gap-2" aria-label="Recipe approval filters">{[['approved','Show only approved recipes'],['unapproved','Show only unapproved recipes']].map(([value,label])=><button key={value} className={button} aria-pressed={approvalFilter===value} onClick={()=>setApprovalFilter(approvalFilter===value?'all':value)}>{label}</button>)}<button className={button} onClick={()=>{setApprovalFilter('all');setSearch('');setStatusFilter('All');}}>Clear filter</button></div>
+        <div className="flex flex-wrap gap-2" aria-label="Component approval filters">{[['approved','Show only approved components'],['unapproved','Show only unapproved components']].map(([value,label])=><button key={value} className={button} aria-pressed={approvalFilter===value} onClick={()=>setApprovalFilter(approvalFilter===value?'all':value)}>{label}</button>)}<button className={button} onClick={()=>{setApprovalFilter('all');setSearch('');setStatusFilter('All');}}>Clear filter</button></div>
         <p className="text-xs text-slate-500">Approved filter shows Allowed guidance, including explicit session exceptions. Culinary service approval remains separate.</p>
         {categories.map(category => <section key={category}><h3 className="mb-2 text-sm font-bold uppercase tracking-wide text-slate-600">{category}</h3><div className="space-y-2">{selected.items.filter(item => item.category === category && (approvalFilter==='all'||(approvalFilter==='approved'?item.status.startsWith('Allowed'):!item.status.startsWith('Allowed')))).map(item => <ItemRow key={item.key} item={item} editing={editing} onApply={override => setOverrides(previous => { const next = { ...previous }; if (override) next[item.key] = override; else delete next[item.key]; return next; })} />)}</div></section>)}
       </details>}

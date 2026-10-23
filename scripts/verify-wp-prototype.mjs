@@ -69,7 +69,7 @@ assert.deepEqual(Object.keys(zip.files).sort(),['data-audit.html','data-audit.xl
 assert.match(await zip.file('data-audit.html').async('string'),/\$16\.00\/lb/);
 const cards=await zip.file('flash-cards.html').async('string');
 assert.equal((cards.match(/class="card"/g)||[]).length,packageMenus.length);
-assert.match(cards,/Menu qualification/);assert.match(cards,/Category composition/);assert.match(cards,/Input readiness/);
+assert.match(cards,/Servable components by category/);assert.match(cards,/FC/);
 assert.ok(!cards.includes('MRN:'));assert.ok(!cards.includes('W&amp;P FC'));
 await assert.rejects(()=>buildWeighPayPackage(packageMenus,{pricePerLb:12}),/does not match/);
 console.log('Export rate and calculation consistency checks passed.');
