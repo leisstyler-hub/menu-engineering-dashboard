@@ -1,3 +1,7 @@
+## 2026-10-23 - W&P multi-menu workbench
+
+- [Oct 23, 4:24 PM] Development candidate 2026.10.23.004-wp-menu-workbench adds searchable multi-menu selection, removable chips, compact food rows and detail panel/drawer. Expandable enterprise header keeps all-menu totals independent of selection; collapsed headline metrics remain visible. Portfolio exports follow the working selection. No source data changes or deployment. Evidence: docs/WP_WORKBENCH_2026_10_23.md.
+
 ## 2026-10-23 - W&P pizza and single-ingredient exclusions
 
 - [Oct 23, 2:49 PM] Development candidate 2026.10.23.003-wp-ingredient-exclusions removes pizza/flatbread menus and plainly named ingredients including arugula garnish, shredded romaine, diced cucumber/tomatoes and shredded carrots from W&P counts, charts and exports. Prepared dishes remain available. Source records preserved. Saved catalog yields 48 eligible menus and 376 qualifying foods. Evidence: docs/WP_INGREDIENT_EXCLUSIONS_2026_10_23.md. Not deployed.

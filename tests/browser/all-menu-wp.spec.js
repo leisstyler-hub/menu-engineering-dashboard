@@ -7,7 +7,7 @@ for(const width of [390,1440])test(`All W&P menus use component view and current
  await page.setViewportSize({width,height:900});const errors=collectUnexpectedPageErrors(page),writes=[];
  const rows=[{menu:'New Kitchen',item:'Gnocchi',mrn:'88770.1',portion:'6 oz portion',portionOz:6,trueCost:2},{menu:'New Kitchen',item:'Purchased topping',mrn:'00000999.01',portion:'1 oz',portionOz:1,trueCost:.1}];
  await page.route('**/api/**',r=>{if(r.request().method()!=='GET')writes.push(r.request().url());return r.fulfill({json:r.request().url().includes('recipe-library')?{ok:true,source:'supabase-recipe-items',rows}:{ok:true,records:[],rows:[],days:[]}})});
- await openTool(page,/open dashboard/i,/Menu Engineering/);await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();await page.getByLabel('Choose W&P menu').selectOption('New Kitchen');
+ await openTool(page,/open dashboard/i,/Menu Engineering/);await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();await chooseMenu(page,'New Kitchen');
  const view=page.getByRole('region',{name:'Pan-ready W&P assortment'});await expect(view).toBeVisible();await expect(view.getByTestId('servable-food')).toHaveCount(2);await expect(view.getByRole('img',{name:'Servable components by category chart'})).toBeVisible();
  const dish=view.getByTestId('servable-food').filter({has:page.getByRole('button',{name:'Compare Gnocchi',exact:true})});await expect(dish).toContainText('Recipe linked');await dish.getByText(/Supporting components/).click();await expect(dish.getByTestId('supporting-component').first()).toBeVisible();
  await expect(view).toContainText('Recipe not linked; shared item economics only');await expect(view).not.toContainText('HACCP');
@@ -18,3 +18,10 @@ test('Transfer includes a new shared menu and exact new MRN without bundled cata
  await page.route('**/api/**',r=>r.fulfill({json:r.request().url().includes('recipe-library')?{ok:true,source:'supabase-recipe-items',rows:[{menu:'New Shared Menu',item:'New Shared Item',mrn:'0001.23456789',portion:'4 oz',trueCost:1.25}]}:{ok:true,records:[],rows:[],days:[]}}));
  await openTool(page,/transfer/i,/Transfer/);await page.getByLabel('Menu 1',{exact:true}).selectOption('New Shared Menu');await expect(page.getByLabel('Item 1',{exact:true})).toContainText('New Shared Item');await expect(page.getByLabel('Item 1',{exact:true})).toContainText('0001.23456789');
 });
+
+async function chooseMenu(page,name) {
+ const picker=page.getByRole('group',{name:'Menu selection'});
+ if(!await picker.getByLabel('Search menus').isVisible()) await picker.locator('summary').click();
+ await picker.getByRole('button',{name:'Clear menu selection'}).click();
+ await picker.locator('label').filter({has:page.getByRole('checkbox')}).filter({hasText:name}).getByRole('checkbox').check();
+}

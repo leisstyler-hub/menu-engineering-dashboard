@@ -6,8 +6,9 @@ import baltiSource from '../../data/baltiWpAnalysis.json';
 import allMenusSource from '../../data/allMenusWpAnalysis.json';
 import { buildMenuAnalysisSource } from './menuAnalysisSource.js';
 import PanReadyAnalysis from './PanReadyAnalysis.jsx';
-import WpPortfolio from './WpPortfolio.jsx';
-import { buildPortfolio, includeWpMenu } from './wpPortfolioModel.js';
+import WpPortfolio, { EnterpriseOverview } from './WpPortfolio.jsx';
+import WpMenuPicker from './WpMenuPicker.jsx';
+import { includeWpMenu } from './wpPortfolioModel.js';
 import { panReadyMenu, assessPanReadyMenu } from './panReadyModel.js';
 
 
@@ -26,7 +27,8 @@ export default function WeighPayView() {
   const rate = pricePerLb(rateText, rateUnit);
   const [data, setData] = useState({ state: 'loading', rows: [], source: '', loadedAt: '', message: '' });
   const [reload, setReload] = useState(0);
-  const [selectedMenu, setSelectedMenu] = useState('');
+  const [selectedMenus, setSelectedMenus] = useState([]);
+
   const [approvalFilter, setApprovalFilter] = useState('all');
   const [editing, setEditing] = useState(false);
   const [overrides, setOverrides] = useState({});
@@ -50,6 +52,8 @@ export default function WeighPayView() {
   }, [reload]);
   const trusted = data.source.startsWith('supabase-recipe-items');
   const menuNames=useMemo(()=>[...new Set(data.rows.map(row=>String(row.menu||'Unassigned menu')))].filter(includeWpMenu), [data.rows]);
+  const activeMenus = selectedMenus.filter(name => menuNames.includes(name));
+  const selectedMenu = activeMenus.length === 1 ? activeMenus[0] : '';
   const conceptSources=useMemo(()=>Object.fromEntries(menuNames.map(menu=>[menu,buildMenuAnalysisSource(menu,data.rows,{'AMZ: Andes':andesSource,'AMZ: Balti':baltiSource}[menu]||allMenusSource,trusted)])),[menuNames,data.rows,trusted]);
   const projections = useMemo(() => Object.values(conceptSources).map(source=>panReadyMenu(source,rate,trusted?data.rows:[])),[conceptSources,rate,trusted,data.rows]);
   const menus = useMemo(() => projections.map(p=>assessPanReadyMenu(p,rate,trusted,overrides)),[projections,overrides,trusted,rate]);
@@ -87,8 +91,9 @@ export default function WeighPayView() {
     {data.state === 'error' && <p role="alert" className="rounded-xl bg-amber-50 p-4 text-amber-900">{data.message}</p>}
     {exportError && <p role="alert" className="text-rose-800">{exportError}</p>}
     {data.state === 'ready' && <>
-      <div className="flex flex-wrap items-center gap-3 rounded-xl border bg-white p-3"><label htmlFor="wp-menu-choice" className="text-sm font-semibold">Menu</label><select id="wp-menu-choice" aria-label="Choose W&P menu" className={`${input} w-full sm:w-auto sm:max-w-md`} value={selectedMenu} onChange={e=>{setSelectedMenu(e.target.value);setEditing(false);setApprovalFilter('all');}}><option value="">All menus - unique portfolio</option>{projections.map(p=>{const foods=buildPortfolio([p]),pass=trusted?foods.filter(r=>r.portfolioStatus==='Within 40%').length:0;return <option key={p.menu} value={p.menu}>{p.menu} - {percent(foods.length?pass/foods.length:0)} qualifying</option>;})}</select></div>
-      <WpPortfolio projections={projections.filter(p=>!selectedMenu||p.menu===selectedMenu)} trusted={trusted} rate={rate} onExport={exportPortfolio} exporting={exporting}/>
+      <EnterpriseOverview projections={projections} trusted={trusted} rate={rate}/>
+      <WpMenuPicker projections={projections} selectedMenus={activeMenus} trusted={trusted} onChange={names=>{setSelectedMenus(names);setEditing(false);setApprovalFilter('all');}}/>
+      <WpPortfolio projections={projections.filter(p=>!activeMenus.length||activeMenus.includes(p.menu))} trusted={trusted} rate={rate} onExport={exportPortfolio} exporting={exporting}/>
       {selected&&<p className="text-sm text-slate-600">{selected.menu} - {selected.allowed}/{selected.total} allowed components - {percent(selected.passRate)} - {selected.status}</p>}
       {selected && conceptSources[selected.menu] && <div className="space-y-3"><button className={button} disabled={exporting||!rate} onClick={()=>exportPackage(menus.filter(m=>m.menu===selected.menu))}>Export menu package</button></div>}
       {selectedMenu&&<PanReadyAnalysis key={selectedMenu} projections={projections} selectedMenu={selectedMenu} rate={rate||0}/> }

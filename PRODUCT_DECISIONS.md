@@ -387,3 +387,7 @@ Reason: menu building from actual pan-ready foods without interpreting plate rec
 ## 2026-10-23 - W&P unique qualifying portfolio
 
 Tyler approved excluding Deli Core, Grill Core and Salt & Char from W&P; unique qualifying component category charts/lists/exports and compact menu selector with percentages. Authenticated approval events: f7f8a37d1c9e9d3a65ccc6f4f29b782c627304cd848d9e2ca10b29dbbaf2ac3b and 9ef2a1dc48bbcab9a66be7466ef135b0eeb3591e881f94eea265c11646cc350e. Scope: docs/WP_PORTFOLIO_2026_10_23.md. Source records stay intact.
+
+## 2026-10-23 - W&P menu workbench and enterprise overview
+
+Approved for development by Tyler (Requesting/Approving Admin and Admin of Record), authenticated Buzz identity in ADMIN_REGISTRY.md, event 672d7b2a2a32347caef3ec43d3c1c8ed2304f8122ddf057920702ce0c30e8bf3. Searchable multi-menu checklist/chips, compact food list with details, synchronized selection/export and unchanged exact-source deduplication. Latest placement steering fbf333cbf49d172bcd3118edf76d3eb53c957f51f0d9c8735b2447d76506c69d approves an expandable enterprise header; headline all-menu totals remain visible independently of selection. Session price applies to both scopes. Rejected: enterprise metrics disappearing with menu selection; inferred aggregate FC; permanent sidebar consuming food space. Existing source authority, exclusions and recipe privacy remain. Revisit on operational feedback. Solo Chief, development only; evidence docs/WP_WORKBENCH_2026_10_23.md.
