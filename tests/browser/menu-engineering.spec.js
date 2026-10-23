@@ -22,7 +22,7 @@ test('W&P evaluates all menus with the 60% gate, missing inputs and stored categ
   const errors = collectUnexpectedPageErrors(page);
   const writes = await setup(page);
   await page.getByRole('button', { name: 'W&P Guidance', exact: true }).click();
-  await page.getByRole('group',{name:'Menu selection'}).locator('summary').click();await expect(page.getByRole('group',{name:'Menu selection'}).locator('label').filter({hasText:'Test Kitchen'})).toContainText('60.0%');
+  await expect(page.getByRole('group',{name:'Menu selection'}).locator('label').filter({hasText:'Test Kitchen'})).toContainText('60.0%');
   await chooseMenu(page,'Test Kitchen');
   await expect(page.getByText('Test Kitchen - 3/5 allowed components - 60.0% - Pass',{exact:true})).toBeVisible();
   await page.getByText('Servable component guidance and session adjustments',{exact:true}).click();
@@ -89,7 +89,7 @@ test('W&P refreshes server data despite a browser override and clears session ex
   await page.addInitScript(() => localStorage.setItem('culinaryToolsMenuEngineeringItems_v3', JSON.stringify([{ menu: 'Stale browser', item: 'Stale' }])));
   await setup(page);
   await page.getByRole('button', { name: 'W&P Guidance', exact: true }).click();
-  await page.getByRole('group',{name:'Menu selection'}).locator('summary').click();await expect(page.getByRole('group',{name:'Menu selection'})).toContainText('Test Kitchen');
+  await expect(page.getByRole('group',{name:'Menu selection'})).toContainText('Test Kitchen');
   await chooseMenu(page,'Test Kitchen');
   await page.getByText('Servable component guidance and session adjustments',{exact:true}).click();
   await page.getByRole('button', { name: 'Edit guidance', exact: true }).click();
@@ -125,7 +125,7 @@ test('W&P shows read failure and can recover through Refresh', async ({ page }) 
   await expect(page.getByRole('button', { name: 'Export all menus', exact: true })).toBeDisabled();
   await page.unroute('**/api/recipe-library?scope=all');
   await page.getByRole('button', { name: 'Refresh data', exact: true }).click();
-  await page.getByRole('group',{name:'Menu selection'}).locator('summary').click();await expect(page.getByRole('group',{name:'Menu selection'}).getByRole('checkbox')).toHaveCount(3);
+  await expect(page.getByRole('group',{name:'Menu selection'}).getByRole('checkbox')).toHaveCount(3);
 });
 
 test('W&P exports all menus with safely escaped reference content and printable cards', async ({ page }) => {
@@ -194,7 +194,7 @@ for (const width of [390, 1440]) {
 
 async function chooseMenu(page,name) {
  const picker=page.getByRole('group',{name:'Menu selection'});
- if(!await picker.getByLabel('Search menus').isVisible()) await picker.locator('summary').click();
+
  await picker.getByRole('button',{name:'Clear menu selection'}).click();
  await picker.locator('label').filter({has:page.getByRole('checkbox')}).filter({hasText:name}).getByRole('checkbox').check();
 }

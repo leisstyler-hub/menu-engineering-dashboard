@@ -21,7 +21,7 @@ test('Transfer includes a new shared menu and exact new MRN without bundled cata
 
 async function chooseMenu(page,name) {
  const picker=page.getByRole('group',{name:'Menu selection'});
- if(!await picker.getByLabel('Search menus').isVisible()) await picker.locator('summary').click();
+
  await picker.getByRole('button',{name:'Clear menu selection'}).click();
  await picker.locator('label').filter({has:page.getByRole('checkbox')}).filter({hasText:name}).getByRole('checkbox').check();
 }

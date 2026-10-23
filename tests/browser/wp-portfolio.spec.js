@@ -11,7 +11,7 @@ for(const width of [390,1440])test(`Unique qualifying portfolio and compact menu
  await page.route('**/api/**',r=>{if(r.request().method()!=='GET'&&!r.request().url().includes('/traffic/'))writes.push(r.request().url());return r.fulfill({json:r.request().url().includes('recipe-library')?{ok:true,source:'supabase-recipe-items',rows}:{ok:true,rows:[],records:[]}});});
  await page.setViewportSize({width,height:900});await openTool(page,/open dashboard/i,/Menu Engineering/);await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();
  const picker=page.getByRole('group',{name:'Menu selection'}),view=page.getByRole('region',{name:'W&P qualifying portfolio'});
- await picker.getByText('Choose menus',{exact:false}).click();await expect(picker.getByRole('checkbox')).toHaveCount(2);await expect(picker).not.toContainText('Core');await expect(picker).not.toContainText('Salt');
+ await expect(picker.getByRole('checkbox')).toHaveCount(2);await expect(picker).not.toContainText('Core');await expect(picker).not.toContainText('Salt');
  await expect(view.getByTestId('portfolio-food')).toHaveCount(1);await expect(view).toContainText('Kitchen A · Kitchen B');await expect(view).toContainText('35.7%');
  await view.getByRole('button',{name:'Vegetables: 1 qualifying components',exact:true}).click();
  const dl=page.waitForEvent('download');await view.getByRole('button',{name:'Export portfolio selection'}).click();const zip=await JSZip.loadAsync(await readFile(await(await dl).path()));
@@ -24,7 +24,7 @@ for(const width of [390,1440])test(`Unique qualifying portfolio and compact menu
  await enterprise.locator('summary').click();await expect(enterprise.locator('summary')).toContainText('1 qualifying foods');await expect(enterprise.getByText('Proteins',{exact:true})).not.toBeVisible();await enterprise.locator('summary').click();await expect(enterprise).toHaveText(totals,{useInnerText:true});
  await picker.getByRole('checkbox',{name:'Kitchen B',exact:false}).check();const selectedDownload=page.waitForEvent('download');await view.getByRole('button',{name:'Export portfolio selection'}).click();const selectedZip=await JSZip.loadAsync(await readFile(await(await selectedDownload).path()));const selectedBook=XLSX.read(await selectedZip.file('data-audit.xlsx').async('uint8array'));const selectedRows=XLSX.utils.sheet_to_json(selectedBook.Sheets['Servable Items']);expect(selectedRows).toHaveLength(1);expect(selectedRows[0].Menu).toBe('Kitchen B');await picker.getByRole('button',{name:'Remove Kitchen B',exact:true}).click();await expect(enterprise).toHaveText(totals,{useInnerText:true});
 
- await enterprise.locator('summary').click();await picker.locator('summary').click();
+ await enterprise.locator('summary').click();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();
  await page.screenshot({path:`test-results/wp-portfolio-${width}.png`,fullPage:true});expect(errors).toEqual([]);expect(writes).toEqual([]);
 });

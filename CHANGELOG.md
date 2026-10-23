@@ -1,3 +1,7 @@
+## 2026-10-23 - W&P visible menu tiles
+
+- [Oct 23, 4:34 PM] Development candidate 2026.10.23.005-wp-menu-tiles replaces the dropdown checklist with a visible responsive menu tile grid, active states and per-menu qualifying metrics, without an internal scrollbar. Enterprise overview retained. Shared Menu Library source path confirmed; no source changes or deployment. Evidence: docs/WP_MENU_TILES_2026_10_23.md.
+
 ## 2026-10-23 - W&P multi-menu workbench
 
 - [Oct 23, 4:24 PM] Development candidate 2026.10.23.004-wp-menu-workbench adds searchable multi-menu selection, removable chips, compact food rows and detail panel/drawer. Expandable enterprise header keeps all-menu totals independent of selection; collapsed headline metrics remain visible. Portfolio exports follow the working selection. No source data changes or deployment. Evidence: docs/WP_WORKBENCH_2026_10_23.md.

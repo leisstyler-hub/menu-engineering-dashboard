@@ -51,7 +51,7 @@ test('Saved current shared catalog opens every menu with matching servable count
   await page.route('**/api/**',route=>{if(route.request().method()!=='GET'&&!route.request().url().includes('/traffic/'))writes.push(route.request().url());return route.fulfill({json:route.request().url().includes('recipe-library')?payload:{ok:true,records:[],rows:[]}});});
   await openTool(page,/open dashboard/i,/Menu Engineering/);
   await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();
-  await page.getByText('Choose menus | All eligible menus',{exact:true}).click();await expect(page.getByRole('group',{name:'Menu selection'}).getByRole('checkbox')).toHaveCount(menus.length);
+  await expect(page.getByRole('group',{name:'Menu selection'}).getByRole('checkbox')).toHaveCount(menus.length);
   const portfolio=buildPortfolio(menus.map(menu=>panReadyMenu(buildMenuAnalysisSource(menu,payload.rows,specials[menu]||library,true),11.2,payload.rows)));
   const qualifying=portfolio.filter(r=>r.portfolioStatus==='Within 40%');
   await expect(page.getByRole('region',{name:'W&P qualifying portfolio'}).getByTestId('portfolio-food')).toHaveCount(qualifying.length);
@@ -60,7 +60,7 @@ test('Saved current shared catalog opens every menu with matching servable count
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();
     const list=page.getByLabel('Portfolio food list');
     expect((await list.boundingBox()).height).toBeLessThanOrEqual(561);
-    expect((await page.getByText('Choose menus | All eligible menus',{exact:true}).boundingBox()).height).toBeLessThan(55);
+    const grid=page.getByTestId('menu-tile-grid');expect(await grid.evaluate(el=>el.scrollHeight<=el.clientHeight&&el.scrollWidth<=el.clientWidth)).toBeTruthy();const positions=await grid.getByTestId('menu-tile').evaluateAll(nodes=>[...new Set(nodes.map(n=>Math.round(n.getBoundingClientRect().top)))]);expect(positions.length).toBeGreaterThanOrEqual(3);
     await page.screenshot({path:`test-results/wp-portfolio-catalog-${width}.png`,fullPage:true});
   }
   for(const menu of menus){
@@ -76,7 +76,7 @@ test('Saved current shared catalog opens every menu with matching servable count
 
 async function chooseMenu(page,name) {
  const picker=page.getByRole('group',{name:'Menu selection'});
- if(!await picker.getByLabel('Search menus').isVisible()) await picker.locator('summary').click();
+
  await picker.getByRole('button',{name:'Clear menu selection'}).click();
  await picker.locator('label').filter({has:page.getByRole('checkbox')}).filter({hasText:name}).getByRole('checkbox').check();
 }
