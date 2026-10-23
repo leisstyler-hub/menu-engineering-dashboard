@@ -6,6 +6,8 @@ import baltiSource from '../../data/baltiWpAnalysis.json';
 import allMenusSource from '../../data/allMenusWpAnalysis.json';
 import { buildMenuAnalysisSource } from './menuAnalysisSource.js';
 import PanReadyAnalysis from './PanReadyAnalysis.jsx';
+import WpPortfolio from './WpPortfolio.jsx';
+import { buildPortfolio, includeWpMenu } from './wpPortfolioModel.js';
 import { panReadyMenu, assessPanReadyMenu } from './panReadyModel.js';
 
 
@@ -24,8 +26,6 @@ export default function WeighPayView() {
   const rate = pricePerLb(rateText, rateUnit);
   const [data, setData] = useState({ state: 'loading', rows: [], source: '', loadedAt: '', message: '' });
   const [reload, setReload] = useState(0);
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
   const [selectedMenu, setSelectedMenu] = useState('');
   const [approvalFilter, setApprovalFilter] = useState('all');
   const [editing, setEditing] = useState(false);
@@ -49,11 +49,10 @@ export default function WeighPayView() {
     return () => { active = false; clearTimeout(timeout); controller.abort(); };
   }, [reload]);
   const trusted = data.source.startsWith('supabase-recipe-items');
-  const menuNames=useMemo(()=>[...new Set(data.rows.map(row=>String(row.menu||'Unassigned menu')))], [data.rows]);
+  const menuNames=useMemo(()=>[...new Set(data.rows.map(row=>String(row.menu||'Unassigned menu')))].filter(includeWpMenu), [data.rows]);
   const conceptSources=useMemo(()=>Object.fromEntries(menuNames.map(menu=>[menu,buildMenuAnalysisSource(menu,data.rows,{'AMZ: Andes':andesSource,'AMZ: Balti':baltiSource}[menu]||allMenusSource,trusted)])),[menuNames,data.rows,trusted]);
   const projections = useMemo(() => Object.values(conceptSources).map(source=>panReadyMenu(source,rate,trusted?data.rows:[])),[conceptSources,rate,trusted,data.rows]);
   const menus = useMemo(() => projections.map(p=>assessPanReadyMenu(p,rate,trusted,overrides)),[projections,overrides,trusted,rate]);
-  const visible=menus.filter(menu=>menu.menu.toLowerCase().includes(search.trim().toLowerCase())&&(statusFilter==='All'||menu.status===statusFilter));
   const selected = menus.find(menu => menu.menu === selectedMenu);
   const categories = selected ? [...new Set(selected.items.map(item => item.category))] : [];
   const exportPackage = async chosen => {
@@ -63,6 +62,14 @@ export default function WeighPayView() {
       await downloadWeighPayPackage(chosen, { source: data.source, loadedAt: data.loadedAt, trusted, sourceMessage: data.message, pricePerLb: rate, conceptAnalyses: Object.fromEntries(projections.map(p=>[p.menu,p.items])), classificationReviews: Object.fromEntries(projections.map(p=>[p.menu,p.review])) });
     } catch (error) { setExportError(`Export failed: ${error.message}`); }
     finally { setExporting(false); }
+  };
+  const exportPortfolio = async rows => {
+    setExporting(true); setExportError('');
+    try {
+      const { downloadWeighPayPackage } = await import('./weighPayExport.js');
+      await downloadWeighPayPackage([], {source:data.source,loadedAt:data.loadedAt,trusted,pricePerLb:rate,portfolioRows:rows});
+    } catch(error) {setExportError(`Export failed: ${error.message}`);}
+    finally {setExporting(false);}
   };
   return <section className="space-y-4 pb-24 md:pb-0" aria-label="Weigh & Pay guidance">
     <div className="rounded-2xl border border-slate-200 bg-white p-4">
@@ -80,21 +87,16 @@ export default function WeighPayView() {
     {data.state === 'error' && <p role="alert" className="rounded-xl bg-amber-50 p-4 text-amber-900">{data.message}</p>}
     {exportError && <p role="alert" className="text-rose-800">{exportError}</p>}
     {data.state === 'ready' && <>
-      <p className="text-sm text-slate-600">Category counts, ranking and menu qualification use source-linked serving choices. Unresolved classifications keep guidance conditional.</p>
-      <Overview menus={menus}/>
-      <div className="flex flex-wrap gap-2"><input aria-label="Search W&P menus" className={`${input} flex-1`} placeholder="Search all menus" value={search} onChange={event => setSearch(event.target.value)} /><select aria-label="Filter W&P status" className={input} value={statusFilter} onChange={event => setStatusFilter(event.target.value)}>{['All', 'Pass', 'Conditional', 'Fail'].map(status => <option key={status}>{status}</option>)}</select></div>
-      <div className="max-h-[420px] overflow-auto rounded-2xl border border-slate-200 bg-white">
-        <table className="w-full text-left text-sm"><thead className="sticky top-0 bg-slate-100 text-xs text-slate-600"><tr><th className="p-3">Menu</th><th className="p-3">Guidance</th><th className="p-3">Allowed / Total</th><th className="p-3">Pass rate</th><th className="p-3">Needs inputs</th></tr></thead><tbody>{visible.map(menu => <tr key={menu.menu} data-testid="wp-menu-row" className={`border-t border-slate-100 ${menu.menu === selectedMenu ? 'bg-emerald-50/50' : ''}`}><td className="p-3"><button className="text-left font-semibold text-slate-900 underline decoration-slate-300 underline-offset-4" onClick={() => { setSelectedMenu(menu.menu); setEditing(false); setApprovalFilter('all'); }}>{menu.menu}</button></td><td className="p-3"><Badge status={menu.status} testId="wp-menu-status" /></td><td className="p-3 whitespace-nowrap">{menu.allowed} / {menu.total}</td><td className="p-3">{percent(menu.passRate)}</td><td className="p-3">{menu.missing}</td></tr>)}</tbody></table>
-        {!visible.length && <p className="p-4 text-sm text-slate-500">{menus.length ? 'No menus match these filters.' : 'No servable components are available in the current source.'}</p>}
-      </div>
-      {!selected && menus.length > 0 && <p className="text-sm text-slate-500">Select a menu to see its assortment by category.</p>}
+      <div className="flex flex-wrap items-center gap-3 rounded-xl border bg-white p-3"><label htmlFor="wp-menu-choice" className="text-sm font-semibold">Menu</label><select id="wp-menu-choice" aria-label="Choose W&P menu" className={`${input} w-full sm:w-auto sm:max-w-md`} value={selectedMenu} onChange={e=>{setSelectedMenu(e.target.value);setEditing(false);setApprovalFilter('all');}}><option value="">All menus - unique portfolio</option>{projections.map(p=>{const foods=buildPortfolio([p]),pass=trusted?foods.filter(r=>r.portfolioStatus==='Within 40%').length:0;return <option key={p.menu} value={p.menu}>{p.menu} - {percent(foods.length?pass/foods.length:0)} qualifying</option>;})}</select></div>
+      <WpPortfolio projections={projections.filter(p=>!selectedMenu||p.menu===selectedMenu)} trusted={trusted} rate={rate} onExport={exportPortfolio} exporting={exporting}/>
+      {selected&&<p className="text-sm text-slate-600">{selected.menu} - {selected.allowed}/{selected.total} allowed components - {percent(selected.passRate)} - {selected.status}</p>}
       {selected && conceptSources[selected.menu] && <div className="space-y-3"><button className={button} disabled={exporting||!rate} onClick={()=>exportPackage(menus.filter(m=>m.menu===selected.menu))}>Export menu package</button></div>}
-      <PanReadyAnalysis key={selectedMenu} projections={projections.filter(p=>visible.some(m=>m.menu===p.menu))} selectedMenu={selectedMenu} rate={rate||0}/>
+      {selectedMenu&&<PanReadyAnalysis key={selectedMenu} projections={projections} selectedMenu={selectedMenu} rate={rate||0}/> }
       {selected && !['AMZ: Andes','AMZ: Balti'].includes(selected.menu) && <details key={`adjustments:${selected.menu}`} className="rounded-2xl border border-slate-200 bg-white p-4 space-y-4"><summary className="cursor-pointer text-sm font-semibold text-teal-800">Servable component guidance and session adjustments</summary>
         <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-xl font-bold">{selected.menu}</h2><p className="mt-1 text-sm text-slate-600">Calculated {percent(selected.calculatedPassRate)} · Current guidance {percent(selected.passRate)} · {selected.exceptions} exceptions</p></div><div className="flex flex-wrap gap-2"><button className={button} onClick={() => setEditing(value => !value)}>{editing ? 'Done editing' : 'Edit guidance'}</button><button className={button} disabled={exporting || !rate} onClick={() => exportPackage(menus.filter(m=>m.menu===selected.menu))}>Export shared guidance</button></div></div>
         {selected.status === 'Conditional' && <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Conditional: check unresolved inputs, service reviews, session exceptions or source status before using this assortment.</p>}
         {editing && <p className="rounded-xl bg-slate-50 p-3 text-sm text-slate-600">Changes apply to this session and exports only. Refreshing data or leaving W&amp;P clears them. Allowing an exception requires valid cost and weight; it never hides the calculated result.</p>}
-        <div className="flex flex-wrap gap-2" aria-label="Component approval filters">{[['approved','Show only approved components'],['unapproved','Show only unapproved components']].map(([value,label])=><button key={value} className={button} aria-pressed={approvalFilter===value} onClick={()=>setApprovalFilter(approvalFilter===value?'all':value)}>{label}</button>)}<button className={button} onClick={()=>{setApprovalFilter('all');setSearch('');setStatusFilter('All');}}>Clear filter</button></div>
+        <div className="flex flex-wrap gap-2" aria-label="Component approval filters">{[['approved','Show only approved components'],['unapproved','Show only unapproved components']].map(([value,label])=><button key={value} className={button} aria-pressed={approvalFilter===value} onClick={()=>setApprovalFilter(approvalFilter===value?'all':value)}>{label}</button>)}<button className={button} onClick={()=>{setApprovalFilter('all');}}>Clear filter</button></div>
         <p className="text-xs text-slate-500">Approved filter shows Allowed guidance, including explicit session exceptions. Culinary service approval remains separate.</p>
         {categories.map(category => <section key={category}><h3 className="mb-2 text-sm font-bold uppercase tracking-wide text-slate-600">{category}</h3><div className="space-y-2">{selected.items.filter(item => item.category === category && (approvalFilter==='all'||(approvalFilter==='approved'?item.status.startsWith('Allowed'):!item.status.startsWith('Allowed')))).map(item => <ItemRow key={item.key} item={item} editing={editing} onApply={override => setOverrides(previous => { const next = { ...previous }; if (override) next[item.key] = override; else delete next[item.key]; return next; })} />)}</div></section>)}
       </details>}
@@ -120,10 +122,4 @@ function ItemRow({ item, editing, onApply }) {
     {item.override && <p className="mt-2 text-xs text-amber-900">Calculated: {item.calculatedStatus} · Override: {item.override.reason}</p>}
     {editing && <div className="mt-3 flex flex-wrap items-center gap-2"><select className={input} aria-label={`Decision for ${item.item}`} value={decision} onChange={event => setDecision(event.target.value)}><option value="calculated">Use calculated result</option><option value="allow">Allow exception</option><option value="block">Block item</option></select><input className={`${input} flex-1`} aria-label={`Reason for ${item.item}`} placeholder="Reason required for override" maxLength={500} value={reason} onChange={event => setReason(event.target.value)} /><button className={button} onClick={apply}>Apply</button>{error && <p role="alert" className="w-full text-xs text-rose-700">{error}</p>}</div>}
   </article>;
-}
-
-function Overview({menus}) {
- const items=menus.flatMap(menu=>menu.items);
- const cards=[['Menus assessed',menus.length],['W&P qualified menus',menus.filter(menu=>menu.status==='Pass').length],['Conditional menus',menus.filter(menu=>menu.status==='Conditional').length],['Needs cost / weight',items.filter(item=>item.missingCost||item.missingWeight).length]];
- return <div aria-label="W&P overview" className="grid grid-cols-2 gap-3 lg:grid-cols-4">{cards.map(([label,value])=><div key={label} className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-xs text-slate-500">{label}</p><p className="mt-1 text-3xl font-bold">{value}</p></div>)}</div>;
 }

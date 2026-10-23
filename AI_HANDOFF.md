@@ -798,3 +798,7 @@ After editing:
 ## 2026-10-23 - W&P servable components production verified
 
 PRODUCTION VERIFIED: 2026.10.23.001-wp-servable-components, release 663e1d5 / app b43ceac, READY dpl_ABP3Ntwu45Neg4EA9mDE8dZCfUpL, canonical asset /assets/index-D1W2Hs_S.js. Full verify/build and production browser 17/17 passed; actual API-backed 1440/390px Excel/flash-card workflows passed without operational writes/page errors. 1693 shared rows/53 menus; 326 classification-review memberships remain explicit. Solo Chief, no independent LIVE sign-off. Authority, evidence and rollback: docs/WP_PAN_READY_2026_10_23.md.
+
+## 2026-10-23 - W&P qualifying portfolio development candidate
+
+IMPLEMENTED locally: 2026.10.23.002-wp-qualifying-portfolio. Category bars/lists/Excel count unique source foods; compact menu dropdown opens selected data and includes qualifying percentage. Deli Core, Grill Core and Salt & Char excluded; flatbread/pizza handheld builds excluded. Conflicting MRN economics stay unranked. Saved 1693-row audit yields 50 eligible menus, 883 unique components and 390 within 40% with no recorded service restriction. Source records intact. Scope, verification and release limits: docs/WP_PORTFOLIO_2026_10_23.md. Solo Chief; no independent clearance or deployment claimed.

@@ -1,0 +1,24 @@
+import {test,expect} from '@playwright/test';
+import {readFile} from 'node:fs/promises';
+import JSZip from 'jszip';
+import * as XLSX from 'xlsx';
+import {openTool,collectUnexpectedPageErrors} from './smoke-helpers.js';
+for(const width of [390,1440])test(`Unique qualifying portfolio and compact menu picker at ${width}px`,async({page})=>{
+ const errors=collectUnexpectedPageErrors(page),writes=[];
+ const food={item:'Roasted carrots',mrn:'00012.30',portion:'4 oz',portionOz:4,trueCost:1};
+ const rows=[{...food,menu:'Kitchen A'},{...food,menu:'Kitchen B'},{...food,item:'Roasted potatoes',mrn:'00013',trueCost:2,menu:'Kitchen A'},...['AMZ: Deli Core','AMZ: Grill Core','AMZ: Salt & Char'].map(menu=>({...food,item:'Tomato slices',mrn:menu,menu}))];
+ await page.route('**/api/**',r=>{if(r.request().method()!=='GET'&&!r.request().url().includes('/traffic/'))writes.push(r.request().url());return r.fulfill({json:r.request().url().includes('recipe-library')?{ok:true,source:'supabase-recipe-items',rows}:{ok:true,rows:[],records:[]}});});
+ await page.setViewportSize({width,height:900});await openTool(page,/open dashboard/i,/Menu Engineering/);await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();
+ const picker=page.getByLabel('Choose W&P menu'),view=page.getByRole('region',{name:'W&P qualifying portfolio'});
+ await expect(picker.locator('option')).toHaveCount(3);await expect(picker).not.toContainText('Core');await expect(picker).not.toContainText('Salt');
+ await expect(view.getByTestId('portfolio-food')).toHaveCount(1);await expect(view).toContainText('Kitchen A · Kitchen B');await expect(view).toContainText('35.7%');
+ await view.getByRole('button',{name:'Vegetables: 1 qualifying components',exact:true}).click();
+ const dl=page.waitForEvent('download');await view.getByRole('button',{name:'Export portfolio selection'}).click();const zip=await JSZip.loadAsync(await readFile(await(await dl).path()));
+ const wb=XLSX.read(await zip.file('data-audit.xlsx').async('uint8array'));const items=XLSX.utils.sheet_to_json(wb.Sheets['Servable Items']);expect(items).toHaveLength(1);expect(items[0].MRN).toBe('00012.30');expect(items[0].Menu).toBe('Kitchen A; Kitchen B');expect(wb.SheetNames).toContain('Portfolio');
+ await picker.selectOption('Kitchen B');await expect(view).toContainText('1 unique component');await expect(page.getByRole('region',{name:'Pan-ready W&P assortment'})).toContainText('Kitchen B');
+ await picker.selectOption('');await expect(page.getByRole('region',{name:'Pan-ready W&P assortment'})).toHaveCount(0);
+ await view.getByLabel('Portfolio category').selectOption('All');await view.getByLabel('Portfolio result').selectOption('Above 40%');await expect(view.getByTestId('portfolio-food')).toHaveCount(1);await expect(view).toContainText('Roasted potatoes');
+ await view.getByLabel('Portfolio result').selectOption('Within 40%');
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();
+ await page.screenshot({path:`test-results/wp-portfolio-${width}.png`,fullPage:true});expect(errors).toEqual([]);expect(writes).toEqual([]);
+});

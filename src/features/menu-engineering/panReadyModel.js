@@ -7,11 +7,12 @@ export function tierFor(fc) {
   if (!Number.isFinite(fc) || fc < 0) return 'Needs information';
   return TIERS[[.3,.4,.5,.6].findIndex(limit => fc <= limit + 1e-12)] || '>60%';
 }
-const handheld = /\b(burgers?|sandwich(?:es)?|naanwich|banh mi|handheld|burritos?|quesadillas?|tacos?|kathi roll|gyros?|panini|wraps?|torta|cubano|reuben|grilled cheese|monte cristo|blta|grinder)\b/i;
+const handheld = /\b(pizzas?|flatbreads?|burgers?|sandwich(?:es)?|naanwich|banh mi|handheld|burritos?|quesadillas?|tacos?|kathi roll|gyros?|panini|wraps?|torta|cubano|reuben|grilled cheese|monte cristo|blta|grinder)\b/i;
 const assembled = /\b(plates?|bowls?|bibimbap|bibimbowl)\b/i;
 const prep = /\b(marinade|paste|stock|base|spice blend|masala spice|garam masala|seasoning|dough|batter|brine)\b/i;
 const nonCore = /\b(cookies?|cake|baklava|shortbread|brownie|pudding|churros?|lassi|horchata|iced tea|black tea|chai tea|iced coffee|smoothie|lemonade|beverage|agua fresca|flan|sfoof|ladoo|doughnuts?)\b/i;
 function categoryFor(name) {
+  if (/\b(?:mashed|baked|roasted|loaded) potatoes\b/i.test(name)) return 'Starches / grains';
   const mainFood=name.split(/\b(?:in|with)\b/i);
   if (mainFood.length>1 && /\b(chicken|tofu|tempeh|seitan|turkey|pork|beef|lamb|fish|salmon|shrimp|paneer)\b/i.test(mainFood[0])) return 'Proteins';
   if (/\b(cauliflower|celeriac|mushroom|portobello)\b.*\b(steak|shawarma|flank)\b/i.test(name)) return 'Vegetables';

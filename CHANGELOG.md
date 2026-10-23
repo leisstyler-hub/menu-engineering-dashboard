@@ -1191,3 +1191,7 @@ Integrated reviewed SSMT accounts/reuse candidate with current commissary scroll
 ## 2026-10-23 - W&P servable components deployed
 
 - [Oct 23, 10:48 AM] PRODUCTION VERIFIED 2026.10.23.001-wp-servable-components: release 663e1d5, READY dpl_ABP3Ntwu45Neg4EA9mDE8dZCfUpL, full package verification/build and production 17/17 browser checks passed. Actual desktop/mobile catalog and component Excel/FC flash-card export checks passed. No operational writes; classification gaps remain visible. Solo Chief, no independent LIVE sign-off. Evidence: docs/WP_PAN_READY_2026_10_23.md.
+
+## 2026-10-23 - W&P qualifying portfolio candidate
+
+- [Oct 23, 11:05 AM] Added unique qualifying-component category bars, lists and portfolio Excel export, plus compact menu selector with qualifying percentages. Excluded Deli Core, Grill Core and Salt & Char from W&P; conflicting source economics remain under review. Development candidate, not deployed.

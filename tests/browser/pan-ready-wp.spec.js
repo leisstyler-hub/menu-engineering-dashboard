@@ -3,6 +3,7 @@ import {readFile} from 'node:fs/promises';
 import JSZip from 'jszip';
 import * as XLSX from 'xlsx';
 import {buildMenuAnalysisSource} from '../../src/features/menu-engineering/menuAnalysisSource.js';
+import {buildPortfolio} from '../../src/features/menu-engineering/wpPortfolioModel.js';
 import {panReadyMenu} from '../../src/features/menu-engineering/panReadyModel.js';
 import {openTool,collectUnexpectedPageErrors} from './smoke-helpers.js';
 const rows=[{menu:'AMZ: Balti',item:'Butter Chicken Plate',mrn:'212486.1',portion:'1 serving(s)',portionOz:17.206,trueCost:3.02},{menu:'AMZ: Andes',item:'Tofu',mrn:'187686',portion:'8 oz',portionOz:8,trueCost:1.52}];
@@ -14,7 +15,7 @@ for(const width of [390,1440]) test(`Pan-ready ranking, supporting prep and item
   await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();
   await expect(page.getByLabel('W&P selling price',{exact:true})).toHaveValue('0.70');
   await expect(page.getByLabel('W&P price unit')).toHaveValue('oz');
-  await page.getByRole('button',{name:'AMZ: Balti',exact:true}).click();
+  await page.getByLabel('Choose W&P menu').selectOption('AMZ: Balti');
   const view=page.getByRole('region',{name:'Pan-ready W&P assortment'});
   await expect(view.getByRole('img',{name:'Servable components by category chart'})).toBeVisible();
   await view.getByLabel('Search servable foods').fill('Butter Chicken');
@@ -46,18 +47,29 @@ test('Saved current shared catalog opens every menu with matching servable count
   const payload=JSON.parse(await readFile(process.env.WP_CATALOG_SNAPSHOT,'utf8'));
   const library=JSON.parse(await readFile(new URL('../../src/data/allMenusWpAnalysis.json',import.meta.url),'utf8'));
   const specials=Object.fromEntries(await Promise.all([['AMZ: Andes','andes'],['AMZ: Balti','balti']].map(async([menu,file])=>[menu,JSON.parse(await readFile(new URL(`../../src/data/${file}WpAnalysis.json`,import.meta.url),'utf8'))])));
-  const menus=[...new Set(payload.rows.map(r=>r.menu))],errors=collectUnexpectedPageErrors(page),writes=[];
+  const menus=[...new Set(payload.rows.map(r=>r.menu))].filter(m=>!['AMZ: Deli Core','AMZ: Grill Core','AMZ: Salt & Char'].includes(m)),errors=collectUnexpectedPageErrors(page),writes=[];
   await page.route('**/api/**',route=>{if(route.request().method()!=='GET'&&!route.request().url().includes('/traffic/'))writes.push(route.request().url());return route.fulfill({json:route.request().url().includes('recipe-library')?payload:{ok:true,records:[],rows:[]}});});
   await openTool(page,/open dashboard/i,/Menu Engineering/);
   await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();
-  await expect(page.getByTestId('wp-menu-row')).toHaveCount(menus.length);
+  await expect(page.getByLabel('Choose W&P menu').locator('option')).toHaveCount(menus.length+1);
+  const portfolio=buildPortfolio(menus.map(menu=>panReadyMenu(buildMenuAnalysisSource(menu,payload.rows,specials[menu]||library,true),11.2,payload.rows)));
+  const qualifying=portfolio.filter(r=>r.portfolioStatus==='Within 40%');
+  await expect(page.getByRole('region',{name:'W&P qualifying portfolio'}).getByTestId('portfolio-food')).toHaveCount(qualifying.length);
+  for(const width of [1440,390]) {
+    await page.setViewportSize({width,height:900});
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();
+    const list=page.getByLabel('Portfolio food list');
+    expect((await list.boundingBox()).height).toBeLessThanOrEqual(561);
+    expect((await page.getByLabel('Choose W&P menu').boundingBox()).height).toBeLessThan(55);
+    await page.screenshot({path:`test-results/wp-portfolio-catalog-${width}.png`,fullPage:true});
+  }
   for(const menu of menus){
     const source=buildMenuAnalysisSource(menu,payload.rows,specials[menu]||library,true);
     const expected=panReadyMenu(source,11.2,payload.rows);
-    await page.getByRole('button',{name:menu,exact:true}).click();
+    await page.getByLabel('Choose W&P menu').selectOption(menu);
     const view=page.getByRole('region',{name:'Pan-ready W&P assortment'});
-    await expect(view.getByLabel('Food cost ranking').getByTestId('servable-food')).toHaveCount(expected.items.length);
-    await expect(view.getByText(new RegExp(`^${expected.items.length} serving choices`))).toBeVisible();
+    await expect(view.getByLabel('Food cost ranking').getByTestId('servable-food')).toHaveCount(buildPortfolio([expected]).length);
+    await expect(view.getByText(new RegExp(`^${buildPortfolio([expected]).length} serving choices`))).toBeVisible();
   }
   expect(errors).toEqual([]);expect(writes).toEqual([]);
 });

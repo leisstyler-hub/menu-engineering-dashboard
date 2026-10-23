@@ -1,4 +1,5 @@
 import JSZip from 'jszip';
+import {buildPortfolio,includeWpMenu} from './wpPortfolioModel.js';
 
 import * as XLSX from 'xlsx';
 
@@ -27,6 +28,7 @@ export function reportChart(title,segments) {
 
 export async function buildWeighPayPackage(menus, sourceInfo) {
 
+ menus=menus.filter(m=>includeWpMenu(m.menu));
  const rate=pricePerLb(sourceInfo.pricePerLb??WP_PRICE_PER_LB);
 
  if(!rate||menus.some(menu=>menu.items.some(item=>item.pricePerLb!==rate)))throw new Error('Export price does not match the evaluated guidance.');
@@ -35,21 +37,26 @@ export async function buildWeighPayPackage(menus, sourceInfo) {
  const fc = n => n == null ? 'Needs information' : `${(n*100).toFixed(1)}%`;
  const classificationList = menu => { const rows=(sourceInfo.classificationReviews?.[menu.menu]||[]).filter(r=>r.classificationReason!=='Supporting prep only'); return rows.length?`<h3>Classification review</h3><ul>${rows.map(r=>`<li>${escape(r.name)} - ${escape(r.classificationReason)} - FC Needs information</li>`).join('')}</ul>`:''; };
  const projected = menu => sourceInfo.conceptAnalyses?.[menu.menu] || sourceInfo.andesAnalysis || menu.items.map(i=>({...i,name:i.item,massOz:i.weightOz,tier:tierFor(i.foodCost),serviceReasons:i.reasons||[]}));
- const rows=menus.flatMap(menu=>projected(menu).map(r=>({...r,menu:menu.menu})));
+ const rows=sourceInfo.portfolioRows || buildPortfolio(menus.map(menu=>({menu:menu.menu,items:projected(menu)})));
+ const exportMenus=menus.length===1&&!sourceInfo.portfolioRows?menus:[{menu:'W&P portfolio',items:[],portfolio:true}];
  const categories=CATEGORIES.map(label=>({label,value:rows.filter(r=>r.category===label).length}));
  const provenance=sourceInfo.trusted===false?'Fallback data - reference only. ':'';
- const cover=`<section class="cover"><h1>Weigh &amp; Pay - Pan-ready Assortment</h1><p>$${(rate/16).toFixed(2)}/oz - $${rate.toFixed(2)}/lb</p><p class="meta">Source: ${escape(sourceInfo.source)} - Read: ${escape(sourceInfo.loadedAt)}</p><p class="notice">${escape(provenance)}Source-linked serving choices; classification and service restrictions require review. Supporting prep is included in parent cost, not counted again. Counts preserve menu memberships and source variants. Missing information is never ranked as a pass.</p>${reportChart('Servable components by category',categories)}</section>`;
- const list=items=>items.length?`<ul>${items.map(r=>`<li>${escape(r.name)} - <strong>FC ${escape(fc(r.foodCost))}</strong> - ${escape(r.category||'Unclassified')} - ${escape(r.tier||tierFor(r.foodCost))}${r.serviceReasons?.length?` - Service review: ${escape(r.serviceReasons.join('; '))}`:''}</li>`).join('')}</ul>`:'<p>None</p>';
- const cards=menus.map(menu=>{
-   const items=projected(menu), allowed=items.filter(r=>r.foodCost!=null&&r.foodCost<=.4+1e-12&&!r.serviceReasons?.length);
+ const cover=`<section class="cover"><h1>Weigh &amp; Pay - Pan-ready Assortment</h1><p>$${(rate/16).toFixed(2)}/oz - $${rate.toFixed(2)}/lb</p><p class="meta">Source: ${escape(sourceInfo.source)} - Read: ${escape(sourceInfo.loadedAt)}</p><p class="notice">${escape(provenance)}Source-linked serving choices; classification and service restrictions require review. Supporting prep is included in parent cost, not counted again. Each unique food is counted once; source menu memberships remain listed. Missing information is never ranked as a pass.</p>${reportChart('Servable components by category',categories)}</section>`;
+ const list=items=>items.length?`<ul>${items.map(r=>`<li>${escape(r.name)}${r.menus?.length?` (${escape(r.menus.join('; '))})`:''} - <strong>FC ${escape(fc(r.foodCost))}</strong> - ${escape(r.category||'Unclassified')} - ${escape(r.tier||tierFor(r.foodCost))}${r.serviceReasons?.length?` - Service review: ${escape(r.serviceReasons.join('; '))}`:''}</li>`).join('')}</ul>`:'<p>None</p>';
+ const cards=exportMenus.map(menu=>{
+   const items=rows, allowed=items.filter(r=>r.foodCost!=null&&r.foodCost<=.4+1e-12&&!r.serviceReasons?.length);
    const held=items.filter(r=>!allowed.includes(r));
-   return `<article class="card"><h2>${escape(menu.menu)}</h2>${reportChart('Servable components by category',CATEGORIES.map(label=>({label,value:items.filter(r=>r.category===label).length})))}<div class="lists"><section><h3 class="run">Within 40% - candidates</h3>${list(allowed)}</section><section><h3 class="hold">Above gate / review / needs information</h3>${list(held)}</section></div>${classificationList(menu)}${menu.items.some(i=>i.override)?`<p class="notice">Session exceptions: ${menu.items.filter(i=>i.override).map(i=>escape(i.item)+': '+escape(i.override.reason)).join('; ')}</p>`:''}</article>`;
+   return `<article class="card"><h2>${escape(menu.menu)}</h2>${reportChart('Servable components by category',CATEGORIES.map(label=>({label,value:items.filter(r=>r.category===label).length})))}<div class="lists"><section><h3 class="run">Within 40% - candidates</h3>${list(allowed)}</section><section><h3 class="hold">Above gate / review / needs information</h3>${list(held)}</section></div>${menu.portfolio?menus.map(classificationList).join(''):classificationList(menu)}${menu.items.some(i=>i.override)?`<p class="notice">Session exceptions: ${menu.items.filter(i=>i.override).map(i=>escape(i.item)+': '+escape(i.override.reason)).join('; ')}</p>`:''}</article>`;
  }).join('');
  zip.file('flash-cards.html',page('W&P Brand Flash Cards',cover+cards));
  zip.file('data-audit.html',page('Data Audit',cover+cards));
  const workbook=XLSX.utils.book_new();
  XLSX.utils.book_append_sheet(workbook,XLSX.utils.json_to_sheet(menus.map(m=>({Menu:m.menu,'Component guidance':m.status,'Servable components':projected(m).length,'Price per oz':rate/16,'Price per lb':rate,Source:sourceInfo.source}))), 'Data Audit');
- const itemSheet=XLSX.utils.json_to_sheet(rows.map(r=>({Menu:r.menu,Category:r.category,Item:r.name,MRN:String(r.mrn??''),Portion:r.portion,'Cost per portion':r.cost,'Weight oz':r.massOz,'Cost per lb':r.massOz&&r.cost!=null?r.cost/r.massOz*16:null,'FC%':r.foodCost,'FC tier':r.tier||tierFor(r.foodCost),'Service review':r.serviceReasons?.join('; '),'Cost source':r.costBasis||'Recipe snapshot','Weight source':r.weightSource,'Recipe link':r.linkStatus||'Source recipe','Classification basis':r.classificationBasis,'Price per oz':rate/16,'Source read':sourceInfo.loadedAt})));
+ const itemSheet=XLSX.utils.json_to_sheet(rows.map(r=>({Menu:r.menus?.join('; ')||r.menu,Category:r.category,Item:r.name,MRN:String(r.mrn??''),Portion:r.portion,'Cost per portion':r.cost,'Weight oz':r.massOz,'Cost per lb':r.massOz&&r.cost!=null?r.cost/r.massOz*16:null,'FC%':r.foodCost,'FC tier':r.tier||tierFor(r.foodCost),'Service review':r.serviceReasons?.join('; '),'Cost source':r.costBasis||'Recipe snapshot','Weight source':r.weightSource,'Recipe link':r.linkStatus||'Source recipe','Classification basis':r.classificationBasis,'Price per oz':rate/16,'Source read':sourceInfo.loadedAt})));
+ XLSX.utils.book_append_sheet(workbook,XLSX.utils.json_to_sheet(rows.map(r=>({Category:r.category,Item:r.name,MRN:String(r.mrn??''),'FC%':r.foodCost,'Cost per lb':r.costPerLb??(r.massOz&&r.cost!=null?r.cost/r.massOz*16:null),Menus:r.menus?.join('; ')||r.menu,Result:r.portfolioStatus||'',Conflict:r.conflict?'Source economics require review':''}))), 'Portfolio');
+ const portfolioSheet=workbook.Sheets['Portfolio'];
+ portfolioSheet['!cols']=[{wch:24},{wch:55},{wch:24},{wch:13},{wch:16},{wch:60},{wch:22},{wch:40}];
+ if(portfolioSheet['!ref'])for(let r=1;r<=XLSX.utils.decode_range(portfolioSheet['!ref']).e.r;r++){const c=portfolioSheet[XLSX.utils.encode_cell({r,c:3})];if(c?.t==='n')c.z='0.0%';}
  const range=itemSheet['!ref']&&XLSX.utils.decode_range(itemSheet['!ref']);
  if(range) for(let row=1;row<=range.e.r;row++){const cell=itemSheet[XLSX.utils.encode_cell({r:row,c:8})];if(cell?.t==='n')cell.z='0.0%';}
  itemSheet['!cols']=[{wch:25},{wch:23},{wch:55},{wch:24},{wch:18},{wch:18},{wch:15},{wch:16},{wch:13},{wch:22},{wch:50}];

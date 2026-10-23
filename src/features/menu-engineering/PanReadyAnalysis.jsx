@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { CATEGORIES, TIERS } from './panReadyModel.js';
+import { buildPortfolio } from './wpPortfolioModel.js';
 import { Donut } from './WeighPayCharts.jsx';
 
 const pct = n => n == null ? 'Needs information' : `${(n*100).toFixed(1)}%`;
@@ -9,9 +10,9 @@ export default function PanReadyAnalysis({ projections, selectedMenu, rate }) {
   const [category,setCategory]=useState('All'),[search,setSearch]=useState(''),[selectedKey,setSelectedKey]=useState('');
   const [across,setAcross]=useState(false);
   const pool=useMemo(()=>projections.filter(p=>across||!selectedMenu||p.menu===selectedMenu),[projections,selectedMenu,across]);
-  const rows=pool.flatMap(p=>p.items);
+  const rows=buildPortfolio(pool);
   const visible=rows.filter(r=>(category==='All'||r.category===category)&&`${r.name} ${r.mrn}`.toLowerCase().includes(search.toLowerCase()));
-  const key=r=>JSON.stringify([r.menu,r.key]);
+  const key=r=>r.key;
   const selected=rows.find(r=>key(r)===selectedKey);
   const review=pool.flatMap(p=>p.review.filter(r=>r.classificationReason!=='Supporting prep only').map(r=>({...r,menu:p.menu})));
   const counts=CATEGORIES.map(label=>({label,value:visible.filter(r=>r.category===label).length}));

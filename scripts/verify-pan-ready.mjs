@@ -21,6 +21,10 @@ assert.equal(categorized.find(r=>r.name==='Cauliflower Steak').category,'Vegetab
 assert.equal(categorized.find(r=>r.name==='Chicken with Peppers').category,'Proteins');
 const sandwich={concept:'Test',recipes:[{id:'a',mrn:'001',name:'Chicken Burger',topLevel:true,components:[{childId:'b'}]},{id:'b',mrn:'002',name:'Roast Chicken',cost:1,massOz:4,components:[]}]};
 assert.equal(panReadyMenu(sandwich,11.2).items.length,0);
+const flatbread={concept:'Test',recipes:[{id:'flatbread',mrn:'003',name:'BBQ Chicken Flatbread',topLevel:true,components:[]}]};
+assert.equal(panReadyMenu(flatbread,11.2).items.length,0,'Assembled flatbreads are not service-pan proteins');
+const loadedPotatoes={concept:'Test',recipes:[{id:'potatoes',mrn:'004',name:'Bacon & Cheddar Loaded Mashed Potatoes',topLevel:true,components:[]}]};
+assert.equal(panReadyMenu(loadedPotatoes,11.2).items[0].category,'Starches / grains');
 assert.equal(JSON.stringify(balti),before);
 assert.deepEqual([.3,.30001,.4,.40001,.5,.50001,.6,.60001,null].map(tierFor),['≤30%','>30–40%','>30–40%','>40–50%','>40–50%','>50–60%','>50–60%','>60%','Needs information']);
 assert.ok(result.items.every(r=>CATEGORIES.includes(r.category)));
@@ -38,7 +42,8 @@ const blob=await buildWeighPayPackage([assessPanReadyMenu(result,11.2,true)],{pr
 const zip=await JSZip.loadAsync(await blob.arrayBuffer());
 const workbook=XLSX.read(await zip.file('data-audit.xlsx').async('uint8array'));
 const exported=XLSX.utils.sheet_to_json(workbook.Sheets['Servable Items']);
-assert.equal(exported.length,result.items.length);
+const {buildPortfolio}=await import('../src/features/menu-engineering/wpPortfolioModel.js');
+assert.equal(exported.length,buildPortfolio([result]).length);
 assert.ok(exported.every(r=>typeof r.MRN==='string'));
 assert.ok(exported.every(r=>!r.Item.includes('Plate')));
 const cards=await zip.file('flash-cards.html').async('string');
