@@ -12,6 +12,9 @@ const assembled = /\b(plates?|bowls?|bibimbap|bibimbowl)\b/i;
 const prep = /\b(marinade|paste|stock|base|spice blend|masala spice|garam masala|seasoning|dough|batter|brine)\b/i;
 const nonCore = /\b(cookies?|cake|baklava|shortbread|brownie|pudding|churros?|lassi|horchata|iced tea|black tea|chai tea|iced coffee|smoothie|lemonade|beverage|agua fresca|flan|sfoof|ladoo|doughnuts?)\b/i;
 function categoryFor(name) {
+  const mainFood=name.split(/\b(?:in|with)\b/i);
+  if (mainFood.length>1 && /\b(chicken|tofu|tempeh|seitan|turkey|pork|beef|lamb|fish|salmon|shrimp|paneer)\b/i.test(mainFood[0])) return 'Proteins';
+  if (/\b(cauliflower|celeriac|mushroom|portobello)\b.*\b(steak|shawarma|flank)\b/i.test(name)) return 'Vegetables';
   if (/\b(sauce|gravy|dressing)\b\s*(?:\([^)]*\))?\s*$/i.test(name)) return 'Sauces / dressings';
   if (/\b(halloumi|falafel|bacon|sausage|ham|meatloaf|porchetta)\b/i.test(name)) return 'Proteins';
   if (/\b(hummus|mayo(?:nnaise)?|mustard|tzatziki|toum|muhammara|remoulade|crema|dip|guacamole|relish|tapenade|sriracha|vina?igrette|viniagrette)\b/i.test(name)) return 'Sauces / dressings';

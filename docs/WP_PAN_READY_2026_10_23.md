@@ -38,5 +38,7 @@ Limits: name-based category/role rules are conservative guidance, not a claim of
 
 Self-review covered source membership (including Andes/Balti), classification precedence, export/screen count parity, conflicting variants, missing-weight handling and navigation. Independent Reviewer/Verifier/Scribe clearance is not claimed under the continuing solo mission.
 
-- Complete `npm run verify`: PASS, including all package guards, SSMT unit suite and Vite production build. Log retained in workspace `.scratch/WP_PAN_READY_VERIFY.log`; no app code changed after this passing run. Documentation-only finalization followed.
+- Complete `npm run verify`: PASS, including all package guards, SSMT unit suite and Vite production build. Log retained in workspace `.scratch/WP_PAN_READY_VERIFY.log`. Final category edge corrections below are rechecked on the committed candidate.
 - `git diff --check`: PASS. Build emits the existing Vercel directive/chunk-size advisories; no new build failure.
+
+Final self-review added explicit category guards for finished tofu/chicken in sauce (Proteins), a sauce recipe named for chicken (Sauces), and cauliflower steak (Vegetables). These rules prevent sauce words and culinary cut names from moving a servable food into the wrong category. Final committed-candidate check results and logs are retained in workspace WORK_LOGS/WP_PAN_READY_2026_10_23/RESULT.md.
