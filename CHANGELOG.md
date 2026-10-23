@@ -1195,3 +1195,7 @@ Integrated reviewed SSMT accounts/reuse candidate with current commissary scroll
 ## 2026-10-23 - W&P qualifying portfolio candidate
 
 - [Oct 23, 11:05 AM] Added unique qualifying-component category bars, lists and portfolio Excel export, plus compact menu selector with qualifying percentages. Excluded Deli Core, Grill Core and Salt & Char from W&P; conflicting source economics remain under review. Development candidate, not deployed.
+
+## 2026-10-23 - W&P qualifying portfolio deployed
+
+- [Oct 23, 11:19 AM] PRODUCTION VERIFIED `2026.10.23.002-wp-qualifying-portfolio`: app c7f54ac, released candidate 7ae3800, READY dpl_27gfFRHvEEaNLD9pV5qDCcDtKtnL. Full verification/build and production browser report 19/19 passed. Actual desktop/mobile shared catalog and Excel checks confirmed 382 unique qualifying foods across 49 eligible menus, exclusions, exact MRNs and matching memberships. No operational writes; classification gaps remain explicit. Solo Chief, no independent LIVE clearance. Evidence and rollback: docs/WP_PORTFOLIO_2026_10_23.md.
