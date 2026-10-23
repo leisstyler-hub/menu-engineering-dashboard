@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { openTool, collectUnexpectedPageErrors } from './smoke-helpers.js';
 
 const row = (id, item, extra = {}) => ({ id, item, menu: 'Test Kitchen', category: 'Entree', mrn: `000${id}.123456789`, price: 8, trueCost: 1, portionOz: 8, ...extra });
-const rows = [row(1, 'Roast Chicken'), row(2, 'Lentil Rice', { category: 'Side' }), row(3, 'Cauliflower Steak', { category: 'Side' }), row(4, 'Salmon'), row(5, 'Uncosted Vegetables', { trueCost: null }), row(1, 'Roast Chicken'), row(7,'Andes sample',{menu:'AMZ: Andes'}), row(6, 'Unknown Portion', { menu: 'Incomplete Kitchen', portionOz: null, portion: '1 piece' })];
+const rows = [row(1, 'Roast Chicken'), row(2, 'Lentil Rice', { category: 'Side' }), row(3, 'Cauliflower Steak', { category: 'Side' }), row(4, 'Roast Salmon'), row(5, 'Uncosted Vegetables', { trueCost: null }), row(1, 'Roast Chicken'), row(7,'Andes sample',{menu:'AMZ: Andes'}), row(6, 'Unknown Portion', { menu: 'Incomplete Kitchen', portionOz: null, portion: '1 piece' })];
 
 async function setup(page, source = 'supabase-recipe-items') {
   const writes = [];
@@ -29,7 +29,7 @@ test('W&P evaluates all menus with the 60% gate, missing inputs and stored categ
   await page.getByRole('button',{name:'Show only approved components',exact:true}).click();
   await page.getByRole('button',{name:'Clear filter',exact:true}).click();
   await expect(page.getByRole('heading', { name: 'Starches / grains', exact: true })).toBeVisible();
-  await expect(page.getByTestId('wp-item-row').filter({ hasText: 'Salmon' })).toContainText('Seafood');
+  await expect(page.getByTestId('wp-item-row').filter({ hasText: 'Roast Salmon' })).toContainText('Seafood');
   await expect(page.getByTestId('wp-item-row').filter({ hasText: 'Uncosted Vegetables' })).toContainText('Needs cost');
   await page.getByLabel('Choose W&P menu').selectOption('Incomplete Kitchen');
   await page.getByText('Servable component guidance and session adjustments',{exact:true}).click();
@@ -43,13 +43,13 @@ test('W&P controls require Edit and a reason; export captures exceptions without
   await page.getByRole('button', { name: 'W&P Guidance', exact: true }).click();
   await page.getByLabel('Choose W&P menu').selectOption('Test Kitchen');
   await page.getByText('Servable component guidance and session adjustments',{exact:true}).click();
-  await expect(page.getByLabel('Decision for Salmon')).toHaveCount(0);
+  await expect(page.getByLabel('Decision for Roast Salmon')).toHaveCount(0);
   await page.getByRole('button', { name: 'Edit guidance', exact: true }).click();
-  const salmon = page.getByTestId('wp-item-row').filter({ hasText: 'Salmon' });
-  await salmon.getByLabel('Decision for Salmon').selectOption('allow');
+  const salmon = page.getByTestId('wp-item-row').filter({ hasText: 'Roast Salmon' });
+  await salmon.getByLabel('Decision for Roast Salmon').selectOption('allow');
   await salmon.getByRole('button', { name: 'Apply', exact: true }).click();
   await expect(salmon).toContainText('Enter a reason');
-  await salmon.getByLabel('Reason for Salmon').fill('Approved limited assortment');
+  await salmon.getByLabel('Reason for Roast Salmon').fill('Approved limited assortment');
   await salmon.getByRole('button', { name: 'Apply', exact: true }).click();
   await expect(salmon).toContainText('Allowed by override');
   const download = page.waitForEvent('download');

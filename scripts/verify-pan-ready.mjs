@@ -4,6 +4,16 @@ import { panReadyMenu, assessPanReadyMenu, tierFor, CATEGORIES } from '../src/fe
 const load = name => JSON.parse(fs.readFileSync(new URL(`../src/data/${name}WpAnalysis.json`, import.meta.url)));
 const balti = load('balti'), andes = load('andes'), before = JSON.stringify(balti);
 const result = panReadyMenu(balti, 11.2);
+const rawNames=['Arugula','Baby Arugula Salad Garnish','Shredded Romaine','Romaine Lettuce','Diced Tomatoes','Shredded Carrots','Diced Cucumber','Ingredient: Parmesan Cheese'];
+const ingredientFixture={concept:'Test',recipes:[...rawNames,'Roasted carrots','Arugula and Beet Salad','Chicken with Peppers','Arugula Pesto Gnocchi'].map((name,i)=>({id:`raw-${i}`,mrn:`00${i}`,name,topLevel:true,cost:1,massOz:4,components:[]}))};
+const ingredientBefore=JSON.stringify(ingredientFixture);
+const ingredientResult=panReadyMenu(ingredientFixture,11.2);
+assert.ok(rawNames.every(name=>ingredientResult.excluded.some(r=>r.name===name)), 'Plain ingredients must be excluded even without linked recipe details');
+assert.ok(rawNames.every(name=>!ingredientResult.items.some(r=>r.name===name)));
+assert.ok(['Roasted carrots','Arugula and Beet Salad','Chicken with Peppers','Arugula Pesto Gnocchi'].every(name=>ingredientResult.items.some(r=>r.name===name)), 'Prepared foods must not be excluded by ingredient substring or empty component links');
+assert.equal(JSON.stringify(ingredientFixture),ingredientBefore);
+const {isPlainIngredient}=await import('../src/features/menu-engineering/panReadyModel.js');
+assert.equal(isPlainIngredient('Ingredient: Samosa, Vegetable, Small, Monsoon Kitchens'),false,'A bought prepared food is not a single ingredient just because it has an Ingredient label');
 assert.ok(result.items.some(r => /Butter Chicken/.test(r.name)));
 assert.ok(!result.items.some(r => /\bplate\b/i.test(r.name)));
 assert.equal(result.items.filter(r => /Jeera Rice/.test(r.name)).length, 1);

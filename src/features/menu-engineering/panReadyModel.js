@@ -11,6 +11,14 @@ const handheld = /\b(pizzas?|flatbreads?|burgers?|sandwich(?:es)?|naanwich|banh 
 const assembled = /\b(plates?|bowls?|bibimbap|bibimbowl)\b/i;
 const prep = /\b(marinade|paste|stock|base|spice blend|masala spice|garam masala|seasoning|dough|batter|brine)\b/i;
 const nonCore = /\b(cookies?|cake|baklava|shortbread|brownie|pudding|churros?|lassi|horchata|iced tea|black tea|chai tea|iced coffee|smoothie|lemonade|beverage|agua fresca|flan|sfoof|ladoo|doughnuts?)\b/i;
+// Only whole plain-food names establish this
+// exclusion. Missing component links do not establish an ingredient count.
+export function isPlainIngredient(name) {
+  const plain=String(name||'').toLowerCase().replace(/^(?:amz|eurna|eur|ra|thjv|ths|ingredient)\s*:?\s+/,'')
+    .replace(/\b(?:raw|fresh|baby|shredded|sliced|slices|diced|chopped|whole|leaves|leaf|hearts|of|salad garnish)\b/g,' ')
+    .replace(/[,()]/g,' ').replace(/\s+/g,' ').trim();
+  return /^(?:arugula|romaine(?: lettuce)?|iceberg(?: lettuce)?|lettuce|spinach|kale|spring mix|mixed greens|tomato(?:es)?|cherry tomatoes|grape tomatoes|cucumbers?|carrots?|onions?|red onions?|white onions?|yellow onions?|green onions?|scallions?|bell peppers?|red bell peppers?|green bell peppers?|broccoli|cauliflower|celery|radish(?:es)?|cabbage|red cabbage|green cabbage|avocado|mushrooms?|zucchini|basil|cilantro|parsley|mint|lemon|lime|apples?|oranges?|grapes?|strawberries|blueberries|watermelon|pineapple|cheddar(?: cheese)?|parmesan(?: cheese)?|mozzarella(?: cheese)?|feta(?: cheese)?|chicken(?: breast)?|beef|pork|tofu|salmon|shrimp|eggs?|rice|quinoa|potatoes|salt|sugar|butter|olive oil)$/.test(plain);
+}
 function categoryFor(name) {
   if (/\b(?:mashed|baked|roasted|loaded) potatoes\b/i.test(name)) return 'Starches / grains';
   const mainFood=name.split(/\b(?:in|with)\b/i);
@@ -39,6 +47,7 @@ export function panReadyMenu(source, rate, sharedRows = []) {
   function visit(r, fromPlate = false, path = []) {
     if (!r || r.issue || path.includes(r.id)) return;
     if (handheld.test(r.name)) { excluded.set(r.id,{...r,classificationReason:'Handheld excluded'}); return; }
+    if (isPlainIngredient(r.name)) { excluded.set(r.id,{...r,classificationReason:'Plain single ingredient excluded'}); return; }
     if (nonCore.test(r.name)) { excluded.set(r.id,{...r,classificationReason:'Non-core dessert / beverage excluded'}); return; }
     const formatName=r.name.replace(/\([^)]*\)/g,'').replace(/\bBowl Inc\b/gi,'');
     if (assembled.test(formatName)) {

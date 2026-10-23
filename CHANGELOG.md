@@ -1,3 +1,7 @@
+## 2026-10-23 - W&P pizza and single-ingredient exclusions
+
+- [Oct 23, 2:49 PM] Development candidate 2026.10.23.003-wp-ingredient-exclusions removes pizza/flatbread menus and plainly named ingredients including arugula garnish, shredded romaine, diced cucumber/tomatoes and shredded carrots from W&P counts, charts and exports. Prepared dishes remain available. Source records preserved. Saved catalog yields 48 eligible menus and 376 qualifying foods. Evidence: docs/WP_INGREDIENT_EXCLUSIONS_2026_10_23.md. Not deployed.
+
 ## 2026-10-23 - W&P servable-component candidate
 
 - [Oct 23, 8:07 AM] Implemented local candidate 2026.10.23.001-wp-servable-components: pan-ready component lists/counts/qualification, category graph, filtered FC tiers and selected-food comparison at $0.70/oz. Plates/bowls supply linked service components; handhelds excluded and supporting prep stays nested. Excel includes per-component rows; flash cards include FC% beside each food. 17/17 affected browser checks pass, including saved-current-catalog traversal of all 53 menus. No source/operational writes or deployment. Evidence and remaining classification limits: docs/WP_PAN_READY_2026_10_23.md.

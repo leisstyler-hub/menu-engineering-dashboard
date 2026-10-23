@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {buildPortfolio,includeWpMenu} from '../src/features/menu-engineering/wpPortfolioModel.js';
 for(const menu of ['AMZ: Deli Core','AMZ: Grill Core','AMZ: Salt & Char'])assert.equal(includeWpMenu(menu),false);
 assert.equal(includeWpMenu('AMZ: Andes'),true);
+for(const menu of ['AMZ: Pizzas & Flatbreads','Pizza','Flatbreads'])assert.equal(includeWpMenu(menu),false);
 assert.equal(includeWpMenu('AMZ: Cafe Express Curated Sandwiches'),false);
 const food={mrn:'001.23',name:'Roasted carrots',portion:'4 oz',massOz:4,cost:1,foodCost:1/2.8,category:'Vegetables',serviceReasons:[]};
 const result=buildPortfolio([{menu:'A',items:[food]},{menu:'B',items:[{...food}]},{menu:'AMZ: Deli Core',items:[{...food,mrn:'deli'}]}]);

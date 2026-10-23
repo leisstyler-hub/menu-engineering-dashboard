@@ -1,5 +1,5 @@
 import {tierFor} from './panReadyModel.js';
-export const includeWpMenu = menu => !/^(?:AMZ:\s*)?(?:Deli Core|Grill Core|Salt\s*&\s*Char)$/i.test(String(menu).trim()) && !/\bsandwich(?:es)?\b/i.test(String(menu));
+export const includeWpMenu = menu => !/^(?:AMZ:\s*)?(?:Deli Core|Grill Core|Salt\s*&\s*Char)$/i.test(String(menu).trim()) && !/\b(?:sandwich(?:es)?|pizzas?|flatbreads?)\b/i.test(String(menu));
 
 // Source identifiers establish identity. Names alone never merge unrelated foods.
 export function buildPortfolio(projections) {
