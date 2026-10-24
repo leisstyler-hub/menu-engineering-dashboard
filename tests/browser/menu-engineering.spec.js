@@ -195,6 +195,6 @@ for (const width of [390, 1440]) {
 async function chooseMenu(page,name) {
  const picker=page.getByRole('group',{name:'Menu selection'});
 
- await picker.getByRole('button',{name:'Clear menu selection'}).click();
+ await picker.getByRole('button',{name:'Clear filters'}).click();
  await picker.locator('label').filter({has:page.getByRole('checkbox')}).filter({hasText:name}).getByRole('checkbox').check();
 }

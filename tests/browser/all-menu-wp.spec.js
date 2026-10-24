@@ -1,4 +1,4 @@
-﻿import {test,expect} from '@playwright/test';
+import {test,expect} from '@playwright/test';
 import JSZip from 'jszip';
 import {readFile} from 'node:fs/promises';
 import {openTool,collectUnexpectedPageErrors} from './smoke-helpers.js';
@@ -22,6 +22,6 @@ test('Transfer includes a new shared menu and exact new MRN without bundled cata
 async function chooseMenu(page,name) {
  const picker=page.getByRole('group',{name:'Menu selection'});
 
- await picker.getByRole('button',{name:'Clear menu selection'}).click();
+ await picker.getByRole('button',{name:'Clear filters'}).click();
  await picker.locator('label').filter({has:page.getByRole('checkbox')}).filter({hasText:name}).getByRole('checkbox').check();
 }

@@ -1,3 +1,7 @@
+## 2026-10-24 - W&P clear filters
+
+Version 2026.10.24.001-wp-clear-filters labels the existing menu-picker reset as Clear filters, matching Tyler's screenshot request. Clears menu selections and menu search through the existing handler. Browser selectors updated to the visible accessible name. No operational writes. Release state must be established from deployment evidence.
+
 ## 2026-10-24 - Changelog authoring standard
 
 Tyler requires Chief and Donnie to post every commit to Buzz Changelog and standardize concise app/Buzz wording. See docs/governance/CHANGELOG_STANDARD.md. Repository prompt templates updated; installed Donnie prompt is not verified. Documentation-only change; existing app summary renderer and historical entries retained. Publication of this change is not claimed.
