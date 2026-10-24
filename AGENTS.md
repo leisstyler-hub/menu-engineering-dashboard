@@ -2,6 +2,8 @@
 
 ## Current solo-delivery policy
 
+Chief and Donnie must follow [CHANGELOG_STANDARD.md](docs/governance/CHANGELOG_STANDARD.md): post every commit to Buzz Changelog and use matching concise change wording in the app changelog.
+
 Apply [GOVERNANCE.md: Current policy](GOVERNANCE.md#current-policy-solo-delivery-approved-2026-10-24) first. It supersedes conflicting historical staffing and signoff requirements below. Chief and Donnie deliver routine work solo; Reviewer is optional except when a documented risk requires independent review. There is no required Builder or separate Scribe/Release/Verifier identity. Human release authority, substantive checks, source/data protection and honest production evidence still apply.
 
 ## Historical guidance (apply current policy first)

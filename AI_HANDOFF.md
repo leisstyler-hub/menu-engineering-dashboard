@@ -1,3 +1,7 @@
+## 2026-10-24 - Changelog authoring standard
+
+Tyler requires Chief and Donnie to post every commit to Buzz Changelog and standardize concise app/Buzz wording. See docs/governance/CHANGELOG_STANDARD.md. Repository prompt templates updated; installed Donnie prompt is not verified. Documentation-only change; existing app summary renderer and historical entries retained. Publication of this change is not claimed.
+
 ## 2026-10-24 - Solo governance transition (published to main 2026-10-24)
 
 Approved roster: Chief + Donnie, optional shared Reviewer; no separate Builder. GOVERNANCE.md current policy supersedes historical mandatory-team staffing. Routine jobs may be implemented, checked, documented and released by one owner under explicit admin authorization; risk exceptions retain independent review. This documentation candidate changes no app version, behavior or operational records. Prompt updates require owner review/save; identity archival requires human owner/admin action and Alex's agreement for his agents. Governance commit 6d1f308 published under Tyler release approval f26e75bb08e108a184aab295a5da01a8d9cb275cdeb53a853f5bf48ded371837 (17:17:16Z). Production deployment dpl_YmNZJM3gWivjS77d9EuxprrBRCpt was BUILDING at the first post-push inspection; this entry does not claim final production verification. No archival or Donnie deployment is claimed. Approval: GOV-2026-10-24 in PRODUCT_DECISIONS.md. Rollback: revert this docs-only change. Historical Scribe/Reviewer staffing requirements are not current solo-lane gates.

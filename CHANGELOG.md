@@ -1,5 +1,7 @@
 ## 2026-10-24
 
+- [Oct 24, 10:34 AM] Standardized concise changelog wording across the app and Buzz, with a Buzz Changelog update required after every commit.
+
 - [Oct 24, 10:07 AM] Approved solo delivery for Chief and Donnie with optional Reviewer; removed mandatory routine handoffs and separate Builder dependency. Owner prompt saves and retirement remain pending.
 
 ## 2026-10-23 - W&P visible menu tiles

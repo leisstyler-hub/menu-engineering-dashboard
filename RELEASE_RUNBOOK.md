@@ -6,6 +6,8 @@ Apply [GOVERNANCE.md: Current policy](GOVERNANCE.md#current-policy-solo-delivery
 
 ### Current routine release sequence
 
+Every commit also requires the concise Buzz Changelog post defined in [CHANGELOG_STANDARD.md](docs/governance/CHANGELOG_STANDARD.md). This includes documentation commits before deployment; update the recorded state after production verification.
+
 1. Record requesting admin, scoped release authorization, owner, branch and exact candidate HEAD. Revalidate current upstream and isolate unrelated work.
 2. Complete implementation, fresh self-review, required checks and acceptance proof; reconcile current records. Documentation-only releases use the existing narrow documentation checks and docs-only publish mechanics; no app-version bump is required.
 3. Stop for failed checks, widened scope, conflicting instructions or unavailable access. For a risk exception, obtain the independent review required by GOVERNANCE.md before publication.
