@@ -1,3 +1,7 @@
+## Current staffing reference (2026-10-24)
+
+Technical/data protections in this document remain binding. Apply current GOVERNANCE.md for risk-appropriate independent review and owner responsibility; historical references to named Architect, Scribe or Data Guard identities do not require those agents for routine solo work. Changing a protected technical/data rule still requires recorded admin approval and appropriate independent review.
+
 # Architecture Rules
 
 Authoritative current-state architecture and data-authority rules for the Culinary Tools Platform. This consolidates rules already established in `AGENTS.md` and `AI_HANDOFF.md` into one governance-tier location; it does not reinterpret or change them. For code-structure detail (file layout, module boundaries) see `docs/ARCHITECTURE.md`. For deployment mechanics see `docs/DEPLOYMENT.md` and [RELEASE_RUNBOOK.md](RELEASE_RUNBOOK.md).

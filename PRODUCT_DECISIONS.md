@@ -1,3 +1,11 @@
+## GOV-2026-10-24: Solo delivery and reduced roster
+
+Date: 2026-10-24. Status: APPROVED; rollout tracked in AI_HANDOFF.md. Requesting/Approving Admin and Admin of Record: Tyler, authenticated Buzz identity `12fc010ae7314bd1bf75d7a74c296a93629c12a464ba2aaa406fee08a57d794d`. Permission: Registered Admin process approval. Approval `7504a1f092ceedc3f1ceeb1d1c697833674d807be7398e09e181e75ef6e8d049` at 17:05:21Z; no-Builder clarification `2883ddb6cf2aa3a0d79e6830c0c3d6aa7a93e75196ad9d5edde3db02ce4e912e`.
+
+Context: a changelog candidate passed verification but waited for another named agent. Decision: Chief and Donnie deliver routine work solo, with optional shared Reviewer and independent review for documented risk exceptions. No separate Builder. Authoritative details: GOVERNANCE.md current policy.
+
+Reasoning: remove unnecessary handoffs while retaining evidence, human authorization and data safeguards. Rejected: mandatory two-agent lane and nine-worker/six-team default. Implications: align repository rules and owner-reviewed prompts; identity retirement is a separate owner action requiring Alex's agreement for his agents. Revisit after an incident, demonstrated risk, large overhaul or explicit admin direction. This approval does not authorize operational data changes or establish publication.
+
 ### 2026-10-20 - SSMT control discovery
 
 Tyler approved making the SSMT history control and primary Pricing Structure / Menu Selector controls more obvious at authenticated Buzz event `604bee25b3cfd67dcb19acb5a918a33c008733d5ec44bd35ccf94c8317bac4c5`, 2026-10-21T05:21:31Z. Display Activity History as **SSMT Change Log**, retaining the same saved-change history, permissions and destination. Enlarge the existing primary section buttons and identify their active state. No Platform Home reorganization, renamed tools, data-source change or new workflow. Requesting/Approving Admin and Admin of Record: Tyler, `12fc010ae7314bd1bf75d7a74c296a93629c12a464ba2aaa406fee08a57d794d`. Revisit only on an explicit product request.

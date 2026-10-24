@@ -1,5 +1,11 @@
 # Agent Instructions
 
+## Current solo-delivery policy
+
+Apply [GOVERNANCE.md: Current policy](GOVERNANCE.md#current-policy-solo-delivery-approved-2026-10-24) first. It supersedes conflicting historical staffing and signoff requirements below. Chief and Donnie deliver routine work solo; Reviewer is optional except when a documented risk requires independent review. There is no required Builder or separate Scribe/Release/Verifier identity. Human release authority, substantive checks, source/data protection and honest production evidence still apply.
+
+## Historical guidance (apply current policy first)
+
 This is the entry point for any agent or Registered Admin working on the Culinary Tools Platform. Read in this order:
 
 1. **AGENTS.md** (this file) — roster, teams, reading order.

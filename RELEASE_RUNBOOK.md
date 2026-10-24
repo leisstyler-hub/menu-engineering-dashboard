@@ -1,5 +1,19 @@
 # Release Runbook
 
+## Current solo-delivery policy
+
+Apply [GOVERNANCE.md: Current policy](GOVERNANCE.md#current-policy-solo-delivery-approved-2026-10-24) first. It supersedes conflicting historical staffing and signoff requirements below. Chief and Donnie deliver routine work solo; Reviewer is optional except when a documented risk requires independent review. There is no required Builder or separate Scribe/Release/Verifier identity. Human release authority, substantive checks, source/data protection and honest production evidence still apply.
+
+### Current routine release sequence
+
+1. Record requesting admin, scoped release authorization, owner, branch and exact candidate HEAD. Revalidate current upstream and isolate unrelated work.
+2. Complete implementation, fresh self-review, required checks and acceptance proof; reconcile current records. Documentation-only releases use the existing narrow documentation checks and docs-only publish mechanics; no app-version bump is required.
+3. Stop for failed checks, widened scope, conflicting instructions or unavailable access. For a risk exception, obtain the independent review required by GOVERNANCE.md before publication.
+4. The same owner may publish through the existing governed commands, preserve rollback evidence, confirm deployment READY and exact source SHA, and check the canonical production environment. A push or unchanged version string alone does not prove deployment.
+5. Report exact state, commit/version where applicable, links, checks, production proof, rollback, remaining risks and elapsed time. Routine LIVE requires the complete evidence above, not another agent's signoff. State explicitly that delivery and verification were solo. Do not retroactively relabel historical releases.
+
+## Historical guidance (apply current policy first)
+
 Governs how a change moves from "implemented" to "live" for the Culinary Tools Platform, and who is allowed to make that happen. Maintained by Scribe. For the mechanical publish commands (scripts, credentials, repair steps), see `docs/DEPLOYMENT.md` and `AI_HANDOFF.md` — this file does not repeat those, it governs the authority and sequencing around them.
 
 ## Who Is Involved

@@ -1,5 +1,13 @@
 # Mission Template
 
+## Current solo-delivery policy
+
+Apply [GOVERNANCE.md: Current policy](GOVERNANCE.md#current-policy-solo-delivery-approved-2026-10-24) first. It supersedes conflicting historical staffing and signoff requirements below. Chief and Donnie deliver routine work solo; Reviewer is optional except when a documented risk requires independent review. There is no required Builder or separate Scribe/Release/Verifier identity. Human release authority, substantive checks, source/data protection and honest production evidence still apply.
+
+For routine solo work use: requesting/admin identity and approval event; objective; owner/branch; scope and exclusions; risk classification; acceptance checks; documentation; rollback; release authority; current state. Use the full historical template only when the risk or overhaul warrants it. REQUIRED REVIEWERS may be `None - routine solo lane`; independent review is recorded for exceptions. SELECTED AGENT TEAM may be `Solo - Chief` or `Solo - Donnie`.
+
+## Historical guidance (apply current policy first)
+
 The standard structure Chief uses to assign work to permanent workers (see [GOVERNANCE.md](GOVERNANCE.md) for roster/teams). Reproduced here from Chief's own mission-assignment format so the structure survives outside conversation history. Maintained by Scribe; if Chief's actual practice changes, update this file to match — don't let this file drift into an aspirational template nobody follows.
 
 Every mission assignment should fill in the fields below. Omit a field only if it genuinely does not apply (e.g., `DATA RISKS: None`), not by leaving it blank.
