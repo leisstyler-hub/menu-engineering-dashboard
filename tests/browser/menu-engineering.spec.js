@@ -14,7 +14,7 @@ async function setup(page, source = 'supabase-recipe-items') {
     if (request.url().includes('/api/recipe-library')) return route.fulfill({ json: { ok: true, rows, source } });
     return route.fulfill({ json: { ok: true, records: [], rows: [], days: [] } });
   });
-  await openTool(page, /open dashboard/i, /Menu Engineering/);
+  await openTool(page, /open menu analysis/i, /Menu Engineering/);
   return writes;
 }
 
@@ -63,7 +63,7 @@ test('W&P controls require Edit and a reason; export captures exceptions without
 
 test('Menu Engineering retains Menu and Portfolio views with compact desktop and mobile controls', async ({ page }) => {
   await setup(page);
-  await page.getByRole('button', { name: 'Menu Matrix', exact: true }).click();
+  await page.getByRole('button', { name: 'Menu Performance', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Menu View', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Portfolio Menu View', exact: true }).click();
   await expect(page.getByText('Test Kitchen', { exact: true }).last()).toBeVisible();
@@ -168,7 +168,7 @@ for (const width of [390, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     const writes = await setup(page);
     const guidance = page.getByRole('button', { name: 'W&P Guidance', exact: true });
-    const matrix = page.getByRole('button', { name: 'Menu Matrix', exact: true });
+    const matrix = page.getByRole('button', { name: 'Menu Performance', exact: true });
     await expect(guidance).toBeVisible();
     await expect(matrix).toBeVisible();
     await expect(page.getByLabel('Search all engineering items')).toHaveCount(0);

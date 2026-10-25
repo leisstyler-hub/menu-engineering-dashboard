@@ -1,5 +1,7 @@
 ## 2026-10-25
 
+- [Oct 25, 10:10 AM] Renamed menu analysis navigation and made every tool-card description fully readable on desktop and mobile.
+
 - [Oct 25, 10:00 AM] Replaced Operations Console with menu categories, searchable data-gap reviews and clear snapshot/shared-source status.
 
 ## 2026-10-24

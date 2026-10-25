@@ -11,7 +11,7 @@ for(const width of [390,1440]) test(`Pan-ready ranking, supporting prep and item
   const errors=collectUnexpectedPageErrors(page),writes=[];
   await page.setViewportSize({width,height:900});
   await page.route('**/api/**',route=>{if(route.request().method()!=='GET'&&!route.request().url().includes('/traffic/'))writes.push(route.request().url());return route.fulfill({json:route.request().url().includes('recipe-library')?{ok:true,source:'supabase-recipe-items',rows}:{ok:true,records:[],rows:[]}});});
-  await openTool(page,/open dashboard/i,/Menu Engineering/);
+  await openTool(page,/open menu analysis/i,/Menu Engineering/);
   await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();
   await expect(page.getByLabel('W&P selling price',{exact:true})).toHaveValue('0.70');
   await expect(page.getByLabel('W&P price unit')).toHaveValue('oz');
@@ -49,7 +49,7 @@ test('Saved current shared catalog opens every menu with matching servable count
   const specials=Object.fromEntries(await Promise.all([['AMZ: Andes','andes'],['AMZ: Balti','balti']].map(async([menu,file])=>[menu,JSON.parse(await readFile(new URL(`../../src/data/${file}WpAnalysis.json`,import.meta.url),'utf8'))])));
   const menus=[...new Set(payload.rows.map(r=>r.menu))].filter(includeWpMenu),errors=collectUnexpectedPageErrors(page),writes=[];
   await page.route('**/api/**',route=>{if(route.request().method()!=='GET'&&!route.request().url().includes('/traffic/'))writes.push(route.request().url());return route.fulfill({json:route.request().url().includes('recipe-library')?payload:{ok:true,records:[],rows:[]}});});
-  await openTool(page,/open dashboard/i,/Menu Engineering/);
+  await openTool(page,/open menu analysis/i,/Menu Engineering/);
   await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();
   await expect(page.getByRole('group',{name:'Menu selection'}).getByRole('checkbox')).toHaveCount(menus.length);
   const portfolio=buildPortfolio(menus.map(menu=>panReadyMenu(buildMenuAnalysisSource(menu,payload.rows,specials[menu]||library,true),11.2,payload.rows)));

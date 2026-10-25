@@ -1,3 +1,7 @@
+## 2026-10-25 - Menu analysis labels and tool descriptions
+
+Candidate 2026.10.25.002-menu-analysis-labels renames Open Dashboard to Open Menu Analysis, and Menu Matrix to Menu Performance, under Tyler approval. Both analysis paths retain behavior. All 12 landing descriptions shortened; desktop/mobile description clamps and mobile title clamp removed. Desktop action text wraps beside a fixed-size arrow. Four-width browser proof covers 320/390/1440/1920px. No data/source/operational writes. Solo Chief, release state requires deployment evidence. Scope record: docs/MENU_ANALYSIS_LABELS_2026_10_25.md.
+
 ## 2026-10-25 - Menu readiness replacement
 
 Candidate 2026.10.25.001-menu-readiness replaces Operations Console on desktop/mobile with a shared panel. Bundled categories are labeled snapshot; explicit current-data load uses the existing recipe-library scope=all read. Categories and four exact trust-gap counts open searchable, paginated item/menu/MRN/category lists. Existing trust-gap rules reused; no source changes or operational writes. Duplicate category panel removed. Failed reads remain explicit; reference rows are never labeled current shared data. Missing allergen data does not mean allergen-free. New/updated landing browser suite passes 7/7; weekday promotion fixture stabilized without runtime calendar changes. Owner Chief, solo. Release evidence: docs/MENU_READINESS_2026_10_25.md and workspace release log; this candidate note alone does not establish deployment.

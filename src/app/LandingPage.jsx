@@ -270,8 +270,8 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
     menuEngineering: {
       title: "Menu Engineering",
       eyebrow: "Live",
-      description: "Review price, true cost, food cost %, margin, and portfolio health across MenuWorks items.",
-      action: "Open Dashboard",
+      description: "Explore W&P guidance and compare item costs, food cost % and margins.",
+      action: "Open Menu Analysis",
       onOpen: onOpenMenuEngineering,
       icon: BarChart3,
       tone: "emerald",
@@ -280,7 +280,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
     neighborhoodRotations: {
       title: "Neighborhood Rotations",
       eyebrow: "Pilot in Place",
-      description: "Declare weekly global rotations, station LTOs, Fresh $5 selections, and district status.",
+      description: "Plan weekly menus, promotions and Fresh $5 selections.",
       action: "Open Rotations",
       onOpen: onOpenNeighborhoodRotations,
       icon: CalendarRange,
@@ -290,7 +290,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
     menuLibrary: {
       title: "Menu Library",
       eyebrow: "New",
-      description: "Open menu item library cards with costs, calories, protein, Webtrition weights, allergens, descriptions, and future recipe files.",
+      description: "Find menu items, costs, portions, nutrition and allergens.",
       action: "Open Library",
       onOpen: onOpenRecipeDatabase,
       icon: BookOpen,
@@ -300,7 +300,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
     menuProjects: {
       title: "Menu Projects",
       eyebrow: "New",
-      description: "Track concept briefs, approvals, files, SSMT programming, Centric handoffs, blockers, and launch deadlines.",
+      description: "Track menu launches, approvals, handoffs and deadlines.",
       action: "Open Projects",
       onOpen: onOpenMenuProjects,
       icon: FolderKanban,
@@ -310,7 +310,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
     ssmt: {
       title: "SSMT",
       eyebrow: "New",
-      description: "Build Culinary-to-IT menu records, assign pricing from SEA price + category, manage modifiers, flags, phases, and active dates.",
+      description: "Build menus with pricing, modifiers and Culinary-to-IT review.",
       action: "Open SSMT",
       onOpen: onOpenSsmtTool,
       icon: FileSpreadsheet,
@@ -320,7 +320,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
     menuAudit: {
       title: "Menu Audit Tool",
       eyebrow: "Phase 1",
-      description: "Compare SSMT app records with Webtrition metadata and shopping-list support with exact MRN preservation.",
+      description: "Check SSMT menus against Webtrition and shopping lists.",
       action: "Open Audit",
       onOpen: onOpenMenuAuditTool,
       icon: ClipboardCheck,
@@ -330,7 +330,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
     cafeTasting: {
       title: "Cafe Tasting Form",
       eyebrow: "New",
-      description: "Build a plate from the Menu Library, weigh it, rate presentation and taste, and submit straight to Smartsheet.",
+      description: "Record plate weights, presentation and tasting feedback.",
       action: "Open Tasting Form",
       onOpen: onOpenCafeTasting,
       icon: Camera,
@@ -340,7 +340,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
     webtrition: {
       title: "Webtrition",
       eyebrow: "External",
-      description: "Open Webtrition for recipes, MRNs, nutrition, and menu programming source data.",
+      description: "Open source recipes, MRNs, nutrition and menu programming.",
       action: "Open Webtrition",
       onOpen: () => openExternalTool("https://www.webtrition.com/ui/#/"),
       icon: null,
@@ -351,7 +351,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
     leanTool: {
       title: "Lean Tool",
       eyebrow: "New",
-      description: "Run fast phone or tablet observations using DOWNTIME waste categories, live marks, and report-out email.",
+      description: "Record DOWNTIME observations and share waste findings.",
       action: "Open Lean Tool",
       onOpen: onOpenLeanTool,
       icon: Smartphone,
@@ -361,7 +361,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
     menuCrossUtilization: {
       title: "Menu Cross Utilization",
       eyebrow: "New",
-      description: "See pillar strategy, per-menu ingredient overlap, and a pairwise matrix built from shopping-list data for menu planning.",
+      description: "Compare ingredient overlap and cross-use across menus.",
       action: "Open Cross Utilization",
       onOpen: onOpenMenuCrossUtilization,
       icon: Shuffle,
@@ -371,7 +371,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
     transferTool: {
       title: "Transfer",
       eyebrow: "Draft",
-      description: "Build shared inter-cafe transfers with current Item + Waste Cost, reusable copies, and S4-ready Excel or ZIP export.",
+      description: "Create cafe transfers with current Item + Waste Cost and S4 exports.",
       action: "Open Transfer",
       onOpen: onOpenTransferTool,
       icon: ArrowRightLeft,
@@ -381,7 +381,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
     commissaryOrdering: {
       title: "Commissary Ordering",
       eyebrow: "Draft",
-      description: "Order salad-bar production by cafe and delivery, then download the locked Prep List and S4 transfer workbooks.",
+      description: "Plan salad-bar orders and export Prep Lists and S4 transfers.",
       action: "Open Commissary Ordering",
       onOpen: onOpenCommissaryOrdering,
       icon: PackageCheck,
@@ -880,8 +880,8 @@ function MobileToolCard({ title, eyebrow, description, action, onOpen, icon: Ico
       </div>
       <div className="min-w-0 flex-1 text-left">
         <p className="text-[9px] font-black uppercase tracking-[0.12em] text-slate-400">{meta}</p>
-        <h2 className="mt-1 line-clamp-2 text-sm font-black leading-5 text-slate-950">{title}</h2>
-        <p className="mt-2 line-clamp-3 text-xs font-semibold leading-4 text-slate-500">{description}</p>
+        <h2 className="mt-1 break-words text-sm font-black leading-5 text-slate-950">{title}</h2>
+        <p data-testid="tool-description" className="mt-2 break-words text-xs font-semibold leading-4 text-slate-500">{description}</p>
       </div>
       <div className="flex items-center justify-end border-t border-slate-100 pt-2 text-slate-950">
         <span className="sr-only">{action}</span>
@@ -1168,15 +1168,15 @@ function ToolCard({ title, eyebrow, description, action, onOpen, icon: Icon, ton
           <span className={`max-w-[8rem] rounded-full border px-2.5 py-1 text-[10px] font-black leading-none ${tones[tone]}`}>{eyebrow}</span>
         </div>
         <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">{meta}</p>
-        <h2 className="mt-1.5 text-xl font-bold leading-6 tracking-normal">{title}</h2>
-        <p className="mt-2 line-clamp-3 text-sm leading-5 text-slate-600">{description}</p>
+        <h2 className="mt-1.5 break-words text-xl font-bold leading-6 tracking-normal">{title}</h2>
+        <p data-testid="tool-description" className="mt-2 break-words text-sm leading-5 text-slate-600">{description}</p>
       </div>
       <button
         onClick={onOpen}
         className="mt-4 inline-flex w-full items-center justify-between rounded-lg bg-slate-950 px-3 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
       >
-        {action}
-        <ArrowRight size={18} />
+        <span className="min-w-0 break-words text-left">{action}</span>
+        <ArrowRight size={18} className="ml-2 shrink-0" />
       </button>
     </article>
   );

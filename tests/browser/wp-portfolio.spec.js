@@ -9,7 +9,7 @@ for(const width of [390,1440])test(`Unique qualifying portfolio and compact menu
  const rows=[{...food,menu:'Kitchen A'},{...food,menu:'Kitchen B'},{...food,item:'Roasted potatoes',mrn:'00013',trueCost:2,menu:'Kitchen A'},...['AMZ: Deli Core','AMZ: Grill Core','AMZ: Salt & Char'].map(menu=>({...food,item:'Tomato slices',mrn:menu,menu}))];
  rows.push(...['Arugula','Shredded Romaine','Diced Tomatoes','Shredded Carrots','Diced Cucumber','Ingredient: Parmesan Cheese','Pepperoni Pizza'].map((item,i)=>({...food,item,mrn:`raw-${i}`,menu:'Kitchen A'})),{...food,item:'Roasted carrots',mrn:'pizza-menu',menu:'AMZ: Pizzas & Flatbreads'});
  await page.route('**/api/**',r=>{if(r.request().method()!=='GET'&&!r.request().url().includes('/traffic/'))writes.push(r.request().url());return r.fulfill({json:r.request().url().includes('recipe-library')?{ok:true,source:'supabase-recipe-items',rows}:{ok:true,rows:[],records:[]}});});
- await page.setViewportSize({width,height:900});await openTool(page,/open dashboard/i,/Menu Engineering/);await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();
+ await page.setViewportSize({width,height:900});await openTool(page,/open menu analysis/i,/Menu Engineering/);await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();
  const picker=page.getByRole('group',{name:'Menu selection'}),view=page.getByRole('region',{name:'W&P qualifying portfolio'});
  await expect(picker.getByRole('checkbox')).toHaveCount(2);await expect(picker).not.toContainText('Core');await expect(picker).not.toContainText('Salt');
  await expect(view.getByTestId('portfolio-food')).toHaveCount(1);await expect(view).toContainText('Kitchen A · Kitchen B');await expect(view).toContainText('35.7%');

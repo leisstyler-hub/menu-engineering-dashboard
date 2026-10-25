@@ -7,7 +7,7 @@ for(const width of [390,1440])test(`All W&P menus use component view and current
  await page.setViewportSize({width,height:900});const errors=collectUnexpectedPageErrors(page),writes=[];
  const rows=[{menu:'New Kitchen',item:'Gnocchi',mrn:'88770.1',portion:'6 oz portion',portionOz:6,trueCost:2},{menu:'New Kitchen',item:'Purchased topping',mrn:'00000999.01',portion:'1 oz',portionOz:1,trueCost:.1}];
  await page.route('**/api/**',r=>{if(r.request().method()!=='GET')writes.push(r.request().url());return r.fulfill({json:r.request().url().includes('recipe-library')?{ok:true,source:'supabase-recipe-items',rows}:{ok:true,records:[],rows:[],days:[]}})});
- await openTool(page,/open dashboard/i,/Menu Engineering/);await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();await chooseMenu(page,'New Kitchen');
+ await openTool(page,/open menu analysis/i,/Menu Engineering/);await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();await chooseMenu(page,'New Kitchen');
  const view=page.getByRole('region',{name:'Pan-ready W&P assortment'});await expect(view).toBeVisible();await expect(view.getByTestId('servable-food')).toHaveCount(2);await expect(view.getByRole('img',{name:'Servable components by category chart'})).toBeVisible();
  const dish=view.getByTestId('servable-food').filter({has:page.getByRole('button',{name:'Compare Gnocchi',exact:true})});await expect(dish).toContainText('Recipe linked');await dish.getByText(/Supporting components/).click();await expect(dish.getByTestId('supporting-component').first()).toBeVisible();
  await expect(view).toContainText('Recipe not linked; shared item economics only');await expect(view).not.toContainText('HACCP');
