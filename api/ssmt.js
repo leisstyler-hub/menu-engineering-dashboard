@@ -14,6 +14,7 @@ import {
   validateExperienceChange,
   validateWorkspaceShape,
 } from "../src/features/ssmt/ssmtAudit.js";
+import { publicCalendarMenus } from "../lib/ssmtCalendarPreview.js";
 const roles = new Set(["Chef", "Experience", "IT"]);
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "private, no-store");
@@ -109,17 +110,7 @@ export default async function handler(req, res) {
       const { workspace } = await storedWorkspace();
       return res.status(200).json({
         ok: true,
-        menus: workspace.menus
-          .filter((m) => !m.hiddenFromDownstream)
-          .map((m) => ({
-            id: m.id,
-            name: m.name,
-            type: m.type,
-            phase: m.phase,
-            activeStart: m.activeStart,
-            activeEnd: m.activeEnd,
-            promotionSchedule: m.promotionSchedule,
-          })),
+        menus: publicCalendarMenus(workspace.menus),
       });
     }
     const actor = await identity(req);

@@ -1,3 +1,9 @@
+## CAL-2026-10-25: Promotion previews and pale date highlight
+
+Requesting/Approving Admin: Tyler, authenticated identity 12fc010ae7314bd1bf75d7a74c296a93629c12a464ba2aaa406fee08a57d794d. Tyler request 8152c08f614ef47361e4725c904ec24380e2ca1a32a2fb809011cdadb8c4bcf5 and post-pilot approval 0afb53031e21e0544a8c6b725bf912eff7d085544c09e14296fc4ca4c906f5cb. The request asks for BYPTWD hover details, then missing-data guidance and expansion if the pilot is liked; approval follows the populated pilot and accepts its layout before connecting current data. Scope is the shared promotion calendars, not a general public SSMT viewer.
+
+Hover/focus and landing tap show dates, type, phase, menu FIXY and supplied item display information. SSMT click-to-open remains. Empty promotions explain possible outside-app processing; no rebuilding is required for calendar use. Blank FIXY is explicit, never inferred. Pale #f0f9e8 replaces intense lime. Current shared SSMT remains authoritative; no record/schema writes. Reject public full-workspace reads, recipe/storage links and private price/modifier/account/audit fields. Public projection is defined in ARCHITECTURE_RULES.md and independently reviewed before release.
+
 ## GOV-2026-10-24: Solo delivery and reduced roster
 
 Date: 2026-10-24. Status: APPROVED; rollout tracked in AI_HANDOFF.md. Requesting/Approving Admin and Admin of Record: Tyler, authenticated Buzz identity `12fc010ae7314bd1bf75d7a74c296a93629c12a464ba2aaa406fee08a57d794d`. Permission: Registered Admin process approval. Approval `7504a1f092ceedc3f1ceeb1d1c697833674d807be7398e09e181e75ef6e8d049` at 17:05:21Z; no-Builder clarification `2883ddb6cf2aa3a0d79e6830c0c3d6aa7a93e75196ad9d5edde3db02ce4e912e`.

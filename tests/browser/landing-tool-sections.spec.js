@@ -125,7 +125,7 @@ test("home shows the shared promotion calendar without opening password-protecte
     };
   });
   expect(positions).toEqual({ programmingBeforeCalendar: true, calendarBeforeIntelligence: true });
-  await expect(calendar.getByRole("button", { name: "Landing Page Promo" })).toHaveCount(0);
+  await expect(calendar.getByRole("button", { name: "Landing Page Promo" })).toHaveCount(1);
   await calendar.getByText("Landing Page Promo", { exact: true }).click();
   await expect(page.getByText(/passcode required/i)).toHaveCount(0);
   await expect(programming).toBeVisible();

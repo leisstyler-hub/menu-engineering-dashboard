@@ -8,7 +8,7 @@ for(const width of [390,1440])test(`BYPTWD landing-only hover pilot at ${width}p
   await page.clock.setFixedTime(new Date(2026,9,9,12));
   await page.route('**/api/**',route=>{
     const r=route.request();if(r.method()!=='GET'&&!r.url().includes('/traffic/'))writes.push(r.url());
-    return route.fulfill({json:r.url().includes('action=status')?{ok:true,enabled:true}:r.url().includes('action=calendar')?{ok:true,menus:[pilot,{id:'other-menu',name:'Other promotion',type:'Promotion',activeStart:pilot.activeStart,activeEnd:pilot.activeEnd}]}:{ok:true,records:[],rows:[]}});
+    return route.fulfill({json:r.url().includes('action=status')?{ok:true,enabled:true}:r.url().includes('action=calendar')?{ok:true,menus:[pilot,{id:'other-menu',name:'Other promotion',type:'Promotion',activeStart:pilot.activeStart,activeEnd:pilot.activeEnd,items:[],fixyDesignation:''}]}:{ok:true,records:[],rows:[]}});
   });
   await page.goto('/');await expect(page.getByTestId('brand-entrance')).toHaveCount(0);
   const calendar=page.getByTestId(width<768?'mobile-landing-promotion-calendar':'landing-promotion-calendar');
@@ -26,7 +26,10 @@ for(const width of [390,1440])test(`BYPTWD landing-only hover pilot at ${width}p
   await page.screenshot({path:`test-results/byptwd-hover-${width}.png`,fullPage:false});
   await page.keyboard.press('Escape');await expect(popup).toHaveCount(0);
   await trigger.focus();await trigger.press('Tab');await trigger.focus();await expect(popup).toBeVisible();
+  await trigger.press('ArrowDown');await expect(popup.getByRole('button',{name:'Close',exact:true})).toBeFocused();
+  await page.keyboard.press('Tab');await expect(popup.getByRole('textbox',{name:'Search menu items'})).toBeFocused();
   await popup.getByRole('button',{name:'Close',exact:true}).click();await expect(popup).toHaveCount(0);
-  await expect(calendar.getByRole('button',{name:'Other promotion',exact:true})).toHaveCount(0);
+  await calendar.getByRole('button',{name:'Other promotion',exact:true}).click();
+  await expect(page.getByRole('dialog',{name:'Other promotion preview'})).toContainText('no rebuild is required');
   expect(writes).toEqual([]);
 });

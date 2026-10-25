@@ -1,3 +1,7 @@
+## 2026-10-25 - Promotion preview rollout candidate
+
+Candidate 2026.10.25.005-promotion-preview connects the approved hover card to the existing calendar GET through lib/ssmtCalendarPreview.js. Only visible Promotion menus receive scalar allowlisted FIXY and item label/description/calories/category data; recurrence is reconstructed, hidden records/dividers excluded. No full-workspace or private recipe/link/price/modifier exposure. Shared calendars support hover/focus; landing tap and original SSMT click-to-open behavior remain. Empty-menu messaging permits outside-app work without reconstruction. Pale date highlight included. CAL-2026-10-25 is approved; boundary review is required before publication. No operational writes. Release evidence: workspace WORK_LOGS/PROMOTION_PREVIEW_RELEASE_2026_10_25.md.
+
 ## 2026-10-25 - BYPTWD hover pilot, local only
 
 Candidate 2026.10.25.004-byptwd-hover-pilot is restricted to BYPTWD exact menu ID on landing calendars; SSMT click-to-open and other promotions stay unchanged. Hover/focus/tap shows dates/type/status/FIXY and searchable supplied items. Pale #f0f9e8 today fill replaces intense lime locally. No backend/public data projection or production workspace changes. Existing public API lacks FIXY/items, so filled prototype uses a clearly labeled sanitized October 20 snapshot with 58 item rows, outside repo source. Not deployed; awaiting Tyler review before rollout. Scope/evidence: docs/BYPTWD_HOVER_PILOT_2026_10_25.md. Production remains 2026.10.25.003-calendar-lime-today unless independently changed.

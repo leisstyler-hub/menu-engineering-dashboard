@@ -412,8 +412,9 @@ test("Experience description edits save without granting wider controls", async 
 test("public home keeps a read-only calendar while SSMT accounts are enabled", async ({
   page,
 }) => {
-  const now = new Date(),
+  const now = new Date(2026,9,26,12),
     date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  await page.clock.setFixedTime(now);
   await page.route("**/api/ssmt**", (r) => {
     const action = new URL(r.request().url()).searchParams.get("action");
     return r.fulfill({
@@ -443,7 +444,9 @@ test("public home keeps a read-only calendar while SSMT accounts are enabled", a
     ).toBeVisible();
   await expect(
     calendar.getByRole("button", { name: "Public Promotion", exact: true }),
-  ).toHaveCount(0);
+  ).toHaveCount(1);
+  await calendar.getByRole('button',{name:'Public Promotion',exact:true}).click();
+  await expect(page.getByRole('dialog',{name:'Public Promotion preview'})).toBeVisible();
   await expect(page.getByRole("heading", { name: "SSMT Sign in" })).toHaveCount(
     0,
   );

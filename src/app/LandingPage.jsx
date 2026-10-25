@@ -475,7 +475,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
               ))}
             </section>
 
-            <PromotionCalendar menus={promotionMenus} testId="landing-promotion-calendar" enablePilotPreview />
+            <PromotionCalendar menus={promotionMenus} testId="landing-promotion-calendar" />
 
             <LandingAccordion
               testId="platform-intelligence"
@@ -673,7 +673,7 @@ function MobileLanding({
           ))}
         </section>
 
-        <PromotionCalendar menus={promotionMenus} testId="mobile-landing-promotion-calendar" enablePilotPreview />
+        <PromotionCalendar menus={promotionMenus} testId="mobile-landing-promotion-calendar" />
 
         <LandingAccordion
           testId="mobile-platform-intelligence"
