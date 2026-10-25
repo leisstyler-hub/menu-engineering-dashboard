@@ -1,3 +1,7 @@
+## 2026-10-25
+
+- [Oct 25, 10:00 AM] Replaced Operations Console with menu categories, searchable data-gap reviews and clear snapshot/shared-source status.
+
 ## 2026-10-24
 
 - [Oct 24, 10:58 AM] Clarified the W&P menu picker with a Clear filters button that resets menu selections and menu search.

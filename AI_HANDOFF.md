@@ -1,3 +1,7 @@
+## 2026-10-25 - Menu readiness replacement
+
+Candidate 2026.10.25.001-menu-readiness replaces Operations Console on desktop/mobile with a shared panel. Bundled categories are labeled snapshot; explicit current-data load uses the existing recipe-library scope=all read. Categories and four exact trust-gap counts open searchable, paginated item/menu/MRN/category lists. Existing trust-gap rules reused; no source changes or operational writes. Duplicate category panel removed. Failed reads remain explicit; reference rows are never labeled current shared data. Missing allergen data does not mean allergen-free. New/updated landing browser suite passes 7/7; weekday promotion fixture stabilized without runtime calendar changes. Owner Chief, solo. Release evidence: docs/MENU_READINESS_2026_10_25.md and workspace release log; this candidate note alone does not establish deployment.
+
 ## 2026-10-24 - W&P clear filters
 
 Version 2026.10.24.001-wp-clear-filters labels the existing menu-picker reset as Clear filters, matching Tyler's screenshot request. Clears menu selections and menu search through the existing handler. Browser selectors updated to the visible accessible name. No operational writes. Release state must be established from deployment evidence.

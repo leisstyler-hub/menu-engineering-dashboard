@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ArrowRight, ArrowRightLeft, BarChart3, BookOpen, CalendarRange, ChevronDown, Camera, ClipboardCheck, Database, FileSpreadsheet, FolderKanban, Home, ListChecks, PackageCheck, PieChart, Settings, Shuffle, Smartphone, Sparkles, TrendingUp, Utensils, Wrench } from "lucide-react";
+import { ArrowRight, ArrowRightLeft, BarChart3, BookOpen, CalendarRange, ChevronDown, Camera, ClipboardCheck, Database, FileSpreadsheet, FolderKanban, Home, ListChecks, PackageCheck, PieChart, Settings, Shuffle, Smartphone, Sparkles, Utensils, Wrench } from "lucide-react";
 
 import CHANGELOG_TEXT from "../../CHANGELOG.md?raw";
 import DASHBOARD_SUMMARY from "../data/dashboardSummary.json";
 import CompassOneLogo from "../shared/ui/CompassOneLogo.jsx";
 import PlatformSettings from "../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../shared/ui/VersionStamp.jsx";
+import MenuReadiness, { useMenuReadiness } from './MenuReadiness.jsx';
 import PromotionCalendar from "../features/ssmt/PromotionCalendar.jsx";
 import { loadSsmtPublicCalendar } from "../features/ssmt/ssmtWorkspaceStorage.js";
 import { money } from "../shared/formatting.js";
@@ -249,6 +250,8 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
     topMenus,
   } = DASHBOARD_SUMMARY;
 
+  const readiness = useMenuReadiness();
+
   const handleDownloadTrustLayerGapList = async () => {
     const response = await fetch("/api/recipe-library?scope=all");
     const payload = await response.json().catch(() => null);
@@ -436,6 +439,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
         onOpenLeanTool={onOpenLeanTool}
         onOpenMenuCrossUtilization={onOpenMenuCrossUtilization}
         onOpenSmartsheetHealth={onOpenSmartsheetHealth}
+        readiness={readiness}
         promotionMenus={promotionMenus}
       />
 
@@ -481,14 +485,12 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
               description="Operational analytics at a glance"
             >
             <div className="space-y-4">
-            <section className="grid grid-cols-1 gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+            <section className="grid grid-cols-1 gap-4">
               <DashboardPanel icon={PieChart} eyebrow="Menu Intelligence" title="Diet Mix">
                 <DietDonut counts={dietCounts} total={totalItems} />
               </DashboardPanel>
 
-              <DashboardPanel icon={TrendingUp} eyebrow="Cost Signal" title="Menu Category Spread">
-                <CategoryBars counts={categoryCounts} total={totalItems} />
-              </DashboardPanel>
+
             </section>
 
             <DashboardPanel icon={BarChart3} eyebrow="Usage Signal" title="Weekly Traffic">
@@ -593,35 +595,13 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
           </section>
 
           <LandingAccordion
-            testId="operations-console"
+            testId="menu-readiness"
             icon={Settings}
-            eyebrow="Workspace summary"
-            title="Operations Console"
-            description="Tool counts and source-data status"
+            eyebrow="Categories and data gaps"
+            title="Menu readiness"
+            description="Explore categories and open items that need review"
           >
-            <div className="grid gap-4 xl:grid-cols-[1fr_1.2fr]">
-              <div>
-                <h3 className="text-2xl font-bold">Plan, price, and audit menus from one workspace.</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Built for quick chef decisions: choose the workstream, check status, and move straight into the active tool.
-                </p>
-                <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-                  <Metric label="Tools" value={String(tools.length)} />
-                  <Metric label="Menu items" value={totalItems.toLocaleString()} />
-                  <Metric label="Menus" value={menuCount} />
-                  <Metric label="Costed items" value={costedItems.toLocaleString()} />
-                </div>
-              </div>
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
-                  <Database size={16} />
-                  MenuWorks dataset
-                </div>
-                <p className="mt-2 text-sm text-slate-600">
-                  Item details, pricing, allergens, and review warnings are surfaced where they affect selections.
-                </p>
-              </div>
-            </div>
+            <MenuReadiness snapshot={DASHBOARD_SUMMARY} readiness={readiness} buildGapRows={buildTrustGapRows} />
           </LandingAccordion>
         </main>
       </div>
@@ -652,14 +632,8 @@ function MobileLanding({
   onOpenMenuCrossUtilization,
   onOpenSmartsheetHealth,
   promotionMenus,
+  readiness,
 }) {
-  const metricTiles = [
-    { label: "Tools", value: "11", icon: Wrench, tone: "bg-[#fff7e7] text-[#8a621b]" },
-    { label: "Menu Items", value: totalItems.toLocaleString(), icon: Utensils, tone: "bg-[#eaf8f2] text-emerald-700" },
-    { label: "Menus", value: menuCount, icon: ListChecks, tone: "bg-[#edf5ff] text-sky-700" },
-    { label: "Costed Items", value: costedItems.toLocaleString(), icon: Database, tone: "bg-[#f0eefb] text-indigo-700" },
-  ];
-
   const navItems = [
     { label: "Home", icon: Home, onOpen: null, active: true },
     { label: "Engineering", icon: BarChart3, onOpen: onOpenMenuEngineering },
@@ -685,7 +659,7 @@ function MobileLanding({
         </div>
       </header>
 
-      <main className="mobile-app-content">
+      <main className="mobile-app-content pb-20">
         <section className="space-y-5" aria-label="Tools">
           {(toolSections?.length ? toolSections : [{ title: "Tools", tools }]).map((section) => (
             <section key={section.title} data-testid="landing-mobile-tool-section" className="space-y-3">
@@ -768,29 +742,14 @@ function MobileLanding({
         </LandingAccordion>
 
         <LandingAccordion
-          testId="mobile-operations-console"
+          testId="mobile-menu-readiness"
           icon={Settings}
-          eyebrow="Workspace summary"
-          title="Operations Console"
-          description="Tool counts and source-data status"
+          eyebrow="Categories and data gaps"
+          title="Menu readiness"
+          description="Explore categories and open items that need review"
           compact
         >
-          <section className="space-y-3" aria-label="Operations console details">
-            <div className="mobile-kpi-grid">
-              {metricTiles.map((tile) => (
-                <MobileMetricTile key={tile.label} {...tile} />
-              ))}
-            </div>
-            <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
-              <div className="flex items-center gap-2 text-sm font-black text-slate-950">
-                <Database size={16} />
-                MenuWorks dataset
-              </div>
-              <p className="mt-2 text-xs font-semibold leading-5 text-slate-600">
-                Item details, pricing, allergens, and review warnings are surfaced where they affect selections.
-              </p>
-            </div>
-          </section>
+          <MenuReadiness snapshot={DASHBOARD_SUMMARY} readiness={readiness} buildGapRows={buildTrustGapRows} />
         </LandingAccordion>
       </main>
 
@@ -1073,15 +1032,6 @@ function WeeklyTrafficChart({ days, compact = false }) {
   );
 }
 
-function Metric({ label, value }) {
-  return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3">
-      <p className="text-xs font-semibold text-slate-500">{label}</p>
-      <p className="mt-1 text-xl font-bold text-slate-950">{value}</p>
-    </div>
-  );
-}
-
 function DashboardPanel({ icon: Icon, eyebrow, title, children }) {
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
@@ -1192,31 +1142,6 @@ function SignalStack({ rows }) {
           </div>
         </div>
       ))}
-    </div>
-  );
-}
-
-function CategoryBars({ counts, total }) {
-  const rows = Object.entries(counts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 7);
-
-  return (
-    <div className="space-y-3">
-      {rows.map(([category, count]) => {
-        const percent = percentOf(count, total);
-        return (
-          <div key={category}>
-            <div className="flex items-center justify-between gap-3 text-sm">
-              <p className="font-bold capitalize text-slate-900">{category}</p>
-              <p className="font-black text-slate-600">{count.toLocaleString()} / {percent}%</p>
-            </div>
-            <div className="mt-2 h-3 overflow-hidden rounded-full bg-slate-100">
-              <div className="h-full rounded-full bg-sky-500" style={{ width: `${Math.max(4, percent)}%` }} />
-            </div>
-          </div>
-        );
-      })}
     </div>
   );
 }

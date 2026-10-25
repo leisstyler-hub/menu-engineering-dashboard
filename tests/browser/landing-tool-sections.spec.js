@@ -49,7 +49,7 @@ test("home screen groups tools under Chef Tools and Programming & Auditing in th
   await expect(transferTile).not.toContainText("G/L");
 
   const platformIntelligence = page.getByTestId("platform-intelligence");
-  const operationsConsole = page.getByTestId("operations-console");
+  const operationsConsole = page.getByTestId("menu-readiness");
   await expect(platformIntelligence).not.toHaveAttribute("open", "");
   await expect(operationsConsole).not.toHaveAttribute("open", "");
 
@@ -63,7 +63,7 @@ test("home screen groups tools under Chef Tools and Programming & Auditing in th
     const tools = document.querySelectorAll("[data-tool-title]");
     const lastTool = tools.item(tools.length - 1);
     const intelligence = document.querySelector('[data-testid="platform-intelligence"]');
-    const operations = document.querySelector('[data-testid="operations-console"]');
+    const operations = document.querySelector('[data-testid="menu-readiness"]');
     return {
       toolsBeforeIntelligence: Boolean(lastTool?.compareDocumentPosition(intelligence) & Node.DOCUMENT_POSITION_FOLLOWING),
       intelligenceBeforeOperations: Boolean(intelligence?.compareDocumentPosition(operations) & Node.DOCUMENT_POSITION_FOLLOWING),
@@ -77,7 +77,7 @@ test("home screen groups tools under Chef Tools and Programming & Auditing in th
 
   await operationsConsole.locator("summary").click();
   await expect(operationsConsole).toHaveAttribute("open", "");
-  await expect(operationsConsole.getByText("MenuWorks dataset")).toBeVisible();
+  await expect(operationsConsole.getByText("Bundled snapshot")).toBeVisible();
 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
@@ -85,7 +85,9 @@ test("home screen groups tools under Chef Tools and Programming & Auditing in th
 
 test("home shows the shared promotion calendar without opening password-protected SSMT menus", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
-  const now = new Date();
+  // Promotions intentionally exclude weekends; keep this fixture on a weekday.
+  const now = new Date(2026, 9, 26, 12);
+  await page.clock.setFixedTime(now);
   const dateKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   const workspaceMenus = [{ id: "landing-promo", name: "Landing Page Promo", type: "Promotion", activeStart: dateKey, activeEnd: dateKey, items: [] }];
   await page.route("**/api/storage/records**", async (route) => {
@@ -157,7 +159,7 @@ test("mobile home uses a contained two-column compact grid with closed bottom ac
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
 
   const mobileIntelligence = page.getByTestId("mobile-platform-intelligence");
-  const mobileOperations = page.getByTestId("mobile-operations-console");
+  const mobileOperations = page.getByTestId("mobile-menu-readiness");
   await expect(mobileIntelligence).not.toHaveAttribute("open", "");
   await expect(mobileOperations).not.toHaveAttribute("open", "");
   const lastCardBottom = await cards.last().boundingBox().then((box) => box.y + box.height);
