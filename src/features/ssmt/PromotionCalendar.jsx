@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import PromotionPreview from "./PromotionPreview.jsx";
 
 export function promotionOccursOnDate(menu, dateKey, date) {
   if (menu.type !== "Promotion" || !menu.activeStart || !menu.activeEnd) return false;
@@ -11,7 +12,7 @@ export function promotionOccursOnDate(menu, dateKey, date) {
   return (schedule.weekdays || []).includes(date.getDay());
 }
 
-export default function PromotionCalendar({ menus = [], onOpenMenu, testId = "ssmt-promotion-calendar" }) {
+export default function PromotionCalendar({ menus = [], onOpenMenu, testId = "ssmt-promotion-calendar", enablePilotPreview = false }) {
   const [visibleMonth, setVisibleMonth] = useState(() => {
     const today = new Date();
     return new Date(today.getFullYear(), today.getMonth(), 1);
@@ -48,10 +49,10 @@ export default function PromotionCalendar({ menus = [], onOpenMenu, testId = "ss
             const inMonth = date.getMonth() === visibleMonth.getMonth();
             const isToday = key === localKey(new Date());
             return (
-              <div key={key} data-testid={`ssmt-calendar-day-${key}`} aria-current={isToday ? "date" : undefined} className={`min-h-28 border-b border-r border-slate-200 p-2 ${isToday ? "bg-lime-200 text-[#1a2e05] ring-2 ring-inset ring-lime-500" : inMonth ? "bg-white" : "bg-slate-50 text-slate-400"}`}>
+              <div key={key} data-testid={`ssmt-calendar-day-${key}`} aria-current={isToday ? "date" : undefined} className={`min-h-28 border-b border-r border-slate-200 p-2 ${isToday ? "bg-[#f0f9e8] text-[#1a2e05] ring-1 ring-inset ring-[#b8d99c]" : inMonth ? "bg-white" : "bg-slate-50 text-slate-400"}`}>
                 <span className="text-xs font-black">{date.getDate()}</span>
                 <div className="mt-1 space-y-1">
-                  {dayPromotions.map((menu) => onOpenMenu ? (
+                  {dayPromotions.map((menu) => enablePilotPreview && menu.id === "menu-byptwd-f234b0e9-efe1-49ec-992c-0c4c63c4ebe9" ? (<PromotionPreview key={menu.id} menu={menu} />) : onOpenMenu ? (
                     <button key={menu.id} type="button" onClick={() => onOpenMenu(menu.id)} className="block w-full rounded-md border border-purple-300 bg-purple-100 px-2 py-1 text-left text-[11px] font-black leading-4 text-purple-950 hover:border-purple-500 hover:bg-purple-200">{menu.name}</button>
                   ) : (
                     <div key={menu.id} className="rounded-md border border-purple-300 bg-purple-100 px-2 py-1 text-[11px] font-black leading-4 text-purple-950">{menu.name}</div>

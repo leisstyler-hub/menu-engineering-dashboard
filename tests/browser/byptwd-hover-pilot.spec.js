@@ -1,0 +1,32 @@
+import {test,expect} from '@playwright/test';
+import {readFile} from 'node:fs/promises';
+test.use({hasTouch:true});
+const pilot=process.env.BYPTWD_PREVIEW_FIXTURE?JSON.parse(await readFile(process.env.BYPTWD_PREVIEW_FIXTURE,'utf8')):{id:'menu-byptwd-f234b0e9-efe1-49ec-992c-0c4c63c4ebe9',name:'BYPTWD - Seattle',type:'Promotion',phase:'IT complete',activeStart:'2026-10-09',activeEnd:'2026-10-09',fixyDesignation:'TEST ONLY',items:[{label:'Test item',description:'Isolated test description'}]};
+for(const width of [390,1440])test(`BYPTWD landing-only hover pilot at ${width}px`,async({page})=>{
+  const writes=[];
+  await page.setViewportSize({width,height:1000});
+  await page.clock.setFixedTime(new Date(2026,9,9,12));
+  await page.route('**/api/**',route=>{
+    const r=route.request();if(r.method()!=='GET'&&!r.url().includes('/traffic/'))writes.push(r.url());
+    return route.fulfill({json:r.url().includes('action=status')?{ok:true,enabled:true}:r.url().includes('action=calendar')?{ok:true,menus:[pilot,{id:'other-menu',name:'Other promotion',type:'Promotion',activeStart:pilot.activeStart,activeEnd:pilot.activeEnd}]}:{ok:true,records:[],rows:[]}});
+  });
+  await page.goto('/');await expect(page.getByTestId('brand-entrance')).toHaveCount(0);
+  const calendar=page.getByTestId(width<768?'mobile-landing-promotion-calendar':'landing-promotion-calendar');
+  const trigger=calendar.getByRole('button',{name:pilot.name,exact:true});
+  if(width<768)await trigger.tap();else await trigger.hover();
+  const popup=page.getByRole('dialog',{name:`${pilot.name} preview`});
+  await expect(popup).toContainText('2026-10-09 to 2026-10-09');
+  await expect(popup).toContainText('Promotion');await expect(popup).toContainText('IT complete');
+  await expect(popup).toContainText(pilot.fixyDesignation||'Not supplied to this preview');
+  await expect(popup).toContainText(`Menu items (${pilot.items.length})`);
+  await popup.hover();await expect(popup).toBeVisible();
+  await popup.getByRole('textbox',{name:'Search menu items'}).fill(pilot.items[0].label);
+  await expect(popup).toContainText(pilot.items[0].description);
+  const bounds=await popup.boundingBox();expect(bounds.x).toBeGreaterThanOrEqual(0);expect(bounds.x+bounds.width).toBeLessThanOrEqual(width);
+  await page.screenshot({path:`test-results/byptwd-hover-${width}.png`,fullPage:false});
+  await page.keyboard.press('Escape');await expect(popup).toHaveCount(0);
+  await trigger.focus();await trigger.press('Tab');await trigger.focus();await expect(popup).toBeVisible();
+  await popup.getByRole('button',{name:'Close',exact:true}).click();await expect(popup).toHaveCount(0);
+  await expect(calendar.getByRole('button',{name:'Other promotion',exact:true})).toHaveCount(0);
+  expect(writes).toEqual([]);
+});

@@ -1,3 +1,7 @@
+## 2026-10-25 - BYPTWD hover pilot, local only
+
+Candidate 2026.10.25.004-byptwd-hover-pilot is restricted to BYPTWD exact menu ID on landing calendars; SSMT click-to-open and other promotions stay unchanged. Hover/focus/tap shows dates/type/status/FIXY and searchable supplied items. Pale #f0f9e8 today fill replaces intense lime locally. No backend/public data projection or production workspace changes. Existing public API lacks FIXY/items, so filled prototype uses a clearly labeled sanitized October 20 snapshot with 58 item rows, outside repo source. Not deployed; awaiting Tyler review before rollout. Scope/evidence: docs/BYPTWD_HOVER_PILOT_2026_10_25.md. Production remains 2026.10.25.003-calendar-lime-today unless independently changed.
+
 ## 2026-10-25 - Brighter calendar today highlight
 
 Candidate 2026.10.25.003-calendar-lime-today replaces the faint purple current-day background with lime-200, lime-500 inset outline and dark readable date text in shared PromotionCalendar (landing and SSMT). Scheduling, weekend rules, promotions and persistence unchanged. Existing calendar browser expectations updated; computed background/text checked in light/dark modes. Owner Chief, solo. Approval: Tyler event 128b65a0b4ba5615181fd9583f3748e60e9c6a0a8dabc9d01bd1b7babbb7f430. Release evidence recorded in workspace WORK_LOGS/CALENDAR_LIME_RELEASE_2026_10_25.md.
