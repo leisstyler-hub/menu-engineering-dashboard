@@ -1,3 +1,7 @@
+## 2026-10-25 - Brighter calendar today highlight
+
+Candidate 2026.10.25.003-calendar-lime-today replaces the faint purple current-day background with lime-200, lime-500 inset outline and dark readable date text in shared PromotionCalendar (landing and SSMT). Scheduling, weekend rules, promotions and persistence unchanged. Existing calendar browser expectations updated; computed background/text checked in light/dark modes. Owner Chief, solo. Approval: Tyler event 128b65a0b4ba5615181fd9583f3748e60e9c6a0a8dabc9d01bd1b7babbb7f430. Release evidence recorded in workspace WORK_LOGS/CALENDAR_LIME_RELEASE_2026_10_25.md.
+
 ## 2026-10-25 - Menu analysis labels and tool descriptions
 
 Candidate 2026.10.25.002-menu-analysis-labels renames Open Dashboard to Open Menu Analysis, and Menu Matrix to Menu Performance, under Tyler approval. Both analysis paths retain behavior. All 12 landing descriptions shortened; desktop/mobile description clamps and mobile title clamp removed. Desktop action text wraps beside a fixed-size arrow. Four-width browser proof covers 320/390/1440/1920px. No data/source/operational writes. Solo Chief, release state requires deployment evidence. Scope record: docs/MENU_ANALYSIS_LABELS_2026_10_25.md.

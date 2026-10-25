@@ -108,7 +108,12 @@ test("home shows the shared promotion calendar without opening password-protecte
   const intelligence = page.getByTestId("platform-intelligence");
   await expect(calendar).toBeVisible();
   await expect(today).toHaveAttribute("aria-current", "date");
-  await expect(today).toHaveClass(/bg-purple-50/);
+  await expect(today).toHaveClass(/bg-lime-200/);
+  await expect(today).toHaveCSS("background-color", "rgb(217, 249, 157)");
+  await page.locator('html').evaluate(element=>element.classList.add('dark'));
+  await expect(today).toHaveCSS("background-color", "rgb(217, 249, 157)");
+  await expect(today).toHaveCSS("color", "rgb(26, 46, 5)");
+  await page.locator('html').evaluate(element=>element.classList.remove('dark'));
   await expect(calendar.getByText("Landing Page Promo", { exact: true })).toBeVisible();
   const positions = await page.evaluate(() => {
     const programmingSection = document.querySelectorAll('[data-testid="landing-tool-section"]')[1];
