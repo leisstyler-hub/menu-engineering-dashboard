@@ -1,0 +1,36 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {reconcileRecipeEvidence} from '../src/features/menu-engineering/wpSourceReconciliation.js';
+import {measure} from '../src/features/menu-engineering/andesAnalysisModel.js';
+import {panReadyMenu} from '../src/features/menu-engineering/panReadyModel.js';
+const recipe={id:'BOOK_2-page-892',mrn:'179291.1',portion:'2 each',massOz:null,cost:1.4,components:[]};
+const evidence=[{id:recipe.id,mrn:recipe.mrn,portion:recipe.portion,massOz:5,approximate:false,basis:'Source-stated portion; BOOK_2 p892'}];
+const before=JSON.stringify(recipe);
+assert.equal(reconcileRecipeEvidence(recipe,evidence,measure).massOz,5);
+assert.equal(reconcileRecipeEvidence({...recipe,mrn:'179291'},evidence,measure).massOz,null);
+assert.equal(reconcileRecipeEvidence({...recipe,id:'other-page'},evidence,measure).massOz,null);
+assert.equal(reconcileRecipeEvidence(recipe,[{...evidence[0],sourceSha256:'original-book'}],measure,['different-book']).massOz,null);
+assert.equal(reconcileRecipeEvidence({...recipe,portion:'1 each'},evidence,measure).massOz,null);
+assert.equal(reconcileRecipeEvidence(recipe,[...evidence,{...evidence[0],massOz:4}],measure).massOz,null);
+assert.equal(reconcileRecipeEvidence({...recipe,massOz:6},evidence,measure).massOz,6,'Never overwrite existing mass');
+assert.equal(reconcileRecipeEvidence({...recipe,portion:'1-1/2 ounce'},[],measure).massOz,1.5);
+assert.equal(reconcileRecipeEvidence({...recipe,portion:'1 lb, 2 oz'},[],measure).massOz,18);
+assert.equal(reconcileRecipeEvidence({...recipe,portion:'1-1/2 oz portion'},[],measure).massOz,1.5);
+for(const portion of ['2 each','1 cup','4 floz'])assert.equal(reconcileRecipeEvidence({...recipe,portion},[],measure).massOz,null);
+const approximate=reconcileRecipeEvidence(recipe,[{...evidence[0],approximate:true}],measure);
+assert.equal(approximate.weightApproximate,true);
+assert.equal(JSON.stringify(recipe),before);
+const r=panReadyMenu({concept:'Test',recipes:[{id:'a',mrn:'191645',name:'AMZ: Fried Eggplant with Tomato Chickpea Sauce',portion:'1 serving(s)',cost:1.85,components:[],topLevel:true}]},11.2).items[0];
+assert.equal(r.category,'Vegetables');
+assert.ok(r.informationReasons.some(reason=>/weight/i.test(reason)));
+assert.ok(!r.serviceReasons.includes('Non-core add-on stays fixed-price'));
+const data=JSON.parse(fs.readFileSync(new URL('../src/data/wpSourceReconciliation.json',import.meta.url)));
+const libraries=['allMenus','balti','andes'].map(n=>JSON.parse(fs.readFileSync(new URL(`../src/data/${n}WpAnalysis.json`,import.meta.url))));
+const allowed=new Set(['id','mrn','portion','massOz','approximate','basis','reason','sourceSha256']);
+for(const entry of data){
+  assert.ok(Object.keys(entry).every(k=>allowed.has(k)),'Only bounded evidence may ship');
+  assert.ok(libraries.some(library=>[library.sourceSha256].flat().includes(entry.sourceSha256)&&library.recipes.some(r=>r.id===entry.id&&r.mrn===entry.mrn&&r.portion===entry.portion)),'Exact source book and occurrence must exist');
+  assert.ok(entry.reason||Number.isFinite(entry.massOz)&&entry.massOz>0);
+}
+assert.equal(new Set(data.map(e=>e.id)).size,data.length);
+console.log('W&P source reconciliation guards passed');

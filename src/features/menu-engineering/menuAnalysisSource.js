@@ -1,5 +1,7 @@
 import {measure} from './andesAnalysisModel.js';
 import {portionWeightOz} from './weighPayModel.js';
+import evidence from '../../data/wpSourceReconciliation.json' with {type:'json'};
+import {reconcileRecipeEvidence} from './wpSourceReconciliation.js';
 
 const text = value => String(value ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
 function samePortion(a,b) {
@@ -8,7 +10,8 @@ function samePortion(a,b) {
 }
 // Membership always comes from current shared rows. Books only supply analysis.
 export function buildMenuAnalysisSource(menu,rows,library,trusted=false) {
-  const recipes=library?.recipes||[],byId=new Map(recipes.map(r=>[r.id,r]));
+  const hashes=Array.isArray(library?.sourceSha256)?library.sourceSha256:[library?.sourceSha256];
+  const recipes=(library?.recipes||[]).map(r=>reconcileRecipeEvidence(r,evidence,measure,hashes)),byId=new Map(recipes.map(r=>[r.id,r]));
   const selected=new Map(),dishes=[];
   function signature(r,seen=[]) {
     if(!r||seen.includes(r.id)||seen.length>=8)return 'unresolved';
@@ -31,7 +34,8 @@ export function buildMenuAnalysisSource(menu,rows,library,trusted=false) {
     if(match)for(const edge of match.components||[])include(edge.childId);
     dishes.push({...match,id,mrn:String(row.mrn??''),name:String(row.item||row.displayName||'Unnamed item'),portion:String(row.portion||''),
       cost:match?.cost??(trusted?sharedCost:null),costBasis:match?.cost!=null?'Recipe snapshot':'Shared item data',
-      massOz:sharedMass??match?.massOz??null,massBasis:sharedMass?'Shared item data':'Recipe snapshot',
+      massOz:sharedMass??match?.massOz??null,massBasis:sharedMass?'Shared item data':match?.massBasis||'Recipe snapshot',
+      weightApproximate:sharedMass?false:Boolean(match?.weightApproximate),sourceRecipeId:match?.id,
       batchServings:match?.batchServings??null,components:match?.components||[],topLevel:true,
       linkStatus:match?'Recipe linked':candidates.length?'Ambiguous recipe variants; shared item economics only':'Recipe not linked; shared item economics only'});
   });

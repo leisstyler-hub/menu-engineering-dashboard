@@ -1,0 +1,310 @@
+[
+  {
+    "id": "BOOK_1-page-426",
+    "mrn": "142401",
+    "portion": "1 each",
+    "massOz": 4,
+    "approximate": true,
+    "basis": "Approximate source-stated cooked portion; BOOK_1 p426",
+    "sourceSha256": "2b2ec20e7c9e2ac788c6fd29e0ee8a9790edf6b493b469da11501bb5896cc7b6"
+  },
+  {
+    "id": "BOOK_1-page-477",
+    "mrn": "145111",
+    "portion": "1 cup",
+    "massOz": 6,
+    "approximate": true,
+    "basis": "Approximate source-stated finished portion; BOOK_1 p477",
+    "sourceSha256": "2b2ec20e7c9e2ac788c6fd29e0ee8a9790edf6b493b469da11501bb5896cc7b6"
+  },
+  {
+    "id": "BOOK_1-page-489",
+    "mrn": "145111",
+    "portion": "1 cup",
+    "massOz": 6,
+    "approximate": true,
+    "basis": "Approximate source-stated finished portion; BOOK_1 p489",
+    "sourceSha256": "2b2ec20e7c9e2ac788c6fd29e0ee8a9790edf6b493b469da11501bb5896cc7b6"
+  },
+  {
+    "id": "BOOK_1-page-499",
+    "mrn": "145111",
+    "portion": "1 cup",
+    "massOz": 6,
+    "approximate": true,
+    "basis": "Approximate source-stated finished portion; BOOK_1 p499",
+    "sourceSha256": "2b2ec20e7c9e2ac788c6fd29e0ee8a9790edf6b493b469da11501bb5896cc7b6"
+  },
+  {
+    "id": "BOOK_1-page-510",
+    "mrn": "145111",
+    "portion": "1 cup",
+    "massOz": 6,
+    "approximate": true,
+    "basis": "Approximate source-stated finished portion; BOOK_1 p510",
+    "sourceSha256": "2b2ec20e7c9e2ac788c6fd29e0ee8a9790edf6b493b469da11501bb5896cc7b6"
+  },
+  {
+    "id": "BOOK_1-page-864",
+    "mrn": "85984.1",
+    "portion": "1/2 cup",
+    "massOz": 2.5,
+    "approximate": false,
+    "basis": "Source-stated finished portion weight; BOOK_1 p864",
+    "sourceSha256": "2b2ec20e7c9e2ac788c6fd29e0ee8a9790edf6b493b469da11501bb5896cc7b6"
+  },
+  {
+    "id": "BOOK_1-page-1154",
+    "mrn": "41510.6",
+    "portion": "1/2 cup",
+    "massOz": 2.5,
+    "approximate": false,
+    "basis": "Source-stated finished portion weight; BOOK_1 p1154",
+    "sourceSha256": "2b2ec20e7c9e2ac788c6fd29e0ee8a9790edf6b493b469da11501bb5896cc7b6"
+  },
+  {
+    "id": "BOOK_1-page-1180",
+    "mrn": "138676",
+    "portion": "1 floz",
+    "massOz": 0.9876709345882515,
+    "approximate": false,
+    "basis": "Source-stated 28 g per serving; BOOK_1 p1180",
+    "sourceSha256": "2b2ec20e7c9e2ac788c6fd29e0ee8a9790edf6b493b469da11501bb5896cc7b6"
+  },
+  {
+    "id": "BOOK_2-page-31",
+    "mrn": "176594",
+    "portion": "1/4 cup",
+    "reason": "Source portion note says 2 oz; parent uses 1 oz; serving basis needs review",
+    "sourceSha256": "ab4d3ba154683656d19c4bec9c9aae105cfda05b4e3798f660c2e8ae970704f6"
+  },
+  {
+    "id": "BOOK_2-page-161",
+    "mrn": "176594",
+    "portion": "1/4 cup",
+    "reason": "Source portion note says 2 oz; parent uses 1 oz; serving basis needs review",
+    "sourceSha256": "ab4d3ba154683656d19c4bec9c9aae105cfda05b4e3798f660c2e8ae970704f6"
+  },
+  {
+    "id": "BOOK_2-page-440",
+    "mrn": "78549",
+    "portion": "1 serving(s)",
+    "reason": "5 oz pork excludes separately served accompaniments; matching full-portion weight not established",
+    "sourceSha256": "ab4d3ba154683656d19c4bec9c9aae105cfda05b4e3798f660c2e8ae970704f6"
+  },
+  {
+    "id": "BOOK_2-page-844",
+    "mrn": "133970",
+    "portion": "1 each",
+    "reason": "Raw forming weight only; cooked serving weight not established",
+    "sourceSha256": "ab4d3ba154683656d19c4bec9c9aae105cfda05b4e3798f660c2e8ae970704f6"
+  },
+  {
+    "id": "BOOK_2-page-892",
+    "mrn": "179291.1",
+    "portion": "2 each",
+    "massOz": 5,
+    "approximate": false,
+    "basis": "Source-stated two-skewer portion; BOOK_2 p892",
+    "sourceSha256": "ab4d3ba154683656d19c4bec9c9aae105cfda05b4e3798f660c2e8ae970704f6"
+  },
+  {
+    "id": "BOOK_2-page-1014",
+    "mrn": "176594",
+    "portion": "1/4 cup",
+    "reason": "Source portion note says 2 oz; parent uses 1 oz; serving basis needs review",
+    "sourceSha256": "ab4d3ba154683656d19c4bec9c9aae105cfda05b4e3798f660c2e8ae970704f6"
+  },
+  {
+    "id": "BOOK_2-page-1081",
+    "mrn": "142401",
+    "portion": "1 each",
+    "massOz": 4,
+    "approximate": true,
+    "basis": "Approximate source-stated cooked portion; BOOK_2 p1081",
+    "sourceSha256": "ab4d3ba154683656d19c4bec9c9aae105cfda05b4e3798f660c2e8ae970704f6"
+  },
+  {
+    "id": "BOOK_2-page-1274",
+    "mrn": "191619",
+    "portion": "1 each",
+    "massOz": 5,
+    "approximate": true,
+    "basis": "Approximate source-stated skewer portion; BOOK_2 p1274",
+    "sourceSha256": "ab4d3ba154683656d19c4bec9c9aae105cfda05b4e3798f660c2e8ae970704f6"
+  },
+  {
+    "id": "BOOK_2-page-1277",
+    "mrn": "191645",
+    "portion": "1 serving(s)",
+    "reason": "Parent-use mass only; finished eggplant-and-sauce serving weight not established",
+    "sourceSha256": "ab4d3ba154683656d19c4bec9c9aae105cfda05b4e3798f660c2e8ae970704f6"
+  },
+  {
+    "id": "BOOK_2-page-1406",
+    "mrn": "145111",
+    "portion": "1 cup",
+    "massOz": 6,
+    "approximate": true,
+    "basis": "Approximate source-stated finished portion; BOOK_2 p1406",
+    "sourceSha256": "ab4d3ba154683656d19c4bec9c9aae105cfda05b4e3798f660c2e8ae970704f6"
+  },
+  {
+    "id": "BOOK_2-page-1418",
+    "mrn": "145111",
+    "portion": "1 cup",
+    "massOz": 6,
+    "approximate": true,
+    "basis": "Approximate source-stated finished portion; BOOK_2 p1418",
+    "sourceSha256": "ab4d3ba154683656d19c4bec9c9aae105cfda05b4e3798f660c2e8ae970704f6"
+  },
+  {
+    "id": "BOOK_2-page-1428",
+    "mrn": "145111",
+    "portion": "1 cup",
+    "massOz": 6,
+    "approximate": true,
+    "basis": "Approximate source-stated finished portion; BOOK_2 p1428",
+    "sourceSha256": "ab4d3ba154683656d19c4bec9c9aae105cfda05b4e3798f660c2e8ae970704f6"
+  },
+  {
+    "id": "BOOK_2-page-1439",
+    "mrn": "145111",
+    "portion": "1 cup",
+    "massOz": 6,
+    "approximate": true,
+    "basis": "Approximate source-stated finished portion; BOOK_2 p1439",
+    "sourceSha256": "ab4d3ba154683656d19c4bec9c9aae105cfda05b4e3798f660c2e8ae970704f6"
+  },
+  {
+    "id": "BOOK_2-page-1448",
+    "mrn": "35992.45",
+    "portion": "2 each",
+    "reason": "Conflicting portion evidence: two 2 oz skewers versus 5 oz parent use",
+    "sourceSha256": "ab4d3ba154683656d19c4bec9c9aae105cfda05b4e3798f660c2e8ae970704f6"
+  },
+  {
+    "id": "BOOK_2-page-1453",
+    "mrn": "26414.36",
+    "portion": "1 piece",
+    "reason": "Raw chicken quarter weight only; cooked edible serving weight not established",
+    "sourceSha256": "ab4d3ba154683656d19c4bec9c9aae105cfda05b4e3798f660c2e8ae970704f6"
+  },
+  {
+    "id": "BOOK_1-page-932",
+    "mrn": "135194.3",
+    "portion": "1/2 cup",
+    "massOz": 3,
+    "approximate": false,
+    "basis": "Source-stated finished half-cup serving; BOOK_1 p932; BOOK_1-page-932",
+    "sourceSha256": "2b2ec20e7c9e2ac788c6fd29e0ee8a9790edf6b493b469da11501bb5896cc7b6"
+  },
+  {
+    "id": "BOOK_1-page-1148",
+    "mrn": "138783",
+    "portion": "1 floz",
+    "massOz": 1,
+    "approximate": false,
+    "basis": "Source-stated 1 oz per 2 tbsp serving; BOOK_1 p1148; BOOK_1-page-1148",
+    "sourceSha256": "2b2ec20e7c9e2ac788c6fd29e0ee8a9790edf6b493b469da11501bb5896cc7b6"
+  },
+  {
+    "id": "BOOK_2-page-346",
+    "mrn": "41707.8",
+    "portion": "1 floz",
+    "massOz": 1,
+    "approximate": false,
+    "basis": "Source-stated 1 oz per 2 tbsp serving; BOOK_2-page-346",
+    "sourceSha256": "ab4d3ba154683656d19c4bec9c9aae105cfda05b4e3798f660c2e8ae970704f6"
+  },
+  {
+    "id": "BOOK_2-page-353",
+    "mrn": "41707.8",
+    "portion": "1 floz",
+    "massOz": 1,
+    "approximate": false,
+    "basis": "Source-stated 1 oz per 2 tbsp serving; BOOK_2-page-353",
+    "sourceSha256": "ab4d3ba154683656d19c4bec9c9aae105cfda05b4e3798f660c2e8ae970704f6"
+  },
+  {
+    "id": "BOOK_2-page-360",
+    "mrn": "41707.8",
+    "portion": "1 floz",
+    "massOz": 1,
+    "approximate": false,
+    "basis": "Source-stated 1 oz per 2 tbsp serving; BOOK_2-page-360",
+    "sourceSha256": "ab4d3ba154683656d19c4bec9c9aae105cfda05b4e3798f660c2e8ae970704f6"
+  },
+  {
+    "id": "BOOK_2-page-366",
+    "mrn": "41707.8",
+    "portion": "1 floz",
+    "massOz": 1,
+    "approximate": false,
+    "basis": "Source-stated 1 oz per 2 tbsp serving; BOOK_2-page-366",
+    "sourceSha256": "ab4d3ba154683656d19c4bec9c9aae105cfda05b4e3798f660c2e8ae970704f6"
+  },
+  {
+    "id": "BOOK_2-page-389",
+    "mrn": "41707.8",
+    "portion": "1 floz",
+    "massOz": 1,
+    "approximate": false,
+    "basis": "Source-stated 1 oz per 2 tbsp serving; BOOK_2-page-389",
+    "sourceSha256": "ab4d3ba154683656d19c4bec9c9aae105cfda05b4e3798f660c2e8ae970704f6"
+  },
+  {
+    "id": "BOOK_2-page-395",
+    "mrn": "41707.8",
+    "portion": "1 floz",
+    "massOz": 1,
+    "approximate": false,
+    "basis": "Source-stated 1 oz per 2 tbsp serving; BOOK_2-page-395",
+    "sourceSha256": "ab4d3ba154683656d19c4bec9c9aae105cfda05b4e3798f660c2e8ae970704f6"
+  },
+  {
+    "id": "BOOK_2-page-1162",
+    "mrn": "165741.28",
+    "portion": "3/4 cup",
+    "massOz": 6,
+    "approximate": false,
+    "basis": "Source-stated finished serving; BOOK_2 pp1162-1163; BOOK_2-page-1162",
+    "sourceSha256": "ab4d3ba154683656d19c4bec9c9aae105cfda05b4e3798f660c2e8ae970704f6"
+  },
+  {
+    "id": "BOOK_2-page-2460",
+    "mrn": "41707.8",
+    "portion": "1 floz",
+    "massOz": 1,
+    "approximate": false,
+    "basis": "Source-stated 1 oz per 2 tbsp serving; BOOK_2-page-2460",
+    "sourceSha256": "ab4d3ba154683656d19c4bec9c9aae105cfda05b4e3798f660c2e8ae970704f6"
+  },
+  {
+    "id": "page-174",
+    "mrn": "142401",
+    "portion": "1 each",
+    "massOz": 4,
+    "approximate": true,
+    "basis": "Approximate source-stated cooked portion; BALTI p174",
+    "sourceSha256": "81b79a1621f299401f691160c76125b1b7a4ba8c21a4eab97e854bcbaba6b4ce"
+  },
+  {
+    "id": "page-192",
+    "mrn": "165741.28",
+    "portion": "3/4 cup",
+    "massOz": 6,
+    "approximate": false,
+    "basis": "Source-stated finished serving; BALTI pp192-193",
+    "sourceSha256": "81b79a1621f299401f691160c76125b1b7a4ba8c21a4eab97e854bcbaba6b4ce"
+  },
+  {
+    "id": "BOOK_2-page-1095",
+    "mrn": "193768.1",
+    "portion": "1/2 cup",
+    "massOz": 4,
+    "approximate": false,
+    "basis": "Source-stated finished cold serving; BOOK_2 p1095",
+    "sourceSha256": "ab4d3ba154683656d19c4bec9c9aae105cfda05b4e3798f660c2e8ae970704f6"
+  }
+]

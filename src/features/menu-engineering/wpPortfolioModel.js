@@ -18,6 +18,8 @@ export function buildPortfolio(projections) {
     const foodCost=conflict?null:first.foodCost;
     const valid=Number.isFinite(foodCost)&&foodCost>=0&&perLb(first)!=null;
     const portfolioStatus=!valid?'Needs information':serviceReasons.length?'Service review':foodCost<=.4+1e-12?'Within 40%':'Above 40%';
-    return {...first,...(conflict?{cost:null,massOz:null}:{}),key,menus,variants,serviceReasons:conflict?[...serviceReasons,'Conflicting source variants require review']:serviceReasons,foodCost,tier:tierFor(foodCost),costPerLb:conflict?null:perLb(first),portfolioStatus,conflict};
+    const informationReasons=[...new Set(variants.flatMap(r=>r.informationReasons||[]))];
+    if(conflict)informationReasons.push('Conflicting source variants; no single cost per pound established');
+    return {...first,...(conflict?{cost:null,massOz:null}:{}),key,menus,variants,informationReasons,weightApproximate:variants.some(r=>r.weightApproximate),serviceReasons:conflict?[...serviceReasons,'Conflicting source variants require review']:serviceReasons,foodCost,tier:tierFor(foodCost),costPerLb:conflict?null:perLb(first),portfolioStatus,conflict};
   }).sort((a,b)=>a.category.localeCompare(b.category)||a.name.localeCompare(b.name));
 }

@@ -20,6 +20,7 @@ export function isPlainIngredient(name) {
   return /^(?:arugula|romaine(?: lettuce)?|iceberg(?: lettuce)?|lettuce|spinach|kale|spring mix|mixed greens|tomato(?:es)?|cherry tomatoes|grape tomatoes|cucumbers?|carrots?|onions?|red onions?|white onions?|yellow onions?|green onions?|scallions?|bell peppers?|red bell peppers?|green bell peppers?|broccoli|cauliflower|celery|radish(?:es)?|cabbage|red cabbage|green cabbage|avocado|mushrooms?|zucchini|basil|cilantro|parsley|mint|lemon|lime|apples?|oranges?|grapes?|strawberries|blueberries|watermelon|pineapple|cheddar(?: cheese)?|parmesan(?: cheese)?|mozzarella(?: cheese)?|feta(?: cheese)?|chicken(?: breast)?|beef|pork|tofu|salmon|shrimp|eggs?|rice|quinoa|potatoes|salt|sugar|butter|olive oil)$/.test(plain);
 }
 function categoryFor(name) {
+  if(/^AMZ:\s*Fried Eggplant with Tomato Chickpea Sauce$/i.test(name))return 'Vegetables';
   if (/\b(?:mashed|baked|roasted|loaded) potatoes\b/i.test(name)) return 'Starches / grains';
   const mainFood=name.split(/\b(?:in|with)\b/i);
   if (mainFood.length>1 && /\b(chicken|tofu|tempeh|seitan|turkey|pork|beef|lamb|fish|salmon|shrimp|paneer)\b/i.test(mainFood[0])) return 'Proteins';
@@ -80,6 +81,7 @@ export function panReadyMenu(source, rate, sharedRows = []) {
   }
   for (const variants of identities.values()) if (variants.length>1) for (const r of variants) {
     r.foodCost=null; r.tier='Needs information'; r.economics='Needs review';
+    r.informationReasons=[...new Set([...(r.informationReasons||[]),'Conflicting source variants; a compatible cost and serving weight must agree'])];
     r.serviceReasons=[...r.serviceReasons,'Conflicting source variants require review'];
   }
   return {menu:source.concept,items:candidates,review:[...review.values()],excluded:[...excluded.values()]};

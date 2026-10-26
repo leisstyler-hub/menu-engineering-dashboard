@@ -1,3 +1,7 @@
+## 2026-10-26
+
+- [Oct 26, 9:05 AM] Recovered documented W&P portion weights, corrected Anisa eggplant classification and separated missing information from service review with source explanations.
+
 ## 2026-10-25
 
 - [Oct 25, 10:53 AM] Connected promotion hover previews to current menu details, added empty-menu guidance and softened today's highlight.

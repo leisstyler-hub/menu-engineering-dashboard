@@ -1,4 +1,5 @@
 import { itemRestrictions, pricePerLb, portionWeightOz } from './weighPayModel.js';
+import {informationReasonsFor} from './wpSourceReconciliation.js';
 
 // Quantities compare only within one dimension. Volume is never treated as mass.
 export function measure(text) {
@@ -42,14 +43,14 @@ export function analyzeAndes(data,rate,sharedRows=[]) {
     const cost=Number.isFinite(recipe.cost)&&recipe.cost>=0?recipe.cost:null;
     const snapshotMass=Number.isFinite(recipe.massOz)&&recipe.massOz>0?recipe.massOz:null;
     const mass=snapshotMass??sharedMass(recipe,sharedRows,data.concept||'AMZ: Andes');
-    const weightSource=snapshotMass?(recipe.massBasis||'Recipe snapshot'):mass?'Shared item data':'Not documented';
+    const weightSource=snapshotMass?(recipe.massBasis||'Recipe snapshot'):mass?'Shared item data':recipe.informationReasons?.length?'See source exception':'No validated serving weight';
     const fc=price&&cost!==null&&mass?cost/(mass/16*price):null;
     const economics=!price?'Needs price':cost===null?'Needs cost':!mass?'Needs weight':fc<=.4+1e-12?'Within 40%':'Above 40%';
     const restriction=itemRestrictions({item:recipe.name,portion:recipe.portion});
     const components=(recipe.components||[]).map(edge=>{const child=byId.get(edge.childId);return {...edge,contribution:componentContribution(recipe,edge,child),analysis:visit(child,[...seen,recipe.id])};});
     const known=components.reduce((sum,c)=>sum+(c.contribution??0),0);
     const remainder=cost!==null&&components.every(c=>c.contribution!==null)&&known<=cost+1e-9?Math.max(0,cost-known):null;
-    return {...recipe,cost,massOz:mass,weightSource,foodCost:fc,economics,minimumOz:price&&cost!==null?cost/(price*.4)*16:null,serviceReasons:[...restriction.reasons,...restriction.reviews],components,remainder};
+    return {...recipe,cost,massOz:mass,weightSource,informationReasons:informationReasonsFor(recipe,cost,mass,measure),foodCost:fc,economics,minimumOz:price&&cost!==null?cost/(price*.4)*16:null,serviceReasons:[...restriction.reasons,...restriction.reviews],components,remainder};
   }
   return recipes.map(recipe=>visit(recipe));
 }
