@@ -115,7 +115,7 @@ test("Commissary Ordering Tool requires cafe selection and saves separate delive
   expect(transferFile.suggestedFilename()).toMatch(/Commissary Salad Bar Nessie.*Expense Transfer\.xlsx/);
   const transferWorkbook = XLSX.readFile(await transferFile.path());
   const transferRows = XLSX.utils.sheet_to_json(transferWorkbook.Sheets[transferWorkbook.SheetNames[0]], { header: 1, defval: "" });
-  expect(transferRows).toContainEqual(expect.arrayContaining(["4111009", "30159", "4111009", expect.stringContaining("Frozen Peas"), 2.84]));
+  expect(transferRows).toContainEqual(expect.arrayContaining(["4111009", "30159", "4111009", expect.stringContaining("Frozen Peas"), 11.35]));
   const bomDownload = page.waitForEvent("download");
   await page.getByRole("button", { name: /generate prep list/i }).click();
   const prepListFile = await bomDownload;
@@ -136,6 +136,7 @@ test("Commissary Ordering Tool requires cafe selection and saves separate delive
   await expect(page.getByText(/Nessie's order.*was saved/i)).toBeVisible();
   expect(writes).toHaveLength(1);
   expect(writes[0].context.tool).toBe("commissaryOrders");
+  expect(writes[0].records[0].orderUnitVersion).toBe(2);
   expect(writes[0].records[0].quantities[cucumber.id]).toEqual({ monday: 2, wednesday: 1 });
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
@@ -179,7 +180,14 @@ test("Prep List View is vertical, touch friendly, translated, and saves hold-to-
   await expect(prepView).toBeVisible();
   await expect(page.getByLabel("Your cafe")).toHaveCount(0);
   await expect(prepView.getByText("Sliced Cucumber", { exact: true })).toBeVisible();
-  await expect(prepView.getByText("2", { exact: true })).toBeVisible();
+  const cucumber = COMMISSARY_ORDER_ITEMS[0];
+  const quantityBlock = prepView.getByTestId(`prep-quantity-${cucumber.id}`);
+  const cafeBreakdown = prepView.getByTestId(`prep-cafes-${cucumber.id}`);
+  await expect(quantityBlock).toContainText("2 gal");
+  await expect(cafeBreakdown).toHaveText("Nessie 2");
+  const quantityBox = await quantityBlock.boundingBox();
+  const cafeBox = await cafeBreakdown.boundingBox();
+  expect(cafeBox.y).toBeGreaterThan(quantityBox.y);
   const overflow = await prepView.evaluate((node) => node.scrollWidth > node.clientWidth + 1);
   expect(overflow).toBe(false);
 

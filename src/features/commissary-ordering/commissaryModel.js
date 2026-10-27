@@ -2,6 +2,7 @@ import { COMMISSARY_ITEM_BY_ID, COMMISSARY_ORDER_ITEMS } from "./commissaryCatal
 
 export const PACIFIC_TIME_ZONE = "America/Los_Angeles";
 export const DELIVERY_KEYS = Object.freeze(["monday", "wednesday"]);
+export const COMMISSARY_ORDER_UNIT_VERSION = 2;
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const pad = (value) => String(value).padStart(2, "0");
@@ -84,12 +85,15 @@ export function sanitizeQuantity(value) {
   return Math.round(number * 100) / 100;
 }
 
-export function normalizeQuantities(quantities = {}) {
+export function normalizeQuantities(quantities = {}, options = {}) {
+  const orderUnitVersion = Number(options.orderUnitVersion ?? COMMISSARY_ORDER_UNIT_VERSION);
   return Object.fromEntries(COMMISSARY_ORDER_ITEMS.map(({ id, legacyIds = [] }) => {
     const source = quantities?.[id] || legacyIds.map((legacyId) => quantities?.[legacyId]).find(Boolean) || {};
+    const catalog = COMMISSARY_ITEM_BY_ID.get(id);
+    const scale = orderUnitVersion < COMMISSARY_ORDER_UNIT_VERSION && catalog?.legacyOrderUnit === "quart" ? 0.25 : 1;
     return [id, {
-      monday: sanitizeQuantity(source.monday),
-      wednesday: sanitizeQuantity(source.wednesday),
+      monday: sanitizeQuantity(sanitizeQuantity(source.monday) * scale),
+      wednesday: sanitizeQuantity(sanitizeQuantity(source.wednesday) * scale),
     }];
   }));
 }
@@ -106,6 +110,7 @@ export function buildOrderRecord({ cafe, weekStart, quantities, now = new Date()
     cafe,
     weekStart,
     cutoffDate: cutoffDateForWeek(weekStart),
+    orderUnitVersion: COMMISSARY_ORDER_UNIT_VERSION,
     quantities: normalized,
     updatedAt: now.toISOString(),
   };
@@ -152,7 +157,7 @@ export function orderValue(quantities = {}) {
 export function rolledUpItems(records = []) {
   return COMMISSARY_ORDER_ITEMS.map((row) => {
     const cafes = Object.fromEntries(records.map((record) => {
-      const values = normalizeQuantities(record.quantities)[row.id];
+      const values = normalizeQuantities(record.quantities, { orderUnitVersion: record.orderUnitVersion ?? 1 })[row.id];
       return [record.cafe, values];
     }));
     const monday = Object.values(cafes).reduce((sum, value) => sum + value.monday, 0);
@@ -162,7 +167,7 @@ export function rolledUpItems(records = []) {
 }
 
 export function orderLinesForCafe(record = {}) {
-  const quantities = normalizeQuantities(record.quantities);
+  const quantities = normalizeQuantities(record.quantities, { orderUnitVersion: record.orderUnitVersion ?? 1 });
   return Object.entries(quantities).map(([id, values]) => {
     const catalog = COMMISSARY_ITEM_BY_ID.get(id);
     return catalog ? { ...catalog, monday: values.monday, wednesday: values.wednesday, total: values.monday + values.wednesday } : null;

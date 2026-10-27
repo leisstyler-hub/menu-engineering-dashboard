@@ -9,20 +9,24 @@ export const COMMISSARY_RECEIVING_CAFES = Object.freeze([
   { name: "Cricket", profitCenter: "22472" },
 ]);
 
-const item = (category, name, mrn, itemWasteCost, orderUnit, orderUnitCost, notes = "", options = {}) => ({
-  id: `commissary-${String(mrn).replace(/[^a-z0-9]/gi, "-").toLowerCase()}`,
-  category,
-  name,
-  mrn: String(mrn),
-  portion: "1 ounce",
-  itemWasteCost,
-  orderUnit,
-  orderUnitCost,
-  notes,
-  transferGlCode: options.transferGlCode || "4111011",
-  transferGlCategory: options.transferGlCategory || "Prepared Foods",
-  legacyIds: options.legacyIds || [],
-});
+const item = (category, name, mrn, itemWasteCost, orderUnit, orderUnitCost, notes = "", options = {}) => {
+  const convertsFromQuart = orderUnit === "quart";
+  return {
+    id: `commissary-${String(mrn).replace(/[^a-z0-9]/gi, "-").toLowerCase()}`,
+    category,
+    name,
+    mrn: String(mrn),
+    portion: "1 ounce",
+    itemWasteCost,
+    orderUnit: convertsFromQuart ? "gallon" : orderUnit,
+    orderUnitCost: convertsFromQuart ? orderUnitCost * 4 : orderUnitCost,
+    legacyOrderUnit: convertsFromQuart ? "quart" : "",
+    notes,
+    transferGlCode: options.transferGlCode || "4111011",
+    transferGlCategory: options.transferGlCategory || "Prepared Foods",
+    legacyIds: options.legacyIds || [],
+  };
+};
 
 export const COMMISSARY_ORDER_ITEMS = Object.freeze([
   item("Toppings", "Sliced Cucumber", "68562.2", 0.15839, "quart", 0.15839 * 32, "Requires mixing"),

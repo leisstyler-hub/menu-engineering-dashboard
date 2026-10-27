@@ -8,7 +8,7 @@ import {
 import { CAFE_UNITS } from "../../src/shared/cafeUnits.js";
 import { S4_GL_ACCOUNT_CODES } from "../../src/features/transfer-tool/s4GlAccounts.js";
 import { COMMISSARY_ORDER_ITEMS, COMMISSARY_RECEIVING_CAFES } from "../../src/features/commissary-ordering/commissaryCatalog.js";
-import { isWeekLocked } from "../../src/features/commissary-ordering/commissaryModel.js";
+import { COMMISSARY_ORDER_UNIT_VERSION, isWeekLocked } from "../../src/features/commissary-ordering/commissaryModel.js";
 import { gzipSync, gunzipSync } from "node:zlib";
 
 const DEFAULT_SUPABASE_URL = "https://pzilyzqhatthctgsjwtt.supabase.co";
@@ -106,6 +106,7 @@ export function commissaryWriteValidation(records = [], context = {}) {
     return "";
   }
   if (record["Record Type"] !== "Commissary Order" || !COMMISSARY_CAFES.has(record.cafe)) return "The commissary cafe is invalid.";
+  if (![1, COMMISSARY_ORDER_UNIT_VERSION].includes(Number(record.orderUnitVersion || 1))) return "The commissary order-unit version is invalid.";
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(record.weekStart || ""))) return "The commissary service week is invalid.";
   const expectedId = `commissaryOrder|${record.cafe.toLowerCase()}|${record.weekStart}`;
   if (record["Record ID"] !== expectedId) return "The commissary order identity is invalid.";

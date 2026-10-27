@@ -67,6 +67,13 @@ function PrepCheck({ checked, disabled, label, onToggle }) {
 }
 
 const quantityText = (value) => Number(value).toLocaleString("en-US", { maximumFractionDigits: 2 });
+const compactUnit = (unit, spanish) => {
+  if (unit === "gallon") return "gal";
+  if (unit === "quart") return spanish ? "cto" : "qt";
+  if (unit === "5-liter container") return "5 L";
+  if (unit === "32-ounce bottle") return spanish ? "botella 32 oz" : "32 oz bottle";
+  return spanish ? commissarySpanishUnit(unit) : unit;
+};
 
 export default function PrepListView({ records, weekStart, completed, saving, onToggle }) {
   const [delivery, setDelivery] = useState("monday");
@@ -149,7 +156,7 @@ export default function PrepListView({ records, weekStart, completed, saving, on
               .join(" · ");
             const itemName = spanish ? commissarySpanishItem(row.name) : row.name;
             const category = spanish ? commissarySpanishCategory(row.category) : row.category;
-            const unit = spanish ? commissarySpanishUnit(row.orderUnit) : row.orderUnit;
+            const unit = compactUnit(row.orderUnit, spanish);
             return (
               <article key={row.id} className={`flex min-h-24 items-center gap-4 px-4 py-4 transition md:px-6 ${checked ? "bg-emerald-50" : "bg-white"}`}>
                 <PrepCheck
@@ -161,11 +168,10 @@ export default function PrepListView({ records, weekStart, completed, saving, on
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-black uppercase tracking-[0.12em] text-sky-700">{category}</p>
                   <p className={`mt-0.5 text-xl font-black leading-tight ${checked ? "text-emerald-900 line-through decoration-2" : "text-slate-950"}`}>{itemName}</p>
-                  <p className="mt-1 text-sm font-bold text-slate-500">{cafes}</p>
                 </div>
-                <div className="shrink-0 text-right">
-                  <p className="text-3xl font-black tabular-nums text-slate-950">{quantityText(row[delivery])}</p>
-                  <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">{unit}</p>
+                <div className="max-w-[45%] shrink-0 text-right" data-testid={`prep-quantity-${row.id}`}>
+                  <p className="whitespace-nowrap text-3xl font-black tabular-nums text-slate-950">{quantityText(row[delivery])} <span className="text-xl">{unit}</span></p>
+                  <p className="mt-1 text-sm font-bold leading-tight text-slate-500" data-testid={`prep-cafes-${row.id}`}>{cafes}</p>
                 </div>
               </article>
             );
