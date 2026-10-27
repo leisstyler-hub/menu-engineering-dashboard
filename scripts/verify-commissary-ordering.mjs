@@ -4,10 +4,12 @@ import JSZip from "jszip";
 import * as XLSX from "xlsx";
 import BOM_XLSX from "xlsx-js-style";
 
+import { commissaryWriteValidation } from "../api/storage/records.js";
 import { buildS4Rows, buildS4Workbook } from "../src/features/transfer-tool/transferExport.js";
 import { COMMISSARY_ORDER_ITEMS } from "../src/features/commissary-ordering/commissaryCatalog.js";
 import { buildCommissaryBomWorkbook, buildCommissaryTransfer } from "../src/features/commissary-ordering/commissaryExport.js";
-import { addDays, buildOrderRecord, emptyQuantities, firstOpenWeek, isWeekLocked, normalizeQuantities, transferPeriod } from "../src/features/commissary-ordering/commissaryModel.js";
+import { addDays, buildOrderRecord, buildPrepProgressRecord, emptyQuantities, firstOpenWeek, isWeekLocked, latestPrepWeek, normalizePrepCompleted, normalizeQuantities, togglePrepCompleted, transferPeriod } from "../src/features/commissary-ordering/commissaryModel.js";
+import { COMMISSARY_SPANISH } from "../src/features/commissary-ordering/commissaryTranslations.js";
 
 assert.equal(COMMISSARY_ORDER_ITEMS.length, 41, "The source workbook should produce 41 commissary order items.");
 assert.equal(COMMISSARY_ORDER_ITEMS.find((row) => row.name === "Aleppo-Edamame")?.mrn, "176736");
@@ -28,6 +30,21 @@ assert.equal(isWeekLocked("2026-10-12", new Date("2026-10-08T00:00:00Z")), true,
 assert.equal(isWeekLocked("2026-10-12", new Date("2026-10-07T12:00:00Z")), false);
 assert.deepEqual(transferPeriod("2026-10-12"), { start: "2026-10-09", end: "2026-10-15" });
 assert.equal(firstOpenWeek(new Date("2026-10-03T15:00:00Z")), "2026-10-12");
+assert.equal(latestPrepWeek(new Date("2026-10-08T12:00:00Z")), "2026-10-12", "Prep View should default to the most recently locked service week.");
+assert.equal(Object.keys(COMMISSARY_SPANISH.items).length, COMMISSARY_ORDER_ITEMS.length, "Every commissary item needs an explicit Spanish label.");
+assert.ok(COMMISSARY_ORDER_ITEMS.every((row) => COMMISSARY_SPANISH.items[row.name]), "Spanish translation coverage must follow the entire commissary catalog.");
+const firstPrepItem = COMMISSARY_ORDER_ITEMS[0].id;
+const completed = togglePrepCompleted({}, "monday", firstPrepItem);
+assert.deepEqual(completed, { monday: [firstPrepItem], wednesday: [] });
+assert.deepEqual(togglePrepCompleted(completed, "monday", firstPrepItem), { monday: [], wednesday: [] });
+assert.deepEqual(normalizePrepCompleted({ monday: [firstPrepItem, firstPrepItem, "not-an-item"] }), { monday: [firstPrepItem], wednesday: [] });
+const progressRecord = buildPrepProgressRecord({ weekStart: "2026-10-12", completed });
+assert.equal(progressRecord["Record ID"], "commissaryOrder|prepProgress|2026-10-12");
+assert.equal(progressRecord["Record Type"], "Commissary Prep Progress");
+const currentLockedProgress = buildPrepProgressRecord({ weekStart: latestPrepWeek(), completed });
+assert.equal(commissaryWriteValidation([currentLockedProgress], { tool: "commissaryOrders" }), "");
+assert.match(commissaryWriteValidation([{ ...currentLockedProgress, completed: { monday: [firstPrepItem, firstPrepItem], wednesday: [] } }], { tool: "commissaryOrders" }), /invalid or duplicate item/i);
+assert.match(commissaryWriteValidation([buildPrepProgressRecord({ weekStart: firstOpenWeek(), completed })], { tool: "commissaryOrders" }), /available after.*cutoff/i);
 
 const quantities = emptyQuantities();
 quantities[COMMISSARY_ORDER_ITEMS[0].id] = { monday: 2, wednesday: 1 };
@@ -96,4 +113,4 @@ assert.ok(exportedRows.slice(1).filter((row) => !String(row[3]).includes("Frozen
 const future = addDays("2026-10-12", 7);
 assert.equal(isWeekLocked(future, new Date("2026-10-08T00:01:00Z")), false);
 
-console.log("Commissary Ordering Tool verified: 41 items, Frozen Peas on Frozen G/L, Pacific cutoff, three visible Prep List sheets plus hidden Power Automate data, and Friday–Thursday S4 consolidation.");
+console.log("Commissary Ordering Tool verified: 41 items with Spanish labels, locked-week shared Prep View progress, Pacific cutoff, styled Prep List workbook, Frozen Peas G/L, and Friday–Thursday S4 consolidation.");

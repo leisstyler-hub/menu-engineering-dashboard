@@ -53,6 +53,10 @@ export function firstOpenWeek(now = new Date()) {
   return monday;
 }
 
+export function latestPrepWeek(now = new Date()) {
+  return addDays(firstOpenWeek(now), -7);
+}
+
 export function selectableWeeks(now = new Date(), count = 12) {
   const first = firstOpenWeek(now);
   return Array.from({ length: count }, (_, index) => addDays(first, index * 7));
@@ -105,6 +109,36 @@ export function buildOrderRecord({ cafe, weekStart, quantities, now = new Date()
     quantities: normalized,
     updatedAt: now.toISOString(),
   };
+}
+
+export function normalizePrepCompleted(completed = {}) {
+  return Object.fromEntries(DELIVERY_KEYS.map((delivery) => [
+    delivery,
+    [...new Set(Array.isArray(completed?.[delivery]) ? completed[delivery] : [])]
+      .filter((itemId) => COMMISSARY_ITEM_BY_ID.has(itemId)),
+  ]));
+}
+
+export function buildPrepProgressRecord({ weekStart, completed, now = new Date() }) {
+  return {
+    "Record ID": `commissaryOrder|prepProgress|${weekStart}`,
+    "Record Type": "Commissary Prep Progress",
+    Status: "In Progress",
+    "Date Range Label": weekLabel(weekStart),
+    "Visible In Dashboard": false,
+    weekStart,
+    completed: normalizePrepCompleted(completed),
+    updatedAt: now.toISOString(),
+  };
+}
+
+export function togglePrepCompleted(completed, delivery, itemId) {
+  const normalized = normalizePrepCompleted(completed);
+  if (!DELIVERY_KEYS.includes(delivery) || !COMMISSARY_ITEM_BY_ID.has(itemId)) return normalized;
+  const current = new Set(normalized[delivery]);
+  if (current.has(itemId)) current.delete(itemId);
+  else current.add(itemId);
+  return { ...normalized, [delivery]: [...current] };
 }
 
 export function orderValue(quantities = {}) {

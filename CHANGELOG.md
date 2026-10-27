@@ -1,5 +1,7 @@
 ## 2026-10-26
 
+- [Oct 26, 6:23 PM] Added a touch-first Commissary Prep List View with separate delivery checklists, shared completion progress, and instant Spanish translation.
+
 <!-- [Oct 26, 6:02 PM] Internal downstream responsibility metadata was updated and intentionally omitted from the visitor-facing changelog. -->
 
 - [Oct 26, 9:05 AM] Recovered documented W&P portion weights, corrected Anisa eggplant classification and separated missing information from service review with source explanations.

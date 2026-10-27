@@ -1,3 +1,7 @@
+## COMMISSARY-2026-10-26: Touch-first Prep List View
+
+Requesting/Approving Admin and Admin of Record: Alex Neuse. Status: APPROVED. The Commissary Ordering Tool gains a simple `Prep List View` sibling tab rather than a separate tool or daily access-code gate. The view is vertical and tablet-first, separates Monday and Wednesday delivery work, defaults to the latest locked production week, and uses a deliberate touch hold for large completion checks. Completion is shared Supabase-backed operational state per service week and delivery, never localStorage and never a mutation of locked café orders. A single switch provides deterministic Spanish translations for the current commissary catalog and interface without an external live-translation dependency. Excel/SharePoint automation is not part of this decision. Release remains subject to the established verification and deployment workflow.
+
 ## CAL-2026-10-25: Promotion previews and pale date highlight
 
 Requesting/Approving Admin: Tyler, authenticated identity 12fc010ae7314bd1bf75d7a74c296a93629c12a464ba2aaa406fee08a57d794d. Tyler request 8152c08f614ef47361e4725c904ec24380e2ca1a32a2fb809011cdadb8c4bcf5 and post-pilot approval 0afb53031e21e0544a8c6b725bf912eff7d085544c09e14296fc4ca4c906f5cb. The request asks for BYPTWD hover details, then missing-data guidance and expansion if the pilot is liked; approval follows the populated pilot and accepts its layout before connecting current data. Scope is the shared promotion calendars, not a general public SSMT viewer.
@@ -366,7 +370,7 @@ Context: dispersed menu setup and duplicate landing controls obscure routine com
 
 Reasoning: a clear reading order and adjacent designation/generator make completion easier without a wizard or hidden required fields. Rejected alternatives: a wizard, collapsing all setup, and retaining duplicate landing navigation. Implications: presentation and selection feedback change; data authority, source relationships, exact identifiers and persistence contracts do not. No production source repair is implied. Revisit when isolated usability evidence shows remaining ambiguity or a separately approved source-repair workflow is required. Development only under this mission; merge/deployment require separate authority. Evidence and pending gates: [candidate record](docs/ssmt/LAYOUT_SELECTION_2026_10_21.md).
 
-## Pairwise browser expansion � 2026-10-21
+## Pairwise browser expansion — 2026-10-21
 
 Status: Approved. Requesting/Approving Admin and Admin of Record: Tyler (Buzz 12fc010ae7314bd1bf75d7a74c296a93629c12a464ba2aaa406fee08a57d794d), approval 5756314d1d524d953b7cde8a7597a3a1f605fbc236e19d08a5a99455d869a674. Use available width and an Expand / Restore viewport workspace, preserving 44px cells, matrix grouping/scoring, accessible pair details, keyboard safety and Overview. Expanded mode may omit explanatory copy/summary to prioritize matrix space; normal view retains them. Below 1536px use bounded scrolling for matrix/details. Dynamic menu-index integration is separate and remains unapproved. Revisit if field usability requires it; source authority is unchanged.
 

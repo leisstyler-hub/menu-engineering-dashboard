@@ -4,6 +4,7 @@ import { ArrowLeft, Download, FileSpreadsheet, LockKeyhole, PackageCheck, Save, 
 import { money } from "../../shared/formatting.js";
 import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
+import PrepListView from "./PrepListView.jsx";
 import { COMMISSARY_ORDER_ITEMS, COMMISSARY_RECEIVING_CAFES } from "./commissaryCatalog.js";
 import { exportCommissaryBom, exportCommissaryTransfer } from "./commissaryExport.js";
 import {
@@ -14,13 +15,17 @@ import {
   firstOpenWeek,
   formatShortDate,
   isWeekLocked,
+  latestPrepWeek,
   normalizeQuantities,
+  normalizePrepCompleted,
   orderValue,
   selectableWeeks,
   transferPeriod,
   weekLabel,
+  buildPrepProgressRecord,
+  togglePrepCompleted,
 } from "./commissaryModel.js";
-import { loadCommissaryOrders, saveCommissaryOrder } from "./commissaryStorage.js";
+import { loadCommissaryRecords, saveCommissaryOrder, saveCommissaryPrepProgress } from "./commissaryStorage.js";
 
 const DELIVERY_ROWS = [
   { key: "monday", title: "Monday delivery", detail: "Monday–Wednesday service" },
@@ -36,26 +41,34 @@ function weekOptions(now = new Date()) {
 }
 
 export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
+  const [activeView, setActiveView] = useState("orders");
   const [cafe, setCafe] = useState("");
   const [weekStart, setWeekStart] = useState(() => firstOpenWeek());
   const [orders, setOrders] = useState([]);
+  const [prepProgressRecords, setPrepProgressRecords] = useState([]);
   const [quantities, setQuantities] = useState(() => emptyQuantities());
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [prepSaving, setPrepSaving] = useState(false);
 
   const weeks = useMemo(() => weekOptions(), []);
   const locked = isWeekLocked(weekStart);
   const currentRecord = useMemo(() => orders.find((row) => recordKey(row.cafe, row.weekStart) === recordKey(cafe, weekStart)), [cafe, orders, weekStart]);
   const weekRecords = useMemo(() => orders.filter((row) => row.weekStart === weekStart && COMMISSARY_RECEIVING_CAFES.some(({ name }) => name === row.cafe)), [orders, weekStart]);
+  const prepProgressRecord = useMemo(() => prepProgressRecords.find((row) => row.weekStart === weekStart), [prepProgressRecords, weekStart]);
+  const prepCompleted = useMemo(() => normalizePrepCompleted(prepProgressRecord?.completed), [prepProgressRecord]);
   const currentValue = orderValue(quantities);
   const period = transferPeriod(weekStart);
 
   useEffect(() => {
     let mounted = true;
-    loadCommissaryOrders().then((records) => {
-      if (mounted) setOrders(records);
+    loadCommissaryRecords().then((records) => {
+      if (mounted) {
+        setOrders(records.filter((record) => record["Record Type"] === "Commissary Order"));
+        setPrepProgressRecords(records.filter((record) => record["Record Type"] === "Commissary Prep Progress"));
+      }
     }).catch((loadError) => {
       if (mounted) setError(loadError.message);
     }).finally(() => {
@@ -118,6 +131,30 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
     return runExport(() => exportCommissaryBom(records, weekStart));
   };
 
+  const openPrepView = () => {
+    setActiveView("prep");
+    setWeekStart(latestPrepWeek());
+    setNotice("");
+    setError("");
+  };
+
+  const togglePrepItem = async (delivery, itemId) => {
+    if (!locked || prepSaving) return;
+    const previous = prepProgressRecord || buildPrepProgressRecord({ weekStart, completed: {} });
+    const next = buildPrepProgressRecord({ weekStart, completed: togglePrepCompleted(previous.completed, delivery, itemId) });
+    setPrepProgressRecords((current) => [...current.filter((row) => row.weekStart !== weekStart), next]);
+    setPrepSaving(true);
+    setError("");
+    try {
+      await saveCommissaryPrepProgress(next);
+    } catch (saveError) {
+      setPrepProgressRecords((current) => [...current.filter((row) => row.weekStart !== weekStart), ...(prepProgressRecord ? [prepProgressRecord] : [])]);
+      setError(saveError.message);
+    } finally {
+      setPrepSaving(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 pb-24 text-slate-950">
       <header className="border-b border-slate-200 bg-white">
@@ -135,21 +172,28 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
               <h1 className="mt-2 text-3xl font-black md:text-5xl">Commissary Ordering Tool</h1>
               <p className="mt-2 max-w-3xl text-sm font-semibold text-slate-600">Choose your cafe, then enter each delivery quantity. Orders lock at 5:00 PM local Pacific time on the Wednesday before service.</p>
             </div>
-            <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 xl:w-auto xl:min-w-[30rem]">
-              <label className="min-w-0 text-xs font-black uppercase tracking-[0.12em] text-slate-600">Your cafe<select aria-label="Your cafe" value={cafe} onChange={(event) => { setCafe(event.target.value); setNotice(""); setError(""); }} className="mt-1 block w-full min-w-0 max-w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-black text-slate-950"><option value="">Select cafe</option>{COMMISSARY_RECEIVING_CAFES.map((row) => <option key={row.name} value={row.name}>{row.name} Cafe · PC {row.profitCenter}</option>)}</select></label>
+            <div className={`grid w-full grid-cols-1 gap-3 xl:w-auto ${activeView === "orders" ? "sm:grid-cols-2 xl:min-w-[30rem]" : "xl:min-w-[15rem]"}`}>
+              {activeView === "orders" && <label className="min-w-0 text-xs font-black uppercase tracking-[0.12em] text-slate-600">Your cafe<select aria-label="Your cafe" value={cafe} onChange={(event) => { setCafe(event.target.value); setNotice(""); setError(""); }} className="mt-1 block w-full min-w-0 max-w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-black text-slate-950"><option value="">Select cafe</option>{COMMISSARY_RECEIVING_CAFES.map((row) => <option key={row.name} value={row.name}>{row.name} Cafe · PC {row.profitCenter}</option>)}</select></label>}
               <label className="min-w-0 text-xs font-black uppercase tracking-[0.12em] text-slate-600">Service week<select aria-label="Service week" value={weekStart} onChange={(event) => { setWeekStart(event.target.value); setNotice(""); setError(""); }} className="mt-1 block w-full min-w-0 max-w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-black text-slate-950">{weeks.map((week) => <option key={week} value={week}>Week {weekLabel(week)}{isWeekLocked(week) ? " · locked" : ""}</option>)}</select></label>
             </div>
           </div>
         </section>
 
+        <nav className="grid grid-cols-2 gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm" aria-label="Commissary tool views">
+          <button type="button" aria-pressed={activeView === "orders"} onClick={() => setActiveView("orders")} className={`min-h-12 rounded-xl px-4 py-3 text-sm font-black ${activeView === "orders" ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-slate-100"}`}>Cafe Orders</button>
+          <button type="button" aria-pressed={activeView === "prep"} onClick={openPrepView} className={`min-h-12 rounded-xl px-4 py-3 text-sm font-black ${activeView === "prep" ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-slate-100"}`}>Prep List View</button>
+        </nav>
+
         <section className={`rounded-2xl border p-4 ${locked ? "border-slate-300 bg-slate-200 text-slate-700" : "border-emerald-200 bg-emerald-50 text-emerald-950"}`}>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-start gap-3">{locked ? <LockKeyhole className="mt-0.5" size={21} /> : <PackageCheck className="mt-0.5" size={21} />}<div><p className="font-black">{locked ? "Ordering closed" : `Ordering open for week ${weekLabel(weekStart)}`}</p><p className="text-sm font-semibold">Cutoff: Wednesday {formatShortDate(cutoffDateForWeek(weekStart))} at 5:00 PM Pacific.</p>{locked && <p className="mt-1 font-black">Please contact commissary executive chef to adjust pars.</p>}</div></div>
-            <div className="text-right"><p className="text-xs font-black uppercase tracking-[0.12em]">Transfer period</p><p className="font-black">Friday {formatShortDate(period.start)} – Thursday {formatShortDate(period.end)}</p></div>
+            <div className="flex items-start gap-3">{locked ? <LockKeyhole className="mt-0.5" size={21} /> : <PackageCheck className="mt-0.5" size={21} />}<div><p className="font-black">{activeView === "prep" ? (locked ? "Prep list ready" : "Waiting for order cutoff") : (locked ? "Ordering closed" : `Ordering open for week ${weekLabel(weekStart)}`)}</p><p className="text-sm font-semibold">Cutoff: Wednesday {formatShortDate(cutoffDateForWeek(weekStart))} at 5:00 PM Pacific.</p>{activeView === "orders" && locked && <p className="mt-1 font-black">Please contact commissary executive chef to adjust pars.</p>}</div></div>
+            <div className="text-right"><p className="text-xs font-black uppercase tracking-[0.12em]">{activeView === "prep" ? "Shared production view" : "Transfer period"}</p><p className="font-black">{activeView === "prep" ? "Monday and Wednesday deliveries" : `Friday ${formatShortDate(period.start)} – Thursday ${formatShortDate(period.end)}`}</p></div>
           </div>
         </section>
 
-        {!cafe ? (
+        {activeView === "prep" ? (
+          <PrepListView records={weekRecords} weekStart={weekStart} completed={prepCompleted} saving={prepSaving || !locked} onToggle={togglePrepItem} />
+        ) : !cafe ? (
           <section className="rounded-2xl border-2 border-dashed border-sky-200 bg-white p-10 text-center"><Truck className="mx-auto text-sky-600" size={34} /><h2 className="mt-3 text-2xl font-black">Select your cafe to begin</h2><p className="mt-1 text-sm font-semibold text-slate-600">The cafe-first step prevents an order from being entered on another unit’s line.</p></section>
         ) : (
           <section className={`min-w-0 max-w-full overflow-hidden rounded-2xl border border-sky-200 bg-white shadow-sm ${locked ? "opacity-75" : ""}`}>
@@ -161,7 +205,7 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
 
         {(notice || error) && <div role={error ? "alert" : "status"} className={`rounded-xl border p-4 text-sm font-black ${error ? "border-rose-300 bg-rose-50 text-rose-900" : "border-emerald-300 bg-emerald-50 text-emerald-900"}`}>{error || notice}</div>}
 
-        {locked && (
+        {activeView === "orders" && locked && (
           <section className="rounded-2xl border border-slate-300 bg-white p-5 shadow-sm">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"><div><p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Locked production package</p><h2 className="mt-1 text-2xl font-black">Prep List and accounting exports</h2><p className="mt-1 text-sm font-semibold text-slate-600">The Prep List rolls up all saved cafe quantities and preserves a delivery-level unit breakdown. The S4 transfer consolidates Monday and Wednesday into one line per item.</p></div><div className="flex flex-wrap gap-2"><button type="button" onClick={() => runExport(() => exportCommissaryBom(weekRecords, weekStart))} disabled={!weekRecords.length} className="inline-flex items-center gap-2 rounded-lg border border-sky-300 bg-sky-50 px-4 py-3 text-sm font-black text-sky-950 disabled:opacity-40"><FileSpreadsheet size={18} /> Download combined Prep List</button><button type="button" onClick={() => runExport(() => exportCommissaryTransfer(currentRecord))} disabled={!currentRecord || orderValue(currentRecord.quantities) <= 0} className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-3 text-sm font-black text-white disabled:opacity-40"><Download size={18} /> Download {cafe || "cafe"} S4 transfer</button></div></div>
           </section>

@@ -87,10 +87,24 @@ function transferWriteValidation(records = [], context = {}) {
 const COMMISSARY_CAFES = new Set(COMMISSARY_RECEIVING_CAFES.map(({ name }) => name));
 const COMMISSARY_ITEM_IDS = new Set(COMMISSARY_ORDER_ITEMS.map(({ id }) => id));
 
-function commissaryWriteValidation(records = [], context = {}) {
+export function commissaryWriteValidation(records = [], context = {}) {
   if (getBackboneToolFromContext(context) !== "commissaryOrders") return "";
-  if (records.length !== 1) return "A single commissary cafe order is required.";
+  if (records.length !== 1) return "A single commissary record is required.";
   const record = records[0] || {};
+  if (record["Record Type"] === "Commissary Prep Progress") {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(record.weekStart || ""))) return "The commissary prep week is invalid.";
+    if (record["Record ID"] !== `commissaryOrder|prepProgress|${record.weekStart}`) return "The commissary prep progress identity is invalid.";
+    if (!isWeekLocked(record.weekStart, new Date())) return "Prep progress is available after the commissary order cutoff.";
+    if (!record.completed || typeof record.completed !== "object" || Array.isArray(record.completed)) return "Commissary prep completion data is required.";
+    if (Object.keys(record.completed).some((delivery) => !["monday", "wednesday"].includes(delivery))) return "The commissary prep delivery is invalid.";
+    for (const delivery of ["monday", "wednesday"]) {
+      const itemIds = record.completed[delivery];
+      if (!Array.isArray(itemIds) || new Set(itemIds).size !== itemIds.length || itemIds.some((itemId) => !COMMISSARY_ITEM_IDS.has(itemId))) {
+        return "Commissary prep completion contains an invalid or duplicate item.";
+      }
+    }
+    return "";
+  }
   if (record["Record Type"] !== "Commissary Order" || !COMMISSARY_CAFES.has(record.cafe)) return "The commissary cafe is invalid.";
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(record.weekStart || ""))) return "The commissary service week is invalid.";
   const expectedId = `commissaryOrder|${record.cafe.toLowerCase()}|${record.weekStart}`;
@@ -361,7 +375,8 @@ async function loadRecords(req, res) {
       return String(record["Record Type"] || "") === "Transfer" && String(record["Record ID"] || "").startsWith("transfer|");
     }
     if (tool === "commissaryOrders") {
-      return String(record["Record Type"] || "") === "Commissary Order" && String(record["Record ID"] || "").startsWith("commissaryOrder|");
+      return ["Commissary Order", "Commissary Prep Progress"].includes(String(record["Record Type"] || ""))
+        && String(record["Record ID"] || "").startsWith("commissaryOrder|");
     }
     if (ssmtAccountsEnabled() && String(record["Record ID"] || record.__supabaseRecordId || "").startsWith("ssmt|")) return false;
     return true;

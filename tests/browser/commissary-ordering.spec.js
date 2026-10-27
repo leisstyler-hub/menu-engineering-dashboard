@@ -162,3 +162,40 @@ test("locked commissary week is read-only and exposes Prep List and exact-templa
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
+
+test("Prep List View is vertical, touch friendly, translated, and saves hold-to-check progress", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const lockedWeek = addDays(firstOpenWeek(), -7);
+  const quantities = emptyQuantities();
+  quantities[COMMISSARY_ORDER_ITEMS[0].id] = { monday: 2, wednesday: 1 };
+  quantities[COMMISSARY_ORDER_ITEMS.find((row) => row.name === "Frozen Peas").id] = { monday: 1.25, wednesday: 0 };
+  const record = buildOrderRecord({ cafe: "Nessie", weekStart: lockedWeek, quantities, now: new Date(`${lockedWeek}T12:00:00Z`) });
+  const writes = await mockOrders(page, [record]);
+  await page.setViewportSize({ width: 820, height: 1180 });
+  await openTool(page, /open commissary ordering/i, /^Commissary Ordering Tool$/);
+  await page.getByRole("button", { name: "Prep List View" }).click();
+
+  const prepView = page.getByTestId("commissary-prep-list-view");
+  await expect(prepView).toBeVisible();
+  await expect(page.getByLabel("Your cafe")).toHaveCount(0);
+  await expect(prepView.getByText("Sliced Cucumber", { exact: true })).toBeVisible();
+  await expect(prepView.getByText("2", { exact: true })).toBeVisible();
+  const overflow = await prepView.evaluate((node) => node.scrollWidth > node.clientWidth + 1);
+  expect(overflow).toBe(false);
+
+  await page.getByRole("switch", { name: "Spanish translation" }).click();
+  await expect(prepView.getByText("Lista de preparación", { exact: true })).toBeVisible();
+  await expect(prepView.getByText("Pepino en rodajas", { exact: true })).toBeVisible();
+  const checkbox = page.getByRole("button", { name: /mantenga presionado.*pepino en rodajas/i });
+  await checkbox.dispatchEvent("pointerdown", { pointerType: "touch", button: 0 });
+  await page.waitForTimeout(650);
+  await checkbox.dispatchEvent("pointerup", { pointerType: "touch", button: 0 });
+  await expect(checkbox).toHaveAttribute("aria-pressed", "true");
+  await expect.poll(() => writes.length).toBe(1);
+  expect(writes[0].context.tool).toBe("commissaryOrders");
+  expect(writes[0].records[0]["Record Type"]).toBe("Commissary Prep Progress");
+  expect(writes[0].records[0].completed.monday).toContain(COMMISSARY_ORDER_ITEMS[0].id);
+
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
