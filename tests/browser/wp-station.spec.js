@@ -58,6 +58,7 @@ test('Narrowing menus cannot hide conflicts and refresh cannot retain stale cost
 
 test('Actual shared catalog station workflow, workbook and responsive proof',async({page,request})=>{
  test.skip(!process.env.WP_ACTUAL_PROOF,'Explicit read-only shared catalog proof');
+ test.setTimeout(120_000); // Includes two live shared-catalog reads; the app itself allows 45 seconds per load.
  const response=await request.get('https://project-d8v25.vercel.app/api/recipe-library?scope=all');
  expect(response.ok()).toBeTruthy();const payload=await response.json();expect(payload.source).toMatch(/^supabase-recipe-items/);
  const errors=[],writes=[];page.on('pageerror',error=>errors.push(error.message));
