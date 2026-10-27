@@ -19,7 +19,7 @@ test("home changelog shows compact release summaries that stay inside the card",
   await expect(page.getByText(/public production bundle contains version/)).toHaveCount(0);
 
   const firstSummary = changelogPanel.getByTestId("landing-changelog-summary").first();
-  await expect(firstSummary).not.toBeEmpty();
+  await expect(firstSummary).toHaveText("[Oct 27, 4:47 AM] Buzz 10.27 test.");
   const summaryText = (await firstSummary.innerText()).trim();
   expect(summaryText.length).toBeLessThanOrEqual(150);
 
