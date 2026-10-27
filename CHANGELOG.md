@@ -2,6 +2,8 @@
 
 - [Oct 27, 4:47 AM] Buzz 10.27 test.
 
+- [Oct 27, 7:13 AM] Show all source menus in W&P analysis and exports while retaining food-level qualification and missing-information warnings.
+
 ## 2026-10-26
 
 - [Oct 26, 11:06 PM] Plan W&P stations in a calmer green workbench with clearer food browsing, totals first and a direct mobile station jump.

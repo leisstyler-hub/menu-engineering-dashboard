@@ -422,3 +422,8 @@ Tyler, authenticated Requesting/Approving Admin and Admin of Record, event d2631
 ## 2026-10-26 - W&P station planner with existing menu tiles
 
 Tyler, authenticated Requesting/Approving Admin in ADMIN_REGISTRY.md, approved building the reviewed concept while retaining current tiles (a6b591424bdf0ad464ae730442e43987e63ed772323f295cf19d24a0e5ed92eb). Follow-ups approve exact-MRN selection export (e103c217d36f09f3d4ec90b123d17bf2b603a267c43665241adf37f7d4bf1eae) and left-list toggle selection with right-side details/delete popup and reset (c417f72290a94773f9c3ec7315706277e739e4612e1abd765dabc42af5b89bc7). Replaces additional single-menu assortment display. Cross-menu station selections and finished pounds are session scenarios, not operational records. No authority, recipe privacy, source economics, eligibility, import or shared persistence changes. See docs/WP_STATION_BUILDER_2026_10_26.md.
+
+
+## WP-2026-10-27 - Show all menus
+
+Tyler approved all source menus in W&P analysis (event b933b11799916b6d5e700371cdda8bbf080d9b96b87c3a3d1073bb99ce10ff87). Supersedes menu-name exclusions. Food-level service restrictions, ingredient exclusion and missing/conflicting economics remain. Read-only analysis and exports; no operational writes.

@@ -13,7 +13,7 @@ export default function WpMenuPicker({projections, selectedMenus, onChange, trus
   return <fieldset aria-label="Menu selection" className="min-w-0 rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-teal-50/60 p-4 md:p-5">
     <legend className="px-2 text-sm font-bold text-teal-950">Explore menus</legend>
     <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-      <div><h3 className="text-lg font-bold tracking-tight text-slate-950">Find your W&amp;P spread</h3><p className="mt-1 text-sm text-slate-500">{selectedMenus.length ? `${selectedMenus.length} menus selected` : 'All eligible menus'} / {options.length} available</p></div>
+      <div><h3 className="text-lg font-bold tracking-tight text-slate-950">Find your W&amp;P spread</h3><p className="mt-1 text-sm text-slate-500">{selectedMenus.length ? `${selectedMenus.length} menus selected` : 'All menus'} / {options.length} available</p></div>
       <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto"><label className="min-w-0 flex-1 sm:w-64"><span className="sr-only">Search menus</span><input value={search} onChange={e=>setSearch(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-100" placeholder="Search menus"/></label><button type="button" className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold shadow-sm hover:bg-teal-50" onClick={()=>{onChange([]);setSearch('');}} aria-label="Clear filters">Clear filters</button></div>
     </div>
     <div data-testid="menu-tile-grid" className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-6">{visible.map(o=>{

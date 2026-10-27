@@ -7,11 +7,11 @@ for(const width of [390,1440])test(`Unique qualifying portfolio and compact menu
  const errors=collectUnexpectedPageErrors(page),writes=[];
  const food={item:'Roasted carrots',mrn:'00012.30',portion:'4 oz',portionOz:4,trueCost:1};
  const rows=[{...food,menu:'Kitchen A'},{...food,menu:'Kitchen B'},{...food,item:'Roasted potatoes',mrn:'00013',trueCost:2,menu:'Kitchen A'},...['AMZ: Deli Core','AMZ: Grill Core','AMZ: Salt & Char'].map(menu=>({...food,item:'Tomato slices',mrn:menu,menu}))];
- rows.push(...['Arugula','Shredded Romaine','Diced Tomatoes','Shredded Carrots','Diced Cucumber','Ingredient: Parmesan Cheese','Pepperoni Pizza'].map((item,i)=>({...food,item,mrn:`raw-${i}`,menu:'Kitchen A'})),{...food,item:'Roasted carrots',mrn:'pizza-menu',menu:'AMZ: Pizzas & Flatbreads'});
+ rows.push(...['Arugula','Shredded Romaine','Diced Tomatoes','Shredded Carrots','Diced Cucumber','Ingredient: Parmesan Cheese','Pepperoni Pizza'].map((item,i)=>({...food,item,mrn:`raw-${i}`,menu:'Kitchen A'})),{...food,item:'Pepperoni Pizza',mrn:'pizza-menu',menu:'AMZ: Pizzas & Flatbreads'});
  await page.route('**/api/**',r=>{if(r.request().method()!=='GET'&&!r.request().url().includes('/traffic/'))writes.push(r.request().url());return r.fulfill({json:r.request().url().includes('recipe-library')?{ok:true,source:'supabase-recipe-items',rows}:{ok:true,rows:[],records:[]}});});
  await page.setViewportSize({width,height:900});await openTool(page,/open menu analysis/i,/Menu Engineering/);await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();
  const picker=page.getByRole('group',{name:'Menu selection'}),view=page.getByRole('region',{name:'W&P qualifying portfolio'});
- await expect(picker.getByRole('checkbox')).toHaveCount(2);await expect(picker).not.toContainText('Core');await expect(picker).not.toContainText('Salt');
+ await expect(picker.getByRole('checkbox')).toHaveCount(6);await expect(picker).toContainText('Deli Core');await expect(picker).toContainText('Salt');await expect(picker).toContainText('Pizzas & Flatbreads');
  await expect(view.getByTestId('portfolio-food')).toHaveCount(1);await expect(view).toContainText('Kitchen A · Kitchen B');await expect(view).toContainText('35.7%');
  await view.getByRole('button',{name:'Vegetables: 1 qualifying components',exact:true}).click();
  const dl=page.waitForEvent('download');await view.getByRole('button',{name:'Export browse results'}).click();const zip=await JSZip.loadAsync(await readFile(await(await dl).path()));

@@ -78,6 +78,7 @@ test('Actual shared catalog station workflow, workbook and responsive proof',asy
  });
  await page.setViewportSize({width:1440,height:1000});await openTool(page,/open menu analysis/i,/Menu Engineering/);await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();
  const picker=page.getByRole('group',{name:'Menu selection'}),view=page.getByRole('region',{name:'W&P qualifying portfolio'}),build=page.getByRole('complementary',{name:'Station build'});
+ await expect(picker.getByRole('checkbox')).toHaveCount(new Set(payload.rows.map(row=>String(row.menu||'Unassigned menu'))).size);
  await picker.getByRole('checkbox',{name:/Anisa/}).check();
  const first=view.getByTestId('portfolio-food').first();const name=(await first.getAttribute('aria-label')).replace(/^Select /,'');
  await first.click();await build.getByLabel(`Finished pounds for ${name}`,{exact:true}).fill('10');
