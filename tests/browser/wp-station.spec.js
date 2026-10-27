@@ -15,6 +15,14 @@ for(const width of [390,1440])test(`Station selection, projections and exact MRN
  await picker.getByRole('checkbox',{name:/Kitchen A/}).check();
  await view.getByRole('button',{name:'Select Roasted carrots',exact:true}).click();
  await expect(view.getByRole('button',{name:'Select Roasted carrots',exact:true})).toHaveAttribute('aria-pressed','true');
+ await expect(view.getByRole('heading',{name:'Browse foods',exact:true})).toBeVisible();
+ await expect(build.getByRole('heading',{name:'Your station at a glance',exact:true})).toBeVisible();
+ const summaryBox=await build.getByRole('region',{name:'Station projections'}).boundingBox();
+ const foodBox=await build.getByTestId('station-food').first().boundingBox();
+ expect(summaryBox.y+summaryBox.height).toBeLessThanOrEqual(foodBox.y);
+ expect(await view.getByLabel('Portfolio food list').evaluate(el=>getComputedStyle(el).maxHeight)).toBe('none');
+ expect(await build.evaluate(el=>getComputedStyle(el).backgroundColor)).toBe('rgb(255, 255, 255)');
+ if(width===390){const jump=view.getByRole('button',{name:/View your station/});await expect(jump).toBeVisible();await jump.click();await expect(build).toBeFocused();}
  await build.getByLabel('Finished pounds for Roasted carrots',{exact:true}).fill('10');
  await build.getByLabel('Expected sell-through percent').fill('80');
  await expect(build.getByTestId('station-planned-food-cost')).toHaveText('$40.00');
@@ -79,7 +87,7 @@ test('Actual shared catalog station workflow, workbook and responsive proof',asy
  const download=page.waitForEvent('download');await build.getByRole('button',{name:'Export station selections'}).click();const file=await download;
  const book=XLSX.read(await readFile(await file.path()));const items=XLSX.utils.sheet_to_json(book.Sheets['Station selections']);expect(items).toHaveLength(1);expect(items[0].MRN).toBeTruthy();expect(book.Sheets['Station selections'].B2.t).toBe('s');
  const state=process.env.PLAYWRIGHT_BASE_URL?.includes('project-d8v25.vercel.app')?'PRODUCTION':'LOCAL';
- await file.saveAs(`../../WORK_LOGS/WP_STATION_BUILDER_2026_10_26/${state}_STATION.xlsx`);
- for(const width of [1440,390]){await page.setViewportSize({width,height:1000});await view.screenshot({path:`../../WORK_LOGS/WP_STATION_BUILDER_2026_10_26/${state}_${width}.png`});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();}
+ await file.saveAs(`../../WORK_LOGS/WP_MODERN_WORKBENCH_2026_10_26/${state}_STATION.xlsx`);
+ for(const width of [1440,390]){await page.setViewportSize({width,height:1000});await view.screenshot({path:`../../WORK_LOGS/WP_MODERN_WORKBENCH_2026_10_26/${state}_${width}.png`});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();}
  expect(errors).toEqual([]);expect(writes).toEqual([]);
 });

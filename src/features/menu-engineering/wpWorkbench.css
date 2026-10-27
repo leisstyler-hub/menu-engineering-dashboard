@@ -1,0 +1,31 @@
+/* Scoped workbench palette: quiet sage surfaces and muted forest actions. */
+.wp-workbench { background: #f3f5f1; border-color: #dce3da; color: #283e31; }
+.wp-workbench .text-teal-950 { color: #283e31; }
+.wp-workbench .text-teal-900, .wp-workbench .text-teal-800 { color: #365743; }
+.wp-workbench .text-teal-700 { color: #52725c; }
+.wp-workbench .bg-teal-50 { background-color: #edf3eb; }
+.wp-workbench .ring-teal-500 { --tw-ring-color: #8da58c; }
+.wp-workbench button:focus-visible, .wp-workbench input:focus-visible,
+.wp-workbench select:focus-visible { outline: 3px solid #718b72; outline-offset: 3px; }
+.wp-browse, .wp-station { border-color: #dce3da; box-shadow: 0 3px 14px #263c2c05; }
+.wp-browse-heading { padding: 20px 20px 16px; border-bottom: 1px solid #e6ebe3; }
+.wp-step { color: #607564; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 5px; }
+.wp-category-list { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px 16px 0; }
+.wp-category { display: flex; align-items: center; gap: 9px; border: 1px solid #dce3da; border-radius: 20px; padding: 7px 12px; color: #526457; font-size: 12px; background: #fff; }
+.wp-category strong { background: #f0f3ee; border-radius: 12px; padding: 1px 7px; }
+.wp-category[aria-pressed=true] { background: #e9f0e6; border-color: #8da58c; color: #314f3b; }
+.wp-food-list { max-height: none; }
+.wp-food { border-color: #e8ece5; transition: background-color .12s ease; }
+.wp-food:hover { background-color: #f3f6f0; }
+.wp-food strong { font-size: 15px; line-height: 1.45; }
+.wp-station { scroll-margin-top: 20px; }
+.wp-projection { background: #eef2e9; border: 1px solid #dce4d4; color: #304c38; }
+.wp-projection dd { font-variant-numeric: tabular-nums; font-size: 23px; letter-spacing: -.025em; }
+.wp-primary { background: #405e48; }
+.wp-primary:hover:not(:disabled) { background: #334f3b; }
+.wp-menu-export { color: #48624e; border-color: #ccd8c8; }
+.wp-station-food { border-color: #e1e7dc; }
+.wp-station-jump { width: 100%; align-items: center; justify-content: space-between; border: 1px solid #cddbc7; background: #e9f0e5; color: #36533f; border-radius: 12px; padding: 13px 16px; font-size: 14px; font-weight: 700; text-align: left; }
+.wp-station-jump span { float: right; font-size: 12px; font-weight: 500; }
+@media (max-width: 480px) { .wp-workbench { padding: 12px; } .wp-browse-heading { padding: 16px; } .wp-projection dd { font-size: 21px; } }
+@media (prefers-reduced-motion: reduce) { .wp-food { transition: none; } }
