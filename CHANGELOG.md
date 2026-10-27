@@ -1,5 +1,7 @@
 ## 2026-10-26
 
+- [Oct 26, 10:30 PM] Build a W&P station from menu tiles, project food costs and export selected foods with exact MRNs to Excel.
+
 - [Oct 26, 6:33 PM] Converted commissary quart ordering to gallon bags and gallon costs throughout Cafe Orders, transfers, prep workbooks, and Prep List View. Chefs order in 0.25-gallon increments; legacy saved quart orders convert safely on read. Prep List totals now place the smaller cafe allocation directly underneath the large quantity and unit.
 
 - [Oct 26, 6:23 PM] Added a touch-first Commissary Prep List View with separate delivery checklists, shared completion progress, and instant Spanish translation.

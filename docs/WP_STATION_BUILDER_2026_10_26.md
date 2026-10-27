@@ -1,0 +1,18 @@
+# W&P station builder
+
+Owner: Chief. Branch: chief/wp-station-builder. Admin: Tyler, authenticated in ADMIN_REGISTRY.md. Build authorization: a6b591424bdf0ad464ae730442e43987e63ed772323f295cf19d24a0e5ed92eb, following the two interactive mockups in thread f1740b34545f432ee9d5e95a426cdddd3a7c716e39fbffdcb3b6ecbb9d9c82c4. Solo implementation and verification; no independent clearance.
+
+Approved design: preserve current menu tiles exactly; replace the additional single-menu assortment panel with food selection on the left, station build on the right and food-cost projections. Multi-menu food selection and enterprise overview remain. Build survives tile/filter/price changes for the session. Refreshing source data or leaving W&P clears it; no shared persistence or operational write.
+
+Approach: extend the existing portfolio workbench and reuse source identity/deduplication, classifications and economics. Replacing tiles would contradict Tyler's latest instruction; a separate builder page would interrupt menu selection. Full catalog reconciliation governs station costs even when one menu is selected, preventing selection from masking conflicting variants.
+
+Calculation: planned cost sums cost/lb times entered finished pounds; sales equal finished pounds times sell-through times selling price/lb. All prepared food is charged, including unsold food. FC is planned cost / positive projected sales; contribution is sales less food cost, excluding labor/overhead/tax. Empty/invalid quantities, absent/contradictory economics and untrusted data keep complete costs/FC unavailable. Zero sales has undefined FC. Approximations and service restrictions stay explicit. No recipe methods, documents or links are exposed.
+
+Plan: (1) add failing arithmetic and boundary tests; (2) implement pure projection model and session builder; (3) connect current portfolio without editing tile code; (4) update acceptance tests for replaced assortment, cross-menu persistence, incomplete estimates and responsive flow; (5) full repository verification/build, fresh self-review, records, authorized release checks and production evidence.
+
+Review focus: cross-menu conflicts; data refresh removing a chosen food; untrusted reference data; zero/blank/negative quantity and zero sales; approximate evidence and service restrictions surviving aggregate economics. Rollback: revert scoped builder commit; preceding main 97b4cab / READY deployment dpl_EtsZGAvmaavGGoiLY5wNeXh8zR8e. No source or shared-data rollback needed.
+
+Release status: verified local candidate. Full repository verify/build exited 0; 12/12 affected browser checks passed, including all 48 eligible menus and fresh shared-catalog desktop/mobile workflow with Excel download. Five projection/export unit tests pass. Fresh self-review confirms unchanged tile source, protected source/eligibility/privacy rules and zero operational writes. Production release and evidence are pending.
+
+
+Follow-up scope: Tyler export request e103c217d36f09f3d4ec90b123d17bf2b603a267c43665241adf37f7d4bf1eae adds a station workbook with exact string MRNs, source menus, quantities, costs and scenario totals. Interaction request c417f72290a94773f9c3ec7315706277e739e4612e1abd765dabc42af5b89bc7 supersedes separate Add controls: the left food button toggles selection with pressed/checkmark state; selected station names open a native modal with details and Delete from station. Right reset is Clear selections, distinct from tile Clear filters. Popup supports Escape, native focus containment and initial Close focus. No repeated implementation approval requested because Tyler explicitly approved building the reviewed concept and these additions.

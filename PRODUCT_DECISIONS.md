@@ -417,3 +417,8 @@ Approved for development by Tyler (Requesting/Approving Admin and Admin of Recor
 ## 2026-10-23 - Visible W&P menu tile grid
 
 Tyler, authenticated Requesting/Approving Admin and Admin of Record, event d2631fd574cfd6d95bb119c039e6e94f766ea23bee213e272ef8319dc3246f1e approves modern visible menu selectors with at least three rows for the current catalog and no internal scrollbar. Supersedes checklist/dropdown portion of the previous workbench design; enterprise header remains. Responsive grid wraps naturally on narrow screens and ordinary page scrolling remains. No data-source or eligibility change. Scope/evidence: docs/WP_MENU_TILES_2026_10_23.md.
+
+
+## 2026-10-26 - W&P station planner with existing menu tiles
+
+Tyler, authenticated Requesting/Approving Admin in ADMIN_REGISTRY.md, approved building the reviewed concept while retaining current tiles (a6b591424bdf0ad464ae730442e43987e63ed772323f295cf19d24a0e5ed92eb). Follow-ups approve exact-MRN selection export (e103c217d36f09f3d4ec90b123d17bf2b603a267c43665241adf37f7d4bf1eae) and left-list toggle selection with right-side details/delete popup and reset (c417f72290a94773f9c3ec7315706277e739e4612e1abd765dabc42af5b89bc7). Replaces additional single-menu assortment display. Cross-menu station selections and finished pounds are session scenarios, not operational records. No authority, recipe privacy, source economics, eligibility, import or shared persistence changes. See docs/WP_STATION_BUILDER_2026_10_26.md.

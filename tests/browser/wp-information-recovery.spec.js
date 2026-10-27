@@ -19,14 +19,15 @@ for(const width of [390,1440])test(`Source recovery reasons and export at ${widt
  await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();
  const picker=page.getByRole('group',{name:'Menu selection'});
  await picker.getByRole('checkbox',{name:/Anisa/}).check();
- const view=page.getByRole('region',{name:'Pan-ready W&P assortment'});
- const card=mrn=>view.getByLabel('Food cost ranking').getByTestId('servable-food').filter({hasText:`MRN ${mrn} `});
- await expect(card('179291.1')).toContainText('Weight 5 oz');
- await expect(card('191619')).toContainText('Approximate source weight');
- await expect(card('35992.45')).toContainText('Conflicting portion evidence');
- await expect(card('26414.36')).toContainText('Raw chicken quarter weight only');
- await expect(card('191645')).toContainText('Vegetables');
- await expect(card('191645')).not.toContainText('Non-core add-on stays fixed-price');
+ const view=page.getByRole('region',{name:'W&P qualifying portfolio'});
+ await view.getByLabel('Portfolio result').selectOption('All');
+ const detail=page.getByRole('dialog',{name:'Food details'});
+ for(const [mrn,text] of [['179291.1','Weight: 5 oz'],['191619','Approximate source weight'],['35992.45','Conflicting portion evidence'],['26414.36','Raw chicken quarter weight only'],['191645','Vegetables']]){
+  await view.getByLabel('Search portfolio foods').fill(mrn);
+  const name=(await view.getByTestId('portfolio-food').getAttribute('aria-label')).replace(/^Select /,'');await view.getByTestId('portfolio-food').click();await view.getByRole('button',{name:`Details for ${name}`,exact:true}).click();
+  await expect(detail).toContainText(text);await detail.getByRole('button',{name:'Close details'}).click();
+ }
+ await view.getByLabel('Search portfolio foods').fill('');
  const enterprise=page.getByRole('region',{name:'Enterprise W&P overview'});
  await enterprise.locator('summary').click();
  await expect(enterprise).toContainText('missing information');
@@ -40,7 +41,7 @@ for(const width of [390,1440])test(`Source recovery reasons and export at ${widt
  expect(audit.find(r=>r.MRN==='35992.45')['Information needed']).toContain('Conflicting portion evidence');
  await picker.getByRole('button',{name:'Clear filters'}).click();
  await picker.getByRole('checkbox',{name:/Test Recovery/}).check();
- await expect(view.getByTestId('servable-food').filter({hasText:'MRN 142401 '})).toContainText('Weight ~4 oz');
+ await view.getByLabel('Search portfolio foods').fill('142401');const name=(await view.getByTestId('portfolio-food').getAttribute('aria-label')).replace(/^Select /,'');await view.getByTestId('portfolio-food').click();await view.getByRole('button',{name:`Details for ${name}`,exact:true}).click();await expect(detail).toContainText('Weight: ~4 oz');await detail.getByRole('button',{name:'Close details'}).click();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();
  expect(errors).toEqual([]);expect(writes).toEqual([]);
 });

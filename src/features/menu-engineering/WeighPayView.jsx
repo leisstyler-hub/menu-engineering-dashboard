@@ -5,7 +5,6 @@ import andesSource from '../../data/andesWpAnalysis.json';
 import baltiSource from '../../data/baltiWpAnalysis.json';
 import allMenusSource from '../../data/allMenusWpAnalysis.json';
 import { buildMenuAnalysisSource } from './menuAnalysisSource.js';
-import PanReadyAnalysis from './PanReadyAnalysis.jsx';
 import WpPortfolio, { EnterpriseOverview } from './WpPortfolio.jsx';
 import WpMenuPicker from './WpMenuPicker.jsx';
 import { includeWpMenu } from './wpPortfolioModel.js';
@@ -93,10 +92,9 @@ export default function WeighPayView() {
     {data.state === 'ready' && <>
       <EnterpriseOverview projections={projections} trusted={trusted} rate={rate}/>
       <WpMenuPicker projections={projections} selectedMenus={activeMenus} trusted={trusted} onChange={names=>{setSelectedMenus(names);setEditing(false);setApprovalFilter('all');}}/>
-      <WpPortfolio projections={projections.filter(p=>!activeMenus.length||activeMenus.includes(p.menu))} trusted={trusted} rate={rate} onExport={exportPortfolio} exporting={exporting}/>
+      <WpPortfolio catalogProjections={projections} projections={projections.filter(p=>!activeMenus.length||activeMenus.includes(p.menu))} trusted={trusted} rate={rate} onExport={exportPortfolio} exporting={exporting}/>
       {selected&&<p className="text-sm text-slate-600">{selected.menu} - {selected.allowed}/{selected.total} allowed components - {percent(selected.passRate)} - {selected.status}</p>}
       {selected && conceptSources[selected.menu] && <div className="space-y-3"><button className={button} disabled={exporting||!rate} onClick={()=>exportPackage(menus.filter(m=>m.menu===selected.menu))}>Export menu package</button></div>}
-      {selectedMenu&&<PanReadyAnalysis key={selectedMenu} projections={projections} selectedMenu={selectedMenu} rate={rate||0}/> }
       {selected && !['AMZ: Andes','AMZ: Balti'].includes(selected.menu) && <details key={`adjustments:${selected.menu}`} className="rounded-2xl border border-slate-200 bg-white p-4 space-y-4"><summary className="cursor-pointer text-sm font-semibold text-teal-800">Servable component guidance and session adjustments</summary>
         <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-xl font-bold">{selected.menu}</h2><p className="mt-1 text-sm text-slate-600">Calculated {percent(selected.calculatedPassRate)} · Current guidance {percent(selected.passRate)} · {selected.exceptions} exceptions</p></div><div className="flex flex-wrap gap-2"><button className={button} onClick={() => setEditing(value => !value)}>{editing ? 'Done editing' : 'Edit guidance'}</button><button className={button} disabled={exporting || !rate} onClick={() => exportPackage(menus.filter(m=>m.menu===selected.menu))}>Export shared guidance</button></div></div>
         {selected.status === 'Conditional' && <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Conditional: check unresolved inputs, service reviews, session exceptions or source status before using this assortment.</p>}
