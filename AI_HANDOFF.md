@@ -1,3 +1,7 @@
+## W&P visible tiers - 2026-10-28
+
+Candidate `2026.10.28.002-wp-visible-tiers`, Chief solo, branch `chief/wp-guidance-tiers`. Browse shows existing non-overlapping food-cost tiers plus Service review and Needs information, replacing the result dropdown. Category chips toggle back to All. Station and workbook label the sales-minus-planned-food-cost amount as Remaining for labor & other costs, before labor/overhead/tax. Calculations, qualification thresholds, exact MRNs, source data and menu tiles preserved. Browse export includes the currently browsed category/search across all shown tiers. Scope, rollback and evidence: `docs/WP_GUIDANCE_TIERS_2026_10_28.md`. No operational writes. SSMT gold synopsis is a separate pending report.
+
 ## Shared operational metadata - 2026-10-28
 
 Candidate `2026.10.28.001-operational-metadata` makes `platformMetadata|operations|current` the reusable Supabase-backed configuration contract for the Transfer Tool and Draft Commissary Ordering Tool. The validated payload contains Transfer units/profit centers, approved S4 G/Ls, Prepared Foods fallback, S4 version/line limit and live catalog source contract; Commissary departing/receiving units, all 41 fixed order items with costs/units/G/Ls, three deliveries, Pacific cutoff, 0.25 quantity increment and its Transfer Tool handoff contract. Live menu items remain authoritative in Supabase `recipe_items` and saved transfers/orders remain separate `app_records`; neither is duplicated into metadata.

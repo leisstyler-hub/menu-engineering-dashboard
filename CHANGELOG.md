@@ -1,5 +1,7 @@
 ## 2026-10-28
 
+- [Oct 28, 7:25 AM] Show W&P foods in visible cost tiers, let category selections clear, and explain the amount remaining for labor and other costs.
+
 - [Oct 28, 5:09 AM] Unified Transfer and Commissary configuration in validated Supabase operational metadata for consistent units, cost centers, G/Ls, costs, deliveries, exports, and downstream tools.
 
 ## 2026-10-27

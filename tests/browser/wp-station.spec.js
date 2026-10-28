@@ -26,11 +26,11 @@ for(const width of [390,1440])test(`Station selection, projections and exact MRN
  await build.getByLabel('Finished pounds for Roasted carrots',{exact:true}).fill('10');
  await build.getByLabel('Expected sell-through percent').fill('80');
  await expect(build.getByTestId('station-planned-food-cost')).toHaveText('$40.00');
- await expect(build.getByTestId('station-projected-sales')).toHaveText('$89.60');
+ await expect(build.getByTestId('station-projected-sales')).toHaveText('$89.60');await expect(build.getByTestId('station-remaining-for-labor-other-costs')).toHaveText('$49.60');await expect(build).toContainText('before labor, overhead and tax');
  await expect(build.getByTestId('station-projected-fc-')).toHaveText('44.6%');
  await picker.getByRole('button',{name:'Clear filters'}).click();await picker.getByRole('checkbox',{name:/Kitchen B/}).check();
  await expect(build.getByTestId('station-food')).toHaveCount(1);
- await view.getByLabel('Portfolio result').selectOption('All');
+
  await view.getByRole('button',{name:'Select Roasted potatoes',exact:true}).click();
  await expect(build.getByTestId('station-food')).toHaveCount(2);
  const download=page.waitForEvent('download');await build.getByRole('button',{name:'Export station selections'}).click();

@@ -26,9 +26,9 @@ export default function WpStationBuild({entries, onChange, catalog, rate, truste
       ['Finished pounds',projection.pounds==null?'Incomplete':projection.pounds.toFixed(2)],
       ['Planned food cost',money(projection.cost)],['Projected sales',money(projection.sales)],
       ['Projected FC%',projection.foodCost==null?'Incomplete':`${(projection.foodCost*100).toFixed(1)}%`],
-      ['Sales less food cost',money(projection.contribution)]
+      ['Remaining for labor & other costs',money(projection.contribution)]
     ].map(([label,value])=><div key={label}><dt className="text-xs text-slate-600">{label}</dt><dd className="mt-1 text-lg font-bold" data-testid={`station-${label.toLowerCase().replace(/[^a-z]+/g,'-')}`}>{value}</dd></div>)}</dl>
-      <p className="mt-3 text-xs text-slate-600">Food cost includes all planned pounds. Sales use expected sell-through at {money(rate)}/lb. Excludes labor, overhead and tax.</p>
+      <p className="mt-3 text-xs text-slate-600">Food cost includes all planned pounds. Sales use expected sell-through at {money(rate)}/lb. Remaining amount is projected sales minus all planned food cost, before labor, overhead and tax.</p>
       {projection.reviewCount>0&&<p className="mt-2 text-xs text-amber-900">{projection.reviewCount} foods retain service restrictions. A station FC% does not approve service.</p>}
     </section>
     <button type="button" disabled={!entries.length||exporting} onClick={exportStation} className="wp-primary w-full rounded-xl px-4 py-3 text-sm font-semibold text-white disabled:opacity-50">{exporting?'Preparing workbook…':'Export station selections'}</button>

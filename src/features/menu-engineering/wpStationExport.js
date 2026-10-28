@@ -25,8 +25,8 @@ export function buildStationWorkbook(projection, {rate, sellThrough, trusted}) {
     {Metric:'Planned food cost',Value:projection.cost ?? 'Incomplete'},
     {Metric:'Projected sales',Value:projection.sales ?? 'Incomplete'},
     {Metric:'Projected FC fraction',Value:projection.foodCost ?? 'Incomplete'},
-    {Metric:'Sales less food cost',Value:projection.contribution ?? 'Incomplete'},
-    {Metric:'Limits',Value:'Session scenario; cost includes unsold food. Excludes labor, overhead and tax. Service review remains required.'}
+    {Metric:'Remaining for labor & other costs',Value:projection.contribution ?? 'Incomplete'},
+    {Metric:'Limits',Value:'Session scenario; cost includes unsold food. Remaining amount is projected sales minus all planned food cost, before labor, overhead and tax. Service review remains required.'}
   ]), 'Projection');
   workbook.Sheets.Projection['!cols']=[{wch:28},{wch:110}];
   return workbook;

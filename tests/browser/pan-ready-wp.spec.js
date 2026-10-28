@@ -19,12 +19,12 @@ test('Saved current shared catalog opens every menu with matching servable count
   await expect(page.getByRole('group',{name:'Menu selection'}).getByRole('checkbox')).toHaveCount(menus.length);
   const portfolio=buildPortfolio(menus.map(menu=>panReadyMenu(buildMenuAnalysisSource(menu,payload.rows,specials[menu]||library,true),11.2,payload.rows)));
   const qualifying=portfolio.filter(r=>r.portfolioStatus==='Within 40%');
-  await expect(page.getByRole('region',{name:'W&P qualifying portfolio'}).getByTestId('portfolio-food')).toHaveCount(qualifying.length);
+  await expect(page.getByRole('region',{name:'W&P qualifying portfolio'}).getByTestId('portfolio-food')).toHaveCount(portfolio.length);
   for(const width of [1440,390]) {
     await page.setViewportSize({width,height:900});
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();
     const list=page.getByLabel('Portfolio food list');
-    expect((await list.boundingBox()).height).toBeLessThanOrEqual(561);
+    expect(await list.evaluate(el=>getComputedStyle(el).maxHeight)).toBe('none');
     const grid=page.getByTestId('menu-tile-grid');expect(await grid.evaluate(el=>el.scrollHeight<=el.clientHeight&&el.scrollWidth<=el.clientWidth)).toBeTruthy();const positions=await grid.getByTestId('menu-tile').evaluateAll(nodes=>[...new Set(nodes.map(n=>Math.round(n.getBoundingClientRect().top)))]);expect(positions.length).toBeGreaterThanOrEqual(3);
     await page.screenshot({path:`test-results/wp-portfolio-catalog-${width}.png`,fullPage:true});
   }
@@ -33,7 +33,7 @@ test('Saved current shared catalog opens every menu with matching servable count
     const expected=panReadyMenu(source,11.2,payload.rows);
     await chooseMenu(page,menu);
     const view=page.getByRole('region',{name:'W&P qualifying portfolio'});
-    await view.getByLabel('Portfolio result').selectOption('All');
+
     await expect(view.getByTestId('portfolio-food')).toHaveCount(buildPortfolio([expected]).length);
     await expect(page.getByRole('complementary',{name:'Station build'})).toBeVisible();
   }

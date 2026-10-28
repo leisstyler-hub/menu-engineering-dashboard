@@ -20,7 +20,7 @@ for(const width of [390,1440])test(`Source recovery reasons and export at ${widt
  const picker=page.getByRole('group',{name:'Menu selection'});
  await picker.getByRole('checkbox',{name:/Anisa/}).check();
  const view=page.getByRole('region',{name:'W&P qualifying portfolio'});
- await view.getByLabel('Portfolio result').selectOption('All');
+
  const detail=page.getByRole('dialog',{name:'Food details'});
  for(const [mrn,text] of [['179291.1','Weight: 5 oz'],['191619','Approximate source weight'],['35992.45','Conflicting portion evidence'],['26414.36','Raw chicken quarter weight only'],['191645','Vegetables']]){
   await view.getByLabel('Search portfolio foods').fill(mrn);
