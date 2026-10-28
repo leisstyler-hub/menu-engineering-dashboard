@@ -5,11 +5,9 @@ import {
   getBackboneToolFromContext,
   normalizeBackboneRows,
 } from "../../src/integrations/storage/backboneRecords.js";
-import { CAFE_UNITS } from "../../src/shared/cafeUnits.js";
-import { S4_GL_ACCOUNT_CODES } from "../../src/features/transfer-tool/s4GlAccounts.js";
-import { COMMISSARY_ORDER_ITEMS, COMMISSARY_RECEIVING_CAFES } from "../../src/features/commissary-ordering/commissaryCatalog.js";
 import { isApprovedCommissaryMetadataRecord } from "../../src/features/commissary-ordering/commissaryMetadata.js";
 import { COMMISSARY_ORDER_UNIT_VERSION, DELIVERY_KEYS, isWeekLocked } from "../../src/features/commissary-ordering/commissaryModel.js";
+import { DEFAULT_OPERATIONAL_METADATA, isApprovedOperationalMetadataRecord, OPERATIONAL_METADATA_RECORD_ID } from "../../src/shared/operationalMetadata.js";
 import { gzipSync, gunzipSync } from "node:zlib";
 
 const DEFAULT_SUPABASE_URL = "https://pzilyzqhatthctgsjwtt.supabase.co";
@@ -31,7 +29,8 @@ function transferRecordId(title = "") {
   return `transfer|${encodeURIComponent(normalizeTransferTitle(title))}`;
 }
 
-const TRANSFER_UNITS = new Set(CAFE_UNITS.map(({ cafe }) => cafe));
+const TRANSFER_UNITS = new Set(DEFAULT_OPERATIONAL_METADATA.transferTool.units.map(({ cafe }) => cafe));
+const TRANSFER_GL_ACCOUNT_CODES = new Set(DEFAULT_OPERATIONAL_METADATA.transferTool.glAccounts.map(({ code }) => code));
 
 function isTransferRecord(record = {}) {
   return String(record["Record Type"] || "") === "Transfer" || String(record["Record ID"] || "").startsWith("transfer|");
@@ -59,9 +58,9 @@ function validateTransferRecord(record = {}) {
     if (record.departingProfitCenter && !/^\d{5}$/.test(String(record.departingProfitCenter))) return "Departing profit center snapshot is invalid.";
     if (String(record.eventId || "").length > 18) return "Event ID cannot exceed 18 characters.";
     const allocations = record.items.flatMap((item) => Array.isArray(item.ingredientAllocations) ? item.ingredientAllocations : []);
-    if (allocations.length > 450) return "S4 transfers support no more than 450 ingredient lines.";
+    if (allocations.length > DEFAULT_OPERATIONAL_METADATA.transferTool.maxIngredientLines) return `S4 transfers support no more than ${DEFAULT_OPERATIONAL_METADATA.transferTool.maxIngredientLines} ingredient lines.`;
     if (record.items.some((item) => !Array.isArray(item.ingredientAllocations) || !item.ingredientAllocations.length)) return "Every S4 transfer item requires a priced ingredient allocation.";
-    if (allocations.some((allocation) => !S4_GL_ACCOUNT_CODES.has(String(allocation.glCode || "")) || !(Number(allocation.allocationPerPortion) > 0))) {
+    if (allocations.some((allocation) => !TRANSFER_GL_ACCOUNT_CODES.has(String(allocation.glCode || "")) || !(Number(allocation.allocationPerPortion) > 0))) {
       return "Every ingredient allocation requires an approved G/L code and a positive amount.";
     }
     if (record.items.some((item) => {
@@ -85,8 +84,8 @@ function transferWriteValidation(records = [], context = {}) {
   return validateTransferRecord(records[0]);
 }
 
-const COMMISSARY_CAFES = new Set(COMMISSARY_RECEIVING_CAFES.map(({ name }) => name));
-const COMMISSARY_ITEM_IDS = new Set(COMMISSARY_ORDER_ITEMS.map(({ id }) => id));
+const COMMISSARY_CAFES = new Set(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.receivingCafes.map(({ name }) => name));
+const COMMISSARY_ITEM_IDS = new Set(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.orderItems.map(({ id }) => id));
 
 export function commissaryWriteValidation(records = [], context = {}) {
   if (getBackboneToolFromContext(context) !== "commissaryOrders") return "";
@@ -362,7 +361,7 @@ async function loadRecords(req, res) {
   const params = {
     select: "record_id,updated_at,retain_until,record_payload",
     tool: `eq.${databaseTool}`,
-    record_id: tool === "ssmt" ? `eq.${SSMT_WORKSPACE_RECORD_ID}` : tool === "transfers" ? "like.transfer|*" : tool === "commissaryOrders" ? "like.commissaryOrder|*" : undefined,
+    record_id: tool === "ssmt" ? `eq.${SSMT_WORKSPACE_RECORD_ID}` : tool === "transfers" ? "like.transfer|*" : tool === "commissaryOrders" ? "like.commissaryOrder|*" : tool === "operationalMetadata" ? `eq.${OPERATIONAL_METADATA_RECORD_ID}` : undefined,
     visible_in_dashboard: includeHidden ? undefined : "eq.true",
     order: "updated_at.desc",
   };
@@ -383,6 +382,7 @@ async function loadRecords(req, res) {
       return ["Commissary Order", "Commissary Prep Progress", "Commissary Metadata"].includes(String(record["Record Type"] || ""))
         && String(record["Record ID"] || "").startsWith("commissaryOrder|");
     }
+    if (tool === "operationalMetadata") return isApprovedOperationalMetadataRecord(record);
     if (ssmtAccountsEnabled() && String(record["Record ID"] || record.__supabaseRecordId || "").startsWith("ssmt|")) return false;
     return true;
   });
@@ -415,6 +415,10 @@ async function upsertRecords(req, res) {
   if (transferValidationError) return res.status(400).json({ ok: false, message: transferValidationError });
   const commissaryValidationError = commissaryWriteValidation(records, context);
   if (commissaryValidationError) return res.status(400).json({ ok: false, message: commissaryValidationError });
+  if (getBackboneToolFromContext(context) === "operationalMetadata"
+    && (records.length !== 1 || !isApprovedOperationalMetadataRecord(records[0]))) {
+    return res.status(400).json({ ok: false, message: "Operational metadata does not match the approved release configuration." });
+  }
   if (getBackboneToolFromContext(context) === "transfers") {
     const record = records[0];
     const existing = await supabaseFetch(`app_records?${queryString({ select: "record_id,record_payload", record_id: `eq.${record["Record ID"]}`, limit: "1" })}`);

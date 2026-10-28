@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Download, FileSpreadsheet, LockKeyhole, PackageCheck, Save, Truck } from "lucide-react";
 
 import { money } from "../../shared/formatting.js";
+import { loadOperationalMetadata } from "../../shared/operationalMetadataStorage.js";
 import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
 import PrepListView from "./PrepListView.jsx";
@@ -61,11 +62,18 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
 
   useEffect(() => {
     let mounted = true;
-    loadCommissaryRecords().then((records) => {
+    Promise.all([loadCommissaryRecords(), loadOperationalMetadata()]).then(([records, operationalMetadata]) => {
       if (mounted) {
         setOrders(records.filter((record) => record["Record Type"] === "Commissary Order"));
         setPrepProgressRecords(records.filter((record) => record["Record Type"] === "Commissary Prep Progress"));
-        setMetadata(resolveCommissaryMetadata(records));
+        const legacyMetadata = resolveCommissaryMetadata(records);
+        const shared = operationalMetadata.commissaryOrdering;
+        setMetadata({
+          metadataVersion: operationalMetadata.metadataVersion,
+          receivingCafes: shared.receivingCafes || legacyMetadata.receivingCafes,
+          deliveries: shared.deliveries || legacyMetadata.deliveries,
+          source: operationalMetadata.source,
+        });
       }
     }).catch((loadError) => {
       if (mounted) setError(loadError.message);

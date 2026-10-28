@@ -200,7 +200,7 @@ if (!scaledCatalogItems) fail("catalog scaling regression did not exercise any r
 if (transferRecordId(" My  Transfer ") !== "transfer|my%20transfer") fail("title identity is not deterministic");
 if (normalizeTransferTitle(" MY   TRANSFER ") !== "my transfer") fail("title normalization is not case/space insensitive");
 if (transferTotal([{ quantity: 2, itemWasteCost: 1.234, allocationPerPortion: 8 }]) !== 2.468) fail("transfer total must use the menu card Item + Waste Cost");
-if (cafeProfitCenter("Dawson") !== "28676" || cafeProfitCenter("Astra") !== "62844" || cafeProfitCenter("Eclipse") !== "62100" || cafeProfitCenter("LAX78") !== "64002" || cafeProfitCenter("SNA3") !== "44280") fail("cafe profit-center mapping is incorrect");
+if (cafeProfitCenter("Dawson") !== "28675" || cafeProfitCenter("Commissary") !== "22472" || cafeProfitCenter("Astra") !== "62844" || cafeProfitCenter("Eclipse") !== "62100" || cafeProfitCenter("LAX78") !== "64002" || cafeProfitCenter("SNA3") !== "44280") fail("cafe profit-center mapping is incorrect");
 if (!CAFE_UNITS.every(({ cafe }) => /^\d{5}$/.test(cafeProfitCenter(cafe)))) fail("one or more current cafés are missing a five-digit profit center");
 if (defaultTransferDescription("Tuna Sandwich", "Dawson to Nessie").length > 50) fail("default descriptions are not capped at 50 characters");
 const refreshed = refreshCopiedItems([{ catalogId: CATALOG.items[0].id, itemWasteCost: 999 }], CATALOG.items);
@@ -302,7 +302,7 @@ const record = {
 const s4Record = {
   ...record,
   s4ExportVersion: S4_EXPORT_VERSION,
-  departingProfitCenter: "28676",
+  departingProfitCenter: "28675",
   receivingProfitCenter: "30159",
   eventId: "EVENT-1",
   items: record.items,

@@ -1,5 +1,7 @@
 # Transfer Tool handoff
 
+Shared operating configuration is stored in the validated Supabase record `platformMetadata|operations|current`. Transfer unit/profit-center mappings, approved S4 G/L accounts, the Prepared Foods fallback, S4 export version/line limit, and source contracts resolve from that record with an identical bundled read-outage fallback. Live menu items and Item + Waste costs continue to come from Supabase recipe metadata; saved transfers remain separate `transfer|*` records.
+
 ## Scope
 
 The Transfer Tool is explicitly labeled `DRAFT`. It builds shared reference transfers for later manual entry in S4; it does not submit, approve, post, or reconcile S4 transactions. A saved Culinary Platform transfer draft can be deleted through a transfer-scoped API action after one browser confirmation.

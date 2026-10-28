@@ -1,5 +1,7 @@
 # Commissary Ordering Tool handoff
 
+The complete reusable operating contract is published in the validated Supabase record `platformMetadata|operations|current`: fixed departing unit, receiving cafes/profit centers, all order items with costs/units/G/Ls, delivery definitions, cutoff, quantity increment, order-unit version, and the Transfer Tool handoff. Orders and prep progress remain separate records. The legacy Commissary metadata row remains readable for backward compatibility; the shared operational record is primary.
+
 The Draft Commissary Ordering Tool stores one shared Supabase order per receiving cafe and service week. Initial receiving cafes are Nessie and Cricket. Commissary (`SEA20 Cricket`, profit center `22472`) is the fixed departing unit.
 
 - Friday delivery covers Monday service, Monday delivery covers Tuesday–Wednesday service, and Wednesday delivery covers Thursday–Friday service.

@@ -1,3 +1,7 @@
+## 2026-10-28
+
+- [Oct 28, 5:09 AM] Unified Transfer and Commissary configuration in validated Supabase operational metadata for consistent units, cost centers, G/Ls, costs, deliveries, exports, and downstream tools.
+
 ## 2026-10-27
 
 - [Oct 27, 7:35 PM] Simplified FIXY generation, added modifier defaults and Custom groups, alphabetized reuse lists and clarified locked controls.

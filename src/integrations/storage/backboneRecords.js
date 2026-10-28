@@ -46,6 +46,7 @@ export function getBackboneToolFromContext(context = {}) {
     .toLowerCase();
   if (text.includes("ssmt") || text.includes("sea standard menu template")) return "ssmt";
   if (text.includes("commissaryorder") || text.includes("commissary order")) return "commissaryOrders";
+  if (text.includes("platformmetadata") || text.includes("operationalmetadata") || text.includes("operational metadata")) return "operationalMetadata";
   if (text.includes("transfer")) return "transfers";
   if (text.includes("menuproject") || text.includes("menu project")) return "menuProjects";
   if (text.includes("lean")) return "lean";
@@ -61,6 +62,7 @@ export function getBackboneDatabaseToolFromContext(context = {}) {
   if (tool === "ssmt") return "rotation";
   if (tool === "transfers") return "rotation";
   if (tool === "commissaryOrders") return "rotation";
+  if (tool === "operationalMetadata") return "rotation";
   return tool;
 }
 

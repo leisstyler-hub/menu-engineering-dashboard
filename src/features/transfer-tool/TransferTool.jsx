@@ -1,15 +1,15 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, ArrowRightLeft, Copy, Download, Plus, Save, Search, Trash2 } from "lucide-react";
 
-import { CAFE_UNITS } from "../../shared/cafeUnits.js";
 import { money } from "../../shared/formatting.js";
+import { DEFAULT_OPERATIONAL_METADATA } from "../../shared/operationalMetadata.js";
+import { loadOperationalMetadata } from "../../shared/operationalMetadataStorage.js";
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
 import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
 import { cafeProfitCenter } from "./cafeProfitCenters.js";
 import { exportTransferWorkbook, exportTransferZip } from "./transferExport.js";
 import { applyPreparedFoodsFallback, applySoupPreparedFoodsAllocation, balanceIngredientAllocations, isSoupTransferItem, normalizeTransferItemAllocations, normalizeTransferTitle, refreshCopiedItems, S4_EXPORT_VERSION, transferRecordId, transferTotal, validateS4Transfer, validateTransfer } from "./transferModel.js";
-import { S4_GL_ACCOUNTS } from "./s4GlAccounts.js";
 import { deleteTransfer, loadIngredientAllocations, loadTransfers, refreshTransferCatalogCosts, saveTransfer } from "./transferStorage.js";
 
 const today = () => {
@@ -26,15 +26,15 @@ function recordDate(record) {
   return record.updatedAt || record["Updated At"] || record.createdAt || "";
 }
 
-function toDraft(record) {
+function toDraft(record, profitCenterFor = cafeProfitCenter) {
   const title = record.title || "";
   return {
     recordId: record["Record ID"] || record.recordId || "",
     title,
     departingUnit: record.departingUnit || "",
     receivingUnit: record.receivingUnit || "",
-    departingProfitCenter: record.departingProfitCenter || cafeProfitCenter(record.departingUnit),
-    receivingProfitCenter: record.receivingProfitCenter || cafeProfitCenter(record.receivingUnit),
+    departingProfitCenter: record.departingProfitCenter || profitCenterFor(record.departingUnit),
+    receivingProfitCenter: record.receivingProfitCenter || profitCenterFor(record.receivingUnit),
     transferDate: record.transferDate || today(),
     eventId: record.eventId || "",
     s4ExportVersion: record.s4ExportVersion || "",
@@ -61,7 +61,12 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
   const [deletingTransferId, setDeletingTransferId] = useState("");
   const [batchDrafts, setBatchDrafts] = useState({});
   const [batchError, setBatchError] = useState("");
+  const [operationalMetadata, setOperationalMetadata] = useState(() => ({ ...DEFAULT_OPERATIONAL_METADATA, source: "fallback" }));
   const costsReady = costStatus.state === "ready";
+  const transferConfig = operationalMetadata.transferTool;
+  const transferUnits = transferConfig.units;
+  const glAccounts = transferConfig.glAccounts;
+  const profitCenterFor = (unit) => transferUnits.find(({ cafe }) => cafe === unit)?.profitCenter || "";
 
   const catalogMenus = useMemo(() => [...new Set(catalogItems.map(item => item.menu))].sort(), [catalogItems]);
   const catalogByMenu = useMemo(() => {
@@ -81,6 +86,7 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
         setStatus({ tone: "ready", message: `${sorted.length} shared transfer${sorted.length === 1 ? "" : "s"} available.` });
       })
       .catch((error) => active && setStatus({ tone: "error", message: error.message }));
+    loadOperationalMetadata().then((metadata) => active && setOperationalMetadata(metadata));
     refreshTransferCatalogCosts()
       .then((result) => {
         if (!active) return;
@@ -115,7 +121,7 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
 
   const setUnit = (field, value) => {
     const profitCenterField = field === "departingUnit" ? "departingProfitCenter" : "receivingProfitCenter";
-    setDraft((current) => ({ ...current, [field]: value, [profitCenterField]: cafeProfitCenter(value) }));
+    setDraft((current) => ({ ...current, [field]: value, [profitCenterField]: profitCenterFor(value) }));
     setErrors((current) => ({ ...current, [field]: undefined, [profitCenterField]: undefined }));
   };
 
@@ -220,8 +226,8 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
       title: "",
       departingUnit: source.departingUnit || "",
       receivingUnit: source.receivingUnit || "",
-      departingProfitCenter: cafeProfitCenter(source.departingUnit),
-      receivingProfitCenter: cafeProfitCenter(source.receivingUnit),
+      departingProfitCenter: profitCenterFor(source.departingUnit),
+      receivingProfitCenter: profitCenterFor(source.receivingUnit),
       transferDate: today(),
       eventId: "",
       s4ExportVersion: S4_EXPORT_VERSION,
@@ -272,7 +278,7 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
     try {
       await saveTransfer(record, { createOnly: !draft.recordId });
       setTransfers((current) => [record, ...current.filter((item) => (item["Record ID"] || item.recordId) !== recordId)]);
-      setDraft(toDraft(record));
+      setDraft(toDraft(record, profitCenterFor));
       setStatus({ tone: "saved", message: "Saved to shared storage. This draft is visible to all Culinary Platform users." });
     } catch (error) {
       setStatus({ tone: "error", message: error.status === 409 ? "That transfer title already exists. Choose a globally unique title." : error.message });
@@ -312,13 +318,13 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
         delete next[id];
         return next;
       }
-      return { ...current, [id]: toDraft(record) };
+      return { ...current, [id]: toDraft(record, profitCenterFor) };
     });
     setBatchError("");
   };
 
   const chooseAllocationGl = (line, allocationIndex, glCode) => {
-    if (!S4_GL_ACCOUNTS.some((account) => account.code === glCode)) return;
+    if (!glAccounts.some((account) => account.code === glCode)) return;
     updateLine(line.lineId, {
       ingredientAllocations: (line.ingredientAllocations || []).map((allocation, index) => (
         index === allocationIndex ? {
@@ -422,13 +428,13 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
                 <Field label="Globally unique title" error={errors.title}>
                   <input aria-label="Globally unique title" value={draft.title} disabled={Boolean(draft.recordId)} onChange={(event) => setField("title", event.target.value)} placeholder="Example: Dawson to Nessie 9-14" className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-semibold disabled:bg-slate-100" />
                 </Field>
-                <UnitField label="Departing unit" value={draft.departingUnit} onChange={(value) => setUnit("departingUnit", value)} error={errors.departingUnit} />
-                <UnitField label="Receiving unit" value={draft.receivingUnit} onChange={(value) => setUnit("receivingUnit", value)} error={errors.receivingUnit} />
+                <UnitField label="Departing unit" value={draft.departingUnit} units={transferUnits} onChange={(value) => setUnit("departingUnit", value)} error={errors.departingUnit} />
+                <UnitField label="Receiving unit" value={draft.receivingUnit} units={transferUnits} onChange={(value) => setUnit("receivingUnit", value)} error={errors.receivingUnit} />
                 <Field label="Transfer date" error={errors.transferDate}>
                   <input aria-label="Transfer date" type="date" value={draft.transferDate} onChange={(event) => setField("transferDate", event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-semibold" />
                 </Field>
                 <Field label="Receiving profit center" error={errors.receivingProfitCenter}>
-                  <input aria-label="Receiving profit center" inputMode="numeric" maxLength={5} value={draft.receivingProfitCenter} readOnly={Boolean(cafeProfitCenter(draft.receivingUnit))} onChange={(event) => setField("receivingProfitCenter", event.target.value.replace(/\D/g, "").slice(0, 5))} placeholder={draft.receivingUnit ? "Enter 5 digits" : "Choose receiving unit"} className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-semibold read-only:bg-slate-100" />
+                  <input aria-label="Receiving profit center" inputMode="numeric" maxLength={5} value={draft.receivingProfitCenter} readOnly={Boolean(profitCenterFor(draft.receivingUnit))} onChange={(event) => setField("receivingProfitCenter", event.target.value.replace(/\D/g, "").slice(0, 5))} placeholder={draft.receivingUnit ? "Enter 5 digits" : "Choose receiving unit"} className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-semibold read-only:bg-slate-100" />
                   <span className="mt-1 block text-xs font-semibold text-slate-500">Current cafés are mapped and locked. A future unmapped café requires manual entry.</span>
                 </Field>
                 <Field label="Event ID (optional)" error={errors.eventId}>
@@ -459,7 +465,7 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
                       <Field label="Menu"><select aria-label={`Mobile menu ${index + 1}`} value={line.menu} onChange={(event) => chooseMenu(line, event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 font-semibold"><option value="">Select menu</option>{catalogMenus.map((menu) => <option key={menu} value={menu}>{menu}</option>)}</select></Field>
                       <Field label="Item"><select aria-label={`Mobile item ${index + 1}`} value={line.catalogId} disabled={!line.menu || !costsReady} onChange={(event) => chooseItem(line, event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 font-semibold disabled:bg-slate-100"><option value="">{costsReady ? "Select item" : "Waiting for live costs"}</option>{choices.map((item) => <option key={item.id} value={item.id}>{item.item}{item.mrn ? ` · ${item.mrn}` : ""}{item.portion ? ` · ${item.portion}` : ""}</option>)}</select></Field>
                       <div className="grid grid-cols-2 gap-3"><ChefReviewCost line={line} /><Field label="Item count"><input aria-label={`Mobile item count ${index + 1}`} type="number" min="1" step="1" value={line.quantity} onChange={(event) => updateLine(line.lineId, { quantity: event.target.value })} className="w-full rounded-lg border border-slate-300 px-3 py-2 font-semibold" /></Field></div>
-                      {line.catalogId && <IngredientAllocationList line={line} onChooseAllocationGl={chooseAllocationGl} />}
+                      {line.catalogId && <IngredientAllocationList line={line} glAccounts={glAccounts} onChooseAllocationGl={chooseAllocationGl} />}
                       <p className="text-sm font-black text-emerald-700">Line value {Number.isFinite(lineValue) ? money(lineValue) : "—"}</p>
                     </article>
                   );
@@ -483,7 +489,7 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
                           <td className="w-[150px] p-3"><input aria-label={`Item count ${index + 1}`} type="number" min="1" step="1" value={line.quantity} onChange={(event) => updateLine(line.lineId, { quantity: event.target.value })} className="w-24 rounded-lg border border-slate-300 px-3 py-2 font-semibold" /><p className="mt-2 text-xs font-black text-emerald-700">Line value {Number.isFinite(lineValue) ? money(lineValue) : "—"}</p></td>
                           <td className="p-3"><button type="button" aria-label={`Remove item ${index + 1}`} onClick={() => setDraft((current) => ({ ...current, items: current.items.length === 1 ? [blankLine()] : current.items.filter((item) => item.lineId !== line.lineId) }))} className="rounded-lg border border-rose-200 bg-rose-50 p-2 text-rose-700 hover:bg-rose-100"><Trash2 size={16} /></button></td>
                         </tr>
-                        {line.catalogId && <tr className="border-b border-slate-200 bg-slate-50 last:border-b-0"><td colSpan={5} className="px-3 pb-4"><IngredientAllocationList line={line} onChooseAllocationGl={chooseAllocationGl} /></td></tr>}
+                        {line.catalogId && <tr className="border-b border-slate-200 bg-slate-50 last:border-b-0"><td colSpan={5} className="px-3 pb-4"><IngredientAllocationList line={line} glAccounts={glAccounts} onChooseAllocationGl={chooseAllocationGl} /></td></tr>}
                         </React.Fragment>
                       );
                     })}
@@ -532,7 +538,7 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
             <p className="mt-2 text-sm font-semibold text-slate-600">Each saved transfer exports one S4 row per priced ingredient. Staging edits allow an Event ID and chef-reviewed G/L overrides for this ZIP without changing the saved transfer.</p>
             <div className="mt-4 space-y-4">
               {Object.entries(batchDrafts).map(([recordId, transfer]) => (
-                <BatchTransferEditor key={recordId} transfer={transfer} onChange={(updater) => updateBatch(recordId, updater)} />
+                <BatchTransferEditor key={recordId} transfer={transfer} units={transferUnits} glAccounts={glAccounts} onChange={(updater) => updateBatch(recordId, updater)} />
               ))}
             </div>
             <button type="button" disabled={exporting} onClick={exportBatch} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-black text-white disabled:opacity-50"><Download size={16} /> Export {Object.keys(batchDrafts).length} as ZIP</button>
@@ -547,8 +553,8 @@ function Field({ label, error, children }) {
   return <label className="block"><span className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">{label}</span><span className="mt-2 block">{children}</span>{error && <span role="alert" className="mt-1 block text-xs font-bold text-rose-700">{error}</span>}</label>;
 }
 
-function UnitField({ label, value, onChange, error }) {
-  return <Field label={label} error={error}><select aria-label={label} value={value} onChange={(event) => onChange(event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-semibold"><option value="">Choose unit</option>{Object.entries(CAFE_UNITS.reduce((groups, unit) => ({ ...groups, [unit.district]: [...(groups[unit.district] || []), unit.cafe] }), {})).map(([district, cafes]) => <optgroup key={district} label={district}>{cafes.map((cafe) => <option key={cafe} value={cafe}>{cafe}</option>)}</optgroup>)}</select></Field>;
+function UnitField({ label, value, units, onChange, error }) {
+  return <Field label={label} error={error}><select aria-label={label} value={value} onChange={(event) => onChange(event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-semibold"><option value="">Choose unit</option>{Object.entries(units.reduce((groups, unit) => ({ ...groups, [unit.district]: [...(groups[unit.district] || []), unit.cafe] }), {})).map(([district, cafes]) => <optgroup key={district} label={district}>{cafes.map((cafe) => <option key={cafe} value={cafe}>{cafe}</option>)}</optgroup>)}</select></Field>;
 }
 
 function ChefReviewCost({ line }) {
@@ -557,7 +563,7 @@ function ChefReviewCost({ line }) {
   </div>;
 }
 
-function IngredientAllocationList({ line, onChooseAllocationGl }) {
+function IngredientAllocationList({ line, glAccounts: S4_GL_ACCOUNTS, onChooseAllocationGl }) {
   if (line.allocationStatus === "loading") return <p className="pt-3 text-xs font-bold text-amber-800">Loading Ingredient Costing 9.19.26 allocation…</p>;
   if (!line.ingredientAllocations?.length) return <p role="alert" className="pt-3 text-xs font-bold text-rose-800">{line.allocationMessage || "No ingredient mapping is available for this menu item."}</p>;
   const requiresReview = line.allocationStatus !== "ready";
@@ -580,11 +586,11 @@ function IngredientAllocationList({ line, onChooseAllocationGl }) {
   </details>;
 }
 
-function BatchTransferEditor({ transfer, onChange }) {
-  const mappedProfitCenter = cafeProfitCenter(transfer.receivingUnit);
+function BatchTransferEditor({ transfer, units, glAccounts, onChange }) {
+  const mappedProfitCenter = units.find(({ cafe }) => cafe === transfer.receivingUnit)?.profitCenter || "";
   const validation = validateS4Transfer(transfer);
   const chooseAllocationGl = (line, allocationIndex, glCode) => {
-    if (!S4_GL_ACCOUNTS.some((account) => account.code === glCode)) return;
+    if (!glAccounts.some((account) => account.code === glCode)) return;
     onChange((current) => ({
       ...current,
       items: current.items.map((item) => item.lineId === line.lineId ? {
@@ -614,7 +620,7 @@ function BatchTransferEditor({ transfer, onChange }) {
         {(transfer.items || []).map((line, sourceIndex) => ({ line, sourceIndex })).filter(({ line }) => line.catalogId).map(({ line, sourceIndex }, displayIndex) => (
           <div key={line.lineId || `${line.catalogId}-${sourceIndex}`} className="rounded-lg border border-slate-200 bg-white p-3">
             <p className="font-black">{line.item} <span className="text-xs text-slate-500">{money(Number(line.quantity) * Number(line.allocationPerPortion))}</span></p>
-            <IngredientAllocationList line={line} onChooseAllocationGl={chooseAllocationGl} />
+            <IngredientAllocationList line={line} glAccounts={glAccounts} onChooseAllocationGl={chooseAllocationGl} />
           </div>
         ))}
       </div>
