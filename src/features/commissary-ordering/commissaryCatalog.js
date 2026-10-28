@@ -1,13 +1,12 @@
+import { DEFAULT_COMMISSARY_METADATA } from "./commissaryMetadata.js";
+
 export const COMMISSARY_DEPARTING_UNIT = Object.freeze({
   name: "Commissary",
   siteLabel: "SEA20 Cricket",
   profitCenter: "22472",
 });
 
-export const COMMISSARY_RECEIVING_CAFES = Object.freeze([
-  { name: "Nessie", profitCenter: "30159" },
-  { name: "Cricket", profitCenter: "22472" },
-]);
+export const COMMISSARY_RECEIVING_CAFES = DEFAULT_COMMISSARY_METADATA.receivingCafes;
 
 const item = (category, name, mrn, itemWasteCost, orderUnit, orderUnitCost, notes = "", options = {}) => {
   const convertsFromQuart = orderUnit === "quart";

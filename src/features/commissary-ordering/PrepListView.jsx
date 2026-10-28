@@ -2,16 +2,13 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Languages } from "lucide-react";
 
 import { rolledUpItems, weekLabel } from "./commissaryModel.js";
+import { DEFAULT_COMMISSARY_METADATA } from "./commissaryMetadata.js";
 import {
   commissarySpanishCategory,
   commissarySpanishItem,
   commissarySpanishUnit,
 } from "./commissaryTranslations.js";
 
-const DELIVERIES = [
-  { key: "monday", en: "Monday delivery", es: "Entrega del lunes", detailEn: "Monday–Wednesday service", detailEs: "Servicio de lunes a miércoles" },
-  { key: "wednesday", en: "Wednesday delivery", es: "Entrega del miércoles", detailEn: "Thursday–Friday service", detailEs: "Servicio de jueves a viernes" },
-];
 const HOLD_MS = 600;
 
 function PrepCheck({ checked, disabled, label, onToggle }) {
@@ -75,12 +72,16 @@ const compactUnit = (unit, spanish) => {
   return spanish ? commissarySpanishUnit(unit) : unit;
 };
 
-export default function PrepListView({ records, weekStart, completed, saving, onToggle }) {
-  const [delivery, setDelivery] = useState("monday");
+export default function PrepListView({ records, weekStart, completed, saving, onToggle, deliveries = DEFAULT_COMMISSARY_METADATA.deliveries }) {
+  const [delivery, setDelivery] = useState(() => deliveries[0]?.key || "friday");
   const [spanish, setSpanish] = useState(false);
   const rows = useMemo(() => rolledUpItems(records).filter((row) => Number(row[delivery]) > 0), [delivery, records]);
   const completedIds = new Set(completed?.[delivery] || []);
   const completedCount = rows.filter((row) => completedIds.has(row.id)).length;
+
+  useEffect(() => {
+    if (!deliveries.some(({ key }) => key === delivery)) setDelivery(deliveries[0]?.key || "friday");
+  }, [deliveries, delivery]);
 
   const text = spanish ? {
     title: "Lista de preparación",
@@ -124,8 +125,8 @@ export default function PrepListView({ records, weekStart, completed, saving, on
         </div>
       </div>
 
-      <div className="grid grid-cols-2 border-b border-slate-200 bg-slate-100 p-2">
-        {DELIVERIES.map((option) => (
+      <div className="grid grid-cols-1 gap-1 border-b border-slate-200 bg-slate-100 p-2 sm:grid-cols-3">
+        {deliveries.map((option) => (
           <button
             key={option.key}
             type="button"
@@ -133,8 +134,8 @@ export default function PrepListView({ records, weekStart, completed, saving, on
             onClick={() => setDelivery(option.key)}
             className={`min-h-16 rounded-xl px-3 py-2 text-left transition ${delivery === option.key ? "bg-white text-slate-950 shadow-sm ring-2 ring-sky-400" : "text-slate-600"}`}
           >
-            <span className="block text-base font-black">{spanish ? option.es : option.en}</span>
-            <span className="block text-xs font-semibold">{spanish ? option.detailEs : option.detailEn}</span>
+            <span className="block text-base font-black">{spanish ? option.titleEs : option.title}</span>
+            <span className="block text-xs font-semibold">{spanish ? option.detailEs : option.detail}</span>
           </button>
         ))}
       </div>

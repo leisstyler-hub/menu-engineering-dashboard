@@ -1,5 +1,7 @@
 ## 2026-10-27
 
+- [Oct 27, 6:03 PM] Added Dawson and three-day Commissary deliveries: Friday for Monday, Monday for Tuesday–Wednesday, and Wednesday for Thursday–Friday.
+
 - [Oct 27, 4:47 AM] Buzz 10.27 test.
 
 - [Oct 27, 7:13 AM] Show all source menus in W&P analysis and exports while retaining food-level qualification and missing-information warnings.

@@ -8,7 +8,8 @@ import {
 import { CAFE_UNITS } from "../../src/shared/cafeUnits.js";
 import { S4_GL_ACCOUNT_CODES } from "../../src/features/transfer-tool/s4GlAccounts.js";
 import { COMMISSARY_ORDER_ITEMS, COMMISSARY_RECEIVING_CAFES } from "../../src/features/commissary-ordering/commissaryCatalog.js";
-import { COMMISSARY_ORDER_UNIT_VERSION, isWeekLocked } from "../../src/features/commissary-ordering/commissaryModel.js";
+import { isApprovedCommissaryMetadataRecord } from "../../src/features/commissary-ordering/commissaryMetadata.js";
+import { COMMISSARY_ORDER_UNIT_VERSION, DELIVERY_KEYS, isWeekLocked } from "../../src/features/commissary-ordering/commissaryModel.js";
 import { gzipSync, gunzipSync } from "node:zlib";
 
 const DEFAULT_SUPABASE_URL = "https://pzilyzqhatthctgsjwtt.supabase.co";
@@ -91,13 +92,16 @@ export function commissaryWriteValidation(records = [], context = {}) {
   if (getBackboneToolFromContext(context) !== "commissaryOrders") return "";
   if (records.length !== 1) return "A single commissary record is required.";
   const record = records[0] || {};
+  if (record["Record Type"] === "Commissary Metadata") {
+    return isApprovedCommissaryMetadataRecord(record) ? "" : "The Commissary metadata does not match the approved release configuration.";
+  }
   if (record["Record Type"] === "Commissary Prep Progress") {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(String(record.weekStart || ""))) return "The commissary prep week is invalid.";
     if (record["Record ID"] !== `commissaryOrder|prepProgress|${record.weekStart}`) return "The commissary prep progress identity is invalid.";
     if (!isWeekLocked(record.weekStart, new Date())) return "Prep progress is available after the commissary order cutoff.";
     if (!record.completed || typeof record.completed !== "object" || Array.isArray(record.completed)) return "Commissary prep completion data is required.";
-    if (Object.keys(record.completed).some((delivery) => !["monday", "wednesday"].includes(delivery))) return "The commissary prep delivery is invalid.";
-    for (const delivery of ["monday", "wednesday"]) {
+    if (Object.keys(record.completed).some((delivery) => !DELIVERY_KEYS.includes(delivery))) return "The commissary prep delivery is invalid.";
+    for (const delivery of DELIVERY_KEYS) {
       const itemIds = record.completed[delivery];
       if (!Array.isArray(itemIds) || new Set(itemIds).size !== itemIds.length || itemIds.some((itemId) => !COMMISSARY_ITEM_IDS.has(itemId))) {
         return "Commissary prep completion contains an invalid or duplicate item.";
@@ -114,7 +118,7 @@ export function commissaryWriteValidation(records = [], context = {}) {
   if (!quantities || typeof quantities !== "object" || Array.isArray(quantities)) return "Commissary delivery quantities are required.";
   for (const [itemId, delivery] of Object.entries(quantities)) {
     if (!COMMISSARY_ITEM_IDS.has(itemId)) return "The commissary order contains an unknown item.";
-    if (!delivery || [delivery.monday, delivery.wednesday].some((value) => !Number.isFinite(Number(value)) || Number(value) < 0)) {
+    if (!delivery || DELIVERY_KEYS.some((key) => !Number.isFinite(Number(delivery[key] ?? 0)) || Number(delivery[key] ?? 0) < 0)) {
       return "Commissary quantities must be zero or positive numbers.";
     }
   }
@@ -376,7 +380,7 @@ async function loadRecords(req, res) {
       return String(record["Record Type"] || "") === "Transfer" && String(record["Record ID"] || "").startsWith("transfer|");
     }
     if (tool === "commissaryOrders") {
-      return ["Commissary Order", "Commissary Prep Progress"].includes(String(record["Record Type"] || ""))
+      return ["Commissary Order", "Commissary Prep Progress", "Commissary Metadata"].includes(String(record["Record Type"] || ""))
         && String(record["Record ID"] || "").startsWith("commissaryOrder|");
     }
     if (ssmtAccountsEnabled() && String(record["Record ID"] || record.__supabaseRecordId || "").startsWith("ssmt|")) return false;

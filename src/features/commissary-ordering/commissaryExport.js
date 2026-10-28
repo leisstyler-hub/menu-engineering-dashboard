@@ -1,7 +1,8 @@
 import XLSX from "xlsx-js-style";
 
 import { buildS4Workbook, transferExportFileName } from "../transfer-tool/transferExport.js";
-import { COMMISSARY_DEPARTING_UNIT, COMMISSARY_RECEIVING_CAFES } from "./commissaryCatalog.js";
+import { COMMISSARY_DEPARTING_UNIT } from "./commissaryCatalog.js";
+import { DEFAULT_COMMISSARY_METADATA } from "./commissaryMetadata.js";
 import { orderLinesForCafe, rolledUpItems, transferPeriod, weekLabel } from "./commissaryModel.js";
 
 const S4_TEMPLATE_URL = "/templates/ExpenseTransfer_Between_PC_Template.xlsx";
@@ -74,14 +75,13 @@ function bodyStyle(fill, isGroupStart = false) {
 }
 
 function buildDeliveryMapWorksheet(records, delivery) {
-  const isMonday = delivery === "monday";
   const rows = [
-    [`${isMonday ? "Monday" : "Wednesday"} Cafe Delivery Map`, "", "", "", "", "", ""],
-    [isMonday ? "Monday–Wednesday service" : "Thursday–Friday service", "", "", "", "", "", ""],
+    [`${delivery.day} Cafe Delivery Map`, "", "", "", "", "", ""],
+    [delivery.detail, "", "", "", "", "", ""],
     ["Cafe", "Item", "MRN", "Quantity", "Order unit", "Unit cost", "Extended cost"],
     ...records.flatMap((record) => orderLinesForCafe(record)
-      .filter((line) => Number(line[delivery]) > 0)
-      .map((line) => [record.cafe, line.name, line.mrn, line[delivery], line.orderUnit, line.orderUnitCost, line[delivery] * line.orderUnitCost])),
+      .filter((line) => Number(line[delivery.key]) > 0)
+      .map((line) => [record.cafe, line.name, line.mrn, line[delivery.key], line.orderUnit, line.orderUnitCost, line[delivery.key] * line.orderUnitCost])),
   ];
   const worksheet = XLSX.utils.aoa_to_sheet(rows);
   worksheet["!merges"] = [XLSX.utils.decode_range("A1:G1"), XLSX.utils.decode_range("A2:G2")];
@@ -117,7 +117,7 @@ function buildDeliveryMapWorksheet(records, delivery) {
   return worksheet;
 }
 
-export function buildCommissaryBomWorkbook(records, weekStart) {
+export function buildCommissaryBomWorkbook(records, weekStart, metadata = DEFAULT_COMMISSARY_METADATA) {
   const rows = rolledUpItems(records);
   const worksheetRows = [
     ["Ingredient Technique Prep List", "", "", "", "", ""],
@@ -213,21 +213,20 @@ export function buildCommissaryBomWorkbook(records, weekStart) {
 
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, "Consolidated Prep List");
-  XLSX.utils.book_append_sheet(workbook, buildDeliveryMapWorksheet(records, "monday"), "Monday Delivery Map");
-  XLSX.utils.book_append_sheet(workbook, buildDeliveryMapWorksheet(records, "wednesday"), "Wednesday Delivery Map");
+  metadata.deliveries.forEach((delivery) => XLSX.utils.book_append_sheet(workbook, buildDeliveryMapWorksheet(records, delivery), `${delivery.day} Delivery Map`));
   XLSX.utils.book_append_sheet(workbook, automationWorksheet, "Power Automate");
   workbook.Workbook ||= {};
   workbook.Workbook.Sheets = workbook.SheetNames.map((name) => ({ name, Hidden: name === "Power Automate" ? 1 : 0 }));
   return workbook;
 }
 
-export function exportCommissaryBom(records, weekStart) {
-  const bytes = XLSX.write(buildCommissaryBomWorkbook(records, weekStart), { type: "array", bookType: "xlsx", cellStyles: true });
+export function exportCommissaryBom(records, weekStart, metadata = DEFAULT_COMMISSARY_METADATA) {
+  const bytes = XLSX.write(buildCommissaryBomWorkbook(records, weekStart, metadata), { type: "array", bookType: "xlsx", cellStyles: true });
   downloadBytes(bytes, `Commissary Salad Bar Prep List ${weekStart}.xlsx`, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 }
 
-export function buildCommissaryTransfer(record) {
-  const receiver = COMMISSARY_RECEIVING_CAFES.find(({ name }) => name === record.cafe);
+export function buildCommissaryTransfer(record, metadata = DEFAULT_COMMISSARY_METADATA) {
+  const receiver = metadata.receivingCafes.find(({ name }) => name === record.cafe);
   const period = transferPeriod(record.weekStart);
   return {
     title: `Commissary Salad Bar ${record.cafe} ${period.start} to ${period.end}`,
@@ -255,10 +254,10 @@ export function buildCommissaryTransfer(record) {
   };
 }
 
-export async function exportCommissaryTransfer(record) {
+export async function exportCommissaryTransfer(record, metadata = DEFAULT_COMMISSARY_METADATA) {
   const response = await fetch(S4_TEMPLATE_URL);
   if (!response.ok) throw new Error("The required S4 transfer template is unavailable.");
-  const transfer = buildCommissaryTransfer(record);
+  const transfer = buildCommissaryTransfer(record, metadata);
   const bytes = await buildS4Workbook(await response.arrayBuffer(), transfer);
   downloadBytes(bytes, transferExportFileName(transfer.title), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 }

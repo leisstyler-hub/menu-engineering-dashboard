@@ -1,0 +1,50 @@
+export const COMMISSARY_METADATA_RECORD_ID = "commissaryOrder|metadata|current";
+export const COMMISSARY_METADATA_VERSION = 1;
+
+const RECEIVING_CAFES = Object.freeze([
+  Object.freeze({ name: "Nessie", displayName: "SEA39 Nessie Cafe", profitCenter: "30159" }),
+  Object.freeze({ name: "Cricket", displayName: "SEA20 Cricket Cafe", profitCenter: "22472" }),
+  Object.freeze({ name: "Dawson", displayName: "SEA27 Dawson Cafe", profitCenter: "28675" }),
+]);
+
+const DELIVERIES = Object.freeze([
+  Object.freeze({ key: "friday", day: "Friday", title: "Friday delivery", detail: "Monday service", titleEs: "Entrega del viernes", detailEs: "Servicio del lunes" }),
+  Object.freeze({ key: "monday", day: "Monday", title: "Monday delivery", detail: "Tuesday–Wednesday service", titleEs: "Entrega del lunes", detailEs: "Servicio de martes a miércoles" }),
+  Object.freeze({ key: "wednesday", day: "Wednesday", title: "Wednesday delivery", detail: "Thursday–Friday service", titleEs: "Entrega del miércoles", detailEs: "Servicio de jueves a viernes" }),
+]);
+
+export const DEFAULT_COMMISSARY_METADATA = Object.freeze({
+  metadataVersion: COMMISSARY_METADATA_VERSION,
+  receivingCafes: RECEIVING_CAFES,
+  deliveries: DELIVERIES,
+});
+
+const comparableMetadata = (record = {}) => ({
+  metadataVersion: Number(record.metadataVersion),
+  receivingCafes: record.receivingCafes,
+  deliveries: record.deliveries,
+});
+
+export function isApprovedCommissaryMetadataRecord(record = {}) {
+  return record["Record ID"] === COMMISSARY_METADATA_RECORD_ID
+    && record["Record Type"] === "Commissary Metadata"
+    && JSON.stringify(comparableMetadata(record)) === JSON.stringify(DEFAULT_COMMISSARY_METADATA);
+}
+
+export function buildCommissaryMetadataRecord(now = new Date()) {
+  return {
+    "Record ID": COMMISSARY_METADATA_RECORD_ID,
+    "Record Type": "Commissary Metadata",
+    Status: "Active",
+    "Visible In Dashboard": false,
+    ...DEFAULT_COMMISSARY_METADATA,
+    updatedAt: now.toISOString(),
+  };
+}
+
+export function resolveCommissaryMetadata(records = []) {
+  const record = records.find((candidate) => candidate?.["Record ID"] === COMMISSARY_METADATA_RECORD_ID);
+  return isApprovedCommissaryMetadataRecord(record)
+    ? { ...comparableMetadata(record), source: "supabase" }
+    : { ...DEFAULT_COMMISSARY_METADATA, source: "fallback" };
+}

@@ -5,8 +5,9 @@ import { money } from "../../shared/formatting.js";
 import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
 import PrepListView from "./PrepListView.jsx";
-import { COMMISSARY_ORDER_ITEMS, COMMISSARY_RECEIVING_CAFES } from "./commissaryCatalog.js";
+import { COMMISSARY_ORDER_ITEMS } from "./commissaryCatalog.js";
 import { exportCommissaryBom, exportCommissaryTransfer } from "./commissaryExport.js";
+import { DEFAULT_COMMISSARY_METADATA, resolveCommissaryMetadata } from "./commissaryMetadata.js";
 import {
   addDays,
   buildOrderRecord,
@@ -27,11 +28,6 @@ import {
 } from "./commissaryModel.js";
 import { loadCommissaryRecords, saveCommissaryOrder, saveCommissaryPrepProgress } from "./commissaryStorage.js";
 
-const DELIVERY_ROWS = [
-  { key: "monday", title: "Monday delivery", detail: "Monday–Wednesday service" },
-  { key: "wednesday", title: "Wednesday delivery", detail: "Thursday–Friday service" },
-];
-
 const recordKey = (cafe, weekStart) => `${cafe}|${weekStart}`;
 
 function weekOptions(now = new Date()) {
@@ -46,6 +42,7 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
   const [weekStart, setWeekStart] = useState(() => firstOpenWeek());
   const [orders, setOrders] = useState([]);
   const [prepProgressRecords, setPrepProgressRecords] = useState([]);
+  const [metadata, setMetadata] = useState(() => ({ ...DEFAULT_COMMISSARY_METADATA, source: "fallback" }));
   const [quantities, setQuantities] = useState(() => emptyQuantities());
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
@@ -56,7 +53,7 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
   const weeks = useMemo(() => weekOptions(), []);
   const locked = isWeekLocked(weekStart);
   const currentRecord = useMemo(() => orders.find((row) => recordKey(row.cafe, row.weekStart) === recordKey(cafe, weekStart)), [cafe, orders, weekStart]);
-  const weekRecords = useMemo(() => orders.filter((row) => row.weekStart === weekStart && COMMISSARY_RECEIVING_CAFES.some(({ name }) => name === row.cafe)), [orders, weekStart]);
+  const weekRecords = useMemo(() => orders.filter((row) => row.weekStart === weekStart && metadata.receivingCafes.some(({ name }) => name === row.cafe)), [metadata.receivingCafes, orders, weekStart]);
   const prepProgressRecord = useMemo(() => prepProgressRecords.find((row) => row.weekStart === weekStart), [prepProgressRecords, weekStart]);
   const prepCompleted = useMemo(() => normalizePrepCompleted(prepProgressRecord?.completed), [prepProgressRecord]);
   const currentValue = orderValue(quantities);
@@ -68,6 +65,7 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
       if (mounted) {
         setOrders(records.filter((record) => record["Record Type"] === "Commissary Order"));
         setPrepProgressRecords(records.filter((record) => record["Record Type"] === "Commissary Prep Progress"));
+        setMetadata(resolveCommissaryMetadata(records));
       }
     }).catch((loadError) => {
       if (mounted) setError(loadError.message);
@@ -120,7 +118,7 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
   const generateCurrentTransfer = () => {
     if (!cafe) return setError("Select your cafe before generating a transfer.");
     const record = buildOrderRecord({ cafe, weekStart, quantities });
-    return runExport(() => exportCommissaryTransfer(record));
+    return runExport(() => exportCommissaryTransfer(record, metadata));
   };
 
   const generateCurrentBom = () => {
@@ -130,7 +128,7 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
       ...weekRecords.filter((record) => record.cafe !== cafe),
       current,
     ].filter((record) => orderValue(record.quantities) > 0);
-    return runExport(() => exportCommissaryBom(records, weekStart));
+    return runExport(() => exportCommissaryBom(records, weekStart, metadata));
   };
 
   const openPrepView = () => {
@@ -175,7 +173,7 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
               <p className="mt-2 max-w-3xl text-sm font-semibold text-slate-600">Choose your cafe, then enter each delivery quantity. Orders lock at 5:00 PM local Pacific time on the Wednesday before service.</p>
             </div>
             <div className={`grid w-full grid-cols-1 gap-3 xl:w-auto ${activeView === "orders" ? "sm:grid-cols-2 xl:min-w-[30rem]" : "xl:min-w-[15rem]"}`}>
-              {activeView === "orders" && <label className="min-w-0 text-xs font-black uppercase tracking-[0.12em] text-slate-600">Your cafe<select aria-label="Your cafe" value={cafe} onChange={(event) => { setCafe(event.target.value); setNotice(""); setError(""); }} className="mt-1 block w-full min-w-0 max-w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-black text-slate-950"><option value="">Select cafe</option>{COMMISSARY_RECEIVING_CAFES.map((row) => <option key={row.name} value={row.name}>{row.name} Cafe · PC {row.profitCenter}</option>)}</select></label>}
+              {activeView === "orders" && <label className="min-w-0 text-xs font-black uppercase tracking-[0.12em] text-slate-600">Your cafe<select aria-label="Your cafe" value={cafe} onChange={(event) => { setCafe(event.target.value); setNotice(""); setError(""); }} className="mt-1 block w-full min-w-0 max-w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-black text-slate-950"><option value="">Select cafe</option>{metadata.receivingCafes.map((row) => <option key={row.name} value={row.name}>{row.displayName} · PC {row.profitCenter}</option>)}</select></label>}
               <label className="min-w-0 text-xs font-black uppercase tracking-[0.12em] text-slate-600">Service week<select aria-label="Service week" value={weekStart} onChange={(event) => { setWeekStart(event.target.value); setNotice(""); setError(""); }} className="mt-1 block w-full min-w-0 max-w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-black text-slate-950">{weeks.map((week) => <option key={week} value={week}>Week {weekLabel(week)}{isWeekLocked(week) ? " · locked" : ""}</option>)}</select></label>
             </div>
           </div>
@@ -189,18 +187,18 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
         <section className={`rounded-2xl border p-4 ${locked ? "border-slate-300 bg-slate-200 text-slate-700" : "border-emerald-200 bg-emerald-50 text-emerald-950"}`}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-start gap-3">{locked ? <LockKeyhole className="mt-0.5" size={21} /> : <PackageCheck className="mt-0.5" size={21} />}<div><p className="font-black">{activeView === "prep" ? (locked ? "Prep list ready" : "Waiting for order cutoff") : (locked ? "Ordering closed" : `Ordering open for week ${weekLabel(weekStart)}`)}</p><p className="text-sm font-semibold">Cutoff: Wednesday {formatShortDate(cutoffDateForWeek(weekStart))} at 5:00 PM Pacific.</p>{activeView === "orders" && locked && <p className="mt-1 font-black">Please contact commissary executive chef to adjust pars.</p>}</div></div>
-            <div className="text-right"><p className="text-xs font-black uppercase tracking-[0.12em]">{activeView === "prep" ? "Shared production view" : "Transfer period"}</p><p className="font-black">{activeView === "prep" ? "Monday and Wednesday deliveries" : `Friday ${formatShortDate(period.start)} – Thursday ${formatShortDate(period.end)}`}</p></div>
+            <div className="text-right"><p className="text-xs font-black uppercase tracking-[0.12em]">{activeView === "prep" ? "Shared production view" : "Transfer period"}</p><p className="font-black">{activeView === "prep" ? "Friday, Monday and Wednesday deliveries" : `Friday ${formatShortDate(period.start)} – Thursday ${formatShortDate(period.end)}`}</p></div>
           </div>
         </section>
 
         {activeView === "prep" ? (
-          <PrepListView records={weekRecords} weekStart={weekStart} completed={prepCompleted} saving={prepSaving || !locked} onToggle={togglePrepItem} />
+          <PrepListView records={weekRecords} weekStart={weekStart} completed={prepCompleted} saving={prepSaving || !locked} onToggle={togglePrepItem} deliveries={metadata.deliveries} />
         ) : !cafe ? (
           <section className="rounded-2xl border-2 border-dashed border-sky-200 bg-white p-10 text-center"><Truck className="mx-auto text-sky-600" size={34} /><h2 className="mt-3 text-2xl font-black">Select your cafe to begin</h2><p className="mt-1 text-sm font-semibold text-slate-600">The cafe-first step prevents an order from being entered on another unit’s line.</p></section>
         ) : (
           <section className={`min-w-0 max-w-full overflow-hidden rounded-2xl border border-sky-200 bg-white shadow-sm ${locked ? "opacity-75" : ""}`}>
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-sky-200 px-4 py-3"><div><p className="text-xs font-black uppercase tracking-[0.14em] text-sky-700">{cafe} Cafe</p><h2 className="text-xl font-black">Week {weekLabel(weekStart)} order</h2></div><div className="text-right"><p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Estimated transfer</p><p className="text-2xl font-black">{money(currentValue)}</p></div></div>
-            {loading ? <p className="p-8 text-center font-bold text-slate-600">Loading shared order…</p> : <div className="w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain"><table className="min-w-max border-collapse text-sm"><thead><tr><th className="sticky left-0 z-20 w-52 border-b border-r border-slate-200 bg-slate-950 px-4 py-3 text-left text-white">Delivery</th>{COMMISSARY_ORDER_ITEMS.map((row) => <th key={row.id} className="w-44 max-w-44 border-b border-r border-slate-700 bg-slate-950 px-3 py-3 align-top text-left text-white"><span className="block text-[10px] font-black uppercase tracking-[0.1em] text-sky-300">{row.category}</span><span className="mt-1 block leading-5">{row.name}</span><span className="mt-1 block text-[11px] font-semibold text-slate-300">MRN {row.mrn} · {row.orderUnit}</span><span className="block text-[11px] font-semibold text-emerald-300">{money(row.orderUnitCost)} / {row.orderUnit}</span></th>)}</tr></thead><tbody>{DELIVERY_ROWS.map((delivery) => <tr key={delivery.key}><th className="sticky left-0 z-10 border-b border-r border-slate-200 bg-sky-50 px-4 py-4 text-left"><span className="block font-black">{delivery.title}</span><span className="block text-xs font-semibold text-slate-500">{delivery.detail}</span></th>{COMMISSARY_ORDER_ITEMS.map((row) => <td key={row.id} className="border-b border-r border-slate-200 p-2"><input aria-label={`${delivery.title} ${row.name} quantity`} type="number" min="0" step="0.25" disabled={locked} value={quantities[row.id]?.[delivery.key] ?? 0} onChange={(event) => updateQuantity(row.id, delivery.key, event.target.value)} className="w-full rounded-lg border border-slate-300 px-2 py-2 text-center font-black disabled:cursor-not-allowed disabled:bg-slate-200" /></td>)}</tr>)}</tbody></table></div>}
+            {loading ? <p className="p-8 text-center font-bold text-slate-600">Loading shared order…</p> : <div className="w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain"><table className="min-w-max border-collapse text-sm"><thead><tr><th className="sticky left-0 z-20 w-52 border-b border-r border-slate-200 bg-slate-950 px-4 py-3 text-left text-white">Delivery</th>{COMMISSARY_ORDER_ITEMS.map((row) => <th key={row.id} className="w-44 max-w-44 border-b border-r border-slate-700 bg-slate-950 px-3 py-3 align-top text-left text-white"><span className="block text-[10px] font-black uppercase tracking-[0.1em] text-sky-300">{row.category}</span><span className="mt-1 block leading-5">{row.name}</span><span className="mt-1 block text-[11px] font-semibold text-slate-300">MRN {row.mrn} · {row.orderUnit}</span><span className="block text-[11px] font-semibold text-emerald-300">{money(row.orderUnitCost)} / {row.orderUnit}</span></th>)}</tr></thead><tbody>{metadata.deliveries.map((delivery) => <tr key={delivery.key}><th className="sticky left-0 z-10 border-b border-r border-slate-200 bg-sky-50 px-4 py-4 text-left"><span className="block font-black">{delivery.title}</span><span className="block text-xs font-semibold text-slate-500">{delivery.detail}</span></th>{COMMISSARY_ORDER_ITEMS.map((row) => <td key={row.id} className="border-b border-r border-slate-200 p-2"><input aria-label={`${delivery.title} ${row.name} quantity`} type="number" min="0" step="0.25" disabled={locked} value={quantities[row.id]?.[delivery.key] ?? 0} onChange={(event) => updateQuantity(row.id, delivery.key, event.target.value)} className="w-full rounded-lg border border-slate-300 px-2 py-2 text-center font-black disabled:cursor-not-allowed disabled:bg-slate-200" /></td>)}</tr>)}</tbody></table></div>}
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 p-4"><p className="text-xs font-semibold text-slate-600">Gallon bags may be ordered in 0.25-gallon increments. Specialty dressings retain the container units specified in the costing source.</p><div className="flex flex-col gap-2"><button type="button" onClick={saveOrder} disabled={locked || saving || loading} className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-950 px-5 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-slate-400"><Save size={17} />{saving ? "Saving…" : "Save shared order"}</button><button type="button" onClick={generateCurrentTransfer} disabled={loading || currentValue <= 0} className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-5 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-slate-400"><Download size={17} /> Generate transfer</button><button type="button" onClick={generateCurrentBom} disabled={loading || currentValue <= 0} className="inline-flex items-center justify-center gap-2 rounded-lg border border-sky-300 bg-sky-50 px-5 py-3 text-sm font-black text-sky-950 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-200 disabled:text-slate-500"><FileSpreadsheet size={17} /> Generate Prep List</button></div></div>
           </section>
         )}
@@ -209,7 +207,7 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
 
         {activeView === "orders" && locked && (
           <section className="rounded-2xl border border-slate-300 bg-white p-5 shadow-sm">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"><div><p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Locked production package</p><h2 className="mt-1 text-2xl font-black">Prep List and accounting exports</h2><p className="mt-1 text-sm font-semibold text-slate-600">The Prep List rolls up all saved cafe quantities and preserves a delivery-level unit breakdown. The S4 transfer consolidates Monday and Wednesday into one line per item.</p></div><div className="flex flex-wrap gap-2"><button type="button" onClick={() => runExport(() => exportCommissaryBom(weekRecords, weekStart))} disabled={!weekRecords.length} className="inline-flex items-center gap-2 rounded-lg border border-sky-300 bg-sky-50 px-4 py-3 text-sm font-black text-sky-950 disabled:opacity-40"><FileSpreadsheet size={18} /> Download combined Prep List</button><button type="button" onClick={() => runExport(() => exportCommissaryTransfer(currentRecord))} disabled={!currentRecord || orderValue(currentRecord.quantities) <= 0} className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-3 text-sm font-black text-white disabled:opacity-40"><Download size={18} /> Download {cafe || "cafe"} S4 transfer</button></div></div>
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"><div><p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Locked production package</p><h2 className="mt-1 text-2xl font-black">Prep List and accounting exports</h2><p className="mt-1 text-sm font-semibold text-slate-600">The Prep List rolls up all saved cafe quantities and preserves a delivery-level unit breakdown. The S4 transfer consolidates Friday, Monday and Wednesday into one line per item.</p></div><div className="flex flex-wrap gap-2"><button type="button" onClick={() => runExport(() => exportCommissaryBom(weekRecords, weekStart, metadata))} disabled={!weekRecords.length} className="inline-flex items-center gap-2 rounded-lg border border-sky-300 bg-sky-50 px-4 py-3 text-sm font-black text-sky-950 disabled:opacity-40"><FileSpreadsheet size={18} /> Download combined Prep List</button><button type="button" onClick={() => runExport(() => exportCommissaryTransfer(currentRecord, metadata))} disabled={!currentRecord || orderValue(currentRecord.quantities) <= 0} className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-3 text-sm font-black text-white disabled:opacity-40"><Download size={18} /> Download {cafe || "cafe"} S4 transfer</button></div></div>
           </section>
         )}
       </main>

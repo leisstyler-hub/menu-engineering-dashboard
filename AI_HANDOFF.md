@@ -1,3 +1,9 @@
+## 2026-10-27 - Commissary three-delivery schedule and Dawson
+
+Candidate `2026.10.27.002-commissary-three-deliveries-dawson` adds SEA27 Dawson Cafe (`28675`) to the Draft Commissary Ordering Tool and changes the shared delivery schedule to Friday for Monday service, Monday for Tuesday–Wednesday service, and Wednesday for Thursday–Friday service. Cafe Orders, Prep List View, consolidated Prep List delivery maps, prep completion, estimated values, and S4 transfer consolidation all use the same delivery definitions. Existing orders and prep progress without Friday data normalize to zero/empty Friday values; the prior-Wednesday 5:00 PM Pacific cutoff and Friday–Thursday transfer period remain unchanged.
+
+Receiving cafes and delivery definitions are now reusable shared business metadata in the existing Supabase-backed `app_records` path: logical context `commissaryOrders`, record id `commissaryOrder|metadata|current`, record type `Commissary Metadata`, version 1. The server accepts only the exact release-approved configuration. The app resolves a validated Supabase row first and uses the identical bundled configuration only as a documented read-outage fallback. `scripts/seed-commissary-metadata.mjs --base-url <deployment>` performs the intentional upsert and exact read-back. Release verification and production evidence are pending.
+
 ## 2026-10-27 - All menus in W&P analysis
 
 Candidate 2026.10.27.001-wp-all-menus, Chief solo, Tyler authorization b933b11799916b6d5e700371cdda8bbf080d9b96b87c3a3d1073bb99ce10ff87. All shared source menus appear in picker, enterprise analysis and menu exports. Food-level service, ingredient, economics and source-conflict checks retained. No operational writes. Production evidence pending. Rollback: 3001890.

@@ -61,6 +61,12 @@ When a mission produces an approved product decision, Scribe adds an entry below
 
 ## Decisions
 
+### 2026-10-27 - Commissary three-delivery schedule, Dawson, and shared metadata
+
+Alex approved SEA27 Dawson Cafe (`28675`) as a Commissary Salad Bar receiving cafe and a three-drop schedule: Friday delivery serves Monday only, Monday delivery serves Tuesday–Wednesday, and Wednesday delivery serves Thursday–Friday. The existing prior-Wednesday 5:00 PM Pacific cutoff remains in force. The delivery definitions and receiving-cafe mapping are reusable platform business metadata and must be stored in Supabase so Cafe Orders, Prep List View, Prep List workbooks, S4 transfers, and future consumers resolve the same configuration. A validated bundled copy may be used only as an outage fallback. Existing saved records without the new Friday field remain valid and normalize to zero/empty Friday values. Requesting Admin / Approving Admin / Admin of Record / Release-Authorized Admin: Alex Neuse.
+
+Rejected alternatives: keeping delivery days duplicated independently in each UI/export; using browser localStorage as shared configuration; changing the cutoff; rewriting historical orders; or excluding Dawson from delivery maps and transfers.
+
 ### 2026-10-13 - Menu Engineering Weigh & Pay guidance and compact controls
 Decision ID: WP-2026-10-13. Status: approved. Requesting Admin / Approving Admin / Admin of Record: Tyler, authenticated Buzz identity `12fc010ae7314bd1bf75d7a74c296a93629c12a464ba2aaa406fee08a57d794d`. Design event `3fbad24e76635933211cb10d5bb0d474718c6ae9ffd83103e9732c6d2bcffb7d` approved with explicit build/deploy event `204b1b85f1d99ec9016143b386ef0eb11a41b0262666280484e6963df5078fc4`, 2026-10-13T18:06:03Z. The originating request explicitly requires a solo Chief mission.
 

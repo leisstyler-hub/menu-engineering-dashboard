@@ -1,7 +1,8 @@
 import { COMMISSARY_ITEM_BY_ID, COMMISSARY_ORDER_ITEMS } from "./commissaryCatalog.js";
+import { DEFAULT_COMMISSARY_METADATA } from "./commissaryMetadata.js";
 
 export const PACIFIC_TIME_ZONE = "America/Los_Angeles";
-export const DELIVERY_KEYS = Object.freeze(["monday", "wednesday"]);
+export const DELIVERY_KEYS = Object.freeze(DEFAULT_COMMISSARY_METADATA.deliveries.map(({ key }) => key));
 export const COMMISSARY_ORDER_UNIT_VERSION = 2;
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -76,7 +77,7 @@ export function transferPeriod(weekStart) {
 }
 
 export function emptyQuantities() {
-  return Object.fromEntries(COMMISSARY_ORDER_ITEMS.map(({ id }) => [id, { monday: 0, wednesday: 0 }]));
+  return Object.fromEntries(COMMISSARY_ORDER_ITEMS.map(({ id }) => [id, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, 0]))]));
 }
 
 export function sanitizeQuantity(value) {
@@ -91,10 +92,7 @@ export function normalizeQuantities(quantities = {}, options = {}) {
     const source = quantities?.[id] || legacyIds.map((legacyId) => quantities?.[legacyId]).find(Boolean) || {};
     const catalog = COMMISSARY_ITEM_BY_ID.get(id);
     const scale = orderUnitVersion < COMMISSARY_ORDER_UNIT_VERSION && catalog?.legacyOrderUnit === "quart" ? 0.25 : 1;
-    return [id, {
-      monday: sanitizeQuantity(sanitizeQuantity(source.monday) * scale),
-      wednesday: sanitizeQuantity(sanitizeQuantity(source.wednesday) * scale),
-    }];
+    return [id, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, sanitizeQuantity(sanitizeQuantity(source[delivery]) * scale)]))];
   }));
 }
 
@@ -110,6 +108,7 @@ export function buildOrderRecord({ cafe, weekStart, quantities, now = new Date()
     cafe,
     weekStart,
     cutoffDate: cutoffDateForWeek(weekStart),
+    commissaryMetadataVersion: DEFAULT_COMMISSARY_METADATA.metadataVersion,
     orderUnitVersion: COMMISSARY_ORDER_UNIT_VERSION,
     quantities: normalized,
     updatedAt: now.toISOString(),
@@ -150,7 +149,7 @@ export function orderValue(quantities = {}) {
   const normalized = normalizeQuantities(quantities);
   return COMMISSARY_ORDER_ITEMS.reduce((sum, row) => {
     const delivery = normalized[row.id];
-    return sum + (sanitizeQuantity(delivery.monday) + sanitizeQuantity(delivery.wednesday)) * row.orderUnitCost;
+    return sum + DELIVERY_KEYS.reduce((deliverySum, key) => deliverySum + sanitizeQuantity(delivery[key]), 0) * row.orderUnitCost;
   }, 0);
 }
 
@@ -160,9 +159,8 @@ export function rolledUpItems(records = []) {
       const values = normalizeQuantities(record.quantities, { orderUnitVersion: record.orderUnitVersion ?? 1 })[row.id];
       return [record.cafe, values];
     }));
-    const monday = Object.values(cafes).reduce((sum, value) => sum + value.monday, 0);
-    const wednesday = Object.values(cafes).reduce((sum, value) => sum + value.wednesday, 0);
-    return { ...row, cafes, monday, wednesday, total: monday + wednesday };
+    const deliveryTotals = Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, Object.values(cafes).reduce((sum, value) => sum + value[delivery], 0)]));
+    return { ...row, cafes, ...deliveryTotals, total: DELIVERY_KEYS.reduce((sum, delivery) => sum + deliveryTotals[delivery], 0) };
   }).filter((row) => row.total > 0);
 }
 
@@ -170,6 +168,6 @@ export function orderLinesForCafe(record = {}) {
   const quantities = normalizeQuantities(record.quantities, { orderUnitVersion: record.orderUnitVersion ?? 1 });
   return Object.entries(quantities).map(([id, values]) => {
     const catalog = COMMISSARY_ITEM_BY_ID.get(id);
-    return catalog ? { ...catalog, monday: values.monday, wednesday: values.wednesday, total: values.monday + values.wednesday } : null;
+    return catalog ? { ...catalog, ...values, total: DELIVERY_KEYS.reduce((sum, delivery) => sum + values[delivery], 0) } : null;
   }).filter((line) => line && line.total > 0);
 }
