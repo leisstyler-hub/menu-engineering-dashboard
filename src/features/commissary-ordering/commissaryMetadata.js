@@ -25,10 +25,16 @@ const comparableMetadata = (record = {}) => ({
   deliveries: record.deliveries,
 });
 
+const canonicalize = (value) => {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (!value || typeof value !== "object") return value;
+  return Object.fromEntries(Object.keys(value).sort().map((key) => [key, canonicalize(value[key])]));
+};
+
 export function isApprovedCommissaryMetadataRecord(record = {}) {
   return record["Record ID"] === COMMISSARY_METADATA_RECORD_ID
     && record["Record Type"] === "Commissary Metadata"
-    && JSON.stringify(comparableMetadata(record)) === JSON.stringify(DEFAULT_COMMISSARY_METADATA);
+    && JSON.stringify(canonicalize(comparableMetadata(record))) === JSON.stringify(canonicalize(DEFAULT_COMMISSARY_METADATA));
 }
 
 export function buildCommissaryMetadataRecord(now = new Date()) {

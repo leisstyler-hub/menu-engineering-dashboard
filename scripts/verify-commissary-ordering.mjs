@@ -32,6 +32,11 @@ assert.deepEqual(normalizeQuantities({ [frozenPeas.id]: { friday: 0.25, monday: 
 
 const metadataRecord = buildCommissaryMetadataRecord(new Date("2026-10-27T12:00:00Z"));
 assert.equal(isApprovedCommissaryMetadataRecord(metadataRecord), true);
+assert.equal(isApprovedCommissaryMetadataRecord({
+  ...metadataRecord,
+  deliveries: metadataRecord.deliveries.map(({ day, key, title, detail, titleEs, detailEs }) => ({ detailEs, titleEs, detail, title, key, day })),
+  receivingCafes: metadataRecord.receivingCafes.map(({ name, displayName, profitCenter }) => ({ profitCenter, displayName, name })),
+}), true, "Supabase JSONB key reordering must not invalidate approved metadata.");
 assert.equal(resolveCommissaryMetadata([metadataRecord]).source, "supabase");
 assert.equal(resolveCommissaryMetadata([]).source, "fallback");
 assert.deepEqual(DEFAULT_COMMISSARY_METADATA.deliveries.map(({ key, detail }) => [key, detail]), [["friday", "Monday service"], ["monday", "Tuesday–Wednesday service"], ["wednesday", "Thursday–Friday service"]]);
