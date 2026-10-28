@@ -1455,8 +1455,9 @@ test("SSMT modifier groups are editable with typed group metadata and line-level
   await modifierDialog.getByRole("button", { name: /Add modifier group/i }).click();
   await expect(modifierDialog.getByLabel(/Modifier name/i)).toHaveCount(1);
 
-  await modifierDialog.getByLabel(/Modifier group name/i).last().fill("Sauce Rules");
   await modifierDialog.getByLabel(/Modifier group type/i).last().selectOption("Addition");
+  await expect(modifierDialog.getByLabel(/Modifier group name/i).last()).toHaveValue(/Make It Better/);
+  await modifierDialog.getByLabel(/Modifier group name/i).last().fill("Sauce Rules");
   await modifierDialog.getByLabel(/Minimum selections/i).last().fill("0");
   await modifierDialog.getByLabel(/Maximum selections/i).last().fill("3");
 

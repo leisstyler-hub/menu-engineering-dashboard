@@ -1,3 +1,4 @@
+import { FREE_MODIFIER_PRICE_ID, selectModifierType, resizeModifierGroup } from "./ssmtModifierDefaults.js";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -53,9 +54,10 @@ const PROMOTION_WEEKDAYS = [
   { value: 6, label: "Saturday" },
 ];
 const MENU_TYPE_ORDER = ["Core", "Global", "Promotion", "Thompson Hospitality"];
-const MODIFIER_TYPES = ["Force", "Remove", "Addition"];
+const MODIFIER_TYPES = ["Force", "Remove", "Addition", "Custom"];
 const TIER_2_AREAS = new Set(["AUS", "BNA", "YVR", "YYZ"]);
 const MODIFIER_TYPE_STYLES = {
+  Custom: { borderClass: "border-slate-400", cardClass: "bg-slate-50", headerClass: "border-slate-300 bg-slate-100", iconClass: "bg-slate-700", Icon: Pencil },
   Force: {
     borderClass: "border-violet-400",
     cardClass: "bg-violet-50",
@@ -716,7 +718,7 @@ function createBlankModifierGroup(item, areaOrder) {
   return {
     id: groupId,
     name: "New modifier group",
-    modifierType: "Addition",
+    modifierType: "Custom",
     sourceSheet: "Created in SSMT",
     menuName: item?.menuName || "Created in SSMT",
     minQty: "",
@@ -1548,6 +1550,9 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
     const existingGroup = ssmtData.modifierGroups.find((group) => group.id === groupId)
       || modifierDialog?.groups.find((group) => group.id === groupId)
       || {};
+    if (Object.prototype.hasOwnProperty.call(patch, "modifierType")) {
+      patch = selectModifierType(existingGroup, patch.modifierType, modifierDialog?.item?.label || modifierDialog?.item?.name || "item", ssmtData.areaOrder);
+    }
     const previousName = existingGroup.name || "";
     const nextName = Object.prototype.hasOwnProperty.call(patch, "name") ? patch.name : previousName;
     setSsmtData((current) => {
@@ -1595,10 +1600,13 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
   };
 
   const addModifierChoice = (groupId) => {
-    const addChoice = (group) => ({
+    const existing = ssmtData.modifierGroups.find(group => group.id === groupId);
+    if (!existing) return;
+    const choice = createBlankModifierChoice(groupId, ssmtData.areaOrder, (existing.choices || []).length + 1);
+    const addChoice = (group) => resizeModifierGroup({
       ...group,
-      choices: [...(group.choices || []), createBlankModifierChoice(group.id, ssmtData.areaOrder, (group.choices || []).length + 1)],
-    });
+      choices: [...(group.choices || []), choice],
+    }, ssmtData.areaOrder);
     setSsmtData((current) => ({
       ...current,
       modifierGroups: current.modifierGroups.map((group) => (group.id === groupId ? addChoice(group) : group)),
@@ -1621,8 +1629,8 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
       const nextChoice = { ...choice, ...normalizedPatch };
       const priceRow = findPriceRow(priceBook, nextChoice.priceSelectorId);
       if (Object.prototype.hasOwnProperty.call(patch, "priceSelectorId")) {
-        nextChoice.price = priceRow?.areas?.SEA || "";
-        nextChoice.areaPrices = priceRow?.areas || blankAreaPrices(areaOrder);
+        nextChoice.price = patch.priceSelectorId === FREE_MODIFIER_PRICE_ID ? "0.00" : priceRow?.areas?.SEA || "";
+        nextChoice.areaPrices = patch.priceSelectorId === FREE_MODIFIER_PRICE_ID ? Object.fromEntries(areaOrder.map(area => [area, "0.00"])) : priceRow?.areas || blankAreaPrices(areaOrder);
       }
       return normalizeModifierChoice(nextChoice, areaOrder, priceBook);
     };
@@ -1672,13 +1680,13 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
     setSsmtData((current) => ({
       ...current,
       modifierGroups: current.modifierGroups.map((group) => (
-        group.id === groupId ? { ...group, choices: group.choices.filter((choice) => choice.id !== choiceId) } : group
+        group.id === groupId ? resizeModifierGroup({ ...group, choices: group.choices.filter((choice) => choice.id !== choiceId) }, ssmtData.areaOrder) : group
       )),
     }));
     setModifierDialog((current) => current ? {
       ...current,
       groups: current.groups.map((group) => (
-        group.id === groupId ? { ...group, choices: group.choices.filter((choice) => choice.id !== choiceId) } : group
+        group.id === groupId ? resizeModifierGroup({ ...group, choices: group.choices.filter((choice) => choice.id !== choiceId) }, ssmtData.areaOrder) : group
       )),
     } : current);
     setDeleteRequest(null);
@@ -2345,7 +2353,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
             <section data-testid="ssmt-fixy-setup" aria-label="FIXY setup" className="rounded-lg border border-indigo-300 bg-indigo-50 p-2 shadow-sm">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
                   <label className="grid w-full gap-1 text-sm font-black text-indigo-950 sm:max-w-md">FIXY designation<input aria-label="Menu FIXY designation" placeholder="Required for FIXY/import" value={selectedMenu.fixyDesignation || ""} onChange={e=>updateSelectedMenu({fixyDesignation:e.target.value})} className="min-h-11 w-full rounded-lg border border-indigo-300 bg-white px-3 py-2 text-base font-bold text-slate-950" /></label>
-                  <button type="button" className="min-h-11 rounded-lg border-2 border-indigo-700 bg-indigo-700 px-5 py-2 text-sm font-black text-white shadow-sm hover:bg-indigo-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" onClick={()=>{if(!selectedMenu.fixyDesignation?.trim()){setPhaseBlocker("Enter this menu’s FIXY designation before generating.");return;}if(!selectedItemRows.length){setPhaseBlocker("This menu has zero items. Add an item before generating FIXY.");return;}setReusePanel({mode:"fixy",item:selectedItemRows[0]});}}>Generate FIXY</button>
+                  <button type="button" className="min-h-11 rounded-lg border-2 border-indigo-700 bg-indigo-700 px-5 py-2 text-sm font-black text-white shadow-sm hover:bg-indigo-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" onClick={()=>{if(!selectedMenu.fixyDesignation?.trim()){setPhaseBlocker("Enter this menu’s FIXY designation before generating.");return;}if(!selectedItemRows.length){setPhaseBlocker("This menu has zero items. Add an item before generating FIXY.");return;}const eligible = selectedItemRows.find(item => !String(item.fohColumn || "").trim() && !item.lockedForCentric); if (!eligible) { setPhaseBlocker("All items already have FIXY or are locked. Add an item without FIXY or unlock it first."); return; } setReusePanel({mode:"fixy",item:eligible});}}>Generate FIXY</button>
               </div>
               {!selectedMenu.fixyDesignation?.trim() && <p className="mt-2 text-sm font-bold text-indigo-900">Enter a FIXY designation before generating FIXY or importing items.</p>}
             </section>
@@ -2743,9 +2751,10 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
         <Modal title="Modifier detail" size="wide" onClose={() => setModifierDialog(null)}>
           <div className="space-y-3">
             <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-              <p className="text-sm font-semibold leading-6 text-slate-700">For {modifierDialog.item.label || modifierDialog.item.name}, copy places a modifier group on the SSMT clipboard for paste onto another item. Prices stay tied to Pricing Structure rows.</p>
+              <p className="text-sm font-semibold leading-6 text-slate-700">For {modifierDialog.item.label || modifierDialog.item.name}, copy places a modifier group on the SSMT clipboard for paste onto another item. Choose prices from Pricing Structure or the free modifier option.</p>
               <div className="flex flex-wrap gap-2">
-                <button type="button" className="rounded border bg-white p-2 text-xs font-bold" disabled={Boolean(modifierDialog.item.lockedForCentric)} onClick={()=>setReusePanel({mode:"groups",item:modifierDialog.item})}>Load Modifier Groups</button>
+                <button type="button" className="rounded border bg-white p-2 text-xs font-bold disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-200 disabled:text-slate-500 disabled:opacity-60" title={modifierDialog.item.lockedForCentric ? "Unlock this item to load modifier groups from another menu." : "Load modifier groups from another menu"} disabled={Boolean(modifierDialog.item.lockedForCentric)} onClick={()=>setReusePanel({mode:"groups",item:modifierDialog.item})}>Load Modifier Groups</button>
+                {modifierDialog.item.lockedForCentric && <span className="text-xs font-bold text-slate-600">Item locked: unlock it to load modifier groups.</span>}
                 <button type="button" onClick={() => manualSaveWorkspace("modifiers")} className="inline-flex items-center justify-center gap-2 rounded-lg border border-sky-700 bg-sky-700 px-3 py-2 text-xs font-black text-white hover:bg-sky-800">
                   <Save size={14} /> Save modifiers
                 </button>
@@ -2924,6 +2933,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                               className="w-full min-w-0 rounded-md border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-900"
                             >
                               <option value="">Select price</option>
+                              <option value={FREE_MODIFIER_PRICE_ID} data-price-kind="modifier">$0.00 - Modifier Free</option>
                               {modifierPriceOptions.map((price) => (
                                 <option key={price.id} value={price.id} data-price-kind={price.modifierOnly ? "modifier" : "standard"}>{price.selectorLabel}</option>
                               ))}

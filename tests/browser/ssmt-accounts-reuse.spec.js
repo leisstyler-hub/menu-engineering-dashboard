@@ -57,6 +57,9 @@ async function isolated(
     missingFixy = false,
     chiang = false,
     duplicateTarget = false,
+    sourceWithoutFixy = false,
+    lockedSource = false,
+    alphabeticalFixtures = false,
   } = {},
 ) {
   let shared = workspace();
@@ -81,6 +84,11 @@ async function isolated(
     ];
   }
   if (duplicateTarget) shared.menus[1].items = [{ ...structuredClone(shared.menus[0].items.find(i => i.id === "banana")), id: "existing-banana" }];
+  if (sourceWithoutFixy) shared.menus[0].items[0].fohColumn = "";
+  if (lockedSource) shared.menus[0].items[0].lockedForCentric = true;
+  if (alphabeticalFixtures) {
+    shared.menus.push({ ...structuredClone(source), id: "alpha-menu", name: "alpha menu", items: [{ ...structuredClone(item), id: "z-item", label: "Zebra" }, { ...structuredClone(item), id: "a-item", label: "apple" }] });
+  }
   const saves = [];
   const member = {
     id: "test-user",
@@ -289,7 +297,7 @@ test("accounts gate only SSMT and imports independent items, prices and modifier
 test("FIXY preview requires explicit facts and applies only after confirmation", async ({
   page,
 }) => {
-  await isolated(page);
+  await isolated(page, { sourceWithoutFixy: true });
   await page
     .getByRole("button", { name: "Menu Selector / New Menu", exact: true })
     .click();
@@ -596,4 +604,113 @@ test("SSMT change log and primary navigation are prominent and identify the acti
     await page.getByRole("button", { name: "Back to SSMT", exact: true }).click();
   }
   await page.screenshot({path:"C:/Users/leiss/.buzz/WORK_LOGS/SSMT_PROMINENT_CONTROLS_2026_10_20.png"});
+});
+
+
+test("modifier type defaults follow line counts, Custom stays blank, and saves survive reload", async ({ page }) => {
+  const fixture = await isolated(page);
+  await openTarget(page);
+  await page.getByRole('button', { name: 'Add item', exact: true }).click();
+  await page.getByRole('button', { name: /View modifiers Mods \(0\)/ }).click();
+  let dialog = page.getByRole('dialog', { name: 'Modifier detail', exact: true });
+  await dialog.getByRole('button', { name: 'Add modifier group', exact: true }).click();
+  await dialog.getByLabel('Modifier group type').selectOption('Remove');
+  await expect(dialog.getByLabel('Modifier group name')).toHaveValue('Customize (NEW ITEM)');
+  await expect(dialog.getByLabel('Minimum selections')).toHaveValue('0');
+  await expect(dialog.getByLabel('Maximum selections')).toHaveValue('1');
+  await expect(dialog.getByLabel('Modifier price')).toHaveValue('ssmt-modifier-zero');
+  await dialog.getByRole('button', { name: 'Add modifier item line', exact: true }).click();
+  await expect(dialog.getByLabel('Maximum selections')).toHaveValue('2');
+  await expect(dialog.getByLabel('Modifier price').last()).toHaveValue('ssmt-modifier-zero');
+  await dialog.getByLabel('Modifier group type').selectOption('Addition');
+  await expect(dialog.getByLabel('Modifier group name')).toHaveValue('Make It Better (NEW ITEM)');
+  await expect(dialog.getByLabel('Maximum selections')).toHaveValue('4');
+  await dialog.getByRole('button', { name: 'Delete modifier item line', exact: true }).last().click();
+  const deletion = page.getByRole('dialog', { name: 'Delete modifier item', exact: true });
+  await deletion.getByRole('checkbox').check();
+  await deletion.getByRole('button', { name: 'Delete modifier item', exact: true }).click();
+  await expect(dialog.getByLabel('Maximum selections')).toHaveValue('2');
+  await dialog.getByRole('button', { name: 'Add modifier item line', exact: true }).click();
+  await expect(dialog.getByLabel('Maximum selections')).toHaveValue('4');
+  await dialog.getByLabel('Modifier group type').selectOption('Custom');
+  await expect(dialog.getByLabel('Modifier group name')).toHaveValue('');
+  await expect(dialog.getByLabel('Minimum selections')).toHaveValue('');
+  await expect(dialog.getByLabel('Maximum selections')).toHaveValue('');
+  await expect(dialog.getByLabel('Modifier price').first()).toHaveValue('');
+  await dialog.getByLabel('Modifier group type').selectOption('Remove');
+  await dialog.getByRole('button', { name: 'Save modifiers', exact: true }).click();
+  await expect.poll(() => fixture.saves.length).toBeGreaterThan(0);
+  const savedGroup = fixture.getWorkspace().modifierGroups.at(-1);
+  expect(savedGroup.choices.every(choice => choice.price === '0.00')).toBe(true);
+  expect(fixture.getWorkspace().menus[0].items[0]).toMatchObject(item);
+  await page.reload();
+  await page.getByRole('button', { name: /open ssmt/i }).click();
+  await page.getByLabel('Email', { exact: true }).fill('chef@example.test');
+  await page.getByLabel('Password', { exact: true }).fill('a private test password');
+  await page.getByRole('button', { name: 'Sign in to SSMT', exact: true }).click();
+  await openTarget(page);
+  await page.getByRole('button', { name: /View modifiers/ }).click();
+  dialog = page.getByRole('dialog', { name: 'Modifier detail', exact: true });
+  await expect(dialog.getByLabel('Modifier group type')).toHaveValue('Remove');
+  await expect(dialog.getByLabel('Maximum selections')).toHaveValue('2');
+  await expect(dialog.getByLabel('Modifier price').first()).toHaveValue('ssmt-modifier-zero');
+  await page.screenshot({ path: 'C:/Users/leiss/.buzz/WORK_LOGS/SSMT_MODIFIER_DEFAULTS_DESKTOP.png' });
+});
+
+test("FIXY excludes coded items and hides the single NEW choice", async ({ page }) => {
+  await isolated(page, { missingFixy: true });
+  await page.getByRole('button', { name: 'Menu Selector / New Menu', exact: true }).click();
+  await page.locator('[data-menu-name="Source Menu"]').click();
+  await page.getByRole('button', { name: 'Generate FIXY', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Generate FIXY', exact: true });
+  await expect(dialog.getByLabel('FIXY item').locator('option')).toHaveText(['Missing Code Dish']);
+  await expect(dialog.getByText('Approved completed-menu candidates', { exact: true })).toHaveCount(0);
+});
+
+test("locked item explains why loading modifier groups is disabled", async ({ page }) => {
+  await isolated(page, { lockedSource: true });
+  await page.getByRole('button', { name: 'Menu Selector / New Menu', exact: true }).click();
+  await page.locator('[data-menu-name="Source Menu"]').click();
+  await page.getByRole('button', { name: /View modifiers/ }).click();
+  const dialog = page.getByRole('dialog', { name: 'Modifier detail', exact: true });
+  await expect(dialog.getByRole('button', { name: 'Load Modifier Groups', exact: true })).toBeDisabled();
+  await expect(dialog).toContainText('Item locked');
+  await expect(dialog.getByRole('button', { name: 'Load Modifier Groups', exact: true })).toHaveCSS('opacity', '0.6');
+});
+
+
+test("reuse menu and source-item dropdowns are alphabetical", async ({ page }) => {
+  await isolated(page, { alphabeticalFixtures: true });
+  await openTarget(page);
+  await page.getByRole('button', { name: 'Add from Menu', exact: true }).click();
+  let panel = page.getByRole('dialog', { name: 'Add from Menu', exact: true });
+  const assertSorted = async (locator) => {
+    const values = (await locator.locator('option').allTextContents()).slice(1);
+    expect(values).toEqual([...values].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true })));
+  };
+  await assertSorted(panel.getByLabel('Source menu', { exact: true }));
+  await panel.getByRole('button', { name: 'Close', exact: true }).click();
+  await page.getByRole('button', { name: 'Add item', exact: true }).click();
+  await page.getByRole('button', { name: /View modifiers/ }).click();
+  await page.getByRole('button', { name: 'Load Modifier Groups', exact: true }).click();
+  panel = page.getByRole('dialog', { name: 'Load Modifier Groups', exact: true });
+  await assertSorted(panel.getByLabel('Source menu', { exact: true }));
+  await panel.getByLabel('Source menu', { exact: true }).selectOption('alpha-menu');
+  await expect(panel.getByLabel('Source item').locator('option')).toHaveText(['All items', 'apple', 'Zebra']);
+});
+
+test("menu creation and deletion automatically save to shared storage", async ({ page }) => {
+  test.setTimeout(60000);
+  const fixture = await isolated(page);
+  await page.getByRole('button', { name: 'Menu Selector / New Menu', exact: true }).click();
+  await page.getByLabel('New menu name', { exact: true }).fill('Isolated autosave menu');
+  await page.getByLabel('New menu FIXY designation', { exact: true }).fill('TEST');
+  await page.getByRole('button', { name: 'Create menu', exact: true }).click();
+  await expect.poll(() => fixture.getWorkspace().menus.some(menu => menu.name === 'Isolated autosave menu'), { timeout: 20000 }).toBe(true);
+  await page.getByRole('button', { name: 'Delete menu', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Delete menu', exact: true });
+  await dialog.getByLabel(/Retype menu name/i).fill('Isolated autosave menu');
+  await dialog.getByRole('button', { name: 'Delete menu', exact: true }).click();
+  await expect.poll(() => fixture.getWorkspace().menus.some(menu => menu.name === 'Isolated autosave menu'), { timeout: 20000 }).toBe(false);
+  expect(fixture.getWorkspace().menus.find(menu => menu.id === 'source').items[0]).toMatchObject(item);
 });

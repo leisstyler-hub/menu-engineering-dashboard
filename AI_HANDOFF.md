@@ -1,3 +1,7 @@
+## SSMT modifier defaults - 2026-10-27
+
+Candidate `2026.10.27.003-ssmt-modifier-defaults`, owner Chief solo, branch `chief/ssmt-fixy-modifier-defaults`. FIXY hides already-coded items and the single NEW candidate selector; explicit Remove/Addition type selections fill requested titles/counts, Remove zeroes prices, Custom starts blank. Counts follow added/deleted lines. Existing loaded groups are preserved. Reuse dropdowns are alphabetical; locked group loading shows its reason. Existing creation/deletion autosave confirmed with isolated storage; storage/auth/schema untouched. Scope, rollback and final evidence: `docs/SSMT_MODIFIER_DEFAULTS_2026_10_27.md`. Full package verification and 55/55 local SSMT browsers passed; solo self-review completed. Production verification pending.
+
 ## 2026-10-27 - Commissary three-delivery schedule and Dawson
 
 Candidate `2026.10.27.002-commissary-three-deliveries-dawson` adds SEA27 Dawson Cafe (`28675`) to the Draft Commissary Ordering Tool and changes the shared delivery schedule to Friday for Monday service, Monday for Tuesday–Wednesday service, and Wednesday for Thursday–Friday service. Cafe Orders, Prep List View, consolidated Prep List delivery maps, prep completion, estimated values, and S4 transfer consolidation all use the same delivery definitions. Existing orders and prep progress without Friday data normalize to zero/empty Friday values; the prior-Wednesday 5:00 PM Pacific cutoff and Friday–Thursday transfer period remain unchanged.

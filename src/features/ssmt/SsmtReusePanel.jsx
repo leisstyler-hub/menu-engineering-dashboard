@@ -47,10 +47,11 @@ export default function SsmtReusePanel({
     cafeSoup12Fo: false,
   });
   const [matchIndex, setMatchIndex] = useState("");
-  const sourceMenus = mode === "items" ? menus.filter(m => m.phase === "IT complete") : menus;
+  const alphabetically = (a, b) => String(a.label || a.name || "").localeCompare(String(b.label || b.name || ""), undefined, { sensitivity: "base", numeric: true });
+  const sourceMenus = [...(mode === "items" ? menus.filter(m => m.phase === "IT complete") : menus)].sort(alphabetically);
   const source = menus.find((m) => m.id === sourceId),
     sourceItem = source?.items.find((i) => i.id === sourceItemId);
-  const sourceItems = useMemo(() => (source?.items || []).filter(isMenuItem).map(candidate => ({
+  const sourceItems = useMemo(() => (source?.items || []).filter(isMenuItem).sort(alphabetically).map(candidate => ({
     item: candidate, issue: importItemIssue(candidate, groups, source),
   })), [source, groups]);
   const visibleItems = sourceItems.filter(({item}) => `${item.label || item.name || ""} ${item.fohColumn || ""}`.toLowerCase().includes(search.toLowerCase()));
@@ -233,6 +234,7 @@ export default function SsmtReusePanel({
                     <option value="">All items</option>
                     {source?.items
                       .filter(isMenuItem)
+                      .sort(alphabetically)
                       .map((i) => (
                         <option key={i.id} value={i.id}>
                           {i.label || i.name}
@@ -328,7 +330,8 @@ export default function SsmtReusePanel({
                 }
               >
                 {menu.items
-                  .filter(isMenuItem)
+                  .filter(i => isMenuItem(i) && !String(i.fohColumn || "").trim() && !i.lockedForCentric)
+                  .sort(alphabetically)
                   .map((i) => (
                     <option key={i.id} value={i.id}>
                       {i.label || i.name}
@@ -342,7 +345,7 @@ export default function SsmtReusePanel({
               classify second; create last. Confirm portion and selling format
               before reusing a candidate.
             </p>
-            <label className="block">
+            {matches.length > 0 && <label className="block">
               Approved completed-menu candidates
               <select
                 className={input}
@@ -360,7 +363,7 @@ export default function SsmtReusePanel({
                   </option>
                 ))}
               </select>
-            </label>
+            </label>}
             {matchIndex === "" && (
               <div className="grid gap-3 sm:grid-cols-2">
                 {[
