@@ -13,7 +13,7 @@ import { DEFAULT_COMMISSARY_METADATA, resolveCommissaryMetadata } from "./commis
 import {
   addDays,
   buildOrderRecord,
-  cutoffDateForWeek,
+  cutoffLabelForWeek,
   emptyQuantities,
   emptyGrillOrder,
   firstOpenWeek,
@@ -77,8 +77,14 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
   const [saving, setSaving] = useState(false);
   const [prepSaving, setPrepSaving] = useState(false);
 
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   const weeks = useMemo(() => weekOptions(), []);
-  const locked = isWeekLocked(weekStart);
+  const locked = isWeekLocked(weekStart, now);
   const currentRecord = useMemo(() => orders.find((row) => recordKey(row.cafe, row.weekStart) === recordKey(cafe, weekStart)), [cafe, orders, weekStart]);
   const weekRecords = useMemo(() => orders.filter((row) => row.weekStart === weekStart && metadata.receivingCafes.some(({ name }) => name === row.cafe)), [metadata.receivingCafes, orders, weekStart]);
   const prepProgressRecord = useMemo(() => prepProgressRecords.find((row) => row.weekStart === weekStart), [prepProgressRecords, weekStart]);
@@ -245,7 +251,7 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
 
         <section className={`rounded-2xl border p-4 ${locked ? "border-slate-300 bg-slate-200 text-slate-700" : "border-emerald-200 bg-emerald-50 text-emerald-950"}`}>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-start gap-3">{locked ? <LockKeyhole className="mt-0.5" size={21} /> : <PackageCheck className="mt-0.5" size={21} />}<div><p className="font-black">{activeView === "prep" ? (locked ? "Prep list ready" : "Waiting for order cutoff") : (locked ? "Ordering closed" : `Ordering open for week ${weekLabel(weekStart)}`)}</p><p className="text-sm font-semibold">Cutoff: Wednesday {formatShortDate(cutoffDateForWeek(weekStart))} at 5:00 PM Pacific.</p>{activeView === "orders" && locked && <p className="mt-1 font-black">Please contact commissary executive chef to adjust pars.</p>}</div></div>
+            <div className="flex items-start gap-3">{locked ? <LockKeyhole className="mt-0.5" size={21} /> : <PackageCheck className="mt-0.5" size={21} />}<div><p className="font-black">{activeView === "prep" ? (locked ? "Prep list ready" : "Waiting for order cutoff") : (locked ? "Ordering closed" : `Ordering open for week ${weekLabel(weekStart)}`)}</p><p className="text-sm font-semibold">Cutoff: {cutoffLabelForWeek(weekStart)}.</p>{activeView === "orders" && locked && <p className="mt-1 font-black">Please contact commissary executive chef to adjust pars.</p>}</div></div>
             <div className="text-right"><p className="text-xs font-black uppercase tracking-[0.12em]">{activeView === "prep" ? "Shared production view" : "Transfer period"}</p><p className="font-black">{activeView === "prep" ? "Friday, Monday and Wednesday deliveries" : `Friday ${formatShortDate(period.start)} – Thursday ${formatShortDate(period.end)}`}</p></div>
           </div>
         </section>

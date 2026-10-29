@@ -433,3 +433,7 @@ Tyler, authenticated Requesting/Approving Admin in ADMIN_REGISTRY.md, approved b
 ## WP-2026-10-27 - Show all menus
 
 Tyler approved all source menus in W&P analysis (event b933b11799916b6d5e700371cdda8bbf080d9b96b87c3a3d1073bb99ce10ff87). Supersedes menu-name exclusions. Food-level service restrictions, ingredient exclusion and missing/conflicting economics remain. Read-only analysis and exports; no operational writes.
+
+### 2026-10-29 - One-week Commissary cutoff exception
+
+Tyler authorized reopening November 2-6, 2026 Commissary ordering until Thursday October 29 at 5 PM Pacific, then automatic closure. Only service week 2026-11-02 is excepted; November 9-13 and all other weeks retain the normal prior-Wednesday 5 PM Pacific cutoff. Authority: Buzz `c57d644dd0f1ced70681453e0570970f3b03692454a7ebe64eb1717ff4295ab2`. No historical order rewrite or production verification writes are authorized.

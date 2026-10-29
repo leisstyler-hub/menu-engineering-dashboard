@@ -1,3 +1,7 @@
+## Commissary cutoff exception - 2026-10-29
+
+Candidate `2026.10.29.003-commissary-cutoff-exception`, Chief, branch `chief/commissary-cutoff-exception`. Tyler authorized service week 2026-11-02 to reopen until Thursday 2026-10-29 17:00 America/Los_Angeles (2026-10-30T00:00:00Z), then automatically lock. Shared browser/server model uses an exact-week exception; 2026-11-09 retains Wednesday November 4 17:00 PST (2026-11-05T01:00:00Z). Cutoff label resolves the actual weekday and open tabs refresh lock state every second. No order, prep, SSMT or metadata records are rewritten. Evidence and rollback: `docs/COMMISSARY_CUTOFF_EXCEPTION_2026_10_29.md`.
+
 ## Compact Commissary Grill ordering - 2026-10-29
 
 LIVE `2026.10.29.002-compact-commissary-grill` reduces empty space in the Draft Commissary Ordering Tool's Grill LTO section without changing its content or data behavior. Set labels and selectors share one compact header row; selected sandwich name, MRN, portion and Item + Waste Cost share one status strip; all three delivery labels, service-day details and whole-sandwich inputs remain visible in a tighter responsive grid. Set A and Set B now use two columns from the standard large breakpoint instead of waiting for extra-wide screens. Cycle logic, cafe eligibility, saved records, Prep List rollups and S4 transfer calculations are unchanged. Supabase operational metadata version 4 records the compact, complete-content, two-column interface contract for cross-tool reuse; the component exposes the resolved density as a testable attribute.

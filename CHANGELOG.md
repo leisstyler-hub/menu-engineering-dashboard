@@ -1,5 +1,7 @@
 ## 2026-10-29
 
+- [Oct 29, 9:45 AM] Reopened November 2-6 Commissary ordering until Thursday October 29 at 5 PM Pacific; later weeks keep Wednesday cutoffs.
+
 - [Oct 29, 4:52 AM] Compacted Grill LTO ordering while preserving sandwich details, delivery guidance and every quantity control.
 - [Oct 29, 4:34 AM] Added a six-week Grill LTO ordering cycle starting November 16, with Set A/Set B sandwich choices, ingredient Prep List rollups and cost-center labels.
 

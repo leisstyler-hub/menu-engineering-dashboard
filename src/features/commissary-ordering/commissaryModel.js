@@ -40,7 +40,15 @@ export function pacificParts(now = new Date()) {
 }
 
 export function cutoffDateForWeek(weekStart) {
+  // Tyler's one-week exception: Buzz c57d644dd0f1ced70681453e0570970f3b03692454a7ebe64eb1717ff4295ab2.
+  if (weekStart === "2026-11-02") return "2026-10-29";
   return addDays(weekStart, -5);
+}
+
+export function cutoffLabelForWeek(weekStart) {
+  const date = cutoffDateForWeek(weekStart);
+  const weekday = new Intl.DateTimeFormat("en-US", { weekday: "long", timeZone: "UTC" }).format(new Date(`${date}T00:00:00Z`));
+  return `${weekday} ${formatShortDate(date)} at 5:00 PM Pacific`;
 }
 
 export function isWeekLocked(weekStart, now = new Date()) {

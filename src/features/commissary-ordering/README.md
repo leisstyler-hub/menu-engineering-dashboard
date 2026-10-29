@@ -18,3 +18,5 @@ The Draft Commissary Ordering Tool stores one shared Supabase order per receivin
 - Frozen Peas replace Blanched Green Beans at MRN `4877` and `$9.08` per gallon (the former `$2.27` per quart). Existing saved quantities under the retired green-bean item id are read into the new peas slot and converted to gallons, and generated S4 transfers classify the peas line on `4111009 — Frozen`; all other commissary items retain `4111011 — Prepared Foods`.
 - S4 exports consolidate both deliveries to one row per item, cover the Friday–Thursday accounting period, use the receiving cafe profit center, and apply the approved Prepared Foods G/L fallback (`4111011`).
 - Aleppo-Edamame uses MRN `176736` per the requesting admin.
+
+- One-week authorized exception (Tyler, 2026-10-29): service week 2026-11-02 closes Thursday October 29 at 5 PM Pacific. Every other week retains prior Wednesday 5 PM Pacific, including November 9-13. Both server validation and browser use the shared effective cutoff; no scheduled cleanup is required.

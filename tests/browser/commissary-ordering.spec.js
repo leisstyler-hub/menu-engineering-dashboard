@@ -288,3 +288,22 @@ test("Prep List View is vertical, touch friendly, translated, and saves hold-to-
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
+
+
+test("one-week reopening closes an already open tab at Thursday 5 PM and preserves next Wednesday", async ({ page }) => {
+  await page.clock.install({ time: new Date("2026-10-29T23:59:58Z") });
+  const writes = await mockOrders(page);
+  await openTool(page, /open commissary ordering/i, /^Commissary Ordering Tool$/);
+  await page.getByLabel("Your cafe").selectOption("Nessie");
+  await page.getByLabel("Service week").selectOption("2026-11-02");
+  await expect(page.getByText("Cutoff: Thursday 10/29 at 5:00 PM Pacific.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Save shared order", exact: true })).toBeEnabled();
+  await page.clock.fastForward(3000);
+  await expect(page.getByText("Ordering closed", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Save shared order", exact: true })).toBeDisabled();
+  await expect(page.getByLabel("Friday delivery Sliced Cucumber quantity", { exact: true })).toBeDisabled();
+  await page.getByLabel("Service week").selectOption("2026-11-09");
+  await expect(page.getByText("Cutoff: Wednesday 11/4 at 5:00 PM Pacific.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Save shared order", exact: true })).toBeEnabled();
+  expect(writes).toHaveLength(0);
+});
