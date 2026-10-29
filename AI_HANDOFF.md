@@ -1,3 +1,7 @@
+## Compact Commissary Grill ordering - 2026-10-29
+
+Candidate `2026.10.29.002-compact-commissary-grill` reduces empty space in the Draft Commissary Ordering Tool's Grill LTO section without changing its content or data behavior. Set labels and selectors share one compact header row; selected sandwich name, MRN, portion and Item + Waste Cost share one status strip; all three delivery labels, service-day details and whole-sandwich inputs remain visible in a tighter responsive grid. Set A and Set B now use two columns from the standard large breakpoint instead of waiting for extra-wide screens. Cycle logic, cafe eligibility, saved records, Prep List rollups and S4 transfer calculations are unchanged. Supabase operational metadata version 4 records the compact, complete-content, two-column interface contract for cross-tool reuse; the component exposes the resolved density as a testable attribute.
+
 ## Commissary Grill LTO cycle - 2026-10-29
 
 LIVE `2026.10.29.001-commissary-grill-lto` makes Monday `2026-11-16` Cycle Week 1 for a repeating six-week Grill LTO program in the Draft Commissary Ordering Tool. Grill ordering appears only for Cricket, Nessie, Dawson, Bingo, Grace, Blueshift, Sonic and Astra. Each week exposes one Set A and one Set B choice; chefs select one sandwich from each set and enter whole finished-sandwich quantities for the existing Friday, Monday and Wednesday deliveries. Weeks before November 16 show no Grill section. The `Your cafe` selector again shows each five-digit cost center without the literal `PC` label.

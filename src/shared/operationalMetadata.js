@@ -9,7 +9,7 @@ import { DEFAULT_COMMISSARY_METADATA } from "../features/commissary-ordering/com
 import { GRILL_LTO_PROGRAM } from "../features/commissary-ordering/grillLtoCatalog.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 3;
+export const OPERATIONAL_METADATA_VERSION = 4;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -43,6 +43,12 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
     orderUnitVersion: 2,
     quantityIncrement: 0.25,
     grillProgram: GRILL_LTO_PROGRAM,
+    grillInterface: Object.freeze({
+      density: "compact",
+      contentPolicy: "complete",
+      setLayout: "two-column-desktop",
+      deliveryControls: "always-visible",
+    }),
     cutoff: Object.freeze({ dayOffsetFromMonday: -5, hour: 17, timeZone: "America/Los_Angeles" }),
     transferToolContract: Object.freeze({
       glAccountSource: "transferTool.glAccounts",

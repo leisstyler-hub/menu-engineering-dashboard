@@ -182,11 +182,23 @@ test("Grill LTO starts Cycle Week 1 on November 16 with Set A and Set B whole-sa
 
   const grill = page.getByTestId("commissary-grill-order");
   await expect(grill.getByText(/Cycle Week 1/i)).toBeVisible();
+  await expect(grill).toHaveAttribute("data-density", "compact");
   await expect(page.getByLabel("Your cafe")).toContainText("SEA39 Nessie Cafe · 30159");
   await expect(page.getByLabel("Grill Set A sandwich").locator("option")).toContainText(["Select sandwich", "ATX Burger", "Mushroom Swiss Burger"]);
   await expect(page.getByLabel("Grill Set B sandwich").locator("option")).toContainText(["Select sandwich", "Diablo Burger", "Southwest Burger"]);
   await page.getByLabel("Grill Set A sandwich").selectOption("77139.72");
   await page.getByLabel("Grill Set B sandwich").selectOption("77139.68");
+  const [grillBox, setABox, setBBox] = await Promise.all([
+    grill.boundingBox(),
+    page.getByLabel("Grill Set A sandwich").locator("xpath=ancestor::section[1]").boundingBox(),
+    page.getByLabel("Grill Set B sandwich").locator("xpath=ancestor::section[1]").boundingBox(),
+  ]);
+  expect(grillBox?.height, "Grill ordering should remain compact while retaining both sets").toBeLessThan(420);
+  expect(Math.abs((setABox?.y ?? 0) - (setBBox?.y ?? 0)), "Set A and Set B should share the desktop row").toBeLessThan(3);
+  await expect(grill).toContainText("Item + Waste");
+  await expect(grill).toContainText("Friday delivery");
+  await expect(grill).toContainText("Monday delivery");
+  await expect(grill).toContainText("Wednesday delivery");
   await page.getByLabel("Set A Friday delivery sandwich quantity").fill("10");
   await page.getByLabel("Set A Monday delivery sandwich quantity").fill("20");
   await page.getByLabel("Set B Wednesday delivery sandwich quantity").fill("15");

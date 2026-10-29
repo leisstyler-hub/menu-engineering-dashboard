@@ -1,1 +1,1 @@
-export const APP_VERSION_STAMP = "2026.10.29.001-commissary-grill-lto";
+export const APP_VERSION_STAMP = "2026.10.29.002-compact-commissary-grill";
