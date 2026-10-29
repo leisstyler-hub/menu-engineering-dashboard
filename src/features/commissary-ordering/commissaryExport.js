@@ -3,7 +3,7 @@ import XLSX from "xlsx-js-style";
 import { buildS4Workbook, transferExportFileName } from "../transfer-tool/transferExport.js";
 import { COMMISSARY_DEPARTING_UNIT } from "./commissaryCatalog.js";
 import { DEFAULT_COMMISSARY_METADATA } from "./commissaryMetadata.js";
-import { orderLinesForCafe, rolledUpItems, transferPeriod, weekLabel } from "./commissaryModel.js";
+import { grillOrderLinesForCafe, grillPrepLinesForCafe, orderLinesForCafe, rolledUpPrepItems, transferPeriod, weekLabel } from "./commissaryModel.js";
 
 const S4_TEMPLATE_URL = "/templates/ExpenseTransfer_Between_PC_Template.xlsx";
 const PREPARED_FOODS_GL = "4111011";
@@ -75,19 +75,21 @@ function bodyStyle(fill, isGroupStart = false) {
 }
 
 function buildDeliveryMapWorksheet(records, delivery) {
+  const deliveryLines = records.flatMap((record) => [
+    ...orderLinesForCafe(record).filter((line) => Number(line[delivery.key]) > 0).map((line) => ({ cafe: record.cafe, name: line.name, mrn: line.mrn, quantity: line[delivery.key], unit: line.orderUnit, unitCost: line.orderUnitCost, finishedDish: line.name })),
+    ...grillPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key).map((line) => ({ cafe: record.cafe, name: line.name, mrn: line.mrn, quantity: line.quantity, unit: line.orderUnit, unitCost: null, finishedDish: line.finishedDish })),
+  ]);
   const rows = [
-    [`${delivery.day} Cafe Delivery Map`, "", "", "", "", "", ""],
-    [delivery.detail, "", "", "", "", "", ""],
-    ["Cafe", "Item", "MRN", "Quantity", "Order unit", "Unit cost", "Extended cost"],
-    ...records.flatMap((record) => orderLinesForCafe(record)
-      .filter((line) => Number(line[delivery.key]) > 0)
-      .map((line) => [record.cafe, line.name, line.mrn, line[delivery.key], line.orderUnit, line.orderUnitCost, line[delivery.key] * line.orderUnitCost])),
+    [`${delivery.day} Cafe Delivery Map`, "", "", "", "", "", "", ""],
+    [delivery.detail, "", "", "", "", "", "", ""],
+    ["Cafe", "Ingredient / item", "MRN", "Quantity", "Order unit", "Finished dish", "Unit cost", "Extended cost"],
+    ...deliveryLines.map((line) => [line.cafe, line.name, line.mrn, line.quantity, line.unit, line.finishedDish, line.unitCost ?? "", line.unitCost == null ? "" : line.quantity * line.unitCost]),
   ];
   const worksheet = XLSX.utils.aoa_to_sheet(rows);
-  worksheet["!merges"] = [XLSX.utils.decode_range("A1:G1"), XLSX.utils.decode_range("A2:G2")];
-  worksheet["!cols"] = [18, 30, 14, 12, 20, 14, 16].map((wch) => ({ wch }));
+  worksheet["!merges"] = [XLSX.utils.decode_range("A1:H1"), XLSX.utils.decode_range("A2:H2")];
+  worksheet["!cols"] = [18, 30, 14, 12, 20, 30, 14, 16].map((wch) => ({ wch }));
   worksheet["!freeze"] = { xSplit: 0, ySplit: 3, topLeftCell: "A4", activePane: "bottomLeft", state: "frozen" };
-  worksheet["!autofilter"] = { ref: `A3:G${Math.max(rows.length, 3)}` };
+  worksheet["!autofilter"] = { ref: `A3:H${Math.max(rows.length, 3)}` };
   worksheet["!margins"] = { left: 0.3, right: 0.3, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 };
   worksheet["!rows"] = rows.map((_, row) => ({ hpt: row === 0 ? 26 : row === 1 ? 21 : row === 2 ? 30 : 23 }));
 
@@ -98,7 +100,7 @@ function buildDeliveryMapWorksheet(records, delivery) {
     const isGroupStart = row > 2 && cafe !== previousCafe;
     if (isGroupStart) cafeBand += 1;
     const fill = isGroupStart ? PREP_LIST_COLORS.section : cafeBand % 2 === 0 ? PREP_LIST_COLORS.detailAlt : PREP_LIST_COLORS.detail;
-    for (let column = 0; column < 7; column += 1) {
+    for (let column = 0; column < 8; column += 1) {
       let style;
       if (row === 0) style = titleStyle();
       else if (row === 1) style = {
@@ -110,7 +112,7 @@ function buildDeliveryMapWorksheet(records, delivery) {
       else if (row === 2) style = headerStyle;
       else style = bodyStyle(fill, isGroupStart);
       if (row > 2 && isGroupStart && column === 0) style = { ...style, font: { ...style.font, bold: true, color: { rgb: PREP_LIST_COLORS.navy } } };
-      setCellStyle(worksheet, row, column, style, row > 2 && [5, 6].includes(column) ? moneyFormat : undefined);
+      setCellStyle(worksheet, row, column, style, row > 2 && [6, 7].includes(column) ? moneyFormat : undefined);
     }
     if (row > 2) previousCafe = cafe;
   }
@@ -118,10 +120,10 @@ function buildDeliveryMapWorksheet(records, delivery) {
 }
 
 export function buildCommissaryBomWorkbook(records, weekStart, metadata = DEFAULT_COMMISSARY_METADATA) {
-  const rows = rolledUpItems(records);
+  const rows = rolledUpPrepItems(records);
   const worksheetRows = [
     ["Ingredient Technique Prep List", "", "", "", "", ""],
-    [`Commissary salad bar · Week ${weekLabel(weekStart)}`, "", "", "", "", ""],
+    [`Commissary salad bar and Grill LTO · Week ${weekLabel(weekStart)}`, "", "", "", "", ""],
     ["Ingredient / item", "Total quantity", "Order unit", "Prep technique", "Subrecipe / component", "Finished dish"],
     ...rows.map((row) => [
       row.name,
@@ -129,7 +131,7 @@ export function buildCommissaryBomWorkbook(records, weekStart, metadata = DEFAUL
       row.orderUnit,
       row.notes || row.category,
       row.category,
-      row.name,
+      row.finishedDish || row.name,
     ]),
   ];
   const worksheet = XLSX.utils.aoa_to_sheet(worksheetRows);
@@ -166,10 +168,10 @@ export function buildCommissaryBomWorkbook(records, weekStart, metadata = DEFAUL
 
   const automationRows = [
     ["Portion Plan — Power Automate input area", "", "", "Calculation rows — maintain for Power Automate", "", "", "", ""],
-    [`Commissary salad bar · Week ${weekLabel(weekStart)}`, "", "", "", "", "", "", ""],
+    [`Commissary salad bar and Grill LTO · Week ${weekLabel(weekStart)}`, "", "", "", "", "", "", ""],
     ["Finished dish", "Planned portions", "Current status", "Technique key", "Finished dish", "Normalized unit", "Required qty", "Planning quantity"],
     ...rows.map((row) => [
-      row.name,
+      row.finishedDish || row.name,
       row.total,
       "Locked order",
       `${row.category}|${row.id}`,
@@ -222,14 +224,14 @@ export function buildCommissaryBomWorkbook(records, weekStart, metadata = DEFAUL
 
 export function exportCommissaryBom(records, weekStart, metadata = DEFAULT_COMMISSARY_METADATA) {
   const bytes = XLSX.write(buildCommissaryBomWorkbook(records, weekStart, metadata), { type: "array", bookType: "xlsx", cellStyles: true });
-  downloadBytes(bytes, `Commissary Salad Bar Prep List ${weekStart}.xlsx`, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  downloadBytes(bytes, `Commissary Prep List ${weekStart}.xlsx`, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 }
 
 export function buildCommissaryTransfer(record, metadata = DEFAULT_COMMISSARY_METADATA) {
   const receiver = metadata.receivingCafes.find(({ name }) => name === record.cafe);
   const period = transferPeriod(record.weekStart);
   return {
-    title: `Commissary Salad Bar ${record.cafe} ${period.start} to ${period.end}`,
+    title: `Commissary Order ${record.cafe} ${period.start} to ${period.end}`,
     departingUnit: COMMISSARY_DEPARTING_UNIT.name,
     departingProfitCenter: COMMISSARY_DEPARTING_UNIT.profitCenter,
     receivingUnit: record.cafe,
@@ -237,7 +239,8 @@ export function buildCommissaryTransfer(record, metadata = DEFAULT_COMMISSARY_ME
     transferDate: period.end,
     eventId: "",
     s4ExportVersion: 1,
-    items: orderLinesForCafe(record).map((line) => ({
+    items: [
+      ...orderLinesForCafe(record).map((line) => ({
       catalogId: line.id,
       menu: "Commissary Salad Bar",
       item: `${line.name} (${line.total} ${line.orderUnit}${line.total === 1 ? "" : "s"})`,
@@ -250,7 +253,22 @@ export function buildCommissaryTransfer(record, metadata = DEFAULT_COMMISSARY_ME
         glCode: line.transferGlCode || PREPARED_FOODS_GL,
         allocationPerPortion: line.orderUnitCost,
       }],
-    })),
+      })),
+      ...grillOrderLinesForCafe(record).map((line) => ({
+        catalogId: line.id,
+        menu: line.menu,
+        item: `${line.name} (${line.total} sandwich${line.total === 1 ? "" : "es"})`,
+        mrn: line.mrn,
+        quantity: line.total,
+        itemWasteCost: line.orderUnitCost,
+        ingredientAllocations: [{
+          ingredientName: "Prepared Foods",
+          ingredientMrn: line.mrn,
+          glCode: PREPARED_FOODS_GL,
+          allocationPerPortion: line.orderUnitCost,
+        }],
+      })),
+    ],
   };
 }
 

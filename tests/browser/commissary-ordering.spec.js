@@ -4,10 +4,19 @@ import XLSX from "xlsx";
 import { addDays, buildOrderRecord, emptyQuantities, firstOpenWeek } from "../../src/features/commissary-ordering/commissaryModel.js";
 import { COMMISSARY_ORDER_ITEMS } from "../../src/features/commissary-ordering/commissaryCatalog.js";
 import { buildCommissaryMetadataRecord } from "../../src/features/commissary-ordering/commissaryMetadata.js";
+import { GRILL_LTO_PROGRAM } from "../../src/features/commissary-ordering/grillLtoCatalog.js";
 import { collectUnexpectedPageErrors, expectNoAppProtection, expectNoUnexpectedPageErrors, openTool } from "./smoke-helpers.js";
 
 async function mockOrders(page, records = []) {
   const writes = [];
+  const grillItems = [...new Map(GRILL_LTO_PROGRAM.cycleWeeks.flatMap((week) => [...week.setA, ...week.setB]).map((item, index) => [item.mrn, {
+    menu: GRILL_LTO_PROGRAM.menu,
+    item: item.name,
+    mrn: item.mrn,
+    portion: "1 sandwich",
+    trueCost: Number((3 + index / 10).toFixed(4)),
+  }])).values()];
+  await page.route("**/api/recipe-library?scope=all", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, source: "supabase-recipe-items", rows: grillItems }) }));
   await page.route("**/api/storage/records**", async (route) => {
     if (route.request().method() === "GET") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, records }) });
     writes.push(route.request().postDataJSON());
@@ -131,14 +140,14 @@ test("Commissary Ordering Tool requires cafe selection and saves separate delive
   const transferDownload = page.waitForEvent("download");
   await generateButton.click();
   const transferFile = await transferDownload;
-  expect(transferFile.suggestedFilename()).toMatch(/Commissary Salad Bar Nessie.*Expense Transfer\.xlsx/);
+  expect(transferFile.suggestedFilename()).toMatch(/Commissary Order Nessie.*Expense Transfer\.xlsx/);
   const transferWorkbook = XLSX.readFile(await transferFile.path());
   const transferRows = XLSX.utils.sheet_to_json(transferWorkbook.Sheets[transferWorkbook.SheetNames[0]], { header: 1, defval: "" });
   expect(transferRows).toContainEqual(expect.arrayContaining(["4111009", "30159", "4111009", expect.stringContaining("Frozen Peas"), 11.35]));
   const bomDownload = page.waitForEvent("download");
   await page.getByRole("button", { name: /generate prep list/i }).click();
   const prepListFile = await bomDownload;
-  expect(prepListFile.suggestedFilename()).toMatch(/Commissary Salad Bar Prep List.*\.xlsx/);
+  expect(prepListFile.suggestedFilename()).toMatch(/Commissary Prep List.*\.xlsx/);
   const bomWorkbook = XLSX.readFile(await prepListFile.path(), { cellStyles: true });
   expect(bomWorkbook.SheetNames).toEqual(["Consolidated Prep List", "Friday Delivery Map", "Monday Delivery Map", "Wednesday Delivery Map", "Power Automate"]);
   expect(bomWorkbook.Sheets["Consolidated Prep List"].A1.s.fgColor.rgb).toBe("17365D");
@@ -164,6 +173,42 @@ test("Commissary Ordering Tool requires cafe selection and saves separate delive
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
+test("Grill LTO starts Cycle Week 1 on November 16 with Set A and Set B whole-sandwich orders", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const writes = await mockOrders(page);
+  await openTool(page, /open commissary ordering/i, /^Commissary Ordering Tool$/);
+  await page.getByLabel("Your cafe").selectOption("Nessie");
+  await page.getByLabel("Service week").selectOption("2026-11-16");
+
+  const grill = page.getByTestId("commissary-grill-order");
+  await expect(grill.getByText(/Cycle Week 1/i)).toBeVisible();
+  await expect(page.getByLabel("Your cafe")).toContainText("SEA39 Nessie Cafe · 30159");
+  await expect(page.getByLabel("Grill Set A sandwich").locator("option")).toContainText(["Select sandwich", "ATX Burger", "Mushroom Swiss Burger"]);
+  await expect(page.getByLabel("Grill Set B sandwich").locator("option")).toContainText(["Select sandwich", "Diablo Burger", "Southwest Burger"]);
+  await page.getByLabel("Grill Set A sandwich").selectOption("77139.72");
+  await page.getByLabel("Grill Set B sandwich").selectOption("77139.68");
+  await page.getByLabel("Set A Friday delivery sandwich quantity").fill("10");
+  await page.getByLabel("Set A Monday delivery sandwich quantity").fill("20");
+  await page.getByLabel("Set B Wednesday delivery sandwich quantity").fill("15");
+  await page.getByRole("button", { name: /save shared order/i }).click();
+  await expect(page.getByText(/Nessie's order.*was saved/i)).toBeVisible();
+  expect(writes).toHaveLength(1);
+  expect(writes[0].records[0].grill.cycleWeek).toBe(1);
+  expect(writes[0].records[0].grill.selections).toEqual({ A: "77139.72", B: "77139.68" });
+  expect(writes[0].records[0].grill.quantities.A).toEqual({ friday: 10, monday: 20, wednesday: 0 });
+  expect(writes[0].records[0].grill.quantities.B).toEqual({ friday: 0, monday: 0, wednesday: 15 });
+
+  const prepDownload = page.waitForEvent("download");
+  await page.getByRole("button", { name: /generate prep list/i }).click();
+  const workbook = XLSX.readFile(await (await prepDownload).path());
+  const prepRows = XLSX.utils.sheet_to_json(workbook.Sheets["Consolidated Prep List"], { header: 1, defval: "" });
+  expect(prepRows).toContainEqual(expect.arrayContaining(["AMZ: Smashburger Patty", expect.any(Number), "each"]));
+  const mondayRows = XLSX.utils.sheet_to_json(workbook.Sheets["Monday Delivery Map"], { header: 1, defval: "" });
+  expect(mondayRows).toContainEqual(expect.arrayContaining(["Nessie", "AMZ: Smashburger Patty", "147955.16", 20, "each", expect.stringContaining("ATX Burger")]));
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
 test("locked commissary week is read-only and exposes Prep List and exact-template S4 exports", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   const openWeek = firstOpenWeek();
@@ -182,7 +227,7 @@ test("locked commissary week is read-only and exposes Prep List and exact-templa
   await expect(page.getByRole("button", { name: /download combined prep list/i })).toBeEnabled();
   const transferDownload = page.waitForEvent("download");
   await page.getByRole("button", { name: /download nessie s4 transfer/i }).click();
-  expect((await transferDownload).suggestedFilename()).toMatch(/Commissary Salad Bar Nessie.*Expense Transfer\.xlsx/);
+  expect((await transferDownload).suggestedFilename()).toMatch(/Commissary Order Nessie.*Expense Transfer\.xlsx/);
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });

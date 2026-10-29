@@ -9,7 +9,8 @@ import { buildS4Rows, buildS4Workbook } from "../src/features/transfer-tool/tran
 import { COMMISSARY_ORDER_ITEMS } from "../src/features/commissary-ordering/commissaryCatalog.js";
 import { buildCommissaryBomWorkbook, buildCommissaryTransfer } from "../src/features/commissary-ordering/commissaryExport.js";
 import { buildCommissaryMetadataRecord, DEFAULT_COMMISSARY_METADATA, isApprovedCommissaryMetadataRecord, resolveCommissaryMetadata } from "../src/features/commissary-ordering/commissaryMetadata.js";
-import { COMMISSARY_ORDER_UNIT_VERSION, DELIVERY_KEYS, addDays, buildOrderRecord, buildPrepProgressRecord, emptyQuantities, firstOpenWeek, isWeekLocked, latestPrepWeek, normalizePrepCompleted, normalizeQuantities, togglePrepCompleted, transferPeriod } from "../src/features/commissary-ordering/commissaryModel.js";
+import { COMMISSARY_GRILL_ORDER_VERSION, COMMISSARY_ORDER_UNIT_VERSION, DELIVERY_KEYS, addDays, buildOrderRecord, buildPrepProgressRecord, emptyGrillOrder, emptyQuantities, firstOpenWeek, grillCycleForWeek, grillOrderLinesForCafe, grillPrepLinesForCafe, isWeekLocked, latestPrepWeek, normalizePrepCompleted, normalizeQuantities, orderValue, rolledUpPrepItems, togglePrepCompleted, transferPeriod } from "../src/features/commissary-ordering/commissaryModel.js";
+import { GRILL_LTO_ITEM_MRNS, GRILL_LTO_PREP_ITEM_IDS, GRILL_LTO_PROGRAM } from "../src/features/commissary-ordering/grillLtoCatalog.js";
 import { COMMISSARY_SPANISH } from "../src/features/commissary-ordering/commissaryTranslations.js";
 
 assert.equal(COMMISSARY_ORDER_ITEMS.length, 41, "The source workbook should produce 41 commissary order items.");
@@ -27,6 +28,13 @@ assert.equal(frozenPeas.orderUnitCost, 9.08);
 assert.equal(frozenPeas.transferGlCode, "4111009");
 assert.equal(frozenPeas.transferGlCategory, "Frozen");
 assert.deepEqual(DELIVERY_KEYS, ["friday", "monday", "wednesday"]);
+assert.equal(GRILL_LTO_PROGRAM.anchorWeekStart, "2026-11-16");
+assert.equal(GRILL_LTO_ITEM_MRNS.length, 12);
+assert.ok(GRILL_LTO_PREP_ITEM_IDS.length > 20);
+assert.deepEqual(grillCycleForWeek("2026-11-16"), GRILL_LTO_PROGRAM.cycleWeeks[0], "Monday 11/16/2026 must be Grill Cycle Week 1.");
+assert.deepEqual(grillCycleForWeek("2026-12-21"), GRILL_LTO_PROGRAM.cycleWeeks[5]);
+assert.deepEqual(grillCycleForWeek("2026-12-28"), GRILL_LTO_PROGRAM.cycleWeeks[0], "The six-week Grill cycle must repeat.");
+assert.equal(grillCycleForWeek("2026-11-09"), null, "The Grill cycle must not appear before its 11/16/2026 anchor.");
 assert.deepEqual(normalizeQuantities({ "commissary-9002-2": { monday: 1.5, wednesday: 0.5 } }, { orderUnitVersion: 1 })[frozenPeas.id], { friday: 0, monday: 0.38, wednesday: 0.13 }, "Saved green-bean quart quantities should migrate into the replacement peas gallon slot.");
 assert.deepEqual(normalizeQuantities({ [frozenPeas.id]: { friday: 0.25, monday: 1.5, wednesday: 0.5 } }, { orderUnitVersion: COMMISSARY_ORDER_UNIT_VERSION })[frozenPeas.id], { friday: 0.25, monday: 1.5, wednesday: 0.5 }, "Current gallon quantities must not be converted twice.");
 
@@ -142,4 +150,31 @@ assert.ok(exportedRows.slice(1).filter((row) => !String(row[3]).includes("Frozen
 const future = addDays("2026-10-12", 7);
 assert.equal(isWeekLocked(future, new Date("2026-10-08T00:01:00Z")), false);
 
-console.log("Commissary Ordering Tool verified: Supabase-backed Dawson metadata, Friday/Monday/Wednesday delivery routing, legacy gallon conversion, shared Prep View progress, styled delivery maps, and Friday–Thursday S4 consolidation.");
+const grill = emptyGrillOrder("2026-11-16");
+grill.selections = { A: "77139.72", B: "77139.68" };
+grill.items = {
+  A: { mrn: "77139.72", item: "ATX Burger", portion: "1 each", itemWasteCost: 3.3634 },
+  B: { mrn: "77139.68", item: "Diablo Burger", portion: "1 sandwich", itemWasteCost: 3.1803 },
+};
+grill.quantities = { A: { friday: 10, monday: 20, wednesday: 30 }, B: { friday: 5, monday: 10, wednesday: 15 } };
+const grillRecord = buildOrderRecord({ cafe: "Nessie", weekStart: "2026-11-16", quantities: emptyQuantities(), grill, now: new Date("2026-11-10T12:00:00Z") });
+assert.equal(grillRecord.grill.version, COMMISSARY_GRILL_ORDER_VERSION);
+assert.equal(grillRecord.grill.cycleWeek, 1);
+assert.equal(commissaryWriteValidation([grillRecord], { tool: "commissaryOrders" }), "");
+assert.equal(grillOrderLinesForCafe(grillRecord).length, 2);
+assert.ok(grillPrepLinesForCafe(grillRecord).some((line) => line.name === "AMZ: Smashburger Patty" && line.quantity > 0));
+assert.ok(rolledUpPrepItems([grillRecord]).some((line) => line.name === "AMZ: Smashburger Patty" && line.orderUnit === "each"));
+assert.equal(orderValue(grillRecord.quantities, grillRecord.grill), (60 * 3.3634) + (30 * 3.1803));
+assert.match(commissaryWriteValidation([{ ...grillRecord, grill: { ...grillRecord.grill, selections: { A: "64908.6", B: "77139.68" } } }], { tool: "commissaryOrders" }), /Set A/i);
+assert.match(commissaryWriteValidation([{ ...grillRecord, grill: { ...grillRecord.grill, quantities: { ...grillRecord.grill.quantities, A: { ...grillRecord.grill.quantities.A, friday: 1.5 } } } }], { tool: "commissaryOrders" }), /whole sandwiches/i);
+const grillTransfer = buildCommissaryTransfer(grillRecord);
+assert.equal(grillTransfer.items.length, 2);
+assert.ok(grillTransfer.items.every((item) => item.ingredientAllocations[0].glCode === "4111011"));
+assert.ok(grillTransfer.items.every((item) => item.ingredientAllocations[0].allocationPerPortion === item.itemWasteCost));
+const grillBom = buildCommissaryBomWorkbook([grillRecord], "2026-11-16");
+const grillBomRows = XLSX.utils.sheet_to_json(grillBom.Sheets["Consolidated Prep List"], { header: 1, defval: "" });
+assert.ok(grillBomRows.some((row) => row[0] === "AMZ: Smashburger Patty" && row[1] > 0 && row[2] === "each"));
+const grillMondayRows = XLSX.utils.sheet_to_json(grillBom.Sheets["Monday Delivery Map"], { header: 1, defval: "" });
+assert.ok(grillMondayRows.some((row) => row[0] === "Nessie" && row[1] === "AMZ: Smashburger Patty" && row[5].includes("ATX Burger")));
+
+console.log("Commissary Ordering Tool verified: Supabase-backed cafe metadata, Friday/Monday/Wednesday routing, 11/16 Grill Cycle Week 1, Set A/Set B whole-sandwich orders, ingredient prep rollups, shared Prep View progress, styled delivery maps, and Friday–Thursday S4 consolidation.");

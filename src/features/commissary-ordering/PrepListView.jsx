@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Languages } from "lucide-react";
 
-import { rolledUpItems, weekLabel } from "./commissaryModel.js";
+import { rolledUpPrepItems, weekLabel } from "./commissaryModel.js";
 import { DEFAULT_COMMISSARY_METADATA } from "./commissaryMetadata.js";
 import {
   commissarySpanishCategory,
@@ -75,7 +75,7 @@ const compactUnit = (unit, spanish) => {
 export default function PrepListView({ records, weekStart, completed, saving, onToggle, deliveries = DEFAULT_COMMISSARY_METADATA.deliveries }) {
   const [delivery, setDelivery] = useState(() => deliveries[0]?.key || "friday");
   const [spanish, setSpanish] = useState(false);
-  const rows = useMemo(() => rolledUpItems(records).filter((row) => Number(row[delivery]) > 0), [delivery, records]);
+  const rows = useMemo(() => rolledUpPrepItems(records).filter((row) => Number(row[delivery]) > 0), [delivery, records]);
   const completedIds = new Set(completed?.[delivery] || []);
   const completedCount = rows.filter((row) => completedIds.has(row.id)).length;
 
@@ -155,8 +155,9 @@ export default function PrepListView({ records, weekStart, completed, saving, on
               .filter(([, quantities]) => Number(quantities[delivery]) > 0)
               .map(([cafe, quantities]) => `${cafe} ${quantityText(quantities[delivery])}`)
               .join(" · ");
-            const itemName = spanish ? commissarySpanishItem(row.name) : row.name;
-            const category = spanish ? commissarySpanishCategory(row.category) : row.category;
+            const isGrill = String(row.category).startsWith("Grill");
+            const itemName = isGrill ? row.name : (spanish ? commissarySpanishItem(row.name) : row.name);
+            const category = isGrill ? (spanish ? "Parrilla LTO" : row.category) : (spanish ? commissarySpanishCategory(row.category) : row.category);
             const unit = compactUnit(row.orderUnit, spanish);
             return (
               <article key={row.id} className={`flex min-h-24 items-center gap-4 px-4 py-4 transition md:px-6 ${checked ? "bg-emerald-50" : "bg-white"}`}>
@@ -169,6 +170,7 @@ export default function PrepListView({ records, weekStart, completed, saving, on
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-black uppercase tracking-[0.12em] text-sky-700">{category}</p>
                   <p className={`mt-0.5 text-xl font-black leading-tight ${checked ? "text-emerald-900 line-through decoration-2" : "text-slate-950"}`}>{itemName}</p>
+                  {row.finishedDish && <p className="mt-1 text-xs font-bold text-slate-500">{spanish ? "Para" : "For"}: {row.finishedDish}</p>}
                 </div>
                 <div className="max-w-[45%] shrink-0 text-right" data-testid={`prep-quantity-${row.id}`}>
                   <p className="whitespace-nowrap text-3xl font-black tabular-nums text-slate-950">{quantityText(row[delivery])} <span className="text-xl">{unit}</span></p>

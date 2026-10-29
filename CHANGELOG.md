@@ -1,3 +1,7 @@
+## 2026-10-29
+
+- [Oct 29, 4:34 AM] Added a six-week Grill LTO ordering cycle starting November 16, with Set A/Set B sandwich choices, ingredient Prep List rollups and cost-center labels.
+
 ## 2026-10-28
 
 - [Oct 28, 5:55 PM] Simplified the Commissary cafe dropdown by hiding internal profit-center codes while preserving transfer routing.
