@@ -38,4 +38,8 @@ The full repository verification gate passed. The focused Commissary browser sui
 
 Operational metadata version 3 was seeded through the canonical live API and read back exactly with anchor `2026-11-16`, cycle length 6, all eight eligible cafes and the approved Week 1 Set A/Set B choices. No schema migration was made. A one-hour Vercel runtime scan found no Grill-specific application error; the only signal was the pre-existing Node `url.parse()` deprecation warning on shared API routes.
 
+### Compact interface follow-up
+
+LIVE `2026.10.29.002-compact-commissary-grill` preserves every selector, sandwich detail, delivery instruction and quantity field while consolidating the set header, sandwich economics and delivery controls into a materially shorter responsive layout. Application commit `b76c9abe1adedf10bb8014a8c88f251f3bb0dea2` reached READY production deployment `dpl_3S6vcHDbzoPUv1HiNYWLkvAYGWqr`; canonical asset `/assets/index-DcugKeZT.js` contains the exact version. Full verification and 6/6 local plus 6/6 production browser checks passed. Supabase operational metadata version 4 records and serves the compact, complete-content interface contract. No saved order, prep-progress or schema row changed during verification.
+
 Rollback application baseline: `33675b3be49a18e45d9f17956269fa98e7e76928`. Operational metadata rollback requires reseeding the prior approved version 2 payload.
