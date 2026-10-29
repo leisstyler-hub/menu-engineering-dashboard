@@ -98,20 +98,21 @@ test("Commissary Ordering Tool requires cafe selection and saves separate delive
   await expect(page.getByText("Select your cafe to begin")).toBeVisible();
   await expect(page.getByLabel("Your cafe").locator("option")).toContainText([
     "Select cafe",
-    "SEA39 Nessie Cafe · PC 30159",
-    "SEA20 Cricket Cafe · PC 22472",
-    "SEA27 Dawson Cafe · PC 28675",
-    "Sonic · PC 62102",
-    "Blueshift · PC 56746",
-    "Bingo · PC 53170",
-    "Grace · PC 53172",
-    "Everest · PC 30911",
-    "Dynamo · PC 61755",
-    "Gemini · PC 53169",
-    "Astra · PC 62844",
-    "Eclipse · PC 62100",
-    "Odyssey · PC 54245",
+    "SEA39 Nessie Cafe",
+    "SEA20 Cricket Cafe",
+    "SEA27 Dawson Cafe",
+    "Sonic",
+    "Blueshift",
+    "Bingo",
+    "Grace",
+    "Everest",
+    "Dynamo",
+    "Gemini",
+    "Astra",
+    "Eclipse",
+    "Odyssey",
   ]);
+  await expect(page.getByLabel("Your cafe")).not.toContainText(/\bPC\s+\d{5}\b/);
   await page.getByLabel("Your cafe").selectOption("Nessie");
   await expect(page.getByText("Frozen Peas", { exact: true })).toBeVisible();
   await expect(page.getByText("Blanched Green Beans", { exact: true })).toHaveCount(0);

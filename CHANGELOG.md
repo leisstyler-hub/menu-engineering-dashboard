@@ -1,5 +1,7 @@
 ## 2026-10-28
 
+- [Oct 28, 5:55 PM] Simplified the Commissary cafe dropdown by hiding internal profit-center codes while preserving transfer routing.
+
 - [Oct 28, 5:42 PM] Added ten independent Commissary receiving cafes with Supabase-backed cost centers across orders, prep lists and S4 transfers.
 
 - [Oct 28, 7:25 AM] Show W&P foods in visible cost tiers, let category selections clear, and explain the amount remaining for labor and other costs.
