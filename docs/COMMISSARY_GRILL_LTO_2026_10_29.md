@@ -32,6 +32,10 @@ Operational metadata version 3 carries the eligibility, anchor, cycle, MRNs and 
 
 ## Verification and release evidence
 
-Pending final release evidence: full repository gate, local and production Commissary browser suite, exact Supabase operational-metadata readback, Git commit, GitHub publication, READY Vercel deployment, canonical asset/version check and production error scan.
+Application commit `2628eed812f2f4efffdf6d2034f82e63fb2cf1a9` was published to `main` and reached READY production deployment `dpl_3uF8y55t6Az4JBK5bY9E2wUiTs6v`. The canonical production asset `/assets/index-CMEf8I_c.js` contains version `2026.10.29.001-commissary-grill-lto`.
+
+The full repository verification gate passed. The focused Commissary browser suite passed 6/6 locally and 6/6 against production, covering the November 16 Week 1 cycle, eligible-cafe visibility, Set A/Set B ordering, existing Salad Bar exports, locked exports and touch-friendly Prep List progress. Production browser storage writes were intercepted, so the acceptance run created no order or prep-progress rows.
+
+Operational metadata version 3 was seeded through the canonical live API and read back exactly with anchor `2026-11-16`, cycle length 6, all eight eligible cafes and the approved Week 1 Set A/Set B choices. No schema migration was made. A one-hour Vercel runtime scan found no Grill-specific application error; the only signal was the pre-existing Node `url.parse()` deprecation warning on shared API routes.
 
 Rollback application baseline: `33675b3be49a18e45d9f17956269fa98e7e76928`. Operational metadata rollback requires reseeding the prior approved version 2 payload.
