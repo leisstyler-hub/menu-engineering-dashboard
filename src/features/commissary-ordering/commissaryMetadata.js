@@ -1,10 +1,20 @@
 export const COMMISSARY_METADATA_RECORD_ID = "commissaryOrder|metadata|current";
-export const COMMISSARY_METADATA_VERSION = 1;
+export const COMMISSARY_METADATA_VERSION = 2;
 
 const RECEIVING_CAFES = Object.freeze([
   Object.freeze({ name: "Nessie", displayName: "SEA39 Nessie Cafe", profitCenter: "30159" }),
   Object.freeze({ name: "Cricket", displayName: "SEA20 Cricket Cafe", profitCenter: "22472" }),
   Object.freeze({ name: "Dawson", displayName: "SEA27 Dawson Cafe", profitCenter: "28675" }),
+  Object.freeze({ name: "Sonic", displayName: "Sonic", profitCenter: "62102" }),
+  Object.freeze({ name: "Blueshift", displayName: "Blueshift", profitCenter: "56746" }),
+  Object.freeze({ name: "Bingo", displayName: "Bingo", profitCenter: "53170" }),
+  Object.freeze({ name: "Grace", displayName: "Grace", profitCenter: "53172" }),
+  Object.freeze({ name: "Everest", displayName: "Everest", profitCenter: "30911" }),
+  Object.freeze({ name: "Dynamo", displayName: "Dynamo", profitCenter: "61755" }),
+  Object.freeze({ name: "Gemini", displayName: "Gemini", profitCenter: "53169" }),
+  Object.freeze({ name: "Astra", displayName: "Astra", profitCenter: "62844" }),
+  Object.freeze({ name: "Eclipse", displayName: "Eclipse", profitCenter: "62100" }),
+  Object.freeze({ name: "Odyssey", displayName: "Odyssey", profitCenter: "54245" }),
 ]);
 
 const DELIVERIES = Object.freeze([

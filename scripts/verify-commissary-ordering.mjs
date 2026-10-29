@@ -41,6 +41,9 @@ assert.equal(resolveCommissaryMetadata([metadataRecord]).source, "supabase");
 assert.equal(resolveCommissaryMetadata([]).source, "fallback");
 assert.deepEqual(DEFAULT_COMMISSARY_METADATA.deliveries.map(({ key, detail }) => [key, detail]), [["friday", "Monday service"], ["monday", "Tuesday–Wednesday service"], ["wednesday", "Thursday–Friday service"]]);
 assert.deepEqual(DEFAULT_COMMISSARY_METADATA.receivingCafes.find(({ name }) => name === "Dawson"), { name: "Dawson", displayName: "SEA27 Dawson Cafe", profitCenter: "28675" });
+assert.equal(DEFAULT_COMMISSARY_METADATA.receivingCafes.length, 13);
+assert.deepEqual(DEFAULT_COMMISSARY_METADATA.receivingCafes.find(({ name }) => name === "Everest"), { name: "Everest", displayName: "Everest", profitCenter: "30911" });
+assert.deepEqual(DEFAULT_COMMISSARY_METADATA.receivingCafes.find(({ name }) => name === "Odyssey"), { name: "Odyssey", displayName: "Odyssey", profitCenter: "54245" });
 assert.equal(commissaryWriteValidation([metadataRecord], { tool: "commissaryOrders" }), "");
 assert.match(commissaryWriteValidation([{ ...metadataRecord, receivingCafes: metadataRecord.receivingCafes.map((row) => row.name === "Dawson" ? { ...row, profitCenter: "incorrect" } : row) }], { tool: "commissaryOrders" }), /approved release configuration/i);
 
@@ -83,6 +86,10 @@ assert.ok(s4Rows.every((row) => row.receivingProfitCenter === "30159"));
 assert.ok(s4Rows.some((row) => row.transferAmount === Math.round(4 * COMMISSARY_ORDER_ITEMS[0].orderUnitCost * 100) / 100));
 assert.equal(transfer.departingProfitCenter, "22472");
 assert.equal(transfer.transferDate, "2026-10-15");
+
+const geminiRecord = buildOrderRecord({ cafe: "Gemini", weekStart: "2026-10-12", quantities, now: new Date("2026-10-06T12:00:00Z") });
+const geminiTransfer = buildCommissaryTransfer(geminiRecord);
+assert.equal(geminiTransfer.receivingProfitCenter, "53169", "New Commissary recipients must resolve their S4 destination from shared metadata.");
 
 const bomWorkbook = buildCommissaryBomWorkbook([record], "2026-10-12");
 assert.deepEqual(bomWorkbook.SheetNames, ["Consolidated Prep List", "Friday Delivery Map", "Monday Delivery Map", "Wednesday Delivery Map", "Power Automate"]);

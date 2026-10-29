@@ -8,12 +8,19 @@ import {
 import { DEFAULT_COMMISSARY_METADATA } from "../features/commissary-ordering/commissaryMetadata.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 1;
+export const OPERATIONAL_METADATA_VERSION = 2;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
   cafe,
   profitCenter: CAFE_PROFIT_CENTERS[cafe] || "",
+}));
+
+const transferProfitCenters = new Map(transferUnits.map(({ cafe, profitCenter }) => [cafe, profitCenter]));
+const commissaryReceivingCafes = DEFAULT_COMMISSARY_METADATA.receivingCafes.map(({ name, displayName }) => ({
+  name,
+  displayName,
+  profitCenter: transferProfitCenters.get(name) || "",
 }));
 
 export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
@@ -29,7 +36,7 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
   }),
   commissaryOrdering: Object.freeze({
     departingUnit: COMMISSARY_DEPARTING_UNIT,
-    receivingCafes: DEFAULT_COMMISSARY_METADATA.receivingCafes,
+    receivingCafes: Object.freeze(commissaryReceivingCafes),
     deliveries: DEFAULT_COMMISSARY_METADATA.deliveries,
     orderItems: COMMISSARY_ORDER_ITEMS,
     orderUnitVersion: 2,

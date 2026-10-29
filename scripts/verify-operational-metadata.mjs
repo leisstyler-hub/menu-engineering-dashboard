@@ -11,9 +11,34 @@ assert.equal(isApprovedOperationalMetadataRecord(record), true);
 assert.equal(resolveOperationalMetadata([record]).source, "supabase");
 assert.equal(resolveOperationalMetadata([]).source, "fallback");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.orderItems.length, 41);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.transferTool.units.length, 25);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.receivingCafes.length, 13);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.departingUnit.profitCenter, "22472");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.transferTool.units.find(({ cafe }) => cafe === "Dawson").profitCenter, "28675");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.transferTool.units.find(({ cafe }) => cafe === "Commissary").profitCenter, "22472");
+const expectedCommissaryProfitCenters = {
+  Nessie: "30159",
+  Cricket: "22472",
+  Dawson: "28675",
+  Sonic: "62102",
+  Blueshift: "56746",
+  Bingo: "53170",
+  Grace: "53172",
+  Everest: "30911",
+  Dynamo: "61755",
+  Gemini: "53169",
+  Astra: "62844",
+  Eclipse: "62100",
+  Odyssey: "54245",
+};
+for (const receiver of DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.receivingCafes) {
+  assert.equal(receiver.profitCenter, expectedCommissaryProfitCenters[receiver.name]);
+  assert.equal(
+    receiver.profitCenter,
+    DEFAULT_OPERATIONAL_METADATA.transferTool.units.find(({ cafe }) => cafe === receiver.name)?.profitCenter,
+    `${receiver.name} must resolve its Commissary receiving profit center from the shared transfer-unit metadata.`,
+  );
+}
 assert.ok(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.orderItems.every((item) => item.transferGlCode));
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.transferToolContract.glAccountSource, "transferTool.glAccounts");
 const changed = structuredClone(record);
