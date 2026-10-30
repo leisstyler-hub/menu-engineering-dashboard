@@ -6,9 +6,10 @@ import {
   normalizeBackboneRows,
 } from "../../src/integrations/storage/backboneRecords.js";
 import { isApprovedCommissaryMetadataRecord } from "../../src/features/commissary-ordering/commissaryMetadata.js";
-import { COMMISSARY_DELI_ORDER_VERSION, COMMISSARY_GRILL_ORDER_VERSION, COMMISSARY_ORDER_UNIT_VERSION, DELIVERY_KEYS, deliCycleForWeek, grillCycleForWeek, isDeliEligibleCafe, isGrillEligibleCafe, isWeekLocked } from "../../src/features/commissary-ordering/commissaryModel.js";
+import { COMMISSARY_DELI_ORDER_VERSION, COMMISSARY_GLOBAL_ORDER_VERSION, COMMISSARY_GRILL_ORDER_VERSION, COMMISSARY_ORDER_UNIT_VERSION, DELIVERY_KEYS, deliCycleForWeek, globalCycleForWeek, grillCycleForWeek, isDeliEligibleCafe, isGlobalEligibleCafe, isGrillEligibleCafe, isWeekLocked } from "../../src/features/commissary-ordering/commissaryModel.js";
 import { GRILL_LTO_PREP_ITEM_IDS } from "../../src/features/commissary-ordering/grillLtoCatalog.js";
 import { DELI_ORDERING_PREP_ITEM_IDS } from "../../src/features/commissary-ordering/deliCycleCatalog.js";
+import { GLOBAL_ORDERING_PREP_ITEM_IDS } from "../../src/features/commissary-ordering/globalCycleCatalog.js";
 import { COMMISSARY_HUBS, COMMISSARY_STATIONS, isCafeStationEnabled } from "../../src/features/commissary-ordering/commissaryRouting.js";
 import { DEFAULT_OPERATIONAL_METADATA, isApprovedOperationalMetadataRecord, OPERATIONAL_METADATA_RECORD_ID } from "../../src/shared/operationalMetadata.js";
 import { gzipSync, gunzipSync } from "node:zlib";
@@ -89,7 +90,7 @@ function transferWriteValidation(records = [], context = {}) {
 
 const COMMISSARY_CAFES = new Set(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.receivingCafes.map(({ name }) => name));
 const COMMISSARY_ITEM_IDS = new Set(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.orderItems.map(({ id }) => id));
-const COMMISSARY_PREP_IDS = new Set([...COMMISSARY_ITEM_IDS, ...GRILL_LTO_PREP_ITEM_IDS, ...DELI_ORDERING_PREP_ITEM_IDS]);
+const COMMISSARY_PREP_IDS = new Set([...COMMISSARY_ITEM_IDS, ...GRILL_LTO_PREP_ITEM_IDS, ...DELI_ORDERING_PREP_ITEM_IDS, ...GLOBAL_ORDERING_PREP_ITEM_IDS]);
 
 export function commissaryWriteValidation(records = [], context = {}) {
   if (getBackboneToolFromContext(context) !== "commissaryOrders") return "";
@@ -157,6 +158,24 @@ export function commissaryWriteValidation(records = [], context = {}) {
     }
   } else if (Object.values(record.deli?.quantities || {}).some((delivery) => DELIVERY_KEYS.some((key) => Number(delivery?.[key] || 0) > 0))) {
     return "Deli ordering is not enabled for this cafe.";
+  }
+  const globalCycle = globalCycleForWeek(record.weekStart);
+  if (globalCycle && isGlobalEligibleCafe(record.cafe)) {
+    if (Number(record.global?.version) !== COMMISSARY_GLOBAL_ORDER_VERSION || Number(record.global?.cycleWeek) !== globalCycle.week) return "The Global cycle is invalid.";
+    const options = globalCycle.menus.flatMap((menu) => menu.items);
+    const allowed = new Map(options.map((item) => [item.id, item]));
+    if (Object.keys(record.global?.quantities || {}).some((id) => !allowed.has(id))) return "The Global order contains an item outside the current cycle.";
+    for (const option of options) {
+      const delivery = record.global?.quantities?.[option.id];
+      if (!delivery || DELIVERY_KEYS.some((key) => !Number.isInteger(Number(delivery[key] ?? 0)) || Number(delivery[key] ?? 0) < 0)) return "Global quantities must be zero or positive whole portions.";
+      const count = DELIVERY_KEYS.reduce((sum, key) => sum + Number(delivery[key] || 0), 0);
+      const item = record.global?.items?.[option.id];
+      if (count > 0 && (!item || item.id !== option.id || item.menu !== option.menu || String(item.mrn) !== option.mrn || item.portion !== option.portion || item.category !== option.category || !(Number(item.itemWasteCost) > 0))) {
+        return `The Global cost snapshot for ${option.menu} MRN ${option.mrn} is invalid.`;
+      }
+    }
+  } else if (Object.values(record.global?.quantities || {}).some((delivery) => DELIVERY_KEYS.some((key) => Number(delivery?.[key] || 0) > 0))) {
+    return "Global ordering is not enabled for this cafe.";
   }
   if (isWeekLocked(record.weekStart, new Date())) return "This order is locked. Please contact commissary executive chef to adjust pars.";
   return "";

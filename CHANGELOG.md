@@ -1,5 +1,6 @@
 ## 2026-10-30
 
+- [Oct 30, 5:21 AM] Added six-week Global ordering with live costs, recipe-based prep rollups, cafe eligibility and Cricket/Blueshift hub routing.
 - [Oct 30, 4:53 AM] Delivery controls now show the exact Friday, Monday and Wednesday dates for each service week.
 - [Oct 30, 4:53 AM] Cafes now show only assigned stations, and Prep List View separates Cricket, Sonic and Blueshift hubs.
 - [Oct 30, 4:34 AM] Deli ordering now follows a four-week cycle and converts sandwich counts into recipe-based Prep List components.

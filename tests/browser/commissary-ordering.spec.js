@@ -6,6 +6,7 @@ import { COMMISSARY_ORDER_ITEMS } from "../../src/features/commissary-ordering/c
 import { buildCommissaryMetadataRecord } from "../../src/features/commissary-ordering/commissaryMetadata.js";
 import { GRILL_LTO_PROGRAM } from "../../src/features/commissary-ordering/grillLtoCatalog.js";
 import { DELI_ORDERING_PROGRAM } from "../../src/features/commissary-ordering/deliCycleCatalog.js";
+import { GLOBAL_ORDERING_PROGRAM } from "../../src/features/commissary-ordering/globalCycleCatalog.js";
 import { collectUnexpectedPageErrors, expectNoAppProtection, expectNoUnexpectedPageErrors, openTool } from "./smoke-helpers.js";
 
 async function mockOrders(page, records = []) {
@@ -24,7 +25,14 @@ async function mockOrders(page, records = []) {
     portion: "1 sandwich",
     trueCost: Number((2.5 + index / 10).toFixed(4)),
   }])).values()];
-  await page.route("**/api/recipe-library?scope=all", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, source: "supabase-recipe-items", rows: [...grillItems, ...deliItems] }) }));
+  const globalItems = [...new Map(GLOBAL_ORDERING_PROGRAM.cycleWeeks.flatMap(({ menus }) => menus.flatMap(({ items }) => items)).map((item, index) => [`${item.menu}|${item.mrn}|${item.portion}`, {
+    menu: item.menu,
+    item: item.name,
+    mrn: item.mrn,
+    portion: item.portion,
+    trueCost: Number((1.5 + index / 100).toFixed(4)),
+  }])).values()];
+  await page.route("**/api/recipe-library?scope=all", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, source: "supabase-recipe-items", rows: [...grillItems, ...deliItems, ...globalItems] }) }));
   await page.route("**/api/storage/records**", async (route) => {
     if (route.request().method() === "GET") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, records }) });
     writes.push(route.request().postDataJSON());
@@ -188,6 +196,13 @@ test("Grill LTO starts Cycle Week 1 on November 16 with Set A and Set B whole-sa
   await page.getByLabel("Your cafe").selectOption("Nessie");
   await page.getByLabel("Service week").selectOption("2026-11-16");
 
+  const global = page.getByTestId("commissary-global-order");
+  await expect(global.getByText(/Cycle Week 1/i)).toBeVisible();
+  await expect(global).toContainText("Porto");
+  await expect(global).toContainText("Taco Total");
+  const globalOption = GLOBAL_ORDERING_PROGRAM.cycleWeeks[0].menus[0].items[0];
+  await page.getByLabel(`${globalOption.name} Friday 11/13 portion quantity`).fill("4");
+
   const grill = page.getByTestId("commissary-grill-order");
   await expect(grill.getByText(/Cycle Week 1/i)).toBeVisible();
   await expect(grill).toHaveAttribute("data-density", "compact");
@@ -225,6 +240,8 @@ test("Grill LTO starts Cycle Week 1 on November 16 with Set A and Set B whole-sa
   expect(writes[0].records[0].grill.quantities.B).toEqual({ friday: 0, monday: 0, wednesday: 15 });
   expect(writes[0].records[0].deli.cycleWeek).toBe(1);
   expect(writes[0].records[0].deli.quantities["190990"]).toEqual({ friday: 0, monday: 12, wednesday: 0 });
+  expect(writes[0].records[0].global.cycleWeek).toBe(1);
+  expect(writes[0].records[0].global.quantities[globalOption.id]).toEqual({ friday: 4, monday: 0, wednesday: 0 });
 
   const prepDownload = page.waitForEvent("download");
   await page.getByRole("button", { name: /generate prep list/i }).click();
@@ -245,16 +262,19 @@ test("each cafe sees only its assigned commissary stations", async ({ page }) =>
   await page.getByLabel("Service week").selectOption("2026-11-16");
 
   await page.getByLabel("Your cafe").selectOption("Grace");
+  await expect(page.getByTestId("commissary-global-order")).toBeVisible();
   await expect(page.getByTestId("commissary-grill-order")).toBeVisible();
   await expect(page.getByTestId("commissary-deli-order")).toHaveCount(0);
   await expect(page.getByText("Salad bar", { exact: true })).toBeHidden();
 
   await page.getByLabel("Your cafe").selectOption("Dynamo");
+  await expect(page.getByTestId("commissary-global-order")).toHaveCount(0);
   await expect(page.getByTestId("commissary-deli-order")).toBeVisible();
   await expect(page.getByTestId("commissary-grill-order")).toHaveCount(0);
   await expect(page.getByText("Salad bar", { exact: true })).toBeHidden();
 
   await page.getByLabel("Your cafe").selectOption("Bingo");
+  await expect(page.getByTestId("commissary-global-order")).toBeVisible();
   await expect(page.getByText("Salad bar", { exact: true })).toBeVisible();
   await expect(page.getByTestId("commissary-grill-order")).toBeVisible();
   await expect(page.getByTestId("commissary-deli-order")).toHaveCount(0);

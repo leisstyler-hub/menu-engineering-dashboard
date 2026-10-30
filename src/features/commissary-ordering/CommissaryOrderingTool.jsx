@@ -17,6 +17,7 @@ import {
   emptyQuantities,
   emptyGrillOrder,
   emptyDeliOrder,
+  emptyGlobalOrder,
   firstOpenWeek,
   formatShortDate,
   isWeekLocked,
@@ -24,6 +25,7 @@ import {
   normalizeQuantities,
   normalizeGrillOrder,
   normalizeDeliOrder,
+  normalizeGlobalOrder,
   normalizePrepCompleted,
   orderValue,
   selectableWeeks,
@@ -35,6 +37,8 @@ import {
   isGrillEligibleCafe,
   deliCycleForWeek,
   isDeliEligibleCafe,
+  globalCycleForWeek,
+  isGlobalEligibleCafe,
   deliveriesForWeek,
 } from "./commissaryModel.js";
 import { loadCommissaryRecords, saveCommissaryOrder, saveCommissaryPrepProgress } from "./commissaryStorage.js";
@@ -73,6 +77,18 @@ function DeliItemOrder({ option, item, quantities, deliveries, disabled, onQuant
   );
 }
 
+function GlobalItemOrder({ option, item, quantities, deliveries, disabled, onQuantity }) {
+  return (
+    <section className="overflow-hidden rounded-xl border border-violet-200 bg-white shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-violet-100 bg-violet-50 px-3 py-2">
+        <div className="min-w-0"><h4 className="text-sm font-black">{option.name}</h4><p className="text-[11px] font-semibold text-slate-500">{option.category} · MRN {option.mrn} · {option.portion}</p></div>
+        <p className="shrink-0 text-sm font-black text-emerald-700">Item + Waste {item ? money(item.itemWasteCost) : "Unavailable"}</p>
+      </div>
+      <div className="grid gap-2 p-3 sm:grid-cols-3">{deliveries.map((delivery) => <label key={delivery.key} className="grid grid-cols-[minmax(0,1fr)_4.5rem] items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs font-black text-slate-700 sm:block"><span className="block leading-tight">{delivery.title}</span><span className="block text-[11px] font-semibold leading-tight text-slate-500 sm:min-h-7">{delivery.detail}</span><input aria-label={`${option.name} ${delivery.title} portion quantity`} type="number" min="0" step="1" disabled={disabled || !item} value={quantities?.[delivery.key] ?? 0} onChange={(event) => onQuantity(option.id, delivery.key, event.target.value)} className="row-span-2 w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-center text-base font-black disabled:bg-slate-200 sm:mt-1" /></label>)}</div>
+    </section>
+  );
+}
+
 function weekOptions(now = new Date()) {
   const open = firstOpenWeek(now);
   const earlier = Array.from({ length: 8 }, (_, index) => addDays(open, -(8 - index) * 7));
@@ -90,8 +106,10 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
   const [quantities, setQuantities] = useState(() => emptyQuantities());
   const [grill, setGrill] = useState(() => emptyGrillOrder(firstOpenWeek()));
   const [deli, setDeli] = useState(() => emptyDeliOrder(firstOpenWeek()));
+  const [global, setGlobal] = useState(() => emptyGlobalOrder(firstOpenWeek()));
   const [grillCatalog, setGrillCatalog] = useState([]);
   const [deliCatalog, setDeliCatalog] = useState([]);
+  const [globalCatalog, setGlobalCatalog] = useState([]);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -111,7 +129,7 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
   const prepProgressRecord = useMemo(() => prepProgressRecords.find((row) => row.weekStart === weekStart && row.hub === prepHub)
     || (prepHub === "Cricket" ? prepProgressRecords.find((row) => row.weekStart === weekStart && !row.hub) : null), [prepHub, prepProgressRecords, weekStart]);
   const prepCompleted = useMemo(() => normalizePrepCompleted(prepProgressRecord?.completed), [prepProgressRecord]);
-  const currentValue = orderValue(quantities, grill, deli, cafe);
+  const currentValue = orderValue(quantities, grill, deli, global, cafe);
   const period = transferPeriod(weekStart);
   const grillCycle = grillCycleForWeek(weekStart);
   const grillAvailable = Boolean(grillCycle && isGrillEligibleCafe(cafe));
@@ -120,6 +138,9 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
   const deliCycle = deliCycleForWeek(weekStart);
   const deliAvailable = Boolean(deliCycle && isDeliEligibleCafe(cafe));
   const deliCatalogByMrn = useMemo(() => new Map(deliCatalog.map((item) => [String(item.mrn), item])), [deliCatalog]);
+  const globalCycle = globalCycleForWeek(weekStart);
+  const globalAvailable = Boolean(globalCycle && isGlobalEligibleCafe(cafe));
+  const globalCatalogByKey = useMemo(() => new Map(globalCatalog.map((item) => [`${item.menu}|${String(item.mrn)}|${item.portion}`, item])), [globalCatalog]);
   const datedDeliveries = useMemo(() => deliveriesForWeek(metadata.deliveries, weekStart), [metadata.deliveries, weekStart]);
 
   useEffect(() => {
@@ -140,7 +161,8 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
         });
         setGrillCatalog(liveCatalog.items.filter((item) => item.menu === "AMZ: Grill Core"));
         setDeliCatalog(liveCatalog.items.filter((item) => item.menu === "AMZ: Deli Core"));
-        if (liveCatalog.catalogError) setError(`Live Grill and Deli costs are unavailable: ${liveCatalog.catalogError.message}`);
+        setGlobalCatalog(liveCatalog.items);
+        if (liveCatalog.catalogError) setError(`Live Grill, Deli and Global costs are unavailable: ${liveCatalog.catalogError.message}`);
       }
     }).catch((loadError) => {
       if (mounted) setError(loadError.message);
@@ -163,7 +185,17 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
       return source ? [[mrn, { mrn, item: source.item, portion: source.portion, itemWasteCost: Number(source.itemWasteCost) }]] : [];
     }));
     setDeli(normalizedDeli);
-  }, [cafe, currentRecord, deliCatalogByMrn, saladBarAvailable, weekStart]);
+    const normalizedGlobal = normalizeGlobalOrder(currentRecord?.global || {}, weekStart, cafe);
+    if (globalCycle) {
+      normalizedGlobal.items = Object.fromEntries(globalCycle.menus.flatMap(({ items }) => items).flatMap((option) => {
+        const live = globalCatalogByKey.get(`${option.menu}|${option.mrn}|${option.portion}`);
+        const saved = normalizedGlobal.items[option.id];
+        const source = live || saved;
+        return source ? [[option.id, { id: option.id, menu: option.menu, mrn: option.mrn, item: source.item || option.name, portion: option.portion, category: option.category, itemWasteCost: Number(source.itemWasteCost) }]] : [];
+      }));
+    }
+    setGlobal(normalizedGlobal);
+  }, [cafe, currentRecord, deliCatalogByMrn, globalCatalogByKey, globalCycle, saladBarAvailable, weekStart]);
 
   const updateQuantity = (itemId, delivery, value) => {
     setQuantities((current) => ({
@@ -195,6 +227,13 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
     }));
   };
 
+  const updateGlobalQuantity = (id, delivery, value) => {
+    setGlobal((current) => ({
+      ...current,
+      quantities: { ...current.quantities, [id]: { ...current.quantities[id], [delivery]: value === "" ? "" : Math.max(0, Math.floor(Number(value))) } },
+    }));
+  };
+
   const saveOrder = async () => {
     if (!cafe) return setError("Select your cafe before entering an order.");
     if (locked) return setError("This order is locked. Please contact commissary executive chef to adjust pars.");
@@ -202,7 +241,7 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
     setSaving(true);
     setError("");
     setNotice("");
-    const record = buildOrderRecord({ cafe, weekStart, quantities, grill, deli });
+    const record = buildOrderRecord({ cafe, weekStart, quantities, grill, deli, global });
     try {
       await saveCommissaryOrder(record);
       setOrders((current) => [...current.filter((row) => recordKey(row.cafe, row.weekStart) !== recordKey(cafe, weekStart)), record]);
@@ -225,17 +264,17 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
 
   const generateCurrentTransfer = () => {
     if (!cafe) return setError("Select your cafe before generating a transfer.");
-    const record = buildOrderRecord({ cafe, weekStart, quantities, grill, deli });
+    const record = buildOrderRecord({ cafe, weekStart, quantities, grill, deli, global });
     return runExport(() => exportCommissaryTransfer(record, metadata));
   };
 
   const generateCurrentBom = () => {
     if (!cafe) return setError("Select your cafe before generating the Prep List.");
-    const current = buildOrderRecord({ cafe, weekStart, quantities, grill, deli });
+    const current = buildOrderRecord({ cafe, weekStart, quantities, grill, deli, global });
     const records = [
       ...weekRecords.filter((record) => record.cafe !== cafe),
       current,
-    ].filter((record) => orderValue(record.quantities, record.grill, record.deli, record.cafe) > 0);
+    ].filter((record) => orderValue(record.quantities, record.grill, record.deli, record.global, record.cafe) > 0);
     return runExport(() => exportCommissaryBom(records, weekStart, metadata));
   };
 
@@ -306,6 +345,7 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
         ) : (
           <section className={`min-w-0 max-w-full overflow-hidden rounded-2xl border border-sky-200 bg-white shadow-sm ${locked ? "opacity-75" : ""}`}>
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-sky-200 px-4 py-3"><div><p className="text-xs font-black uppercase tracking-[0.14em] text-sky-700">{cafe} Cafe</p><h2 className="text-xl font-black">Week {weekLabel(weekStart)} order</h2></div><div className="text-right"><p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Estimated transfer</p><p className="text-2xl font-black">{money(currentValue)}</p></div></div>
+            {!loading && globalAvailable && <div className="border-b-4 border-violet-500 bg-violet-50/40 p-3 md:p-4" data-testid="commissary-global-order"><div className="mb-3 grid gap-1 lg:grid-cols-[auto_minmax(0,1fr)] lg:items-end lg:gap-x-4"><div><p className="text-[11px] font-black uppercase tracking-[0.16em] text-violet-800">Global · Cycle Week {globalCycle.week}</p><h3 className="text-xl font-black">Order weekly Global menu portions</h3></div><p className="text-xs font-semibold text-slate-600 lg:pb-0.5">Enter whole finished-item portions from either menu. Live Item + Waste cost drives transfers; exact recipe quantities drive the routed Prep List.</p></div><div className="grid gap-4 xl:grid-cols-2">{globalCycle.menus.map((menu) => <section key={menu.label} className="rounded-2xl border border-violet-200 bg-violet-50/60 p-3"><div className="mb-3"><p className="text-[10px] font-black uppercase tracking-[0.14em] text-violet-700">{menu.menu}</p><h4 className="text-lg font-black">{menu.label}</h4></div><div className="grid gap-3">{menu.items.map((option) => <GlobalItemOrder key={option.id} option={option} item={global.items[option.id]} quantities={global.quantities[option.id]} deliveries={datedDeliveries} disabled={locked} onQuantity={updateGlobalQuantity} />)}</div></section>)}</div></div>}
             {loading ? <p className="p-8 text-center font-bold text-slate-600">Loading shared order…</p> : <><div className={`${saladBarAvailable ? "" : "hidden"} border-b border-slate-200 px-4 py-3`}><p className="text-xs font-black uppercase tracking-[0.14em] text-sky-700">Salad bar</p><p className="text-sm font-semibold text-slate-600">Order gallon bags and specialty containers by delivery.</p></div><div className={`${saladBarAvailable ? "" : "hidden"} w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain`}><table className="min-w-max border-collapse text-sm"><thead><tr><th className="sticky left-0 z-20 w-52 border-b border-r border-slate-200 bg-slate-950 px-4 py-3 text-left text-white">Delivery</th>{COMMISSARY_ORDER_ITEMS.map((row) => <th key={row.id} className="w-44 max-w-44 border-b border-r border-slate-700 bg-slate-950 px-3 py-3 align-top text-left text-white"><span className="block text-[10px] font-black uppercase tracking-[0.1em] text-sky-300">{row.category}</span><span className="mt-1 block leading-5">{row.name}</span><span className="mt-1 block text-[11px] font-semibold text-slate-300">MRN {row.mrn} · {row.orderUnit}</span><span className="block text-[11px] font-semibold text-emerald-300">{money(row.orderUnitCost)} / {row.orderUnit}</span></th>)}</tr></thead><tbody>{datedDeliveries.map((delivery) => <tr key={delivery.key}><th className="sticky left-0 z-10 border-b border-r border-slate-200 bg-sky-50 px-4 py-4 text-left"><span className="block font-black">{delivery.title}</span><span className="block text-xs font-semibold text-slate-500">{delivery.detail}</span></th>{COMMISSARY_ORDER_ITEMS.map((row) => <td key={row.id} className="border-b border-r border-slate-200 p-2"><input aria-label={`${delivery.title} ${row.name} quantity`} type="number" min="0" step="0.25" disabled={locked} value={quantities[row.id]?.[delivery.key] ?? 0} onChange={(event) => updateQuantity(row.id, delivery.key, event.target.value)} className="w-full rounded-lg border border-slate-300 px-2 py-2 text-center font-black disabled:cursor-not-allowed disabled:bg-slate-200" /></td>)}</tr>)}</tbody></table></div>{grillAvailable && <div className="border-t-4 border-amber-400 bg-amber-50/40 p-3 md:p-4" data-testid="commissary-grill-order" data-density={metadata.grillInterface?.density || "compact"}><div className="mb-3 grid gap-1 lg:grid-cols-[auto_minmax(0,1fr)] lg:items-end lg:gap-x-4"><div><p className="text-[11px] font-black uppercase tracking-[0.16em] text-amber-800">Grill LTO · Cycle Week {grillCycle.week}</p><h3 className="text-xl font-black">Choose one sandwich from each set</h3></div><p className="text-xs font-semibold text-slate-600 lg:pb-0.5">Order whole finished sandwiches for Friday, Monday and Wednesday delivery. The Prep List rolls each count into its direct ingredients and immediate sub-recipes.</p></div><div className="grid gap-3 lg:grid-cols-2"><GrillSetOrder setKey="A" options={grillCycle.setA} selectedMrn={grill.selections.A} quantities={grill.quantities.A} deliveries={datedDeliveries} catalogByMrn={grillCatalogByMrn} disabled={locked} onSelect={selectGrillItem} onQuantity={updateGrillQuantity} /><GrillSetOrder setKey="B" options={grillCycle.setB} selectedMrn={grill.selections.B} quantities={grill.quantities.B} deliveries={datedDeliveries} catalogByMrn={grillCatalogByMrn} disabled={locked} onSelect={selectGrillItem} onQuantity={updateGrillQuantity} /></div></div>}{deliAvailable && <div className="border-t-4 border-sky-500 bg-sky-50/40 p-3 md:p-4" data-testid="commissary-deli-order"><div className="mb-3 grid gap-1 lg:grid-cols-[auto_minmax(0,1fr)] lg:items-end lg:gap-x-4"><div><p className="text-[11px] font-black uppercase tracking-[0.16em] text-sky-800">Deli Core · Cycle Week {deliCycle.week}</p><h3 className="text-xl font-black">Order weekly Deli sandwiches</h3></div><p className="text-xs font-semibold text-slate-600 lg:pb-0.5">Enter whole finished-sandwich quantities for each delivery. The Prep List converts them into direct recipe ingredients and immediate sub-recipes.</p></div><div className="grid gap-3 xl:grid-cols-2">{deliCycle.items.map((option) => <DeliItemOrder key={option.mrn} option={option} item={deli.items[option.mrn] || deliCatalogByMrn.get(option.mrn)} quantities={deli.quantities[option.mrn]} deliveries={datedDeliveries} disabled={locked} onQuantity={updateDeliQuantity} />)}</div></div>}</>}
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 p-4"><p className="text-xs font-semibold text-slate-600">Gallon bags may be ordered in 0.25-gallon increments. Specialty dressings retain the container units specified in the costing source.</p><div className="flex flex-col gap-2"><button type="button" onClick={saveOrder} disabled={locked || saving || loading} className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-950 px-5 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-slate-400"><Save size={17} />{saving ? "Saving…" : "Save shared order"}</button><button type="button" onClick={generateCurrentTransfer} disabled={loading || currentValue <= 0} className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-5 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-slate-400"><Download size={17} /> Generate transfer</button><button type="button" onClick={generateCurrentBom} disabled={loading || currentValue <= 0} className="inline-flex items-center justify-center gap-2 rounded-lg border border-sky-300 bg-sky-50 px-5 py-3 text-sm font-black text-sky-950 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-200 disabled:text-slate-500"><FileSpreadsheet size={17} /> Generate Prep List</button></div></div>
           </section>
@@ -315,7 +355,7 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
 
         {activeView === "orders" && locked && (
               <section className="rounded-2xl border border-slate-300 bg-white p-5 shadow-sm">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"><div><p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Locked production package</p><h2 className="mt-1 text-2xl font-black">Prep List and accounting exports</h2><p className="mt-1 text-sm font-semibold text-slate-600">The Prep List rolls up all saved cafe quantities and preserves a delivery-level unit breakdown. The S4 transfer consolidates Friday, Monday and Wednesday into one line per item.</p></div><div className="flex flex-wrap gap-2"><button type="button" onClick={() => runExport(() => exportCommissaryBom(weekRecords, weekStart, metadata))} disabled={!weekRecords.length} className="inline-flex items-center gap-2 rounded-lg border border-sky-300 bg-sky-50 px-4 py-3 text-sm font-black text-sky-950 disabled:opacity-40"><FileSpreadsheet size={18} /> Download combined Prep List</button><button type="button" onClick={() => runExport(() => exportCommissaryTransfer(currentRecord, metadata))} disabled={!currentRecord || orderValue(currentRecord.quantities, currentRecord.grill, currentRecord.deli, currentRecord.cafe) <= 0} className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-3 text-sm font-black text-white disabled:opacity-40"><Download size={18} /> Download {cafe || "cafe"} S4 transfer</button></div></div>
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"><div><p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Locked production package</p><h2 className="mt-1 text-2xl font-black">Prep List and accounting exports</h2><p className="mt-1 text-sm font-semibold text-slate-600">The Prep List rolls up all saved cafe quantities and preserves a delivery-level unit breakdown. The S4 transfer consolidates Friday, Monday and Wednesday into one line per item.</p></div><div className="flex flex-wrap gap-2"><button type="button" onClick={() => runExport(() => exportCommissaryBom(weekRecords, weekStart, metadata))} disabled={!weekRecords.length} className="inline-flex items-center gap-2 rounded-lg border border-sky-300 bg-sky-50 px-4 py-3 text-sm font-black text-sky-950 disabled:opacity-40"><FileSpreadsheet size={18} /> Download combined Prep List</button><button type="button" onClick={() => runExport(() => exportCommissaryTransfer(currentRecord, metadata))} disabled={!currentRecord || orderValue(currentRecord.quantities, currentRecord.grill, currentRecord.deli, currentRecord.global, currentRecord.cafe) <= 0} className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-3 text-sm font-black text-white disabled:opacity-40"><Download size={18} /> Download {cafe || "cafe"} S4 transfer</button></div></div>
           </section>
         )}
       </main>

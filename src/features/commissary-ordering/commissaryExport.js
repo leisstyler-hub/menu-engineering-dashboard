@@ -3,7 +3,7 @@ import XLSX from "xlsx-js-style";
 import { buildS4Workbook, transferExportFileName } from "../transfer-tool/transferExport.js";
 import { COMMISSARY_DEPARTING_UNIT } from "./commissaryCatalog.js";
 import { DEFAULT_COMMISSARY_METADATA } from "./commissaryMetadata.js";
-import { deliOrderLinesForCafe, deliPrepLinesForCafe, deliveryDateForWeek, formatShortDate, grillOrderLinesForCafe, grillPrepLinesForCafe, orderLinesForCafe, rolledUpPrepItems, transferPeriod, weekLabel } from "./commissaryModel.js";
+import { deliOrderLinesForCafe, deliPrepLinesForCafe, deliveryDateForWeek, formatShortDate, globalOrderLinesForCafe, globalPrepLinesForCafe, grillOrderLinesForCafe, grillPrepLinesForCafe, orderLinesForCafe, rolledUpPrepItems, transferPeriod, weekLabel } from "./commissaryModel.js";
 
 const S4_TEMPLATE_URL = "/templates/ExpenseTransfer_Between_PC_Template.xlsx";
 const PREPARED_FOODS_GL = "4111011";
@@ -79,6 +79,7 @@ function buildDeliveryMapWorksheet(records, delivery, weekStart) {
     ...orderLinesForCafe(record).filter((line) => Number(line[delivery.key]) > 0).map((line) => ({ cafe: record.cafe, name: line.name, mrn: line.mrn, quantity: line[delivery.key], unit: line.orderUnit, unitCost: line.orderUnitCost, finishedDish: line.name })),
     ...grillPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key).map((line) => ({ cafe: record.cafe, name: line.name, mrn: line.mrn, quantity: line.quantity, unit: line.orderUnit, unitCost: null, finishedDish: line.finishedDish })),
     ...deliPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key).map((line) => ({ cafe: record.cafe, name: line.name, mrn: line.mrn, quantity: line.quantity, unit: line.orderUnit, unitCost: null, finishedDish: line.finishedDish })),
+    ...globalPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key).map((line) => ({ cafe: record.cafe, name: line.name, mrn: line.mrn, quantity: line.quantity, unit: line.orderUnit, unitCost: null, finishedDish: line.finishedDish })),
   ]);
   const rows = [
     [`${delivery.day} ${formatShortDate(deliveryDateForWeek(weekStart, delivery.key))} Cafe Delivery Map`, "", "", "", "", "", "", ""],
@@ -273,6 +274,20 @@ export function buildCommissaryTransfer(record, metadata = DEFAULT_COMMISSARY_ME
         catalogId: line.id,
         menu: line.menu,
         item: `${line.name} (${line.total} sandwich${line.total === 1 ? "" : "es"})`,
+        mrn: line.mrn,
+        quantity: line.total,
+        itemWasteCost: line.orderUnitCost,
+        ingredientAllocations: [{
+          ingredientName: "Prepared Foods",
+          ingredientMrn: line.mrn,
+          glCode: PREPARED_FOODS_GL,
+          allocationPerPortion: line.orderUnitCost,
+        }],
+      })),
+      ...globalOrderLinesForCafe(record).map((line) => ({
+        catalogId: line.id,
+        menu: line.menu,
+        item: `${line.name} (${line.total} portion${line.total === 1 ? "" : "s"})`,
         mrn: line.mrn,
         quantity: line.total,
         itemWasteCost: line.orderUnitCost,

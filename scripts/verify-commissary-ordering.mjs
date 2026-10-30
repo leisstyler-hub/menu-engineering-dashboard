@@ -9,9 +9,10 @@ import { buildS4Rows, buildS4Workbook } from "../src/features/transfer-tool/tran
 import { COMMISSARY_ORDER_ITEMS } from "../src/features/commissary-ordering/commissaryCatalog.js";
 import { buildCommissaryBomWorkbook, buildCommissaryTransfer } from "../src/features/commissary-ordering/commissaryExport.js";
 import { buildCommissaryMetadataRecord, DEFAULT_COMMISSARY_METADATA, isApprovedCommissaryMetadataRecord, resolveCommissaryMetadata } from "../src/features/commissary-ordering/commissaryMetadata.js";
-import { COMMISSARY_DELI_ORDER_VERSION, COMMISSARY_GRILL_ORDER_VERSION, COMMISSARY_ORDER_UNIT_VERSION, DELIVERY_KEYS, addDays, buildOrderRecord, buildPrepProgressRecord, deliCycleForWeek, deliOrderLinesForCafe, deliPrepLinesForCafe, deliveriesForWeek, emptyDeliOrder, emptyGrillOrder, emptyQuantities, firstOpenWeek, grillCycleForWeek, grillOrderLinesForCafe, grillPrepLinesForCafe, isWeekLocked, latestPrepWeek, normalizePrepCompleted, normalizeQuantities, orderValue, rolledUpPrepItems, togglePrepCompleted, transferPeriod } from "../src/features/commissary-ordering/commissaryModel.js";
+import { COMMISSARY_DELI_ORDER_VERSION, COMMISSARY_GLOBAL_ORDER_VERSION, COMMISSARY_GRILL_ORDER_VERSION, COMMISSARY_ORDER_UNIT_VERSION, DELIVERY_KEYS, addDays, buildOrderRecord, buildPrepProgressRecord, deliCycleForWeek, deliOrderLinesForCafe, deliPrepLinesForCafe, deliveriesForWeek, emptyDeliOrder, emptyGlobalOrder, emptyGrillOrder, emptyQuantities, firstOpenWeek, globalCycleForWeek, globalOrderLinesForCafe, globalPrepLinesForCafe, grillCycleForWeek, grillOrderLinesForCafe, grillPrepLinesForCafe, isWeekLocked, latestPrepWeek, normalizePrepCompleted, normalizeQuantities, orderValue, rolledUpPrepItems, togglePrepCompleted, transferPeriod } from "../src/features/commissary-ordering/commissaryModel.js";
 import { GRILL_LTO_ITEM_MRNS, GRILL_LTO_PREP_ITEM_IDS, GRILL_LTO_PROGRAM } from "../src/features/commissary-ordering/grillLtoCatalog.js";
 import { DELI_ORDERING_ITEM_MRNS, DELI_ORDERING_PREP_ITEM_IDS, DELI_ORDERING_PROGRAM } from "../src/features/commissary-ordering/deliCycleCatalog.js";
+import { GLOBAL_ORDERING_ITEM_IDS, GLOBAL_ORDERING_PREP_ITEM_IDS, GLOBAL_ORDERING_PROGRAM } from "../src/features/commissary-ordering/globalCycleCatalog.js";
 import { COMMISSARY_SPANISH } from "../src/features/commissary-ordering/commissaryTranslations.js";
 import { COMMISSARY_STATIONS, commissaryHubFor, isCafeStationEnabled } from "../src/features/commissary-ordering/commissaryRouting.js";
 
@@ -44,12 +45,20 @@ assert.ok(DELI_ORDERING_PREP_ITEM_IDS.length > 100);
 assert.equal(deliCycleForWeek("2026-11-16").week, 1);
 assert.equal(deliCycleForWeek("2026-12-07").week, 4);
 assert.equal(deliCycleForWeek("2026-12-14").week, 1, "The four-week Deli cycle must repeat.");
+assert.equal(GLOBAL_ORDERING_PROGRAM.anchorWeekStart, "2026-11-16");
+assert.equal(GLOBAL_ORDERING_ITEM_IDS.length, 258);
+assert.ok(GLOBAL_ORDERING_PREP_ITEM_IDS.length > 700);
+assert.deepEqual(globalCycleForWeek("2026-11-16").menus.map(({ label }) => label), ["Porto", "Taco Total"]);
+assert.deepEqual(globalCycleForWeek("2026-12-21").menus.map(({ label }) => label), ["Smokehouse BBQ", "Roam BBQ"]);
+assert.equal(globalCycleForWeek("2026-12-28").week, 1, "The six-week Global cycle must repeat.");
 assert.deepEqual(deliveriesForWeek(DEFAULT_COMMISSARY_METADATA.deliveries, "2026-11-16").map(({ title }) => title), ["Friday 11/13", "Monday 11/16", "Wednesday 11/18"]);
 assert.equal(isCafeStationEnabled("Grace", COMMISSARY_STATIONS.SALAD_BAR), false);
 assert.equal(isCafeStationEnabled("Grace", COMMISSARY_STATIONS.GRILL), true);
 assert.equal(isCafeStationEnabled("Dynamo", COMMISSARY_STATIONS.DELI), true);
 assert.equal(commissaryHubFor("Nessie", COMMISSARY_STATIONS.DELI), "Cricket");
 assert.equal(commissaryHubFor("Dynamo", COMMISSARY_STATIONS.DELI), "Sonic");
+assert.equal(commissaryHubFor("Nessie", COMMISSARY_STATIONS.GLOBAL), "Cricket");
+assert.equal(commissaryHubFor("Astra", COMMISSARY_STATIONS.GLOBAL), "Blueshift");
 assert.deepEqual(normalizeQuantities({ "commissary-9002-2": { monday: 1.5, wednesday: 0.5 } }, { orderUnitVersion: 1 })[frozenPeas.id], { friday: 0, monday: 0.38, wednesday: 0.13 }, "Saved green-bean quart quantities should migrate into the replacement peas gallon slot.");
 assert.deepEqual(normalizeQuantities({ [frozenPeas.id]: { friday: 0.25, monday: 1.5, wednesday: 0.5 } }, { orderUnitVersion: COMMISSARY_ORDER_UNIT_VERSION })[frozenPeas.id], { friday: 0.25, monday: 1.5, wednesday: 0.5 }, "Current gallon quantities must not be converted twice.");
 
@@ -218,4 +227,22 @@ assert.ok(deliBomRows.some((row) => row[0].includes("Turkey") && Number(row[1]) 
 assert.ok(rolledUpPrepItems([deliRecord], { hub: "Cricket" }).some((line) => line.category.startsWith("Deli")));
 assert.equal(rolledUpPrepItems([deliRecord], { hub: "Sonic" }).length, 0);
 
-console.log("Commissary Ordering Tool verified: Supabase-backed cafe metadata, Friday/Monday/Wednesday routing, Grill and four-week Deli whole-sandwich orders, ingredient prep rollups, shared Prep View progress, styled delivery maps, and Friday–Thursday S4 consolidation.");
+const global = emptyGlobalOrder("2026-11-16");
+const globalOption = globalCycleForWeek("2026-11-16").menus[0].items[0];
+global.items[globalOption.id] = { ...globalOption, item: globalOption.name, itemWasteCost: 4.25 };
+global.quantities[globalOption.id] = { friday: 2, monday: 3, wednesday: 4 };
+const globalRecord = buildOrderRecord({ cafe: "Everest", weekStart: "2026-11-16", quantities: emptyQuantities(), global, now: new Date("2026-11-10T12:00:00Z") });
+assert.equal(globalRecord.global.version, COMMISSARY_GLOBAL_ORDER_VERSION);
+assert.equal(globalRecord.global.cycleWeek, 1);
+assert.equal(commissaryWriteValidation([globalRecord], { tool: "commissaryOrders" }), "");
+assert.equal(globalOrderLinesForCafe(globalRecord)[0].total, 9);
+assert.ok(globalPrepLinesForCafe(globalRecord).length > 0);
+assert.ok(rolledUpPrepItems([globalRecord], { hub: "Blueshift" }).some((line) => line.category.startsWith("Global")));
+assert.equal(rolledUpPrepItems([globalRecord], { hub: "Cricket" }).length, 0);
+assert.equal(orderValue(globalRecord.quantities, globalRecord.grill, globalRecord.deli, globalRecord.global, globalRecord.cafe), 38.25);
+const globalTransfer = buildCommissaryTransfer(globalRecord);
+assert.equal(globalTransfer.items.length, 1);
+assert.equal(globalTransfer.items[0].ingredientAllocations[0].glCode, "4111011");
+assert.match(commissaryWriteValidation([{ ...globalRecord, global: { ...globalRecord.global, quantities: { ...globalRecord.global.quantities, [globalOption.id]: { friday: 0.5, monday: 0, wednesday: 0 } } } }], { tool: "commissaryOrders" }), /whole portions/i);
+
+console.log("Commissary Ordering Tool verified: Supabase-backed cafe metadata, Friday/Monday/Wednesday routing, Grill, Deli and six-week Global ordering, recipe prep rollups, shared Prep View progress, styled delivery maps, and Friday–Thursday S4 consolidation.");

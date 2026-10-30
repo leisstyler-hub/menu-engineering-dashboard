@@ -160,9 +160,12 @@ export default function PrepListView({ records, weekStart, hub, hubs = [], onHub
               .filter(([, quantities]) => Number(quantities[delivery]) > 0)
               .map(([cafe, quantities]) => `${cafe} ${quantityText(quantities[delivery])}`)
               .join(" · ");
-            const isGrill = String(row.category).startsWith("Grill");
-            const itemName = isGrill ? row.name : (spanish ? commissarySpanishItem(row.name) : row.name);
-            const category = isGrill ? (spanish ? "Parrilla LTO" : row.category) : (spanish ? commissarySpanishCategory(row.category) : row.category);
+            const programCategory = String(row.category);
+            const isRecipeProgram = /^(?:Grill|Deli|Global)/.test(programCategory);
+            const itemName = isRecipeProgram ? row.name : (spanish ? commissarySpanishItem(row.name) : row.name);
+            const category = isRecipeProgram
+              ? (spanish ? programCategory.replace("Grill", "Parrilla LTO").replace("Deli", "Deli").replace("Global ingredient", "Ingrediente global").replace("Global sub-recipe", "Subreceta global") : programCategory)
+              : (spanish ? commissarySpanishCategory(row.category) : row.category);
             const unit = compactUnit(row.orderUnit, spanish);
             return (
               <article key={row.id} className={`flex min-h-24 items-center gap-4 px-4 py-4 transition md:px-6 ${checked ? "bg-emerald-50" : "bg-white"}`}>

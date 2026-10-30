@@ -2,7 +2,7 @@
 
 The complete reusable operating contract is published in the validated Supabase record `platformMetadata|operations|current`: fixed departing unit, receiving cafes/profit centers, all order items with costs/units/G/Ls, delivery definitions, cutoff, quantity increment, order-unit version, and the Transfer Tool handoff. Orders and prep progress remain separate records. The legacy Commissary metadata row remains readable for backward compatibility; the shared operational record is primary.
 
-The Draft Commissary Ordering Tool stores one shared Supabase order per receiving cafe and service week. Initial receiving cafes are Nessie and Cricket. Commissary (`SEA20 Cricket`, profit center `22472`) is the fixed departing unit.
+The Draft Commissary Ordering Tool stores one shared Supabase order per receiving cafe and service week. Commissary (`SEA20 Cricket`, profit center `22472`) is the fixed departing unit.
 
 - Friday delivery covers Monday service, Monday delivery covers Tuesday–Wednesday service, and Wednesday delivery covers Thursday–Friday service.
 - Receiving cafes and delivery definitions resolve from validated shared `Commissary Metadata` (`commissaryOrder|metadata|current`) in Supabase. The exact release configuration is retained as a code fallback for a read outage; current receiving cafes are SEA39 Nessie, SEA20 Cricket, and SEA27 Dawson.
@@ -16,6 +16,9 @@ The Draft Commissary Ordering Tool stores one shared Supabase order per receivin
 - Prep completion is shared in Supabase as one `Commissary Prep Progress` record per service week (`commissaryOrder|prepProgress|<weekStart>`). Friday, Monday, and Wednesday item-id arrays remain independent. The storage boundary rejects unknown/duplicate items, unexpected delivery keys, invalid identities, and writes before cutoff; browser localStorage is not used.
 - The Spanish switch translates all current commissary item names, categories, supported order units and Prep View interface labels from a bundled reviewed dictionary. Future untranslated catalog values fall back to English, while verification requires complete coverage of the current catalog.
 - Frozen Peas replace Blanched Green Beans at MRN `4877` and `$9.08` per gallon (the former `$2.27` per quart). Existing saved quantities under the retired green-bean item id are read into the new peas slot and converted to gallons, and generated S4 transfers classify the peas line on `4111009 — Frozen`; all other commissary items retain `4111011 — Prepared Foods`.
+- Global ordering begins Cycle Week 1 on Monday 2026-11-16 and repeats every six weeks: Porto/Taco Total, Lemongrass + Lime/Chiang Mai, Anisa/Cypress, Balti/Naan Nomad, Lotus/House of Teriyaki, and Smokehouse BBQ/Roam BBQ. Chefs may order whole finished-item portions from either weekly menu; extensions are excluded.
+- The Global roster and recipe-quantity projection are generated from the live Supabase menu catalog plus reviewed Balti, House of Teriyaki and Smokehouse recipe packs. Live Supabase Item + Waste cost remains authoritative for each finished-item S4 transfer line; the Prep List expands exact ingredient and sub-recipe quantities without exposing recipe methods.
+- Cricket, Nessie and Dawson Global prep routes to the Cricket hub. Global prep for Bingo, Grace, Sonic, Blueshift, Everest, Gemini and Astra routes to Blueshift. Sonic receives no Global prep.
 - S4 exports consolidate both deliveries to one row per item, cover the Friday–Thursday accounting period, use the receiving cafe profit center, and apply the approved Prepared Foods G/L fallback (`4111011`).
 - Aleppo-Edamame uses MRN `176736` per the requesting admin.
 
