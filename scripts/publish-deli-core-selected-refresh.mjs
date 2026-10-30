@@ -42,10 +42,13 @@ async function main() {
   const localRows = JSON.parse(readFileSync(resolve(root, "src/data/menuItems.json"), "utf8")).filter((row) => row.menu === menu);
   if (localRows.length !== 41) throw new Error(`Expected 41 local ${menu} rows, found ${localRows.length}.`);
   if (DELI_CORE_SELECTED_CATALOG.items.some(({ mrn }) => !exactRow(localRows, mrn))) throw new Error("A selected Deli MRN is missing from the local 41-row import scope.");
+  const selectedMrns = new Set(DELI_CORE_SELECTED_CATALOG.items.map(({ mrn }) => mrn));
 
   const before = await jsonFetch("/api/recipe-library?scope=all");
   const beforeRows = deliRows(before);
   if (beforeRows.length < 41) throw new Error(`Production projection expected at least 41 visible ${menu} rows, found ${beforeRows.length}.`);
+  if (new Set(beforeRows.map((row) => row.item_key)).size !== beforeRows.length) throw new Error("Production Deli scope contains duplicate or missing item keys.");
+  if ([...selectedMrns].some((mrn) => !exactRow(beforeRows, mrn))) throw new Error("A selected exact MRN is missing from the current production Deli scope.");
   writeEvidence("before-visible-menu.json", { source: before.source, rows: beforeRows });
 
   const auditBefore = await jsonFetch("/api/recipe-library", {
@@ -53,17 +56,38 @@ async function main() {
     headers: { "Content-Type": "application/json", "x-admin-code": adminCode },
     body: JSON.stringify({ action: "auditRecipeMenuScope", menu }),
   });
-  if (auditBefore.count !== 41 || auditBefore.visibleCount !== 41 || auditBefore.hiddenCount !== 0) {
-    throw new Error(`Production exact-menu preflight expected 41 visible and 0 hidden ${menu} rows, found ${auditBefore.visibleCount} visible and ${auditBefore.hiddenCount} hidden.`);
+  if (auditBefore.count !== beforeRows.length || auditBefore.visibleCount !== beforeRows.length || auditBefore.hiddenCount !== 0) {
+    throw new Error(`Production exact-menu preflight expected ${beforeRows.length} visible and 0 hidden ${menu} rows, found ${auditBefore.visibleCount} visible and ${auditBefore.hiddenCount} hidden.`);
   }
   writeEvidence("before-audit.json", auditBefore);
+
+  const importRows = beforeRows.map((productionRow) => {
+    const { recipeDocuments, ...preserved } = productionRow;
+    if (!selectedMrns.has(String(productionRow.mrn || ""))) return preserved;
+    const refreshed = exactRow(localRows, String(productionRow.mrn));
+    return {
+      ...preserved,
+      portion: refreshed.portion,
+      price: refreshed.price,
+      itemCost: refreshed.itemCost,
+      wastePct: refreshed.wastePct,
+      trueCost: refreshed.trueCost,
+      dataSource: refreshed.dataSource,
+      sourceDataVersion: refreshed.sourceDataVersion,
+      sourceFileName: refreshed.sourceFileName,
+      costSourceSha256: refreshed.costSourceSha256,
+      recipeSourceSha256: refreshed.recipeSourceSha256,
+      recipeEvidence: refreshed.recipeEvidence,
+      menuWorksRaw: { ...(productionRow.menuWorksRaw || {}), ...(refreshed.menuWorksRaw || {}) },
+    };
+  });
 
   const accepted = await jsonFetch("/api/recipe-library", {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-admin-code": adminCode },
     body: JSON.stringify({
       action: "acceptMenuWorksImport",
-      rows: localRows,
+      rows: importRows,
       importedMenuNames: [menu],
       importBatch: {
         id: "deli-core-selected-refresh-2026-10-29",
@@ -72,7 +96,7 @@ async function main() {
       },
     }),
   });
-  if (accepted.rowsWritten !== 41 || accepted.rowsHidden !== 0) throw new Error(`Unexpected import result: wrote ${accepted.rowsWritten}, hid ${accepted.rowsHidden}.`);
+  if (accepted.rowsWritten !== importRows.length || accepted.rowsHidden !== 0) throw new Error(`Unexpected import result: wrote ${accepted.rowsWritten}, hid ${accepted.rowsHidden}.`);
   writeEvidence("import-response.json", accepted);
 
   const uploads = [];
@@ -115,7 +139,7 @@ async function main() {
 
   const after = await jsonFetch("/api/recipe-library?scope=all");
   const afterRows = deliRows(after);
-  if (afterRows.length < 41) throw new Error(`Production projection readback expected at least 41 visible ${menu} rows, found ${afterRows.length}.`);
+  if (afterRows.length !== importRows.length) throw new Error(`Production readback expected ${importRows.length} visible ${menu} rows, found ${afterRows.length}.`);
   for (const item of DELI_CORE_SELECTED_CATALOG.items) {
     const row = exactRow(afterRows, item.mrn);
     if (row?.sourceDataVersion !== "deli-core-selected-refresh-2026-10-29") throw new Error(`MRN ${item.mrn} did not read back with refreshed provenance.`);
@@ -130,7 +154,7 @@ async function main() {
     headers: { "Content-Type": "application/json", "x-admin-code": adminCode },
     body: JSON.stringify({ action: "auditRecipeMenuScope", menu }),
   });
-  if (auditAfter.count !== 41 || auditAfter.visibleCount !== 41 || auditAfter.hiddenCount !== 0) throw new Error("Final exact-menu audit did not preserve the 41-row visible Deli Core scope.");
+  if (auditAfter.count !== importRows.length || auditAfter.visibleCount !== importRows.length || auditAfter.hiddenCount !== 0) throw new Error(`Final exact-menu audit did not preserve the ${importRows.length}-row visible Deli Core scope.`);
   writeEvidence("after-audit.json", auditAfter);
 
   console.log(JSON.stringify({
