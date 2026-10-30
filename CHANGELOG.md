@@ -1,5 +1,6 @@
 ## 2026-10-29
 
+- [Oct 29, 5:59 PM] Verified 20 refreshed Deli items in Supabase with private recipe files, all 168 live rows preserved and zero hidden.
 - [Oct 29, 5:58 PM] Deli refreshes now preserve every live item in the expanded shared menu while updating only reviewed exact MRNs.
 - [Oct 29, 5:57 PM] Protected Deli imports now audit exact database rows while tolerating additional shared SSMT projections.
 - [Oct 29, 5:51 PM] Refreshed 20 exact-MRN Deli Core sandwiches with current costs and private recipe files for shared platform use.
