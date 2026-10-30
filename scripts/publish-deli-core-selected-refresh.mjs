@@ -32,7 +32,10 @@ function deliRows(payload) {
 }
 
 function exactRow(rows, mrn) {
-  return rows.find((row) => String(row.mrn || "") === mrn);
+  const itemKey = `mrn:${menu.toLowerCase()}:${mrn}`;
+  return rows.find((row) => row.item_key === itemKey)
+    || rows.find((row) => String(row.mrn || "") === mrn && row.sourceDataVersion === "deli-core-selected-refresh-2026-10-29")
+    || rows.find((row) => String(row.mrn || "") === mrn);
 }
 
 async function main() {
@@ -42,7 +45,7 @@ async function main() {
 
   const before = await jsonFetch("/api/recipe-library?scope=all");
   const beforeRows = deliRows(before);
-  if (beforeRows.length !== 41) throw new Error(`Production preflight expected 41 visible ${menu} rows, found ${beforeRows.length}.`);
+  if (beforeRows.length < 41) throw new Error(`Production projection expected at least 41 visible ${menu} rows, found ${beforeRows.length}.`);
   writeEvidence("before-visible-menu.json", { source: before.source, rows: beforeRows });
 
   const auditBefore = await jsonFetch("/api/recipe-library", {
@@ -50,6 +53,9 @@ async function main() {
     headers: { "Content-Type": "application/json", "x-admin-code": adminCode },
     body: JSON.stringify({ action: "auditRecipeMenuScope", menu }),
   });
+  if (auditBefore.count !== 41 || auditBefore.visibleCount !== 41 || auditBefore.hiddenCount !== 0) {
+    throw new Error(`Production exact-menu preflight expected 41 visible and 0 hidden ${menu} rows, found ${auditBefore.visibleCount} visible and ${auditBefore.hiddenCount} hidden.`);
+  }
   writeEvidence("before-audit.json", auditBefore);
 
   const accepted = await jsonFetch("/api/recipe-library", {
@@ -109,7 +115,7 @@ async function main() {
 
   const after = await jsonFetch("/api/recipe-library?scope=all");
   const afterRows = deliRows(after);
-  if (afterRows.length !== 41) throw new Error(`Production readback expected 41 visible ${menu} rows, found ${afterRows.length}.`);
+  if (afterRows.length < 41) throw new Error(`Production projection readback expected at least 41 visible ${menu} rows, found ${afterRows.length}.`);
   for (const item of DELI_CORE_SELECTED_CATALOG.items) {
     const row = exactRow(afterRows, item.mrn);
     if (row?.sourceDataVersion !== "deli-core-selected-refresh-2026-10-29") throw new Error(`MRN ${item.mrn} did not read back with refreshed provenance.`);

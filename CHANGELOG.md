@@ -1,5 +1,6 @@
 ## 2026-10-29
 
+- [Oct 29, 5:57 PM] Protected Deli imports now audit exact database rows while tolerating additional shared SSMT projections.
 - [Oct 29, 5:51 PM] Refreshed 20 exact-MRN Deli Core sandwiches with current costs and private recipe files for shared platform use.
 - [Oct 29, 9:45 AM] Reopened November 2-6 Commissary ordering until Thursday October 29 at 5 PM Pacific; later weeks keep Wednesday cutoffs.
 - [Oct 29, 4:52 AM] Compacted Grill LTO ordering while preserving sandwich details, delivery guidance and every quantity control.
