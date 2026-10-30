@@ -1,5 +1,9 @@
 # Governance
 
+## Culinary monikers on shared item updates (approved 2026-10-30)
+
+Tyler's instruction `e3be88ea82f08707037255b28858011fb27a04ba2887cfcee611379262f17461` requires Chief and Donnie to include consistent culinary monikers whenever adding or updating Supabase items. Follow [the culinary moniker standard](docs/governance/WP_CULINARY_PROFILE_STANDARD.md): complete required fields with evidence or explicit Unknown / Needs review, preserve reviewed values and identities, and report candidate versus shared persistence honestly. This rule does not authorize schema migrations or production writes without the existing safeguards.
+
 ## Current policy: solo delivery (approved 2026-10-24)
 
 This section supersedes conflicting staffing, handoff, and independent-signoff requirements in the historical policy below. Authority: Tyler, authenticated Buzz identity `12fc010ae7314bd1bf75d7a74c296a93629c12a464ba2aaa406fee08a57d794d`, approval `7504a1f092ceedc3f1ceeb1d1c697833674d807be7398e09e181e75ef6e8d049` at 2026-10-24T17:05:21Z; Builder exclusion `2883ddb6cf2aa3a0d79e6830c0c3d6aa7a93e75196ad9d5edde3db02ce4e912e`.

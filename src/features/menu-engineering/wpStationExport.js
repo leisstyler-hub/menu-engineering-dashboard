@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx';
+import {profileFor} from './wpSmartModel.js';
 
 export function buildStationWorkbook(projection, {rate, sellThrough, trusted}) {
   const workbook = XLSX.utils.book_new();
@@ -10,7 +11,19 @@ export function buildStationWorkbook(projection, {rate, sellThrough, trusted}) {
     'Planned food cost': row.cost ?? 'Incomplete', 'Service review': row.food?.serviceReasons?.join('; ') || '',
     'Information needed': row.food?.informationReasons?.join('; ') || (row.cost == null ? 'Trusted compatible evidence and positive quantity required' : ''),
     'Approximate weight': row.food?.weightApproximate ? 'Yes' : 'No',
-    'Cost source': row.food?.costBasis || '', 'Weight source': row.food?.weightSource || ''
+    'Cost source': row.food?.costBasis || '', 'Weight source': row.food?.weightSource || '',
+    'Quantity mode':row.quantityMode==='pan'?'Pans':'Manual finished pounds',
+    'Pan size (4-inch deep)':row.quantityMode==='pan'?row.panSize:'',
+    'Opening display pans':row.quantityMode==='pan'?row.openingPans:'',
+    'Reserve / refill pans':row.quantityMode==='pan'?row.reservePans:'',
+    'Total pans to prepare':row.quantityMode==='pan'&&row.pounds!=null?Number(row.openingPans)+Number(row.reservePans):'',
+    'Measured finished lb per pan':row.quantityMode==='pan'?row.fillLb:'',
+    'Service placement':row.placement||'Unconfirmed',
+    'Placement chef confirmed':row.placementConfirmed?'Yes':'No',
+    'Locked in smart builds':row.locked?'Yes':'No',
+    'Proposed monikers':row.food?Object.values((({role,cuisines,flavors,textures,seasons})=>({role,cuisines,flavors,textures,seasons}))(profileFor(row.food))).flat().join('; '):'',
+    'Profile status':'Proposed; chef review required',
+    'Bullet footprint (full-pan spaces)':row.footprint||''
   }));
   const items = XLSX.utils.json_to_sheet(rows);
   items['!cols'] = [{wch:48},{wch:25},{wch:55},{wch:22},{wch:22},{wch:18},{wch:22},{wch:60},{wch:65},{wch:20},{wch:40},{wch:45}];

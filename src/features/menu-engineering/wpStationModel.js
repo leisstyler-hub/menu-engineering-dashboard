@@ -1,3 +1,4 @@
+import {entryPounds} from './wpPanModel.js';
 const positive = value => String(value).trim() !== '' && Number.isFinite(Number(value)) && Number(value) > 0;
 const finite = value => Number.isFinite(value) ? value : null;
 
@@ -5,7 +6,7 @@ const finite = value => Number.isFinite(value) ? value : null;
 export function projectStation(entries, catalog, rate, sellThrough, trusted) {
   const rows = entries.map(entry => {
     const food = catalog.find(row => row.key === entry.key);
-    const pounds = positive(entry.pounds) ? Number(entry.pounds) : null;
+    const pounds = entryPounds(entry);
     const validCost = trusted && food && !food.conflict && Number.isFinite(food.costPerLb) && food.costPerLb >= 0;
     return {...entry, food, pounds, cost: validCost && pounds != null ? finite(food.costPerLb * pounds) : null};
   });

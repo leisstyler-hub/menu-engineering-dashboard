@@ -2,6 +2,8 @@
 
 ## Current solo-delivery policy
 
+Chief and Donnie must follow [the culinary moniker standard](docs/governance/WP_CULINARY_PROFILE_STANDARD.md) on every Supabase item addition or update. Complete the standard profile fields with evidence or explicit Unknown / Needs review values; preserve reviewed classifications and existing identity links. Report shared-profile persistence status separately from candidate/app delivery.
+
 Chief and Donnie must follow [CHANGELOG_STANDARD.md](docs/governance/CHANGELOG_STANDARD.md): post every commit to Buzz Changelog and use matching concise change wording in the app changelog.
 
 Apply [GOVERNANCE.md: Current policy](GOVERNANCE.md#current-policy-solo-delivery-approved-2026-10-24) first. It supersedes conflicting historical staffing and signoff requirements below. Chief and Donnie deliver routine work solo; Reviewer is optional except when a documented risk requires independent review. There is no required Builder or separate Scribe/Release/Verifier identity. Human release authority, substantive checks, source/data protection and honest production evidence still apply.

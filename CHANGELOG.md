@@ -1,5 +1,9 @@
 ## 2026-10-30
 
+- [Oct 30, 11:23 AM] Build W&P spreads from menu pillars with culinary monikers, suggested swaps, locks and measured pan quantities.
+- [Oct 30, 11:23 AM] Beef and seafood can support a premium highlight within the overall 40% food-cost plan.
+- [Oct 30, 11:23 AM] Shared item updates now require consistent culinary monikers, evidence and review status.
+
 - [Oct 30, 6:51 AM] FIXY Generator now offers Turkey with protein code TUR.
 
 - [Oct 30, 5:21 AM] Added six-week Global ordering with live costs, recipe-based prep rollups, cafe eligibility and Cricket/Blueshift hub routing.

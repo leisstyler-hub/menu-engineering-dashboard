@@ -1,11 +1,12 @@
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {projectStation} from './wpStationModel.js';
+import {profileFor} from './wpSmartModel.js';
+import WpPanFields from './WpPanFields.jsx';
 
 const money = value => value == null ? 'Incomplete' : `$${value.toFixed(2)}`;
 const field = 'w-full min-w-0 rounded-lg border border-slate-300 bg-white p-2 text-sm';
 
-export default function WpStationBuild({entries, onChange, catalog, rate, trusted}) {
-  const [sellThrough, setSellThrough] = useState('100');
+export default function WpStationBuild({entries, onChange, catalog, rate, trusted, sellThrough, setSellThrough}) {
   const [detailKey,setDetailKey] = useState('');
   const dialog = useRef(null);
   const detail = catalog.find(food=>food.key===detailKey);
@@ -21,7 +22,7 @@ export default function WpStationBuild({entries, onChange, catalog, rate, truste
   };
   return <aside id="wp-station" tabIndex={-1} aria-label="Station build" className="wp-station min-w-0 space-y-4 rounded-2xl border bg-white p-4 md:p-5">
     <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-bold uppercase text-teal-700">02 / Your station</p><h3 className="text-xl font-bold text-teal-950">Build your spread</h3></div><button type="button" disabled={!entries.length} onClick={()=>onChange([])} className="rounded-lg border bg-white px-3 py-2 text-xs disabled:opacity-50">Clear selections</button></div>
-    <p className="text-xs text-slate-600">{entries.length} foods selected. Switching menu tiles keeps your build; refreshing data or leaving W&amp;P clears it. Enter planned finished pounds.</p>
+    <p className="text-xs text-slate-600">{entries.length} foods selected. Switching menu tiles keeps your build; refreshing data or leaving W&amp;P clears it. Plan opening and reserve pans using measured fill weights, or enter finished pounds.</p>
     <section aria-label="Station projections" className="wp-projection rounded-xl p-4"><h4 className="font-bold">Your station at a glance{projection.approximate?' · estimate':''}</h4><dl className="mt-3 grid grid-cols-2 gap-3 text-sm">{[
       ['Finished pounds',projection.pounds==null?'Incomplete':projection.pounds.toFixed(2)],
       ['Planned food cost',money(projection.cost)],['Projected sales',money(projection.sales)],
@@ -38,8 +39,11 @@ export default function WpStationBuild({entries, onChange, catalog, rate, truste
     <div className="space-y-3">{projection.rows.map(row=><article key={row.key} data-testid="station-food" className="wp-station-food min-w-0 rounded-xl border bg-white p-4">
       <button type="button" aria-label={`Details for ${row.name}`} onClick={()=>setDetailKey(row.key)} className="block w-full break-words text-left text-sm font-bold text-teal-900 hover:underline underline-offset-4">{row.food?.name||row.name}</button>
       <p className="mt-1 break-words text-xs text-slate-500">{row.food?.menus?.join(' · ')||'Source no longer available'} | MRN {row.food?.mrn||'Unresolved'}</p>
-      <div className="mt-3 grid grid-cols-2 items-end gap-3"><label className="text-xs font-semibold">Finished lb<input aria-label={`Finished pounds for ${row.name}`} type="number" min="0.001" step="any" value={entries.find(entry=>entry.key===row.key).pounds} onChange={e=>onChange(entries.map(entry=>entry.key===row.key?{...entry,pounds:e.target.value}:entry))} className={`${field} mt-1`}/></label><div className="text-right text-sm"><p>{money(row.food?.costPerLb)}/lb</p><strong>{money(row.cost)} planned cost</strong></div></div>
-      {row.pounds==null&&<p className="mt-2 text-xs text-amber-900">Enter finished pounds greater than zero.</p>}
+      <WpPanFields entry={entries.find(entry=>entry.key===row.key)} onChange={next=>onChange(entries.map(entry=>entry.key===row.key?next:entry))}/>
+      {row.quantityMode==='pan'&&row.pounds!=null&&<p className="mt-2 text-sm font-semibold text-teal-950">Prepare {Number(row.openingPans)+Number(row.reservePans)} {row.panSize} pans · {Number(row.fillLb).toFixed(2)} lb per pan · {row.pounds.toFixed(2)} lb total.</p>}
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm"><label className="flex items-center gap-2"><input type="checkbox" aria-label={`Lock ${row.name}`} checked={Boolean(row.locked)} onChange={e=>onChange(entries.map(entry=>entry.key===row.key?{...entry,locked:e.target.checked}:entry))}/>Keep this food in smart builds</label><span>{money(row.food?.costPerLb)}/lb · <strong>{money(row.cost)} planned cost</strong></span></div>
+      {row.food&&<FoodMonikers food={row.food} entry={row} onChange={next=>onChange(entries.map(entry=>entry.key===row.key?{...entry,...next}:entry))}/>}
+      {row.pounds==null&&<p className="mt-2 text-xs text-amber-900">Enter a positive measured fill weight and valid whole pan counts, or finished pounds greater than zero.</p>}
       {row.cost==null&&<p className="mt-2 text-xs text-amber-900">Incomplete estimate: valid quantity and trusted, compatible cost/weight evidence required.</p>}
       {!!row.food?.informationReasons?.length&&<p className="mt-2 text-xs text-amber-900">{row.food.informationReasons.join('; ')}</p>}
       {!!row.food?.serviceReasons?.length&&<p className="mt-2 text-xs text-amber-900">Service review: {row.food.serviceReasons.join('; ')}</p>}
@@ -61,4 +65,9 @@ export default function WpStationBuild({entries, onChange, catalog, rate, truste
       <button type="button" onClick={()=>{onChange(entries.filter(entry=>entry.key!==detailKey));dialog.current.close();}} className="mt-4 rounded-xl bg-rose-700 px-4 py-2 text-sm font-semibold text-white">Delete from station</button>
     </dialog>}
   </aside>;
+}
+
+function FoodMonikers({food,entry,onChange}) {
+ const p=profileFor(food);
+ return <div className="mt-3 rounded-lg bg-slate-50 p-3 text-xs"><p className="font-bold text-teal-950">Culinary monikers · proposed</p><p className="mt-1">{[p.role,...p.cuisines,...p.flavors,...p.textures,...p.seasons,p.premium?'Premium highlight':null].filter(Boolean).join(' · ')||'Needs classification'}</p><p className="mt-1 text-slate-500">{p.seasons.length?'':'Season not classified. '}{p.evidenceCount?'Menu Index membership evidence linked. ':'No exact Menu Index membership/portion evidence linked. '}Name-based proposals need chef review.</p><label className="mt-2 block font-semibold">Service placement<select aria-label={`Service placement for ${entry.name}`} className={`${field} mt-1`} value={entry.placement||''} onChange={e=>onChange({placement:e.target.value,placementConfirmed:false})}><option value="">Choose placement</option>{['Hot','Cold','Ambient'].map(v=><option key={v}>{v}</option>)}</select></label><label className="mt-2 flex items-start gap-2"><input type="checkbox" aria-label={`Confirm service placement for ${entry.name}`} disabled={!entry.placement} checked={Boolean(entry.placementConfirmed)} onChange={e=>onChange({placementConfirmed:e.target.checked})}/><span>Chef confirmed this placement under local service requirements. Ambient needs specific validation.</span></label></div>;
 }
