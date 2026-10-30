@@ -55,6 +55,7 @@ export const PROTEINS = {
   SHF: "Shellfish",
   BF: "Beef",
   CHK: "Chicken",
+  TUR: "Turkey",
 };
 export const isMenuItem = (item) => item.recordType !== "divider" && item.rowType !== "divider";
 // Legacy worksheets use N/A (and empty cells) to explicitly mean no modifiers.

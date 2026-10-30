@@ -714,3 +714,20 @@ test("menu creation and deletion automatically save to shared storage", async ({
   await expect.poll(() => fixture.getWorkspace().menus.some(menu => menu.name === 'Isolated autosave menu'), { timeout: 20000 }).toBe(false);
   expect(fixture.getWorkspace().menus.find(menu => menu.id === 'source').items[0]).toMatchObject(item);
 });
+
+test("FIXY generator offers Turkey and applies the TUR protein code", async ({ page }) => {
+  await isolated(page, { sourceWithoutFixy: true });
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+  await page.locator('[data-menu-name="Source Menu"]').click();
+  await page.getByRole("button", { name: "Generate FIXY", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Generate FIXY", exact: true });
+  await expect(dialog.getByLabel("Protein", { exact: true }).locator('option[value="TUR"]')).toContainText("Turkey");
+  await dialog.getByLabel("Food type", { exact: true }).selectOption("FBB");
+  await dialog.getByLabel("Serving role", { exact: true }).selectOption("ENT");
+  await dialog.getByLabel("Protein", { exact: true }).selectOption("TUR");
+  await dialog.getByRole("button", { name: "Preview FIXY" }).click();
+  await expect(dialog).toContainText("R FBB | GRILL | SMASH BURGER ENT TUR");
+  await dialog.getByRole("button", { name: "Apply FIXY" }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.locator('input[value="R FBB | GRILL | SMASH BURGER ENT TUR"]')).toBeVisible();
+});

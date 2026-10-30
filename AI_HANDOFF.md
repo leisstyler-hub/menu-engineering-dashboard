@@ -1,3 +1,7 @@
+## SSMT Turkey protein - 2026-10-30
+
+Candidate 2026.10.30.004-ssmt-turkey-protein adds TUR / Turkey to the shared generator classification list. Tyler request e25180f0a260abd73487f5ce858a92a18a1e2c494b71cbc607ee0695c878706f authorizes this ordinary app fix. Owner Chief, branch chief/ssmt-turkey-protein, baseline f9b3cc0. Existing saved data is unchanged. Isolated browser regression reproduced the absent TUR option before the fix; verification and production state are recorded in docs/ssmt/TURKEY_PROTEIN_2026_10_30.md. Rollback: scoped revert of this release. Solo delivery and self-review.
+
 ## Commissary Global ordering cycle - 2026-10-30
 
 LIVE `2026.10.30.003-commissary-global-ordering` adds optional Global finished-item ordering to the Draft Commissary Ordering Tool for all current and future selectable weeks beginning Monday 2026-11-16. The six-week cycle is Porto/Taco Total, Lemongrass + Lime/Chiang Mai, Anisa/Cypress, Balti/Naan Nomad, Lotus/House of Teriyaki, and Smokehouse BBQ/Roam BBQ. Naan Nomad is the exact `AMZ: Street Eats` station scope. All non-extension items from either weekly menu are orderable as whole portions for Friday, Monday and Wednesday delivery; Global ordering adds no submission requirement.
