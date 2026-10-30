@@ -3,7 +3,7 @@ import XLSX from "xlsx-js-style";
 import { buildS4Workbook, transferExportFileName } from "../transfer-tool/transferExport.js";
 import { COMMISSARY_DEPARTING_UNIT } from "./commissaryCatalog.js";
 import { DEFAULT_COMMISSARY_METADATA } from "./commissaryMetadata.js";
-import { deliOrderLinesForCafe, deliPrepLinesForCafe, grillOrderLinesForCafe, grillPrepLinesForCafe, orderLinesForCafe, rolledUpPrepItems, transferPeriod, weekLabel } from "./commissaryModel.js";
+import { deliOrderLinesForCafe, deliPrepLinesForCafe, deliveryDateForWeek, formatShortDate, grillOrderLinesForCafe, grillPrepLinesForCafe, orderLinesForCafe, rolledUpPrepItems, transferPeriod, weekLabel } from "./commissaryModel.js";
 
 const S4_TEMPLATE_URL = "/templates/ExpenseTransfer_Between_PC_Template.xlsx";
 const PREPARED_FOODS_GL = "4111011";
@@ -74,14 +74,14 @@ function bodyStyle(fill, isGroupStart = false) {
   };
 }
 
-function buildDeliveryMapWorksheet(records, delivery) {
+function buildDeliveryMapWorksheet(records, delivery, weekStart) {
   const deliveryLines = records.flatMap((record) => [
     ...orderLinesForCafe(record).filter((line) => Number(line[delivery.key]) > 0).map((line) => ({ cafe: record.cafe, name: line.name, mrn: line.mrn, quantity: line[delivery.key], unit: line.orderUnit, unitCost: line.orderUnitCost, finishedDish: line.name })),
     ...grillPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key).map((line) => ({ cafe: record.cafe, name: line.name, mrn: line.mrn, quantity: line.quantity, unit: line.orderUnit, unitCost: null, finishedDish: line.finishedDish })),
     ...deliPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key).map((line) => ({ cafe: record.cafe, name: line.name, mrn: line.mrn, quantity: line.quantity, unit: line.orderUnit, unitCost: null, finishedDish: line.finishedDish })),
   ]);
   const rows = [
-    [`${delivery.day} Cafe Delivery Map`, "", "", "", "", "", "", ""],
+    [`${delivery.day} ${formatShortDate(deliveryDateForWeek(weekStart, delivery.key))} Cafe Delivery Map`, "", "", "", "", "", "", ""],
     [delivery.detail, "", "", "", "", "", "", ""],
     ["Cafe", "Ingredient / item", "MRN", "Quantity", "Order unit", "Finished dish", "Unit cost", "Extended cost"],
     ...deliveryLines.map((line) => [line.cafe, line.name, line.mrn, line.quantity, line.unit, line.finishedDish, line.unitCost ?? "", line.unitCost == null ? "" : line.quantity * line.unitCost]),
@@ -216,7 +216,7 @@ export function buildCommissaryBomWorkbook(records, weekStart, metadata = DEFAUL
 
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, "Consolidated Prep List");
-  metadata.deliveries.forEach((delivery) => XLSX.utils.book_append_sheet(workbook, buildDeliveryMapWorksheet(records, delivery), `${delivery.day} Delivery Map`));
+  metadata.deliveries.forEach((delivery) => XLSX.utils.book_append_sheet(workbook, buildDeliveryMapWorksheet(records, delivery, weekStart), `${delivery.day} Delivery Map`));
   XLSX.utils.book_append_sheet(workbook, automationWorksheet, "Power Automate");
   workbook.Workbook ||= {};
   workbook.Workbook.Sheets = workbook.SheetNames.map((name) => ({ name, Hidden: name === "Power Automate" ? 1 : 0 }));

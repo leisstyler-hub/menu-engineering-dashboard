@@ -10,11 +10,12 @@ export const DELI_ORDERING_PROGRAM = Object.freeze({
     "Cricket",
     "Nessie",
     "Dawson",
-    "Bingo",
-    "Grace",
     "Blueshift",
     "Sonic",
-    "Astra"
+    "Dynamo",
+    "Gemini",
+    "Eclipse",
+    "Odyssey"
   ],
   "quantityIncrement": 1,
   "orderUnit": "sandwich",

@@ -72,10 +72,10 @@ const compactUnit = (unit, spanish) => {
   return spanish ? commissarySpanishUnit(unit) : unit;
 };
 
-export default function PrepListView({ records, weekStart, completed, saving, onToggle, deliveries = DEFAULT_COMMISSARY_METADATA.deliveries }) {
+export default function PrepListView({ records, weekStart, hub, hubs = [], onHubChange, completed, saving, onToggle, deliveries = DEFAULT_COMMISSARY_METADATA.deliveries }) {
   const [delivery, setDelivery] = useState(() => deliveries[0]?.key || "friday");
   const [spanish, setSpanish] = useState(false);
-  const rows = useMemo(() => rolledUpPrepItems(records).filter((row) => Number(row[delivery]) > 0), [delivery, records]);
+  const rows = useMemo(() => rolledUpPrepItems(records, { hub }).filter((row) => Number(row[delivery]) > 0), [delivery, hub, records]);
   const completedIds = new Set(completed?.[delivery] || []);
   const completedCount = rows.filter((row) => completedIds.has(row.id)).length;
 
@@ -123,6 +123,11 @@ export default function PrepListView({ records, weekStart, completed, saving, on
             </span>
           </button>
         </div>
+      </div>
+
+      <div className="border-b border-slate-200 bg-white p-3 md:px-6">
+        <p className="mb-2 text-xs font-black uppercase tracking-[0.12em] text-slate-500">{spanish ? "Seleccione su centro de comisaría" : "Select your commissary hub"}</p>
+        <div role="group" aria-label="Select your commissary hub" className="grid grid-cols-3 gap-2">{hubs.map((option) => <button key={option.key} type="button" aria-pressed={hub === option.key} disabled={saving} onClick={() => onHubChange(option.key)} className={`min-h-12 rounded-xl px-3 py-2 text-sm font-black transition disabled:opacity-50 ${hub === option.key ? "bg-sky-600 text-white shadow-sm" : "border border-slate-300 bg-slate-50 text-slate-700"}`}>{option.label}</button>)}</div>
       </div>
 
       <div className="grid grid-cols-1 gap-1 border-b border-slate-200 bg-slate-100 p-2 sm:grid-cols-3">

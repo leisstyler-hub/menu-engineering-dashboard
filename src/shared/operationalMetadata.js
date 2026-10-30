@@ -9,9 +9,10 @@ import { DEFAULT_COMMISSARY_METADATA } from "../features/commissary-ordering/com
 import { GRILL_LTO_PROGRAM } from "../features/commissary-ordering/grillLtoCatalog.js";
 import { DELI_CORE_SELECTED_CATALOG } from "../features/commissary-ordering/deliCoreCatalog.js";
 import { DELI_ORDERING_PROGRAM } from "../features/commissary-ordering/deliCycleCatalog.js";
+import { COMMISSARY_CAFE_STATION_ACCESS, COMMISSARY_HUB_ROUTING, COMMISSARY_HUBS } from "../features/commissary-ordering/commissaryRouting.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 6;
+export const OPERATIONAL_METADATA_VERSION = 7;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -47,6 +48,9 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
     grillProgram: GRILL_LTO_PROGRAM,
     deliCatalog: DELI_CORE_SELECTED_CATALOG,
     deliProgram: DELI_ORDERING_PROGRAM,
+    stationAccess: COMMISSARY_CAFE_STATION_ACCESS,
+    prepHubs: COMMISSARY_HUBS,
+    hubRouting: COMMISSARY_HUB_ROUTING,
     grillInterface: Object.freeze({
       density: "compact",
       contentPolicy: "complete",

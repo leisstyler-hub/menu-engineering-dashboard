@@ -9,10 +9,11 @@ import { buildS4Rows, buildS4Workbook } from "../src/features/transfer-tool/tran
 import { COMMISSARY_ORDER_ITEMS } from "../src/features/commissary-ordering/commissaryCatalog.js";
 import { buildCommissaryBomWorkbook, buildCommissaryTransfer } from "../src/features/commissary-ordering/commissaryExport.js";
 import { buildCommissaryMetadataRecord, DEFAULT_COMMISSARY_METADATA, isApprovedCommissaryMetadataRecord, resolveCommissaryMetadata } from "../src/features/commissary-ordering/commissaryMetadata.js";
-import { COMMISSARY_DELI_ORDER_VERSION, COMMISSARY_GRILL_ORDER_VERSION, COMMISSARY_ORDER_UNIT_VERSION, DELIVERY_KEYS, addDays, buildOrderRecord, buildPrepProgressRecord, deliCycleForWeek, deliOrderLinesForCafe, deliPrepLinesForCafe, emptyDeliOrder, emptyGrillOrder, emptyQuantities, firstOpenWeek, grillCycleForWeek, grillOrderLinesForCafe, grillPrepLinesForCafe, isWeekLocked, latestPrepWeek, normalizePrepCompleted, normalizeQuantities, orderValue, rolledUpPrepItems, togglePrepCompleted, transferPeriod } from "../src/features/commissary-ordering/commissaryModel.js";
+import { COMMISSARY_DELI_ORDER_VERSION, COMMISSARY_GRILL_ORDER_VERSION, COMMISSARY_ORDER_UNIT_VERSION, DELIVERY_KEYS, addDays, buildOrderRecord, buildPrepProgressRecord, deliCycleForWeek, deliOrderLinesForCafe, deliPrepLinesForCafe, deliveriesForWeek, emptyDeliOrder, emptyGrillOrder, emptyQuantities, firstOpenWeek, grillCycleForWeek, grillOrderLinesForCafe, grillPrepLinesForCafe, isWeekLocked, latestPrepWeek, normalizePrepCompleted, normalizeQuantities, orderValue, rolledUpPrepItems, togglePrepCompleted, transferPeriod } from "../src/features/commissary-ordering/commissaryModel.js";
 import { GRILL_LTO_ITEM_MRNS, GRILL_LTO_PREP_ITEM_IDS, GRILL_LTO_PROGRAM } from "../src/features/commissary-ordering/grillLtoCatalog.js";
 import { DELI_ORDERING_ITEM_MRNS, DELI_ORDERING_PREP_ITEM_IDS, DELI_ORDERING_PROGRAM } from "../src/features/commissary-ordering/deliCycleCatalog.js";
 import { COMMISSARY_SPANISH } from "../src/features/commissary-ordering/commissaryTranslations.js";
+import { COMMISSARY_STATIONS, commissaryHubFor, isCafeStationEnabled } from "../src/features/commissary-ordering/commissaryRouting.js";
 
 assert.equal(COMMISSARY_ORDER_ITEMS.length, 41, "The source workbook should produce 41 commissary order items.");
 assert.equal(COMMISSARY_ORDER_ITEMS.find((row) => row.name === "Aleppo-Edamame")?.mrn, "176736");
@@ -43,6 +44,12 @@ assert.ok(DELI_ORDERING_PREP_ITEM_IDS.length > 100);
 assert.equal(deliCycleForWeek("2026-11-16").week, 1);
 assert.equal(deliCycleForWeek("2026-12-07").week, 4);
 assert.equal(deliCycleForWeek("2026-12-14").week, 1, "The four-week Deli cycle must repeat.");
+assert.deepEqual(deliveriesForWeek(DEFAULT_COMMISSARY_METADATA.deliveries, "2026-11-16").map(({ title }) => title), ["Friday 11/13", "Monday 11/16", "Wednesday 11/18"]);
+assert.equal(isCafeStationEnabled("Grace", COMMISSARY_STATIONS.SALAD_BAR), false);
+assert.equal(isCafeStationEnabled("Grace", COMMISSARY_STATIONS.GRILL), true);
+assert.equal(isCafeStationEnabled("Dynamo", COMMISSARY_STATIONS.DELI), true);
+assert.equal(commissaryHubFor("Nessie", COMMISSARY_STATIONS.DELI), "Cricket");
+assert.equal(commissaryHubFor("Dynamo", COMMISSARY_STATIONS.DELI), "Sonic");
 assert.deepEqual(normalizeQuantities({ "commissary-9002-2": { monday: 1.5, wednesday: 0.5 } }, { orderUnitVersion: 1 })[frozenPeas.id], { friday: 0, monday: 0.38, wednesday: 0.13 }, "Saved green-bean quart quantities should migrate into the replacement peas gallon slot.");
 assert.deepEqual(normalizeQuantities({ [frozenPeas.id]: { friday: 0.25, monday: 1.5, wednesday: 0.5 } }, { orderUnitVersion: COMMISSARY_ORDER_UNIT_VERSION })[frozenPeas.id], { friday: 0.25, monday: 1.5, wednesday: 0.5 }, "Current gallon quantities must not be converted twice.");
 
@@ -77,7 +84,8 @@ assert.deepEqual(completed, { friday: [], monday: [firstPrepItem], wednesday: []
 assert.deepEqual(togglePrepCompleted(completed, "monday", firstPrepItem), { friday: [], monday: [], wednesday: [] });
 assert.deepEqual(normalizePrepCompleted({ monday: [firstPrepItem, firstPrepItem, "not-an-item"] }), { friday: [], monday: [firstPrepItem], wednesday: [] });
 const progressRecord = buildPrepProgressRecord({ weekStart: "2026-10-12", completed });
-assert.equal(progressRecord["Record ID"], "commissaryOrder|prepProgress|2026-10-12");
+assert.equal(progressRecord["Record ID"], "commissaryOrder|prepProgress|cricket|2026-10-12");
+assert.equal(progressRecord.hub, "Cricket");
 assert.equal(progressRecord["Record Type"], "Commissary Prep Progress");
 const currentLockedProgress = buildPrepProgressRecord({ weekStart: latestPrepWeek(), completed });
 assert.equal(commissaryWriteValidation([currentLockedProgress], { tool: "commissaryOrders" }), "");
@@ -128,6 +136,9 @@ assert.equal(bomWorkbook.Workbook.Sheets.find((sheet) => sheet.name === "Power A
 const fridayRows = XLSX.utils.sheet_to_json(bomWorkbook.Sheets["Friday Delivery Map"], { header: 1, defval: "" });
 const mondayRows = XLSX.utils.sheet_to_json(bomWorkbook.Sheets["Monday Delivery Map"], { header: 1, defval: "" });
 const wednesdayRows = XLSX.utils.sheet_to_json(bomWorkbook.Sheets["Wednesday Delivery Map"], { header: 1, defval: "" });
+assert.equal(fridayRows[0][0], "Friday 10/9 Cafe Delivery Map");
+assert.equal(mondayRows[0][0], "Monday 10/12 Cafe Delivery Map");
+assert.equal(wednesdayRows[0][0], "Wednesday 10/14 Cafe Delivery Map");
 assert.ok(fridayRows.some((row) => row[0] === "Nessie" && row[1] === "Sliced Cucumber" && row[3] === 1));
 assert.ok(mondayRows.some((row) => row[0] === "Nessie" && row[1] === "Sliced Cucumber" && row[3] === 2));
 assert.ok(wednesdayRows.some((row) => row[0] === "Nessie" && row[1] === "Sliced Cucumber" && row[3] === 1));
@@ -204,5 +215,7 @@ assert.ok(deliTransfer.items.filter((item) => item.menu === "AMZ: Deli Core").ev
 const deliBom = buildCommissaryBomWorkbook([deliRecord], "2026-11-16");
 const deliBomRows = XLSX.utils.sheet_to_json(deliBom.Sheets["Consolidated Prep List"], { header: 1, defval: "" });
 assert.ok(deliBomRows.some((row) => row[0].includes("Turkey") && Number(row[1]) > 0));
+assert.ok(rolledUpPrepItems([deliRecord], { hub: "Cricket" }).some((line) => line.category.startsWith("Deli")));
+assert.equal(rolledUpPrepItems([deliRecord], { hub: "Sonic" }).length, 0);
 
 console.log("Commissary Ordering Tool verified: Supabase-backed cafe metadata, Friday/Monday/Wednesday routing, Grill and four-week Deli whole-sandwich orders, ingredient prep rollups, shared Prep View progress, styled delivery maps, and Friday–Thursday S4 consolidation.");

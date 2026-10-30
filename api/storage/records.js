@@ -9,6 +9,7 @@ import { isApprovedCommissaryMetadataRecord } from "../../src/features/commissar
 import { COMMISSARY_DELI_ORDER_VERSION, COMMISSARY_GRILL_ORDER_VERSION, COMMISSARY_ORDER_UNIT_VERSION, DELIVERY_KEYS, deliCycleForWeek, grillCycleForWeek, isDeliEligibleCafe, isGrillEligibleCafe, isWeekLocked } from "../../src/features/commissary-ordering/commissaryModel.js";
 import { GRILL_LTO_PREP_ITEM_IDS } from "../../src/features/commissary-ordering/grillLtoCatalog.js";
 import { DELI_ORDERING_PREP_ITEM_IDS } from "../../src/features/commissary-ordering/deliCycleCatalog.js";
+import { COMMISSARY_HUBS, COMMISSARY_STATIONS, isCafeStationEnabled } from "../../src/features/commissary-ordering/commissaryRouting.js";
 import { DEFAULT_OPERATIONAL_METADATA, isApprovedOperationalMetadataRecord, OPERATIONAL_METADATA_RECORD_ID } from "../../src/shared/operationalMetadata.js";
 import { gzipSync, gunzipSync } from "node:zlib";
 
@@ -99,7 +100,8 @@ export function commissaryWriteValidation(records = [], context = {}) {
   }
   if (record["Record Type"] === "Commissary Prep Progress") {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(String(record.weekStart || ""))) return "The commissary prep week is invalid.";
-    if (record["Record ID"] !== `commissaryOrder|prepProgress|${record.weekStart}`) return "The commissary prep progress identity is invalid.";
+    if (!COMMISSARY_HUBS.some(({ key }) => key === record.hub)) return "The commissary prep hub is invalid.";
+    if (record["Record ID"] !== `commissaryOrder|prepProgress|${record.hub.toLowerCase()}|${record.weekStart}`) return "The commissary prep progress identity is invalid.";
     if (!isWeekLocked(record.weekStart, new Date())) return "Prep progress is available after the commissary order cutoff.";
     if (!record.completed || typeof record.completed !== "object" || Array.isArray(record.completed)) return "Commissary prep completion data is required.";
     if (Object.keys(record.completed).some((delivery) => !DELIVERY_KEYS.includes(delivery))) return "The commissary prep delivery is invalid.";
@@ -124,6 +126,9 @@ export function commissaryWriteValidation(records = [], context = {}) {
       return "Commissary quantities must be zero or positive numbers.";
     }
   }
+  if (!isCafeStationEnabled(record.cafe, COMMISSARY_STATIONS.SALAD_BAR) && Object.values(quantities).some((delivery) => DELIVERY_KEYS.some((key) => Number(delivery?.[key] || 0) > 0))) {
+    return "Salad Bar ordering is not enabled for this cafe.";
+  }
   const grillCycle = grillCycleForWeek(record.weekStart);
   if (grillCycle && isGrillEligibleCafe(record.cafe)) {
     if (Number(record.grill?.version) !== COMMISSARY_GRILL_ORDER_VERSION || Number(record.grill?.cycleWeek) !== grillCycle.week) return "The Grill LTO cycle is invalid.";
@@ -135,6 +140,8 @@ export function commissaryWriteValidation(records = [], context = {}) {
       const delivery = record.grill?.quantities?.[setKey];
       if (!delivery || DELIVERY_KEYS.some((key) => !Number.isInteger(Number(delivery[key] ?? 0)) || Number(delivery[key] ?? 0) < 0)) return "Grill LTO quantities must be zero or positive whole sandwiches.";
     }
+  } else if (Object.values(record.grill?.quantities || {}).some((delivery) => DELIVERY_KEYS.some((key) => Number(delivery?.[key] || 0) > 0))) {
+    return "Grill ordering is not enabled for this cafe.";
   }
   const deliCycle = deliCycleForWeek(record.weekStart);
   if (deliCycle && isDeliEligibleCafe(record.cafe)) {
@@ -148,6 +155,8 @@ export function commissaryWriteValidation(records = [], context = {}) {
       const item = record.deli?.items?.[mrn];
       if (count > 0 && (!item || String(item.mrn) !== mrn || !item.item || !(Number(item.itemWasteCost) > 0))) return `The Deli cost snapshot for MRN ${mrn} is invalid.`;
     }
+  } else if (Object.values(record.deli?.quantities || {}).some((delivery) => DELIVERY_KEYS.some((key) => Number(delivery?.[key] || 0) > 0))) {
+    return "Deli ordering is not enabled for this cafe.";
   }
   if (isWeekLocked(record.weekStart, new Date())) return "This order is locked. Please contact commissary executive chef to adjust pars.";
   return "";
