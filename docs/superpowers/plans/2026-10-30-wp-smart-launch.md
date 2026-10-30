@@ -21,10 +21,10 @@ Unknown memberships must stay unassigned; conflicting profile variants must not 
 
 ## Tasks
 
-1. [ ] Add failing model tests for pillar selection, culinary diversity, premium retention, lock-aware swaps, invalid quantities and pan economics. Run red.
-2. [ ] Implement wpSmartModel.js and deterministic compact candidate profile extraction from the hashed CSV. Export a separate dry-run profile/intake report; preserve raw strings and document provenance. No source cost import.
-3. [ ] Add pillar controls to WpMenuPicker; add WpSmartBuild controls and integrate with WpPortfolio entries. Suggest within selected pool, show reasons and before/after whole-station economics, keep/lock/undo.
-4. [ ] Extend wpStationModel, WpStationBuild and station export with optional pan mode, opening/reserve counts, measured fill weight and food profiles. Keep manual pound mode compatible.
-5. [ ] Remove only requested beef/seafood blanket exclusions; update direct regressions and communicate remaining service restrictions.
-6. [ ] Add isolated desktop/mobile browser acceptance tests and export checks. Run full npm verify and all W&P browser specs. Review scope and source/privacy constraints.
-7. [ ] Update version, product decision, handoff and changelog; get risk-focused independent review, resolve findings and recheck upstream before authorized release. Publish every commit receipt and report exact production state. Production Supabase writes are separately pending, not implicitly authorized by app release.
+1. [x] Add failing model tests for pillar selection, culinary diversity, premium retention, lock-aware swaps, invalid quantities and pan economics. Run red.
+2. [x] Implement wpSmartModel.js and deterministic compact candidate profile extraction from the hashed CSV. Export a separate dry-run profile/intake report; preserve raw strings and document provenance. No source cost import.
+3. [x] Add pillar controls to WpMenuPicker; add WpSmartBuild controls and integrate with WpPortfolio entries. Suggest within selected pool, show reasons and before/after whole-station economics, keep/lock/undo.
+4. [x] Extend wpStationModel, WpStationBuild and station export with optional pan mode, opening/reserve counts, measured fill weight and food profiles. Keep manual pound mode compatible.
+5. [x] Remove only requested beef/seafood blanket exclusions; update direct regressions and communicate remaining service restrictions.
+6. [x] Add isolated desktop/mobile browser acceptance tests and export checks. Run full npm verify and all W&P browser specs. Review scope and source/privacy constraints.
+7. [x] Update version, product decision, handoff and changelog; get risk-focused independent review, resolve findings and recheck upstream before authorized release. Publish every commit receipt and report exact production state. Production Supabase writes are separately pending, not implicitly authorized by app release.
