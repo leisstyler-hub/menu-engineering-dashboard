@@ -9,8 +9,9 @@ import { buildS4Rows, buildS4Workbook } from "../src/features/transfer-tool/tran
 import { COMMISSARY_ORDER_ITEMS } from "../src/features/commissary-ordering/commissaryCatalog.js";
 import { buildCommissaryBomWorkbook, buildCommissaryTransfer } from "../src/features/commissary-ordering/commissaryExport.js";
 import { buildCommissaryMetadataRecord, DEFAULT_COMMISSARY_METADATA, isApprovedCommissaryMetadataRecord, resolveCommissaryMetadata } from "../src/features/commissary-ordering/commissaryMetadata.js";
-import { COMMISSARY_GRILL_ORDER_VERSION, COMMISSARY_ORDER_UNIT_VERSION, DELIVERY_KEYS, addDays, buildOrderRecord, buildPrepProgressRecord, emptyGrillOrder, emptyQuantities, firstOpenWeek, grillCycleForWeek, grillOrderLinesForCafe, grillPrepLinesForCafe, isWeekLocked, latestPrepWeek, normalizePrepCompleted, normalizeQuantities, orderValue, rolledUpPrepItems, togglePrepCompleted, transferPeriod } from "../src/features/commissary-ordering/commissaryModel.js";
+import { COMMISSARY_DELI_ORDER_VERSION, COMMISSARY_GRILL_ORDER_VERSION, COMMISSARY_ORDER_UNIT_VERSION, DELIVERY_KEYS, addDays, buildOrderRecord, buildPrepProgressRecord, deliCycleForWeek, deliOrderLinesForCafe, deliPrepLinesForCafe, emptyDeliOrder, emptyGrillOrder, emptyQuantities, firstOpenWeek, grillCycleForWeek, grillOrderLinesForCafe, grillPrepLinesForCafe, isWeekLocked, latestPrepWeek, normalizePrepCompleted, normalizeQuantities, orderValue, rolledUpPrepItems, togglePrepCompleted, transferPeriod } from "../src/features/commissary-ordering/commissaryModel.js";
 import { GRILL_LTO_ITEM_MRNS, GRILL_LTO_PREP_ITEM_IDS, GRILL_LTO_PROGRAM } from "../src/features/commissary-ordering/grillLtoCatalog.js";
+import { DELI_ORDERING_ITEM_MRNS, DELI_ORDERING_PREP_ITEM_IDS, DELI_ORDERING_PROGRAM } from "../src/features/commissary-ordering/deliCycleCatalog.js";
 import { COMMISSARY_SPANISH } from "../src/features/commissary-ordering/commissaryTranslations.js";
 
 assert.equal(COMMISSARY_ORDER_ITEMS.length, 41, "The source workbook should produce 41 commissary order items.");
@@ -35,6 +36,13 @@ assert.deepEqual(grillCycleForWeek("2026-11-16"), GRILL_LTO_PROGRAM.cycleWeeks[0
 assert.deepEqual(grillCycleForWeek("2026-12-21"), GRILL_LTO_PROGRAM.cycleWeeks[5]);
 assert.deepEqual(grillCycleForWeek("2026-12-28"), GRILL_LTO_PROGRAM.cycleWeeks[0], "The six-week Grill cycle must repeat.");
 assert.equal(grillCycleForWeek("2026-11-09"), null, "The Grill cycle must not appear before its 11/16/2026 anchor.");
+assert.equal(DELI_ORDERING_PROGRAM.cycleLengthWeeks, 4);
+assert.deepEqual(DELI_ORDERING_PROGRAM.cycleWeeks.map(({ items }) => items.length), [5, 5, 6, 6]);
+assert.equal(DELI_ORDERING_ITEM_MRNS.length, 20);
+assert.ok(DELI_ORDERING_PREP_ITEM_IDS.length > 100);
+assert.equal(deliCycleForWeek("2026-11-16").week, 1);
+assert.equal(deliCycleForWeek("2026-12-07").week, 4);
+assert.equal(deliCycleForWeek("2026-12-14").week, 1, "The four-week Deli cycle must repeat.");
 assert.deepEqual(normalizeQuantities({ "commissary-9002-2": { monday: 1.5, wednesday: 0.5 } }, { orderUnitVersion: 1 })[frozenPeas.id], { friday: 0, monday: 0.38, wednesday: 0.13 }, "Saved green-bean quart quantities should migrate into the replacement peas gallon slot.");
 assert.deepEqual(normalizeQuantities({ [frozenPeas.id]: { friday: 0.25, monday: 1.5, wednesday: 0.5 } }, { orderUnitVersion: COMMISSARY_ORDER_UNIT_VERSION })[frozenPeas.id], { friday: 0.25, monday: 1.5, wednesday: 0.5 }, "Current gallon quantities must not be converted twice.");
 
@@ -177,4 +185,24 @@ assert.ok(grillBomRows.some((row) => row[0] === "AMZ: Smashburger Patty" && row[
 const grillMondayRows = XLSX.utils.sheet_to_json(grillBom.Sheets["Monday Delivery Map"], { header: 1, defval: "" });
 assert.ok(grillMondayRows.some((row) => row[0] === "Nessie" && row[1] === "AMZ: Smashburger Patty" && row[5].includes("ATX Burger")));
 
-console.log("Commissary Ordering Tool verified: Supabase-backed cafe metadata, Friday/Monday/Wednesday routing, 11/16 Grill Cycle Week 1, Set A/Set B whole-sandwich orders, ingredient prep rollups, shared Prep View progress, styled delivery maps, and Friday–Thursday S4 consolidation.");
+const deli = emptyDeliOrder("2026-11-16");
+deli.items["190990"] = { mrn: "190990", item: "Mediterranean Turkey Wrap", portion: "1 wrap", itemWasteCost: 3.25 };
+deli.items["37311.43"] = { mrn: "37311.43", item: "Chicken Caesar Wrap", portion: "1 wrap", itemWasteCost: 2.75 };
+deli.quantities["190990"] = { friday: 5, monday: 10, wednesday: 15 };
+deli.quantities["37311.43"] = { friday: 2, monday: 4, wednesday: 6 };
+const deliRecord = buildOrderRecord({ cafe: "Nessie", weekStart: "2026-11-16", quantities: emptyQuantities(), grill, deli, now: new Date("2026-11-10T12:00:00Z") });
+assert.equal(deliRecord.deli.version, COMMISSARY_DELI_ORDER_VERSION);
+assert.equal(deliRecord.deli.cycleWeek, 1);
+assert.equal(commissaryWriteValidation([deliRecord], { tool: "commissaryOrders" }), "");
+assert.equal(deliOrderLinesForCafe(deliRecord).length, 2);
+assert.ok(deliPrepLinesForCafe(deliRecord).some((line) => line.name.includes("Turkey")));
+assert.ok(rolledUpPrepItems([deliRecord]).some((line) => line.category.startsWith("Deli")));
+assert.equal(orderValue(deliRecord.quantities, deliRecord.grill, deliRecord.deli), (60 * 3.3634) + (30 * 3.1803) + (30 * 3.25) + (12 * 2.75));
+const deliTransfer = buildCommissaryTransfer(deliRecord);
+assert.equal(deliTransfer.items.filter((item) => item.menu === "AMZ: Deli Core").length, 2);
+assert.ok(deliTransfer.items.filter((item) => item.menu === "AMZ: Deli Core").every((item) => item.ingredientAllocations[0].glCode === "4111011"));
+const deliBom = buildCommissaryBomWorkbook([deliRecord], "2026-11-16");
+const deliBomRows = XLSX.utils.sheet_to_json(deliBom.Sheets["Consolidated Prep List"], { header: 1, defval: "" });
+assert.ok(deliBomRows.some((row) => row[0].includes("Turkey") && Number(row[1]) > 0));
+
+console.log("Commissary Ordering Tool verified: Supabase-backed cafe metadata, Friday/Monday/Wednesday routing, Grill and four-week Deli whole-sandwich orders, ingredient prep rollups, shared Prep View progress, styled delivery maps, and Friday–Thursday S4 consolidation.");

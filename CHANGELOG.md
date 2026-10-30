@@ -1,3 +1,8 @@
+## 2026-10-30
+
+- [Oct 30, 4:34 AM] Deli ordering now follows a four-week cycle and converts sandwich counts into recipe-based Prep List components.
+- [Oct 30, 4:34 AM] Weeks 1 and 2 show five costed Deli choices; Weeks 3 and 4 show all six reviewed choices.
+
 ## 2026-10-29
 
 - [Oct 29, 5:59 PM] Verified 20 refreshed Deli items in Supabase with private recipe files, all 168 live rows preserved and zero hidden.

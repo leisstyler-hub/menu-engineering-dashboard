@@ -1,11 +1,13 @@
 import { COMMISSARY_ITEM_BY_ID, COMMISSARY_ORDER_ITEMS } from "./commissaryCatalog.js";
 import { DEFAULT_COMMISSARY_METADATA } from "./commissaryMetadata.js";
 import { GRILL_LTO_PREP_ITEM_IDS, GRILL_LTO_PROGRAM } from "./grillLtoCatalog.js";
+import { DELI_ORDERING_PREP_ITEM_IDS, DELI_ORDERING_PROGRAM } from "./deliCycleCatalog.js";
 
 export const PACIFIC_TIME_ZONE = "America/Los_Angeles";
 export const DELIVERY_KEYS = Object.freeze(DEFAULT_COMMISSARY_METADATA.deliveries.map(({ key }) => key));
 export const COMMISSARY_ORDER_UNIT_VERSION = 2;
 export const COMMISSARY_GRILL_ORDER_VERSION = 1;
+export const COMMISSARY_DELI_ORDER_VERSION = 1;
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const pad = (value) => String(value).padStart(2, "0");
@@ -106,6 +108,44 @@ export function isGrillEligibleCafe(cafe) {
   return GRILL_LTO_PROGRAM.eligibleCafes.includes(cafe);
 }
 
+export function deliCycleForWeek(weekStart) {
+  if (!ISO_DATE.test(String(weekStart || "")) || weekStart < DELI_ORDERING_PROGRAM.anchorWeekStart) return null;
+  const elapsedDays = Math.round((new Date(`${weekStart}T00:00:00Z`) - new Date(`${DELI_ORDERING_PROGRAM.anchorWeekStart}T00:00:00Z`)) / 86400000);
+  const cycleIndex = Math.floor(elapsedDays / 7) % DELI_ORDERING_PROGRAM.cycleLengthWeeks;
+  return DELI_ORDERING_PROGRAM.cycleWeeks[cycleIndex] || null;
+}
+
+export function isDeliEligibleCafe(cafe) {
+  return DELI_ORDERING_PROGRAM.eligibleCafes.includes(cafe);
+}
+
+export function emptyDeliOrder(weekStart) {
+  const cycle = deliCycleForWeek(weekStart);
+  return {
+    version: COMMISSARY_DELI_ORDER_VERSION,
+    cycleWeek: cycle?.week || null,
+    quantities: Object.fromEntries((cycle?.items || []).map(({ mrn }) => [mrn, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, 0]))])),
+    items: {},
+  };
+}
+
+export function normalizeDeliOrder(deli = {}, weekStart, cafe = "") {
+  const empty = emptyDeliOrder(weekStart);
+  const cycle = deliCycleForWeek(weekStart);
+  if (!cycle || !isDeliEligibleCafe(cafe)) return empty;
+  const quantities = Object.fromEntries(cycle.items.map(({ mrn }) => [mrn, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, wholeQuantity(deli?.quantities?.[mrn]?.[delivery])]))]));
+  const items = Object.fromEntries(cycle.items.flatMap(({ mrn }) => {
+    const snapshot = deli?.items?.[mrn];
+    return snapshot && String(snapshot.mrn) === mrn && Number(snapshot.itemWasteCost) > 0 ? [[mrn, {
+      mrn,
+      item: String(snapshot.item || ""),
+      portion: String(snapshot.portion || ""),
+      itemWasteCost: Number(snapshot.itemWasteCost),
+    }]] : [];
+  }));
+  return { version: COMMISSARY_DELI_ORDER_VERSION, cycleWeek: cycle.week, quantities, items };
+}
+
 export function emptyGrillOrder(weekStart) {
   const cycle = grillCycleForWeek(weekStart);
   return {
@@ -165,9 +205,10 @@ export function normalizeQuantities(quantities = {}, options = {}) {
   }));
 }
 
-export function buildOrderRecord({ cafe, weekStart, quantities, grill, now = new Date() }) {
+export function buildOrderRecord({ cafe, weekStart, quantities, grill, deli, now = new Date() }) {
   const normalized = normalizeQuantities(quantities);
   const normalizedGrill = normalizeGrillOrder(grill, weekStart, cafe);
+  const normalizedDeli = normalizeDeliOrder(deli, weekStart, cafe);
   return {
     "Record ID": `commissaryOrder|${cafe.toLowerCase()}|${weekStart}`,
     "Record Type": "Commissary Order",
@@ -182,12 +223,13 @@ export function buildOrderRecord({ cafe, weekStart, quantities, grill, now = new
     orderUnitVersion: COMMISSARY_ORDER_UNIT_VERSION,
     quantities: normalized,
     grill: normalizedGrill,
+    deli: normalizedDeli,
     updatedAt: now.toISOString(),
   };
 }
 
 export function normalizePrepCompleted(completed = {}) {
-  const allowedPrepIds = new Set([...COMMISSARY_ITEM_BY_ID.keys(), ...GRILL_LTO_PREP_ITEM_IDS]);
+  const allowedPrepIds = new Set([...COMMISSARY_ITEM_BY_ID.keys(), ...GRILL_LTO_PREP_ITEM_IDS, ...DELI_ORDERING_PREP_ITEM_IDS]);
   return Object.fromEntries(DELIVERY_KEYS.map((delivery) => [
     delivery,
     [...new Set(Array.isArray(completed?.[delivery]) ? completed[delivery] : [])]
@@ -210,14 +252,14 @@ export function buildPrepProgressRecord({ weekStart, completed, now = new Date()
 
 export function togglePrepCompleted(completed, delivery, itemId) {
   const normalized = normalizePrepCompleted(completed);
-  if (!DELIVERY_KEYS.includes(delivery) || (!COMMISSARY_ITEM_BY_ID.has(itemId) && !GRILL_LTO_PREP_ITEM_IDS.includes(itemId))) return normalized;
+  if (!DELIVERY_KEYS.includes(delivery) || (!COMMISSARY_ITEM_BY_ID.has(itemId) && !GRILL_LTO_PREP_ITEM_IDS.includes(itemId) && !DELI_ORDERING_PREP_ITEM_IDS.includes(itemId))) return normalized;
   const current = new Set(normalized[delivery]);
   if (current.has(itemId)) current.delete(itemId);
   else current.add(itemId);
   return { ...normalized, [delivery]: [...current] };
 }
 
-export function orderValue(quantities = {}, grill = {}) {
+export function orderValue(quantities = {}, grill = {}, deli = {}) {
   const normalized = normalizeQuantities(quantities);
   const saladValue = COMMISSARY_ORDER_ITEMS.reduce((sum, row) => {
     const delivery = normalized[row.id];
@@ -228,7 +270,12 @@ export function orderValue(quantities = {}, grill = {}) {
     const count = DELIVERY_KEYS.reduce((total, delivery) => total + wholeQuantity(grill?.quantities?.[setKey]?.[delivery]), 0);
     return sum + (Number.isFinite(Number(item?.itemWasteCost)) ? Number(item.itemWasteCost) * count : 0);
   }, 0);
-  return saladValue + grillValue;
+  const deliValue = Object.entries(deli?.quantities || {}).reduce((sum, [mrn, values]) => {
+    const item = deli?.items?.[mrn];
+    const count = DELIVERY_KEYS.reduce((total, delivery) => total + wholeQuantity(values?.[delivery]), 0);
+    return sum + (Number(item?.itemWasteCost) > 0 ? Number(item.itemWasteCost) * count : 0);
+  }, 0);
+  return saladValue + grillValue + deliValue;
 }
 
 export function rolledUpItems(records = []) {
@@ -283,10 +330,41 @@ export function grillPrepLinesForCafe(record = {}) {
   })).filter(({ quantity }) => quantity > 0)));
 }
 
+export function deliOrderLinesForCafe(record = {}) {
+  const deli = normalizeDeliOrder(record.deli, record.weekStart, record.cafe);
+  return Object.entries(deli.quantities).map(([mrn, values]) => {
+    const item = deli.items[mrn];
+    if (!item) return null;
+    return {
+      id: `deli-core|${mrn}`,
+      menu: DELI_ORDERING_PROGRAM.menu,
+      name: item.item,
+      mrn,
+      portion: item.portion,
+      orderUnit: DELI_ORDERING_PROGRAM.orderUnit,
+      orderUnitCost: item.itemWasteCost,
+      ...values,
+      total: DELIVERY_KEYS.reduce((sum, delivery) => sum + values[delivery], 0),
+    };
+  }).filter((line) => line && line.total > 0);
+}
+
+export function deliPrepLinesForCafe(record = {}) {
+  return deliOrderLinesForCafe(record).flatMap((line) => (DELI_ORDERING_PROGRAM.itemPrepComponents[line.mrn] || []).flatMap((component) => DELIVERY_KEYS.map((delivery) => ({
+    ...component,
+    category: component.type === "subrecipe" ? "Deli sub-recipe" : "Deli ingredient",
+    orderUnit: component.unit,
+    cafe: record.cafe,
+    finishedDish: line.name,
+    delivery,
+    quantity: Number((component.quantity * line[delivery]).toFixed(4)),
+  })).filter(({ quantity }) => quantity > 0)));
+}
+
 export function rolledUpPrepItems(records = []) {
   const salad = rolledUpItems(records);
   const grillMap = new Map();
-  records.flatMap(grillPrepLinesForCafe).forEach((line) => {
+  records.flatMap((record) => [...grillPrepLinesForCafe(record), ...deliPrepLinesForCafe(record)]).forEach((line) => {
     const key = line.id;
     const current = grillMap.get(key) || {
       id: key,

@@ -6,8 +6,9 @@ import {
   normalizeBackboneRows,
 } from "../../src/integrations/storage/backboneRecords.js";
 import { isApprovedCommissaryMetadataRecord } from "../../src/features/commissary-ordering/commissaryMetadata.js";
-import { COMMISSARY_GRILL_ORDER_VERSION, COMMISSARY_ORDER_UNIT_VERSION, DELIVERY_KEYS, grillCycleForWeek, isGrillEligibleCafe, isWeekLocked } from "../../src/features/commissary-ordering/commissaryModel.js";
+import { COMMISSARY_DELI_ORDER_VERSION, COMMISSARY_GRILL_ORDER_VERSION, COMMISSARY_ORDER_UNIT_VERSION, DELIVERY_KEYS, deliCycleForWeek, grillCycleForWeek, isDeliEligibleCafe, isGrillEligibleCafe, isWeekLocked } from "../../src/features/commissary-ordering/commissaryModel.js";
 import { GRILL_LTO_PREP_ITEM_IDS } from "../../src/features/commissary-ordering/grillLtoCatalog.js";
+import { DELI_ORDERING_PREP_ITEM_IDS } from "../../src/features/commissary-ordering/deliCycleCatalog.js";
 import { DEFAULT_OPERATIONAL_METADATA, isApprovedOperationalMetadataRecord, OPERATIONAL_METADATA_RECORD_ID } from "../../src/shared/operationalMetadata.js";
 import { gzipSync, gunzipSync } from "node:zlib";
 
@@ -87,7 +88,7 @@ function transferWriteValidation(records = [], context = {}) {
 
 const COMMISSARY_CAFES = new Set(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.receivingCafes.map(({ name }) => name));
 const COMMISSARY_ITEM_IDS = new Set(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.orderItems.map(({ id }) => id));
-const COMMISSARY_PREP_IDS = new Set([...COMMISSARY_ITEM_IDS, ...GRILL_LTO_PREP_ITEM_IDS]);
+const COMMISSARY_PREP_IDS = new Set([...COMMISSARY_ITEM_IDS, ...GRILL_LTO_PREP_ITEM_IDS, ...DELI_ORDERING_PREP_ITEM_IDS]);
 
 export function commissaryWriteValidation(records = [], context = {}) {
   if (getBackboneToolFromContext(context) !== "commissaryOrders") return "";
@@ -133,6 +134,19 @@ export function commissaryWriteValidation(records = [], context = {}) {
       if (!item || String(item.mrn) !== selected || !item.item || !(Number(item.itemWasteCost) > 0)) return `The Grill LTO Set ${setKey} cost snapshot is invalid.`;
       const delivery = record.grill?.quantities?.[setKey];
       if (!delivery || DELIVERY_KEYS.some((key) => !Number.isInteger(Number(delivery[key] ?? 0)) || Number(delivery[key] ?? 0) < 0)) return "Grill LTO quantities must be zero or positive whole sandwiches.";
+    }
+  }
+  const deliCycle = deliCycleForWeek(record.weekStart);
+  if (deliCycle && isDeliEligibleCafe(record.cafe)) {
+    if (Number(record.deli?.version) !== COMMISSARY_DELI_ORDER_VERSION || Number(record.deli?.cycleWeek) !== deliCycle.week) return "The Deli Core cycle is invalid.";
+    const allowed = new Set(deliCycle.items.map(({ mrn }) => mrn));
+    if (Object.keys(record.deli?.quantities || {}).some((mrn) => !allowed.has(mrn))) return "The Deli order contains an item outside the current cycle.";
+    for (const { mrn } of deliCycle.items) {
+      const delivery = record.deli?.quantities?.[mrn];
+      if (!delivery || DELIVERY_KEYS.some((key) => !Number.isInteger(Number(delivery[key] ?? 0)) || Number(delivery[key] ?? 0) < 0)) return "Deli quantities must be zero or positive whole sandwiches.";
+      const count = DELIVERY_KEYS.reduce((sum, key) => sum + Number(delivery[key] || 0), 0);
+      const item = record.deli?.items?.[mrn];
+      if (count > 0 && (!item || String(item.mrn) !== mrn || !item.item || !(Number(item.itemWasteCost) > 0))) return `The Deli cost snapshot for MRN ${mrn} is invalid.`;
     }
   }
   if (isWeekLocked(record.weekStart, new Date())) return "This order is locked. Please contact commissary executive chef to adjust pars.";

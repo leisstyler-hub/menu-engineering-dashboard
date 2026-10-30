@@ -5,6 +5,7 @@ import { addDays, buildOrderRecord, emptyQuantities, firstOpenWeek } from "../..
 import { COMMISSARY_ORDER_ITEMS } from "../../src/features/commissary-ordering/commissaryCatalog.js";
 import { buildCommissaryMetadataRecord } from "../../src/features/commissary-ordering/commissaryMetadata.js";
 import { GRILL_LTO_PROGRAM } from "../../src/features/commissary-ordering/grillLtoCatalog.js";
+import { DELI_ORDERING_PROGRAM } from "../../src/features/commissary-ordering/deliCycleCatalog.js";
 import { collectUnexpectedPageErrors, expectNoAppProtection, expectNoUnexpectedPageErrors, openTool } from "./smoke-helpers.js";
 
 async function mockOrders(page, records = []) {
@@ -16,7 +17,14 @@ async function mockOrders(page, records = []) {
     portion: "1 sandwich",
     trueCost: Number((3 + index / 10).toFixed(4)),
   }])).values()];
-  await page.route("**/api/recipe-library?scope=all", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, source: "supabase-recipe-items", rows: grillItems }) }));
+  const deliItems = [...new Map(DELI_ORDERING_PROGRAM.cycleWeeks.flatMap((week) => week.items).map((item, index) => [item.mrn, {
+    menu: DELI_ORDERING_PROGRAM.menu,
+    item: item.name,
+    mrn: item.mrn,
+    portion: "1 sandwich",
+    trueCost: Number((2.5 + index / 10).toFixed(4)),
+  }])).values()];
+  await page.route("**/api/recipe-library?scope=all", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, source: "supabase-recipe-items", rows: [...grillItems, ...deliItems] }) }));
   await page.route("**/api/storage/records**", async (route) => {
     if (route.request().method() === "GET") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, records }) });
     writes.push(route.request().postDataJSON());
@@ -202,6 +210,12 @@ test("Grill LTO starts Cycle Week 1 on November 16 with Set A and Set B whole-sa
   await page.getByLabel("Set A Friday delivery sandwich quantity").fill("10");
   await page.getByLabel("Set A Monday delivery sandwich quantity").fill("20");
   await page.getByLabel("Set B Wednesday delivery sandwich quantity").fill("15");
+  const deli = page.getByTestId("commissary-deli-order");
+  await expect(deli.getByText(/Cycle Week 1/i)).toBeVisible();
+  await expect(deli.locator("section")).toHaveCount(5);
+  await expect(deli).toContainText("Mediterranean Turkey Wrap");
+  await expect(deli).not.toContainText("Shrimp Avocado Corn Wrap");
+  await page.getByLabel("Mediterranean Turkey Wrap Monday delivery sandwich quantity").fill("12");
   await page.getByRole("button", { name: /save shared order/i }).click();
   await expect(page.getByText(/Nessie's order.*was saved/i)).toBeVisible();
   expect(writes).toHaveLength(1);
@@ -209,6 +223,8 @@ test("Grill LTO starts Cycle Week 1 on November 16 with Set A and Set B whole-sa
   expect(writes[0].records[0].grill.selections).toEqual({ A: "77139.72", B: "77139.68" });
   expect(writes[0].records[0].grill.quantities.A).toEqual({ friday: 10, monday: 20, wednesday: 0 });
   expect(writes[0].records[0].grill.quantities.B).toEqual({ friday: 0, monday: 0, wednesday: 15 });
+  expect(writes[0].records[0].deli.cycleWeek).toBe(1);
+  expect(writes[0].records[0].deli.quantities["190990"]).toEqual({ friday: 0, monday: 12, wednesday: 0 });
 
   const prepDownload = page.waitForEvent("download");
   await page.getByRole("button", { name: /generate prep list/i }).click();
@@ -217,6 +233,7 @@ test("Grill LTO starts Cycle Week 1 on November 16 with Set A and Set B whole-sa
   expect(prepRows).toContainEqual(expect.arrayContaining(["AMZ: Smashburger Patty", expect.any(Number), "each"]));
   const mondayRows = XLSX.utils.sheet_to_json(workbook.Sheets["Monday Delivery Map"], { header: 1, defval: "" });
   expect(mondayRows).toContainEqual(expect.arrayContaining(["Nessie", "AMZ: Smashburger Patty", "147955.16", 20, "each", expect.stringContaining("ATX Burger")]));
+  expect(mondayRows).toContainEqual(expect.arrayContaining(["Nessie", "Turkey, Breast, Deli, Smoked, Butterball", "", 48, "ounce", expect.stringContaining("Mediterranean Turkey Wrap")]));
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
