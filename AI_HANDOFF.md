@@ -1,6 +1,6 @@
 ## SSMT Turkey protein - 2026-10-30
 
-Candidate 2026.10.30.004-ssmt-turkey-protein adds TUR / Turkey to the shared generator classification list. Tyler request e25180f0a260abd73487f5ce858a92a18a1e2c494b71cbc607ee0695c878706f authorizes this ordinary app fix. Owner Chief, branch chief/ssmt-turkey-protein, baseline f9b3cc0. Existing saved data is unchanged. Isolated browser regression reproduced the absent TUR option before the fix; verification and production state are recorded in docs/ssmt/TURKEY_PROTEIN_2026_10_30.md. Rollback: scoped revert of this release. Solo delivery and self-review.
+LIVE 2026.10.30.004-ssmt-turkey-protein (app a7e578f; Vercel READY dpl_FtECcTzQcmGBnzqYJCBs49MX2Nre; full verify, 20/20 local and 20/20 production isolated browser checks passed) adds TUR / Turkey to the shared generator classification list. Tyler request e25180f0a260abd73487f5ce858a92a18a1e2c494b71cbc607ee0695c878706f authorizes this ordinary app fix. Owner Chief, branch chief/ssmt-turkey-protein, baseline f9b3cc0. Existing saved data is unchanged. Isolated browser regression reproduced the absent TUR option before the fix; verification and production state are recorded in docs/ssmt/TURKEY_PROTEIN_2026_10_30.md. Rollback: scoped revert of this release. Solo delivery and self-review.
 
 ## Commissary Global ordering cycle - 2026-10-30
 
