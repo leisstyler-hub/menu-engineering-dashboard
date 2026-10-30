@@ -7,9 +7,10 @@ import {
 } from "../features/commissary-ordering/commissaryCatalog.js";
 import { DEFAULT_COMMISSARY_METADATA } from "../features/commissary-ordering/commissaryMetadata.js";
 import { GRILL_LTO_PROGRAM } from "../features/commissary-ordering/grillLtoCatalog.js";
+import { DELI_CORE_SELECTED_CATALOG } from "../features/commissary-ordering/deliCoreCatalog.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 4;
+export const OPERATIONAL_METADATA_VERSION = 5;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -43,6 +44,7 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
     orderUnitVersion: 2,
     quantityIncrement: 0.25,
     grillProgram: GRILL_LTO_PROGRAM,
+    deliCatalog: DELI_CORE_SELECTED_CATALOG,
     grillInterface: Object.freeze({
       density: "compact",
       contentPolicy: "complete",

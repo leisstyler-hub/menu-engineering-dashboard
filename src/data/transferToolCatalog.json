@@ -4737,7 +4737,7 @@
       "item": "Banh Mi Ham Sandwich",
       "mrn": "37394.7",
       "portion": "1 sandwich",
-      "itemWasteCost": 3.078
+      "itemWasteCost": 3.0518
     },
     {
       "id": "amz: deli core|blackend shrimp po boy|77597.9|1 each",
@@ -4753,7 +4753,7 @@
       "item": "Buffalo Chicken Wrap",
       "mrn": "9282.7",
       "portion": "1 each",
-      "itemWasteCost": 3.006
+      "itemWasteCost": 3.084
     },
     {
       "id": "amz: deli core|cajun turkey|76682.6|1 sandwich",
@@ -4769,7 +4769,7 @@
       "item": "Caprese Chicken on Telera",
       "mrn": "104208.27",
       "portion": "1 each",
-      "itemWasteCost": 3.037
+      "itemWasteCost": 3.1073
     },
     {
       "id": "amz: deli core|charred eggplant, shaved parmesan, arugula, smoky romesco on rustico ciabatta|134036.4|1 sandwich",
@@ -4777,7 +4777,7 @@
       "item": "Charred Eggplant, Shaved Parmesan, Arugula, Smoky Romesco on Rustico Ciabatta",
       "mrn": "134036.4",
       "portion": "1 sandwich",
-      "itemWasteCost": 1.3
+      "itemWasteCost": 1.2989
     },
     {
       "id": "amz: deli core|chicken artichoke pesto sandwich|37007.1|1 sandwich",
@@ -4785,7 +4785,7 @@
       "item": "Chicken Artichoke Pesto Sandwich",
       "mrn": "37007.1",
       "portion": "1 sandwich",
-      "itemWasteCost": 2.766
+      "itemWasteCost": 2.8956
     },
     {
       "id": "amz: deli core|chicken caesar wrap|37311.43|1 wrap",
@@ -4793,7 +4793,7 @@
       "item": "Chicken Caesar Wrap",
       "mrn": "37311.43",
       "portion": "1 wrap",
-      "itemWasteCost": 4.139
+      "itemWasteCost": 4.5852
     },
     {
       "id": "amz: deli core|chimichurri steak sandwich|105146.3|1 sandwich",
@@ -4833,7 +4833,7 @@
       "item": "Green California Crunch Sandwich",
       "mrn": "142803",
       "portion": "1 sandwich",
-      "itemWasteCost": 3.723
+      "itemWasteCost": 3.7141
     },
     {
       "id": "amz: deli core|italian grinder|76623.4|1 sandwich",
@@ -4841,7 +4841,7 @@
       "item": "Italian Grinder",
       "mrn": "76623.4",
       "portion": "1 sandwich",
-      "itemWasteCost": 4.306
+      "itemWasteCost": 4.4738
     },
     {
       "id": "amz: deli core|mediterranean falafel wrap|102969|1 serving(s)",
@@ -4857,7 +4857,7 @@
       "item": "Mediterranean Sandwich",
       "mrn": "174951",
       "portion": "1 sandwich",
-      "itemWasteCost": 2.777
+      "itemWasteCost": 2.7876
     },
     {
       "id": "amz: deli core|mediterranean turkey wrap|190990|1 wrap",
@@ -4865,7 +4865,7 @@
       "item": "Mediterranean Turkey Wrap",
       "mrn": "190990",
       "portion": "1 wrap",
-      "itemWasteCost": 2.995
+      "itemWasteCost": 3.1242
     },
     {
       "id": "amz: deli core|muffaletta|144636|1 sandwich",
@@ -4873,7 +4873,7 @@
       "item": "Muffaletta",
       "mrn": "144636",
       "portion": "1 sandwich",
-      "itemWasteCost": 2.517
+      "itemWasteCost": 2.5305
     },
     {
       "id": "amz: deli core|philly cheesesteak|63749.12|1 sandwich",
@@ -4889,7 +4889,7 @@
       "item": "Portobello Provolone Wrap",
       "mrn": "16392",
       "portion": "1 each",
-      "itemWasteCost": 2.475
+      "itemWasteCost": 2.6653
     },
     {
       "id": "amz: deli core|portobello reuben|38489.4|1 each",
@@ -4905,7 +4905,7 @@
       "item": "Roast Beef and Cheddar Sandwich",
       "mrn": "34303.46",
       "portion": "1 sandwich",
-      "itemWasteCost": 3.37
+      "itemWasteCost": 3.3985
     },
     {
       "id": "amz: deli core|roast beef florentine sandwich|37154.1|1 sandwich",
@@ -4913,7 +4913,7 @@
       "item": "Roast Beef Florentine Sandwich",
       "mrn": "37154.1",
       "portion": "1 sandwich",
-      "itemWasteCost": 3.037
+      "itemWasteCost": 3.0254
     },
     {
       "id": "amz: deli core|roast beef sandwich, muenster, horseradish cream, onion roll|136164.1|1 sandwich",
@@ -4945,7 +4945,7 @@
       "item": "Shrimp Salad Sandwich",
       "mrn": "129693.5",
       "portion": "1 each",
-      "itemWasteCost": 2.246
+      "itemWasteCost": 2.3503
     },
     {
       "id": "amz: deli core|southwest chipotle steak sandwich|16992|1 sandwich",
@@ -4961,7 +4961,7 @@
       "item": "Southwest Grilled Chicken Wrap",
       "mrn": "85656.3",
       "portion": "1 each",
-      "itemWasteCost": 2.818
+      "itemWasteCost": 2.8013
     },
     {
       "id": "amz: deli core|thai eggplant sub|195115|1 each",
@@ -5001,7 +5001,7 @@
       "item": "Turkey Apple Brie Sandwich",
       "mrn": "37001.21",
       "portion": "1 sandwich",
-      "itemWasteCost": 2.569
+      "itemWasteCost": 2.7783
     },
     {
       "id": "amz: deli core|turkey avocado club|148838.3|1 sandwich",
@@ -5009,7 +5009,7 @@
       "item": "Turkey Avocado Club",
       "mrn": "148838.3",
       "portion": "1 sandwich",
-      "itemWasteCost": 4.316
+      "itemWasteCost": 4.4165
     },
     {
       "id": "amz: deli core|turkey bacon and brie croissant|135023|1 sandwich",
@@ -5033,7 +5033,7 @@
       "item": "Tuscan Vegetable Sandwich",
       "mrn": "108987",
       "portion": "1 sandwich",
-      "itemWasteCost": 2.153
+      "itemWasteCost": 2.2925
     },
     {
       "id": "amz: deli core|vegetable cuban style hoagie|32415.12|1 sandwich",
@@ -5049,7 +5049,7 @@
       "item": "Waldorf Chicken Salad Croissant",
       "mrn": "161945",
       "portion": "1 serving(s)",
-      "itemWasteCost": 3.037
+      "itemWasteCost": 3.1567
     },
     {
       "id": "amz: fish market|baja grilled fish taco|84484.1|2 each",

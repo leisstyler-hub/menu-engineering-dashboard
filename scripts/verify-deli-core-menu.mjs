@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { recipeLibraryItemKey } from "../src/features/recipe-database/recipeLibraryModel.js";
+import { DELI_CORE_SELECTED_CATALOG } from "../src/features/commissary-ordering/deliCoreCatalog.js";
 import recipeLibraryHandler from "../api/recipe-library.js";
 
 const menuItems = JSON.parse(readFileSync("src/data/menuItems.json", "utf8"));
@@ -7,6 +8,7 @@ const transferCatalog = JSON.parse(readFileSync("src/data/transferToolCatalog.js
 const rawArchive = JSON.parse(readFileSync("public/data/deli-core-raw-2026-09-30.json", "utf8"));
 const menu = "AMZ: Deli Core";
 const omitted = new Set(["134362.15", "141826"]);
+const refreshedMrns = new Set(DELI_CORE_SELECTED_CATALOG.items.map(({ mrn }) => mrn));
 
 function fail(message) {
   console.error(message);
@@ -25,6 +27,13 @@ if (rows.filter((row) => row.station === "Curated Sandwiches").length !== 27) fa
 if (rows.filter((row) => row.station === "Regional Spotlights - Deli").length !== 14) fail("Regional Spotlights - Deli count must be 14.");
 if (rows.some((row) => row.category !== "entree")) fail("Deli Core sandwich rows must remain entree selections.");
 if (rows.find((row) => row.mrn === "105146.3")?.primaryDescriptionSource !== "ssmt-reference:CAFE EXPRESS") fail("Chimichurri Steak must use its exact-MRN CAFE EXPRESS SSMT fallback.");
+if (refreshedMrns.size !== 20) fail("The selected Deli refresh must contain 20 unique exact MRNs.");
+if (rows.filter((row) => refreshedMrns.has(row.mrn)).length !== 20) fail("Every selected Deli refresh MRN must remain in the shared menu.");
+if (rows.filter((row) => refreshedMrns.has(row.mrn)).some((row) => row.sourceDataVersion !== "deli-core-selected-refresh-2026-10-29")) fail("Selected Deli rows must carry the reviewed refresh provenance.");
+if (rows.filter((row) => refreshedMrns.has(row.mrn)).some((row) => !row.recipeEvidence?.exactMrn || !Number.isInteger(row.recipeEvidence?.page))) fail("Selected Deli rows must carry exact-MRN recipe-page evidence.");
+if (rows.filter((row) => refreshedMrns.has(row.mrn)).some((row) => !(row.itemCost > 0) || !(row.trueCost > row.itemCost) || !(row.price > 0))) fail("Selected Deli rows must carry positive item, waste-inclusive and sell-price values.");
+if (Math.abs(rows.find((row) => row.mrn === "37311.43")?.trueCost - 4.585226) > 0.000001) fail("Chicken Caesar Wrap must use the reviewed Item + Waste Cost.");
+if (Math.abs(rows.find((row) => row.mrn === "134036.4")?.trueCost - 1.298942) > 0.000001) fail("Charred Eggplant Ciabatta must use the reviewed Item + Waste Cost.");
 
 const catalogRows = transferCatalog.items.filter((row) => row.menu === menu);
 if (catalogRows.length !== 41) fail(`Transfer Tool expected 41 ${menu} rows, found ${catalogRows.length}.`);
