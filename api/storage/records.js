@@ -6,10 +6,11 @@ import {
   normalizeBackboneRows,
 } from "../../src/integrations/storage/backboneRecords.js";
 import { isApprovedCommissaryMetadataRecord } from "../../src/features/commissary-ordering/commissaryMetadata.js";
-import { COMMISSARY_DELI_ORDER_VERSION, COMMISSARY_GLOBAL_ORDER_VERSION, COMMISSARY_GRILL_ORDER_VERSION, COMMISSARY_ORDER_UNIT_VERSION, COMMISSARY_PACKOUT_PACKET_VERSION, COMMISSARY_STATION_ORDER, DELIVERY_KEYS, deliCycleForWeek, deliveryDateForWeek, globalCycleForWeek, grillCycleForWeek, isDeliEligibleCafe, isGlobalEligibleCafe, isGrillEligibleCafe, isWeekLocked } from "../../src/features/commissary-ordering/commissaryModel.js";
+import { COMMISSARY_BREAKFAST_ORDER_VERSION, COMMISSARY_DELI_ORDER_VERSION, COMMISSARY_GLOBAL_ORDER_VERSION, COMMISSARY_GRILL_ORDER_VERSION, COMMISSARY_ORDER_UNIT_VERSION, COMMISSARY_PACKOUT_PACKET_VERSION, COMMISSARY_STATION_ORDER, DELIVERY_KEYS, deliCycleForWeek, deliveryDateForWeek, globalCycleForWeek, grillCycleForWeek, isBreakfastEligibleCafe, isDeliEligibleCafe, isGlobalEligibleCafe, isGrillEligibleCafe, isWeekLocked } from "../../src/features/commissary-ordering/commissaryModel.js";
 import { GRILL_LTO_PREP_ITEM_IDS } from "../../src/features/commissary-ordering/grillLtoCatalog.js";
 import { DELI_ORDERING_PREP_ITEM_IDS } from "../../src/features/commissary-ordering/deliCycleCatalog.js";
 import { GLOBAL_ORDERING_PREP_ITEM_IDS } from "../../src/features/commissary-ordering/globalCycleCatalog.js";
+import { BREAKFAST_ORDERING_ITEM_IDS, BREAKFAST_ORDERING_PREP_ITEM_IDS, BREAKFAST_ORDERING_PROGRAM } from "../../src/features/commissary-ordering/breakfastCatalog.js";
 import { COMMISSARY_HUBS, COMMISSARY_STATIONS, isCafeStationEnabled } from "../../src/features/commissary-ordering/commissaryRouting.js";
 import { DEFAULT_OPERATIONAL_METADATA, isApprovedOperationalMetadataRecord, OPERATIONAL_METADATA_RECORD_ID } from "../../src/shared/operationalMetadata.js";
 import { gzipSync, gunzipSync } from "node:zlib";
@@ -90,7 +91,7 @@ function transferWriteValidation(records = [], context = {}) {
 
 const COMMISSARY_CAFES = new Set(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.receivingCafes.map(({ name }) => name));
 const COMMISSARY_ITEM_IDS = new Set(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.orderItems.map(({ id }) => id));
-const COMMISSARY_PREP_IDS = new Set([...COMMISSARY_ITEM_IDS, ...GRILL_LTO_PREP_ITEM_IDS, ...DELI_ORDERING_PREP_ITEM_IDS, ...GLOBAL_ORDERING_PREP_ITEM_IDS]);
+const COMMISSARY_PREP_IDS = new Set([...COMMISSARY_ITEM_IDS, ...GRILL_LTO_PREP_ITEM_IDS, ...DELI_ORDERING_PREP_ITEM_IDS, ...GLOBAL_ORDERING_PREP_ITEM_IDS, ...BREAKFAST_ORDERING_PREP_ITEM_IDS]);
 
 export function commissaryWriteValidation(records = [], context = {}) {
   if (getBackboneToolFromContext(context) !== "commissaryOrders") return "";
@@ -220,6 +221,26 @@ export function commissaryWriteValidation(records = [], context = {}) {
     }
   } else if (Object.values(record.global?.quantities || {}).some((delivery) => DELIVERY_KEYS.some((key) => Number(delivery?.[key] || 0) > 0))) {
     return "Global ordering is not enabled for this cafe.";
+  }
+  const breakfastIds = new Set(BREAKFAST_ORDERING_ITEM_IDS);
+  if (isBreakfastEligibleCafe(record.cafe)) {
+    if (Number(record.breakfast?.version) !== COMMISSARY_BREAKFAST_ORDER_VERSION) return "The Breakfast order version is invalid.";
+    const selections = record.breakfast?.selections;
+    if (!Array.isArray(selections) || new Set(selections).size !== selections.length || selections.some((id) => !breakfastIds.has(id))) return "The Breakfast selections are invalid.";
+    const selected = new Set(selections);
+    if (Object.keys(record.breakfast?.quantities || {}).some((id) => !breakfastIds.has(id))) return "The Breakfast order contains an unknown item.";
+    for (const option of BREAKFAST_ORDERING_PROGRAM.items) {
+      const delivery = record.breakfast?.quantities?.[option.id];
+      if (!delivery || DELIVERY_KEYS.some((key) => !Number.isInteger(Number(delivery[key] ?? 0)) || Number(delivery[key] ?? 0) < 0)) return "Breakfast quantities must be zero or positive whole items.";
+      const count = DELIVERY_KEYS.reduce((sum, key) => sum + Number(delivery[key] || 0), 0);
+      if (count > 0 && !selected.has(option.id)) return "Breakfast quantities require a selected item.";
+      const item = record.breakfast?.items?.[option.id];
+      if (count > 0 && (!item || item.id !== option.id || item.menu !== BREAKFAST_ORDERING_PROGRAM.menu || String(item.mrn) !== option.mrn || item.portion !== option.portion || !(Number(item.itemWasteCost) > 0))) {
+        return `The Breakfast cost snapshot for MRN ${option.mrn} is invalid.`;
+      }
+    }
+  } else if (Object.values(record.breakfast?.quantities || {}).some((delivery) => DELIVERY_KEYS.some((key) => Number(delivery?.[key] || 0) > 0))) {
+    return "Breakfast ordering is not enabled for this cafe.";
   }
   if (isWeekLocked(record.weekStart, new Date())) return "This order is locked. Please contact commissary executive chef to adjust pars.";
   return "";

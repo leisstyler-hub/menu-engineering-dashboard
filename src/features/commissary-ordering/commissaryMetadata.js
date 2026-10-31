@@ -1,10 +1,10 @@
 export const COMMISSARY_METADATA_RECORD_ID = "commissaryOrder|metadata|current";
-export const COMMISSARY_METADATA_VERSION = 2;
+export const COMMISSARY_METADATA_VERSION = 3;
 
 const RECEIVING_CAFES = Object.freeze([
-  Object.freeze({ name: "Nessie", displayName: "SEA39 Nessie Cafe", profitCenter: "30159" }),
-  Object.freeze({ name: "Cricket", displayName: "SEA20 Cricket Cafe", profitCenter: "22472" }),
-  Object.freeze({ name: "Dawson", displayName: "SEA27 Dawson Cafe", profitCenter: "28675" }),
+  Object.freeze({ name: "Nessie", displayName: "Nessie", profitCenter: "30159" }),
+  Object.freeze({ name: "Cricket", displayName: "Cricket", profitCenter: "22472" }),
+  Object.freeze({ name: "Dawson", displayName: "Dawson", profitCenter: "28675" }),
   Object.freeze({ name: "Sonic", displayName: "Sonic", profitCenter: "62102" }),
   Object.freeze({ name: "Blueshift", displayName: "Blueshift", profitCenter: "56746" }),
   Object.freeze({ name: "Bingo", displayName: "Bingo", profitCenter: "53170" }),
@@ -15,6 +15,13 @@ const RECEIVING_CAFES = Object.freeze([
   Object.freeze({ name: "Astra", displayName: "Astra", profitCenter: "62844" }),
   Object.freeze({ name: "Eclipse", displayName: "Eclipse", profitCenter: "62100" }),
   Object.freeze({ name: "Odyssey", displayName: "Odyssey", profitCenter: "54245" }),
+  Object.freeze({ name: "Doppler", displayName: "Doppler", profitCenter: "30786" }),
+  Object.freeze({ name: "Day 1", displayName: "Day 1", profitCenter: "30871" }),
+  Object.freeze({ name: "Nitro", displayName: "Nitro", profitCenter: "51641" }),
+  Object.freeze({ name: "Re:Invent", displayName: "Re:Invent", profitCenter: "47622" }),
+  Object.freeze({ name: "Brazil Coffee", displayName: "Brazil Coffee", profitCenter: "30783" }),
+  Object.freeze({ name: "Roxanne Coffee", displayName: "Roxanne Coffee", profitCenter: "28671" }),
+  Object.freeze({ name: "Arizona Coffee", displayName: "Arizona Coffee", profitCenter: "28672" }),
 ]);
 
 const DELIVERIES = Object.freeze([

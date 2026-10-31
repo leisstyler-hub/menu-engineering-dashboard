@@ -11,10 +11,10 @@ assert.equal(isApprovedOperationalMetadataRecord(record), true);
 assert.equal(resolveOperationalMetadata([record]).source, "supabase");
 assert.equal(resolveOperationalMetadata([]).source, "fallback");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.orderItems.length, 41);
-assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 9);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 10);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.grillProgram.anchorWeekStart, "2026-11-16");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.grillProgram.cycleLengthWeeks, 6);
-assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.grillProgram.eligibleCafes, ["Cricket", "Nessie", "Dawson", "Bingo", "Grace", "Blueshift", "Sonic", "Astra"]);
+assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.grillProgram.eligibleCafes, ["Cricket", "Nessie", "Dawson", "Bingo", "Grace", "Blueshift", "Sonic", "Astra", "Day 1", "Nitro", "Re:Invent"]);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.grillInterface, {
   density: "compact",
   contentPolicy: "complete",
@@ -33,13 +33,13 @@ assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.deliCatalog.recipeD
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.deliProgram.anchorWeekStart, "2026-11-16");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.deliProgram.cycleLengthWeeks, 4);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.deliProgram.cycleWeeks.map(({ items }) => items.length), [5, 5, 6, 6]);
-assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.deliProgram.eligibleCafes, ["Cricket", "Nessie", "Dawson", "Blueshift", "Sonic", "Dynamo", "Gemini", "Eclipse", "Odyssey"]);
+assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.deliProgram.eligibleCafes, ["Cricket", "Nessie", "Dawson", "Blueshift", "Sonic", "Dynamo", "Gemini", "Eclipse", "Odyssey", "Doppler", "Day 1", "Re:Invent", "Brazil Coffee", "Roxanne Coffee", "Arizona Coffee"]);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepHubs.map(({ key }) => key), ["Cricket", "Sonic", "Blueshift"]);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.stationAccess.Grace, ["global", "grill"]);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.stationAccess.Dynamo, ["deli"]);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.hubRouting.Cricket.saladBar, ["Cricket", "Nessie", "Dawson"]);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.hubRouting.Sonic.deli, ["Sonic", "Blueshift", "105", "Dynamo", "Gemini", "Eclipse", "Odyssey"]);
-assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.hubRouting.Blueshift.deli, []);
+assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.hubRouting.Blueshift.deli, ["Doppler", "Day 1", "Re:Invent", "Brazil Coffee", "Roxanne Coffee", "Arizona Coffee"]);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globalProgram.anchorWeekStart, "2026-11-16");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globalProgram.cycleLengthWeeks, 6);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globalProgram.cycleWeeks.flatMap(({ menus }) => menus.flatMap(({ items }) => items)).length, 258);
@@ -53,12 +53,14 @@ assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globalInterface
 });
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.packoutPacket.format, "pdf");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.packoutPacket.emailDelivery, false);
-assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.stationOrder, ["Salad Bar", "Deli", "Grill", "Global"]);
+assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.stationOrder, ["Salad Bar", "Breakfast", "Deli", "Grill", "Global"]);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.hubRouting.Cricket.global, ["Cricket", "Nessie", "Dawson"]);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.hubRouting.Sonic.global, []);
-assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.hubRouting.Blueshift.global, ["Bingo", "Grace", "Sonic", "Blueshift", "105", "Everest", "Gemini", "Astra"]);
-assert.equal(DEFAULT_OPERATIONAL_METADATA.transferTool.units.length, 25);
-assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.receivingCafes.length, 13);
+assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.hubRouting.Blueshift.global, ["Bingo", "Grace", "Sonic", "Blueshift", "105", "Everest", "Gemini", "Astra", "Doppler", "Day 1", "Nitro", "Re:Invent"]);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.breakfastProgram.items.length, 27);
+assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.breakfastProgram.eligibleCafes, ["Brazil Coffee", "Roxanne Coffee", "Arizona Coffee"]);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.transferTool.units.length, 27);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.receivingCafes.length, 20);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.departingUnit.profitCenter, "22472");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.transferTool.units.find(({ cafe }) => cafe === "Dawson").profitCenter, "28675");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.transferTool.units.find(({ cafe }) => cafe === "Commissary").profitCenter, "22472");
@@ -76,6 +78,13 @@ const expectedCommissaryProfitCenters = {
   Astra: "62844",
   Eclipse: "62100",
   Odyssey: "54245",
+  Doppler: "30786",
+  "Day 1": "30871",
+  Nitro: "51641",
+  "Re:Invent": "47622",
+  "Brazil Coffee": "30783",
+  "Roxanne Coffee": "28671",
+  "Arizona Coffee": "28672",
 };
 for (const receiver of DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.receivingCafes) {
   assert.equal(receiver.profitCenter, expectedCommissaryProfitCenters[receiver.name]);

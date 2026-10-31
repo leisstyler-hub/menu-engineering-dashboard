@@ -3,6 +3,7 @@ export const COMMISSARY_STATIONS = Object.freeze({
   GRILL: "grill",
   DELI: "deli",
   GLOBAL: "global",
+  BREAKFAST: "breakfast",
 });
 
 export const COMMISSARY_HUBS = Object.freeze([
@@ -28,6 +29,13 @@ export const COMMISSARY_CAFE_STATION_ACCESS = Object.freeze({
   Astra: Object.freeze([COMMISSARY_STATIONS.GLOBAL, COMMISSARY_STATIONS.SALAD_BAR, COMMISSARY_STATIONS.GRILL]),
   Eclipse: Object.freeze([COMMISSARY_STATIONS.DELI]),
   Odyssey: Object.freeze([COMMISSARY_STATIONS.DELI]),
+  Doppler: Object.freeze([COMMISSARY_STATIONS.SALAD_BAR, COMMISSARY_STATIONS.DELI, COMMISSARY_STATIONS.GLOBAL]),
+  "Day 1": ALL_CURRENT_STATIONS,
+  Nitro: Object.freeze([COMMISSARY_STATIONS.SALAD_BAR, COMMISSARY_STATIONS.GRILL, COMMISSARY_STATIONS.GLOBAL]),
+  "Re:Invent": ALL_CURRENT_STATIONS,
+  "Brazil Coffee": Object.freeze([COMMISSARY_STATIONS.BREAKFAST, COMMISSARY_STATIONS.DELI]),
+  "Roxanne Coffee": Object.freeze([COMMISSARY_STATIONS.BREAKFAST, COMMISSARY_STATIONS.DELI]),
+  "Arizona Coffee": Object.freeze([COMMISSARY_STATIONS.BREAKFAST, COMMISSARY_STATIONS.DELI]),
 });
 
 export const COMMISSARY_HUB_ROUTING = Object.freeze({
@@ -36,18 +44,21 @@ export const COMMISSARY_HUB_ROUTING = Object.freeze({
     grill: Object.freeze(["Cricket", "Nessie", "Dawson"]),
     deli: Object.freeze(["Cricket", "Nessie", "Dawson"]),
     global: Object.freeze(["Cricket", "Nessie", "Dawson"]),
+    breakfast: Object.freeze([]),
   }),
   Sonic: Object.freeze({
     saladBar: Object.freeze(["Bingo", "Sonic", "Blueshift", "105", "Everest", "Astra"]),
     grill: Object.freeze(["Bingo", "Grace", "Sonic", "Blueshift", "105", "Astra"]),
     deli: Object.freeze(["Sonic", "Blueshift", "105", "Dynamo", "Gemini", "Eclipse", "Odyssey"]),
     global: Object.freeze([]),
+    breakfast: Object.freeze([]),
   }),
   Blueshift: Object.freeze({
-    saladBar: Object.freeze([]),
-    grill: Object.freeze([]),
-    deli: Object.freeze([]),
-    global: Object.freeze(["Bingo", "Grace", "Sonic", "Blueshift", "105", "Everest", "Gemini", "Astra"]),
+    saladBar: Object.freeze(["Doppler", "Day 1", "Nitro", "Re:Invent"]),
+    grill: Object.freeze(["Day 1", "Nitro", "Re:Invent"]),
+    deli: Object.freeze(["Doppler", "Day 1", "Re:Invent", "Brazil Coffee", "Roxanne Coffee", "Arizona Coffee"]),
+    global: Object.freeze(["Bingo", "Grace", "Sonic", "Blueshift", "105", "Everest", "Gemini", "Astra", "Doppler", "Day 1", "Nitro", "Re:Invent"]),
+    breakfast: Object.freeze(["Brazil Coffee", "Roxanne Coffee", "Arizona Coffee"]),
   }),
 });
 

@@ -173,10 +173,10 @@ export default function PrepListView({ records, weekStart, hub, hubs = [], onHub
               .map(([cafe, quantities]) => `${cafe} ${quantityText(quantities[delivery])}`)
               .join(" · ");
             const programCategory = String(row.category);
-            const isRecipeProgram = /^(?:Grill|Deli|Global)/.test(programCategory);
+            const isRecipeProgram = /^(?:Breakfast|Grill|Deli|Global)/.test(programCategory);
             const itemName = isRecipeProgram ? row.name : (spanish ? commissarySpanishItem(row.name) : row.name);
             const category = isRecipeProgram
-              ? (spanish ? programCategory.replace("Grill", "Parrilla LTO").replace("Deli", "Deli").replace("Global ingredient", "Ingrediente global").replace("Global sub-recipe", "Subreceta global") : programCategory)
+              ? (spanish ? programCategory.replace("Breakfast ingredient", "Ingrediente de desayuno").replace("Breakfast sub-recipe", "Subreceta de desayuno").replace("Grill", "Parrilla LTO").replace("Deli", "Deli").replace("Global ingredient", "Ingrediente global").replace("Global sub-recipe", "Subreceta global") : programCategory)
               : (spanish ? commissarySpanishCategory(row.category) : row.category);
             const unit = compactUnit(row.orderUnit, spanish);
             return (

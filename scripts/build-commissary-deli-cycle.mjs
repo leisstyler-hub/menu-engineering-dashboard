@@ -105,7 +105,7 @@ async function main() {
     menu,
     anchorWeekStart: "2026-11-16",
     cycleLengthWeeks: 4,
-    eligibleCafes: ["Cricket", "Nessie", "Dawson", "Blueshift", "Sonic", "Dynamo", "Gemini", "Eclipse", "Odyssey"],
+    eligibleCafes: ["Cricket", "Nessie", "Dawson", "Blueshift", "Sonic", "Dynamo", "Gemini", "Eclipse", "Odyssey", "Doppler", "Day 1", "Re:Invent", "Brazil Coffee", "Roxanne Coffee", "Arizona Coffee"],
     quantityIncrement: 1,
     orderUnit: "sandwich",
     cycleWeeks,

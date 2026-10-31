@@ -3,6 +3,7 @@ import {
   COMMISSARY_STATION_ORDER,
   DELIVERY_KEYS,
   deliPrepLinesForCafe,
+  breakfastPrepLinesForCafe,
   deliveryDateForWeek,
   formatShortDate,
   globalPrepLinesForCafe,
@@ -49,6 +50,7 @@ function packoutSourceLines(record, delivery) {
     ...deliPrepLinesForCafe(record).filter((line) => line.delivery === delivery),
     ...grillPrepLinesForCafe(record).filter((line) => line.delivery === delivery),
     ...globalPrepLinesForCafe(record).filter((line) => line.delivery === delivery),
+    ...breakfastPrepLinesForCafe(record).filter((line) => line.delivery === delivery),
   ];
 }
 

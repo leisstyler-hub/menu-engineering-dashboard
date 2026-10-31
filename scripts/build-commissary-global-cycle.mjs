@@ -179,7 +179,7 @@ async function main() {
     version: 1,
     anchorWeekStart: "2026-11-16",
     cycleLengthWeeks: 6,
-    eligibleCafes: ["Cricket", "Nessie", "Dawson", "Bingo", "Grace", "Sonic", "Blueshift", "Everest", "Gemini", "Astra"],
+    eligibleCafes: ["Cricket", "Nessie", "Dawson", "Bingo", "Grace", "Sonic", "Blueshift", "Everest", "Gemini", "Astra", "Doppler", "Day 1", "Nitro", "Re:Invent"],
     quantityIncrement: 1,
     orderUnit: "portion",
     extensionsIncluded: false,

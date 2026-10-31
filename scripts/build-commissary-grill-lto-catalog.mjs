@@ -96,7 +96,7 @@ const rendered = `// Generated from public/resources/Ingredient_Costing_9.19.26.
   station: "Spotlights",
   anchorWeekStart: "2026-11-16",
   cycleLengthWeeks: 6,
-  eligibleCafes: ["Cricket", "Nessie", "Dawson", "Bingo", "Grace", "Blueshift", "Sonic", "Astra"],
+  eligibleCafes: ["Cricket", "Nessie", "Dawson", "Bingo", "Grace", "Blueshift", "Sonic", "Astra", "Day 1", "Nitro", "Re:Invent"],
   quantityIncrement: 1,
   orderUnit: "sandwich",
   source: "Supabase recipe_items + Ingredient Costing 9.19.26",

@@ -15,7 +15,10 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
     "Grace",
     "Blueshift",
     "Sonic",
-    "Astra"
+    "Astra",
+    "Day 1",
+    "Nitro",
+    "Re:Invent"
   ],
   "quantityIncrement": 1,
   "orderUnit": "sandwich",

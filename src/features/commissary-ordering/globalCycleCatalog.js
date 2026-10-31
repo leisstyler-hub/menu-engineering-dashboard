@@ -15,7 +15,11 @@ export const GLOBAL_ORDERING_PROGRAM = Object.freeze({
     "Blueshift",
     "Everest",
     "Gemini",
-    "Astra"
+    "Astra",
+    "Doppler",
+    "Day 1",
+    "Nitro",
+    "Re:Invent"
   ],
   "quantityIncrement": 1,
   "orderUnit": "portion",

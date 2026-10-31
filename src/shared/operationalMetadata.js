@@ -10,10 +10,11 @@ import { GRILL_LTO_PROGRAM } from "../features/commissary-ordering/grillLtoCatal
 import { DELI_CORE_SELECTED_CATALOG } from "../features/commissary-ordering/deliCoreCatalog.js";
 import { DELI_ORDERING_PROGRAM } from "../features/commissary-ordering/deliCycleCatalog.js";
 import { GLOBAL_ORDERING_PROGRAM } from "../features/commissary-ordering/globalCycleCatalog.js";
+import { BREAKFAST_ORDERING_PROGRAM } from "../features/commissary-ordering/breakfastCatalog.js";
 import { COMMISSARY_CAFE_STATION_ACCESS, COMMISSARY_HUB_ROUTING, COMMISSARY_HUBS } from "../features/commissary-ordering/commissaryRouting.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 9;
+export const OPERATIONAL_METADATA_VERSION = 10;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -50,6 +51,15 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
     deliCatalog: DELI_CORE_SELECTED_CATALOG,
     deliProgram: DELI_ORDERING_PROGRAM,
     globalProgram: GLOBAL_ORDERING_PROGRAM,
+    breakfastProgram: BREAKFAST_ORDERING_PROGRAM,
+    breakfastInterface: Object.freeze({
+      menu: "AMZ: Breakfast",
+      includedTypes: Object.freeze(["sandwich", "bagel", "burrito"]),
+      excludedTypes: Object.freeze(["plate", "side", "cereal", "taco", "toast", "wrap", "chia", "extension"]),
+      itemSelection: "compact-add-item",
+      deliveryQuantities: "whole-portions",
+      prepProjection: "exact-recipe-components",
+    }),
     globalInterface: Object.freeze({
       menuSelection: "one-per-week",
       entreeSlots: 3,
@@ -67,7 +77,7 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       deliveryControls: "always-visible",
     }),
     prepInterface: Object.freeze({
-      stationOrder: Object.freeze(["Salad Bar", "Deli", "Grill", "Global"]),
+      stationOrder: Object.freeze(["Salad Bar", "Breakfast", "Deli", "Grill", "Global"]),
       stationJumpNavigation: true,
       sauceVolumeDisplay: "cups-quarts-gallons-explicit-volume-units-only",
     }),

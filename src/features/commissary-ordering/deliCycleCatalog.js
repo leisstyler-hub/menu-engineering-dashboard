@@ -15,7 +15,13 @@ export const DELI_ORDERING_PROGRAM = Object.freeze({
     "Dynamo",
     "Gemini",
     "Eclipse",
-    "Odyssey"
+    "Odyssey",
+    "Doppler",
+    "Day 1",
+    "Re:Invent",
+    "Brazil Coffee",
+    "Roxanne Coffee",
+    "Arizona Coffee"
   ],
   "quantityIncrement": 1,
   "orderUnit": "sandwich",
