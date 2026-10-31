@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Languages } from "lucide-react";
 
-import { rolledUpPrepItems, weekLabel } from "./commissaryModel.js";
+import { COMMISSARY_STATION_ORDER, prepDisplayQuantity, rolledUpPrepItems, weekLabel } from "./commissaryModel.js";
 import { DEFAULT_COMMISSARY_METADATA } from "./commissaryMetadata.js";
 import {
   commissarySpanishCategory,
@@ -75,7 +75,11 @@ const compactUnit = (unit, spanish) => {
 export default function PrepListView({ records, weekStart, hub, hubs = [], onHubChange, completed, saving, onToggle, deliveries = DEFAULT_COMMISSARY_METADATA.deliveries }) {
   const [delivery, setDelivery] = useState(() => deliveries[0]?.key || "friday");
   const [spanish, setSpanish] = useState(false);
-  const rows = useMemo(() => rolledUpPrepItems(records, { hub }).filter((row) => Number(row[delivery]) > 0), [delivery, hub, records]);
+  const rows = useMemo(() => rolledUpPrepItems(records, { hub }).map(prepDisplayQuantity).filter((row) => Number(row[delivery]) > 0), [delivery, hub, records]);
+  const stationGroups = useMemo(() => COMMISSARY_STATION_ORDER.flatMap((station) => {
+    const stationRows = rows.filter((row) => row.station === station);
+    return stationRows.length ? [{ station, rows: stationRows }] : [];
+  }), [rows]);
   const completedIds = new Set(completed?.[delivery] || []);
   const completedCount = rows.filter((row) => completedIds.has(row.id)).length;
 
@@ -150,11 +154,19 @@ export default function PrepListView({ records, weekStart, hub, hubs = [], onHub
         <span className="text-slate-500">{text.hold}</span>
       </div>
 
+      {stationGroups.length > 1 && (
+        <nav aria-label="Jump to prep station" className="sticky top-0 z-20 flex gap-2 overflow-x-auto border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur md:px-6">
+          {stationGroups.map(({ station }) => <a key={station} href={`#prep-station-${station.toLowerCase().replace(/\s+/g, "-")}`} className="whitespace-nowrap rounded-full border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-black text-sky-900">{station}</a>)}
+        </nav>
+      )}
+
       {rows.length === 0 ? (
         <p className="p-10 text-center text-lg font-bold text-slate-500">{text.empty}</p>
       ) : (
-        <div className="divide-y divide-slate-200">
-          {rows.map((row) => {
+        <div>
+          {stationGroups.map(({ station, rows: stationRows }) => <section key={station} id={`prep-station-${station.toLowerCase().replace(/\s+/g, "-")}`} className="scroll-mt-24">
+            <div className="border-b border-sky-200 bg-sky-50 px-4 py-3 md:px-6"><p className="text-xs font-black uppercase tracking-[0.16em] text-sky-800">{station}</p></div>
+            <div className="divide-y divide-slate-200">{stationRows.map((row) => {
             const checked = completedIds.has(row.id);
             const cafes = Object.entries(row.cafes)
               .filter(([, quantities]) => Number(quantities[delivery]) > 0)
@@ -186,7 +198,8 @@ export default function PrepListView({ records, weekStart, hub, hubs = [], onHub
                 </div>
               </article>
             );
-          })}
+            })}</div>
+          </section>)}
         </div>
       )}
     </section>

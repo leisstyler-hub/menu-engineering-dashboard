@@ -1,3 +1,7 @@
+## 2026-10-31
+
+- [Oct 31, 7:08 AM] Simplified Global ordering, grouped prep by station, and added Supabase-backed PDF packout packets.
+
 ## 2026-10-30
 
 - [Oct 30, 11:23 AM] Build W&P spreads from menu pillars with culinary monikers, suggested swaps, locks and measured pan quantities.

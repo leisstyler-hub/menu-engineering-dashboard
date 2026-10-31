@@ -13,7 +13,7 @@ import { GLOBAL_ORDERING_PROGRAM } from "../features/commissary-ordering/globalC
 import { COMMISSARY_CAFE_STATION_ACCESS, COMMISSARY_HUB_ROUTING, COMMISSARY_HUBS } from "../features/commissary-ordering/commissaryRouting.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 8;
+export const OPERATIONAL_METADATA_VERSION = 9;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -50,6 +50,13 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
     deliCatalog: DELI_CORE_SELECTED_CATALOG,
     deliProgram: DELI_ORDERING_PROGRAM,
     globalProgram: GLOBAL_ORDERING_PROGRAM,
+    globalInterface: Object.freeze({
+      menuSelection: "one-per-week",
+      entreeSlots: 3,
+      sideSlots: 4,
+      subrecipes: "automatic-from-recipe",
+      deliveryQuantities: "whole-portions",
+    }),
     stationAccess: COMMISSARY_CAFE_STATION_ACCESS,
     prepHubs: COMMISSARY_HUBS,
     hubRouting: COMMISSARY_HUB_ROUTING,
@@ -58,6 +65,19 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       contentPolicy: "complete",
       setLayout: "two-column-desktop",
       deliveryControls: "always-visible",
+    }),
+    prepInterface: Object.freeze({
+      stationOrder: Object.freeze(["Salad Bar", "Deli", "Grill", "Global"]),
+      stationJumpNavigation: true,
+      sauceVolumeDisplay: "cups-quarts-gallons-explicit-volume-units-only",
+    }),
+    packoutPacket: Object.freeze({
+      version: 1,
+      format: "pdf",
+      source: "saved-supabase-commissary-orders",
+      grouping: "cafe-delivery-station",
+      storageRecordType: "Commissary Packout Packet",
+      emailDelivery: false,
     }),
     cutoff: Object.freeze({ dayOffsetFromMonday: -5, hour: 17, timeZone: "America/Los_Angeles" }),
     transferToolContract: Object.freeze({

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { readFile } from "node:fs/promises";
 import XLSX from "xlsx";
 
 import { addDays, buildOrderRecord, emptyQuantities, firstOpenWeek } from "../../src/features/commissary-ordering/commissaryModel.js";
@@ -149,10 +150,9 @@ test("Commissary Ordering Tool requires cafe selection and saves separate delive
   await page.getByLabel(/^Wednesday \d+\/\d+ Sliced Cucumber quantity$/).fill("1");
   await page.getByLabel(/^Monday \d+\/\d+ Frozen Peas quantity$/).fill("1.25");
   const cucumber = COMMISSARY_ORDER_ITEMS.find((row) => row.name === "Sliced Cucumber");
-  const saveButton = page.getByRole("button", { name: /save shared order/i });
+  const saveButton = page.getByRole("button", { name: /^save order$/i });
   const generateButton = page.getByRole("button", { name: /generate transfer/i });
   await expect(generateButton).toBeEnabled();
-  expect((await generateButton.boundingBox()).y).toBeGreaterThan((await saveButton.boundingBox()).y);
   const transferDownload = page.waitForEvent("download");
   await generateButton.click();
   const transferFile = await transferDownload;
@@ -161,7 +161,7 @@ test("Commissary Ordering Tool requires cafe selection and saves separate delive
   const transferRows = XLSX.utils.sheet_to_json(transferWorkbook.Sheets[transferWorkbook.SheetNames[0]], { header: 1, defval: "" });
   expect(transferRows).toContainEqual(expect.arrayContaining(["4111009", "30159", "4111009", expect.stringContaining("Frozen Peas"), 11.35]));
   const bomDownload = page.waitForEvent("download");
-  await page.getByRole("button", { name: /generate prep list/i }).click();
+  await page.getByRole("button", { name: /^prep list$/i }).click();
   const prepListFile = await bomDownload;
   expect(prepListFile.suggestedFilename()).toMatch(/Commissary Prep List.*\.xlsx/);
   const bomWorkbook = XLSX.readFile(await prepListFile.path(), { cellStyles: true });
@@ -185,6 +185,14 @@ test("Commissary Ordering Tool requires cafe selection and saves separate delive
   expect(writes[0].records[0].orderUnitVersion).toBe(2);
   expect(writes[0].records[0].commissaryMetadataVersion).toBe(2);
   expect(writes[0].records[0].quantities[cucumber.id]).toEqual({ friday: 1, monday: 2, wednesday: 1 });
+  const packetDownload = page.waitForEvent("download");
+  await page.getByRole("button", { name: /packout packet/i }).click();
+  const packetFile = await packetDownload;
+  expect(packetFile.suggestedFilename()).toBe(`Commissary Packout Packet ${firstOpenWeek()}.pdf`);
+  expect(new TextDecoder().decode((await readFile(await packetFile.path())).subarray(0, 8))).toBe("%PDF-1.4");
+  expect(writes).toHaveLength(2);
+  expect(writes[1].records[0]["Record Type"]).toBe("Commissary Packout Packet");
+  expect(writes[1].records[0].packet.pages.length).toBeGreaterThan(0);
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
@@ -198,9 +206,10 @@ test("Grill LTO starts Cycle Week 1 on November 16 with Set A and Set B whole-sa
 
   const global = page.getByTestId("commissary-global-order");
   await expect(global.getByText(/Cycle Week 1/i)).toBeVisible();
-  await expect(global).toContainText("Porto");
-  await expect(global).toContainText("Taco Total");
+  await expect(page.getByLabel("Global menu").locator("option")).toContainText(["Select menu", "Porto", "Taco Total"]);
   const globalOption = GLOBAL_ORDERING_PROGRAM.cycleWeeks[0].menus[0].items[0];
+  await page.getByLabel("Global menu").selectOption(globalOption.menu);
+  await page.getByLabel("Entrees 1").selectOption(globalOption.id);
   await page.getByLabel(`${globalOption.name} Friday 11/13 portion quantity`).fill("4");
 
   const grill = page.getByTestId("commissary-grill-order");
@@ -231,7 +240,7 @@ test("Grill LTO starts Cycle Week 1 on November 16 with Set A and Set B whole-sa
   await expect(deli).toContainText("Mediterranean Turkey Wrap");
   await expect(deli).not.toContainText("Shrimp Avocado Corn Wrap");
   await page.getByLabel("Mediterranean Turkey Wrap Monday 11/16 sandwich quantity").fill("12");
-  await page.getByRole("button", { name: /save shared order/i }).click();
+  await page.getByRole("button", { name: /^save order$/i }).click();
   await expect(page.getByText(/Nessie's order.*was saved/i)).toBeVisible();
   expect(writes).toHaveLength(1);
   expect(writes[0].records[0].grill.cycleWeek).toBe(1);
@@ -241,10 +250,12 @@ test("Grill LTO starts Cycle Week 1 on November 16 with Set A and Set B whole-sa
   expect(writes[0].records[0].deli.cycleWeek).toBe(1);
   expect(writes[0].records[0].deli.quantities["190990"]).toEqual({ friday: 0, monday: 12, wednesday: 0 });
   expect(writes[0].records[0].global.cycleWeek).toBe(1);
+  expect(writes[0].records[0].global.menu).toBe(globalOption.menu);
+  expect(writes[0].records[0].global.selections.entrees[0]).toBe(globalOption.id);
   expect(writes[0].records[0].global.quantities[globalOption.id]).toEqual({ friday: 4, monday: 0, wednesday: 0 });
 
   const prepDownload = page.waitForEvent("download");
-  await page.getByRole("button", { name: /generate prep list/i }).click();
+  await page.getByRole("button", { name: /^prep list$/i }).click();
   const workbook = XLSX.readFile(await (await prepDownload).path());
   const prepRows = XLSX.utils.sheet_to_json(workbook.Sheets["Consolidated Prep List"], { header: 1, defval: "" });
   expect(prepRows).toContainEqual(expect.arrayContaining(["AMZ: Smashburger Patty", expect.any(Number), "each"]));
@@ -369,13 +380,13 @@ test("one-week reopening closes an already open tab at Thursday 5 PM and preserv
   await page.getByLabel("Your cafe").selectOption("Nessie");
   await page.getByLabel("Service week").selectOption("2026-11-02");
   await expect(page.getByText("Cutoff: Thursday 10/29 at 5:00 PM Pacific.", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Save shared order", exact: true })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Save order", exact: true })).toBeEnabled();
   await page.clock.fastForward(3000);
   await expect(page.getByText("Ordering closed", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Save shared order", exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Save order", exact: true })).toBeDisabled();
   await expect(page.getByLabel(/^Friday \d+\/\d+ Sliced Cucumber quantity$/)).toBeDisabled();
   await page.getByLabel("Service week").selectOption("2026-11-09");
   await expect(page.getByText("Cutoff: Wednesday 11/4 at 5:00 PM Pacific.", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Save shared order", exact: true })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Save order", exact: true })).toBeEnabled();
   expect(writes).toHaveLength(0);
 });

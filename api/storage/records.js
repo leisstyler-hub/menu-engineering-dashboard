@@ -6,7 +6,7 @@ import {
   normalizeBackboneRows,
 } from "../../src/integrations/storage/backboneRecords.js";
 import { isApprovedCommissaryMetadataRecord } from "../../src/features/commissary-ordering/commissaryMetadata.js";
-import { COMMISSARY_DELI_ORDER_VERSION, COMMISSARY_GLOBAL_ORDER_VERSION, COMMISSARY_GRILL_ORDER_VERSION, COMMISSARY_ORDER_UNIT_VERSION, DELIVERY_KEYS, deliCycleForWeek, globalCycleForWeek, grillCycleForWeek, isDeliEligibleCafe, isGlobalEligibleCafe, isGrillEligibleCafe, isWeekLocked } from "../../src/features/commissary-ordering/commissaryModel.js";
+import { COMMISSARY_DELI_ORDER_VERSION, COMMISSARY_GLOBAL_ORDER_VERSION, COMMISSARY_GRILL_ORDER_VERSION, COMMISSARY_ORDER_UNIT_VERSION, COMMISSARY_PACKOUT_PACKET_VERSION, COMMISSARY_STATION_ORDER, DELIVERY_KEYS, deliCycleForWeek, deliveryDateForWeek, globalCycleForWeek, grillCycleForWeek, isDeliEligibleCafe, isGlobalEligibleCafe, isGrillEligibleCafe, isWeekLocked } from "../../src/features/commissary-ordering/commissaryModel.js";
 import { GRILL_LTO_PREP_ITEM_IDS } from "../../src/features/commissary-ordering/grillLtoCatalog.js";
 import { DELI_ORDERING_PREP_ITEM_IDS } from "../../src/features/commissary-ordering/deliCycleCatalog.js";
 import { GLOBAL_ORDERING_PREP_ITEM_IDS } from "../../src/features/commissary-ordering/globalCycleCatalog.js";
@@ -114,6 +114,37 @@ export function commissaryWriteValidation(records = [], context = {}) {
     }
     return "";
   }
+  if (record["Record Type"] === "Commissary Packout Packet") {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(record.weekStart || ""))) return "The Packout Packet week is invalid.";
+    if (record["Record ID"] !== `commissaryOrder|packoutPacket|${record.weekStart}`) return "The Packout Packet identity is invalid.";
+    if (Number(record.version) !== COMMISSARY_PACKOUT_PACKET_VERSION) return "The Packout Packet version is unsupported.";
+    if (Number.isNaN(Date.parse(record.generatedAt)) || !Number.isInteger(Number(record.cafeCount)) || Number(record.cafeCount) < 1 || Number(record.metadataVersion) !== DEFAULT_OPERATIONAL_METADATA.metadataVersion || record.Status !== "Generated" || record["Visible In Dashboard"] !== false) return "The Packout Packet generation metadata is invalid.";
+    const orderReferencePattern = new RegExp(`^commissaryOrder\\|[^|]+\\|${record.weekStart.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
+    if (!Array.isArray(record.orderRecordIds) || record.orderRecordIds.length < 1 || new Set(record.orderRecordIds).size !== record.orderRecordIds.length || record.orderRecordIds.some((id) => !orderReferencePattern.test(String(id)))) return "The Packout Packet order references are invalid.";
+    if (!record.packet || Number(record.packet.version) !== COMMISSARY_PACKOUT_PACKET_VERSION || record.packet.weekStart !== record.weekStart || !Array.isArray(record.packet.pages) || !record.packet.pages.length || record.packet.pages.length > 100) return "The Packout Packet payload is invalid.";
+    const pageKeys = record.packet.pages.map((page) => `${page.cafe}|${page.deliveryKey}`);
+    const pageCafes = new Set(record.packet.pages.map(({ cafe }) => cafe));
+    const expectedOrderIds = new Set([...pageCafes].map((cafe) => `commissaryOrder|${cafe.toLowerCase()}|${record.weekStart}`));
+    if (new Set(pageKeys).size !== pageKeys.length || pageCafes.size !== Number(record.cafeCount) || expectedOrderIds.size !== record.orderRecordIds.length || record.orderRecordIds.some((id) => !expectedOrderIds.has(id))) return "The Packout Packet cafe and order-reference scope is inconsistent.";
+    if (record.packet.pages.some((page) => {
+      const delivery = DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.deliveries.find(({ key }) => key === page.deliveryKey);
+      if (!COMMISSARY_CAFES.has(page.cafe) || !delivery || page.deliveryDate !== deliveryDateForWeek(record.weekStart, page.deliveryKey) || page.deliveryDay !== delivery.day || page.deliveryDetail !== delivery.detail || !Array.isArray(page.stations) || !page.stations.length) return true;
+      if (new Set(page.stations.map(({ station }) => station)).size !== page.stations.length) return true;
+      const stationIndexes = page.stations.map(({ station }) => COMMISSARY_STATION_ORDER.indexOf(station));
+      if (stationIndexes.some((index, position) => index < 0 || (position > 0 && index <= stationIndexes[position - 1]))) return true;
+      const lineKeys = page.stations.flatMap((group) => (group.lines || []).map((line) => `${group.station}|${line.id}|${line.orderUnit}`));
+      if (new Set(lineKeys).size !== lineKeys.length) return true;
+      return page.stations.some((group) => !Array.isArray(group.lines) || !group.lines.length || group.lines.length > 500 || group.lines.some((line) => {
+        return line.station !== group.station
+          || typeof line.id !== "string" || !line.id || line.id.length > 300
+          || typeof line.name !== "string" || !line.name.trim() || line.name.length > 200
+          || typeof line.orderUnit !== "string" || !line.orderUnit.trim() || line.orderUnit.length > 50
+          || !Number.isFinite(Number(line.quantity)) || Number(line.quantity) <= 0
+          || String(line.mrn || "").length > 50 || String(line.finishedDish || "").length > 600;
+      }));
+    })) return "The Packout Packet contains an invalid cafe, delivery, station, or line.";
+    return "";
+  }
   if (record["Record Type"] !== "Commissary Order" || !COMMISSARY_CAFES.has(record.cafe)) return "The commissary cafe is invalid.";
   if (![1, COMMISSARY_ORDER_UNIT_VERSION].includes(Number(record.orderUnitVersion || 1))) return "The commissary order-unit version is invalid.";
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(record.weekStart || ""))) return "The commissary service week is invalid.";
@@ -162,13 +193,26 @@ export function commissaryWriteValidation(records = [], context = {}) {
   const globalCycle = globalCycleForWeek(record.weekStart);
   if (globalCycle && isGlobalEligibleCafe(record.cafe)) {
     if (Number(record.global?.version) !== COMMISSARY_GLOBAL_ORDER_VERSION || Number(record.global?.cycleWeek) !== globalCycle.week) return "The Global cycle is invalid.";
+    if (record.global?.legacyReviewRequired) return "Legacy Global quantities require explicit replacement with one menu before saving.";
     const options = globalCycle.menus.flatMap((menu) => menu.items);
     const allowed = new Map(options.map((item) => [item.id, item]));
+    const menuNames = new Set(globalCycle.menus.map(({ menu }) => menu));
+    const menu = String(record.global?.menu || "");
+    if (menu && !menuNames.has(menu)) return "The selected Global menu is invalid.";
+    const selections = record.global?.selections;
+    if (!selections || !Array.isArray(selections.entrees) || selections.entrees.length !== 3 || !Array.isArray(selections.sides) || selections.sides.length !== 4) return "The Global entree and side slots are invalid.";
+    const selectedIds = [...selections.entrees, ...selections.sides].filter(Boolean);
+    if (new Set(selectedIds).size !== selectedIds.length) return "Global selections must be distinct.";
+    if (selections.entrees.some((id) => id && (allowed.get(id)?.menu !== menu || allowed.get(id)?.category !== "entree"))) return "A Global entree is outside the selected menu.";
+    if (selections.sides.some((id) => id && (allowed.get(id)?.menu !== menu || allowed.get(id)?.category !== "side"))) return "A Global side is outside the selected menu.";
+    if (!menu && selectedIds.length) return "Choose a Global menu before selecting items.";
+    const selected = new Set(selectedIds);
     if (Object.keys(record.global?.quantities || {}).some((id) => !allowed.has(id))) return "The Global order contains an item outside the current cycle.";
     for (const option of options) {
       const delivery = record.global?.quantities?.[option.id];
       if (!delivery || DELIVERY_KEYS.some((key) => !Number.isInteger(Number(delivery[key] ?? 0)) || Number(delivery[key] ?? 0) < 0)) return "Global quantities must be zero or positive whole portions.";
       const count = DELIVERY_KEYS.reduce((sum, key) => sum + Number(delivery[key] || 0), 0);
+      if (count > 0 && !selected.has(option.id)) return "Global quantities require a selected entree or side slot.";
       const item = record.global?.items?.[option.id];
       if (count > 0 && (!item || item.id !== option.id || item.menu !== option.menu || String(item.mrn) !== option.mrn || item.portion !== option.portion || item.category !== option.category || !(Number(item.itemWasteCost) > 0))) {
         return `The Global cost snapshot for ${option.menu} MRN ${option.mrn} is invalid.`;
@@ -435,7 +479,7 @@ async function loadRecords(req, res) {
       return String(record["Record Type"] || "") === "Transfer" && String(record["Record ID"] || "").startsWith("transfer|");
     }
     if (tool === "commissaryOrders") {
-      return ["Commissary Order", "Commissary Prep Progress", "Commissary Metadata"].includes(String(record["Record Type"] || ""))
+      return ["Commissary Order", "Commissary Prep Progress", "Commissary Packout Packet", "Commissary Metadata"].includes(String(record["Record Type"] || ""))
         && String(record["Record ID"] || "").startsWith("commissaryOrder|");
     }
     if (tool === "operationalMetadata") return isApprovedOperationalMetadataRecord(record);
