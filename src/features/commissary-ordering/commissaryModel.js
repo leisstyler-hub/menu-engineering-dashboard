@@ -1,4 +1,4 @@
-import { COMMISSARY_ITEM_BY_ID, COMMISSARY_ORDER_ITEMS } from "./commissaryCatalog.js";
+import { COMMISSARY_ITEM_BY_ID, COMMISSARY_ORDER_ITEMS, COMMISSARY_RETIRED_ORDER_ITEMS } from "./commissaryCatalog.js";
 import { DEFAULT_COMMISSARY_METADATA } from "./commissaryMetadata.js";
 import { GRILL_LTO_PREP_ITEM_IDS, GRILL_LTO_PROGRAM } from "./grillLtoCatalog.js";
 import { DELI_ORDERING_PREP_ITEM_IDS, DELI_ORDERING_PROGRAM } from "./deliCycleCatalog.js";
@@ -329,7 +329,8 @@ export function sanitizeQuantity(value) {
 
 export function normalizeQuantities(quantities = {}, options = {}) {
   const orderUnitVersion = Number(options.orderUnitVersion ?? COMMISSARY_ORDER_UNIT_VERSION);
-  return Object.fromEntries(COMMISSARY_ORDER_ITEMS.map(({ id, legacyIds = [] }) => {
+  const retainedRetiredItems = COMMISSARY_RETIRED_ORDER_ITEMS.filter(({ id, legacyIds = [] }) => quantities?.[id] || legacyIds.some((legacyId) => quantities?.[legacyId]));
+  return Object.fromEntries([...COMMISSARY_ORDER_ITEMS, ...retainedRetiredItems].map(({ id, legacyIds = [] }) => {
     const source = quantities?.[id] || legacyIds.map((legacyId) => quantities?.[legacyId]).find(Boolean) || {};
     const catalog = COMMISSARY_ITEM_BY_ID.get(id);
     const scale = orderUnitVersion < COMMISSARY_ORDER_UNIT_VERSION && catalog?.legacyOrderUnit === "quart" ? 0.25 : 1;
@@ -398,7 +399,8 @@ export function togglePrepCompleted(completed, delivery, itemId) {
 
 export function orderValue(quantities = {}, grill = {}, deli = {}, global = {}, cafe = "", breakfast = {}) {
   const normalized = normalizeQuantities(quantities);
-  const saladValue = cafe && !isCafeStationEnabled(cafe, COMMISSARY_STATIONS.SALAD_BAR) ? 0 : COMMISSARY_ORDER_ITEMS.reduce((sum, row) => {
+  const saladItems = [...COMMISSARY_ORDER_ITEMS, ...COMMISSARY_RETIRED_ORDER_ITEMS.filter(({ id, legacyIds = [] }) => quantities?.[id] || legacyIds.some((legacyId) => quantities?.[legacyId]))];
+  const saladValue = cafe && !isCafeStationEnabled(cafe, COMMISSARY_STATIONS.SALAD_BAR) ? 0 : saladItems.reduce((sum, row) => {
     const delivery = normalized[row.id];
     return sum + DELIVERY_KEYS.reduce((deliverySum, key) => deliverySum + sanitizeQuantity(delivery[key]), 0) * row.orderUnitCost;
   }, 0);
@@ -430,7 +432,8 @@ export function orderValue(quantities = {}, grill = {}, deli = {}, global = {}, 
 
 export function rolledUpItems(records = [], options = {}) {
   const scopedRecords = records.filter((record) => isCafeStationEnabled(record.cafe, COMMISSARY_STATIONS.SALAD_BAR) && (!options.hub || cafeRoutesToHub(record.cafe, COMMISSARY_STATIONS.SALAD_BAR, options.hub)));
-  return COMMISSARY_ORDER_ITEMS.map((row) => {
+  const retiredInScope = COMMISSARY_RETIRED_ORDER_ITEMS.filter(({ id, legacyIds = [] }) => scopedRecords.some((record) => record.quantities?.[id] || legacyIds.some((legacyId) => record.quantities?.[legacyId])));
+  return [...COMMISSARY_ORDER_ITEMS, ...retiredInScope].map((row) => {
     const cafes = Object.fromEntries(scopedRecords.map((record) => {
       const values = normalizeQuantities(record.quantities, { orderUnitVersion: record.orderUnitVersion ?? 1 })[row.id];
       return [record.cafe, values];

@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRightLeft, Copy, Download, Plus, Save, Search, Trash2 }
 import { money } from "../../shared/formatting.js";
 import { DEFAULT_OPERATIONAL_METADATA } from "../../shared/operationalMetadata.js";
 import { loadOperationalMetadata } from "../../shared/operationalMetadataStorage.js";
+import { saladBarTransferCatalogItems } from "../commissary-ordering/commissaryCatalog.js";
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
 import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
@@ -86,13 +87,15 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
         setStatus({ tone: "ready", message: `${sorted.length} shared transfer${sorted.length === 1 ? "" : "s"} available.` });
       })
       .catch((error) => active && setStatus({ tone: "error", message: error.message }));
-    loadOperationalMetadata().then((metadata) => active && setOperationalMetadata(metadata));
-    refreshTransferCatalogCosts()
-      .then((result) => {
+    Promise.all([loadOperationalMetadata(), refreshTransferCatalogCosts()])
+      .then(([metadata, result]) => {
         if (!active) return;
-        setCatalogItems(result.items);
-        setDraft((current) => ({ ...current, items: refreshCopiedItems(current.items, result.items) }));
-        setCostStatus({ state: "ready", message: `Live Item + Waste Costs verified from ${result.source} for ${result.refreshed.toLocaleString()} of ${result.items.length.toLocaleString()} catalog entries. Unmatched items remain unavailable.` });
+        setOperationalMetadata(metadata);
+        const saladBarItems = saladBarTransferCatalogItems(metadata.commissaryOrdering?.saladBarCosting?.items || metadata.commissaryOrdering?.orderItems || []);
+        const combinedItems = [...result.items, ...saladBarItems];
+        setCatalogItems(combinedItems);
+        setDraft((current) => ({ ...current, items: refreshCopiedItems(current.items, combinedItems) }));
+        setCostStatus({ state: "ready", message: `Item + Waste Costs verified from ${result.source} plus ${saladBarItems.length.toLocaleString()} shared Commissary Salad Bar records. Unmatched items remain unavailable.` });
       })
       .catch((error) => {
         if (!active) return;
@@ -159,6 +162,21 @@ export default function TransferTool({ onBackToPlatform, onOpenSmartsheetHealth 
     } : { ...blankLine(), lineId: line.lineId, menu: line.menu });
     setErrors((current) => ({ ...current, items: undefined }));
     if (!selected) return;
+    if (selected.sharedCostSource === "operational-metadata") {
+      const fallback = applyPreparedFoodsFallback(selected.itemWasteCost, "Shared Commissary Salad Bar costing", selected.defaultGlCode);
+      updateLine(line.lineId, fallback ? {
+        ...fallback,
+        allocationStatus: "ready",
+        allocationMessage: `Shared Salad Bar gallon costing applied from operational metadata. The full Item + Waste Cost maps to ${selected.defaultGlCode} ${selected.defaultGlCategory}.`,
+      } : {
+        allocationPerPortion: null,
+        ingredientAllocations: [],
+        unpricedComponents: [],
+        allocationStatus: "error",
+        allocationMessage: "The shared Salad Bar item is missing a positive Item + Waste Cost.",
+      });
+      return;
+    }
     if (isSoupTransferItem(selected)) {
       const soupAllocation = applySoupPreparedFoodsAllocation(selected, selected.itemWasteCost);
       updateLine(line.lineId, soupAllocation ? {

@@ -149,7 +149,7 @@ test("Commissary Ordering Tool requires cafe selection and saves separate delive
   ]);
   await expect(page.getByLabel("Your cafe")).not.toContainText(/\bPC\s+\d{5}\b/);
   await page.getByLabel("Your cafe").selectOption("Nessie");
-  await expect(page.getByText("Frozen Peas", { exact: true })).toBeVisible();
+  await expect(page.getByText("Green Peas", { exact: true })).toBeVisible();
   await expect(page.getByText("Blanched Green Beans", { exact: true })).toHaveCount(0);
   await expect(page.getByText(/requires mixing/i)).toHaveCount(0);
   await expect(page.getByText(/new recipe/i)).toHaveCount(0);
@@ -157,7 +157,7 @@ test("Commissary Ordering Tool requires cafe selection and saves separate delive
   await page.getByLabel(/^Friday \d+\/\d+ Sliced Cucumber quantity$/).fill("1");
   await page.getByLabel(/^Monday \d+\/\d+ Sliced Cucumber quantity$/).fill("2");
   await page.getByLabel(/^Wednesday \d+\/\d+ Sliced Cucumber quantity$/).fill("1");
-  await page.getByLabel(/^Monday \d+\/\d+ Frozen Peas quantity$/).fill("1.25");
+  await page.getByLabel(/^Monday \d+\/\d+ Green Peas quantity$/).fill("1.25");
   const cucumber = COMMISSARY_ORDER_ITEMS.find((row) => row.name === "Sliced Cucumber");
   const saveButton = page.getByRole("button", { name: /^save order$/i });
   const generateButton = page.getByRole("button", { name: /generate transfer/i });
@@ -168,7 +168,7 @@ test("Commissary Ordering Tool requires cafe selection and saves separate delive
   expect(transferFile.suggestedFilename()).toMatch(/Commissary Order Nessie.*Expense Transfer\.xlsx/);
   const transferWorkbook = XLSX.readFile(await transferFile.path());
   const transferRows = XLSX.utils.sheet_to_json(transferWorkbook.Sheets[transferWorkbook.SheetNames[0]], { header: 1, defval: "" });
-  expect(transferRows).toContainEqual(expect.arrayContaining(["4111009", "30159", "4111009", expect.stringContaining("Frozen Peas"), 11.35]));
+  expect(transferRows).toContainEqual(expect.arrayContaining(["4111009", "30159", "4111009", expect.stringContaining("Green Peas"), 11.82]));
   const bomDownload = page.waitForEvent("download");
   await page.getByRole("button", { name: /^prep list$/i }).click();
   const prepListFile = await bomDownload;
@@ -185,7 +185,7 @@ test("Commissary Ordering Tool requires cafe selection and saves separate delive
   const wednesdayRows = XLSX.utils.sheet_to_json(bomWorkbook.Sheets["Wednesday Delivery Map"], { header: 1, defval: "" });
   expect(fridayRows).toContainEqual(expect.arrayContaining(["Nessie", "Sliced Cucumber", cucumber.mrn, 1]));
   expect(mondayRows).toContainEqual(expect.arrayContaining(["Nessie", "Sliced Cucumber", cucumber.mrn, 2]));
-  expect(mondayRows).toContainEqual(expect.arrayContaining(["Nessie", "Frozen Peas", "4877", 1.25]));
+  expect(mondayRows).toContainEqual(expect.arrayContaining(["Nessie", "Green Peas", "62341", 1.25]));
   expect(wednesdayRows).toContainEqual(expect.arrayContaining(["Nessie", "Sliced Cucumber", cucumber.mrn, 1]));
   await saveButton.click();
   await expect(page.getByText(/Nessie's order.*was saved/i)).toBeVisible();
@@ -366,7 +366,7 @@ test("Prep List View is vertical, touch friendly, translated, and saves hold-to-
   const lockedWeek = addDays(firstOpenWeek(), -7);
   const quantities = emptyQuantities();
   quantities[COMMISSARY_ORDER_ITEMS[0].id] = { friday: 2, monday: 2, wednesday: 1 };
-  quantities[COMMISSARY_ORDER_ITEMS.find((row) => row.name === "Frozen Peas").id] = { friday: 1.25, monday: 1.25, wednesday: 0 };
+  quantities[COMMISSARY_ORDER_ITEMS.find((row) => row.name === "Green Peas").id] = { friday: 1.25, monday: 1.25, wednesday: 0 };
   const record = buildOrderRecord({ cafe: "Nessie", weekStart: lockedWeek, quantities, now: new Date(`${lockedWeek}T12:00:00Z`) });
   const bingoQuantities = emptyQuantities();
   bingoQuantities[COMMISSARY_ORDER_ITEMS[0].id] = { friday: 3, monday: 0, wednesday: 0 };

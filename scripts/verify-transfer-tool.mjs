@@ -8,10 +8,16 @@ import { buildS4Rows, buildS4Workbook, S4_TEMPLATE_SHA256 } from "../src/feature
 import { cafeProfitCenter } from "../src/features/transfer-tool/cafeProfitCenters.js";
 import { applyPreparedFoodsFallback, applySoupPreparedFoodsAllocation, balanceIngredientAllocations, defaultTransferDescription, isSoupTransferItem, normalizeTransferItemAllocations, normalizeTransferTitle, PREPARED_FOODS_GL_CODE, refreshCopiedItems, S4_EXPORT_VERSION, transferRecordId, transferTotal, validateS4Transfer, validateTransfer } from "../src/features/transfer-tool/transferModel.js";
 import { CAFE_UNITS } from "../src/shared/cafeUnits.js";
+import { COMMISSARY_ORDER_ITEMS, saladBarTransferCatalogItems } from "../src/features/commissary-ordering/commissaryCatalog.js";
 
 const root = process.cwd();
 const read = (path) => readFileSync(join(root, path), "utf8");
 const fail = (message) => { console.error(`Transfer Tool verification failed: ${message}`); process.exit(1); };
+
+const saladBarTransferItems = saladBarTransferCatalogItems(COMMISSARY_ORDER_ITEMS);
+if (saladBarTransferItems.length !== 41 || saladBarTransferItems.some((item) => item.menu !== "Commissary Salad Bar" || !(item.itemWasteCost > 0))) fail("shared Salad Bar costing is not cross-utilizable in the Transfer Tool");
+const saladBarGreenPeas = saladBarTransferItems.find((item) => item.mrn === "62341");
+if (saladBarGreenPeas?.itemWasteCost !== 9.455573 || saladBarGreenPeas?.defaultGlCode !== "4111009") fail("shared Salad Bar Green Peas costing/G/L mapping is incorrect");
 
 if (CATALOG.menus.length !== 54 || CATALOG.items.length !== 1497) fail("catalog does not cover the current menu/item source");
 if (!CATALOG.items.every((item) => item.menu && item.item && Object.hasOwn(item, "itemWasteCost") && !Object.hasOwn(item, "glGroups"))) fail("catalog contains malformed or legacy G/L rows");
@@ -213,7 +219,7 @@ const storage = read("src/features/transfer-tool/transferStorage.js");
 const component = read("src/features/transfer-tool/TransferTool.jsx");
 for (const marker of ["createTransfer", "deleteTransfer", "Titles must be globally unique", "like.transfer|*"]) if (!api.includes(marker)) fail(`API is missing ${marker}`);
 for (const marker of ["createTransfer", "deleteTransfer", "tool: \"transfers\"", "/api/recipe-library?scope=all", "row.trueCost", "TRANSFER_MAPPING_NOT_FOUND", "TRANSFER_MAPPING_UNAVAILABLE"]) if (!storage.includes(marker)) fail(`storage client is missing ${marker}`);
-for (const marker of ["Ingredient Costing 9.19.26", "Automatic ingredient G/L allocation", "Prepared Foods soup allocation", "Scaled to Item + Waste Cost", "Item-cost cap applied", "Substitute price used", "Item + Waste / portion", "G/L for", "Export S4 Excel", "Batch export staging", "Include in batch export", "Delete saved transfer", "DRAFT"]) if (!component.includes(marker)) fail(`UI is missing ${marker}`);
+for (const marker of ["Ingredient Costing 9.19.26", "Automatic ingredient G/L allocation", "Prepared Foods soup allocation", "Shared Salad Bar gallon costing", "Scaled to Item + Waste Cost", "Item-cost cap applied", "Substitute price used", "Item + Waste / portion", "G/L for", "Export S4 Excel", "Batch export staging", "Include in batch export", "Delete saved transfer", "DRAFT"]) if (!component.includes(marker)) fail(`UI is missing ${marker}`);
 for (const marker of ["Prepared Foods G/L fallback", "Approved Prepared Foods fallback", "4111011 Prepared Foods"]) if (!component.includes(marker)) fail(`UI is missing ${marker}`);
 for (const removedMarker of ["G/L Breakdown", "Prepared Foods cost balance"]) if (component.includes(removedMarker)) fail(`UI still contains retired automatic balance UI ${removedMarker}`);
 

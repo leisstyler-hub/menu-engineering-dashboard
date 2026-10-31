@@ -4,6 +4,9 @@ import { S4_GL_ACCOUNTS } from "../features/transfer-tool/s4GlAccounts.js";
 import {
   COMMISSARY_DEPARTING_UNIT,
   COMMISSARY_ORDER_ITEMS,
+  COMMISSARY_RETIRED_ORDER_ITEMS,
+  SALAD_BAR_CULINARY_PROFILE_MANIFEST,
+  SALAD_BAR_COST_SOURCE,
 } from "../features/commissary-ordering/commissaryCatalog.js";
 import { DEFAULT_COMMISSARY_METADATA } from "../features/commissary-ordering/commissaryMetadata.js";
 import { GRILL_LTO_PROGRAM } from "../features/commissary-ordering/grillLtoCatalog.js";
@@ -14,7 +17,7 @@ import { BREAKFAST_ORDERING_PROGRAM } from "../features/commissary-ordering/brea
 import { COMMISSARY_CAFE_STATION_ACCESS, COMMISSARY_HUB_ROUTING, COMMISSARY_HUBS } from "../features/commissary-ordering/commissaryRouting.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 10;
+export const OPERATIONAL_METADATA_VERSION = 11;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -45,6 +48,17 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
     receivingCafes: Object.freeze(commissaryReceivingCafes),
     deliveries: DEFAULT_COMMISSARY_METADATA.deliveries,
     orderItems: COMMISSARY_ORDER_ITEMS,
+    retiredOrderItems: COMMISSARY_RETIRED_ORDER_ITEMS,
+    saladBarCosting: Object.freeze({
+      version: 1,
+      source: SALAD_BAR_COST_SOURCE,
+      menu: "Commissary Salad Bar",
+      items: COMMISSARY_ORDER_ITEMS,
+      culinaryProfiles: SALAD_BAR_CULINARY_PROFILE_MANIFEST,
+      culinaryProfilePersistence: "operational-metadata-companion; canonical shared profile domain not yet approved",
+      transferCatalogEnabled: true,
+      historicalRowsPreserved: true,
+    }),
     orderUnitVersion: 2,
     quantityIncrement: 0.25,
     grillProgram: GRILL_LTO_PROGRAM,

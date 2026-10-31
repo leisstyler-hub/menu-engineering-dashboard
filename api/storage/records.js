@@ -90,7 +90,10 @@ function transferWriteValidation(records = [], context = {}) {
 }
 
 const COMMISSARY_CAFES = new Set(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.receivingCafes.map(({ name }) => name));
-const COMMISSARY_ITEM_IDS = new Set(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.orderItems.map(({ id }) => id));
+const COMMISSARY_ITEM_IDS = new Set([
+  ...DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.orderItems,
+  ...(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.retiredOrderItems || []),
+].map(({ id }) => id));
 const COMMISSARY_PREP_IDS = new Set([...COMMISSARY_ITEM_IDS, ...GRILL_LTO_PREP_ITEM_IDS, ...DELI_ORDERING_PREP_ITEM_IDS, ...GLOBAL_ORDERING_PREP_ITEM_IDS, ...BREAKFAST_ORDERING_PREP_ITEM_IDS]);
 
 export function commissaryWriteValidation(records = [], context = {}) {

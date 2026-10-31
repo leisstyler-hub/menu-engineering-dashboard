@@ -1,6 +1,6 @@
 # Transfer Tool handoff
 
-Shared operating configuration is stored in the validated Supabase record `platformMetadata|operations|current`. Transfer unit/profit-center mappings, approved S4 G/L accounts, the Prepared Foods fallback, S4 export version/line limit, and source contracts resolve from that record with an identical bundled read-outage fallback. Live menu items and Item + Waste costs continue to come from Supabase recipe metadata; saved transfers remain separate `transfer|*` records.
+Shared operating configuration is stored in the validated Supabase record `platformMetadata|operations|current`. Transfer unit/profit-center mappings, approved S4 G/L accounts, the Prepared Foods fallback, S4 export version/line limit, and source contracts resolve from that record with an identical bundled read-outage fallback. Live ordinary menu items and Item + Waste costs continue to come from Supabase recipe metadata; the shared operational record additionally projects the reviewed `Commissary Salad Bar` gallon-costing menu. Saved transfers remain separate `transfer|*` records.
 
 ## Scope
 
@@ -9,6 +9,7 @@ The Transfer Tool is explicitly labeled `DRAFT`. It builds shared reference tran
 ## Data authority
 
 - Current menu/item selectors and `trueCost` come from the shared Supabase-backed `/api/recipe-library?scope=all` response. New menus/items and changed MRNs follow that catalog; bundled `transferToolCatalog.json` remains historical/reference test data only. Shared-source failure blocks creation/copy/export rather than offering stale selectable items. Ingredient allocation authority below remains separate.
+- `Commissary Salad Bar` selector rows come from validated operational metadata version 11. They retain the exact source MRN, order unit and Item + Waste Cost from `MenuWorks SB Gallon Convert 3.0.xlsx`; the full line cost defaults to its shared G/L and remains chef-overridable.
 - `public/resources/Ingredient_Costing_9.19.26.xlsx` is the downloadable pricing resource. `scripts/build-ingredient-costing-lookup.mjs` derives the compact server-side lookup at `api/data/ingredientCosting91926.json`; it is deliberately not bundled into the client.
 - The lookup reads direct AP/EP ingredient rows, excludes water and ice, and accepts a price from a canonical `Ingredient:` reference before trying a high-confidence normalized ingredient-and-form match (retaining forms such as chopped, shredded, and sliced). It converts compatible kitchen/metric units and form-limited density measures before calculating ingredient quantity ÷ recipe yield × unit price. When no exact source is available, a substitute must share meaningful food identity, cannot rely on supplier/brand words, and cannot contradict the target's product or preparation type. This prevents failures such as BBQ brisket inheriting beef-pho broth pricing or pepperoncini matching cornichons because both say American Roland. A conservative earlier tier can derive one price from repeated, stable residuals of flat ingredient-only source recipes where every other component is canonically priced; ordinary menu-row portion costs are never treated as an ingredient price directly.
 
