@@ -6,7 +6,7 @@ import BOM_XLSX from "xlsx-js-style";
 
 import { commissaryWriteValidation } from "../api/storage/records.js";
 import { buildS4Rows, buildS4Workbook } from "../src/features/transfer-tool/transferExport.js";
-import { COMMISSARY_ORDER_ITEMS, COMMISSARY_RETIRED_ORDER_ITEMS, SALAD_BAR_COST_SOURCE } from "../src/features/commissary-ordering/commissaryCatalog.js";
+import { COMMISSARY_LEGACY_ORDER_ITEMS, COMMISSARY_ORDER_ITEMS, COMMISSARY_RETIRED_ORDER_ITEMS, SALAD_BAR_COST_SOURCE, commissaryOrderItemsForWeek } from "../src/features/commissary-ordering/commissaryCatalog.js";
 import { buildCommissaryBomWorkbook, buildCommissaryTransfer } from "../src/features/commissary-ordering/commissaryExport.js";
 import { buildCommissaryMetadataRecord, DEFAULT_COMMISSARY_METADATA, isApprovedCommissaryMetadataRecord, resolveCommissaryMetadata } from "../src/features/commissary-ordering/commissaryMetadata.js";
 import { COMMISSARY_BREAKFAST_ORDER_VERSION, COMMISSARY_DELI_ORDER_VERSION, COMMISSARY_GLOBAL_ORDER_VERSION, COMMISSARY_GRILL_ORDER_VERSION, COMMISSARY_ORDER_UNIT_VERSION, DELIVERY_KEYS, addDays, breakfastOrderLinesForCafe, breakfastPrepLinesForCafe, buildOrderRecord, buildPackoutPacketRecord, buildPrepProgressRecord, deliCycleForWeek, deliOrderLinesForCafe, deliPrepLinesForCafe, deliveriesForWeek, emptyBreakfastOrder, emptyDeliOrder, emptyGlobalOrder, emptyGrillOrder, emptyQuantities, firstOpenWeek, globalCycleForWeek, globalOrderLinesForCafe, globalPrepLinesForCafe, grillCycleForWeek, grillOrderLinesForCafe, grillPrepLinesForCafe, isWeekLocked, latestPrepWeek, normalizePrepCompleted, normalizeQuantities, orderValue, prepDisplayQuantity, rolledUpPrepItems, togglePrepCompleted, transferPeriod } from "../src/features/commissary-ordering/commissaryModel.js";
@@ -19,7 +19,12 @@ import { COMMISSARY_SPANISH } from "../src/features/commissary-ordering/commissa
 import { COMMISSARY_STATIONS, commissaryHubFor, isCafeStationEnabled } from "../src/features/commissary-ordering/commissaryRouting.js";
 
 assert.equal(COMMISSARY_ORDER_ITEMS.length, 41, "The source workbook should produce 41 commissary order items.");
+assert.equal(COMMISSARY_LEGACY_ORDER_ITEMS.length, 41, "The pre-effective-date catalog should preserve the original 41-item roster.");
 assert.equal(SALAD_BAR_COST_SOURCE.sha256, "42E2DF61F1B97489ED2B9F27B81C86100B7D404E649099840829B23F76BB80F4");
+assert.equal(SALAD_BAR_COST_SOURCE.effectiveDate, "2026-11-16");
+assert.equal(commissaryOrderItemsForWeek("2026-11-09").find((row) => row.name === "Frozen Peas")?.orderUnitCost, 9.08, "The Nov 9 week must use the original Frozen Peas gallon cost.");
+assert.equal(commissaryOrderItemsForWeek("2026-11-09").some((row) => row.name === "Green Peas"), false);
+assert.equal(commissaryOrderItemsForWeek("2026-11-16").find((row) => row.name === "Green Peas")?.orderUnitCost, 9.455573, "The workbook refresh must begin on Nov 16.");
 assert.equal(COMMISSARY_ORDER_ITEMS.find((row) => row.name === "Spiced Edamame")?.mrn, "176736");
 assert.equal(COMMISSARY_ORDER_ITEMS.find((row) => row.name === "Balsamic Vinegar")?.orderUnit, "gallon");
 assert.equal(COMMISSARY_ORDER_ITEMS.find((row) => row.name === "Fat Free Italian Dressing")?.orderUnit, "gallon");
@@ -70,6 +75,9 @@ assert.ok(BREAKFAST_ORDERING_PREP_ITEM_IDS.length > 40);
 assert.ok(BREAKFAST_ORDERING_PROGRAM.items.every(({ name }) => /(sandwich|bagel|burrito)/i.test(name)));
 const retiredFrozenPeas = COMMISSARY_RETIRED_ORDER_ITEMS.find((row) => row.name === "Frozen Peas");
 assert.deepEqual(normalizeQuantities({ "commissary-9002-2": { monday: 1.5, wednesday: 0.5 } }, { orderUnitVersion: COMMISSARY_ORDER_UNIT_VERSION })[retiredFrozenPeas.id], { friday: 0, monday: 1.5, wednesday: 0.5 }, "Historical Frozen Peas quantities must remain readable without making the retired item selectable.");
+const legacyFrozenPeas = COMMISSARY_LEGACY_ORDER_ITEMS.find((row) => row.name === "Frozen Peas");
+assert.deepEqual(normalizeQuantities({ [legacyFrozenPeas.id]: { friday: 0, monday: 0, wednesday: 4 } }, { orderUnitVersion: 1, weekStart: "2026-11-02" })[legacyFrozenPeas.id], { friday: 0, monday: 0, wednesday: 1 }, "A pre-conversion saved order must restore its original quart quantity as gallons exactly once.");
+assert.deepEqual(normalizeQuantities({ [legacyFrozenPeas.id]: { friday: 0.25, monday: 0, wednesday: 0.25 } }, { orderUnitVersion: 2, weekStart: "2026-11-02" })[legacyFrozenPeas.id], { friday: 0.25, monday: 0, wednesday: 0.25 }, "A version-2 saved order must preserve its original gallon quantities.");
 
 const metadataRecord = buildCommissaryMetadataRecord(new Date("2026-10-27T12:00:00Z"));
 assert.equal(isApprovedCommissaryMetadataRecord(metadataRecord), true);
@@ -94,8 +102,7 @@ assert.equal(isWeekLocked("2026-10-12", new Date("2026-10-07T12:00:00Z")), false
 assert.deepEqual(transferPeriod("2026-10-12"), { start: "2026-10-09", end: "2026-10-15" });
 assert.equal(firstOpenWeek(new Date("2026-10-03T15:00:00Z")), "2026-10-12");
 assert.equal(latestPrepWeek(new Date("2026-10-08T12:00:00Z")), "2026-10-12", "Prep View should default to the most recently locked service week.");
-assert.equal(Object.keys(COMMISSARY_SPANISH.items).length, COMMISSARY_ORDER_ITEMS.length, "Every commissary item needs an explicit Spanish label.");
-assert.ok(COMMISSARY_ORDER_ITEMS.every((row) => COMMISSARY_SPANISH.items[row.name]), "Spanish translation coverage must follow the entire commissary catalog.");
+assert.ok([...COMMISSARY_LEGACY_ORDER_ITEMS, ...COMMISSARY_ORDER_ITEMS].every((row) => COMMISSARY_SPANISH.items[row.name]), "Spanish translation coverage must follow both service-week catalogs.");
 const firstPrepItem = COMMISSARY_ORDER_ITEMS[0].id;
 const completed = togglePrepCompleted({}, "monday", firstPrepItem);
 assert.deepEqual(completed, { friday: [], monday: [firstPrepItem], wednesday: [] });
@@ -110,11 +117,11 @@ assert.equal(commissaryWriteValidation([currentLockedProgress], { tool: "commiss
 assert.match(commissaryWriteValidation([{ ...currentLockedProgress, completed: { friday: [], monday: [firstPrepItem, firstPrepItem], wednesday: [] } }], { tool: "commissaryOrders" }), /invalid or duplicate item/i);
 assert.match(commissaryWriteValidation([buildPrepProgressRecord({ weekStart: firstOpenWeek(), completed })], { tool: "commissaryOrders" }), /available after.*cutoff/i);
 
-const quantities = emptyQuantities();
+const quantities = emptyQuantities("2026-11-16");
 quantities[COMMISSARY_ORDER_ITEMS[0].id] = { friday: 1, monday: 2, wednesday: 1 };
 quantities[COMMISSARY_ORDER_ITEMS.find((row) => row.name === "Balsamic Vinegar").id] = { friday: 0, monday: 1, wednesday: 0 };
 quantities[greenPeas.id] = { friday: 0.25, monday: 1.25, wednesday: 0.75 };
-const record = buildOrderRecord({ cafe: "Nessie", weekStart: "2026-10-12", quantities, now: new Date("2026-10-06T12:00:00Z") });
+const record = buildOrderRecord({ cafe: "Nessie", weekStart: "2026-11-16", quantities, now: new Date("2026-11-10T12:00:00Z") });
 assert.equal(record.orderUnitVersion, COMMISSARY_ORDER_UNIT_VERSION);
 const transfer = buildCommissaryTransfer(record);
 const s4Rows = buildS4Rows(transfer);
@@ -127,13 +134,13 @@ assert.ok(s4Rows.filter((row) => !row.description.includes("Green Peas")).every(
 assert.ok(s4Rows.every((row) => row.receivingProfitCenter === "30159"));
 assert.ok(s4Rows.some((row) => row.transferAmount === Math.round(4 * COMMISSARY_ORDER_ITEMS[0].orderUnitCost * 100) / 100));
 assert.equal(transfer.departingProfitCenter, "22472");
-assert.equal(transfer.transferDate, "2026-10-15");
+assert.equal(transfer.transferDate, "2026-11-19");
 
-const geminiRecord = buildOrderRecord({ cafe: "Gemini", weekStart: "2026-10-12", quantities, now: new Date("2026-10-06T12:00:00Z") });
+const geminiRecord = buildOrderRecord({ cafe: "Gemini", weekStart: "2026-11-16", quantities, now: new Date("2026-11-10T12:00:00Z") });
 const geminiTransfer = buildCommissaryTransfer(geminiRecord);
 assert.equal(geminiTransfer.receivingProfitCenter, "53169", "New Commissary recipients must resolve their S4 destination from shared metadata.");
 
-const bomWorkbook = buildCommissaryBomWorkbook([record], "2026-10-12");
+const bomWorkbook = buildCommissaryBomWorkbook([record], "2026-11-16");
 assert.deepEqual(bomWorkbook.SheetNames, ["Consolidated Prep List", "Friday Delivery Map", "Monday Delivery Map", "Wednesday Delivery Map", "Power Automate"]);
 const bomSheet = bomWorkbook.Sheets["Consolidated Prep List"];
 const bomRows = XLSX.utils.sheet_to_json(bomSheet, { header: 1, defval: "" });
@@ -154,9 +161,9 @@ assert.equal(bomWorkbook.Workbook.Sheets.find((sheet) => sheet.name === "Power A
 const fridayRows = XLSX.utils.sheet_to_json(bomWorkbook.Sheets["Friday Delivery Map"], { header: 1, defval: "" });
 const mondayRows = XLSX.utils.sheet_to_json(bomWorkbook.Sheets["Monday Delivery Map"], { header: 1, defval: "" });
 const wednesdayRows = XLSX.utils.sheet_to_json(bomWorkbook.Sheets["Wednesday Delivery Map"], { header: 1, defval: "" });
-assert.equal(fridayRows[0][0], "Friday 10/9 Cafe Delivery Map");
-assert.equal(mondayRows[0][0], "Monday 10/12 Cafe Delivery Map");
-assert.equal(wednesdayRows[0][0], "Wednesday 10/14 Cafe Delivery Map");
+assert.equal(fridayRows[0][0], "Friday 11/13 Cafe Delivery Map");
+assert.equal(mondayRows[0][0], "Monday 11/16 Cafe Delivery Map");
+assert.equal(wednesdayRows[0][0], "Wednesday 11/18 Cafe Delivery Map");
 assert.ok(fridayRows.some((row) => row[0] === "Nessie" && row[1] === "Sliced Cucumber" && row[3] === 1));
 assert.ok(mondayRows.some((row) => row[0] === "Nessie" && row[1] === "Sliced Cucumber" && row[3] === 2));
 assert.ok(wednesdayRows.some((row) => row[0] === "Nessie" && row[1] === "Sliced Cucumber" && row[3] === 1));
@@ -315,7 +322,7 @@ assert.ok(packet.pages.every((page) => page.cafe === "Everest" && page.stations.
 const packetBytes = buildPackoutPdfBytes(packet);
 assert.equal(new TextDecoder().decode(packetBytes.slice(0, 8)), "%PDF-1.4");
 assert.ok(packetBytes.length > 3000);
-const packetRecord = { ...buildPackoutPacketRecord({ weekStart: "2026-11-16", records: [globalRecord], packet, metadataVersion: 11, now: new Date("2026-11-12T01:00:00Z") }), packet };
+const packetRecord = { ...buildPackoutPacketRecord({ weekStart: "2026-11-16", records: [globalRecord], packet, metadataVersion: 12, now: new Date("2026-11-12T01:00:00Z") }), packet };
 assert.equal(commissaryWriteValidation([packetRecord], { tool: "commissaryOrders" }), "");
 assert.match(commissaryWriteValidation([{ ...packetRecord, packet: { ...packet, pages: [{ ...packet.pages[0], cafe: "Unknown Cafe" }] } }], { tool: "commissaryOrders" }), /scope|invalid cafe/i);
 assert.match(commissaryWriteValidation([{ ...packetRecord, orderRecordIds: [`commissaryOrder|nessie|${packetRecord.weekStart}`] }], { tool: "commissaryOrders" }), /order-reference scope/i);
@@ -326,7 +333,7 @@ const packetWithDuplicateLine = { ...packet, pages: packet.pages.map((page) => p
 assert.match(commissaryWriteValidation([{ ...packetRecord, packet: packetWithDuplicateLine }], { tool: "commissaryOrders" }), /invalid cafe, delivery/i);
 
 const zeroVolumeRecord = buildOrderRecord({ cafe: "Nessie", weekStart: "2026-11-16", quantities: emptyQuantities(), now: new Date("2026-11-10T12:00:00Z") });
-const scopedPacketRecord = buildPackoutPacketRecord({ weekStart: "2026-11-16", records: [globalRecord, zeroVolumeRecord], packet, metadataVersion: 11, now: new Date("2026-11-12T01:00:00Z") });
+const scopedPacketRecord = buildPackoutPacketRecord({ weekStart: "2026-11-16", records: [globalRecord, zeroVolumeRecord], packet, metadataVersion: 12, now: new Date("2026-11-12T01:00:00Z") });
 assert.equal(scopedPacketRecord.cafeCount, 1);
 assert.deepEqual(scopedPacketRecord.orderRecordIds, [globalRecord["Record ID"]]);
 

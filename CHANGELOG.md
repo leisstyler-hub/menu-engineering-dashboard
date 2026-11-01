@@ -1,3 +1,7 @@
+## 2026-11-01
+
+- [Nov 1, 6:02 AM] Made new Salad Bar items and costs effective Nov 16 while restoring original Nov 2 and Nov 9 catalogs and saved-order quantities.
+
 ## 2026-10-31
 
 - [Oct 31, 12:23 PM] Refreshed Salad Bar gallon costs and roster from the reviewed MenuWorks workbook, with shared Supabase metadata and Transfer Tool access.

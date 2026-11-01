@@ -116,6 +116,73 @@ const activeItem = ([sourceName, mrn, sourcePortion, itemCost, wastePercent, ite
 export const COMMISSARY_ORDER_ITEMS = Object.freeze(SOURCE_ROWS.map(activeItem).sort((left, right) => left.name === "Sliced Cucumber" ? -1 : right.name === "Sliced Cucumber" ? 1 : 0));
 export const SALAD_BAR_CULINARY_PROFILE_MANIFEST = Object.freeze(COMMISSARY_ORDER_ITEMS.map(({ culinaryProfile }) => culinaryProfile));
 
+const legacyItem = (category, name, mrn, itemWasteCost, orderUnit, orderUnitCost, notes = "", options = {}) => {
+  const convertsFromQuart = orderUnit === "quart";
+  return Object.freeze({
+    id: `commissary-${String(mrn).replace(/[^a-z0-9]/gi, "-").toLowerCase()}`,
+    category,
+    name,
+    mrn: String(mrn),
+    portion: "1 ounce",
+    itemWasteCost,
+    orderUnit: convertsFromQuart ? "gallon" : orderUnit,
+    orderUnitCost: convertsFromQuart ? orderUnitCost * 4 : orderUnitCost,
+    legacyOrderUnit: convertsFromQuart ? "quart" : "",
+    quantityIncrement: convertsFromQuart ? 0.25 : 1,
+    notes,
+    transferGlCode: options.transferGlCode || "4111011",
+    transferGlCategory: options.transferGlCategory || "Prepared Foods",
+    legacyIds: options.legacyIds || [],
+    catalogVersion: "legacy-before-2026-11-16",
+  });
+};
+
+// Exact ordering roster and costs that were in production before the 2026-11-16 workbook refresh.
+// Saved weeks before the effective date must continue to render, total and export against this catalog.
+export const COMMISSARY_LEGACY_ORDER_ITEMS = Object.freeze([
+  legacyItem("Toppings", "Sliced Cucumber", "68562.2", 0.15839, "quart", 0.15839 * 32, "Requires mixing"),
+  legacyItem("Toppings", "Sliced Green Bell Pepper", "62342", 0.123716, "quart", 0.123716 * 32),
+  legacyItem("Toppings", "Sliced Red Onion", "46017.23", 0.093527, "quart", 0.093527 * 32),
+  legacyItem("Toppings", "Shredded Red Cabbage", "71070.2", 0.068369, "quart", 0.068369 * 32),
+  legacyItem("Toppings", "Sliced Radishes", "71070.1", 0.276611, "quart", 0.276611 * 32),
+  legacyItem("Toppings", "Tri-Color Quinoa", "55978.2", 0.146697, "quart", 0.146697 * 32),
+  legacyItem("Toppings", "Herbed Bulgur", "144954", 0.09, "quart", 0.09 * 32),
+  legacyItem("Toppings", "Blanched Broccoli", "16207.12", 0.26341, "quart", 0.26341 * 32, "Requires batch cooking"),
+  legacyItem("Toppings", "Frozen Peas", "4877", 2.27 / 32, "quart", 2.27, "", { transferGlCode: "4111009", transferGlCategory: "Frozen", legacyIds: ["commissary-9002-2"] }),
+  legacyItem("Toppings", "Marinated Artichokes", "70850", 0.2, "quart", 0.2 * 32),
+  legacyItem("Toppings", "Marinated Chickpeas", "62871.2", 0.134019, "quart", 0.134019 * 32),
+  legacyItem("Toppings", "Aleppo-Edamame", "176736", 0.22, "quart", 0.22 * 32),
+  legacyItem("Toppings", "Pickled Red Onions", "76321", 0.25, "quart", 0.25 * 32),
+  legacyItem("Toppings", "Broccoli Kimchi", "85528.4", 0.13, "quart", 0.13 * 32),
+  legacyItem("Toppings", "Broccoli Stem Slaw", "110975", 0.15, "quart", 0.15 * 32),
+  legacyItem("Toppings", "Grape Tomatoes", "66240", 0.235316, "quart", 0.235316 * 32),
+  legacyItem("Toppings", "Kidney Beans", "67067.12", 0.036004, "quart", 0.036004 * 32),
+  legacyItem("Toppings", "Shredded Carrots", "119962", 0.14154, "quart", 0.14154 * 32),
+  legacyItem("Toppings", "Banana Pepper Rings", "46017.25", 0.191859, "quart", 0.191859 * 32),
+  legacyItem("Toppings", "Sliced Black Olives", "62339", 0.130953, "quart", 0.130953 * 32),
+  legacyItem("Proteins", "Chopped Hard Boiled Eggs", "62326", 0.214008, "quart", 0.214008 * 32),
+  legacyItem("Proteins", "Diced Ham", "14899", 0.210286, "quart", 0.210286 * 32),
+  legacyItem("Proteins", "Roasted Herb Chicken", "63167.8", 0.36, "quart", 0.36 * 32, "No grill"),
+  legacyItem("Proteins", "Garlic Herb Marinated Tofu", "167505", 0.249142, "quart", 0.249142 * 32),
+  legacyItem("Crunchy Toppers", "Flatbread Crisps", "62303.4", 0.046691, "quart", 1.44),
+  legacyItem("Crunchy Toppers", "Dried Cranberries", "62347", 0.21282, "quart", 6.56),
+  legacyItem("Crunchy Toppers", "Seasoned Croutons", "65280", 0.198638, "quart", 6.4),
+  legacyItem("Crunchy Toppers", "Fried Corn Tortilla Strips", "144578", 0.045906, "quart", 1.6),
+  legacyItem("Cheese", "Blue Cheese Crumbles", "47711.1", 0.252602, "quart", 8),
+  legacyItem("Cheese", "Crumbled Feta Cheese", "62345", 0.223263, "quart", 0.223263 * 32),
+  legacyItem("Cheese", "Shredded Cheddar Cheese", "62344", 0.191072, "quart", 0.191072 * 32),
+  legacyItem("Cheese", "4% Full Fat Cottage Cheese", "1746.6", 0.169409, "quart", 0.169409 * 32),
+  legacyItem("Dressings", "1000 Island Dressing", "111748.11", 0.19989, "gallon", 16.46),
+  legacyItem("Dressings", "Balsamic Vinaigrette Dressing", "16776", 0.176034, "gallon", 15.33),
+  legacyItem("Dressings", "Balsamic Vinegar", "47957.11", 0.102421, "5-liter container", 21.26),
+  legacyItem("Dressings", "Fat Free Italian Dressing", "62355", 0.082842, "32-ounce bottle", 5.64),
+  legacyItem("Dressings", "Honey Mustard Dressing", "5323", 0.20369, "gallon", 17.65),
+  legacyItem("Dressings", "Olive Oil", "47805.1", 0.367476, "gallon", 43.015),
+  legacyItem("Dressings", "Ranch Dressing", "62357", 0.126196, "gallon", 14.8),
+  legacyItem("Dressings", "Red Wine Vinegar", "62369", 0.094547, "gallon", 12.29),
+  legacyItem("Dressings", "Caesar Dressing", "62370", 0.094547, "gallon", 1.67),
+]);
+
 // Retired rows remain readable for previously saved orders and exports, but are not selectable in new orders.
 const retiredItem = (name, mrn, orderUnitCost, transferGlCode = "4111011", legacyIds = []) => Object.freeze({
   id: `commissary-${String(mrn).replace(/[^a-z0-9]/gi, "-").toLowerCase()}`,
@@ -142,7 +209,17 @@ export const COMMISSARY_RETIRED_ORDER_ITEMS = Object.freeze([
   retiredItem("Caesar Dressing", "62370", 1.67),
 ]);
 
-export const COMMISSARY_ITEM_BY_ID = new Map([...COMMISSARY_ORDER_ITEMS, ...COMMISSARY_RETIRED_ORDER_ITEMS].map((row) => [row.id, row]));
+export function commissaryOrderItemsForWeek(weekStart) {
+  return weekStart && weekStart < SALAD_BAR_COST_SOURCE.effectiveDate ? COMMISSARY_LEGACY_ORDER_ITEMS : COMMISSARY_ORDER_ITEMS;
+}
+
+export function commissaryItemMapForWeek(weekStart, quantities = {}) {
+  const rows = commissaryOrderItemsForWeek(weekStart);
+  const retainedRetired = weekStart && weekStart < SALAD_BAR_COST_SOURCE.effectiveDate ? [] : COMMISSARY_RETIRED_ORDER_ITEMS.filter(({ id, legacyIds = [] }) => quantities?.[id] || legacyIds.some((legacyId) => quantities?.[legacyId]));
+  return new Map([...rows, ...retainedRetired].map((row) => [row.id, row]));
+}
+
+export const COMMISSARY_ITEM_BY_ID = new Map([...COMMISSARY_LEGACY_ORDER_ITEMS, ...COMMISSARY_RETIRED_ORDER_ITEMS, ...COMMISSARY_ORDER_ITEMS].map((row) => [row.id, row]));
 
 export function saladBarTransferCatalogItems(metadataItems = COMMISSARY_ORDER_ITEMS) {
   return metadataItems.map((row) => ({

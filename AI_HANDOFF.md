@@ -1,3 +1,9 @@
+## Salad Bar service-week effective date - 2026-11-01
+
+Release candidate `2026.11.01.001-salad-bar-effective-date` makes the reviewed `MenuWorks SB Gallon Convert 3.0.xlsx` roster and costs effective for service weeks beginning 2026-11-16. Service weeks before that date resolve the exact prior 41-item roster and prior costs, including Frozen Peas MRN `4877`; 2026-11-16 and later resolve the new 41-row workbook roster, including Green Peas MRN `62341`. The boundary applies consistently to the chef grid, saved-record normalization, totals, Prep List rollups, delivery maps and S4 exports. Historical order-unit version 1 quantities still convert from quarts to gallons once; version 2 quantities remain unchanged.
+
+Operational metadata version 12 persists both complete Salad Bar catalogs, the reviewed source/effective date and the existing 41 companion culinary profiles. Supabase remains the primary shared order store. Existing Nessie and Cricket records for 2026-11-02 were not rewritten; the release makes their original saved quantities visible again under the correct historical catalog. No recoverable Supabase rows existed for 2026-11-09 or Dawson 2026-11-02, so no quantities were invented or backfilled. Application verification and production evidence are pending publication.
+
 ## Salad Bar gallon-costing refresh - 2026-10-31
 
 LIVE `2026.10.31.003-salad-bar-gallon-costing` replaces the Salad Bar ordering catalog with the 41 exact rows in `MenuWorks SB Gallon Convert 3.0.xlsx` (`Report`, SHA-256 `42E2DF61F1B97489ED2B9F27B81C86100B7D404E649099840829B23F76BB80F4`). The source carries MRN, portion, Item Cost, Waste %, and Item + Waste Cost for every row. `1 gallon` and `128 floz` rows order as gallon bags in 0.25-gallon increments; the six explicit `3 pound` rows retain 3-pound containers and whole-container increments. Six retired roster items remain readable in historical saved orders and exports but are not selectable for new orders.

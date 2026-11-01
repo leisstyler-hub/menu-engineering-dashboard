@@ -4,7 +4,7 @@ The complete reusable operating contract is published in the validated Supabase 
 
 The Draft Commissary Ordering Tool stores one shared Supabase order per receiving cafe and service week. Commissary (`SEA20 Cricket`, profit center `22472`) is the fixed departing unit.
 
-- Salad Bar ordering is sourced from the reviewed `MenuWorks SB Gallon Convert 3.0.xlsx` 41-row cost index. Exact source Item Cost, Waste %, Item + Waste Cost, MRN and source portion are persisted in operational metadata version 11 for cross-tool use. Gallon/128-floz rows order in 0.25-gallon increments; six explicit 3-pound packs order as whole containers. The Transfer Tool exposes the same records under `Commissary Salad Bar`.
+- Salad Bar ordering uses a service-week effective-date boundary. Weeks before 2026-11-16 retain the original 41-item roster and original costs; `MenuWorks SB Gallon Convert 3.0.xlsx` becomes authoritative beginning 2026-11-16. Operational metadata version 12 persists both complete catalogs plus the effective date for cross-tool use. New gallon/128-floz rows order in 0.25-gallon increments; six explicit 3-pound packs order as whole containers. The Transfer Tool exposes the current workbook records under `Commissary Salad Bar`.
 
 - Friday delivery covers Monday service, Monday delivery covers Tuesday–Wednesday service, and Wednesday delivery covers Thursday–Friday service.
 - Receiving cafes and delivery definitions resolve from validated shared `Commissary Metadata` (`commissaryOrder|metadata|current`) in Supabase. The exact release configuration is retained as a code fallback for a read outage; current receiving cafes are SEA39 Nessie, SEA20 Cricket, and SEA27 Dawson.

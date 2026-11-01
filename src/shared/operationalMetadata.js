@@ -3,6 +3,7 @@ import { CAFE_PROFIT_CENTERS } from "../features/transfer-tool/cafeProfitCenters
 import { S4_GL_ACCOUNTS } from "../features/transfer-tool/s4GlAccounts.js";
 import {
   COMMISSARY_DEPARTING_UNIT,
+  COMMISSARY_LEGACY_ORDER_ITEMS,
   COMMISSARY_ORDER_ITEMS,
   COMMISSARY_RETIRED_ORDER_ITEMS,
   SALAD_BAR_CULINARY_PROFILE_MANIFEST,
@@ -17,7 +18,7 @@ import { BREAKFAST_ORDERING_PROGRAM } from "../features/commissary-ordering/brea
 import { COMMISSARY_CAFE_STATION_ACCESS, COMMISSARY_HUB_ROUTING, COMMISSARY_HUBS } from "../features/commissary-ordering/commissaryRouting.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 11;
+export const OPERATIONAL_METADATA_VERSION = 12;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -50,10 +51,12 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
     orderItems: COMMISSARY_ORDER_ITEMS,
     retiredOrderItems: COMMISSARY_RETIRED_ORDER_ITEMS,
     saladBarCosting: Object.freeze({
-      version: 1,
+      version: 2,
       source: SALAD_BAR_COST_SOURCE,
       menu: "Commissary Salad Bar",
       items: COMMISSARY_ORDER_ITEMS,
+      legacyItems: COMMISSARY_LEGACY_ORDER_ITEMS,
+      catalogSelection: "service-week-effective-date",
       culinaryProfiles: SALAD_BAR_CULINARY_PROFILE_MANIFEST,
       culinaryProfilePersistence: "operational-metadata-companion; canonical shared profile domain not yet approved",
       transferCatalogEnabled: true,

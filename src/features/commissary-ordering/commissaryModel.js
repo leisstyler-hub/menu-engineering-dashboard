@@ -1,4 +1,4 @@
-import { COMMISSARY_ITEM_BY_ID, COMMISSARY_ORDER_ITEMS, COMMISSARY_RETIRED_ORDER_ITEMS } from "./commissaryCatalog.js";
+import { COMMISSARY_ITEM_BY_ID, COMMISSARY_RETIRED_ORDER_ITEMS, SALAD_BAR_COST_SOURCE, commissaryItemMapForWeek, commissaryOrderItemsForWeek } from "./commissaryCatalog.js";
 import { DEFAULT_COMMISSARY_METADATA } from "./commissaryMetadata.js";
 import { GRILL_LTO_PREP_ITEM_IDS, GRILL_LTO_PROGRAM } from "./grillLtoCatalog.js";
 import { DELI_ORDERING_PREP_ITEM_IDS, DELI_ORDERING_PROGRAM } from "./deliCycleCatalog.js";
@@ -108,8 +108,8 @@ export function transferPeriod(weekStart) {
   return { start: addDays(weekStart, -3), end: addDays(weekStart, 3) };
 }
 
-export function emptyQuantities() {
-  return Object.fromEntries(COMMISSARY_ORDER_ITEMS.map(({ id }) => [id, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, 0]))]));
+export function emptyQuantities(weekStart) {
+  return Object.fromEntries(commissaryOrderItemsForWeek(weekStart).map(({ id }) => [id, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, 0]))]));
 }
 
 const wholeQuantity = (value) => {
@@ -329,17 +329,19 @@ export function sanitizeQuantity(value) {
 
 export function normalizeQuantities(quantities = {}, options = {}) {
   const orderUnitVersion = Number(options.orderUnitVersion ?? COMMISSARY_ORDER_UNIT_VERSION);
-  const retainedRetiredItems = COMMISSARY_RETIRED_ORDER_ITEMS.filter(({ id, legacyIds = [] }) => quantities?.[id] || legacyIds.some((legacyId) => quantities?.[legacyId]));
-  return Object.fromEntries([...COMMISSARY_ORDER_ITEMS, ...retainedRetiredItems].map(({ id, legacyIds = [] }) => {
+  const weekItems = commissaryOrderItemsForWeek(options.weekStart);
+  const retainedRetiredItems = options.weekStart && options.weekStart < SALAD_BAR_COST_SOURCE.effectiveDate ? [] : COMMISSARY_RETIRED_ORDER_ITEMS.filter(({ id, legacyIds = [] }) => quantities?.[id] || legacyIds.some((legacyId) => quantities?.[legacyId]));
+  const catalogById = commissaryItemMapForWeek(options.weekStart, quantities);
+  return Object.fromEntries([...weekItems, ...retainedRetiredItems].map(({ id, legacyIds = [] }) => {
     const source = quantities?.[id] || legacyIds.map((legacyId) => quantities?.[legacyId]).find(Boolean) || {};
-    const catalog = COMMISSARY_ITEM_BY_ID.get(id);
+    const catalog = catalogById.get(id);
     const scale = orderUnitVersion < COMMISSARY_ORDER_UNIT_VERSION && catalog?.legacyOrderUnit === "quart" ? 0.25 : 1;
     return [id, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, sanitizeQuantity(sanitizeQuantity(source[delivery]) * scale)]))];
   }));
 }
 
 export function buildOrderRecord({ cafe, weekStart, quantities, grill, deli, global, breakfast, now = new Date() }) {
-  const normalized = isCafeStationEnabled(cafe, COMMISSARY_STATIONS.SALAD_BAR) ? normalizeQuantities(quantities) : emptyQuantities();
+  const normalized = isCafeStationEnabled(cafe, COMMISSARY_STATIONS.SALAD_BAR) ? normalizeQuantities(quantities, { weekStart }) : emptyQuantities(weekStart);
   const normalizedGrill = normalizeGrillOrder(grill, weekStart, cafe);
   const normalizedDeli = normalizeDeliOrder(deli, weekStart, cafe);
   const normalizedGlobal = normalizeGlobalOrder(global, weekStart, cafe);
@@ -397,9 +399,9 @@ export function togglePrepCompleted(completed, delivery, itemId) {
   return { ...normalized, [delivery]: [...current] };
 }
 
-export function orderValue(quantities = {}, grill = {}, deli = {}, global = {}, cafe = "", breakfast = {}) {
-  const normalized = normalizeQuantities(quantities);
-  const saladItems = [...COMMISSARY_ORDER_ITEMS, ...COMMISSARY_RETIRED_ORDER_ITEMS.filter(({ id, legacyIds = [] }) => quantities?.[id] || legacyIds.some((legacyId) => quantities?.[legacyId]))];
+export function orderValue(quantities = {}, grill = {}, deli = {}, global = {}, cafe = "", breakfast = {}, weekStart) {
+  const normalized = normalizeQuantities(quantities, { weekStart });
+  const saladItems = [...commissaryItemMapForWeek(weekStart, quantities).values()];
   const saladValue = cafe && !isCafeStationEnabled(cafe, COMMISSARY_STATIONS.SALAD_BAR) ? 0 : saladItems.reduce((sum, row) => {
     const delivery = normalized[row.id];
     return sum + DELIVERY_KEYS.reduce((deliverySum, key) => deliverySum + sanitizeQuantity(delivery[key]), 0) * row.orderUnitCost;
@@ -432,11 +434,11 @@ export function orderValue(quantities = {}, grill = {}, deli = {}, global = {}, 
 
 export function rolledUpItems(records = [], options = {}) {
   const scopedRecords = records.filter((record) => isCafeStationEnabled(record.cafe, COMMISSARY_STATIONS.SALAD_BAR) && (!options.hub || cafeRoutesToHub(record.cafe, COMMISSARY_STATIONS.SALAD_BAR, options.hub)));
-  const retiredInScope = COMMISSARY_RETIRED_ORDER_ITEMS.filter(({ id, legacyIds = [] }) => scopedRecords.some((record) => record.quantities?.[id] || legacyIds.some((legacyId) => record.quantities?.[legacyId])));
-  return [...COMMISSARY_ORDER_ITEMS, ...retiredInScope].map((row) => {
+  const rowsById = new Map(scopedRecords.flatMap((record) => [...commissaryItemMapForWeek(record.weekStart, record.quantities).values()]).map((row) => [row.id, row]));
+  return [...rowsById.values()].map((row) => {
     const cafes = Object.fromEntries(scopedRecords.map((record) => {
-      const values = normalizeQuantities(record.quantities, { orderUnitVersion: record.orderUnitVersion ?? 1 })[row.id];
-      return [record.cafe, values];
+      const values = normalizeQuantities(record.quantities, { orderUnitVersion: record.orderUnitVersion ?? 1, weekStart: record.weekStart })[row.id];
+      return [record.cafe, values || Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, 0]))];
     }));
     const deliveryTotals = Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, Object.values(cafes).reduce((sum, value) => sum + value[delivery], 0)]));
     return { ...row, station: "Salad Bar", cafes, ...deliveryTotals, total: DELIVERY_KEYS.reduce((sum, delivery) => sum + deliveryTotals[delivery], 0) };
@@ -445,9 +447,10 @@ export function rolledUpItems(records = [], options = {}) {
 
 export function orderLinesForCafe(record = {}) {
   if (!isCafeStationEnabled(record.cafe, COMMISSARY_STATIONS.SALAD_BAR)) return [];
-  const quantities = normalizeQuantities(record.quantities, { orderUnitVersion: record.orderUnitVersion ?? 1 });
+  const quantities = normalizeQuantities(record.quantities, { orderUnitVersion: record.orderUnitVersion ?? 1, weekStart: record.weekStart });
+  const catalogById = commissaryItemMapForWeek(record.weekStart, record.quantities);
   return Object.entries(quantities).map(([id, values]) => {
-    const catalog = COMMISSARY_ITEM_BY_ID.get(id);
+    const catalog = catalogById.get(id);
     return catalog ? { ...catalog, ...values, total: DELIVERY_KEYS.reduce((sum, delivery) => sum + values[delivery], 0) } : null;
   }).filter((line) => line && line.total > 0);
 }
