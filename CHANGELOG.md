@@ -1,3 +1,7 @@
+## 2026-11-02
+
+- [Nov 2, 4:00 PM] Simplified W&P pan planning with source portion estimates, visible Tags and locked-item protection.
+
 ## 2026-11-01
 
 - [Nov 1, 6:02 AM] Made new Salad Bar items and costs effective Nov 16 while restoring original Nov 2 and Nov 9 catalogs and saved-order quantities.

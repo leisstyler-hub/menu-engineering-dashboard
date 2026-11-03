@@ -22,15 +22,13 @@ for(const width of [390,1440])test(`Smart pillars, safe preview, pan plan and sw
  await expect(station.getByLabel('Lock Roasted carrots',{exact:true})).toBeChecked();await expect(station).toContainText('Chili Herb Crunch');await expect(station.getByTestId('station-projected-fc-')).toHaveText('Incomplete');
  await smart.getByRole('button',{name:'Undo last smart change'}).click();await expect(station.getByTestId('station-food')).toHaveCount(1);
  await station.getByLabel('Lock Roasted carrots',{exact:true}).uncheck();
- await station.getByLabel('Quantity mode for Roasted carrots').selectOption('pan');
- await station.getByLabel('Opening display pans for Roasted carrots').fill('2');await station.getByLabel('Reserve / refill pans for Roasted carrots').fill('2');await station.getByLabel('Measured finished lb per pan for Roasted carrots').fill('3');
- await expect(station.getByTestId('station-finished-pounds')).toHaveText('12.00');await station.getByLabel('Service placement for Roasted carrots',{exact:true}).selectOption('Hot');await station.getByLabel('Confirm service placement for Roasted carrots',{exact:true}).check();
+ await station.getByLabel('Total pans to prepare for Roasted carrots').fill('4');
+ await expect(station.getByTestId('station-finished-pounds')).toHaveText('Incomplete');
  await expect(smart.getByRole('button',{name:'Apply swap: Roasted squash',exact:true})).toBeVisible();await smart.getByRole('button',{name:'Apply swap: Roasted squash',exact:true}).click();
- await expect(station.getByLabel('Measured finished lb per pan for Roasted squash')).toHaveValue('');await expect(station.getByLabel('Confirm service placement for Roasted squash',{exact:true})).not.toBeChecked();
- await station.getByLabel('Measured finished lb per pan for Roasted squash').fill('2');
+ await expect(station.getByLabel('Total pans to prepare for Roasted squash')).toHaveValue('4');
  const download=page.waitForEvent('download');await station.getByRole('button',{name:'Export station selections'}).click();
- const book=XLSX.read(await readFile(await(await download).path()));const data=XLSX.utils.sheet_to_json(book.Sheets['Station selections']);expect(data[0].MRN).toBe('0002');expect(data[0]['Opening display pans']).toBe('2');expect(data[0]['Profile status']).toContain('Proposed');
- await station.getByLabel('Pan size for Roasted squash').selectOption('bullet');await expect(station.getByLabel('Measured finished lb per pan for Roasted squash')).toHaveValue('');await expect(smart).toContainText('bullet pan footprint');
+ const book=XLSX.read(await readFile(await(await download).path()));const data=XLSX.utils.sheet_to_json(book.Sheets['Station selections']);expect(data[0].MRN).toBe('0002');expect(data[0]['Total pans to prepare']).toBe('4');expect(data[0]['Profile status']).toContain('Proposed');
+ await station.getByLabel('Pan size for Roasted squash').selectOption('bullet');await expect(station.getByLabel('Total pans to prepare for Roasted squash')).toHaveValue('4');
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();expect(errors).toEqual([]);expect(writes).toEqual([]);
  await smart.screenshot({path:`test-results/wp-smart-${width}.png`});
 });
@@ -46,7 +44,7 @@ test('Actual shared catalog can build a mixed smart spread without writes',async
  const preview=smart.getByLabel('Suggested spread preview');await expect(preview).toBeVisible();expect(await preview.getByRole('listitem').count()).toBeGreaterThan(2);
  await preview.getByRole('button',{name:'Use suggested lineup (replace unlocked selections)',exact:true}).click();
  expect(await station.getByTestId('station-food').count()).toBeGreaterThan(2);await expect(station.getByTestId('station-projected-fc-')).toHaveText('Incomplete');
- await expect(station).toContainText('Culinary monikers');
+ await expect(station).toContainText('Tags');
  for(const width of [1440,390]){await page.setViewportSize({width,height:1000});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();await page.getByRole('region',{name:'W&P qualifying portfolio'}).screenshot({path:`test-results/wp-smart-actual-${width}.png`});}
  expect(errors).toEqual([]);expect(writes).toEqual([]);
 });

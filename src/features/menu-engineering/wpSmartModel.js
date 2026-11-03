@@ -11,10 +11,13 @@ export function pillarMenus(pillar,names) {
 const byMrn=new Map();
 for(const row of evidence.records){if(!byMrn.has(row.mrn))byMrn.set(row.mrn,[]);byMrn.get(row.mrn).push(row);}
 export function profileFor(food) {
+ if(food.culinaryProfile?.reviewStatus==='Reviewed')return {placements:[],flavors:[],textures:[],seasons:[],cuisines:[],role:food.category,premium:false,...food.culinaryProfile,evidenceCount:1};
  const candidates=(byMrn.get(String(food.mrn||''))||[]).filter(r=>(food.menus||[]).some(m=>menuName(m)===menuName(r.menu))&&String(r.portion).trim().toLowerCase()===String(food.portion||'').trim().toLowerCase());
  const name=String(food.name||'').toLowerCase();
  const placements=[];
- if(/\b(roasted|steamed|braised|grilled|bulgogi|sauteed|sautéed|poriyal|mashed|baked|curry|rice)\b/.test(name))placements.push('Hot');
+ if(/butter chicken/.test(name))placements.push('Hot');
+ if(/dinner rolls?/.test(name))placements.push('Ambient');
+ if(/\b(roasted|steamed|braised|grilled|bulgogi|sauteed|saut\u00e9ed|poriyal|mashed|baked|curry|rice)\b/.test(name))placements.push('Hot');
  if(/\b(salad|slaw|cucumbers?|tabbouleh|hummus|vinaigrette)\b/.test(name))placements.push('Cold');
  if(/\b(crunch|crispy chickpeas|croutons?|toasted seeds|granola)\b/.test(name))placements.push('Ambient');
  const flavors=[];const textures=[];
@@ -28,25 +31,27 @@ export function profileFor(food) {
  return {reviewStatus:'Proposed',placements:[...new Set(placements)],flavors,textures,seasons,cuisines,role:food.category,
  premium:/\b(beef|steak|salmon|seafood|shrimp|tuna|fish)\b/.test(name)&&!/plant.based|vegan/.test(name),
  evidenceCount:candidates.length,sourceSha256:candidates.length?evidence.sourceSha256:null,
- basis:'Name-based culinary proposal; cuisine uses mapped menu pillar. Chef confirmation required.'};
+ basis:'Name-based culinary proposal; cuisine uses mapped menu pillar. Review required; not service approval.'};
 }
 const eligible=f=>!f.conflict&&!(f.serviceReasons||[]).length;
 export function capacityIssues(entries,capacity) {
  const counts={Hot:0,Cold:0,Ambient:0},issues=[];
  for(const e of entries){
-  if(!Object.hasOwn(counts,e.placement)){issues.push('Choose service placement for every food to check equipment fit.');continue;}
+  if(!Object.hasOwn(counts,e.placement)){issues.push('Service Tag needs review to check equipment fit.');continue;}
   let footprint=1,count=1;
-  if(e.quantityMode==='pan'){
+  if(e.totalPans!==undefined){
+   count=1;footprint=e.placement==='Ambient'?1:e.panSize==='half'?.5:e.panSize==='bullet'?1/6:1;
+  }else if(e.quantityMode==='pan'){
    count=Number(e.openingPans);
    if(!Number.isInteger(count)||count<0){issues.push('Enter whole opening pan counts to check equipment fit.');continue;}
    if(e.placement!=='Ambient'){
-    footprint=e.panSize==='half'?.5:e.panSize==='full'?1:Number(e.footprint);
+    footprint=e.panSize==='half'?.5:e.panSize==='full'?1:e.totalPans!==undefined&&e.panSize==='bullet'?1/6:Number(e.footprint);
     if(!Number.isFinite(footprint)||footprint<=0){issues.push('Confirm the bullet pan footprint in full-pan spaces.');continue;}
    }
   }
   counts[e.placement]+=count*footprint;
  }
- for(const [placement,count] of Object.entries(counts))if(count>Number(capacity[placement.toLowerCase()]))issues.push(`${placement} opening display exceeds available capacity (${count} / ${capacity[placement.toLowerCase()]}).`);
+ for(const [placement,count] of Object.entries(counts))if(count>Number(capacity[placement.toLowerCase()]))issues.push(`${placement} display selection exceeds available capacity (${count} / ${capacity[placement.toLowerCase()]}).`);
  return [...new Set(issues)];
 }
 export function suggestSpread(foods,entries,capacity) {
@@ -55,10 +60,10 @@ export function suggestSpread(foods,entries,capacity) {
  const chosen=entries.filter(e=>e.locked).map(e=>({...e})), messages=[];
  const available=foods.filter(eligible), counts=new Map();
  for(const e of chosen){const f=foods.find(f=>f.key===e.key);if(f)counts.set(f.category,(counts.get(f.category)||0)+1);}
- const locatedLocks=chosen.map(e=>({...e,placement:e.placement||profileFor(foods.find(f=>f.key===e.key)||{}).placements[0]}));
+ const locatedLocks=chosen.map(e=>({...e,placement:profileFor(foods.find(f=>f.key===e.key)||{}).placements.length===1?profileFor(foods.find(f=>f.key===e.key)||{}).placements[0]:''}));
  const lockIssues=capacityIssues(locatedLocks,capacity);
  if(lockIssues.length)return {entries:chosen,messages:lockIssues};
- for(const e of locatedLocks){const count=e.quantityMode==='pan'?Number(e.openingPans):1;const footprint=e.placement==='Ambient'||e.quantityMode!=='pan'?1:e.panSize==='half'?.5:e.panSize==='full'?1:Number(e.footprint);remaining[e.placement]-=count*footprint;}
+ for(const e of locatedLocks){const count=e.totalPans!==undefined?1:e.quantityMode==='pan'?Number(e.openingPans):1;const footprint=e.placement==='Ambient'||e.quantityMode!=='pan'?1:e.panSize==='half'?.5:e.panSize==='full'?1:e.totalPans!==undefined&&e.panSize==='bullet'?1/6:Number(e.footprint);remaining[e.placement]-=count*footprint;}
  const slots=Object.entries(remaining).flatMap(([p,n])=>Array.from({length:Math.max(0,Math.floor(n))},()=>p));
  const totalSlots=slots.length+chosen.length;
  for(const placement of slots){
@@ -67,16 +72,16 @@ export function suggestSpread(foods,entries,capacity) {
   const score=f=>{const p=profileFor(f);return (counts.has(f.category)?-5*(counts.get(f.category)||0):40)+(p.premium&&!chosenProfiles.some(p=>p.premium)?12:0)+(p.seasons.includes(capacity.season)?6:0)+p.flavors.filter(t=>!chosenProfiles.some(p=>p.flavors.includes(t))).length*3+p.textures.filter(t=>!chosenProfiles.some(p=>p.textures.includes(t))).length*4-(p.flavors.includes('Rich')&&chosenProfiles.some(p=>p.flavors.includes('Rich'))?5:0)-(Number.isFinite(f.foodCost)?Math.min(20,f.foodCost*10):22);};
   candidates.sort((a,b)=>score(b)-score(a)||a.name.localeCompare(b.name));const f=candidates[0];
   if(!f)continue;
-  const p=profileFor(f),guidance=[!counts.has(f.category)?`Adds ${f.category.toLowerCase()}`:'Extends this culinary role',p.premium?'Premium highlight':null,p.seasons.includes(capacity.season)?'Seasonal fit':null,...p.textures.filter(t=>!chosenProfiles.some(p=>p.textures.includes(t))).map(t=>`Adds ${t.toLowerCase()} texture`)].filter(Boolean).join(' · ');
-  chosen.push({key:f.key,name:f.name,mrn:f.mrn,menus:f.menus,pounds:'',quantityMode:'pan',panSize:'full',openingPans:'1',reservePans:'0',fillLb:'',placement,placementConfirmed:false,guidance});counts.set(f.category,(counts.get(f.category)||0)+1);
+  const p=profileFor(f),guidance=[!counts.has(f.category)?`Adds ${f.category.toLowerCase()}`:'Extends this culinary role',p.premium?'Premium highlight':null,p.seasons.includes(capacity.season)?'Seasonal fit':null,...p.textures.filter(t=>!chosenProfiles.some(p=>p.textures.includes(t))).map(t=>`Adds ${t.toLowerCase()} texture`)].filter(Boolean).join(' Ã‚· ');
+  chosen.push({key:f.key,name:f.name,mrn:f.mrn,menus:f.menus,pounds:'',quantityMode:'pan',panSize:'full',totalPans:'1',placement,guidance});counts.set(f.category,(counts.get(f.category)||0)+1);
  }
  if(chosen.length<totalSlots)messages.push('The selected food pool cannot fill all requested spaces with known placement proposals.');
  if(entries.filter(e=>e.locked).length>totalSlots)messages.push('Locked foods exceed available space.');
- messages.push('Culinary proposals require chef confirmation. Enter quantities to evaluate the 40% overall target; demand is not predicted.');
+ messages.push('Tags include proposed classifications. Set total pans to estimate the 40% overall target; sell-through is a scenario, not predicted demand.');
  return {entries:chosen,messages};
 }
 export function applySwap(entries,fromKey,to) {
- return entries.map(e=>e.key===fromKey&&!e.locked?{...e,key:to.key,name:to.name,mrn:to.mrn,menus:to.menus,fillLb:'',placementConfirmed:false}:e);
+ return entries.map(e=>e.key===fromKey&&!e.locked?{...e,key:to.key,name:to.name,mrn:to.mrn,menus:to.menus,fillLb:'',placement:profileFor(to).placements.length===1?profileFor(to).placements[0]:'',placementConfirmed:false}:e);
 }
 export function suggestSwaps(entries,foods,options) {
  const catalog=options.catalog||foods;

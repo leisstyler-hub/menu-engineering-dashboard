@@ -7,23 +7,22 @@ export function buildStationWorkbook(projection, {rate, sellThrough, trusted}) {
     Food: row.food?.name || row.name, MRN: String(row.food?.mrn || row.mrn || ''),
     'Source menus': row.food?.menus?.join('; ') || row.menus?.join('; ') || 'Source no longer available',
     Category: row.food?.category || '', 'Planned finished lb': row.pounds ?? 'Invalid quantity',
-    'Cost per lb': trusted && !row.food?.conflict ? row.food?.costPerLb ?? 'Unresolved' : 'Unresolved',
+    'Estimated cost per lb': row.cost!=null&&row.pounds>0?row.cost/row.pounds:'Unresolved',
     'Planned food cost': row.cost ?? 'Incomplete', 'Service review': row.food?.serviceReasons?.join('; ') || '',
-    'Information needed': row.food?.informationReasons?.join('; ') || (row.cost == null ? 'Trusted compatible evidence and positive quantity required' : ''),
-    'Approximate weight': row.food?.weightApproximate ? 'Yes' : 'No',
-    'Cost source': row.food?.costBasis || '', 'Weight source': row.food?.weightSource || '',
-    'Quantity mode':row.quantityMode==='pan'?'Pans':'Manual finished pounds',
-    'Pan size (4-inch deep)':row.quantityMode==='pan'?row.panSize:'',
-    'Opening display pans':row.quantityMode==='pan'?row.openingPans:'',
-    'Reserve / refill pans':row.quantityMode==='pan'?row.reservePans:'',
-    'Total pans to prepare':row.quantityMode==='pan'&&row.pounds!=null?Number(row.openingPans)+Number(row.reservePans):'',
-    'Measured finished lb per pan':row.quantityMode==='pan'?row.fillLb:'',
-    'Service placement':row.placement||'Unconfirmed',
-    'Placement chef confirmed':row.placementConfirmed?'Yes':'No',
-    'Locked in smart builds':row.locked?'Yes':'No',
-    'Proposed monikers':row.food?Object.values((({role,cuisines,flavors,textures,seasons})=>({role,cuisines,flavors,textures,seasons}))(profileFor(row.food))).flat().join('; '):'',
-    'Profile status':'Proposed; chef review required',
-    'Bullet footprint (full-pan spaces)':row.footprint||''
+    'Information needed':row.estimate?.reason||row.food?.informationReasons?.join('; ')||(row.cost==null?'Trusted compatible evidence and positive quantity required':''),
+    'Approximate weight':row.estimate||row.food?.weightApproximate?'Yes':'No',
+    'Cost source':row.estimate?'Menu Item Index source-file estimate':row.food?.costBasis||'', 'Weight source':row.estimate?'Menu Item Index portion weight and reference pan':row.food?.weightSource||'',
+    'Pan size (4-inch deep)':row.panSize||'',
+    'Total pans to prepare':row.totalPans??'',
+    'Estimated source servings':row.servings??'Unavailable',
+    'Estimate basis':row.estimate?.basis||row.estimate?.reason||'',
+    'Source file SHA256':row.estimate?.sourceSha256||'',
+    'LOCK ITEM FROM SUGGESTIONS':row.locked?'Yes':'No',
+    'Tags':row.food?Object.values((({placements,role,cuisines,flavors,textures,seasons})=>({placements,role,cuisines,flavors,textures,seasons}))(profileFor(row.food))).flat().join('; '):'',
+    'Profile status':row.food?profileFor(row.food).reviewStatus:'Needs review',
+    'Pan assumptions':'4-inch: full 14.2 qt; half 6.7 qt; bullet approximated as 1/6-size 1.8 qt; 80% usable fill',
+    'Premium placement advice':row.food&&profileFor(row.food).premium?'Consider end of guest path after foundations/sides; suitable holding required':''
+
   }));
   const items = XLSX.utils.json_to_sheet(rows);
   items['!cols'] = [{wch:48},{wch:25},{wch:55},{wch:22},{wch:22},{wch:18},{wch:22},{wch:60},{wch:65},{wch:20},{wch:40},{wch:45}];

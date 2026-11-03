@@ -1,8 +1,8 @@
 # Governance
 
-## Culinary monikers on shared item updates (approved 2026-10-30)
+## Culinary Tags on shared item updates (approved 2026-10-30)
 
-Tyler's instruction `e3be88ea82f08707037255b28858011fb27a04ba2887cfcee611379262f17461` requires Chief and Donnie to include consistent culinary monikers whenever adding or updating Supabase items. Follow [the culinary moniker standard](docs/governance/WP_CULINARY_PROFILE_STANDARD.md): complete required fields with evidence or explicit Unknown / Needs review, preserve reviewed values and identities, and report candidate versus shared persistence honestly. This rule does not authorize schema migrations or production writes without the existing safeguards.
+Tyler's instruction `e3be88ea82f08707037255b28858011fb27a04ba2887cfcee611379262f17461` requires Chief and Donnie to include consistent culinary Tags whenever adding or updating Supabase items. Follow [the culinary Tags standard](docs/governance/WP_CULINARY_PROFILE_STANDARD.md): complete required fields with evidence or explicit Unknown / Needs review, preserve reviewed values and identities, and report candidate versus shared persistence honestly. This rule does not authorize schema migrations or production writes without the existing safeguards.
 
 ## Current policy: solo delivery (approved 2026-10-24)
 

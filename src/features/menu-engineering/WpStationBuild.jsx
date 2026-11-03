@@ -1,6 +1,7 @@
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {projectStation} from './wpStationModel.js';
 import {profileFor} from './wpSmartModel.js';
+import WpTags from './WpTags.jsx';
 import WpPanFields from './WpPanFields.jsx';
 
 const money = value => value == null ? 'Incomplete' : `$${value.toFixed(2)}`;
@@ -22,16 +23,17 @@ export default function WpStationBuild({entries, onChange, catalog, rate, truste
   };
   return <aside id="wp-station" tabIndex={-1} aria-label="Station build" className="wp-station min-w-0 space-y-4 rounded-2xl border bg-white p-4 md:p-5">
     <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-bold uppercase text-teal-700">02 / Your station</p><h3 className="text-xl font-bold text-teal-950">Build your spread</h3></div><button type="button" disabled={!entries.length} onClick={()=>onChange([])} className="rounded-lg border bg-white px-3 py-2 text-xs disabled:opacity-50">Clear selections</button></div>
-    <p className="text-xs text-slate-600">{entries.length} foods selected. Switching menu tiles keeps your build; refreshing data or leaving W&amp;P clears it. Plan opening and reserve pans using measured fill weights, or enter finished pounds.</p>
+    <p className="text-xs text-slate-600">{entries.length} foods selected. Switching menu tiles keeps your build; refreshing data or leaving W&amp;P clears it. Select pan size and total pans to prepare. Estimates use the exact MRN and compatible source portion data.</p>
     <section aria-label="Station projections" className="wp-projection rounded-xl p-4"><h4 className="font-bold">Your station at a glance{projection.approximate?' · estimate':''}</h4><dl className="mt-3 grid grid-cols-2 gap-3 text-sm">{[
-      ['Finished pounds',projection.pounds==null?'Incomplete':projection.pounds.toFixed(2)],
+      ['Estimated food weight (lb)',projection.pounds==null?'Incomplete':projection.pounds.toFixed(2)],
       ['Planned food cost',money(projection.cost)],['Projected sales',money(projection.sales)],
       ['Projected FC%',projection.foodCost==null?'Incomplete':`${(projection.foodCost*100).toFixed(1)}%`],
       ['Remaining for labor & other costs',money(projection.contribution)]
-    ].map(([label,value])=><div key={label}><dt className="text-xs text-slate-600">{label}</dt><dd className="mt-1 text-lg font-bold" data-testid={`station-${label.toLowerCase().replace(/[^a-z]+/g,'-')}`}>{value}</dd></div>)}</dl>
-      <p className="mt-3 text-xs text-slate-600">Food cost includes all planned pounds. Sales use expected sell-through at {money(rate)}/lb. Remaining amount is projected sales minus all planned food cost, before labor, overhead and tax.</p>
+    ].map(([label,value])=><div key={label}><dt className="text-xs text-slate-600">{label}</dt><dd className="mt-1 text-lg font-bold" data-testid={label==='Estimated food weight (lb)'?'station-finished-pounds':`station-${label.toLowerCase().replace(/[^a-z]+/g,'-')}`}>{value}</dd></div>)}</dl>
+      <p className="mt-3 text-xs text-slate-600">Food cost includes all pans prepared. Sales use expected sell-through at {money(rate)}/lb. Remaining amount is projected sales minus all planned food cost, before labor, overhead and tax. Menu Item Index estimates are separate from current catalog qualification.</p>
       {projection.reviewCount>0&&<p className="mt-2 text-xs text-amber-900">{projection.reviewCount} foods retain service restrictions. A station FC% does not approve service.</p>}
     </section>
+    <details className="text-xs text-slate-500"><summary className="cursor-pointer">How pan estimates work</summary><p className="mt-2">Reference 4-inch pans: full 14.2 qt, half 6.7 qt, bullet modeled as a 1/6-size 1.8 qt pan; 80% usable fill. Actual equipment and packing vary. Estimates use the Menu Item Index portion volume, weight and cost for the exact MRN and serving variant, not a generic food density. Source-file costs are not a live-price refresh. Weight-only or piece portions need food-specific pan yield evidence.</p></details>
     <button type="button" disabled={!entries.length||exporting} onClick={exportStation} className="wp-primary w-full rounded-xl px-4 py-3 text-sm font-semibold text-white disabled:opacity-50">{exporting?'Preparing workbook…':'Export station selections'}</button>
     {exportError&&<p role="alert" className="text-sm text-rose-800">{exportError}</p>}
     {!trusted&&<p className="text-sm font-semibold text-amber-900">Reference data only. Load shared data for cost projections.</p>}
@@ -39,12 +41,12 @@ export default function WpStationBuild({entries, onChange, catalog, rate, truste
     <div className="space-y-3">{projection.rows.map(row=><article key={row.key} data-testid="station-food" className="wp-station-food min-w-0 rounded-xl border bg-white p-4">
       <button type="button" aria-label={`Details for ${row.name}`} onClick={()=>setDetailKey(row.key)} className="block w-full break-words text-left text-sm font-bold text-teal-900 hover:underline underline-offset-4">{row.food?.name||row.name}</button>
       <p className="mt-1 break-words text-xs text-slate-500">{row.food?.menus?.join(' · ')||'Source no longer available'} | MRN {row.food?.mrn||'Unresolved'}</p>
+      {row.food&&<WpTags food={row.food}/>}
       <WpPanFields entry={entries.find(entry=>entry.key===row.key)} onChange={next=>onChange(entries.map(entry=>entry.key===row.key?next:entry))}/>
-      {row.quantityMode==='pan'&&row.pounds!=null&&<p className="mt-2 text-sm font-semibold text-teal-950">Prepare {Number(row.openingPans)+Number(row.reservePans)} {row.panSize} pans · {Number(row.fillLb).toFixed(2)} lb per pan · {row.pounds.toFixed(2)} lb total.</p>}
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm"><label className="flex items-center gap-2"><input type="checkbox" aria-label={`Lock ${row.name}`} checked={Boolean(row.locked)} onChange={e=>onChange(entries.map(entry=>entry.key===row.key?{...entry,locked:e.target.checked}:entry))}/>Keep this food in smart builds</label><span>{money(row.food?.costPerLb)}/lb · <strong>{money(row.cost)} planned cost</strong></span></div>
-      {row.food&&<FoodMonikers food={row.food} entry={row} onChange={next=>onChange(entries.map(entry=>entry.key===row.key?{...entry,...next}:entry))}/>}
-      {row.pounds==null&&<p className="mt-2 text-xs text-amber-900">Enter a positive measured fill weight and valid whole pan counts, or finished pounds greater than zero.</p>}
-      {row.cost==null&&<p className="mt-2 text-xs text-amber-900">Incomplete estimate: valid quantity and trusted, compatible cost/weight evidence required.</p>}
+      {row.estimate?.servings!=null&&<p className="mt-2 text-xs text-slate-600">Estimated {row.servings.toFixed(1)} source servings / {row.pounds.toFixed(2)} lb total.</p>}
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm"><label className="flex items-center gap-2"><input type="checkbox" aria-label={`Lock ${row.name}`} checked={Boolean(row.locked)} onChange={e=>onChange(entries.map(entry=>entry.key===row.key?{...entry,locked:e.target.checked}:entry))}/>LOCK ITEM FROM SUGGESTIONS</label><span><strong>{money(row.cost)} estimated food cost</strong></span></div>
+      {row.estimate?.reason&&<p className="mt-2 text-xs text-amber-900">{row.estimate.reason}</p>}
+      {row.food&&profileFor(row.food).premium&&<p className="mt-2 text-xs text-slate-500">Premium item: consider the end of the guest path after foundations and sides, with suitable holding.</p>}
       {!!row.food?.informationReasons?.length&&<p className="mt-2 text-xs text-amber-900">{row.food.informationReasons.join('; ')}</p>}
       {!!row.food?.serviceReasons?.length&&<p className="mt-2 text-xs text-amber-900">Service review: {row.food.serviceReasons.join('; ')}</p>}
       {row.food?.weightApproximate&&<p className="mt-2 text-xs text-amber-900">Approximate source weight; estimated economics.</p>}
@@ -65,9 +67,4 @@ export default function WpStationBuild({entries, onChange, catalog, rate, truste
       <button type="button" onClick={()=>{onChange(entries.filter(entry=>entry.key!==detailKey));dialog.current.close();}} className="mt-4 rounded-xl bg-rose-700 px-4 py-2 text-sm font-semibold text-white">Delete from station</button>
     </dialog>}
   </aside>;
-}
-
-function FoodMonikers({food,entry,onChange}) {
- const p=profileFor(food);
- return <div className="mt-3 rounded-lg bg-slate-50 p-3 text-xs"><p className="font-bold text-teal-950">Culinary monikers · proposed</p><p className="mt-1">{[p.role,...p.cuisines,...p.flavors,...p.textures,...p.seasons,p.premium?'Premium highlight':null].filter(Boolean).join(' · ')||'Needs classification'}</p><p className="mt-1 text-slate-500">{p.seasons.length?'':'Season not classified. '}{p.evidenceCount?'Menu Index membership evidence linked. ':'No exact Menu Index membership/portion evidence linked. '}Name-based proposals need chef review.</p><label className="mt-2 block font-semibold">Service placement<select aria-label={`Service placement for ${entry.name}`} className={`${field} mt-1`} value={entry.placement||''} onChange={e=>onChange({placement:e.target.value,placementConfirmed:false})}><option value="">Choose placement</option>{['Hot','Cold','Ambient'].map(v=><option key={v}>{v}</option>)}</select></label><label className="mt-2 flex items-start gap-2"><input type="checkbox" aria-label={`Confirm service placement for ${entry.name}`} disabled={!entry.placement} checked={Boolean(entry.placementConfirmed)} onChange={e=>onChange({placementConfirmed:e.target.checked})}/><span>Chef confirmed this placement under local service requirements. Ambient needs specific validation.</span></label></div>;
 }

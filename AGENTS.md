@@ -2,7 +2,7 @@
 
 ## Current solo-delivery policy
 
-Chief and Donnie must follow [the culinary moniker standard](docs/governance/WP_CULINARY_PROFILE_STANDARD.md) on every Supabase item addition or update. Complete the standard profile fields with evidence or explicit Unknown / Needs review values; preserve reviewed classifications and existing identity links. Report shared-profile persistence status separately from candidate/app delivery.
+Chief and Donnie must follow [the culinary Tags standard](docs/governance/WP_CULINARY_PROFILE_STANDARD.md) on every Supabase item addition or update. Complete the standard profile fields with evidence or explicit Unknown / Needs review values; preserve reviewed classifications and existing identity links. Report shared-profile persistence status separately from candidate/app delivery.
 
 Chief and Donnie must follow [CHANGELOG_STANDARD.md](docs/governance/CHANGELOG_STANDARD.md): post every commit to Buzz Changelog and use matching concise change wording in the app changelog.
 

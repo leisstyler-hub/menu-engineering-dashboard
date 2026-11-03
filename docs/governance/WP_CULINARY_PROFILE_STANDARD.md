@@ -1,4 +1,4 @@
-# Culinary moniker standard
+# Culinary Tags standard
 
 Authority: Tyler, Buzz event e3be88ea82f08707037255b28858011fb27a04ba2887cfcee611379262f17461, October 30, 2026. Applies to Chief, Donnie and anyone adding or updating shared Supabase menu items.
 
@@ -11,7 +11,7 @@ Include the item's culinary profile in the change review and import dry run. Com
 | Profile version | `1`; version future vocabulary changes |
 | Identity | Existing item key plus exact text MRN and compatible portion; preserve menu memberships |
 | Service placement | Hot, Cold, Ambient; multiple allowed when reviewed; otherwise Unknown |
-| Cuisine moniker | Approved cuisine/pillar vocabulary; specific cuisine only with evidence; Unknown if unresolved |
+| Cuisine Tag | Approved cuisine/pillar vocabulary; specific cuisine only with evidence; Unknown if unresolved |
 | Culinary role | Proteins, Starches / grains, Vegetables, Sauces / dressings, Toppings / garnishes; Unknown for unresolved classifications |
 | Seasonality | Spring, Summer, Fall, Winter, Year-round; multiple allowed; Unknown is distinct from Year-round |
 | Flavor | Bright, Savory, Spicy, Rich, Herbal; multiple allowed; Unknown if unsupported |
@@ -20,11 +20,11 @@ Include the item's culinary profile in the change review and import dry run. Com
 | Review status | Proposed, Reviewed, Needs review |
 | Provenance | Source file/hash or source record/version; proposed derivation; reviewer and date for Reviewed values |
 
-Preparation area alone never certifies service temperature or safe ambient display. Name-based inference remains Proposed. No dietary taxonomy expansion is required. Recipe documents and methods remain private. Pan fill weights require separate food-specific measurement and equipment fit; no generic volume-to-mass assumptions.
+Preparation area alone never certifies service temperature or safe ambient display. Name-based inference remains Proposed. No dietary taxonomy expansion is required. Recipe documents and methods remain private. Pan estimates may use food-specific source portion volume paired with source weight/cost and documented pan capacity/fill assumptions, per Tyler November 2 approval. Label these estimates; measured pan yields remain separate. No generic volume-to-mass assumptions.
 
 ## Persistence and compatibility
 
-Approved profiles belong in a versioned Supabase-backed domain linked to existing identities, with a defined import round-trip. Do not put business metadata into arbitrary source fields, rename item keys, regenerate MRNs or overwrite historical data. The current smart builder's bundled candidate evidence and session confirmations do not establish that profiles have been persisted or reviewed in Supabase.
+Approved profiles belong in a versioned Supabase-backed domain linked to existing identities, with a defined import round-trip. Do not put business metadata into arbitrary source fields, rename item keys, regenerate MRNs or overwrite historical data. The current smart builder's bundled candidate evidence and session proposals do not establish that profiles have been persisted or reviewed in Supabase.
 
 Until the shared profile storage/API contract is approved and deployed, item updates must carry a companion profile manifest and explicit persistence status. Record unresolved profiles as a follow-up; never imply that the candidate layer is canonical shared metadata. Any shared-schema or production-data change needs the specific approval, independent review and recovery safeguards required by GOVERNANCE.md and ARCHITECTURE_RULES.md.
 

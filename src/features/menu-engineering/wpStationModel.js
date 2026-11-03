@@ -1,14 +1,16 @@
+import {estimatePans} from './wpPanEstimate.js';
 import {entryPounds} from './wpPanModel.js';
 const positive = value => String(value).trim() !== '' && Number.isFinite(Number(value)) && Number(value) > 0;
 const finite = value => Number.isFinite(value) ? value : null;
 
-// Session quantities are finished pounds entered by the planner, never inferred recipe yields.
+// Source portion estimates drive pan plans; legacy session quantities remain read-compatible.
 export function projectStation(entries, catalog, rate, sellThrough, trusted) {
   const rows = entries.map(entry => {
     const food = catalog.find(row => row.key === entry.key);
-    const pounds = entryPounds(entry);
+    const estimate=entry.totalPans!==undefined?estimatePans(entry,food):null;
+    const pounds = estimate?estimate.pounds:entryPounds(entry);
     const validCost = trusted && food && !food.conflict && Number.isFinite(food.costPerLb) && food.costPerLb >= 0;
-    return {...entry, food, pounds, cost: validCost && pounds != null ? finite(food.costPerLb * pounds) : null};
+    return {...entry, food, pounds, estimate, servings:estimate?.servings??null, cost:estimate?(trusted&&!food?.conflict?estimate.cost:null):validCost && pounds != null ? finite(food.costPerLb * pounds) : null};
   });
   const quantitiesValid = rows.length > 0 && rows.every(row => row.pounds != null);
   const pounds = quantitiesValid ? finite(rows.reduce((sum, row) => sum + row.pounds, 0)) : null;
@@ -19,5 +21,5 @@ export function projectStation(entries, catalog, rate, sellThrough, trusted) {
   return {rows, pounds, cost, soldPounds, sales, foodCost: cost != null && sales > 0 ? cost / sales : null,
     contribution: cost != null && sales != null ? sales - cost : null,
     reviewCount: rows.filter(row => row.food?.serviceReasons?.length).length,
-    approximate: rows.some(row => row.food?.weightApproximate)};
+    approximate: rows.some(row => row.estimate || row.food?.weightApproximate)};
 }
