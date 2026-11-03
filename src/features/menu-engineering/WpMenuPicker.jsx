@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { buildPortfolio } from './wpPortfolioModel.js';
-import {PILLARS,pillarMenus} from './wpSmartModel.js';
+import {SELECTOR_PILLARS as PILLARS,selectorPillarMenus as pillarMenus} from './wpSelectorPillars.js';
 
 export default function WpMenuPicker({projections, selectedMenus, onChange, trusted}) {
   const [search, setSearch] = useState('');
@@ -22,7 +22,7 @@ export default function WpMenuPicker({projections, selectedMenus, onChange, trus
       const active=names.length>0&&names.every(n=>selectedMenus.includes(n));
       return <button type="button" key={pillar} disabled={!names.length} aria-pressed={active} onClick={()=>onChange(active?selectedMenus.filter(n=>!names.includes(n)):[...new Set([...selectedMenus,...names])])} className={`rounded-xl border px-3 py-2 text-xs font-semibold disabled:opacity-40 ${active?'bg-teal-900 text-white':'bg-white text-teal-950'}`}>{pillar} ({names.length})</button>;
     })}</div>
-    <p className="mb-3 text-xs text-slate-500">Pillars select their mapped menu tiles; adjust tiles individually. Unmapped menus remain available below.</p>
+    <p className="mb-3 text-xs text-slate-500">Pillars select their mapped menu tiles; adjust tiles individually. Core Stations includes Cafe Express and Harvest Co. Menus awaiting a confirmed mapping appear in Needs pillar assignment.</p>
     <div data-testid="menu-tile-grid" className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-6">{visible.map(o=>{
       const selected=selectedMenus.includes(o.name);
       return <label data-testid="menu-tile" key={o.name} className={`relative flex min-h-24 min-w-0 cursor-pointer flex-col justify-between rounded-2xl border p-3 transition-colors focus-within:ring-2 focus-within:ring-teal-500 focus-within:ring-offset-2 ${selected?'border-teal-800 bg-teal-900 text-white shadow-md':'border-slate-200 bg-white text-slate-800 shadow-sm hover:border-teal-400 hover:bg-teal-50'}`}>

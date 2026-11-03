@@ -57,6 +57,14 @@ export default function WeighPayView() {
   const projections = useMemo(() => Object.values(conceptSources).map(source=>panReadyMenu(source,rate,trusted?data.rows:[])),[conceptSources,rate,trusted,data.rows]);
   const menus = useMemo(() => projections.map(p=>assessPanReadyMenu(p,rate,trusted,overrides)),[projections,overrides,trusted,rate]);
   const selected = menus.find(menu => menu.menu === selectedMenu);
+  const exportFlaggedAudit = async () => {
+    setExporting(true); setExportError('');
+    try {
+      const { downloadFlaggedAudit } = await import('./wpFlaggedAudit.js');
+      downloadFlaggedAudit(projections, {trusted,source:data.source,loadedAt:data.loadedAt,sourceMessage:data.message,pricePerLb:rate});
+    } catch(error) { setExportError(`Flagged item audit failed: ${error.message}`); }
+    finally { setExporting(false); }
+  };
   const categories = selected ? [...new Set(selected.items.map(item => item.category))] : [];
   const exportPackage = async chosen => {
     setExporting(true); setExportError('');
@@ -78,7 +86,7 @@ export default function WeighPayView() {
     <div className="rounded-2xl border border-slate-200 bg-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div><h2 className="text-xl font-bold">Weigh &amp; Pay guidance</h2><p className="mt-1 text-sm text-slate-600">{money(rate)}/lb · 40% item food cost · 60% of servable components must pass</p></div>
-        <div className="flex flex-wrap gap-2"><button className={button} disabled={data.state === 'loading'} onClick={() => setReload(value => value + 1)}>Refresh data</button><button className={button} disabled={!menus.length || exporting || !rate} onClick={() => exportPackage(menus)}>{exporting ? 'Preparing package…' : 'Export all menus'}</button></div>
+        <div className="flex flex-wrap gap-2"><button className={button} disabled={data.state!=='ready'||!projections.length||exporting} onClick={exportFlaggedAudit}>Flagged Item Audit</button><button className={button} disabled={data.state === 'loading'} onClick={() => setReload(value => value + 1)}>Refresh data</button><button className={button} disabled={!menus.length || exporting || !rate} onClick={() => exportPackage(menus)}>{exporting ? 'Preparing package…' : 'Export all menus'}</button></div>
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2"><label className="text-sm font-semibold" htmlFor="wp-price">W&amp;P selling price</label><input id="wp-price" aria-label="W&P selling price" className={`${input} w-28`} type="number" min="0.000001" step="any" value={rateText} onChange={e=>setRateText(e.target.value)}/><select aria-label="W&P price unit" className={input} value={rateUnit} onChange={e=>{const unit=e.target.value;setRateText(rate==null?'':String(unit==='oz'?rate/16:rate));setRateUnit(unit);}}><option value="lb">$/lb</option><option value="oz">$/oz</option></select><span className="text-xs text-slate-500">Session scenario · {rate==null?'Enter a positive price':`${money(rate)}/lb · $${(rate/16).toFixed(4)}/oz`}</span></div>
       {!rate&&<p role="alert" className="mt-2 text-sm text-amber-800">Enter a positive selling price to calculate or export guidance.</p>}
