@@ -1,6 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import XLSX from "xlsx";
+import COSTING from "../api/data/ingredientCosting91926.json" with { type: "json" };
 
 const root = resolve(import.meta.dirname, "..");
 const sourcePath = resolve(root, "public/resources/Ingredient_Costing_9.19.26.xlsx");
@@ -13,6 +14,16 @@ const cycleGroups = [
   { key: "teriyaki", items: [{ mrn: "63517.3", name: "Teriyaki Bacon Burger" }, { mrn: "63329.3", name: "Carolina BBQ Burger" }] },
   { key: "fish", items: [{ mrn: "78211.2", name: "Blackened Steelhead Sandwich" }, { mrn: "165740.2", name: "Spicy Fried Cod Sandwich on Brioche" }] },
   { key: "chesapeake", items: [{ mrn: "77139.70", name: "Chesapeake Chicken Sandwich" }, { mrn: "77139.69", name: "Haystack Burger" }] },
+];
+
+const coreItems = [
+  { mrn: "147955.17", name: "Smashburger", category: "sandwich" },
+  { mrn: "77139.66", name: "Smashburger With Cheese", category: "sandwich" },
+  { mrn: "83088.1", name: "Santa Fe Black Bean Burger", category: "sandwich" },
+  { mrn: "107374.35", name: "Nashville Hot Chicken Sandwich", category: "sandwich" },
+  { mrn: "77139.67", name: "Grilled Chicken Sandwich", category: "sandwich" },
+  { mrn: "16811", name: "Garden Salad", category: "side" },
+  { mrn: "5294.29", name: "Grilled Vegetables", category: "side" },
 ];
 
 const text = (value) => String(value ?? "").normalize("NFKC").trim().replace(/^'/, "");
@@ -34,7 +45,7 @@ const parseAmount = (value) => {
   return quantity != null && unit ? { quantity, unit } : null;
 };
 
-const targets = new Set(cycleGroups.flatMap(({ items }) => items.map(({ mrn: value }) => value)));
+const targets = new Set([...cycleGroups.flatMap(({ items }) => items.map(({ mrn: value }) => value)), ...coreItems.map(({ mrn: value }) => value)]);
 const componentsByRecipe = new Map([...targets].map((value) => [value, new Map()]));
 const workbook = XLSX.readFile(sourcePath, { raw: false });
 
@@ -89,20 +100,34 @@ const itemPrepComponents = Object.fromEntries([...componentsByRecipe].map(([reci
   recipeMrn,
   [...components.values()].sort((a, b) => a.type.localeCompare(b.type) || a.name.localeCompare(b.name)),
 ]));
+const itemTransferComponents = Object.fromEntries([...targets].map((recipeMrn) => {
+  const recipe = COSTING.recipes[recipeMrn];
+  return [recipeMrn, [...(recipe?.components || []), ...(recipe?.unpricedComponents || [])].map((component) => ({
+    id: `grill-transfer|${mrn(component.ingredientMrn) || text(component.ingredientName).toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+    mrn: mrn(component.ingredientMrn), name: text(component.ingredientName),
+    quantity: Number((Number(component.quantity) / Number(component.recipeYield || 1)).toFixed(6)),
+    unit: text(component.unit).toLowerCase(),
+    costPerPortion: Number.isFinite(Number(component.allocationPerPortion)) ? Number(component.allocationPerPortion) : null,
+    glCode: text(component.glCode) || "4111011",
+  }))];
+}));
 
 const rendered = `// Generated from public/resources/Ingredient_Costing_9.19.26.xlsx.\n// Run node scripts/build-commissary-grill-lto-catalog.mjs after the source workbook changes.\n\nexport const GRILL_LTO_PROGRAM = Object.freeze(${JSON.stringify({
-  version: 1,
+  version: 2,
   menu: "AMZ: Grill Core",
   station: "Spotlights",
   anchorWeekStart: "2026-11-16",
   cycleLengthWeeks: 6,
-  eligibleCafes: ["Cricket", "Nessie", "Dawson", "Bingo", "Grace", "Blueshift", "Sonic", "Astra", "Day 1", "Nitro", "Re:Invent"],
+  effectiveDate: "2026-11-16",
+  eligibleCafes: ["Cricket", "Nessie", "Dawson", "Atlas", "Bingo", "Grace", "Blueshift", "Sonic", "Astra", "Day 1", "Nitro", "Re:Invent"],
   quantityIncrement: 1,
   orderUnit: "sandwich",
   source: "Supabase recipe_items + Ingredient Costing 9.19.26",
   cycleWeeks,
+  coreItems,
   itemPrepComponents,
-}, null, 2)});\n\nexport const GRILL_LTO_ITEM_MRNS = Object.freeze([...new Set(GRILL_LTO_PROGRAM.cycleWeeks.flatMap((week) => [...week.setA, ...week.setB]).map((item) => item.mrn))]);\nexport const GRILL_LTO_PREP_ITEM_IDS = Object.freeze([...new Set(Object.values(GRILL_LTO_PROGRAM.itemPrepComponents).flat().map((item) => item.id))]);\n`;
+  itemTransferComponents,
+}, null, 2)});\n\nexport const GRILL_LTO_ITEM_MRNS = Object.freeze([...new Set([...GRILL_LTO_PROGRAM.cycleWeeks.flatMap((week) => [...week.setA, ...week.setB]), ...GRILL_LTO_PROGRAM.coreItems].map((item) => item.mrn))]);\nexport const GRILL_LTO_PREP_ITEM_IDS = Object.freeze([...new Set(Object.values(GRILL_LTO_PROGRAM.itemPrepComponents).flat().map((item) => item.id))]);\n`;
 
 if (process.argv.includes("--check")) {
   if (readFileSync(outputPath, "utf8").replace(/\r\n/g, "\n") !== rendered) throw new Error("Commissary Grill LTO catalog is stale. Run node scripts/build-commissary-grill-lto-catalog.mjs.");

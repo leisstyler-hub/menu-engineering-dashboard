@@ -5,11 +5,12 @@ import { DELI_ORDERING_PREP_ITEM_IDS, DELI_ORDERING_PROGRAM } from "./deliCycleC
 import { GLOBAL_ORDERING_PREP_ITEM_IDS, GLOBAL_ORDERING_PROGRAM } from "./globalCycleCatalog.js";
 import { BREAKFAST_ORDERING_ITEM_IDS, BREAKFAST_ORDERING_PREP_ITEM_IDS, BREAKFAST_ORDERING_PROGRAM } from "./breakfastCatalog.js";
 import { COMMISSARY_STATIONS, cafeRoutesToHub, isCafeStationEnabled } from "./commissaryRouting.js";
+import { filterCommissaryComponents } from "./commissaryPrepPolicy.js";
 
 export const PACIFIC_TIME_ZONE = "America/Los_Angeles";
 export const DELIVERY_KEYS = Object.freeze(DEFAULT_COMMISSARY_METADATA.deliveries.map(({ key }) => key));
 export const COMMISSARY_ORDER_UNIT_VERSION = 2;
-export const COMMISSARY_GRILL_ORDER_VERSION = 1;
+export const COMMISSARY_GRILL_ORDER_VERSION = 2;
 export const COMMISSARY_DELI_ORDER_VERSION = 1;
 export const COMMISSARY_GLOBAL_ORDER_VERSION = 2;
 export const COMMISSARY_BREAKFAST_ORDER_VERSION = 1;
@@ -289,6 +290,10 @@ export function emptyGrillOrder(weekStart) {
       B: Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, 0])),
     },
     items: { A: null, B: null },
+    core: {
+      quantities: Object.fromEntries(GRILL_LTO_PROGRAM.coreItems.map(({ mrn }) => [mrn, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, 0]))])),
+      items: {},
+    },
   };
 }
 
@@ -318,7 +323,12 @@ export function normalizeGrillOrder(grill = {}, weekStart, cafe = "") {
       itemWasteCost: Number(snapshot.itemWasteCost),
     } : null];
   }));
-  return { version: COMMISSARY_GRILL_ORDER_VERSION, cycleWeek: cycle.week, selections, quantities, items };
+  const coreQuantities = Object.fromEntries(GRILL_LTO_PROGRAM.coreItems.map(({ mrn }) => [mrn, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, wholeQuantity(grill?.core?.quantities?.[mrn]?.[delivery])]))]));
+  const coreItems = Object.fromEntries(GRILL_LTO_PROGRAM.coreItems.flatMap(({ mrn }) => {
+    const snapshot = grill?.core?.items?.[mrn];
+    return snapshot && String(snapshot.mrn) === mrn && Number(snapshot.itemWasteCost) > 0 ? [[mrn, { mrn, item: String(snapshot.item || ""), portion: String(snapshot.portion || ""), itemWasteCost: Number(snapshot.itemWasteCost) }]] : [];
+  }));
+  return { version: COMMISSARY_GRILL_ORDER_VERSION, cycleWeek: cycle.week, selections, quantities, items, core: { quantities: coreQuantities, items: coreItems } };
 }
 
 export function sanitizeQuantity(value) {
@@ -406,23 +416,14 @@ export function orderValue(quantities = {}, grill = {}, deli = {}, global = {}, 
     const delivery = normalized[row.id];
     return sum + DELIVERY_KEYS.reduce((deliverySum, key) => deliverySum + sanitizeQuantity(delivery[key]), 0) * row.orderUnitCost;
   }, 0);
-  const grillValue = cafe && !isCafeStationEnabled(cafe, COMMISSARY_STATIONS.GRILL) ? 0 : ["A", "B"].reduce((sum, setKey) => {
-    const item = grill?.items?.[setKey];
-    const count = DELIVERY_KEYS.reduce((total, delivery) => total + wholeQuantity(grill?.quantities?.[setKey]?.[delivery]), 0);
-    return sum + (Number.isFinite(Number(item?.itemWasteCost)) ? Number(item.itemWasteCost) * count : 0);
-  }, 0);
+  const grillRecord = { cafe, weekStart, grill };
+  const grillValue = cafe && !isCafeStationEnabled(cafe, COMMISSARY_STATIONS.GRILL) ? 0 : grillTransferLinesForCafe(grillRecord).reduce((sum, line) => sum + line.itemWasteCost * line.quantity, 0);
   const deliValue = cafe && !isCafeStationEnabled(cafe, COMMISSARY_STATIONS.DELI) ? 0 : Object.entries(deli?.quantities || {}).reduce((sum, [mrn, values]) => {
     const item = deli?.items?.[mrn];
     const count = DELIVERY_KEYS.reduce((total, delivery) => total + wholeQuantity(values?.[delivery]), 0);
     return sum + (Number(item?.itemWasteCost) > 0 ? Number(item.itemWasteCost) * count : 0);
   }, 0);
-  const selectedGlobalIds = effectiveGlobalIds(global);
-  const globalValue = cafe && !isCafeStationEnabled(cafe, COMMISSARY_STATIONS.GLOBAL) ? 0 : Object.entries(global?.quantities || {}).reduce((sum, [id, values]) => {
-    if (!selectedGlobalIds.has(id)) return sum;
-    const item = global?.items?.[id];
-    const count = DELIVERY_KEYS.reduce((total, delivery) => total + wholeQuantity(values?.[delivery]), 0);
-    return sum + (Number(item?.itemWasteCost) > 0 ? Number(item.itemWasteCost) * count : 0);
-  }, 0);
+  const globalValue = cafe && !isCafeStationEnabled(cafe, COMMISSARY_STATIONS.GLOBAL) ? 0 : globalTransferLinesForCafe({ cafe, weekStart, global }).reduce((sum, line) => sum + line.itemWasteCost * line.quantity, 0);
   const normalizedBreakfast = normalizeBreakfastOrder(breakfast, cafe);
   const breakfastValue = Object.entries(normalizedBreakfast.quantities).reduce((sum, [id, values]) => {
     const item = normalizedBreakfast.items[id];
@@ -457,7 +458,7 @@ export function orderLinesForCafe(record = {}) {
 
 export function grillOrderLinesForCafe(record = {}) {
   const grill = normalizeGrillOrder(record.grill, record.weekStart, record.cafe);
-  return ["A", "B"].map((setKey) => {
+  const rotating = ["A", "B"].map((setKey) => {
     const item = grill.items[setKey];
     if (!item || !grill.selections[setKey]) return null;
     const values = grill.quantities[setKey];
@@ -474,10 +475,17 @@ export function grillOrderLinesForCafe(record = {}) {
       total: DELIVERY_KEYS.reduce((sum, delivery) => sum + values[delivery], 0),
     };
   }).filter((line) => line && line.total > 0);
+  const core = GRILL_LTO_PROGRAM.coreItems.map((option) => {
+    const item = grill.core.items[option.mrn];
+    const values = grill.core.quantities[option.mrn];
+    if (!item) return null;
+    return { id: `grill-core|${option.mrn}`, core: true, menu: GRILL_LTO_PROGRAM.menu, name: item.item, mrn: option.mrn, portion: item.portion, orderUnit: option.category === "side" ? "portion" : "sandwich", orderUnitCost: item.itemWasteCost, ...values, total: DELIVERY_KEYS.reduce((sum, delivery) => sum + values[delivery], 0) };
+  }).filter((line) => line && line.total > 0);
+  return [...rotating, ...core];
 }
 
 export function grillPrepLinesForCafe(record = {}) {
-  return grillOrderLinesForCafe(record).flatMap((line) => (GRILL_LTO_PROGRAM.itemPrepComponents[line.mrn] || []).flatMap((component) => DELIVERY_KEYS.map((delivery) => ({
+  return grillOrderLinesForCafe(record).flatMap((line) => filterCommissaryComponents(GRILL_LTO_PROGRAM.itemPrepComponents[line.mrn] || [], record.weekStart).flatMap((component) => DELIVERY_KEYS.map((delivery) => ({
     ...component,
     category: component.type === "subrecipe" ? "Grill sub-recipe" : "Grill ingredient",
     station: "Grill",
@@ -544,7 +552,7 @@ export function globalOrderLinesForCafe(record = {}) {
 }
 
 export function globalPrepLinesForCafe(record = {}) {
-  return globalOrderLinesForCafe(record).flatMap((line) => (GLOBAL_ORDERING_PROGRAM.itemPrepComponents[line.id] || []).flatMap((component) => DELIVERY_KEYS.map((delivery) => ({
+  return globalOrderLinesForCafe(record).flatMap((line) => filterCommissaryComponents(GLOBAL_ORDERING_PROGRAM.itemPrepComponents[line.id] || [], record.weekStart).flatMap((component) => DELIVERY_KEYS.map((delivery) => ({
     ...component,
     category: component.type === "subrecipe" ? "Global sub-recipe" : "Global ingredient",
     station: "Global",
@@ -554,6 +562,30 @@ export function globalPrepLinesForCafe(record = {}) {
     delivery,
     quantity: Number((component.quantity * line[delivery]).toFixed(4)),
   })).filter(({ quantity }) => quantity > 0)));
+}
+
+function componentTransferLines(orderLines, componentMap, weekStart, station) {
+  return orderLines.flatMap((line) => filterCommissaryComponents(componentMap[line.id] || componentMap[line.mrn] || [], weekStart)
+    .filter(({ costPerPortion }) => Number(costPerPortion) > 0)
+    .map((component) => ({
+      id: `${line.id}|${component.id}`,
+      menu: line.menu,
+      name: component.name,
+      finishedDish: line.name,
+      mrn: component.mrn,
+      quantity: line.total,
+      itemWasteCost: Number(component.costPerPortion),
+      glCode: component.glCode || "4111011",
+      station,
+    })));
+}
+
+export function grillTransferLinesForCafe(record = {}) {
+  return componentTransferLines(grillOrderLinesForCafe(record), GRILL_LTO_PROGRAM.itemTransferComponents || {}, record.weekStart, "Grill");
+}
+
+export function globalTransferLinesForCafe(record = {}) {
+  return componentTransferLines(globalOrderLinesForCafe(record), GLOBAL_ORDERING_PROGRAM.itemTransferComponents || {}, record.weekStart, "Global");
 }
 
 export function breakfastOrderLinesForCafe(record = {}) {
@@ -587,6 +619,14 @@ export function breakfastPrepLinesForCafe(record = {}) {
     delivery,
     quantity: Number((component.quantity * line[delivery]).toFixed(4)),
   })).filter(({ quantity }) => quantity > 0)));
+}
+
+export function hasCommissaryOrder(record = {}) {
+  return orderLinesForCafe(record).length > 0
+    || grillOrderLinesForCafe(record).length > 0
+    || deliOrderLinesForCafe(record).length > 0
+    || globalOrderLinesForCafe(record).length > 0
+    || breakfastOrderLinesForCafe(record).length > 0;
 }
 
 export function rolledUpPrepItems(records = [], options = {}) {

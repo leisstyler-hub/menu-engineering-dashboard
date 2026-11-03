@@ -3,7 +3,7 @@ import XLSX from "xlsx-js-style";
 import { buildS4Workbook, transferExportFileName } from "../transfer-tool/transferExport.js";
 import { COMMISSARY_DEPARTING_UNIT } from "./commissaryCatalog.js";
 import { DEFAULT_COMMISSARY_METADATA } from "./commissaryMetadata.js";
-import { breakfastOrderLinesForCafe, breakfastPrepLinesForCafe, deliOrderLinesForCafe, deliPrepLinesForCafe, deliveryDateForWeek, formatShortDate, globalOrderLinesForCafe, globalPrepLinesForCafe, grillOrderLinesForCafe, grillPrepLinesForCafe, orderLinesForCafe, rolledUpPrepItems, transferPeriod, weekLabel } from "./commissaryModel.js";
+import { breakfastOrderLinesForCafe, breakfastPrepLinesForCafe, deliOrderLinesForCafe, deliPrepLinesForCafe, deliveryDateForWeek, formatShortDate, globalPrepLinesForCafe, globalTransferLinesForCafe, grillPrepLinesForCafe, grillTransferLinesForCafe, orderLinesForCafe, rolledUpPrepItems, transferPeriod, weekLabel } from "./commissaryModel.js";
 
 const S4_TEMPLATE_URL = "/templates/ExpenseTransfer_Between_PC_Template.xlsx";
 const PREPARED_FOODS_GL = "4111011";
@@ -257,18 +257,18 @@ export function buildCommissaryTransfer(record, metadata = DEFAULT_COMMISSARY_ME
         allocationPerPortion: line.orderUnitCost,
       }],
       })),
-      ...grillOrderLinesForCafe(record).map((line) => ({
+      ...grillTransferLinesForCafe(record).map((line) => ({
         catalogId: line.id,
         menu: line.menu,
-        item: `${line.name} (${line.total} sandwich${line.total === 1 ? "" : "es"})`,
+        item: `${line.name} for ${line.finishedDish}`,
         mrn: line.mrn,
-        quantity: line.total,
-        itemWasteCost: line.orderUnitCost,
+        quantity: line.quantity,
+        itemWasteCost: line.itemWasteCost,
         ingredientAllocations: [{
-          ingredientName: "Prepared Foods",
+          ingredientName: line.name,
           ingredientMrn: line.mrn,
-          glCode: PREPARED_FOODS_GL,
-          allocationPerPortion: line.orderUnitCost,
+          glCode: line.glCode,
+          allocationPerPortion: line.itemWasteCost,
         }],
       })),
       ...deliOrderLinesForCafe(record).map((line) => ({
@@ -285,18 +285,18 @@ export function buildCommissaryTransfer(record, metadata = DEFAULT_COMMISSARY_ME
           allocationPerPortion: line.orderUnitCost,
         }],
       })),
-      ...globalOrderLinesForCafe(record).map((line) => ({
+      ...globalTransferLinesForCafe(record).map((line) => ({
         catalogId: line.id,
         menu: line.menu,
-        item: `${line.name} (${line.total} portion${line.total === 1 ? "" : "s"})`,
+        item: `${line.name} for ${line.finishedDish}`,
         mrn: line.mrn,
-        quantity: line.total,
-        itemWasteCost: line.orderUnitCost,
+        quantity: line.quantity,
+        itemWasteCost: line.itemWasteCost,
         ingredientAllocations: [{
-          ingredientName: "Prepared Foods",
+          ingredientName: line.name,
           ingredientMrn: line.mrn,
-          glCode: PREPARED_FOODS_GL,
-          allocationPerPortion: line.orderUnitCost,
+          glCode: line.glCode,
+          allocationPerPortion: line.itemWasteCost,
         }],
       })),
       ...breakfastOrderLinesForCafe(record).map((line) => ({

@@ -7,7 +7,7 @@ import {
 } from "../../src/integrations/storage/backboneRecords.js";
 import { isApprovedCommissaryMetadataRecord } from "../../src/features/commissary-ordering/commissaryMetadata.js";
 import { COMMISSARY_BREAKFAST_ORDER_VERSION, COMMISSARY_DELI_ORDER_VERSION, COMMISSARY_GLOBAL_ORDER_VERSION, COMMISSARY_GRILL_ORDER_VERSION, COMMISSARY_ORDER_UNIT_VERSION, COMMISSARY_PACKOUT_PACKET_VERSION, COMMISSARY_STATION_ORDER, DELIVERY_KEYS, deliCycleForWeek, deliveryDateForWeek, globalCycleForWeek, grillCycleForWeek, isBreakfastEligibleCafe, isDeliEligibleCafe, isGlobalEligibleCafe, isGrillEligibleCafe, isWeekLocked } from "../../src/features/commissary-ordering/commissaryModel.js";
-import { GRILL_LTO_PREP_ITEM_IDS } from "../../src/features/commissary-ordering/grillLtoCatalog.js";
+import { GRILL_LTO_PREP_ITEM_IDS, GRILL_LTO_PROGRAM } from "../../src/features/commissary-ordering/grillLtoCatalog.js";
 import { DELI_ORDERING_PREP_ITEM_IDS } from "../../src/features/commissary-ordering/deliCycleCatalog.js";
 import { GLOBAL_ORDERING_PREP_ITEM_IDS } from "../../src/features/commissary-ordering/globalCycleCatalog.js";
 import { BREAKFAST_ORDERING_ITEM_IDS, BREAKFAST_ORDERING_PREP_ITEM_IDS, BREAKFAST_ORDERING_PROGRAM } from "../../src/features/commissary-ordering/breakfastCatalog.js";
@@ -176,7 +176,16 @@ export function commissaryWriteValidation(records = [], context = {}) {
       const delivery = record.grill?.quantities?.[setKey];
       if (!delivery || DELIVERY_KEYS.some((key) => !Number.isInteger(Number(delivery[key] ?? 0)) || Number(delivery[key] ?? 0) < 0)) return "Grill LTO quantities must be zero or positive whole sandwiches.";
     }
-  } else if (Object.values(record.grill?.quantities || {}).some((delivery) => DELIVERY_KEYS.some((key) => Number(delivery?.[key] || 0) > 0))) {
+    const coreAllowed = new Set(GRILL_LTO_PROGRAM.coreItems.map(({ mrn }) => mrn));
+    if (Object.keys(record.grill?.core?.quantities || {}).some((mrn) => !coreAllowed.has(mrn))) return "The Grill Core order contains an unknown item.";
+    for (const mrn of coreAllowed) {
+      const delivery = record.grill?.core?.quantities?.[mrn];
+      if (!delivery || DELIVERY_KEYS.some((key) => !Number.isInteger(Number(delivery[key] ?? 0)) || Number(delivery[key] ?? 0) < 0)) return "Grill Core quantities must be zero or positive whole items.";
+      const count = DELIVERY_KEYS.reduce((sum, key) => sum + Number(delivery[key] || 0), 0);
+      const item = record.grill?.core?.items?.[mrn];
+      if (count > 0 && (!item || String(item.mrn) !== mrn || !item.item || !(Number(item.itemWasteCost) > 0))) return `The Grill Core cost snapshot for MRN ${mrn} is invalid.`;
+    }
+  } else if (Object.values(record.grill?.quantities || {}).some((delivery) => DELIVERY_KEYS.some((key) => Number(delivery?.[key] || 0) > 0)) || Object.values(record.grill?.core?.quantities || {}).some((delivery) => DELIVERY_KEYS.some((key) => Number(delivery?.[key] || 0) > 0))) {
     return "Grill ordering is not enabled for this cafe.";
   }
   const deliCycle = deliCycleForWeek(record.weekStart);

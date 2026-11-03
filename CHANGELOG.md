@@ -1,5 +1,7 @@
 ## 2026-11-02
 
+- [Nov 2, 6:00 PM] Added Atlas and Frontier commissary routes, optional Grill Core ordering, and Nov 16 raw-protein exclusions for Grill and Global.
+
 - [Nov 2, 4:24 PM] Export a Flagged Item Audit with correction details and use corrected W&P pillar selections, including Core Stations.
 
 - [Nov 2, 4:00 PM] Simplified W&P pan planning with source portion estimates, visible Tags and locked-item protection.

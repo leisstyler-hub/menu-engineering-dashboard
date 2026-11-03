@@ -2,15 +2,17 @@
 // Run node scripts/build-commissary-grill-lto-catalog.mjs after the source workbook changes.
 
 export const GRILL_LTO_PROGRAM = Object.freeze({
-  "version": 1,
+  "version": 2,
   "menu": "AMZ: Grill Core",
   "station": "Spotlights",
   "anchorWeekStart": "2026-11-16",
   "cycleLengthWeeks": 6,
+  "effectiveDate": "2026-11-16",
   "eligibleCafes": [
     "Cricket",
     "Nessie",
     "Dawson",
+    "Atlas",
     "Bingo",
     "Grace",
     "Blueshift",
@@ -163,7 +165,78 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
       ]
     }
   ],
+  "coreItems": [
+    {
+      "mrn": "147955.17",
+      "name": "Smashburger",
+      "category": "sandwich"
+    },
+    {
+      "mrn": "77139.66",
+      "name": "Smashburger With Cheese",
+      "category": "sandwich"
+    },
+    {
+      "mrn": "83088.1",
+      "name": "Santa Fe Black Bean Burger",
+      "category": "sandwich"
+    },
+    {
+      "mrn": "107374.35",
+      "name": "Nashville Hot Chicken Sandwich",
+      "category": "sandwich"
+    },
+    {
+      "mrn": "77139.67",
+      "name": "Grilled Chicken Sandwich",
+      "category": "sandwich"
+    },
+    {
+      "mrn": "16811",
+      "name": "Garden Salad",
+      "category": "side"
+    },
+    {
+      "mrn": "5294.29",
+      "name": "Grilled Vegetables",
+      "category": "side"
+    }
+  ],
   "itemPrepComponents": {
+    "16811": [
+      {
+        "id": "grill-prep|ingredient|1247|ounce",
+        "type": "ingredient",
+        "mrn": "1247",
+        "name": "Carrots, Fresh",
+        "quantity": 1,
+        "unit": "ounce"
+      },
+      {
+        "id": "grill-prep|ingredient|53124|ounce",
+        "type": "ingredient",
+        "mrn": "53124",
+        "name": "Cucumbers, English, Fresh, Sliced",
+        "quantity": 1,
+        "unit": "ounce"
+      },
+      {
+        "id": "grill-prep|ingredient|7557|each",
+        "type": "ingredient",
+        "mrn": "7557",
+        "name": "Tomatoes, Grape, Fresh",
+        "quantity": 5,
+        "unit": "each"
+      },
+      {
+        "id": "grill-prep|subrecipe|34052.3|cup",
+        "type": "subrecipe",
+        "mrn": "34052.3",
+        "name": "EUR: Signature Salad Blend",
+        "quantity": 1,
+        "unit": "cup"
+      }
+    ],
     "77139.72": [
       {
         "id": "grill-prep|ingredient|31228|each",
@@ -1011,9 +1084,1416 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "quantity": 2,
         "unit": "ounce"
       }
+    ],
+    "147955.17": [
+      {
+        "id": "grill-prep|ingredient|31228|each",
+        "type": "ingredient",
+        "mrn": "31228",
+        "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
+        "quantity": 1,
+        "unit": "each"
+      },
+      {
+        "id": "grill-prep|ingredient|3764|each",
+        "type": "ingredient",
+        "mrn": "3764",
+        "name": "Lettuce, Iceberg, Individual Leaf, Fresh",
+        "quantity": 1,
+        "unit": "each"
+      },
+      {
+        "id": "grill-prep|ingredient|169286|tbsp",
+        "type": "ingredient",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 1,
+        "unit": "tbsp"
+      },
+      {
+        "id": "grill-prep|ingredient|166043|slice",
+        "type": "ingredient",
+        "mrn": "166043",
+        "name": "Onions, Red, Fresh, Each Slice, 1/4\"",
+        "quantity": 2,
+        "unit": "slice"
+      },
+      {
+        "id": "grill-prep|ingredient|225846|each",
+        "type": "ingredient",
+        "mrn": "225846",
+        "name": "Pickles, Dill Chips, Kosher, Block & Barrel, Bulk",
+        "quantity": 3,
+        "unit": "each"
+      },
+      {
+        "id": "grill-prep|ingredient|56055|slice",
+        "type": "ingredient",
+        "mrn": "56055",
+        "name": "Tomatoes, 5x6, Fresh, Sliced",
+        "quantity": 2,
+        "unit": "slice"
+      },
+      {
+        "id": "grill-prep|subrecipe|147955.16|each",
+        "type": "subrecipe",
+        "mrn": "147955.16",
+        "name": "AMZ: Smashburger Patty",
+        "quantity": 1,
+        "unit": "each"
+      },
+      {
+        "id": "grill-prep|subrecipe|168231|tbsp",
+        "type": "subrecipe",
+        "mrn": "168231",
+        "name": "EUR: Upcycled Chow Chow Aioli",
+        "quantity": 2,
+        "unit": "tbsp"
+      }
+    ],
+    "77139.66": [
+      {
+        "id": "grill-prep|ingredient|31228|each",
+        "type": "ingredient",
+        "mrn": "31228",
+        "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
+        "quantity": 1,
+        "unit": "each"
+      },
+      {
+        "id": "grill-prep|ingredient|1605|slice",
+        "type": "ingredient",
+        "mrn": "1605",
+        "name": "Cheese, American, Pre-Sliced, .5 oz, Great Lakes",
+        "quantity": 1,
+        "unit": "slice"
+      },
+      {
+        "id": "grill-prep|ingredient|3764|each",
+        "type": "ingredient",
+        "mrn": "3764",
+        "name": "Lettuce, Iceberg, Individual Leaf, Fresh",
+        "quantity": 1,
+        "unit": "each"
+      },
+      {
+        "id": "grill-prep|ingredient|169286|tbsp",
+        "type": "ingredient",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 1,
+        "unit": "tbsp"
+      },
+      {
+        "id": "grill-prep|ingredient|166043|slice",
+        "type": "ingredient",
+        "mrn": "166043",
+        "name": "Onions, Red, Fresh, Each Slice, 1/4\"",
+        "quantity": 2,
+        "unit": "slice"
+      },
+      {
+        "id": "grill-prep|ingredient|225846|each",
+        "type": "ingredient",
+        "mrn": "225846",
+        "name": "Pickles, Dill Chips, Kosher, Block & Barrel, Bulk",
+        "quantity": 3,
+        "unit": "each"
+      },
+      {
+        "id": "grill-prep|ingredient|56055|slice",
+        "type": "ingredient",
+        "mrn": "56055",
+        "name": "Tomatoes, 5x6, Fresh, Sliced",
+        "quantity": 2,
+        "unit": "slice"
+      },
+      {
+        "id": "grill-prep|subrecipe|147955.16|each",
+        "type": "subrecipe",
+        "mrn": "147955.16",
+        "name": "AMZ: Smashburger Patty",
+        "quantity": 1,
+        "unit": "each"
+      },
+      {
+        "id": "grill-prep|subrecipe|168231|tbsp",
+        "type": "subrecipe",
+        "mrn": "168231",
+        "name": "EUR: Upcycled Chow Chow Aioli",
+        "quantity": 2,
+        "unit": "tbsp"
+      }
+    ],
+    "83088.1": [
+      {
+        "id": "grill-prep|ingredient|179508|scoop-16",
+        "type": "ingredient",
+        "mrn": "179508",
+        "name": "Avocado, Hand Scooped, Wholly Avocado, Fresh",
+        "quantity": 2,
+        "unit": "scoop #16"
+      },
+      {
+        "id": "grill-prep|ingredient|31228|each",
+        "type": "ingredient",
+        "mrn": "31228",
+        "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
+        "quantity": 1,
+        "unit": "each"
+      },
+      {
+        "id": "grill-prep|ingredient|170538|each",
+        "type": "ingredient",
+        "mrn": "170538",
+        "name": "Burger, Meatless, Black Bean, Actual Veggies, 4 oz, Frozen",
+        "quantity": 1,
+        "unit": "each"
+      },
+      {
+        "id": "grill-prep|ingredient|3762|each",
+        "type": "ingredient",
+        "mrn": "3762",
+        "name": "Lettuce, Leaf, Individual Leaf, Fresh",
+        "quantity": 1,
+        "unit": "each"
+      },
+      {
+        "id": "grill-prep|ingredient|169286|tbsp",
+        "type": "ingredient",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 1,
+        "unit": "tbsp"
+      },
+      {
+        "id": "grill-prep|ingredient|56055|slice",
+        "type": "ingredient",
+        "mrn": "56055",
+        "name": "Tomatoes, 5x6, Fresh, Sliced",
+        "quantity": 2,
+        "unit": "slice"
+      },
+      {
+        "id": "grill-prep|subrecipe|77960.2|ounce",
+        "type": "subrecipe",
+        "mrn": "77960.2",
+        "name": "EUR: Pickled Red Onions",
+        "quantity": 2,
+        "unit": "ounce"
+      },
+      {
+        "id": "grill-prep|subrecipe|81315|ounce",
+        "type": "subrecipe",
+        "mrn": "81315",
+        "name": "EURNA: Pickled Jalapenos",
+        "quantity": 1,
+        "unit": "ounce"
+      }
+    ],
+    "107374.35": [
+      {
+        "id": "grill-prep|ingredient|31228|each",
+        "type": "ingredient",
+        "mrn": "31228",
+        "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
+        "quantity": 1,
+        "unit": "each"
+      },
+      {
+        "id": "grill-prep|ingredient|191189|each",
+        "type": "ingredient",
+        "mrn": "191189",
+        "name": "Chicken, Breast, Fillet, Breaded, Spicy, 4oz, Koch, Frozen",
+        "quantity": 1,
+        "unit": "each"
+      },
+      {
+        "id": "grill-prep|ingredient|108406|tbsp",
+        "type": "ingredient",
+        "mrn": "108406",
+        "name": "Mayo, Vegan, Hellmann's, Bulk",
+        "quantity": 2,
+        "unit": "tbsp"
+      },
+      {
+        "id": "grill-prep|ingredient|169286|tbsp",
+        "type": "ingredient",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 1,
+        "unit": "tbsp"
+      },
+      {
+        "id": "grill-prep|ingredient|85770|g",
+        "type": "ingredient",
+        "mrn": "85770",
+        "name": "Oil, Canola, Liquid Frying, Frilite",
+        "quantity": 1,
+        "unit": "g"
+      },
+      {
+        "id": "grill-prep|ingredient|225846|each",
+        "type": "ingredient",
+        "mrn": "225846",
+        "name": "Pickles, Dill Chips, Kosher, Block & Barrel, Bulk",
+        "quantity": 3,
+        "unit": "each"
+      },
+      {
+        "id": "grill-prep|subrecipe|120180.3|tbsp",
+        "type": "subrecipe",
+        "mrn": "120180.3",
+        "name": "EUR: Nashville Hot Sauce for Chicken",
+        "quantity": 3,
+        "unit": "tbsp"
+      },
+      {
+        "id": "grill-prep|subrecipe|18179.1|cup",
+        "type": "subrecipe",
+        "mrn": "18179.1",
+        "name": "EURNA: Vinegar Coleslaw",
+        "quantity": 0.5,
+        "unit": "cup"
+      }
+    ],
+    "77139.67": [
+      {
+        "id": "grill-prep|ingredient|31228|each",
+        "type": "ingredient",
+        "mrn": "31228",
+        "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
+        "quantity": 1,
+        "unit": "each"
+      },
+      {
+        "id": "grill-prep|ingredient|3764|each",
+        "type": "ingredient",
+        "mrn": "3764",
+        "name": "Lettuce, Iceberg, Individual Leaf, Fresh",
+        "quantity": 1,
+        "unit": "each"
+      },
+      {
+        "id": "grill-prep|ingredient|169286|tbsp",
+        "type": "ingredient",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 1,
+        "unit": "tbsp"
+      },
+      {
+        "id": "grill-prep|ingredient|166043|slice",
+        "type": "ingredient",
+        "mrn": "166043",
+        "name": "Onions, Red, Fresh, Each Slice, 1/4\"",
+        "quantity": 2,
+        "unit": "slice"
+      },
+      {
+        "id": "grill-prep|ingredient|225846|each",
+        "type": "ingredient",
+        "mrn": "225846",
+        "name": "Pickles, Dill Chips, Kosher, Block & Barrel, Bulk",
+        "quantity": 3,
+        "unit": "each"
+      },
+      {
+        "id": "grill-prep|ingredient|56055|slice",
+        "type": "ingredient",
+        "mrn": "56055",
+        "name": "Tomatoes, 5x6, Fresh, Sliced",
+        "quantity": 2,
+        "unit": "slice"
+      },
+      {
+        "id": "grill-prep|subrecipe|144591.1|each",
+        "type": "subrecipe",
+        "mrn": "144591.1",
+        "name": "AMZ: Grilled Chicken Breast",
+        "quantity": 1,
+        "unit": "each"
+      },
+      {
+        "id": "grill-prep|subrecipe|168231|tbsp",
+        "type": "subrecipe",
+        "mrn": "168231",
+        "name": "EUR: Upcycled Chow Chow Aioli",
+        "quantity": 2,
+        "unit": "tbsp"
+      }
+    ],
+    "5294.29": [
+      {
+        "id": "grill-prep|ingredient|4123|ounce",
+        "type": "ingredient",
+        "mrn": "4123",
+        "name": "Mushrooms, Portobello, Fresh",
+        "quantity": 1,
+        "unit": "ounce"
+      },
+      {
+        "id": "grill-prep|ingredient|169286|tbsp",
+        "type": "ingredient",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.166667,
+        "unit": "tbsp"
+      },
+      {
+        "id": "grill-prep|ingredient|4253|ounce",
+        "type": "ingredient",
+        "mrn": "4253",
+        "name": "Onions, Red, Fresh, Each Ring, 1/4\"",
+        "quantity": 0.666667,
+        "unit": "ounce"
+      },
+      {
+        "id": "grill-prep|ingredient|8065|ounce",
+        "type": "ingredient",
+        "mrn": "8065",
+        "name": "Peppers, Bell, Red, Fresh",
+        "quantity": 1,
+        "unit": "ounce"
+      },
+      {
+        "id": "grill-prep|ingredient|7411|tsp",
+        "type": "ingredient",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.027778,
+        "unit": "tsp"
+      },
+      {
+        "id": "grill-prep|ingredient|7390|tsp",
+        "type": "ingredient",
+        "mrn": "7390",
+        "name": "Spice, Pepper, Black, Ground",
+        "quantity": 0.027778,
+        "unit": "tsp"
+      },
+      {
+        "id": "grill-prep|ingredient|55272|ounce",
+        "type": "ingredient",
+        "mrn": "55272",
+        "name": "Squash, Yellow, Fresh, Bias Cut, Halved, 1/2\"",
+        "quantity": 1,
+        "unit": "ounce"
+      },
+      {
+        "id": "grill-prep|ingredient|7462|ounce",
+        "type": "ingredient",
+        "mrn": "7462",
+        "name": "Squash, Zucchini, Fresh, Bias Cut, Halved, 1/2\"",
+        "quantity": 1.083333,
+        "unit": "ounce"
+      }
+    ]
+  },
+  "itemTransferComponents": {
+    "16811": [
+      {
+        "id": "grill-transfer|1247",
+        "mrn": "1247",
+        "name": "Carrots, Fresh",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.1188,
+        "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|7557",
+        "mrn": "7557",
+        "name": "Tomatoes, Grape, Fresh",
+        "quantity": 5,
+        "unit": "each",
+        "costPerPortion": 0.3,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|53124",
+        "mrn": "53124",
+        "name": "Cucumbers, English, Fresh, Sliced",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "77139.72": [
+      {
+        "id": "grill-transfer|31228",
+        "mrn": "31228",
+        "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.68,
+        "glCode": "4111010"
+      },
+      {
+        "id": "grill-transfer|1675",
+        "mrn": "1675",
+        "name": "Cheese, Pepper Jack, Loaf, Great Lakes, Sliced, .75 oz",
+        "quantity": 1,
+        "unit": "slice",
+        "costPerPortion": 0.15,
+        "glCode": "4111006"
+      },
+      {
+        "id": "grill-transfer|3764",
+        "mrn": "3764",
+        "name": "Lettuce, Iceberg, Individual Leaf, Fresh",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.25,
+        "unit": "tbsp",
+        "costPerPortion": 0.0138,
+        "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|56055",
+        "mrn": "56055",
+        "name": "Tomatoes, 5x6, Fresh, Sliced",
+        "quantity": 2,
+        "unit": "slice",
+        "costPerPortion": 0.12,
+        "glCode": "4111005"
+      }
+    ],
+    "13773.6": [
+      {
+        "id": "grill-transfer|31228",
+        "mrn": "31228",
+        "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.68,
+        "glCode": "4111010"
+      },
+      {
+        "id": "grill-transfer|1688",
+        "mrn": "1688",
+        "name": "Cheese, Swiss, Pre-Sliced, .75 oz, Great Lakes",
+        "quantity": 1,
+        "unit": "slice",
+        "costPerPortion": 0.16,
+        "glCode": "4111006"
+      },
+      {
+        "id": "grill-transfer|3764",
+        "mrn": "3764",
+        "name": "Lettuce, Iceberg, Individual Leaf, Fresh",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.055,
+        "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|56055",
+        "mrn": "56055",
+        "name": "Tomatoes, 5x6, Fresh, Sliced",
+        "quantity": 2,
+        "unit": "slice",
+        "costPerPortion": 0.12,
+        "glCode": "4111005"
+      }
+    ],
+    "77139.68": [
+      {
+        "id": "grill-transfer|31228",
+        "mrn": "31228",
+        "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.68,
+        "glCode": "4111010"
+      },
+      {
+        "id": "grill-transfer|1675",
+        "mrn": "1675",
+        "name": "Cheese, Pepper Jack, Loaf, Great Lakes, Sliced, .75 oz",
+        "quantity": 1,
+        "unit": "slice",
+        "costPerPortion": 0.15,
+        "glCode": "4111006"
+      },
+      {
+        "id": "grill-transfer|3764",
+        "mrn": "3764",
+        "name": "Lettuce, Iceberg, Individual Leaf, Fresh",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.055,
+        "glCode": "4111005"
+      }
+    ],
+    "64908.6": [
+      {
+        "id": "grill-transfer|31228",
+        "mrn": "31228",
+        "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.68,
+        "glCode": "4111010"
+      },
+      {
+        "id": "grill-transfer|1675",
+        "mrn": "1675",
+        "name": "Cheese, Pepper Jack, Loaf, Great Lakes, Sliced, .75 oz",
+        "quantity": 1,
+        "unit": "slice",
+        "costPerPortion": 0.15,
+        "glCode": "4111006"
+      },
+      {
+        "id": "grill-transfer|1755",
+        "mrn": "1755",
+        "name": "Cilantro, Fresh",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.055,
+        "glCode": "4111005"
+      }
+    ],
+    "107045.1": [
+      {
+        "id": "grill-transfer|183006",
+        "mrn": "183006",
+        "name": "Bacon, Applewood, Sliced, 14/18 Ct, Hatfield, Raw",
+        "quantity": 2,
+        "unit": "each",
+        "costPerPortion": 0.8,
+        "glCode": "4111003"
+      },
+      {
+        "id": "grill-transfer|31228",
+        "mrn": "31228",
+        "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.68,
+        "glCode": "4111010"
+      },
+      {
+        "id": "grill-transfer|1605",
+        "mrn": "1605",
+        "name": "Cheese, American, Pre-Sliced, .5 oz, Great Lakes",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.13,
+        "glCode": "4111006"
+      },
+      {
+        "id": "grill-transfer|162575",
+        "mrn": "162575",
+        "name": "Egg, Fresh, Large, Cage Free, HFAC, Wilcox",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.36,
+        "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|3764",
+        "mrn": "3764",
+        "name": "Lettuce, Iceberg, Individual Leaf, Fresh",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      }
+    ],
+    "91861.2": [
+      {
+        "id": "grill-transfer|31228",
+        "mrn": "31228",
+        "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.68,
+        "glCode": "4111010"
+      },
+      {
+        "id": "grill-transfer|1667",
+        "mrn": "1667",
+        "name": "Cheese, Cheddar, Mild, Great Lakes, Pre-Sliced, .75 oz",
+        "quantity": 1,
+        "unit": "slice",
+        "costPerPortion": 0.15,
+        "glCode": "4111006"
+      },
+      {
+        "id": "grill-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.055,
+        "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|36857",
+        "mrn": "36857",
+        "name": "Beef, Brisket, BBQ, Sliced, Austin Blues, FC",
+        "quantity": 2,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111003"
+      }
+    ],
+    "63517.3": [
+      {
+        "id": "grill-transfer|183006",
+        "mrn": "183006",
+        "name": "Bacon, Applewood, Sliced, 14/18 Ct, Hatfield, Raw",
+        "quantity": 2,
+        "unit": "each",
+        "costPerPortion": 0.8,
+        "glCode": "4111003"
+      },
+      {
+        "id": "grill-transfer|31228",
+        "mrn": "31228",
+        "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.68,
+        "glCode": "4111010"
+      },
+      {
+        "id": "grill-transfer|148538",
+        "mrn": "148538",
+        "name": "Cheese, Provolone, Pre-Sliced, .5 oz, Great Lakes",
+        "quantity": 1,
+        "unit": "slice",
+        "costPerPortion": 0.11,
+        "glCode": "4111006"
+      },
+      {
+        "id": "grill-transfer|3764",
+        "mrn": "3764",
+        "name": "Lettuce, Iceberg, Individual Leaf, Fresh",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.055,
+        "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|225846",
+        "mrn": "225846",
+        "name": "Pickles, Dill Chips, Kosher, Block & Barrel, Bulk",
+        "quantity": 3,
+        "unit": "each",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|56055",
+        "mrn": "56055",
+        "name": "Tomatoes, 5x6, Fresh, Sliced",
+        "quantity": 2,
+        "unit": "slice",
+        "costPerPortion": 0.12,
+        "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|8262",
+        "mrn": "8262",
+        "name": "Pineapple, Fresh, Sliced",
+        "quantity": 1,
+        "unit": "slice",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      }
+    ],
+    "63329.3": [
+      {
+        "id": "grill-transfer|31228",
+        "mrn": "31228",
+        "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.68,
+        "glCode": "4111010"
+      },
+      {
+        "id": "grill-transfer|9165",
+        "mrn": "9165",
+        "name": "Cheese, Cheddar, Mild, Loaf, Great Lakes, Sliced, .5 oz",
+        "quantity": 2,
+        "unit": "slice",
+        "costPerPortion": 0.19,
+        "glCode": "4111006"
+      },
+      {
+        "id": "grill-transfer|3764",
+        "mrn": "3764",
+        "name": "Lettuce, Iceberg, Individual Leaf, Fresh",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|4183",
+        "mrn": "4183",
+        "name": "Onions, French Fried, Dried",
+        "quantity": 0.5,
+        "unit": "cup",
+        "costPerPortion": 0.32,
+        "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|225846",
+        "mrn": "225846",
+        "name": "Pickles, Dill Chips, Kosher, Block & Barrel, Bulk",
+        "quantity": 3,
+        "unit": "each",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      }
+    ],
+    "78211.2": [
+      {
+        "id": "grill-transfer|31228",
+        "mrn": "31228",
+        "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.68,
+        "glCode": "4111010"
+      },
+      {
+        "id": "grill-transfer|3764",
+        "mrn": "3764",
+        "name": "Lettuce, Iceberg, Individual Leaf, Fresh",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|166043",
+        "mrn": "166043",
+        "name": "Onions, Red, Fresh, Each Slice, 1/4\"",
+        "quantity": 1,
+        "unit": "slice",
+        "costPerPortion": 0.04,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|225846",
+        "mrn": "225846",
+        "name": "Pickles, Dill Chips, Kosher, Block & Barrel, Bulk",
+        "quantity": 3,
+        "unit": "each",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|56055",
+        "mrn": "56055",
+        "name": "Tomatoes, 5x6, Fresh, Sliced",
+        "quantity": 2,
+        "unit": "slice",
+        "costPerPortion": 0.12,
+        "glCode": "4111005"
+      }
+    ],
+    "165740.2": [
+      {
+        "id": "grill-transfer|31228",
+        "mrn": "31228",
+        "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.68,
+        "glCode": "4111010"
+      },
+      {
+        "id": "grill-transfer|3764",
+        "mrn": "3764",
+        "name": "Lettuce, Iceberg, Individual Leaf, Fresh",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.5,
+        "unit": "tsp",
+        "costPerPortion": 0.0092,
+        "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|225846",
+        "mrn": "225846",
+        "name": "Pickles, Dill Chips, Kosher, Block & Barrel, Bulk",
+        "quantity": 3,
+        "unit": "each",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|56055",
+        "mrn": "56055",
+        "name": "Tomatoes, 5x6, Fresh, Sliced",
+        "quantity": 2,
+        "unit": "slice",
+        "costPerPortion": 0.12,
+        "glCode": "4111005"
+      }
+    ],
+    "77139.70": [
+      {
+        "id": "grill-transfer|31228",
+        "mrn": "31228",
+        "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.68,
+        "glCode": "4111010"
+      },
+      {
+        "id": "grill-transfer|1712",
+        "mrn": "1712",
+        "name": "Chicken, Breast, Boneless, Skinless, 5 oz, Tyson, Raw",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 1.28,
+        "glCode": "4111003"
+      },
+      {
+        "id": "grill-transfer|3764",
+        "mrn": "3764",
+        "name": "Lettuce, Iceberg, Individual Leaf, Fresh",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.055,
+        "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|166043",
+        "mrn": "166043",
+        "name": "Onions, Red, Fresh, Each Slice, 1/4\"",
+        "quantity": 2,
+        "unit": "slice",
+        "costPerPortion": 0.08,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|56055",
+        "mrn": "56055",
+        "name": "Tomatoes, 5x6, Fresh, Sliced",
+        "quantity": 2,
+        "unit": "slice",
+        "costPerPortion": 0.12,
+        "glCode": "4111005"
+      }
+    ],
+    "77139.69": [
+      {
+        "id": "grill-transfer|31228",
+        "mrn": "31228",
+        "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.68,
+        "glCode": "4111010"
+      },
+      {
+        "id": "grill-transfer|7775",
+        "mrn": "7775",
+        "name": "Cheese, Havarti, Roth Kase",
+        "quantity": 0.75,
+        "unit": "ounce",
+        "costPerPortion": 0.2175,
+        "glCode": "4111006"
+      },
+      {
+        "id": "grill-transfer|3764",
+        "mrn": "3764",
+        "name": "Lettuce, Iceberg, Individual Leaf, Fresh",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.055,
+        "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|166043",
+        "mrn": "166043",
+        "name": "Onions, Red, Fresh, Each Slice, 1/4\"",
+        "quantity": 2,
+        "unit": "slice",
+        "costPerPortion": 0.08,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|15372",
+        "mrn": "15372",
+        "name": "Potatoes, Hash Brown, Shredded, McCain, Frozen",
+        "quantity": 4,
+        "unit": "ounce",
+        "costPerPortion": 0.44,
+        "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|82193",
+        "mrn": "82193",
+        "name": "Seasoning, Mesquite, BBQ, McCormick",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.06,
+        "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|56055",
+        "mrn": "56055",
+        "name": "Tomatoes, 5x6, Fresh, Sliced",
+        "quantity": 2,
+        "unit": "slice",
+        "costPerPortion": 0.12,
+        "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|85770",
+        "mrn": "85770",
+        "name": "Oil, Canola, Liquid Frying, Frilite",
+        "quantity": 15.666667,
+        "unit": "g",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "147955.17": [
+      {
+        "id": "grill-transfer|31228",
+        "mrn": "31228",
+        "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.68,
+        "glCode": "4111010"
+      },
+      {
+        "id": "grill-transfer|3764",
+        "mrn": "3764",
+        "name": "Lettuce, Iceberg, Individual Leaf, Fresh",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.055,
+        "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|166043",
+        "mrn": "166043",
+        "name": "Onions, Red, Fresh, Each Slice, 1/4\"",
+        "quantity": 2,
+        "unit": "slice",
+        "costPerPortion": 0.08,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|225846",
+        "mrn": "225846",
+        "name": "Pickles, Dill Chips, Kosher, Block & Barrel, Bulk",
+        "quantity": 3,
+        "unit": "each",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|56055",
+        "mrn": "56055",
+        "name": "Tomatoes, 5x6, Fresh, Sliced",
+        "quantity": 2,
+        "unit": "slice",
+        "costPerPortion": 0.12,
+        "glCode": "4111005"
+      }
+    ],
+    "77139.66": [
+      {
+        "id": "grill-transfer|31228",
+        "mrn": "31228",
+        "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.68,
+        "glCode": "4111010"
+      },
+      {
+        "id": "grill-transfer|1605",
+        "mrn": "1605",
+        "name": "Cheese, American, Pre-Sliced, .5 oz, Great Lakes",
+        "quantity": 1,
+        "unit": "slice",
+        "costPerPortion": 0.16,
+        "glCode": "4111006"
+      },
+      {
+        "id": "grill-transfer|3764",
+        "mrn": "3764",
+        "name": "Lettuce, Iceberg, Individual Leaf, Fresh",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.055,
+        "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|166043",
+        "mrn": "166043",
+        "name": "Onions, Red, Fresh, Each Slice, 1/4\"",
+        "quantity": 2,
+        "unit": "slice",
+        "costPerPortion": 0.08,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|225846",
+        "mrn": "225846",
+        "name": "Pickles, Dill Chips, Kosher, Block & Barrel, Bulk",
+        "quantity": 3,
+        "unit": "each",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|56055",
+        "mrn": "56055",
+        "name": "Tomatoes, 5x6, Fresh, Sliced",
+        "quantity": 2,
+        "unit": "slice",
+        "costPerPortion": 0.12,
+        "glCode": "4111005"
+      }
+    ],
+    "83088.1": [
+      {
+        "id": "grill-transfer|31228",
+        "mrn": "31228",
+        "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.68,
+        "glCode": "4111010"
+      },
+      {
+        "id": "grill-transfer|170538",
+        "mrn": "170538",
+        "name": "Burger, Meatless, Black Bean, Actual Veggies, 4 oz, Frozen",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 1.3433,
+        "glCode": "4111003"
+      },
+      {
+        "id": "grill-transfer|3762",
+        "mrn": "3762",
+        "name": "Lettuce, Leaf, Individual Leaf, Fresh",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.08,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.055,
+        "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|56055",
+        "mrn": "56055",
+        "name": "Tomatoes, 5x6, Fresh, Sliced",
+        "quantity": 2,
+        "unit": "slice",
+        "costPerPortion": 0.12,
+        "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|179508",
+        "mrn": "179508",
+        "name": "Avocado, Hand Scooped, Wholly Avocado, Fresh",
+        "quantity": 2,
+        "unit": "scoop #16",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      }
+    ],
+    "107374.35": [
+      {
+        "id": "grill-transfer|31228",
+        "mrn": "31228",
+        "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.68,
+        "glCode": "4111010"
+      },
+      {
+        "id": "grill-transfer|191189",
+        "mrn": "191189",
+        "name": "Chicken, Breast, Fillet, Breaded, Spicy, 4oz, Koch, Frozen",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 1.54,
+        "glCode": "4111003"
+      },
+      {
+        "id": "grill-transfer|108406",
+        "mrn": "108406",
+        "name": "Mayo, Vegan, Hellmann's, Bulk",
+        "quantity": 2,
+        "unit": "tbsp",
+        "costPerPortion": 0.2,
+        "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.055,
+        "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|225846",
+        "mrn": "225846",
+        "name": "Pickles, Dill Chips, Kosher, Block & Barrel, Bulk",
+        "quantity": 3,
+        "unit": "each",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|85770",
+        "mrn": "85770",
+        "name": "Oil, Canola, Liquid Frying, Frilite",
+        "quantity": 1,
+        "unit": "g",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "77139.67": [
+      {
+        "id": "grill-transfer|31228",
+        "mrn": "31228",
+        "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.68,
+        "glCode": "4111010"
+      },
+      {
+        "id": "grill-transfer|3764",
+        "mrn": "3764",
+        "name": "Lettuce, Iceberg, Individual Leaf, Fresh",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.055,
+        "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|166043",
+        "mrn": "166043",
+        "name": "Onions, Red, Fresh, Each Slice, 1/4\"",
+        "quantity": 2,
+        "unit": "slice",
+        "costPerPortion": 0.08,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|225846",
+        "mrn": "225846",
+        "name": "Pickles, Dill Chips, Kosher, Block & Barrel, Bulk",
+        "quantity": 3,
+        "unit": "each",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|56055",
+        "mrn": "56055",
+        "name": "Tomatoes, 5x6, Fresh, Sliced",
+        "quantity": 2,
+        "unit": "slice",
+        "costPerPortion": 0.12,
+        "glCode": "4111005"
+      }
+    ],
+    "5294.29": [
+      {
+        "id": "grill-transfer|4123",
+        "mrn": "4123",
+        "name": "Mushrooms, Portobello, Fresh",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.24,
+        "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.166667,
+        "unit": "tbsp",
+        "costPerPortion": 0.0092,
+        "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|4253",
+        "mrn": "4253",
+        "name": "Onions, Red, Fresh, Each Ring, 1/4\"",
+        "quantity": 0.666667,
+        "unit": "ounce",
+        "costPerPortion": 0.02,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|8065",
+        "mrn": "8065",
+        "name": "Peppers, Bell, Red, Fresh",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.6075,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.027778,
+        "unit": "tsp",
+        "costPerPortion": 0.0022,
+        "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|55272",
+        "mrn": "55272",
+        "name": "Squash, Yellow, Fresh, Bias Cut, Halved, 1/2\"",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.3333,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|7462",
+        "mrn": "7462",
+        "name": "Squash, Zucchini, Fresh, Bias Cut, Halved, 1/2\"",
+        "quantity": 1.083333,
+        "unit": "ounce",
+        "costPerPortion": 0.3611,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|7390",
+        "mrn": "7390",
+        "name": "Spice, Pepper, Black, Ground",
+        "quantity": 0.027778,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
     ]
   }
 });
 
-export const GRILL_LTO_ITEM_MRNS = Object.freeze([...new Set(GRILL_LTO_PROGRAM.cycleWeeks.flatMap((week) => [...week.setA, ...week.setB]).map((item) => item.mrn))]);
+export const GRILL_LTO_ITEM_MRNS = Object.freeze([...new Set([...GRILL_LTO_PROGRAM.cycleWeeks.flatMap((week) => [...week.setA, ...week.setB]), ...GRILL_LTO_PROGRAM.coreItems].map((item) => item.mrn))]);
 export const GRILL_LTO_PREP_ITEM_IDS = Object.freeze([...new Set(Object.values(GRILL_LTO_PROGRAM.itemPrepComponents).flat().map((item) => item.id))]);

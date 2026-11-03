@@ -18,7 +18,7 @@ import { BREAKFAST_ORDERING_PROGRAM } from "../features/commissary-ordering/brea
 import { COMMISSARY_CAFE_STATION_ACCESS, COMMISSARY_HUB_ROUTING, COMMISSARY_HUBS } from "../features/commissary-ordering/commissaryRouting.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 12;
+export const OPERATIONAL_METADATA_VERSION = 13;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -92,6 +92,16 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       contentPolicy: "complete",
       setLayout: "two-column-desktop",
       deliveryControls: "always-visible",
+      coreItems: "permanent-optional-whole-item-quantities",
+    }),
+    componentProductionPolicy: Object.freeze({
+      version: 1,
+      effectiveDate: "2026-11-16",
+      stations: Object.freeze(["Grill", "Global"]),
+      rawAnimalProteins: "unit-supplied-excluded-from-prep-and-transfer",
+      explicitlyPrecookedProteins: "commissary-generated-included",
+      transferValuation: "priced-retained-recipe-components-only",
+      unresolvedComponentCost: "excluded-no-invented-allocation",
     }),
     prepInterface: Object.freeze({
       stationOrder: Object.freeze(["Salad Bar", "Breakfast", "Deli", "Grill", "Global"]),

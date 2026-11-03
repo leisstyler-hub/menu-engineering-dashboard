@@ -13,11 +13,11 @@ import { collectUnexpectedPageErrors, expectNoAppProtection, expectNoUnexpectedP
 
 async function mockOrders(page, records = []) {
   const writes = [];
-  const grillItems = [...new Map(GRILL_LTO_PROGRAM.cycleWeeks.flatMap((week) => [...week.setA, ...week.setB]).map((item, index) => [item.mrn, {
+  const grillItems = [...new Map([...GRILL_LTO_PROGRAM.cycleWeeks.flatMap((week) => [...week.setA, ...week.setB]), ...GRILL_LTO_PROGRAM.coreItems].map((item, index) => [item.mrn, {
     menu: GRILL_LTO_PROGRAM.menu,
     item: item.name,
     mrn: item.mrn,
-    portion: "1 sandwich",
+    portion: item.category === "side" ? "1 serving" : "1 sandwich",
     trueCost: Number((3 + index / 10).toFixed(4)),
   }])).values()];
   const deliItems = [...new Map(DELI_ORDERING_PROGRAM.cycleWeeks.flatMap((week) => week.items).map((item, index) => [item.mrn, {
@@ -193,7 +193,7 @@ test("Commissary Ordering Tool requires cafe selection and saves separate delive
   expect(writes).toHaveLength(1);
   expect(writes[0].context.tool).toBe("commissaryOrders");
   expect(writes[0].records[0].orderUnitVersion).toBe(2);
-  expect(writes[0].records[0].commissaryMetadataVersion).toBe(3);
+  expect(writes[0].records[0].commissaryMetadataVersion).toBe(4);
   expect(writes[0].records[0].quantities[cucumber.id]).toEqual({ friday: 1, monday: 2, wednesday: 1 });
   const packetDownload = page.waitForEvent("download");
   await page.getByRole("button", { name: /packout packet/i }).click();
@@ -246,6 +246,9 @@ test("Grill LTO starts Cycle Week 1 on November 16 with Set A and Set B whole-sa
   await page.getByLabel("Set A Friday 11/13 sandwich quantity").fill("10");
   await page.getByLabel("Set A Monday 11/16 sandwich quantity").fill("20");
   await page.getByLabel("Set B Wednesday 11/18 sandwich quantity").fill("15");
+  const core = page.getByTestId("commissary-grill-core");
+  await expect(core).toContainText("Optional core sandwiches and sides");
+  await page.getByLabel("Smashburger Monday 11/16 quantity").fill("6");
   const deli = page.getByTestId("commissary-deli-order");
   await expect(deli.getByText(/Cycle Week 1/i)).toBeVisible();
   await expect(deli.locator("section")).toHaveCount(5);
@@ -259,6 +262,7 @@ test("Grill LTO starts Cycle Week 1 on November 16 with Set A and Set B whole-sa
   expect(writes[0].records[0].grill.selections).toEqual({ A: "77139.72", B: "77139.68" });
   expect(writes[0].records[0].grill.quantities.A).toEqual({ friday: 10, monday: 20, wednesday: 0 });
   expect(writes[0].records[0].grill.quantities.B).toEqual({ friday: 0, monday: 0, wednesday: 15 });
+  expect(writes[0].records[0].grill.core.quantities["147955.17"]).toEqual({ friday: 0, monday: 6, wednesday: 0 });
   expect(writes[0].records[0].deli.cycleWeek).toBe(1);
   expect(writes[0].records[0].deli.quantities["190990"]).toEqual({ friday: 0, monday: 12, wednesday: 0 });
   expect(writes[0].records[0].global.cycleWeek).toBe(1);
@@ -270,9 +274,9 @@ test("Grill LTO starts Cycle Week 1 on November 16 with Set A and Set B whole-sa
   await page.getByRole("button", { name: /^prep list$/i }).click();
   const workbook = XLSX.readFile(await (await prepDownload).path());
   const prepRows = XLSX.utils.sheet_to_json(workbook.Sheets["Consolidated Prep List"], { header: 1, defval: "" });
-  expect(prepRows).toContainEqual(expect.arrayContaining(["AMZ: Smashburger Patty", expect.any(Number), "each"]));
+  expect(prepRows.some((row) => row[0] === "AMZ: Smashburger Patty")).toBe(false);
   const mondayRows = XLSX.utils.sheet_to_json(workbook.Sheets["Monday Delivery Map"], { header: 1, defval: "" });
-  expect(mondayRows).toContainEqual(expect.arrayContaining(["Nessie", "AMZ: Smashburger Patty", "147955.16", 20, "each", expect.stringContaining("ATX Burger")]));
+  expect(mondayRows.some((row) => row[1] === "AMZ: Smashburger Patty")).toBe(false);
   expect(mondayRows).toContainEqual(expect.arrayContaining(["Nessie", "Turkey, Breast, Deli, Smoked, Butterball", "", 48, "ounce", expect.stringContaining("Mediterranean Turkey Wrap")]));
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
@@ -315,6 +319,17 @@ test("each cafe sees only its assigned commissary stations", async ({ page }) =>
   await expect(page.getByTestId("commissary-deli-order")).toBeVisible();
   await expect(page.getByTestId("commissary-grill-order")).toHaveCount(0);
   await expect(page.getByText("Salad bar", { exact: true })).toBeVisible();
+
+  await page.getByLabel("Your cafe").selectOption("Atlas");
+  await expect(page.getByTestId("commissary-grill-order")).toBeVisible();
+  await expect(page.getByTestId("commissary-grill-core")).toBeVisible();
+  await expect(page.getByTestId("commissary-global-order")).toHaveCount(0);
+  await expect(page.getByText("Salad bar", { exact: true })).toBeHidden();
+
+  await page.getByLabel("Your cafe").selectOption("Frontier");
+  await expect(page.getByTestId("commissary-global-order")).toBeVisible();
+  await expect(page.getByText("Salad bar", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("commissary-grill-order")).toHaveCount(0);
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });

@@ -91,6 +91,18 @@ function lookupComponents(recipeMrn) {
   }));
 }
 
+function transferComponents(recipeMrn) {
+  const recipe = COSTING.recipes[mrn(recipeMrn)];
+  return [...(recipe?.components || []), ...(recipe?.unpricedComponents || [])].map((component) => ({
+    id: `global-transfer|${mrn(component.ingredientMrn) || slug(component.ingredientName)}`,
+    mrn: mrn(component.ingredientMrn), name: text(component.ingredientName),
+    quantity: round(Number(component.quantity) / Number(component.recipeYield || 1)),
+    unit: text(component.unit).toLowerCase(),
+    costPerPortion: Number.isFinite(Number(component.allocationPerPortion)) ? Number(component.allocationPerPortion) : null,
+    glCode: text(component.glCode) || "4111011",
+  }));
+}
+
 async function pdfComponents(path, requiredMrns) {
   const document = await pdfjs.getDocument({ data: new Uint8Array(readFileSync(path)), disableWorker: true }).promise;
   const wanted = new Set(requiredMrns);
@@ -175,16 +187,19 @@ async function main() {
     if (!components?.length) throw new Error(`Global item ${item.menu} / ${item.name} / ${item.mrn} lacks an exact recipe projection.`);
     return [item.id, components];
   }));
+  const itemTransferComponents = Object.fromEntries(allItems.map((item) => [item.id, transferComponents(item.mrn)]));
   const payload = {
-    version: 1,
+    version: 2,
     anchorWeekStart: "2026-11-16",
+    effectiveDate: "2026-11-16",
     cycleLengthWeeks: 6,
-    eligibleCafes: ["Cricket", "Nessie", "Dawson", "Bingo", "Grace", "Sonic", "Blueshift", "Everest", "Gemini", "Astra", "Doppler", "Day 1", "Nitro", "Re:Invent"],
+    eligibleCafes: ["Cricket", "Nessie", "Dawson", "Frontier", "Bingo", "Grace", "Sonic", "Blueshift", "Everest", "Gemini", "Astra", "Doppler", "Day 1", "Nitro", "Re:Invent"],
     quantityIncrement: 1,
     orderUnit: "portion",
     extensionsIncluded: false,
     cycleWeeks,
     itemPrepComponents,
+    itemTransferComponents,
     source: {
       catalog: "supabase.recipe_items",
       catalogRosterSha256: createHash("sha256").update(JSON.stringify(allItems)).digest("hex"),

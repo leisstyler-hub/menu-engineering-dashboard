@@ -2,13 +2,15 @@
 // Contains prep quantities only; proprietary recipe methods are never projected.
 
 export const GLOBAL_ORDERING_PROGRAM = Object.freeze({
-  "version": 1,
+  "version": 2,
   "anchorWeekStart": "2026-11-16",
+  "effectiveDate": "2026-11-16",
   "cycleLengthWeeks": 6,
   "eligibleCafes": [
     "Cricket",
     "Nessie",
     "Dawson",
+    "Frontier",
     "Bingo",
     "Grace",
     "Sonic",
@@ -15470,6 +15472,13058 @@ export const GLOBAL_ORDERING_PROGRAM = Object.freeze({
         "name": "Sauce, Korean Pepper, Gochujang, Ventura",
         "quantity": 0.25,
         "unit": "ounce"
+      }
+    ]
+  },
+  "itemTransferComponents": {
+    "global|amz-porto|121026|1-piece": [
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.125,
+        "unit": "tbsp",
+        "costPerPortion": 0.03,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|108009",
+        "mrn": "108009",
+        "name": "Chicken, Whole Fryer, 3 lb, Raw",
+        "quantity": 0.25,
+        "unit": "each",
+        "costPerPortion": 0,
+        "glCode": "4111003"
+      }
+    ],
+    "global|amz-porto|121025|5-ounce": [
+      {
+        "id": "global-transfer|15151",
+        "mrn": "15151",
+        "name": "Chicken, Thigh, Bone-In, Skin On, 5.3 oz",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.73,
+        "glCode": "4111003"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.166667,
+        "unit": "tbsp",
+        "costPerPortion": 0.04,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-porto|121023|2-each": [
+      {
+        "id": "global-transfer|9598",
+        "mrn": "9598",
+        "name": "Shrimp, 21/25, Jumbo, P&D, Tail on, Raw, Slade Gorton, Frozen",
+        "quantity": 0.25,
+        "unit": "pound",
+        "costPerPortion": 1.64,
+        "glCode": "4111004"
+      }
+    ],
+    "global|amz-porto|121022.2|1-each": [
+      {
+        "id": "global-transfer|4241",
+        "mrn": "4241",
+        "name": "Onions, Green, Scallion, Each, Fresh, Bias Cut",
+        "quantity": 0.147059,
+        "unit": "tbsp",
+        "costPerPortion": 0.0107,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|55395",
+        "mrn": "55395",
+        "name": "Parsley, Fresh, Chopped, Fine",
+        "quantity": 0.147059,
+        "unit": "tbsp",
+        "costPerPortion": 0.0088,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|53211",
+        "mrn": "53211",
+        "name": "Peppers, Chili, Fresno, Red, Fresh, Sliced, Thin",
+        "quantity": 0.014706,
+        "unit": "cup",
+        "costPerPortion": 0.0118,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7529",
+        "mrn": "7529",
+        "name": "Tofu, Firm, Cubed, 1\"",
+        "quantity": 0.294118,
+        "unit": "pound",
+        "costPerPortion": 0.2824,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-porto|120671|1-2-cup": [
+      {
+        "id": "global-transfer|51970",
+        "mrn": "51970",
+        "name": "Cucumbers, English, Fresh, Diced",
+        "quantity": 0.09375,
+        "unit": "cup",
+        "costPerPortion": 0.12,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|3542",
+        "mrn": "3542",
+        "name": "Juice, Lime, Fresh Pressed",
+        "quantity": 0.015625,
+        "unit": "cup",
+        "costPerPortion": 0.0134,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|15323",
+        "mrn": "15323",
+        "name": "Oil, Olive, Extra Virgin",
+        "quantity": 0.023438,
+        "unit": "cup",
+        "costPerPortion": 0.0638,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4251",
+        "mrn": "4251",
+        "name": "Onions, Green, Scallion, Each, Fresh, Sliced",
+        "quantity": 0.375,
+        "unit": "each",
+        "costPerPortion": 0.015,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4321",
+        "mrn": "4321",
+        "name": "Parsley, Fresh, Chopped",
+        "quantity": 0.0625,
+        "unit": "cup",
+        "costPerPortion": 0.06,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4386",
+        "mrn": "4386",
+        "name": "Peas, Black-Eyed, Bush Brothers, Canned, Drained",
+        "quantity": 0.25,
+        "unit": "cup",
+        "costPerPortion": 0.07,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.03125,
+        "unit": "tsp",
+        "costPerPortion": 0.0025,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|15490",
+        "mrn": "15490",
+        "name": "Tomatoes, Roma, Fresh, Small Diced, 1/4\"",
+        "quantity": 0.0625,
+        "unit": "cup",
+        "costPerPortion": 0.045,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3787",
+        "mrn": "3787",
+        "name": "Peppers, Bell, Red, Fresh, Diced, Small, 1/4\"",
+        "quantity": 0.0625,
+        "unit": "each",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7711",
+        "mrn": "7711",
+        "name": "Peppers, Chili, Serrano, Fresh, Seeded, Minced",
+        "quantity": 0.0625,
+        "unit": "each",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7390",
+        "mrn": "7390",
+        "name": "Spice, Pepper, Black, Ground",
+        "quantity": 0.015625,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-porto|120752|1-2-cup": [
+      {
+        "id": "global-transfer|2892",
+        "mrn": "2892",
+        "name": "Garlic Cloves, Peeled, Fresh",
+        "quantity": 0.2,
+        "unit": "each",
+        "costPerPortion": 0.21,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3539",
+        "mrn": "3539",
+        "name": "Juice, Lemon, Fresh Pressed",
+        "quantity": 0.025,
+        "unit": "cup",
+        "costPerPortion": 0.02,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|15323",
+        "mrn": "15323",
+        "name": "Oil, Olive, Extra Virgin",
+        "quantity": 0.033333,
+        "unit": "cup",
+        "costPerPortion": 0.0907,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4247",
+        "mrn": "4247",
+        "name": "Onions, Red, Fresh",
+        "quantity": 0.1,
+        "unit": "each",
+        "costPerPortion": 0.004,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4321",
+        "mrn": "4321",
+        "name": "Parsley, Fresh, Chopped",
+        "quantity": 0.008333,
+        "unit": "cup",
+        "costPerPortion": 0.008,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|56431",
+        "mrn": "56431",
+        "name": "Peppers, Red, Roasted, Strips, American Roland, Canned, Drained",
+        "quantity": 0.083333,
+        "unit": "cup",
+        "costPerPortion": 0.0867,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.066667,
+        "unit": "tsp",
+        "costPerPortion": 0.0053,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7561",
+        "mrn": "7561",
+        "name": "Tomatoes, Roma, Fresh",
+        "quantity": 0.133333,
+        "unit": "each",
+        "costPerPortion": 0.0587,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|2289",
+        "mrn": "2289",
+        "name": "Eggplant, Fresh",
+        "quantity": 0.133333,
+        "unit": "each",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|67366",
+        "mrn": "67366",
+        "name": "Spice, Pepper, Black, Ground, Fresh",
+        "quantity": 0.033333,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-porto|9002.15|1-2-cup": [
+      {
+        "id": "global-transfer|10669",
+        "mrn": "10669",
+        "name": "Beans, Green, French, Fresh",
+        "quantity": 0.2,
+        "unit": "pound",
+        "costPerPortion": 1.24,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.01,
+        "unit": "tbsp",
+        "costPerPortion": 0.0024,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7390",
+        "mrn": "7390",
+        "name": "Spice, Pepper, Black, Ground",
+        "quantity": 0.01,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-porto|121015|4-oz-portion": [
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.020833,
+        "unit": "cup",
+        "costPerPortion": 0.0183,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7043",
+        "mrn": "7043",
+        "name": "Potatoes, Baker 100 Count, Fresh",
+        "quantity": 0.208333,
+        "unit": "pound",
+        "costPerPortion": 0.24,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.104167,
+        "unit": "tsp",
+        "costPerPortion": 0.0083,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7357",
+        "mrn": "7357",
+        "name": "Spice, Chili Powder, Light, McCormick",
+        "quantity": 0.125,
+        "unit": "tbsp",
+        "costPerPortion": 0.0063,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7373",
+        "mrn": "7373",
+        "name": "Spice, Garlic, Granulated",
+        "quantity": 0.041667,
+        "unit": "tbsp",
+        "costPerPortion": 0.005,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|16255",
+        "mrn": "16255",
+        "name": "Spice, Paprika, Smoked",
+        "quantity": 0.041667,
+        "unit": "tbsp",
+        "costPerPortion": 0.005,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7393",
+        "mrn": "7393",
+        "name": "Spice, Pepper, Cayenne, Ground",
+        "quantity": 0.0625,
+        "unit": "tsp",
+        "costPerPortion": 0.0031,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7364",
+        "mrn": "7364",
+        "name": "Spice, Coriander, Ground",
+        "quantity": 0.041667,
+        "unit": "tbsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7367",
+        "mrn": "7367",
+        "name": "Spice, Cumin, Ground",
+        "quantity": 0.041667,
+        "unit": "tbsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7387",
+        "mrn": "7387",
+        "name": "Spice, Paprika, Ground",
+        "quantity": 0.041667,
+        "unit": "tbsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-porto|120641|1-2-cup": [
+      {
+        "id": "global-transfer|1755",
+        "mrn": "1755",
+        "name": "Cilantro, Fresh",
+        "quantity": 0.25,
+        "unit": "cup",
+        "costPerPortion": 0.12,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|1919",
+        "mrn": "1919",
+        "name": "Couscous, Traditional, Dry",
+        "quantity": 0.125,
+        "unit": "cup",
+        "costPerPortion": 0.28,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|3783",
+        "mrn": "3783",
+        "name": "Lemon, Fresh",
+        "quantity": 0.25,
+        "unit": "each",
+        "costPerPortion": 0.04,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3771",
+        "mrn": "3771",
+        "name": "Lettuce, Arugula, Baby, Fresh",
+        "quantity": 0.3125,
+        "unit": "cup",
+        "costPerPortion": 0.1219,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4221",
+        "mrn": "4221",
+        "name": "Nuts, Pistachio",
+        "quantity": 0.046875,
+        "unit": "cup",
+        "costPerPortion": 0.2925,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|15323",
+        "mrn": "15323",
+        "name": "Oil, Olive, Extra Virgin",
+        "quantity": 0.007813,
+        "unit": "cup",
+        "costPerPortion": 0.0213,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|15323",
+        "mrn": "15323",
+        "name": "Oil, Olive, Extra Virgin",
+        "quantity": 0.039063,
+        "unit": "cup",
+        "costPerPortion": 0.1063,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4229",
+        "mrn": "4229",
+        "name": "Onions, Green, Scallion, Bunch, Fresh, Sliced, Thin",
+        "quantity": 0.03125,
+        "unit": "cup",
+        "costPerPortion": 0.0362,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4322",
+        "mrn": "4322",
+        "name": "Parsley, Fresh",
+        "quantity": 0.25,
+        "unit": "cup",
+        "costPerPortion": 0.24,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7698",
+        "mrn": "7698",
+        "name": "Peppers, Chili, Jalapeno, Sliced, Embasa, Canned",
+        "quantity": 0.015625,
+        "unit": "cup",
+        "costPerPortion": 0.0125,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7109",
+        "mrn": "7109",
+        "name": "Raisins, Golden, Bulk",
+        "quantity": 0.375,
+        "unit": "tbsp",
+        "costPerPortion": 0.0338,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.03125,
+        "unit": "tsp",
+        "costPerPortion": 0.0025,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.09375,
+        "unit": "tsp",
+        "costPerPortion": 0.0075,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7642",
+        "mrn": "7642",
+        "name": "Water, Boiling",
+        "quantity": 0.09375,
+        "unit": "cup",
+        "costPerPortion": 0.0164,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7367",
+        "mrn": "7367",
+        "name": "Spice, Cumin, Ground",
+        "quantity": 0.0625,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7390",
+        "mrn": "7390",
+        "name": "Spice, Pepper, Black, Ground",
+        "quantity": 0.007813,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-porto|120722|2-floz": [
+      {
+        "id": "global-transfer|2883",
+        "mrn": "2883",
+        "name": "Garlic Cloves, Peeled, Fresh, Chopped",
+        "quantity": 0.083333,
+        "unit": "each",
+        "costPerPortion": 0.0875,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3783",
+        "mrn": "3783",
+        "name": "Lemon, Fresh",
+        "quantity": 0.027778,
+        "unit": "each",
+        "costPerPortion": 0.0044,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0046,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|96597",
+        "mrn": "96597",
+        "name": "Onions, White, Fresh, Diced, Medium",
+        "quantity": 0.006944,
+        "unit": "each",
+        "costPerPortion": 0.0092,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.055556,
+        "unit": "tsp",
+        "costPerPortion": 0.0044,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|86778",
+        "mrn": "86778",
+        "name": "Sauce, Hot, Original, Cholula, 5 oz",
+        "quantity": 0.006944,
+        "unit": "cup",
+        "costPerPortion": 0.03,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7393",
+        "mrn": "7393",
+        "name": "Spice, Pepper, Cayenne, Ground",
+        "quantity": 0.027778,
+        "unit": "tsp",
+        "costPerPortion": 0.0014,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|89698",
+        "mrn": "89698",
+        "name": "Peppers, Chili, Fresno, Red, Fresh",
+        "quantity": 0.083333,
+        "unit": "each",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-porto|121071|2-floz": [
+      {
+        "id": "global-transfer|71089",
+        "mrn": "71089",
+        "name": "Mayonnaise, Deluxe, Signature, Kraft, Bulk",
+        "quantity": 0.0625,
+        "unit": "cup",
+        "costPerPortion": 0.09,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7346",
+        "mrn": "7346",
+        "name": "Sour Cream, Real, Daisy",
+        "quantity": 0.0625,
+        "unit": "cup",
+        "costPerPortion": 0.05,
+        "glCode": "4111006"
+      }
+    ],
+    "global|amz-taco-total|197399.1|1-each": [
+      {
+        "id": "global-transfer|7346",
+        "mrn": "7346",
+        "name": "Sour Cream, Real, Daisy",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.565,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|3758",
+        "mrn": "3758",
+        "name": "Lettuce, Romaine, Fresh, Shredded",
+        "quantity": 1.5,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-taco-total|197399|1-each": [
+      {
+        "id": "global-transfer|7346",
+        "mrn": "7346",
+        "name": "Sour Cream, Real, Daisy",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.565,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|3758",
+        "mrn": "3758",
+        "name": "Lettuce, Romaine, Fresh, Shredded",
+        "quantity": 1.5,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-taco-total|130576.3|1-each": [
+      {
+        "id": "global-transfer|1634",
+        "mrn": "1634",
+        "name": "Cheese, Cheddar, Mild, Pre-Shredded, Feathered, Great Lakes",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.2,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|183087",
+        "mrn": "183087",
+        "name": "Cheese, Monterey Jack, Shredded, Feather, Great Lakes Cheese, Bulk",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.16,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|1656",
+        "mrn": "1656",
+        "name": "Cheese, Mozzarella, Part Skim, Pre-Shredded, Feathered, Great Lakes",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.16,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|7346",
+        "mrn": "7346",
+        "name": "Sour Cream, Real, Daisy",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.05,
+        "glCode": "4111006"
+      }
+    ],
+    "global|amz-taco-total|204354|3-each": [
+      {
+        "id": "global-transfer|7346",
+        "mrn": "7346",
+        "name": "Sour Cream, Real, Daisy",
+        "quantity": 3,
+        "unit": "tbsp",
+        "costPerPortion": 0.15,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|3758",
+        "mrn": "3758",
+        "name": "Lettuce, Romaine, Fresh, Shredded",
+        "quantity": 1.5,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-taco-total|41689.9|1-2-cup": [
+      {
+        "id": "global-transfer|1781",
+        "mrn": "1781",
+        "name": "Cilantro, Fresh, Chopped",
+        "quantity": 0.015625,
+        "unit": "cup",
+        "costPerPortion": 0.0075,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3542",
+        "mrn": "3542",
+        "name": "Juice, Lime, Fresh Pressed",
+        "quantity": 0.125,
+        "unit": "floz",
+        "costPerPortion": 0.0179,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.03125,
+        "unit": "floz",
+        "costPerPortion": 0.0034,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7116",
+        "mrn": "7116",
+        "name": "Rice, Basmati, Long Grain, Dry",
+        "quantity": 1.8125,
+        "unit": "ounce",
+        "costPerPortion": 0.3625,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.03125,
+        "unit": "tbsp",
+        "costPerPortion": 0.0075,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7644",
+        "mrn": "7644",
+        "name": "Water, Tap",
+        "quantity": 2,
+        "unit": "floz",
+        "costPerPortion": 0.0438,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-taco-total|226776|1-ounce": [
+      {
+        "id": "global-transfer|145942",
+        "mrn": "145942",
+        "name": "Cheese, Cotija, Grated, Supremo",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.11,
+        "glCode": "4111006"
+      }
+    ],
+    "global|amz-taco-total|41728.4|1-2-cup": [
+      {
+        "id": "global-transfer|2892",
+        "mrn": "2892",
+        "name": "Garlic Cloves, Peeled, Fresh",
+        "quantity": 0.125,
+        "unit": "ounce",
+        "costPerPortion": 0.0516,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.03125,
+        "unit": "floz",
+        "costPerPortion": 0.0034,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4213",
+        "mrn": "4213",
+        "name": "Onions, Yellow, Fresh, Diced, 1/8\"",
+        "quantity": 0.03125,
+        "unit": "pound",
+        "costPerPortion": 0.0926,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|15490",
+        "mrn": "15490",
+        "name": "Tomatoes, Roma, Fresh, Small Diced, 1/4\"",
+        "quantity": 0.046875,
+        "unit": "pound",
+        "costPerPortion": 0.0879,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7119",
+        "mrn": "7119",
+        "name": "Rice, Jasmine, Dry",
+        "quantity": 0.0625,
+        "unit": "pound",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.015625,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-taco-total|76908.2|3-oz-portion": [
+      {
+        "id": "global-transfer|169558",
+        "mrn": "169558",
+        "name": "Beans, Black, Pouch",
+        "quantity": 0.166667,
+        "unit": "pound",
+        "costPerPortion": 0.3,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.041667,
+        "unit": "tbsp",
+        "costPerPortion": 0.01,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7373",
+        "mrn": "7373",
+        "name": "Spice, Garlic, Granulated",
+        "quantity": 0.166667,
+        "unit": "tbsp",
+        "costPerPortion": 0.02,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|47082",
+        "mrn": "47082",
+        "name": "Spice, Oregano, Mexican, Dried",
+        "quantity": 0.041667,
+        "unit": "tbsp",
+        "costPerPortion": 0.0062,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|1781",
+        "mrn": "1781",
+        "name": "Cilantro, Fresh, Chopped",
+        "quantity": 0.125,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7367",
+        "mrn": "7367",
+        "name": "Spice, Cumin, Ground",
+        "quantity": 0.25,
+        "unit": "tbsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-taco-total|20064.4|3-ounce": [
+      {
+        "id": "global-transfer|664",
+        "mrn": "664",
+        "name": "Beans, Pinto, Dry",
+        "quantity": 0.09375,
+        "unit": "pound",
+        "costPerPortion": 0.0984,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|2894",
+        "mrn": "2894",
+        "name": "Garlic Cloves, Peeled, Fresh, Mashed",
+        "quantity": 0.125,
+        "unit": "ounce",
+        "costPerPortion": 0.0516,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|9058",
+        "mrn": "9058",
+        "name": "Onions, Yellow, Fresh, Diced",
+        "quantity": 0.625,
+        "unit": "ounce",
+        "costPerPortion": 0.0187,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7644",
+        "mrn": "7644",
+        "name": "Water, Tap",
+        "quantity": 6,
+        "unit": "floz",
+        "costPerPortion": 0.1313,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 1.5,
+        "unit": "g",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4271",
+        "mrn": "4271",
+        "name": "Oregano, Fresh, Chopped",
+        "quantity": 0.4,
+        "unit": "g",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 2.25,
+        "unit": "g",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7390",
+        "mrn": "7390",
+        "name": "Spice, Pepper, Black, Ground",
+        "quantity": 0.15,
+        "unit": "g",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-taco-total|175362.2|1-2-cup": [
+      {
+        "id": "global-transfer|1330",
+        "mrn": "1330",
+        "name": "Cauliflower, Fresh, Florets, 1\"",
+        "quantity": 0.16,
+        "unit": "pound",
+        "costPerPortion": 0.6344,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-taco-total|175362.1|1-2-cup": [
+      {
+        "id": "global-transfer|84566",
+        "mrn": "84566",
+        "name": "Pork, Shoulder, Butt, Boneless, Vac Plus, Premium, Raw",
+        "quantity": 0.220588,
+        "unit": "pound",
+        "costPerPortion": 0,
+        "glCode": "4111003"
+      }
+    ],
+    "global|amz-taco-total|174049.2|4-ounce": [
+      {
+        "id": "global-transfer|224672",
+        "mrn": "224672",
+        "name": "Base, Beef, Low Sodium, No MSG, Gluten Free, Minor's",
+        "quantity": 0.1,
+        "unit": "tbsp",
+        "costPerPortion": 0.013,
+        "glCode": "4111003"
+      },
+      {
+        "id": "global-transfer|116740",
+        "mrn": "116740",
+        "name": "Beef, Chuck, Roll, Raw",
+        "quantity": 0.25,
+        "unit": "pound",
+        "costPerPortion": 1.64,
+        "glCode": "4111003"
+      },
+      {
+        "id": "global-transfer|96597",
+        "mrn": "96597",
+        "name": "Onions, White, Fresh, Diced, Medium",
+        "quantity": 0.025,
+        "unit": "pound",
+        "costPerPortion": 0.0267,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7352",
+        "mrn": "7352",
+        "name": "Spice, Bay Leaf, Whole",
+        "quantity": 0.075,
+        "unit": "each",
+        "costPerPortion": 0.0009,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-taco-total|85478.1|4-ounce": [
+      {
+        "id": "global-transfer|1781",
+        "mrn": "1781",
+        "name": "Cilantro, Fresh, Chopped",
+        "quantity": 0.020833,
+        "unit": "cup",
+        "costPerPortion": 0.01,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|16111",
+        "mrn": "16111",
+        "name": "Corn, on Cob, Husk Removed, Fresh",
+        "quantity": 0.25,
+        "unit": "each",
+        "costPerPortion": 0.05,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|2892",
+        "mrn": "2892",
+        "name": "Garlic Cloves, Peeled, Fresh",
+        "quantity": 0.25,
+        "unit": "each",
+        "costPerPortion": 0.2625,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|15323",
+        "mrn": "15323",
+        "name": "Oil, Olive, Extra Virgin",
+        "quantity": 0.25,
+        "unit": "tbsp",
+        "costPerPortion": 0.0425,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|15323",
+        "mrn": "15323",
+        "name": "Oil, Olive, Extra Virgin",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0142,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4181",
+        "mrn": "4181",
+        "name": "Onions, Yellow, Fresh, Chopped",
+        "quantity": 0.125,
+        "unit": "cup",
+        "costPerPortion": 0.04,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4271",
+        "mrn": "4271",
+        "name": "Oregano, Fresh, Chopped",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.01,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|84970",
+        "mrn": "84970",
+        "name": "Peppers, Chili, Pasilla Negro, Dried, D'Allesandro",
+        "quantity": 0.333333,
+        "unit": "ounce",
+        "costPerPortion": 0.1,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|63195",
+        "mrn": "63195",
+        "name": "Squash, Yellow, Fresh, Diced",
+        "quantity": 0.125,
+        "unit": "cup",
+        "costPerPortion": 0.05,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|62635",
+        "mrn": "62635",
+        "name": "Squash, Zucchini, Fresh, Diced",
+        "quantity": 0.125,
+        "unit": "cup",
+        "costPerPortion": 0.06,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-taco-total|175489|1-2-cup": [
+      {
+        "id": "global-transfer|17743",
+        "mrn": "17743",
+        "name": "Beef, Steak, Skirt, Outside",
+        "quantity": 0.277778,
+        "unit": "pound",
+        "costPerPortion": 2.2222,
+        "glCode": "4111003"
+      }
+    ],
+    "global|amz-taco-total|41742.6|1-2-cup": [
+      {
+        "id": "global-transfer|1744",
+        "mrn": "1744",
+        "name": "Chicken, Thigh, Boneless, Skinless",
+        "quantity": 0.3,
+        "unit": "pound",
+        "costPerPortion": 2.016,
+        "glCode": "4111003"
+      },
+      {
+        "id": "global-transfer|2883",
+        "mrn": "2883",
+        "name": "Garlic Cloves, Peeled, Fresh, Chopped",
+        "quantity": 0.2,
+        "unit": "ounce",
+        "costPerPortion": 0.0825,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.2,
+        "unit": "tbsp",
+        "costPerPortion": 0.011,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4181",
+        "mrn": "4181",
+        "name": "Onions, Yellow, Fresh, Chopped",
+        "quantity": 0.8,
+        "unit": "ounce",
+        "costPerPortion": 0.024,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4271",
+        "mrn": "4271",
+        "name": "Oregano, Fresh, Chopped",
+        "quantity": 0.0125,
+        "unit": "tbsp",
+        "costPerPortion": 0.0015,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7696",
+        "mrn": "7696",
+        "name": "Peppers, Chipotle in Adobo Sauce, Embasa, Canned, Minced",
+        "quantity": 0.2,
+        "unit": "ounce",
+        "costPerPortion": 0.104,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7352",
+        "mrn": "7352",
+        "name": "Spice, Bay Leaf, Whole",
+        "quantity": 0.1,
+        "unit": "each",
+        "costPerPortion": 0.0013,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7377",
+        "mrn": "7377",
+        "name": "Spice, Marjoram, Leaves, Dried",
+        "quantity": 0.05,
+        "unit": "tsp",
+        "costPerPortion": 0.002,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|54289",
+        "mrn": "54289",
+        "name": "Thyme, Fresh, Chopped",
+        "quantity": 0.0125,
+        "unit": "tbsp",
+        "costPerPortion": 0.002,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7542",
+        "mrn": "7542",
+        "name": "Tomatoes, Diced in Juice, No Added Salt, Canned, Including Liquids",
+        "quantity": 1.6,
+        "unit": "ounce",
+        "costPerPortion": 0.256,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|11960",
+        "mrn": "11960",
+        "name": "Tomatillo, Green, Fresh",
+        "quantity": 1.6,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-taco-total|57451.20|4-ounce": [
+      {
+        "id": "global-transfer|1781",
+        "mrn": "1781",
+        "name": "Cilantro, Fresh, Chopped",
+        "quantity": 0.058824,
+        "unit": "tbsp",
+        "costPerPortion": 0.0018,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3542",
+        "mrn": "3542",
+        "name": "Juice, Lime, Fresh Pressed",
+        "quantity": 0.014706,
+        "unit": "cup",
+        "costPerPortion": 0.0126,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|222540",
+        "mrn": "222540",
+        "name": "Mustard, Dijon, Grey Poupon",
+        "quantity": 0.029412,
+        "unit": "tbsp",
+        "costPerPortion": 0.0053,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.705882,
+        "unit": "tsp",
+        "costPerPortion": 0.0129,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4271",
+        "mrn": "4271",
+        "name": "Oregano, Fresh, Chopped",
+        "quantity": 0.058824,
+        "unit": "tbsp",
+        "costPerPortion": 0.0071,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7695",
+        "mrn": "7695",
+        "name": "Peppers, Chipotle in Adobo Sauce, Embasa, Canned",
+        "quantity": 0.029412,
+        "unit": "ounce",
+        "costPerPortion": 0.0153,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.014706,
+        "unit": "tsp",
+        "costPerPortion": 0.0012,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|76664",
+        "mrn": "76664",
+        "name": "Shrimp, 31/40, P&D, Tail-Off, Raw, Slade Gorton, Frozen",
+        "quantity": 0.235294,
+        "unit": "pound",
+        "costPerPortion": 1.5064,
+        "glCode": "4111004"
+      },
+      {
+        "id": "global-transfer|7367",
+        "mrn": "7367",
+        "name": "Spice, Cumin, Ground",
+        "quantity": 0.029412,
+        "unit": "tbsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7390",
+        "mrn": "7390",
+        "name": "Spice, Pepper, Black, Ground",
+        "quantity": 0.007353,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-taco-total|76680.1|4-ounce": [
+      {
+        "id": "global-transfer|7220",
+        "mrn": "7220",
+        "name": "Sausage, Chorizo, Pork, Fontanini, Raw",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.29,
+        "glCode": "4111003"
+      }
+    ],
+    "global|amz-taco-total|145025|4-oz-meat": [
+      {
+        "id": "global-transfer|76296",
+        "mrn": "76296",
+        "name": "Banana, Leaf Only",
+        "quantity": 0.106195,
+        "unit": "ounce",
+        "costPerPortion": 0.0106,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|2883",
+        "mrn": "2883",
+        "name": "Garlic Cloves, Peeled, Fresh, Chopped",
+        "quantity": 0.004425,
+        "unit": "cup",
+        "costPerPortion": 0.0085,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.00885,
+        "unit": "cup",
+        "costPerPortion": 0.0078,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4247",
+        "mrn": "4247",
+        "name": "Onions, Red, Fresh",
+        "quantity": 0.00885,
+        "unit": "pound",
+        "costPerPortion": 0.0262,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|96894",
+        "mrn": "96894",
+        "name": "Orange, Seville, Fresh",
+        "quantity": 0.212389,
+        "unit": "ounce",
+        "costPerPortion": 0.0573,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4272",
+        "mrn": "4272",
+        "name": "Oregano, Fresh",
+        "quantity": 0.00885,
+        "unit": "tbsp",
+        "costPerPortion": 0.0011,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|49473",
+        "mrn": "49473",
+        "name": "Peppers, Chili, Arbol Pods, D'Allesandro",
+        "quantity": 0.00885,
+        "unit": "ounce",
+        "costPerPortion": 0.0007,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7359",
+        "mrn": "7359",
+        "name": "Spice, Cinnamon, Ground",
+        "quantity": 0.017699,
+        "unit": "tbsp",
+        "costPerPortion": 0.0021,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7361",
+        "mrn": "7361",
+        "name": "Spice, Cloves, Ground",
+        "quantity": 0.00885,
+        "unit": "tsp",
+        "costPerPortion": 0.0004,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|3542",
+        "mrn": "3542",
+        "name": "Juice, Lime, Fresh Pressed",
+        "quantity": 0.035398,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|45663",
+        "mrn": "45663",
+        "name": "Paste, Achiote, Marquez Bros",
+        "quantity": 0.061947,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|84566",
+        "mrn": "84566",
+        "name": "Pork, Shoulder, Butt, Boneless, Vac Plus, Premium, Raw",
+        "quantity": 0.353982,
+        "unit": "pound",
+        "costPerPortion": 0,
+        "glCode": "4111003"
+      },
+      {
+        "id": "global-transfer|7347",
+        "mrn": "7347",
+        "name": "Spice, Allspice, Ground",
+        "quantity": 0.017699,
+        "unit": "tbsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7367",
+        "mrn": "7367",
+        "name": "Spice, Cumin, Ground",
+        "quantity": 0.017699,
+        "unit": "tbsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7390",
+        "mrn": "7390",
+        "name": "Spice, Pepper, Black, Ground",
+        "quantity": 0.017699,
+        "unit": "tbsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-taco-total|63107.1|1-tbsp": [
+      {
+        "id": "global-transfer|7701",
+        "mrn": "7701",
+        "name": "Peppers, Chili, Jalapeno, Fresh, Diced",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.04,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-taco-total|47955.5|1-4-cup": [
+      {
+        "id": "global-transfer|7551",
+        "mrn": "7551",
+        "name": "Tomatoes, Fresh, Small Diced, 1/4\"",
+        "quantity": 0.25,
+        "unit": "cup",
+        "costPerPortion": 0.18,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-taco-total|41707.8|2-floz": [
+      {
+        "id": "global-transfer|2883",
+        "mrn": "2883",
+        "name": "Garlic Cloves, Peeled, Fresh, Chopped",
+        "quantity": 0.0625,
+        "unit": "tbsp",
+        "costPerPortion": 0.0075,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3542",
+        "mrn": "3542",
+        "name": "Juice, Lime, Fresh Pressed",
+        "quantity": 0.015625,
+        "unit": "cup",
+        "costPerPortion": 0.0134,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.125,
+        "unit": "tbsp",
+        "costPerPortion": 0.0069,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|9058",
+        "mrn": "9058",
+        "name": "Onions, Yellow, Fresh, Diced",
+        "quantity": 0.0625,
+        "unit": "cup",
+        "costPerPortion": 0.02,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.03125,
+        "unit": "tbsp",
+        "costPerPortion": 0.0075,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7421",
+        "mrn": "7421",
+        "name": "Spice, Turmeric",
+        "quantity": 0.0625,
+        "unit": "tbsp",
+        "costPerPortion": 0.0075,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|116445",
+        "mrn": "116445",
+        "name": "Vinegar, Rice, Seasoned, Marukan",
+        "quantity": 0.03125,
+        "unit": "cup",
+        "costPerPortion": 0.04,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|24701",
+        "mrn": "24701",
+        "name": "Peppers, Chili, Habanero, Fresh, Seeded, Minced",
+        "quantity": 0.125,
+        "unit": "each",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-taco-total|11315|1-4-cup": [
+      {
+        "id": "global-transfer|1781",
+        "mrn": "1781",
+        "name": "Cilantro, Fresh, Chopped",
+        "quantity": 0.020833,
+        "unit": "cup",
+        "costPerPortion": 0.01,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4179",
+        "mrn": "4179",
+        "name": "Onions, Yellow, Fresh, Chopped, Fine",
+        "quantity": 0.25,
+        "unit": "ounce",
+        "costPerPortion": 0.0075,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7700",
+        "mrn": "7700",
+        "name": "Peppers, Chili, Jalapeno, Fresh, Chopped",
+        "quantity": 0.25,
+        "unit": "ounce",
+        "costPerPortion": 0.02,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.104167,
+        "unit": "tsp",
+        "costPerPortion": 0.0083,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|15490",
+        "mrn": "15490",
+        "name": "Tomatoes, Roma, Fresh, Small Diced, 1/4\"",
+        "quantity": 1.5,
+        "unit": "ounce",
+        "costPerPortion": 0.1575,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3542",
+        "mrn": "3542",
+        "name": "Juice, Lime, Fresh Pressed",
+        "quantity": 0.166667,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-taco-total|143119|4-ounce": [
+      {
+        "id": "global-transfer|76296",
+        "mrn": "76296",
+        "name": "Banana, Leaf Only",
+        "quantity": 0.142857,
+        "unit": "ounce",
+        "costPerPortion": 0.0143,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|84566",
+        "mrn": "84566",
+        "name": "Pork, Shoulder, Butt, Boneless, Vac Plus, Premium, Raw",
+        "quantity": 0.535714,
+        "unit": "pound",
+        "costPerPortion": 0,
+        "glCode": "4111003"
+      }
+    ],
+    "global|amz-taco-total|65814.2|4-oz-portion": [
+      {
+        "id": "global-transfer|1781",
+        "mrn": "1781",
+        "name": "Cilantro, Fresh, Chopped",
+        "quantity": 0.005455,
+        "unit": "cup",
+        "costPerPortion": 0.0026,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|2892",
+        "mrn": "2892",
+        "name": "Garlic Cloves, Peeled, Fresh",
+        "quantity": 0.003636,
+        "unit": "pound",
+        "costPerPortion": 0.024,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3190",
+        "mrn": "3190",
+        "name": "Honey, Bulk",
+        "quantity": 0.029091,
+        "unit": "tbsp",
+        "costPerPortion": 0.0058,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|3585",
+        "mrn": "3585",
+        "name": "Juice, Orange, 100%",
+        "quantity": 0.010909,
+        "unit": "quart",
+        "costPerPortion": 0.05,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3783",
+        "mrn": "3783",
+        "name": "Lemon, Fresh",
+        "quantity": 0.007273,
+        "unit": "each",
+        "costPerPortion": 0.0012,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.058182,
+        "unit": "tbsp",
+        "costPerPortion": 0.0032,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|9058",
+        "mrn": "9058",
+        "name": "Onions, Yellow, Fresh, Diced",
+        "quantity": 0.009091,
+        "unit": "pound",
+        "costPerPortion": 0.0269,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4287",
+        "mrn": "4287",
+        "name": "Orange, 88 Count, Fresh",
+        "quantity": 0.010909,
+        "unit": "each",
+        "costPerPortion": 0.0052,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.001818,
+        "unit": "cup",
+        "costPerPortion": 0.001,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7189",
+        "mrn": "7189",
+        "name": "Sauce, Hot Tabasco",
+        "quantity": 0.087273,
+        "unit": "floz",
+        "costPerPortion": 0.0209,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7352",
+        "mrn": "7352",
+        "name": "Spice, Bay Leaf, Whole",
+        "quantity": 0.021818,
+        "unit": "each",
+        "costPerPortion": 0.0003,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7643",
+        "mrn": "7643",
+        "name": "Water, Cold",
+        "quantity": 0.007273,
+        "unit": "gallon",
+        "costPerPortion": 0.0204,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|84566",
+        "mrn": "84566",
+        "name": "Pork, Shoulder, Butt, Boneless, Vac Plus, Premium, Raw",
+        "quantity": 0.272727,
+        "unit": "pound",
+        "costPerPortion": 0,
+        "glCode": "4111003"
+      },
+      {
+        "id": "global-transfer|7367",
+        "mrn": "7367",
+        "name": "Spice, Cumin, Ground",
+        "quantity": 0.003636,
+        "unit": "cup",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7390",
+        "mrn": "7390",
+        "name": "Spice, Pepper, Black, Ground",
+        "quantity": 0.000909,
+        "unit": "cup",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-taco-total|83080|2-ounce": [
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0097,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3542",
+        "mrn": "3542",
+        "name": "Juice, Lime, Fresh Pressed",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0042,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4235",
+        "mrn": "4235",
+        "name": "Onions, Green, Scallion, Bunch, Fresh, Minced",
+        "quantity": 0.25,
+        "unit": "ounce",
+        "costPerPortion": 0.0075,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.020833,
+        "unit": "tsp",
+        "costPerPortion": 0.0017,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|15490",
+        "mrn": "15490",
+        "name": "Tomatoes, Roma, Fresh, Small Diced, 1/4\"",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.105,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|1781",
+        "mrn": "1781",
+        "name": "Cilantro, Fresh, Chopped",
+        "quantity": 0.333333,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7390",
+        "mrn": "7390",
+        "name": "Spice, Pepper, Black, Ground",
+        "quantity": 0.020833,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-taco-total|140820|2-floz": [
+      {
+        "id": "global-transfer|2892",
+        "mrn": "2892",
+        "name": "Garlic Cloves, Peeled, Fresh",
+        "quantity": 0.039063,
+        "unit": "ounce",
+        "costPerPortion": 0.0161,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3542",
+        "mrn": "3542",
+        "name": "Juice, Lime, Fresh Pressed",
+        "quantity": 0.007813,
+        "unit": "cup",
+        "costPerPortion": 0.0067,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.03125,
+        "unit": "cup",
+        "costPerPortion": 0.0275,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4291",
+        "mrn": "4291",
+        "name": "Onions, Yellow, Fresh",
+        "quantity": 0.046875,
+        "unit": "pound",
+        "costPerPortion": 0.1389,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|8065",
+        "mrn": "8065",
+        "name": "Peppers, Bell, Red, Fresh",
+        "quantity": 0.03125,
+        "unit": "pound",
+        "costPerPortion": 0.3038,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|89698",
+        "mrn": "89698",
+        "name": "Peppers, Chili, Fresno, Red, Fresh",
+        "quantity": 0.125,
+        "unit": "ounce",
+        "costPerPortion": 0.0462,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7699",
+        "mrn": "7699",
+        "name": "Peppers, Chili, Jalapeno, Fresh",
+        "quantity": 0.015625,
+        "unit": "ounce",
+        "costPerPortion": 0.0013,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7695",
+        "mrn": "7695",
+        "name": "Peppers, Chipotle in Adobo Sauce, Embasa, Canned",
+        "quantity": 0.03125,
+        "unit": "ounce",
+        "costPerPortion": 0.0163,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.03125,
+        "unit": "tbsp",
+        "costPerPortion": 0.0075,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7493",
+        "mrn": "7493",
+        "name": "Sugar, Granulated",
+        "quantity": 0.0625,
+        "unit": "tbsp",
+        "costPerPortion": 0.0019,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7645",
+        "mrn": "7645",
+        "name": "Water, Hot",
+        "quantity": 0.09375,
+        "unit": "cup",
+        "costPerPortion": 0.0488,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|1755",
+        "mrn": "1755",
+        "name": "Cilantro, Fresh",
+        "quantity": 0.003906,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-taco-total|8517.3|2-floz": [
+      {
+        "id": "global-transfer|2892",
+        "mrn": "2892",
+        "name": "Garlic Cloves, Peeled, Fresh",
+        "quantity": 0.057143,
+        "unit": "ounce",
+        "costPerPortion": 0.0236,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.028571,
+        "unit": "tbsp",
+        "costPerPortion": 0.0016,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4179",
+        "mrn": "4179",
+        "name": "Onions, Yellow, Fresh, Chopped, Fine",
+        "quantity": 0.114286,
+        "unit": "ounce",
+        "costPerPortion": 0.0034,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7699",
+        "mrn": "7699",
+        "name": "Peppers, Chili, Jalapeno, Fresh",
+        "quantity": 0.228571,
+        "unit": "ounce",
+        "costPerPortion": 0.0183,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.028571,
+        "unit": "tbsp",
+        "costPerPortion": 0.0069,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|1755",
+        "mrn": "1755",
+        "name": "Cilantro, Fresh",
+        "quantity": 0.057143,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3543",
+        "mrn": "3543",
+        "name": "Juice, Lime",
+        "quantity": 0.057143,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|42036",
+        "mrn": "42036",
+        "name": "Tomatillo, Green, Embasa, Canned, Chopped",
+        "quantity": 0.014286,
+        "unit": "can #10",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-taco-total|81493|1-2-ounce": [
+      {
+        "id": "global-transfer|3758",
+        "mrn": "3758",
+        "name": "Lettuce, Romaine, Fresh, Shredded",
+        "quantity": 1,
+        "unit": "cup",
+        "costPerPortion": 0.29,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-taco-total|1105|1-ounce": [
+      {
+        "id": "global-transfer|7346",
+        "mrn": "7346",
+        "name": "Sour Cream, Real, Daisy",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.05,
+        "glCode": "4111006"
+      }
+    ],
+    "global|amz-taco-total|143820.11|4-oz-portion": [
+      {
+        "id": "global-transfer|133193",
+        "mrn": "133193",
+        "name": "Base, Vegetable, Low Sodium, Gluten Free, No MSG, Nestle Professional",
+        "quantity": 0.01,
+        "unit": "tbsp",
+        "costPerPortion": 0.0008,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|2892",
+        "mrn": "2892",
+        "name": "Garlic Cloves, Peeled, Fresh",
+        "quantity": 0.02,
+        "unit": "ounce",
+        "costPerPortion": 0.0082,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4291",
+        "mrn": "4291",
+        "name": "Onions, Yellow, Fresh",
+        "quantity": 0.16,
+        "unit": "ounce",
+        "costPerPortion": 0.0048,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|15823",
+        "mrn": "15823",
+        "name": "Peppers, Chili, Ancho, Dried",
+        "quantity": 0.03,
+        "unit": "ounce",
+        "costPerPortion": 0.009,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|13447",
+        "mrn": "13447",
+        "name": "Peppers, Chili, Guajillo, Dried",
+        "quantity": 0.02,
+        "unit": "ounce",
+        "costPerPortion": 0.006,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7361",
+        "mrn": "7361",
+        "name": "Spice, Cloves, Ground",
+        "quantity": 0.02,
+        "unit": "g",
+        "costPerPortion": 0.0003,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7385",
+        "mrn": "7385",
+        "name": "Spice, Oregano, Dried, Crushed",
+        "quantity": 0.05,
+        "unit": "g",
+        "costPerPortion": 0.0007,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|187108",
+        "mrn": "187108",
+        "name": "Tofu, Firm, Fresh, Morinaga",
+        "quantity": 0.07,
+        "unit": "pound",
+        "costPerPortion": 0.1792,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7547",
+        "mrn": "7547",
+        "name": "Tomatoes, Fresh, Halved",
+        "quantity": 0.16,
+        "unit": "ounce",
+        "costPerPortion": 0.0168,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7637",
+        "mrn": "7637",
+        "name": "Vinegar, White",
+        "quantity": 0.08,
+        "unit": "ounce",
+        "costPerPortion": 0.024,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7644",
+        "mrn": "7644",
+        "name": "Water, Tap",
+        "quantity": 0.32,
+        "unit": "ounce",
+        "costPerPortion": 0.096,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7644",
+        "mrn": "7644",
+        "name": "Water, Tap",
+        "quantity": 0.2,
+        "unit": "ounce",
+        "costPerPortion": 0.06,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.01,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7367",
+        "mrn": "7367",
+        "name": "Spice, Cumin, Ground",
+        "quantity": 0.1,
+        "unit": "g",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7390",
+        "mrn": "7390",
+        "name": "Spice, Pepper, Black, Ground",
+        "quantity": 0.1,
+        "unit": "g",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-lemongrass-lime|101666.8|1-bowl": [
+      {
+        "id": "global-transfer|24857",
+        "mrn": "24857",
+        "name": "Basil, Thai, Fresh",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.24,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|1781",
+        "mrn": "1781",
+        "name": "Cilantro, Fresh, Chopped",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|1842",
+        "mrn": "1842",
+        "name": "Coconut, Sweetened, Shredded, Toasted, Azar Nut",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.28,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|56048",
+        "mrn": "56048",
+        "name": "Corn, Baby, American Roland, Canned, Drained",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.18,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|8189",
+        "mrn": "8189",
+        "name": "Lime, Fresh, Wedge",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.04,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|5239",
+        "mrn": "5239",
+        "name": "Peas, Snow, Fresh, Stems Removed",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.34,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7710",
+        "mrn": "7710",
+        "name": "Peppers, Chili, Serrano, Fresh",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.08,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-lemongrass-lime|193556|1-bowl": [
+      {
+        "id": "global-transfer|75232",
+        "mrn": "75232",
+        "name": "Basil, Thai, Fresh, Chopped",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.12,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|56048",
+        "mrn": "56048",
+        "name": "Corn, Baby, American Roland, Canned, Drained",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.18,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|188718",
+        "mrn": "188718",
+        "name": "Fish, Cod, Atlantic, Loin, 4 oz, High Liner, Frozen",
+        "quantity": 0.125,
+        "unit": "pound",
+        "costPerPortion": 0.1333,
+        "glCode": "4111004"
+      },
+      {
+        "id": "global-transfer|8189",
+        "mrn": "8189",
+        "name": "Lime, Fresh, Wedge",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.04,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|5239",
+        "mrn": "5239",
+        "name": "Peas, Snow, Fresh, Stems Removed",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.34,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7710",
+        "mrn": "7710",
+        "name": "Peppers, Chili, Serrano, Fresh",
+        "quantity": 0.5,
+        "unit": "ounce",
+        "costPerPortion": 0.04,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-lemongrass-lime|101666.11|1-bowl": [
+      {
+        "id": "global-transfer|24857",
+        "mrn": "24857",
+        "name": "Basil, Thai, Fresh",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.24,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|1781",
+        "mrn": "1781",
+        "name": "Cilantro, Fresh, Chopped",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|1842",
+        "mrn": "1842",
+        "name": "Coconut, Sweetened, Shredded, Toasted, Azar Nut",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.06,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|56048",
+        "mrn": "56048",
+        "name": "Corn, Baby, American Roland, Canned, Drained",
+        "quantity": 1,
+        "unit": "floz",
+        "costPerPortion": 0.12,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|8189",
+        "mrn": "8189",
+        "name": "Lime, Fresh, Wedge",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.04,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|5239",
+        "mrn": "5239",
+        "name": "Peas, Snow, Fresh, Stems Removed",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.34,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7710",
+        "mrn": "7710",
+        "name": "Peppers, Chili, Serrano, Fresh",
+        "quantity": 0.125,
+        "unit": "ounce",
+        "costPerPortion": 0.01,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-lemongrass-lime|193550|1-bowl": [
+      {
+        "id": "global-transfer|75232",
+        "mrn": "75232",
+        "name": "Basil, Thai, Fresh, Chopped",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.12,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|1842",
+        "mrn": "1842",
+        "name": "Coconut, Sweetened, Shredded, Toasted, Azar Nut",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.28,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|56048",
+        "mrn": "56048",
+        "name": "Corn, Baby, American Roland, Canned, Drained",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.18,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|5239",
+        "mrn": "5239",
+        "name": "Peas, Snow, Fresh, Stems Removed",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.34,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7710",
+        "mrn": "7710",
+        "name": "Peppers, Chili, Serrano, Fresh",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.08,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|24688",
+        "mrn": "24688",
+        "name": "Shrimp, 16/20, P&D, Tail On, Raw, Slade Gorton, Frozen",
+        "quantity": 0.125,
+        "unit": "pound",
+        "costPerPortion": 0.94,
+        "glCode": "4111004"
+      },
+      {
+        "id": "global-transfer|8189",
+        "mrn": "8189",
+        "name": "Lime, Fresh, Wedge",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-lemongrass-lime|182206.41|1-bowl": [
+      {
+        "id": "global-transfer|75232",
+        "mrn": "75232",
+        "name": "Basil, Thai, Fresh, Chopped",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.12,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|1842",
+        "mrn": "1842",
+        "name": "Coconut, Sweetened, Shredded, Toasted, Azar Nut",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.06,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|56048",
+        "mrn": "56048",
+        "name": "Corn, Baby, American Roland, Canned, Drained",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.18,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|8189",
+        "mrn": "8189",
+        "name": "Lime, Fresh, Wedge",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.04,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|5239",
+        "mrn": "5239",
+        "name": "Peas, Snow, Fresh, Stems Removed",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.34,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7710",
+        "mrn": "7710",
+        "name": "Peppers, Chili, Serrano, Fresh",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.08,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-lemongrass-lime|193357|1-bowl": [
+      {
+        "id": "global-transfer|75232",
+        "mrn": "75232",
+        "name": "Basil, Thai, Fresh, Chopped",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.12,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|8189",
+        "mrn": "8189",
+        "name": "Lime, Fresh, Wedge",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.04,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|53211",
+        "mrn": "53211",
+        "name": "Peppers, Chili, Fresno, Red, Fresh, Sliced, Thin",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.05,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|354",
+        "mrn": "354",
+        "name": "Bamboo Shoots, Canned, Drained, Sliced",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-lemongrass-lime|193354|1-bowl": [
+      {
+        "id": "global-transfer|75232",
+        "mrn": "75232",
+        "name": "Basil, Thai, Fresh, Chopped",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.12,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|8189",
+        "mrn": "8189",
+        "name": "Lime, Fresh, Wedge",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.04,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|53211",
+        "mrn": "53211",
+        "name": "Peppers, Chili, Fresno, Red, Fresh, Sliced, Thin",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.05,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|354",
+        "mrn": "354",
+        "name": "Bamboo Shoots, Canned, Drained, Sliced",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-lemongrass-lime|193354.1|1-bowl": [
+      {
+        "id": "global-transfer|75232",
+        "mrn": "75232",
+        "name": "Basil, Thai, Fresh, Chopped",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.12,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|8189",
+        "mrn": "8189",
+        "name": "Lime, Fresh, Wedge",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.04,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|53211",
+        "mrn": "53211",
+        "name": "Peppers, Chili, Fresno, Red, Fresh, Sliced, Thin",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.05,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|354",
+        "mrn": "354",
+        "name": "Bamboo Shoots, Canned, Drained, Sliced",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-lemongrass-lime|193356|1-bowl": [
+      {
+        "id": "global-transfer|75232",
+        "mrn": "75232",
+        "name": "Basil, Thai, Fresh, Chopped",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.12,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|8189",
+        "mrn": "8189",
+        "name": "Lime, Fresh, Wedge",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.04,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|53211",
+        "mrn": "53211",
+        "name": "Peppers, Chili, Fresno, Red, Fresh, Sliced, Thin",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.05,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|354",
+        "mrn": "354",
+        "name": "Bamboo Shoots, Canned, Drained, Sliced",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-lemongrass-lime|193359|1-bowl": [
+      {
+        "id": "global-transfer|1781",
+        "mrn": "1781",
+        "name": "Cilantro, Fresh, Chopped",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|8189",
+        "mrn": "8189",
+        "name": "Lime, Fresh, Wedge",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.04,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|160101",
+        "mrn": "160101",
+        "name": "Onions, Red, Fried (Shallots), RTU",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.22,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4218",
+        "mrn": "4218",
+        "name": "Onions, Yellow, Fresh, Sliced, Thin",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-lemongrass-lime|193359.1|1-bowl": [
+      {
+        "id": "global-transfer|1781",
+        "mrn": "1781",
+        "name": "Cilantro, Fresh, Chopped",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|8189",
+        "mrn": "8189",
+        "name": "Lime, Fresh, Wedge",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.04,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|160101",
+        "mrn": "160101",
+        "name": "Onions, Red, Fried (Shallots), RTU",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.22,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4218",
+        "mrn": "4218",
+        "name": "Onions, Yellow, Fresh, Sliced, Thin",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-lemongrass-lime|193495|1-bowl": [
+      {
+        "id": "global-transfer|1781",
+        "mrn": "1781",
+        "name": "Cilantro, Fresh, Chopped",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|8189",
+        "mrn": "8189",
+        "name": "Lime, Fresh, Wedge",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.04,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|160101",
+        "mrn": "160101",
+        "name": "Onions, Red, Fried (Shallots), RTU",
+        "quantity": 0.5,
+        "unit": "ounce",
+        "costPerPortion": 0.11,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4218",
+        "mrn": "4218",
+        "name": "Onions, Yellow, Fresh, Sliced, Thin",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-lemongrass-lime|101666.9|1-bowl": [
+      {
+        "id": "global-transfer|1781",
+        "mrn": "1781",
+        "name": "Cilantro, Fresh, Chopped",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|8189",
+        "mrn": "8189",
+        "name": "Lime, Fresh, Wedge",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.04,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|160101",
+        "mrn": "160101",
+        "name": "Onions, Red, Fried (Shallots), RTU",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.22,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4218",
+        "mrn": "4218",
+        "name": "Onions, Yellow, Fresh, Sliced, Thin",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|23604",
+        "mrn": "23604",
+        "name": "Squash, Kabocha, Fresh",
+        "quantity": 0.25,
+        "unit": "pound",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-lemongrass-lime|38424.4|1-cup": [
+      {
+        "id": "global-transfer|77011",
+        "mrn": "77011",
+        "name": "Rice, Jasmine, Brown, Dry",
+        "quantity": 0.166667,
+        "unit": "cup",
+        "costPerPortion": 0.1333,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-lemongrass-lime|5354.11|1-cup": [
+      {
+        "id": "global-transfer|7119",
+        "mrn": "7119",
+        "name": "Rice, Jasmine, Dry",
+        "quantity": 0.166667,
+        "unit": "cup",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-lemongrass-lime|107128.2|1-2-cup": [
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.0625,
+        "unit": "ounce",
+        "costPerPortion": 0.0258,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|53211",
+        "mrn": "53211",
+        "name": "Peppers, Chili, Fresno, Red, Fresh, Sliced, Thin",
+        "quantity": 0.041667,
+        "unit": "ounce",
+        "costPerPortion": 0.0154,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.041667,
+        "unit": "tbsp",
+        "costPerPortion": 0.01,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|155947",
+        "mrn": "155947",
+        "name": "Tomatoes, Grape, Fresh, Halved",
+        "quantity": 0.020833,
+        "unit": "pound",
+        "costPerPortion": 0.0391,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|1780",
+        "mrn": "1780",
+        "name": "Cilantro, Fresh, Minced",
+        "quantity": 0.052083,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|24810",
+        "mrn": "24810",
+        "name": "Papaya, Green, Fresh",
+        "quantity": 0.104167,
+        "unit": "pound",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-lemongrass-lime|10908.2|4-ounce": [
+      {
+        "id": "global-transfer|1781",
+        "mrn": "1781",
+        "name": "Cilantro, Fresh, Chopped",
+        "quantity": 0.041667,
+        "unit": "cup",
+        "costPerPortion": 0.02,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|2120",
+        "mrn": "2120",
+        "name": "Cucumbers, Fresh, Unpeeled, Sliced",
+        "quantity": 0.083333,
+        "unit": "quart",
+        "costPerPortion": 0.1333,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|3070",
+        "mrn": "3070",
+        "name": "Ginger Root, Fresh, Minced",
+        "quantity": 0.016667,
+        "unit": "tsp",
+        "costPerPortion": 0.0005,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3398",
+        "mrn": "3398",
+        "name": "Jicama, Fresh, Peeled, Julienne-Slice",
+        "quantity": 0.083333,
+        "unit": "quart",
+        "costPerPortion": 0.3067,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|101685",
+        "mrn": "101685",
+        "name": "Nuts, Peanuts, Dry Roasted, Granulated, Unsalted",
+        "quantity": 0.0125,
+        "unit": "cup",
+        "costPerPortion": 0.014,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.216667,
+        "unit": "floz",
+        "costPerPortion": 0.0238,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|53211",
+        "mrn": "53211",
+        "name": "Peppers, Chili, Fresno, Red, Fresh, Sliced, Thin",
+        "quantity": 0.041667,
+        "unit": "pound",
+        "costPerPortion": 0.2467,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7106",
+        "mrn": "7106",
+        "name": "Radish, Fresh, Sliced",
+        "quantity": 0.041667,
+        "unit": "quart",
+        "costPerPortion": 0.1933,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.011111,
+        "unit": "cup",
+        "costPerPortion": 0.0062,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7204",
+        "mrn": "7204",
+        "name": "Sauce, Soy, Less Sodium, Gluten Free, Lee Kum Kee, Bulk",
+        "quantity": 0.025,
+        "unit": "cup",
+        "costPerPortion": 0.036,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7204",
+        "mrn": "7204",
+        "name": "Sauce, Soy, Less Sodium, Gluten Free, Lee Kum Kee, Bulk",
+        "quantity": 0.033333,
+        "unit": "floz",
+        "costPerPortion": 0.006,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|27943",
+        "mrn": "27943",
+        "name": "Sauce, Sweet Chili, Franks RedHot",
+        "quantity": 0.05,
+        "unit": "tbsp",
+        "costPerPortion": 0.0053,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7493",
+        "mrn": "7493",
+        "name": "Sugar, Granulated",
+        "quantity": 0.05,
+        "unit": "tbsp",
+        "costPerPortion": 0.0015,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|116445",
+        "mrn": "116445",
+        "name": "Vinegar, Rice, Seasoned, Marukan",
+        "quantity": 0.216667,
+        "unit": "floz",
+        "costPerPortion": 0.0347,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-lemongrass-lime|88266.1|1-2-cup": [
+      {
+        "id": "global-transfer|1781",
+        "mrn": "1781",
+        "name": "Cilantro, Fresh, Chopped",
+        "quantity": 0.153846,
+        "unit": "cup",
+        "costPerPortion": 0.0738,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|56048",
+        "mrn": "56048",
+        "name": "Corn, Baby, American Roland, Canned, Drained",
+        "quantity": 0.461538,
+        "unit": "ounce",
+        "costPerPortion": 0.0831,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.076923,
+        "unit": "tsp",
+        "costPerPortion": 0.003,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3070",
+        "mrn": "3070",
+        "name": "Ginger Root, Fresh, Minced",
+        "quantity": 0.153846,
+        "unit": "tsp",
+        "costPerPortion": 0.0046,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3542",
+        "mrn": "3542",
+        "name": "Juice, Lime, Fresh Pressed",
+        "quantity": 0.153846,
+        "unit": "floz",
+        "costPerPortion": 0.0221,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|101685",
+        "mrn": "101685",
+        "name": "Nuts, Peanuts, Dry Roasted, Granulated, Unsalted",
+        "quantity": 0.153846,
+        "unit": "ounce",
+        "costPerPortion": 0.0492,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4203",
+        "mrn": "4203",
+        "name": "Oil, Sesame",
+        "quantity": 0.205128,
+        "unit": "tbsp",
+        "costPerPortion": 0.0585,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4233",
+        "mrn": "4233",
+        "name": "Onions, Green, Scallion, Bunch, Fresh, Pieces, 2\"",
+        "quantity": 0.076923,
+        "unit": "ounce",
+        "costPerPortion": 0.0023,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|15491",
+        "mrn": "15491",
+        "name": "Paste, Chili, Sambal Oelek, Huy Fong",
+        "quantity": 0.153846,
+        "unit": "tsp",
+        "costPerPortion": 0.0038,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7204",
+        "mrn": "7204",
+        "name": "Sauce, Soy, Less Sodium, Gluten Free, Lee Kum Kee, Bulk",
+        "quantity": 0.076923,
+        "unit": "tbsp",
+        "costPerPortion": 0.0069,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|114620",
+        "mrn": "114620",
+        "name": "Sauce, Sriracha, Franks",
+        "quantity": 0.153846,
+        "unit": "tsp",
+        "costPerPortion": 0.0046,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7492",
+        "mrn": "7492",
+        "name": "Sugar, Brown, Light",
+        "quantity": 0.153846,
+        "unit": "tbsp",
+        "costPerPortion": 0.0077,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|155947",
+        "mrn": "155947",
+        "name": "Tomatoes, Grape, Fresh, Halved",
+        "quantity": 0.230769,
+        "unit": "ounce",
+        "costPerPortion": 0.0242,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|53211",
+        "mrn": "53211",
+        "name": "Peppers, Chili, Fresno, Red, Fresh, Sliced, Thin",
+        "quantity": 0.076923,
+        "unit": "each",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7650",
+        "mrn": "7650",
+        "name": "Watercress, Fresh",
+        "quantity": 0.153846,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-lemongrass-lime|35351.4|1-2-cup": [
+      {
+        "id": "global-transfer|24857",
+        "mrn": "24857",
+        "name": "Basil, Thai, Fresh",
+        "quantity": 0.027778,
+        "unit": "cup",
+        "costPerPortion": 0.1067,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|8992",
+        "mrn": "8992",
+        "name": "Beans, Green, Snapped, Fresh",
+        "quantity": 0.444444,
+        "unit": "ounce",
+        "costPerPortion": 0.05,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|1252",
+        "mrn": "1252",
+        "name": "Carrots, Fresh, Julienne Sliced",
+        "quantity": 0.666667,
+        "unit": "ounce",
+        "costPerPortion": 0.0792,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|2886",
+        "mrn": "2886",
+        "name": "Garlic Cloves, Peeled, Fresh, Crushed",
+        "quantity": 0.111111,
+        "unit": "tsp",
+        "costPerPortion": 0.0033,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3542",
+        "mrn": "3542",
+        "name": "Juice, Lime, Fresh Pressed",
+        "quantity": 0.027778,
+        "unit": "cup",
+        "costPerPortion": 0.0239,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.027778,
+        "unit": "tsp",
+        "costPerPortion": 0.0022,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7493",
+        "mrn": "7493",
+        "name": "Sugar, Granulated",
+        "quantity": 0.027778,
+        "unit": "cup",
+        "costPerPortion": 0.0133,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|155947",
+        "mrn": "155947",
+        "name": "Tomatoes, Grape, Fresh, Halved",
+        "quantity": 0.888889,
+        "unit": "ounce",
+        "costPerPortion": 0.0933,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|1185",
+        "mrn": "1185",
+        "name": "Cabbage, Green, Fresh, Shredded",
+        "quantity": 1.111111,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7710",
+        "mrn": "7710",
+        "name": "Peppers, Chili, Serrano, Fresh",
+        "quantity": 0.111111,
+        "unit": "each",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-chiang-mai|176857.1|1-serving-s": [
+      {
+        "id": "global-transfer|1784",
+        "mrn": "1784",
+        "name": "Cilantro, Fresh, Sprigs",
+        "quantity": 3,
+        "unit": "each",
+        "costPerPortion": 0.06,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|8189",
+        "mrn": "8189",
+        "name": "Lime, Fresh, Wedge",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.04,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|65839",
+        "mrn": "65839",
+        "name": "Noodles, Yakisoba, Pre-Cooked, Fortune, Jsl Food, Frozen",
+        "quantity": 0.25,
+        "unit": "cup",
+        "costPerPortion": 0.1125,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4241",
+        "mrn": "4241",
+        "name": "Onions, Green, Scallion, Each, Fresh, Bias Cut",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.0725,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|160101",
+        "mrn": "160101",
+        "name": "Onions, Red, Fried (Shallots), RTU",
+        "quantity": 0.25,
+        "unit": "ounce",
+        "costPerPortion": 0.055,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|80489",
+        "mrn": "80489",
+        "name": "Shallots, Peeled, Fresh, Thinly Sliced",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.09,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-chiang-mai|176858.3|1-serving-s": [
+      {
+        "id": "global-transfer|24857",
+        "mrn": "24857",
+        "name": "Basil, Thai, Fresh",
+        "quantity": 0.25,
+        "unit": "ounce",
+        "costPerPortion": 0.0925,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|134249",
+        "mrn": "134249",
+        "name": "Carrots, Fresh, Matchstick, Pre-Cut",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.12,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|1784",
+        "mrn": "1784",
+        "name": "Cilantro, Fresh, Sprigs",
+        "quantity": 5,
+        "unit": "each",
+        "costPerPortion": 0.1,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|2105",
+        "mrn": "2105",
+        "name": "Cucumbers, Fresh, Scored, Sliced, Thin, Each Slice",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.16,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|74098",
+        "mrn": "74098",
+        "name": "Lettuce, Boston Bibb, Individual Leaf, Fresh",
+        "quantity": 4,
+        "unit": "each",
+        "costPerPortion": 0.28,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|160101",
+        "mrn": "160101",
+        "name": "Onions, Red, Fried (Shallots), RTU",
+        "quantity": 0.25,
+        "unit": "ounce",
+        "costPerPortion": 0.055,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|1196",
+        "mrn": "1196",
+        "name": "Cabbage, Green, Fresh",
+        "quantity": 1.5,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|83047",
+        "mrn": "83047",
+        "name": "Mint, Fresh, Leaf",
+        "quantity": 5,
+        "unit": "each",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-chiang-mai|176858|1-serving-s": [
+      {
+        "id": "global-transfer|24857",
+        "mrn": "24857",
+        "name": "Basil, Thai, Fresh",
+        "quantity": 0.25,
+        "unit": "ounce",
+        "costPerPortion": 0.0925,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|134249",
+        "mrn": "134249",
+        "name": "Carrots, Fresh, Matchstick, Pre-Cut",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.12,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|1784",
+        "mrn": "1784",
+        "name": "Cilantro, Fresh, Sprigs",
+        "quantity": 5,
+        "unit": "each",
+        "costPerPortion": 0.1,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|2105",
+        "mrn": "2105",
+        "name": "Cucumbers, Fresh, Scored, Sliced, Thin, Each Slice",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.16,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|74098",
+        "mrn": "74098",
+        "name": "Lettuce, Boston Bibb, Individual Leaf, Fresh",
+        "quantity": 4,
+        "unit": "each",
+        "costPerPortion": 0.28,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|160101",
+        "mrn": "160101",
+        "name": "Onions, Red, Fried (Shallots), RTU",
+        "quantity": 0.25,
+        "unit": "ounce",
+        "costPerPortion": 0.055,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|1196",
+        "mrn": "1196",
+        "name": "Cabbage, Green, Fresh",
+        "quantity": 1.5,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|83047",
+        "mrn": "83047",
+        "name": "Mint, Fresh, Leaf",
+        "quantity": 5,
+        "unit": "each",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-chiang-mai|176847|8-ounce": [
+      {
+        "id": "global-transfer|15489",
+        "mrn": "15489",
+        "name": "Lemongrass, Fresh",
+        "quantity": 0.013889,
+        "unit": "pound",
+        "costPerPortion": 0.0475,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|10618",
+        "mrn": "10618",
+        "name": "Makrut Lime Leaves, Fresh",
+        "quantity": 0.166667,
+        "unit": "each",
+        "costPerPortion": 0.0067,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|57091",
+        "mrn": "57091",
+        "name": "Nuts, Cashew, Whole, Unsalted",
+        "quantity": 0.017361,
+        "unit": "pound",
+        "costPerPortion": 0.1745,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.027778,
+        "unit": "floz",
+        "costPerPortion": 0.0031,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|13453",
+        "mrn": "13453",
+        "name": "Paste, Tamarind",
+        "quantity": 0.166667,
+        "unit": "floz",
+        "costPerPortion": 0.0883,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.013889,
+        "unit": "tbsp",
+        "costPerPortion": 0.0033,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|152843",
+        "mrn": "152843",
+        "name": "Sauce, Fish, Vegan",
+        "quantity": 0.034722,
+        "unit": "floz",
+        "costPerPortion": 0.0073,
+        "glCode": "4111004"
+      },
+      {
+        "id": "global-transfer|12214",
+        "mrn": "12214",
+        "name": "Sauce, Soy, Mushroom, Golden Pheasant",
+        "quantity": 0.027778,
+        "unit": "floz",
+        "costPerPortion": 0.0017,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7492",
+        "mrn": "7492",
+        "name": "Sugar, Brown, Light",
+        "quantity": 0.024306,
+        "unit": "cup",
+        "costPerPortion": 0.0194,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7643",
+        "mrn": "7643",
+        "name": "Water, Cold",
+        "quantity": 0.017361,
+        "unit": "quart",
+        "costPerPortion": 0.0122,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|130394",
+        "mrn": "130394",
+        "name": "Jackfruit, Green, Dragonfly, Canned, Drained, Rinsed",
+        "quantity": 0.277778,
+        "unit": "pound",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-chiang-mai|175500|8-ounce": [
+      {
+        "id": "global-transfer|15489",
+        "mrn": "15489",
+        "name": "Lemongrass, Fresh",
+        "quantity": 0.020833,
+        "unit": "pound",
+        "costPerPortion": 0.0712,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.005208,
+        "unit": "cup",
+        "costPerPortion": 0.0046,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|49436",
+        "mrn": "49436",
+        "name": "Paste, Red Curry, Mae Ploy",
+        "quantity": 0.039063,
+        "unit": "pound",
+        "costPerPortion": 0.2469,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|13453",
+        "mrn": "13453",
+        "name": "Paste, Tamarind",
+        "quantity": 0.015625,
+        "unit": "cup",
+        "costPerPortion": 0.0663,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|166972",
+        "mrn": "166972",
+        "name": "Pork, Belly, Sous Vide, FC, Tyson, Frozen",
+        "quantity": 0.104167,
+        "unit": "pound",
+        "costPerPortion": 0.4153,
+        "glCode": "4111003"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.002604,
+        "unit": "cup",
+        "costPerPortion": 0.0015,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|109344",
+        "mrn": "109344",
+        "name": "Sauce, Fish, Three Crabs",
+        "quantity": 0.015625,
+        "unit": "cup",
+        "costPerPortion": 0.0262,
+        "glCode": "4111004"
+      },
+      {
+        "id": "global-transfer|7204",
+        "mrn": "7204",
+        "name": "Sauce, Soy, Less Sodium, Gluten Free, Lee Kum Kee, Bulk",
+        "quantity": 0.013021,
+        "unit": "cup",
+        "costPerPortion": 0.0188,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|12214",
+        "mrn": "12214",
+        "name": "Sauce, Soy, Mushroom, Golden Pheasant",
+        "quantity": 0.018229,
+        "unit": "cup",
+        "costPerPortion": 0.0088,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|75907",
+        "mrn": "75907",
+        "name": "Spice, Curry Powder, Madras, Woodland",
+        "quantity": 0.0625,
+        "unit": "tbsp",
+        "costPerPortion": 0.005,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7492",
+        "mrn": "7492",
+        "name": "Sugar, Brown, Light",
+        "quantity": 0.013021,
+        "unit": "cup",
+        "costPerPortion": 0.0104,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|10618",
+        "mrn": "10618",
+        "name": "Makrut Lime Leaves, Fresh",
+        "quantity": 0.010417,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|84566",
+        "mrn": "84566",
+        "name": "Pork, Shoulder, Butt, Boneless, Vac Plus, Premium, Raw",
+        "quantity": 0.208333,
+        "unit": "pound",
+        "costPerPortion": 0,
+        "glCode": "4111003"
+      }
+    ],
+    "global|amz-chiang-mai|176857|1-serving-s": [
+      {
+        "id": "global-transfer|1784",
+        "mrn": "1784",
+        "name": "Cilantro, Fresh, Sprigs",
+        "quantity": 3,
+        "unit": "each",
+        "costPerPortion": 0.06,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|8189",
+        "mrn": "8189",
+        "name": "Lime, Fresh, Wedge",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.04,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|65839",
+        "mrn": "65839",
+        "name": "Noodles, Yakisoba, Pre-Cooked, Fortune, Jsl Food, Frozen",
+        "quantity": 0.25,
+        "unit": "cup",
+        "costPerPortion": 0.1125,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4241",
+        "mrn": "4241",
+        "name": "Onions, Green, Scallion, Each, Fresh, Bias Cut",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.0725,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|160101",
+        "mrn": "160101",
+        "name": "Onions, Red, Fried (Shallots), RTU",
+        "quantity": 0.25,
+        "unit": "ounce",
+        "costPerPortion": 0.055,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|80489",
+        "mrn": "80489",
+        "name": "Shallots, Peeled, Fresh, Thinly Sliced",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.09,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-chiang-mai|5354.11|1-cup": [
+      {
+        "id": "global-transfer|7119",
+        "mrn": "7119",
+        "name": "Rice, Jasmine, Dry",
+        "quantity": 0.166667,
+        "unit": "cup",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-chiang-mai|107128.2|1-2-cup": [
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.0625,
+        "unit": "ounce",
+        "costPerPortion": 0.0258,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|53211",
+        "mrn": "53211",
+        "name": "Peppers, Chili, Fresno, Red, Fresh, Sliced, Thin",
+        "quantity": 0.041667,
+        "unit": "ounce",
+        "costPerPortion": 0.0154,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.041667,
+        "unit": "tbsp",
+        "costPerPortion": 0.01,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|155947",
+        "mrn": "155947",
+        "name": "Tomatoes, Grape, Fresh, Halved",
+        "quantity": 0.020833,
+        "unit": "pound",
+        "costPerPortion": 0.0391,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|1780",
+        "mrn": "1780",
+        "name": "Cilantro, Fresh, Minced",
+        "quantity": 0.052083,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|24810",
+        "mrn": "24810",
+        "name": "Papaya, Green, Fresh",
+        "quantity": 0.104167,
+        "unit": "pound",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-anisa|216051|1-each": [
+      {
+        "id": "global-transfer|192123",
+        "mrn": "192123",
+        "name": "Bread, Pita, Traditional, Pocket, 6.75\", Atoria's",
+        "quantity": 0.5,
+        "unit": "each",
+        "costPerPortion": 0.195,
+        "glCode": "4111010"
+      },
+      {
+        "id": "global-transfer|15672",
+        "mrn": "15672",
+        "name": "Skewers, Knotted",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-anisa|216051.1|1-each": [
+      {
+        "id": "global-transfer|192123",
+        "mrn": "192123",
+        "name": "Bread, Pita, Traditional, Pocket, 6.75\", Atoria's",
+        "quantity": 0.5,
+        "unit": "each",
+        "costPerPortion": 0.195,
+        "glCode": "4111010"
+      },
+      {
+        "id": "global-transfer|15672",
+        "mrn": "15672",
+        "name": "Skewers, Knotted",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-anisa|216051.2|1-serving-s": [
+      {
+        "id": "global-transfer|192123",
+        "mrn": "192123",
+        "name": "Bread, Pita, Traditional, Pocket, 6.75\", Atoria's",
+        "quantity": 0.5,
+        "unit": "each",
+        "costPerPortion": 0.195,
+        "glCode": "4111010"
+      },
+      {
+        "id": "global-transfer|15672",
+        "mrn": "15672",
+        "name": "Skewers, Knotted",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-anisa|216051.5|1-serving-s": [
+      {
+        "id": "global-transfer|192123",
+        "mrn": "192123",
+        "name": "Bread, Pita, Traditional, Pocket, 6.75\", Atoria's",
+        "quantity": 0.5,
+        "unit": "each",
+        "costPerPortion": 0.195,
+        "glCode": "4111010"
+      },
+      {
+        "id": "global-transfer|15672",
+        "mrn": "15672",
+        "name": "Skewers, Knotted",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-anisa|216051.6|1-serving-s": [
+      {
+        "id": "global-transfer|192123",
+        "mrn": "192123",
+        "name": "Bread, Pita, Traditional, Pocket, 6.75\", Atoria's",
+        "quantity": 0.5,
+        "unit": "each",
+        "costPerPortion": 0.195,
+        "glCode": "4111010"
+      }
+    ],
+    "global|amz-anisa|216051.3|1-serving-s": [
+      {
+        "id": "global-transfer|192123",
+        "mrn": "192123",
+        "name": "Bread, Pita, Traditional, Pocket, 6.75\", Atoria's",
+        "quantity": 0.5,
+        "unit": "each",
+        "costPerPortion": 0.195,
+        "glCode": "4111010"
+      },
+      {
+        "id": "global-transfer|15672",
+        "mrn": "15672",
+        "name": "Skewers, Knotted",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-anisa|216051.4|1-serving-s": [
+      {
+        "id": "global-transfer|192123",
+        "mrn": "192123",
+        "name": "Bread, Pita, Traditional, Pocket, 6.75\", Atoria's",
+        "quantity": 0.5,
+        "unit": "each",
+        "costPerPortion": 0.195,
+        "glCode": "4111010"
+      }
+    ],
+    "global|amz-anisa|81258.2|1-2-cup": [
+      {
+        "id": "global-transfer|51970",
+        "mrn": "51970",
+        "name": "Cucumbers, English, Fresh, Diced",
+        "quantity": 0.5,
+        "unit": "cup",
+        "costPerPortion": 0.64,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|3539",
+        "mrn": "3539",
+        "name": "Juice, Lemon, Fresh Pressed",
+        "quantity": 0.041667,
+        "unit": "cup",
+        "costPerPortion": 0.0333,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3885",
+        "mrn": "3885",
+        "name": "Mint, Fresh, Chopped",
+        "quantity": 0.5,
+        "unit": "tbsp",
+        "costPerPortion": 0.285,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.166667,
+        "unit": "tbsp",
+        "costPerPortion": 0.0092,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|15323",
+        "mrn": "15323",
+        "name": "Oil, Olive, Extra Virgin",
+        "quantity": 0.208333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0354,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4254",
+        "mrn": "4254",
+        "name": "Onions, Red, Fresh, Julienne Sliced, 1/4\"",
+        "quantity": 0.25,
+        "unit": "cup",
+        "costPerPortion": 0.08,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.166667,
+        "unit": "tbsp",
+        "costPerPortion": 0.04,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|15490",
+        "mrn": "15490",
+        "name": "Tomatoes, Roma, Fresh, Small Diced, 1/4\"",
+        "quantity": 0.25,
+        "unit": "cup",
+        "costPerPortion": 0.18,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7390",
+        "mrn": "7390",
+        "name": "Spice, Pepper, Black, Ground",
+        "quantity": 0.166667,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-anisa|191654|1-cup": [
+      {
+        "id": "global-transfer|78896",
+        "mrn": "78896",
+        "name": "Egg, Fresh, Extra Large",
+        "quantity": 0.166667,
+        "unit": "each",
+        "costPerPortion": 0.0433,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7116",
+        "mrn": "7116",
+        "name": "Rice, Basmati, Long Grain, Dry",
+        "quantity": 0.666667,
+        "unit": "cup",
+        "costPerPortion": 0.2933,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.041667,
+        "unit": "tbsp",
+        "costPerPortion": 0.01,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7421",
+        "mrn": "7421",
+        "name": "Spice, Turmeric",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.01,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7644",
+        "mrn": "7644",
+        "name": "Water, Tap",
+        "quantity": 0.020833,
+        "unit": "cup",
+        "costPerPortion": 0.0108,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|86826",
+        "mrn": "86826",
+        "name": "Yogurt, Plain, Greek, 2%, Fage, Bulk",
+        "quantity": 0.333333,
+        "unit": "ounce",
+        "costPerPortion": 0.0575,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|7407",
+        "mrn": "7407",
+        "name": "Spice, Saffron",
+        "quantity": 0.166667,
+        "unit": "tbsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-anisa|172546|4-ounce": [
+      {
+        "id": "global-transfer|15323",
+        "mrn": "15323",
+        "name": "Oil, Olive, Extra Virgin",
+        "quantity": 0.125,
+        "unit": "tbsp",
+        "costPerPortion": 0.0213,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7796",
+        "mrn": "7796",
+        "name": "Onions, Spanish, Fresh, Sliced, 1/4\"",
+        "quantity": 0.125,
+        "unit": "pound",
+        "costPerPortion": 0.3703,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.083333,
+        "unit": "tsp",
+        "costPerPortion": 0.0067,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|62637",
+        "mrn": "62637",
+        "name": "Squash, Yellow, Fresh, Sliced",
+        "quantity": 0.125,
+        "unit": "each",
+        "costPerPortion": 0.0437,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|239",
+        "mrn": "239",
+        "name": "Asparagus, Fresh",
+        "quantity": 0.125,
+        "unit": "pound",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|54681",
+        "mrn": "54681",
+        "name": "Eggplant, Fresh, Sliced, 1/2\"",
+        "quantity": 0.125,
+        "unit": "each",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|165977",
+        "mrn": "165977",
+        "name": "Mushrooms, Portobello, Fresh, Sliced, 1/2\"",
+        "quantity": 0.25,
+        "unit": "each",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|24930",
+        "mrn": "24930",
+        "name": "Peppers, Bell, Red, Fresh, Strips, 1/2\"",
+        "quantity": 0.125,
+        "unit": "each",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|75666",
+        "mrn": "75666",
+        "name": "Spice, Pepper, Black, Ground, Coarse",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7461",
+        "mrn": "7461",
+        "name": "Squash, Zucchini, Fresh, Sliced, 1/2\"",
+        "quantity": 0.125,
+        "unit": "each",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-anisa|181410.1|4-ounce": [
+      {
+        "id": "global-transfer|1330",
+        "mrn": "1330",
+        "name": "Cauliflower, Fresh, Florets, 1\"",
+        "quantity": 0.333333,
+        "unit": "pound",
+        "costPerPortion": 1.3217,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|1924",
+        "mrn": "1924",
+        "name": "Corn Starch, 100% Pure",
+        "quantity": 0.125,
+        "unit": "cup",
+        "costPerPortion": 0.12,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|2166",
+        "mrn": "2166",
+        "name": "Dill Weed, Fresh, Chopped",
+        "quantity": 0.0625,
+        "unit": "cup",
+        "costPerPortion": 0.05,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.041667,
+        "unit": "cup",
+        "costPerPortion": 0.0367,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4321",
+        "mrn": "4321",
+        "name": "Parsley, Fresh, Chopped",
+        "quantity": 0.0625,
+        "unit": "cup",
+        "costPerPortion": 0.06,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.02,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|166369",
+        "mrn": "166369",
+        "name": "Sauce, Harissa, Gluten Free, Minor's, RTU",
+        "quantity": 0.041667,
+        "unit": "cup",
+        "costPerPortion": 0.0458,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|85770",
+        "mrn": "85770",
+        "name": "Oil, Canola, Liquid Frying, Frilite",
+        "quantity": 23.527778,
+        "unit": "g",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-anisa|191690|1-cup": [
+      {
+        "id": "global-transfer|134249",
+        "mrn": "134249",
+        "name": "Carrots, Fresh, Matchstick, Pre-Cut",
+        "quantity": 0.0625,
+        "unit": "cup",
+        "costPerPortion": 0.045,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|1906",
+        "mrn": "1906",
+        "name": "Cranberries, Dried, Ocean Spray",
+        "quantity": 0.041667,
+        "unit": "cup",
+        "costPerPortion": 0.0467,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|2169",
+        "mrn": "2169",
+        "name": "Dill Weed, Fresh, Minced",
+        "quantity": 0.25,
+        "unit": "tbsp",
+        "costPerPortion": 0.0125,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|10185",
+        "mrn": "10185",
+        "name": "Figs, Dried",
+        "quantity": 0.041667,
+        "unit": "cup",
+        "costPerPortion": 0.1133,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.166667,
+        "unit": "tbsp",
+        "costPerPortion": 0.0092,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4176",
+        "mrn": "4176",
+        "name": "Onions, Yellow, Fresh, Diced, Fine",
+        "quantity": 0.083333,
+        "unit": "each",
+        "costPerPortion": 0.0292,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4320",
+        "mrn": "4320",
+        "name": "Parsley, Fresh, Minced",
+        "quantity": 0.25,
+        "unit": "tbsp",
+        "costPerPortion": 0.015,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7352",
+        "mrn": "7352",
+        "name": "Spice, Bay Leaf, Whole",
+        "quantity": 0.25,
+        "unit": "each",
+        "costPerPortion": 0.0031,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7359",
+        "mrn": "7359",
+        "name": "Spice, Cinnamon, Ground",
+        "quantity": 0.041667,
+        "unit": "tbsp",
+        "costPerPortion": 0.005,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7802",
+        "mrn": "7802",
+        "name": "Spice, Fennel, Seed",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0267,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7925",
+        "mrn": "7925",
+        "name": "Spice, Cardamom, Ground",
+        "quantity": 0.041667,
+        "unit": "tbsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7367",
+        "mrn": "7367",
+        "name": "Spice, Cumin, Ground",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7407",
+        "mrn": "7407",
+        "name": "Spice, Saffron",
+        "quantity": 0.041667,
+        "unit": "tbsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-anisa|165425|1-cup": [
+      {
+        "id": "global-transfer|7943",
+        "mrn": "7943",
+        "name": "Butter, Unsalted",
+        "quantity": 0.055556,
+        "unit": "ounce",
+        "costPerPortion": 0.0089,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|3774",
+        "mrn": "3774",
+        "name": "Lemon, Fresh, Zest, Grated",
+        "quantity": 0.111111,
+        "unit": "tbsp",
+        "costPerPortion": 0.0056,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7116",
+        "mrn": "7116",
+        "name": "Rice, Basmati, Long Grain, Dry",
+        "quantity": 0.333333,
+        "unit": "cup",
+        "costPerPortion": 0.1467,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.055556,
+        "unit": "tbsp",
+        "costPerPortion": 0.0133,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-anisa|78664|1-2-cup": [
+      {
+        "id": "global-transfer|2097",
+        "mrn": "2097",
+        "name": "Cucumbers, Fresh, Peeled, Small Diced, 1/4\"",
+        "quantity": 0.1875,
+        "unit": "cup",
+        "costPerPortion": 0.135,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|3539",
+        "mrn": "3539",
+        "name": "Juice, Lemon, Fresh Pressed",
+        "quantity": 0.1875,
+        "unit": "floz",
+        "costPerPortion": 0.0188,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3775",
+        "mrn": "3775",
+        "name": "Lemon, Fresh, Zested",
+        "quantity": 0.375,
+        "unit": "tsp",
+        "costPerPortion": 0.0338,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|15323",
+        "mrn": "15323",
+        "name": "Oil, Olive, Extra Virgin",
+        "quantity": 0.25,
+        "unit": "floz",
+        "costPerPortion": 0.085,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4319",
+        "mrn": "4319",
+        "name": "Parsley, Italian, Fresh, Chopped",
+        "quantity": 0.375,
+        "unit": "cup",
+        "costPerPortion": 0.345,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.0625,
+        "unit": "tbsp",
+        "costPerPortion": 0.015,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|15490",
+        "mrn": "15490",
+        "name": "Tomatoes, Roma, Fresh, Small Diced, 1/4\"",
+        "quantity": 0.1875,
+        "unit": "cup",
+        "costPerPortion": 0.135,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7389",
+        "mrn": "7389",
+        "name": "Spice, Pepper, Black, Cracked",
+        "quantity": 0.0625,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-anisa|24347.7|2-floz": [
+      {
+        "id": "global-transfer|2892",
+        "mrn": "2892",
+        "name": "Garlic Cloves, Peeled, Fresh",
+        "quantity": 0.010417,
+        "unit": "cup",
+        "costPerPortion": 0.02,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3539",
+        "mrn": "3539",
+        "name": "Juice, Lemon, Fresh Pressed",
+        "quantity": 0.03125,
+        "unit": "cup",
+        "costPerPortion": 0.025,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.010417,
+        "unit": "cup",
+        "costPerPortion": 0.0092,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|15323",
+        "mrn": "15323",
+        "name": "Oil, Olive, Extra Virgin",
+        "quantity": 0.010417,
+        "unit": "cup",
+        "costPerPortion": 0.0283,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|8977",
+        "mrn": "8977",
+        "name": "Paste, Sesame Tahini",
+        "quantity": 0.0625,
+        "unit": "cup",
+        "costPerPortion": 0.265,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.041667,
+        "unit": "tbsp",
+        "costPerPortion": 0.01,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|2289",
+        "mrn": "2289",
+        "name": "Eggplant, Fresh",
+        "quantity": 0.083333,
+        "unit": "pound",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-anisa|78682.1|2-ounce": [
+      {
+        "id": "global-transfer|51970",
+        "mrn": "51970",
+        "name": "Cucumbers, English, Fresh, Diced",
+        "quantity": 0.125,
+        "unit": "cup",
+        "costPerPortion": 0.16,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|2169",
+        "mrn": "2169",
+        "name": "Dill Weed, Fresh, Minced",
+        "quantity": 0.25,
+        "unit": "tbsp",
+        "costPerPortion": 0.0125,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.020833,
+        "unit": "cup",
+        "costPerPortion": 0.0387,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3885",
+        "mrn": "3885",
+        "name": "Mint, Fresh, Chopped",
+        "quantity": 0.25,
+        "unit": "tbsp",
+        "costPerPortion": 0.1425,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.020833,
+        "unit": "cup",
+        "costPerPortion": 0.0183,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4235",
+        "mrn": "4235",
+        "name": "Onions, Green, Scallion, Bunch, Fresh, Minced",
+        "quantity": 0.333333,
+        "unit": "tbsp",
+        "costPerPortion": 0.1867,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7109",
+        "mrn": "7109",
+        "name": "Raisins, Golden, Bulk",
+        "quantity": 0.25,
+        "unit": "tbsp",
+        "costPerPortion": 0.0225,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.041667,
+        "unit": "tbsp",
+        "costPerPortion": 0.01,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|86826",
+        "mrn": "86826",
+        "name": "Yogurt, Plain, Greek, 2%, Fage, Bulk",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.1725,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|75666",
+        "mrn": "75666",
+        "name": "Spice, Pepper, Black, Ground, Coarse",
+        "quantity": 0.041667,
+        "unit": "tbsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-anisa|191490|2-floz": [
+      {
+        "id": "global-transfer|51970",
+        "mrn": "51970",
+        "name": "Cucumbers, English, Fresh, Diced",
+        "quantity": 0.1,
+        "unit": "cup",
+        "costPerPortion": 0.128,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|3539",
+        "mrn": "3539",
+        "name": "Juice, Lemon, Fresh Pressed",
+        "quantity": 0.025,
+        "unit": "cup",
+        "costPerPortion": 0.02,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3886",
+        "mrn": "3886",
+        "name": "Mint, Fresh, Bunch",
+        "quantity": 0.1,
+        "unit": "tbsp",
+        "costPerPortion": 0.056,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.025,
+        "unit": "cup",
+        "costPerPortion": 0.022,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|15323",
+        "mrn": "15323",
+        "name": "Oil, Olive, Extra Virgin",
+        "quantity": 0.0125,
+        "unit": "cup",
+        "costPerPortion": 0.034,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4257",
+        "mrn": "4257",
+        "name": "Onions, Red, Fresh, Diced",
+        "quantity": 0.05,
+        "unit": "each",
+        "costPerPortion": 0.002,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4320",
+        "mrn": "4320",
+        "name": "Parsley, Fresh, Minced",
+        "quantity": 0.1,
+        "unit": "tbsp",
+        "costPerPortion": 0.006,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7702",
+        "mrn": "7702",
+        "name": "Peppers, Chili, Jalapeno, Fresh, Minced",
+        "quantity": 0.025,
+        "unit": "cup",
+        "costPerPortion": 0.02,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.05,
+        "unit": "tbsp",
+        "costPerPortion": 0.012,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|166369",
+        "mrn": "166369",
+        "name": "Sauce, Harissa, Gluten Free, Minor's, RTU",
+        "quantity": 0.025,
+        "unit": "cup",
+        "costPerPortion": 0.0275,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|15490",
+        "mrn": "15490",
+        "name": "Tomatoes, Roma, Fresh, Small Diced, 1/4\"",
+        "quantity": 0.05,
+        "unit": "cup",
+        "costPerPortion": 0.036,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|75666",
+        "mrn": "75666",
+        "name": "Spice, Pepper, Black, Ground, Coarse",
+        "quantity": 0.025,
+        "unit": "tbsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-anisa|191736|2-oz-portion": [
+      {
+        "id": "global-transfer|7943",
+        "mrn": "7943",
+        "name": "Butter, Unsalted",
+        "quantity": 0.125,
+        "unit": "pound",
+        "costPerPortion": 0.32,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|7359",
+        "mrn": "7359",
+        "name": "Spice, Cinnamon, Ground",
+        "quantity": 0.03125,
+        "unit": "tbsp",
+        "costPerPortion": 0.0037,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7361",
+        "mrn": "7361",
+        "name": "Spice, Cloves, Ground",
+        "quantity": 0.0625,
+        "unit": "tsp",
+        "costPerPortion": 0.0025,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7381",
+        "mrn": "7381",
+        "name": "Spice, Nutmeg, Ground",
+        "quantity": 0.0625,
+        "unit": "tsp",
+        "costPerPortion": 0.0044,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7925",
+        "mrn": "7925",
+        "name": "Spice, Cardamom, Ground",
+        "quantity": 0.0625,
+        "unit": "tbsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7364",
+        "mrn": "7364",
+        "name": "Spice, Coriander, Ground",
+        "quantity": 0.03125,
+        "unit": "tbsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7367",
+        "mrn": "7367",
+        "name": "Spice, Cumin, Ground",
+        "quantity": 0.0625,
+        "unit": "tbsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|75666",
+        "mrn": "75666",
+        "name": "Spice, Pepper, Black, Ground, Coarse",
+        "quantity": 0.03125,
+        "unit": "tbsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-anisa|191730|1-4-cup": [
+      {
+        "id": "global-transfer|169399",
+        "mrn": "169399",
+        "name": "Bread Crumbs, Panko Japanese, Golden Dipt",
+        "quantity": 0.055556,
+        "unit": "cup",
+        "costPerPortion": 0.0289,
+        "glCode": "4111010"
+      },
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.027778,
+        "unit": "tbsp",
+        "costPerPortion": 0.0032,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|14394",
+        "mrn": "14394",
+        "name": "Glace, Balsamic Vinegar, Colavita",
+        "quantity": 0.055556,
+        "unit": "tbsp",
+        "costPerPortion": 0.01,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|3539",
+        "mrn": "3539",
+        "name": "Juice, Lemon, Fresh Pressed",
+        "quantity": 0.013889,
+        "unit": "cup",
+        "costPerPortion": 0.0111,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3787",
+        "mrn": "3787",
+        "name": "Peppers, Bell, Red, Fresh, Diced, Small, 1/4\"",
+        "quantity": 0.055556,
+        "unit": "cup",
+        "costPerPortion": 0.0911,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|16253",
+        "mrn": "16253",
+        "name": "Peppers, Red, Roasted, Whole, Empress, Canned, Drained",
+        "quantity": 0.111111,
+        "unit": "cup",
+        "costPerPortion": 0.0933,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.055556,
+        "unit": "tbsp",
+        "costPerPortion": 0.0133,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7403",
+        "mrn": "7403",
+        "name": "Seeds, Pumpkin, Kernels (Pepitas)",
+        "quantity": 0.027778,
+        "unit": "cup",
+        "costPerPortion": 0.1644,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7381",
+        "mrn": "7381",
+        "name": "Spice, Nutmeg, Ground",
+        "quantity": 0.027778,
+        "unit": "tbsp",
+        "costPerPortion": 0.0058,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7532",
+        "mrn": "7532",
+        "name": "Tomato Paste, Canned",
+        "quantity": 0.055556,
+        "unit": "cup",
+        "costPerPortion": 0.04,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-anisa|191726|1-4-cup": [
+      {
+        "id": "global-transfer|14394",
+        "mrn": "14394",
+        "name": "Glace, Balsamic Vinegar, Colavita",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.015,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|3539",
+        "mrn": "3539",
+        "name": "Juice, Lemon, Fresh Pressed",
+        "quantity": 0.020833,
+        "unit": "cup",
+        "costPerPortion": 0.0167,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|15323",
+        "mrn": "15323",
+        "name": "Oil, Olive, Extra Virgin",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0142,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|16270",
+        "mrn": "16270",
+        "name": "Onions, Red, Fresh, Slivered, Thin",
+        "quantity": 0.666667,
+        "unit": "cup",
+        "costPerPortion": 0.24,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4320",
+        "mrn": "4320",
+        "name": "Parsley, Fresh, Minced",
+        "quantity": 0.166667,
+        "unit": "tbsp",
+        "costPerPortion": 0.01,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.02,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|87235",
+        "mrn": "87235",
+        "name": "Spice, Pepper, Aleppo",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|58802",
+        "mrn": "58802",
+        "name": "Spice, Sumac, Ground",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-anisa|61291.6|2-floz": [
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.015625,
+        "unit": "cup",
+        "costPerPortion": 0.0291,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3539",
+        "mrn": "3539",
+        "name": "Juice, Lemon, Fresh Pressed",
+        "quantity": 0.03125,
+        "unit": "cup",
+        "costPerPortion": 0.025,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|8977",
+        "mrn": "8977",
+        "name": "Paste, Sesame Tahini",
+        "quantity": 0.125,
+        "unit": "cup",
+        "costPerPortion": 0.53,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7644",
+        "mrn": "7644",
+        "name": "Water, Tap",
+        "quantity": 0.09375,
+        "unit": "cup",
+        "costPerPortion": 0.0488,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7367",
+        "mrn": "7367",
+        "name": "Spice, Cumin, Ground",
+        "quantity": 0.0625,
+        "unit": "tbsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-anisa|144613|2-ounce": [
+      {
+        "id": "global-transfer|2892",
+        "mrn": "2892",
+        "name": "Garlic Cloves, Peeled, Fresh",
+        "quantity": 0.28125,
+        "unit": "ounce",
+        "costPerPortion": 0.116,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3533",
+        "mrn": "3533",
+        "name": "Juice, Lemon, Bulk",
+        "quantity": 0.015625,
+        "unit": "cup",
+        "costPerPortion": 0.0675,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.1875,
+        "unit": "cup",
+        "costPerPortion": 0.165,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.125,
+        "unit": "tsp",
+        "costPerPortion": 0.01,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7644",
+        "mrn": "7644",
+        "name": "Water, Tap",
+        "quantity": 0.015625,
+        "unit": "cup",
+        "costPerPortion": 0.0081,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-cypress|132544.4|1-each": [
+      {
+        "id": "global-transfer|192123",
+        "mrn": "192123",
+        "name": "Bread, Pita, Traditional, Pocket, 6.75\", Atoria's",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.39,
+        "glCode": "4111010"
+      },
+      {
+        "id": "global-transfer|1665",
+        "mrn": "1665",
+        "name": "Cheese, Feta, Crumbled, Great Lakes",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.28,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|187182",
+        "mrn": "187182",
+        "name": "Hummus, Classic, Little Sesame",
+        "quantity": 2,
+        "unit": "ounce",
+        "costPerPortion": 0.23,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|3758",
+        "mrn": "3758",
+        "name": "Lettuce, Romaine, Fresh, Shredded",
+        "quantity": 0.25,
+        "unit": "cup",
+        "costPerPortion": 0.0725,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4295",
+        "mrn": "4295",
+        "name": "Onions, Red, Fresh, Sliced, 1/8\", Each Slice",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|156121",
+        "mrn": "156121",
+        "name": "Sauce, Tzatziki, Prepared, Grecian Delight",
+        "quantity": 2,
+        "unit": "ounce",
+        "costPerPortion": 0.45,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7552",
+        "mrn": "7552",
+        "name": "Tomatoes, Fresh, Each Slice, 1/4\"",
+        "quantity": 1.5,
+        "unit": "ounce",
+        "costPerPortion": 0.1575,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|51971",
+        "mrn": "51971",
+        "name": "Cucumbers, English, Fresh, Peeled, Sliced, Thin",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-cypress|213388.4|1-each": [
+      {
+        "id": "global-transfer|192123",
+        "mrn": "192123",
+        "name": "Bread, Pita, Traditional, Pocket, 6.75\", Atoria's",
+        "quantity": 0.5,
+        "unit": "each",
+        "costPerPortion": 0.195,
+        "glCode": "4111010"
+      },
+      {
+        "id": "global-transfer|1665",
+        "mrn": "1665",
+        "name": "Cheese, Feta, Crumbled, Great Lakes",
+        "quantity": 0.25,
+        "unit": "cup",
+        "costPerPortion": 0.28,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|2105",
+        "mrn": "2105",
+        "name": "Cucumbers, Fresh, Scored, Sliced, Thin, Each Slice",
+        "quantity": 3,
+        "unit": "each",
+        "costPerPortion": 0.18,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|228203",
+        "mrn": "228203",
+        "name": "Olives, Kalamata, Pitted, Roland, Halved",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.085,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4254",
+        "mrn": "4254",
+        "name": "Onions, Red, Fresh, Julienne Sliced, 1/4\"",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|90859",
+        "mrn": "90859",
+        "name": "Peppers, Pepperoncini, Stems and Seeds Removed, American Roland",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.4225,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|155947",
+        "mrn": "155947",
+        "name": "Tomatoes, Grape, Fresh, Halved",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.105,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-cypress|132544.6|1-each": [
+      {
+        "id": "global-transfer|192123",
+        "mrn": "192123",
+        "name": "Bread, Pita, Traditional, Pocket, 6.75\", Atoria's",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.39,
+        "glCode": "4111010"
+      },
+      {
+        "id": "global-transfer|1665",
+        "mrn": "1665",
+        "name": "Cheese, Feta, Crumbled, Great Lakes",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.28,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|187182",
+        "mrn": "187182",
+        "name": "Hummus, Classic, Little Sesame",
+        "quantity": 2,
+        "unit": "ounce",
+        "costPerPortion": 0.23,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|3758",
+        "mrn": "3758",
+        "name": "Lettuce, Romaine, Fresh, Shredded",
+        "quantity": 0.25,
+        "unit": "cup",
+        "costPerPortion": 0.0725,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4295",
+        "mrn": "4295",
+        "name": "Onions, Red, Fresh, Sliced, 1/8\", Each Slice",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|156121",
+        "mrn": "156121",
+        "name": "Sauce, Tzatziki, Prepared, Grecian Delight",
+        "quantity": 2,
+        "unit": "ounce",
+        "costPerPortion": 0.45,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7552",
+        "mrn": "7552",
+        "name": "Tomatoes, Fresh, Each Slice, 1/4\"",
+        "quantity": 1.5,
+        "unit": "ounce",
+        "costPerPortion": 0.1575,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|51971",
+        "mrn": "51971",
+        "name": "Cucumbers, English, Fresh, Peeled, Sliced, Thin",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-cypress|213388.3|1-each": [
+      {
+        "id": "global-transfer|192123",
+        "mrn": "192123",
+        "name": "Bread, Pita, Traditional, Pocket, 6.75\", Atoria's",
+        "quantity": 0.5,
+        "unit": "each",
+        "costPerPortion": 0.195,
+        "glCode": "4111010"
+      },
+      {
+        "id": "global-transfer|1665",
+        "mrn": "1665",
+        "name": "Cheese, Feta, Crumbled, Great Lakes",
+        "quantity": 0.25,
+        "unit": "cup",
+        "costPerPortion": 0.28,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|2105",
+        "mrn": "2105",
+        "name": "Cucumbers, Fresh, Scored, Sliced, Thin, Each Slice",
+        "quantity": 3,
+        "unit": "each",
+        "costPerPortion": 0.18,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|228203",
+        "mrn": "228203",
+        "name": "Olives, Kalamata, Pitted, Roland, Halved",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.085,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4254",
+        "mrn": "4254",
+        "name": "Onions, Red, Fresh, Julienne Sliced, 1/4\"",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|90859",
+        "mrn": "90859",
+        "name": "Peppers, Pepperoncini, Stems and Seeds Removed, American Roland",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.4225,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|155947",
+        "mrn": "155947",
+        "name": "Tomatoes, Grape, Fresh, Halved",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.105,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-cypress|213388|1-each": [
+      {
+        "id": "global-transfer|192123",
+        "mrn": "192123",
+        "name": "Bread, Pita, Traditional, Pocket, 6.75\", Atoria's",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.39,
+        "glCode": "4111010"
+      },
+      {
+        "id": "global-transfer|1665",
+        "mrn": "1665",
+        "name": "Cheese, Feta, Crumbled, Great Lakes",
+        "quantity": 0.25,
+        "unit": "cup",
+        "costPerPortion": 0.28,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|2105",
+        "mrn": "2105",
+        "name": "Cucumbers, Fresh, Scored, Sliced, Thin, Each Slice",
+        "quantity": 3,
+        "unit": "each",
+        "costPerPortion": 0.18,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|228203",
+        "mrn": "228203",
+        "name": "Olives, Kalamata, Pitted, Roland, Halved",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.085,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4254",
+        "mrn": "4254",
+        "name": "Onions, Red, Fresh, Julienne Sliced, 1/4\"",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|90859",
+        "mrn": "90859",
+        "name": "Peppers, Pepperoncini, Stems and Seeds Removed, American Roland",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.4225,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|155947",
+        "mrn": "155947",
+        "name": "Tomatoes, Grape, Fresh, Halved",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.105,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-cypress|132544.1|1-each": [
+      {
+        "id": "global-transfer|192123",
+        "mrn": "192123",
+        "name": "Bread, Pita, Traditional, Pocket, 6.75\", Atoria's",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.39,
+        "glCode": "4111010"
+      },
+      {
+        "id": "global-transfer|1665",
+        "mrn": "1665",
+        "name": "Cheese, Feta, Crumbled, Great Lakes",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.28,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|187182",
+        "mrn": "187182",
+        "name": "Hummus, Classic, Little Sesame",
+        "quantity": 2,
+        "unit": "ounce",
+        "costPerPortion": 0.23,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|3758",
+        "mrn": "3758",
+        "name": "Lettuce, Romaine, Fresh, Shredded",
+        "quantity": 0.25,
+        "unit": "cup",
+        "costPerPortion": 0.0725,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4295",
+        "mrn": "4295",
+        "name": "Onions, Red, Fresh, Sliced, 1/8\", Each Slice",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|156121",
+        "mrn": "156121",
+        "name": "Sauce, Tzatziki, Prepared, Grecian Delight",
+        "quantity": 2,
+        "unit": "ounce",
+        "costPerPortion": 0.45,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7552",
+        "mrn": "7552",
+        "name": "Tomatoes, Fresh, Each Slice, 1/4\"",
+        "quantity": 1.5,
+        "unit": "ounce",
+        "costPerPortion": 0.1575,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|51971",
+        "mrn": "51971",
+        "name": "Cucumbers, English, Fresh, Peeled, Sliced, Thin",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-cypress|213388.1|1-each": [
+      {
+        "id": "global-transfer|192123",
+        "mrn": "192123",
+        "name": "Bread, Pita, Traditional, Pocket, 6.75\", Atoria's",
+        "quantity": 0.5,
+        "unit": "each",
+        "costPerPortion": 0.195,
+        "glCode": "4111010"
+      },
+      {
+        "id": "global-transfer|1665",
+        "mrn": "1665",
+        "name": "Cheese, Feta, Crumbled, Great Lakes",
+        "quantity": 0.25,
+        "unit": "cup",
+        "costPerPortion": 0.28,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|2105",
+        "mrn": "2105",
+        "name": "Cucumbers, Fresh, Scored, Sliced, Thin, Each Slice",
+        "quantity": 3,
+        "unit": "each",
+        "costPerPortion": 0.18,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|228203",
+        "mrn": "228203",
+        "name": "Olives, Kalamata, Pitted, Roland, Halved",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.085,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4254",
+        "mrn": "4254",
+        "name": "Onions, Red, Fresh, Julienne Sliced, 1/4\"",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|90859",
+        "mrn": "90859",
+        "name": "Peppers, Pepperoncini, Stems and Seeds Removed, American Roland",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.4225,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|155947",
+        "mrn": "155947",
+        "name": "Tomatoes, Grape, Fresh, Halved",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.105,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-cypress|132544.3|1-each": [
+      {
+        "id": "global-transfer|192123",
+        "mrn": "192123",
+        "name": "Bread, Pita, Traditional, Pocket, 6.75\", Atoria's",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.39,
+        "glCode": "4111010"
+      },
+      {
+        "id": "global-transfer|1665",
+        "mrn": "1665",
+        "name": "Cheese, Feta, Crumbled, Great Lakes",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.28,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|187182",
+        "mrn": "187182",
+        "name": "Hummus, Classic, Little Sesame",
+        "quantity": 2,
+        "unit": "ounce",
+        "costPerPortion": 0.23,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|3758",
+        "mrn": "3758",
+        "name": "Lettuce, Romaine, Fresh, Shredded",
+        "quantity": 0.25,
+        "unit": "cup",
+        "costPerPortion": 0.0725,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4295",
+        "mrn": "4295",
+        "name": "Onions, Red, Fresh, Sliced, 1/8\", Each Slice",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|156121",
+        "mrn": "156121",
+        "name": "Sauce, Tzatziki, Prepared, Grecian Delight",
+        "quantity": 2,
+        "unit": "ounce",
+        "costPerPortion": 0.45,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7552",
+        "mrn": "7552",
+        "name": "Tomatoes, Fresh, Each Slice, 1/4\"",
+        "quantity": 1.5,
+        "unit": "ounce",
+        "costPerPortion": 0.1575,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|51971",
+        "mrn": "51971",
+        "name": "Cucumbers, English, Fresh, Peeled, Sliced, Thin",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-cypress|213388.2|1-each": [
+      {
+        "id": "global-transfer|192123",
+        "mrn": "192123",
+        "name": "Bread, Pita, Traditional, Pocket, 6.75\", Atoria's",
+        "quantity": 0.5,
+        "unit": "each",
+        "costPerPortion": 0.195,
+        "glCode": "4111010"
+      },
+      {
+        "id": "global-transfer|1665",
+        "mrn": "1665",
+        "name": "Cheese, Feta, Crumbled, Great Lakes",
+        "quantity": 0.25,
+        "unit": "cup",
+        "costPerPortion": 0.28,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|2105",
+        "mrn": "2105",
+        "name": "Cucumbers, Fresh, Scored, Sliced, Thin, Each Slice",
+        "quantity": 3,
+        "unit": "each",
+        "costPerPortion": 0.18,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|228203",
+        "mrn": "228203",
+        "name": "Olives, Kalamata, Pitted, Roland, Halved",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.085,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4254",
+        "mrn": "4254",
+        "name": "Onions, Red, Fresh, Julienne Sliced, 1/4\"",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|90859",
+        "mrn": "90859",
+        "name": "Peppers, Pepperoncini, Stems and Seeds Removed, American Roland",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.4225,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|155947",
+        "mrn": "155947",
+        "name": "Tomatoes, Grape, Fresh, Halved",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.105,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-cypress|132544.5|1-each": [
+      {
+        "id": "global-transfer|192123",
+        "mrn": "192123",
+        "name": "Bread, Pita, Traditional, Pocket, 6.75\", Atoria's",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.39,
+        "glCode": "4111010"
+      },
+      {
+        "id": "global-transfer|1665",
+        "mrn": "1665",
+        "name": "Cheese, Feta, Crumbled, Great Lakes",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.28,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|187182",
+        "mrn": "187182",
+        "name": "Hummus, Classic, Little Sesame",
+        "quantity": 2,
+        "unit": "ounce",
+        "costPerPortion": 0.23,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|3758",
+        "mrn": "3758",
+        "name": "Lettuce, Romaine, Fresh, Shredded",
+        "quantity": 0.25,
+        "unit": "cup",
+        "costPerPortion": 0.0725,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4295",
+        "mrn": "4295",
+        "name": "Onions, Red, Fresh, Sliced, 1/8\", Each Slice",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|156121",
+        "mrn": "156121",
+        "name": "Sauce, Tzatziki, Prepared, Grecian Delight",
+        "quantity": 2,
+        "unit": "ounce",
+        "costPerPortion": 0.45,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7552",
+        "mrn": "7552",
+        "name": "Tomatoes, Fresh, Each Slice, 1/4\"",
+        "quantity": 1.5,
+        "unit": "ounce",
+        "costPerPortion": 0.1575,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|51971",
+        "mrn": "51971",
+        "name": "Cucumbers, English, Fresh, Peeled, Sliced, Thin",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-cypress|213388.5|1-each": [
+      {
+        "id": "global-transfer|192123",
+        "mrn": "192123",
+        "name": "Bread, Pita, Traditional, Pocket, 6.75\", Atoria's",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.39,
+        "glCode": "4111010"
+      },
+      {
+        "id": "global-transfer|1665",
+        "mrn": "1665",
+        "name": "Cheese, Feta, Crumbled, Great Lakes",
+        "quantity": 0.25,
+        "unit": "cup",
+        "costPerPortion": 0.28,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|2105",
+        "mrn": "2105",
+        "name": "Cucumbers, Fresh, Scored, Sliced, Thin, Each Slice",
+        "quantity": 3,
+        "unit": "each",
+        "costPerPortion": 0.18,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|3758",
+        "mrn": "3758",
+        "name": "Lettuce, Romaine, Fresh, Shredded",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.0181,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|228203",
+        "mrn": "228203",
+        "name": "Olives, Kalamata, Pitted, Roland, Halved",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.085,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|90859",
+        "mrn": "90859",
+        "name": "Peppers, Pepperoncini, Stems and Seeds Removed, American Roland",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.4225,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|155947",
+        "mrn": "155947",
+        "name": "Tomatoes, Grape, Fresh, Halved",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.105,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-cypress|74147.1|1-2-cup": [
+      {
+        "id": "global-transfer|169563",
+        "mrn": "169563",
+        "name": "Beans, Garbanzo, Pouch",
+        "quantity": 0.25,
+        "unit": "cup",
+        "costPerPortion": 0.16,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|3539",
+        "mrn": "3539",
+        "name": "Juice, Lemon, Fresh Pressed",
+        "quantity": 0.166667,
+        "unit": "tbsp",
+        "costPerPortion": 0.0083,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3885",
+        "mrn": "3885",
+        "name": "Mint, Fresh, Chopped",
+        "quantity": 0.020833,
+        "unit": "cup",
+        "costPerPortion": 0.19,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|15323",
+        "mrn": "15323",
+        "name": "Oil, Olive, Extra Virgin",
+        "quantity": 0.333333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0567,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.020833,
+        "unit": "tsp",
+        "costPerPortion": 0.0017,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|56177",
+        "mrn": "56177",
+        "name": "Cucumbers, English, Fresh, Diced, 1/2\"",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7390",
+        "mrn": "7390",
+        "name": "Spice, Pepper, Black, Ground",
+        "quantity": 0.010417,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|58802",
+        "mrn": "58802",
+        "name": "Spice, Sumac, Ground",
+        "quantity": 0.083333,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-cypress|22656.2|1-2-cup": [
+      {
+        "id": "global-transfer|3539",
+        "mrn": "3539",
+        "name": "Juice, Lemon, Fresh Pressed",
+        "quantity": 0.142857,
+        "unit": "tbsp",
+        "costPerPortion": 0.0071,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|15323",
+        "mrn": "15323",
+        "name": "Oil, Olive, Extra Virgin",
+        "quantity": 0.119048,
+        "unit": "tbsp",
+        "costPerPortion": 0.0202,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4257",
+        "mrn": "4257",
+        "name": "Onions, Red, Fresh, Diced",
+        "quantity": 0.285714,
+        "unit": "ounce",
+        "costPerPortion": 0.0086,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4319",
+        "mrn": "4319",
+        "name": "Parsley, Italian, Fresh, Chopped",
+        "quantity": 0.017857,
+        "unit": "cup",
+        "costPerPortion": 0.0164,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.035714,
+        "unit": "tsp",
+        "costPerPortion": 0.0029,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7561",
+        "mrn": "7561",
+        "name": "Tomatoes, Roma, Fresh",
+        "quantity": 1.285714,
+        "unit": "ounce",
+        "costPerPortion": 0.135,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|2094",
+        "mrn": "2094",
+        "name": "Cucumbers, Fresh",
+        "quantity": 1.428571,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7390",
+        "mrn": "7390",
+        "name": "Spice, Pepper, Black, Ground",
+        "quantity": 0.017857,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-cypress|60810.2|1-2-cup": [
+      {
+        "id": "global-transfer|3539",
+        "mrn": "3539",
+        "name": "Juice, Lemon, Fresh Pressed",
+        "quantity": 0.333333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0167,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3885",
+        "mrn": "3885",
+        "name": "Mint, Fresh, Chopped",
+        "quantity": 0.333333,
+        "unit": "tsp",
+        "costPerPortion": 0.0633,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|15323",
+        "mrn": "15323",
+        "name": "Oil, Olive, Extra Virgin",
+        "quantity": 0.166667,
+        "unit": "tbsp",
+        "costPerPortion": 0.0283,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|15323",
+        "mrn": "15323",
+        "name": "Oil, Olive, Extra Virgin",
+        "quantity": 0.333333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0567,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|228203",
+        "mrn": "228203",
+        "name": "Olives, Kalamata, Pitted, Roland, Halved",
+        "quantity": 0.333333,
+        "unit": "ounce",
+        "costPerPortion": 0.095,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4254",
+        "mrn": "4254",
+        "name": "Onions, Red, Fresh, Julienne Sliced, 1/4\"",
+        "quantity": 0.333333,
+        "unit": "ounce",
+        "costPerPortion": 0.01,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4287",
+        "mrn": "4287",
+        "name": "Orange, 88 Count, Fresh",
+        "quantity": 0.166667,
+        "unit": "each",
+        "costPerPortion": 0.08,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4321",
+        "mrn": "4321",
+        "name": "Parsley, Fresh, Chopped",
+        "quantity": 0.333333,
+        "unit": "tsp",
+        "costPerPortion": 0.0067,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.083333,
+        "unit": "tsp",
+        "costPerPortion": 0.0067,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|2353",
+        "mrn": "2353",
+        "name": "Fennel, Fresh",
+        "quantity": 1.333333,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-cypress|164784|1-2-cup": [
+      {
+        "id": "global-transfer|120683",
+        "mrn": "120683",
+        "name": "Carrots, Fresh, Shredded",
+        "quantity": 1,
+        "unit": "cup",
+        "costPerPortion": 0.64,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|1781",
+        "mrn": "1781",
+        "name": "Cilantro, Fresh, Chopped",
+        "quantity": 0.125,
+        "unit": "cup",
+        "costPerPortion": 0.06,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|2892",
+        "mrn": "2892",
+        "name": "Garlic Cloves, Peeled, Fresh",
+        "quantity": 0.166667,
+        "unit": "each",
+        "costPerPortion": 0.175,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3539",
+        "mrn": "3539",
+        "name": "Juice, Lemon, Fresh Pressed",
+        "quantity": 0.041667,
+        "unit": "cup",
+        "costPerPortion": 0.0333,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|15323",
+        "mrn": "15323",
+        "name": "Oil, Olive, Extra Virgin",
+        "quantity": 0.020833,
+        "unit": "cup",
+        "costPerPortion": 0.0567,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.166667,
+        "unit": "tsp",
+        "costPerPortion": 0.0133,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7353",
+        "mrn": "7353",
+        "name": "Spice, Caraway Seed",
+        "quantity": 0.166667,
+        "unit": "tsp",
+        "costPerPortion": 0.0178,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7359",
+        "mrn": "7359",
+        "name": "Spice, Cinnamon, Ground",
+        "quantity": 0.083333,
+        "unit": "tsp",
+        "costPerPortion": 0.0033,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7493",
+        "mrn": "7493",
+        "name": "Sugar, Granulated",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0025,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7390",
+        "mrn": "7390",
+        "name": "Spice, Pepper, Black, Ground",
+        "quantity": 0.083333,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-cypress|35992.17|1-2-cup": [
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.166667,
+        "unit": "tsp",
+        "costPerPortion": 0.0065,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3772",
+        "mrn": "3772",
+        "name": "Lentils, Yellow, Dry",
+        "quantity": 1.666667,
+        "unit": "ounce",
+        "costPerPortion": 0.825,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|3885",
+        "mrn": "3885",
+        "name": "Mint, Fresh, Chopped",
+        "quantity": 0.083333,
+        "unit": "cup",
+        "costPerPortion": 0.76,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|15323",
+        "mrn": "15323",
+        "name": "Oil, Olive, Extra Virgin",
+        "quantity": 0.333333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0567,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4237",
+        "mrn": "4237",
+        "name": "Onions, Green, Scallion, Bunch, Fresh, Chopped",
+        "quantity": 0.083333,
+        "unit": "cup",
+        "costPerPortion": 0.0967,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3787",
+        "mrn": "3787",
+        "name": "Peppers, Bell, Red, Fresh, Diced, Small, 1/4\"",
+        "quantity": 0.166667,
+        "unit": "cup",
+        "costPerPortion": 0.2733,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.020833,
+        "unit": "tsp",
+        "costPerPortion": 0.0017,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7633",
+        "mrn": "7633",
+        "name": "Vinegar, Red Wine",
+        "quantity": 0.5,
+        "unit": "tbsp",
+        "costPerPortion": 0.025,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7390",
+        "mrn": "7390",
+        "name": "Spice, Pepper, Black, Ground",
+        "quantity": 0.020833,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-cypress|123443|1-2-cup": [
+      {
+        "id": "global-transfer|133193",
+        "mrn": "133193",
+        "name": "Base, Vegetable, Low Sodium, Gluten Free, No MSG, Nestle Professional",
+        "quantity": 0.136364,
+        "unit": "tbsp",
+        "costPerPortion": 0.0109,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.045455,
+        "unit": "tsp",
+        "costPerPortion": 0.0018,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3539",
+        "mrn": "3539",
+        "name": "Juice, Lemon, Fresh Pressed",
+        "quantity": 0.090909,
+        "unit": "tbsp",
+        "costPerPortion": 0.0045,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3772",
+        "mrn": "3772",
+        "name": "Lentils, Yellow, Dry",
+        "quantity": 0.090909,
+        "unit": "cup",
+        "costPerPortion": 0.0291,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|3885",
+        "mrn": "3885",
+        "name": "Mint, Fresh, Chopped",
+        "quantity": 0.022727,
+        "unit": "cup",
+        "costPerPortion": 0.2073,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|15323",
+        "mrn": "15323",
+        "name": "Oil, Olive, Extra Virgin",
+        "quantity": 0.045455,
+        "unit": "tbsp",
+        "costPerPortion": 0.0077,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|3511",
+        "mrn": "3511",
+        "name": "Peppers, Bell, Red, Fresh, Diced, Fine",
+        "quantity": 0.022727,
+        "unit": "cup",
+        "costPerPortion": 0.0373,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.090909,
+        "unit": "tsp",
+        "costPerPortion": 0.0073,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|58802",
+        "mrn": "58802",
+        "name": "Spice, Sumac, Ground",
+        "quantity": 0.022727,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-cypress|5354.14|1-cup": [
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.222222,
+        "unit": "tsp",
+        "costPerPortion": 0.0178,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7421",
+        "mrn": "7421",
+        "name": "Spice, Turmeric",
+        "quantity": 0.222222,
+        "unit": "tsp",
+        "costPerPortion": 0.0089,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7119",
+        "mrn": "7119",
+        "name": "Rice, Jasmine, Dry",
+        "quantity": 0.333333,
+        "unit": "cup",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-cypress|78664|4-ounce": [
+      {
+        "id": "global-transfer|2097",
+        "mrn": "2097",
+        "name": "Cucumbers, Fresh, Peeled, Small Diced, 1/4\"",
+        "quantity": 0.1875,
+        "unit": "cup",
+        "costPerPortion": 0.135,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|3539",
+        "mrn": "3539",
+        "name": "Juice, Lemon, Fresh Pressed",
+        "quantity": 0.1875,
+        "unit": "floz",
+        "costPerPortion": 0.0188,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3775",
+        "mrn": "3775",
+        "name": "Lemon, Fresh, Zested",
+        "quantity": 0.375,
+        "unit": "tsp",
+        "costPerPortion": 0.0338,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|15323",
+        "mrn": "15323",
+        "name": "Oil, Olive, Extra Virgin",
+        "quantity": 0.25,
+        "unit": "floz",
+        "costPerPortion": 0.085,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4319",
+        "mrn": "4319",
+        "name": "Parsley, Italian, Fresh, Chopped",
+        "quantity": 0.375,
+        "unit": "cup",
+        "costPerPortion": 0.345,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.0625,
+        "unit": "tbsp",
+        "costPerPortion": 0.015,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|15490",
+        "mrn": "15490",
+        "name": "Tomatoes, Roma, Fresh, Small Diced, 1/4\"",
+        "quantity": 0.1875,
+        "unit": "cup",
+        "costPerPortion": 0.135,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7389",
+        "mrn": "7389",
+        "name": "Spice, Pepper, Black, Cracked",
+        "quantity": 0.0625,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-cypress|35089.6|1-2-cup": [
+      {
+        "id": "global-transfer|546",
+        "mrn": "546",
+        "name": "Beans, Cannellini, Low Sodium, Canned, Drained, Rinsed",
+        "quantity": 0.285714,
+        "unit": "cup",
+        "costPerPortion": 0.1486,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|3539",
+        "mrn": "3539",
+        "name": "Juice, Lemon, Fresh Pressed",
+        "quantity": 0.142857,
+        "unit": "tbsp",
+        "costPerPortion": 0.0071,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.857143,
+        "unit": "tsp",
+        "costPerPortion": 0.0157,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.017857,
+        "unit": "tsp",
+        "costPerPortion": 0.0014,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7137",
+        "mrn": "7137",
+        "name": "Rosemary, Fresh, Chopped",
+        "quantity": 0.071429,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7390",
+        "mrn": "7390",
+        "name": "Spice, Pepper, Black, Ground",
+        "quantity": 0.017857,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-balti|212486.1|1-serving-s": [],
+    "global|amz-balti|212486.4|1-serving-s": [],
+    "global|amz-balti|212486.7|1-serving-s": [],
+    "global|amz-balti|212486.6|1-serving-s": [],
+    "global|amz-balti|212486.10|1-serving-s": [],
+    "global|amz-balti|212486.2|1-serving-s": [],
+    "global|amz-balti|212486.8|1-serving-s": [],
+    "global|amz-balti|212486.3|1-serving-s": [],
+    "global|amz-balti|212486.9|1-serving-s": [],
+    "global|amz-balti|212486.19|1-serving-s": [],
+    "global|amz-balti|212486.21|1-serving-s": [],
+    "global|amz-balti|212486.20|1-serving-s": [],
+    "global|amz-balti|212486.12|1-serving-s": [],
+    "global|amz-balti|212486.13|1-serving-s": [],
+    "global|amz-balti|212486|1-serving-s": [],
+    "global|amz-balti|212486.22|1-serving-s": [],
+    "global|amz-balti|212486.15|1-serving-s": [],
+    "global|amz-balti|212486.17|1-serving-s": [],
+    "global|amz-balti|212486.5|1-serving-s": [],
+    "global|amz-balti|212486.14|1-serving-s": [],
+    "global|amz-balti|212486.18|1-serving-s": [],
+    "global|amz-balti|212486.16|1-serving-s": [],
+    "global|amz-balti|212486.11|1-serving-s": [],
+    "global|amz-balti|118677|1-2-cup": [
+      {
+        "id": "global-transfer|1330",
+        "mrn": "1330",
+        "name": "Cauliflower, Fresh, Florets, 1\"",
+        "quantity": 0.208333,
+        "unit": "pound",
+        "costPerPortion": 0.826,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|1781",
+        "mrn": "1781",
+        "name": "Cilantro, Fresh, Chopped",
+        "quantity": 0.083333,
+        "unit": "cup",
+        "costPerPortion": 0.04,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|84156",
+        "mrn": "84156",
+        "name": "Mango, Amchur, Powdered",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0017,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.041667,
+        "unit": "cup",
+        "costPerPortion": 0.0367,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|54497",
+        "mrn": "54497",
+        "name": "Potatoes, Yukon Gold, Fresh, Cubed, 1\"",
+        "quantity": 0.125,
+        "unit": "pound",
+        "costPerPortion": 0.12,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7366",
+        "mrn": "7366",
+        "name": "Spice, Cumin Seed",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0267,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|51533",
+        "mrn": "51533",
+        "name": "Spice, Fenugreek Leaves, Dried",
+        "quantity": 0.166667,
+        "unit": "tbsp",
+        "costPerPortion": 0.025,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-balti|165741.34|1-cup": [
+      {
+        "id": "global-transfer|3045",
+        "mrn": "3045",
+        "name": "Ginger Root, Fresh",
+        "quantity": 0.111111,
+        "unit": "ounce",
+        "costPerPortion": 0.0287,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7116",
+        "mrn": "7116",
+        "name": "Rice, Basmati, Long Grain, Dry",
+        "quantity": 0.333333,
+        "unit": "cup",
+        "costPerPortion": 0.1467,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.02,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7352",
+        "mrn": "7352",
+        "name": "Spice, Bay Leaf, Whole",
+        "quantity": 0.111111,
+        "unit": "each",
+        "costPerPortion": 0.0014,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-balti|164850|1-2-cup": [
+      {
+        "id": "global-transfer|167991",
+        "mrn": "167991",
+        "name": "Base, Bhuna Masala, Passport, Frozen",
+        "quantity": 0.666667,
+        "unit": "ounce",
+        "costPerPortion": 0.185,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|1781",
+        "mrn": "1781",
+        "name": "Cilantro, Fresh, Chopped",
+        "quantity": 0.020833,
+        "unit": "cup",
+        "costPerPortion": 0.01,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.020833,
+        "unit": "cup",
+        "costPerPortion": 0.0183,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|49464",
+        "mrn": "49464",
+        "name": "Seasoning, Garam Masala, Woodland",
+        "quantity": 0.041667,
+        "unit": "tbsp",
+        "costPerPortion": 0.0033,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7366",
+        "mrn": "7366",
+        "name": "Spice, Cumin Seed",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0267,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|49473",
+        "mrn": "49473",
+        "name": "Peppers, Chili, Arbol Pods, D'Allesandro",
+        "quantity": 0.25,
+        "unit": "each",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7694",
+        "mrn": "7694",
+        "name": "Peppers, Chili, Serrano, Fresh, Seeded, Sliced, 1/4\"",
+        "quantity": 0.125,
+        "unit": "each",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|56693",
+        "mrn": "56693",
+        "name": "Taarka Daal, Passport, Frozen",
+        "quantity": 0.166667,
+        "unit": "pound",
+        "costPerPortion": 0,
+        "glCode": "4111011"
+      }
+    ],
+    "global|amz-balti|165741.13|1-2-cup": [
+      {
+        "id": "global-transfer|169563",
+        "mrn": "169563",
+        "name": "Beans, Garbanzo, Pouch",
+        "quantity": 0.1875,
+        "unit": "cup",
+        "costPerPortion": 0.12,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|1781",
+        "mrn": "1781",
+        "name": "Cilantro, Fresh, Chopped",
+        "quantity": 0.015625,
+        "unit": "cup",
+        "costPerPortion": 0.0075,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|158759",
+        "mrn": "158759",
+        "name": "Coconut Milk, Unsweetened, Thai Kitchen",
+        "quantity": 0.0625,
+        "unit": "cup",
+        "costPerPortion": 0.05,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|3070",
+        "mrn": "3070",
+        "name": "Ginger Root, Fresh, Minced",
+        "quantity": 0.0625,
+        "unit": "tbsp",
+        "costPerPortion": 0.0056,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.007813,
+        "unit": "cup",
+        "costPerPortion": 0.0069,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|128954",
+        "mrn": "128954",
+        "name": "Spice, Mustard Seed, Black",
+        "quantity": 0.046875,
+        "unit": "tbsp",
+        "costPerPortion": 0.0028,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|76287",
+        "mrn": "76287",
+        "name": "Curry Leaves, Fresh",
+        "quantity": 0.46875,
+        "unit": "each",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|49473",
+        "mrn": "49473",
+        "name": "Peppers, Chili, Arbol Pods, D'Allesandro",
+        "quantity": 0.1875,
+        "unit": "each",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-balti|165741.24|1-2-cup": [
+      {
+        "id": "global-transfer|83558",
+        "mrn": "83558",
+        "name": "Chana Masala, Passport, Frozen",
+        "quantity": 0.25,
+        "unit": "pound",
+        "costPerPortion": 1.11,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|1781",
+        "mrn": "1781",
+        "name": "Cilantro, Fresh, Chopped",
+        "quantity": 0.015625,
+        "unit": "cup",
+        "costPerPortion": 0.0075,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-balti|97343.4|1-each": [
+      {
+        "id": "global-transfer|118493",
+        "mrn": "118493",
+        "name": "Bread, Naan, Flatbread, Stonefire, 4.4 oz",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.97,
+        "glCode": "4111010"
+      }
+    ],
+    "global|amz-balti|155592|1-each": [
+      {
+        "id": "global-transfer|118493",
+        "mrn": "118493",
+        "name": "Bread, Naan, Flatbread, Stonefire, 4.4 oz",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.97,
+        "glCode": "4111010"
+      },
+      {
+        "id": "global-transfer|15323",
+        "mrn": "15323",
+        "name": "Oil, Olive, Extra Virgin",
+        "quantity": 1,
+        "unit": "tsp",
+        "costPerPortion": 0.0567,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-balti|165741.21|1-cup": [
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.083333,
+        "unit": "tsp",
+        "costPerPortion": 0.0015,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4254",
+        "mrn": "4254",
+        "name": "Onions, Red, Fresh, Julienne Sliced, 1/4\"",
+        "quantity": 0.333333,
+        "unit": "ounce",
+        "costPerPortion": 0.01,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7116",
+        "mrn": "7116",
+        "name": "Rice, Basmati, Long Grain, Dry",
+        "quantity": 0.333333,
+        "unit": "cup",
+        "costPerPortion": 0.1467,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7352",
+        "mrn": "7352",
+        "name": "Spice, Bay Leaf, Whole",
+        "quantity": 0.166667,
+        "unit": "each",
+        "costPerPortion": 0.0021,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7360",
+        "mrn": "7360",
+        "name": "Spice, Cinnamon Stick",
+        "quantity": 0.111111,
+        "unit": "each",
+        "costPerPortion": 0.0611,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7366",
+        "mrn": "7366",
+        "name": "Spice, Cumin Seed",
+        "quantity": 0.111111,
+        "unit": "tbsp",
+        "costPerPortion": 0.0356,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-balti|165741.111|1-2-cup": [],
+    "global|amz-balti|193119|1-2-cup": [
+      {
+        "id": "global-transfer|51405",
+        "mrn": "51405",
+        "name": "Coconut, Unsweetened, Shredded",
+        "quantity": 0.041667,
+        "unit": "ounce",
+        "costPerPortion": 0.0165,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.041667,
+        "unit": "cup",
+        "costPerPortion": 0.0775,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3678",
+        "mrn": "3678",
+        "name": "Kale, Fresh, Chopped",
+        "quantity": 0.208333,
+        "unit": "pound",
+        "costPerPortion": 0.9208,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.020833,
+        "unit": "cup",
+        "costPerPortion": 0.0183,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|9058",
+        "mrn": "9058",
+        "name": "Onions, Yellow, Fresh, Diced",
+        "quantity": 0.083333,
+        "unit": "cup",
+        "costPerPortion": 0.0267,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|76662",
+        "mrn": "76662",
+        "name": "Peppers, Chili, Bird's Eye, Dried",
+        "quantity": 0.041667,
+        "unit": "ounce",
+        "costPerPortion": 0.0125,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7366",
+        "mrn": "7366",
+        "name": "Spice, Cumin Seed",
+        "quantity": 0.041667,
+        "unit": "tbsp",
+        "costPerPortion": 0.0133,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7379",
+        "mrn": "7379",
+        "name": "Spice, Mustard Seed",
+        "quantity": 0.041667,
+        "unit": "tbsp",
+        "costPerPortion": 0.0025,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-balti|165741.19|1-cup": [
+      {
+        "id": "global-transfer|1781",
+        "mrn": "1781",
+        "name": "Cilantro, Fresh, Chopped",
+        "quantity": 0.222222,
+        "unit": "tbsp",
+        "costPerPortion": 0.0067,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|130494",
+        "mrn": "130494",
+        "name": "Ginger Root, Fresh, Chopped",
+        "quantity": 0.333333,
+        "unit": "tbsp",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3539",
+        "mrn": "3539",
+        "name": "Juice, Lemon, Fresh Pressed",
+        "quantity": 0.222222,
+        "unit": "tbsp",
+        "costPerPortion": 0.0111,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3774",
+        "mrn": "3774",
+        "name": "Lemon, Fresh, Zest, Grated",
+        "quantity": 0.111111,
+        "unit": "tsp",
+        "costPerPortion": 0.01,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4155",
+        "mrn": "4155",
+        "name": "Nuts, Cashew, Whole, Salted, John B Sanfilippo",
+        "quantity": 0.055556,
+        "unit": "cup",
+        "costPerPortion": 0.2489,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.027778,
+        "unit": "cup",
+        "costPerPortion": 0.0244,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|49473",
+        "mrn": "49473",
+        "name": "Peppers, Chili, Arbol Pods, D'Allesandro",
+        "quantity": 0.277778,
+        "unit": "g",
+        "costPerPortion": 0.0008,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7711",
+        "mrn": "7711",
+        "name": "Peppers, Chili, Serrano, Fresh, Seeded, Minced",
+        "quantity": 0.222222,
+        "unit": "tbsp",
+        "costPerPortion": 0.0133,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7116",
+        "mrn": "7116",
+        "name": "Rice, Basmati, Long Grain, Dry",
+        "quantity": 0.333333,
+        "unit": "cup",
+        "costPerPortion": 0.1467,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.055556,
+        "unit": "tbsp",
+        "costPerPortion": 0.0133,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7366",
+        "mrn": "7366",
+        "name": "Spice, Cumin Seed",
+        "quantity": 0.111111,
+        "unit": "tbsp",
+        "costPerPortion": 0.0356,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|128954",
+        "mrn": "128954",
+        "name": "Spice, Mustard Seed, Black",
+        "quantity": 0.111111,
+        "unit": "tbsp",
+        "costPerPortion": 0.0067,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7421",
+        "mrn": "7421",
+        "name": "Spice, Turmeric",
+        "quantity": 0.055556,
+        "unit": "tsp",
+        "costPerPortion": 0.0022,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|76287",
+        "mrn": "76287",
+        "name": "Curry Leaves, Fresh",
+        "quantity": 0.833333,
+        "unit": "each",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-balti|165741|1-2-cup": [
+      {
+        "id": "global-transfer|7943",
+        "mrn": "7943",
+        "name": "Butter, Unsalted",
+        "quantity": 0.111111,
+        "unit": "ounce",
+        "costPerPortion": 0.0178,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|1781",
+        "mrn": "1781",
+        "name": "Cilantro, Fresh, Chopped",
+        "quantity": 0.018519,
+        "unit": "cup",
+        "costPerPortion": 0.0089,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|130495",
+        "mrn": "130495",
+        "name": "Ginger Root, Fresh, Julienne Sliced",
+        "quantity": 0.018519,
+        "unit": "ounce",
+        "costPerPortion": 0.0048,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3070",
+        "mrn": "3070",
+        "name": "Ginger Root, Fresh, Minced",
+        "quantity": 0.055556,
+        "unit": "tbsp",
+        "costPerPortion": 0.005,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3539",
+        "mrn": "3539",
+        "name": "Juice, Lemon, Fresh Pressed",
+        "quantity": 0.018519,
+        "unit": "cup",
+        "costPerPortion": 0.0148,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.111111,
+        "unit": "tbsp",
+        "costPerPortion": 0.0061,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|6173",
+        "mrn": "6173",
+        "name": "Peppers, Bell, Green, Fresh, Diced, Medium, 1/2\"",
+        "quantity": 0.333333,
+        "unit": "ounce",
+        "costPerPortion": 0.2025,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|49473",
+        "mrn": "49473",
+        "name": "Peppers, Chili, Arbol Pods, D'Allesandro",
+        "quantity": 0.027778,
+        "unit": "ounce",
+        "costPerPortion": 0.0022,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7711",
+        "mrn": "7711",
+        "name": "Peppers, Chili, Serrano, Fresh, Seeded, Minced",
+        "quantity": 0.111111,
+        "unit": "tbsp",
+        "costPerPortion": 0.0067,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7366",
+        "mrn": "7366",
+        "name": "Spice, Cumin Seed",
+        "quantity": 0.111111,
+        "unit": "tbsp",
+        "costPerPortion": 0.0356,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|128954",
+        "mrn": "128954",
+        "name": "Spice, Mustard Seed, Black",
+        "quantity": 0.055556,
+        "unit": "tbsp",
+        "costPerPortion": 0.0033,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7421",
+        "mrn": "7421",
+        "name": "Spice, Turmeric",
+        "quantity": 0.027778,
+        "unit": "tsp",
+        "costPerPortion": 0.0011,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|76287",
+        "mrn": "76287",
+        "name": "Curry Leaves, Fresh",
+        "quantity": 0.666667,
+        "unit": "each",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|56693",
+        "mrn": "56693",
+        "name": "Taarka Daal, Passport, Frozen",
+        "quantity": 3.555556,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111011"
+      }
+    ],
+    "global|amz-balti|165741.12|1-2-cup": [
+      {
+        "id": "global-transfer|167991",
+        "mrn": "167991",
+        "name": "Base, Bhuna Masala, Passport, Frozen",
+        "quantity": 2,
+        "unit": "ounce",
+        "costPerPortion": 0.555,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|655",
+        "mrn": "655",
+        "name": "Beans, Kidney, Dark Red, Low Sodium, Canned, Drained, Rinsed",
+        "quantity": 0.5,
+        "unit": "cup",
+        "costPerPortion": 0.18,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|1755",
+        "mrn": "1755",
+        "name": "Cilantro, Fresh",
+        "quantity": 0.0625,
+        "unit": "cup",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.020833,
+        "unit": "cup",
+        "costPerPortion": 0.0183,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|49464",
+        "mrn": "49464",
+        "name": "Seasoning, Garam Masala, Woodland",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0067,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|169394",
+        "mrn": "169394",
+        "name": "Spice, Chili Powder, Kashmiri",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0042,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7366",
+        "mrn": "7366",
+        "name": "Spice, Cumin Seed",
+        "quantity": 0.010417,
+        "unit": "cup",
+        "costPerPortion": 0.0092,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7802",
+        "mrn": "7802",
+        "name": "Spice, Fennel, Seed",
+        "quantity": 0.010417,
+        "unit": "cup",
+        "costPerPortion": 0.0054,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|51533",
+        "mrn": "51533",
+        "name": "Spice, Fenugreek Leaves, Dried",
+        "quantity": 0.010417,
+        "unit": "cup",
+        "costPerPortion": 0.0462,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7421",
+        "mrn": "7421",
+        "name": "Spice, Turmeric",
+        "quantity": 0.0625,
+        "unit": "tbsp",
+        "costPerPortion": 0.0075,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-balti|165741.9|1-2-cup": [
+      {
+        "id": "global-transfer|167991",
+        "mrn": "167991",
+        "name": "Base, Bhuna Masala, Passport, Frozen",
+        "quantity": 0.5,
+        "unit": "floz",
+        "costPerPortion": 0.0867,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|3070",
+        "mrn": "3070",
+        "name": "Ginger Root, Fresh, Minced",
+        "quantity": 0.010417,
+        "unit": "cup",
+        "costPerPortion": 0.015,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.010417,
+        "unit": "cup",
+        "costPerPortion": 0.0092,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7711",
+        "mrn": "7711",
+        "name": "Peppers, Chili, Serrano, Fresh, Seeded, Minced",
+        "quantity": 0.010417,
+        "unit": "cup",
+        "costPerPortion": 0.01,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|49464",
+        "mrn": "49464",
+        "name": "Seasoning, Garam Masala, Woodland",
+        "quantity": 0.041667,
+        "unit": "tbsp",
+        "costPerPortion": 0.0033,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7363",
+        "mrn": "7363",
+        "name": "Spice, Coriander Seeds",
+        "quantity": 0.041667,
+        "unit": "tbsp",
+        "costPerPortion": 0.0246,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7366",
+        "mrn": "7366",
+        "name": "Spice, Cumin Seed",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0267,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|8061",
+        "mrn": "8061",
+        "name": "Spinach, Baby, Fresh",
+        "quantity": 0.5,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|56693",
+        "mrn": "56693",
+        "name": "Taarka Daal, Passport, Frozen",
+        "quantity": 0.166667,
+        "unit": "pound",
+        "costPerPortion": 0,
+        "glCode": "4111011"
+      }
+    ],
+    "global|amz-balti|165741.30|1-2-cup": [
+      {
+        "id": "global-transfer|1781",
+        "mrn": "1781",
+        "name": "Cilantro, Fresh, Chopped",
+        "quantity": 0.0625,
+        "unit": "cup",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|56693",
+        "mrn": "56693",
+        "name": "Taarka Daal, Passport, Frozen",
+        "quantity": 0.25,
+        "unit": "pound",
+        "costPerPortion": 0,
+        "glCode": "4111011"
+      }
+    ],
+    "global|amz-balti|165741.22|1-cup": [
+      {
+        "id": "global-transfer|8992",
+        "mrn": "8992",
+        "name": "Beans, Green, Snapped, Fresh",
+        "quantity": 0.222222,
+        "unit": "ounce",
+        "costPerPortion": 0.025,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|9057",
+        "mrn": "9057",
+        "name": "Carrots, Fresh, Diced",
+        "quantity": 0.222222,
+        "unit": "ounce",
+        "costPerPortion": 0.0264,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|3045",
+        "mrn": "3045",
+        "name": "Ginger Root, Fresh",
+        "quantity": 0.083333,
+        "unit": "ounce",
+        "costPerPortion": 0.0215,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3889",
+        "mrn": "3889",
+        "name": "Milk, Whole, Bulk",
+        "quantity": 0.166667,
+        "unit": "cup",
+        "costPerPortion": 0.1967,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|4877",
+        "mrn": "4877",
+        "name": "Peas, Green, Frozen",
+        "quantity": 0.222222,
+        "unit": "ounce",
+        "costPerPortion": 0.0756,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7116",
+        "mrn": "7116",
+        "name": "Rice, Basmati, Long Grain, Dry",
+        "quantity": 0.333333,
+        "unit": "cup",
+        "costPerPortion": 0.1467,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.055556,
+        "unit": "tbsp",
+        "costPerPortion": 0.0133,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7352",
+        "mrn": "7352",
+        "name": "Spice, Bay Leaf, Whole",
+        "quantity": 0.111111,
+        "unit": "each",
+        "costPerPortion": 0.0014,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7360",
+        "mrn": "7360",
+        "name": "Spice, Cinnamon Stick",
+        "quantity": 0.055556,
+        "unit": "each",
+        "costPerPortion": 0.0306,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7421",
+        "mrn": "7421",
+        "name": "Spice, Turmeric",
+        "quantity": 0.027778,
+        "unit": "tsp",
+        "costPerPortion": 0.0011,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7493",
+        "mrn": "7493",
+        "name": "Sugar, Granulated",
+        "quantity": 0.111111,
+        "unit": "tbsp",
+        "costPerPortion": 0.0033,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|65173",
+        "mrn": "65173",
+        "name": "Spice, Cardamom, Pods",
+        "quantity": 0.333333,
+        "unit": "each",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7362",
+        "mrn": "7362",
+        "name": "Spice, Cloves, Whole",
+        "quantity": 0.277778,
+        "unit": "each",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7407",
+        "mrn": "7407",
+        "name": "Spice, Saffron",
+        "quantity": 0.013889,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-balti|89516|2-ounce": [
+      {
+        "id": "global-transfer|3747",
+        "mrn": "3747",
+        "name": "Mango, Chunks, Frozen-IQF",
+        "quantity": 0.058824,
+        "unit": "pound",
+        "costPerPortion": 0.4141,
+        "glCode": "4111009"
+      },
+      {
+        "id": "global-transfer|9058",
+        "mrn": "9058",
+        "name": "Onions, Yellow, Fresh, Diced",
+        "quantity": 0.023529,
+        "unit": "cup",
+        "costPerPortion": 0.0075,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7107",
+        "mrn": "7107",
+        "name": "Raisins, Boghosian, Bulk",
+        "quantity": 0.017647,
+        "unit": "cup",
+        "costPerPortion": 0.0198,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.023529,
+        "unit": "tsp",
+        "costPerPortion": 0.0019,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7359",
+        "mrn": "7359",
+        "name": "Spice, Cinnamon, Ground",
+        "quantity": 0.011765,
+        "unit": "tbsp",
+        "costPerPortion": 0.0014,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7393",
+        "mrn": "7393",
+        "name": "Spice, Pepper, Cayenne, Ground",
+        "quantity": 0.011765,
+        "unit": "tbsp",
+        "costPerPortion": 0.0018,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7492",
+        "mrn": "7492",
+        "name": "Sugar, Brown, Light",
+        "quantity": 0.082353,
+        "unit": "cup",
+        "costPerPortion": 0.0659,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7637",
+        "mrn": "7637",
+        "name": "Vinegar, White",
+        "quantity": 0.017647,
+        "unit": "cup",
+        "costPerPortion": 0.0056,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7925",
+        "mrn": "7925",
+        "name": "Spice, Cardamom, Ground",
+        "quantity": 0.011765,
+        "unit": "tbsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-balti|81281|2-ounce": [
+      {
+        "id": "global-transfer|15323",
+        "mrn": "15323",
+        "name": "Oil, Olive, Extra Virgin",
+        "quantity": 0.092593,
+        "unit": "tbsp",
+        "costPerPortion": 0.0157,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4181",
+        "mrn": "4181",
+        "name": "Onions, Yellow, Fresh, Chopped",
+        "quantity": 0.009259,
+        "unit": "cup",
+        "costPerPortion": 0.003,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|130501",
+        "mrn": "130501",
+        "name": "Peppers, Chili, Jalapeno, Fresh, Seeded, Diced, Small, 1/4\"",
+        "quantity": 0.092593,
+        "unit": "tsp",
+        "costPerPortion": 0.0012,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7366",
+        "mrn": "7366",
+        "name": "Spice, Cumin Seed",
+        "quantity": 0.027778,
+        "unit": "tsp",
+        "costPerPortion": 0.003,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7379",
+        "mrn": "7379",
+        "name": "Spice, Mustard Seed",
+        "quantity": 0.027778,
+        "unit": "tsp",
+        "costPerPortion": 0.0006,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7393",
+        "mrn": "7393",
+        "name": "Spice, Pepper, Cayenne, Ground",
+        "quantity": 0.009259,
+        "unit": "tsp",
+        "costPerPortion": 0.0005,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7421",
+        "mrn": "7421",
+        "name": "Spice, Turmeric",
+        "quantity": 0.013889,
+        "unit": "tsp",
+        "costPerPortion": 0.0006,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|15490",
+        "mrn": "15490",
+        "name": "Tomatoes, Roma, Fresh, Small Diced, 1/4\"",
+        "quantity": 0.074074,
+        "unit": "ounce",
+        "costPerPortion": 0.0078,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7643",
+        "mrn": "7643",
+        "name": "Water, Cold",
+        "quantity": 0.037037,
+        "unit": "tbsp",
+        "costPerPortion": 0.0004,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|185399",
+        "mrn": "185399",
+        "name": "Yogurt, Plain, Greek, Fat Free, Oikos, Bulk",
+        "quantity": 0.092593,
+        "unit": "cup",
+        "costPerPortion": 0.1272,
+        "glCode": "4111006"
+      }
+    ],
+    "global|amz-balti|81768|2-ounce": [
+      {
+        "id": "global-transfer|1755",
+        "mrn": "1755",
+        "name": "Cilantro, Fresh",
+        "quantity": 0.166667,
+        "unit": "cup",
+        "costPerPortion": 0.08,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0097,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3070",
+        "mrn": "3070",
+        "name": "Ginger Root, Fresh, Minced",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0075,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3542",
+        "mrn": "3542",
+        "name": "Juice, Lime, Fresh Pressed",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0042,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7699",
+        "mrn": "7699",
+        "name": "Peppers, Chili, Jalapeno, Fresh",
+        "quantity": 0.166667,
+        "unit": "each",
+        "costPerPortion": 0.0117,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|74068",
+        "mrn": "74068",
+        "name": "Sugar, Granulated, Vegan",
+        "quantity": 0.020833,
+        "unit": "cup",
+        "costPerPortion": 0.01,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|116445",
+        "mrn": "116445",
+        "name": "Vinegar, Rice, Seasoned, Marukan",
+        "quantity": 0.166667,
+        "unit": "floz",
+        "costPerPortion": 0.0267,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-balti|87890|2-ounce": [
+      {
+        "id": "global-transfer|2142",
+        "mrn": "2142",
+        "name": "Dates, Pitted, Chopped",
+        "quantity": 1.666667,
+        "unit": "ounce",
+        "costPerPortion": 1.2167,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|183831",
+        "mrn": "183831",
+        "name": "Paste, Tamarind, D'Allesandro",
+        "quantity": 0.166667,
+        "unit": "cup",
+        "costPerPortion": 0.7067,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.02,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7357",
+        "mrn": "7357",
+        "name": "Spice, Chili Powder, Light, McCormick",
+        "quantity": 0.333333,
+        "unit": "tsp",
+        "costPerPortion": 0.0133,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7366",
+        "mrn": "7366",
+        "name": "Spice, Cumin Seed",
+        "quantity": 0.104167,
+        "unit": "ounce",
+        "costPerPortion": 0.012,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7802",
+        "mrn": "7802",
+        "name": "Spice, Fennel, Seed",
+        "quantity": 0.0625,
+        "unit": "tsp",
+        "costPerPortion": 0.0007,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7374",
+        "mrn": "7374",
+        "name": "Spice, Ginger, Ground",
+        "quantity": 0.166667,
+        "unit": "tsp",
+        "costPerPortion": 0.0089,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7492",
+        "mrn": "7492",
+        "name": "Sugar, Brown, Light",
+        "quantity": 0.083333,
+        "unit": "cup",
+        "costPerPortion": 0.0667,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-street-eats|104707.1|1-sandwich": [
+      {
+        "id": "global-transfer|33731",
+        "mrn": "33731",
+        "name": "Bread, Naan, Garlic, StoneFire, Frozen",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 1.05,
+        "glCode": "4111010"
+      },
+      {
+        "id": "global-transfer|3753",
+        "mrn": "3753",
+        "name": "Lettuce, Salad Mix, Spring (Mesclun)",
+        "quantity": 0.25,
+        "unit": "cup",
+        "costPerPortion": 0.1475,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3885",
+        "mrn": "3885",
+        "name": "Mint, Fresh, Chopped",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.57,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-street-eats|104707.6|1-each": [
+      {
+        "id": "global-transfer|33731",
+        "mrn": "33731",
+        "name": "Bread, Naan, Garlic, StoneFire, Frozen",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 1.05,
+        "glCode": "4111010"
+      },
+      {
+        "id": "global-transfer|3753",
+        "mrn": "3753",
+        "name": "Lettuce, Salad Mix, Spring (Mesclun)",
+        "quantity": 0.25,
+        "unit": "cup",
+        "costPerPortion": 0.1475,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3885",
+        "mrn": "3885",
+        "name": "Mint, Fresh, Chopped",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.57,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-street-eats|104707.5|1-sandwich": [
+      {
+        "id": "global-transfer|33731",
+        "mrn": "33731",
+        "name": "Bread, Naan, Garlic, StoneFire, Frozen",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 1.05,
+        "glCode": "4111010"
+      },
+      {
+        "id": "global-transfer|3753",
+        "mrn": "3753",
+        "name": "Lettuce, Salad Mix, Spring (Mesclun)",
+        "quantity": 0.25,
+        "unit": "cup",
+        "costPerPortion": 0.1475,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3885",
+        "mrn": "3885",
+        "name": "Mint, Fresh, Chopped",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.57,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-street-eats|104707.4|1-sandwich": [
+      {
+        "id": "global-transfer|33731",
+        "mrn": "33731",
+        "name": "Bread, Naan, Garlic, StoneFire, Frozen",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 1.05,
+        "glCode": "4111010"
+      },
+      {
+        "id": "global-transfer|3753",
+        "mrn": "3753",
+        "name": "Lettuce, Salad Mix, Spring (Mesclun)",
+        "quantity": 0.25,
+        "unit": "cup",
+        "costPerPortion": 0.1475,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3885",
+        "mrn": "3885",
+        "name": "Mint, Fresh, Chopped",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.57,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-street-eats|104707.3|1-sandwich": [
+      {
+        "id": "global-transfer|33731",
+        "mrn": "33731",
+        "name": "Bread, Naan, Garlic, StoneFire, Frozen",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 1.05,
+        "glCode": "4111010"
+      },
+      {
+        "id": "global-transfer|3753",
+        "mrn": "3753",
+        "name": "Lettuce, Salad Mix, Spring (Mesclun)",
+        "quantity": 0.25,
+        "unit": "cup",
+        "costPerPortion": 0.1475,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3885",
+        "mrn": "3885",
+        "name": "Mint, Fresh, Chopped",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.57,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-street-eats|118677|1-2-cup": [
+      {
+        "id": "global-transfer|1330",
+        "mrn": "1330",
+        "name": "Cauliflower, Fresh, Florets, 1\"",
+        "quantity": 0.208333,
+        "unit": "pound",
+        "costPerPortion": 0.826,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|1781",
+        "mrn": "1781",
+        "name": "Cilantro, Fresh, Chopped",
+        "quantity": 0.083333,
+        "unit": "cup",
+        "costPerPortion": 0.04,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|84156",
+        "mrn": "84156",
+        "name": "Mango, Amchur, Powdered",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0017,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.041667,
+        "unit": "cup",
+        "costPerPortion": 0.0367,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|54497",
+        "mrn": "54497",
+        "name": "Potatoes, Yukon Gold, Fresh, Cubed, 1\"",
+        "quantity": 0.125,
+        "unit": "pound",
+        "costPerPortion": 0.12,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7366",
+        "mrn": "7366",
+        "name": "Spice, Cumin Seed",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0267,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|51533",
+        "mrn": "51533",
+        "name": "Spice, Fenugreek Leaves, Dried",
+        "quantity": 0.166667,
+        "unit": "tbsp",
+        "costPerPortion": 0.025,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-street-eats|165741.24|1-2-cup": [
+      {
+        "id": "global-transfer|83558",
+        "mrn": "83558",
+        "name": "Chana Masala, Passport, Frozen",
+        "quantity": 0.25,
+        "unit": "pound",
+        "costPerPortion": 1.11,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|1781",
+        "mrn": "1781",
+        "name": "Cilantro, Fresh, Chopped",
+        "quantity": 0.015625,
+        "unit": "cup",
+        "costPerPortion": 0.0075,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-street-eats|118715|1-2-cup": [
+      {
+        "id": "global-transfer|119526",
+        "mrn": "119526",
+        "name": "Beans, Mung Dal, No Skin, Dry",
+        "quantity": 0.046875,
+        "unit": "cup",
+        "costPerPortion": 0.03,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|119609",
+        "mrn": "119609",
+        "name": "Beans, Urad, Black, Split, Dry",
+        "quantity": 0.046875,
+        "unit": "cup",
+        "costPerPortion": 0.03,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|51557",
+        "mrn": "51557",
+        "name": "Beans, Urad, Black, Whole, Dry",
+        "quantity": 0.046875,
+        "unit": "cup",
+        "costPerPortion": 0.03,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|1780",
+        "mrn": "1780",
+        "name": "Cilantro, Fresh, Minced",
+        "quantity": 0.015625,
+        "unit": "cup",
+        "costPerPortion": 0.015,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3885",
+        "mrn": "3885",
+        "name": "Mint, Fresh, Chopped",
+        "quantity": 0.03125,
+        "unit": "cup",
+        "costPerPortion": 0.285,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.003906,
+        "unit": "cup",
+        "costPerPortion": 0.0022,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7563",
+        "mrn": "7563",
+        "name": "Tomatoes, Roma, Fresh, Diced, Medium, 1/2\"",
+        "quantity": 0.078125,
+        "unit": "cup",
+        "costPerPortion": 0.0562,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-street-eats|165741.11|1-2-cup": [
+      {
+        "id": "global-transfer|69300",
+        "mrn": "69300",
+        "name": "Chutney, Cilantro, Monsoon Kitchens Inc., Frozen",
+        "quantity": 0.25,
+        "unit": "floz",
+        "costPerPortion": 0.105,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|69296",
+        "mrn": "69296",
+        "name": "Chutney, Tamarind, Monsoon Kitchens Inc., Frozen",
+        "quantity": 0.125,
+        "unit": "ounce",
+        "costPerPortion": 0.0419,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|50595",
+        "mrn": "50595",
+        "name": "Cucumbers, English, Fresh, Sliced, Thin, on Bias",
+        "quantity": 0.083333,
+        "unit": "pound",
+        "costPerPortion": 0.5867,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|130495",
+        "mrn": "130495",
+        "name": "Ginger Root, Fresh, Julienne Sliced",
+        "quantity": 0.083333,
+        "unit": "ounce",
+        "costPerPortion": 0.0215,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4254",
+        "mrn": "4254",
+        "name": "Onions, Red, Fresh, Julienne Sliced, 1/4\"",
+        "quantity": 0.083333,
+        "unit": "pound",
+        "costPerPortion": 0.2469,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7548",
+        "mrn": "7548",
+        "name": "Tomatoes, Fresh, Julienne Sliced",
+        "quantity": 0.083333,
+        "unit": "pound",
+        "costPerPortion": 0.14,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7710",
+        "mrn": "7710",
+        "name": "Peppers, Chili, Serrano, Fresh",
+        "quantity": 0.125,
+        "unit": "each",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-street-eats|165741.30|1-2-cup": [
+      {
+        "id": "global-transfer|1781",
+        "mrn": "1781",
+        "name": "Cilantro, Fresh, Chopped",
+        "quantity": 0.0625,
+        "unit": "cup",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|56693",
+        "mrn": "56693",
+        "name": "Taarka Daal, Passport, Frozen",
+        "quantity": 0.25,
+        "unit": "pound",
+        "costPerPortion": 0,
+        "glCode": "4111011"
+      }
+    ],
+    "global|amz-lotus|165520.3|1-cup": [
+      {
+        "id": "global-transfer|700",
+        "mrn": "700",
+        "name": "Beef, Flank, Steak, Raw",
+        "quantity": 0.208333,
+        "unit": "pound",
+        "costPerPortion": 1.6667,
+        "glCode": "4111003"
+      },
+      {
+        "id": "global-transfer|1066",
+        "mrn": "1066",
+        "name": "Broccoli, Fresh, Florets, 1\"",
+        "quantity": 0.083333,
+        "unit": "pound",
+        "costPerPortion": 0.3304,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.041667,
+        "unit": "ounce",
+        "costPerPortion": 0.0172,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.020833,
+        "unit": "cup",
+        "costPerPortion": 0.0183,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4203",
+        "mrn": "4203",
+        "name": "Oil, Sesame",
+        "quantity": 0.041667,
+        "unit": "ounce",
+        "costPerPortion": 0.0048,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7414",
+        "mrn": "7414",
+        "name": "Spice, Sesame Seeds",
+        "quantity": 0.041667,
+        "unit": "tbsp",
+        "costPerPortion": 0.0025,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|85770",
+        "mrn": "85770",
+        "name": "Oil, Canola, Liquid Frying, Frilite",
+        "quantity": 5.28125,
+        "unit": "g",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-lotus|165520.12|1-cup": [
+      {
+        "id": "global-transfer|1356",
+        "mrn": "1356",
+        "name": "Celery, Fresh, Bias Cut",
+        "quantity": 0.0625,
+        "unit": "pound",
+        "costPerPortion": 0.2319,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|10924",
+        "mrn": "10924",
+        "name": "Chicken, Breast, Boneless, Skinless, NAE, Random, Foster Farms, Raw",
+        "quantity": 0.333333,
+        "unit": "pound",
+        "costPerPortion": 1.1356,
+        "glCode": "4111003"
+      },
+      {
+        "id": "global-transfer|1924",
+        "mrn": "1924",
+        "name": "Corn Starch, 100% Pure",
+        "quantity": 0.010417,
+        "unit": "cup",
+        "costPerPortion": 0.01,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|2883",
+        "mrn": "2883",
+        "name": "Garlic Cloves, Peeled, Fresh, Chopped",
+        "quantity": 0.010417,
+        "unit": "cup",
+        "costPerPortion": 0.02,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.020833,
+        "unit": "cup",
+        "costPerPortion": 0.0183,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4241",
+        "mrn": "4241",
+        "name": "Onions, Green, Scallion, Each, Fresh, Bias Cut",
+        "quantity": 0.010417,
+        "unit": "cup",
+        "costPerPortion": 0.0121,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|54495",
+        "mrn": "54495",
+        "name": "Onions, Yellow, Fresh, Cubed, 1\"",
+        "quantity": 0.041667,
+        "unit": "pound",
+        "costPerPortion": 0.04,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|63219",
+        "mrn": "63219",
+        "name": "Peppers, Bell, Orange, Fresh, Diced",
+        "quantity": 0.083333,
+        "unit": "pound",
+        "costPerPortion": 0.81,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7204",
+        "mrn": "7204",
+        "name": "Sauce, Soy, Less Sodium, Gluten Free, Lee Kum Kee, Bulk",
+        "quantity": 0.010417,
+        "unit": "cup",
+        "costPerPortion": 0.015,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7194",
+        "mrn": "7194",
+        "name": "Sauce, Oyster, Jade Mountain",
+        "quantity": 0.010417,
+        "unit": "cup",
+        "costPerPortion": 0,
+        "glCode": "4111004"
+      },
+      {
+        "id": "global-transfer|75666",
+        "mrn": "75666",
+        "name": "Spice, Pepper, Black, Ground, Coarse",
+        "quantity": 0.005208,
+        "unit": "cup",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-lotus|165520.11|1-cup": [
+      {
+        "id": "global-transfer|348",
+        "mrn": "348",
+        "name": "Baking Soda",
+        "quantity": 0.071429,
+        "unit": "tsp",
+        "costPerPortion": 0.0026,
+        "glCode": "4112002"
+      },
+      {
+        "id": "global-transfer|1066",
+        "mrn": "1066",
+        "name": "Broccoli, Fresh, Florets, 1\"",
+        "quantity": 0.053571,
+        "unit": "pound",
+        "costPerPortion": 0.2124,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|1744",
+        "mrn": "1744",
+        "name": "Chicken, Thigh, Boneless, Skinless",
+        "quantity": 0.285714,
+        "unit": "pound",
+        "costPerPortion": 1.92,
+        "glCode": "4111003"
+      },
+      {
+        "id": "global-transfer|1924",
+        "mrn": "1924",
+        "name": "Corn Starch, 100% Pure",
+        "quantity": 0.214286,
+        "unit": "cup",
+        "costPerPortion": 0.2057,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|1924",
+        "mrn": "1924",
+        "name": "Corn Starch, 100% Pure",
+        "quantity": 0.053571,
+        "unit": "cup",
+        "costPerPortion": 0.0514,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7947",
+        "mrn": "7947",
+        "name": "Egg, Liquid, Whites, Cage Free, Pasteurized, Deb-El, Fresh",
+        "quantity": 0.017857,
+        "unit": "cup",
+        "costPerPortion": 0.03,
+        "glCode": "4111003"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.008929,
+        "unit": "cup",
+        "costPerPortion": 0.0079,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4203",
+        "mrn": "4203",
+        "name": "Oil, Sesame",
+        "quantity": 0.017857,
+        "unit": "cup",
+        "costPerPortion": 0.0814,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|49473",
+        "mrn": "49473",
+        "name": "Peppers, Chili, Arbol Pods, D'Allesandro",
+        "quantity": 0.053571,
+        "unit": "ounce",
+        "costPerPortion": 0.0043,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.071429,
+        "unit": "tsp",
+        "costPerPortion": 0.0057,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7204",
+        "mrn": "7204",
+        "name": "Sauce, Soy, Less Sodium, Gluten Free, Lee Kum Kee, Bulk",
+        "quantity": 0.053571,
+        "unit": "cup",
+        "costPerPortion": 0.0771,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7664",
+        "mrn": "7664",
+        "name": "Wine, Cooking, Sherry, American Roland",
+        "quantity": 0.035714,
+        "unit": "cup",
+        "costPerPortion": 0.0286,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|85770",
+        "mrn": "85770",
+        "name": "Oil, Canola, Liquid Frying, Frilite",
+        "quantity": 11.254464,
+        "unit": "g",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-lotus|165520.2|1-cup": [
+      {
+        "id": "global-transfer|107664",
+        "mrn": "107664",
+        "name": "Chicken, Breast, Chunk, Tempura, RTC, Tyson",
+        "quantity": 0.208333,
+        "unit": "pound",
+        "costPerPortion": 0.8306,
+        "glCode": "4111003"
+      },
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0097,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3070",
+        "mrn": "3070",
+        "name": "Ginger Root, Fresh, Minced",
+        "quantity": 0.041667,
+        "unit": "tbsp",
+        "costPerPortion": 0.0037,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.010417,
+        "unit": "cup",
+        "costPerPortion": 0.0092,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|54495",
+        "mrn": "54495",
+        "name": "Onions, Yellow, Fresh, Cubed, 1\"",
+        "quantity": 0.041667,
+        "unit": "pound",
+        "costPerPortion": 0.04,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|9061",
+        "mrn": "9061",
+        "name": "Peppers, Bell, Green, Fresh, Diced",
+        "quantity": 0.041667,
+        "unit": "pound",
+        "costPerPortion": 0.405,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|49473",
+        "mrn": "49473",
+        "name": "Peppers, Chili, Arbol Pods, D'Allesandro",
+        "quantity": 0.005208,
+        "unit": "ounce",
+        "costPerPortion": 0.0004,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|107152",
+        "mrn": "107152",
+        "name": "Sauce, Orange Peel, Passport, Frozen",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.27,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7414",
+        "mrn": "7414",
+        "name": "Spice, Sesame Seeds",
+        "quantity": 0.041667,
+        "unit": "tbsp",
+        "costPerPortion": 0.0025,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|85770",
+        "mrn": "85770",
+        "name": "Oil, Canola, Liquid Frying, Frilite",
+        "quantity": 10.390625,
+        "unit": "g",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-lotus|165520.4|1-cup": [
+      {
+        "id": "global-transfer|134248",
+        "mrn": "134248",
+        "name": "Broccoli, Fresh, Florets, Pre-Cut",
+        "quantity": 0.041667,
+        "unit": "pound",
+        "costPerPortion": 0.1652,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|1924",
+        "mrn": "1924",
+        "name": "Corn Starch, 100% Pure",
+        "quantity": 0.083333,
+        "unit": "cup",
+        "costPerPortion": 0.08,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0097,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3070",
+        "mrn": "3070",
+        "name": "Ginger Root, Fresh, Minced",
+        "quantity": 0.041667,
+        "unit": "tbsp",
+        "costPerPortion": 0.0037,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.010417,
+        "unit": "cup",
+        "costPerPortion": 0.0092,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|54495",
+        "mrn": "54495",
+        "name": "Onions, Yellow, Fresh, Cubed, 1\"",
+        "quantity": 0.041667,
+        "unit": "pound",
+        "costPerPortion": 0.04,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|9061",
+        "mrn": "9061",
+        "name": "Peppers, Bell, Green, Fresh, Diced",
+        "quantity": 0.041667,
+        "unit": "pound",
+        "costPerPortion": 0.405,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|53208",
+        "mrn": "53208",
+        "name": "Peppers, Bell, Red, Fresh, Diced",
+        "quantity": 0.041667,
+        "unit": "pound",
+        "costPerPortion": 0.405,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|49473",
+        "mrn": "49473",
+        "name": "Peppers, Chili, Arbol Pods, D'Allesandro",
+        "quantity": 0.005208,
+        "unit": "ounce",
+        "costPerPortion": 0.0004,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|107152",
+        "mrn": "107152",
+        "name": "Sauce, Orange Peel, Passport, Frozen",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.27,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7204",
+        "mrn": "7204",
+        "name": "Sauce, Soy, Less Sodium, Gluten Free, Lee Kum Kee, Bulk",
+        "quantity": 0.020833,
+        "unit": "cup",
+        "costPerPortion": 0.03,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7414",
+        "mrn": "7414",
+        "name": "Spice, Sesame Seeds",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.005,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7529",
+        "mrn": "7529",
+        "name": "Tofu, Firm, Cubed, 1\"",
+        "quantity": 0.166667,
+        "unit": "pound",
+        "costPerPortion": 0.16,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7397",
+        "mrn": "7397",
+        "name": "Spice, Pepper, White, Ground",
+        "quantity": 0.041667,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-lotus|165520|1-cup": [
+      {
+        "id": "global-transfer|348",
+        "mrn": "348",
+        "name": "Baking Soda",
+        "quantity": 0.041667,
+        "unit": "tsp",
+        "costPerPortion": 0.0015,
+        "glCode": "4112002"
+      },
+      {
+        "id": "global-transfer|700",
+        "mrn": "700",
+        "name": "Beef, Flank, Steak, Raw",
+        "quantity": 0.208333,
+        "unit": "pound",
+        "costPerPortion": 1.6667,
+        "glCode": "4111003"
+      },
+      {
+        "id": "global-transfer|1924",
+        "mrn": "1924",
+        "name": "Corn Starch, 100% Pure",
+        "quantity": 0.083333,
+        "unit": "cup",
+        "costPerPortion": 0.08,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.020833,
+        "unit": "cup",
+        "costPerPortion": 0.0183,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4251",
+        "mrn": "4251",
+        "name": "Onions, Green, Scallion, Each, Fresh, Sliced",
+        "quantity": 0.166667,
+        "unit": "each",
+        "costPerPortion": 0.0067,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4216",
+        "mrn": "4216",
+        "name": "Onions, Yellow, Fresh, Julienne Sliced",
+        "quantity": 0.041667,
+        "unit": "pound",
+        "costPerPortion": 0.04,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|8065",
+        "mrn": "8065",
+        "name": "Peppers, Bell, Red, Fresh",
+        "quantity": 0.052083,
+        "unit": "pound",
+        "costPerPortion": 0.5063,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.083333,
+        "unit": "tsp",
+        "costPerPortion": 0.0067,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7247",
+        "mrn": "7247",
+        "name": "Seasoning, Chinese Five Spice, McCormick",
+        "quantity": 0.041667,
+        "unit": "tsp",
+        "costPerPortion": 0.0008,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7394",
+        "mrn": "7394",
+        "name": "Spice, Pepper, Red Chili, Crushed, Flakes",
+        "quantity": 0.041667,
+        "unit": "tsp",
+        "costPerPortion": 0.0012,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-lotus|165520.20|1-cup": [
+      {
+        "id": "global-transfer|1356",
+        "mrn": "1356",
+        "name": "Celery, Fresh, Bias Cut",
+        "quantity": 0.041667,
+        "unit": "pound",
+        "costPerPortion": 0.1546,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|1924",
+        "mrn": "1924",
+        "name": "Corn Starch, 100% Pure",
+        "quantity": 0.083333,
+        "unit": "cup",
+        "costPerPortion": 0.08,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.010417,
+        "unit": "cup",
+        "costPerPortion": 0.0092,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4251",
+        "mrn": "4251",
+        "name": "Onions, Green, Scallion, Each, Fresh, Sliced",
+        "quantity": 0.166667,
+        "unit": "each",
+        "costPerPortion": 0.0067,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4216",
+        "mrn": "4216",
+        "name": "Onions, Yellow, Fresh, Julienne Sliced",
+        "quantity": 0.041667,
+        "unit": "pound",
+        "costPerPortion": 0.04,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|8065",
+        "mrn": "8065",
+        "name": "Peppers, Bell, Red, Fresh",
+        "quantity": 0.041667,
+        "unit": "pound",
+        "costPerPortion": 0.405,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7204",
+        "mrn": "7204",
+        "name": "Sauce, Soy, Less Sodium, Gluten Free, Lee Kum Kee, Bulk",
+        "quantity": 0.020833,
+        "unit": "cup",
+        "costPerPortion": 0.03,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7247",
+        "mrn": "7247",
+        "name": "Seasoning, Chinese Five Spice, McCormick",
+        "quantity": 0.041667,
+        "unit": "tbsp",
+        "costPerPortion": 0.0025,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7394",
+        "mrn": "7394",
+        "name": "Spice, Pepper, Red Chili, Crushed, Flakes",
+        "quantity": 0.041667,
+        "unit": "tsp",
+        "costPerPortion": 0.0012,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7529",
+        "mrn": "7529",
+        "name": "Tofu, Firm, Cubed, 1\"",
+        "quantity": 0.208333,
+        "unit": "pound",
+        "costPerPortion": 0.2,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7390",
+        "mrn": "7390",
+        "name": "Spice, Pepper, Black, Ground",
+        "quantity": 0.083333,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-lotus|165520.8|1-cup": [
+      {
+        "id": "global-transfer|1066",
+        "mrn": "1066",
+        "name": "Broccoli, Fresh, Florets, 1\"",
+        "quantity": 0.041667,
+        "unit": "pound",
+        "costPerPortion": 0.1652,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|1360",
+        "mrn": "1360",
+        "name": "Celery, Fresh, Bias Cut, 1/4\"",
+        "quantity": 0.041667,
+        "unit": "pound",
+        "costPerPortion": 0.1546,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|1924",
+        "mrn": "1924",
+        "name": "Corn Starch, 100% Pure",
+        "quantity": 0.010417,
+        "unit": "cup",
+        "costPerPortion": 0.01,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.020833,
+        "unit": "cup",
+        "costPerPortion": 0.0183,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4203",
+        "mrn": "4203",
+        "name": "Oil, Sesame",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0237,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|54495",
+        "mrn": "54495",
+        "name": "Onions, Yellow, Fresh, Cubed, 1\"",
+        "quantity": 0.041667,
+        "unit": "pound",
+        "costPerPortion": 0.04,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|8065",
+        "mrn": "8065",
+        "name": "Peppers, Bell, Red, Fresh",
+        "quantity": 0.041667,
+        "unit": "pound",
+        "costPerPortion": 0.405,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7204",
+        "mrn": "7204",
+        "name": "Sauce, Soy, Less Sodium, Gluten Free, Lee Kum Kee, Bulk",
+        "quantity": 0.010417,
+        "unit": "cup",
+        "costPerPortion": 0.015,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7414",
+        "mrn": "7414",
+        "name": "Spice, Sesame Seeds",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.005,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7529",
+        "mrn": "7529",
+        "name": "Tofu, Firm, Cubed, 1\"",
+        "quantity": 0.208333,
+        "unit": "pound",
+        "costPerPortion": 0.2,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-lotus|165520.6|1-cup": [
+      {
+        "id": "global-transfer|1356",
+        "mrn": "1356",
+        "name": "Celery, Fresh, Bias Cut",
+        "quantity": 0.041667,
+        "unit": "pound",
+        "costPerPortion": 0.1546,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|1924",
+        "mrn": "1924",
+        "name": "Corn Starch, 100% Pure",
+        "quantity": 0.010417,
+        "unit": "cup",
+        "costPerPortion": 0.01,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0097,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4155",
+        "mrn": "4155",
+        "name": "Nuts, Cashew, Whole, Salted, John B Sanfilippo",
+        "quantity": 0.083333,
+        "unit": "cup",
+        "costPerPortion": 0.3733,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.083333,
+        "unit": "floz",
+        "costPerPortion": 0.0092,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4228",
+        "mrn": "4228",
+        "name": "Onions, Green, Scallion, Each, Fresh",
+        "quantity": 0.416667,
+        "unit": "each",
+        "costPerPortion": 0.0167,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|54495",
+        "mrn": "54495",
+        "name": "Onions, Yellow, Fresh, Cubed, 1\"",
+        "quantity": 0.041667,
+        "unit": "pound",
+        "costPerPortion": 0.04,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|8065",
+        "mrn": "8065",
+        "name": "Peppers, Bell, Red, Fresh",
+        "quantity": 0.041667,
+        "unit": "pound",
+        "costPerPortion": 0.405,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|49473",
+        "mrn": "49473",
+        "name": "Peppers, Chili, Arbol Pods, D'Allesandro",
+        "quantity": 0.0625,
+        "unit": "ounce",
+        "costPerPortion": 0.005,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7795",
+        "mrn": "7795",
+        "name": "Pork, Tenderloin, Fresh",
+        "quantity": 0.208333,
+        "unit": "pound",
+        "costPerPortion": 0.8306,
+        "glCode": "4111003"
+      },
+      {
+        "id": "global-transfer|7188",
+        "mrn": "7188",
+        "name": "Sauce, Hoisin, Lee Kum Kee",
+        "quantity": 0.010417,
+        "unit": "cup",
+        "costPerPortion": 0.0125,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7397",
+        "mrn": "7397",
+        "name": "Spice, Pepper, White, Ground",
+        "quantity": 0.083333,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-lotus|165520.5|1-cup": [
+      {
+        "id": "global-transfer|107664",
+        "mrn": "107664",
+        "name": "Chicken, Breast, Chunk, Tempura, RTC, Tyson",
+        "quantity": 0.25,
+        "unit": "pound",
+        "costPerPortion": 0.9967,
+        "glCode": "4111003"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.0125,
+        "unit": "cup",
+        "costPerPortion": 0.011,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4241",
+        "mrn": "4241",
+        "name": "Onions, Green, Scallion, Each, Fresh, Bias Cut",
+        "quantity": 0.0125,
+        "unit": "cup",
+        "costPerPortion": 0.0145,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|54495",
+        "mrn": "54495",
+        "name": "Onions, Yellow, Fresh, Cubed, 1\"",
+        "quantity": 0.05,
+        "unit": "pound",
+        "costPerPortion": 0.048,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|55397",
+        "mrn": "55397",
+        "name": "Peppers, Bell, Green, Fresh, Pieces, 1\"",
+        "quantity": 0.05,
+        "unit": "pound",
+        "costPerPortion": 0.0533,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|165999",
+        "mrn": "165999",
+        "name": "Pineapple, Fresh, Cubed, 1/2\"",
+        "quantity": 0.075,
+        "unit": "pound",
+        "costPerPortion": 0.072,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|107151",
+        "mrn": "107151",
+        "name": "Sauce, Sweet & Sour, Passport, Frozen",
+        "quantity": 0.8,
+        "unit": "ounce",
+        "costPerPortion": 0.208,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|85770",
+        "mrn": "85770",
+        "name": "Oil, Canola, Liquid Frying, Frilite",
+        "quantity": 7.81875,
+        "unit": "g",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-lotus|104819.1|8-ounce": [
+      {
+        "id": "global-transfer|1246",
+        "mrn": "1246",
+        "name": "Carrots, Fresh, Bias Cut",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.3333,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.055,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|54495",
+        "mrn": "54495",
+        "name": "Onions, Yellow, Fresh, Cubed, 1\"",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.18,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|55397",
+        "mrn": "55397",
+        "name": "Peppers, Bell, Green, Fresh, Pieces, 1\"",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.6075,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|6996",
+        "mrn": "6996",
+        "name": "Pineapple, Fresh, Cubed",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.084,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7414",
+        "mrn": "7414",
+        "name": "Spice, Sesame Seeds",
+        "quantity": 1,
+        "unit": "tsp",
+        "costPerPortion": 0.02,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|35285",
+        "mrn": "35285",
+        "name": "Tofu, Extra Firm, Including Liquids, Fresh",
+        "quantity": 5,
+        "unit": "ounce",
+        "costPerPortion": 0.8,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-lotus|165520.10|1-cup": [
+      {
+        "id": "global-transfer|1356",
+        "mrn": "1356",
+        "name": "Celery, Fresh, Bias Cut",
+        "quantity": 0.041667,
+        "unit": "pound",
+        "costPerPortion": 0.1546,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3070",
+        "mrn": "3070",
+        "name": "Ginger Root, Fresh, Minced",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0075,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|111721",
+        "mrn": "111721",
+        "name": "Nuts, Peanuts, Dry Roasted, Unsalted",
+        "quantity": 0.041667,
+        "unit": "cup",
+        "costPerPortion": 0.0567,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.020833,
+        "unit": "cup",
+        "costPerPortion": 0.0183,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|28382",
+        "mrn": "28382",
+        "name": "Peas, Sugar Snap, Fresh",
+        "quantity": 0.041667,
+        "unit": "pound",
+        "costPerPortion": 0.2267,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|8065",
+        "mrn": "8065",
+        "name": "Peppers, Bell, Red, Fresh",
+        "quantity": 0.041667,
+        "unit": "pound",
+        "costPerPortion": 0.405,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|149251",
+        "mrn": "149251",
+        "name": "Sauce, Chili Crisp, Mild, Mr. Bing",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0042,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|76664",
+        "mrn": "76664",
+        "name": "Shrimp, 31/40, P&D, Tail-Off, Raw, Slade Gorton, Frozen",
+        "quantity": 0.166667,
+        "unit": "pound",
+        "costPerPortion": 1.067,
+        "glCode": "4111004"
+      }
+    ],
+    "global|amz-lotus|176734|4-ounce": [
+      {
+        "id": "global-transfer|10669",
+        "mrn": "10669",
+        "name": "Beans, Green, French, Fresh",
+        "quantity": 2,
+        "unit": "ounce",
+        "costPerPortion": 0.775,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0046,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.041667,
+        "unit": "tbsp",
+        "costPerPortion": 0.01,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7390",
+        "mrn": "7390",
+        "name": "Spice, Pepper, Black, Ground",
+        "quantity": 0.041667,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-lotus|16882.7|1-cup": [
+      {
+        "id": "global-transfer|7117",
+        "mrn": "7117",
+        "name": "Rice, Brown, Whole Grain, Parboiled, Dry",
+        "quantity": 0.166667,
+        "unit": "cup",
+        "costPerPortion": 0.0733,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7644",
+        "mrn": "7644",
+        "name": "Water, Tap",
+        "quantity": 0.333333,
+        "unit": "cup",
+        "costPerPortion": 0.1733,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-lotus|95884.2|1-2-cup": [
+      {
+        "id": "global-transfer|1161",
+        "mrn": "1161",
+        "name": "Cabbage, Chinese (Napa), Fresh, Shredded",
+        "quantity": 0.238095,
+        "unit": "cup",
+        "costPerPortion": 0.0548,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|1276",
+        "mrn": "1276",
+        "name": "Carrots, Pre-Shredded, Fresh",
+        "quantity": 0.119048,
+        "unit": "cup",
+        "costPerPortion": 0.0619,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|1781",
+        "mrn": "1781",
+        "name": "Cilantro, Fresh, Chopped",
+        "quantity": 0.02381,
+        "unit": "cup",
+        "costPerPortion": 0.0114,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4203",
+        "mrn": "4203",
+        "name": "Oil, Sesame",
+        "quantity": 0.02381,
+        "unit": "tbsp",
+        "costPerPortion": 0.0068,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.035714,
+        "unit": "tsp",
+        "costPerPortion": 0.0029,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7493",
+        "mrn": "7493",
+        "name": "Sugar, Granulated",
+        "quantity": 0.047619,
+        "unit": "tbsp",
+        "costPerPortion": 0.0014,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|116445",
+        "mrn": "116445",
+        "name": "Vinegar, Rice, Seasoned, Marukan",
+        "quantity": 0.02381,
+        "unit": "tsp",
+        "costPerPortion": 0.0006,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|29726",
+        "mrn": "29726",
+        "name": "Radish, Daikon, Fresh",
+        "quantity": 1.142857,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-lotus|5354.11|1-cup": [
+      {
+        "id": "global-transfer|7119",
+        "mrn": "7119",
+        "name": "Rice, Jasmine, Dry",
+        "quantity": 0.166667,
+        "unit": "cup",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-lotus|176731.1|1-2-cup": [
+      {
+        "id": "global-transfer|139394",
+        "mrn": "139394",
+        "name": "Carrots, Rainbow, Fresh, Peeled",
+        "quantity": 0.138889,
+        "unit": "pound",
+        "costPerPortion": 0.2639,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-lotus|86471.11|1-2-cup": [
+      {
+        "id": "global-transfer|139394",
+        "mrn": "139394",
+        "name": "Carrots, Rainbow, Fresh, Peeled",
+        "quantity": 0.230769,
+        "unit": "pound",
+        "costPerPortion": 0.4385,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4203",
+        "mrn": "4203",
+        "name": "Oil, Sesame",
+        "quantity": 0.038462,
+        "unit": "cup",
+        "costPerPortion": 0.1754,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7203",
+        "mrn": "7203",
+        "name": "Sauce, Soy, Kikkoman, Bulk",
+        "quantity": 0.384615,
+        "unit": "ounce",
+        "costPerPortion": 0.2269,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|48223",
+        "mrn": "48223",
+        "name": "Sauce, Soy, Sweet, Asian Food Trading",
+        "quantity": 0.230769,
+        "unit": "ounce",
+        "costPerPortion": 0.06,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|10616",
+        "mrn": "10616",
+        "name": "Spice, Peppercorns, Szechuan",
+        "quantity": 0.076923,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-lotus|165520.13|1-cup": [
+      {
+        "id": "global-transfer|16468",
+        "mrn": "16468",
+        "name": "Carrots, Fresh, Small Diced, 1/4\"",
+        "quantity": 1.333333,
+        "unit": "ounce",
+        "costPerPortion": 0.1583,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|2264",
+        "mrn": "2264",
+        "name": "Egg, Fresh, Large, Cage Free, HFAC, Pasteurized, Deb-El",
+        "quantity": 0.333333,
+        "unit": "each",
+        "costPerPortion": 0.12,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.083333,
+        "unit": "ounce",
+        "costPerPortion": 0.0344,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.166667,
+        "unit": "tbsp",
+        "costPerPortion": 0.0092,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.666667,
+        "unit": "tbsp",
+        "costPerPortion": 0.0367,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0046,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4203",
+        "mrn": "4203",
+        "name": "Oil, Sesame",
+        "quantity": 0.333333,
+        "unit": "tsp",
+        "costPerPortion": 0.0317,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4229",
+        "mrn": "4229",
+        "name": "Onions, Green, Scallion, Bunch, Fresh, Sliced, Thin",
+        "quantity": 0.083333,
+        "unit": "ounce",
+        "costPerPortion": 0.0025,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7954",
+        "mrn": "7954",
+        "name": "Onions, Yellow, Fresh, Small Diced, 1/4\"",
+        "quantity": 1.333333,
+        "unit": "ounce",
+        "costPerPortion": 0.81,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4877",
+        "mrn": "4877",
+        "name": "Peas, Green, Frozen",
+        "quantity": 1.333333,
+        "unit": "ounce",
+        "costPerPortion": 0.4533,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.020833,
+        "unit": "tsp",
+        "costPerPortion": 0.0017,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.041667,
+        "unit": "tsp",
+        "costPerPortion": 0.0033,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.083333,
+        "unit": "tsp",
+        "costPerPortion": 0.0067,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7204",
+        "mrn": "7204",
+        "name": "Sauce, Soy, Less Sodium, Gluten Free, Lee Kum Kee, Bulk",
+        "quantity": 0.166667,
+        "unit": "tbsp",
+        "costPerPortion": 0.015,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-lotus|165520.14|1-cup": [
+      {
+        "id": "global-transfer|120683",
+        "mrn": "120683",
+        "name": "Carrots, Fresh, Shredded",
+        "quantity": 0.055556,
+        "unit": "pound",
+        "costPerPortion": 0.1056,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|1368",
+        "mrn": "1368",
+        "name": "Celery, Fresh, Bias Cut, 1/8\"",
+        "quantity": 0.444444,
+        "unit": "ounce",
+        "costPerPortion": 0.1481,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.055556,
+        "unit": "ounce",
+        "costPerPortion": 0.0229,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3070",
+        "mrn": "3070",
+        "name": "Ginger Root, Fresh, Minced",
+        "quantity": 0.055556,
+        "unit": "ounce",
+        "costPerPortion": 0.0144,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|133884",
+        "mrn": "133884",
+        "name": "Noodles, Lo Mein, Pre-Cooked, Twin Marquis, Frozen",
+        "quantity": 0.277778,
+        "unit": "pound",
+        "costPerPortion": 1.1556,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.027778,
+        "unit": "cup",
+        "costPerPortion": 0.0244,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4225",
+        "mrn": "4225",
+        "name": "Onions, Green, Scallion, Bunch, Fresh",
+        "quantity": 0.111111,
+        "unit": "cup",
+        "costPerPortion": 0.1289,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4216",
+        "mrn": "4216",
+        "name": "Onions, Yellow, Fresh, Julienne Sliced",
+        "quantity": 0.333333,
+        "unit": "ounce",
+        "costPerPortion": 0.02,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7414",
+        "mrn": "7414",
+        "name": "Spice, Sesame Seeds",
+        "quantity": 0.027778,
+        "unit": "cup",
+        "costPerPortion": 0.0267,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|1185",
+        "mrn": "1185",
+        "name": "Cabbage, Green, Fresh, Shredded",
+        "quantity": 0.055556,
+        "unit": "pound",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-lotus|78386.13|1-each": [
+      {
+        "id": "global-transfer|10936",
+        "mrn": "10936",
+        "name": "Egg Roll, Vegetable, 3 oz, Minh, Frozen",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.69,
+        "glCode": "4111003"
+      }
+    ],
+    "global|amz-lotus|141183|1-2-cup": [
+      {
+        "id": "global-transfer|2892",
+        "mrn": "2892",
+        "name": "Garlic Cloves, Peeled, Fresh",
+        "quantity": 0.083333,
+        "unit": "tsp",
+        "costPerPortion": 0.0033,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|95860",
+        "mrn": "95860",
+        "name": "Kale, Lacinato (Dinosaur), Fresh",
+        "quantity": 0.25,
+        "unit": "pound",
+        "costPerPortion": 1.105,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.166667,
+        "unit": "tsp",
+        "costPerPortion": 0.0031,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.083333,
+        "unit": "tsp",
+        "costPerPortion": 0.0067,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7394",
+        "mrn": "7394",
+        "name": "Spice, Pepper, Red Chili, Crushed, Flakes",
+        "quantity": 0.083333,
+        "unit": "tsp",
+        "costPerPortion": 0.0025,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-lotus|143744|1-1-2-ounce": [
+      {
+        "id": "global-transfer|1924",
+        "mrn": "1924",
+        "name": "Corn Starch, 100% Pure",
+        "quantity": 0.090909,
+        "unit": "ounce",
+        "costPerPortion": 0.0164,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.136364,
+        "unit": "ounce",
+        "costPerPortion": 0.0562,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3070",
+        "mrn": "3070",
+        "name": "Ginger Root, Fresh, Minced",
+        "quantity": 0.181818,
+        "unit": "ounce",
+        "costPerPortion": 0.047,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7203",
+        "mrn": "7203",
+        "name": "Sauce, Soy, Kikkoman, Bulk",
+        "quantity": 0.181818,
+        "unit": "ounce",
+        "costPerPortion": 0.1073,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|94358",
+        "mrn": "94358",
+        "name": "Sauce, Soy, Less Sodium, Kikkoman, Bulk",
+        "quantity": 0.272727,
+        "unit": "ounce",
+        "costPerPortion": 0.0655,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|74068",
+        "mrn": "74068",
+        "name": "Sugar, Granulated, Vegan",
+        "quantity": 0.727273,
+        "unit": "ounce",
+        "costPerPortion": 0.1818,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|140952",
+        "mrn": "140952",
+        "name": "Vinegar, Black (Zhenjiang), Koon Chun",
+        "quantity": 0.727273,
+        "unit": "ounce",
+        "costPerPortion": 0.2182,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 1.272727,
+        "unit": "g",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7247",
+        "mrn": "7247",
+        "name": "Seasoning, Chinese Five Spice, McCormick",
+        "quantity": 0.272727,
+        "unit": "g",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|24866",
+        "mrn": "24866",
+        "name": "Wine, Rice (Shaoxing)",
+        "quantity": 0.181818,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-lotus|31693.4|1-1-2-floz": [
+      {
+        "id": "global-transfer|3434",
+        "mrn": "3434",
+        "name": "Juice, Apple, 100%",
+        "quantity": 0.01,
+        "unit": "cup",
+        "costPerPortion": 0.0032,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3636",
+        "mrn": "3636",
+        "name": "Juice, Pineapple, 100%, Canned",
+        "quantity": 0.005,
+        "unit": "gallon",
+        "costPerPortion": 0.048,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3724",
+        "mrn": "3724",
+        "name": "Ketchup, Pouch Pack, KraftHeinz, Bulk",
+        "quantity": 0.135,
+        "unit": "cup",
+        "costPerPortion": 0.0864,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|22802",
+        "mrn": "22802",
+        "name": "Sauce, Steak, A-1",
+        "quantity": 0.025,
+        "unit": "floz",
+        "costPerPortion": 0.006,
+        "glCode": "4111003"
+      },
+      {
+        "id": "global-transfer|7371",
+        "mrn": "7371",
+        "name": "Spice, Garlic Powder",
+        "quantity": 0.00125,
+        "unit": "cup",
+        "costPerPortion": 0.0024,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7374",
+        "mrn": "7374",
+        "name": "Spice, Ginger, Ground",
+        "quantity": 0.01,
+        "unit": "tbsp",
+        "costPerPortion": 0.0016,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7380",
+        "mrn": "7380",
+        "name": "Spice, Mustard, Ground, Dry",
+        "quantity": 0.00125,
+        "unit": "cup",
+        "costPerPortion": 0.0012,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|10611",
+        "mrn": "10611",
+        "name": "Vinegar, Rice Wine, Unseasoned",
+        "quantity": 0.01,
+        "unit": "cup",
+        "costPerPortion": 0.008,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7647",
+        "mrn": "7647",
+        "name": "Water, Warm",
+        "quantity": 0.01,
+        "unit": "cup",
+        "costPerPortion": 0.0052,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-lotus|193093|1-1-2-oz-portion": [
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.09375,
+        "unit": "ounce",
+        "costPerPortion": 0.0387,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.03125,
+        "unit": "tbsp",
+        "costPerPortion": 0.0017,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4235",
+        "mrn": "4235",
+        "name": "Onions, Green, Scallion, Bunch, Fresh, Minced",
+        "quantity": 0.023438,
+        "unit": "cup",
+        "costPerPortion": 0.0272,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|149251",
+        "mrn": "149251",
+        "name": "Sauce, Chili Crisp, Mild, Mr. Bing",
+        "quantity": 0.125,
+        "unit": "cup",
+        "costPerPortion": 0.095,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|48223",
+        "mrn": "48223",
+        "name": "Sauce, Soy, Sweet, Asian Food Trading",
+        "quantity": 0.03125,
+        "unit": "cup",
+        "costPerPortion": 0.015,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-house-of-teriyaki|83244.2|6-ounce": [
+      {
+        "id": "global-transfer|20558",
+        "mrn": "20558",
+        "name": "Beef, Sirloin, Flap Meat, Raw",
+        "quantity": 6,
+        "unit": "ounce",
+        "costPerPortion": 2.22,
+        "glCode": "4111003"
+      }
+    ],
+    "global|amz-house-of-teriyaki|83244.7|6-oz-portion": [
+      {
+        "id": "global-transfer|1744",
+        "mrn": "1744",
+        "name": "Chicken, Thigh, Boneless, Skinless",
+        "quantity": 0.6,
+        "unit": "pound",
+        "costPerPortion": 4.032,
+        "glCode": "4111003"
+      }
+    ],
+    "global|amz-house-of-teriyaki|107142.158|5-ounce": [],
+    "global|amz-house-of-teriyaki|107142.156|6-ounce": [
+      {
+        "id": "global-transfer|165977",
+        "mrn": "165977",
+        "name": "Mushrooms, Portobello, Fresh, Sliced, 1/2\"",
+        "quantity": 0.241667,
+        "unit": "pound",
+        "costPerPortion": 0.928,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4241",
+        "mrn": "4241",
+        "name": "Onions, Green, Scallion, Each, Fresh, Bias Cut",
+        "quantity": 0.033333,
+        "unit": "cup",
+        "costPerPortion": 0.0387,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|145914",
+        "mrn": "145914",
+        "name": "Tofu, Extra Firm, Fresh, Drained",
+        "quantity": 0.2,
+        "unit": "pound",
+        "costPerPortion": 0.336,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-house-of-teriyaki|16882.7|1-cup": [
+      {
+        "id": "global-transfer|7117",
+        "mrn": "7117",
+        "name": "Rice, Brown, Whole Grain, Parboiled, Dry",
+        "quantity": 0.166667,
+        "unit": "cup",
+        "costPerPortion": 0.0733,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7644",
+        "mrn": "7644",
+        "name": "Water, Tap",
+        "quantity": 0.333333,
+        "unit": "cup",
+        "costPerPortion": 0.1733,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-house-of-teriyaki|76874|4-ounce": [
+      {
+        "id": "global-transfer|1253",
+        "mrn": "1253",
+        "name": "Carrots, Fresh, Grated",
+        "quantity": 0.1,
+        "unit": "cup",
+        "costPerPortion": 0.064,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|1781",
+        "mrn": "1781",
+        "name": "Cilantro, Fresh, Chopped",
+        "quantity": 0.05,
+        "unit": "cup",
+        "costPerPortion": 0.024,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|50595",
+        "mrn": "50595",
+        "name": "Cucumbers, English, Fresh, Sliced, Thin, on Bias",
+        "quantity": 0.3,
+        "unit": "each",
+        "costPerPortion": 0.099,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|3885",
+        "mrn": "3885",
+        "name": "Mint, Fresh, Chopped",
+        "quantity": 0.025,
+        "unit": "cup",
+        "costPerPortion": 0.228,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|53211",
+        "mrn": "53211",
+        "name": "Peppers, Chili, Fresno, Red, Fresh, Sliced, Thin",
+        "quantity": 0.025,
+        "unit": "cup",
+        "costPerPortion": 0.02,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.2,
+        "unit": "tsp",
+        "costPerPortion": 0.016,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7414",
+        "mrn": "7414",
+        "name": "Spice, Sesame Seeds",
+        "quantity": 0.1,
+        "unit": "tbsp",
+        "costPerPortion": 0.006,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|10621",
+        "mrn": "10621",
+        "name": "Spice, Sesame Seeds, Black",
+        "quantity": 0.1,
+        "unit": "tbsp",
+        "costPerPortion": 0.006,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|74068",
+        "mrn": "74068",
+        "name": "Sugar, Granulated, Vegan",
+        "quantity": 0.1,
+        "unit": "cup",
+        "costPerPortion": 0.048,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|116445",
+        "mrn": "116445",
+        "name": "Vinegar, Rice, Seasoned, Marukan",
+        "quantity": 0.2,
+        "unit": "cup",
+        "costPerPortion": 0.256,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7273",
+        "mrn": "7273",
+        "name": "Shallots, Peeled, Fresh, Minced",
+        "quantity": 0.1,
+        "unit": "each",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-house-of-teriyaki|5354.11|1-cup": [
+      {
+        "id": "global-transfer|7119",
+        "mrn": "7119",
+        "name": "Rice, Jasmine, Dry",
+        "quantity": 0.166667,
+        "unit": "cup",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-house-of-teriyaki|4911.4|1-2-cup": [
+      {
+        "id": "global-transfer|1063",
+        "mrn": "1063",
+        "name": "Broccoli, Fresh",
+        "quantity": 0.32,
+        "unit": "pound",
+        "costPerPortion": 1.2688,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.02,
+        "unit": "tbsp",
+        "costPerPortion": 0.0048,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7390",
+        "mrn": "7390",
+        "name": "Spice, Pepper, Black, Ground",
+        "quantity": 0.04,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-house-of-teriyaki|200583|1-2-cup": [
+      {
+        "id": "global-transfer|3542",
+        "mrn": "3542",
+        "name": "Juice, Lime, Fresh Pressed",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0042,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4203",
+        "mrn": "4203",
+        "name": "Oil, Sesame",
+        "quantity": 0.166667,
+        "unit": "tbsp",
+        "costPerPortion": 0.0475,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4250",
+        "mrn": "4250",
+        "name": "Onions, Green, Scallion, Each, Fresh, Sliced, Thin",
+        "quantity": 0.020833,
+        "unit": "cup",
+        "costPerPortion": 0.0242,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.02,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7204",
+        "mrn": "7204",
+        "name": "Sauce, Soy, Less Sodium, Gluten Free, Lee Kum Kee, Bulk",
+        "quantity": 0.041667,
+        "unit": "cup",
+        "costPerPortion": 0.06,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|15887",
+        "mrn": "15887",
+        "name": "Seaweed, Nori, Sheet, Dried",
+        "quantity": 0.041667,
+        "unit": "each",
+        "costPerPortion": 0.0017,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7414",
+        "mrn": "7414",
+        "name": "Spice, Sesame Seeds",
+        "quantity": 0.166667,
+        "unit": "tbsp",
+        "costPerPortion": 0.01,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7493",
+        "mrn": "7493",
+        "name": "Sugar, Granulated",
+        "quantity": 0.166667,
+        "unit": "tbsp",
+        "costPerPortion": 0.005,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|116445",
+        "mrn": "116445",
+        "name": "Vinegar, Rice, Seasoned, Marukan",
+        "quantity": 0.083333,
+        "unit": "cup",
+        "costPerPortion": 0.1067,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|179991",
+        "mrn": "179991",
+        "name": "Cucumber, Persian, Fresh",
+        "quantity": 0.416667,
+        "unit": "pound",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-house-of-teriyaki|83251|3-ounce": [
+      {
+        "id": "global-transfer|1253",
+        "mrn": "1253",
+        "name": "Carrots, Fresh, Grated",
+        "quantity": 0.153846,
+        "unit": "ounce",
+        "costPerPortion": 0.0183,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|53304",
+        "mrn": "53304",
+        "name": "Cabbage, Red, Fresh, Shredded",
+        "quantity": 0.115385,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3769",
+        "mrn": "3769",
+        "name": "Lettuce, Iceberg, Fresh, Chopped",
+        "quantity": 1.692308,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-house-of-teriyaki|83251.2|1-serving-s": [],
+    "global|amz-house-of-teriyaki|112463|4-ounce": [
+      {
+        "id": "global-transfer|1190",
+        "mrn": "1190",
+        "name": "Cabbage, Chinese (Napa), Fresh, Cubed, 1\"",
+        "quantity": 0.033898,
+        "unit": "pound",
+        "costPerPortion": 0.0325,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|1246",
+        "mrn": "1246",
+        "name": "Carrots, Fresh, Bias Cut",
+        "quantity": 0.012712,
+        "unit": "pound",
+        "costPerPortion": 0.0242,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.006356,
+        "unit": "cup",
+        "costPerPortion": 0.0118,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3070",
+        "mrn": "3070",
+        "name": "Ginger Root, Fresh, Minced",
+        "quantity": 0.006356,
+        "unit": "cup",
+        "costPerPortion": 0.0092,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|65839",
+        "mrn": "65839",
+        "name": "Noodles, Yakisoba, Pre-Cooked, Fortune, Jsl Food, Frozen",
+        "quantity": 0.169492,
+        "unit": "pound",
+        "costPerPortion": 0.2644,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.016949,
+        "unit": "tbsp",
+        "costPerPortion": 0.0009,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4203",
+        "mrn": "4203",
+        "name": "Oil, Sesame",
+        "quantity": 0.050847,
+        "unit": "floz",
+        "costPerPortion": 0.029,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-house-of-teriyaki|81555.7|1-ounce": [
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.1875,
+        "unit": "tbsp",
+        "costPerPortion": 0.0218,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3070",
+        "mrn": "3070",
+        "name": "Ginger Root, Fresh, Minced",
+        "quantity": 0.28125,
+        "unit": "tbsp",
+        "costPerPortion": 0.0253,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3190",
+        "mrn": "3190",
+        "name": "Honey, Bulk",
+        "quantity": 0.1875,
+        "unit": "ounce",
+        "costPerPortion": 0.0197,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|15323",
+        "mrn": "15323",
+        "name": "Oil, Olive, Extra Virgin",
+        "quantity": 0.375,
+        "unit": "ounce",
+        "costPerPortion": 0.06,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|51464",
+        "mrn": "51464",
+        "name": "Sauce, Soy, Tamari, Gluten Free, Kikkoman, Bulk",
+        "quantity": 0.375,
+        "unit": "ounce",
+        "costPerPortion": 0.2963,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-house-of-teriyaki|143744|2-ounce": [
+      {
+        "id": "global-transfer|1924",
+        "mrn": "1924",
+        "name": "Corn Starch, 100% Pure",
+        "quantity": 0.090909,
+        "unit": "ounce",
+        "costPerPortion": 0.0164,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.136364,
+        "unit": "ounce",
+        "costPerPortion": 0.0562,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3070",
+        "mrn": "3070",
+        "name": "Ginger Root, Fresh, Minced",
+        "quantity": 0.181818,
+        "unit": "ounce",
+        "costPerPortion": 0.047,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7203",
+        "mrn": "7203",
+        "name": "Sauce, Soy, Kikkoman, Bulk",
+        "quantity": 0.181818,
+        "unit": "ounce",
+        "costPerPortion": 0.1073,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|94358",
+        "mrn": "94358",
+        "name": "Sauce, Soy, Less Sodium, Kikkoman, Bulk",
+        "quantity": 0.272727,
+        "unit": "ounce",
+        "costPerPortion": 0.0655,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|74068",
+        "mrn": "74068",
+        "name": "Sugar, Granulated, Vegan",
+        "quantity": 0.727273,
+        "unit": "ounce",
+        "costPerPortion": 0.1818,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|140952",
+        "mrn": "140952",
+        "name": "Vinegar, Black (Zhenjiang), Koon Chun",
+        "quantity": 0.727273,
+        "unit": "ounce",
+        "costPerPortion": 0.2182,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 1.272727,
+        "unit": "g",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7247",
+        "mrn": "7247",
+        "name": "Seasoning, Chinese Five Spice, McCormick",
+        "quantity": 0.272727,
+        "unit": "g",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|24866",
+        "mrn": "24866",
+        "name": "Wine, Rice (Shaoxing)",
+        "quantity": 0.181818,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-house-of-teriyaki|83240|2-floz": [
+      {
+        "id": "global-transfer|15491",
+        "mrn": "15491",
+        "name": "Paste, Chili, Sambal Oelek, Huy Fong",
+        "quantity": 0.5,
+        "unit": "floz",
+        "costPerPortion": 0.075,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|114620",
+        "mrn": "114620",
+        "name": "Sauce, Sriracha, Franks",
+        "quantity": 0.25,
+        "unit": "floz",
+        "costPerPortion": 0.045,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|27943",
+        "mrn": "27943",
+        "name": "Sauce, Sweet Chili, Franks RedHot",
+        "quantity": 0.25,
+        "unit": "floz",
+        "costPerPortion": 0.0525,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-house-of-teriyaki|193093|2-oz-portion": [
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.09375,
+        "unit": "ounce",
+        "costPerPortion": 0.0387,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.03125,
+        "unit": "tbsp",
+        "costPerPortion": 0.0017,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4235",
+        "mrn": "4235",
+        "name": "Onions, Green, Scallion, Bunch, Fresh, Minced",
+        "quantity": 0.023438,
+        "unit": "cup",
+        "costPerPortion": 0.0272,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|149251",
+        "mrn": "149251",
+        "name": "Sauce, Chili Crisp, Mild, Mr. Bing",
+        "quantity": 0.125,
+        "unit": "cup",
+        "costPerPortion": 0.095,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|48223",
+        "mrn": "48223",
+        "name": "Sauce, Soy, Sweet, Asian Food Trading",
+        "quantity": 0.03125,
+        "unit": "cup",
+        "costPerPortion": 0.015,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-house-of-teriyaki|83233|2-ounce": [
+      {
+        "id": "global-transfer|1924",
+        "mrn": "1924",
+        "name": "Corn Starch, 100% Pure",
+        "quantity": 0.074074,
+        "unit": "ounce",
+        "costPerPortion": 0.0133,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4203",
+        "mrn": "4203",
+        "name": "Oil, Sesame",
+        "quantity": 0.259259,
+        "unit": "g",
+        "costPerPortion": 0.0011,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7203",
+        "mrn": "7203",
+        "name": "Sauce, Soy, Kikkoman, Bulk",
+        "quantity": 0.691358,
+        "unit": "ounce",
+        "costPerPortion": 0.4079,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7492",
+        "mrn": "7492",
+        "name": "Sugar, Brown, Light",
+        "quantity": 0.888889,
+        "unit": "ounce",
+        "costPerPortion": 0.3289,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7643",
+        "mrn": "7643",
+        "name": "Water, Cold",
+        "quantity": 0.296296,
+        "unit": "ounce",
+        "costPerPortion": 0.0889,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7643",
+        "mrn": "7643",
+        "name": "Water, Cold",
+        "quantity": 0.074074,
+        "unit": "ounce",
+        "costPerPortion": 0.0222,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|48655",
+        "mrn": "48655",
+        "name": "Wine, Cooking, Mirin (Sweet Rice), Kikkoman",
+        "quantity": 0.166667,
+        "unit": "ounce",
+        "costPerPortion": 0.0433,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-smokehouse-bbq|44966|4-each": [
+      {
+        "id": "global-transfer|4279",
+        "mrn": "4279",
+        "name": "Orange, Peel, Fresh, Grated, Fine",
+        "quantity": 0.166667,
+        "unit": "tbsp",
+        "costPerPortion": 0.015,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.166667,
+        "unit": "tsp",
+        "costPerPortion": 0.0133,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|16044",
+        "mrn": "16044",
+        "name": "Sauce, Barbecue, Mississippi Honey, Cattlemen's",
+        "quantity": 0.166667,
+        "unit": "cup",
+        "costPerPortion": 0.16,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7393",
+        "mrn": "7393",
+        "name": "Spice, Pepper, Cayenne, Ground",
+        "quantity": 0.333333,
+        "unit": "tsp",
+        "costPerPortion": 0.0167,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7492",
+        "mrn": "7492",
+        "name": "Sugar, Brown, Light",
+        "quantity": 0.333333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0167,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|14139",
+        "mrn": "14139",
+        "name": "Pork, Back Ribs, 2.5 Down, Raw",
+        "quantity": 0.666667,
+        "unit": "pound",
+        "costPerPortion": 0,
+        "glCode": "4111003"
+      },
+      {
+        "id": "global-transfer|7367",
+        "mrn": "7367",
+        "name": "Spice, Cumin, Ground",
+        "quantity": 0.333333,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7387",
+        "mrn": "7387",
+        "name": "Spice, Paprika, Ground",
+        "quantity": 0.166667,
+        "unit": "tbsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7390",
+        "mrn": "7390",
+        "name": "Spice, Pepper, Black, Ground",
+        "quantity": 0.333333,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-smokehouse-bbq|36688.2|5-oz-portion": [],
+    "global|amz-smokehouse-bbq|171040|5-oz-portion": [
+      {
+        "id": "global-transfer|4138",
+        "mrn": "4138",
+        "name": "Mustard, Yellow, French's",
+        "quantity": 0.125,
+        "unit": "tbsp",
+        "costPerPortion": 0.0037,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.0625,
+        "unit": "tsp",
+        "costPerPortion": 0.005,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7242",
+        "mrn": "7242",
+        "name": "Seasoning, Cajun, McCormick",
+        "quantity": 0.125,
+        "unit": "tbsp",
+        "costPerPortion": 0.0075,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|16255",
+        "mrn": "16255",
+        "name": "Spice, Paprika, Smoked",
+        "quantity": 0.125,
+        "unit": "tbsp",
+        "costPerPortion": 0.015,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7637",
+        "mrn": "7637",
+        "name": "Vinegar, White",
+        "quantity": 0.25,
+        "unit": "tbsp",
+        "costPerPortion": 0.005,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|1744",
+        "mrn": "1744",
+        "name": "Chicken, Thigh, Boneless, Skinless",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0,
+        "glCode": "4111003"
+      },
+      {
+        "id": "global-transfer|7391",
+        "mrn": "7391",
+        "name": "Spice, Pepper, Black, Ground, Fine",
+        "quantity": 0.0625,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-smokehouse-bbq|170726|6-ounce": [],
+    "global|amz-smokehouse-bbq|4651.6|1-each": [
+      {
+        "id": "global-transfer|1730",
+        "mrn": "1730",
+        "name": "Chicken, Quarter, 8.44 oz, Raw",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.47,
+        "glCode": "4111003"
+      },
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.010417,
+        "unit": "ounce",
+        "costPerPortion": 0.0043,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3190",
+        "mrn": "3190",
+        "name": "Honey, Bulk",
+        "quantity": 0.0625,
+        "unit": "tsp",
+        "costPerPortion": 0.0042,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.013889,
+        "unit": "cup",
+        "costPerPortion": 0.0122,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4271",
+        "mrn": "4271",
+        "name": "Oregano, Fresh, Chopped",
+        "quantity": 0.041667,
+        "unit": "tsp",
+        "costPerPortion": 0.0017,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|16043",
+        "mrn": "16043",
+        "name": "Sauce, Barbecue, Kansas City Classic",
+        "quantity": 1,
+        "unit": "floz",
+        "costPerPortion": 0.11,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7973",
+        "mrn": "7973",
+        "name": "Sauce, Hot, Original, Franks RedHot",
+        "quantity": 0.020833,
+        "unit": "tsp",
+        "costPerPortion": 0.0004,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7137",
+        "mrn": "7137",
+        "name": "Rosemary, Fresh, Chopped",
+        "quantity": 0.041667,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-smokehouse-bbq|44948.1|5-ounce": [
+      {
+        "id": "global-transfer|7696",
+        "mrn": "7696",
+        "name": "Peppers, Chipotle in Adobo Sauce, Embasa, Canned, Minced",
+        "quantity": 0.09375,
+        "unit": "ounce",
+        "costPerPortion": 0.0488,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7357",
+        "mrn": "7357",
+        "name": "Spice, Chili Powder, Light, McCormick",
+        "quantity": 0.666667,
+        "unit": "g",
+        "costPerPortion": 0.0076,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7371",
+        "mrn": "7371",
+        "name": "Spice, Garlic Powder",
+        "quantity": 1.638889,
+        "unit": "g",
+        "costPerPortion": 0.0188,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7380",
+        "mrn": "7380",
+        "name": "Spice, Mustard, Ground, Dry",
+        "quantity": 0.361111,
+        "unit": "g",
+        "costPerPortion": 0.0051,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7387",
+        "mrn": "7387",
+        "name": "Spice, Paprika, Ground",
+        "quantity": 1.166667,
+        "unit": "g",
+        "costPerPortion": 0.0337,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7492",
+        "mrn": "7492",
+        "name": "Sugar, Brown, Light",
+        "quantity": 0.3125,
+        "unit": "ounce",
+        "costPerPortion": 0.1156,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7643",
+        "mrn": "7643",
+        "name": "Water, Cold",
+        "quantity": 0.697917,
+        "unit": "ounce",
+        "costPerPortion": 0.2094,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.15625,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|84566",
+        "mrn": "84566",
+        "name": "Pork, Shoulder, Butt, Boneless, Vac Plus, Premium, Raw",
+        "quantity": 0.333333,
+        "unit": "pound",
+        "costPerPortion": 0,
+        "glCode": "4111003"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.111111,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7367",
+        "mrn": "7367",
+        "name": "Spice, Cumin, Ground",
+        "quantity": 0.5,
+        "unit": "g",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7390",
+        "mrn": "7390",
+        "name": "Spice, Pepper, Black, Ground",
+        "quantity": 1.166667,
+        "unit": "g",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-smokehouse-bbq|135703|1-sandwich": [
+      {
+        "id": "global-transfer|126676",
+        "mrn": "126676",
+        "name": "Bun, Potato, Lyon, 2.5 oz",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.62,
+        "glCode": "4111010"
+      },
+      {
+        "id": "global-transfer|130394",
+        "mrn": "130394",
+        "name": "Jackfruit, Green, Dragonfly, Canned, Drained, Rinsed",
+        "quantity": 0.3,
+        "unit": "pound",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|16043",
+        "mrn": "16043",
+        "name": "Sauce, Barbecue, Kansas City Classic",
+        "quantity": 3.2,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-smokehouse-bbq|5365.6|5-ounce": [
+      {
+        "id": "global-transfer|7229",
+        "mrn": "7229",
+        "name": "Sausage, Kielbasa (Polish), Rope, Jimmy Dean",
+        "quantity": 0.25,
+        "unit": "pound",
+        "costPerPortion": 1.105,
+        "glCode": "4111003"
+      }
+    ],
+    "global|amz-smokehouse-bbq|143209|1-sandwich": [
+      {
+        "id": "global-transfer|116038",
+        "mrn": "116038",
+        "name": "Chips, Corn, Fritos, Bulk",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.18,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|42827",
+        "mrn": "42827",
+        "name": "Pickles, Bread & Butter Chips, Bay Valley",
+        "quantity": 14,
+        "unit": "g",
+        "costPerPortion": 0.1185,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|112508",
+        "mrn": "112508",
+        "name": "Roll, Potato, 3 oz, Macrina",
+        "quantity": 3,
+        "unit": "ounce",
+        "costPerPortion": 0.46,
+        "glCode": "4111010"
+      }
+    ],
+    "global|amz-smokehouse-bbq|178230|5-ounce": [
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.666667,
+        "unit": "each",
+        "costPerPortion": 0.7,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|129483",
+        "mrn": "129483",
+        "name": "Ketchup, Organic, Portland",
+        "quantity": 0.055556,
+        "unit": "cup",
+        "costPerPortion": 0.1667,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|15323",
+        "mrn": "15323",
+        "name": "Oil, Olive, Extra Virgin",
+        "quantity": 0.333333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0567,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4215",
+        "mrn": "4215",
+        "name": "Onions, Yellow, Fresh, Minced",
+        "quantity": 0.333333,
+        "unit": "each",
+        "costPerPortion": 0.1167,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.166667,
+        "unit": "tsp",
+        "costPerPortion": 0.0133,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|127742",
+        "mrn": "127742",
+        "name": "Sauce, Soy, Tamari, Low Sodium, Gluten Free, Kikkoman",
+        "quantity": 0.083333,
+        "unit": "cup",
+        "costPerPortion": 0.04,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7802",
+        "mrn": "7802",
+        "name": "Spice, Fennel, Seed",
+        "quantity": 0.333333,
+        "unit": "tsp",
+        "costPerPortion": 0.0036,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7491",
+        "mrn": "7491",
+        "name": "Sugar, Brown, Dark",
+        "quantity": 0.083333,
+        "unit": "cup",
+        "costPerPortion": 0.0667,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|55883",
+        "mrn": "55883",
+        "name": "Peppers, Chili, Fresno, Red, Fresh, Seeded, Chopped, Fine",
+        "quantity": 0.333333,
+        "unit": "each",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7037",
+        "mrn": "7037",
+        "name": "Pork, Spareribs, St. Louis Style, Raw",
+        "quantity": 0.666667,
+        "unit": "pound",
+        "costPerPortion": 0,
+        "glCode": "4111003"
+      },
+      {
+        "id": "global-transfer|7390",
+        "mrn": "7390",
+        "name": "Spice, Pepper, Black, Ground",
+        "quantity": 0.166667,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-smokehouse-bbq|87937|5-ounce": [
+      {
+        "id": "global-transfer|35285",
+        "mrn": "35285",
+        "name": "Tofu, Extra Firm, Including Liquids, Fresh",
+        "quantity": 0.25,
+        "unit": "pound",
+        "costPerPortion": 0.64,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-smokehouse-bbq|201508|5-ounce": [],
+    "global|amz-smokehouse-bbq|18314|4-oz-portion": [
+      {
+        "id": "global-transfer|85813",
+        "mrn": "85813",
+        "name": "Beans, Baked, Vegetarian, Reduced Sodium, Bush's Best, Canned",
+        "quantity": 0.166667,
+        "unit": "pound",
+        "costPerPortion": 0.3,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4179",
+        "mrn": "4179",
+        "name": "Onions, Yellow, Fresh, Chopped, Fine",
+        "quantity": 0.083333,
+        "unit": "cup",
+        "costPerPortion": 0.0267,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|16043",
+        "mrn": "16043",
+        "name": "Sauce, Barbecue, Kansas City Classic",
+        "quantity": 0.083333,
+        "unit": "cup",
+        "costPerPortion": 0.0733,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7380",
+        "mrn": "7380",
+        "name": "Spice, Mustard, Ground, Dry",
+        "quantity": 0.010417,
+        "unit": "cup",
+        "costPerPortion": 0.01,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7492",
+        "mrn": "7492",
+        "name": "Sugar, Brown, Light",
+        "quantity": 0.010417,
+        "unit": "cup",
+        "costPerPortion": 0.0083,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-smokehouse-bbq|156388|1-2-cup": [
+      {
+        "id": "global-transfer|1253",
+        "mrn": "1253",
+        "name": "Carrots, Fresh, Grated",
+        "quantity": 0.166667,
+        "unit": "ounce",
+        "costPerPortion": 0.0198,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|71089",
+        "mrn": "71089",
+        "name": "Mayonnaise, Deluxe, Signature, Kraft, Bulk",
+        "quantity": 0.083333,
+        "unit": "cup",
+        "costPerPortion": 0.12,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.083333,
+        "unit": "tsp",
+        "costPerPortion": 0.0067,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7493",
+        "mrn": "7493",
+        "name": "Sugar, Granulated",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0025,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7629",
+        "mrn": "7629",
+        "name": "Vinegar, Apple Cider",
+        "quantity": 0.25,
+        "unit": "tbsp",
+        "costPerPortion": 0.01,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|1185",
+        "mrn": "1185",
+        "name": "Cabbage, Green, Fresh, Shredded",
+        "quantity": 0.166667,
+        "unit": "pound",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|53304",
+        "mrn": "53304",
+        "name": "Cabbage, Red, Fresh, Shredded",
+        "quantity": 0.166667,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7390",
+        "mrn": "7390",
+        "name": "Spice, Pepper, Black, Ground",
+        "quantity": 0.083333,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-smokehouse-bbq|183070.5|1-2-cup": [],
+    "global|amz-smokehouse-bbq|27385.2|4-ounce": [
+      {
+        "id": "global-transfer|652",
+        "mrn": "652",
+        "name": "Beans, Lima, Baby, Frozen",
+        "quantity": 0.178571,
+        "unit": "cup",
+        "costPerPortion": 0.1143,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|1166",
+        "mrn": "1166",
+        "name": "Butter, Salted, Softened",
+        "quantity": 0.107143,
+        "unit": "cup",
+        "costPerPortion": 0.1371,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|15813",
+        "mrn": "15813",
+        "name": "Corn, Whole Kernel, Cut, Fresh",
+        "quantity": 0.107143,
+        "unit": "cup",
+        "costPerPortion": 0.0686,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.035714,
+        "unit": "tbsp",
+        "costPerPortion": 0.0042,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4257",
+        "mrn": "4257",
+        "name": "Onions, Red, Fresh, Diced",
+        "quantity": 0.035714,
+        "unit": "each",
+        "costPerPortion": 0.0014,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7410",
+        "mrn": "7410",
+        "name": "Salt, Bulk",
+        "quantity": 0.035714,
+        "unit": "tbsp",
+        "costPerPortion": 0.0086,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7493",
+        "mrn": "7493",
+        "name": "Sugar, Granulated",
+        "quantity": 0.017857,
+        "unit": "cup",
+        "costPerPortion": 0.0086,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7545",
+        "mrn": "7545",
+        "name": "Tomatoes, Fresh, Diced",
+        "quantity": 0.035714,
+        "unit": "pound",
+        "costPerPortion": 0.067,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7390",
+        "mrn": "7390",
+        "name": "Spice, Pepper, Black, Ground",
+        "quantity": 0.008929,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-smokehouse-bbq|140479|4-ounce": [
+      {
+        "id": "global-transfer|338",
+        "mrn": "338",
+        "name": "Baking Powder",
+        "quantity": 0.06,
+        "unit": "tbsp",
+        "costPerPortion": 0.0066,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|1158",
+        "mrn": "1158",
+        "name": "Butter, Salted, Melted",
+        "quantity": 0.02,
+        "unit": "pound",
+        "costPerPortion": 0.0512,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|1926",
+        "mrn": "1926",
+        "name": "Cornmeal, Plain, Yellow",
+        "quantity": 0.04,
+        "unit": "pound",
+        "costPerPortion": 0.0441,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|2264",
+        "mrn": "2264",
+        "name": "Egg, Fresh, Large, Cage Free, HFAC, Pasteurized, Deb-El",
+        "quantity": 0.16,
+        "unit": "each",
+        "costPerPortion": 0.0576,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|2690",
+        "mrn": "2690",
+        "name": "Flour, All Purpose",
+        "quantity": 0.08,
+        "unit": "pound",
+        "costPerPortion": 0.576,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|3878",
+        "mrn": "3878",
+        "name": "Milk, Lowfat, 2%, Bulk",
+        "quantity": 0.04,
+        "unit": "quart",
+        "costPerPortion": 0.0688,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.04,
+        "unit": "tsp",
+        "costPerPortion": 0.0032,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7493",
+        "mrn": "7493",
+        "name": "Sugar, Granulated",
+        "quantity": 0.04,
+        "unit": "pound",
+        "costPerPortion": 0.1365,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|174705",
+        "mrn": "174705",
+        "name": "Oil, Cooking Spray, Grilling, Pam",
+        "quantity": 0.08,
+        "unit": "spray (1 sec/spray)",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-smokehouse-bbq|34041.1|1-each": [
+      {
+        "id": "global-transfer|16111",
+        "mrn": "16111",
+        "name": "Corn, on Cob, Husk Removed, Fresh",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 0.2,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4208",
+        "mrn": "4208",
+        "name": "Oil, Canola, 100%, Gem",
+        "quantity": 0.01,
+        "unit": "cup",
+        "costPerPortion": 4.0128,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.05,
+        "unit": "tsp",
+        "costPerPortion": 0.004,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7390",
+        "mrn": "7390",
+        "name": "Spice, Pepper, Black, Ground",
+        "quantity": 0.08,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-smokehouse-bbq|116037|2-each": [
+      {
+        "id": "global-transfer|160614",
+        "mrn": "160614",
+        "name": "Mix, Cornbread, Southern Style, Gold Medal, Dry",
+        "quantity": 0.104167,
+        "unit": "pound",
+        "costPerPortion": 0.5833,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4215",
+        "mrn": "4215",
+        "name": "Onions, Yellow, Fresh, Minced",
+        "quantity": 0.166667,
+        "unit": "ounce",
+        "costPerPortion": 0.005,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.041667,
+        "unit": "tsp",
+        "costPerPortion": 0.0033,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7346",
+        "mrn": "7346",
+        "name": "Sour Cream, Real, Daisy",
+        "quantity": 0.416667,
+        "unit": "ounce",
+        "costPerPortion": 0.2354,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|7373",
+        "mrn": "7373",
+        "name": "Spice, Garlic, Granulated",
+        "quantity": 0.083333,
+        "unit": "tsp",
+        "costPerPortion": 0.0033,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|16255",
+        "mrn": "16255",
+        "name": "Spice, Paprika, Smoked",
+        "quantity": 0.083333,
+        "unit": "tsp",
+        "costPerPortion": 0.0047,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7393",
+        "mrn": "7393",
+        "name": "Spice, Pepper, Cayenne, Ground",
+        "quantity": 0.041667,
+        "unit": "tsp",
+        "costPerPortion": 0.0021,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7644",
+        "mrn": "7644",
+        "name": "Water, Tap",
+        "quantity": 0.666667,
+        "unit": "floz",
+        "costPerPortion": 0.0146,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-smokehouse-bbq|34989.6|1-2-cup": [
+      {
+        "id": "global-transfer|1634",
+        "mrn": "1634",
+        "name": "Cheese, Cheddar, Mild, Pre-Shredded, Feathered, Great Lakes",
+        "quantity": 0.05,
+        "unit": "cup",
+        "costPerPortion": 0.04,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|81134",
+        "mrn": "81134",
+        "name": "Mayonnaise, Light, Kraft",
+        "quantity": 0.05,
+        "unit": "cup",
+        "costPerPortion": 0.064,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4249",
+        "mrn": "4249",
+        "name": "Onions, Green, Scallion, Bunch, Fresh, Diced",
+        "quantity": 0.4,
+        "unit": "tbsp",
+        "costPerPortion": 0.224,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.025,
+        "unit": "tsp",
+        "costPerPortion": 0.002,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7346",
+        "mrn": "7346",
+        "name": "Sour Cream, Real, Daisy",
+        "quantity": 0.4,
+        "unit": "tbsp",
+        "costPerPortion": 0.02,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|7390",
+        "mrn": "7390",
+        "name": "Spice, Pepper, Black, Ground",
+        "quantity": 0.025,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-smokehouse-bbq|135194.3|1-2-cup": [
+      {
+        "id": "global-transfer|1634",
+        "mrn": "1634",
+        "name": "Cheese, Cheddar, Mild, Pre-Shredded, Feathered, Great Lakes",
+        "quantity": 0.026316,
+        "unit": "pound",
+        "costPerPortion": 0.0842,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|33382",
+        "mrn": "33382",
+        "name": "Cheese, Mozzarella, Part Skim, Provolone, 60/40 Blend, Pre-Shredded, Great Lakes",
+        "quantity": 0.210526,
+        "unit": "ounce",
+        "costPerPortion": 0.0337,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|1949",
+        "mrn": "1949",
+        "name": "Cream, Half & Half",
+        "quantity": 0.013158,
+        "unit": "quart",
+        "costPerPortion": 0.0634,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|1946",
+        "mrn": "1946",
+        "name": "Cream, Whipping, Heavy, 40%, Stablized, Saputo",
+        "quantity": 0.026316,
+        "unit": "quart",
+        "costPerPortion": 0.1347,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.039474,
+        "unit": "tbsp",
+        "costPerPortion": 0.0095,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|58479",
+        "mrn": "58479",
+        "name": "Spice, Onion, Granulated",
+        "quantity": 0.006579,
+        "unit": "ounce",
+        "costPerPortion": 0.0002,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4304",
+        "mrn": "4304",
+        "name": "Pasta, Macaroni, Elbow, Barilla, Dry",
+        "quantity": 0.039474,
+        "unit": "pound",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.026316,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7387",
+        "mrn": "7387",
+        "name": "Spice, Paprika, Ground",
+        "quantity": 0.026316,
+        "unit": "tbsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-smokehouse-bbq|5633.3|1-2-cup": [
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.96,
+        "unit": "tsp",
+        "costPerPortion": 0.0176,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4321",
+        "mrn": "4321",
+        "name": "Parsley, Fresh, Chopped",
+        "quantity": 0.02,
+        "unit": "cup",
+        "costPerPortion": 0.0192,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.02,
+        "unit": "tsp",
+        "costPerPortion": 0.0016,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7498",
+        "mrn": "7498",
+        "name": "Sweet Potatoes, 120 Count, Fresh",
+        "quantity": 0.25,
+        "unit": "pound",
+        "costPerPortion": 0.42,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7390",
+        "mrn": "7390",
+        "name": "Spice, Pepper, Black, Ground",
+        "quantity": 0.02,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-smokehouse-bbq|162176|1-2-cup": [
+      {
+        "id": "global-transfer|8994",
+        "mrn": "8994",
+        "name": "Beets, Gold, Fresh",
+        "quantity": 0.083333,
+        "unit": "cup",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7943",
+        "mrn": "7943",
+        "name": "Butter, Unsalted",
+        "quantity": 0.166667,
+        "unit": "ounce",
+        "costPerPortion": 0.0267,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|78707",
+        "mrn": "78707",
+        "name": "Carrots, Fresh, Diced, Medium, 1/2\"",
+        "quantity": 0.083333,
+        "unit": "cup",
+        "costPerPortion": 0.0433,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.166667,
+        "unit": "each",
+        "costPerPortion": 0.175,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|11451",
+        "mrn": "11451",
+        "name": "Mushrooms, Shiitake, Fresh, Diced",
+        "quantity": 0.083333,
+        "unit": "cup",
+        "costPerPortion": 0.2967,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7688",
+        "mrn": "7688",
+        "name": "Peppers, Bell, Red, Fresh, Diced, Medium, 1/2\"",
+        "quantity": 0.083333,
+        "unit": "cup",
+        "costPerPortion": 0.1367,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.166667,
+        "unit": "tsp",
+        "costPerPortion": 0.0133,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|80489",
+        "mrn": "80489",
+        "name": "Shallots, Peeled, Fresh, Thinly Sliced",
+        "quantity": 0.041667,
+        "unit": "cup",
+        "costPerPortion": 0.06,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|62638",
+        "mrn": "62638",
+        "name": "Squash, Butternut, Fresh, Diced",
+        "quantity": 0.166667,
+        "unit": "cup",
+        "costPerPortion": 0.0667,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7390",
+        "mrn": "7390",
+        "name": "Spice, Pepper, Black, Ground",
+        "quantity": 0.041667,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7528",
+        "mrn": "7528",
+        "name": "Thyme, Fresh, Sprig",
+        "quantity": 0.5,
+        "unit": "each",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-smokehouse-bbq|18326.5|1-2-cup": [
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.0097,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.041667,
+        "unit": "tbsp",
+        "costPerPortion": 0.0023,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|56428",
+        "mrn": "56428",
+        "name": "Onions, Red, Fresh, Minced",
+        "quantity": 0.0625,
+        "unit": "cup",
+        "costPerPortion": 0.0325,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.041667,
+        "unit": "tbsp",
+        "costPerPortion": 0.01,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7394",
+        "mrn": "7394",
+        "name": "Spice, Pepper, Red Chili, Crushed, Flakes",
+        "quantity": 0.041667,
+        "unit": "tsp",
+        "costPerPortion": 0.0012,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7493",
+        "mrn": "7493",
+        "name": "Sugar, Granulated",
+        "quantity": 0.020833,
+        "unit": "tsp",
+        "costPerPortion": 0.0002,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|15490",
+        "mrn": "15490",
+        "name": "Tomatoes, Roma, Fresh, Small Diced, 1/4\"",
+        "quantity": 0.104167,
+        "unit": "cup",
+        "costPerPortion": 0.075,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7629",
+        "mrn": "7629",
+        "name": "Vinegar, Apple Cider",
+        "quantity": 0.010417,
+        "unit": "cup",
+        "costPerPortion": 0.0067,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|17570",
+        "mrn": "17570",
+        "name": "Greens, Collard, Fresh",
+        "quantity": 0.208333,
+        "unit": "pound",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7391",
+        "mrn": "7391",
+        "name": "Spice, Pepper, Black, Ground, Fine",
+        "quantity": 0.041667,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-smokehouse-bbq|184229|2-ounce": [
+      {
+        "id": "global-transfer|111876",
+        "mrn": "111876",
+        "name": "Sauce, Barbecue, Original, Cattlemen's",
+        "quantity": 2,
+        "unit": "tbsp",
+        "costPerPortion": 0.11,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-smokehouse-bbq|191747|2-floz": [
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.04,
+        "unit": "ounce",
+        "costPerPortion": 0.0165,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3070",
+        "mrn": "3070",
+        "name": "Ginger Root, Fresh, Minced",
+        "quantity": 0.08,
+        "unit": "ounce",
+        "costPerPortion": 0.0207,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4138",
+        "mrn": "4138",
+        "name": "Mustard, Yellow, French's",
+        "quantity": 0.32,
+        "unit": "ounce",
+        "costPerPortion": 0.128,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|19900",
+        "mrn": "19900",
+        "name": "Sauce, Barbecue, Gold, Cattlemen's",
+        "quantity": 1.28,
+        "unit": "ounce",
+        "costPerPortion": 0.5504,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|94358",
+        "mrn": "94358",
+        "name": "Sauce, Soy, Less Sodium, Kikkoman, Bulk",
+        "quantity": 0.08,
+        "unit": "ounce",
+        "costPerPortion": 0.0192,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7493",
+        "mrn": "7493",
+        "name": "Sugar, Granulated",
+        "quantity": 0.24,
+        "unit": "ounce",
+        "costPerPortion": 0.0512,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|116445",
+        "mrn": "116445",
+        "name": "Vinegar, Rice, Seasoned, Marukan",
+        "quantity": 0.08,
+        "unit": "ounce",
+        "costPerPortion": 0.024,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-smokehouse-bbq|39571|2-floz": [
+      {
+        "id": "global-transfer|19900",
+        "mrn": "19900",
+        "name": "Sauce, Barbecue, Gold, Cattlemen's",
+        "quantity": 1,
+        "unit": "floz",
+        "costPerPortion": 0.12,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-smokehouse-bbq|144725|2-floz": [
+      {
+        "id": "global-transfer|16044",
+        "mrn": "16044",
+        "name": "Sauce, Barbecue, Mississippi Honey, Cattlemen's",
+        "quantity": 1,
+        "unit": "floz",
+        "costPerPortion": 0.12,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-smokehouse-bbq|27397.2|2-floz": [
+      {
+        "id": "global-transfer|3190",
+        "mrn": "3190",
+        "name": "Honey, Bulk",
+        "quantity": 0.083333,
+        "unit": "cup",
+        "costPerPortion": 0.2667,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|16043",
+        "mrn": "16043",
+        "name": "Sauce, Barbecue, Kansas City Classic",
+        "quantity": 0.166667,
+        "unit": "cup",
+        "costPerPortion": 0.1467,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-smokehouse-bbq|142988|2-ounce": [
+      {
+        "id": "global-transfer|3434",
+        "mrn": "3434",
+        "name": "Juice, Apple, 100%",
+        "quantity": 0.03125,
+        "unit": "pound",
+        "costPerPortion": 0.3308,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7637",
+        "mrn": "7637",
+        "name": "Vinegar, White",
+        "quantity": 0.03125,
+        "unit": "pound",
+        "costPerPortion": 0.15,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|16043",
+        "mrn": "16043",
+        "name": "Sauce, Barbecue, Kansas City Classic",
+        "quantity": 0.0625,
+        "unit": "pound",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-roam-bbq|191763|5-ounce": [
+      {
+        "id": "global-transfer|7492",
+        "mrn": "7492",
+        "name": "Sugar, Brown, Light",
+        "quantity": 0.666667,
+        "unit": "ounce",
+        "costPerPortion": 0.2467,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|179742",
+        "mrn": "179742",
+        "name": "Pork, Spareribs, St. Louis Style, Hatfield, Raw",
+        "quantity": 0.5,
+        "unit": "pound",
+        "costPerPortion": 0,
+        "glCode": "4111003"
+      },
+      {
+        "id": "global-transfer|75666",
+        "mrn": "75666",
+        "name": "Spice, Pepper, Black, Ground, Coarse",
+        "quantity": 0.041667,
+        "unit": "tbsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-roam-bbq|191761|1-each": [
+      {
+        "id": "global-transfer|24688",
+        "mrn": "24688",
+        "name": "Shrimp, 16/20, P&D, Tail On, Raw, Slade Gorton, Frozen",
+        "quantity": 0.3125,
+        "unit": "pound",
+        "costPerPortion": 2.35,
+        "glCode": "4111004"
+      }
+    ],
+    "global|amz-roam-bbq|191762|5-oz-meat": [
+      {
+        "id": "global-transfer|15151",
+        "mrn": "15151",
+        "name": "Chicken, Thigh, Bone-In, Skin On, 5.3 oz",
+        "quantity": 0.555556,
+        "unit": "pound",
+        "costPerPortion": 2.2148,
+        "glCode": "4111003"
+      }
+    ],
+    "global|amz-roam-bbq|191760|1-each": [
+      {
+        "id": "global-transfer|7529",
+        "mrn": "7529",
+        "name": "Tofu, Firm, Cubed, 1\"",
+        "quantity": 0.1875,
+        "unit": "pound",
+        "costPerPortion": 0.18,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|76965",
+        "mrn": "76965",
+        "name": "Eggplant, Chinese, Fresh",
+        "quantity": 0.125,
+        "unit": "pound",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-roam-bbq|191769|1-each": [
+      {
+        "id": "global-transfer|1744",
+        "mrn": "1744",
+        "name": "Chicken, Thigh, Boneless, Skinless",
+        "quantity": 5,
+        "unit": "ounce",
+        "costPerPortion": 2.1,
+        "glCode": "4111003"
+      }
+    ],
+    "global|amz-roam-bbq|191768|1-each": [
+      {
+        "id": "global-transfer|3793",
+        "mrn": "3793",
+        "name": "Lamb, Leg, Brt, Raw",
+        "quantity": 5,
+        "unit": "ounce",
+        "costPerPortion": 1.85,
+        "glCode": "4111003"
+      }
+    ],
+    "global|amz-roam-bbq|191767|1-each": [
+      {
+        "id": "global-transfer|7530",
+        "mrn": "7530",
+        "name": "Tofu, Firm, Cubed, 1/2\"",
+        "quantity": 0.3125,
+        "unit": "pound",
+        "costPerPortion": 0.3,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-roam-bbq|191756|5-ounce": [
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.066667,
+        "unit": "ounce",
+        "costPerPortion": 0.0275,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3070",
+        "mrn": "3070",
+        "name": "Ginger Root, Fresh, Minced",
+        "quantity": 0.1,
+        "unit": "ounce",
+        "costPerPortion": 0.0258,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|166972",
+        "mrn": "166972",
+        "name": "Pork, Belly, Sous Vide, FC, Tyson, Frozen",
+        "quantity": 0.266667,
+        "unit": "pound",
+        "costPerPortion": 1.0631,
+        "glCode": "4111003"
+      },
+      {
+        "id": "global-transfer|27082",
+        "mrn": "27082",
+        "name": "Sauce, Barbecue, Smokey Texas, Cattlemen's",
+        "quantity": 0.666667,
+        "unit": "ounce",
+        "costPerPortion": 0.2867,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|94358",
+        "mrn": "94358",
+        "name": "Sauce, Soy, Less Sodium, Kikkoman, Bulk",
+        "quantity": 0.233333,
+        "unit": "ounce",
+        "costPerPortion": 0.056,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7492",
+        "mrn": "7492",
+        "name": "Sugar, Brown, Light",
+        "quantity": 0.4,
+        "unit": "ounce",
+        "costPerPortion": 0.148,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-roam-bbq|91765.2|1-2-cup": [
+      {
+        "id": "global-transfer|130775",
+        "mrn": "130775",
+        "name": "Carrots, Fresh, Matchstick",
+        "quantity": 0.5,
+        "unit": "ounce",
+        "costPerPortion": 0.0594,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|50595",
+        "mrn": "50595",
+        "name": "Cucumbers, English, Fresh, Sliced, Thin, on Bias",
+        "quantity": 0.5,
+        "unit": "ounce",
+        "costPerPortion": 0.235,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|3539",
+        "mrn": "3539",
+        "name": "Juice, Lemon, Fresh Pressed",
+        "quantity": 0.166667,
+        "unit": "floz",
+        "costPerPortion": 0.0167,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|108406",
+        "mrn": "108406",
+        "name": "Mayo, Vegan, Hellmann's, Bulk",
+        "quantity": 0.5,
+        "unit": "ounce",
+        "costPerPortion": 0.215,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.02,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7355",
+        "mrn": "7355",
+        "name": "Spice, Celery Seed",
+        "quantity": 0.083333,
+        "unit": "tsp",
+        "costPerPortion": 0.0009,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|116445",
+        "mrn": "116445",
+        "name": "Vinegar, Rice, Seasoned, Marukan",
+        "quantity": 0.166667,
+        "unit": "floz",
+        "costPerPortion": 0.0267,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|74534",
+        "mrn": "74534",
+        "name": "Apples, Fuji, 163 Count, Fresh",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|1184",
+        "mrn": "1184",
+        "name": "Cabbage, Green, Fresh, Sliced",
+        "quantity": 0.5,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|1193",
+        "mrn": "1193",
+        "name": "Cabbage, Red, Fresh, Julienne Sliced",
+        "quantity": 0.5,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-roam-bbq|191753|4-ounce": [
+      {
+        "id": "global-transfer|1656",
+        "mrn": "1656",
+        "name": "Cheese, Mozzarella, Part Skim, Pre-Shredded, Feathered, Great Lakes",
+        "quantity": 1.5,
+        "unit": "ounce",
+        "costPerPortion": 0.24,
+        "glCode": "4111006"
+      },
+      {
+        "id": "global-transfer|65843",
+        "mrn": "65843",
+        "name": "Noodles, Japanese, Udon, Pre-Cooked, Schwan, Frozen",
+        "quantity": 2,
+        "unit": "ounce",
+        "costPerPortion": 0.32,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4236",
+        "mrn": "4236",
+        "name": "Onions, Green, Scallion, Bunch, Fresh, Diced, Fine",
+        "quantity": 0.125,
+        "unit": "ounce",
+        "costPerPortion": 0.0037,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-roam-bbq|86472.1|4-ounce": [
+      {
+        "id": "global-transfer|1252",
+        "mrn": "1252",
+        "name": "Carrots, Fresh, Julienne Sliced",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.1188,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4091",
+        "mrn": "4091",
+        "name": "Mushrooms, Button, Fresh",
+        "quantity": 0.5,
+        "unit": "ounce",
+        "costPerPortion": 0.12,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|55450",
+        "mrn": "55450",
+        "name": "Mushrooms, Shiitake, Fresh",
+        "quantity": 0.5,
+        "unit": "ounce",
+        "costPerPortion": 0.12,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.5,
+        "unit": "tbsp",
+        "costPerPortion": 0.0275,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4237",
+        "mrn": "4237",
+        "name": "Onions, Green, Scallion, Bunch, Fresh, Chopped",
+        "quantity": 0.5,
+        "unit": "tsp",
+        "costPerPortion": 0.0121,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4218",
+        "mrn": "4218",
+        "name": "Onions, Yellow, Fresh, Sliced, Thin",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.03,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|6566",
+        "mrn": "6566",
+        "name": "Peppers, Bell, Green, Fresh, Sliced, Thin",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.6075,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7414",
+        "mrn": "7414",
+        "name": "Spice, Sesame Seeds",
+        "quantity": 0.5,
+        "unit": "tsp",
+        "costPerPortion": 0.01,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|8061",
+        "mrn": "8061",
+        "name": "Spinach, Baby, Fresh",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-roam-bbq|165124|1-cup": [
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.166667,
+        "unit": "tsp",
+        "costPerPortion": 0.0133,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7119",
+        "mrn": "7119",
+        "name": "Rice, Jasmine, Dry",
+        "quantity": 0.333333,
+        "unit": "cup",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-roam-bbq|27313.7|1-2-cup": [
+      {
+        "id": "global-transfer|108406",
+        "mrn": "108406",
+        "name": "Mayo, Vegan, Hellmann's, Bulk",
+        "quantity": 0.833333,
+        "unit": "ounce",
+        "costPerPortion": 0.3583,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|222540",
+        "mrn": "222540",
+        "name": "Mustard, Dijon, Grey Poupon",
+        "quantity": 0.083333,
+        "unit": "tbsp",
+        "costPerPortion": 0.015,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4257",
+        "mrn": "4257",
+        "name": "Onions, Red, Fresh, Diced",
+        "quantity": 0.375,
+        "unit": "ounce",
+        "costPerPortion": 0.0112,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3787",
+        "mrn": "3787",
+        "name": "Peppers, Bell, Red, Fresh, Diced, Small, 1/4\"",
+        "quantity": 0.166667,
+        "unit": "ounce",
+        "costPerPortion": 0.1013,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7073",
+        "mrn": "7073",
+        "name": "Potatoes, Red Bliss, Fresh, Diced",
+        "quantity": 2,
+        "unit": "ounce",
+        "costPerPortion": 0.14,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7422",
+        "mrn": "7422",
+        "name": "Spice, Wasabi Powder, American Roland",
+        "quantity": 0.166667,
+        "unit": "tbsp",
+        "costPerPortion": 0.0467,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|116445",
+        "mrn": "116445",
+        "name": "Vinegar, Rice, Seasoned, Marukan",
+        "quantity": 0.333333,
+        "unit": "floz",
+        "costPerPortion": 0.0533,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|1389",
+        "mrn": "1389",
+        "name": "Celery, Fresh, Minced",
+        "quantity": 0.333333,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|7411",
+        "mrn": "7411",
+        "name": "Salt, Kosher",
+        "quantity": 0.083333,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7390",
+        "mrn": "7390",
+        "name": "Spice, Pepper, Black, Ground",
+        "quantity": 0.041667,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-roam-bbq|154566|1-8-cup": [
+      {
+        "id": "global-transfer|4230",
+        "mrn": "4230",
+        "name": "Onions, Green, Scallion, Bunch, Fresh, Sliced, 1/8\"",
+        "quantity": 0.0625,
+        "unit": "quart",
+        "costPerPortion": 0.29,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-roam-bbq|63438.1|4-each": [
+      {
+        "id": "global-transfer|42827",
+        "mrn": "42827",
+        "name": "Pickles, Bread & Butter Chips, Bay Valley",
+        "quantity": 4,
+        "unit": "each",
+        "costPerPortion": 0.05,
+        "glCode": "4111006"
+      }
+    ],
+    "global|amz-roam-bbq|191747|2-floz": [
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.04,
+        "unit": "ounce",
+        "costPerPortion": 0.0165,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3070",
+        "mrn": "3070",
+        "name": "Ginger Root, Fresh, Minced",
+        "quantity": 0.08,
+        "unit": "ounce",
+        "costPerPortion": 0.0207,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4138",
+        "mrn": "4138",
+        "name": "Mustard, Yellow, French's",
+        "quantity": 0.32,
+        "unit": "ounce",
+        "costPerPortion": 0.128,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|19900",
+        "mrn": "19900",
+        "name": "Sauce, Barbecue, Gold, Cattlemen's",
+        "quantity": 1.28,
+        "unit": "ounce",
+        "costPerPortion": 0.5504,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|94358",
+        "mrn": "94358",
+        "name": "Sauce, Soy, Less Sodium, Kikkoman, Bulk",
+        "quantity": 0.08,
+        "unit": "ounce",
+        "costPerPortion": 0.0192,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7493",
+        "mrn": "7493",
+        "name": "Sugar, Granulated",
+        "quantity": 0.24,
+        "unit": "ounce",
+        "costPerPortion": 0.0512,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|116445",
+        "mrn": "116445",
+        "name": "Vinegar, Rice, Seasoned, Marukan",
+        "quantity": 0.08,
+        "unit": "ounce",
+        "costPerPortion": 0.024,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-roam-bbq|191744|2-floz": [
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.066667,
+        "unit": "ounce",
+        "costPerPortion": 0.0275,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3070",
+        "mrn": "3070",
+        "name": "Ginger Root, Fresh, Minced",
+        "quantity": 0.05,
+        "unit": "ounce",
+        "costPerPortion": 0.0129,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3190",
+        "mrn": "3190",
+        "name": "Honey, Bulk",
+        "quantity": 0.8,
+        "unit": "ounce",
+        "costPerPortion": 0.084,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7973",
+        "mrn": "7973",
+        "name": "Sauce, Hot, Original, Franks RedHot",
+        "quantity": 0.8,
+        "unit": "ounce",
+        "costPerPortion": 0.28,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7203",
+        "mrn": "7203",
+        "name": "Sauce, Soy, Kikkoman, Bulk",
+        "quantity": 0.1,
+        "unit": "floz",
+        "costPerPortion": 0.006,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|114620",
+        "mrn": "114620",
+        "name": "Sauce, Sriracha, Franks",
+        "quantity": 0.2,
+        "unit": "floz",
+        "costPerPortion": 0.036,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|116445",
+        "mrn": "116445",
+        "name": "Vinegar, Rice, Seasoned, Marukan",
+        "quantity": 0.1,
+        "unit": "floz",
+        "costPerPortion": 0.016,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-roam-bbq|144772|1-8-cup": [
+      {
+        "id": "global-transfer|117315",
+        "mrn": "117315",
+        "name": "Kimchi, Pickled Vegetables with Anchovy Sauce, Kikkokin, Bulk",
+        "quantity": 1,
+        "unit": "floz",
+        "costPerPortion": 0.18,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-roam-bbq|191750|2-ounce": [
+      {
+        "id": "global-transfer|80618",
+        "mrn": "80618",
+        "name": "Eggplant, Japanese, Fresh",
+        "quantity": 2,
+        "unit": "ounce",
+        "costPerPortion": 0.32,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-roam-bbq|191751|2-ounce": [
+      {
+        "id": "global-transfer|3678",
+        "mrn": "3678",
+        "name": "Kale, Fresh, Chopped",
+        "quantity": 2,
+        "unit": "ounce",
+        "costPerPortion": 0.5525,
+        "glCode": "4111012"
+      }
+    ],
+    "global|amz-roam-bbq|191746|2-floz": [
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.1,
+        "unit": "ounce",
+        "costPerPortion": 0.0413,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3070",
+        "mrn": "3070",
+        "name": "Ginger Root, Fresh, Minced",
+        "quantity": 0.1,
+        "unit": "ounce",
+        "costPerPortion": 0.0258,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|27082",
+        "mrn": "27082",
+        "name": "Sauce, Barbecue, Smokey Texas, Cattlemen's",
+        "quantity": 1.2,
+        "unit": "ounce",
+        "costPerPortion": 0.516,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7492",
+        "mrn": "7492",
+        "name": "Sugar, Brown, Light",
+        "quantity": 0.2,
+        "unit": "ounce",
+        "costPerPortion": 0.074,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|3",
+        "mrn": "3",
+        "name": "Liquor, Bourbon",
+        "quantity": 0.1,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|169286",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 0.025,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|112191",
+        "mrn": "112191",
+        "name": "Sauce, Korean Pepper, Gochujang, Ventura",
+        "quantity": 0.2,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-roam-bbq|191748|1-4-cup": [
+      {
+        "id": "global-transfer|4203",
+        "mrn": "4203",
+        "name": "Oil, Sesame",
+        "quantity": 0.166667,
+        "unit": "ounce",
+        "costPerPortion": 0.0192,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|152843",
+        "mrn": "152843",
+        "name": "Sauce, Fish, Vegan",
+        "quantity": 0.125,
+        "unit": "ounce",
+        "costPerPortion": 0.0313,
+        "glCode": "4111004"
+      },
+      {
+        "id": "global-transfer|112953",
+        "mrn": "112953",
+        "name": "Spice, Pepper, Chili, Korean, Powder, Assi Brand",
+        "quantity": 0.083333,
+        "unit": "ounce",
+        "costPerPortion": 0.0067,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7394",
+        "mrn": "7394",
+        "name": "Spice, Pepper, Red Chili, Crushed, Flakes",
+        "quantity": 0.166667,
+        "unit": "ounce",
+        "costPerPortion": 0.0133,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7493",
+        "mrn": "7493",
+        "name": "Sugar, Granulated",
+        "quantity": 0.333333,
+        "unit": "ounce",
+        "costPerPortion": 0.0711,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|116445",
+        "mrn": "116445",
+        "name": "Vinegar, Rice, Seasoned, Marukan",
+        "quantity": 0.083333,
+        "unit": "ounce",
+        "costPerPortion": 0.025,
+        "glCode": "4111005"
+      }
+    ],
+    "global|amz-roam-bbq|191745|2-floz": [
+      {
+        "id": "global-transfer|1924",
+        "mrn": "1924",
+        "name": "Corn Starch, 100% Pure",
+        "quantity": 0.1875,
+        "unit": "ounce",
+        "costPerPortion": 0.0338,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|2893",
+        "mrn": "2893",
+        "name": "Garlic Cloves, Peeled, Fresh, Minced",
+        "quantity": 0.03125,
+        "unit": "ounce",
+        "costPerPortion": 0.0129,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|3070",
+        "mrn": "3070",
+        "name": "Ginger Root, Fresh, Minced",
+        "quantity": 0.03125,
+        "unit": "ounce",
+        "costPerPortion": 0.0081,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|4203",
+        "mrn": "4203",
+        "name": "Oil, Sesame",
+        "quantity": 0.0625,
+        "unit": "ounce",
+        "costPerPortion": 0.0072,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|4216",
+        "mrn": "4216",
+        "name": "Onions, Yellow, Fresh, Julienne Sliced",
+        "quantity": 0.125,
+        "unit": "ounce",
+        "costPerPortion": 0.0075,
+        "glCode": "4111012"
+      },
+      {
+        "id": "global-transfer|94358",
+        "mrn": "94358",
+        "name": "Sauce, Soy, Less Sodium, Kikkoman, Bulk",
+        "quantity": 0.0625,
+        "unit": "ounce",
+        "costPerPortion": 0.015,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7394",
+        "mrn": "7394",
+        "name": "Spice, Pepper, Red Chili, Crushed, Flakes",
+        "quantity": 0.03125,
+        "unit": "ounce",
+        "costPerPortion": 0.0025,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7414",
+        "mrn": "7414",
+        "name": "Spice, Sesame Seeds",
+        "quantity": 0.03125,
+        "unit": "ounce",
+        "costPerPortion": 0.0036,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7493",
+        "mrn": "7493",
+        "name": "Sugar, Granulated",
+        "quantity": 0.1875,
+        "unit": "ounce",
+        "costPerPortion": 0.04,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|7644",
+        "mrn": "7644",
+        "name": "Water, Tap",
+        "quantity": 0.125,
+        "unit": "ounce",
+        "costPerPortion": 0.0375,
+        "glCode": "4111005"
+      },
+      {
+        "id": "global-transfer|112191",
+        "mrn": "112191",
+        "name": "Sauce, Korean Pepper, Gochujang, Ventura",
+        "quantity": 0.25,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111005"
       }
     ]
   },

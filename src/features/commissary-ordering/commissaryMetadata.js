@@ -1,5 +1,5 @@
 export const COMMISSARY_METADATA_RECORD_ID = "commissaryOrder|metadata|current";
-export const COMMISSARY_METADATA_VERSION = 3;
+export const COMMISSARY_METADATA_VERSION = 4;
 
 const RECEIVING_CAFES = Object.freeze([
   Object.freeze({ name: "Nessie", displayName: "Nessie", profitCenter: "30159" }),
@@ -22,6 +22,8 @@ const RECEIVING_CAFES = Object.freeze([
   Object.freeze({ name: "Brazil Coffee", displayName: "Brazil Coffee", profitCenter: "30783" }),
   Object.freeze({ name: "Roxanne Coffee", displayName: "Roxanne Coffee", profitCenter: "28671" }),
   Object.freeze({ name: "Arizona Coffee", displayName: "Arizona Coffee", profitCenter: "28672" }),
+  Object.freeze({ name: "Atlas", displayName: "Atlas", profitCenter: "35983" }),
+  Object.freeze({ name: "Frontier", displayName: "Frontier", profitCenter: "53166" }),
 ]);
 
 const DELIVERIES = Object.freeze([

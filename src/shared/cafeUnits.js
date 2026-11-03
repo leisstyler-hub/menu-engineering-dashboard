@@ -1,5 +1,5 @@
 export const CAFE_UNITS_BY_DISTRICT = Object.freeze({
-  South: ["Doppler", "Day 1", "Nitro", "Re:Invent"],
+  South: ["Doppler", "Day 1", "Nitro", "Re:Invent", "Frontier"],
   North: ["Dawson", "Nessie", "Cricket", "Brazil Coffee", "Roxanne Coffee", "Arizona Coffee", "Commissary", "Atlas"],
   East: ["Astra", "Bingo", "Sonic", "Blueshift", "Eclipse", "Grace", "Everest", "Dynamo", "Gemini", "Odyssey"],
   LAX: ["LAX22", "LAX35", "LAX75", "LAX78", "SNA3"],

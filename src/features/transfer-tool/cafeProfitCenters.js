@@ -3,6 +3,7 @@ export const CAFE_PROFIT_CENTERS = Object.freeze({
   "Day 1": "30871",
   Nitro: "51641",
   "Re:Invent": "47622",
+  Frontier: "53166",
   Dawson: "28675",
   Nessie: "30159",
   Cricket: "22472",
