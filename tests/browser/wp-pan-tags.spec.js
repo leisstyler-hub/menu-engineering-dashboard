@@ -32,7 +32,7 @@ for(const width of [390,1440])test(`MRN portion pan estimates and Tags at ${widt
 
 test('Actual shared MRN and serving variant produce a pan estimate without writes',async({page,request})=>{
  test.skip(!process.env.WP_ACTUAL_PROOF,'Explicit read-only shared proof');test.setTimeout(120000);
- const response=await request.get('https://project-d8v25.vercel.app/api/recipe-library?scope=all');expect(response.ok()).toBeTruthy();const payload=await response.json();
+ const response=await request.get('https://project-d8v25.vercel.app/api/recipe-library?scope=all');expect(response.ok()).toBeTruthy();const payload=await response.json();expect(payload.source).toMatch(/^supabase-recipe-items/);
  const candidate=payload.rows.find(r=>/poriyal/i.test(r.item)&&estimatePans({panSize:'half',totalPans:1},{mrn:r.mrn,menus:[r.menu],portion:r.portion},source.records).cost!=null);
  expect(candidate,'actual poriyal MRN/menu/portion evidence').toBeTruthy();
  const estimate=estimatePans({panSize:'half',totalPans:1},{mrn:candidate.mrn,menus:[candidate.menu],portion:candidate.portion});const writes=[];

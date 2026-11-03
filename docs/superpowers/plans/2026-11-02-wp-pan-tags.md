@@ -2,11 +2,11 @@
 
 Owner Chief; branch chief/wp-pan-tags. Approved design/release: Tyler event d903401c3db3d1a9f54b3b4b045351aa0f86c8d8275f0cd921c47ecdfe09ebe4. Baseline fee402c.
 
-- [ ] Add tests for source portion volume/weight/cost estimates, exact text MRNs, membership/portion conflicts, invalid quantities, missing evidence, swaps and unsold production cost.
-- [ ] Add a minimal public portion-economics evidence projection from the provided CSV, with hash; no ingredients/methods. Implement shared deterministic pan estimates. Source volume paired with source weight establishes food-specific density, never a generic water conversion.
-- [ ] Replace planner entry with pan size/count, read-only Tags and uppercase lock label. Remove placement confirmation; retain proposal/review distinction. Use one display vessel per selected food for equipment guidance, independently of production pan count. Workbook shares model outputs.
-- [ ] Update acceptance browser tests, run full repository gate and local desktop/mobile workflow including actual catalog under intercepted writes. Obtain independent source/estimation review under current governance; fix findings.
-- [ ] Update version, changelog, handoff, product decisions and release evidence; inspect attribution, commit and post Changelog; recheck upstream, publish through governed script, prove READY source SHA and canonical browser workflow, post final evidence.
+- [x] Add tests for source portion volume/weight/cost estimates, exact text MRNs, membership/portion conflicts, invalid quantities, missing evidence, swaps and unsold production cost.
+- [x] Add a minimal public portion-economics evidence projection from the provided CSV, with hash; no ingredients/methods. Implement shared deterministic pan estimates. Source volume paired with source weight establishes food-specific density, never a generic water conversion.
+- [x] Replace planner entry with pan size/count, read-only Tags and uppercase lock label. Remove placement confirmation; retain proposal/review distinction. Use one display vessel per selected food for equipment guidance, independently of production pan count. Workbook shares model outputs.
+- [x] Update acceptance browser tests, run full repository gate and local desktop/mobile workflow including actual catalog under intercepted writes. Obtain independent source/estimation review under current governance; fix findings.
+- [x] Update version, changelog, handoff, product decisions and release evidence; inspect attribution, commit and post Changelog; recheck upstream, publish through governed script, prove READY source SHA and canonical browser workflow, post final evidence.
 
 ## Next deployment
 
