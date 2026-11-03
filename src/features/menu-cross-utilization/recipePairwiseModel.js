@@ -7,7 +7,15 @@ export const COVERAGE_REASONS = Object.freeze({
   'subrecipe-unresolved':'Subrecipe ingredients are missing, cyclic, or conflicting.',
   'packet-missing':'No recipe packet supplied for this menu.',
 });
-const pantryName = (name) => ({'tap water':'Water','salt':'Salt, Table','kosher salt':'Salt, Kosher','canola oil':'Oil, Canola','ground black pepper':'Spice, Pepper, Black','fine ground black pepper':'Spice, Pepper, Black','granulated sugar':'Sugar, Granulated'}[normalizeDescription(name)] || name);
+function pantryName(name) {
+  const normalized=normalizeDescription(name);
+  const sourceName=String(name||'').replace(/\s+/g,' ').trim();
+  // Recipe reports reverse the shopping-list noun order. Apply the same approved
+  // broad-oil and generic-black-pepper exclusions, including brand suffixes.
+  if(/^(canola|vegetable|corn|soybean)( (cooking|frying))? oil(?:\s*,|$)/i.test(sourceName))return 'Oil, Canola';
+  if(/^(?:(?:fine ground|ground|whole) )?black pepper(?:\s*,|$)/i.test(sourceName))return 'Spice, Pepper, Black';
+  return {'tap water':'Water','salt':'Salt, Table','kosher salt':'Salt, Kosher','granulated sugar':'Sugar, Granulated'}[normalized]||name;
+}
 
 // Recipe names form their own exact-description cohort. Neither recipe codes nor names
 // certify purchasing identity, SKU equivalence, cost savings, or compatible pack sizes.

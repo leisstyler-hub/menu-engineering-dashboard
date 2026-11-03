@@ -29,3 +29,7 @@ Recovery: revert the application to baseline `d53cccb3a47a21b5c19e5ef900995e1ee2
 Independent source checks enumerate all 3,812 ingredient tables and account exactly once for 25,104 ingredient-name text cells across all pages. All 24,729 extracted ingredient names, codes and quantities agree with PDFjs after 244 documented clipped-column resolutions against PyMuPDF. The independent reviewer accepted the source, privacy and guarded activation design with nonblocking hardening notes addressed. This review is distinct from runtime verification.
 
 Implementation and production evidence are recorded separately in the workspace execution record. No LIVE claim is established by this design document alone.
+
+### Private production import verified
+
+All 57 original PDFs passed no-overwrite upload and authenticated download SHA256 verification. Readback matched every relational recipe/ingredient field against immutable manifests: 3,812 variants and 24,729 ingredients, zero mismatches; 1,425 private proposed links. The active safe presence release is `de48debc5bb19641a5e0e80296b461d1f1c997f0a395e5b68db897d495368eca`. All 57 public object probes were denied, new tables force RLS without browser grants, and the fixed reader denies anon/authenticated execution. Catalog/document/canonical SSMT/original Andes fingerprints match the saved preflight. This establishes the private data state; app deployment and canonical production browser proof are recorded separately after publication.

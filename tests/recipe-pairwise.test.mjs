@@ -16,8 +16,8 @@ test('expands subrecipes; missing and cyclic dependencies stay unscored',()=>{
  const cyclic=buildRecipePairwiseData([book('Andes',[recipe('1',[{kind:'subrecipe',childVariantKeys:['1']}])])]);assert.equal(cyclic.menus[0].hasIngredientData,false);
 });
 test('unvalidated source cannot score; pantry rules keep distinctive variants',()=>{
- const source=book('Andes',[recipe('1',[leaf('Salt, Kosher'),leaf('Water'),leaf('Oil, Sesame')])]);
- assert.equal(buildRecipePairwiseData([source]).menus[0].matchKeys.length,1);
+ const source=book('Andes',[recipe('1',[leaf('Salt, Kosher'),leaf('Water'),leaf('Canola Frying Oil, Frilite'),leaf('Whole Black Pepper'),leaf('Oil, Sesame'),leaf('Black Pepper Sauce')])]);
+ assert.equal(buildRecipePairwiseData([source]).menus[0].matchKeys.length,2);
  source.validated=false;assert.equal(buildRecipePairwiseData([source]).menus[0].hasIngredientData,false);
 });
 test('public projection allowlists fields and rejects incompatible key namespaces',()=>{

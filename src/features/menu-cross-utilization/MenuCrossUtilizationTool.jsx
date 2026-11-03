@@ -507,11 +507,12 @@ function PillarCrossUseStrip({ pillars, menus }) {
 
 function PairDetail({ pair, menus, isExpanded }) {
   const DATA = useContext(PairwiseDataContext);
+  const isRecipe = DATA.source === 'recipe-ingredient-presence';
   if (!pair) {
     return (
       <aside className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5 text-sm font-semibold text-slate-500">
         <Info size={16} className="mb-2" />
-        Click any matrix cell to see % overlap, shared ingredients, and purchasing reuse notes for that menu pair.
+        Click any matrix cell to see % overlap, shared ingredients, and {isRecipe ? 'ingredient reuse' : 'purchasing reuse'} notes for that menu pair.
       </aside>
     );
   }
@@ -530,14 +531,14 @@ function PairDetail({ pair, menus, isExpanded }) {
       <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
         <p className="text-xs font-bold uppercase tracking-[0.12em] text-emerald-700">% Overlap</p>
         <p className="text-3xl font-black text-emerald-900">{percent(pair.overlapPercent)}</p>
-        <p className="mt-1 text-xs font-semibold text-emerald-800">{pair.sharedCount} shared ingredients (ingredient/purchasing overlap only)</p>
+        <p className="mt-1 text-xs font-semibold text-emerald-800">{pair.sharedCount} shared ingredients ({isRecipe ? 'ingredient name overlap only' : 'ingredient/purchasing overlap only'})</p>
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-2 text-xs font-bold text-slate-600">
-        <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">{pair.a}: {menuA?.portfolio.eligibleCount ?? "—"} eligible SKUs</span>
-        <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">{pair.b}: {menuB?.portfolio.eligibleCount ?? "—"} eligible SKUs</span>
+        <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">{pair.a}: {menuA?.portfolio.eligibleCount ?? "—"} eligible {isRecipe ? 'ingredients' : 'SKUs'}</span>
+        <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">{pair.b}: {menuB?.portfolio.eligibleCount ?? "—"} eligible {isRecipe ? 'ingredients' : 'SKUs'}</span>
       </div>
-      <p className="mt-2 text-[11px] font-semibold text-slate-500">Small menus can show noisier percentages against large menus — check eligible SKU counts above before over-reading a big-looking percentage.</p>
+      <p className="mt-2 text-[11px] font-semibold text-slate-500">Small menus can show noisier percentages against large menus — check eligible {isRecipe ? 'ingredient' : 'SKU'} counts above before over-reading a big-looking percentage.</p>
 
       <div className="mt-4 flex min-h-0 flex-1 flex-col">
         <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Shared ingredients ({shared.length})</p>
@@ -551,7 +552,7 @@ function PairDetail({ pair, menus, isExpanded }) {
       <div data-testid="pair-detail-reuse-opportunity" className="mt-4 rounded-lg border border-sky-200 bg-sky-50 p-3">
         <p className="text-xs font-black uppercase tracking-[0.12em] text-sky-700">Ordering / reuse opportunity</p>
         <p className="mt-1 text-xs font-semibold leading-5 text-sky-900">
-          {pair.sharedCount} ingredients purchased by both menus is a purchasing/ordering reuse signal, not proof of a shared recipe. Use this as a data-based starting point for menu-planning conversations, not an automatic rotation decision.
+          {isRecipe ? `${pair.sharedCount} exact ingredient name matches are a planning/reuse signal. Purchasing identity, prices and pack compatibility still need confirmation.` : `${pair.sharedCount} ingredients purchased by both menus is a purchasing/ordering reuse signal, not proof of a shared recipe. Use this as a data-based starting point for menu-planning conversations, not an automatic rotation decision.`}
         </p>
       </div>
     </aside>
