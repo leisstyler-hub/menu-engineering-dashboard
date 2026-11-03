@@ -21,3 +21,11 @@ Full `npm run verify` passed with 15 smart/pan tests, 36 package model tests, al
 ## Release state
 
 Candidate verification and production evidence are reconciled here after publication. The current candidate is not called LIVE until exact deployment and canonical acceptance are confirmed. Request received November 2 at 16:18:54 PT; pillar addition received 16:20:49 PT. Rollback requires restoring the baseline app; no data rollback is needed.
+
+## Production evidence
+
+Application `7c8f4ec9f94e931871cfc4bfb77d723057ff2152` passed the full committed pnpm repository gate and reached successful Vercel production deployment `GUfNm4J17mTkU6BbbkNnwpLricmu` ([deployment](https://vercel.com/tylerl-s-projects/project-d8v25/GUfNm4J17mTkU6BbbkNnwpLricmu)). GitHub deployment `7507036129` binds that exact SHA to Production with success. Canonical asset `/assets/index-DAg2_whT.js` contains version `2026.11.02.002-wp-flagged-audit`. All 14 canonical production browser checks passed, including four actual Supabase-catalog workflows. Actual catalog read: 1,693 source rows, 53 menus; the audit projection contains 1,779 source-menu/variant rows, including component and classification/exclusion rows, with 1,300 pan-evidence gaps. These are observed snapshot counts, not permanent coverage guarantees. Desktop and mobile screenshots inspected; operational writes intercepted.
+
+Chief implemented, performed fresh self-review, verified and released solo. No independent clearance claimed. Source data and Pairwise were not modified. Rollback remains `07e8d70` / `dpl_9aShMNwvaxJux8JJdt55PCQXfAVs`. App Changelog receipt `96fb5db367e91f86492fc88388ae6e56e6bb05d767f5bbc6052f83d53f86d7a7`; documentation follow-up is separate from the tested application SHA. Detailed logs and screenshots: workspace `WORK_LOGS/WP_FLAGGED_AUDIT_2026_11_02`.
+
+Timing PT: request 16:18:54; pillar addition 16:20:49; implementation commit 16:27:11; production deployment succeeded around 16:28:48; canonical 14-check proof completed around 16:30. Initial stale-preview/build overlap caused two setup failures, corrected by a stable-build rerun; no failed acceptance check remains. Chickle assignment is explicitly awaiting product direction and does not prevent selecting that menu.
