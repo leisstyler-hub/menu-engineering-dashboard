@@ -1,5 +1,8 @@
 ## 2026-11-03
 
+- [Nov 3, 2:37 PM] Plan W&P spreads with visible slots, temperature Tags, quantity forecasts and suggestions that preserve your selections.
+- [Nov 3, 2:37 PM] Default RA menus off, recalculate Pairwise when enabled, and summarize item corrections before audit details.
+
 - [Nov 3, 10:17 AM] Use consistent concept pillars everywhere, group Balti Pilot with Balti, and retire MTO Deli and WP Salad Bar.
 
 - [Nov 3, 9:44 AM] Keep recipe comparisons focused on ingredient overlap while preserving purchasing language for historical snapshots.

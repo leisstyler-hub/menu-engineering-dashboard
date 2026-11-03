@@ -33,3 +33,14 @@ Until the shared profile storage/API contract is approved and deployed, item upd
 Before an item update is published, check profile field coverage, allowed vocabulary, exact identity/portion links, conflicts, preserved reviewed values and source provenance. Verify library cards, menu membership, W&P and relevant downstream selectors against isolated data. Diff operational and profile changes separately; report all unresolved fields. Never hide or remove existing records merely because they are absent from a file. Never verify by writing canonical SSMT.
 
 After approved production application, read back the affected item/profile records and record counts, exceptions and relationship checks. A dry run or app deployment alone does not prove a successful Supabase import.
+
+
+## W&P planning extension - Tyler November 3, 2026
+
+Authority: original request `206635fcaa07a294b17554b80cf9d49f1f0f851aec58279e62df5d2edc04b7ed`, support `54ac413a0eb4a2199cdfef762016c916f5344f012093a5d9101784f8312a8b52`, reference-range extension `4f0cb50c24b0cd0d439799cb221db9ce13bd533fefb5752b157db3c79785b4db`, and build authorization `666d1d9e93383309d0db4242b48e7738f1d14b84542bbaecfae6725df223a8a4`.
+
+Track temperature-control requirements separately from service placement. Ingredient/cooking/texture keywords do not certify ambient holding; salads default to Proposed Cold unless exact recipe service evidence supports Hot. Ambiguous warm-salad names remain unresolved. Surface conflicts with Reviewed classifications without rewriting stored source values. Add proposed food type, protein family and service format to planner-derived metadata. These fields do not change the existing shared profile schema or establish shared persistence.
+
+Explicit source volume can support labeled pan-serving estimates without mass. Compatible serving cost can support cost totals; missing mass leaves weight-dependent sales/food-cost fractions incomplete. Chef quantity forecasts support portions and source-compatible cups. Individual fixed-price foods retain their original qualification boundary.
+
+Tyler's chef-reported Butter Chicken full 4-inch pan range is 21 lb 3 oz to 24 lb 12 oz. It may serve as an optional, adjustable planning reference for comparable sauced dishes. Label Estimated using Butter Chicken reference, retain a range, and never relabel it measured for another food or extrapolate it to dry foods, rice, salads, noodles or different pans automatically. Exact food-specific measurements take priority. This is a scenario override, not a source mass conversion or shared source correction.

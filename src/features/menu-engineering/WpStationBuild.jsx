@@ -7,7 +7,7 @@ import WpPanFields from './WpPanFields.jsx';
 const money = value => value == null ? 'Incomplete' : `$${value.toFixed(2)}`;
 const field = 'w-full min-w-0 rounded-lg border border-slate-300 bg-white p-2 text-sm';
 
-export default function WpStationBuild({entries, onChange, catalog, rate, trusted, sellThrough, setSellThrough}) {
+export default function WpStationBuild({entries, onChange, catalog, rate, trusted, sellThrough, setSellThrough,children}) {
   const [detailKey,setDetailKey] = useState('');
   const dialog = useRef(null);
   const detail = catalog.find(food=>food.key===detailKey);
@@ -42,15 +42,18 @@ export default function WpStationBuild({entries, onChange, catalog, rate, truste
       <button type="button" aria-label={`Details for ${row.name}`} onClick={()=>setDetailKey(row.key)} className="block w-full break-words text-left text-sm font-bold text-teal-900 hover:underline underline-offset-4">{row.food?.name||row.name}</button>
       <p className="mt-1 break-words text-xs text-slate-500">{row.food?.menus?.join(' · ')||'Source no longer available'} | MRN {row.food?.mrn||'Unresolved'}</p>
       {row.food&&<WpTags food={row.food}/>}
-      <WpPanFields entry={entries.find(entry=>entry.key===row.key)} onChange={next=>onChange(entries.map(entry=>entry.key===row.key?next:entry))}/>
-      {row.estimate?.servings!=null&&<p className="mt-2 text-xs text-slate-600">Estimated {row.servings.toFixed(1)} source servings / {row.pounds.toFixed(2)} lb total.</p>}
+      {row.food?.planningOnly&&<p className="mt-1 text-xs text-amber-900">Fixed-price service planning. Weight-based station sales remain incomplete for this mixed build.</p>}
+      <WpPanFields food={row.food} entry={entries.find(entry=>entry.key===row.key)} onChange={next=>onChange(entries.map(entry=>entry.key===row.key?next:entry))}/>
+      {row.estimate?.servings!=null&&<p className="mt-2 text-xs text-slate-600">Estimated {row.servings.toFixed(1)} source servings / {row.pounds==null?'weight unavailable':`${row.pounds.toFixed(2)} lb total`}.</p>}
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm"><label className="flex items-center gap-2"><input type="checkbox" aria-label={`Lock ${row.name}`} checked={Boolean(row.locked)} onChange={e=>onChange(entries.map(entry=>entry.key===row.key?{...entry,locked:e.target.checked}:entry))}/>LOCK ITEM FROM SUGGESTIONS</label><span><strong>{money(row.cost)} estimated food cost</strong></span></div>
+      {row.referenceRange&&<p className="mt-2 text-xs font-semibold">{row.referenceRange.basis}: {row.referenceRange.low.toFixed(2)}-{row.referenceRange.high.toFixed(2)} lb total. Chef-adjustable planning range.</p>}
       {row.estimate?.reason&&<p className="mt-2 text-xs text-amber-900">{row.estimate.reason}</p>}
       {row.food&&profileFor(row.food).premium&&<p className="mt-2 text-xs text-slate-500">Premium item: consider the end of the guest path after foundations and sides, with suitable holding.</p>}
       {!!row.food?.informationReasons?.length&&<p className="mt-2 text-xs text-amber-900">{row.food.informationReasons.join('; ')}</p>}
       {!!row.food?.serviceReasons?.length&&<p className="mt-2 text-xs text-amber-900">Service review: {row.food.serviceReasons.join('; ')}</p>}
       {row.food?.weightApproximate&&<p className="mt-2 text-xs text-amber-900">Approximate source weight; estimated economics.</p>}
     </article>)}</div>
+    {children}
     <label className="block text-sm font-semibold">Expected sell-through %<input aria-label="Expected sell-through percent" className={`${field} mt-1`} type="number" min="0" max="100" step="any" value={sellThrough} onChange={e=>setSellThrough(e.target.value)}/></label>
     {(sellThrough.trim()===''||!Number.isFinite(Number(sellThrough))||Number(sellThrough)<0||Number(sellThrough)>100)&&<p role="alert" className="text-sm text-amber-900">Enter sell-through from 0 to 100%.</p>}
     {detailKey&&<dialog ref={dialog} aria-label="Food details" onClose={()=>setDetailKey('')} className="m-auto max-h-[80vh] w-[calc(100%-2rem)] max-w-lg overflow-y-auto rounded-2xl border border-teal-200 bg-white p-5 shadow-2xl backdrop:bg-slate-950/40">

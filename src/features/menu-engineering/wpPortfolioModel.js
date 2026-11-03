@@ -25,3 +25,9 @@ export function buildPortfolio(projections) {
     return {...first,...(conflict?{cost:null,massOz:null}:{}),key,menus,variants,informationReasons,weightApproximate:variants.some(r=>r.weightApproximate),serviceReasons:conflict?[...serviceReasons,'Conflicting source variants require review']:serviceReasons,foodCost,tier:tierFor(foodCost),costPerLb:conflict?null:perLb(first),portfolioStatus,conflict};
   }).sort((a,b)=>a.category.localeCompare(b.category)||a.name.localeCompare(b.name));
 }
+
+// Individual fixed-price foods are offered for station planning without changing W&P qualification.
+export function buildPlanningPortfolio(projections){
+ const extended=projections.map(p=>({...p,items:[...p.items,...[...(p.excluded||[]),...(p.review||[])].filter(r=>/\b(sandwich(?:es)?|wraps?|burritos?|panini|broth|soup)\b/i.test(r.name||'')&&!/Supporting prep|Plain single|Non-core/.test(r.classificationReason||'')).map(r=>({...r,category:r.category||'Proteins',planningOnly:true,serviceReasons:['Individual service; outside W&P price qualification'],informationReasons:r.informationReasons||[],foodCost:null}))]}));
+ return buildPortfolio(extended).map(r=>r.planningOnly?{...r,portfolioStatus:'Service review',foodCost:null}:r);
+}

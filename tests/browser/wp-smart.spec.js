@@ -15,11 +15,12 @@ for(const width of [390,1440])test(`Smart pillars, safe preview, pan plan and sw
  const picker=page.getByRole('group',{name:'Menu selection'}),view=page.getByRole('region',{name:'W&P qualifying portfolio'}),smart=page.getByRole('region',{name:'Smart spread guidance'}),station=page.getByRole('complementary',{name:'Station build'});
  await picker.getByRole('button',{name:'Latin (1)',exact:true}).click();await expect(picker.getByRole('checkbox',{name:'AMZ: Andes',exact:true})).toBeChecked();await expect(picker.getByRole('checkbox',{name:'AMZ: Balti',exact:true})).not.toBeChecked();
  await view.getByRole('button',{name:'Select Roasted carrots',exact:true}).click();
- await smart.getByLabel('Hot full-pan spaces').fill('2');await smart.getByLabel('Cold full-pan spaces').fill('1');await smart.getByLabel('Ambient display positions').fill('1');
- await smart.getByRole('button',{name:'Suggest a starting spread',exact:true}).click();await expect(smart.getByLabel('Suggested spread preview')).toBeVisible();
+ await view.getByText('Edit capacity',{exact:true}).click();
+ await view.getByLabel('Hot full-pan spaces').fill('2');await view.getByLabel('Cold full-pan spaces').fill('1');await view.getByLabel('Ambient display positions').fill('1');
+ await smart.getByRole('button',{name:'Suggest items',exact:true}).click();await expect(smart.getByLabel('Suggested spread preview')).toBeVisible();
  await station.getByLabel('Lock Roasted carrots',{exact:true}).check();await expect(smart.getByLabel('Suggested spread preview')).toHaveCount(0);
- await smart.getByRole('button',{name:'Suggest a starting spread',exact:true}).click();await smart.getByRole('button',{name:'Use suggested lineup (replace unlocked selections)',exact:true}).click();
- await expect(station.getByLabel('Lock Roasted carrots',{exact:true})).toBeChecked();await expect(station).toContainText('Chili Herb Crunch');await expect(station.getByTestId('station-projected-fc-')).toHaveText('Incomplete');
+ await smart.getByRole('button',{name:'Suggest items',exact:true}).click();await smart.getByRole('button',{name:'Add suggested items',exact:true}).click();
+ await expect(station.getByLabel('Lock Roasted carrots',{exact:true})).toBeChecked();await expect(station).toContainText('Cucumber salad');await expect(station.getByTestId('station-projected-fc-')).toHaveText('Incomplete');
  await smart.getByRole('button',{name:'Undo last smart change'}).click();await expect(station.getByTestId('station-food')).toHaveCount(1);
  await station.getByLabel('Lock Roasted carrots',{exact:true}).uncheck();
  await station.getByLabel('Total pans to prepare for Roasted carrots').fill('4');
@@ -40,9 +41,9 @@ test('Actual shared catalog can build a mixed smart spread without writes',async
  await openTool(page,/open menu analysis/i,/Menu Engineering/);await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();
  const picker=page.getByRole('group',{name:'Menu selection'}),smart=page.getByRole('region',{name:'Smart spread guidance'}),station=page.getByRole('complementary',{name:'Station build'});
  await picker.getByRole('button',{name:/^Asian & Pacific/}).click();await picker.getByRole('button',{name:/^Mediterranean & Middle Eastern/}).click();
- await smart.getByLabel('Planning season').selectOption('Fall');await smart.getByRole('button',{name:'Suggest a starting spread',exact:true}).click();
+ await smart.getByRole('button',{name:'Suggest items',exact:true}).click();
  const preview=smart.getByLabel('Suggested spread preview');await expect(preview).toBeVisible();expect(await preview.getByRole('listitem').count()).toBeGreaterThan(2);
- await preview.getByRole('button',{name:'Use suggested lineup (replace unlocked selections)',exact:true}).click();
+ await preview.getByRole('button',{name:'Add suggested items',exact:true}).click();
  expect(await station.getByTestId('station-food').count()).toBeGreaterThan(2);await expect(station.getByTestId('station-projected-fc-')).toHaveText('Incomplete');
  await expect(station).toContainText('Tags');
  for(const width of [1440,390]){await page.setViewportSize({width,height:1000});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();await page.getByRole('region',{name:'W&P qualifying portfolio'}).screenshot({path:`test-results/wp-smart-actual-${width}.png`});}

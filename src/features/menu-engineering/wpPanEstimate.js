@@ -18,17 +18,19 @@ export function estimatePans(entry,food,records=evidence.records){
  const missing=reason=>({pounds:null,cost:null,servings:null,reason,approximate:true,sourceSha256:evidence.sourceSha256});
  const pan=PAN_REFERENCE[entry.panSize];
  if(!pan||!positive(entry.totalPans)||!Number.isInteger(Number(entry.totalPans)))return missing('Choose a pan size and positive whole total pan count.');
+ if(food?.conflict)return missing('Conflicting catalog variants need review.');
  if(!food?.mrn)return missing('Exact MRN is required for the Menu Item Index estimate.');
- const candidates=records.filter(r=>r.mrn===String(food.mrn)&&(food.menus||[]).some(m=>menu(m)===menu(r.menu))&&normalized(r.portion)===normalized(food.portion));
+ let candidates=records.filter(r=>r.mrn===String(food.mrn)&&(food.menus||[]).some(m=>menu(m)===menu(r.menu))&&normalized(r.portion)===normalized(food.portion));
+ const catalogVolume=!candidates.length&&portionCups(food.portion);
+ if(catalogVolume)candidates=[{mrn:String(food.mrn),portion:food.portion,massOz:food.massOz,cost:food.cost}];
  if(!candidates.length)return missing('No exact Menu Item Index MRN, menu and serving-size match.');
  const signatures=new Set(candidates.map(r=>JSON.stringify([normalized(r.portion),r.massOz===''?null:Number(r.massOz),r.cost===''?null:Number(r.cost)])));
  if(signatures.size!==1)return missing('Conflicting Menu Item Index portions, weights or costs need review.');
  const source=candidates[0],cups=portionCups(source.portion);
  if(!cups)return missing('Source portion has no explicit volume; food-specific pan yield is needed.');
- if(!positive(source.massOz))return missing('Source portion weight needs review.');
  const servings=pan.quarts*4*PAN_FILL/cups*Number(entry.totalPans);
- const pounds=servings*Number(source.massOz)/16;
+ const pounds=positive(source.massOz)?servings*Number(source.massOz)/16:null;
  const cost=String(source.cost??'').trim()!==''&&Number.isFinite(Number(source.cost))&&Number(source.cost)>=0?servings*Number(source.cost):null;
- if(!Number.isFinite(servings)||!Number.isFinite(pounds)||cost!==null&&!Number.isFinite(cost))return missing('Pan quantity exceeds the supported estimate range.');
- return {servings,pounds,cost,approximate:true,sourceSha256:evidence.sourceSha256,reason:cost===null?'Source portion cost needs review.':'',basis:'Menu Item Index portion volume, weight and cost; reference pan at 80% fill. Source-file estimate, not live pricing.'};
+ if(!Number.isFinite(servings)||pounds!==null&&!Number.isFinite(pounds)||cost!==null&&!Number.isFinite(cost))return missing('Pan quantity exceeds the supported estimate range.');
+ return {servings,pounds,cost,approximate:true,sourceSha256:catalogVolume?null:evidence.sourceSha256,reason:pounds===null?'Volume supports serving estimates; source portion weight needs review.':cost===null?'Source portion cost needs review.':'',basis:catalogVolume?'Current catalog explicit serving volume; reference pan at 80% fill. Missing mass remains unknown.':'Menu Item Index portion volume, weight and cost; reference pan at 80% fill. Source-file estimate, not live pricing.'};
 }

@@ -29,3 +29,11 @@
 .wp-station-jump span { float: right; font-size: 12px; font-weight: 500; }
 @media (max-width: 480px) { .wp-workbench { padding: 12px; } .wp-browse-heading { padding: 16px; } .wp-projection dd { font-size: 21px; } }
 @media (prefers-reduced-motion: reduce) { .wp-food { transition: none; } }
+
+.wp-capacity { position: sticky; top: 8px; z-index: 20; border-color: #cddbc7; }
+.wp-food-list { max-height: 62vh; overflow-y: auto; overscroll-behavior: contain; }
+.wp-workspace > .wp-station { max-height: 85vh; overflow-y: auto; overscroll-behavior: contain; position: sticky; top: 12px; }
+@media (max-width: 1279px) { .wp-workspace { grid-template-columns: minmax(0,1fr); } .wp-workspace > .wp-station { position: static; max-height: none; } .wp-capacity { top: 0; } .wp-food-list { max-height: 48vh; } }
+.wp-workspace > .wp-station { top: calc(var(--wp-capacity-height, 120px) + 20px); max-height: calc(100vh - var(--wp-capacity-height, 120px) - 40px); }
+.wp-station { scroll-margin-top: calc(var(--wp-capacity-height, 120px) + 24px); }
+@media (max-width: 1279px) { .wp-workspace > .wp-station { position: static; max-height: none; } }

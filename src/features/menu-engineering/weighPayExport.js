@@ -1,3 +1,5 @@
+import {profileFor} from './wpSmartModel.js';
+const tagColumns=r=>{const p=profileFor({...r,menus:r.menus||[r.menu]});return {'Service temperature':p.placements.join('; ')||'Needs review','Temperature control':p.temperatureControl,'Food type':p.foodType,'Service format':p.serviceFormat,'Tags status':p.reviewStatus,Tags:[...p.placements,p.role,...p.cuisines,...p.flavors,...p.textures].filter(Boolean).join('; '),'Temperature conflicts':p.conflicts.join('; ')};};
 import JSZip from 'jszip';
 import {buildPortfolio,includeWpMenu} from './wpPortfolioModel.js';
 
@@ -52,14 +54,15 @@ export async function buildWeighPayPackage(menus, sourceInfo) {
  zip.file('data-audit.html',page('Data Audit',cover+cards));
  const workbook=XLSX.utils.book_new();
  XLSX.utils.book_append_sheet(workbook,XLSX.utils.json_to_sheet(menus.map(m=>({Menu:m.menu,'Component guidance':m.status,'Servable components':projected(m).length,'Price per oz':rate/16,'Price per lb':rate,Source:sourceInfo.source}))), 'Data Audit');
- const itemSheet=XLSX.utils.json_to_sheet(rows.map(r=>({Menu:r.menus?.join('; ')||r.menu,Category:r.category,Item:r.name,MRN:String(r.mrn??''),Portion:r.portion,'Cost per portion':r.cost,'Weight oz':r.massOz,'Cost per lb':r.massOz&&r.cost!=null?r.cost/r.massOz*16:null,'FC%':r.foodCost,'FC tier':r.tier||tierFor(r.foodCost),'Service review':r.serviceReasons?.join('; '),'Cost source':r.costBasis||'Recipe snapshot','Weight source':r.weightSource,'Approximate weight':r.weightApproximate?'Yes':'No','Information needed':r.informationReasons?.join('; '),'Recipe link':r.linkStatus||'Source recipe','Classification basis':r.classificationBasis,'Price per oz':rate/16,'Source read':sourceInfo.loadedAt})));
- XLSX.utils.book_append_sheet(workbook,XLSX.utils.json_to_sheet(rows.map(r=>({Category:r.category,Item:r.name,MRN:String(r.mrn??''),'FC%':r.foodCost,'Cost per lb':r.costPerLb??(r.massOz&&r.cost!=null?r.cost/r.massOz*16:null),Menus:r.menus?.join('; ')||r.menu,Result:r.portfolioStatus||'',Conflict:r.conflict?'Source economics require review':''}))), 'Portfolio');
+ const itemSheet=XLSX.utils.json_to_sheet(rows.map(r=>({...tagColumns(r),Menu:r.menus?.join('; ')||r.menu,Category:r.category,Item:r.name,MRN:String(r.mrn??''),Portion:r.portion,'Cost per portion':r.cost,'Weight oz':r.massOz,'Cost per lb':r.massOz&&r.cost!=null?r.cost/r.massOz*16:null,'FC%':r.foodCost,'FC tier':r.tier||tierFor(r.foodCost),'Service review':r.serviceReasons?.join('; '),'Cost source':r.costBasis||'Recipe snapshot','Weight source':r.weightSource,'Approximate weight':r.weightApproximate?'Yes':'No','Information needed':r.informationReasons?.join('; '),'Recipe link':r.linkStatus||'Source recipe','Classification basis':r.classificationBasis,'Price per oz':rate/16,'Source read':sourceInfo.loadedAt})));
+ XLSX.utils.book_append_sheet(workbook,XLSX.utils.json_to_sheet(rows.map(r=>({...tagColumns(r),Category:r.category,Item:r.name,MRN:String(r.mrn??''),'FC%':r.foodCost,'Cost per lb':r.costPerLb??(r.massOz&&r.cost!=null?r.cost/r.massOz*16:null),Menus:r.menus?.join('; ')||r.menu,Result:r.portfolioStatus||'',Conflict:r.conflict?'Source economics require review':''}))), 'Portfolio');
  const portfolioSheet=workbook.Sheets['Portfolio'];
- portfolioSheet['!cols']=[{wch:24},{wch:55},{wch:24},{wch:13},{wch:16},{wch:60},{wch:22},{wch:40}];
- if(portfolioSheet['!ref'])for(let r=1;r<=XLSX.utils.decode_range(portfolioSheet['!ref']).e.r;r++){const c=portfolioSheet[XLSX.utils.encode_cell({r,c:3})];if(c?.t==='n')c.z='0.0%';}
- const range=itemSheet['!ref']&&XLSX.utils.decode_range(itemSheet['!ref']);
- if(range) for(let row=1;row<=range.e.r;row++){const cell=itemSheet[XLSX.utils.encode_cell({r:row,c:8})];if(cell?.t==='n')cell.z='0.0%';}
- itemSheet['!cols']=[{wch:25},{wch:23},{wch:55},{wch:24},{wch:18},{wch:18},{wch:15},{wch:16},{wch:13},{wch:22},{wch:50}];
+ for(const sheet of [portfolioSheet,itemSheet]){
+  const headers=XLSX.utils.sheet_to_json(sheet,{header:1})[0]||[];
+  sheet['!cols']=headers.map(h=>({wch:/Item|Tags|menus|source|conflict|Information/i.test(h)?48:/MRN/.test(h)?24:/FC%/.test(h)?13:22}));
+  const col=headers.indexOf('FC%'),range=sheet['!ref']&&XLSX.utils.decode_range(sheet['!ref']);
+  if(range&&col>=0)for(let row=1;row<=range.e.r;row++){const cell=sheet[XLSX.utils.encode_cell({r:row,c:col})];if(cell?.t==='n')cell.z='0.0%';}
+ }
  XLSX.utils.book_append_sheet(workbook,itemSheet,'Servable Items');
  const reviewRows=menus.flatMap(menu=>(sourceInfo.classificationReviews?.[menu.menu]||[]).map(r=>({Menu:menu.menu,Item:r.name,MRN:r.mrn,Reason:r.classificationReason})));
  XLSX.utils.book_append_sheet(workbook,XLSX.utils.json_to_sheet(reviewRows.length?reviewRows:[{Reason:'No classification exceptions'}]),'Classification Review');

@@ -30,6 +30,7 @@ test('actual shared catalog audit and pillar coverage export without writes',asy
  const writes=[];await page.route('**/api/**',r=>{if(r.request().method()!=='GET'&&!r.request().url().includes('/traffic/'))writes.push(r.request().url());return r.fulfill({json:r.request().url().includes('recipe-library')?payload:{ok:true,rows:[],records:[]}});});
  await openTool(page,/open menu analysis/i,/Menu Engineering/);await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();
  const picker=page.getByRole('group',{name:'Menu selection'});await expect(picker.getByRole('checkbox',{name:'AMZ: Harvest Co.',exact:true})).toBeVisible({timeout:60000});
+ await page.getByRole('checkbox',{name:'Include RA menus',exact:true}).check();
  await picker.getByRole('button',{name:/^Core Stations Pillar/}).click();
  for(const name of ['AMZ: Harvest Co.','AMZ: Cafe Express Soup','AMZ: Cafe Express Curated Salads','AMZ: Cafe Express Curated Sandwiches'])await expect(picker.getByRole('checkbox',{name,exact:true})).toBeChecked();
  const download=page.waitForEvent('download');await page.getByRole('button',{name:'Flagged Item Audit',exact:true}).click();
@@ -44,6 +45,7 @@ test('W&P pillar selector covers live-name aliases and Core Stations tiles',asyn
  await page.route('**/api/**',r=>r.fulfill({json:r.request().url().includes('recipe-library')?{ok:true,source:'supabase-recipe-items',rows:menus.map((menu,i)=>({menu,item:'Roasted squash',mrn:String(i),portion:'4 oz',portionOz:4,trueCost:1}))}:{ok:true,rows:[],records:[]}}));
  await openTool(page,/open menu analysis/i,/Menu Engineering/);await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();
  const picker=page.getByRole('group',{name:'Menu selection'});
+ await page.getByRole('checkbox',{name:'Include RA menus',exact:true}).check();
  await picker.getByRole('button',{name:'Core Stations Pillar (4)',exact:true}).click();
  for(const name of menus.slice(2,6))await expect(picker.getByRole('checkbox',{name,exact:true})).toBeChecked();
  await expect(picker.getByRole('checkbox',{name:menus[0],exact:true})).not.toBeChecked();

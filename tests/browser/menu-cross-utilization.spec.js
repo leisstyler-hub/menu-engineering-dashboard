@@ -4,6 +4,7 @@ import { collectUnexpectedPageErrors, expectNoAppProtection, expectNoUnexpectedP
 async function openTool(page, buttonName, headingName) {
   await openPlatformTool(page, buttonName, headingName);
   await page.getByRole("combobox", { name: "Comparison source" }).selectOption("history");
+  await page.getByRole("checkbox",{name:"Include RA menus",exact:true}).check();
 }
 
 test("Menu Cross Utilization Tool opens with pillar strategy and the full menu list", async ({ page }) => {

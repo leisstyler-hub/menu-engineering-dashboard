@@ -8,6 +8,7 @@ test('active recipe and historical lists use current pillars and omit retired co
  const data=projectRecipePresence(buildRecipePairwiseData(names.map(menu=>({menu,version:'fixture',validated:true,recipes:[{variantKey:menu,ingredients:[{kind:'ingredient',name:'Carrots'}]}]}))));
  await page.route('**/api/**',r=>r.fulfill({json:r.request().url().includes('recipe-pairwise')?{ok:true,data}:{ok:true}}));
  await openTool(page,/open cross utilization/i,/^Menu Cross Utilization Tool$/);
+ await page.getByRole('checkbox',{name:'Include RA menus',exact:true}).check();
  for(const name of ['Balti','Balti Pilot'])await expect(page.getByRole('row',{name:new RegExp(`^${name} South Asian `)})).toContainText('South Asian');
  await expect(page.getByRole('row',{name:/^Chickle /})).toContainText('American Grill & Smokehouse');
  for(const name of ['MTO Deli','WP Salad Bar'])await expect(page.getByRole('row',{name:new RegExp(name)})).toHaveCount(0);
@@ -19,6 +20,7 @@ test('W&P selects Balti variants together and exports shared pillars without ret
  await page.route('**/api/**',r=>r.fulfill({json:r.request().url().includes('recipe-library')?{ok:true,source:'supabase-recipe-items',rows:names.map((name,i)=>({menu:`AMZ: ${name}`,item:'Grilled chicken',mrn:String(i),portion:'4 oz',portionOz:4,trueCost:1}))}:{ok:true,rows:[],records:[]}}));
  await openTool(page,/open menu analysis/i,/Menu Engineering/);await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();
  const picker=page.getByRole('group',{name:'Menu selection'});
+ await page.getByRole('checkbox',{name:'Include RA menus',exact:true}).check();
  await picker.getByRole('button',{name:'South Asian (2)',exact:true}).click();
  for(const name of ['Balti','Balti Pilot'])await expect(picker.getByRole('checkbox',{name:`AMZ: ${name}`,exact:true})).toBeChecked();
  for(const name of ['MTO Deli','WP Salad Bar'])await expect(picker.getByRole('checkbox',{name:`AMZ: ${name}`,exact:true})).toHaveCount(0);

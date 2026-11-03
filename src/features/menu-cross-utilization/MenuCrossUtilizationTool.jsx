@@ -1,3 +1,4 @@
+import {scopePairwise} from './pairwiseScope.js';
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Grid3x3, Info, LayoutList, Maximize2, Minimize2, Search } from "lucide-react";
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
@@ -67,7 +68,9 @@ export default function MenuCrossUtilizationTool({ onBackToPlatform, onOpenSmart
   const [recipeData, setRecipeData] = useState(null);
   const [loadError, setLoadError] = useState("");
   const [loadAttempt, setLoadAttempt] = useState(0);
-  const DATA = source === "history" ? HISTORICAL_DATA : (recipeData || HISTORICAL_DATA);
+  const [includeRa,setIncludeRa]=useState(false);
+  const rawData = source === "history" ? HISTORICAL_DATA : (recipeData || HISTORICAL_DATA);
+  const DATA=useMemo(()=>scopePairwise(rawData,includeRa),[rawData,includeRa]);
   const available = source === "history" || Boolean(recipeData);
   useEffect(() => {
     if (source !== "recipes") return undefined;
@@ -109,6 +112,7 @@ export default function MenuCrossUtilizationTool({ onBackToPlatform, onOpenSmart
     };
   }, [isMatrixExpanded]);
 
+  useEffect(()=>{setSelectedPair(null);},[includeRa,source,recipeData]);
   const menus = DATA.menus;
   const eligibleMenus = useMemo(() => menus.filter((menu) => menu.hasIngredientData).sort(menuSortByPillarThenName), [menus]);
   const maxOverlap = useMemo(() => DATA.pairs.reduce((max, pair) => Math.max(max, pair.overlapPercent), 0), [DATA]);
@@ -161,7 +165,8 @@ export default function MenuCrossUtilizationTool({ onBackToPlatform, onOpenSmart
             </div>}
           </header>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="rounded-lg border bg-white p-3 text-sm font-semibold"><input type="checkbox" checked={includeRa} onChange={e=>setIncludeRa(e.target.checked)}/> Include RA menus</label>
             <button
               type="button"
               onClick={() => {

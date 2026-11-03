@@ -10,8 +10,8 @@ export function buildFlaggedAuditRows(projections,{trusted=true}={}) {
  for(const projection of projections.filter(p=>!isRetiredConcept(p.menu))) for(const [group,foods] of [['Servable component',projection.items||[]],['Classification review',projection.review||[]],['Excluded from W&P',projection.excluded||[]]]) for(const food of foods) {
   const item={...food,menus:[projection.menu]},profile=profileFor(item);
   const estimate=estimatePans({panSize:'half',totalPans:1},item);
-  const flags=[...(food.informationReasons||[]),food.classificationReason,...(food.serviceReasons||[])];
-  const actions=[];
+  const flags=[...(profile.conflicts||[]),...(food.informationReasons||[]),food.classificationReason,...(food.serviceReasons||[])];
+  const actions=profile.conflicts?.length?['Resolve the temperature conflict against exact recipe service evidence.']:[];
   const pillars=SELECTOR_PILLARS.filter(p=>p!=='Needs pillar assignment'&&selectorPillarMenus(p,[projection.menu]).length);
   if(!pillars.length){flags.push('Menu needs pillar assignment');actions.push('Confirm the menu pillar in the selector mapping.');}
   if(!food.mrn){flags.push('Missing exact MRN');actions.push('Supply the exact source MRN.');}
@@ -43,7 +43,10 @@ export function buildFlaggedAuditRows(projections,{trusted=true}={}) {
 }
 
 export function buildFlaggedAuditWorkbook(projections,options={}) {
- const rows=buildFlaggedAuditRows(projections,options),book=XLSX.utils.book_new();
+ const detail=buildFlaggedAuditRows(projections,options),groups=new Map(),book=XLSX.utils.book_new();
+ for(const row of detail){const {Menu,Pillar,Tags,...identity}=row;const key=JSON.stringify([identity,row.MRN?null:Menu]);if(!groups.has(key))groups.set(key,{...row,menus:[],pillars:[],tags:[]});groups.get(key).menus.push(Menu);groups.get(key).pillars.push(Pillar);groups.get(key).tags.push(Tags);}
+ const rows=[...groups.values()].map(({menus,pillars,tags,...row})=>({...row,Menu:join(menus),Pillar:join(pillars),Tags:join(tags),Priority:/Service|temperature|Ambient|Conflicting/i.test(row['Flags / information needed'])?'1 / Service and conflicts':/Missing exact MRN|Missing valid|Missing validated/.test(row['Flags / information needed'])?'2 / Source information':'3 / Tags and planning'})).sort((a,b)=>a.Priority.localeCompare(b.Priority)||a.Item.localeCompare(b.Item));
+ XLSX.utils.book_append_sheet(book,XLSX.utils.json_to_sheet(['1 / Service and conflicts','2 / Source information','3 / Tags and planning'].map(Priority=>({Priority,'Items to correct':rows.filter(r=>r.Priority===Priority).length})).concat([{Priority:'Source memberships', 'Items to correct':detail.length},{Priority:'Distinct correction rows','Items to correct':rows.length}])),'Audit summary');
  const sheet=XLSX.utils.json_to_sheet(rows.length?rows:[{MRN:'',Item:'No flagged items in loaded scope'}]);
  const headers=Object.keys(rows[0]||{MRN:'',Item:''});
  sheet['!cols']=headers.map(key=>({wch:/Flags|remedy/.test(key)?65:/source|Tags|gap|notes/i.test(key)?40:key==='Item'?48:key==='MRN'?24:26}));
@@ -51,9 +54,10 @@ export function buildFlaggedAuditWorkbook(projections,options={}) {
  sheet['!rows']=[{hpt:30},...rows.map(()=>({hpt:110}))];
  sheet['!autofilter']={ref:sheet['!ref']};
  XLSX.utils.book_append_sheet(book,sheet,'Flagged Item Audit');
+ if(options.fullDetail)XLSX.utils.book_append_sheet(book,XLSX.utils.json_to_sheet(detail),'Source detail');
  XLSX.utils.book_append_sheet(book,XLSX.utils.json_to_sheet([
   {Field:'Exported at',Value:new Date().toISOString()},
-  {Field:'Scope',Value:`All ${projections.length} loaded menus, including classification review and excluded foods; browse filters and session overrides do not hide flags. One row per source menu/variant.`},
+  {Field:'Scope',Value:`All ${projections.length} loaded menus, including classification review and excluded foods; browse filters and session overrides do not hide flags. Compatible correction rows grouped across menus; distinct economics and portions remain separate. Optional full detail retains memberships.`},
   {Field:'Flagged rows',Value:rows.length},
   {Field:'Source',Value:options.source||'Unspecified'},
   {Field:'Source read',Value:options.loadedAt||'Unspecified'},

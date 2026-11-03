@@ -1,0 +1,13 @@
+import React,{useLayoutEffect,useRef} from 'react';
+import {spreadProgress} from './wpSmartModel.js';
+const fields=[['hot','Hot','Hot full-pan spaces'],['cold','Cold','Cold full-pan spaces'],['ambient','Ambient','Ambient display positions'],['individual','individual','Individual item choices']];
+export default function WpCapacity({entries,catalog,capacity,onChange}){
+ const progress=spreadProgress(entries,catalog,capacity),panel=useRef(null);
+ useLayoutEffect(()=>{const el=panel.current;if(!el)return;const resize=new ResizeObserver(()=>el.parentElement.style.setProperty('--wp-capacity-height',`${el.offsetHeight}px`));resize.observe(el);return()=>resize.disconnect();},[]);
+ return <section ref={panel} aria-label="Spread capacity" className="wp-capacity rounded-xl border bg-white p-3 shadow-sm">
+ <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-bold">Plan your W&amp;P</h3><strong role="status" className="text-xs">{progress.complete?'Spread complete':'Fill the open slots'}</strong></div>
+ <div className="mt-2 grid grid-cols-4 gap-2">{fields.map(([key,label])=><div key={key} className="min-w-0 text-xs"><span className="block font-semibold">{key==='individual'?'Individual':label}</span><span>{Number(progress.used[label].toFixed(2))} / {capacity[key]||0} filled</span><span aria-label={`${label} slots`} className="mt-1 flex flex-wrap gap-1">{Array.from({length:Math.min(40,Math.max(0,Math.floor(Number(capacity[key])||0)))},(_,i)=><span key={i} className="h-2 w-3 rounded-sm border border-teal-700" style={{background:`linear-gradient(to right, #52725c ${Math.max(0,Math.min(1,progress.used[label]-i))*100}%, #fff 0)`}}/>)}</span></div>)}</div>
+ <details className="mt-2 text-xs"><summary className="cursor-pointer font-semibold">Edit capacity</summary><div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-4">{fields.map(([key,,aria])=><label key={key} className="min-w-0 font-semibold">{aria}<input aria-label={aria} type="number" min="0" max="40" step="1" className="mt-1 w-full rounded border p-1.5" value={capacity[key]} onChange={e=>onChange({...capacity,[key]:e.target.value})}/></label>)}</div><p className="mt-2 text-slate-500">Hot/cold slots measure display footprint, not reserve pans. Individual choices have separate quantity forecasts.</p></details>
+ {[...progress.issues,...progress.quantityIssues].map(issue=><p role="alert" key={issue} className="mt-1 text-xs text-amber-900">{issue}</p>)}
+ </section>;
+}

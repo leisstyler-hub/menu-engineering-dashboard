@@ -1,3 +1,4 @@
+import {isRaConcept} from '../../shared/raConcepts.js';
 import React, { useEffect, useMemo, useState } from 'react';
 import { pricePerLb, WP_PRICE_PER_LB } from './weighPayModel.js';
 
@@ -49,19 +50,21 @@ export default function WeighPayView() {
       .finally(() => clearTimeout(timeout));
     return () => { active = false; clearTimeout(timeout); controller.abort(); };
   }, [reload]);
+  const [includeRa,setIncludeRa]=useState(false);
   const trusted = data.source.startsWith('supabase-recipe-items');
-  const menuNames=useMemo(()=>[...new Set(data.rows.map(row=>String(row.menu||'Unassigned menu')))].filter(includeWpMenu), [data.rows]);
+  const menuNames=useMemo(()=>[...new Set(data.rows.map(row=>String(row.menu||'Unassigned menu')))].filter(name=>includeWpMenu(name)&&(includeRa||!isRaConcept(name))), [data.rows,includeRa]);
   const activeMenus = selectedMenus.filter(name => menuNames.includes(name));
   const selectedMenu = activeMenus.length === 1 ? activeMenus[0] : '';
   const conceptSources=useMemo(()=>Object.fromEntries(menuNames.map(menu=>[menu,buildMenuAnalysisSource(menu,data.rows,{'AMZ: Andes':andesSource,'AMZ: Balti':baltiSource}[menu]||allMenusSource,trusted)])),[menuNames,data.rows,trusted]);
   const projections = useMemo(() => Object.values(conceptSources).map(source=>panReadyMenu(source,rate,trusted?data.rows:[])),[conceptSources,rate,trusted,data.rows]);
   const menus = useMemo(() => projections.map(p=>assessPanReadyMenu(p,rate,trusted,overrides)),[projections,overrides,trusted,rate]);
   const selected = menus.find(menu => menu.menu === selectedMenu);
+  const [auditFullDetail,setAuditFullDetail]=useState(false);
   const exportFlaggedAudit = async () => {
     setExporting(true); setExportError('');
     try {
       const { downloadFlaggedAudit } = await import('./wpFlaggedAudit.js');
-      downloadFlaggedAudit(projections, {trusted,source:data.source,loadedAt:data.loadedAt,sourceMessage:data.message,pricePerLb:rate});
+      downloadFlaggedAudit(projections, {fullDetail:auditFullDetail,trusted,source:data.source,loadedAt:data.loadedAt,sourceMessage:data.message,pricePerLb:rate});
     } catch(error) { setExportError(`Flagged item audit failed: ${error.message}`); }
     finally { setExporting(false); }
   };
@@ -91,6 +94,7 @@ export default function WeighPayView() {
       <div className="mt-3 flex flex-wrap items-center gap-2"><label className="text-sm font-semibold" htmlFor="wp-price">W&amp;P selling price</label><input id="wp-price" aria-label="W&P selling price" className={`${input} w-28`} type="number" min="0.000001" step="any" value={rateText} onChange={e=>setRateText(e.target.value)}/><select aria-label="W&P price unit" className={input} value={rateUnit} onChange={e=>{const unit=e.target.value;setRateText(rate==null?'':String(unit==='oz'?rate/16:rate));setRateUnit(unit);}}><option value="lb">$/lb</option><option value="oz">$/oz</option></select><span className="text-xs text-slate-500">Session scenario · {rate==null?'Enter a positive price':`${money(rate)}/lb · $${(rate/16).toFixed(4)}/oz`}</span></div>
       {!rate&&<p role="alert" className="mt-2 text-sm text-amber-800">Enter a positive selling price to calculate or export guidance.</p>}
       {data.state === 'ready' && <p className={`mt-3 text-xs ${trusted ? 'text-slate-500' : 'font-semibold text-amber-800'}`}>{trusted ? `Shared Supabase data · ${data.source}` : `Fallback data — reference only · ${data.source}`} · Read {new Date(data.loadedAt).toLocaleString()}{data.message ? ` · ${data.message}` : ''}</p>}
+      <label className="mt-2 block text-xs"><input type="checkbox" checked={auditFullDetail} onChange={e=>setAuditFullDetail(e.target.checked)}/> Include full source detail in audit</label>
       <details className="mt-3 text-sm text-slate-600"><summary className="cursor-pointer font-semibold">Rules &amp; calculation</summary><p className="mt-2">True Food Cost = stored true cost / (stored portion weight in lb multiplied by the selected selling price). Missing cost/weight and blocked items remain in the denominator; identical servable component variants within each menu count once. A menu pass covers only its allowed assortment and does not predict aggregate café food cost.</p><p className="mt-2">Seafood, lamb/veal, steak/whole-muscle beef, pork tenderloin, handhelds, soup by volume and non-core add-ons stay off W&amp;P. Ground beef and complete guest builds require Culinary validation. Rules use stored categories and item names; review incomplete or ambiguous classifications before service.</p></details>
     </div>
 
@@ -99,6 +103,7 @@ export default function WeighPayView() {
     {exportError && <p role="alert" className="text-rose-800">{exportError}</p>}
     {data.state === 'ready' && <>
       <EnterpriseOverview projections={projections} trusted={trusted} rate={rate}/>
+      <label className="block rounded-xl border bg-white p-3 text-sm font-semibold"><input type="checkbox" checked={includeRa} onChange={e=>setIncludeRa(e.target.checked)}/> Include RA menus</label>
       <WpMenuPicker projections={projections} selectedMenus={activeMenus} trusted={trusted} onChange={names=>{setSelectedMenus(names);setEditing(false);setApprovalFilter('all');}}/>
       <WpPortfolio catalogProjections={projections} projections={projections.filter(p=>!activeMenus.length||activeMenus.includes(p.menu))} trusted={trusted} rate={rate} onExport={exportPortfolio} exporting={exporting}/>
       {selected&&<p className="text-sm text-slate-600">{selected.menu} - {selected.allowed}/{selected.total} allowed components - {percent(selected.passRate)} - {selected.status}</p>}

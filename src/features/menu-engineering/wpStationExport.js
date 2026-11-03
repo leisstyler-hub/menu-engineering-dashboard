@@ -14,6 +14,8 @@ export function buildStationWorkbook(projection, {rate, sellThrough, trusted}) {
     'Cost source':row.estimate?'Menu Item Index source-file estimate':row.food?.costBasis||'', 'Weight source':row.estimate?'Menu Item Index portion weight and reference pan':row.food?.weightSource||'',
     'Pan size (4-inch deep)':row.panSize||'',
     'Total pans to prepare':row.totalPans??'',
+    'Quantity mode':row.quantityMode||'', 'Expected portions':row.expectedPortions??'', 'Expected cups':row.expectedCups??'',
+    'Reference low lb':row.referenceRange?.low??'', 'Reference high lb':row.referenceRange?.high??'', 'Reference basis':row.referenceRange?.basis||'',
     'Estimated source servings':row.servings??'Unavailable',
     'Estimate basis':row.estimate?.basis||row.estimate?.reason||'',
     'Source file SHA256':row.estimate?.sourceSha256||'',

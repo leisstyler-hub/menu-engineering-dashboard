@@ -1,3 +1,5 @@
+import {isRaConcept} from '../../src/shared/raConcepts.js';
+import {includeWpMenu} from '../../src/features/menu-engineering/wpPortfolioModel.js';
 import {test,expect} from '@playwright/test';
 import * as XLSX from 'xlsx';
 import {readFile} from 'node:fs/promises';
@@ -20,7 +22,7 @@ for(const width of [390,1440])test(`Station selection, projections and exact MRN
  const summaryBox=await build.getByRole('region',{name:'Station projections'}).boundingBox();
  const foodBox=await build.getByTestId('station-food').first().boundingBox();
  expect(summaryBox.y+summaryBox.height).toBeLessThanOrEqual(foodBox.y);
- expect(await view.getByLabel('Portfolio food list').evaluate(el=>getComputedStyle(el).maxHeight)).toBe('none');
+ expect(await view.getByLabel('Portfolio food list').evaluate(el=>getComputedStyle(el).overflowY)).toBe('auto');
  expect(await build.evaluate(el=>getComputedStyle(el).backgroundColor)).toBe('rgb(255, 255, 255)');
  if(width===390){const jump=view.getByRole('button',{name:/View your station/});await expect(jump).toBeVisible();await jump.click();await expect(build).toBeFocused();}
  await build.getByLabel('Total pans to prepare for Roasted carrots',{exact:true}).fill('10');
@@ -78,7 +80,7 @@ test('Actual shared catalog station workflow, workbook and responsive proof',asy
  });
  await page.setViewportSize({width:1440,height:1000});await openTool(page,/open menu analysis/i,/Menu Engineering/);await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();
  const picker=page.getByRole('group',{name:'Menu selection'}),view=page.getByRole('region',{name:'W&P qualifying portfolio'}),build=page.getByRole('complementary',{name:'Station build'});
- await expect(picker.getByRole('checkbox')).toHaveCount(new Set(payload.rows.map(row=>String(row.menu||'Unassigned menu'))).size,{timeout:60_000});
+ await expect(picker.getByRole('checkbox')).toHaveCount(new Set(payload.rows.map(row=>String(row.menu||'Unassigned menu')).filter(name=>includeWpMenu(name)&&!isRaConcept(name))).size,{timeout:60_000});
  await picker.getByRole('checkbox',{name:/Anisa/}).check();
  const first=view.getByTestId('portfolio-food').first();const name=(await first.getAttribute('aria-label')).replace(/^Select /,'');
  await first.click();await build.getByLabel(`Total pans to prepare for ${name}`,{exact:true}).fill('10');
