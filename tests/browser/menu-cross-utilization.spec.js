@@ -1,5 +1,10 @@
 import { expect, test } from "@playwright/test";
-import { collectUnexpectedPageErrors, expectNoAppProtection, expectNoUnexpectedPageErrors, openTool } from "./smoke-helpers.js";
+import { collectUnexpectedPageErrors, expectNoAppProtection, expectNoUnexpectedPageErrors, openTool as openPlatformTool } from "./smoke-helpers.js";
+
+async function openTool(page, buttonName, headingName) {
+  await openPlatformTool(page, buttonName, headingName);
+  await page.getByRole("combobox", { name: "Comparison source" }).selectOption("history");
+}
 
 test("Menu Cross Utilization Tool opens with pillar strategy and the full menu list", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);

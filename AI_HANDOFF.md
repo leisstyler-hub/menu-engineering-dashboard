@@ -1,3 +1,7 @@
+## Recipe-derived Pairwise candidate - 2026-11-03
+
+Chief owns the all-menu recipe intake and Pairwise rebuild requested by Tyler event fd360e879332fa0c6cedbb573b64ffb83c49ac9aa3aa4de16bcd879cc5081a80. Version 2026.11.03.001-recipe-pairwise reads reviewed ingredient-name presence from Supabase, recalculates scores, shows source versions and bounded coverage gaps, and keeps the historical shopping-list snapshot separately selectable. Recipes remain unpublished. Source intake covers 57 PDFs and 4,095 pages, 3,812 recipe occurrences with 2,103 distinct MRNs, and 24,729 ingredient rows. Candidate: 52 scored menus and 1,326 pairs; Breakfast source identity and three absent packets remain gaps. New additive private tables and proposed catalog links preserve existing Andes/catalog/SSMT. Independent source/privacy/activation review completed; execution and browser/release state require their own evidence. See [record](docs/RECIPE_PAIRWISE_2026_11_03.md).
+
 ## Commissary Core Grill and component production scope - 2026-11-02
 
 LIVE `2026.11.02.003-commissary-core-protein-scope` adds Atlas `35983` and Frontier `53166` to the shared Commissary/Transfer unit registry. Atlas has Grill only and routes to Cricket; Frontier has Global plus Salad Bar and routes both to Cricket. The routing contract is enforced consistently by cafe visibility, saved-order normalization, server validation, Prep View, packout and export paths.

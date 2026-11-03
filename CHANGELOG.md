@@ -1,3 +1,7 @@
+## 2026-11-03
+
+- [Nov 3, 9:27 AM] Rebuild Pairwise from private recipe ingredients with live source refresh, coverage gaps and separate historical comparisons.
+
 ## 2026-11-02
 
 - [Nov 2, 6:00 PM] Added Atlas and Frontier commissary routes, optional Grill Core ordering, and Nov 16 raw-protein exclusions for Grill and Global.

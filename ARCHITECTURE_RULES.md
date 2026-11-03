@@ -1,3 +1,7 @@
+## Recipe Pairwise source boundary - November 3, 2026
+
+Tyler request fd360e879332fa0c6cedbb573b64ffb83c49ac9aa3aa4de16bcd879cc5081a80 authorizes a recipe-derived comparison cohort from the supplied archive. Store immutable original packets and exact extraction privately in culinary_recipe_intake; existing Andes and operational/catalog authority remain unchanged. Pairwise consumes only a reviewed presence release through a fixed service-only RPC and allowlisted server API. Public projection may contain menu names, exact normalized ingredient-name presence, coverage reason codes, source version hashes/report dates and derived statistics; never methods, quantities, raw manifests, storage paths, signed document URLs or private credentials. Recalculate scores from presence at runtime. Do not mix recipe-name keys with historical MIT keys, or represent unknown coverage as zero overlap. [Storage/recovery contract](docs/RECIPE_PAIRWISE_2026_11_03.md).
+
 ## Current staffing reference (2026-10-24)
 
 Technical/data protections in this document remain binding. Apply current GOVERNANCE.md for risk-appropriate independent review and owner responsibility; historical references to named Architect, Scribe or Data Guard identities do not require those agents for routine solo work. Changing a protected technical/data rule still requires recorded admin approval and appropriate independent review.

@@ -1,17 +1,17 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Grid3x3, Info, LayoutList, Maximize2, Minimize2, Search } from "lucide-react";
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
 import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
-import DATA from "../../data/menuCrossUtilization.json";
+import HISTORICAL_DATA from "../../data/menuCrossUtilization.json";
 import { findPair, sharedIngredients } from "./menuCrossUtilizationModel.js";
 
 const percent = (value) => `${Math.round((value || 0) * 100)}%`;
-const DATA_PAIRS = DATA.pairs;
+const PairwiseDataContext = createContext(HISTORICAL_DATA);
 
 function pillarIndexForMenu(menuName) {
-  const index = DATA.pillars.findIndex((pillar) => pillar.menus.includes(menuName));
-  return index === -1 ? DATA.pillars.length : index;
+  const index = HISTORICAL_DATA.pillars.findIndex((pillar) => pillar.menus.includes(menuName));
+  return index === -1 ? HISTORICAL_DATA.pillars.length : index;
 }
 
 function menuSortByPillarThenName(a, b) {
@@ -20,14 +20,14 @@ function menuSortByPillarThenName(a, b) {
   return a.name.localeCompare(b.name);
 }
 
-function pillarCrossUseStats(pillar, menus) {
+function pillarCrossUseStats(pillar, menus, pairs) {
   const members = menus.filter((menu) => pillar.menus.includes(menu.name));
   const eligibleMembers = members.filter((menu) => menu.hasIngredientData);
   let total = 0;
   let count = 0;
   for (let i = 0; i < eligibleMembers.length; i += 1) {
     for (let j = i + 1; j < eligibleMembers.length; j += 1) {
-      const pair = findPair(DATA_PAIRS, eligibleMembers[i].name, eligibleMembers[j].name);
+      const pair = findPair(pairs, eligibleMembers[i].name, eligibleMembers[j].name);
       if (pair) {
         total += pair.overlapPercent;
         count += 1;
@@ -39,6 +39,7 @@ function pillarCrossUseStats(pillar, menus) {
 
 function menuPillarCrossUsePercent(menu, menus) {
   if (!menu?.hasIngredientData) return null;
+  if (!menu.pillar) return null;
   const pillarMenus = menus.filter((candidate) => candidate.name !== menu.name && candidate.hasIngredientData && candidate.pillar === menu.pillar);
   if (!pillarMenus.length) return 0;
   const otherKeys = new Set(pillarMenus.flatMap((candidate) => candidate.matchKeys));
@@ -47,15 +48,38 @@ function menuPillarCrossUsePercent(menu, menus) {
 }
 
 function groupedMenusByPillar(menus) {
-  return DATA.pillars
+  const unassigned=menus.filter(menu=>!menu.pillar);
+  return [...HISTORICAL_DATA.pillars
     .map((pillar) => ({
       pillar,
       menus: menus.filter((menu) => pillar.menus.includes(menu.name)).sort((a, b) => a.name.localeCompare(b.name)),
     }))
-    .filter((group) => group.menus.length);
+    .filter((group) => group.menus.length), ...(unassigned.length?[{pillar:{name:'Needs pillar assignment',color:'#64748b'},menus:unassigned}]:[])];
 }
 
 export default function MenuCrossUtilizationTool({ onBackToPlatform, onOpenSmartsheetHealth }) {
+  const [source, setSource] = useState("recipes");
+  const [recipeData, setRecipeData] = useState(null);
+  const [loadError, setLoadError] = useState("");
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const DATA = source === "history" ? HISTORICAL_DATA : (recipeData || HISTORICAL_DATA);
+  const available = source === "history" || Boolean(recipeData);
+  useEffect(() => {
+    if (source !== "recipes") return undefined;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => { controller.abort(); setLoadError('Recipe comparison request timed out. Retry or choose the historical snapshot.'); }, 20000);
+    setLoadError("");
+    setRecipeData(null);
+    fetch("/api/recipe-pairwise", { cache: "no-store", signal: controller.signal })
+      .then(response => { if (!response.ok) throw Error("unavailable"); return response.json(); })
+      .then(payload => {
+        if (!payload.ok || payload.data?.source !== "recipe-ingredient-presence" || !Array.isArray(payload.data.menus) || !Array.isArray(payload.data.pairs)) throw Error("invalid source");
+        if (!controller.signal.aborted) setRecipeData(payload.data);
+      })
+      .catch(error => { if (error.name !== "AbortError") { setRecipeData(null); setLoadError("Recipe comparisons are unavailable. Retry or choose the historical shopping-list snapshot."); } })
+      .finally(() => clearTimeout(timeout));
+    return () => {clearTimeout(timeout);controller.abort();};
+  }, [source, loadAttempt]);
   const [view, setView] = useState("overview");
   const [search, setSearch] = useState("");
   const [pillarFilter, setPillarFilter] = useState("All pillars");
@@ -82,7 +106,7 @@ export default function MenuCrossUtilizationTool({ onBackToPlatform, onOpenSmart
 
   const menus = DATA.menus;
   const eligibleMenus = useMemo(() => menus.filter((menu) => menu.hasIngredientData).sort(menuSortByPillarThenName), [menus]);
-  const maxOverlap = useMemo(() => DATA.pairs.reduce((max, pair) => Math.max(max, pair.overlapPercent), 0), []);
+  const maxOverlap = useMemo(() => DATA.pairs.reduce((max, pair) => Math.max(max, pair.overlapPercent), 0), [DATA]);
 
   const filteredMenus = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -94,6 +118,7 @@ export default function MenuCrossUtilizationTool({ onBackToPlatform, onOpenSmart
   }, [menus, search, pillarFilter]);
 
   return (
+    <PairwiseDataContext.Provider value={DATA}>
     <div className="min-h-screen bg-slate-50 px-4 py-5 text-slate-950">
       <div className="mx-auto max-w-[132rem] space-y-5">
         <div ref={backgroundChromeRef} className="space-y-5">
@@ -106,7 +131,7 @@ export default function MenuCrossUtilizationTool({ onBackToPlatform, onOpenSmart
                 <p className="mt-5 text-xs font-black uppercase tracking-[0.22em] text-emerald-600">Menu Planning Tool</p>
                 <h1 className="mt-2 text-3xl font-black md:text-5xl">Menu Cross Utilization Tool</h1>
                 <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-slate-600">
-                  Ingredient/purchasing overlap guidance for menu planning, built from shopping-list data. This is guidance only, not an automatic rotation rule, and not proof of shared prep, recipes, labor, cost, or waste reduction.
+                  {source === "recipes" ? "Ingredient presence overlap from supplied recipe packets, using exact normalized ingredient names. This does not certify purchasing SKU equivalence." : "Historical ingredient/purchasing overlap from the August shopping-list snapshot."} This is guidance only, not an automatic rotation rule, and not proof of shared prep, recipes, labor, cost, or waste reduction.
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -115,12 +140,20 @@ export default function MenuCrossUtilizationTool({ onBackToPlatform, onOpenSmart
                 <VersionStamp />
               </div>
             </div>
-            <div className="mt-4 flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs font-bold text-slate-600">
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <label className="min-w-0 max-w-full text-sm font-bold">Comparison source <select aria-label="Comparison source" value={source} onChange={event => { setSource(event.target.value); setSelectedPair(null); }} className="mt-2 block w-full max-w-full rounded-lg border border-slate-300 bg-white p-2 sm:ml-2 sm:mt-0 sm:inline-block sm:w-auto">
+                <option value="recipes">Recipe ingredient records</option>
+                <option value="history">Historical shopping lists (August 3, 2026)</option>
+              </select></label>
+              {source === "recipes" && <button type="button" className="rounded-lg border px-3 py-2 text-sm font-bold" onClick={() => {setSelectedPair(null);setRecipeData(null);setLoadAttempt(value=>value+1);}}>Refresh recipe records</button>}
+            </div>
+            {available && <div className="mt-4 flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs font-bold text-slate-600">
               <span className="rounded-full border border-slate-200 bg-white px-3 py-1">{DATA.scope.account}</span>
               <span className="rounded-full border border-slate-200 bg-white px-3 py-1">Report date {DATA.scope.reportDate}</span>
               <span className="rounded-full border border-slate-200 bg-white px-3 py-1">{DATA.scope.mealPeriod}</span>
               <span className="rounded-full border border-slate-200 bg-white px-3 py-1">{DATA.scope.source}</span>
-            </div>
+              {source === 'recipes' && <span className="rounded-full border border-slate-200 bg-white px-3 py-1" title={DATA.releaseVersion}>Data release {DATA.releaseVersion?.slice(0,12)}</span>}
+            </div>}
           </header>
 
           <div className="flex flex-wrap gap-2">
@@ -144,7 +177,7 @@ export default function MenuCrossUtilizationTool({ onBackToPlatform, onOpenSmart
           </div>
         </div>
 
-        {view === "overview" ? (
+        {!available ? <div role="status" className="rounded-lg border border-amber-200 bg-white p-5">{loadError || "Loading recipe ingredient records..."}</div> : view === "overview" ? (
           <>
             <PillarStrategy pillars={DATA.pillars} menus={menus} />
             <MenuTable
@@ -169,6 +202,7 @@ export default function MenuCrossUtilizationTool({ onBackToPlatform, onOpenSmart
         )}
       </div>
     </div>
+    </PairwiseDataContext.Provider>
   );
 }
 
@@ -190,7 +224,8 @@ function PillarStrategy({ pillars, menus }) {
 }
 
 function PillarCard({ pillar, menus }) {
-  const { members, avgOverlap } = useMemo(() => pillarCrossUseStats(pillar, menus), [pillar, menus]);
+  const DATA = useContext(PairwiseDataContext);
+  const { members, avgOverlap } = useMemo(() => pillarCrossUseStats(pillar, menus, DATA.pairs), [pillar, menus]);
 
   return (
     <article data-testid={`pillar-overview-${pillar.name}`} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
@@ -213,6 +248,7 @@ function PillarCard({ pillar, menus }) {
 }
 
 function MenuTable({ menus, search, setSearch, pillarFilter, setPillarFilter, pillars }) {
+  const DATA = useContext(PairwiseDataContext);
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -249,29 +285,30 @@ function MenuTable({ menus, search, setSearch, pillarFilter, setPillarFilter, pi
             <tr className="border-b border-slate-200 text-left text-xs font-black uppercase tracking-[0.08em] text-slate-500">
               <th className="py-2 pr-3">Menu</th>
               <th className="py-2 pr-3">Pillar</th>
-              <th className="py-2 pr-3">Eligible SKUs</th>
-              <th className="py-2 pr-3">Portfolio Shared SKUs</th>
+              <th className="py-2 pr-3">Eligible ingredients</th>
+              <th className="py-2 pr-3">Portfolio shared ingredients</th>
               <th className="py-2 pr-3">Portfolio Cross-Use %</th>
               <th className="py-2 pr-3">Pillar Cross-Use %</th>
-              <th className="py-2 pr-3">Unique SKUs</th>
+              <th className="py-2 pr-3">Unique ingredients</th>
             </tr>
           </thead>
           <tbody>
             {menus.map((menu) => (
               <tr key={menu.name} className="border-b border-slate-100">
-                <td className="py-2 pr-3 font-bold text-slate-950">{menu.name}</td>
-                <td className="py-2 pr-3 text-slate-600">{menu.pillar || "—"}</td>
+                <td className="py-2 pr-3 font-bold text-slate-950">{menu.name}{menu.reportDates?.length>0&&<p className="mt-1 text-xs font-normal text-slate-500">Reports: {menu.reportDates.join(', ')} · {menu.versions.length} packet version{menu.versions.length===1?'':'s'}</p>}</td>
+                <td className="py-2 pr-3 text-slate-600">{menu.pillar || "Needs pillar assignment"}</td>
                 {menu.hasIngredientData ? (
                   <>
                     <td className="py-2 pr-3 text-slate-700">{menu.portfolio.eligibleCount.toLocaleString()}</td>
                     <td className="py-2 pr-3 text-slate-700">{menu.portfolio.sharedWithAny.toLocaleString()}</td>
                     <td className="py-2 pr-3 font-bold text-slate-950">{percent(menu.portfolio.crossUsePercent)}</td>
-                    <td className="py-2 pr-3 font-bold text-slate-950">{percent(menuPillarCrossUsePercent(menu, DATA.menus))}</td>
+                    <td className="py-2 pr-3 font-bold text-slate-950">{menu.pillar ? percent(menuPillarCrossUsePercent(menu, DATA.menus)) : 'Needs pillar assignment'}</td>
                     <td className="py-2 pr-3 text-slate-700">{menu.portfolio.uniqueCount.toLocaleString()}</td>
                   </>
                 ) : (
                   <td className="py-2 pr-3 text-amber-800" colSpan={5}>
-                    <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-black">no ingredient data</span>
+                    <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-black">{menu.coverageStatus || "no ingredient data"}</span>
+                    {menu.coverageReasons?.map(reason=><p key={reason} className="mt-2 text-xs">{reason}</p>)}
                   </td>
                 )}
               </tr>
@@ -290,6 +327,7 @@ function overlapColor(value, max) {
 }
 
 function PairwiseMatrix({ menus, pairs, maxOverlap, selectedPair, setSelectedPair, isExpanded, onToggleExpand }) {
+  const DATA = useContext(PairwiseDataContext);
   const groupedMenus = useMemo(() => groupedMenusByPillar(menus), [menus]);
   const expandButtonRef = useRef(null);
   const restoreButtonRef = useRef(null);
@@ -335,7 +373,7 @@ function PairwiseMatrix({ menus, pairs, maxOverlap, selectedPair, setSelectedPai
           <h2 id="pairwise-matrix-heading" className="mt-1 text-2xl font-black">Ingredient overlap by menu pair</h2>
           {isExpanded ? null : (
             <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-slate-600">
-              Hover a cell for a quick read, or click it for the full pair detail. Overlap is plain Jaccard on shared match keys (shared ingredients divided by union of ingredients). Chickle has no ingredient data and is excluded from this grid.
+              Hover a cell for a quick read, or click it for the full pair detail. Overlap is plain Jaccard on shared match keys (shared ingredients divided by union of ingredients). {DATA.source === 'recipe-ingredient-presence' ? 'Menus without verified packet coverage remain in the overview and are excluded from this grid.' : 'Chickle has no ingredient data and is excluded from this grid.'}
             </p>
           )}
         </div>
@@ -443,12 +481,13 @@ function PairwiseMatrix({ menus, pairs, maxOverlap, selectedPair, setSelectedPai
 }
 
 function PillarCrossUseStrip({ pillars, menus }) {
+  const DATA = useContext(PairwiseDataContext);
   return (
     <div className="mt-4 rounded-lg border border-red-100 bg-red-50 p-3">
       <p className="text-xs font-black uppercase tracking-[0.16em] text-red-700">Pillar cross-utilization %</p>
       <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
         {pillars.map((pillar) => {
-          const { members, eligibleMembers, avgOverlap, pairCount } = pillarCrossUseStats(pillar, menus);
+          const { members, eligibleMembers, avgOverlap, pairCount } = pillarCrossUseStats(pillar, menus, DATA.pairs);
           return (
             <div key={pillar.name} data-testid={`pillar-cross-use-${pillar.name}`} className="rounded-lg border border-red-100 bg-white p-3">
               <div className="flex items-center justify-between gap-3">
@@ -467,6 +506,7 @@ function PillarCrossUseStrip({ pillars, menus }) {
 }
 
 function PairDetail({ pair, menus, isExpanded }) {
+  const DATA = useContext(PairwiseDataContext);
   if (!pair) {
     return (
       <aside className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5 text-sm font-semibold text-slate-500">
