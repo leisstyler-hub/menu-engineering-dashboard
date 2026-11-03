@@ -12,7 +12,7 @@ test('recipe matrix uses runtime records, exposes gaps and unassigned pillars, a
  await openTool(page,/open cross utilization/i,/^Menu Cross Utilization Tool$/);
  await expect(page.getByRole('row',{name:/Breakfast/})).toContainText('Packet cover and menu filename disagree');
  await expect(page.getByRole('row',{name:/Pho/})).toContainText('No supplied packet');
- await expect(page.getByRole('row',{name:/Chickle/})).toContainText('Needs pillar assignment');
+ await expect(page.getByRole('row',{name:/Chickle/})).toContainText('American Grill & Smokehouse');
  await page.getByRole('button',{name:/open pairwise matrix/i}).click();
  await expect(page.getByTitle(/Andes .* Chickle:/).first()).toContainText('50%');
  await page.getByTitle(/Andes .* Chickle:/).first().click();

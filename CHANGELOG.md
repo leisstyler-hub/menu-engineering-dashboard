@@ -1,5 +1,7 @@
 ## 2026-11-03
 
+- [Nov 3, 10:17 AM] Use consistent concept pillars everywhere, group Balti Pilot with Balti, and retire MTO Deli and WP Salad Bar.
+
 - [Nov 3, 9:44 AM] Keep recipe comparisons focused on ingredient overlap while preserving purchasing language for historical snapshots.
 
 - [Nov 3, 9:27 AM] Rebuild Pairwise from private recipe ingredients with live source refresh, coverage gaps and separate historical comparisons.

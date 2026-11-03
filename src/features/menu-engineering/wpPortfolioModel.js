@@ -1,6 +1,7 @@
 import {tierFor} from './panReadyModel.js';
-// All source menus are visible; food-level checks determine qualification.
-export const includeWpMenu = () => true;
+import {isRetiredConcept} from '../../shared/conceptPillars.js';
+// Retired concepts remain in source records, outside active planning.
+export const includeWpMenu = name => !isRetiredConcept(name);
 
 // Source identifiers establish identity. Names alone never merge unrelated foods.
 export function buildPortfolio(projections) {

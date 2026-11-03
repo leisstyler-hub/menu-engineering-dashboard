@@ -1,3 +1,4 @@
+import {pillarForConcept,isRetiredConcept} from '../../shared/conceptPillars.js';
 import { PILLARS, normalizeDescription, isPantryExcluded, buildPairwiseMatrix, portfolioCrossUseStats } from './menuCrossUtilizationModel.js';
 
 const RECIPE_NAMESPACE = 'recipe-name:';
@@ -63,9 +64,9 @@ export function buildRecipePairwiseData(books, {expectedMenus=[]}={}) {
       for(const key of result.keys)menu.keys.add(key);
     }
   }
-  for(const name of expectedMenus)if(!groups.has(name))groups.set(name,{name,keys:new Set(),issues:['No supplied packet'],versions:[],reportDates:[],recipeCount:0,ingredientRows:0});
-  const menus=[...groups.values()].map(menu=>({
-    name:menu.name,pillar:PILLARS.find(pillar=>pillar.menus.includes(menu.name))?.name||null,
+  for(const name of expectedMenus.filter(name=>!isRetiredConcept(name)))if(!groups.has(name))groups.set(name,{name,keys:new Set(),issues:['No supplied packet'],versions:[],reportDates:[],recipeCount:0,ingredientRows:0});
+  const menus=[...groups.values()].filter(menu=>!isRetiredConcept(menu.name)).map(menu=>({
+    name:menu.name,pillar:pillarForConcept(menu.name)?.name||null,
     matchKeys:[...menu.keys].sort(),hasIngredientData:!menu.issues.length&&menu.keys.size>0,
     coverageStatus:menu.versions.length?(menu.issues.length?'Needs review':'Verified supplied packet'):'No supplied packet',
     issues:[...new Set(menu.issues)].sort(),versions:[...new Set(menu.versions)].sort(),
@@ -101,11 +102,11 @@ export function projectRecipePresence(payload) {
     if(versions.some(version=>typeof version!=='string'||!/^[A-Za-z0-9.-]{1,80}$/.test(version)))throw Error('Invalid source version');
     const reportDates=Array.isArray(menu.reportDates)?[...new Set(menu.reportDates)]:[];
     if(reportDates.some(date=>!/^\d{2}\/\d{2}\/\d{4}$/.test(date)))throw Error('Invalid report date');
-    return {name:menu.name,pillar:PILLARS.find(p=>p.menus.includes(menu.name))?.name||null,matchKeys:keys.sort(),hasIngredientData:menu.hasIngredientData,coverageStatus:menu.coverageStatus,
+    return {name:menu.name,pillar:pillarForConcept(menu.name)?.name||null,matchKeys:keys.sort(),hasIngredientData:menu.hasIngredientData,coverageStatus:menu.coverageStatus,
       reasonCodes,coverageReasons:reasonCodes.map(code=>COVERAGE_REASONS[code]),versions,reportDates,
       recipeCount:Number.isSafeInteger(menu.recipeCount)&&menu.recipeCount>=0?menu.recipeCount:0,
       ingredientRows:Number.isSafeInteger(menu.ingredientRows)&&menu.ingredientRows>=0?menu.ingredientRows:0};
-  });
+  }).filter(m=>!isRetiredConcept(m.name));
   for(const menu of menus)menu.portfolio=portfolioCrossUseStats(menu,menus);
   return {schemaVersion:1,releaseVersion:payload.releaseVersion,source:'recipe-ingredient-presence',scope:{account:'Amazon Region (FBE000)',reportDate:'Versioned packets',mealPeriod:'Packet scope',source:'Recipe ingredient names; exact normalized matches'},pillars:PILLARS,menus,ingredientLabels:labels,pairs:buildPairwiseMatrix(menus)};
 }

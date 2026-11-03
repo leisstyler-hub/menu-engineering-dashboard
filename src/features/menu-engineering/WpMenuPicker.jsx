@@ -1,10 +1,11 @@
+import {isRetiredConcept} from '../../shared/conceptPillars.js';
 import React, { useMemo, useState } from 'react';
 import { buildPortfolio } from './wpPortfolioModel.js';
 import {SELECTOR_PILLARS as PILLARS,selectorPillarMenus as pillarMenus} from './wpSelectorPillars.js';
 
 export default function WpMenuPicker({projections, selectedMenus, onChange, trusted}) {
   const [search, setSearch] = useState('');
-  const options = useMemo(() => projections.map(p => {
+  const options = useMemo(() => projections.filter(p=>!isRetiredConcept(p.menu)).map(p => {
     const foods = buildPortfolio([p]);
     const passing = trusted ? foods.filter(r => r.portfolioStatus === 'Within 40%').length : 0;
     return {name:p.menu, total:foods.length, passing};

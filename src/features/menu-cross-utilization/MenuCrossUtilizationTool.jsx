@@ -3,8 +3,13 @@ import { ArrowLeft, Grid3x3, Info, LayoutList, Maximize2, Minimize2, Search } fr
 import CompassOneLogo from "../../shared/ui/CompassOneLogo.jsx";
 import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
-import HISTORICAL_DATA from "../../data/menuCrossUtilization.json";
-import { findPair, sharedIngredients } from "./menuCrossUtilizationModel.js";
+import HISTORICAL_SNAPSHOT from "../../data/menuCrossUtilization.json";
+import { findPair, sharedIngredients, portfolioCrossUseStats } from "./menuCrossUtilizationModel.js";
+
+import {PILLARS,isRetiredConcept,pillarForConcept} from '../../shared/conceptPillars.js';
+const HISTORICAL_DATA={...HISTORICAL_SNAPSHOT,pillars:PILLARS,menus:HISTORICAL_SNAPSHOT.menus.filter(m=>!isRetiredConcept(m.name)).map(m=>({...m,pillar:pillarForConcept(m.name)?.name||null})),pairs:HISTORICAL_SNAPSHOT.pairs.filter(p=>!isRetiredConcept(p.a)&&!isRetiredConcept(p.b))};
+
+for(const menu of HISTORICAL_DATA.menus)menu.portfolio=portfolioCrossUseStats(menu,HISTORICAL_DATA.menus);
 
 const percent = (value) => `${Math.round((value || 0) * 100)}%`;
 const PairwiseDataContext = createContext(HISTORICAL_DATA);

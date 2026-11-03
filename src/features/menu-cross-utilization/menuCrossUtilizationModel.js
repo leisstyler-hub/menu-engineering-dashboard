@@ -9,19 +9,8 @@ export const SCOPE = {
   source: "MenuWorks Shopping List Reports",
 };
 
-// Static, document-defined pillar groupings from `01 Pillar Summary` in the Compass workbook.
-// Pillar membership is a strategic/cuisine categorization decision, not something derivable
-// from ingredient data, so it is carried as reference data rather than computed.
-export const PILLARS = [
-  { name: "Latin", color: "#D97706", menus: ["Andes", "Cevicheria", "Ciudad", "La Chino", "Porto", "SMACO", "Taco Total"] },
-  { name: "Asian & Pacific", color: "#0F766E", menus: ["Atlas Noodle", "Bibimbowl", "Chiang Mai", "House of Teriyaki", "Lemongrass + Lime", "Lotus", "Masaya", "Ohana", "Pho", "Poke Counter", "Sushi", "Wok", "Yakisoba"] },
-  { name: "Mediterranean & Middle Eastern", color: "#7C3AED", menus: ["Anisa", "Barbanzo", "Cypress", "Oregano"] },
-  { name: "Italian", color: "#B91C1C", menus: ["Paninioteca", "Piccola Italia", "Pizzas & Flatbreads", "Tavola Nova"] },
-  { name: "American Grill & Smokehouse", color: "#374151", menus: ["Carvery", "Cutlet", "Fish Market", "Roam BBQ", "Salt & Char", "Smokehouse BBQ"] },
-  { name: "South Asian", color: "#C2410C", menus: ["Balti", "Chaatwalla", "Katora", "Saffron", "Street Eats"] },
-  { name: "Cafe Express & Fresh", color: "#15803D", menus: ["Bowl INC", "Fresh Five", "Global Grains", "Harvest Co", "Q Bowl", "Simmers", "Smoothies"] },
-  { name: "Base Station Infrastructure", color: "#1D4ED8", menus: ["Breakfast", "Curated Salads", "Curated Sandwiches", "Deli Core", "Grill Core", "MTO Deli", "Soup", "WP Salad Bar"] },
-];
+import {PILLARS,pillarForConcept} from '../../shared/conceptPillars.js';
+export {PILLARS};
 
 // The PDF's own "Menus Included" field prints "AMZ: <Name>" / "AMZ+RA: <Name>", but that field
 // carries source-system typos/prefixes we don't want as the display name. The filename stem is
@@ -38,7 +27,7 @@ export function canonicalMenuNameFromFilename(fileName) {
 }
 
 export function pillarForMenu(menuName) {
-  return PILLARS.find((pillar) => pillar.menus.includes(menuName)) || null;
+  return pillarForConcept(menuName);
 }
 
 // Low-signal pantry items excluded from the primary overlap score, per the workbook's

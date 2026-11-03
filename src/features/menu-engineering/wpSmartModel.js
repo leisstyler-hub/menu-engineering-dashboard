@@ -1,13 +1,10 @@
-import pillars from '../../data/menuCrossUtilization.json' with {type:'json'};
+import {PILLARS as SHARED_PILLARS,conceptMenusForPillar,pillarForConcept,canonicalConceptName} from '../../shared/conceptPillars.js';
 import evidence from '../../data/wpProfileEvidence.json' with {type:'json'};
 import {projectStation} from './wpStationModel.js';
 export {entryPounds} from './wpPanModel.js';
-export const PILLARS=pillars.pillars.map(p=>p.name);
-const menuName = value=>String(value||'').replace(/^AMZ:\s*/i,'').trim().toLowerCase();
-export function pillarMenus(pillar,names) {
- const allowed=new Set((pillars.pillars.find(p=>p.name===pillar)?.menus||[]).map(menuName));
- return names.filter(name=>allowed.has(menuName(name)));
-}
+export const PILLARS=SHARED_PILLARS.map(p=>p.name);
+export const pillarMenus=conceptMenusForPillar;
+const menuName=canonicalConceptName;
 const byMrn=new Map();
 for(const row of evidence.records){if(!byMrn.has(row.mrn))byMrn.set(row.mrn,[]);byMrn.get(row.mrn).push(row);}
 export function profileFor(food) {
@@ -27,7 +24,7 @@ export function profileFor(food) {
  if(/squash|pumpkin|apple|brussels|root vegetable/.test(name))seasons.push('Fall','Winter');
  if(/asparagus|peas|spring/.test(name))seasons.push('Spring');
  if(/tomato|corn|watermelon|summer/.test(name))seasons.push('Summer');
- const cuisines=[...new Set((food.menus||[]).flatMap(m=>pillars.pillars.filter(p=>p.menus.some(n=>menuName(n)===menuName(m))).map(p=>p.name)))];
+ const cuisines=[...new Set((food.menus||[]).flatMap(m=>(pillarForConcept(m)?[pillarForConcept(m).name]:[])))];
  return {reviewStatus:'Proposed',placements:[...new Set(placements)],flavors,textures,seasons,cuisines,role:food.category,
  premium:/\b(beef|steak|salmon|seafood|shrimp|tuna|fish)\b/.test(name)&&!/plant.based|vegan/.test(name),
  evidenceCount:candidates.length,sourceSha256:candidates.length?evidence.sourceSha256:null,

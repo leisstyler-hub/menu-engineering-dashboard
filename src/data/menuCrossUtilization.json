@@ -64,6 +64,7 @@
       "color": "#374151",
       "menus": [
         "Carvery",
+        "Chickle",
         "Cutlet",
         "Fish Market",
         "Roam BBQ",
@@ -76,6 +77,7 @@
       "color": "#C2410C",
       "menus": [
         "Balti",
+        "Balti Pilot",
         "Chaatwalla",
         "Katora",
         "Saffron",
@@ -83,30 +85,23 @@
       ]
     },
     {
-      "name": "Cafe Express & Fresh",
-      "color": "#15803D",
+      "name": "Core Stations Pillar",
+      "color": "#1D4ED8",
       "menus": [
         "Bowl INC",
         "Fresh Five",
         "Global Grains",
-        "Harvest Co",
         "Q Bowl",
         "Simmers",
-        "Smoothies"
-      ]
-    },
-    {
-      "name": "Base Station Infrastructure",
-      "color": "#1D4ED8",
-      "menus": [
+        "Smoothies",
         "Breakfast",
+        "Cafe Express",
+        "Harvest Co",
         "Curated Salads",
         "Curated Sandwiches",
         "Deli Core",
         "Grill Core",
-        "MTO Deli",
-        "Soup",
-        "WP Salad Bar"
+        "Soup"
       ]
     }
   ],
@@ -695,8 +690,8 @@
     },
     {
       "name": "Bowl INC",
-      "pillar": "Cafe Express & Fresh",
-      "isCoreStation": false,
+      "pillar": "Core Stations Pillar",
+      "isCoreStation": true,
       "sourceFile": "Shopping List Bowl INC.pdf",
       "hasIngredientData": true,
       "extractedRowCount": 114,
@@ -815,7 +810,7 @@
     },
     {
       "name": "Breakfast",
-      "pillar": "Base Station Infrastructure",
+      "pillar": "Core Stations Pillar",
       "isCoreStation": true,
       "sourceFile": "Shopping List Breakfast.pdf",
       "hasIngredientData": true,
@@ -1606,7 +1601,7 @@
     },
     {
       "name": "Chickle",
-      "pillar": null,
+      "pillar": "American Grill & Smokehouse",
       "isCoreStation": false,
       "sourceFile": "Shopping List Chickle.pdf",
       "hasIngredientData": false,
@@ -1725,7 +1720,7 @@
     },
     {
       "name": "Curated Salads",
-      "pillar": "Base Station Infrastructure",
+      "pillar": "Core Stations Pillar",
       "isCoreStation": true,
       "sourceFile": "Shopping List Curated Salads.pdf",
       "hasIngredientData": true,
@@ -1903,7 +1898,7 @@
     },
     {
       "name": "Curated Sandwiches",
-      "pillar": "Base Station Infrastructure",
+      "pillar": "Core Stations Pillar",
       "isCoreStation": true,
       "sourceFile": "Shopping List Curated Sandwiches.pdf",
       "hasIngredientData": true,
@@ -2409,7 +2404,7 @@
     },
     {
       "name": "Deli Core",
-      "pillar": "Base Station Infrastructure",
+      "pillar": "Core Stations Pillar",
       "isCoreStation": true,
       "sourceFile": "Shopping List Deli Core.pdf",
       "hasIngredientData": true,
@@ -2932,8 +2927,8 @@
     },
     {
       "name": "Fresh Five",
-      "pillar": "Cafe Express & Fresh",
-      "isCoreStation": false,
+      "pillar": "Core Stations Pillar",
+      "isCoreStation": true,
       "sourceFile": "Shopping List Fresh Five.pdf",
       "hasIngredientData": true,
       "extractedRowCount": 201,
@@ -3134,8 +3129,8 @@
     },
     {
       "name": "Global Grains",
-      "pillar": "Cafe Express & Fresh",
-      "isCoreStation": false,
+      "pillar": "Core Stations Pillar",
+      "isCoreStation": true,
       "sourceFile": "Shopping List Global Grains.pdf",
       "hasIngredientData": true,
       "extractedRowCount": 109,
@@ -3250,7 +3245,7 @@
     },
     {
       "name": "Grill Core",
-      "pillar": "Base Station Infrastructure",
+      "pillar": "Core Stations Pillar",
       "isCoreStation": true,
       "sourceFile": "Shopping List Grill Core.pdf",
       "hasIngredientData": true,
@@ -3437,8 +3432,8 @@
     },
     {
       "name": "Harvest Co",
-      "pillar": "Cafe Express & Fresh",
-      "isCoreStation": false,
+      "pillar": "Core Stations Pillar",
+      "isCoreStation": true,
       "sourceFile": "Shopping List Harvest Co.pdf",
       "hasIngredientData": true,
       "extractedRowCount": 99,
@@ -4087,8 +4082,8 @@
     },
     {
       "name": "MTO Deli",
-      "pillar": "Base Station Infrastructure",
-      "isCoreStation": true,
+      "pillar": null,
+      "isCoreStation": false,
       "sourceFile": "Shopping List MTO Deli.pdf",
       "hasIngredientData": true,
       "extractedRowCount": 129,
@@ -4887,8 +4882,8 @@
     },
     {
       "name": "Q Bowl",
-      "pillar": "Cafe Express & Fresh",
-      "isCoreStation": false,
+      "pillar": "Core Stations Pillar",
+      "isCoreStation": true,
       "sourceFile": "Shopping List Q Bowl.pdf",
       "hasIngredientData": true,
       "extractedRowCount": 166,
@@ -5346,8 +5341,8 @@
     },
     {
       "name": "Simmers",
-      "pillar": "Cafe Express & Fresh",
-      "isCoreStation": false,
+      "pillar": "Core Stations Pillar",
+      "isCoreStation": true,
       "sourceFile": "Shopping List Simmers.pdf",
       "hasIngredientData": true,
       "extractedRowCount": 185,
@@ -5749,8 +5744,8 @@
     },
     {
       "name": "Smoothies",
-      "pillar": "Cafe Express & Fresh",
-      "isCoreStation": false,
+      "pillar": "Core Stations Pillar",
+      "isCoreStation": true,
       "sourceFile": "Shopping List Smoothies.pdf",
       "hasIngredientData": true,
       "extractedRowCount": 25,
@@ -5788,7 +5783,7 @@
     },
     {
       "name": "Soup",
-      "pillar": "Base Station Infrastructure",
+      "pillar": "Core Stations Pillar",
       "isCoreStation": true,
       "sourceFile": "Shopping List Soup.pdf",
       "hasIngredientData": true,
@@ -6669,8 +6664,8 @@
     },
     {
       "name": "WP Salad Bar",
-      "pillar": "Base Station Infrastructure",
-      "isCoreStation": true,
+      "pillar": null,
+      "isCoreStation": false,
       "sourceFile": "Shopping List WP Salad Bar.pdf",
       "hasIngredientData": true,
       "extractedRowCount": 150,

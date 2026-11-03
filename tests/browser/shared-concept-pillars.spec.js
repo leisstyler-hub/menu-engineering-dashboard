@@ -1,0 +1,29 @@
+import {test,expect} from '@playwright/test';
+import {openTool} from './smoke-helpers.js';
+import {buildRecipePairwiseData,projectRecipePresence} from '../../src/features/menu-cross-utilization/recipePairwiseModel.js';
+import * as XLSX from 'xlsx';
+import {readFile} from 'node:fs/promises';
+const names=['Balti','Balti Pilot','Chickle','MTO Deli','WP Salad Bar'];
+test('active recipe and historical lists use current pillars and omit retired concepts',async({page})=>{
+ const data=projectRecipePresence(buildRecipePairwiseData(names.map(menu=>({menu,version:'fixture',validated:true,recipes:[{variantKey:menu,ingredients:[{kind:'ingredient',name:'Carrots'}]}]}))));
+ await page.route('**/api/**',r=>r.fulfill({json:r.request().url().includes('recipe-pairwise')?{ok:true,data}:{ok:true}}));
+ await openTool(page,/open cross utilization/i,/^Menu Cross Utilization Tool$/);
+ for(const name of ['Balti','Balti Pilot'])await expect(page.getByRole('row',{name:new RegExp(`^${name} South Asian `)})).toContainText('South Asian');
+ await expect(page.getByRole('row',{name:/^Chickle /})).toContainText('American Grill & Smokehouse');
+ for(const name of ['MTO Deli','WP Salad Bar'])await expect(page.getByRole('row',{name:new RegExp(name)})).toHaveCount(0);
+ await page.getByRole('combobox',{name:'Comparison source'}).selectOption('history');
+ await expect(page.getByRole('row',{name:/^Chickle /})).toContainText('American Grill & Smokehouse');
+ for(const name of ['MTO Deli','WP Salad Bar'])await expect(page.getByRole('row',{name:new RegExp(name)})).toHaveCount(0);
+});
+test('W&P selects Balti variants together and exports shared pillars without retired concepts',async({page})=>{
+ await page.route('**/api/**',r=>r.fulfill({json:r.request().url().includes('recipe-library')?{ok:true,source:'supabase-recipe-items',rows:names.map((name,i)=>({menu:`AMZ: ${name}`,item:'Grilled chicken',mrn:String(i),portion:'4 oz',portionOz:4,trueCost:1}))}:{ok:true,rows:[],records:[]}}));
+ await openTool(page,/open menu analysis/i,/Menu Engineering/);await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();
+ const picker=page.getByRole('group',{name:'Menu selection'});
+ await picker.getByRole('button',{name:'South Asian (2)',exact:true}).click();
+ for(const name of ['Balti','Balti Pilot'])await expect(picker.getByRole('checkbox',{name:`AMZ: ${name}`,exact:true})).toBeChecked();
+ for(const name of ['MTO Deli','WP Salad Bar'])await expect(picker.getByRole('checkbox',{name:`AMZ: ${name}`,exact:true})).toHaveCount(0);
+ const download=page.waitForEvent('download');await page.getByRole('button',{name:'Flagged Item Audit',exact:true}).click();
+ const book=XLSX.read(await readFile(await(await download).path()));const rows=XLSX.utils.sheet_to_json(book.Sheets['Flagged Item Audit']);
+ expect(rows.find(r=>r.Menu==='AMZ: Balti Pilot').Pillar).toBe('South Asian');expect(rows.find(r=>r.Menu==='AMZ: Chickle').Pillar).toBe('American Grill & Smokehouse');
+ expect(rows.some(r=>/MTO Deli|WP Salad Bar/.test(r.Menu))).toBe(false);
+});

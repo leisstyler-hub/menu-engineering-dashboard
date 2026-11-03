@@ -16,7 +16,7 @@ test("Menu Cross Utilization Tool opens with pillar strategy and the full menu l
   await expect(page.getByText(/guidance only, not an automatic rotation rule/i)).toBeVisible();
 
   await expect(page.getByRole("heading", { name: "Cuisine pillar groupings" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Base Station Infrastructure" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Core Stations Pillar" })).toBeVisible();
 
   await expect(page.getByRole("heading", { name: "Menu cross-utilization list" })).toBeVisible();
   const chickleRow = page.getByRole("row", { name: /Chickle/ });

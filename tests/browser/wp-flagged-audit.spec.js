@@ -51,6 +51,6 @@ test('W&P pillar selector covers live-name aliases and Core Stations tiles',asyn
  await expect(picker.getByRole('checkbox',{name:menus[0],exact:true})).toBeChecked();
  await picker.getByRole('button',{name:'Italian (1)',exact:true}).click();
  await expect(picker.getByRole('checkbox',{name:menus[1],exact:true})).toBeChecked();
- await picker.getByRole('button',{name:'Needs pillar assignment (1)',exact:true}).click();
+ await picker.getByRole('button',{name:'American Grill & Smokehouse (1)',exact:true}).click();
  await expect(picker.getByRole('checkbox',{name:menus[6],exact:true})).toBeChecked();
 });

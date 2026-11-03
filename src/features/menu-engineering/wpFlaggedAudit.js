@@ -1,3 +1,4 @@
+import {isRetiredConcept} from '../../shared/conceptPillars.js';
 import XLSX from 'xlsx-js-style';
 import {estimatePans} from './wpPanEstimate.js';
 import {profileFor} from './wpSmartModel.js';
@@ -6,7 +7,7 @@ import {SELECTOR_PILLARS,selectorPillarMenus} from './wpSelectorPillars.js';
 const join=values=>[...new Set(values.filter(Boolean))].join('; ');
 export function buildFlaggedAuditRows(projections,{trusted=true}={}) {
  const rows=[];
- for(const projection of projections) for(const [group,foods] of [['Servable component',projection.items||[]],['Classification review',projection.review||[]],['Excluded from W&P',projection.excluded||[]]]) for(const food of foods) {
+ for(const projection of projections.filter(p=>!isRetiredConcept(p.menu))) for(const [group,foods] of [['Servable component',projection.items||[]],['Classification review',projection.review||[]],['Excluded from W&P',projection.excluded||[]]]) for(const food of foods) {
   const item={...food,menus:[projection.menu]},profile=profileFor(item);
   const estimate=estimatePans({panSize:'half',totalPans:1},item);
   const flags=[...(food.informationReasons||[]),food.classificationReason,...(food.serviceReasons||[])];

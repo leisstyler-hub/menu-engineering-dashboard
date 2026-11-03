@@ -1,3 +1,7 @@
+## PILLARS-2026-11-03: One current mapping and retired concepts
+
+Tyler request 7999c6ed07a8b1908c60a2a6febff89f0b95a082508c02dbbadff3a7bef71c25 supersedes the selector-only scope: use current pillar assignments throughout Pairwise, W&P selection, smart builds and profile/export presentation. Balti Pilot belongs with Balti in South Asian. Complete remaining assignment Chickle as American Grill & Smokehouse based on its chicken-led source menu. Keep approved Core Stations Pillar and Harvest Co. membership. Follow-up 7f60f119aaf2a986c74d3eb632fc6341f95beedfd1cb2462930e52d0bc081e58 retires MTO Deli and WP Salad Bar from active planning/comparisons/exports; retain source and history. No culinary reviewed-profile rewrite or operational data write. Ingredient identities and pairwise pair scores remain unchanged; within-pillar statistics intentionally reflect current membership.
+
 ## Recipe-derived Pairwise - approved November 3, 2026
 
 Tyler explicitly requested all supplied menu recipe packets be built into the Andes-style private intake and Pairwise rebuilt at Buzz event fd360e879332fa0c6cedbb573b64ffb83c49ac9aa3aa4de16bcd879cc5081a80. Preserve original packets, exact MRNs/portions, source versions and private recipe access. The new comparison cohort uses source recipe ingredients, retaining historical shopping-list comparisons separately. Exact normalized ingredient-name presence is labeled distinctly from purchasing MIT identity; unresolved source membership/dependencies remain visible and unscored. Recipe viewing, catalog replacement and canonical SSMT writes are outside this scope. Implementation, reviewed safeguards and recovery: [recipe Pairwise record](docs/RECIPE_PAIRWISE_2026_11_03.md).
@@ -449,3 +453,6 @@ Tyler approved all source menus in W&P analysis (event b933b11799916b6d5e700371c
 ### 2026-10-29 - One-week Commissary cutoff exception
 
 Tyler authorized reopening November 2-6, 2026 Commissary ordering until Thursday October 29 at 5 PM Pacific, then automatic closure. Only service week 2026-11-02 is excepted; November 9-13 and all other weeks retain the normal prior-Wednesday 5 PM Pacific cutoff. Authority: Buzz `c57d644dd0f1ced70681453e0570970f3b03692454a7ebe64eb1717ff4295ab2`. No historical order rewrite or production verification writes are authorized.
+
+
+Tyler follow-up 68f717e0b9b2b3e2de30a90378373a1aa38046e8093cf3ab00895fb2eb4574c3 merges Cafe Express & Fresh with the former Base Station group under Core Stations Pillar, including Bowl INC, Fresh Five, Global Grains, Q Bowl, Simmers and Smoothies.
