@@ -9,7 +9,7 @@ import { buildS4Rows, buildS4Workbook } from "../src/features/transfer-tool/tran
 import { COMMISSARY_LEGACY_ORDER_ITEMS, COMMISSARY_ORDER_ITEMS, COMMISSARY_RETIRED_ORDER_ITEMS, SALAD_BAR_COST_SOURCE, commissaryOrderItemsForWeek } from "../src/features/commissary-ordering/commissaryCatalog.js";
 import { buildCommissaryBomWorkbook, buildCommissaryTransfer } from "../src/features/commissary-ordering/commissaryExport.js";
 import { buildCommissaryMetadataRecord, DEFAULT_COMMISSARY_METADATA, isApprovedCommissaryMetadataRecord, resolveCommissaryMetadata } from "../src/features/commissary-ordering/commissaryMetadata.js";
-import { COMMISSARY_BREAKFAST_ORDER_VERSION, COMMISSARY_DELI_ORDER_VERSION, COMMISSARY_GLOBAL_ORDER_VERSION, COMMISSARY_GRILL_ORDER_VERSION, COMMISSARY_ORDER_UNIT_VERSION, DELIVERY_KEYS, addDays, breakfastOrderLinesForCafe, breakfastPrepLinesForCafe, buildOrderRecord, buildPackoutPacketRecord, buildPrepProgressRecord, deliCycleForWeek, deliOrderLinesForCafe, deliPrepLinesForCafe, deliveriesForWeek, emptyBreakfastOrder, emptyDeliOrder, emptyGlobalOrder, emptyGrillOrder, emptyQuantities, firstOpenWeek, globalCycleForWeek, globalOrderLinesForCafe, globalPrepLinesForCafe, globalTransferLinesForCafe, grillCycleForWeek, grillOrderLinesForCafe, grillPrepLinesForCafe, grillTransferLinesForCafe, isWeekLocked, latestPrepWeek, normalizePrepCompleted, normalizeQuantities, orderValue, prepDisplayQuantity, rolledUpPrepItems, togglePrepCompleted, transferPeriod } from "../src/features/commissary-ordering/commissaryModel.js";
+import { COMMISSARY_BREAKFAST_ORDER_VERSION, COMMISSARY_DELI_ORDER_VERSION, COMMISSARY_GLOBAL_ORDER_VERSION, COMMISSARY_GRILL_ORDER_VERSION, COMMISSARY_ORDER_UNIT_VERSION, DELIVERY_KEYS, addDays, breakfastOrderLinesForCafe, breakfastPrepLinesForCafe, buildOrderRecord, buildPackoutPacketRecord, buildPrepProgressRecord, deliCycleForWeek, deliOrderLinesForCafe, deliPrepLinesForCafe, deliveriesForWeek, emptyBreakfastOrder, emptyDeliOrder, emptyGlobalOrder, emptyGrillOrder, emptyQuantities, firstOpenWeek, globalCycleForWeek, globalOrderLinesForCafe, globalPrepLinesForCafe, globalTransferLinesForCafe, grillCycleForWeek, grillOrderLinesForCafe, grillPrepLinesForCafe, grillTransferLinesForCafe, isGrillCoreAvailable, isWeekLocked, latestPrepWeek, normalizeDeliOrder, normalizePrepCompleted, normalizeQuantities, orderValue, prepDisplayQuantity, rolledUpPrepItems, standingOrderReductions, togglePrepCompleted, transferPeriod } from "../src/features/commissary-ordering/commissaryModel.js";
 import { buildPackoutPacket, buildPackoutPdfBytes } from "../src/features/commissary-ordering/commissaryPackout.js";
 import { GRILL_LTO_ITEM_MRNS, GRILL_LTO_PREP_ITEM_IDS, GRILL_LTO_PROGRAM } from "../src/features/commissary-ordering/grillLtoCatalog.js";
 import { DELI_ORDERING_ITEM_MRNS, DELI_ORDERING_PREP_ITEM_IDS, DELI_ORDERING_PROGRAM } from "../src/features/commissary-ordering/deliCycleCatalog.js";
@@ -53,9 +53,12 @@ assert.deepEqual(grillCycleForWeek("2026-11-16"), GRILL_LTO_PROGRAM.cycleWeeks[0
 assert.deepEqual(grillCycleForWeek("2026-12-21"), GRILL_LTO_PROGRAM.cycleWeeks[5]);
 assert.deepEqual(grillCycleForWeek("2026-12-28"), GRILL_LTO_PROGRAM.cycleWeeks[0], "The six-week Grill cycle must repeat.");
 assert.equal(grillCycleForWeek("2026-11-09"), null, "The Grill cycle must not appear before its 11/16/2026 anchor.");
+assert.equal(isGrillCoreAvailable("Atlas", "2026-11-09"), true, "Atlas Grill Core must begin one week before the general Grill program.");
+assert.equal(isGrillCoreAvailable("Nessie", "2026-11-09"), false);
 assert.equal(DELI_ORDERING_PROGRAM.cycleLengthWeeks, 4);
-assert.deepEqual(DELI_ORDERING_PROGRAM.cycleWeeks.map(({ items }) => items.length), [5, 5, 6, 6]);
-assert.equal(DELI_ORDERING_ITEM_MRNS.length, 20);
+assert.deepEqual(DELI_ORDERING_PROGRAM.cycleWeeks.map(({ items }) => items.length), [5, 5, 5, 6]);
+assert.equal(DELI_ORDERING_ITEM_MRNS.length, 19);
+assert.deepEqual(DELI_ORDERING_PROGRAM.standingOrderItemMrns, ["37394.7"]);
 assert.ok(DELI_ORDERING_PREP_ITEM_IDS.length > 100);
 assert.equal(deliCycleForWeek("2026-11-16").week, 1);
 assert.equal(deliCycleForWeek("2026-12-07").week, 4);
@@ -92,6 +95,10 @@ assert.deepEqual(normalizeQuantities({ "commissary-9002-2": { monday: 1.5, wedne
 const legacyFrozenPeas = COMMISSARY_LEGACY_ORDER_ITEMS.find((row) => row.name === "Frozen Peas");
 assert.deepEqual(normalizeQuantities({ [legacyFrozenPeas.id]: { friday: 0, monday: 0, wednesday: 4 } }, { orderUnitVersion: 1, weekStart: "2026-11-02" })[legacyFrozenPeas.id], { friday: 0, monday: 0, wednesday: 1 }, "A pre-conversion saved order must restore its original quart quantity as gallons exactly once.");
 assert.deepEqual(normalizeQuantities({ [legacyFrozenPeas.id]: { friday: 0.25, monday: 0, wednesday: 0.25 } }, { orderUnitVersion: 2, weekStart: "2026-11-02" })[legacyFrozenPeas.id], { friday: 0.25, monday: 0, wednesday: 0.25 }, "A version-2 saved order must preserve its original gallon quantities.");
+assert.equal(COMMISSARY_ORDER_ITEMS.find((row) => row.name === "Ranch Dressing")?.quantityIncrement, 1);
+assert.equal(COMMISSARY_ORDER_ITEMS.find((row) => row.name === "Spring Mix")?.quantityIncrement, 1);
+assert.equal(COMMISSARY_ORDER_ITEMS.find((row) => row.name === "Baby Arugula")?.quantityIncrement, 1);
+assert.equal(COMMISSARY_ORDER_ITEMS.find((row) => row.name === "Green Peas")?.quantityIncrement, 0.25);
 
 const metadataRecord = buildCommissaryMetadataRecord(new Date("2026-10-27T12:00:00Z"));
 assert.equal(isApprovedCommissaryMetadataRecord(metadataRecord), true);
@@ -236,6 +243,13 @@ assert.ok(grillTransfer.items.every((item) => item.ingredientAllocations[0].allo
 const grillBom = buildCommissaryBomWorkbook([grillRecord], "2026-11-16");
 const grillBomRows = XLSX.utils.sheet_to_json(grillBom.Sheets["Consolidated Prep List"], { header: 1, defval: "" });
 assert.equal(grillBomRows.some((row) => row[0] === "AMZ: Smashburger Patty"), false);
+const atlasEarlyGrill = emptyGrillOrder("2026-11-09");
+atlasEarlyGrill.core.items["147955.17"] = { mrn: "147955.17", item: "Smashburger", portion: "1 sandwich", itemWasteCost: 2.9983 };
+atlasEarlyGrill.core.quantities["147955.17"] = { friday: 2, monday: 4, wednesday: 6 };
+const atlasEarlyRecord = buildOrderRecord({ cafe: "Atlas", weekStart: "2026-11-09", grill: atlasEarlyGrill, now: new Date("2026-11-03T12:00:00Z") });
+assert.equal(atlasEarlyRecord.grill.cycleWeek, null);
+assert.equal(commissaryWriteValidation([atlasEarlyRecord], { tool: "commissaryOrders" }), "");
+assert.equal(grillOrderLinesForCafe(atlasEarlyRecord).length, 1);
 const grillMondayRows = XLSX.utils.sheet_to_json(grillBom.Sheets["Monday Delivery Map"], { header: 1, defval: "" });
 assert.ok(grillMondayRows.some((row) => row[0] === "Nessie" && row[5].includes("ATX Burger")));
 
@@ -260,6 +274,10 @@ const deliBomRows = XLSX.utils.sheet_to_json(deliBom.Sheets["Consolidated Prep L
 assert.ok(deliBomRows.some((row) => row[0].includes("Turkey") && Number(row[1]) > 0));
 assert.ok(rolledUpPrepItems([deliRecord], { hub: "Cricket" }).some((line) => line.category.startsWith("Deli")));
 assert.equal(rolledUpPrepItems([deliRecord], { hub: "Sonic" }).length, 0);
+const retiredDeli = normalizeDeliOrder({ quantities: { "37394.7": { friday: 2, monday: 3, wednesday: 4 } }, items: { "37394.7": { mrn: "37394.7", item: "Banh Mi Ham Sandwich", portion: "1 sandwich", itemWasteCost: 2.94 } } }, "2026-11-30", "Nessie");
+assert.deepEqual(retiredDeli.standingOrderMrns, ["37394.7"], "A saved Ham Banh Mi order must remain visible after it leaves the selectable roster.");
+assert.equal(retiredDeli.quantities["37394.7"].monday, 3);
+assert.equal(standingOrderReductions({ deli: retiredDeli }, { deli: { ...retiredDeli, quantities: { ...retiredDeli.quantities, "37394.7": { friday: 2, monday: 0, wednesday: 4 } } } }).length, 1);
 
 const breakfast = emptyBreakfastOrder();
 const breakfastOption = BREAKFAST_ORDERING_PROGRAM.items[0];
@@ -340,7 +358,7 @@ assert.ok(packet.pages.every((page) => page.cafe === "Everest" && page.stations.
 const packetBytes = buildPackoutPdfBytes(packet);
 assert.equal(new TextDecoder().decode(packetBytes.slice(0, 8)), "%PDF-1.4");
 assert.ok(packetBytes.length > 3000);
-const packetRecord = { ...buildPackoutPacketRecord({ weekStart: "2026-11-16", records: [globalRecord], packet, metadataVersion: 13, now: new Date("2026-11-12T01:00:00Z") }), packet };
+const packetRecord = { ...buildPackoutPacketRecord({ weekStart: "2026-11-16", records: [globalRecord], packet, metadataVersion: 14, now: new Date("2026-11-12T01:00:00Z") }), packet };
 assert.equal(commissaryWriteValidation([packetRecord], { tool: "commissaryOrders" }), "");
 assert.match(commissaryWriteValidation([{ ...packetRecord, packet: { ...packet, pages: [{ ...packet.pages[0], cafe: "Unknown Cafe" }] } }], { tool: "commissaryOrders" }), /scope|invalid cafe/i);
 assert.match(commissaryWriteValidation([{ ...packetRecord, orderRecordIds: [`commissaryOrder|nessie|${packetRecord.weekStart}`] }], { tool: "commissaryOrders" }), /order-reference scope/i);

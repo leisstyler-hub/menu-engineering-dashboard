@@ -6,9 +6,9 @@ import {
   normalizeBackboneRows,
 } from "../../src/integrations/storage/backboneRecords.js";
 import { isApprovedCommissaryMetadataRecord } from "../../src/features/commissary-ordering/commissaryMetadata.js";
-import { COMMISSARY_BREAKFAST_ORDER_VERSION, COMMISSARY_DELI_ORDER_VERSION, COMMISSARY_GLOBAL_ORDER_VERSION, COMMISSARY_GRILL_ORDER_VERSION, COMMISSARY_ORDER_UNIT_VERSION, COMMISSARY_PACKOUT_PACKET_VERSION, COMMISSARY_STATION_ORDER, DELIVERY_KEYS, deliCycleForWeek, deliveryDateForWeek, globalCycleForWeek, grillCycleForWeek, isBreakfastEligibleCafe, isDeliEligibleCafe, isGlobalEligibleCafe, isGrillEligibleCafe, isWeekLocked } from "../../src/features/commissary-ordering/commissaryModel.js";
+import { COMMISSARY_BREAKFAST_ORDER_VERSION, COMMISSARY_DELI_ORDER_VERSION, COMMISSARY_GLOBAL_ORDER_VERSION, COMMISSARY_GRILL_ORDER_VERSION, COMMISSARY_ORDER_UNIT_VERSION, COMMISSARY_PACKOUT_PACKET_VERSION, COMMISSARY_STATION_ORDER, DELIVERY_KEYS, deliCycleForWeek, deliveryDateForWeek, globalCycleForWeek, grillCycleForWeek, invalidWholeUnitSaladQuantities, isBreakfastEligibleCafe, isDeliEligibleCafe, isGlobalEligibleCafe, isGrillCoreAvailable, isGrillEligibleCafe, isWeekLocked, standingOrderReductions } from "../../src/features/commissary-ordering/commissaryModel.js";
 import { GRILL_LTO_PREP_ITEM_IDS, GRILL_LTO_PROGRAM } from "../../src/features/commissary-ordering/grillLtoCatalog.js";
-import { DELI_ORDERING_PREP_ITEM_IDS } from "../../src/features/commissary-ordering/deliCycleCatalog.js";
+import { DELI_ORDERING_PREP_ITEM_IDS, DELI_ORDERING_PROGRAM } from "../../src/features/commissary-ordering/deliCycleCatalog.js";
 import { GLOBAL_ORDERING_PREP_ITEM_IDS } from "../../src/features/commissary-ordering/globalCycleCatalog.js";
 import { BREAKFAST_ORDERING_ITEM_IDS, BREAKFAST_ORDERING_PREP_ITEM_IDS, BREAKFAST_ORDERING_PROGRAM } from "../../src/features/commissary-ordering/breakfastCatalog.js";
 import { COMMISSARY_HUBS, COMMISSARY_STATIONS, isCafeStationEnabled } from "../../src/features/commissary-ordering/commissaryRouting.js";
@@ -176,7 +176,11 @@ export function commissaryWriteValidation(records = [], context = {}) {
       const delivery = record.grill?.quantities?.[setKey];
       if (!delivery || DELIVERY_KEYS.some((key) => !Number.isInteger(Number(delivery[key] ?? 0)) || Number(delivery[key] ?? 0) < 0)) return "Grill LTO quantities must be zero or positive whole sandwiches.";
     }
-    const coreAllowed = new Set(GRILL_LTO_PROGRAM.coreItems.map(({ mrn }) => mrn));
+  } else if (Object.values(record.grill?.quantities || {}).some((delivery) => DELIVERY_KEYS.some((key) => Number(delivery?.[key] || 0) > 0))) {
+    return "Grill LTO ordering is not enabled for this cafe and week.";
+  }
+  const coreAllowed = new Set(GRILL_LTO_PROGRAM.coreItems.map(({ mrn }) => mrn));
+  if (isGrillCoreAvailable(record.cafe, record.weekStart)) {
     if (Object.keys(record.grill?.core?.quantities || {}).some((mrn) => !coreAllowed.has(mrn))) return "The Grill Core order contains an unknown item.";
     for (const mrn of coreAllowed) {
       const delivery = record.grill?.core?.quantities?.[mrn];
@@ -185,16 +189,18 @@ export function commissaryWriteValidation(records = [], context = {}) {
       const item = record.grill?.core?.items?.[mrn];
       if (count > 0 && (!item || String(item.mrn) !== mrn || !item.item || !(Number(item.itemWasteCost) > 0))) return `The Grill Core cost snapshot for MRN ${mrn} is invalid.`;
     }
-  } else if (Object.values(record.grill?.quantities || {}).some((delivery) => DELIVERY_KEYS.some((key) => Number(delivery?.[key] || 0) > 0)) || Object.values(record.grill?.core?.quantities || {}).some((delivery) => DELIVERY_KEYS.some((key) => Number(delivery?.[key] || 0) > 0))) {
-    return "Grill ordering is not enabled for this cafe.";
+  } else if (Object.values(record.grill?.core?.quantities || {}).some((delivery) => DELIVERY_KEYS.some((key) => Number(delivery?.[key] || 0) > 0))) {
+    return "Grill Core ordering is not enabled for this cafe and week.";
   }
   const deliCycle = deliCycleForWeek(record.weekStart);
   if (deliCycle && isDeliEligibleCafe(record.cafe)) {
     if (Number(record.deli?.version) !== COMMISSARY_DELI_ORDER_VERSION || Number(record.deli?.cycleWeek) !== deliCycle.week) return "The Deli Core cycle is invalid.";
-    const allowed = new Set(deliCycle.items.map(({ mrn }) => mrn));
+    const standing = new Set(DELI_ORDERING_PROGRAM.standingOrderItemMrns || []);
+    const allowed = new Set([...deliCycle.items.map(({ mrn }) => mrn), ...standing]);
     if (Object.keys(record.deli?.quantities || {}).some((mrn) => !allowed.has(mrn))) return "The Deli order contains an item outside the current cycle.";
-    for (const { mrn } of deliCycle.items) {
+    for (const mrn of allowed) {
       const delivery = record.deli?.quantities?.[mrn];
+      if (!delivery && standing.has(mrn)) continue;
       if (!delivery || DELIVERY_KEYS.some((key) => !Number.isInteger(Number(delivery[key] ?? 0)) || Number(delivery[key] ?? 0) < 0)) return "Deli quantities must be zero or positive whole sandwiches.";
       const count = DELIVERY_KEYS.reduce((sum, key) => sum + Number(delivery[key] || 0), 0);
       const item = record.deli?.items?.[mrn];
@@ -551,6 +557,27 @@ async function upsertRecords(req, res) {
   if (getBackboneToolFromContext(context) === "operationalMetadata"
     && (records.length !== 1 || !isApprovedOperationalMetadataRecord(records[0]))) {
     return res.status(400).json({ ok: false, message: "Operational metadata does not match the approved release configuration." });
+  }
+  if (getBackboneToolFromContext(context) === "commissaryOrders") {
+    for (const record of records.filter((candidate) => candidate?.["Record Type"] === "Commissary Order")) {
+      const existingRows = await supabaseFetch(`app_records?${queryString({ select: "record_payload", record_id: `eq.${record["Record ID"]}`, limit: "1" })}`);
+      const existing = existingRows?.[0]?.record_payload;
+      const fractionalWholeUnitKeys = invalidWholeUnitSaladQuantities(record.quantities, record.weekStart);
+      const changedFractionalKeys = fractionalWholeUnitKeys.filter((key) => {
+        const [itemId, delivery] = key.split("|");
+        return Number(record.quantities?.[itemId]?.[delivery] || 0) !== Number(existing?.quantities?.[itemId]?.[delivery] || 0);
+      });
+      if (changedFractionalKeys.length) {
+        return res.status(400).json({ ok: false, message: "Salad dressings, vinaigrettes, spring mix, spinach, and arugula must be ordered in whole units. Existing split quantities remain grandfathered until an operator changes them." });
+      }
+      const reductions = existing ? standingOrderReductions(existing, record) : [];
+      if (reductions.length) {
+        const approval = record.standingOrderChangeApproval;
+        if (!approval || approval.baselineUpdatedAt !== existing.updatedAt || Number(approval.reductionCount) !== reductions.length) {
+          return res.status(409).json({ ok: false, message: "Saved standing orders would be reduced or removed. Reload the order and explicitly confirm what should happen to the standing quantities." });
+        }
+      }
+    }
   }
   if (getBackboneToolFromContext(context) === "transfers") {
     const record = records[0];

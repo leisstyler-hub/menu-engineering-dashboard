@@ -454,5 +454,8 @@ Tyler approved all source menus in W&P analysis (event b933b11799916b6d5e700371c
 
 Tyler authorized reopening November 2-6, 2026 Commissary ordering until Thursday October 29 at 5 PM Pacific, then automatic closure. Only service week 2026-11-02 is excepted; November 9-13 and all other weeks retain the normal prior-Wednesday 5 PM Pacific cutoff. Authority: Buzz `c57d644dd0f1ced70681453e0570970f3b03692454a7ebe64eb1717ff4295ab2`. No historical order rewrite or production verification writes are authorized.
 
-
 Tyler follow-up 68f717e0b9b2b3e2de30a90378373a1aa38046e8093cf3ab00895fb2eb4574c3 merges Cafe Express & Fresh with the former Base Station group under Core Stations Pillar, including Bowl INC, Fresh Five, Global Grains, Q Bowl, Simmers and Smoothies.
+
+### 2026-11-03 - Commissary standing-order preservation
+
+Alex established an absolute Commissary Ordering rule: catalog and program releases never rewrite saved orders. A saved quantity that becomes retired remains readable, visible, exportable and available to prep; any operator action that reduces or removes a saved quantity requires an explicit keep-or-change confirmation tied to the current Supabase record baseline. Existing split quantities are grandfathered when a new whole-unit policy takes effect, but any later edit must follow the current increment. This decision applies to all Commissary Ordering updates and supersedes any implementation that would silently normalize saved quantities out of a record.

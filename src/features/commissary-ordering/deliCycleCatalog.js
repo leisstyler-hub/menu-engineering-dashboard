@@ -25,6 +25,9 @@ export const DELI_ORDERING_PROGRAM = Object.freeze({
   ],
   "quantityIncrement": 1,
   "orderUnit": "sandwich",
+  "standingOrderItemMrns": [
+    "37394.7"
+  ],
   "cycleWeeks": [
     {
       "week": 1,
@@ -94,10 +97,6 @@ export const DELI_ORDERING_PROGRAM = Object.freeze({
         {
           "mrn": "144636",
           "name": "Muffaletta"
-        },
-        {
-          "mrn": "37394.7",
-          "name": "Banh Mi Ham Sandwich"
         },
         {
           "mrn": "108987",

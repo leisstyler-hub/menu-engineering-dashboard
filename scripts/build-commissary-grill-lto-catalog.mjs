@@ -119,6 +119,8 @@ const rendered = `// Generated from public/resources/Ingredient_Costing_9.19.26.
   anchorWeekStart: "2026-11-16",
   cycleLengthWeeks: 6,
   effectiveDate: "2026-11-16",
+  coreDefaultStartWeek: "2026-11-16",
+  coreStartWeekByCafe: { Atlas: "2026-11-09" },
   eligibleCafes: ["Cricket", "Nessie", "Dawson", "Atlas", "Bingo", "Grace", "Blueshift", "Sonic", "Astra", "Day 1", "Nitro", "Re:Invent"],
   quantityIncrement: 1,
   orderUnit: "sandwich",

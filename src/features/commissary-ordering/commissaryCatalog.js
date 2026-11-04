@@ -25,6 +25,11 @@ const CRUNCHY_MRNS = new Set(["62347", "144578", "65280"]);
 const DRESSING_MRNS = new Set(["111748.11", "16776", "47957.11", "62355", "5323", "47805.1", "62357", "62369"]);
 const categoryFor = (mrn) => CHEESE_MRNS.has(mrn) ? "Cheese" : PROTEIN_MRNS.has(mrn) ? "Proteins" : CRUNCHY_MRNS.has(mrn) ? "Crunchy Toppers" : DRESSING_MRNS.has(mrn) ? "Dressings" : "Toppings";
 const titleCase = (value) => String(value).replace(/(^|[\s-])\p{L}/gu, (letter) => letter.toUpperCase());
+export const isWholeUnitSaladItem = (item = {}) => {
+  const name = String(item.name || item.sourceName || "").toLowerCase();
+  return (String(item.category || "") === "Dressings" && /(dressing|vinaigrette)/.test(name))
+    || /(spring mix|spinach|arugula)/.test(name);
+};
 const culinaryProfileFor = ({ id, name, mrn, portion }) => Object.freeze({
   profileVersion: 1,
   identity: Object.freeze({ itemKey: id, name, mrn, portion, menuMemberships: Object.freeze(["Commissary Salad Bar", SALAD_BAR_COST_SOURCE.menuName]) }),
@@ -104,12 +109,13 @@ const activeItem = ([sourceName, mrn, sourcePortion, itemCost, wastePercent, ite
     itemWasteCost,
     orderUnit: isGallon ? "gallon" : "3-pound container",
     orderUnitCost: itemWasteCost,
-    quantityIncrement: isGallon ? 0.25 : 1,
+    quantityIncrement: 1,
     notes: "",
     transferGlCode,
     transferGlCategory: transferGlCode === "4111009" ? "Frozen" : "Prepared Foods",
     source: SALAD_BAR_COST_SOURCE,
   };
+  item.quantityIncrement = isWholeUnitSaladItem(item) ? 1 : (isGallon ? 0.25 : 1);
   return Object.freeze({ ...item, culinaryProfile: culinaryProfileFor(item) });
 };
 
@@ -128,7 +134,7 @@ const legacyItem = (category, name, mrn, itemWasteCost, orderUnit, orderUnitCost
     orderUnit: convertsFromQuart ? "gallon" : orderUnit,
     orderUnitCost: convertsFromQuart ? orderUnitCost * 4 : orderUnitCost,
     legacyOrderUnit: convertsFromQuart ? "quart" : "",
-    quantityIncrement: convertsFromQuart ? 0.25 : 1,
+    quantityIncrement: isWholeUnitSaladItem({ category, name }) ? 1 : (convertsFromQuart ? 0.25 : 1),
     notes,
     transferGlCode: options.transferGlCode || "4111011",
     transferGlCategory: options.transferGlCategory || "Prepared Foods",

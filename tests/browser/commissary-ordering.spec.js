@@ -325,11 +325,30 @@ test("each cafe sees only its assigned commissary stations", async ({ page }) =>
   await expect(page.getByTestId("commissary-grill-core")).toBeVisible();
   await expect(page.getByTestId("commissary-global-order")).toHaveCount(0);
   await expect(page.getByText("Salad bar", { exact: true })).toBeHidden();
+  await page.getByLabel("Service week").selectOption("2026-11-09");
+  await expect(page.getByTestId("commissary-grill-core")).toBeVisible();
+  await expect(page.getByTestId("commissary-grill-order")).toHaveCount(0);
 
+  await page.getByLabel("Service week").selectOption("2026-11-16");
   await page.getByLabel("Your cafe").selectOption("Frontier");
   await expect(page.getByTestId("commissary-global-order")).toBeVisible();
   await expect(page.getByText("Salad bar", { exact: true })).toBeVisible();
   await expect(page.getByTestId("commissary-grill-order")).toHaveCount(0);
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("Salad whole-unit controls and the retired Ham Banh Mi roster are enforced", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await mockOrders(page);
+  await openTool(page, /open commissary ordering/i, /^Commissary Ordering Tool$/);
+  await page.getByLabel("Your cafe").selectOption("Cricket");
+  await page.getByLabel("Service week").selectOption("2026-11-16");
+  const ranch = page.getByLabel("Monday 11/16 Ranch Dressing quantity");
+  await ranch.fill("0.5");
+  await expect(ranch).toHaveValue("0");
+  await page.getByLabel("Service week").selectOption("2026-11-30");
+  await expect(page.getByTestId("commissary-deli-order")).not.toContainText("Banh Mi Ham Sandwich");
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });

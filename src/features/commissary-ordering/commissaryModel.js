@@ -1,4 +1,4 @@
-import { COMMISSARY_ITEM_BY_ID, COMMISSARY_RETIRED_ORDER_ITEMS, SALAD_BAR_COST_SOURCE, commissaryItemMapForWeek, commissaryOrderItemsForWeek } from "./commissaryCatalog.js";
+import { COMMISSARY_ITEM_BY_ID, COMMISSARY_RETIRED_ORDER_ITEMS, SALAD_BAR_COST_SOURCE, commissaryItemMapForWeek, commissaryOrderItemsForWeek, isWholeUnitSaladItem } from "./commissaryCatalog.js";
 import { DEFAULT_COMMISSARY_METADATA } from "./commissaryMetadata.js";
 import { GRILL_LTO_PREP_ITEM_IDS, GRILL_LTO_PROGRAM } from "./grillLtoCatalog.js";
 import { DELI_ORDERING_PREP_ITEM_IDS, DELI_ORDERING_PROGRAM } from "./deliCycleCatalog.js";
@@ -11,7 +11,7 @@ export const PACIFIC_TIME_ZONE = "America/Los_Angeles";
 export const DELIVERY_KEYS = Object.freeze(DEFAULT_COMMISSARY_METADATA.deliveries.map(({ key }) => key));
 export const COMMISSARY_ORDER_UNIT_VERSION = 2;
 export const COMMISSARY_GRILL_ORDER_VERSION = 2;
-export const COMMISSARY_DELI_ORDER_VERSION = 1;
+export const COMMISSARY_DELI_ORDER_VERSION = 2;
 export const COMMISSARY_GLOBAL_ORDER_VERSION = 2;
 export const COMMISSARY_BREAKFAST_ORDER_VERSION = 1;
 export const COMMISSARY_PACKOUT_PACKET_VERSION = 1;
@@ -127,6 +127,12 @@ export function grillCycleForWeek(weekStart) {
 
 export function isGrillEligibleCafe(cafe) {
   return GRILL_LTO_PROGRAM.eligibleCafes.includes(cafe) && isCafeStationEnabled(cafe, COMMISSARY_STATIONS.GRILL);
+}
+
+export function isGrillCoreAvailable(cafe, weekStart) {
+  if (!ISO_DATE.test(String(weekStart || "")) || !isGrillEligibleCafe(cafe)) return false;
+  const start = GRILL_LTO_PROGRAM.coreStartWeekByCafe?.[cafe] || GRILL_LTO_PROGRAM.coreDefaultStartWeek || GRILL_LTO_PROGRAM.effectiveDate;
+  return Boolean(start && weekStart >= start);
 }
 
 export function deliCycleForWeek(weekStart) {
@@ -266,8 +272,11 @@ export function normalizeDeliOrder(deli = {}, weekStart, cafe = "") {
   const empty = emptyDeliOrder(weekStart);
   const cycle = deliCycleForWeek(weekStart);
   if (!cycle || !isDeliEligibleCafe(cafe)) return empty;
-  const quantities = Object.fromEntries(cycle.items.map(({ mrn }) => [mrn, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, wholeQuantity(deli?.quantities?.[mrn]?.[delivery])]))]));
-  const items = Object.fromEntries(cycle.items.flatMap(({ mrn }) => {
+  const currentMrns = cycle.items.map(({ mrn }) => mrn);
+  const standingMrns = (DELI_ORDERING_PROGRAM.standingOrderItemMrns || []).filter((mrn) => DELIVERY_KEYS.some((delivery) => wholeQuantity(deli?.quantities?.[mrn]?.[delivery]) > 0));
+  const retainedMrns = [...new Set([...currentMrns, ...standingMrns])];
+  const quantities = Object.fromEntries(retainedMrns.map((mrn) => [mrn, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, wholeQuantity(deli?.quantities?.[mrn]?.[delivery])]))]));
+  const items = Object.fromEntries(retainedMrns.flatMap((mrn) => {
     const snapshot = deli?.items?.[mrn];
     return snapshot && String(snapshot.mrn) === mrn && Number(snapshot.itemWasteCost) > 0 ? [[mrn, {
       mrn,
@@ -276,7 +285,7 @@ export function normalizeDeliOrder(deli = {}, weekStart, cafe = "") {
       itemWasteCost: Number(snapshot.itemWasteCost),
     }]] : [];
   }));
-  return { version: COMMISSARY_DELI_ORDER_VERSION, cycleWeek: cycle.week, quantities, items };
+  return { version: COMMISSARY_DELI_ORDER_VERSION, cycleWeek: cycle.week, quantities, items, standingOrderMrns: standingMrns };
 }
 
 export function emptyGrillOrder(weekStart) {
@@ -300,10 +309,10 @@ export function emptyGrillOrder(weekStart) {
 export function normalizeGrillOrder(grill = {}, weekStart, cafe = "") {
   const empty = emptyGrillOrder(weekStart);
   const cycle = grillCycleForWeek(weekStart);
-  if (!cycle || !isGrillEligibleCafe(cafe)) return empty;
+  if (!isGrillEligibleCafe(cafe)) return empty;
   const allowed = {
-    A: new Set(cycle.setA.map(({ mrn }) => mrn)),
-    B: new Set(cycle.setB.map(({ mrn }) => mrn)),
+    A: new Set((cycle?.setA || []).map(({ mrn }) => mrn)),
+    B: new Set((cycle?.setB || []).map(({ mrn }) => mrn)),
   };
   const selections = Object.fromEntries(["A", "B"].map((setKey) => {
     const selected = String(grill?.selections?.[setKey] || grill?.items?.[setKey]?.mrn || "");
@@ -323,12 +332,13 @@ export function normalizeGrillOrder(grill = {}, weekStart, cafe = "") {
       itemWasteCost: Number(snapshot.itemWasteCost),
     } : null];
   }));
-  const coreQuantities = Object.fromEntries(GRILL_LTO_PROGRAM.coreItems.map(({ mrn }) => [mrn, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, wholeQuantity(grill?.core?.quantities?.[mrn]?.[delivery])]))]));
+  const coreAvailable = isGrillCoreAvailable(cafe, weekStart);
+  const coreQuantities = Object.fromEntries(GRILL_LTO_PROGRAM.coreItems.map(({ mrn }) => [mrn, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, coreAvailable ? wholeQuantity(grill?.core?.quantities?.[mrn]?.[delivery]) : 0]))]));
   const coreItems = Object.fromEntries(GRILL_LTO_PROGRAM.coreItems.flatMap(({ mrn }) => {
     const snapshot = grill?.core?.items?.[mrn];
     return snapshot && String(snapshot.mrn) === mrn && Number(snapshot.itemWasteCost) > 0 ? [[mrn, { mrn, item: String(snapshot.item || ""), portion: String(snapshot.portion || ""), itemWasteCost: Number(snapshot.itemWasteCost) }]] : [];
   }));
-  return { version: COMMISSARY_GRILL_ORDER_VERSION, cycleWeek: cycle.week, selections, quantities, items, core: { quantities: coreQuantities, items: coreItems } };
+  return { version: COMMISSARY_GRILL_ORDER_VERSION, cycleWeek: cycle?.week || null, selections, quantities, items, core: { quantities: coreQuantities, items: coreItems } };
 }
 
 export function sanitizeQuantity(value) {
@@ -350,7 +360,38 @@ export function normalizeQuantities(quantities = {}, options = {}) {
   }));
 }
 
-export function buildOrderRecord({ cafe, weekStart, quantities, grill, deli, global, breakfast, now = new Date() }) {
+function quantityLeaves(record = {}) {
+  const leaves = new Map();
+  const collect = (prefix, groups = {}) => Object.entries(groups || {}).forEach(([item, values]) => DELIVERY_KEYS.forEach((delivery) => {
+    const value = Number(values?.[delivery] || 0);
+    if (value > 0) leaves.set(`${prefix}|${item}|${delivery}`, value);
+  }));
+  collect("salad", record.quantities);
+  collect("grill-a", record.grill?.quantities?.A ? { [record.grill?.items?.A?.mrn || "unselected"]: record.grill.quantities.A } : {});
+  collect("grill-b", record.grill?.quantities?.B ? { [record.grill?.items?.B?.mrn || "unselected"]: record.grill.quantities.B } : {});
+  collect("grill-core", record.grill?.core?.quantities);
+  collect("deli", record.deli?.quantities);
+  collect("global", record.global?.quantities);
+  collect("breakfast", record.breakfast?.quantities);
+  return leaves;
+}
+
+export function standingOrderReductions(existing = {}, next = {}) {
+  const before = quantityLeaves(existing);
+  const after = quantityLeaves(next);
+  return [...before.entries()].flatMap(([key, value]) => Number(after.get(key) || 0) < value ? [{ key, before: value, after: Number(after.get(key) || 0) }] : []);
+}
+
+export function invalidWholeUnitSaladQuantities(quantities = {}, weekStart) {
+  const byId = commissaryItemMapForWeek(weekStart, quantities);
+  return Object.entries(quantities || {}).flatMap(([id, values]) => {
+    const item = byId.get(id);
+    if (!item || !isWholeUnitSaladItem(item)) return [];
+    return DELIVERY_KEYS.flatMap((delivery) => Number.isInteger(Number(values?.[delivery] || 0)) ? [] : [`${id}|${delivery}`]);
+  });
+}
+
+export function buildOrderRecord({ cafe, weekStart, quantities, grill, deli, global, breakfast, standingOrderChangeApproval = null, now = new Date() }) {
   const normalized = isCafeStationEnabled(cafe, COMMISSARY_STATIONS.SALAD_BAR) ? normalizeQuantities(quantities, { weekStart }) : emptyQuantities(weekStart);
   const normalizedGrill = normalizeGrillOrder(grill, weekStart, cafe);
   const normalizedDeli = normalizeDeliOrder(deli, weekStart, cafe);
@@ -373,6 +414,7 @@ export function buildOrderRecord({ cafe, weekStart, quantities, grill, deli, glo
     deli: normalizedDeli,
     global: normalizedGlobal,
     breakfast: normalizedBreakfast,
+    ...(standingOrderChangeApproval ? { standingOrderChangeApproval } : {}),
     updatedAt: now.toISOString(),
   };
 }

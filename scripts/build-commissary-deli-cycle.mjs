@@ -17,7 +17,7 @@ const recipePages = new Map([
 const cycleMrns = [
   ["190990", "37311.43", "76623.4", "37154.1", "16392"],
   ["148838.3", "37001.21", "37007.1", "34303.46", "142803"],
-  ["37007.1", "190990", "161945", "144636", "37394.7", "108987"],
+  ["37007.1", "190990", "161945", "144636", "108987"],
   ["129693.5", "85656.3", "9282.7", "174951", "104208.27", "134036.4"],
 ];
 
@@ -108,6 +108,7 @@ async function main() {
     eligibleCafes: ["Cricket", "Nessie", "Dawson", "Blueshift", "Sonic", "Dynamo", "Gemini", "Eclipse", "Odyssey", "Doppler", "Day 1", "Re:Invent", "Brazil Coffee", "Roxanne Coffee", "Arizona Coffee"],
     quantityIncrement: 1,
     orderUnit: "sandwich",
+    standingOrderItemMrns: ["37394.7"],
     cycleWeeks,
     itemPrepComponents: prep,
   };

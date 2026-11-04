@@ -18,7 +18,7 @@ import { BREAKFAST_ORDERING_PROGRAM } from "../features/commissary-ordering/brea
 import { COMMISSARY_CAFE_STATION_ACCESS, COMMISSARY_HUB_ROUTING, COMMISSARY_HUBS } from "../features/commissary-ordering/commissaryRouting.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 13;
+export const OPERATIONAL_METADATA_VERSION = 14;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -64,6 +64,19 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
     }),
     orderUnitVersion: 2,
     quantityIncrement: 0.25,
+    standingOrderPolicy: Object.freeze({
+      version: 1,
+      catalogUpdatesNeverRewriteSavedOrders: true,
+      retiredSelectionsRemainVisible: true,
+      quantityReductionRequiresExplicitOperatorConfirmation: true,
+      serverBaselineCheck: "saved-record-updatedAt",
+    }),
+    saladBarWholeUnitPolicy: Object.freeze({
+      categories: Object.freeze(["dressings", "vinaigrettes"]),
+      products: Object.freeze(["spring mix", "spinach", "arugula"]),
+      increment: 1,
+      grandfatherExistingSplitQuantities: true,
+    }),
     grillProgram: GRILL_LTO_PROGRAM,
     deliCatalog: DELI_CORE_SELECTED_CATALOG,
     deliProgram: DELI_ORDERING_PROGRAM,

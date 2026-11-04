@@ -8,6 +8,10 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
   "anchorWeekStart": "2026-11-16",
   "cycleLengthWeeks": 6,
   "effectiveDate": "2026-11-16",
+  "coreDefaultStartWeek": "2026-11-16",
+  "coreStartWeekByCafe": {
+    "Atlas": "2026-11-09"
+  },
   "eligibleCafes": [
     "Cricket",
     "Nessie",

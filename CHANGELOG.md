@@ -1,5 +1,7 @@
 ## 2026-11-03
 
+- [Nov 3, 5:59 PM] Preserved Commissary standing orders, removed Ham Banh Mi, added whole-unit Salad Bar rules, and opened Atlas Grill Core on Nov 9.
+
 - [Nov 3, 2:37 PM] Plan W&P spreads with visible slots, temperature Tags, quantity forecasts and suggestions that preserve your selections.
 - [Nov 3, 2:37 PM] Default RA menus off, recalculate Pairwise when enabled, and summarize item corrections before audit details.
 
