@@ -10,6 +10,8 @@ const item = {
   modifierGroups: ["bread"],
   seaPrice: 0,
   areaPrices: { SEA: 0 },
+  dietaryPreference: "Vegetarian",
+  calories: "540",
   lockedForCentric: false,
 };
 const source = {
@@ -60,6 +62,7 @@ async function isolated(
     sourceWithoutFixy = false,
     lockedSource = false,
     alphabeticalFixtures = false,
+    reviewSource = false,
   } = {},
 ) {
   let shared = workspace();
@@ -89,6 +92,7 @@ async function isolated(
   if (alphabeticalFixtures) {
     shared.menus.push({ ...structuredClone(source), id: "alpha-menu", name: "alpha menu", items: [{ ...structuredClone(item), id: "z-item", label: "Zebra" }, { ...structuredClone(item), id: "a-item", label: "apple" }] });
   }
+  if (reviewSource) { shared.menus[0].phase = "Experience review"; shared.menus[0].items[0].lockedForCentric = true; }
   const saves = [];
   const member = {
     id: "test-user",
@@ -202,7 +206,7 @@ async function isolated(
   await page
     .getByRole("button", { name: "Sign in to SSMT", exact: true })
     .click();
-  return { saves, getWorkspace: () => shared };
+  return { saves, getWorkspace: () => shared, switchRole: (next) => { role = next; member.role = next; } };
 }
 async function openTarget(page) {
   await page
@@ -730,4 +734,61 @@ test("FIXY generator offers Turkey and applies the TUR protein code", async ({ p
   await dialog.getByRole("button", { name: "Apply FIXY" }).click();
   await expect(dialog).toHaveCount(0);
   await expect(page.locator('input[value="R FBB | GRILL | SMASH BURGER ENT TUR"]')).toBeVisible();
+});
+
+
+test("Experience review copies selected details, checks spelling and persists into the Chef menu", async ({ page }) => {
+  const fixture = await isolated(page, { role: "Experience" });
+  await page.evaluate(() => { window.reviewCopy = ""; Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async text => { window.reviewCopy = text; } } }); });
+  await page.getByLabel("Experience menu").selectOption("source");
+  const description = page.getByLabel("Description for Smash Burger", { exact: true });
+  await expect(description).toHaveAttribute("spellcheck", "true");
+  await expect(description).toHaveAttribute("lang", "en-US");
+  await expect(page.getByText("Vegetarian", { exact: true })).toBeVisible();
+  await expect(page.getByText("540 calories", { exact: true })).toBeVisible();
+  await page.getByText("View modifiers (1)", { exact: true }).click();
+  await expect(page.getByText("Bun", { exact: true })).toBeVisible();
+  await description.fill("Freshly reviewed burger description");
+  await page.screenshot({ path: "../../WORK_LOGS/SSMT_EXPERIENCE_2026_11_04/EXPERIENCE_DESKTOP.png", fullPage: true });
+  await page.getByRole("button", { name: "Copy all selected menu" }).click();
+  const copied = await page.evaluate(() => window.reviewCopy);
+  expect(copied).toContain("Source Menu");
+  expect(copied).toContain("Freshly reviewed burger description");
+  expect(copied).toContain("Vegetarian");
+  expect(copied).toContain("540");
+  expect(copied).toContain("Bun");
+  expect(copied).not.toContain("Target Menu");
+  await page.getByRole("button", { name: "Save SSMT workspace", exact: true }).click();
+  await expect.poll(() => fixture.saves.length).toBe(1);
+  expect(fixture.getWorkspace().menus[0].items[0]).toEqual({ ...item, description: "Freshly reviewed burger description" });
+  fixture.switchRole("Chef");
+  await page.reload();
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByLabel("Email", { exact: true }).fill("chef@example.test");
+  await page.getByLabel("Password", { exact: true }).fill("a private test password");
+  await page.getByRole("button", { name: "Sign in to SSMT", exact: true }).click();
+  await page.getByRole("button", { name: /Menu Selector \/ New Menu/ }).click();
+  await page.getByRole("button", { name: /Source Menu/ }).first().click();
+  await expect(page.locator('textarea').filter({ hasText: "Freshly reviewed burger description" }).first()).toHaveValue("Freshly reviewed burger description");
+});
+
+
+test("Experience handoff saves IT stage and phone copy fallback preserves missing metadata", async ({ page }) => {
+  const fixture = await isolated(page, { role: "Experience", reviewSource: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByLabel("Experience menu").selectOption("source");
+  await page.getByRole("button", { name: "Send to IT programming", exact: true }).click();
+  await page.getByRole("button", { name: "Save SSMT workspace", exact: true }).click();
+  await expect.poll(() => fixture.saves.length).toBe(1);
+  expect(fixture.getWorkspace().menus[0].phase).toBe("IT programming");
+  expect(fixture.getWorkspace().menus[0].items[0].lockedForCentric).toBe(true);
+  await page.getByLabel("Spellcheck descriptions").uncheck();
+  await expect(page.getByLabel("Description for Smash Burger", { exact: true })).toHaveAttribute("spellcheck", "false");
+  await page.evaluate(() => Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async () => { throw new Error("Denied"); } } }));
+  await page.getByRole("button", { name: "Copy all selected menu" }).click();
+  await expect(page.getByLabel("Selected menu text", { exact: true })).toHaveValue(/Calories: Not available/);
+  await page.screenshot({ path: "../../WORK_LOGS/SSMT_EXPERIENCE_2026_11_04/EXPERIENCE_PHONE.png", fullPage: true });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.getByLabel("Experience menu").selectOption("target");
+  await expect(page.getByLabel("Selected menu text", { exact: true })).toHaveCount(0);
 });

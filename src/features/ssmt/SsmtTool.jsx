@@ -34,6 +34,7 @@ import { loadSsmtWorkspaceFromSharedStorage, saveSsmtWorkspaceToSharedStorage } 
 
 import SsmtAccessGate from "./SsmtAccessGate.jsx";
 import SsmtReusePanel from "./SsmtReusePanel.jsx";
+import SsmtExperienceReview from "./SsmtExperienceReview.jsx";
 
 export default function SsmtTool(props) {
   return <SsmtAccessGate onBack={props.onBackToPlatform}>{(member, onOpenUserAdmin) => <SsmtEditor key={member?.id || "legacy"} {...props} accountMember={member} onOpenUserAdmin={onOpenUserAdmin} />}</SsmtAccessGate>;
@@ -1781,12 +1782,12 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
   };
 
   if (accountMember?.role === "Experience") {
-    return <div className="mx-auto max-w-6xl space-y-3 p-4 text-slate-950"><button onClick={onBackToPlatform}>Back to Platform</button><h1 className="text-2xl font-black">SSMT — Experience review</h1>
-      <p>Edit descriptions and advance a menu to IT programming. {workspaceSync.message}</p>
-      {dataStatus === "ready" ? <><label>Menu<select aria-label="Experience menu" value={selectedMenu.id} onChange={e=>setSelectedMenuId(e.target.value)} className="ml-3 rounded border p-2">{menus.map(m=><option key={m.id} value={m.id}>{m.name}</option>)}</select></label>
-      <div className="space-y-2">{selectedMenu.items.filter(i=>i.rowType!=="divider").map(i=><label key={i.id} className="grid grid-cols-[minmax(120px,1fr)_3fr] gap-3 rounded border bg-white p-2"><strong>{i.label||i.name}</strong><textarea aria-label={`Description for ${i.label||i.name}`} value={i.description||""} onChange={e=>updateItem(i.id,{description:e.target.value})} className="rounded border p-2"/></label>)}</div>
-      <button className="rounded border bg-white p-2" onClick={()=>manualSaveWorkspace()}>Save SSMT workspace</button>
-      <button className="ml-3 rounded border bg-white p-2" disabled={!["Culinary draft","Experience review"].includes(selectedMenu.phase)||!allItemRowsLocked} onClick={()=>updateSelectedMenuPhase(selectedMenu.phase==="Culinary draft"?"Experience review":"IT programming")}>Advance menu</button>{phaseBlocker&&<p role="alert">{phaseBlocker}</p>}</>:<p>{dataStatus==="error"?"Shared workspace could not be loaded. No edits or saves are allowed.":"Loading shared SSMT workspace…"}</p>}</div>;
+    return <SsmtExperienceReview menus={menus} menu={selectedMenu}
+      groupsForItem={item => matchedModifierGroupsForItem(item, pricedModifierGroups)}
+      onSelectMenu={setSelectedMenuId} onDescriptionChange={(id, description) => updateItem(id, { description })}
+      onSave={() => manualSaveWorkspace()} onAdvance={updateSelectedMenuPhase}
+      allItemsLocked={allItemRowsLocked} syncMessage={workspaceSync.message}
+      phaseBlocker={phaseBlocker} dataStatus={dataStatus} onBack={onBackToPlatform} />;
   }
 
   if (!unlocked) {

@@ -1,5 +1,9 @@
 ## 2026-11-04
 
+- [Nov 4, 11:39 AM] Experience review shows dietary details and modifiers, checks spelling, and copies the selected menu for review.
+- [Nov 4, 11:39 AM] Reviewed descriptions save to the shared menu; clear stage controls hand ready menus to IT programming.
+
+
 - [Nov 4, 10:41 AM] Keep linked SSMT menu and modifier prices current in completed menus and exports when active or scheduled pricing changes.
 
 - [Nov 4, 8:38 AM] Remove spread items with an ×, show dashes for unavailable figures, and simplify pan and served-portion controls.
