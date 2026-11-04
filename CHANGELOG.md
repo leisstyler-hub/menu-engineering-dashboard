@@ -1,5 +1,7 @@
 ## 2026-11-04
 
+- [Nov 4, 10:41 AM] Keep linked SSMT menu and modifier prices current in completed menus and exports when active or scheduled pricing changes.
+
 - [Nov 4, 8:38 AM] Remove spread items with an ×, show dashes for unavailable figures, and simplify pan and served-portion controls.
 
 - [Nov 4, 7:01 AM] Read W&P selections with stronger contrast, larger pan references and an editable serving-size planning estimate.

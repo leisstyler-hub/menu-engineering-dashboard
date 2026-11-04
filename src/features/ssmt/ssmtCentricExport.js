@@ -1,4 +1,5 @@
 import * as XLSX from "xlsx";
+import { resolveSsmtMenuPrices, resolveSsmtModifierPrices } from "./ssmtPricing.js";
 
 const PLACEHOLDER = "[placeholder]";
 const OPTIONAL_BLANK = "";
@@ -118,7 +119,7 @@ function areaHeaders(areaOrder = []) {
 }
 
 function areaValues(areaOrder = [], areaPrices = {}, fallback = "") {
-  return areaOrder.map((area) => priceText(areaPrices?.[area] || (area === "SEA" ? fallback : "")));
+  return areaOrder.map((area) => priceText(areaPrices?.[area] ?? (area === "SEA" ? fallback : "")));
 }
 
 function relatedModifierGroups(item, modifierGroups = []) {
@@ -190,7 +191,9 @@ export function centricExportFileName(brandName) {
   return name ? `${name} SSMT Export.xlsx` : "SSMT Export.xlsx";
 }
 
-export function buildCentricExportWorkbook({ selectedMenu = {}, areaOrder = [], modifierGroups = [] } = {}) {
+export function buildCentricExportWorkbook({ selectedMenu = {}, areaOrder = [], modifierGroups = [], priceBook = [] } = {}) {
+  selectedMenu = resolveSsmtMenuPrices(selectedMenu, priceBook);
+  modifierGroups = resolveSsmtModifierPrices(modifierGroups, priceBook);
   const workbook = XLSX.utils.book_new();
   const brandName = requiredText(selectedMenu.name);
   const menuName = centricName(selectedMenu.name);
@@ -228,7 +231,7 @@ export function buildCentricExportWorkbook({ selectedMenu = {}, areaOrder = [], 
         label,
         label,
         optionalText(item.description),
-        priceText(item.seaPrice || item.price),
+        priceText(item.seaPrice ?? item.price),
         optionalText(item.calories),
         OPTIONAL_BLANK,
         "TRUE",
@@ -251,7 +254,7 @@ export function buildCentricExportWorkbook({ selectedMenu = {}, areaOrder = [], 
         "",
         "",
         "",
-        ...areaValues(areaOrder, item.areaPrices, item.seaPrice || item.price),
+        ...areaValues(areaOrder, item.areaPrices, item.seaPrice ?? item.price),
       ];
     }),
   ]);
@@ -288,7 +291,7 @@ export function buildCentricExportWorkbook({ selectedMenu = {}, areaOrder = [], 
         name,
         name,
         optionalText(choice.description),
-        priceText(choice.price || choice.priceSelector),
+        priceText(choice.price ?? choice.priceSelector),
         optionalText(choice.calories),
         OPTIONAL_BLANK,
         "TRUE",
@@ -302,8 +305,8 @@ export function buildCentricExportWorkbook({ selectedMenu = {}, areaOrder = [], 
         "0",
         "0",
         "0",
-        priceText(choice.price || choice.priceSelector),
-        priceText(choice.price || choice.priceSelector),
+        priceText(choice.price ?? choice.priceSelector),
+        priceText(choice.price ?? choice.priceSelector),
         "",
         "",
         cleanText(choice.mrn),
@@ -313,7 +316,7 @@ export function buildCentricExportWorkbook({ selectedMenu = {}, areaOrder = [], 
         "",
         "",
         "",
-        ...areaValues(areaOrder, choice.areaPrices, choice.price || choice.priceSelector),
+        ...areaValues(areaOrder, choice.areaPrices, choice.price ?? choice.priceSelector),
       ];
     })),
   ]);
@@ -329,7 +332,7 @@ export function buildCentricExportWorkbook({ selectedMenu = {}, areaOrder = [], 
   return workbook;
 }
 
-export function downloadCentricExport({ selectedMenu, areaOrder, modifierGroups }) {
-  const workbook = buildCentricExportWorkbook({ selectedMenu, areaOrder, modifierGroups });
+export function downloadCentricExport({ selectedMenu, areaOrder, modifierGroups, priceBook }) {
+  const workbook = buildCentricExportWorkbook({ selectedMenu, areaOrder, modifierGroups, priceBook });
   XLSX.writeFile(workbook, centricExportFileName(selectedMenu?.name));
 }

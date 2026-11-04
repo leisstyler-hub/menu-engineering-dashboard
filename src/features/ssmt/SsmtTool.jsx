@@ -27,6 +27,7 @@ import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
 import { readLocalStorageJson, writeLocalStorageJson } from "../../shared/safeStorage.js";
 import { downloadCentricExport } from "./ssmtCentricExport.js";
+import { activateDuePricing, resolveSsmtMenuPrices, resolveSsmtModifierPrices } from "./ssmtPricing.js";
 import { deriveSsmtOperatingRows, ssmtDerivedMenuEntries } from "./ssmtDerivedMenuSource.js";
 import PromotionCalendar from "./PromotionCalendar.jsx";
 import { loadSsmtWorkspaceFromSharedStorage, saveSsmtWorkspaceToSharedStorage } from "./ssmtWorkspaceStorage.js";
@@ -383,22 +384,6 @@ function pricingCountdown(effectiveDate) {
   return days === 0 ? "activates today" : `${days} day${days === 1 ? "" : "s"} until launch`;
 }
 
-function activateDuePricing(workspace = {}, today = localDateKey()) {
-  const plan = workspace.plannedPriceBook;
-  if (!plan?.effectiveDate || plan.effectiveDate > today || !Array.isArray(plan.priceBook)) return workspace;
-  return {
-    ...workspace,
-    priceBook: clonePriceBook(plan.priceBook),
-    priceBookEffectiveFrom: plan.effectiveDate,
-    plannedPriceBook: null,
-    priceBookArchives: [...(workspace.priceBookArchives || []), {
-      id: `price-archive-${Date.now()}`,
-      effectiveFrom: workspace.priceBookEffectiveFrom || "Original SSMT pricing",
-      effectiveTo: plan.effectiveDate,
-      priceBook: clonePriceBook(workspace.priceBook),
-    }],
-  };
-}
 function menuKey(menu = {}) {
   return String(menu.name || menu.id || "").trim().replace(/^amz:\s*/i, "").toLowerCase();
 }
@@ -981,14 +966,23 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
     setMenuNameEditing(false);
   }, [selectedMenuId]);
 
-  const selectedMenu = menus.find((menu) => menu.id === selectedMenuId) || menus[0] || { id: "loading", name: "Loading SSMT", type: "Core", phase: "Culinary draft", items: [] };
+  const savedSelectedMenu = menus.find((menu) => menu.id === selectedMenuId) || menus[0] || { id: "loading", name: "Loading SSMT", type: "Core", phase: "Culinary draft", items: [] };
+  const selectedMenu = useMemo(() => resolveSsmtMenuPrices(savedSelectedMenu, ssmtData.priceBook), [savedSelectedMenu, ssmtData.priceBook]);
+  const pricedModifierGroups = useMemo(() => resolveSsmtModifierPrices(ssmtData.modifierGroups, ssmtData.priceBook), [ssmtData.modifierGroups, ssmtData.priceBook]);
+  useEffect(() => {
+    if (dataStatus !== "ready" || accountMember?.role === "Experience" || !ssmtData.plannedPriceBook?.effectiveDate) return;
+    const activate = () => setSsmtData(current => activateDuePricing(current));
+    activate();
+    const timer = window.setInterval(activate, 30_000);
+    return () => window.clearInterval(timer);
+  }, [dataStatus, accountMember?.role, ssmtData.plannedPriceBook]);
   const selectedPrice = ssmtData.priceBook.find((row) => row.id === selectedPriceId) || ssmtData.priceBook[0];
   const itemPriceOptions = useMemo(() => sortPricesForItemSelector(ssmtData.priceBook), [ssmtData.priceBook]);
   const modifierPriceOptions = useMemo(() => sortPricesForModifierSelector(ssmtData.priceBook), [ssmtData.priceBook]);
   const displayedPriceBook = pricingPlanMode && ssmtData.plannedPriceBook ? ssmtData.plannedPriceBook.priceBook : ssmtData.priceBook;
   const displayedPriceOptions = useMemo(() => sortPricesForItemSelector(displayedPriceBook), [displayedPriceBook]);
   const plannedPricingNotice = ssmtData.plannedPriceBook ? `New pricing launches ${ssmtData.plannedPriceBook.effectiveDate || "after a date is set"}${ssmtData.plannedPriceBook.effectiveDate ? ` � ${pricingCountdown(ssmtData.plannedPriceBook.effectiveDate)}` : ""}.` : "";
-  const modifierGroupIndex = useMemo(() => buildModifierGroupIndex(ssmtData.modifierGroups), [ssmtData.modifierGroups]);
+  const modifierGroupIndex = useMemo(() => buildModifierGroupIndex(pricedModifierGroups), [pricedModifierGroups]);
   const visibleMenus = useMemo(() => {
     const query = search.trim().toLowerCase();
     const availableMenus = menus.filter((menu) => menuIsVisible(menu, showHiddenMenus));
@@ -1172,6 +1166,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
       selectedMenu,
       areaOrder: ssmtData.areaOrder,
       modifierGroups: ssmtData.modifierGroups,
+      priceBook: ssmtData.priceBook,
     });
     setCopiedFieldNotice(`${selectedMenu.name} SSMT Export downloaded.`);
   };
@@ -1456,7 +1451,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
 
   const openModifierDialog = (item) => {
     setCopiedModifierNotice("");
-    const matchedGroups = matchedModifierGroupsForItem(item, ssmtData.modifierGroups);
+    const matchedGroups = matchedModifierGroupsForItem(item, pricedModifierGroups);
     setModifierDialog({
       item,
       groups: matchedGroups.map((group) => normalizeModifierGroup(group, ssmtData.areaOrder, ssmtData.priceBook)),
@@ -2791,7 +2786,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
             {!modifierDialog.groups.length && (
               <p className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm font-bold text-slate-600">No modifier groups attached.</p>
             )}
-            {modifierDialog.groups.map((group) => {
+            {resolveSsmtModifierPrices(modifierDialog.groups, ssmtData.priceBook).map((group) => {
               const modifierType = modifierTypeForGroup(group);
               const typeStyle = MODIFIER_TYPE_STYLES[modifierType] || MODIFIER_TYPE_STYLES.Addition;
               const ModifierTypeIcon = typeStyle.Icon;
