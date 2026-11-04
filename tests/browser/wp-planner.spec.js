@@ -27,8 +27,35 @@ test('count service, rice cups and reference range keep estimates explicit',asyn
  await page.route('**/api/**',r=>r.fulfill({json:r.request().url().includes('recipe-library')?{ok:true,source:'supabase-recipe-items',rows:items}:{ok:true,rows:[],records:[]}}));
  await openTool(page,/open menu analysis/i,/Menu Engineering/);await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();
  const v=page.getByRole('region',{name:'W&P qualifying portfolio'}),s=page.getByRole('complementary',{name:'Station build'});
- await v.getByRole('button',{name:'Select Grilled chicken sandwich',exact:true}).click();await s.getByLabel('Expected sandwiches / wraps for Grilled chicken sandwich').fill('40');await expect(s.getByTestId('station-planned-food-cost')).toHaveText('$20.00');await expect(s.getByTestId('station-projected-sales')).toHaveText('Incomplete');
- await v.getByRole('button',{name:'Select Butter Chicken',exact:true}).click();await expect(s.getByLabel('Planning cups per serving for Butter Chicken')).toHaveValue('0.5');await expect(s).toContainText('Planning assumption: 0.5 cup');await s.getByLabel('Planning cups per serving for Butter Chicken').fill('1');await expect(s).toContainText('Planning assumption: 1 cup');await expect(s).not.toContainText('Source portion has no explicit volume');await s.getByLabel('Pan size for Butter Chicken').selectOption('full');await s.getByText('Use Butter Chicken reference range',{exact:true}).click();await expect(s).toContainText('21.19-24.75 lb total');
+ await v.getByRole('button',{name:'Select Grilled chicken sandwich',exact:true}).click();await s.getByLabel('Expected sandwiches / wraps for Grilled chicken sandwich').fill('40');await expect(s.getByTestId('station-planned-food-cost')).toHaveText('$20.00');await expect(s.getByTestId('station-projected-sales')).toHaveText('-');
+ await v.getByRole('button',{name:'Select Butter Chicken',exact:true}).click();await expect(s.getByLabel('Planning cups per serving for Butter Chicken')).toHaveCount(0);await expect(s).toContainText('Planning assumption: 0.5 cup');await expect(s).not.toContainText('Source portion has no explicit volume');await s.getByLabel('Pan size for Butter Chicken').selectOption('full');await s.getByText('Use Butter Chicken reference range',{exact:true}).click();await expect(s).toContainText('21.19-24.75 lb total');
  await v.getByRole('button',{name:'Select Steamed rice',exact:true}).click();await s.getByLabel('Service format for Steamed rice').selectOption('cups');await s.getByLabel('Expected cups for Steamed rice').fill('10');await expect(s).toContainText('Estimated 20.0 source servings');
  await v.getByRole('button',{name:'Select Chicken salad',exact:true}).click();await s.getByLabel('Serve Chicken salad in pans').check();await expect(s.getByLabel('Pan size for Chicken salad')).toBeVisible();
+});
+
+for(const width of [390,1440])test(`remove selected foods and keep pan controls focused at ${width}`,async({page})=>{
+ await page.setViewportSize({width,height:950});
+ const items=[{menu:'AMZ: Test',item:'BBQ chicken thighs',mrn:'000123',portion:'4 oz',portionOz:4,trueCost:.5},{menu:'AMZ: Test',item:'Roasted carrots',mrn:'000124',portion:'1/2 cup',portionOz:4,trueCost:.5}];
+ await page.route('**/api/**',r=>r.fulfill({json:r.request().url().includes('recipe-library')?{ok:true,source:'supabase-recipe-items',rows:items}:{ok:true,rows:[],records:[]}}));
+ await openTool(page,/open menu analysis/i,/Menu Engineering/);await page.getByRole('button',{name:'W&P Guidance',exact:true}).click();
+ const v=page.getByRole('region',{name:'W&P qualifying portfolio'}),s=page.getByRole('complementary',{name:'Station build'});
+ await v.getByRole('button',{name:'Select BBQ chicken thighs',exact:true}).click();
+ await v.getByRole('button',{name:'Select Roasted carrots',exact:true}).click();
+ await expect(s.getByLabel('Planning cups per serving for BBQ chicken thighs')).toHaveCount(0);
+ await expect(s.getByLabel('Total pans to prepare for BBQ chicken thighs')).toBeVisible();
+ await expect(s.getByTestId('station-projected-sales')).toHaveText('-');
+ await s.getByLabel('Service format for BBQ chicken thighs').selectOption('portions');
+ await expect(s.getByText(/^Serving size: 4 oz/)).toBeVisible();
+ await s.getByLabel('Expected portions for BBQ chicken thighs').fill('10');
+ await expect(s.getByTestId('station-planned-food-cost')).not.toHaveText('-');
+ const remove=s.getByRole('button',{name:'Remove BBQ chicken thighs from spread',exact:true});
+ await expect(remove).toHaveText('\u00d7');await remove.click();
+ await expect(s.getByTestId('station-food')).toHaveCount(1);
+ await expect(s.getByRole('button',{name:'Details for Roasted carrots'})).toBeVisible();
+ await expect(v.getByRole('button',{name:'Select BBQ chicken thighs',exact:true})).toHaveAttribute('aria-pressed','false');
+ await expect(s.getByTestId('station-projected-sales')).not.toHaveText('-');
+ await s.getByRole('button',{name:'Remove Roasted carrots from spread',exact:true}).click();
+ await expect(s.getByTestId('station-food')).toHaveCount(0);
+ await expect(s.getByTestId('station-projected-sales')).toHaveText('-');
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBeTruthy();
 });

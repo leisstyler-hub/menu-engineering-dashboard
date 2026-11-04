@@ -1,7 +1,7 @@
 import React,{useMemo,useState} from 'react';
 import {suggestSpread,suggestSwaps,applySwap,capacityIssues,profileFor} from './wpSmartModel.js';
 const field='mt-1 w-full min-w-0 rounded-lg border bg-white p-2 text-sm';
-const fc=p=>p?.foodCost==null?'Incomplete':`${(p.foodCost*100).toFixed(1)}%`;
+const fc=p=>p?.foodCost==null?'-':`${(p.foodCost*100).toFixed(1)}%`;
 export default function WpSmartBuild({foods,catalog,entries,onChange,rate,trusted,sellThrough,capacity}) {
  const [proposal,setProposal]=useState(null),[undo,setUndo]=useState(null),[dismissed,setDismissed]=useState([]);
  const valid=['hot','cold','ambient'].every(k=>String(capacity[k]).trim()!==''&&Number.isInteger(Number(capacity[k]))&&Number(capacity[k])>=0&&Number(capacity[k])<=40)&&Number.isInteger(Number(capacity.individual))&&Number(capacity.individual)>=0&&Number(capacity.individual)<=40&&['hot','cold','ambient','individual'].some(k=>Number(capacity[k])>0);

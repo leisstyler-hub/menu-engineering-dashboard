@@ -1,5 +1,7 @@
 ## 2026-11-04
 
+- [Nov 4, 8:38 AM] Remove spread items with an ×, show dashes for unavailable figures, and simplify pan and served-portion controls.
+
 - [Nov 4, 7:01 AM] Read W&P selections with stronger contrast, larger pan references and an editable serving-size planning estimate.
 - [Nov 4, 7:01 AM] Remove the Individual capacity target while keeping food-specific portion forecasts.
 

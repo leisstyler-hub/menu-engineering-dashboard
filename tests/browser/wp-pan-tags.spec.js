@@ -25,7 +25,7 @@ for(const width of [390,1440])test(`MRN portion pan estimates and Tags at ${widt
  expect(exported[0].MRN).toBe('193119');expect(exported[0]['Total pans to prepare']).toBe('2');expect(exported[0]['LOCK ITEM FROM SUGGESTIONS']).toBe('Yes');expect(exported[0].Tags).toContain('Hot');expect(exported[0]['Opening display pans']).toBeUndefined();
  expect(exported[0]['Planned food cost']).toBeCloseTo(52.82816);expect(exported[0]['Source file SHA256']).toHaveLength(64);
  await station.getByLabel('Pan size for Kale Poriyal').selectOption('full');await expect(station.getByTestId('station-planned-food-cost')).toHaveText('$111.96');
- await view.getByRole('button',{name:'Select Roasted squash',exact:true}).click();await expect(station.getByTestId('station-planned-food-cost')).toHaveText('Incomplete');await expect(station).toContainText('Planning assumption: 0.5 cup');
+ await view.getByRole('button',{name:'Select Roasted squash',exact:true}).click();await expect(station.getByTestId('station-planned-food-cost')).toHaveText('-');await expect(station).toContainText('Planning assumption: 0.5 cup');
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();expect(writes).toEqual([]);expect(errors).toEqual([]);
  await station.screenshot({path:`test-results/wp-pan-tags-${width}.png`});
 });

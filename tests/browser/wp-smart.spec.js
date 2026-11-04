@@ -20,11 +20,11 @@ for(const width of [390,1440])test(`Smart pillars, safe preview, pan plan and sw
  await smart.getByRole('button',{name:'Suggest items',exact:true}).click();await expect(smart.getByLabel('Suggested spread preview')).toBeVisible();
  await station.getByLabel('Lock Roasted carrots',{exact:true}).check();await expect(smart.getByLabel('Suggested spread preview')).toHaveCount(0);
  await smart.getByRole('button',{name:'Suggest items',exact:true}).click();await smart.getByRole('button',{name:'Add suggested items',exact:true}).click();
- await expect(station.getByLabel('Lock Roasted carrots',{exact:true})).toBeChecked();await expect(station).toContainText('Cucumber salad');await expect(station.getByTestId('station-projected-fc-')).toHaveText('Incomplete');
+ await expect(station.getByLabel('Lock Roasted carrots',{exact:true})).toBeChecked();await expect(station).toContainText('Cucumber salad');await expect(station.getByTestId('station-projected-fc-')).toHaveText('-');
  await smart.getByRole('button',{name:'Undo last smart change'}).click();await expect(station.getByTestId('station-food')).toHaveCount(1);
  await station.getByLabel('Lock Roasted carrots',{exact:true}).uncheck();
  await station.getByLabel('Total pans to prepare for Roasted carrots').fill('4');
- await expect(station.getByTestId('station-finished-pounds')).toHaveText('Incomplete');
+ await expect(station.getByTestId('station-finished-pounds')).toHaveText('-');
  await expect(smart.getByRole('button',{name:'Apply swap: Roasted squash',exact:true})).toBeVisible();await smart.getByRole('button',{name:'Apply swap: Roasted squash',exact:true}).click();
  await expect(station.getByLabel('Total pans to prepare for Roasted squash')).toHaveValue('4');
  const download=page.waitForEvent('download');await station.getByRole('button',{name:'Export station selections'}).click();
@@ -44,7 +44,7 @@ test('Actual shared catalog can build a mixed smart spread without writes',async
  await smart.getByRole('button',{name:'Suggest items',exact:true}).click();
  const preview=smart.getByLabel('Suggested spread preview');await expect(preview).toBeVisible();expect(await preview.getByRole('listitem').count()).toBeGreaterThan(2);
  await preview.getByRole('button',{name:'Add suggested items',exact:true}).click();
- expect(await station.getByTestId('station-food').count()).toBeGreaterThan(2);await expect(station.getByTestId('station-projected-fc-')).toHaveText('Incomplete');
+ expect(await station.getByTestId('station-food').count()).toBeGreaterThan(2);await expect(station.getByTestId('station-projected-fc-')).toHaveText('-');
  await expect(station).toContainText('Tags');
  for(const width of [1440,390]){await page.setViewportSize({width,height:1000});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();await page.getByRole('region',{name:'W&P qualifying portfolio'}).screenshot({path:`test-results/wp-smart-actual-${width}.png`});}
  expect(errors).toEqual([]);expect(writes).toEqual([]);

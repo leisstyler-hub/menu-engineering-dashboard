@@ -27,9 +27,9 @@ for(const width of [390,1440])test(`Station selection, projections and exact MRN
  if(width===390){const jump=view.getByRole('button',{name:/View your station/});await expect(jump).toBeVisible();await jump.click();await expect(build).toBeFocused();}
  await build.getByLabel('Total pans to prepare for Roasted carrots',{exact:true}).fill('10');
  await build.getByLabel('Expected sell-through percent').fill('80');
- await expect(build.getByTestId('station-planned-food-cost')).toHaveText('Incomplete');
- await expect(build.getByTestId('station-projected-sales')).toHaveText('Incomplete');await expect(build.getByTestId('station-remaining-for-labor-other-costs')).toHaveText('Incomplete');await expect(build).toContainText('before labor, overhead and tax');
- await expect(build.getByTestId('station-projected-fc-')).toHaveText('Incomplete');
+ await expect(build.getByTestId('station-planned-food-cost')).toHaveText('-');
+ await expect(build.getByTestId('station-projected-sales')).toHaveText('-');await expect(build.getByTestId('station-remaining-for-labor-other-costs')).toHaveText('-');await expect(build).toContainText('before labor, overhead and tax');
+ await expect(build.getByTestId('station-projected-fc-')).toHaveText('-');
  await picker.getByRole('button',{name:'Clear filters'}).click();await picker.getByRole('checkbox',{name:/Kitchen B/}).check();
  await expect(build.getByTestId('station-food')).toHaveCount(1);
 
@@ -39,11 +39,11 @@ for(const width of [390,1440])test(`Station selection, projections and exact MRN
  const book=XLSX.read(await readFile(await(await download).path()));const exported=XLSX.utils.sheet_to_json(book.Sheets['Station selections']);
  expect(exported.map(r=>r.MRN)).toEqual(['00012.30','00013.01']);expect(book.Sheets['Station selections'].B2.t).toBe('s');expect(exported[0]['Total pans to prepare']).toBe('10');expect(exported[0]['Source menus']).toBe('Kitchen A');expect(exported[0]['Planned food cost']).toBe('Incomplete');
  await view.getByRole('button',{name:'Select Roasted squash',exact:true}).click();
- await expect(build.getByTestId('station-planned-food-cost')).toHaveText('Incomplete');await expect(build.getByTestId('station-projected-fc-')).toHaveText('Incomplete');
+ await expect(build.getByTestId('station-planned-food-cost')).toHaveText('-');await expect(build.getByTestId('station-projected-fc-')).toHaveText('-');
  await build.getByRole('button',{name:'Details for Roasted squash'}).click();await page.getByRole('dialog',{name:'Food details'}).getByRole('button',{name:'Delete from station'}).click();await expect(view.getByRole('button',{name:'Select Roasted squash',exact:true})).toHaveAttribute('aria-pressed','false');
  await page.getByLabel('W&P selling price',{exact:true}).fill('1');
- await expect(build.getByTestId('station-projected-sales')).toHaveText('Incomplete');
- await build.getByLabel('Total pans to prepare for Roasted carrots',{exact:true}).fill('');await expect(build.getByTestId('station-projected-sales')).toHaveText('Incomplete');
+ await expect(build.getByTestId('station-projected-sales')).toHaveText('-');
+ await build.getByLabel('Total pans to prepare for Roasted carrots',{exact:true}).fill('');await expect(build.getByTestId('station-projected-sales')).toHaveText('-');
  await build.getByLabel('Total pans to prepare for Roasted carrots',{exact:true}).fill('10');
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();
  await build.scrollIntoViewIfNeeded();await page.screenshot({path:`test-results/wp-station-${width}.png`,fullPage:true});
@@ -60,7 +60,7 @@ test('Narrowing menus cannot hide conflicts and refresh cannot retain stale cost
  await page.getByRole('group',{name:'Menu selection'}).getByRole('checkbox',{name:/Kitchen A/}).check();
  const view=page.getByRole('region',{name:'W&P qualifying portfolio'}),build=page.getByRole('complementary',{name:'Station build'});
  await view.getByRole('button',{name:'Select Roasted carrots',exact:true}).click();
- await expect(build.getByTestId('station-planned-food-cost')).toHaveText('Incomplete');await expect(build).toContainText('Conflicting source variants');
+ await expect(build.getByTestId('station-planned-food-cost')).toHaveText('-');await expect(build).toContainText('Conflicting source variants');
  rows=rows.slice(0,1);await page.getByRole('button',{name:'Refresh data',exact:true}).click();
  // A refresh remounts the workbench and clears its temporary plan, rather than retaining stale economics.
  await expect(build.getByTestId('station-food')).toHaveCount(0);
