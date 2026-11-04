@@ -37,3 +37,16 @@
 .wp-workspace > .wp-station { top: calc(var(--wp-capacity-height, 120px) + 20px); max-height: calc(100vh - var(--wp-capacity-height, 120px) - 40px); }
 .wp-station { scroll-margin-top: calc(var(--wp-capacity-height, 120px) + 24px); }
 @media (max-width: 1279px) { .wp-workspace > .wp-station { position: static; max-height: none; } }
+
+/* Readable equipment reference and distinct selection boundaries. */
+.wp-capacity { border: 2px solid #405e48; background: #e1ebde; box-shadow: 0 3px 8px #243b3024; }
+.wp-capacity [aria-label$="slots"] > span { width: 24px; height: 14px; border-width: 2px; }
+.wp-station-food { border: 2px solid #607b68; border-left: 7px solid #405e48; box-shadow: 0 3px 8px #243b301a; }
+.wp-station-food:nth-child(even) { background: #e8efe5; }
+.wp-station-food + .wp-station-food { margin-top: 20px; }
+.wp-food { border-bottom: 2px solid #8c9e90; }
+.wp-food:nth-child(even) { background: #e8efe5; }
+.wp-category[aria-pressed=true] { background: #405e48; color: white; border-color: #283e31; }
+.wp-category[aria-pressed=true] strong { background: #283e31; }
+.wp-projection { border: 2px solid #607b68; background: #dce8d8; }
+.wp-assumption { background: #fff4d6; border-color: #9b6c1b; color: #594012; }

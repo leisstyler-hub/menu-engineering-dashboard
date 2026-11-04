@@ -11,7 +11,7 @@ export function buildStationWorkbook(projection, {rate, sellThrough, trusted}) {
     'Planned food cost': row.cost ?? 'Incomplete', 'Service review': row.food?.serviceReasons?.join('; ') || '',
     'Information needed':row.estimate?.reason||row.food?.informationReasons?.join('; ')||(row.cost==null?'Trusted compatible evidence and positive quantity required':''),
     'Approximate weight':row.estimate||row.food?.weightApproximate?'Yes':'No',
-    'Cost source':row.estimate?'Menu Item Index source-file estimate':row.food?.costBasis||'', 'Weight source':row.estimate?'Menu Item Index portion weight and reference pan':row.food?.weightSource||'',
+    'Cost source':row.estimate?.basis?.startsWith('Planning assumption')?'Unknown; serving-volume assumption only':row.estimate?'Menu Item Index source-file estimate':row.food?.costBasis||'', 'Weight source':row.estimate?.basis?.startsWith('Planning assumption')?'Unknown; serving-volume assumption only':row.estimate?'Menu Item Index portion weight and reference pan':row.food?.weightSource||'',
     'Pan size (4-inch deep)':row.panSize||'',
     'Total pans to prepare':row.totalPans??'',
     'Quantity mode':row.quantityMode||'', 'Expected portions':row.expectedPortions??'', 'Expected cups':row.expectedCups??'',

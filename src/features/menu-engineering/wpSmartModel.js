@@ -73,8 +73,8 @@ export function spreadProgress(entries,foods,capacity) {
   used[placement]+=footprint;
  }
  const targets={Hot:Number(capacity.hot),Cold:Number(capacity.cold),Ambient:Number(capacity.ambient),individual:Number(capacity.individual||0)};
- for(const k of Object.keys(used))if(used[k]>targets[k]+1e-8)issues.push(`${k} display selection exceeds available capacity (${used[k]} / ${targets[k]}).`);
- const complete=entries.length>0&&!issues.length&&!quantityIssues.length&&Object.keys(used).every(k=>Math.abs(used[k]-targets[k])<1e-8);
+ for(const k of Object.keys(used))if(k!=='individual'&&used[k]>targets[k]+1e-8)issues.push(`${k} display selection exceeds available capacity (${used[k]} / ${targets[k]}).`);
+ const complete=entries.length>0&&!issues.length&&!quantityIssues.length&&Object.keys(used).filter(k=>k!=='individual').every(k=>Math.abs(used[k]-targets[k])<1e-8);
  return {used,targets,issues,quantityIssues,complete};
 }
 export function suggestSpread(foods,entries,capacity) {
@@ -86,7 +86,7 @@ export function suggestSpread(foods,entries,capacity) {
   while(remaining[placement]>1e-8){
    const candidates=foods.filter(eligible).filter(f=>{
     const p=profileFor(f);
-    return p.foodType!=='Dessert'&&!(p.role==='Sauces / dressings'&&chosen.some(e=>profileFor((capacity.catalog||foods).find(c=>c.key===e.key)||{}).role==='Sauces / dressings'))&&!(p.premium&&chosen.some(e=>profileFor((capacity.catalog||foods).find(c=>c.key===e.key)||{}).premium))&&!chosen.some(e=>e.key===f.key)&&!p.conflicts?.length&&(placement==='individual'?p.serviceFormat==='Individual'&&p.placements.length===1:p.placements.length===1&&p.placements[0]===placement&&p.serviceFormat!=='Individual');
+    return p.foodType!=='Dessert'&&!(p.role==='Sauces / dressings'&&chosen.some(e=>profileFor((capacity.catalog||foods).find(c=>c.key===e.key)||{}).role==='Sauces / dressings'))&&!(p.premium&&chosen.some(e=>profileFor((capacity.catalog||foods).find(c=>c.key===e.key)||{}).premium))&&!chosen.some(e=>e.key===f.key)&&!p.conflicts?.length&&(placement==='individual'?p.serviceFormat==='Individual'&&p.placements.length===1:p.placements.length===1&&p.placements[0]===placement&&(p.serviceFormat!=='Individual'||p.foodType==='Salad'));
    });
    const profiles=chosen.map(e=>profileFor((capacity.catalog||foods).find(f=>f.key===e.key)||{}));
    const premiumCount=profiles.filter(p=>p.premium).length;

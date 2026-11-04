@@ -1,3 +1,8 @@
+## 2026-11-04
+
+- [Nov 4, 7:01 AM] Read W&P selections with stronger contrast, larger pan references and an editable serving-size planning estimate.
+- [Nov 4, 7:01 AM] Remove the Individual capacity target while keeping food-specific portion forecasts.
+
 ## 2026-11-03
 
 - [Nov 3, 5:59 PM] Preserved Commissary standing orders, removed Ham Banh Mi, added whole-unit Salad Bar rules, and opened Atlas Grill Core on Nov 9.

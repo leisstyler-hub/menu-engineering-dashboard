@@ -17,17 +17,24 @@ export function portionCups(value){
 export function estimatePans(entry,food,records=evidence.records){
  const missing=reason=>({pounds:null,cost:null,servings:null,reason,approximate:true,sourceSha256:evidence.sourceSha256});
  const pan=PAN_REFERENCE[entry.panSize];
+ const assumedCups=entry.assumedPortionCups;
  if(!pan||!positive(entry.totalPans)||!Number.isInteger(Number(entry.totalPans)))return missing('Choose a pan size and positive whole total pan count.');
  if(food?.conflict)return missing('Conflicting catalog variants need review.');
  if(!food?.mrn)return missing('Exact MRN is required for the Menu Item Index estimate.');
  let candidates=records.filter(r=>r.mrn===String(food.mrn)&&(food.menus||[]).some(m=>menu(m)===menu(r.menu))&&normalized(r.portion)===normalized(food.portion));
  const catalogVolume=!candidates.length&&portionCups(food.portion);
  if(catalogVolume)candidates=[{mrn:String(food.mrn),portion:food.portion,massOz:food.massOz,cost:food.cost}];
+ if(!candidates.length&&positive(assumedCups)&&!portionCups(food.portion))candidates=[{portion:food.portion}];
  if(!candidates.length)return missing('No exact Menu Item Index MRN, menu and serving-size match.');
  const signatures=new Set(candidates.map(r=>JSON.stringify([normalized(r.portion),r.massOz===''?null:Number(r.massOz),r.cost===''?null:Number(r.cost)])));
  if(signatures.size!==1)return missing('Conflicting Menu Item Index portions, weights or costs need review.');
  const source=candidates[0],cups=portionCups(source.portion);
- if(!cups)return missing('Source portion has no explicit volume; food-specific pan yield is needed.');
+ if(!cups){
+  if(!positive(assumedCups))return missing('Set a planning serving size in cups to estimate servings.');
+  const servings=pan.quarts*4*PAN_FILL/Number(assumedCups)*Number(entry.totalPans);
+  if(!Number.isFinite(servings))return missing('Planning serving size is outside the supported range.');
+  return {...missing(''),servings,sourceSha256:null,basis:`Planning assumption: ${assumedCups} cup per serving at 80% pan fill. Weight and economics need item-specific yield evidence.`};
+ }
  const servings=pan.quarts*4*PAN_FILL/cups*Number(entry.totalPans);
  const pounds=positive(source.massOz)?servings*Number(source.massOz)/16:null;
  const cost=String(source.cost??'').trim()!==''&&Number.isFinite(Number(source.cost))&&Number(source.cost)>=0?servings*Number(source.cost):null;

@@ -28,7 +28,7 @@ export function EnterpriseOverview({projections,trusted,rate}) {
 
 export default function WpPortfolio({projections,catalogProjections=projections,trusted,rate,onExport,exporting}) {
   const [entries,setEntries]=useState([]);
-  const [capacity,setCapacity]=useState({hot:'4',cold:'4',ambient:'2',individual:'2'});
+  const [capacity,setCapacity]=useState({hot:'4',cold:'4',ambient:'2',individual:'0'});
   const [sellThrough,setSellThrough]=useState('100');
   const catalog=useMemo(()=>buildPlanningPortfolio(catalogProjections),[catalogProjections]);
   const [category,setCategory]=useState('All'),[search,setSearch]=useState('');
