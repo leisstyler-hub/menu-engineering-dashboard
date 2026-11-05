@@ -1,6 +1,6 @@
-## Experience flag access candidate - 2026-11-04
+## Experience flag access LIVE - 2026-11-04
 
-Candidate 2026.11.04.006-ssmt-experience-flags reuses existing item flag dialogs and reporting for Experience. Narrow server permission change permits item flags and their edit signal/status only; stage behavior unchanged. Independent review approved with non-blocking compatibility note for malformed/orphaned flags. No production test writes. Rollback baseline 5d06163. Release evidence: workspace WORK_LOGS/SSMT_FLAGS_RELEASE_RESULT.md.
+LIVE app e4e95b59f35f8f0915396d8ade45fa393d2f13b1, version 2026.11.04.006-ssmt-experience-flags reuses existing item flag dialogs and reporting for Experience. Narrow server permission change permits item flags and their edit signal/status only; stage behavior unchanged. Independent review approved with non-blocking compatibility note for malformed/orphaned flags. No production test writes. Rollback baseline 5d06163. Full package verification/build passed; local and production account/Experience browser suites each passed 24/24. READY dpl_F4yghsjctXGB8NCxoWRB6SfSLX24, canonical asset /assets/index-eAkL58Py.js verified. Chief implemented and verified, with independent permission diff review approved. Release evidence: workspace WORK_LOGS/SSMT_FLAGS_RELEASE_RESULT.md.
 
 ## SSMT Category and modifier MRN production verification - 2026-11-04
 

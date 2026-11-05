@@ -6,8 +6,10 @@ Architecture: Reuse SsmtTool flag callbacks/dialogs in SsmtExperienceReview. Nar
 - [x] Add failing permission tests and browser save/reload acceptance.
 - [x] Reuse existing flag controls/dialogs/report link; permit validated flag operations only.
 - [x] Run full package verification and account/Experience browser suite, independent permission review, update version/changelog/handoff.
-- [ ] Publish under Tyler routine release authority, verify production with intercepted data and report exact state/recovery.
+- [x] Publish under Tyler routine release authority, verify production with intercepted data and report exact state/recovery.
 
 Review focus: altered MRNs/prices/modifiers remain denied; malformed flags denied; save failure/revision guard unchanged; edit/clear uses existing behavior; builder visibility after reload. No production workspace test writes.
 
 Verification: full pnpm verify/build passed after pinning the existing historical Commissary availability assertion to its fixture clock (node:test Date mock with finally reset). Local account/Experience browser suite passed 24/24. Independent permission review APPROVED; reviewer inspected diff without rerunning tests. Browser proof covers create/edit/clear/recreate/save and builder reload visibility. Prior failing runs are retained in workspace WORK_LOGS/SSMT_FLAGS_*.log.
+
+LIVE app e4e95b59f35f8f0915396d8ade45fa393d2f13b1, READY dpl_F4yghsjctXGB8NCxoWRB6SfSLX24; canonical /assets/index-eAkL58Py.js has the exact version. Production account/Experience suite passed 24/24 with API/storage interception. No operational data changed. Rollback 5d06163744d897546022ebfe6c1cced88c1ab4af / dpl_A132RKwFqrVqQELW1d7Yi7Py1y7s.
