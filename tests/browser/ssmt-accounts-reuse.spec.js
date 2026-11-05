@@ -53,6 +53,8 @@ async function isolated(
   page,
   {
     role = "Chef",
+    tyler = false,
+    dietaryFixtures = false,
     conflict = false,
     failLoad = false,
     extraGroups = false,
@@ -93,11 +95,15 @@ async function isolated(
     shared.menus.push({ ...structuredClone(source), id: "alpha-menu", name: "alpha menu", items: [{ ...structuredClone(item), id: "z-item", label: "Zebra" }, { ...structuredClone(item), id: "a-item", label: "apple" }] });
   }
   if (reviewSource) { shared.menus[0].phase = "Experience review"; shared.menus[0].items[0].lockedForCentric = true; }
+  if (dietaryFixtures) shared.menus[0].items.push(
+    { ...structuredClone(item), id: "vegan", label: "Vegan Dish", dietaryPreference: "Vegan" },
+    { ...structuredClone(item), id: "unset", label: "Unset Dish", dietaryPreference: "" },
+  );
   const saves = [];
   const member = {
     id: "test-user",
     name: "Test Chef",
-    email: "chef@example.test",
+    email: tyler ? "tyler.leiss@compass-usa.com" : "chef@example.test",
     role,
     isAdmin: role === "Chef",
   };
@@ -849,4 +855,55 @@ test("Experience flags save and appear in the builder menu", async ({ page }) =>
   await page.getByRole("button", { name: /Edit or clear flag for Smash Burger/ }).click();
   await page.getByRole("button", { name: "Edit flag", exact: true }).click();
   await expect(page.getByRole("textbox", { name: "Note", exact: true })).toHaveValue("Builder please check this description");
+});
+
+
+test("Create Record labels distinguish FIXY designation from menu name", async ({ page }) => {
+  await isolated(page);
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+  await expect(page.getByLabel("New menu FIXY designation")).toHaveAttribute("placeholder", "e.g. MFP Test");
+  await expect(page.getByLabel("New menu name", { exact: true })).toHaveAttribute("placeholder", "Menu Name");
+  await expect(page.getByText("FIXY Designation", { exact: true })).toBeVisible();
+});
+
+test("Tyler can inspect the IT editor and return with edits and exact MRN intact", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  const fixture = await isolated(page, { tyler: true });
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+  await page.locator('[data-menu-name="Source Menu"]').click();
+  const description = page.getByRole("textbox", { name: "Description", exact: true });
+  await description.fill("Updated description for IT");
+  const before = fixture.saves.length;
+  await page.getByRole("button", { name: "View as IT", exact: true }).click();
+  await expect(page.getByTestId("ssmt-it-preview")).toBeVisible();
+  await expect(page.getByLabel("Dietary tag for Smash Burger: Vegetarian")).toHaveText("Vegetarian");
+  await expect(description).toHaveValue("updated description for it");
+  await expect(page.getByRole("textbox", { name: /MRN for Smash Burger/ })).toHaveValue("00083821.10");
+  const environment = process.env.PLAYWRIGHT_BASE_URL?.includes("vercel.app") ? "PRODUCTION" : "LOCAL";
+  await page.screenshot({ path: `../../WORK_LOGS/SSMT_IT_VIEW_${environment}_1440.png` });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole("button", { name: "Return to building", exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.screenshot({ path: `../../WORK_LOGS/SSMT_IT_VIEW_${environment}_390.png` });
+  await page.getByRole("button", { name: "Return to building", exact: true }).click();
+  await expect(page.getByTestId("ssmt-it-preview")).toHaveCount(0);
+  await expect(description).toHaveValue("updated description for it");
+  expect(fixture.saves.length).toBe(before);
+  expect(fixture.getWorkspace().menus[0].phase).toBe("IT complete");
+});
+
+test("other administrators have no Tyler IT preview", async ({ page }) => {
+  await isolated(page);
+  await openTarget(page);
+  await expect(page.getByRole("button", { name: "View as IT", exact: true })).toHaveCount(0);
+});
+
+test("IT editor displays the saved dietary name", async ({ page }) => {
+  await isolated(page, { role: "IT", dietaryFixtures: true });
+  await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
+  await page.locator('[data-menu-name="Source Menu"]').click();
+  await expect(page.getByLabel("Dietary tag for Smash Burger: Vegetarian")).toHaveText("Vegetarian");
+  await expect(page.getByLabel("Dietary tag for Vegan Dish: Vegan")).toHaveText("Vegan");
+  await expect(page.locator('[data-testid="ssmt-row-item-unset"] [aria-label^="Dietary tag"]')).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "View as IT", exact: true })).toHaveCount(0);
 });

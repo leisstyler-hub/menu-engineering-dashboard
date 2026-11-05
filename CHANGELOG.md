@@ -1,5 +1,8 @@
 ## 2026-11-05
 
+- [Nov 5, 8:25 AM] Tyler can view a selected menu as IT; IT displays saved Vegan and Vegetarian labels.
+- [Nov 5, 8:25 AM] Create Record clearly labels FIXY Designation and Menu Name, with examples in both fields.
+
 - [Nov 5, 5:22 AM] Global orders now send reviewed sauces, marinades, rubs and seasonings without unit-purchased proteins; Porto adds two optional sauces.
 
 - [Nov 5, 4:44 AM] Group Commissary prep by production type and ingredient family, standardize prep units, send Deli as sandwiches, and scope packout packets to the selected unit or hub.
