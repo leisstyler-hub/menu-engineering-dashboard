@@ -794,7 +794,7 @@ test("SSMT shares one item across multiple sub menus without duplicating its sav
   await expect(page.getByTestId("ssmt-derived-source-preview")).toContainText("AMZ: Shared Submenu Fixture - Amaz Lebanese (1)");
   await expect(page.getByTestId("ssmt-derived-source-preview")).toContainText("AMZ: Shared Submenu Fixture - Persian (2)");
 
-  await page.getByRole("button", { name: /Save menu/i }).click();
+  await page.getByRole("button", { name: /Save SSMT workspace/i }).click();
   await expect(page.getByTestId("ssmt-workspace-sync")).toContainText(/Shared SSMT workspace saved/i, { timeout: 20_000 });
 
   await expect.poll(() => {
@@ -1127,7 +1127,7 @@ test("SSMT loads and saves item lock state through shared storage", async ({ pag
   await expect(vegetarianBadge).toHaveClass(/bg-lime-300/);
   await dietaryPreferenceSelect.selectOption("Vegan");
 
-  await page.getByRole("button", { name: /Save menu/i }).click();
+  await page.getByRole("button", { name: /Save SSMT workspace/i }).click();
 
   await expect.poll(() => {
     const record = savedBodies
@@ -1204,7 +1204,7 @@ test("SSMT manual saves recover failed shared saves and keep flags plus modifier
   await expect(page.getByRole("heading", { name: smokeMenuName })).toBeVisible();
   await expect(page.getByTestId("ssmt-workspace-sync")).toContainText(/failed|local cache/i, { timeout: 20_000 });
 
-  await expect(page.getByRole("button", { name: /Save menu/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Save SSMT workspace/i })).toBeVisible();
   await page.getByLabel(/Item label/i).first().fill("flagged sandwich");
   await page.getByRole("button", { name: /view modifiers/i }).first().click();
   const modifierDialog = page.getByRole("dialog", { name: /modifier/i });
@@ -1261,7 +1261,7 @@ test("SSMT manual saves recover failed shared saves and keep flags plus modifier
   expect(reportHref).toContain("confirm premium tier");
   expect(reportHref).toContain("Timestamp:");
 
-  await page.getByRole("button", { name: /Save menu/i }).click();
+  await page.getByRole("button", { name: /Save SSMT workspace/i }).click();
   await expect.poll(() => {
     const record = savedBodies
       .flatMap((body) => body?.records || [])
@@ -1328,7 +1328,7 @@ test("SSMT menu names require edit mode and cross-system reference names persist
   await page.getByLabel(/Current SSMT phase/i).selectOption("IT complete");
   await expect(page.getByTestId("ssmt-derived-source-preview")).toContainText(`AMZ: ${renamedMenuName}`);
 
-  await page.getByRole("button", { name: /Save menu/i }).click();
+  await page.getByRole("button", { name: /Save SSMT workspace/i }).click();
   await expect.poll(() => {
     const record = savedBodies
       .flatMap((body) => body?.records || [])
@@ -1432,7 +1432,7 @@ test("SSMT modifier groups are editable with typed group metadata and line-level
   await page.getByRole("button", { name: /Add pricing row/i }).click();
   const modifierFreePricingRow = page.getByRole("row", { name: /Modifier Free/i });
   await modifierFreePricingRow.getByLabel(/SEA price for/i).fill("0.00");
-  await expect(modifierFreePricingRow.locator("td").first()).toHaveText("$0.00 - Modifier Free");
+  await expect(modifierFreePricingRow.locator("td").first().getByText("$0.00 - Modifier Free", { exact: true })).toBeVisible();
   const otherAreas = ["AUS", "BNA", "BOS", "BWI", "DEN", "IAD", "JFK", "LAX", "SAN", "SNA", "SJC", "WAS", "YVR", "YYZ", "MCO"];
   for (const area of otherAreas) {
     await modifierFreePricingRow.getByLabel(new RegExp(`^${area} price for`, "i")).fill("$0.00");

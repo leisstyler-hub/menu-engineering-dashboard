@@ -44,7 +44,7 @@ test('current pricing edits update completed menu display and item/modifier expo
  await expect(page.getByLabel('Copy AUS price for Linked Burger',{exact:true})).toContainText('$9.99');
  await expect(page.getByLabel('Copy BNA price for Linked Burger',{exact:true})).toContainText('$11.00');
  await verifyExport(page,'9.99','11.00');
- await page.getByRole('button',{name:'Save menu',exact:true}).click();
+ await page.getByRole('button',{name:'Save SSMT workspace',exact:true}).click();
  await expect.poll(()=>saves.length).toBeGreaterThan(0);
  for(const saved of saves){expect(saved.menus).toEqual(original.menus);expect(saved.modifierGroups).toEqual(original.modifierGroups);}
 });
@@ -62,4 +62,102 @@ test('scheduled activation updates a completed menu while the editor stays open 
  const activated=saves.find(s=>s.priceBookArchives.length===1);
  expect(activated.priceBookArchives[0].priceBook).toEqual(original.priceBook);
  expect(activated.menus).toEqual(original.menus);expect(activated.modifierGroups).toEqual(original.modifierGroups);
+});
+
+
+test('one workspace save stays above navigation on selector, builder and price increase screens', async ({page}) => {
+ const {saves}=await fixture(page);
+ const checkSave=async()=>{
+  const save=page.getByRole('button',{name:'Save SSMT workspace',exact:true});
+  await expect(save).toHaveCount(1);
+  const saveBox=await save.boundingBox(),navBox=await page.getByRole('navigation',{name:'SSMT sections',exact:true}).boundingBox();
+  expect(saveBox.y+saveBox.height).toBeLessThanOrEqual(navBox.y);
+  expect(saveBox.x+saveBox.width).toBeGreaterThan(navBox.x+navBox.width-25);
+  await expect(page.getByRole('button',{name:'Save menu',exact:true})).toHaveCount(0);
+ };
+ await page.getByRole('button',{name:'Menu Selector / New Menu',exact:true}).click();
+ await checkSave();
+ await page.locator('[data-menu-name="Completed Pricing Menu"]').click();
+ await checkSave();
+ await page.getByRole('button',{name:'Save SSMT workspace',exact:true}).click();
+ await expect.poll(()=>saves.length).toBeGreaterThan(0);
+ await page.getByRole('button',{name:'Pricing Structure',exact:true}).click();
+ await checkSave();
+ await page.getByRole('button',{name:/Planning New Price Increase/}).click();
+ await checkSave();
+ const environment=process.env.PLAYWRIGHT_BASE_URL?.includes('vercel.app')?'PRODUCTION':'LOCAL';
+ await page.screenshot({path:`../../WORK_LOGS/SSMT_SAVE_${environment}_DESKTOP.png`});
+ await page.setViewportSize({width:390,height:844});
+ await checkSave();
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ await page.screenshot({path:`../../WORK_LOGS/SSMT_SAVE_${environment}_PHONE.png`});
+});
+
+test('current price deletion warns with linked counts, blocks used rows and preserves saved data when deleting an unused row',async({page})=>{
+ const {original,saves}=await fixture(page);
+ await page.getByRole('button',{name:'Pricing Structure',exact:true}).click();
+ await page.getByRole('button',{name:'Delete price row $12.00 - Burger',exact:true}).click();
+ let dialog=page.getByRole('dialog',{name:'Delete current pricing row',exact:true});
+ await expect(dialog).toContainText('Menu items using this row: 1');
+ await expect(dialog).toContainText('Modifier choices using this row: 1');
+ await expect(dialog.getByRole('button',{name:'Delete pricing row',exact:true})).toBeDisabled();
+ await expect(dialog).toContainText('Reassign these links before deleting');
+ const environment=process.env.PLAYWRIGHT_BASE_URL?.includes('vercel.app')?'PRODUCTION':'LOCAL';
+ await page.screenshot({path:`../../WORK_LOGS/SSMT_PRICE_DELETE_${environment}_DESKTOP.png`});
+ await page.setViewportSize({width:390,height:844});
+ await expect(dialog.getByRole('button',{name:'Cancel',exact:true})).toBeInViewport();
+ await page.screenshot({path:`../../WORK_LOGS/SSMT_PRICE_DELETE_${environment}_PHONE.png`});
+ await page.setViewportSize({width:1280,height:720});
+ await dialog.getByRole('button',{name:'Cancel',exact:true}).click();
+ await page.getByLabel('New pricing category',{exact:true}).fill('Test Row');
+ await page.getByLabel('New SEA price',{exact:true}).fill('1.25');
+ await page.getByRole('button',{name:'Add pricing row',exact:true}).click();
+ const remove=page.getByRole('button',{name:/Delete price row.*Test Row/});
+ await remove.click();
+ dialog=page.getByRole('dialog',{name:'Delete current pricing row',exact:true});
+ await expect(dialog).toContainText('Menu items using this row: 0');
+ await expect(dialog).toContainText('Modifier choices using this row: 0');
+ await dialog.getByRole('button',{name:'Cancel',exact:true}).click();
+ await expect(remove).toBeVisible();
+ await remove.click();
+ await dialog.getByRole('button',{name:'Delete pricing row',exact:true}).click();
+ await expect(remove).toHaveCount(0);
+ await page.getByRole('button',{name:'Save SSMT workspace',exact:true}).click();
+ await expect.poll(()=>saves.length).toBeGreaterThan(0);
+ expect(saves.at(-1).priceBook).toEqual(original.priceBook);
+ expect(saves.at(-1).menus).toEqual(original.menus);
+ expect(saves.at(-1).modifierGroups).toEqual(original.modifierGroups);
+ expect(saves.at(-1).priceBookArchives).toEqual(original.priceBookArchives);
+ await page.reload();await page.getByRole('button',{name:/open ssmt/i}).click();
+ await page.getByRole('button',{name:'Pricing Structure',exact:true}).click();
+ await expect(remove).toHaveCount(0);
+ await expect(page.getByRole('button',{name:'Delete price row $12.00 - Burger',exact:true})).toBeVisible();
+});
+
+test('legacy deletion of the final unused price row stays empty after save and reload',async({page})=>{
+ let shared={'Record ID':'ssmt|workspace|current','Record Type':'SSMT Workspace',menus:[],modifierGroups:[],seedMenuTypeCorrectionsApplied:true,priceBook:[{id:'last-test-row',category:'Last Test',selectorLabel:'$1.00 - Last Test',areas:{SEA:'1.00'}}]};
+ await page.addInitScript(()=>{localStorage.clear();sessionStorage.clear();});
+ await page.route('**/api/**',async r=>{
+  const req=r.request(),url=new URL(req.url());
+  if(url.pathname.endsWith('/ssmt'))return r.fulfill({json:{ok:true,enabled:false,menus:[]}});
+  if(url.pathname.endsWith('/storage/records')){
+   if(req.method()==='POST')shared=structuredClone(req.postDataJSON().records[0]);
+   return r.fulfill({json:{ok:true,source:'supabase',records:[shared],synced:1}});
+  }
+  return r.fulfill({json:{ok:true,records:[]}});
+ });
+ const open=async()=>{
+  await page.goto('/');await page.getByRole('button',{name:/open ssmt/i}).click();
+  await page.getByLabel('SSMT passcode',{exact:true}).fill('0411');
+  await page.getByRole('button',{name:'Unlock SSMT',exact:true}).click();
+  await page.getByRole('button',{name:'Pricing Structure',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Save SSMT workspace',exact:true})).toBeVisible();
+ };
+ await open();
+ await page.getByRole('button',{name:'Delete price row $1.00 - Last Test',exact:true}).click();
+ await page.getByRole('dialog',{name:'Delete current pricing row',exact:true}).getByRole('button',{name:'Delete pricing row',exact:true}).click();
+ await page.getByRole('button',{name:'Save SSMT workspace',exact:true}).click();
+ await expect.poll(()=>shared.priceBook).toEqual([]);
+ await open();
+ await expect(page.getByRole('button',{name:/Delete price row/})).toHaveCount(0);
 });

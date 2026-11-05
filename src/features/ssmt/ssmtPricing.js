@@ -67,3 +67,30 @@ export function activateDuePricing(workspace = {}, today) {
     }],
   };
 }
+
+// Only exact saved selector IDs establish usage. Include historical/hidden menus
+// and clipboard choices so deleting a row cannot revive an older price snapshot.
+export function priceRowUsage(workspace = {}, priceId) {
+  const result = { menuItems: 0, modifierChoices: 0, clipboardChoices: 0, total: 0, inPlannedBook: false };
+  if (!priceId) return result;
+  const countChoices = group => (group?.choices || []).filter(choice => choice.priceSelectorId === priceId).length;
+  for (const menu of workspace.menus || []) {
+    for (const item of menu.items || []) {
+      if (item.priceSelectorId === priceId) result.menuItems += 1;
+      for (const group of item.modifierGroups || []) {
+        if (group && typeof group === 'object') result.modifierChoices += countChoices(group);
+      }
+    }
+  }
+  for (const group of workspace.modifierGroups || []) result.modifierChoices += countChoices(group);
+  for (const slot of workspace.modifierClipboardSlots || []) result.clipboardChoices += countChoices(slot.group);
+  result.total = result.menuItems + result.modifierChoices + result.clipboardChoices;
+  result.inPlannedBook = (workspace.plannedPriceBook?.priceBook || []).some(row => row.id === priceId);
+  return result;
+}
+
+export function deleteUnusedCurrentPriceRow(workspace = {}, priceId) {
+  if (!priceId || (workspace.priceBook || []).filter(row => row.id === priceId).length !== 1) return workspace;
+  if (priceRowUsage(workspace, priceId).total > 0) return workspace;
+  return { ...workspace, priceBook: workspace.priceBook.filter(row => row.id !== priceId) };
+}

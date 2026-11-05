@@ -1,5 +1,7 @@
 ## 2026-11-05
 
+- [Nov 5, 9:08 AM] SSMT uses one save button above navigation; unused current pricing rows can be deleted after a usage warning.
+
 - [Nov 5, 8:55 AM] Tyler can open the Experience review screen from a selected menu and return to building with edits preserved.
 
 - [Nov 5, 8:55 AM] Tyler can open the Experience review screen from a selected menu and return to building with edits preserved.

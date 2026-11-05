@@ -27,7 +27,7 @@ import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
 import { readLocalStorageJson, writeLocalStorageJson } from "../../shared/safeStorage.js";
 import { downloadCentricExport } from "./ssmtCentricExport.js";
-import { activateDuePricing, resolveSsmtMenuPrices, resolveSsmtModifierPrices } from "./ssmtPricing.js";
+import { activateDuePricing, resolveSsmtMenuPrices, resolveSsmtModifierPrices, priceRowUsage, deleteUnusedCurrentPriceRow } from "./ssmtPricing.js";
 import { deriveSsmtOperatingRows, ssmtDerivedMenuEntries } from "./ssmtDerivedMenuSource.js";
 import PromotionCalendar from "./PromotionCalendar.jsx";
 import { loadSsmtWorkspaceFromSharedStorage, saveSsmtWorkspaceToSharedStorage } from "./ssmtWorkspaceStorage.js";
@@ -762,6 +762,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
   const [flagActionDialog, setFlagActionDialog] = useState(null);
   const [deleteRequest, setDeleteRequest] = useState(null);
   const [deleteConfirmed, setDeleteConfirmed] = useState(false);
+  const [deletePriceId, setDeletePriceId] = useState("");
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [flagReason, setFlagReason] = useState("Description correction");
   const [flagNote, setFlagNote] = useState("");
@@ -878,7 +879,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
         const storedMenus = Array.isArray(workspace.menus)
           ? (accountMode ? workspace.menus : mergeWorkspaceMenusWithSeed(workspace.menus, payload.menus, { applySeedTypes: !workspace.seedMenuTypeCorrectionsApplied, deletedMenuKeys: workspace.deletedMenuKeys || [] }))
           : payload.menus;
-        const storedPriceBook = Array.isArray(workspace.priceBook) && workspace.priceBook.length ? workspace.priceBook : payload.priceBook;
+        const storedPriceBook = Array.isArray(workspace.priceBook) ? workspace.priceBook : payload.priceBook;
         const storedModifierGroups = Array.isArray(workspace.modifierGroups) && workspace.modifierGroups.length ? workspace.modifierGroups : payload.modifierGroups;
         const priceBook = accountMode ? workspace.priceBook || [] : storedPriceBook.map((price) => normalizePricingRow(price, payload.areaOrder));
         const modifierGroups = accountMode ? workspace.modifierGroups : storedModifierGroups.map((group) => normalizeModifierGroup(group, payload.areaOrder, priceBook));
@@ -982,6 +983,19 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
     return () => window.clearInterval(timer);
   }, [dataStatus, accountMember?.role, ssmtData.plannedPriceBook]);
   const selectedPrice = ssmtData.priceBook.find((row) => row.id === selectedPriceId) || ssmtData.priceBook[0];
+  const priceToDelete = ssmtData.priceBook.find(row => row.id === deletePriceId);
+  const deletePriceUsage = priceRowUsage(latestWorkspaceRef.current, deletePriceId);
+  const canDeletePrice = Boolean(priceToDelete) && deletePriceUsage.total === 0 && ssmtData.priceBook.filter(row => row.id === deletePriceId).length === 1;
+  const confirmDeletePrice = () => {
+    const workspace = latestWorkspaceRef.current;
+    if (deleteUnusedCurrentPriceRow(workspace, deletePriceId) === workspace) return;
+    setSsmtData(current => ({
+      ...current,
+      priceBook: deleteUnusedCurrentPriceRow({ ...latestWorkspaceRef.current, priceBook: current.priceBook }, deletePriceId).priceBook,
+    }));
+    setDeletePriceId("");
+  };
+
   const itemPriceOptions = useMemo(() => sortPricesForItemSelector(ssmtData.priceBook), [ssmtData.priceBook]);
   const modifierPriceOptions = useMemo(() => sortPricesForModifierSelector(ssmtData.priceBook), [ssmtData.priceBook]);
   const displayedPriceBook = pricingPlanMode && ssmtData.plannedPriceBook ? ssmtData.plannedPriceBook.priceBook : ssmtData.priceBook;
@@ -1912,6 +1926,12 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
           </div>
         </header>
 
+        {dataStatus === "ready" && <div data-testid="ssmt-save-bar" className="flex justify-end">
+          <button type="button" onClick={() => manualSaveWorkspace("SSMT workspace")} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-sky-700 px-5 py-2 text-sm font-black text-white hover:bg-sky-800">
+            <Save size={16} /> Save SSMT workspace
+          </button>
+        </div>}
+
         {activeView !== "home" && <nav aria-label="SSMT sections" className={`grid grid-cols-1 gap-2 rounded-xl border border-slate-200 bg-white shadow-sm sm:grid-cols-3 ${activeView === "editor" ? "p-2" : "p-3"}`}>
           <button type="button" aria-pressed={activeView === "home"} onClick={() => requestLeaveCurrentMenu(() => setActiveView("home"))} className={`inline-flex items-center justify-center gap-3 rounded-lg border-2 text-base font-black shadow-sm ${activeView === "editor" ? "min-h-11 px-3 py-2" : "min-h-14 px-5 py-4"} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${activeView === "home" ? "border-slate-950 bg-slate-950 text-white" : "border-slate-300 bg-slate-100 text-slate-900 hover:border-slate-500"}`}>
             <ListChecks size={24} aria-hidden="true" /> Back to SSMT
@@ -1942,9 +1962,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
             }`}
           >
             <span>Shared workspace: {workspaceSync.message}</span>
-            <button type="button" onClick={() => manualSaveWorkspace("SSMT workspace")} className="inline-flex items-center justify-center gap-1 rounded-md border border-slate-300 bg-white px-2 py-1 text-[11px] font-black text-slate-800 hover:bg-slate-100">
-              <Save size={13} /> Save SSMT workspace
-            </button>
+
           </section>
         )}
 
@@ -2059,7 +2077,10 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                   <tbody>
                     {displayedPriceOptions.map((price) => (
                       <tr key={price.id} className="odd:bg-white even:bg-slate-50/70">
-                        <td className="border-b border-slate-100 px-4 py-3 font-black text-slate-950">{price.selectorLabel}</td>
+                        <td className="border-b border-slate-100 px-4 py-3 font-black text-slate-950">
+                          <span>{price.selectorLabel}</span>
+                          {!pricingPlanMode && <button type="button" aria-label={`Delete price row ${price.selectorLabel}`} onClick={() => setDeletePriceId(price.id)} className="mt-2 flex items-center gap-1 rounded border border-red-300 bg-red-50 px-2 py-1 text-xs font-bold text-red-800 hover:bg-red-100"><Trash2 size={13} /> Delete</button>}
+                        </td>
                         <td className="border-b border-slate-100 px-4 py-3">
                           <input
                             type="checkbox"
@@ -2236,9 +2257,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
               </div>
               <div className="flex flex-wrap gap-2">
                 {canPreviewExperience && !experiencePreview && <button type="button" onClick={() => setExperiencePreview(true)} className="rounded-lg border border-indigo-700 bg-indigo-700 px-3 py-1.5 text-sm font-black text-white">View as Experience</button>}
-                <button type="button" onClick={() => manualSaveWorkspace("menu")} className="inline-flex items-center gap-2 rounded-lg border border-sky-700 bg-sky-700 px-3 py-1.5 text-sm font-black text-white hover:bg-sky-800">
-                  <Save size={16} /> Save menu
-                </button>
+
                 <button type="button" onClick={exportSelectedMenuForCentric} className="inline-flex items-center gap-2 rounded-lg border border-emerald-700 bg-emerald-700 px-3 py-1.5 text-sm font-black text-white hover:bg-emerald-800">
                   <Download size={16} /> Export SSMT
                 </button>
@@ -3032,6 +3051,23 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
 
       {flagModals}
 
+      {deletePriceId && <Modal title="Delete current pricing row" onClose={() => setDeletePriceId("")}>
+        <div className="space-y-4">
+          <p className="rounded border-2 border-amber-400 bg-amber-50 p-3 font-bold text-amber-950">Caution: remove {priceToDelete?.selectorLabel || "this row"} from the current price bracket?</p>
+          <div className="space-y-1 font-semibold">
+            <p>Menu items using this row: {deletePriceUsage.menuItems}</p>
+            <p>Modifier choices using this row: {deletePriceUsage.modifierChoices}</p>
+            <p>Saved clipboard choices using this row: {deletePriceUsage.clipboardChoices}</p>
+          </div>
+          {deletePriceUsage.total > 0 && <p role="alert" className="font-bold text-red-800">Reassign these links before deleting. This row is still used, including any historical or hidden menus.</p>}
+          {deletePriceUsage.inPlannedBook && <p className="font-bold text-amber-900">The planned price increase still contains this row and may restore it when activated.</p>}
+          <p className="text-sm text-slate-700">Menu items, saved prices, planned pricing and pricing archives will be preserved. Use Save SSMT workspace to save your change.</p>
+          <div className="flex flex-wrap justify-end gap-2">
+            <button type="button" onClick={() => setDeletePriceId("")} className="rounded-lg border border-slate-300 px-4 py-2 font-bold">Cancel</button>
+            <button type="button" disabled={!canDeletePrice} onClick={confirmDeletePrice} className="rounded-lg bg-red-700 px-4 py-2 font-bold text-white disabled:cursor-not-allowed disabled:opacity-40">Delete pricing row</button>
+          </div>
+        </div>
+      </Modal>}
       {deleteRequest && (
         <DeleteConfirmationModal
           request={deleteRequest}
