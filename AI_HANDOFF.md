@@ -1,3 +1,7 @@
+## SSMT compact save status - 2026-11-05
+
+Candidate `2026.11.05.006-ssmt-save-status`, Chief solo on existing chief/ssmt-aus-bna. Tyler request 565a12e52b791ba4fbece3a3f8ae2c9e4987ce54c1e3addba82d141b96bcf947. Move shared status immediately left of Save SSMT workspace above navigation; both are 48px high. Last saved uses loaded workspace updatedAt or the successfully submitted snapshot timestamp; unavailable timestamps are explicit. Saving/failure/no-shared-save states remain distinct, full recovery advice remains visible for failures, and original message is available to screen readers and hover. No persistence behavior or production data writes changed. Rollback c330386 / dpl_ACtYJoEFzLcGri9PcAA2F4jW9npV. Full package verify/build passed; final local SSMT/account/pricing browser acceptance 62/62 passed, including desktop/phone exact heights and save-time reload. Solo self-review and screenshots checked. Production verification pending. Evidence: workspace WORK_LOGS/SSMT_SAVE_STATUS_2026_11_05.md.
+
 ## SSMT consistent save and guarded price-row deletion - 2026-11-05
 
 LIVE `2026.11.05.005-ssmt-save-price-delete`, Chief on chief/ssmt-aus-bna, requested by Tyler c86a503dc99b7ad5614a6d2db748d75f5bcfbc1dc2c8a11e62b410535f1e1759. One Save SSMT workspace control sits above navigation at the right on home, selector, builder and active/planned pricing. Save modifiers stays in its dialog. Existing guarded save/revision/conflict behavior is reused.

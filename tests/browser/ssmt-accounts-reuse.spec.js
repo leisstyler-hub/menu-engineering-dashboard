@@ -912,3 +912,29 @@ test("IT editor displays the saved dietary name", async ({ page }) => {
   await expect(page.locator('[data-testid="ssmt-row-item-unset"] [aria-label^="Dietary tag"]')).toHaveCount(0);
   await expect(page.getByRole("button", { name: "View as Experience", exact: true })).toHaveCount(0);
 });
+
+
+test("save status stays beside the button at matching height and shows confirmed save time", async ({ page }) => {
+  const fixture = await isolated(page);
+  const status = page.getByTestId("ssmt-workspace-sync");
+  const save = page.getByRole("button", { name: "Save SSMT workspace", exact: true });
+  await save.click();
+  await expect.poll(() => fixture.saves.length).toBe(1);
+  await expect(status).toContainText(/Last saved/);
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    const statusBox = await status.boundingBox();
+    const saveBox = await save.boundingBox();
+    expect(statusBox.height).toBe(saveBox.height);
+    expect(statusBox.y).toBe(saveBox.y);
+    expect(statusBox.x + statusBox.width).toBeLessThan(saveBox.x);
+    expect(saveBox.x + saveBox.width).toBeLessThanOrEqual(width);
+    await page.screenshot({ path: `../../WORK_LOGS/SSMT_SAVE_STATUS_${process.env.PLAYWRIGHT_BASE_URL?.includes("vercel.app") ? "PRODUCTION" : "LOCAL"}_${width}.png` });
+  }
+  await page.reload();
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByLabel("Email", { exact: true }).fill("chef@example.test");
+  await page.getByLabel("Password", { exact: true }).fill("a private test password");
+  await page.getByRole("button", { name: "Sign in to SSMT", exact: true }).click();
+  await expect(status).toContainText(/Last saved/);
+});

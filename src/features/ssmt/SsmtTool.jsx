@@ -783,6 +783,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
     source: "local",
     message: "Loading SSMT workspace...",
   });
+  const [lastSavedAt, setLastSavedAt] = useState("");
   const workspaceLoadedRef = useRef(false);
   const skipInitialSharedSaveRef = useRef(true);
   const lastSharedSaveSignatureRef = useRef("");
@@ -822,6 +823,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
       const result = await saveSsmtWorkspaceToSharedStorage(workspace, {accounts:accountMode,revision:accountRevisionRef.current});
       if (accountMode) accountRevisionRef.current = result.revision;
       lastSharedSaveSignatureRef.current = submittedSignature;
+      setLastSavedAt(workspace.updatedAt);
       setWorkspaceSync({state:"synced",source:result.source || "supabase",message:`Shared SSMT workspace saved from ${label}.`});
       saved = true;
       return true;
@@ -852,6 +854,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
           const shared = await loadSsmtWorkspaceFromSharedStorage({ accounts: accountMode });
           if (cancelled) return;
           sharedWorkspace = shared.workspace;
+          setLastSavedAt(sharedWorkspace?.updatedAt || "");
           if (accountMode) accountRevisionRef.current = shared.revision;
           setWorkspaceSync(sharedWorkspace ? {
             state: "synced",
@@ -1926,11 +1929,36 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
           </div>
         </header>
 
-        {dataStatus === "ready" && <div data-testid="ssmt-save-bar" className="flex justify-end">
-          <button type="button" onClick={() => manualSaveWorkspace("SSMT workspace")} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-sky-700 px-5 py-2 text-sm font-black text-white hover:bg-sky-800">
+        {dataStatus === "ready" && <div data-testid="ssmt-save-bar" className="flex items-center justify-end gap-2">
+          <section
+            data-testid="ssmt-workspace-sync"
+            role="status"
+            title={workspaceSync.message}
+            aria-label={workspaceSync.message}
+            className={`flex h-12 min-w-0 items-center rounded-lg border px-3 text-xs font-bold ${
+              workspaceSync.state === "synced"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                : workspaceSync.state === "saving"
+                  ? "border-sky-200 bg-sky-50 text-sky-900"
+                  : "border-amber-200 bg-amber-50 text-amber-900"
+            }`}
+          >
+            <span className="truncate">{workspaceSync.state === "saving" ? "Saving..."
+              : workspaceSync.state === "fallback" ? "Save failed: see details"
+              : workspaceSync.state === "local" ? "Not saved yet"
+              : lastSavedAt && Number.isFinite(Date.parse(lastSavedAt))
+                ? `Last saved ${new Date(lastSavedAt).toLocaleString([], { hour: "numeric", minute: "2-digit" })}`
+                : "Saved: time unavailable"}</span>
+            <span className="sr-only">{workspaceSync.message}</span>
+          </section>
+          <button type="button" onClick={() => manualSaveWorkspace("SSMT workspace")} className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-lg bg-sky-700 px-3 py-2 text-sm font-black text-white hover:bg-sky-800 sm:px-5">
             <Save size={16} /> Save SSMT workspace
           </button>
         </div>}
+
+        {dataStatus === "ready" && workspaceSync.state === "fallback" && (
+          <p role="alert" className="text-sm font-bold text-amber-900">{workspaceSync.message}</p>
+        )}
 
         {activeView !== "home" && <nav aria-label="SSMT sections" className={`grid grid-cols-1 gap-2 rounded-xl border border-slate-200 bg-white shadow-sm sm:grid-cols-3 ${activeView === "editor" ? "p-2" : "p-3"}`}>
           <button type="button" aria-pressed={activeView === "home"} onClick={() => requestLeaveCurrentMenu(() => setActiveView("home"))} className={`inline-flex items-center justify-center gap-3 rounded-lg border-2 text-base font-black shadow-sm ${activeView === "editor" ? "min-h-11 px-3 py-2" : "min-h-14 px-5 py-4"} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${activeView === "home" ? "border-slate-950 bg-slate-950 text-white" : "border-slate-300 bg-slate-100 text-slate-900 hover:border-slate-500"}`}>
@@ -1947,22 +1975,6 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
         {dataStatus !== "ready" && (
           <section className={`rounded-lg border p-4 text-sm font-bold leading-6 ${dataStatus === "error" ? "border-red-200 bg-red-50 text-red-800" : "border-sky-200 bg-sky-50 text-sky-900"}`}>
             {dataStatus === "error" ? "SSMT seed data could not be loaded." : "Loading current SSMT seed data..."}
-          </section>
-        )}
-
-        {dataStatus === "ready" && (
-          <section
-            data-testid="ssmt-workspace-sync"
-            className={`flex flex-col gap-2 rounded-lg border px-3 py-2 text-xs font-black sm:flex-row sm:items-center sm:justify-between ${
-              workspaceSync.state === "synced"
-                ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-                : workspaceSync.state === "saving"
-                  ? "border-sky-200 bg-sky-50 text-sky-900"
-                : "border-amber-200 bg-amber-50 text-amber-900"
-            }`}
-          >
-            <span>Shared workspace: {workspaceSync.message}</span>
-
           </section>
         )}
 
