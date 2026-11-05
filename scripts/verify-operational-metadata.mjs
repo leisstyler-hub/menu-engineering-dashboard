@@ -11,16 +11,18 @@ assert.equal(isApprovedOperationalMetadataRecord(record), true);
 assert.equal(resolveOperationalMetadata([record]).source, "supabase");
 assert.equal(resolveOperationalMetadata([]).source, "fallback");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.orderItems.length, 41);
-assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 14);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 15);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.items.length, 41);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.legacyItems.length, 41);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.source.effectiveDate, "2026-11-16");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.catalogSelection, "service-week-effective-date");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.culinaryProfiles.length, 41);
-assert.ok(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.culinaryProfiles.every((profile) => profile.profileVersion === 1 && profile.identity?.mrn && profile.identity?.portion && profile.reviewStatus === "Needs review" && profile.cuisineMoniker === "Unknown" && profile.provenance?.sourceSha256));
+assert.ok(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.culinaryProfiles.every((profile) => profile.profileVersion === 1 && profile.identity?.mrn && profile.identity?.portion && profile.reviewStatus === "Needs review" && profile.cuisineMoniker === "Unknown" && (profile.provenance?.sourceSha256 || profile.provenance?.sourceRecord)));
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.source.sha256, "42E2DF61F1B97489ED2B9F27B81C86100B7D404E649099840829B23F76BB80F4");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.transferCatalogEnabled, true);
-assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.retiredOrderItems.length, 6);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.retiredOrderItems.length, 13);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.previousItems.length, 41);
+assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.categoryOrder, ["Leafy Greens", "Vegetables", "Proteins", "Cheeses", "Crunchy Toppers", "Dressings"]);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.grillProgram.anchorWeekStart, "2026-11-16");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.grillProgram.cycleLengthWeeks, 6);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.grillProgram.coreStartWeekByCafe.Atlas, "2026-11-09");
@@ -47,7 +49,7 @@ assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.deliProgram.cyc
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.deliProgram.standingOrderItemMrns, ["37394.7"]);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.standingOrderPolicy.catalogUpdatesNeverRewriteSavedOrders, true);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarWholeUnitPolicy.grandfatherExistingSplitQuantities, true);
-assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.deliProgram.eligibleCafes, ["Cricket", "Nessie", "Dawson", "Blueshift", "Sonic", "Dynamo", "Gemini", "Eclipse", "Odyssey", "Doppler", "Day 1", "Re:Invent", "Brazil Coffee", "Roxanne Coffee", "Arizona Coffee"]);
+assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.deliProgram.eligibleCafes, ["Cricket", "Nessie", "Dawson", "Blueshift", "Sonic", "Dynamo", "Gemini", "Eclipse", "Odyssey", "Doppler", "Day 1", "Re:Invent", "Brazil Coffee", "Roxanne Coffee", "Arizona Coffee", "Zoka Coffee"]);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepHubs.map(({ key }) => key), ["Cricket", "Sonic", "Blueshift"]);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.stationAccess.Grace, ["global", "grill"]);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.stationAccess.Dynamo, ["deli"]);
@@ -71,10 +73,11 @@ assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.s
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.hubRouting.Cricket.global, ["Cricket", "Nessie", "Dawson", "Frontier"]);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.hubRouting.Sonic.global, []);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.hubRouting.Blueshift.global, ["Bingo", "Grace", "Sonic", "Blueshift", "105", "Everest", "Gemini", "Astra", "Doppler", "Day 1", "Nitro", "Re:Invent"]);
-assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.breakfastProgram.items.length, 27);
-assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.breakfastProgram.eligibleCafes, ["Brazil Coffee", "Roxanne Coffee", "Arizona Coffee"]);
-assert.equal(DEFAULT_OPERATIONAL_METADATA.transferTool.units.length, 28);
-assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.receivingCafes.length, 22);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.breakfastProgram.items.length, 28);
+assert.ok(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.breakfastProgram.items.some(({ mrn }) => mrn === "17350.24"));
+assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.breakfastProgram.eligibleCafes, ["Brazil Coffee", "Roxanne Coffee", "Arizona Coffee", "Zoka Coffee"]);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.transferTool.units.length, 29);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.receivingCafes.length, 23);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.componentProductionPolicy.effectiveDate, "2026-11-16");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.grillInterface.coreItems, "permanent-optional-whole-item-quantities");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.departingUnit.profitCenter, "22472");
@@ -101,6 +104,7 @@ const expectedCommissaryProfitCenters = {
   "Brazil Coffee": "30783",
   "Roxanne Coffee": "28671",
   "Arizona Coffee": "28672",
+  "Zoka Coffee": "28676",
   Atlas: "35983",
   Frontier: "53166",
 };

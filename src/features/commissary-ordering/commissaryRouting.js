@@ -36,6 +36,7 @@ export const COMMISSARY_CAFE_STATION_ACCESS = Object.freeze({
   "Brazil Coffee": Object.freeze([COMMISSARY_STATIONS.BREAKFAST, COMMISSARY_STATIONS.DELI]),
   "Roxanne Coffee": Object.freeze([COMMISSARY_STATIONS.BREAKFAST, COMMISSARY_STATIONS.DELI]),
   "Arizona Coffee": Object.freeze([COMMISSARY_STATIONS.BREAKFAST, COMMISSARY_STATIONS.DELI]),
+  "Zoka Coffee": Object.freeze([COMMISSARY_STATIONS.BREAKFAST, COMMISSARY_STATIONS.DELI]),
   Atlas: Object.freeze([COMMISSARY_STATIONS.GRILL]),
   Frontier: Object.freeze([COMMISSARY_STATIONS.GLOBAL, COMMISSARY_STATIONS.SALAD_BAR]),
 });
@@ -44,9 +45,9 @@ export const COMMISSARY_HUB_ROUTING = Object.freeze({
   Cricket: Object.freeze({
     saladBar: Object.freeze(["Cricket", "Nessie", "Dawson", "Frontier"]),
     grill: Object.freeze(["Cricket", "Nessie", "Dawson", "Atlas"]),
-    deli: Object.freeze(["Cricket", "Nessie", "Dawson"]),
+    deli: Object.freeze(["Cricket", "Nessie", "Dawson", "Zoka Coffee"]),
     global: Object.freeze(["Cricket", "Nessie", "Dawson", "Frontier"]),
-    breakfast: Object.freeze([]),
+    breakfast: Object.freeze(["Zoka Coffee"]),
   }),
   Sonic: Object.freeze({
     saladBar: Object.freeze(["Bingo", "Sonic", "Blueshift", "105", "Everest", "Astra"]),

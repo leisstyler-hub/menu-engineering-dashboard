@@ -7,12 +7,14 @@ export const BREAKFAST_ORDERING_PROGRAM = Object.freeze({
   "eligibleCafes": [
     "Brazil Coffee",
     "Roxanne Coffee",
-    "Arizona Coffee"
+    "Arizona Coffee",
+    "Zoka Coffee"
   ],
   "quantityIncrement": 1,
   "orderUnit": "item",
   "includedTypes": [
     "sandwich",
+    "croissant",
     "bagel",
     "burrito"
   ],
@@ -45,6 +47,13 @@ export const BREAKFAST_ORDERING_PROGRAM = Object.freeze({
       "id": "breakfast|44576.2|1-each",
       "mrn": "44576.2",
       "name": "Bacon And Egg Burrito",
+      "portion": "1 each",
+      "category": "entree"
+    },
+    {
+      "id": "breakfast|17350.24|1-each",
+      "mrn": "17350.24",
+      "name": "Bacon Egg Cheddar Croissant",
       "portion": "1 each",
       "category": "entree"
     },
@@ -286,6 +295,48 @@ export const BREAKFAST_ORDERING_PROGRAM = Object.freeze({
         "name": "Tortilla Wrap, Flour, 12'', Ole Mexican",
         "quantity": 1,
         "unit": "each"
+      }
+    ],
+    "breakfast|17350.24|1-each": [
+      {
+        "id": "breakfast-prep|ingredient|183006|each",
+        "type": "ingredient",
+        "mrn": "183006",
+        "name": "Bacon, Applewood, Sliced, 14/18 Ct, Hatfield, Raw",
+        "quantity": 2,
+        "unit": "each"
+      },
+      {
+        "id": "breakfast-prep|ingredient|9165|slice",
+        "type": "ingredient",
+        "mrn": "9165",
+        "name": "Cheese, Cheddar, Mild, Loaf, Great Lakes, Sliced, .5 oz",
+        "quantity": 1,
+        "unit": "slice"
+      },
+      {
+        "id": "breakfast-prep|ingredient|155704|each",
+        "type": "ingredient",
+        "mrn": "155704",
+        "name": "Croissant, Butter, Sliced, 3 oz, Pillsbury, Frozen",
+        "quantity": 1,
+        "unit": "each"
+      },
+      {
+        "id": "breakfast-prep|ingredient|2264|each",
+        "type": "ingredient",
+        "mrn": "2264",
+        "name": "Egg, Fresh, Large, Cage Free, HFAC, Pasteurized, Deb-El",
+        "quantity": 1,
+        "unit": "each"
+      },
+      {
+        "id": "breakfast-prep|ingredient|169286|tsp",
+        "type": "ingredient",
+        "mrn": "169286",
+        "name": "Oil, Canola, 100%",
+        "quantity": 1,
+        "unit": "tsp"
       }
     ],
     "breakfast|39909.35|1-sandwich": [
@@ -907,7 +958,7 @@ export const BREAKFAST_ORDERING_PROGRAM = Object.freeze({
   },
   "source": {
     "catalog": "supabase.recipe_items",
-    "catalogRosterSha256": "3cc0aea5328b9946a9c844716f967cbe7be664bcf11124199b097df4b75f658f",
+    "catalogRosterSha256": "7f5c485f67e2ed68f444d71aa45bf66a3d39a0e65c33662227ddba2eb301802f",
     "recipeProjection": {
       "title": "Ingredient Costing 9.19.26",
       "file": "/resources/Ingredient_Costing_9.19.26.xlsx",

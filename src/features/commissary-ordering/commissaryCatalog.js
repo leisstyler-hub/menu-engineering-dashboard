@@ -19,18 +19,23 @@ export const SALAD_BAR_COST_SOURCE = Object.freeze({
   costBasis: "Item + Waste Cost",
 });
 
+export const SALAD_BAR_CATEGORY_ORDER = Object.freeze(["Leafy Greens", "Vegetables", "Proteins", "Cheeses", "Crunchy Toppers", "Dressings"]);
+const LEAFY_GREEN_MRNS = new Set(["47795.1", "62323", "63609"]);
 const CHEESE_MRNS = new Set(["1746.6", "47711.1", "62345", "62344"]);
 const PROTEIN_MRNS = new Set(["62326", "14899", "167505", "63167.8"]);
 const CRUNCHY_MRNS = new Set(["62347", "144578", "65280"]);
 const DRESSING_MRNS = new Set(["111748.11", "16776", "47957.11", "62355", "5323", "47805.1", "62357", "62369"]);
-const categoryFor = (mrn) => CHEESE_MRNS.has(mrn) ? "Cheese" : PROTEIN_MRNS.has(mrn) ? "Proteins" : CRUNCHY_MRNS.has(mrn) ? "Crunchy Toppers" : DRESSING_MRNS.has(mrn) ? "Dressings" : "Toppings";
+const categoryFor = (mrn) => LEAFY_GREEN_MRNS.has(mrn) ? "Leafy Greens" : CHEESE_MRNS.has(mrn) ? "Cheeses" : PROTEIN_MRNS.has(mrn) ? "Proteins" : CRUNCHY_MRNS.has(mrn) ? "Crunchy Toppers" : DRESSING_MRNS.has(mrn) ? "Dressings" : "Vegetables";
 const titleCase = (value) => String(value).replace(/(^|[\s-])\p{L}/gu, (letter) => letter.toUpperCase());
 export const isWholeUnitSaladItem = (item = {}) => {
   const name = String(item.name || item.sourceName || "").toLowerCase();
-  return (String(item.category || "") === "Dressings" && /(dressing|vinaigrette)/.test(name))
+  const category = String(item.category || "");
+  return category === "Leafy Greens"
+    || category === "Cheeses"
+    || (category === "Dressings" && /(dressing|vinaigrette)/.test(name))
     || /(spring mix|spinach|arugula)/.test(name);
 };
-const culinaryProfileFor = ({ id, name, mrn, portion }) => Object.freeze({
+const culinaryProfileFor = ({ id, name, mrn, portion, source = SALAD_BAR_COST_SOURCE }) => Object.freeze({
   profileVersion: 1,
   identity: Object.freeze({ itemKey: id, name, mrn, portion, menuMemberships: Object.freeze(["Commissary Salad Bar", SALAD_BAR_COST_SOURCE.menuName]) }),
   servicePlacement: Object.freeze(["Unknown"]),
@@ -42,12 +47,31 @@ const culinaryProfileFor = ({ id, name, mrn, portion }) => Object.freeze({
   premiumHighlight: "Unknown",
   reviewStatus: "Needs review",
   provenance: Object.freeze({
-    sourceFile: SALAD_BAR_COST_SOURCE.workbook,
-    sourceSha256: SALAD_BAR_COST_SOURCE.sha256,
-    basis: "Exact MenuWorks Salad Bar identity and costing row; no culinary classification evidence supplied.",
+    ...(source.approvedOverrideId
+      ? { sourceRecord: source.approvedOverrideId, sourceVersion: source.approvedAt }
+      : { sourceFile: SALAD_BAR_COST_SOURCE.workbook, sourceSha256: SALAD_BAR_COST_SOURCE.sha256 }),
+    basis: source.basis || "Exact MenuWorks Salad Bar identity and costing row; no culinary classification evidence supplied.",
     reviewer: null,
     reviewedAt: null,
   }),
+});
+
+export const SALAD_BAR_PACKAGE_OVERRIDE_SOURCE = Object.freeze({
+  approvedOverrideId: "alex-salad-bar-package-units-2026-11-04",
+  approvedAt: "2026-11-04",
+  approvedBy: "Alex",
+  basis: "Alex-approved whole-package order unit and Item + Waste Cost override; culinary classifications remain Unknown / Needs review.",
+  effectiveForNewSelections: "2026-11-04",
+});
+
+const PACKAGE_OVERRIDES = Object.freeze({
+  "47795.1": Object.freeze({ portion: "3 pound bag", orderUnit: "3-pound bag", orderUnitCost: 7.75 }),
+  "62323": Object.freeze({ portion: "4 pound bag", orderUnit: "4-pound bag", orderUnitCost: 17.8 }),
+  "63609": Object.freeze({ portion: "2.5 pound bag", orderUnit: "2.5-pound bag", orderUnitCost: 8.81 }),
+  "1746.6": Object.freeze({ portion: "5 pound container", orderUnit: "5-pound container", orderUnitCost: 14.15 }),
+  "47711.1": Object.freeze({ portion: "5 pound bag", orderUnit: "5-pound bag", orderUnitCost: 16.79 }),
+  "62345": Object.freeze({ portion: "5 pound bag", orderUnit: "5-pound bag", orderUnitCost: 15.89 }),
+  "62344": Object.freeze({ portion: "5 pound bag", orderUnit: "5-pound bag", orderUnitCost: 13.6 }),
 });
 
 const SOURCE_ROWS = [
@@ -94,32 +118,36 @@ const SOURCE_ROWS = [
   ["tri-color quinoa", "55978.2", "1 gallon", 16.220102, 0.04, 16.868906],
 ];
 
-const activeItem = ([sourceName, mrn, sourcePortion, itemCost, wastePercent, itemWasteCost]) => {
+const activeItem = ([sourceName, mrn, sourcePortion, itemCost, wastePercent, itemWasteCost], override = null) => {
   const isGallon = sourcePortion === "1 gallon" || sourcePortion === "128 floz";
   const transferGlCode = mrn === "62341" ? "4111009" : "4111011";
+  const source = override ? SALAD_BAR_PACKAGE_OVERRIDE_SOURCE : SALAD_BAR_COST_SOURCE;
   const item = {
-    id: `commissary-${mrn.replace(/[^a-z0-9]/gi, "-").toLowerCase()}`,
+    id: `commissary-${mrn.replace(/[^a-z0-9]/gi, "-").toLowerCase()}${override ? "-package-v3" : ""}`,
     category: categoryFor(mrn),
     name: titleCase(sourceName),
     sourceName,
     mrn,
-    portion: sourcePortion,
-    itemCost,
-    wastePercent,
-    itemWasteCost,
-    orderUnit: isGallon ? "gallon" : "3-pound container",
-    orderUnitCost: itemWasteCost,
+    portion: override?.portion || sourcePortion,
+    itemCost: override?.orderUnitCost ?? itemCost,
+    wastePercent: override ? 0 : wastePercent,
+    itemWasteCost: override?.orderUnitCost ?? itemWasteCost,
+    orderUnit: override?.orderUnit || (isGallon ? "gallon" : "3-pound container"),
+    orderUnitCost: override?.orderUnitCost ?? itemWasteCost,
     quantityIncrement: 1,
     notes: "",
     transferGlCode,
     transferGlCategory: transferGlCode === "4111009" ? "Frozen" : "Prepared Foods",
-    source: SALAD_BAR_COST_SOURCE,
+    source,
   };
   item.quantityIncrement = isWholeUnitSaladItem(item) ? 1 : (isGallon ? 0.25 : 1);
   return Object.freeze({ ...item, culinaryProfile: culinaryProfileFor(item) });
 };
 
-export const COMMISSARY_ORDER_ITEMS = Object.freeze(SOURCE_ROWS.map(activeItem).sort((left, right) => left.name === "Sliced Cucumber" ? -1 : right.name === "Sliced Cucumber" ? 1 : 0));
+export const COMMISSARY_PREVIOUS_ORDER_ITEMS = Object.freeze(SOURCE_ROWS.map((row) => activeItem(row)));
+export const COMMISSARY_ORDER_ITEMS = Object.freeze(SOURCE_ROWS
+  .map((row) => activeItem(row, PACKAGE_OVERRIDES[row[1]] || null))
+  .sort((left, right) => SALAD_BAR_CATEGORY_ORDER.indexOf(left.category) - SALAD_BAR_CATEGORY_ORDER.indexOf(right.category) || left.name.localeCompare(right.name)));
 export const SALAD_BAR_CULINARY_PROFILE_MANIFEST = Object.freeze(COMMISSARY_ORDER_ITEMS.map(({ culinaryProfile }) => culinaryProfile));
 
 const legacyItem = (category, name, mrn, itemWasteCost, orderUnit, orderUnitCost, notes = "", options = {}) => {
@@ -213,6 +241,9 @@ export const COMMISSARY_RETIRED_ORDER_ITEMS = Object.freeze([
   retiredItem("Kidney Beans", "67067.12", 1.152128),
   retiredItem("Flatbread Crisps", "62303.4", 5.76),
   retiredItem("Caesar Dressing", "62370", 1.67),
+  ...COMMISSARY_PREVIOUS_ORDER_ITEMS
+    .filter(({ mrn }) => PACKAGE_OVERRIDES[mrn])
+    .map((item) => Object.freeze({ ...item, retired: true, notes: "Saved standing-order unit retained; new selections use the updated whole-package item." })),
 ]);
 
 export function commissaryOrderItemsForWeek(weekStart) {
@@ -225,7 +256,7 @@ export function commissaryItemMapForWeek(weekStart, quantities = {}) {
   return new Map([...rows, ...retainedRetired].map((row) => [row.id, row]));
 }
 
-export const COMMISSARY_ITEM_BY_ID = new Map([...COMMISSARY_LEGACY_ORDER_ITEMS, ...COMMISSARY_RETIRED_ORDER_ITEMS, ...COMMISSARY_ORDER_ITEMS].map((row) => [row.id, row]));
+export const COMMISSARY_ITEM_BY_ID = new Map([...COMMISSARY_LEGACY_ORDER_ITEMS, ...COMMISSARY_PREVIOUS_ORDER_ITEMS, ...COMMISSARY_RETIRED_ORDER_ITEMS, ...COMMISSARY_ORDER_ITEMS].map((row) => [row.id, row]));
 
 export function saladBarTransferCatalogItems(metadataItems = COMMISSARY_ORDER_ITEMS) {
   return metadataItems.map((row) => ({

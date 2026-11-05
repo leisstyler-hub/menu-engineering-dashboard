@@ -10,6 +10,7 @@ export const CAFE_PROFIT_CENTERS = Object.freeze({
   "Brazil Coffee": "30783",
   "Roxanne Coffee": "28671",
   "Arizona Coffee": "28672",
+  "Zoka Coffee": "28676",
   Commissary: "22472",
   Atlas: "35983",
   Astra: "62844",

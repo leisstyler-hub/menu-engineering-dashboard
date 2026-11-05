@@ -1,5 +1,7 @@
 ## 2026-11-04
 
+- [Nov 4, 7:08 PM] Updated Salad Bar package costs, added Zoka Coffee, and restored the Bacon Egg Cheddar Croissant to Breakfast ordering.
+
 - [Nov 4, 5:46 PM] Experience reviewers can use existing item flags and reports to alert menu builders.
 
 - [Nov 4, 4:20 PM] Choose Food, Beverage or Retail from Category; item modifiers show the exact MRN beside the item name.
@@ -10,7 +12,7 @@
 
 - [Nov 4, 10:41 AM] Keep linked SSMT menu and modifier prices current in completed menus and exports when active or scheduled pricing changes.
 
-- [Nov 4, 8:38 AM] Remove spread items with an ×, show dashes for unavailable figures, and simplify pan and served-portion controls.
+- [Nov 4, 8:38 AM] Remove spread items with an Ã—, show dashes for unavailable figures, and simplify pan and served-portion controls.
 
 - [Nov 4, 7:01 AM] Read W&P selections with stronger contrast, larger pan references and an editable serving-size planning estimate.
 - [Nov 4, 7:01 AM] Remove the Individual capacity target while keeping food-specific portion forecasts.

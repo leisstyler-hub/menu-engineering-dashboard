@@ -21,7 +21,8 @@ export const DELI_ORDERING_PROGRAM = Object.freeze({
     "Re:Invent",
     "Brazil Coffee",
     "Roxanne Coffee",
-    "Arizona Coffee"
+    "Arizona Coffee",
+    "Zoka Coffee"
   ],
   "quantityIncrement": 1,
   "orderUnit": "sandwich",

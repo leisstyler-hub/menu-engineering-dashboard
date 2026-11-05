@@ -5,9 +5,12 @@ import {
   COMMISSARY_DEPARTING_UNIT,
   COMMISSARY_LEGACY_ORDER_ITEMS,
   COMMISSARY_ORDER_ITEMS,
+  COMMISSARY_PREVIOUS_ORDER_ITEMS,
   COMMISSARY_RETIRED_ORDER_ITEMS,
+  SALAD_BAR_CATEGORY_ORDER,
   SALAD_BAR_CULINARY_PROFILE_MANIFEST,
   SALAD_BAR_COST_SOURCE,
+  SALAD_BAR_PACKAGE_OVERRIDE_SOURCE,
 } from "../features/commissary-ordering/commissaryCatalog.js";
 import { DEFAULT_COMMISSARY_METADATA } from "../features/commissary-ordering/commissaryMetadata.js";
 import { GRILL_LTO_PROGRAM } from "../features/commissary-ordering/grillLtoCatalog.js";
@@ -18,7 +21,7 @@ import { BREAKFAST_ORDERING_PROGRAM } from "../features/commissary-ordering/brea
 import { COMMISSARY_CAFE_STATION_ACCESS, COMMISSARY_HUB_ROUTING, COMMISSARY_HUBS } from "../features/commissary-ordering/commissaryRouting.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 14;
+export const OPERATIONAL_METADATA_VERSION = 15;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -51,11 +54,14 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
     orderItems: COMMISSARY_ORDER_ITEMS,
     retiredOrderItems: COMMISSARY_RETIRED_ORDER_ITEMS,
     saladBarCosting: Object.freeze({
-      version: 2,
+      version: 3,
       source: SALAD_BAR_COST_SOURCE,
+      packageUnitOverride: SALAD_BAR_PACKAGE_OVERRIDE_SOURCE,
       menu: "Commissary Salad Bar",
       items: COMMISSARY_ORDER_ITEMS,
+      previousItems: COMMISSARY_PREVIOUS_ORDER_ITEMS,
       legacyItems: COMMISSARY_LEGACY_ORDER_ITEMS,
+      categoryOrder: SALAD_BAR_CATEGORY_ORDER,
       catalogSelection: "service-week-effective-date",
       culinaryProfiles: SALAD_BAR_CULINARY_PROFILE_MANIFEST,
       culinaryProfilePersistence: "operational-metadata-companion; canonical shared profile domain not yet approved",
@@ -72,8 +78,8 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       serverBaselineCheck: "saved-record-updatedAt",
     }),
     saladBarWholeUnitPolicy: Object.freeze({
-      categories: Object.freeze(["dressings", "vinaigrettes"]),
-      products: Object.freeze(["spring mix", "spinach", "arugula"]),
+      categories: Object.freeze(["dressings", "vinaigrettes", "leafy greens", "cheeses"]),
+      products: Object.freeze(["spring mix", "arugula", "chopped kale", "cottage cheese", "blue cheese", "feta", "cheddar"]),
       increment: 1,
       grandfatherExistingSplitQuantities: true,
     }),
@@ -84,7 +90,7 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
     breakfastProgram: BREAKFAST_ORDERING_PROGRAM,
     breakfastInterface: Object.freeze({
       menu: "AMZ: Breakfast",
-      includedTypes: Object.freeze(["sandwich", "bagel", "burrito"]),
+      includedTypes: Object.freeze(["sandwich", "croissant", "bagel", "burrito"]),
       excludedTypes: Object.freeze(["plate", "side", "cereal", "taco", "toast", "wrap", "chia", "extension"]),
       itemSelection: "compact-add-item",
       deliveryQuantities: "whole-portions",

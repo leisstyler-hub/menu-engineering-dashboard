@@ -9,6 +9,14 @@ const text = (value) => String(value ?? "").normalize("NFKC").trim().replace(/\s
 const mrn = (value) => text(value).replace(/^'/, "");
 const slug = (value) => text(value).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 const round = (value) => Number(Number(value).toFixed(6));
+const EXPLICIT_BREAKFAST_HANDHELD_MRNS = new Set(["17350.24"]);
+
+function isSupportedBreakfastHandheld(row = {}) {
+  const name = text(row.item);
+  const recipeCategory = text(row.recipeCategory || row.recipe_category);
+  return /(sandwich|bagel|burrito)/i.test(name)
+    || (EXPLICIT_BREAKFAST_HANDHELD_MRNS.has(mrn(row.mrn)) && /breakfast\s*>\s*sandwich\/wrap/i.test(recipeCategory));
+}
 
 function prepComponent(component) {
   const name = text(component.ingredientName).replace(/^\s*\u2615\s*/, "");
@@ -40,7 +48,7 @@ async function main() {
   }
   const deduped = new Map();
   payload.rows
-    .filter((row) => row.menu === "AMZ: Breakfast" && row.category === "entree" && /(sandwich|bagel|burrito)/i.test(text(row.item)))
+    .filter((row) => row.menu === "AMZ: Breakfast" && row.category === "entree" && isSupportedBreakfastHandheld(row))
     .forEach((row) => {
       const id = `breakfast|${mrn(row.mrn)}|${slug(row.portion)}`;
       if (!deduped.has(id)) deduped.set(id, { id, mrn: mrn(row.mrn), name: text(row.item), portion: text(row.portion), category: "entree" });
@@ -55,10 +63,10 @@ async function main() {
   const program = {
     version: 1,
     menu: "AMZ: Breakfast",
-    eligibleCafes: ["Brazil Coffee", "Roxanne Coffee", "Arizona Coffee"],
+    eligibleCafes: ["Brazil Coffee", "Roxanne Coffee", "Arizona Coffee", "Zoka Coffee"],
     quantityIncrement: 1,
     orderUnit: "item",
-    includedTypes: ["sandwich", "bagel", "burrito"],
+    includedTypes: ["sandwich", "croissant", "bagel", "burrito"],
     exclusions: ["plate", "side", "cereal", "taco", "toast", "wrap", "chia", "extension"],
     items,
     itemPrepComponents,
