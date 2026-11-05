@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 const displayValue = (value) => value === undefined || value === null || String(value).trim() === "" ? "Not available" : String(value);
 
-export default function SsmtExperienceReview({ menus, menu, groupsForItem, onSelectMenu, onDescriptionChange, onSave, onAdvance, allItemsLocked, syncMessage, phaseBlocker, dataStatus, onBack, flagModals, flagReportHref, existingFlagForItem, onFlagItem }) {
+export default function SsmtExperienceReview({ menus, menu, groupsForItem, onSelectMenu, onDescriptionChange, onSave, onAdvance, allItemsLocked, syncMessage, phaseBlocker, dataStatus, onBack, backLabel = "Back to Platform", preview = false, flagModals, flagReportHref, existingFlagForItem, onFlagItem }) {
   const [spellcheck, setSpellcheck] = useState(true);
   const [copyStatus, setCopyStatus] = useState("");
   const [copyFallback, setCopyFallback] = useState("");
@@ -28,7 +28,8 @@ export default function SsmtExperienceReview({ menus, menu, groupsForItem, onSel
     }
   };
   return <div className="mx-auto max-w-6xl space-y-4 p-4 pb-28 text-slate-950 md:pb-4">
-    <button type="button" onClick={onBack}>Back to Platform</button>
+    <button type="button" onClick={onBack}>{backLabel}</button>
+    {preview && <p data-testid="ssmt-experience-preview" className="rounded border border-indigo-700 bg-indigo-50 p-3 font-bold">Experience preview: {menu.name}. Description edits and flags apply to this shared menu.</p>}
     <h1 className="text-2xl font-black">SSMT - Experience review</h1>
     <p>Edit the shared menu descriptions, save, then send the menu to IT programming.</p>
     <p role="status">{syncMessage}</p>

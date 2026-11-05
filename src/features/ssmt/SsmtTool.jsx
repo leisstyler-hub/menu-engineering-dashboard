@@ -737,10 +737,10 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
     return window.sessionStorage.getItem(UNLOCKED_KEY) === "true";
   });
   const [activeView, setActiveView] = useState("home");
-  const [itPreview, setItPreview] = useState(false);
-  const canPreviewIt = accountMember?.isAdmin === true && accountMember?.role === "Chef" && accountMember?.email?.toLowerCase() === "tyler.leiss@compass-usa.com";
-  const showItDietaryNames = accountMember?.role === "IT" || (canPreviewIt && itPreview);
-  useEffect(() => { setItPreview(false); }, [activeView]);
+  const [experiencePreview, setExperiencePreview] = useState(false);
+  const canPreviewExperience = accountMember?.isAdmin === true && accountMember?.role === "Chef" && accountMember?.email?.toLowerCase() === "tyler.leiss@compass-usa.com";
+  const showItDietaryNames = accountMember?.role === "IT";
+  useEffect(() => { setExperiencePreview(false); }, [activeView]);
   const [menus, setMenus] = useState([]);
   const [selectedMenuId, setSelectedMenuId] = useState("");
   const [deletedMenuKeys, setDeletedMenuKeys] = useState([]);
@@ -1829,7 +1829,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
       )}
   </>;
 
-  if (accountMember?.role === "Experience") {
+  if (accountMember?.role === "Experience" || (canPreviewExperience && experiencePreview)) {
     return <SsmtExperienceReview menus={menus} menu={selectedMenu}
       flagModals={flagModals} flagReportHref={selectedFlagReportHref}
       existingFlagForItem={existingFlagForItem} onFlagItem={openFlagForItem}
@@ -1837,7 +1837,10 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
       onSelectMenu={setSelectedMenuId} onDescriptionChange={(id, description) => updateItem(id, { description })}
       onSave={() => manualSaveWorkspace()} onAdvance={updateSelectedMenuPhase}
       allItemsLocked={allItemRowsLocked} syncMessage={workspaceSync.message}
-      phaseBlocker={phaseBlocker} dataStatus={dataStatus} onBack={onBackToPlatform} />;
+      phaseBlocker={phaseBlocker} dataStatus={dataStatus}
+      backLabel={experiencePreview ? "Return to building" : "Back to Platform"}
+      preview={experiencePreview}
+      onBack={experiencePreview ? () => setExperiencePreview(false) : onBackToPlatform} />;
   }
 
   if (!unlocked) {
@@ -2226,17 +2229,13 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
 
         {activeView === "editor" && (
           <main className="space-y-3">
-            {canPreviewIt && itPreview && <section data-testid="ssmt-it-preview" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border-2 border-indigo-700 bg-indigo-50 p-3 text-indigo-950">
-              <div><h2 className="font-black">IT view: {selectedMenu.name}</h2><p className="text-sm">IT uses this same menu editor, item details and modifiers. Your account permissions still apply.</p></div>
-              <button type="button" onClick={() => setItPreview(false)} className="rounded-lg bg-indigo-700 px-4 py-2 font-black text-white">Return to building</button>
-            </section>}
             <section className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm">
               <div className="min-w-0">
                 <h2 className="text-xl font-black">{selectedMenu.name || "Unnamed menu"}</h2>
                 <p className="text-sm font-bold text-slate-600">{selectedMenu.type}</p>
               </div>
               <div className="flex flex-wrap gap-2">
-                {canPreviewIt && !itPreview && <button type="button" onClick={() => setItPreview(true)} className="rounded-lg border border-indigo-700 bg-indigo-700 px-3 py-1.5 text-sm font-black text-white">View as IT</button>}
+                {canPreviewExperience && !experiencePreview && <button type="button" onClick={() => setExperiencePreview(true)} className="rounded-lg border border-indigo-700 bg-indigo-700 px-3 py-1.5 text-sm font-black text-white">View as Experience</button>}
                 <button type="button" onClick={() => manualSaveWorkspace("menu")} className="inline-flex items-center gap-2 rounded-lg border border-sky-700 bg-sky-700 px-3 py-1.5 text-sm font-black text-white hover:bg-sky-800">
                   <Save size={16} /> Save menu
                 </button>

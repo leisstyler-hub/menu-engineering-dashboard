@@ -1,5 +1,9 @@
 ## 2026-11-05
 
+- [Nov 5, 8:55 AM] Tyler can open the Experience review screen from a selected menu and return to building with edits preserved.
+
+- [Nov 5, 8:55 AM] Tyler can open the Experience review screen from a selected menu and return to building with edits preserved.
+
 - [Nov 5, 8:25 AM] Tyler can view a selected menu as IT; IT displays saved Vegan and Vegetarian labels.
 - [Nov 5, 8:25 AM] Create Record clearly labels FIXY Designation and Menu Name, with examples in both fields.
 
