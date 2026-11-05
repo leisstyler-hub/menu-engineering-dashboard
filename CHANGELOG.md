@@ -1,5 +1,7 @@
 ## 2026-11-04
 
+- [Nov 4, 4:20 PM] Choose Food, Beverage or Retail from Category; item modifiers show the exact MRN beside the item name.
+
 - [Nov 4, 11:39 AM] Experience review shows dietary details and modifiers, checks spelling, and copies the selected menu for review.
 - [Nov 4, 11:39 AM] Reviewed descriptions save to the shared menu; clear stage controls hand ready menus to IT programming.
 

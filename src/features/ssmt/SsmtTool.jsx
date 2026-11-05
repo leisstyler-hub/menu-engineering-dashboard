@@ -2569,14 +2569,20 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                             )}
                           </td>
                           <td className={builderCellClass}>
-                            <input
+                            <select
                               aria-label={`Category for ${item.label || item.name || "item"}`}
                               value={item.category || ""}
                               onChange={(event) => updateItem(item.id, { category: event.target.value })}
                               onClick={() => copyLockedField(item, item.category, "Category")}
-                              readOnly={Boolean(item.lockedForCentric)}
-                              className={`w-full rounded-md border border-slate-300 px-2 py-1 text-xs font-bold outline-none focus:border-emerald-500 ${item.lockedForCentric ? "cursor-copy bg-emerald-50 text-slate-950" : "bg-white"}`}
-                            />
+                              disabled={Boolean(item.lockedForCentric)}
+                              className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-bold text-slate-900 disabled:cursor-not-allowed disabled:bg-emerald-50 disabled:text-slate-950"
+                            >
+                              <option value=""></option>
+                              {["Food", "Beverage", "Retail"].map((category) => <option key={category} value={category}>{category}</option>)}
+                              {item.category && !["Food", "Beverage", "Retail"].includes(item.category) && (
+                                <option value={item.category}>{item.category} (Legacy value)</option>
+                              )}
+                            </select>
                           </td>
                           <td className={builderCellClass}>
                             <select
@@ -2746,6 +2752,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
       {modifierDialog && (
         <Modal title="Modifier detail" size="wide" onClose={() => setModifierDialog(null)}>
           <div className="space-y-3">
+            <h3 data-testid="modifier-item-heading" className="text-lg font-black text-slate-900">{modifierDialog.item.label || modifierDialog.item.name} <span className="break-all text-sm font-bold text-slate-600">MRN: {modifierDialog.item.mrn || "Not available"}</span></h3>
             <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
               <p className="text-sm font-semibold leading-6 text-slate-700">For {modifierDialog.item.label || modifierDialog.item.name}, copy places a modifier group on the SSMT clipboard for paste onto another item. Choose prices from Pricing Structure or the free modifier option.</p>
               <div className="flex flex-wrap gap-2">

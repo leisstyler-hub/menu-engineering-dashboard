@@ -792,3 +792,22 @@ test("Experience handoff saves IT stage and phone copy fallback preserves missin
   await page.getByLabel("Experience menu").selectOption("target");
   await expect(page.getByLabel("Selected menu text", { exact: true })).toHaveCount(0);
 });
+
+
+test("Category options save and modifier header shows exact item MRN", async ({ page }) => {
+  const fixture = await isolated(page);
+  await openTarget(page);
+  await page.getByRole("button", { name: "Add item", exact: true }).click();
+  const category = page.getByLabel("Category for NEW ITEM", { exact: true });
+  await expect(category).toHaveJSProperty("tagName", "SELECT");
+  await expect(category.locator("option")).toHaveText(["", "Food", "Beverage", "Retail"]);
+  for (const value of ["Food", "Beverage", "Retail"]) {
+    await category.selectOption(value);
+    await expect(category).toHaveValue(value);
+  }
+  await page.getByLabel(/MRN for/).first().fill("00083821.10");
+  await page.getByRole("button", { name: /View modifiers Mods/ }).first().click();
+  await expect(page.getByTestId("modifier-item-heading")).toHaveText("NEW ITEM MRN: 00083821.10");
+  await page.getByRole("button", { name: "Save modifiers", exact: true }).click();
+  await expect.poll(() => fixture.getWorkspace().menus[1].items[0]?.category).toBe("Retail");
+});

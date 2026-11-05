@@ -257,8 +257,8 @@ test("SSMT opens behind passcode and separates pricing from menu building", asyn
   await expect(descriptionInput).toHaveValue("needs sentence case");
 
   const categoryInput = page.getByLabel(/Category for/i).first();
-  await categoryInput.fill("Typed Category");
-  await expect(categoryInput).toHaveValue("Typed Category");
+  await categoryInput.selectOption("Retail");
+  await expect(categoryInput).toHaveValue("Retail");
 
   const fixyInput = page.getByLabel(/Fixy for/i).first();
   await fixyInput.fill("GRILL 1");
@@ -617,9 +617,9 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
   await expect(mrnInput).toHaveValue("123456.78");
   await expect(page.getByText(/^N\/A$/).first()).toBeVisible();
 
-  await page.getByLabel(/Category for/i).first().fill("entree");
+  await page.getByLabel(/Category for/i).first().selectOption("Food");
   await page.getByLabel(/Secondary category for/i).first().selectOption("Side");
-  await expect(page.getByLabel(/Category for/i).first()).toHaveValue("entree");
+  await expect(page.getByLabel(/Category for/i).first()).toHaveValue("Food");
   await expect(page.getByLabel(/Secondary category for/i).first()).toHaveValue("Side");
 
   await page.getByRole("button", { name: /Lock item BETA ITEM/i }).click();
@@ -965,7 +965,7 @@ test("SSMT item locks enable Centric copy fields and gate phase advancement", as
 
   await page.getByLabel(/Item label/i).first().fill("centric paste item");
   await page.getByLabel(/MRN for/i).first().fill("123456.78");
-  await page.getByLabel(/Category for/i).first().fill("Entree");
+  await page.getByLabel(/Category for/i).first().selectOption("Food");
   await page.getByLabel(/SEA price for/i).first().selectOption({ index: 1 });
 
   const firstPriceButton = page.getByRole("button", { name: /Copy AUS price for CENTRIC PASTE ITEM/i }).first();
@@ -1374,7 +1374,7 @@ test("SSMT selected-menu export downloads a Centric-shaped workbook", async ({ p
   await page.getByLabel(/Item label/i).first().fill("export sandwich");
   await page.getByLabel(/Description/i).first().fill("export ready description");
   await page.getByLabel(/MRN for/i).first().fill("321654.98");
-  await page.getByLabel(/Category for/i).first().fill("Food");
+  await page.getByLabel(/Category for/i).first().selectOption("Food");
   await page.getByLabel(/Secondary category for/i).first().selectOption("Entr\u00e9e");
   await page.getByLabel(/SEA price for/i).first().selectOption({ index: 1 });
 
