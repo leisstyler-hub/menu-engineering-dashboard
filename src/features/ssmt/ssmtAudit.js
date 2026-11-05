@@ -128,7 +128,18 @@ export function validateExperienceChange(before, after) {
     ]),
     menus: (workspace.menus || []).map((menu) => ({
       ...without(menu, allowedMenu),
-      items: (menu.items || []).map((item) => without(item, ["description"])),
+      items: (menu.items || []).map((item) => {
+        const cleaned = without(item, ["description"]);
+        const previous = before.menus?.find(entry => entry.id === menu.id)?.items?.find(entry => entry.id === item.id);
+        // A legacy import can capture its own unchanged prior description once.
+        // This never permits changing provenance or an existing snapshot.
+        if (previous?.importSource?.menuId && previous.importSource.itemId &&
+            previous.importSource.description === undefined &&
+            item.importSource?.description === (previous.description || "")) {
+          cleaned.importSource = without(item.importSource, ["description"]);
+        }
+        return cleaned;
+      }),
     })),
   });
   if (stable(clean(before)) !== stable(clean(after)))
@@ -141,6 +152,14 @@ export function validateExperienceChange(before, after) {
   ];
   for (const menu of after.menus || []) {
     const previous = before.menus.find((m) => m.id === menu.id);
+    for (const item of menu.items || []) {
+      const oldItem = previous.items?.find(entry => entry.id === item.id);
+      if (oldItem?.importSource?.menuId && oldItem.importSource.itemId &&
+          oldItem.importSource.description === undefined && item.description !== oldItem.description &&
+          item.importSource?.description !== (oldItem.description || "")) {
+        return "Reload SSMT before editing this imported description so its original description is preserved.";
+      }
+    }
     const flagsChanged = stable(menu.flags) !== stable(previous.flags);
     if (flagsChanged) {
       if (!Array.isArray(menu.flags)) return "Experience flags must be a list.";

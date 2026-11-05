@@ -34,6 +34,7 @@ import { loadSsmtWorkspaceFromSharedStorage, saveSsmtWorkspaceToSharedStorage } 
 
 import SsmtAccessGate from "./SsmtAccessGate.jsx";
 import SsmtReusePanel from "./SsmtReusePanel.jsx";
+import { exactMrnMatches } from "./ssmtReuse.js";
 import SsmtExperienceReview from "./SsmtExperienceReview.jsx";
 
 export default function SsmtTool(props) {
@@ -619,7 +620,7 @@ function mergeMenuTypes(menuTypes = []) {
 }
 
 function menuIsAutoHibernated(menu, today = new Date()) {
-  if (menu.type !== "Promotion" || !menu.activeEnd) return false;
+  if (menu.type !== "Promotion" || !menu.activeEnd || menu.restoredActiveEnd === menu.activeEnd) return false;
   const end = new Date(`${menu.activeEnd}T23:59:59`);
   return Number.isFinite(end.getTime()) && end < today;
 }
@@ -736,7 +737,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
     if (typeof window === "undefined") return false;
     return window.sessionStorage.getItem(UNLOCKED_KEY) === "true";
   });
-  const [activeView, setActiveView] = useState("home");
+  const [activeView, setActiveView] = useState(accountMember?.role === "Experience" ? "menus" : "home");
   const [experiencePreview, setExperiencePreview] = useState(false);
   const canPreviewExperience = accountMember?.isAdmin === true && accountMember?.role === "Chef" && accountMember?.email?.toLowerCase() === "tyler.leiss@compass-usa.com";
   const showItDietaryNames = accountMember?.role === "IT";
@@ -1080,7 +1081,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
       if (menu.id !== selectedMenu.id) return menu;
       return {
         ...menu,
-        items: menu.items.map((item) => (item.id === itemId ? { ...item, ...patch } : item)),
+        items: menu.items.map((item) => (item.id === itemId ? { ...item, ...(Object.hasOwn(patch, "description") && item.importSource && item.importSource.description === undefined ? {importSource:{...item.importSource, description:item.description || ""}} : {}), ...patch } : item)),
       };
     }));
   };
@@ -1846,7 +1847,118 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
       )}
   </>;
 
-  if (accountMember?.role === "Experience" || (canPreviewExperience && experiencePreview)) {
+  const menuSelector = (
+<section data-testid="ssmt-menu-selector" className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Existing records</p>
+                  <h2 className="mt-1 text-2xl font-black">Menu Selector</h2>
+                </div>
+                <div className="flex w-full flex-col gap-2 md:max-w-xl md:flex-row md:items-center">
+                  <label className="relative block flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search menus..." className="w-full rounded-lg border border-slate-300 bg-white py-3 pl-10 pr-3 text-sm font-bold outline-none focus:border-emerald-500" />
+                  </label>
+                  <label className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-xs font-black text-slate-700">
+                    <input type="checkbox" checked={showHiddenMenus} onChange={(event) => setShowHiddenMenus(event.target.checked)} aria-label="Show hibernated menus" />
+                    Show hibernated
+                  </label>
+                </div>
+              </div>
+              {plannedPricingNotice && (
+                <div data-testid="ssmt-menu-pricing-warning" className="mt-4 rounded-lg border-2 border-amber-400 bg-amber-50 px-4 py-3 text-base font-black text-amber-950">{plannedPricingNotice}</div>
+              )}
+              {flaggedMenus.length > 0 && (
+                <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-bold leading-5 text-amber-950">
+                  IT Department: {flaggedMenus.length} menu{flaggedMenus.length === 1 ? " has" : "s have"} been flagged for edit.
+                </div>
+              )}
+              <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                {handoffQueues.map((queue) => {
+                  const QueueIcon = queue.icon;
+                  return (
+                    <section key={queue.phase} data-testid={`ssmt-handoff-${queue.phase}`} className={`rounded-xl border p-4 ${queue.panelClass}`}>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3">
+                          <span className={`rounded-lg p-2 ${queue.badgeClass}`}><QueueIcon size={20} /></span>
+                          <div>
+                            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">{queue.eyebrow}</p>
+                            <h3 className="mt-0.5 text-xl font-black text-slate-950">{queue.title}</h3>
+                            <p className="mt-1 text-sm font-bold text-slate-700">{queue.menus.length} {queue.menus.length === 1 ? "menu" : "menus"} ready for {queue.phase === "Experience review" ? "Experience Department review" : "IT programming"}</p>
+                          </div>
+                        </div>
+                        <span className={`min-w-9 rounded-full px-3 py-1 text-center text-sm font-black ${queue.badgeClass}`}>{queue.menus.length}</span>
+                      </div>
+                      {queue.menus.length ? (
+                        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                          {queue.menus.map((menu) => (
+                            <button key={menu.id} type="button" onClick={() => openMenu(menu.id)} className={`rounded-lg border bg-white px-3 py-2 text-left shadow-sm transition ${queue.buttonClass}`}>
+                              <span className="block text-sm font-black text-slate-950">{menu.name}</span>
+                              <span className="mt-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500">{menu.type} · Open menu</span>
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="mt-3 rounded-lg border border-dashed border-slate-300 bg-white/70 px-3 py-3 text-sm font-bold text-slate-600">{queue.emptyMessage}</p>
+                      )}
+                    </section>
+                  );
+                })}
+              </div>
+              <div data-testid="ssmt-menu-selector-grid" className="mt-4 grid gap-2 lg:grid-cols-4 xl:grid-cols-5">
+                {menuGroups.map((group) => (
+                  <section
+                    key={group.type}
+                    data-testid={`ssmt-menu-group-${group.type}`}
+                    data-menu-type={group.type}
+                    className={`flex max-h-[76vh] min-h-0 flex-col rounded-lg border p-3 ${group.groupClass}`}
+                  >
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <h3 className="text-sm font-black text-slate-950">{group.label}</h3>
+                      <span className={`rounded px-2 py-1 text-[11px] font-black ${group.badgeClass}`}>{group.menus.length}</span>
+                    </div>
+                    <div className="grid min-h-0 gap-1 overflow-y-auto pr-1">
+                      {group.menus.map((menu) => {
+                        const needsEdits = Boolean(menu.editSignal || (Array.isArray(menu.flags) && menu.flags.length));
+                        const isComplete = menu.phase === "IT complete";
+                        const workSignal = needsEdits ? "Needs edits" : isComplete ? "Complete" : "Needs completion";
+                        return (
+                        <div
+                          key={menu.id}
+                          className={`rounded-lg border bg-white p-2 text-left shadow-sm ${group.itemClass}`}
+                        >
+                          <button type="button" data-menu-name={menu.name} onClick={() => openMenu(menu.id)} className="block w-full text-left">
+                            <span className="block whitespace-normal break-words text-sm font-black leading-4 text-slate-950">{menu.name}</span>
+                            <span className="mt-1 flex flex-wrap items-center gap-1 text-[11px] font-bold text-slate-600">
+                              <span>{menu.type}</span>
+                              <span>{menu.phase}</span>
+                              {Array.isArray(menu.flags) && menu.flags.length > 0 && <span>{menu.flags.length} flags</span>}
+                              {(menu.hidden || menuIsAutoHibernated(menu)) && <span>Hibernated</span>}
+                              <span className={`rounded px-1.5 py-0.5 font-black ${needsEdits ? "bg-amber-200 text-amber-950" : isComplete ? "bg-emerald-100 text-emerald-900" : "bg-rose-100 text-rose-900"}`}>{workSignal}</span>
+                            </span>
+                          </button>
+                          {accountMember?.role !== "Experience" && <button
+                            type="button"
+                            onClick={() => setMenus((current) => current.map((candidate) => (candidate.id === menu.id ? { ...candidate, hidden: !(candidate.hidden || menuIsAutoHibernated(candidate)), ...(candidate.hidden || menuIsAutoHibernated(candidate) ? {restoredActiveEnd:candidate.activeEnd || ""} : {}) } : candidate)))}
+                            className="mt-2 inline-flex rounded border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-black text-slate-700 hover:bg-slate-100"
+                          >
+                            {menu.hidden || menuIsAutoHibernated(menu) ? "Restore" : "Hibernate"}
+                          </button>}
+                        </div>
+                        );
+                      })}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            </section>
+  );
+
+  if (accountMember?.role === "Experience" && activeView === "menus") {
+    return <div className="mx-auto max-w-[1800px] space-y-4 p-4 text-slate-950"><button type="button" onClick={onBackToPlatform}>Back to Platform</button><h1 className="text-2xl font-black">SSMT - Experience</h1><nav aria-label="SSMT sections" className="flex flex-wrap gap-3"><button type="button" onClick={()=>setActiveView("home")}>Back to SSMT</button><button type="button" onClick={()=>setActiveView("pricing")}>Pricing Structure</button><button type="button" onClick={()=>setActiveView("menus")}>Menu Selector</button></nav>{dataStatus === "ready" ? menuSelector : <p role="status">{dataStatus === "error" ? "Shared workspace could not be loaded." : "Loading shared SSMT workspace..."}</p>}</div>;
+  }
+
+  if ((accountMember?.role === "Experience" && activeView === "editor") || (canPreviewExperience && experiencePreview)) {
     return <SsmtExperienceReview menus={menus} menu={selectedMenu}
       flagModals={flagModals} flagReportHref={selectedFlagReportHref}
       existingFlagForItem={existingFlagForItem} onFlagItem={openFlagForItem}
@@ -1855,9 +1967,9 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
       onSave={() => manualSaveWorkspace()} onAdvance={updateSelectedMenuPhase}
       allItemsLocked={allItemRowsLocked} syncMessage={workspaceSync.message}
       phaseBlocker={phaseBlocker} dataStatus={dataStatus}
-      backLabel={experiencePreview ? "Return to building" : "Back to Platform"}
+      backLabel={experiencePreview ? "Return to building" : "Back to Menu Selector"}
       preview={experiencePreview}
-      onBack={experiencePreview ? () => setExperiencePreview(false) : onBackToPlatform} />;
+      onBack={experiencePreview ? () => setExperiencePreview(false) : () => setActiveView("menus")} />;
   }
 
   if (!unlocked) {
@@ -2024,6 +2136,8 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
         )}
 
         {activeView === "pricing" && (
+          <fieldset disabled={accountMember?.role === "Experience"} className="min-w-0">
+          {accountMember?.role === "Experience" && <p className="mb-3 font-bold">Pricing Structure - view only</p>}
           <main className="space-y-5">
             {plannedPricingNotice && <section data-testid="ssmt-pricing-warning" className="rounded-lg border-2 border-amber-400 bg-amber-50 p-4 text-base font-black text-amber-950">{plannedPricingNotice}</section>}
             <section data-testid="ssmt-price-increase-panel" className="rounded-xl border-2 border-emerald-300 bg-gradient-to-br from-emerald-50 via-white to-sky-50 p-6 shadow-md">
@@ -2124,114 +2238,12 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
               </div>
             </section>
           </main>
+          </fieldset>
         )}
 
         {activeView === "menus" && (
           <main className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
-            <section data-testid="ssmt-menu-selector" className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Existing records</p>
-                  <h2 className="mt-1 text-2xl font-black">Menu Selector</h2>
-                </div>
-                <div className="flex w-full flex-col gap-2 md:max-w-xl md:flex-row md:items-center">
-                  <label className="relative block flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                    <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search menus..." className="w-full rounded-lg border border-slate-300 bg-white py-3 pl-10 pr-3 text-sm font-bold outline-none focus:border-emerald-500" />
-                  </label>
-                  <label className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-xs font-black text-slate-700">
-                    <input type="checkbox" checked={showHiddenMenus} onChange={(event) => setShowHiddenMenus(event.target.checked)} aria-label="Show hibernated menus" />
-                    Show hibernated
-                  </label>
-                </div>
-              </div>
-              {plannedPricingNotice && (
-                <div data-testid="ssmt-menu-pricing-warning" className="mt-4 rounded-lg border-2 border-amber-400 bg-amber-50 px-4 py-3 text-base font-black text-amber-950">{plannedPricingNotice}</div>
-              )}
-              {flaggedMenus.length > 0 && (
-                <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-bold leading-5 text-amber-950">
-                  IT Department: {flaggedMenus.length} menu{flaggedMenus.length === 1 ? " has" : "s have"} been flagged for edit.
-                </div>
-              )}
-              <div className="mt-4 grid gap-3 lg:grid-cols-2">
-                {handoffQueues.map((queue) => {
-                  const QueueIcon = queue.icon;
-                  return (
-                    <section key={queue.phase} data-testid={`ssmt-handoff-${queue.phase}`} className={`rounded-xl border p-4 ${queue.panelClass}`}>
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-start gap-3">
-                          <span className={`rounded-lg p-2 ${queue.badgeClass}`}><QueueIcon size={20} /></span>
-                          <div>
-                            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">{queue.eyebrow}</p>
-                            <h3 className="mt-0.5 text-xl font-black text-slate-950">{queue.title}</h3>
-                            <p className="mt-1 text-sm font-bold text-slate-700">{queue.menus.length} {queue.menus.length === 1 ? "menu" : "menus"} ready for {queue.phase === "Experience review" ? "Experience Department review" : "IT programming"}</p>
-                          </div>
-                        </div>
-                        <span className={`min-w-9 rounded-full px-3 py-1 text-center text-sm font-black ${queue.badgeClass}`}>{queue.menus.length}</span>
-                      </div>
-                      {queue.menus.length ? (
-                        <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                          {queue.menus.map((menu) => (
-                            <button key={menu.id} type="button" onClick={() => openMenu(menu.id)} className={`rounded-lg border bg-white px-3 py-2 text-left shadow-sm transition ${queue.buttonClass}`}>
-                              <span className="block text-sm font-black text-slate-950">{menu.name}</span>
-                              <span className="mt-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500">{menu.type} · Open menu</span>
-                            </button>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="mt-3 rounded-lg border border-dashed border-slate-300 bg-white/70 px-3 py-3 text-sm font-bold text-slate-600">{queue.emptyMessage}</p>
-                      )}
-                    </section>
-                  );
-                })}
-              </div>
-              <div data-testid="ssmt-menu-selector-grid" className="mt-4 grid gap-2 lg:grid-cols-4 xl:grid-cols-5">
-                {menuGroups.map((group) => (
-                  <section
-                    key={group.type}
-                    data-testid={`ssmt-menu-group-${group.type}`}
-                    data-menu-type={group.type}
-                    className={`flex max-h-[76vh] min-h-0 flex-col rounded-lg border p-3 ${group.groupClass}`}
-                  >
-                    <div className="mb-2 flex items-center justify-between gap-2">
-                      <h3 className="text-sm font-black text-slate-950">{group.label}</h3>
-                      <span className={`rounded px-2 py-1 text-[11px] font-black ${group.badgeClass}`}>{group.menus.length}</span>
-                    </div>
-                    <div className="grid min-h-0 gap-1 overflow-y-auto pr-1">
-                      {group.menus.map((menu) => {
-                        const needsEdits = Boolean(menu.editSignal || (Array.isArray(menu.flags) && menu.flags.length));
-                        const isComplete = menu.phase === "IT complete";
-                        const workSignal = needsEdits ? "Needs edits" : isComplete ? "Complete" : "Needs completion";
-                        return (
-                        <div
-                          key={menu.id}
-                          className={`rounded-lg border bg-white p-2 text-left shadow-sm ${group.itemClass}`}
-                        >
-                          <button type="button" data-menu-name={menu.name} onClick={() => openMenu(menu.id)} className="block w-full text-left">
-                            <span className="block whitespace-normal break-words text-sm font-black leading-4 text-slate-950">{menu.name}</span>
-                            <span className="mt-1 flex flex-wrap items-center gap-1 text-[11px] font-bold text-slate-600">
-                              <span>{menu.type}</span>
-                              <span>{menu.phase}</span>
-                              {Array.isArray(menu.flags) && menu.flags.length > 0 && <span>{menu.flags.length} flags</span>}
-                              {(menu.hidden || menuIsAutoHibernated(menu)) && <span>Hibernated</span>}
-                              <span className={`rounded px-1.5 py-0.5 font-black ${needsEdits ? "bg-amber-200 text-amber-950" : isComplete ? "bg-emerald-100 text-emerald-900" : "bg-rose-100 text-rose-900"}`}>{workSignal}</span>
-                            </span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setMenus((current) => current.map((candidate) => (candidate.id === menu.id ? { ...candidate, hidden: !candidate.hidden } : candidate)))}
-                            className="mt-2 inline-flex rounded border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-black text-slate-700 hover:bg-slate-100"
-                          >
-                            {menu.hidden ? "Restore" : "Hibernate"}
-                          </button>
-                        </div>
-                        );
-                      })}
-                    </div>
-                  </section>
-                ))}
-              </div>
-            </section>
+            {menuSelector}
 
             <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
               <p className="text-xs font-black uppercase tracking-[0.2em] text-sky-600">Create record</p>
@@ -2623,6 +2635,10 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                               readOnly={Boolean(item.lockedForCentric)}
                               className={`w-full rounded-md border border-slate-300 px-2 py-1 font-mono text-xs font-bold outline-none focus:border-emerald-500 ${item.lockedForCentric ? "cursor-copy bg-emerald-50 text-slate-950" : "bg-white"}`}
                             />
+                            {!item.lockedForCentric && !item.importSource && exactMrnMatches(item.mrn, menus, selectedMenu.id).length > 0 && <div className="mt-1 space-y-1 text-xs text-sky-900">
+                              <p className="font-bold">Existing item found</p>
+                              {exactMrnMatches(item.mrn, menus, selectedMenu.id).map(match => <button key={`${match.menuId}-${match.item.id}`} type="button" className="block text-left underline" onClick={() => setReusePanel({mode:"items", item, replaceItemId:item.id, initialSourceId:match.menuId, initialItemId:match.item.id})}>Import {match.item.label || match.item.name} from {match.menuName}</button>)}
+                            </div>}
                           </td>
                           <td className={`${builderCellClass} font-bold text-slate-700`}>
                             {selectedMenu.type === "Promotion" ? (
@@ -2825,11 +2841,11 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
         </Modal>
       )}
 
-      {reusePanel && <SsmtReusePanel key={reusePanel.item?.id || reusePanel.mode} {...reusePanel} onChooseItem={item=>setReusePanel({mode:"fixy",item})} menus={menus} menu={selectedMenu} groups={ssmtData.modifierGroups} onClose={()=>setReusePanel(null)} onApply={result=>{
+      {reusePanel && <SsmtReusePanel key={`${reusePanel.item?.id || reusePanel.mode}-${reusePanel.initialSourceId || ""}-${reusePanel.initialItemId || ""}`} {...reusePanel} onChooseItem={item=>setReusePanel({mode:"fixy",item})} menus={menus} menu={reusePanel.replaceItemId ? {...selectedMenu, items:selectedMenu.items.filter(item=>item.id !== reusePanel.replaceItemId)} : selectedMenu} groups={ssmtData.modifierGroups} onClose={()=>setReusePanel(null)} onApply={result=>{
         if (result.fixy) updateItem(reusePanel.item.id, {fohColumn:result.fixy});
         else {
           setSsmtData(current=>({...current,modifierGroups:[...current.modifierGroups,...result.groups]}));
-          if(result.items) updateSelectedMenu({items:[...selectedMenu.items,...result.items]});
+          if(result.items) updateSelectedMenu({items:reusePanel.replaceItemId ? selectedMenu.items.flatMap(item=>item.id === reusePanel.replaceItemId ? result.items.map((copy,index)=>index === 0 ? {...copy,id:item.id,additionalSubmenuIds:item.additionalSubmenuIds || []} : copy) : [item]) : [...selectedMenu.items,...result.items]});
           else {
             updateItem(reusePanel.item.id,{modifierGroups:[...(reusePanel.item.modifierGroups||[]),...result.groups.map(g=>g.id)]});
             setModifierDialog(current=>current?{...current,item:{...current.item,modifierGroups:[...(current.item.modifierGroups||[]),...result.groups.map(g=>g.id)]},groups:[...current.groups,...result.groups]}:current);

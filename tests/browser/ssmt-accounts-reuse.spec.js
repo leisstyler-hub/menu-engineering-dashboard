@@ -65,9 +65,14 @@ async function isolated(
     lockedSource = false,
     alphabeticalFixtures = false,
     reviewSource = false,
+    expiredPromotion = false,
+    experienceLanding = false,
+    mrnDraft = false,
   } = {},
 ) {
   let shared = workspace();
+  if (mrnDraft) { shared.menus[1].items = [{...structuredClone(item),id:"draft-match",label:"Draft dish",fohColumn:"",description:"Draft description",modifierGroups:[],additionalSubmenuIds:[]}]; shared.menus[1].flags = [{id:"draft-flag",itemId:"draft-match",itemName:"Draft dish",reason:"Description correction",note:"Keep this flag",createdAt:"2026-11-05T17:00:00Z"}]; }
+  if (expiredPromotion) Object.assign(shared.menus[0], {type:"Promotion", activeEnd:"2020-01-01", hidden:false});
   if (missingFixy) shared.menus[0].items.push({ ...structuredClone(item), id: "missing-fixy", label: "Missing Code Dish", name: "Missing Code Dish", fohColumn: "", mrn: "00999" });
   if (extraGroups) {
     shared.modifierGroups.push({
@@ -212,6 +217,7 @@ async function isolated(
   await page
     .getByRole("button", { name: "Sign in to SSMT", exact: true })
     .click();
+  if (role === "Experience" && !experienceLanding && !failLoad) await page.locator('[data-menu-name="Source Menu"]').click();
   return { saves, getWorkspace: () => shared, switchRole: (next) => { role = next; member.role = next; } };
 }
 async function openTarget(page) {
@@ -375,7 +381,7 @@ test("Experience only sees descriptions/handoff and a failed shared load cannot 
   const fixture = await isolated(page, { role: "Experience", failLoad: true });
   await expect(
     page.getByText(
-      "Shared workspace could not be loaded. No edits or saves are allowed.",
+      "Shared workspace could not be loaded.",
     ),
   ).toBeVisible();
   await expect(
@@ -937,4 +943,99 @@ test("save status stays beside the button at matching height and shows confirmed
   await page.getByLabel("Password", { exact: true }).fill("a private test password");
   await page.getByRole("button", { name: "Sign in to SSMT", exact: true }).click();
   await expect(status).toContainText(/Last saved/);
+});
+
+
+test("passive exact MRN guide imports explicitly and Experience labels reused items only", async ({ page }) => {
+  const fixture = await isolated(page, { tyler: true, mrnDraft: true });
+  await openTarget(page);
+  await page.getByLabel("Menu FIXY designation", { exact: true }).fill("MFP DAY");
+  const mrn = page.getByRole("textbox", {name:/MRN for/}).last();
+  await mrn.fill("00083821.10");
+  await expect(page.getByText("Existing item found", {exact:true})).toBeVisible();
+  expect(fixture.getWorkspace().menus[1].items[0].description).toBe("Draft description");
+  await page.getByRole("button", {name:"Import Smash Burger from Source Menu",exact:true}).click();
+  let panel = page.getByRole("dialog", {name:"Add from Menu",exact:true});
+  await panel.getByRole("button", {name:"Close",exact:true}).click();
+  await expect(mrn).toHaveValue("00083821.10");
+  await page.getByRole("button", {name:"Import Smash Burger from Source Menu",exact:true}).click();
+  panel = page.getByRole("dialog", {name:"Add from Menu",exact:true});
+  await panel.getByRole("button", {name:"Preview copies",exact:true}).click();
+  await expect(panel).toContainText("Replaces the selected item only after Apply copies");
+  await panel.getByRole("button", {name:"Apply copies",exact:true}).click();
+  await page.getByRole("button", {name:"Add item",exact:true}).click();
+  await page.getByRole("button", {name:"Save SSMT workspace",exact:true}).click();
+  await expect.poll(()=>fixture.saves.length).toBe(1);
+  const saved = fixture.getWorkspace();
+  expect(saved.menus[1].items).toHaveLength(2);
+  expect(saved.menus[1].items[0].importSource).toMatchObject({menuId:"source",itemId:"source-item"});
+  expect(saved.menus[0].items[0]).toMatchObject(item);
+  expect(saved.menus[1].items[0].id).toBe("draft-match");
+  expect(saved.menus[1].flags[0].itemId).toBe("draft-match");
+  await page.reload();
+  await page.getByRole("button", {name:/open ssmt/i}).click();
+  await page.getByLabel("Email", {exact:true}).fill("chef@example.test");
+  await page.getByLabel("Password", {exact:true}).fill("a private test password");
+  await page.getByRole("button", {name:"Sign in to SSMT",exact:true}).click();
+  await openTarget(page);
+  await page.getByRole("button", {name:"View as Experience",exact:true}).click();
+  await expect(page.getByText("No Review Needed", {exact:true})).toHaveCount(1);
+  await page.getByRole("button", {name:"Return to building",exact:true}).click();
+  fixture.switchRole("Experience");
+  await page.reload();
+  await page.getByRole("button", {name:/open ssmt/i}).click();
+  await page.getByLabel("Email", {exact:true}).fill("chef@example.test");
+  await page.getByLabel("Password", {exact:true}).fill("a private test password");
+  await page.getByRole("button", {name:"Sign in to SSMT",exact:true}).click();
+  await page.locator('[data-menu-name="Target Menu"]').click();
+  await expect(page.getByText("No Review Needed", {exact:true})).toHaveCount(1);
+  await page.getByLabel("Description for Smash Burger", {exact:true}).fill("Changed description needs review");
+  await expect(page.getByText("No Review Needed", {exact:true})).toHaveCount(0);
+  await page.getByRole("button",{name:"Save SSMT workspace",exact:true}).click();
+  await expect.poll(()=>fixture.saves.length).toBe(2);
+});
+
+
+test("auto hibernated promotion offers Restore and preserves its historical dates", async ({page}) => {
+  const fixture = await isolated(page, {expiredPromotion:true});
+  await page.getByRole("button", {name:"Menu Selector / New Menu",exact:true}).click();
+  await page.getByLabel("Show hibernated menus").check();
+  const card = page.locator('[data-menu-name="Source Menu"]').locator('..');
+  await expect(card.getByRole("button", {name:"Restore",exact:true})).toBeVisible();
+  await card.getByRole("button", {name:"Restore",exact:true}).click();
+  await page.getByLabel("Show hibernated menus").uncheck();
+  await expect(page.locator('[data-menu-name="Source Menu"]')).toBeVisible();
+  await page.getByRole("button", {name:"Save SSMT workspace",exact:true}).click();
+  await expect.poll(()=>fixture.saves.length).toBe(1);
+  expect(fixture.getWorkspace().menus[0].activeEnd).toBe("2020-01-01");
+  await page.reload();
+  await page.getByRole("button", {name:/open ssmt/i}).click();
+  await page.getByLabel("Email", {exact:true}).fill("chef@example.test");
+  await page.getByLabel("Password", {exact:true}).fill("a private test password");
+  await page.getByRole("button", {name:"Sign in to SSMT",exact:true}).click();
+  await page.getByRole("button", {name:"Menu Selector / New Menu",exact:true}).click();
+  await expect(page.locator('[data-menu-name="Source Menu"]')).toBeVisible();
+});
+
+
+test("Experience starts on the shared selector and opens only its review view", async ({page}) => {
+  await page.setViewportSize({width:390,height:844});
+  const fixture = await isolated(page, {role:"Experience",experienceLanding:true});
+  await expect(page.getByRole("heading",{name:"Menu Selector",exact:true})).toBeVisible();
+  await expect(page.getByRole("button",{name:"Create menu",exact:true})).toHaveCount(0);
+  await expect(page.getByRole("button",{name:"Hibernate",exact:true})).toHaveCount(0);
+  await page.locator('[data-menu-name="Source Menu"]').click();
+  await expect(page.getByRole("heading",{name:"SSMT - Experience review",exact:true})).toBeVisible();
+  await expect(page.getByRole("button",{name:"Add item",exact:true})).toHaveCount(0);
+  await page.getByRole("button",{name:"Back to Menu Selector",exact:true}).click();
+  await expect(page.getByRole("heading",{name:"Menu Selector",exact:true})).toBeVisible();
+  await page.getByRole("button",{name:"Pricing Structure",exact:true}).click();
+  await expect(page.getByText("Pricing Structure - view only",{exact:true})).toBeVisible();
+  for (const control of await page.locator("fieldset input, fieldset select, fieldset button").all()) await expect(control).toBeDisabled();
+  await page.getByRole("button",{name:"Back to SSMT",exact:true}).click();
+  await page.getByRole("button",{name:"Menu Selector / New Menu",exact:true}).click();
+  await expect(page.getByRole("button",{name:"Create menu",exact:true})).toHaveCount(0);
+  expect(fixture.saves).toHaveLength(0);
+  const environment = process.env.PLAYWRIGHT_BASE_URL?.includes("vercel.app") ? "PRODUCTION" : "LOCAL";
+  await page.screenshot({path:`../../WORK_LOGS/SSMT_EXPERIENCE_SELECTOR_${environment}_390.png`});
 });

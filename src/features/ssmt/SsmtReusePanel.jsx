@@ -30,12 +30,15 @@ export default function SsmtReusePanel({
   onApply,
   onClose,
   onChooseItem,
+  initialSourceId = "",
+  initialItemId = "",
+  replaceItemId,
 }) {
   const dialogRef = useSsmtDialog(onClose);
-  const [sourceId, setSourceId] = useState(""),
+  const [sourceId, setSourceId] = useState(initialSourceId),
     [sourceItemId, setSourceItemId] = useState(""),
     [search, setSearch] = useState(""),
-    [selected, setSelected] = useState([]),
+    [selected, setSelected] = useState(initialItemId ? [initialItemId] : []),
     [allowCopies, setAllowCopies] = useState(false),
     [error, setError] = useState(""),
     [preview, setPreview] = useState(null);
@@ -183,6 +186,7 @@ export default function SsmtReusePanel({
         </div>
         {mode !== "fixy" && (
           <>
+            {replaceItemId && <p className="rounded border border-amber-300 bg-amber-50 p-3 font-bold">Replaces the selected item only after Apply copies. Close to keep your entry.</p>}
             <label className="block">
               Source menu
               <select

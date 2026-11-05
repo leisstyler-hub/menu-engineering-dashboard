@@ -1,3 +1,4 @@
+import { noExperienceReviewNeeded } from "./ssmtReuse.js";
 import React, { useState } from "react";
 
 const displayValue = (value) => value === undefined || value === null || String(value).trim() === "" ? "Not available" : String(value);
@@ -49,6 +50,7 @@ export default function SsmtExperienceReview({ menus, menu, groupsForItem, onSel
         const groups = groupsForItem(item);
         return <section key={item.id} className="space-y-2 rounded-lg border bg-white p-3">
           <h2 className="font-bold">{item.label || item.name}</h2>
+          {noExperienceReviewNeeded(item, menus) && <span className="inline-flex rounded border border-emerald-300 bg-emerald-50 px-2 py-1 text-sm font-bold text-emerald-900">No Review Needed</span>}
           <button type="button" aria-label={existingFlagForItem(item) ? `Edit or clear flag for ${item.label || item.name || "item"}` : "Flag for change"} onClick={() => onFlagItem(item)} className="rounded border border-amber-400 bg-amber-50 px-3 py-2 font-bold text-amber-900">{existingFlagForItem(item) ? "Flagged" : "Flag"}</button>
           {existingFlagForItem(item) && <p className="text-sm text-amber-900">{existingFlagForItem(item).reason}: {existingFlagForItem(item).note}</p>}
           <p className="text-sm">MRN: {displayValue(item.mrn)}</p>

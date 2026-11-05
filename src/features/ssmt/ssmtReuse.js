@@ -168,11 +168,18 @@ export function importItems(
     const matched = groupsForItem(original, groups, source);
     const attached = loadGroups(matched, [], true);
     item.modifierGroups = attached.map((g) => g.id);
-    item.importSource = { menuId: source.id, itemId: original.id };
+    item.importSource = { menuId: source.id, itemId: original.id, description: original.description || "" };
     items.push(item);
     copies.push(...attached);
   }
   return { items, groups: copies };
+}
+export function exactMrnMatches(mrn, menus, destinationId) {
+  const exact = text(mrn);
+  if (!exact) return [];
+  return menus.filter(menu => menu.id !== destinationId && menu.phase === "IT complete")
+    .flatMap(menu => (menu.items || []).filter(item => isMenuItem(item) && text(item.mrn) === exact)
+      .map(item => ({ menuId: menu.id, menuName: menu.name, item })));
 }
 export function approvedMatches(item, menus) {
   return menus
@@ -226,4 +233,13 @@ export function generateFixy(item, menu, facts) {
     return `R FSL | CAFE EXPRESS | ${name} 12 FO SNK`;
   }
   return `${facts.business || "R"} ${facts.type} | ${concept} | ${name} ${facts.service}${facts.protein ? ` ${facts.protein}` : ""}`;
+}
+
+
+export function noExperienceReviewNeeded(item) {
+  const source = item.importSource;
+  if (!source?.menuId || !source?.itemId) return false;
+  // Legacy imports predate the snapshot. Their existing provenance qualifies;
+  // updateItem captures their current description before its first edit.
+  return source.description === undefined || String(item.description || "") === String(source.description);
 }

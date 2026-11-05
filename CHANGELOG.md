@@ -1,4 +1,11 @@
+## SSMT MRN guide and Experience navigation - 2026-11-05
+
+Candidate `2026.11.05.007-ssmt-mrn-experience`, Chief on chief/ssmt-aus-bna. Passive exact-MRN suggestions offer explicit existing import preview. Imported items show No Review Needed in Experience; new items have no label; only descriptions trigger re-review. Legacy imports retain provenance eligibility and capture their own description before first edit. Server permits only the exact previous-description snapshot insertion, rejects bypass, and protects identity/provenance. Replacement retains draft identity, flags and submenu placement. Experience starts at the existing Menu Selector, navigates home/pricing/selector and opens its review view; no Create record or hibernation controls, pricing view-only. Automatically hibernated promotions offer Restore with a per-end-date exemption while retaining historical dates. No schema/direct production workspace writes. Full package verification/build passed; local SSMT browser checks 67/67 and independent safety review passed. Production verification pending. Rollback 1a53561 / dpl_55PoQotddNDurMioba6jbd9uLqm8. Evidence: workspace WORK_LOGS/SSMT_MRN_EXPERIENCE_2026_11_05.md.
+
 ## 2026-11-05
+
+- [Nov 5, 10:10 AM] Experience opens menus from Menu Selector; imported items show No Review Needed until their description changes.
+- [Nov 5, 10:10 AM] Exact MRN matches offer an explicit import preview, and automatically hibernated promotions show Restore.
 
 - [Nov 5, 9:30 AM] SSMT shows a compact last-saved status beside the workspace save button.
 
