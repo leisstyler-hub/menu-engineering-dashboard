@@ -1,3 +1,7 @@
+## Experience flag access candidate - 2026-11-04
+
+Candidate 2026.11.04.006-ssmt-experience-flags reuses existing item flag dialogs and reporting for Experience. Narrow server permission change permits item flags and their edit signal/status only; stage behavior unchanged. Independent review approved with non-blocking compatibility note for malformed/orphaned flags. No production test writes. Rollback baseline 5d06163. Release evidence: workspace WORK_LOGS/SSMT_FLAGS_RELEASE_RESULT.md.
+
 ## SSMT Category and modifier MRN production verification - 2026-11-04
 
 App 333f6d2d5682e250d469918e9bfe965fd1bb83ef, version 2026.11.04.005-ssmt-category-mrn, is served by the canonical production URL; asset /assets/index-Dx7uoiUa.js verified. Direct production acceptance passes for category choices, saved selection and exact modifier item MRN. Full local repository verification/build passed, accounts/Experience 23/23 and SSMT 28/28. Solo delivery/self-review; no independent clearance claimed. Production test fixtures intercept storage; no operational records changed. Broader production run encountered a rollout-time timeout; no blanket production suite pass claimed. Rollback 550a6ef. Detailed evidence: workspace WORK_LOGS/SSMT_CATEGORY_MRN_2026_11_04/RELEASE_RESULT.md.

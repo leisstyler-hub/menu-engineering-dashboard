@@ -1781,8 +1781,54 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
     setFlagReason("Description correction");
   };
 
+  const flagModals = <>
+      {flagActionDialog && (
+        <Modal title="This item is already flagged" onClose={() => setFlagActionDialog(null)}>
+          <div className="space-y-4">
+            <p className="text-sm font-bold text-slate-700">
+              {flagActionDialog.item?.label || flagActionDialog.item?.name || "This item"} already has a saved flag ({flagActionDialog.flag?.reason || "no reason"}). Do you want to edit it or clear it?
+            </p>
+            <div className="flex flex-wrap justify-end gap-2">
+              <button type="button" onClick={() => setFlagActionDialog(null)} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-black text-slate-800 hover:bg-slate-100">
+                Cancel
+              </button>
+              <button type="button" onClick={clearExistingFlag} className="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-black text-red-800 hover:bg-red-100">
+                <Trash2 size={16} /> Clear flag
+              </button>
+              <button type="button" onClick={editExistingFlag} className="inline-flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-950 px-4 py-2 text-sm font-black text-white hover:bg-slate-800">
+                <Flag size={16} /> Edit flag
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {flagDialog && (
+        <Modal title={flagDialog.editingFlagId ? "Edit item flag" : "Flag for change"} onClose={() => setFlagDialog(null)}>
+          <div className="space-y-4">
+            <p className="text-sm font-bold text-slate-700">Save this item flag on the SSMT menu. Use Report flags after one or more flags are saved to open the Tyler/Alex email draft.</p>
+            <label className="block">
+              <span className="text-sm font-black text-slate-900">Reason</span>
+              <select value={flagReason} onChange={(event) => setFlagReason(event.target.value)} className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-sm font-bold">
+                {ssmtData.flagReasons.map((reason) => <option key={reason}>{reason}</option>)}
+              </select>
+            </label>
+            <label className="block">
+              <span className="text-sm font-black text-slate-900">Note</span>
+              <textarea value={flagNote} onChange={(event) => setFlagNote(event.target.value)} className="mt-2 h-28 w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-3 text-sm font-semibold" />
+            </label>
+            <button type="button" onClick={saveFlag} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 py-3 text-sm font-black text-white hover:bg-slate-800">
+              <Flag size={18} /> {flagDialog.editingFlagId ? "Update flag" : "Save flag and report"}
+            </button>
+          </div>
+        </Modal>
+      )}
+  </>;
+
   if (accountMember?.role === "Experience") {
     return <SsmtExperienceReview menus={menus} menu={selectedMenu}
+      flagModals={flagModals} flagReportHref={selectedFlagReportHref}
+      existingFlagForItem={existingFlagForItem} onFlagItem={openFlagForItem}
       groupsForItem={item => matchedModifierGroupsForItem(item, pricedModifierGroups)}
       onSelectMenu={setSelectedMenuId} onDescriptionChange={(id, description) => updateItem(id, { description })}
       onSave={() => manualSaveWorkspace()} onAdvance={updateSelectedMenuPhase}
@@ -2973,47 +3019,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
         </Modal>
       )}
 
-      {flagActionDialog && (
-        <Modal title="This item is already flagged" onClose={() => setFlagActionDialog(null)}>
-          <div className="space-y-4">
-            <p className="text-sm font-bold text-slate-700">
-              {flagActionDialog.item?.label || flagActionDialog.item?.name || "This item"} already has a saved flag ({flagActionDialog.flag?.reason || "no reason"}). Do you want to edit it or clear it?
-            </p>
-            <div className="flex flex-wrap justify-end gap-2">
-              <button type="button" onClick={() => setFlagActionDialog(null)} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-black text-slate-800 hover:bg-slate-100">
-                Cancel
-              </button>
-              <button type="button" onClick={clearExistingFlag} className="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-black text-red-800 hover:bg-red-100">
-                <Trash2 size={16} /> Clear flag
-              </button>
-              <button type="button" onClick={editExistingFlag} className="inline-flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-950 px-4 py-2 text-sm font-black text-white hover:bg-slate-800">
-                <Flag size={16} /> Edit flag
-              </button>
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {flagDialog && (
-        <Modal title={flagDialog.editingFlagId ? "Edit item flag" : "Flag for change"} onClose={() => setFlagDialog(null)}>
-          <div className="space-y-4">
-            <p className="text-sm font-bold text-slate-700">Save this item flag on the SSMT menu. Use Report flags after one or more flags are saved to open the Tyler/Alex email draft.</p>
-            <label className="block">
-              <span className="text-sm font-black text-slate-900">Reason</span>
-              <select value={flagReason} onChange={(event) => setFlagReason(event.target.value)} className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-sm font-bold">
-                {ssmtData.flagReasons.map((reason) => <option key={reason}>{reason}</option>)}
-              </select>
-            </label>
-            <label className="block">
-              <span className="text-sm font-black text-slate-900">Note</span>
-              <textarea value={flagNote} onChange={(event) => setFlagNote(event.target.value)} className="mt-2 h-28 w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-3 text-sm font-semibold" />
-            </label>
-            <button type="button" onClick={saveFlag} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 py-3 text-sm font-black text-white hover:bg-slate-800">
-              <Flag size={18} /> {flagDialog.editingFlagId ? "Update flag" : "Save flag and report"}
-            </button>
-          </div>
-        </Modal>
-      )}
+      {flagModals}
 
       {deleteRequest && (
         <DeleteConfirmationModal

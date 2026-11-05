@@ -231,3 +231,21 @@ test("SSMT recordType section rows are excluded from import and approved matches
 test("real missing modifier references still block atomically and identify the reference", () => {
   assert.throws(() => importItems({ ...source, items: [{ ...item, modifierGroups: ["Missing sauce"] }] }, target, ["i"], []), /Missing sauce/);
 });
+
+test("Experience can use existing item flags without broader menu permissions", () => {
+  const before = { menus: [{ ...source, flags: [], phase: "Experience review" }], modifierGroups: [] };
+  const after = structuredClone(before);
+  after.menus[0].flags = [{ id: "flag-test", itemId: source.items[0].id, itemName: source.items[0].label || source.items[0].name || "Selected row", reason: "Description correction", note: "Please review", createdAt: new Date().toISOString() }];
+  after.menus[0].editSignal = true;
+  after.menus[0].status = "Edit / resubmission needed";
+  assert.equal(validateExperienceChange(before, after), "");
+  const bad = structuredClone(after);
+  bad.menus[0].items[0].mrn = "changed";
+  assert.match(validateExperienceChange(before, bad), /Experience/);
+  const malformed = structuredClone(after);
+  malformed.menus[0].flags[0].itemId = "missing-item";
+  assert.match(validateExperienceChange(before, malformed), /flag/i);
+  const arbitraryStatus = structuredClone(before);
+  arbitraryStatus.menus[0].status = "anything";
+  assert.match(validateExperienceChange(before, arbitraryStatus), /Experience/);
+});

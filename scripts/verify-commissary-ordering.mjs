@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { mock } from "node:test";
 import { readFile } from "node:fs/promises";
 import JSZip from "jszip";
 import * as XLSX from "xlsx";
@@ -248,7 +249,13 @@ atlasEarlyGrill.core.items["147955.17"] = { mrn: "147955.17", item: "Smashburger
 atlasEarlyGrill.core.quantities["147955.17"] = { friday: 2, monday: 4, wednesday: 6 };
 const atlasEarlyRecord = buildOrderRecord({ cafe: "Atlas", weekStart: "2026-11-09", grill: atlasEarlyGrill, now: new Date("2026-11-03T12:00:00Z") });
 assert.equal(atlasEarlyRecord.grill.cycleWeek, null);
-assert.equal(commissaryWriteValidation([atlasEarlyRecord], { tool: "commissaryOrders" }), "");
+// This historical availability fixture must validate before its order cutoff.
+mock.timers.enable({ apis: ["Date"], now: new Date("2026-11-03T12:00:00Z") });
+try {
+  assert.equal(commissaryWriteValidation([atlasEarlyRecord], { tool: "commissaryOrders" }), "");
+} finally {
+  mock.timers.reset();
+}
 assert.equal(grillOrderLinesForCafe(atlasEarlyRecord).length, 1);
 const grillMondayRows = XLSX.utils.sheet_to_json(grillBom.Sheets["Monday Delivery Map"], { header: 1, defval: "" });
 assert.ok(grillMondayRows.some((row) => row[0] === "Nessie" && row[5].includes("ATX Burger")));

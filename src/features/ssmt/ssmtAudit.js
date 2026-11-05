@@ -113,7 +113,7 @@ export function auditChanges(before, after) {
   return events;
 }
 export function validateExperienceChange(before, after) {
-  const allowedMenu = ["phase", "status", "phaseTimestamps"];
+  const allowedMenu = ["phase", "status", "phaseTimestamps", "flags", "editSignal"];
   const clean = (workspace) => ({
     priceBook: [],
     deletedMenuKeys: [],
@@ -141,9 +141,24 @@ export function validateExperienceChange(before, after) {
   ];
   for (const menu of after.menus || []) {
     const previous = before.menus.find((m) => m.id === menu.id);
+    const flagsChanged = stable(menu.flags) !== stable(previous.flags);
+    if (flagsChanged) {
+      if (!Array.isArray(menu.flags)) return "Experience flags must be a list.";
+      for (const flag of menu.flags) {
+        if (!flag || typeof flag.id !== "string" || !flag.id ||
+          !menu.items.some(item => item.id === flag.itemId) ||
+          !["itemName", "reason", "note", "createdAt"].every(key => typeof flag[key] === "string") ||
+          Object.keys(flag).some(key => !["id", "itemId", "itemName", "reason", "note", "createdAt"].includes(key)))
+          return "Experience flag is invalid.";
+      }
+    }
+    if (stable(menu.editSignal) !== stable(previous.editSignal) &&
+      !(flagsChanged && menu.editSignal === (menu.flags.length > 0)))
+      return "Experience can change edit signals only with item flags.";
+    const flagStatus = flagsChanged && menu.flags.length > 0 && menu.status === "Edit / resubmission needed";
     if (
       menu.phase === previous.phase &&
-      (stable(menu.status) !== stable(previous.status) ||
+      ((stable(menu.status) !== stable(previous.status) && !flagStatus) ||
         stable(menu.phaseTimestamps) !== stable(previous.phaseTimestamps))
     )
       return "Experience can change workflow metadata only when advancing a menu.";

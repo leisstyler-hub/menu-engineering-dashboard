@@ -811,3 +811,42 @@ test("Category options save and modifier header shows exact item MRN", async ({ 
   await page.getByRole("button", { name: "Save modifiers", exact: true }).click();
   await expect.poll(() => fixture.getWorkspace().menus[1].items[0]?.category).toBe("Retail");
 });
+
+test("Experience flags save and appear in the builder menu", async ({ page }) => {
+  const fixture = await isolated(page, { role: "Experience" });
+  await page.getByLabel("Experience menu").selectOption("source");
+  await page.getByRole("button", { name: "Flag for change", exact: true }).first().click();
+  await page.getByRole("textbox", { name: "Note", exact: true }).fill("Builder please check this description");
+  await page.getByRole("button", { name: "Save flag and report", exact: true }).click();
+  await expect(page.getByRole("button", { name: /Edit or clear flag for Smash Burger/ })).toBeVisible();
+  await page.getByRole("button", { name: "Save SSMT workspace", exact: true }).click();
+  await expect.poll(() => fixture.saves.length).toBe(1);
+  expect(fixture.getWorkspace().menus[0].flags[0].note).toBe("Builder please check this description");
+  await page.getByRole("button", { name: /Edit or clear flag for Smash Burger/ }).click();
+  await page.getByRole("button", { name: "Edit flag", exact: true }).click();
+  await page.getByRole("textbox", { name: "Note", exact: true }).fill("Updated correction");
+  await page.getByRole("button", { name: "Update flag", exact: true }).click();
+  await page.getByRole("button", { name: "Save SSMT workspace", exact: true }).click();
+  await expect.poll(() => fixture.getWorkspace().menus[0].flags[0].note).toBe("Updated correction");
+  await page.getByRole("button", { name: /Edit or clear flag for Smash Burger/ }).click();
+  await page.getByRole("button", { name: "Clear flag", exact: true }).click();
+  await page.getByRole("button", { name: "Save SSMT workspace", exact: true }).click();
+  await expect.poll(() => fixture.getWorkspace().menus[0].flags.length).toBe(0);
+  await page.getByRole("button", { name: "Flag for change", exact: true }).first().click();
+  await page.getByRole("textbox", { name: "Note", exact: true }).fill("Builder please check this description");
+  await page.getByRole("button", { name: "Save flag and report", exact: true }).click();
+  await page.getByRole("button", { name: "Save SSMT workspace", exact: true }).click();
+  await expect.poll(() => fixture.getWorkspace().menus[0].flags.length).toBe(1);
+
+  fixture.switchRole("Chef");
+  await page.reload();
+  await page.getByRole("button", { name: /open ssmt/i }).click();
+  await page.getByLabel("Email", { exact: true }).fill("chef@example.test");
+  await page.getByLabel("Password", { exact: true }).fill("a private test password");
+  await page.getByRole("button", { name: "Sign in to SSMT", exact: true }).click();
+  await page.getByRole("button", { name: /Menu Selector \/ New Menu/ }).click();
+  await page.getByRole("button", { name: /Source Menu/ }).first().click();
+  await page.getByRole("button", { name: /Edit or clear flag for Smash Burger/ }).click();
+  await page.getByRole("button", { name: "Edit flag", exact: true }).click();
+  await expect(page.getByRole("textbox", { name: "Note", exact: true })).toHaveValue("Builder please check this description");
+});
