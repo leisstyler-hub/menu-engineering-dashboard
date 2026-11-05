@@ -17,12 +17,13 @@ import { GRILL_LTO_PROGRAM } from "../features/commissary-ordering/grillLtoCatal
 import { DELI_CORE_SELECTED_CATALOG } from "../features/commissary-ordering/deliCoreCatalog.js";
 import { DELI_ORDERING_PROGRAM } from "../features/commissary-ordering/deliCycleCatalog.js";
 import { GLOBAL_ORDERING_PROGRAM } from "../features/commissary-ordering/globalCycleCatalog.js";
+import { GLOBAL_COMMISSARY_PRODUCTION } from "../features/commissary-ordering/globalProductionCatalog.js";
 import { BREAKFAST_ORDERING_PROGRAM } from "../features/commissary-ordering/breakfastCatalog.js";
 import { COMMISSARY_CAFE_STATION_ACCESS, COMMISSARY_HUB_ROUTING, COMMISSARY_HUBS, COMMISSARY_PACKOUT_HUB_ROUTING } from "../features/commissary-ordering/commissaryRouting.js";
 import { GLOBAL_UNIT_PREPARATION_NOTES } from "../features/commissary-ordering/commissaryModel.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 16;
+export const OPERATIONAL_METADATA_VERSION = 17;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -88,6 +89,7 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
     deliCatalog: DELI_CORE_SELECTED_CATALOG,
     deliProgram: DELI_ORDERING_PROGRAM,
     globalProgram: GLOBAL_ORDERING_PROGRAM,
+    globalProductionPolicy: GLOBAL_COMMISSARY_PRODUCTION,
     breakfastProgram: BREAKFAST_ORDERING_PROGRAM,
     breakfastInterface: Object.freeze({
       menu: "AMZ: Breakfast",
@@ -101,6 +103,7 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       menuSelection: "one-per-week",
       entreeSlots: 3,
       sideSlots: 4,
+      sauceSlots: 2,
       subrecipes: "automatic-from-recipe",
       deliveryQuantities: "whole-portions",
     }),
@@ -116,13 +119,16 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       coreItems: "permanent-optional-whole-item-quantities",
     }),
     componentProductionPolicy: Object.freeze({
-      version: 1,
+      version: 2,
       effectiveDate: "2026-11-16",
       stations: Object.freeze(["Grill", "Global"]),
       rawAnimalProteins: "unit-supplied-excluded-from-prep-and-transfer",
       explicitlyPrecookedProteins: "commissary-generated-included",
       transferValuation: "priced-retained-recipe-components-only",
       unresolvedComponentCost: "excluded-no-invented-allocation",
+      globalRecipeResolution: "reviewed-nested-recipe-output-with-direct-component-fallback",
+      globalInUnitExceptions: Object.freeze(["5365.6"]),
+      globalExcludedSubrecipes: Object.freeze(["60487"]),
     }),
     prepInterface: Object.freeze({
       stationOrder: Object.freeze(["Salad Bar", "Breakfast", "Deli", "Grill", "Global"]),
@@ -136,7 +142,7 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       looseStaples: "canola-kosher-salt-black-pepper-dried-spices-excluded-or-bundled-as-recipes",
       deliDeliveryMap: "finished-sandwich-counts",
       globalUnitPreparationNotes: GLOBAL_UNIT_PREPARATION_NOTES,
-      globalMarinadePolicy: "case-by-case-reviewed-only-no-inferred-substitutions",
+      globalMarinadePolicy: "six-week-reviewed-recipe-tree-minus-unit-protein",
     }),
     packoutPacket: Object.freeze({
       version: 1,

@@ -224,9 +224,14 @@ test("Grill LTO starts Cycle Week 1 on November 16 with Set A and Set B whole-sa
   await expect(global.getByText(/Cycle Week 1/i)).toBeVisible();
   await expect(page.getByLabel("Global menu").locator("option")).toContainText(["Select menu", "Porto", "Taco Total"]);
   const globalOption = GLOBAL_ORDERING_PROGRAM.cycleWeeks[0].menus[0].items[0];
+  const globalSauce = GLOBAL_ORDERING_PROGRAM.cycleWeeks[0].menus[0].items.find(({ mrn }) => mrn === "120722");
   await page.getByLabel("Global menu").selectOption(globalOption.menu);
   await page.getByLabel("Entrees 1").selectOption(globalOption.id);
   await page.getByLabel(`${globalOption.name} Friday 11/13 portion quantity`).fill("4");
+  await expect(global.getByText("Optional sauces", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Optional sauces 1").locator("option")).toContainText(["Piri Piri Dipping Sauce", "Piri-naise Dipping Sauce"]);
+  await page.getByLabel("Optional sauces 1").selectOption(globalSauce.id);
+  await page.getByLabel(`${globalSauce.name} Friday 11/13 portion quantity`).fill("4");
 
   const grill = page.getByTestId("commissary-grill-order");
   await expect(grill.getByText(/Cycle Week 1/i)).toBeVisible();
@@ -273,6 +278,8 @@ test("Grill LTO starts Cycle Week 1 on November 16 with Set A and Set B whole-sa
   expect(writes[0].records[0].global.menu).toBe(globalOption.menu);
   expect(writes[0].records[0].global.selections.entrees[0]).toBe(globalOption.id);
   expect(writes[0].records[0].global.quantities[globalOption.id]).toEqual({ friday: 4, monday: 0, wednesday: 0 });
+  expect(writes[0].records[0].global.selections.sauces[0]).toBe(globalSauce.id);
+  expect(writes[0].records[0].global.quantities[globalSauce.id]).toEqual({ friday: 4, monday: 0, wednesday: 0 });
 
   const prepDownload = page.waitForEvent("download");
   await page.getByRole("button", { name: /^prep list$/i }).click();
@@ -280,6 +287,7 @@ test("Grill LTO starts Cycle Week 1 on November 16 with Set A and Set B whole-sa
   const prepRows = XLSX.utils.sheet_to_json(workbook.Sheets["Consolidated Prep List"], { header: 1, defval: "" });
   expect(prepRows.some((row) => row[0] === "AMZ: Smashburger Patty")).toBe(false);
   expect(prepRows[2]).toEqual(["Ingredient / item", "Total quantity", "Order unit", "Production type", "Production family", "Finished dish"]);
+  expect(prepRows.some((row) => row[0] === "Piri Piri Marinade/Base" && row[5] === "Piri Piri Chicken")).toBe(true);
   const mondayRows = XLSX.utils.sheet_to_json(workbook.Sheets["Monday Delivery Map"], { header: 1, defval: "" });
   expect(mondayRows.some((row) => row[1] === "AMZ: Smashburger Patty")).toBe(false);
   expect(mondayRows).toContainEqual(expect.arrayContaining(["Nessie", "Mediterranean Turkey Wrap", "190990", 12, "sandwich", "Mediterranean Turkey Wrap"]));

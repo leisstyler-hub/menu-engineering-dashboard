@@ -11,6 +11,7 @@ import { COMMISSARY_LEGACY_ORDER_ITEMS, COMMISSARY_ORDER_ITEMS, COMMISSARY_PREVI
 import { buildCommissaryBomWorkbook, buildCommissaryTransfer } from "../src/features/commissary-ordering/commissaryExport.js";
 import { buildCommissaryMetadataRecord, DEFAULT_COMMISSARY_METADATA, isApprovedCommissaryMetadataRecord, resolveCommissaryMetadata } from "../src/features/commissary-ordering/commissaryMetadata.js";
 import { COMMISSARY_BREAKFAST_ORDER_VERSION, COMMISSARY_DELI_ORDER_VERSION, COMMISSARY_GLOBAL_ORDER_VERSION, COMMISSARY_GRILL_ORDER_VERSION, COMMISSARY_ORDER_UNIT_VERSION, DELIVERY_KEYS, GLOBAL_UNIT_PREPARATION_NOTES, addDays, breakfastOrderLinesForCafe, breakfastPrepLinesForCafe, buildOrderRecord, buildPackoutPacketRecord, buildPrepProgressRecord, deliCycleForWeek, deliOrderLinesForCafe, deliPrepLinesForCafe, deliveriesForWeek, emptyBreakfastOrder, emptyDeliOrder, emptyGlobalOrder, emptyGrillOrder, emptyQuantities, firstOpenWeek, globalCycleForWeek, globalOrderLinesForCafe, globalPrepLinesForCafe, globalTransferLinesForCafe, grillCycleForWeek, grillOrderLinesForCafe, grillPrepLinesForCafe, grillTransferLinesForCafe, isGrillCoreAvailable, isWeekLocked, latestPrepWeek, normalizeDeliOrder, normalizePrepCompleted, normalizeQuantities, orderValue, prepDisplayQuantity, rolledUpPrepItems, standingOrderReductions, togglePrepCompleted, transferPeriod } from "../src/features/commissary-ordering/commissaryModel.js";
+import { prepareGlobalCommissaryComponents } from "../src/features/commissary-ordering/commissaryPrepPolicy.js";
 import { buildPackoutPacket, buildPackoutPdfBytes } from "../src/features/commissary-ordering/commissaryPackout.js";
 import { GRILL_LTO_ITEM_MRNS, GRILL_LTO_PREP_ITEM_IDS, GRILL_LTO_PROGRAM } from "../src/features/commissary-ordering/grillLtoCatalog.js";
 import { DELI_ORDERING_ITEM_MRNS, DELI_ORDERING_PREP_ITEM_IDS, DELI_ORDERING_PROGRAM } from "../src/features/commissary-ordering/deliCycleCatalog.js";
@@ -361,10 +362,14 @@ const porto = emptyGlobalOrder("2026-11-16");
 const portoMenu = globalCycleForWeek("2026-11-16").menus.find(({ menu }) => menu === "AMZ: Porto");
 const portoPotatoes = portoMenu.items.find(({ mrn }) => mrn === "121015");
 const portoChicken = portoMenu.items.find(({ mrn }) => mrn === "121026");
+const portoDippingSauce = portoMenu.items.find(({ mrn }) => mrn === "120722");
+const portoPirinaise = portoMenu.items.find(({ mrn }) => mrn === "121071");
+assert.ok(portoDippingSauce && portoPirinaise, "Porto must expose both reviewed optional sauces.");
 porto.menu = portoMenu.menu;
 porto.selections.entrees[0] = portoChicken.id;
 porto.selections.sides[0] = portoPotatoes.id;
-for (const option of [portoChicken, portoPotatoes]) {
+porto.selections.sauces[0] = portoDippingSauce.id;
+for (const option of [portoChicken, portoPotatoes, portoDippingSauce]) {
   porto.items[option.id] = { ...option, item: option.name, itemWasteCost: 2 };
   porto.quantities[option.id] = { friday: 8, monday: 0, wednesday: 0 };
 }
@@ -372,7 +377,38 @@ const portoRecord = buildOrderRecord({ cafe: "Everest", weekStart: "2026-11-16",
 const portoPrep = globalPrepLinesForCafe(portoRecord);
 assert.ok(portoPrep.some(({ name }) => name === "Piri Piri Potato Wedge Spice Mix"));
 assert.equal(portoPrep.some(({ name }) => /canola|kosher salt|black pepper|^spice,/i.test(name)), false);
-assert.equal(portoPrep.some(({ name }) => /Piri Piri Sauce/i.test(name)), false, "Porto marinades must not be inferred from another recipe.");
+assert.ok(portoPrep.some(({ name, mrn }) => name === "Piri Piri Marinade/Base" && mrn === "120715"), "Piri Piri protein orders must resolve the hidden reviewed marinade.");
+assert.equal(portoPrep.some(({ name }) => /Chicken, Whole Fryer/i.test(name)), false, "Unit-purchased protein must not enter Commissary prep.");
+assert.ok(globalTransferLinesForCafe(portoRecord).some(({ name, mrn }) => name === "Piri Piri Marinade/Base" && mrn === "120715"), "The same hidden marinade must reach transfers.");
+
+const balti = emptyGlobalOrder("2026-12-07");
+const baltiMenu = globalCycleForWeek("2026-12-07").menus.find(({ menu }) => menu === "AMZ: Balti");
+const butterChicken = baltiMenu.items.find(({ mrn }) => mrn === "212486.1");
+balti.menu = baltiMenu.menu;
+balti.selections.entrees[0] = butterChicken.id;
+balti.items[butterChicken.id] = { ...butterChicken, item: butterChicken.name, itemWasteCost: 3.241 };
+balti.quantities[butterChicken.id] = { friday: 10, monday: 0, wednesday: 0 };
+const baltiRecord = buildOrderRecord({ cafe: "Everest", weekStart: "2026-12-07", global: balti, now: new Date("2026-12-01T12:00:00Z") });
+const baltiPrep = globalPrepLinesForCafe(baltiRecord);
+assert.ok(baltiPrep.some(({ name, mrn }) => name === "Tikka Marinade" && mrn === "165741.29"));
+assert.ok(baltiPrep.some(({ name }) => name === "Butter Chicken Sauce"));
+assert.equal(baltiPrep.some(({ name }) => /Chicken, Thigh/i.test(name)), false);
+assert.ok(globalTransferLinesForCafe(baltiRecord).some(({ name }) => name === "Butter Chicken Sauce"));
+
+const smokehouse = emptyGlobalOrder("2026-12-21");
+const smokehouseMenu = globalCycleForWeek("2026-12-21").menus.find(({ menu }) => menu === "AMZ: Smokehouse BBQ");
+const kielbasa = smokehouseMenu.items.find(({ mrn }) => mrn === "5365.6");
+smokehouse.menu = smokehouseMenu.menu;
+smokehouse.selections.entrees[0] = kielbasa.id;
+smokehouse.items[kielbasa.id] = { ...kielbasa, item: kielbasa.name, itemWasteCost: 2 };
+smokehouse.quantities[kielbasa.id] = { friday: 6, monday: 0, wednesday: 0 };
+const kielbasaRecord = buildOrderRecord({ cafe: "Everest", weekStart: "2026-12-21", global: smokehouse, now: new Date("2026-12-15T12:00:00Z") });
+assert.equal(globalPrepLinesForCafe(kielbasaRecord).length, 0, "Kielbasa is wholly in-unit.");
+assert.equal(globalTransferLinesForCafe(kielbasaRecord).length, 0, "Kielbasa must not reach Commissary transfers.");
+assert.deepEqual(prepareGlobalCommissaryComponents([
+  { name: "Plant-Based Beef Crumble", quantity: 4, unit: "ounce" },
+  { name: "Kofta Sauce", quantity: 2, unit: "fluid ounce" },
+], "2026-11-30", "global|amz-cypress|132544.5|1-each").map(({ name }) => name), ["Kofta Sauce"], "Direct-build plant protein stays in-unit while its preparation remains.");
 assert.match(commissaryWriteValidation([{ ...globalRecord, global: { ...globalRecord.global, quantities: { ...globalRecord.global.quantities, [globalOption.id]: { friday: 0.5, monday: 0, wednesday: 0 } } } }], { tool: "commissaryOrders" }), /whole portions/i);
 assert.match(commissaryWriteValidation([{ ...globalRecord, global: { ...globalRecord.global, menu: "AMZ: Taco Total" } }], { tool: "commissaryOrders" }), /outside the selected menu/i);
 const legacyMultiMenu = emptyGlobalOrder("2026-11-16");
@@ -433,7 +469,7 @@ const sonicHubPacket = buildPackoutPacket([globalRecord], "2026-11-16", DEFAULT_
 assert.equal(sonicHubPacket.pages.length, 3, "Sonic hub packout must include routed Everest Global work.");
 const cricketHubPacket = buildPackoutPacket([globalRecord], "2026-11-16", DEFAULT_COMMISSARY_METADATA, { selectedCafe: "Cricket" });
 assert.equal(cricketHubPacket.pages.length, 0, "Cricket hub packout must not include Everest Global work.");
-const packetRecord = { ...buildPackoutPacketRecord({ weekStart: "2026-11-16", records: [globalRecord], packet, metadataVersion: 16, now: new Date("2026-11-12T01:00:00Z") }), packet };
+const packetRecord = { ...buildPackoutPacketRecord({ weekStart: "2026-11-16", records: [globalRecord], packet, metadataVersion: 17, now: new Date("2026-11-12T01:00:00Z") }), packet };
 assert.equal(commissaryWriteValidation([packetRecord], { tool: "commissaryOrders" }), "");
 assert.match(commissaryWriteValidation([{ ...packetRecord, packet: { ...packet, pages: [{ ...packet.pages[0], cafe: "Unknown Cafe" }] } }], { tool: "commissaryOrders" }), /scope|invalid cafe/i);
 assert.match(commissaryWriteValidation([{ ...packetRecord, orderRecordIds: [`commissaryOrder|nessie|${packetRecord.weekStart}`] }], { tool: "commissaryOrders" }), /order-reference scope/i);

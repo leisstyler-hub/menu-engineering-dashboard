@@ -5,14 +5,14 @@ import { DELI_ORDERING_PREP_ITEM_IDS, DELI_ORDERING_PROGRAM } from "./deliCycleC
 import { GLOBAL_ORDERING_PREP_ITEM_IDS, GLOBAL_ORDERING_PROGRAM } from "./globalCycleCatalog.js";
 import { BREAKFAST_ORDERING_ITEM_IDS, BREAKFAST_ORDERING_PREP_ITEM_IDS, BREAKFAST_ORDERING_PROGRAM } from "./breakfastCatalog.js";
 import { COMMISSARY_STATIONS, cafeRoutesToHub, isCafeStationEnabled } from "./commissaryRouting.js";
-import { filterCommissaryComponents, isExcludedLoosePrepItem, prepareCommissaryComponents } from "./commissaryPrepPolicy.js";
+import { filterCommissaryComponents, isExcludedLoosePrepItem, prepareCommissaryComponents, prepareGlobalCommissaryComponents, prepareGlobalTransferComponents } from "./commissaryPrepPolicy.js";
 
 export const PACIFIC_TIME_ZONE = "America/Los_Angeles";
 export const DELIVERY_KEYS = Object.freeze(DEFAULT_COMMISSARY_METADATA.deliveries.map(({ key }) => key));
 export const COMMISSARY_ORDER_UNIT_VERSION = 2;
 export const COMMISSARY_GRILL_ORDER_VERSION = 2;
 export const COMMISSARY_DELI_ORDER_VERSION = 2;
-export const COMMISSARY_GLOBAL_ORDER_VERSION = 2;
+export const COMMISSARY_GLOBAL_ORDER_VERSION = 3;
 export const COMMISSARY_BREAKFAST_ORDER_VERSION = 1;
 export const COMMISSARY_PACKOUT_PACKET_VERSION = 1;
 export const COMMISSARY_STATION_ORDER = Object.freeze(["Salad Bar", "Breakfast", "Deli", "Grill", "Global"]);
@@ -207,7 +207,7 @@ export function emptyGlobalOrder(weekStart) {
     version: COMMISSARY_GLOBAL_ORDER_VERSION,
     cycleWeek: cycle?.week || null,
     menu: "",
-    selections: { entrees: ["", "", ""], sides: ["", "", "", ""] },
+    selections: { entrees: ["", "", ""], sides: ["", "", "", ""], sauces: ["", ""] },
     quantities: Object.fromEntries(items.map(({ id }) => [id, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, 0]))])),
     items: {},
   };
@@ -224,7 +224,7 @@ export function normalizeGlobalOrder(global = {}, weekStart, cafe = "") {
   const legacyMenus = new Set(legacySelected.map(({ menu: itemMenu }) => itemMenu));
   const legacyEntrees = legacySelected.filter(({ category }) => category === "entree");
   const legacySides = legacySelected.filter(({ category }) => category === "side");
-  const legacyUnsupported = legacySelected.filter(({ category }) => !["entree", "side"].includes(category));
+  const legacyUnsupported = legacySelected.filter(({ category }) => !["entree", "side", "subRecipe"].includes(category));
   const legacyReviewRequired = !menu && legacySelected.length > 0 && (
     legacyMenus.size !== 1 || legacyEntrees.length > 3 || legacySides.length > 4 || legacyUnsupported.length > 0
   );
@@ -233,15 +233,17 @@ export function normalizeGlobalOrder(global = {}, weekStart, cafe = "") {
   const allowedByCategory = {
     entrees: new Set(menuOptions.filter(({ category }) => category === "entree").map(({ id }) => id)),
     sides: new Set(menuOptions.filter(({ category }) => category === "side").map(({ id }) => id)),
+    sauces: new Set(menuOptions.filter(({ category }) => category === "subRecipe").map(({ id }) => id)),
   };
   const normalizeSelections = (key, size) => {
     const saved = Array.isArray(global?.selections?.[key]) ? global.selections[key] : [];
-    const legacy = legacySelected.filter(({ category }) => category === (key === "entrees" ? "entree" : "side")).map(({ id }) => id);
+    const category = key === "entrees" ? "entree" : key === "sides" ? "side" : "subRecipe";
+    const legacy = legacySelected.filter((option) => option.category === category).map(({ id }) => id);
     const unique = [...new Set([...saved, ...legacy].filter((id) => allowedByCategory[key].has(id)))].slice(0, size);
     return [...unique, ...Array.from({ length: size - unique.length }, () => "")];
   };
-  const selections = { entrees: normalizeSelections("entrees", 3), sides: normalizeSelections("sides", 4) };
-  const selectedIds = new Set([...selections.entrees, ...selections.sides].filter(Boolean));
+  const selections = { entrees: normalizeSelections("entrees", 3), sides: normalizeSelections("sides", 4), sauces: normalizeSelections("sauces", 2) };
+  const selectedIds = new Set([...selections.entrees, ...selections.sides, ...selections.sauces].filter(Boolean));
   const quantities = Object.fromEntries(options.map(({ id }) => [id, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, selectedIds.has(id) || legacyReviewRequired ? wholeQuantity(global?.quantities?.[id]?.[delivery]) : 0]))]));
   const items = Object.fromEntries(options.flatMap((option) => {
     const snapshot = global?.items?.[option.id];
@@ -262,7 +264,7 @@ function effectiveGlobalIds(global = {}) {
   if (global.legacyReviewRequired) {
     return new Set(Object.entries(global.quantities || {}).filter(([, values]) => DELIVERY_KEYS.some((delivery) => wholeQuantity(values?.[delivery]) > 0)).map(([id]) => id));
   }
-  return new Set([...(global.selections?.entrees || []), ...(global.selections?.sides || [])].filter(Boolean));
+  return new Set([...(global.selections?.entrees || []), ...(global.selections?.sides || []), ...(global.selections?.sauces || [])].filter(Boolean));
 }
 
 export function emptyDeliOrder(weekStart) {
@@ -601,7 +603,7 @@ export function globalOrderLinesForCafe(record = {}) {
 }
 
 export function globalPrepLinesForCafe(record = {}) {
-  return globalOrderLinesForCafe(record).flatMap((line) => prepareCommissaryComponents(GLOBAL_ORDERING_PROGRAM.itemPrepComponents[line.id] || [], record.weekStart, line.id).flatMap((component) => DELIVERY_KEYS.map((delivery) => ({
+  return globalOrderLinesForCafe(record).flatMap((line) => prepareGlobalCommissaryComponents(GLOBAL_ORDERING_PROGRAM.itemPrepComponents[line.id] || [], record.weekStart, line.id).flatMap((component) => DELIVERY_KEYS.map((delivery) => ({
     ...component,
     category: component.type === "subrecipe" ? "Global sub-recipe" : "Global ingredient",
     station: "Global",
@@ -634,7 +636,19 @@ export function grillTransferLinesForCafe(record = {}) {
 }
 
 export function globalTransferLinesForCafe(record = {}) {
-  return componentTransferLines(globalOrderLinesForCafe(record), GLOBAL_ORDERING_PROGRAM.itemTransferComponents || {}, record.weekStart, "Global");
+  return globalOrderLinesForCafe(record).flatMap((line) => prepareGlobalTransferComponents(GLOBAL_ORDERING_PROGRAM.itemTransferComponents?.[line.id] || [], record.weekStart, line.id)
+    .filter(({ costPerPortion }) => Number(costPerPortion) > 0)
+    .map((component) => ({
+      id: `${line.id}|${component.id}`,
+      menu: line.menu,
+      name: component.name,
+      finishedDish: line.name,
+      mrn: component.mrn,
+      quantity: line.total,
+      itemWasteCost: Number(component.costPerPortion),
+      glCode: component.glCode || "4111011",
+      station: "Global",
+    })));
 }
 
 export function breakfastOrderLinesForCafe(record = {}) {
