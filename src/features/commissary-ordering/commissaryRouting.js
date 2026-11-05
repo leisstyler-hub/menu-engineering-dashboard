@@ -65,6 +65,17 @@ export const COMMISSARY_HUB_ROUTING = Object.freeze({
   }),
 });
 
+const PACKOUT_GLOBAL_SONIC_CAFES = Object.freeze([
+  "Bingo", "Grace", "Sonic", "Blueshift", "105", "Everest", "Gemini", "Astra",
+  "Doppler", "Day 1", "Nitro", "Re:Invent",
+]);
+
+export const COMMISSARY_PACKOUT_HUB_ROUTING = Object.freeze({
+  Cricket: COMMISSARY_HUB_ROUTING.Cricket,
+  Sonic: Object.freeze({ ...COMMISSARY_HUB_ROUTING.Sonic, global: PACKOUT_GLOBAL_SONIC_CAFES }),
+  Blueshift: Object.freeze({ ...COMMISSARY_HUB_ROUTING.Blueshift, global: Object.freeze([]) }),
+});
+
 export function isCafeStationEnabled(cafe, station) {
   return COMMISSARY_CAFE_STATION_ACCESS[cafe]?.includes(station) || false;
 }
@@ -76,4 +87,8 @@ export function commissaryHubFor(cafe, station) {
 
 export function cafeRoutesToHub(cafe, station, hub) {
   return commissaryHubFor(cafe, station) === hub;
+}
+
+export function cafeRoutesToPackoutHub(cafe, station, hub) {
+  return COMMISSARY_PACKOUT_HUB_ROUTING[hub]?.[station]?.includes(cafe) || false;
 }

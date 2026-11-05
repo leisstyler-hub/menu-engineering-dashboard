@@ -2,7 +2,7 @@ import {
   COMMISSARY_PACKOUT_PACKET_VERSION,
   COMMISSARY_STATION_ORDER,
   DELIVERY_KEYS,
-  deliPrepLinesForCafe,
+  deliOrderLinesForCafe,
   breakfastPrepLinesForCafe,
   deliveryDateForWeek,
   formatShortDate,
@@ -13,6 +13,7 @@ import {
   weekLabel,
 } from "./commissaryModel.js";
 import { DEFAULT_COMMISSARY_METADATA } from "./commissaryMetadata.js";
+import { COMMISSARY_HUBS, COMMISSARY_STATIONS, cafeRoutesToPackoutHub } from "./commissaryRouting.js";
 
 const PACKING_CHECKS = Object.freeze([
   "Labels and date dots",
@@ -47,11 +48,34 @@ function packoutSourceLines(record, delivery) {
     }));
   return [
     ...salad,
-    ...deliPrepLinesForCafe(record).filter((line) => line.delivery === delivery),
+    ...deliOrderLinesForCafe(record).filter((line) => Number(line[delivery]) > 0).map((line) => ({
+      id: line.id,
+      station: "Deli",
+      name: line.name,
+      mrn: line.mrn,
+      orderUnit: "sandwich",
+      finishedDish: line.name,
+      quantity: Number(line[delivery]),
+    })),
     ...grillPrepLinesForCafe(record).filter((line) => line.delivery === delivery),
     ...globalPrepLinesForCafe(record).filter((line) => line.delivery === delivery),
     ...breakfastPrepLinesForCafe(record).filter((line) => line.delivery === delivery),
   ];
+}
+
+const STATION_KEY_BY_LABEL = Object.freeze({
+  "Salad Bar": COMMISSARY_STATIONS.SALAD_BAR,
+  Breakfast: COMMISSARY_STATIONS.BREAKFAST,
+  Deli: COMMISSARY_STATIONS.DELI,
+  Grill: COMMISSARY_STATIONS.GRILL,
+  Global: COMMISSARY_STATIONS.GLOBAL,
+});
+
+function scopePackoutLines(lines, cafe, selectedCafe) {
+  if (!selectedCafe || selectedCafe === cafe && !COMMISSARY_HUBS.some(({ key }) => key === selectedCafe)) return selectedCafe && selectedCafe !== cafe ? [] : lines;
+  const isHub = COMMISSARY_HUBS.some(({ key }) => key === selectedCafe);
+  if (!isHub) return selectedCafe === cafe ? lines : [];
+  return lines.filter((line) => cafeRoutesToPackoutHub(cafe, STATION_KEY_BY_LABEL[line.station], selectedCafe));
 }
 
 function rollupPackoutLines(lines = [], delivery) {
@@ -92,13 +116,14 @@ function rollupPackoutLines(lines = [], delivery) {
     || a.name.localeCompare(b.name));
 }
 
-export function buildPackoutPacket(records = [], weekStart, metadata = DEFAULT_COMMISSARY_METADATA) {
+export function buildPackoutPacket(records = [], weekStart, metadata = DEFAULT_COMMISSARY_METADATA, options = {}) {
+  const selectedCafe = options.selectedCafe || "";
   const cafes = [...new Set(records.map(({ cafe }) => cafe).filter(Boolean))].sort();
   const pages = cafes.flatMap((cafe) => {
     const record = records.find((candidate) => candidate.cafe === cafe && candidate.weekStart === weekStart);
     if (!record) return [];
     return metadata.deliveries.flatMap((delivery) => {
-      const lines = rollupPackoutLines(packoutSourceLines(record, delivery.key), delivery.key);
+      const lines = rollupPackoutLines(scopePackoutLines(packoutSourceLines(record, delivery.key), cafe, selectedCafe), delivery.key);
       if (!lines.length) return [];
       return [{
         cafe,

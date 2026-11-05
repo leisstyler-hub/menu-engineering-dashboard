@@ -18,10 +18,11 @@ import { DELI_CORE_SELECTED_CATALOG } from "../features/commissary-ordering/deli
 import { DELI_ORDERING_PROGRAM } from "../features/commissary-ordering/deliCycleCatalog.js";
 import { GLOBAL_ORDERING_PROGRAM } from "../features/commissary-ordering/globalCycleCatalog.js";
 import { BREAKFAST_ORDERING_PROGRAM } from "../features/commissary-ordering/breakfastCatalog.js";
-import { COMMISSARY_CAFE_STATION_ACCESS, COMMISSARY_HUB_ROUTING, COMMISSARY_HUBS } from "../features/commissary-ordering/commissaryRouting.js";
+import { COMMISSARY_CAFE_STATION_ACCESS, COMMISSARY_HUB_ROUTING, COMMISSARY_HUBS, COMMISSARY_PACKOUT_HUB_ROUTING } from "../features/commissary-ordering/commissaryRouting.js";
+import { GLOBAL_UNIT_PREPARATION_NOTES } from "../features/commissary-ordering/commissaryModel.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 15;
+export const OPERATIONAL_METADATA_VERSION = 16;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -106,6 +107,7 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
     stationAccess: COMMISSARY_CAFE_STATION_ACCESS,
     prepHubs: COMMISSARY_HUBS,
     hubRouting: COMMISSARY_HUB_ROUTING,
+    packoutHubRouting: COMMISSARY_PACKOUT_HUB_ROUTING,
     grillInterface: Object.freeze({
       density: "compact",
       contentPolicy: "complete",
@@ -125,13 +127,23 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
     prepInterface: Object.freeze({
       stationOrder: Object.freeze(["Salad Bar", "Breakfast", "Deli", "Grill", "Global"]),
       stationJumpNavigation: true,
+      productionGrouping: Object.freeze(["Vegetable Production", "Cold Sauce Production", "Hot Sauce Production", "Other Production"]),
+      familyAdjacency: true,
       sauceVolumeDisplay: "cups-quarts-gallons-explicit-volume-units-only",
+      grillVolumeDisplay: "cups-quarts-gallons",
+      massDisplay: "kilograms-converted-to-pounds",
+      avocadoMashDisplay: "number-16-scoops-converted-to-gallons",
+      looseStaples: "canola-kosher-salt-black-pepper-dried-spices-excluded-or-bundled-as-recipes",
+      deliDeliveryMap: "finished-sandwich-counts",
+      globalUnitPreparationNotes: GLOBAL_UNIT_PREPARATION_NOTES,
+      globalMarinadePolicy: "case-by-case-reviewed-only-no-inferred-substitutions",
     }),
     packoutPacket: Object.freeze({
       version: 1,
       format: "pdf",
       source: "saved-supabase-commissary-orders",
       grouping: "cafe-delivery-station",
+      selectionScope: "selected-unit-exact-or-selected-hub-station-routing",
       storageRecordType: "Commissary Packout Packet",
       emailDelivery: false,
     }),

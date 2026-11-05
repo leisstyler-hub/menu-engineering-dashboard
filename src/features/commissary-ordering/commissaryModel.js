@@ -5,7 +5,7 @@ import { DELI_ORDERING_PREP_ITEM_IDS, DELI_ORDERING_PROGRAM } from "./deliCycleC
 import { GLOBAL_ORDERING_PREP_ITEM_IDS, GLOBAL_ORDERING_PROGRAM } from "./globalCycleCatalog.js";
 import { BREAKFAST_ORDERING_ITEM_IDS, BREAKFAST_ORDERING_PREP_ITEM_IDS, BREAKFAST_ORDERING_PROGRAM } from "./breakfastCatalog.js";
 import { COMMISSARY_STATIONS, cafeRoutesToHub, isCafeStationEnabled } from "./commissaryRouting.js";
-import { filterCommissaryComponents } from "./commissaryPrepPolicy.js";
+import { filterCommissaryComponents, isExcludedLoosePrepItem, prepareCommissaryComponents } from "./commissaryPrepPolicy.js";
 
 export const PACIFIC_TIME_ZONE = "America/Los_Angeles";
 export const DELIVERY_KEYS = Object.freeze(DEFAULT_COMMISSARY_METADATA.deliveries.map(({ key }) => key));
@@ -16,6 +16,13 @@ export const COMMISSARY_GLOBAL_ORDER_VERSION = 2;
 export const COMMISSARY_BREAKFAST_ORDER_VERSION = 1;
 export const COMMISSARY_PACKOUT_PACKET_VERSION = 1;
 export const COMMISSARY_STATION_ORDER = Object.freeze(["Salad Bar", "Breakfast", "Deli", "Grill", "Global"]);
+
+export const GLOBAL_UNIT_PREPARATION_NOTES = Object.freeze({
+  "AMZ: Balti": "Rice and naan purchased and prepared in unit.",
+  "AMZ: House of Teriyaki": "Rice purchased and prepared in unit.",
+  "AMZ: Lemongrass + Lime": "Rice purchased and prepared in unit.",
+  "AMZ: Lotus": "Rice purchased and prepared in unit.",
+});
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const pad = (value) => String(value).padStart(2, "0");
@@ -527,7 +534,7 @@ export function grillOrderLinesForCafe(record = {}) {
 }
 
 export function grillPrepLinesForCafe(record = {}) {
-  return grillOrderLinesForCafe(record).flatMap((line) => filterCommissaryComponents(GRILL_LTO_PROGRAM.itemPrepComponents[line.mrn] || [], record.weekStart).flatMap((component) => DELIVERY_KEYS.map((delivery) => ({
+  return grillOrderLinesForCafe(record).flatMap((line) => filterCommissaryComponents(GRILL_LTO_PROGRAM.itemPrepComponents[line.mrn] || [], record.weekStart).filter(({ name }) => !isExcludedLoosePrepItem(name)).flatMap((component) => DELIVERY_KEYS.map((delivery) => ({
     ...component,
     category: component.type === "subrecipe" ? "Grill sub-recipe" : "Grill ingredient",
     station: "Grill",
@@ -559,7 +566,7 @@ export function deliOrderLinesForCafe(record = {}) {
 }
 
 export function deliPrepLinesForCafe(record = {}) {
-  return deliOrderLinesForCafe(record).flatMap((line) => (DELI_ORDERING_PROGRAM.itemPrepComponents[line.mrn] || []).flatMap((component) => DELIVERY_KEYS.map((delivery) => ({
+  return deliOrderLinesForCafe(record).flatMap((line) => (DELI_ORDERING_PROGRAM.itemPrepComponents[line.mrn] || []).filter(({ name }) => !isExcludedLoosePrepItem(name)).flatMap((component) => DELIVERY_KEYS.map((delivery) => ({
     ...component,
     category: component.type === "subrecipe" ? "Deli sub-recipe" : "Deli ingredient",
     station: "Deli",
@@ -594,7 +601,7 @@ export function globalOrderLinesForCafe(record = {}) {
 }
 
 export function globalPrepLinesForCafe(record = {}) {
-  return globalOrderLinesForCafe(record).flatMap((line) => filterCommissaryComponents(GLOBAL_ORDERING_PROGRAM.itemPrepComponents[line.id] || [], record.weekStart).flatMap((component) => DELIVERY_KEYS.map((delivery) => ({
+  return globalOrderLinesForCafe(record).flatMap((line) => prepareCommissaryComponents(GLOBAL_ORDERING_PROGRAM.itemPrepComponents[line.id] || [], record.weekStart, line.id).flatMap((component) => DELIVERY_KEYS.map((delivery) => ({
     ...component,
     category: component.type === "subrecipe" ? "Global sub-recipe" : "Global ingredient",
     station: "Global",
@@ -651,7 +658,7 @@ export function breakfastOrderLinesForCafe(record = {}) {
 }
 
 export function breakfastPrepLinesForCafe(record = {}) {
-  return breakfastOrderLinesForCafe(record).flatMap((line) => (BREAKFAST_ORDERING_PROGRAM.itemPrepComponents[line.id] || []).flatMap((component) => DELIVERY_KEYS.map((delivery) => ({
+  return breakfastOrderLinesForCafe(record).flatMap((line) => (BREAKFAST_ORDERING_PROGRAM.itemPrepComponents[line.id] || []).filter(({ name }) => !isExcludedLoosePrepItem(name)).flatMap((component) => DELIVERY_KEYS.map((delivery) => ({
     ...component,
     category: component.type === "subrecipe" ? "Breakfast sub-recipe" : "Breakfast ingredient",
     station: "Breakfast",
@@ -680,7 +687,7 @@ export function rolledUpPrepItems(records = [], options = {}) {
     ...(options.hub && !cafeRoutesToHub(record.cafe, COMMISSARY_STATIONS.GLOBAL, options.hub) ? [] : globalPrepLinesForCafe(record)),
     ...(options.hub && !cafeRoutesToHub(record.cafe, COMMISSARY_STATIONS.BREAKFAST, options.hub) ? [] : breakfastPrepLinesForCafe(record)),
   ]).forEach((line) => {
-    const key = `${line.station}|${line.id}`;
+    const key = `${line.station}|${String(line.name || "").trim().toLowerCase()}|${String(line.mrn || "").trim()}|${String(line.orderUnit || "").trim().toLowerCase()}`;
     const current = grillMap.get(key) || {
       id: line.id,
       name: line.name,
@@ -704,10 +711,37 @@ export function rolledUpPrepItems(records = [], options = {}) {
     finishedDishes: undefined,
     total: DELIVERY_KEYS.reduce((sum, delivery) => sum + row[delivery], 0),
   }));
-  return [...salad, ...grill].filter((row) => row.total > 0);
+  const displayed = [...salad, ...grill]
+    .filter((row) => row.total > 0)
+    .map(prepDisplayQuantity);
+  if (!options.consolidateAcrossStations) return displayed;
+  const consolidated = new Map();
+  displayed.forEach((row) => {
+    const key = `${String(row.name || "").trim().toLowerCase()}|${String(row.mrn || "").trim()}|${String(row.orderUnit || "").trim().toLowerCase()}`;
+    const current = consolidated.get(key) || { ...row, finishedDishes: new Set(), stations: new Set(), cafes: {}, ...Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, 0])), total: 0 };
+    current.finishedDishes.add(row.finishedDish || row.name);
+    current.stations.add(row.station);
+    DELIVERY_KEYS.forEach((delivery) => { current[delivery] = Number((current[delivery] + Number(row[delivery] || 0)).toFixed(4)); });
+    Object.entries(row.cafes || {}).forEach(([cafe, values]) => {
+      current.cafes[cafe] ||= Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, 0]));
+      DELIVERY_KEYS.forEach((delivery) => { current.cafes[cafe][delivery] = Number((current.cafes[cafe][delivery] + Number(values?.[delivery] || 0)).toFixed(4)); });
+    });
+    current.total = Number((current.total + Number(row.total || 0)).toFixed(4));
+    consolidated.set(key, current);
+  });
+  return [...consolidated.values()]
+    .map((row) => ({ ...row, station: [...row.stations].sort().join("; "), stations: undefined, finishedDish: [...row.finishedDishes].sort().join("; "), finishedDishes: undefined }))
+    .map((row) => ({ ...row, productionType: prepProductionType(row), productionFamily: prepProductionFamily(row) }))
+    .sort((a, b) => prepProductionTypeOrder(a.productionType) - prepProductionTypeOrder(b.productionType)
+      || a.productionFamily.localeCompare(b.productionFamily)
+      || a.name.localeCompare(b.name)
+      || a.orderUnit.localeCompare(b.orderUnit));
 }
 
-const SAUCE_NAME = /(?:sauce|aioli|dressing|relish|chutney|salsa|mayo|mayonnaise|vinaigrette|pesto|dip|glaze)/i;
+const SAUCE_NAME = /(?:sauce|aioli|dressing|relish|chutney|salsa|mayo|mayonnaise|vinaigrette|pesto|dip|glaze|marinade)/i;
+const HOT_SAUCE_NAME = /(?:hot sauce|curry|masala|teriyaki|brais|queso|gravy|demi|piri piri|peri peri)/i;
+const VEGETABLE_NAME = /\b(tomato|cucumber|onion|pepper|carrot|celery|broccoli|cauliflower|cabbage|lettuce|kale|spinach|arugula|spring mix|potato|squash|zucchini|mushroom|corn|bean|peas?|avocado|scallion|cilantro|parsley|vegetable)\b/i;
+const PRODUCTION_TYPE_ORDER = Object.freeze(["Vegetable Production", "Cold Sauce Production", "Hot Sauce Production", "Other Production"]);
 const VOLUME_TO_CUPS = Object.freeze({
   "fluid ounce": 1 / 8,
   "fluid ounces": 1 / 8,
@@ -727,12 +761,56 @@ const VOLUME_TO_CUPS = Object.freeze({
   liter: 4.22675,
   liters: 4.22675,
   l: 4.22675,
+  tbsp: 1 / 16,
+  tablespoon: 1 / 16,
+  tablespoons: 1 / 16,
 });
+
+export function prepProductionType(row = {}) {
+  const value = `${row.name || ""} ${row.finishedDish || ""}`;
+  if (VEGETABLE_NAME.test(String(row.name || ""))) return "Vegetable Production";
+  if (SAUCE_NAME.test(value)) return HOT_SAUCE_NAME.test(value) ? "Hot Sauce Production" : "Cold Sauce Production";
+  return "Other Production";
+}
+
+export function prepProductionFamily(row = {}) {
+  const name = String(row.name || "").toLowerCase();
+  const families = ["tomato", "cucumber", "onion", "pepper", "carrot", "celery", "broccoli", "cauliflower", "cabbage", "lettuce", "kale", "spinach", "arugula", "potato", "squash", "zucchini", "mushroom", "corn", "bean", "pea", "avocado"];
+  return families.find((family) => new RegExp(`\\b${family}`).test(name)) || name.replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function prepProductionTypeOrder(type) {
+  const index = PRODUCTION_TYPE_ORDER.indexOf(type);
+  return index < 0 ? PRODUCTION_TYPE_ORDER.length : index;
+}
 
 export function prepDisplayQuantity(row = {}) {
   const unit = String(row.orderUnit || "").trim().toLowerCase();
+  if (["kilogram", "kilograms", "kg"].includes(unit)) {
+    const convert = (value) => Number((Number(value || 0) * 2.2046226218).toFixed(4));
+    return {
+      ...row,
+      cafes: Object.fromEntries(Object.entries(row.cafes || {}).map(([cafe, values]) => [cafe, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, convert(values?.[delivery])]))])),
+      ...Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, convert(row[delivery])])),
+      total: convert(row.total),
+      orderUnit: "pound",
+    };
+  }
+  if (/avocado.*mash|mash.*avocado/i.test(`${row.name || ""} ${row.finishedDish || ""}`) && /(?:#\s*16|no\.?\s*16).*scoop|scoop.*(?:#\s*16|no\.?\s*16)/i.test(unit)) {
+    const convert = (value) => Number((Number(value || 0) / 64).toFixed(4));
+    return {
+      ...row,
+      cafes: Object.fromEntries(Object.entries(row.cafes || {}).map(([cafe, values]) => [cafe, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, convert(values?.[delivery])]))])),
+      ...Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, convert(row[delivery])])),
+      total: convert(row.total),
+      orderUnit: "gallon",
+    };
+  }
   const cupsPerUnit = VOLUME_TO_CUPS[unit];
-  if (!cupsPerUnit || !SAUCE_NAME.test(`${row.name || ""} ${row.finishedDish || ""}`)) return row;
+  const shouldConvertVolume = SAUCE_NAME.test(`${row.name || ""} ${row.finishedDish || ""}`)
+    || row.station === "Grill"
+    || ["tbsp", "tablespoon", "tablespoons"].includes(unit);
+  if (!cupsPerUnit || !shouldConvertVolume) return row;
   const convert = (value) => Number((Number(value || 0) * cupsPerUnit).toFixed(4));
   const converted = {
     ...row,

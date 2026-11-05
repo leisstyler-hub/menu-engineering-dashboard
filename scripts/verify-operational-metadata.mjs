@@ -11,7 +11,7 @@ assert.equal(isApprovedOperationalMetadataRecord(record), true);
 assert.equal(resolveOperationalMetadata([record]).source, "supabase");
 assert.equal(resolveOperationalMetadata([]).source, "fallback");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.orderItems.length, 41);
-assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 15);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 16);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.items.length, 41);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.legacyItems.length, 41);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.source.effectiveDate, "2026-11-16");

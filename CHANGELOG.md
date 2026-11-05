@@ -1,3 +1,7 @@
+## 2026-11-05
+
+- [Nov 5, 4:44 AM] Group Commissary prep by production type and ingredient family, standardize prep units, send Deli as sandwiches, and scope packout packets to the selected unit or hub.
+
 ## 2026-11-04
 
 - [Nov 4, 7:08 PM] Updated Salad Bar package costs, added Zoka Coffee, and restored the Bacon Egg Cheddar Croissant to Breakfast ordering.

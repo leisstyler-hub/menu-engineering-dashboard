@@ -3,7 +3,7 @@ import XLSX from "xlsx-js-style";
 import { buildS4Workbook, transferExportFileName } from "../transfer-tool/transferExport.js";
 import { COMMISSARY_DEPARTING_UNIT } from "./commissaryCatalog.js";
 import { DEFAULT_COMMISSARY_METADATA } from "./commissaryMetadata.js";
-import { breakfastOrderLinesForCafe, breakfastPrepLinesForCafe, deliOrderLinesForCafe, deliPrepLinesForCafe, deliveryDateForWeek, formatShortDate, globalPrepLinesForCafe, globalTransferLinesForCafe, grillPrepLinesForCafe, grillTransferLinesForCafe, orderLinesForCafe, rolledUpPrepItems, transferPeriod, weekLabel } from "./commissaryModel.js";
+import { breakfastOrderLinesForCafe, breakfastPrepLinesForCafe, deliOrderLinesForCafe, deliveryDateForWeek, formatShortDate, globalPrepLinesForCafe, globalTransferLinesForCafe, grillPrepLinesForCafe, grillTransferLinesForCafe, orderLinesForCafe, prepDisplayQuantity, rolledUpPrepItems, transferPeriod, weekLabel } from "./commissaryModel.js";
 
 const S4_TEMPLATE_URL = "/templates/ExpenseTransfer_Between_PC_Template.xlsx";
 const PREPARED_FOODS_GL = "4111011";
@@ -75,13 +75,17 @@ function bodyStyle(fill, isGroupStart = false) {
 }
 
 function buildDeliveryMapWorksheet(records, delivery, weekStart) {
+  const prepLine = (line) => {
+    const display = prepDisplayQuantity({ ...line, total: line.quantity, [delivery.key]: line.quantity, cafes: {} });
+    return { cafe: line.cafe, name: display.name, mrn: display.mrn, quantity: display[delivery.key], unit: display.orderUnit, unitCost: null, finishedDish: display.finishedDish };
+  };
   const deliveryLines = records.flatMap((record) => [
     ...orderLinesForCafe(record).filter((line) => Number(line[delivery.key]) > 0).map((line) => ({ cafe: record.cafe, name: line.name, mrn: line.mrn, quantity: line[delivery.key], unit: line.orderUnit, unitCost: line.orderUnitCost, finishedDish: line.name })),
-    ...grillPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key).map((line) => ({ cafe: record.cafe, name: line.name, mrn: line.mrn, quantity: line.quantity, unit: line.orderUnit, unitCost: null, finishedDish: line.finishedDish })),
-    ...deliPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key).map((line) => ({ cafe: record.cafe, name: line.name, mrn: line.mrn, quantity: line.quantity, unit: line.orderUnit, unitCost: null, finishedDish: line.finishedDish })),
-    ...globalPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key).map((line) => ({ cafe: record.cafe, name: line.name, mrn: line.mrn, quantity: line.quantity, unit: line.orderUnit, unitCost: null, finishedDish: line.finishedDish })),
-    ...breakfastPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key).map((line) => ({ cafe: record.cafe, name: line.name, mrn: line.mrn, quantity: line.quantity, unit: line.orderUnit, unitCost: null, finishedDish: line.finishedDish })),
-  ]);
+    ...grillPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key).map(prepLine),
+    ...deliOrderLinesForCafe(record).filter((line) => Number(line[delivery.key]) > 0).map((line) => ({ cafe: record.cafe, name: line.name, mrn: line.mrn, quantity: line[delivery.key], unit: "sandwich", unitCost: line.orderUnitCost, finishedDish: line.name })),
+    ...globalPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key).map(prepLine),
+    ...breakfastPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key).map(prepLine),
+  ]).sort((a, b) => a.cafe.localeCompare(b.cafe) || a.name.localeCompare(b.name));
   const rows = [
     [`${delivery.day} ${formatShortDate(deliveryDateForWeek(weekStart, delivery.key))} Cafe Delivery Map`, "", "", "", "", "", "", ""],
     [delivery.detail, "", "", "", "", "", "", ""],
@@ -123,17 +127,17 @@ function buildDeliveryMapWorksheet(records, delivery, weekStart) {
 }
 
 export function buildCommissaryBomWorkbook(records, weekStart, metadata = DEFAULT_COMMISSARY_METADATA) {
-  const rows = rolledUpPrepItems(records);
+  const rows = rolledUpPrepItems(records, { consolidateAcrossStations: true });
   const worksheetRows = [
     ["Ingredient Technique Prep List", "", "", "", "", ""],
-    [`Commissary salad bar and Grill LTO · Week ${weekLabel(weekStart)}`, "", "", "", "", ""],
-    ["Ingredient / item", "Total quantity", "Order unit", "Prep technique", "Subrecipe / component", "Finished dish"],
+    [`Commissary production · Week ${weekLabel(weekStart)}`, "", "", "", "", ""],
+    ["Ingredient / item", "Total quantity", "Order unit", "Production type", "Production family", "Finished dish"],
     ...rows.map((row) => [
       row.name,
       row.total,
       row.orderUnit,
-      row.notes || row.category,
-      row.category,
+      row.productionType,
+      row.productionFamily,
       row.finishedDish || row.name,
     ]),
   ];
@@ -148,7 +152,7 @@ export function buildCommissaryBomWorkbook(records, weekStart, metadata = DEFAUL
   let previousCategory = null;
   let categoryBand = -1;
   for (let row = 0; row < worksheetRows.length; row += 1) {
-    const category = row > 2 ? worksheetRows[row][4] : null;
+    const category = row > 2 ? worksheetRows[row][3] : null;
     const isGroupStart = row > 2 && category !== previousCategory;
     if (isGroupStart) categoryBand += 1;
     const fill = isGroupStart ? PREP_LIST_COLORS.section : categoryBand % 2 === 0 ? PREP_LIST_COLORS.detailAlt : PREP_LIST_COLORS.detail;
@@ -163,7 +167,7 @@ export function buildCommissaryBomWorkbook(records, weekStart, metadata = DEFAUL
       };
       else if (row === 2) style = headerStyle;
       else style = bodyStyle(fill, isGroupStart);
-      if (row > 2 && isGroupStart && [0, 4].includes(column)) style = { ...style, font: { ...style.font, bold: true, color: { rgb: PREP_LIST_COLORS.navy } } };
+      if (row > 2 && isGroupStart && [0, 3].includes(column)) style = { ...style, font: { ...style.font, bold: true, color: { rgb: PREP_LIST_COLORS.navy } } };
       setCellStyle(worksheet, row, column, style);
     }
     if (row > 2) previousCategory = category;
@@ -171,13 +175,13 @@ export function buildCommissaryBomWorkbook(records, weekStart, metadata = DEFAUL
 
   const automationRows = [
     ["Portion Plan — Power Automate input area", "", "", "Calculation rows — maintain for Power Automate", "", "", "", ""],
-    [`Commissary salad bar and Grill LTO · Week ${weekLabel(weekStart)}`, "", "", "", "", "", "", ""],
+    [`Commissary production · Week ${weekLabel(weekStart)}`, "", "", "", "", "", "", ""],
     ["Finished dish", "Planned portions", "Current status", "Technique key", "Finished dish", "Normalized unit", "Required qty", "Planning quantity"],
     ...rows.map((row) => [
       row.finishedDish || row.name,
       row.total,
       "Locked order",
-      `${row.category}|${row.id}`,
+      `${row.productionType}|${row.id}`,
       row.name,
       row.orderUnit,
       row.total,

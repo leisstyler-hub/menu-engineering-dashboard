@@ -206,6 +206,7 @@ test("Commissary Ordering Tool requires cafe selection and saves separate delive
   expect(writes).toHaveLength(2);
   expect(writes[1].records[0]["Record Type"]).toBe("Commissary Packout Packet");
   expect(writes[1].records[0].packet.pages.length).toBeGreaterThan(0);
+  expect(writes[1].records[0].packet.pages.every(({ cafe }) => cafe === "Nessie")).toBe(true);
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
@@ -278,9 +279,11 @@ test("Grill LTO starts Cycle Week 1 on November 16 with Set A and Set B whole-sa
   const workbook = XLSX.readFile(await (await prepDownload).path());
   const prepRows = XLSX.utils.sheet_to_json(workbook.Sheets["Consolidated Prep List"], { header: 1, defval: "" });
   expect(prepRows.some((row) => row[0] === "AMZ: Smashburger Patty")).toBe(false);
+  expect(prepRows[2]).toEqual(["Ingredient / item", "Total quantity", "Order unit", "Production type", "Production family", "Finished dish"]);
   const mondayRows = XLSX.utils.sheet_to_json(workbook.Sheets["Monday Delivery Map"], { header: 1, defval: "" });
   expect(mondayRows.some((row) => row[1] === "AMZ: Smashburger Patty")).toBe(false);
-  expect(mondayRows).toContainEqual(expect.arrayContaining(["Nessie", "Turkey, Breast, Deli, Smoked, Butterball", "", 48, "ounce", expect.stringContaining("Mediterranean Turkey Wrap")]));
+  expect(mondayRows).toContainEqual(expect.arrayContaining(["Nessie", "Mediterranean Turkey Wrap", "190990", 12, "sandwich", "Mediterranean Turkey Wrap"]));
+  expect(mondayRows.some((row) => row[5] === "Mediterranean Turkey Wrap" && row[1] !== "Mediterranean Turkey Wrap")).toBe(false);
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
