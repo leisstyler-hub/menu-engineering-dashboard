@@ -243,3 +243,44 @@ test('Pricing Structure shows muted exact linked-item counts beside each price',
  await page.getByRole('button',{name:'Pricing Structure',exact:true}).click();
  await expect(page.getByLabel('3 linked menu items for $0.00 - Replacement',{exact:true})).toHaveText('3');
 });
+
+test('finance pricing audit downloads current prices and modifier parents on desktop and phone',async({page})=>{
+ const {saves}=await fixture(page,true,true,[{id:'unused',category:'Unused',selectorLabel:'$20.00 - Unused',areas:{SEA:'$20.00',AUS:'',BNA:0}}],[{id:'hidden',name:'Hidden Menu',hidden:true,phase:'IT complete',items:[{id:'h',label:'Hidden Burger',mrn:'000125',priceSelectorId:'burger',modifierGroups:['extras']}]}]);
+ await page.getByRole('button',{name:'Pricing Structure',exact:true}).click();
+ const button=page.getByRole('button',{name:'Export Pricing Audit',exact:true});
+ await expect(button).toBeVisible();
+ const downloadPromise=page.waitForEvent('download');await button.click();const file=await downloadPromise;
+ expect(file.suggestedFilename()).toMatch(/^SSMT_Pricing_Audit_\d{4}-\d{2}-\d{2}\.xlsx$/);
+ const wb=XLSX.read(readFileSync(await file.path()),{type:'buffer'}),rows=name=>XLSX.utils.sheet_to_json(wb.Sheets[name],{range:5,defval:''});
+ expect(wb.SheetNames).toEqual(['Pricing Summary','Items by Price','Modifiers','Exceptions']);
+ expect(rows('Pricing Summary').find(r=>r['Price row ID']==='burger')['Attached menu items']).toBe(2);
+ expect(rows('Pricing Summary').find(r=>r['Price row ID']==='burger')['Modifier attachments']).toBe(3);
+ expect(rows('Pricing Summary').find(r=>r['Price row ID']==='unused')['Attached menu items']).toBe(0);
+ expect(rows('Items by Price').find(r=>r.MRN==='000123')['Price AUS']).toBe(10.4);
+ const mods=rows('Modifiers').filter(r=>r.Scope==='Menu attachment');
+ expect(mods.map(r=>r['Parent menu'])).toEqual(['Completed Pricing Menu','Completed Pricing Menu','Hidden Menu']);
+ expect(mods.find(r=>r['Parent menu']==='Hidden Menu')['Parent item']).toBe('Hidden Burger');
+ expect(rows('Pricing Summary').find(r=>r['Price row ID']==='burger')['Price SEA']).toBe(12);
+ await page.setViewportSize({width:390,height:844});await expect(button).toBeVisible();await button.scrollIntoViewIfNeeded();
+ const box=await button.boundingBox();expect(box.x+box.width).toBeLessThanOrEqual(390);
+ await page.screenshot({path:'.scratch/ssmt-pricing-audit-phone.png',fullPage:false});
+ // No save is triggered by the export itself.
+ expect(saves).toHaveLength(0);
+});
+
+// Literal workbook presentation preview from the downloaded XLSX; isolated sample only.
+test('finance workbook presentation is legible and preserves styled summary headers',async({page})=>{
+ await fixture(page,false,true);
+ await page.getByRole('button',{name:'Pricing Structure',exact:true}).click();
+ const pending=page.waitForEvent('download');await page.getByRole('button',{name:'Export Pricing Audit',exact:true}).click();
+ const file=await pending;await file.saveAs('.scratch/SSMT_PRICING_AUDIT_SAMPLE.xlsx');
+ const wb=XLSX.read(readFileSync(await file.path()),{cellStyles:true});
+ const escape=value=>String(value??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+ for(const name of ['Pricing Summary','Modifiers']){
+  const sheet=wb.Sheets[name],data=XLSX.utils.sheet_to_json(sheet,{header:1,defval:''});
+  const html='<style>body{font:14px Calibri,Arial;margin:20px;color:#203b35}table{border-collapse:collapse;table-layout:fixed}td{padding:8px;border:1px solid #dce5df;vertical-align:middle;overflow-wrap:anywhere}tr:nth-child(even){background:#f0f5f2}.title,.header{background:#234d3b;color:white;font-weight:bold}.title{font-size:22px}.header td{background:#234d3b} .note{background:#e8f1ed}</style><table style="width:'+data[5].reduce((sum,_,c)=>sum+((sheet['!cols']?.[c]?.wch||24)*7),0)+'px"><colgroup>'+data[5].map((_,c)=>'<col style="width:'+((sheet['!cols']?.[c]?.wch||24)*7)+'px">').join('')+'</colgroup>'+data.map((row,r)=>'<tr class="'+(r===0?'title':r===5?'header':r<5?'note':'')+'">'+(r<5?'<td colspan="'+data[5].length+'">'+escape(row[0])+'</td>':row.map((cell,c)=>'<td style="width:'+((sheet['!cols']?.[c]?.wch||24)*7)+'px">'+escape(sheet[XLSX.utils.encode_cell({r,c})]?.w ?? cell)+'</td>').join(''))+'</tr>').join('')+'</table>';
+  await page.setViewportSize({width:1800,height:800});await page.setContent(html);
+  await expect(page.locator('tr').nth(5)).toContainText(name==='Pricing Summary'?'Attached menu items':'Parent menu');
+  await page.screenshot({path:`.scratch/SSMT_AUDIT_${name.replaceAll(' ','_')}.png`,fullPage:false});
+ }
+});

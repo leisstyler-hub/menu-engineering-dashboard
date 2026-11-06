@@ -27,6 +27,7 @@ import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
 import { readLocalStorageJson, writeLocalStorageJson } from "../../shared/safeStorage.js";
 import { downloadCentricExport } from "./ssmtCentricExport.js";
+import { downloadPricingAudit } from "./ssmtPricingAudit.js";
 import { activateDuePricing, resolveSsmtMenuPrices, resolveSsmtModifierPrices, priceRowUsage, deleteUnusedCurrentPriceRow, reassignAndDeleteCurrentPriceRow } from "./ssmtPricing.js";
 import { deriveSsmtOperatingRows, ssmtDerivedMenuEntries } from "./ssmtDerivedMenuSource.js";
 import PromotionCalendar from "./PromotionCalendar.jsx";
@@ -1213,6 +1214,21 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
     setCopiedFieldNotice(`${selectedMenu.name} SSMT Export downloaded.`);
   };
 
+  const exportPricingAudit = () => {
+    if (dataStatus !== "ready") return;
+    try {
+      const workspace = buildWorkspaceSnapshot();
+      const saved = workspaceSharedSignature(workspace) === lastSharedSaveSignatureRef.current;
+      downloadPricingAudit(workspace, {
+        saveState: saved && workspaceSync.state === "synced" ? "Saved shared snapshot" : "Draft / not confirmed saved",
+        source: workspaceSync.source || "Loaded SSMT workspace",
+      });
+      setCopiedFieldNotice("Pricing audit Excel downloaded: current prices, menu items, modifiers and exceptions.");
+    } catch (error) {
+      setCopiedFieldNotice(`Pricing audit export failed: ${error.message || "Please try again."}`);
+    }
+  };
+
   const addPricingRow = () => {
     const category = newPriceCategory.trim();
     const seaPrice = newPriceSea.trim();
@@ -2180,6 +2196,10 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                   <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600">SEA price + category</p>
                   <h2 className="mt-1 text-2xl font-black">Pricing Structure</h2>
                   <p className="mt-2 text-sm font-semibold text-slate-600">{ssmtData.areaOrder.join(", ")}</p>
+                  <button type="button" onClick={exportPricingAudit} disabled={dataStatus !== "ready"} className="mt-3 inline-flex items-center gap-2 rounded-lg border border-emerald-700 bg-emerald-700 px-4 py-2 text-sm font-black text-white hover:bg-emerald-800 disabled:opacity-50">
+                    <Download size={16} aria-hidden="true" /> Export Pricing Audit
+                  </button>
+                  <p className="mt-1 text-xs text-slate-600">Excel report of current loaded prices and all menu/modifier links, including hidden menus. Save status is recorded in the report.</p>
                 </div>
                 <div className="grid gap-2 sm:grid-cols-[minmax(180px,1fr)_150px_150px_auto]">
                   <label className="grid gap-1 text-sm font-bold text-slate-700">

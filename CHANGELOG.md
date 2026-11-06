@@ -8,6 +8,8 @@ Candidate `2026.11.05.007-ssmt-mrn-experience`, Chief on chief/ssmt-aus-bna. Pas
 
 ## 2026-11-05
 
+- [Nov 5, 7:14 PM] Export a finance pricing audit with all current prices, attached-item counts, menu items and modifiers grouped by price, menu and parent.
+
 - [Nov 5, 6:45 PM] Pricing Structure shows a muted count of linked menu items beside each price.
 
 - [Nov 5, 6:40 PM] Replacement pricing choices show a muted count of linked menu items on the right.
