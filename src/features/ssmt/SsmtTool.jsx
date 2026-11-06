@@ -36,7 +36,8 @@ import { loadSsmtWorkspaceFromSharedStorage, saveSsmtWorkspaceToSharedStorage } 
 import SsmtAccessGate from "./SsmtAccessGate.jsx";
 import SsmtReusePanel from "./SsmtReusePanel.jsx";
 import { exactMrnMatches } from "./ssmtReuse.js";
-import SsmtExperienceReview from "./SsmtExperienceReview.jsx";
+import SsmtExperienceReview, { TicketFormNotice } from "./SsmtExperienceReview.jsx";
+import { ssmtTicketForPhase } from "./ssmtTicketForms.js";
 
 export default function SsmtTool(props) {
   return <SsmtAccessGate onBack={props.onBackToPlatform}>{(member, onOpenUserAdmin) => <SsmtEditor key={member?.id || "legacy"} {...props} accountMember={member} onOpenUserAdmin={onOpenUserAdmin} />}</SsmtAccessGate>;
@@ -774,6 +775,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
   const [leaveMenuPrompt, setLeaveMenuPrompt] = useState(null);
   const [clearFlagsPrompt, setClearFlagsPrompt] = useState(false);
   const [copiedModifierNotice, setCopiedModifierNotice] = useState("");
+  const [ticketForm, setTicketForm] = useState(null);
   const [copiedFieldNotice, setCopiedFieldNotice] = useState("");
   const [modifierClipboardSlots, setModifierClipboardSlots] = useState(EMPTY_MODIFIER_CLIPBOARD_SLOTS);
   const [phaseBlocker, setPhaseBlocker] = useState("");
@@ -1174,6 +1176,14 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
     if (phaseIsBlocked(phase)) {
       setPhaseBlocker(`Lock all item rows before moving to ${phase}.`);
       return;
+    }
+    if (phase !== selectedMenu.phase) {
+      const ticket = ssmtTicketForPhase(selectedMenu, phase);
+      setTicketForm(ticket);
+      if (ticket) {
+        try { window.open(ticket.href, "_blank", "noopener,noreferrer"); }
+        catch { /* The visible form link remains available when popups are blocked. */ }
+      }
     }
     const timestamp = new Date().toISOString();
     setPhaseBlocker("");
@@ -1994,7 +2004,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
   }
 
   if ((accountMember?.role === "Experience" && activeView === "editor") || (canPreviewExperience && experiencePreview)) {
-    return <SsmtExperienceReview menus={menus} menu={selectedMenu}
+    return <SsmtExperienceReview ticketForm={ticketForm?.menuId === selectedMenu.id ? ticketForm : null} menus={menus} menu={selectedMenu}
       flagModals={flagModals} flagReportHref={selectedFlagReportHref}
       existingFlagForItem={existingFlagForItem} onFlagItem={openFlagForItem}
       groupsForItem={item => matchedModifierGroupsForItem(item, pricedModifierGroups)}
@@ -2002,7 +2012,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
       onSave={() => manualSaveWorkspace()} onAdvance={updateSelectedMenuPhase}
       allItemsLocked={allItemRowsLocked} syncMessage={workspaceSync.message}
       phaseBlocker={phaseBlocker} dataStatus={dataStatus}
-      backLabel={experiencePreview ? "Return to building" : "Back to Menu Selector"}
+      backLabel={experiencePreview ? "Menu Builder" : "Back to Menu Selector"}
       preview={experiencePreview}
       onBack={experiencePreview ? () => setExperiencePreview(false) : () => setActiveView("menus")} />;
   }
@@ -2133,6 +2143,8 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
             </a>
           </section>
         )}
+
+        <TicketFormNotice ticket={ticketForm?.menuId === selectedMenu.id ? ticketForm : null} />
 
         {copiedFieldNotice && (
           <section className="rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-950">

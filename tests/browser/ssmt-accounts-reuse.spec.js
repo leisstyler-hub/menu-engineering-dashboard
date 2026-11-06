@@ -63,6 +63,7 @@ async function isolated(
     duplicateTarget = false,
     sourceWithoutFixy = false,
     lockedSource = false,
+    culinaryDraftSource = false,
     alphabeticalFixtures = false,
     reviewSource = false,
     expiredPromotion = false,
@@ -103,6 +104,7 @@ async function isolated(
   if (duplicateTarget) shared.menus[1].items = [{ ...structuredClone(shared.menus[0].items.find(i => i.id === "banana")), id: "existing-banana" }];
   if (sourceWithoutFixy) shared.menus[0].items[0].fohColumn = "";
   if (lockedSource) shared.menus[0].items[0].lockedForCentric = true;
+  if (culinaryDraftSource) shared.menus[0].phase = "Culinary draft";
   if (alphabeticalFixtures) {
     shared.menus.push({ ...structuredClone(source), id: "alpha-menu", name: "alpha menu", items: [{ ...structuredClone(item), id: "z-item", label: "Zebra" }, { ...structuredClone(item), id: "a-item", label: "apple" }] });
   }
@@ -130,6 +132,8 @@ async function isolated(
   await page.addInitScript(() => {
     localStorage.clear();
     sessionStorage.clear();
+    window.ticketOpens = [];
+    window.open = (url, target, features) => {window.ticketOpens.push({url, target, features});return null;};
   });
   // Never let any storage request escape the test.
   await page.route("**/api/storage/records**", (r) =>
@@ -775,6 +779,9 @@ test("Experience review copies selected details, checks spelling and persists in
   await expect(page.getByText("540 calories", { exact: true })).toBeVisible();
   await page.getByText("View modifiers (1)", { exact: true }).click();
   await expect(page.getByText("Bun", { exact: true })).toBeVisible();
+  const modifierPanel = page.getByTestId("ssmt-experience-modifiers");
+  await expect(modifierPanel.getByRole("heading",{name:"Bread",exact:true})).toHaveCSS("font-size","20px");
+  expect((await modifierPanel.boundingBox()).width).toBeGreaterThan(900);
   await description.fill("Freshly reviewed burger description");
   await page.screenshot({ path: "../../WORK_LOGS/SSMT_EXPERIENCE_2026_11_04/EXPERIENCE_DESKTOP.png", fullPage: true });
   await page.getByRole("button", { name: "Copy all selected menu" }).click();
@@ -806,6 +813,14 @@ test("Experience handoff saves IT stage and phone copy fallback preserves missin
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByLabel("Experience menu").selectOption("source");
   await page.getByRole("button", { name: "Send to IT programming", exact: true }).click();
+  const opened = await page.evaluate(()=>window.ticketOpens);
+  expect(opened).toHaveLength(1);
+  const ticketUrl = new URL(opened[0].url);
+  expect(ticketUrl.pathname).toBe("/b/form/efc2cf544e664e50863f21c7b156335a");
+  expect(ticketUrl.searchParams.get("Please explain further.")).toContain("Source Menu");
+  expect(ticketUrl.searchParams.has("Your Email")).toBe(false);
+  expect(ticketUrl.searchParams.has("Onsite Contact Name")).toBe(false);
+  await expect(page.getByRole("link",{name:"Open IT ticket form",exact:true})).toHaveAttribute("href",opened[0].url);
   await page.getByRole("button", { name: "Save SSMT workspace", exact: true }).click();
   await expect.poll(() => fixture.saves.length).toBe(1);
   expect(fixture.getWorkspace().menus[0].phase).toBe("IT programming");
@@ -898,6 +913,7 @@ test("Tyler can inspect Experience review and return with shared edits and exact
   const before = fixture.saves.length;
   await page.getByRole("button", { name: "View as Experience", exact: true }).click();
   await expect(page.getByTestId("ssmt-experience-preview")).toBeVisible();
+  await expect(page.getByRole("button",{name:"Menu Builder",exact:true})).toHaveCSS("border-top-width","1px");
   await expect(page.getByRole("heading", { name: "SSMT - Experience review", exact: true })).toBeVisible();
   await expect(page.getByText("Vegetarian", { exact: true })).toBeVisible();
   const reviewDescription = page.getByLabel("Description for Smash Burger", { exact: true });
@@ -909,10 +925,14 @@ test("Tyler can inspect Experience review and return with shared edits and exact
   const environment = process.env.PLAYWRIGHT_BASE_URL?.includes("vercel.app") ? "PRODUCTION" : "LOCAL";
   await page.screenshot({ path: `../../WORK_LOGS/SSMT_EXPERIENCE_PREVIEW_${environment}_1440.png` });
   await page.setViewportSize({ width: 390, height: 844 });
-  await expect(page.getByRole("button", { name: "Return to building", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Menu Builder", exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.screenshot({ path: `../../WORK_LOGS/SSMT_EXPERIENCE_PREVIEW_${environment}_390.png` });
-  await page.getByRole("button", { name: "Return to building", exact: true }).click();
+  await page.evaluate(()=>document.documentElement.classList.add("dark"));
+  await expect(page.getByRole("region",{name:"Bread modifier group",exact:true}).locator("header")).toHaveCSS("background-color","rgb(46, 26, 71)");
+  await page.screenshot({path:`../../WORK_LOGS/SSMT_MODIFIERS_${environment}_DARK_390.png`,fullPage:true});
+  await page.evaluate(()=>document.documentElement.classList.remove("dark"));
+  await page.getByRole("button", { name: "Menu Builder", exact: true }).click();
   await expect(page.getByTestId("ssmt-experience-preview")).toHaveCount(0);
   await expect(description).toHaveValue("Reviewed from Tyler preview");
   expect(fixture.saves.length).toBe(before);
@@ -996,7 +1016,7 @@ test("passive exact MRN guide imports explicitly and Experience labels reused it
   await openTarget(page);
   await page.getByRole("button", {name:"View as Experience",exact:true}).click();
   await expect(page.getByText("No Review Needed", {exact:true})).toHaveCount(1);
-  await page.getByRole("button", {name:"Return to building",exact:true}).click();
+  await page.getByRole("button", {name:"Menu Builder",exact:true}).click();
   fixture.switchRole("Experience");
   await page.reload();
   await page.getByRole("button", {name:/open ssmt/i}).click();
@@ -1120,4 +1140,45 @@ test("Experience dietary labels show only Vegan, Vegetarian or blank", async ({p
   await expect(page.getByText("Dietary information not available",{exact:true})).toHaveCount(0);
   expect(fixture.getWorkspace()).toEqual(before);
   expect(fixture.saves).toHaveLength(0);
+});
+
+
+test("Experience ticket opens only on an allowed move into Experience review with menu defaults and requester blank", async ({page}) => {
+  await page.addInitScript(()=>{window.ticketOpens=[];window.open=(url,target,features)=>{window.ticketOpens.push({url,target,features});return null;};});
+  const fixture = await isolated(page,{tyler:true,lockedSource:true,culinaryDraftSource:true});
+  await page.getByRole("button",{name:"Menu Selector / New Menu",exact:true}).click();
+  await page.locator('[data-menu-name="Source Menu"]').click();
+  await page.getByRole("button",{name:"View as Experience",exact:true}).click();
+  expect(await page.evaluate(()=>window.ticketOpens)).toEqual([]);
+  await page.getByRole("button",{name:"Move to Experience review",exact:true}).click();
+  const opened=await page.evaluate(()=>window.ticketOpens);
+  expect(opened).toHaveLength(1);
+  const url=new URL(opened[0].url);
+  expect(url.origin+url.pathname).toBe("https://app.smartsheet.com/b/form/bb4da0b6130d4cfba2832e7dda6919ab");
+  expect(url.searchParams.get("Project Name")).toBe("Source Menu");
+  expect(url.searchParams.has("Requestor Name")).toBe(false);
+  expect(url.searchParams.has("Requestor Email")).toBe(false);
+  expect(url.searchParams.get("Summary & Objective")).toContain("Source Menu");
+  expect(url.searchParams.has("Requested Project Completion Date")).toBe(false);
+  expect(url.searchParams.has("Project Group")).toBe(false);
+  expect(opened[0].features).toContain("noopener");
+  await expect(page.getByRole("link",{name:"Open Experience ticket form",exact:true})).toHaveAttribute("href",opened[0].url);
+  await page.getByRole("button",{name:"Menu Builder",exact:true}).click();
+  await expect(page.getByRole("combobox",{name:"Current SSMT phase",exact:true})).toHaveValue("Experience review");
+  await page.getByRole("combobox",{name:"Current SSMT phase",exact:true}).selectOption("Experience review");
+  expect(await page.evaluate(()=>window.ticketOpens.length)).toBe(1);
+  await page.getByRole("button",{name:"Save SSMT workspace",exact:true}).click();
+  await expect.poll(()=>fixture.saves.length).toBe(1);
+  expect(fixture.getWorkspace().menus[0].phase).toBe("Experience review");
+  expect(fixture.getWorkspace().menus[0].items[0].mrn).toBe("00083821.10");
+});
+
+test("Experience ticket never opens for a locked-out phase transition",async({page})=>{
+  await page.addInitScript(()=>{window.ticketOpens=[];window.open=(url)=>{window.ticketOpens.push(url);return null;};});
+  await isolated(page,{tyler:true,culinaryDraftSource:true});
+  await page.getByRole("button",{name:"Menu Selector / New Menu",exact:true}).click();
+  await page.locator('[data-menu-name="Source Menu"]').click();
+  await page.getByRole("button",{name:"View as Experience",exact:true}).click();
+  await expect(page.getByRole("button",{name:"Move to Experience review",exact:true})).toBeDisabled();
+  expect(await page.evaluate(()=>window.ticketOpens)).toEqual([]);
 });
