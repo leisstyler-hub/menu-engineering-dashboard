@@ -1,5 +1,7 @@
 ## 2026-11-06
 
+- [Nov 6, 8:10 AM] Experience and IT ticket menu names use the menu bucket, menu name and Enterprise suffix.
+
 - [Nov 6, 7:54 AM] Experience and IT handoffs open menu-prefilled tickets with requester fields blank; modifier groups expand into readable rows.
 
 - [Nov 6, 7:37 AM] Experience review has larger text, colored section dividers, and Vegan, Vegetarian or blank dietary labels.

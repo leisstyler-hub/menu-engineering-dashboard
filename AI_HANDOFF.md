@@ -1,3 +1,7 @@
+## SSMT ticket menu naming - 2026-11-06
+
+Candidate 2026.11.06.004-ssmt-ticket-menu-name, Chief solo. Both ticket name fields use {Bucket Menu Type} {Menu Name} - Enterprise from menu.type/name. Requester stays blank; saved menu/Centric names unchanged. Tyler authorization 53e8dd5e3633a066e297a2cd990eda88af401a8a6cd371cedd43c6fe4368f6c6. Rollback bc825cc. Full package verification/build and serial isolated browser 37/37 passed. Solo self-review complete. Publication pending.
+
 ## Dashboard landing gap and shared release numbering - 2026-11-05
 
 Candidate `2026.11.05.015-dashboard-landing-gap`, Chief solo on `chief/dashboard-landing-gap`, baseline/rollback `793393d975dde203159f5f028b78338d37b9b52c`. Tyler request `6c5e2804d79c4fb97c739920a349bd20e26d7b9f782c9b11492f0fd4e72907c6` corrects the landing-page gap and prohibits daily numbering resets between publishers. Desktop Latest Changelog stretches to the recent-items row with a bounded scroll area and ten latest entries; tablet/mobile retain bounded/compact presentation. Shared sequence guard runs in verification and after upstream fetch before the preferred publish push. Full repository verify/build passed; responsive landing suites passed 9/9 and sequence regression tests 2/2. Fresh solo self-review and screenshot review completed. No operational records changed. Publication and production evidence are recorded separately in workspace `WORK_LOGS/DASHBOARD_LANDING_GAP_2026_11_05.md`.

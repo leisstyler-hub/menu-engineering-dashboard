@@ -11,14 +11,15 @@ test("ticket defaults preserve exact menu values and omit requestor and unverifi
     assert.equal(ticket.menuId, menu.id);
     assert.match(url.searchParams.get(phase === "Experience review" ? "Long Details" : "Please explain further."), /00042\.10/);
     for (const key of ["Requestor Name", "Requestor Email", "Your Email", "Onsite Contact Name", "Onsite Contact Phone Number", "Project Group", "Priority Level", "What can we assist you with?"]) assert.equal(url.searchParams.has(key), false);
-    if (phase === "Experience review") assert.equal(url.searchParams.get("Project Name"),menu.name);
+    if (phase === "Experience review") assert.equal(url.searchParams.get("Project Name"),"Promotion Soup & Salad / 2026 - Enterprise");
     else {
-      assert.equal(url.searchParams.get("Centric Menu Name"), menu.centricMenuName);
+      assert.equal(url.searchParams.get("Centric Menu Name"), "Promotion Soup & Salad / 2026 - Enterprise");
       assert.equal(url.searchParams.get("Menu Change Launch Date"), menu.activeStart);
     }
   }
   const unset = new URL(ssmtTicketForPhase({id:"x",name:"Unmapped"},"IT programming").href);
-  assert.equal(unset.searchParams.has("Centric Menu Name"),false);
+  assert.equal(unset.searchParams.get("Centric Menu Name"),"Unmapped - Enterprise");
+  assert.equal(menu.centricMenuName,"CENTRIC 001");
   assert.equal(unset.searchParams.has("Menu Change Launch Date"),false);
   assert.equal(ssmtTicketForPhase(menu,"IT complete"),null);
   assert.equal(ssmtTicketForPhase(menu,"Culinary draft"),null);

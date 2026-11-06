@@ -817,6 +817,7 @@ test("Experience handoff saves IT stage and phone copy fallback preserves missin
   expect(opened).toHaveLength(1);
   const ticketUrl = new URL(opened[0].url);
   expect(ticketUrl.pathname).toBe("/b/form/efc2cf544e664e50863f21c7b156335a");
+  expect(ticketUrl.searchParams.get("Centric Menu Name")).toBe("Core Source Menu - Enterprise");
   expect(ticketUrl.searchParams.get("Please explain further.")).toContain("Source Menu");
   expect(ticketUrl.searchParams.has("Your Email")).toBe(false);
   expect(ticketUrl.searchParams.has("Onsite Contact Name")).toBe(false);
@@ -1155,7 +1156,7 @@ test("Experience ticket opens only on an allowed move into Experience review wit
   expect(opened).toHaveLength(1);
   const url=new URL(opened[0].url);
   expect(url.origin+url.pathname).toBe("https://app.smartsheet.com/b/form/bb4da0b6130d4cfba2832e7dda6919ab");
-  expect(url.searchParams.get("Project Name")).toBe("Source Menu");
+  expect(url.searchParams.get("Project Name")).toBe("Core Source Menu - Enterprise");
   expect(url.searchParams.has("Requestor Name")).toBe(false);
   expect(url.searchParams.has("Requestor Email")).toBe(false);
   expect(url.searchParams.get("Summary & Objective")).toContain("Source Menu");
