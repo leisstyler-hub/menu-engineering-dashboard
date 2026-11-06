@@ -2,7 +2,7 @@ import {test,expect} from '@playwright/test';
 import XLSX from 'xlsx';
 import {readFileSync} from 'node:fs';
 
-async function fixture(page,planned=false,reassign=false,extraPrices=[]){
+async function fixture(page,planned=false,reassign=false,extraPrices=[],extraMenus=[]){
  const priceBook=[{id:'burger',category:'Burger',selectorLabel:'$12.00 - Burger',areas:{SEA:'$12.00',AUS:'$10.40',BNA:'$11.00'}}];
  const item={id:'linked',label:'Linked Burger',name:'Linked Burger',mrn:'000123',fohColumn:'R | GRILL | BURGER',lockedForCentric:true,priceSelectorId:'burger',seaPrice:'$99.00',areaPrices:{SEA:'$99.00',AUS:'$99.00',BNA:'$99.00'},modifierGroups:['extras']};
  const original={menus:[{id:'complete',name:'Completed Pricing Menu',type:'Core',phase:'IT complete',completedAt:'2026-10-01',fixyDesignation:'GRILL',items:[item]}],priceBook,modifierGroups:[{id:'extras',name:'Extras',modifierType:'Addition',choices:[{id:'cheese',label:'Cheese',mrn:'000124',priceSelectorId:'burger',price:'$99.00',areaPrices:{SEA:'$99.00',AUS:'$99.00',BNA:'$99.00'}}]}],selectedMenuId:'complete',priceBookArchives:[],plannedPriceBook:planned?{effectiveDate:'2026-12-01',priceBook:[{...priceBook[0],areas:{SEA:'$14.00',AUS:'$13.00',BNA:'$13.50'}}]}:null};
@@ -12,6 +12,7 @@ async function fixture(page,planned=false,reassign=false,extraPrices=[]){
   original.modifierClipboardSlots=[{id:'slot-1',label:'Slot 1',group:structuredClone(original.modifierGroups[0]),savedAt:'2026-11-01'}];
  }
  original.priceBook.push(...extraPrices);
+ original.menus.push(...extraMenus);
  let shared=structuredClone(original);const saves=[];
  await page.addInitScript(()=>{localStorage.clear();sessionStorage.clear();});
  // Intercept every API request, including all writes, on local and production hosts.
@@ -64,14 +65,16 @@ test('reassign and delete moves menu, shared and inline modifier and clipboard l
  await expect(dialog).toContainText('Modifier choices using this row: 2');
  await expect(dialog).toContainText('Saved clipboard choices using this row: 1');
  await expect(dialog.getByRole('button',{name:'Delete pricing row',exact:true})).toBeDisabled();
- await dialog.getByLabel('Replacement pricing row',{exact:true}).selectOption('replacement');
+ await dialog.locator('summary').click();
+ await dialog.getByRole('radio',{name:'$0.00 - Replacement',exact:true}).check();
  await page.setViewportSize({width:390,height:844});
  await expect(dialog.getByRole('button',{name:'Reassign and delete',exact:true})).toBeInViewport();
  await dialog.getByRole('button',{name:'Cancel',exact:true}).click();
  await expect(page.getByRole('button',{name:'Delete price row $12.00 - Burger',exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Delete price row $12.00 - Burger',exact:true}).click();
- await expect(dialog.getByLabel('Replacement pricing row',{exact:true})).toHaveValue('');
- await dialog.getByLabel('Replacement pricing row',{exact:true}).selectOption('replacement');
+ await expect(dialog.locator('summary')).toHaveText('Choose a replacement pricing row');
+ await dialog.locator('summary').click();
+ await dialog.getByRole('radio',{name:'$0.00 - Replacement',exact:true}).check();
  await dialog.getByRole('button',{name:'Reassign and delete',exact:true}).click();
  await expect(page.getByRole('button',{name:'Delete price row $12.00 - Burger',exact:true})).toHaveCount(0);
  await page.getByRole('button',{name:'Save SSMT workspace',exact:true}).click();
@@ -210,8 +213,34 @@ test('replacement chooser sorts prices high to low and equal prices alphabetical
  await fixture(page,false,false,rows);
  await page.getByRole('button',{name:'Pricing Structure',exact:true}).click();
  await page.getByRole('button',{name:'Delete price row $12.00 - Burger',exact:true}).click();
- const chooser=page.getByLabel('Replacement pricing row',{exact:true});
- await expect(chooser.locator('option')).toHaveText(['Choose a replacement before deleting','Highest','Alpha','Zulu','Zero']);
- await chooser.selectOption('a');
- await expect(chooser).toHaveValue('a');
+ const chooser=page.getByRole('dialog');
+ await chooser.locator('summary').click();
+ await expect(chooser.getByRole('radio')).toHaveCount(5);
+ expect(await chooser.getByRole('radio').evaluateAll(rows=>rows.map(row=>row.getAttribute('aria-label')))).toEqual(['No replacement','Highest','Alpha','Zulu','Zero']);
+ await chooser.getByRole('radio',{name:'Alpha',exact:true}).check();
+ await expect(chooser.locator('summary')).toHaveText('Alpha');
+});
+
+
+test('replacement chooser shows muted exact linked-menu-item counts at the right',async({page})=>{
+ const {saves}=await fixture(page,false,true,[],[{id:'historical',hidden:true,name:'Historical',phase:'IT complete',items:[{id:'h1',priceSelectorId:'burger'},{id:'h2',priceSelectorId:'burger'},{id:'unlinked',seaPrice:'$12.00'}]}]);
+ await page.getByRole('button',{name:'Pricing Structure',exact:true}).click();
+ await page.getByRole('button',{name:'Delete price row $0.00 - Replacement',exact:true}).click();
+ await page.getByText('Choose a replacement pricing row',{exact:true}).click();
+ const count=page.getByLabel('3 linked menu items for $12.00 - Burger',{exact:true});
+ await expect(count).toHaveText('3');
+ await expect(count).toHaveCSS('color','rgb(100, 116, 139)');
+ const label=page.getByText('$12.00 - Burger',{exact:true}).last();
+ const a=await label.boundingBox(),b=await count.boundingBox();
+ expect(b.x).toBeGreaterThan(a.x);
+ await page.getByRole('radio',{name:'$12.00 - Burger',exact:true}).check();
+ await expect(page.getByRole('button',{name:'Reassign and delete',exact:true})).toBeEnabled();
+ await page.getByRole('button',{name:'Cancel',exact:true}).click();
+ await page.getByRole('button',{name:'Delete price row $12.00 - Burger',exact:true}).click();
+ await page.setViewportSize({width:390,height:844});
+ await page.getByText('Choose a replacement pricing row',{exact:true}).click();
+ await expect(page.getByLabel('0 linked menu items for $0.00 - Replacement',{exact:true})).toHaveText('0');
+ await page.screenshot({path:'../../.scratch/SSMT_COUNTS_PHONE.png'});
+ await page.getByRole('button',{name:'Cancel',exact:true}).click();
+ for(const saved of saves)expect(saved.priceBook).toHaveLength(2);
 });

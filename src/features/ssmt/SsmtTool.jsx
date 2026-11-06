@@ -991,6 +991,13 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
   const selectedPrice = ssmtData.priceBook.find((row) => row.id === selectedPriceId) || ssmtData.priceBook[0];
   const priceToDelete = ssmtData.priceBook.find(row => row.id === deletePriceId);
   const deletePriceUsage = priceRowUsage(latestWorkspaceRef.current, deletePriceId);
+  const priceMenuItemCounts = useMemo(() => {
+    const counts = new Map();
+    for (const menu of menus) for (const item of menu.items || []) {
+      if (item.priceSelectorId) counts.set(item.priceSelectorId, (counts.get(item.priceSelectorId) || 0) + 1);
+    }
+    return counts;
+  }, [menus]);
   const replacementPrice = ssmtData.priceBook.filter(row => row.id === replacementPriceId && row.id !== deletePriceId);
   const canDeletePrice = Boolean(priceToDelete) && (deletePriceUsage.total === 0 || replacementPrice.length === 1) && ssmtData.priceBook.filter(row => row.id === deletePriceId).length === 1;
   const confirmDeletePrice = () => {
@@ -3099,12 +3106,35 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
             <p>Modifier choices using this row: {deletePriceUsage.modifierChoices}</p>
             <p>Saved clipboard choices using this row: {deletePriceUsage.clipboardChoices}</p>
           </div>
-          <label className="grid gap-2 font-bold">Replacement pricing row
-            <select aria-label="Replacement pricing row" value={replacementPriceId} onChange={event => setReplacementPriceId(event.target.value)} className="w-full min-w-0 rounded-lg border border-slate-300 bg-white p-2">
-              <option value="">{deletePriceUsage.total > 0 ? "Choose a replacement before deleting" : "No replacement needed (unused row)"}</option>
-              {ssmtData.priceBook.filter(row => row.id !== deletePriceId && ssmtData.priceBook.filter(candidate => candidate.id === row.id).length === 1).sort(comparePricesHighToLow).map(row => <option key={row.id} value={row.id}>{row.selectorLabel || row.category}</option>)}
-            </select>
-          </label>
+          <fieldset className="min-w-0 space-y-2">
+            <legend className="font-bold">Replacement pricing row</legend>
+            <details className="rounded-lg border border-slate-300 bg-white">
+              <summary className="cursor-pointer p-2 font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-600">
+                {replacementPrice[0]?.selectorLabel || replacementPrice[0]?.category || "Choose a replacement pricing row"}
+              </summary>
+              <div className="max-h-48 overflow-y-auto border-t border-slate-200">
+                <label className="flex min-h-11 cursor-pointer items-center gap-2 px-3 py-2 text-sm">
+                  <input type="radio" name="replacement-price" aria-label="No replacement" checked={!replacementPriceId} onChange={() => setReplacementPriceId("")} />
+                  {deletePriceUsage.total > 0 ? "Choose a replacement before deleting" : "No replacement needed (unused row)"}
+                </label>
+                {ssmtData.priceBook.filter(row => row.id !== deletePriceId && ssmtData.priceBook.filter(candidate => candidate.id === row.id).length === 1).sort(comparePricesHighToLow).map(row => {
+                  const label = row.selectorLabel || row.category;
+                  const count = priceMenuItemCounts.get(row.id) || 0;
+                  return <label key={row.id} className="flex min-h-11 cursor-pointer items-center gap-2 px-3 py-2 hover:bg-slate-50">
+                    <input type="radio" name="replacement-price" aria-label={label} checked={replacementPriceId === row.id} onChange={event => {
+                      setReplacementPriceId(row.id);
+                      const details = event.currentTarget.closest("details");
+                      details.open = false;
+                      details.querySelector("summary").focus();
+                    }} />
+                    <span className="min-w-0 flex-1 font-bold">{label}</span>
+                    <span aria-label={`${count} linked menu ${count === 1 ? "item" : "items"} for ${label}`} title="Linked menu items across all menus, including hidden and historical menus" className="shrink-0 text-xs font-normal tabular-nums text-slate-500">{count}</span>
+                  </label>;
+                })}
+              </div>
+            </details>
+            <p className="text-xs text-slate-500">Right-hand numbers show linked menu items across all menus.</p>
+          </fieldset>
           {deletePriceUsage.total > 0 && <p role="alert" className="font-bold text-red-800">Reassign these links before deleting. This includes historical or hidden menus. The selected replacement prices will apply to every linked item and modifier.</p>}
           {deletePriceUsage.inPlannedBook && <p className="font-bold text-amber-900">The planned price increase still contains this row and may restore it when activated.</p>}
           <p className="text-sm text-slate-700">Items and their other details are preserved. Reassignment updates price links and saved prices to the replacement. Planned pricing and pricing archives are preserved. Use Save SSMT workspace to save your change.</p>

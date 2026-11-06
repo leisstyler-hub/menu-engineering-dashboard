@@ -17,3 +17,10 @@ test('invalid, same, missing and ambiguous row IDs cannot reassign or delete',()
  for(const [a,b] of [['a','a'],['a','missing'],['missing','b'],['a','']])assert.equal(pricing.reassignAndDeleteCurrentPriceRow(w,a,b),w);
  assert.equal(pricing.reassignAndDeleteCurrentPriceRow({...w,priceBook:[...w.priceBook,{id:'b'}]},'a','b').priceBook.length,3);
 });
+
+test('menu-item usage counts exact price links across active and hidden menus without counting modifier or clipboard copies',()=>{
+ const w={menus:[{items:[{priceSelectorId:'a'},{priceSelectorId:'b'},{seaPrice:'$5.00'}]},{hidden:true,phase:'IT complete',items:[{priceSelectorId:'a'}]}],modifierGroups:[{choices:[{priceSelectorId:'a'}]}],modifierClipboardSlots:[{group:{choices:[{priceSelectorId:'a'}]}}]};
+ assert.equal(pricing.priceRowUsage(w,'a').menuItems,2);
+ assert.equal(pricing.priceRowUsage(w,'b').menuItems,1);
+ assert.equal(pricing.priceRowUsage(w,'unused').menuItems,0);
+});
