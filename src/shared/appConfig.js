@@ -1,1 +1,1 @@
-export const APP_VERSION_STAMP = "2026.11.05.010-ssmt-price-link-counts";
+export const APP_VERSION_STAMP = "2026.11.05.011-ssmt-price-table-counts";

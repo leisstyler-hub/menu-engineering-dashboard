@@ -1,3 +1,7 @@
+## SSMT Pricing Structure linked-item counts - 2026-11-05
+
+Candidate 2026.11.05.011-ssmt-price-table-counts, Chief solo. Tyler clarification 474e70c8 places the muted number in the Pricing Structure table. Supersedes chooser-count interpretation in 52f3b24; restores original native replacement chooser and keeps Seattle sorting. Table counts exact menu-item priceSelectorId links across hidden/history menus; excludes modifier/clipboard copies. Count updates after reassignment and reload. No direct production data writes. Evidence: workspace WORK_LOGS/SSMT_PRICE_LINK_COUNTS_2026_11_05.md. Rollback 48f61b6 / dpl_24EDANgWiRDRpHXTCSFF9WxVP25H.
+
 ## SSMT replacement linked-item counts - 2026-11-05
 
 Candidate 2026.11.05.010-ssmt-price-link-counts, Chief solo on chief/ssmt-aus-bna, Tyler request 8694f532. Replacement choices show a muted right-aligned menu-item count from exact priceSelectorId links across all menus, including hidden/history. Modifiers and clipboard choices are excluded from this menu-item count; existing delete usage totals remain unchanged. Native details and radio controls allow separate subdued count styling, preserve keyboard access and return focus to summary after selection. Seattle descending order and alphabetical ties remain. No data or schema changes. Acceptance and release record: workspace WORK_LOGS/SSMT_PRICE_LINK_COUNTS_2026_11_05.md. Rollback 48f61b60f2c6f2fb21acbd7ef3d0425215f99e52.
