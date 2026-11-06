@@ -8,6 +8,8 @@ Candidate `2026.11.05.007-ssmt-mrn-experience`, Chief on chief/ssmt-aus-bna. Pas
 
 ## 2026-11-05
 
+- [Nov 5, 8:39 PM] Landing changelog fills the space beside recent items; daily release numbers continue across all publishers.
+
 - [Nov 5, 8:20 PM] Experience menu choices show review menus first, with headers and alphabetical order within each group.
 
 - [Nov 5, 7:37 PM] Experience review uses aligned rows with submenu outlines and divider headings; Copy All copies only item titles and descriptions.

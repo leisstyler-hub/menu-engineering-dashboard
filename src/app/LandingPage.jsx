@@ -83,7 +83,7 @@ const CHANGELOG_ENTRIES = (() => {
     }, []);
 })();
 
-const visibleChangelogItems = CHANGELOG_ENTRIES.slice(0, 6);
+const visibleChangelogItems = CHANGELOG_ENTRIES.slice(0, 10);
 const WEEKLY_TRAFFIC_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, index) => ({
   day,
   visitors: null,
@@ -533,7 +533,7 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
               </DashboardPanel>
             </section>
 
-            <section className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(420px,0.75fr)]">
+            <section className="grid grid-cols-1 items-stretch gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(420px,0.75fr)]">
               <DashboardPanel icon={ListChecks} eyebrow="Newest Data Signal" title="Recently Added Items">
                 <div className="space-y-2">
                   {recentItems.map((item) => (
@@ -550,8 +550,8 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
                 </div>
               </DashboardPanel>
 
-              <DashboardPanel icon={Database} eyebrow="Release Signal" title="Latest Changelog">
-                <div className="max-h-[460px] space-y-2 overflow-y-auto pr-1" data-testid="landing-changelog-panel">
+              <DashboardPanel icon={Database} eyebrow="Release Signal" title="Latest Changelog" className="flex min-h-0 flex-col" contentClassName="relative min-h-0 flex-1">
+                <div className="max-h-[460px] space-y-2 overflow-y-auto pr-1 xl:absolute xl:inset-0 xl:max-h-none" data-testid="landing-changelog-panel">
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                     <p className="text-sm font-black text-slate-950">{CHANGELOG_ENTRIES.length.toLocaleString()} total logged changes</p>
                   </div>
@@ -1032,9 +1032,9 @@ function WeeklyTrafficChart({ days, compact = false }) {
   );
 }
 
-function DashboardPanel({ icon: Icon, eyebrow, title, children }) {
+function DashboardPanel({ icon: Icon, eyebrow, title, children, className = "", contentClassName = "" }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <section className={`rounded-lg border border-slate-200 bg-white p-5 shadow-sm ${className}`}>
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">{eyebrow}</p>
@@ -1044,7 +1044,7 @@ function DashboardPanel({ icon: Icon, eyebrow, title, children }) {
           <Icon size={20} />
         </div>
       </div>
-      <div className="mt-5">{children}</div>
+      <div className={`mt-5 ${contentClassName}`}>{children}</div>
     </section>
   );
 }

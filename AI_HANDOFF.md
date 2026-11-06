@@ -1,3 +1,7 @@
+## Dashboard landing gap and shared release numbering - 2026-11-05
+
+Candidate `2026.11.05.015-dashboard-landing-gap`, Chief solo on `chief/dashboard-landing-gap`, baseline/rollback `793393d975dde203159f5f028b78338d37b9b52c`. Tyler request `6c5e2804d79c4fb97c739920a349bd20e26d7b9f782c9b11492f0fd4e72907c6` corrects the landing-page gap and prohibits daily numbering resets between publishers. Desktop Latest Changelog stretches to the recent-items row with a bounded scroll area and ten latest entries; tablet/mobile retain bounded/compact presentation. Shared sequence guard runs in verification and after upstream fetch before the preferred publish push. Full repository verify/build passed; responsive landing suites passed 9/9 and sequence regression tests 2/2. Fresh solo self-review and screenshot review completed. No operational records changed. Publication and production evidence are recorded separately in workspace `WORK_LOGS/DASHBOARD_LANDING_GAP_2026_11_05.md`.
+
 ## SSMT Experience selector grouping - 2026-11-05
 
 LIVE 2026.11.05.014-ssmt-experience-selector, Chief solo on chief/ssmt-aus-bna. Tyler request 280095c8. Experience dropdown uses native Experience Review: and Menus: groups, review phase first and case-insensitive alphabetical sorting within each. Only a copied display array is sorted. No production data writes. Full package verification/build passed and native-shell account/Experience browser passed 34/34 with exit 0; governed committed verification/build passed again. App a5e2a244f9277bb90a9f9aceefb19e63b91a0b29 verified READY production dpl_9XoxXMFMC232cbUrJkGyFrHq3TD7 at exact SHA and canonical aliases. Canonical /assets/index-kxCsc8vT.js contains the version; isolated production Experience browser passed 11/11 with exit 0, including selector grouping/order and menu switching. No production workspace data changed. Chief solo delivery and self-review. Evidence: workspace WORK_LOGS/SSMT_EXPERIENCE_SELECTOR_GROUPS_2026_11_05.md. Documentation follow-up deployment not separately verified. Solo fresh self-review found no scope or data changes. Rollback d3da78e / dpl_6XWG59XaxtHa5wT9DkJTBtxxtrWt.
@@ -1100,6 +1104,8 @@ Run this if local `origin/main` looks stale, normal Git reports `SEC_E_NO_CREDEN
 If normal `git push` fails, use GitHub Contents API or the GitHub connector, but make sure all intended files are published. New files require create-file handling, not update-only handling.
 
 ## Version Stamp Rule
+
+Daily `NNN` is one shared sequence across all admins, agents and tools, using the Los Angeles release date. Before assigning a number, fetch current upstream and use one greater than the highest number already used that date in shared `src/shared/appConfig.js` history. Never reset for a different requester or worktree: Alex's third release followed by Tyler's is fourth. Do not renumber historical releases. `scripts/release-version.mjs` checks this during verification and again after the publish script fetches upstream; unchanged versions permit documentation-only releases.
 
 For live app behavior/UI/data-flow changes, update:
 

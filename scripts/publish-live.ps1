@@ -177,6 +177,8 @@ Invoke-Checked $git @("-c", "http.sslBackend=openssl", "-c", "credential.helper=
 
 $localSha = (& $git -c "safe.directory=$repoRoot" rev-parse HEAD).Trim()
 $remoteSha = (& $git -c "safe.directory=$repoRoot" rev-parse "refs/remotes/origin/$Branch").Trim()
+Write-Step "Shared daily release sequence"
+Invoke-Checked "node" @("scripts/release-version.mjs", "refs/remotes/origin/$Branch")
 $mergeBase = (& $git -c "safe.directory=$repoRoot" merge-base HEAD "refs/remotes/origin/$Branch").Trim()
 
 if ($mergeBase -ne $remoteSha) {

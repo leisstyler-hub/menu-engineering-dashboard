@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { execFileSync } from "node:child_process";
 
 const root = process.cwd();
 
@@ -82,4 +83,6 @@ assertIncludes("scripts/release-live.mjs", "Release source guard");
 assertIncludes("scripts/release-live.mjs", "GitHub source already deleted");
 assertIncludes("scripts/release-live.mjs", "Release complete");
 
+execFileSync(process.execPath, ["--test", "tests/release-version.test.mjs"], { stdio: "inherit" });
+execFileSync(process.execPath, ["scripts/release-version.mjs"], { stdio: "inherit" });
 console.log("Release workflow verification passed.");
