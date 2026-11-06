@@ -1074,6 +1074,12 @@ test("Experience aligned rows retain submenu and divider structure on desktop an
   const fixture = await isolated(page,{role:"Experience",reviewSections:true});
   const before = structuredClone(fixture.getWorkspace());
   const lunch = page.getByRole("region",{name:"Lunch",exact:true});
+  await expect(lunch.getByRole("heading",{level:2})).toHaveCSS("font-size","20px");
+  const divider = lunch.getByRole("heading",{name:"Mains",exact:true});
+  await expect(divider).toHaveCSS("font-size","18px");
+  await expect(divider.locator("..")).toHaveCSS("border-left-width","6px");
+  await expect(lunch.getByLabel("Description for Soup",{exact:true})).toHaveCSS("font-size","16px");
+  await expect(page.getByText("Dietary information not available",{exact:true})).toHaveCount(0);
   await expect(lunch).toBeVisible();
   await expect(lunch.getByRole("heading",{name:"Mains",exact:true})).toBeVisible();
   await expect(lunch.getByRole("heading",{name:"Coming soon",exact:true})).toBeVisible();
@@ -1099,4 +1105,19 @@ test("Experience aligned rows retain submenu and divider structure on desktop an
   await expect(lunch.getByRole("button",{name:"Flag for change",exact:true})).toBeInViewport();
   await scroller.evaluate(node=>node.scrollLeft=0);
   await page.screenshot({path:"../../WORK_LOGS/EXPERIENCE_ROWS_PHONE.png",fullPage:true});
+  await page.evaluate(()=>document.documentElement.classList.add("dark"));
+  await expect(divider.locator("../..")).toHaveCSS("background-color","rgb(11, 39, 66)");
+  await page.screenshot({path:"../../WORK_LOGS/EXPERIENCE_ROWS_PHONE_DARK.png",fullPage:true});
+});
+
+test("Experience dietary labels show only Vegan, Vegetarian or blank", async ({page}) => {
+  const fixture = await isolated(page,{role:"Experience",dietaryFixtures:true});
+  const before = structuredClone(fixture.getWorkspace());
+  const rows = page.getByTestId("ssmt-experience-item-row");
+  await expect(rows.nth(0).locator("td").nth(2)).toContainText("Vegetarian");
+  await expect(rows.nth(1).locator("td").nth(2)).toContainText("Vegan");
+  await expect(rows.nth(2).locator("td").nth(2)).toHaveText("540 calories");
+  await expect(page.getByText("Dietary information not available",{exact:true})).toHaveCount(0);
+  expect(fixture.getWorkspace()).toEqual(before);
+  expect(fixture.saves).toHaveLength(0);
 });

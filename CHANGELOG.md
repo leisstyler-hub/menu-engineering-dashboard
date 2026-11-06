@@ -1,5 +1,7 @@
 ## 2026-11-06
 
+- [Nov 6, 7:37 AM] Experience review has larger text, colored section dividers, and Vegan, Vegetarian or blank dietary labels.
+
 - [Nov 6, 7:25 AM] Completed promo menus show Centric Ready with a green outline on both calendars.
 
 ## SSMT pricing reassignment production verified - 2026-11-05
