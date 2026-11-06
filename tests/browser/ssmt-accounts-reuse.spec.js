@@ -69,9 +69,15 @@ async function isolated(
     experienceLanding = false,
     mrnDraft = false,
     reviewSections = false,
+    selectorGroups = false,
   } = {},
 ) {
   let shared = workspace();
+  if (selectorGroups) shared.menus.push(
+    {...structuredClone(source), id:"z-review", name:"Zebra review", phase:"Experience review"},
+    {...structuredClone(source), id:"a-review", name:"apple review", phase:"Experience review"},
+    {...structuredClone(source), id:"a-menu", name:"alpha menu"},
+  );
   if (mrnDraft) { shared.menus[1].items = [{...structuredClone(item),id:"draft-match",label:"Draft dish",fohColumn:"",description:"Draft description",modifierGroups:[],additionalSubmenuIds:[]}]; shared.menus[1].flags = [{id:"draft-flag",itemId:"draft-match",itemName:"Draft dish",reason:"Description correction",note:"Keep this flag",createdAt:"2026-11-05T17:00:00Z"}]; }
   if (expiredPromotion) Object.assign(shared.menus[0], {type:"Promotion", activeEnd:"2020-01-01", hidden:false});
   if (missingFixy) shared.menus[0].items.push({ ...structuredClone(item), id: "missing-fixy", label: "Missing Code Dish", name: "Missing Code Dish", fohColumn: "", mrn: "00999" });
@@ -1027,6 +1033,19 @@ test("auto hibernated promotion offers Restore and preserves its historical date
   await expect(page.locator('[data-menu-name="Source Menu"]')).toBeVisible();
 });
 
+
+test("Experience menu dropdown groups pending reviews first and alphabetizes each group", async ({page}) => {
+  const fixture = await isolated(page,{role:"Experience",selectorGroups:true});
+  const before = structuredClone(fixture.getWorkspace());
+  const selector = page.getByLabel("Experience menu",{exact:true});
+  expect(await selector.locator("optgroup").evaluateAll(groups => groups.map(group => group.label))).toEqual(["Experience Review:", "Menus:"]);
+  await expect(selector.locator("option")).toHaveText(["apple review", "Zebra review", "alpha menu", "Source Menu", "Target Menu"]);
+  await selector.selectOption("z-review");
+  await expect(selector).toHaveValue("z-review");
+  await expect(page.getByText("Current stage: Experience review",{exact:true})).toBeVisible();
+  expect(fixture.getWorkspace()).toEqual(before);
+  expect(fixture.saves).toHaveLength(0);
+});
 
 test("Experience starts on the shared selector and opens only its review view", async ({page}) => {
   await page.setViewportSize({width:390,height:844});

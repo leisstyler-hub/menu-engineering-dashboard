@@ -19,6 +19,11 @@ export default function SsmtExperienceReview({ menus, menu, groupsForItem, onSel
     } else section.rows.push(row);
   }
   if (section.rows.length || section.title) sections.push(section);
+  const alphabeticalMenus = [...menus].sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "base", numeric: true }));
+  const selectorGroups = [
+    { label: "Experience Review:", menus: alphabeticalMenus.filter(entry => entry.phase === "Experience review") },
+    { label: "Menus:", menus: alphabeticalMenus.filter(entry => entry.phase !== "Experience review") },
+  ];
   const nextPhase = menu.phase === "Culinary draft" ? "Experience review" : "IT programming";
   const canAdvance = ["Culinary draft", "Experience review"].includes(menu.phase) && allItemsLocked;
   const copyAll = async () => {
@@ -41,7 +46,7 @@ export default function SsmtExperienceReview({ menus, menu, groupsForItem, onSel
     {flagModals}
     {dataStatus === "ready" ? <>
       <div className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
-        <label className="flex min-w-0 max-w-full items-center gap-2 font-semibold">Menu <select aria-label="Experience menu" value={menu.id} onChange={event => { onSelectMenu(event.target.value); setCopyFallback(""); setCopyStatus(""); }} className="min-w-0 max-w-full rounded-md border border-slate-300 bg-white px-2 py-2 font-normal">{menus.map(entry => <option key={entry.id} value={entry.id}>{entry.name}</option>)}</select></label>
+        <label className="flex min-w-0 max-w-full items-center gap-2 font-semibold">Menu <select aria-label="Experience menu" value={menu.id} onChange={event => { onSelectMenu(event.target.value); setCopyFallback(""); setCopyStatus(""); }} className="min-w-0 max-w-full rounded-md border border-slate-300 bg-white px-2 py-2 font-normal">{selectorGroups.map(group => <optgroup key={group.label} label={group.label}>{group.menus.map(entry => <option key={entry.id} value={entry.id}>{entry.name}</option>)}</optgroup>)}</select></label>
         <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-900">Current stage: {menu.phase}</span>
         <button type="button" onClick={copyAll} className="rounded border bg-white p-2">Copy all selected menu</button>
       <label className="flex items-center gap-2"><input type="checkbox" checked={spellcheck} onChange={event => setSpellcheck(event.target.checked)} />Spellcheck descriptions</label>
