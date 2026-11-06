@@ -2,10 +2,15 @@ import {test,expect} from '@playwright/test';
 import XLSX from 'xlsx';
 import {readFileSync} from 'node:fs';
 
-async function fixture(page,planned=false){
+async function fixture(page,planned=false,reassign=false){
  const priceBook=[{id:'burger',category:'Burger',selectorLabel:'$12.00 - Burger',areas:{SEA:'$12.00',AUS:'$10.40',BNA:'$11.00'}}];
  const item={id:'linked',label:'Linked Burger',name:'Linked Burger',mrn:'000123',fohColumn:'R | GRILL | BURGER',lockedForCentric:true,priceSelectorId:'burger',seaPrice:'$99.00',areaPrices:{SEA:'$99.00',AUS:'$99.00',BNA:'$99.00'},modifierGroups:['extras']};
  const original={menus:[{id:'complete',name:'Completed Pricing Menu',type:'Core',phase:'IT complete',completedAt:'2026-10-01',fixyDesignation:'GRILL',items:[item]}],priceBook,modifierGroups:[{id:'extras',name:'Extras',modifierType:'Addition',choices:[{id:'cheese',label:'Cheese',mrn:'000124',priceSelectorId:'burger',price:'$99.00',areaPrices:{SEA:'$99.00',AUS:'$99.00',BNA:'$99.00'}}]}],selectedMenuId:'complete',priceBookArchives:[],plannedPriceBook:planned?{effectiveDate:'2026-12-01',priceBook:[{...priceBook[0],areas:{SEA:'$14.00',AUS:'$13.00',BNA:'$13.50'}}]}:null};
+ if(reassign){
+  original.priceBook.push({id:'replacement',category:'Replacement',selectorLabel:'$0.00 - Replacement',areas:{SEA:'$0.00',AUS:'',BNA:'$2.00'}});
+  original.menus[0].items[0].modifierGroups.push(structuredClone(original.modifierGroups[0]));
+  original.modifierClipboardSlots=[{id:'slot-1',label:'Slot 1',group:structuredClone(original.modifierGroups[0]),savedAt:'2026-11-01'}];
+ }
  let shared=structuredClone(original);const saves=[];
  await page.addInitScript(()=>{localStorage.clear();sessionStorage.clear();});
  // Intercept every API request, including all writes, on local and production hosts.
@@ -47,6 +52,37 @@ test('current pricing edits update completed menu display and item/modifier expo
  await page.getByRole('button',{name:'Save SSMT workspace',exact:true}).click();
  await expect.poll(()=>saves.length).toBeGreaterThan(0);
  for(const saved of saves){expect(saved.menus).toEqual(original.menus);expect(saved.modifierGroups).toEqual(original.modifierGroups);}
+});
+
+test('reassign and delete moves menu, shared and inline modifier and clipboard links together and persists after reload',async({page})=>{
+ const {original,saves}=await fixture(page,false,true);
+ await page.getByRole('button',{name:'Pricing Structure',exact:true}).click();
+ await page.getByRole('button',{name:'Delete price row $12.00 - Burger',exact:true}).click();
+ const dialog=page.getByRole('dialog',{name:'Delete current pricing row',exact:true});
+ await expect(dialog).toContainText('Menu items using this row: 1');
+ await expect(dialog).toContainText('Modifier choices using this row: 2');
+ await expect(dialog).toContainText('Saved clipboard choices using this row: 1');
+ await expect(dialog.getByRole('button',{name:'Delete pricing row',exact:true})).toBeDisabled();
+ await dialog.getByLabel('Replacement pricing row',{exact:true}).selectOption('replacement');
+ await page.setViewportSize({width:390,height:844});
+ await expect(dialog.getByRole('button',{name:'Reassign and delete',exact:true})).toBeInViewport();
+ await dialog.getByRole('button',{name:'Cancel',exact:true}).click();
+ await expect(page.getByRole('button',{name:'Delete price row $12.00 - Burger',exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Delete price row $12.00 - Burger',exact:true}).click();
+ await expect(dialog.getByLabel('Replacement pricing row',{exact:true})).toHaveValue('');
+ await dialog.getByLabel('Replacement pricing row',{exact:true}).selectOption('replacement');
+ await dialog.getByRole('button',{name:'Reassign and delete',exact:true}).click();
+ await expect(page.getByRole('button',{name:'Delete price row $12.00 - Burger',exact:true})).toHaveCount(0);
+ await page.getByRole('button',{name:'Save SSMT workspace',exact:true}).click();
+ await expect.poll(()=>saves.at(-1)?.priceBook.length).toBe(1);
+ const saved=saves.at(-1),item=saved.menus[0].items[0];
+ expect(item.priceSelectorId).toBe('replacement');expect(item.mrn).toBe('000123');expect(item.lockedForCentric).toBe(true);expect(item.areaPrices).toEqual(original.priceBook[1].areas);
+ for(const g of [item.modifierGroups[1],saved.modifierGroups[0],saved.modifierClipboardSlots[0].group]){expect(g.choices[0].priceSelectorId).toBe('replacement');expect(g.choices[0].price).toBe('$0.00');}
+ expect(saved.priceBookArchives).toEqual(original.priceBookArchives);
+ await page.reload();await page.getByRole('button',{name:/open ssmt/i}).click();
+ await page.getByRole('button',{name:'Pricing Structure',exact:true}).click();
+ await expect(page.getByRole('button',{name:'Delete price row $12.00 - Burger',exact:true})).toHaveCount(0);
+ await expect(page.getByRole('button',{name:'Delete price row $0.00 - Replacement',exact:true})).toBeVisible();
 });
 test('scheduled activation updates a completed menu while the editor stays open and preserves historical prices',async({page})=>{
  await page.clock.install({time:new Date('2026-11-30T12:00:00')});

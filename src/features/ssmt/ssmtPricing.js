@@ -94,3 +94,25 @@ export function deleteUnusedCurrentPriceRow(workspace = {}, priceId) {
   if (priceRowUsage(workspace, priceId).total > 0) return workspace;
   return { ...workspace, priceBook: workspace.priceBook.filter(row => row.id !== priceId) };
 }
+
+export function reassignAndDeleteCurrentPriceRow(workspace = {}, priceId, replacementId) {
+  const book = workspace.priceBook || [];
+  if (!priceId || !replacementId || priceId === replacementId ||
+      book.filter(row => row.id === priceId).length !== 1 ||
+      book.filter(row => row.id === replacementId).length !== 1) return workspace;
+  const index = pricingIndex(book);
+  const moveChoice = (choice, modifier = false) => choice.priceSelectorId === priceId
+    ? resolveChoice({ ...choice, priceSelectorId: replacementId }, index, modifier) : choice;
+  const moveGroup = group => group && typeof group === 'object'
+    ? { ...group, choices: (group.choices || []).map(choice => moveChoice(choice, true)) } : group;
+  return {
+    ...workspace,
+    priceBook: book.filter(row => row.id !== priceId),
+    menus: (workspace.menus || []).map(menu => ({ ...menu, items: (menu.items || []).map(item => ({
+      ...moveChoice(item),
+      ...(Array.isArray(item.modifierGroups) ? { modifierGroups: item.modifierGroups.map(moveGroup) } : {}),
+    })) })),
+    modifierGroups: (workspace.modifierGroups || []).map(moveGroup),
+    modifierClipboardSlots: (workspace.modifierClipboardSlots || []).map(slot => ({ ...slot, group: moveGroup(slot.group) })),
+  };
+}

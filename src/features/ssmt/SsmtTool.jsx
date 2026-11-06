@@ -27,7 +27,7 @@ import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
 import { readLocalStorageJson, writeLocalStorageJson } from "../../shared/safeStorage.js";
 import { downloadCentricExport } from "./ssmtCentricExport.js";
-import { activateDuePricing, resolveSsmtMenuPrices, resolveSsmtModifierPrices, priceRowUsage, deleteUnusedCurrentPriceRow } from "./ssmtPricing.js";
+import { activateDuePricing, resolveSsmtMenuPrices, resolveSsmtModifierPrices, priceRowUsage, deleteUnusedCurrentPriceRow, reassignAndDeleteCurrentPriceRow } from "./ssmtPricing.js";
 import { deriveSsmtOperatingRows, ssmtDerivedMenuEntries } from "./ssmtDerivedMenuSource.js";
 import PromotionCalendar from "./PromotionCalendar.jsx";
 import { loadSsmtWorkspaceFromSharedStorage, saveSsmtWorkspaceToSharedStorage } from "./ssmtWorkspaceStorage.js";
@@ -764,6 +764,8 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
   const [deleteRequest, setDeleteRequest] = useState(null);
   const [deleteConfirmed, setDeleteConfirmed] = useState(false);
   const [deletePriceId, setDeletePriceId] = useState("");
+  const [replacementPriceId, setReplacementPriceId] = useState("");
+  useEffect(() => { setReplacementPriceId(""); }, [deletePriceId]);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [flagReason, setFlagReason] = useState("Description correction");
   const [flagNote, setFlagNote] = useState("");
@@ -989,9 +991,19 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
   const selectedPrice = ssmtData.priceBook.find((row) => row.id === selectedPriceId) || ssmtData.priceBook[0];
   const priceToDelete = ssmtData.priceBook.find(row => row.id === deletePriceId);
   const deletePriceUsage = priceRowUsage(latestWorkspaceRef.current, deletePriceId);
-  const canDeletePrice = Boolean(priceToDelete) && deletePriceUsage.total === 0 && ssmtData.priceBook.filter(row => row.id === deletePriceId).length === 1;
+  const replacementPrice = ssmtData.priceBook.filter(row => row.id === replacementPriceId && row.id !== deletePriceId);
+  const canDeletePrice = Boolean(priceToDelete) && (deletePriceUsage.total === 0 || replacementPrice.length === 1) && ssmtData.priceBook.filter(row => row.id === deletePriceId).length === 1;
   const confirmDeletePrice = () => {
     const workspace = latestWorkspaceRef.current;
+    if (replacementPriceId) {
+      const next = reassignAndDeleteCurrentPriceRow(workspace, deletePriceId, replacementPriceId);
+      if (next === workspace) return;
+      setMenus(next.menus);
+      setModifierClipboardSlots(next.modifierClipboardSlots);
+      setSsmtData(current => ({ ...current, priceBook: next.priceBook, modifierGroups: next.modifierGroups }));
+      setDeletePriceId("");
+      return;
+    }
     if (deleteUnusedCurrentPriceRow(workspace, deletePriceId) === workspace) return;
     setSsmtData(current => ({
       ...current,
@@ -3087,12 +3099,18 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
             <p>Modifier choices using this row: {deletePriceUsage.modifierChoices}</p>
             <p>Saved clipboard choices using this row: {deletePriceUsage.clipboardChoices}</p>
           </div>
-          {deletePriceUsage.total > 0 && <p role="alert" className="font-bold text-red-800">Reassign these links before deleting. This row is still used, including any historical or hidden menus.</p>}
+          <label className="grid gap-2 font-bold">Replacement pricing row
+            <select aria-label="Replacement pricing row" value={replacementPriceId} onChange={event => setReplacementPriceId(event.target.value)} className="w-full min-w-0 rounded-lg border border-slate-300 bg-white p-2">
+              <option value="">{deletePriceUsage.total > 0 ? "Choose a replacement before deleting" : "No replacement needed (unused row)"}</option>
+              {ssmtData.priceBook.filter(row => row.id !== deletePriceId && ssmtData.priceBook.filter(candidate => candidate.id === row.id).length === 1).map(row => <option key={row.id} value={row.id}>{row.selectorLabel || row.category}</option>)}
+            </select>
+          </label>
+          {deletePriceUsage.total > 0 && <p role="alert" className="font-bold text-red-800">Reassign these links before deleting. This includes historical or hidden menus. The selected replacement prices will apply to every linked item and modifier.</p>}
           {deletePriceUsage.inPlannedBook && <p className="font-bold text-amber-900">The planned price increase still contains this row and may restore it when activated.</p>}
-          <p className="text-sm text-slate-700">Menu items, saved prices, planned pricing and pricing archives will be preserved. Use Save SSMT workspace to save your change.</p>
+          <p className="text-sm text-slate-700">Items and their other details are preserved. Reassignment updates price links and saved prices to the replacement. Planned pricing and pricing archives are preserved. Use Save SSMT workspace to save your change.</p>
           <div className="flex flex-wrap justify-end gap-2">
             <button type="button" onClick={() => setDeletePriceId("")} className="rounded-lg border border-slate-300 px-4 py-2 font-bold">Cancel</button>
-            <button type="button" disabled={!canDeletePrice} onClick={confirmDeletePrice} className="rounded-lg bg-red-700 px-4 py-2 font-bold text-white disabled:cursor-not-allowed disabled:opacity-40">Delete pricing row</button>
+            <button type="button" disabled={!canDeletePrice} onClick={confirmDeletePrice} className="rounded-lg bg-red-700 px-4 py-2 font-bold text-white disabled:cursor-not-allowed disabled:opacity-40">{replacementPriceId ? "Reassign and delete" : "Delete pricing row"}</button>
           </div>
         </div>
       </Modal>}
