@@ -12,5 +12,7 @@ Preserve menu order, exact MRNs, descriptions, flags, modifier references, workf
 - [x] Add browser fixture with leading items, submenu and divider rows, empty sections; assert headings, membership, aligned desktop columns, phone containment, description save and divider preservation.
 - [x] Run test and confirm missing layout fails.
 - [x] Implement named submenu sections containing a semantic table with common colgroup; divider rows span columns. Keep modifier expansion within its column. Provide horizontally scrollable table on phones without page overflow.
-- [ ] Run complete account browser suite and full pnpm verify; inspect screenshots, self-review, update version/changelog/handoff.
-- [ ] Commit, post Changelog, publish through governed script, confirm exact production SHA/READY, run isolated live browser suite; report rollback and evidence.
+- [x] Run complete account browser suite and full pnpm verify; inspect screenshots, self-review, update version/changelog/handoff.
+- [x] Commit, post Changelog, publish through governed script, confirm exact production SHA/READY, run isolated live browser suite; report rollback and evidence.
+
+Completed: application 26ab9be, production dpl_CHWcDjwn1NzCTwEWn8ddFStYAda4 READY, production Experience 10/10. Local 70/71 with pre-existing public-calendar preview failure also reproduced before release on production. Full committed verify/build passed. Solo self-review, no production operational writes.
