@@ -68,6 +68,7 @@ async function isolated(
     expiredPromotion = false,
     experienceLanding = false,
     mrnDraft = false,
+    reviewSections = false,
   } = {},
 ) {
   let shared = workspace();
@@ -104,6 +105,14 @@ async function isolated(
     { ...structuredClone(item), id: "vegan", label: "Vegan Dish", dietaryPreference: "Vegan" },
     { ...structuredClone(item), id: "unset", label: "Unset Dish", dietaryPreference: "" },
   );
+  if (reviewSections) shared.menus[0].items = [
+    structuredClone(item),
+    {id:"lunch",recordType:"divider",dividerKind:"submenu",title:"Lunch"},
+    {id:"mains",recordType:"divider",dividerKind:"category",title:"Mains"},
+    {...structuredClone(item),id:"soup",label:"Soup",mrn:"00001.00"},
+    {id:"empty",recordType:"divider",dividerKind:"category",title:"Coming soon"},
+    {id:"dinner",recordType:"divider",dividerKind:"submenu",title:"Dinner"},
+  ];
   const saves = [];
   const member = {
     id: "test-user",
@@ -764,11 +773,12 @@ test("Experience review copies selected details, checks spelling and persists in
   await page.screenshot({ path: "../../WORK_LOGS/SSMT_EXPERIENCE_2026_11_04/EXPERIENCE_DESKTOP.png", fullPage: true });
   await page.getByRole("button", { name: "Copy all selected menu" }).click();
   const copied = await page.evaluate(() => window.reviewCopy);
-  expect(copied).toContain("Source Menu");
+  expect(copied).not.toContain("Source Menu");
   expect(copied).toContain("Freshly reviewed burger description");
-  expect(copied).toContain("Vegetarian");
-  expect(copied).toContain("540");
-  expect(copied).toContain("Bun");
+  expect(copied).not.toContain("Vegetarian");
+  expect(copied).not.toContain("540");
+  expect(copied).not.toContain("Bun");
+  expect(copied).toBe("Smash Burger\nFreshly reviewed burger description");
   expect(copied).not.toContain("Target Menu");
   await page.getByRole("button", { name: "Save SSMT workspace", exact: true }).click();
   await expect.poll(() => fixture.saves.length).toBe(1);
@@ -798,7 +808,7 @@ test("Experience handoff saves IT stage and phone copy fallback preserves missin
   await expect(page.getByLabel("Description for Smash Burger", { exact: true })).toHaveAttribute("spellcheck", "false");
   await page.evaluate(() => Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async () => { throw new Error("Denied"); } } }));
   await page.getByRole("button", { name: "Copy all selected menu" }).click();
-  await expect(page.getByLabel("Selected menu text", { exact: true })).toHaveValue(/Calories: Not available/);
+  await expect(page.getByLabel("Selected menu text", { exact: true })).toHaveValue("Smash Burger\nBeef burger");
   await page.screenshot({ path: "../../WORK_LOGS/SSMT_EXPERIENCE_2026_11_04/EXPERIENCE_PHONE.png", fullPage: true });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.getByLabel("Experience menu").selectOption("target");
@@ -1038,4 +1048,36 @@ test("Experience starts on the shared selector and opens only its review view", 
   expect(fixture.saves).toHaveLength(0);
   const environment = process.env.PLAYWRIGHT_BASE_URL?.includes("vercel.app") ? "PRODUCTION" : "LOCAL";
   await page.screenshot({path:`../../WORK_LOGS/SSMT_EXPERIENCE_SELECTOR_${environment}_390.png`});
+});
+
+
+test("Experience aligned rows retain submenu and divider structure on desktop and phone", async ({page}) => {
+  const fixture = await isolated(page,{role:"Experience",reviewSections:true});
+  const before = structuredClone(fixture.getWorkspace());
+  const lunch = page.getByRole("region",{name:"Lunch",exact:true});
+  await expect(lunch).toBeVisible();
+  await expect(lunch.getByRole("heading",{name:"Mains",exact:true})).toBeVisible();
+  await expect(lunch.getByRole("heading",{name:"Coming soon",exact:true})).toBeVisible();
+  await expect(lunch.getByLabel("Description for Soup",{exact:true})).toBeVisible();
+  await expect(page.getByRole("region",{name:"Dinner",exact:true})).toBeVisible();
+  const rows=page.getByTestId("ssmt-experience-item-row");
+  await expect(rows).toHaveCount(2);
+  await expect(rows.first()).toContainText("00083821.10");
+  await expect(rows.last()).toContainText("00001.00");
+  const boxes = await rows.evaluateAll(nodes => nodes.map(n=>Array.from(n.cells).map(c=>({x:c.getBoundingClientRect().x,width:c.getBoundingClientRect().width}))));
+  for(let i=0;i<5;i++){expect(Math.abs(boxes[0][i].x-boxes[1][i].x)).toBeLessThan(2);expect(Math.abs(boxes[0][i].width-boxes[1][i].width)).toBeLessThan(2);}
+  await page.screenshot({path:"../../WORK_LOGS/EXPERIENCE_ROWS_DESKTOP.png",fullPage:true});
+  await page.getByLabel("Description for Soup",{exact:true}).fill("Reviewed soup");
+  await page.getByRole("button",{name:"Save SSMT workspace",exact:true}).click();
+  await expect.poll(()=>fixture.saves.length).toBe(1);
+  const expected=before.menus[0].items.map(row=>row.id==="soup"?{...row,description:"Reviewed soup"}:row);
+  expect(fixture.getWorkspace().menus[0].items).toEqual(expected);
+  await page.setViewportSize({width:390,height:844});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  const scroller=page.getByTestId("ssmt-experience-table-scroll");
+  await lunch.getByRole("button",{name:"Flag for change",exact:true}).scrollIntoViewIfNeeded();
+  await scroller.evaluate(node=>node.scrollLeft=node.scrollWidth);
+  await expect(lunch.getByRole("button",{name:"Flag for change",exact:true})).toBeInViewport();
+  await scroller.evaluate(node=>node.scrollLeft=0);
+  await page.screenshot({path:"../../WORK_LOGS/EXPERIENCE_ROWS_PHONE.png",fullPage:true});
 });

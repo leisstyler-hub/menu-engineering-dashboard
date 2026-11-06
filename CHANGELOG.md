@@ -8,6 +8,8 @@ Candidate `2026.11.05.007-ssmt-mrn-experience`, Chief on chief/ssmt-aus-bna. Pas
 
 ## 2026-11-05
 
+- [Nov 5, 7:37 PM] Experience review uses aligned rows with submenu outlines and divider headings; Copy All copies only item titles and descriptions.
+
 - [Nov 5, 7:14 PM] Export a finance pricing audit with all current prices, attached-item counts, menu items and modifiers grouped by price, menu and parent.
 
 - [Nov 5, 6:45 PM] Pricing Structure shows a muted count of linked menu items beside each price.
