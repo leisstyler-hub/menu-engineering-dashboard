@@ -1,5 +1,6 @@
 import serviceEvidence from '../../data/wpServiceEvidence.json' with {type:'json'};
 import {serviceProfile} from './wpServiceProfile.js';
+import {tactProfile} from './wpTactProfile.js';
 import {PILLARS as SHARED_PILLARS,conceptMenusForPillar,pillarForConcept,canonicalConceptName} from '../../shared/conceptPillars.js';
 import evidence from '../../data/wpProfileEvidence.json' with {type:'json'};
 import {projectStation} from './wpStationModel.js';
@@ -12,6 +13,9 @@ for(const row of evidence.records){if(!byMrn.has(row.mrn))byMrn.set(row.mrn,[]);
 const serviceByMrn=new Map();
 for(const row of serviceEvidence.records){if(!serviceByMrn.has(row.mrn))serviceByMrn.set(row.mrn,[]);serviceByMrn.get(row.mrn).push(row);}
 export function profileFor(food) {
+ return {...legacyProfileFor(food),tact:tactProfile(food)};
+}
+function legacyProfileFor(food) {
  const linked=(serviceByMrn.get(String(food.mrn||''))||[]).filter(r=>(food.menus||[]).some(m=>menuName(m)===menuName(r.menu))&&String(r.portion).trim().toLowerCase()===String(food.portion||'').trim().toLowerCase());
  const service=serviceProfile(food,linked);
  if(food.culinaryProfile?.reviewStatus==='Reviewed'){const reviewed={...service,flavors:[],textures:[],seasons:[],cuisines:[],role:food.category,premium:false,...food.culinaryProfile,evidenceCount:linked.length};if(service.temperatureControl==='Required'&&reviewed.placements?.includes('Ambient'))return {...reviewed,placements:reviewed.placements.filter(p=>p!=='Ambient'),reviewStatus:'Needs review',conflicts:[...service.conflicts,'Reviewed Ambient conflicts with temperature-control evidence.']};if(linked.some(r=>r.placements?.length)&&service.placements.length===1&&(!reviewed.placements?.includes(service.placements[0])||reviewed.placements.length!==1))return {...reviewed,placements:[],reviewStatus:'Needs review',conflicts:[...service.conflicts,'Reviewed placement conflicts with recipe service evidence.']};return reviewed;}

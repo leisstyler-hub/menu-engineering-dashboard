@@ -1,3 +1,7 @@
+## W&P TACT foundation candidate - November 6, 2026
+
+Chief owns branch chief/wp-pan-tags, baseline 4eaae5c, candidate 2026.11.06.005-wp-tact-foundation under Tyler request d2907b86740abccbc8f6b6060d4c8cd94258dd03acc9221c52ea2465d54fe24d. One shared TACT vocabulary generates per-dimension evidence/status for current and future foods. W&P item Tags and station/portfolio workbooks show Taste, Aroma, Color and Texture. New-menu companion manifest accounts for every row, preserves exact identities/current reviewed profiles and flags ambiguity. Current source audit covers 1,693 rows; proposed taste/aroma/color/texture counts 358/162/100/49, all other dimensions explicit Needs review. No canonical profile storage, schema, catalog or SSMT writes. Existing Flavor, service safety, costs and suggestion rules retained. Visual bar guide remains later scope. Tests, review, deployment and rollback: docs/WP_TACT_FOUNDATION_2026_11_06.md; production state must be recorded separately.
+
 ## SSMT ticket menu naming - 2026-11-06
 
 Candidate 2026.11.06.004-ssmt-ticket-menu-name, Chief solo. Both ticket name fields use {Bucket Menu Type} {Menu Name} - Enterprise from menu.type/name. Requester stays blank; saved menu/Centric names unchanged. Tyler authorization 53e8dd5e3633a066e297a2cd990eda88af401a8a6cd371cedd43c6fe4368f6c6. Rollback bc825cc. Full package verification/build and serial isolated browser 37/37 passed. Solo self-review complete. Publication pending.

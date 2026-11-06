@@ -8,7 +8,7 @@ Include the item's culinary profile in the change review and import dry run. Com
 
 | Field | Controlled values / rule |
 |---|---|
-| Profile version | `1`; version future vocabulary changes |
+| Profile version | `1` legacy; `2` TACT companion/application profile, as defined below |
 | Identity | Existing item key plus exact text MRN and compatible portion; preserve menu memberships |
 | Service placement | Hot, Cold, Ambient; multiple allowed when reviewed; otherwise Unknown |
 | Cuisine Tag | Approved cuisine/pillar vocabulary; specific cuisine only with evidence; Unknown if unresolved |
@@ -44,3 +44,21 @@ Track temperature-control requirements separately from service placement. Ingred
 Explicit source volume can support labeled pan-serving estimates without mass. Compatible serving cost can support cost totals; missing mass leaves weight-dependent sales/food-cost fractions incomplete. Chef quantity forecasts support portions and source-compatible cups. Individual fixed-price foods retain their original qualification boundary.
 
 Tyler's chef-reported Butter Chicken full 4-inch pan range is 21 lb 3 oz to 24 lb 12 oz. It may serve as an optional, adjustable planning reference for comparable sauced dishes. Label Estimated using Butter Chicken reference, retain a range, and never relabel it measured for another food or extrapolate it to dry foods, rice, salads, noodles or different pans automatically. Exact food-specific measurements take priority. This is a scenario override, not a source mass conversion or shared source correction.
+
+
+## TACT foundation - Tyler November 6, 2026
+
+Authority: build request `d2907b86740abccbc8f6b6060d4c8cd94258dd03acc9221c52ea2465d54fe24d`. Existing foods and incoming menus use the same versioned vocabulary and evidence/review requirements. Profile version 2 adds `tact` with vocabulary `version: 1`; legacy profile version 1 remains readable. This is an application/companion-manifest contract, not a deployed Supabase schema.
+
+| Dimension | Controlled values |
+|---|---|
+| Taste | Sweet, Sour/Acidic, Salty, Bitter, Umami |
+| Aroma | Herbal, Citrus, Floral, Toasted, Roasted, Smoky, Warm Spice |
+| Color | Green, Red, Orange, Yellow, Purple, Brown, White/Cream |
+| Texture | Crisp/Crunchy, Creamy, Tender, Chewy, Firm, Soft, Juicy |
+
+Each dimension carries `values`, `status`, `evidence`, and `issues`. Proposed classifications derive from bounded words in available item names, descriptions and ingredient names; the finished dish requires confirmation. Color proposals require explicit color language; an ingredient does not establish the finished dish color. Empty evidence yields Needs review, never proof of sensory absence. Reviewed dimensions require reviewer/date, including intentionally empty lists; preserve unsupported reviewed values and flag vocabulary/provenance issues. Legacy profile review never certifies a new TACT dimension. Existing Flavor and Texture remain unchanged for compatibility; Bright, Rich, Spicy and Fresh are not silently converted into reviewed TACT. Heat/richness remain represented by legacy Flavor.
+
+For every incoming menu, run `node scripts/prepare-wp-profile-manifest.mjs current-catalog.json NEW_OUTPUT.json incoming-menu-rows.json`. Incoming JSON is an array or `{rows:[...]}` with menu, exact text MRN, portion, item/name and available description/ingredients. Omit the third argument to prepare every current catalog row, rather than only bundled evidence. Outputs must be new paths. Review all profile/identity gaps and preserve the companion with the import dry run. Exact current matches retain current profiles; conflicting incoming profiles are flagged, duplicate/incomplete identities stay unresolved. Do not merge rows by MRN alone. Canonical persistence still needs its approved storage/API, recovery and protected-action review; this command performs no writes.
+
+New items automatically receive the same proposal rules when displayed in W&P. This does not guarantee complete sensory facts from a name-only import, or claim that reviewed profiles have been stored centrally. The complete visual bar guide remains a later delivery section.

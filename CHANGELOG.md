@@ -1,5 +1,7 @@
 ## 2026-11-06
 
+- [Nov 6, 9:34 AM] See Taste, Aroma, Color and Texture tags with review gaps, using consistent rules for existing foods and incoming menus.
+
 - [Nov 6, 8:10 AM] Experience and IT ticket menu names use the menu bucket, menu name and Enterprise suffix.
 
 - [Nov 6, 7:54 AM] Experience and IT handoffs open menu-prefilled tickets with requester fields blank; modifier groups expand into readable rows.

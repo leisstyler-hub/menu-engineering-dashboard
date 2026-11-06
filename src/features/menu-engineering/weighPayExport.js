@@ -1,5 +1,6 @@
 import {profileFor} from './wpSmartModel.js';
-const tagColumns=r=>{const p=profileFor({...r,menus:r.menus||[r.menu]});return {'Service temperature':p.placements.join('; ')||'Needs review','Temperature control':p.temperatureControl,'Food type':p.foodType,'Service format':p.serviceFormat,'Tags status':p.reviewStatus,Tags:[...p.placements,p.role,...p.cuisines,...p.flavors,...p.textures].filter(Boolean).join('; '),'Temperature conflicts':p.conflicts.join('; ')};};
+import {tactColumns} from './wpTactProfile.js';
+const tagColumns=r=>{const p=profileFor({...r,menus:r.menus||[r.menu]});return {'Service temperature':p.placements.join('; ')||'Needs review','Temperature control':p.temperatureControl,'Food type':p.foodType,'Service format':p.serviceFormat,'Tags status':p.reviewStatus,Tags:[...p.placements,p.role,...p.cuisines,...p.flavors,...p.textures].filter(Boolean).join('; '),...tactColumns(p.tact),'Temperature conflicts':p.conflicts.join('; ')};};
 import JSZip from 'jszip';
 import {buildPortfolio,includeWpMenu} from './wpPortfolioModel.js';
 

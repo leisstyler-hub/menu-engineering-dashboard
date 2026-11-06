@@ -1,5 +1,6 @@
 import * as XLSX from 'xlsx';
 import {profileFor} from './wpSmartModel.js';
+import {tactColumns} from './wpTactProfile.js';
 
 export function buildStationWorkbook(projection, {rate, sellThrough, trusted}) {
   const workbook = XLSX.utils.book_new();
@@ -22,6 +23,7 @@ export function buildStationWorkbook(projection, {rate, sellThrough, trusted}) {
     'LOCK ITEM FROM SUGGESTIONS':row.locked?'Yes':'No',
     'Tags':row.food?Object.values((({placements,role,cuisines,flavors,textures,seasons})=>({placements,role,cuisines,flavors,textures,seasons}))(profileFor(row.food))).flat().join('; '):'',
     'Profile status':row.food?profileFor(row.food).reviewStatus:'Needs review',
+    ...(row.food?tactColumns(profileFor(row.food).tact):{}),
     'Pan assumptions':'4-inch: full 14.2 qt; half 6.7 qt; bullet approximated as 1/6-size 1.8 qt; 80% usable fill',
     'Premium placement advice':row.food&&profileFor(row.food).premium?'Consider end of guest path after foundations/sides; suitable holding required':''
 
