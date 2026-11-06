@@ -2,7 +2,7 @@ import {test,expect} from '@playwright/test';
 import XLSX from 'xlsx';
 import {readFileSync} from 'node:fs';
 
-async function fixture(page,planned=false,reassign=false){
+async function fixture(page,planned=false,reassign=false,extraPrices=[]){
  const priceBook=[{id:'burger',category:'Burger',selectorLabel:'$12.00 - Burger',areas:{SEA:'$12.00',AUS:'$10.40',BNA:'$11.00'}}];
  const item={id:'linked',label:'Linked Burger',name:'Linked Burger',mrn:'000123',fohColumn:'R | GRILL | BURGER',lockedForCentric:true,priceSelectorId:'burger',seaPrice:'$99.00',areaPrices:{SEA:'$99.00',AUS:'$99.00',BNA:'$99.00'},modifierGroups:['extras']};
  const original={menus:[{id:'complete',name:'Completed Pricing Menu',type:'Core',phase:'IT complete',completedAt:'2026-10-01',fixyDesignation:'GRILL',items:[item]}],priceBook,modifierGroups:[{id:'extras',name:'Extras',modifierType:'Addition',choices:[{id:'cheese',label:'Cheese',mrn:'000124',priceSelectorId:'burger',price:'$99.00',areaPrices:{SEA:'$99.00',AUS:'$99.00',BNA:'$99.00'}}]}],selectedMenuId:'complete',priceBookArchives:[],plannedPriceBook:planned?{effectiveDate:'2026-12-01',priceBook:[{...priceBook[0],areas:{SEA:'$14.00',AUS:'$13.00',BNA:'$13.50'}}]}:null};
@@ -11,6 +11,7 @@ async function fixture(page,planned=false,reassign=false){
   original.menus[0].items[0].modifierGroups.push(structuredClone(original.modifierGroups[0]));
   original.modifierClipboardSlots=[{id:'slot-1',label:'Slot 1',group:structuredClone(original.modifierGroups[0]),savedAt:'2026-11-01'}];
  }
+ original.priceBook.push(...extraPrices);
  let shared=structuredClone(original);const saves=[];
  await page.addInitScript(()=>{localStorage.clear();sessionStorage.clear();});
  // Intercept every API request, including all writes, on local and production hosts.
@@ -196,4 +197,21 @@ test('legacy deletion of the final unused price row stays empty after save and r
  await expect.poll(()=>shared.priceBook).toEqual([]);
  await open();
  await expect(page.getByRole('button',{name:/Delete price row/})).toHaveCount(0);
+});
+
+
+test('replacement chooser sorts prices high to low and equal prices alphabetically',async({page})=>{
+ const rows=[
+  {id:'z',category:'Zulu',selectorLabel:'Zulu',areas:{SEA:'$5.00',AUS:'$99.00'}},
+  {id:'a',category:'Alpha',selectorLabel:'Alpha',areas:{SEA:'$5.00',AUS:'$1.00'}},
+  {id:'highest',category:'Highest',selectorLabel:'Highest',modifierOnly:true,areas:{SEA:'$20.00'}},
+  {id:'zero',category:'Zero',selectorLabel:'Zero',areas:{SEA:'$0.00'}}
+ ];
+ await fixture(page,false,false,rows);
+ await page.getByRole('button',{name:'Pricing Structure',exact:true}).click();
+ await page.getByRole('button',{name:'Delete price row $12.00 - Burger',exact:true}).click();
+ const chooser=page.getByLabel('Replacement pricing row',{exact:true});
+ await expect(chooser.locator('option')).toHaveText(['Choose a replacement before deleting','Highest','Alpha','Zulu','Zero']);
+ await chooser.selectOption('a');
+ await expect(chooser).toHaveValue('a');
 });

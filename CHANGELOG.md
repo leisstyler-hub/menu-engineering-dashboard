@@ -8,6 +8,8 @@ Candidate `2026.11.05.007-ssmt-mrn-experience`, Chief on chief/ssmt-aus-bna. Pas
 
 ## 2026-11-05
 
+- [Nov 5, 6:25 PM] Replacement pricing rows sort by Seattle price, highest to lowest, then alphabetically for equal prices.
+
 - [Nov 5, 6:05 PM] Choose a replacement pricing row to reassign linked items and modifiers before deleting the old row.
 
 - [Nov 5, 10:10 AM] Experience opens menus from Menu Selector; imported items show No Review Needed until their description changes.

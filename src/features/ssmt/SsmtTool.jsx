@@ -3102,7 +3102,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
           <label className="grid gap-2 font-bold">Replacement pricing row
             <select aria-label="Replacement pricing row" value={replacementPriceId} onChange={event => setReplacementPriceId(event.target.value)} className="w-full min-w-0 rounded-lg border border-slate-300 bg-white p-2">
               <option value="">{deletePriceUsage.total > 0 ? "Choose a replacement before deleting" : "No replacement needed (unused row)"}</option>
-              {ssmtData.priceBook.filter(row => row.id !== deletePriceId && ssmtData.priceBook.filter(candidate => candidate.id === row.id).length === 1).map(row => <option key={row.id} value={row.id}>{row.selectorLabel || row.category}</option>)}
+              {ssmtData.priceBook.filter(row => row.id !== deletePriceId && ssmtData.priceBook.filter(candidate => candidate.id === row.id).length === 1).sort(comparePricesHighToLow).map(row => <option key={row.id} value={row.id}>{row.selectorLabel || row.category}</option>)}
             </select>
           </label>
           {deletePriceUsage.total > 0 && <p role="alert" className="font-bold text-red-800">Reassign these links before deleting. This includes historical or hidden menus. The selected replacement prices will apply to every linked item and modifier.</p>}
