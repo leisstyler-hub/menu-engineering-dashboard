@@ -1,3 +1,7 @@
+## 2026-11-06
+
+- [Nov 6, 7:25 AM] Completed promo menus show Centric Ready with a green outline on both calendars.
+
 ## SSMT pricing reassignment production verified - 2026-11-05
 
 LIVE 2026.11.05.008-ssmt-price-reassign, app 4f00eae645e8c206a4d090d09126f7a2c222e4c0. READY production dpl_HPvM8eXJQCyfvXXYS5WZe4NyhqVz and canonical /assets/index-BUUpzCyl.js verified. Full package verify/build passed; local browser 66/66 and isolated production pricing browser 6/6 passed. Independent pricing-safety review cleared with a non-blocking coverage note; existing API tests cover stale saves. Chief delivered and verified. No production records changed. Rollback 9ef133a / dpl_9GBgtHVdaPMRtvY3UFfP96gGCR9b. Evidence: workspace WORK_LOGS/SSMT_PRICE_REASSIGN_2026_11_05.md.

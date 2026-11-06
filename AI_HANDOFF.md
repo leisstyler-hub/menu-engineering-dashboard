@@ -1185,3 +1185,8 @@ Application commit `9b3817de632a11cfc1a74c6e5ce094da7d2d066d` reached successful
 
 
 Tyler follow-up 68f717e0b9b2b3e2de30a90378373a1aa38046e8093cf3ab00895fb2eb4574c3 merges Cafe Express & Fresh with the former Base Station group under Core Stations Pillar, including Bowl INC, Fresh Five, Global Grains, Q Bowl, Simmers and Smoothies.
+
+
+## 2026-11-06 - Calendar Centric readiness
+
+Candidate 2026.11.06.001-ssmt-centric-ready, Chief on chief/ssmt-aus-bna. Both public and SSMT promotion calendars reuse PromotionPreview and display Centric Ready plus a green outline only when the Promotion phase equals IT complete. Earlier phases remain unmarked; no source/status mutation or new persistence. Desktop/phone and dark-mode acceptance use intercepted workspace/calendar fixtures; production writes remain forbidden. Full repository verification/build passed using npm run verify (pnpm auto-install aborted before checks). Local calendar and SSMT browser checks passed 30/30. Solo self-review; production verification pending. Rollback baseline ab4bff29148a00fecf943698f5a65593c4b45664 / dpl_FBtuk2iGdJrqo9o4DmW8yaE958zY.
