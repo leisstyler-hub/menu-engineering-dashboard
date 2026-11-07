@@ -11,6 +11,7 @@ for (const width of [390, 1440]) {
     await page.goto("/");
     const trigger = page.getByRole("button", { name: "Report a bug", exact: true });
     await expect(trigger).toBeVisible();
+    await expect(trigger).toHaveCSS("color", "rgb(22, 163, 74)");
     const box = await trigger.boundingBox();
     expect(box.y).toBeLessThan(20);
     expect(box.x + box.width).toBeGreaterThan(width - 30);

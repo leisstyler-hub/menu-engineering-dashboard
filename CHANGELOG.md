@@ -1,5 +1,7 @@
 ## 2026-11-06
 
+- [Nov 6, 9:01 PM] The Report a Bug icon is green.
+
 - [Nov 6, 4:55 PM] Report bugs from the top-right icon and open an email to Tyler with the tool, app version and your description.
 
 - [Nov 6, 9:34 AM] See Taste, Aroma, Color and Texture tags with review gaps, using consistent rules for existing foods and incoming menus.

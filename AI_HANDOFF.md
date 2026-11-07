@@ -1,3 +1,7 @@
+## Green bug icon candidate - 2026-11-06
+
+2026.11.06.007-green-bug-icon: Chief solo, chief/bug-report. Green trigger, matching hover/focus colors. Pebble request 58bf02dd, Tyler approval-channel direction 40f17f48. Acceptance pending. Rollback 2de3a982675a0291bba1b5b7bcbee9df5992f9f7.
+
 ## W&P TACT foundation candidate - November 6, 2026
 
 Chief owns branch chief/wp-pan-tags, baseline 4eaae5c, candidate 2026.11.06.005-wp-tact-foundation under Tyler request d2907b86740abccbc8f6b6060d4c8cd94258dd03acc9221c52ea2465d54fe24d. One shared TACT vocabulary generates per-dimension evidence/status for current and future foods. W&P item Tags and station/portfolio workbooks show Taste, Aroma, Color and Texture. New-menu companion manifest accounts for every row, preserves exact identities/current reviewed profiles and flags ambiguity. Current source audit covers 1,693 rows; proposed taste/aroma/color/texture counts 358/162/100/49, all other dimensions explicit Needs review. No canonical profile storage, schema, catalog or SSMT writes. Existing Flavor, service safety, costs and suggestion rules retained. Visual bar guide remains later scope. Tests, review, deployment and rollback: docs/WP_TACT_FOUNDATION_2026_11_06.md; production state must be recorded separately.

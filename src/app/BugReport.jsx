@@ -39,7 +39,7 @@ export default function BugReport({ activeTool }) {
   return <>
     <div className="flex h-14 items-center justify-end border-b border-slate-200 bg-white px-3">
       <button ref={trigger} type="button" aria-label="Report a bug" title="Report a bug" onClick={openReport}
-        className="flex h-11 w-11 items-center justify-center rounded-full text-rose-600 hover:bg-rose-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-rose-600">
+        className="flex h-11 w-11 items-center justify-center rounded-full text-green-600 hover:bg-green-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-600">
         <Bug size={23} aria-hidden="true" />
       </button>
     </div>
