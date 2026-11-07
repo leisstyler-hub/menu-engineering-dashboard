@@ -1,3 +1,7 @@
+## Hibernate Menu Projects and Menu Audit - 2026-11-06
+
+Candidate 2026.11.06.008-hibernate-menu-tools, Chief solo on chief/bug-report. Tyler approval5f92cd18. Hide only these two tools from desktop/mobile home and mobile navigation. Preserve implementations, direct routes, saved records and source authority. Restore by reverting UI exclusions. Rollback33e062e. Checks pending.
+
 ## Green bug icon candidate - 2026-11-06
 
 2026.11.06.007-green-bug-icon: Chief solo, chief/bug-report. Green trigger, matching hover/focus colors. Pebble request 58bf02dd, Tyler approval-channel direction 40f17f48. Acceptance pending. Rollback 2de3a982675a0291bba1b5b7bcbee9df5992f9f7.

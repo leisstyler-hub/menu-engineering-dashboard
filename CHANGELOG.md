@@ -1,5 +1,7 @@
 ## 2026-11-06
 
+- [Nov 6, 9:11 PM] Menu Projects and Menu Audit Tool are hibernated from the home screen and mobile navigation.
+
 - [Nov 6, 9:01 PM] The Report a Bug icon is green.
 
 - [Nov 6, 4:55 PM] Report bugs from the top-right icon and open an email to Tyler with the tool, app version and your description.

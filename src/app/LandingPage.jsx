@@ -406,8 +406,6 @@ export default function LandingPage({ onOpenMenuEngineering, onOpenNeighborhoodR
       title: "Programming & Auditing",
       tools: [
         toolMap.ssmt,
-        toolMap.menuProjects,
-        toolMap.menuAudit,
         toolMap.leanTool,
         toolMap.cafeTasting,
       ],

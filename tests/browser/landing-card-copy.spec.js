@@ -5,7 +5,12 @@ for(const width of [320,390,1440,1920]) test(`Tool cards show complete descripti
   await page.route('**/api/**',route=>route.fulfill({json:{ok:true,rows:[],records:[]}}));
   await page.goto('/');
   const cards=page.locator(width<768?'button.mobile-tool-card':'article[data-tool-title]');
-  await expect(cards).toHaveCount(12);
+  await expect(cards).toHaveCount(10);
+  await expect(page.getByRole("heading",{name:"Menu Projects",exact:true})).toHaveCount(0);
+  await expect(page.getByRole("heading",{name:"Menu Audit Tool",exact:true})).toHaveCount(0);
+  const nav=page.getByRole("navigation",{name:"Mobile tool navigation"});
+  await expect(nav.getByRole("button",{name:"Projects",exact:true})).toHaveCount(0);
+  await expect(nav.getByRole("button",{name:"Audit",exact:true})).toHaveCount(0);
   for(const card of await cards.all()){
     const description=card.getByTestId('tool-description');
     await expect(description).toBeVisible();

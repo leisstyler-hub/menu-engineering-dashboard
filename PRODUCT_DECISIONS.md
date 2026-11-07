@@ -464,3 +464,8 @@ Alex established an absolute Commissary Ordering rule: catalog and program relea
 ## SSMT Experience reuse labels and navigation - 2026-11-05
 
 Tyler explicitly simplified review tracking (2af11719bd845cae2905fed2387a905b02413a256b41bedd308d7c482e26f210): items imported from another menu show **No Review Needed** in Experience; new items have no moniker. Only description changes trigger re-review (c9c7fdd59715cb48198bca729e14713fe748dedb5d72cf58063b08013bda60c1). Use existing import provenance, including legacy imports, and preserve a stable own-description baseline before edits. This is a reuse exemption, not a reviewer-signoff ledger. Rejected: per-person review tracking and calorie/dietary/modifier/price invalidation. Exact MRN matches are passive suggestions until explicit import preview/apply. Experience starts with the existing Menu Selector, opens menu review, can navigate SSMT home/pricing/menus, and has no Create record controls (fc72a38b / 7c811b9e). Existing description/flags/handoff permissions remain; pricing is view-only. Automatically hibernated promotions show Restore; restore preserves their historical dates.
+
+
+## Menu Projects and Menu Audit hibernation - 2026-11-06
+
+Tyler approval 5f92cd18eb8fb45989bb59b680a31e091c89dce3bf1dd7c94b0fdd38f9a6ec12: remove only Menu Projects and Menu Audit Tool from landing cards and mobile navigation. Preserve routes, implementations, records and history for later reactivation. SSMT, Lean Tool and Cafe Tasting remain active.

@@ -40,7 +40,7 @@ test("home screen groups tools under Chef Tools and Programming & Auditing in th
     },
     {
       heading: "Programming & Auditing",
-      tools: ["SSMT", "Menu Projects", "Menu Audit Tool", "Lean Tool", "Cafe Tasting Form"],
+      tools: ["SSMT", "Lean Tool", "Cafe Tasting Form"],
     },
   ]);
 
@@ -139,7 +139,7 @@ test("mobile home uses a contained two-column compact grid with closed bottom ac
   await page.goto("/");
 
   const cards = page.locator(".mobile-tool-card");
-  await expect(cards).toHaveCount(12);
+  await expect(cards).toHaveCount(10);
   const first = await cards.nth(0).boundingBox();
   const second = await cards.nth(1).boundingBox();
   expect(Math.abs(first.y - second.y)).toBeLessThan(2);
