@@ -1,6 +1,7 @@
 import React, { Suspense, lazy, useEffect, useState } from "react";
 import { ArrowRightLeft, BarChart3, BookOpen, CalendarRange, ClipboardCheck, FileSpreadsheet, FolderKanban, Home, PackageCheck } from "lucide-react";
 import LandingPage from "./LandingPage.jsx";
+import BugReport from "./BugReport.jsx";
 import { addToolBreadcrumb, setActiveToolContext } from "../shared/monitoring/sentry.jsx";
 
 const CHUNK_RELOAD_KEY = "culinaryToolsChunkReloaded";
@@ -62,6 +63,14 @@ export default function CulinaryToolsPlatformApp() {
     setActiveToolContext(activeTool);
     addToolBreadcrumb(activeTool);
   }, [activeTool]);
+
+  return <>
+    <BugReport activeTool={activeTool} />
+    <PlatformContent activeTool={activeTool} setActiveTool={setActiveTool} openSmartsheetHealth={openSmartsheetHealth} />
+  </>;
+}
+
+function PlatformContent({ activeTool, setActiveTool, openSmartsheetHealth }) {
 
   if (activeTool === "menuEngineering") {
     return (
