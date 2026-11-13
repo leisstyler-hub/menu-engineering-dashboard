@@ -18,7 +18,7 @@ import { DELI_ORDERING_ITEM_MRNS, DELI_ORDERING_PREP_ITEM_IDS, DELI_ORDERING_PRO
 import { GLOBAL_ORDERING_ITEM_IDS, GLOBAL_ORDERING_PREP_ITEM_IDS, GLOBAL_ORDERING_PROGRAM } from "../src/features/commissary-ordering/globalCycleCatalog.js";
 import { BREAKFAST_ORDERING_ITEM_IDS, BREAKFAST_ORDERING_PREP_ITEM_IDS, BREAKFAST_ORDERING_PROGRAM } from "../src/features/commissary-ordering/breakfastCatalog.js";
 import { COMMISSARY_SPANISH } from "../src/features/commissary-ordering/commissaryTranslations.js";
-import { COMMISSARY_STATIONS, commissaryHubFor, isCafeStationEnabled } from "../src/features/commissary-ordering/commissaryRouting.js";
+import { COMMISSARY_STATIONS, commissaryHubFor, isCafeStationEnabled, isCommissaryHub } from "../src/features/commissary-ordering/commissaryRouting.js";
 import { filterCommissaryComponents, isRawAnimalProteinComponent } from "../src/features/commissary-ordering/commissaryPrepPolicy.js";
 
 function validateBeforeCutoff(records, context = { tool: "commissaryOrders" }) {
@@ -102,6 +102,7 @@ assert.equal(isCafeStationEnabled("Atlas", COMMISSARY_STATIONS.SALAD_BAR), false
 assert.deepEqual(["Brazil Coffee", "Roxanne Coffee", "Arizona Coffee", "Zoka Coffee"].map((cafe) => isCafeStationEnabled(cafe, COMMISSARY_STATIONS.BREAKFAST)), [true, true, true, true]);
 assert.equal(commissaryHubFor("Zoka Coffee", COMMISSARY_STATIONS.BREAKFAST), "Cricket");
 assert.equal(commissaryHubFor("Zoka Coffee", COMMISSARY_STATIONS.DELI), "Cricket");
+assert.deepEqual(["Cricket", "Sonic", "Blueshift", "Nessie"].map(isCommissaryHub), [true, true, true, false]);
 assert.equal(isCafeStationEnabled("Doppler", COMMISSARY_STATIONS.GRILL), false);
 assert.equal(isCafeStationEnabled("Day 1", COMMISSARY_STATIONS.GRILL), true);
 assert.equal(isCafeStationEnabled("Nitro", COMMISSARY_STATIONS.DELI), false);
@@ -373,6 +374,10 @@ assert.ok(orderValue(globalRecord.quantities, globalRecord.grill, globalRecord.d
 const globalTransfer = buildCommissaryTransfer(globalRecord);
 assert.equal(globalTransfer.items.length, globalTransferLinesForCafe(globalRecord).length);
 assert.ok(globalTransfer.items.every((item) => item.itemWasteCost > 0));
+const cricketScopedWorkbook = buildCommissaryBomWorkbook([record, globalRecord], "2026-11-16", DEFAULT_COMMISSARY_METADATA, { hub: "Cricket" });
+const cricketScopedMonday = XLSX.utils.sheet_to_json(cricketScopedWorkbook.Sheets["Monday Delivery Map"], { header: 1, defval: "" });
+assert.ok(cricketScopedMonday.some((row) => row[0] === "Nessie"), "Cricket prep must include a Cricket-routed cafe.");
+assert.equal(cricketScopedMonday.some((row) => row[0] === "Everest"), false, "Cricket prep must exclude cafes routed to other hubs.");
 const porto = emptyGlobalOrder("2026-11-16");
 const portoMenu = globalCycleForWeek("2026-11-16").menus.find(({ menu }) => menu === "AMZ: Porto");
 const portoPotatoes = portoMenu.items.find(({ mrn }) => mrn === "121015");
@@ -484,7 +489,7 @@ const sonicHubPacket = buildPackoutPacket([globalRecord], "2026-11-16", DEFAULT_
 assert.equal(sonicHubPacket.pages.length, 3, "Sonic hub packout must include routed Everest Global work.");
 const cricketHubPacket = buildPackoutPacket([globalRecord], "2026-11-16", DEFAULT_COMMISSARY_METADATA, { selectedCafe: "Cricket" });
 assert.equal(cricketHubPacket.pages.length, 0, "Cricket hub packout must not include Everest Global work.");
-const packetRecord = { ...buildPackoutPacketRecord({ weekStart: "2026-11-16", records: [globalRecord], packet, metadataVersion: 18, now: new Date("2026-11-12T01:00:00Z") }), packet };
+const packetRecord = { ...buildPackoutPacketRecord({ weekStart: "2026-11-16", records: [globalRecord], packet, metadataVersion: 19, now: new Date("2026-11-12T01:00:00Z") }), packet };
 assert.equal(commissaryWriteValidation([packetRecord], { tool: "commissaryOrders" }), "");
 assert.match(commissaryWriteValidation([{ ...packetRecord, packet: { ...packet, pages: [{ ...packet.pages[0], cafe: "Unknown Cafe" }] } }], { tool: "commissaryOrders" }), /scope|invalid cafe/i);
 assert.match(commissaryWriteValidation([{ ...packetRecord, orderRecordIds: [`commissaryOrder|nessie|${packetRecord.weekStart}`] }], { tool: "commissaryOrders" }), /order-reference scope/i);

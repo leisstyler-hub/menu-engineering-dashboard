@@ -4,6 +4,7 @@ import { buildS4Workbook, transferExportFileName } from "../transfer-tool/transf
 import { COMMISSARY_DEPARTING_UNIT } from "./commissaryCatalog.js";
 import { DEFAULT_COMMISSARY_METADATA } from "./commissaryMetadata.js";
 import { breakfastOrderLinesForCafe, breakfastPrepLinesForCafe, deliOrderLinesForCafe, deliveryDateForWeek, formatShortDate, globalPrepLinesForCafe, globalTransferLinesForCafe, grillPrepLinesForCafe, grillTransferLinesForCafe, orderLinesForCafe, prepDisplayQuantity, rolledUpPrepItems, transferPeriod, weekLabel } from "./commissaryModel.js";
+import { COMMISSARY_STATIONS, cafeRoutesToHub } from "./commissaryRouting.js";
 
 const S4_TEMPLATE_URL = "/templates/ExpenseTransfer_Between_PC_Template.xlsx";
 const PREPARED_FOODS_GL = "4111011";
@@ -74,17 +75,18 @@ function bodyStyle(fill, isGroupStart = false) {
   };
 }
 
-function buildDeliveryMapWorksheet(records, delivery, weekStart) {
+function buildDeliveryMapWorksheet(records, delivery, weekStart, options = {}) {
+  const routed = (record, station) => !options.hub || cafeRoutesToHub(record.cafe, station, options.hub);
   const prepLine = (line) => {
     const display = prepDisplayQuantity({ ...line, total: line.quantity, [delivery.key]: line.quantity, cafes: {} });
     return { cafe: line.cafe, station: line.station, name: display.name, mrn: display.mrn, quantity: display[delivery.key], unit: display.orderUnit, finishedDish: display.finishedDish };
   };
   const deliveryLines = records.flatMap((record) => [
-    ...orderLinesForCafe(record).filter((line) => Number(line[delivery.key]) > 0).map((line) => ({ cafe: record.cafe, station: "Salad Bar", name: line.name, mrn: line.mrn, quantity: line[delivery.key], unit: line.orderUnit, finishedDish: line.name })),
-    ...grillPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key && !GRILL_UNIT_SUPPLIED_BUN.test(line.name)).map(prepLine),
-    ...deliOrderLinesForCafe(record).filter((line) => Number(line[delivery.key]) > 0).map((line) => ({ cafe: record.cafe, station: "Deli", name: line.name, mrn: line.mrn, quantity: line[delivery.key], unit: "sandwich", finishedDish: line.name })),
-    ...globalPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key).map(prepLine),
-    ...breakfastPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key).map(prepLine),
+    ...(routed(record, COMMISSARY_STATIONS.SALAD_BAR) ? orderLinesForCafe(record).filter((line) => Number(line[delivery.key]) > 0).map((line) => ({ cafe: record.cafe, station: "Salad Bar", name: line.name, mrn: line.mrn, quantity: line[delivery.key], unit: line.orderUnit, finishedDish: line.name })) : []),
+    ...(routed(record, COMMISSARY_STATIONS.GRILL) ? grillPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key && !GRILL_UNIT_SUPPLIED_BUN.test(line.name)).map(prepLine) : []),
+    ...(routed(record, COMMISSARY_STATIONS.DELI) ? deliOrderLinesForCafe(record).filter((line) => Number(line[delivery.key]) > 0).map((line) => ({ cafe: record.cafe, station: "Deli", name: line.name, mrn: line.mrn, quantity: line[delivery.key], unit: "sandwich", finishedDish: line.name })) : []),
+    ...(routed(record, COMMISSARY_STATIONS.GLOBAL) ? globalPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key).map(prepLine) : []),
+    ...(routed(record, COMMISSARY_STATIONS.BREAKFAST) ? breakfastPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key).map(prepLine) : []),
   ]).sort((a, b) => a.cafe.localeCompare(b.cafe) || a.station.localeCompare(b.station) || a.name.localeCompare(b.name) || String(a.mrn).localeCompare(String(b.mrn)));
   const rows = [
     [`${delivery.day} ${formatShortDate(deliveryDateForWeek(weekStart, delivery.key))} Cafe Delivery Map`, "", "", "", "", "", ""],
@@ -162,8 +164,8 @@ function buildPrepListWorksheet(rows, delivery, weekStart) {
   return worksheet;
 }
 
-export function buildCommissaryBomWorkbook(records, weekStart, metadata = DEFAULT_COMMISSARY_METADATA) {
-  const rows = rolledUpPrepItems(records, { consolidateAcrossStations: true });
+export function buildCommissaryBomWorkbook(records, weekStart, metadata = DEFAULT_COMMISSARY_METADATA, options = {}) {
+  const rows = rolledUpPrepItems(records, { consolidateAcrossStations: true, hub: options.hub });
 
   const automationRows = [
     ["Portion Plan — Power Automate input area", "", "", "Calculation rows — maintain for Power Automate", "", "", "", ""],
@@ -214,16 +216,16 @@ export function buildCommissaryBomWorkbook(records, weekStart, metadata = DEFAUL
 
   const workbook = XLSX.utils.book_new();
   metadata.deliveries.forEach((delivery) => XLSX.utils.book_append_sheet(workbook, buildPrepListWorksheet(rows, delivery, weekStart), `${delivery.day} Prep List`));
-  metadata.deliveries.forEach((delivery) => XLSX.utils.book_append_sheet(workbook, buildDeliveryMapWorksheet(records, delivery, weekStart), `${delivery.day} Delivery Map`));
+  metadata.deliveries.forEach((delivery) => XLSX.utils.book_append_sheet(workbook, buildDeliveryMapWorksheet(records, delivery, weekStart, options), `${delivery.day} Delivery Map`));
   XLSX.utils.book_append_sheet(workbook, automationWorksheet, "Power Automate");
   workbook.Workbook ||= {};
   workbook.Workbook.Sheets = workbook.SheetNames.map((name) => ({ name, Hidden: name === "Power Automate" ? 1 : 0 }));
   return workbook;
 }
 
-export function exportCommissaryBom(records, weekStart, metadata = DEFAULT_COMMISSARY_METADATA) {
-  const bytes = XLSX.write(buildCommissaryBomWorkbook(records, weekStart, metadata), { type: "array", bookType: "xlsx", cellStyles: true });
-  downloadBytes(bytes, `Commissary Prep List ${weekStart}.xlsx`, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+export function exportCommissaryBom(records, weekStart, metadata = DEFAULT_COMMISSARY_METADATA, options = {}) {
+  const bytes = XLSX.write(buildCommissaryBomWorkbook(records, weekStart, metadata, options), { type: "array", bookType: "xlsx", cellStyles: true });
+  downloadBytes(bytes, `${options.hub ? `${options.hub} ` : ""}Commissary Prep List ${weekStart}.xlsx`, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 }
 
 export function buildCommissaryTransfer(record, metadata = DEFAULT_COMMISSARY_METADATA) {

@@ -12,6 +12,10 @@ export const COMMISSARY_HUBS = Object.freeze([
   Object.freeze({ key: "Blueshift", label: "Blueshift" }),
 ]);
 
+export function isCommissaryHub(cafe) {
+  return COMMISSARY_HUBS.some(({ key }) => key === cafe);
+}
+
 const ALL_CURRENT_STATIONS = Object.freeze([COMMISSARY_STATIONS.SALAD_BAR, COMMISSARY_STATIONS.GRILL, COMMISSARY_STATIONS.DELI, COMMISSARY_STATIONS.GLOBAL]);
 
 export const COMMISSARY_CAFE_STATION_ACCESS = Object.freeze({

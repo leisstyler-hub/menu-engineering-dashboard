@@ -23,7 +23,7 @@ import { COMMISSARY_CAFE_STATION_ACCESS, COMMISSARY_HUB_ROUTING, COMMISSARY_HUBS
 import { GLOBAL_UNIT_PREPARATION_NOTES } from "../features/commissary-ordering/commissaryModel.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 18;
+export const OPERATIONAL_METADATA_VERSION = 19;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -109,6 +109,7 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
     }),
     stationAccess: COMMISSARY_CAFE_STATION_ACCESS,
     prepHubs: COMMISSARY_HUBS,
+    prepAccess: Object.freeze({ hubSitesOnly: true, selectedCafeBindsHub: true, allowedSites: Object.freeze(COMMISSARY_HUBS.map(({ key }) => key)) }),
     hubRouting: COMMISSARY_HUB_ROUTING,
     packoutHubRouting: COMMISSARY_PACKOUT_HUB_ROUTING,
     grillInterface: Object.freeze({
