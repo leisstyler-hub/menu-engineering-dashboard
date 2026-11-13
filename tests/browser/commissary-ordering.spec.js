@@ -299,6 +299,13 @@ test("Grill LTO starts Cycle Week 1 on November 16 with Set A and Set B whole-sa
   expect(fridayPrepRows.some((row) => row[0] === "Piri Piri Marinade/Base" && row[5] === "Piri Piri Chicken")).toBe(true);
   const mondayRows = XLSX.utils.sheet_to_json(workbook.Sheets["Monday Delivery Map"], { header: 1, defval: "" });
   expect(mondayRows.some((row) => row[2] === "AMZ: Smashburger Patty")).toBe(false);
+  const chowChowRows = mondayRows.filter((row) => row[0] === "Cricket" && row[1] === "Grill" && String(row[3]) === "168231");
+  expect(chowChowRows).toHaveLength(1);
+  expect(chowChowRows[0]).toEqual(expect.arrayContaining(["Cricket", "Grill", "EUR: Upcycled Chow Chow Aioli", "168231"]));
+  expect(chowChowRows[0][4]).toBeGreaterThan(0);
+  expect(chowChowRows[0][5]).toBe("cup");
+  expect(chowChowRows[0][6]).toContain("ATX Burger");
+  expect(chowChowRows[0][6]).toContain("Smashburger");
   expect(mondayRows).toContainEqual(expect.arrayContaining(["Cricket", "Deli", "Mediterranean Turkey Wrap", "190990", 12, "sandwich", "Mediterranean Turkey Wrap"]));
   expect(mondayRows.some((row) => row[6] === "Mediterranean Turkey Wrap" && row[2] !== "Mediterranean Turkey Wrap")).toBe(false);
   expect(mondayRows.some((row) => /\bbun\b/i.test(String(row[2])))).toBe(false);

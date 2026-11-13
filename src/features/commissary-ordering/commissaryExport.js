@@ -79,15 +79,33 @@ function buildDeliveryMapWorksheet(records, delivery, weekStart, options = {}) {
   const routed = (record, station) => !options.hub || cafeRoutesToHub(record.cafe, station, options.hub);
   const prepLine = (line) => {
     const display = prepDisplayQuantity({ ...line, total: line.quantity, [delivery.key]: line.quantity, cafes: {} });
-    return { cafe: line.cafe, station: line.station, name: display.name, mrn: display.mrn, quantity: display[delivery.key], unit: display.orderUnit, finishedDish: display.finishedDish };
+    return { cafe: line.cafe, station: line.station, name: display.name, mrn: display.mrn, quantity: display[delivery.key], unit: display.orderUnit, finishedDish: display.finishedDish, prepVolume: true };
   };
-  const deliveryLines = records.flatMap((record) => [
+  const rawDeliveryLines = records.flatMap((record) => [
     ...(routed(record, COMMISSARY_STATIONS.SALAD_BAR) ? orderLinesForCafe(record).filter((line) => Number(line[delivery.key]) > 0).map((line) => ({ cafe: record.cafe, station: "Salad Bar", name: line.name, mrn: line.mrn, quantity: line[delivery.key], unit: line.orderUnit, finishedDish: line.name })) : []),
     ...(routed(record, COMMISSARY_STATIONS.GRILL) ? grillPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key && !GRILL_UNIT_SUPPLIED_BUN.test(line.name)).map(prepLine) : []),
     ...(routed(record, COMMISSARY_STATIONS.DELI) ? deliOrderLinesForCafe(record).filter((line) => Number(line[delivery.key]) > 0).map((line) => ({ cafe: record.cafe, station: "Deli", name: line.name, mrn: line.mrn, quantity: line[delivery.key], unit: "sandwich", finishedDish: line.name })) : []),
     ...(routed(record, COMMISSARY_STATIONS.GLOBAL) ? globalPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key).map(prepLine) : []),
     ...(routed(record, COMMISSARY_STATIONS.BREAKFAST) ? breakfastPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key).map(prepLine) : []),
-  ]).sort((a, b) => a.cafe.localeCompare(b.cafe) || a.station.localeCompare(b.station) || a.name.localeCompare(b.name) || String(a.mrn).localeCompare(String(b.mrn)));
+  ]);
+  const consolidatedLines = new Map();
+  rawDeliveryLines.forEach((line) => {
+    const mrn = String(line.mrn || "").trim();
+    const identity = mrn ? `mrn:${mrn}` : `name:${String(line.name || "").trim().toLowerCase()}`;
+    const volumeUnit = line.prepVolume ? { cup: 1, quart: 4, gallon: 16 }[String(line.unit || "").trim().toLowerCase()] : null;
+    const normalizedUnit = volumeUnit ? "volume-cups" : String(line.unit || "").trim().toLowerCase();
+    const key = `${line.cafe}|${line.station}|${identity}|${normalizedUnit}`;
+    const current = consolidatedLines.get(key) || { ...line, quantity: 0, finishedDishes: new Set() };
+    current.quantity = Number((current.quantity + (Number(line.quantity) * (volumeUnit || 1))).toFixed(4));
+    current.unit = volumeUnit ? "cup" : line.unit;
+    current.finishedDishes.add(line.finishedDish || line.name);
+    consolidatedLines.set(key, current);
+  });
+  const deliveryLines = [...consolidatedLines.values()].map((line) => {
+    const finishedDish = [...line.finishedDishes].sort().join("; ");
+    const display = line.prepVolume ? prepDisplayQuantity({ ...line, orderUnit: line.unit, finishedDish, total: line.quantity, [delivery.key]: line.quantity, cafes: {} }) : { ...line, [delivery.key]: line.quantity, orderUnit: line.unit };
+    return { ...line, quantity: display[delivery.key], unit: display.orderUnit, finishedDish, finishedDishes: undefined, prepVolume: undefined };
+  }).sort((a, b) => a.cafe.localeCompare(b.cafe) || a.station.localeCompare(b.station) || a.name.localeCompare(b.name) || String(a.mrn).localeCompare(String(b.mrn)));
   const rows = [
     [`${delivery.day} ${formatShortDate(deliveryDateForWeek(weekStart, delivery.key))} Cafe Delivery Map`, "", "", "", "", "", ""],
     [delivery.detail, "", "", "", "", "", ""],

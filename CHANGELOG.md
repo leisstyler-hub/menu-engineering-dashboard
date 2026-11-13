@@ -1,5 +1,7 @@
 ## 2026-11-12
 
+- [Nov 12, 6:56 PM] Consolidate exact-MRN delivery rows and classify plural vegetable prep correctly.
+
 - [Nov 12, 6:41 PM] Limit Commissary Prep Lists to hub sites and preserve routed-site filtering.
 
 - [Nov 12, 6:22 PM] Split Commissary prep into three daily lists, consolidate exact MRNs, simplify delivery maps, and combine Grill ordering.

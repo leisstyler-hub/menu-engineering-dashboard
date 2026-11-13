@@ -758,7 +758,7 @@ export function rolledUpPrepItems(records = [], options = {}) {
 
 const SAUCE_NAME = /(?:sauce|aioli|dressing|relish|chutney|salsa|mayo|mayonnaise|vinaigrette|pesto|dip|glaze|marinade)/i;
 const HOT_SAUCE_NAME = /(?:hot sauce|curry|masala|teriyaki|brais|queso|gravy|demi|piri piri|peri peri)/i;
-const VEGETABLE_NAME = /\b(tomato|cucumber|onion|pepper|carrot|celery|broccoli|cauliflower|cabbage|lettuce|kale|spinach|arugula|spring mix|potato|squash|zucchini|mushroom|corn|bean|peas?|avocado|scallion|cilantro|parsley|vegetable)\b/i;
+const VEGETABLE_NAME = /\b(tomato(?:es)?|cucumbers?|onions?|peppers?|carrots?|celery|broccoli|cauliflower|cabbage|lettuce|kale|spinach|arugula|spring mix|potato(?:es)?|squash|zucchini|mushrooms?|corn|beans?|peas?|avocado|scallions?|cilantro|parsley|vegetables?)\b/i;
 const PRODUCTION_TYPE_ORDER = Object.freeze(["Vegetable Production", "Cold Sauce Production", "Hot Sauce Production", "Other Production"]);
 const VOLUME_TO_CUPS = Object.freeze({
   "fluid ounce": 1 / 8,

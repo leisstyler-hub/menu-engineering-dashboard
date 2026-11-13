@@ -23,7 +23,7 @@ import { COMMISSARY_CAFE_STATION_ACCESS, COMMISSARY_HUB_ROUTING, COMMISSARY_HUBS
 import { GLOBAL_UNIT_PREPARATION_NOTES } from "../features/commissary-ordering/commissaryModel.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 19;
+export const OPERATIONAL_METADATA_VERSION = 20;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -148,6 +148,8 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       workbookVersion: 2,
       dailyPrepLists: Object.freeze({ friday: "Monday service", monday: "Tuesday-Wednesday service", wednesday: "Thursday-Friday service" }),
       exactMrnRollup: true,
+      deliveryMapExactMrnRollup: "cafe-station-compatible-unit",
+      vegetableProductionNames: "singular-and-plural-produce-names",
       costsVisible: false,
       deliveryMapGrouping: "cafe-station-item",
       grillUnitSuppliedItems: Object.freeze(["brioche buns"]),

@@ -1,3 +1,9 @@
+## Commissary exact-MRN delivery rollup and vegetable classification - 2026-11-12
+
+Candidate `2026.11.12.003-commissary-prep-rollup` consolidates repeated exact MRNs to one compatible-unit row within each cafe and station on Friday, Monday and Wednesday Delivery Maps. Quantities sum before the final cups/quarts/gallons display conversion, and the finished-dish cell retains every contributing dish. This removes repeated Upcycled Chow Chow Aioli MRN `168231` rows for one cafe's Grill delivery without merging work across cafes or stations. Prep List classification now recognizes plural produce names such as Cucumbers and Red Onions as Vegetable Production while retaining their existing family adjacency.
+
+Operational metadata version 20 publishes both output rules. This is generated-output logic only: no menu item, recipe, culinary profile, saved Commissary Order or Prep Progress row is changed. Culinary Tags shared-profile persistence is not applicable. The pre-release production snapshot contains 22 Commissary Order rows, including 15 locked-week rows, with canonical SHA-256 `F0B3D801C5B19E9057E31E44A0DFC53E224D3ADB8ACDBA5A62F3C1AE099F4CD1`; release must retain the exact count and hash. Deployment evidence follows after verification.
+
 ## Commissary hub-only Prep List access - 2026-11-12
 
 LIVE `2026.11.12.002-commissary-hub-prep-access` exposes Prep List View, Prep List downloads and Packout Packets only when Cricket, Sonic or Blueshift is selected as the cafe. Opening Prep List View binds the view to that selected hub; operators cannot switch into another hub's work from inside the view. Prep workbook production and delivery-map rows apply the existing station-level hub routing, including cafes whose different stations route to different hubs. Non-hub receiving cafes retain ordering and their own S4 transfer export but no production-list controls.
