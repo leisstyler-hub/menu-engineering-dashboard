@@ -11,7 +11,7 @@ assert.equal(isApprovedOperationalMetadataRecord(record), true);
 assert.equal(resolveOperationalMetadata([record]).source, "supabase");
 assert.equal(resolveOperationalMetadata([]).source, "fallback");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.orderItems.length, 41);
-assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 17);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 18);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.items.length, 41);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.legacyItems.length, 41);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.source.effectiveDate, "2026-11-16");
@@ -33,6 +33,7 @@ assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.grillInterface,
   setLayout: "two-column-desktop",
   deliveryControls: "always-visible",
   coreItems: "permanent-optional-whole-item-quantities",
+  sectionLayout: "single-section-lto-before-core",
 });
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.deliCatalog.menu, "AMZ: Deli Core");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.deliCatalog.items.length, 20);
@@ -68,7 +69,7 @@ assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globalInterface
   subrecipes: "automatic-from-recipe",
   deliveryQuantities: "whole-portions",
 });
-assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 17);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 18);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globalProductionPolicy.version, 1);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globalProductionPolicy.rules["global|amz-porto|121026|1-piece"].outputs[0].mrn, "120715");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globalProductionPolicy.rules["global|amz-smokehouse-bbq|5365.6|5-ounce"].mode, "in-unit");
@@ -77,6 +78,12 @@ assert.equal(Object.values(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globa
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.packoutPacket.format, "pdf");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.packoutPacket.emailDelivery, false);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.stationOrder, ["Salad Bar", "Breakfast", "Deli", "Grill", "Global"]);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.workbookVersion, 2);
+assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.dailyPrepLists, { friday: "Monday service", monday: "Tuesday-Wednesday service", wednesday: "Thursday-Friday service" });
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.exactMrnRollup, true);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.costsVisible, false);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.deliveryMapGrouping, "cafe-station-item");
+assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.grillUnitSuppliedItems, ["brioche buns"]);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.hubRouting.Cricket.global, ["Cricket", "Nessie", "Dawson", "Frontier"]);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.hubRouting.Sonic.global, []);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.hubRouting.Blueshift.global, ["Bingo", "Grace", "Sonic", "Blueshift", "105", "Everest", "Gemini", "Astra", "Doppler", "Day 1", "Nitro", "Re:Invent"]);

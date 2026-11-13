@@ -19,7 +19,7 @@ function downloadBytes(bytes, fileName, mimeType) {
   setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
-const moneyFormat = "$#,##0.00";
+const GRILL_UNIT_SUPPLIED_BUN = /\bbun\b/i;
 const PREP_LIST_COLORS = {
   navy: "17365D",
   blue: "5B9BD5",
@@ -77,37 +77,37 @@ function bodyStyle(fill, isGroupStart = false) {
 function buildDeliveryMapWorksheet(records, delivery, weekStart) {
   const prepLine = (line) => {
     const display = prepDisplayQuantity({ ...line, total: line.quantity, [delivery.key]: line.quantity, cafes: {} });
-    return { cafe: line.cafe, name: display.name, mrn: display.mrn, quantity: display[delivery.key], unit: display.orderUnit, unitCost: null, finishedDish: display.finishedDish };
+    return { cafe: line.cafe, station: line.station, name: display.name, mrn: display.mrn, quantity: display[delivery.key], unit: display.orderUnit, finishedDish: display.finishedDish };
   };
   const deliveryLines = records.flatMap((record) => [
-    ...orderLinesForCafe(record).filter((line) => Number(line[delivery.key]) > 0).map((line) => ({ cafe: record.cafe, name: line.name, mrn: line.mrn, quantity: line[delivery.key], unit: line.orderUnit, unitCost: line.orderUnitCost, finishedDish: line.name })),
-    ...grillPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key).map(prepLine),
-    ...deliOrderLinesForCafe(record).filter((line) => Number(line[delivery.key]) > 0).map((line) => ({ cafe: record.cafe, name: line.name, mrn: line.mrn, quantity: line[delivery.key], unit: "sandwich", unitCost: line.orderUnitCost, finishedDish: line.name })),
+    ...orderLinesForCafe(record).filter((line) => Number(line[delivery.key]) > 0).map((line) => ({ cafe: record.cafe, station: "Salad Bar", name: line.name, mrn: line.mrn, quantity: line[delivery.key], unit: line.orderUnit, finishedDish: line.name })),
+    ...grillPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key && !GRILL_UNIT_SUPPLIED_BUN.test(line.name)).map(prepLine),
+    ...deliOrderLinesForCafe(record).filter((line) => Number(line[delivery.key]) > 0).map((line) => ({ cafe: record.cafe, station: "Deli", name: line.name, mrn: line.mrn, quantity: line[delivery.key], unit: "sandwich", finishedDish: line.name })),
     ...globalPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key).map(prepLine),
     ...breakfastPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key).map(prepLine),
-  ]).sort((a, b) => a.cafe.localeCompare(b.cafe) || a.name.localeCompare(b.name));
+  ]).sort((a, b) => a.cafe.localeCompare(b.cafe) || a.station.localeCompare(b.station) || a.name.localeCompare(b.name) || String(a.mrn).localeCompare(String(b.mrn)));
   const rows = [
-    [`${delivery.day} ${formatShortDate(deliveryDateForWeek(weekStart, delivery.key))} Cafe Delivery Map`, "", "", "", "", "", "", ""],
-    [delivery.detail, "", "", "", "", "", "", ""],
-    ["Cafe", "Ingredient / item", "MRN", "Quantity", "Order unit", "Finished dish", "Unit cost", "Extended cost"],
-    ...deliveryLines.map((line) => [line.cafe, line.name, line.mrn, line.quantity, line.unit, line.finishedDish, line.unitCost ?? "", line.unitCost == null ? "" : line.quantity * line.unitCost]),
+    [`${delivery.day} ${formatShortDate(deliveryDateForWeek(weekStart, delivery.key))} Cafe Delivery Map`, "", "", "", "", "", ""],
+    [delivery.detail, "", "", "", "", "", ""],
+    ["Cafe", "Station", "Ingredient / item", "MRN", "Quantity", "Order unit", "Finished dish"],
+    ...deliveryLines.map((line) => [line.cafe, line.station, line.name, line.mrn, line.quantity, line.unit, line.finishedDish]),
   ];
   const worksheet = XLSX.utils.aoa_to_sheet(rows);
-  worksheet["!merges"] = [XLSX.utils.decode_range("A1:H1"), XLSX.utils.decode_range("A2:H2")];
-  worksheet["!cols"] = [18, 30, 14, 12, 20, 30, 14, 16].map((wch) => ({ wch }));
+  worksheet["!merges"] = [XLSX.utils.decode_range("A1:G1"), XLSX.utils.decode_range("A2:G2")];
+  worksheet["!cols"] = [18, 16, 30, 14, 12, 20, 30].map((wch) => ({ wch }));
   worksheet["!freeze"] = { xSplit: 0, ySplit: 3, topLeftCell: "A4", activePane: "bottomLeft", state: "frozen" };
   worksheet["!autofilter"] = { ref: `A3:H${Math.max(rows.length, 3)}` };
   worksheet["!margins"] = { left: 0.3, right: 0.3, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 };
   worksheet["!rows"] = rows.map((_, row) => ({ hpt: row === 0 ? 26 : row === 1 ? 21 : row === 2 ? 30 : 23 }));
 
-  let previousCafe = null;
+  let previousGroup = null;
   let cafeBand = -1;
   for (let row = 0; row < rows.length; row += 1) {
-    const cafe = row > 2 ? rows[row][0] : null;
-    const isGroupStart = row > 2 && cafe !== previousCafe;
+    const group = row > 2 ? `${rows[row][0]}|${rows[row][1]}` : null;
+    const isGroupStart = row > 2 && group !== previousGroup;
     if (isGroupStart) cafeBand += 1;
     const fill = isGroupStart ? PREP_LIST_COLORS.section : cafeBand % 2 === 0 ? PREP_LIST_COLORS.detailAlt : PREP_LIST_COLORS.detail;
-    for (let column = 0; column < 8; column += 1) {
+    for (let column = 0; column < 7; column += 1) {
       let style;
       if (row === 0) style = titleStyle();
       else if (row === 1) style = {
@@ -118,28 +118,21 @@ function buildDeliveryMapWorksheet(records, delivery, weekStart) {
       };
       else if (row === 2) style = headerStyle;
       else style = bodyStyle(fill, isGroupStart);
-      if (row > 2 && isGroupStart && column === 0) style = { ...style, font: { ...style.font, bold: true, color: { rgb: PREP_LIST_COLORS.navy } } };
-      setCellStyle(worksheet, row, column, style, row > 2 && [6, 7].includes(column) ? moneyFormat : undefined);
+      if (row > 2 && isGroupStart && [0, 1].includes(column)) style = { ...style, font: { ...style.font, bold: true, color: { rgb: PREP_LIST_COLORS.navy } } };
+      setCellStyle(worksheet, row, column, style);
     }
-    if (row > 2) previousCafe = cafe;
+    if (row > 2) previousGroup = group;
   }
   return worksheet;
 }
 
-export function buildCommissaryBomWorkbook(records, weekStart, metadata = DEFAULT_COMMISSARY_METADATA) {
-  const rows = rolledUpPrepItems(records, { consolidateAcrossStations: true });
+function buildPrepListWorksheet(rows, delivery, weekStart) {
+  const dayRows = rows.filter((row) => Number(row[delivery.key]) > 0);
   const worksheetRows = [
-    ["Ingredient Technique Prep List", "", "", "", "", ""],
-    [`Commissary production · Week ${weekLabel(weekStart)}`, "", "", "", "", ""],
+    [`${delivery.day} Prep List`, "", "", "", "", ""],
+    [`${delivery.detail} · ${delivery.day} ${formatShortDate(deliveryDateForWeek(weekStart, delivery.key))}`, "", "", "", "", ""],
     ["Ingredient / item", "Total quantity", "Order unit", "Production type", "Production family", "Finished dish"],
-    ...rows.map((row) => [
-      row.name,
-      row.total,
-      row.orderUnit,
-      row.productionType,
-      row.productionFamily,
-      row.finishedDish || row.name,
-    ]),
+    ...dayRows.map((row) => [row.name, row[delivery.key], row.orderUnit, row.productionType, row.productionFamily, row.finishedDish || row.name]),
   ];
   const worksheet = XLSX.utils.aoa_to_sheet(worksheetRows);
   worksheet["!merges"] = [XLSX.utils.decode_range("A1:F1"), XLSX.utils.decode_range("A2:F2")];
@@ -148,7 +141,6 @@ export function buildCommissaryBomWorkbook(records, weekStart, metadata = DEFAUL
   worksheet["!autofilter"] = { ref: `A3:F${Math.max(worksheetRows.length, 3)}` };
   worksheet["!margins"] = { left: 0.25, right: 0.25, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 };
   worksheet["!rows"] = worksheetRows.map((_, row) => ({ hpt: row === 0 ? 28 : row === 1 ? 22 : row === 2 ? 34 : 25 }));
-
   let previousCategory = null;
   let categoryBand = -1;
   for (let row = 0; row < worksheetRows.length; row += 1) {
@@ -159,12 +151,7 @@ export function buildCommissaryBomWorkbook(records, weekStart, metadata = DEFAUL
     for (let column = 0; column < 6; column += 1) {
       let style;
       if (row === 0) style = titleStyle();
-      else if (row === 1) style = {
-        font: { name: "Arial", sz: 10, italic: true, color: { rgb: PREP_LIST_COLORS.muted } },
-        fill: { patternType: "solid", fgColor: { rgb: PREP_LIST_COLORS.detail } },
-        alignment: { vertical: "center" },
-        border: border(PREP_LIST_COLORS.section),
-      };
+      else if (row === 1) style = { font: { name: "Arial", sz: 10, italic: true, color: { rgb: PREP_LIST_COLORS.muted } }, fill: { patternType: "solid", fgColor: { rgb: PREP_LIST_COLORS.detail } }, alignment: { vertical: "center" }, border: border(PREP_LIST_COLORS.section) };
       else if (row === 2) style = headerStyle;
       else style = bodyStyle(fill, isGroupStart);
       if (row > 2 && isGroupStart && [0, 3].includes(column)) style = { ...style, font: { ...style.font, bold: true, color: { rgb: PREP_LIST_COLORS.navy } } };
@@ -172,6 +159,11 @@ export function buildCommissaryBomWorkbook(records, weekStart, metadata = DEFAUL
     }
     if (row > 2) previousCategory = category;
   }
+  return worksheet;
+}
+
+export function buildCommissaryBomWorkbook(records, weekStart, metadata = DEFAULT_COMMISSARY_METADATA) {
+  const rows = rolledUpPrepItems(records, { consolidateAcrossStations: true });
 
   const automationRows = [
     ["Portion Plan — Power Automate input area", "", "", "Calculation rows — maintain for Power Automate", "", "", "", ""],
@@ -221,7 +213,7 @@ export function buildCommissaryBomWorkbook(records, weekStart, metadata = DEFAUL
   }
 
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Consolidated Prep List");
+  metadata.deliveries.forEach((delivery) => XLSX.utils.book_append_sheet(workbook, buildPrepListWorksheet(rows, delivery, weekStart), `${delivery.day} Prep List`));
   metadata.deliveries.forEach((delivery) => XLSX.utils.book_append_sheet(workbook, buildDeliveryMapWorksheet(records, delivery, weekStart), `${delivery.day} Delivery Map`));
   XLSX.utils.book_append_sheet(workbook, automationWorksheet, "Power Automate");
   workbook.Workbook ||= {};

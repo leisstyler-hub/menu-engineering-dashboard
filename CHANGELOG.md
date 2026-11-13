@@ -1,3 +1,7 @@
+## 2026-11-12
+
+- [Nov 12, 6:22 PM] Split Commissary prep into three daily lists, consolidate exact MRNs, simplify delivery maps, and combine Grill ordering.
+
 ## 2026-11-06
 
 - [Nov 6, 9:11 PM] Menu Projects and Menu Audit Tool are hibernated from the home screen and mobile navigation.
@@ -23,7 +27,6 @@ LIVE 2026.11.05.008-ssmt-price-reassign, app 4f00eae645e8c206a4d090d09126f7a2c22
 ## SSMT MRN guide and Experience navigation - 2026-11-05
 
 Candidate `2026.11.05.007-ssmt-mrn-experience`, Chief on chief/ssmt-aus-bna. Passive exact-MRN suggestions offer explicit existing import preview. Imported items show No Review Needed in Experience; new items have no label; only descriptions trigger re-review. Legacy imports retain provenance eligibility and capture their own description before first edit. Server permits only the exact previous-description snapshot insertion, rejects bypass, and protects identity/provenance. Replacement retains draft identity, flags and submenu placement. Experience starts at the existing Menu Selector, navigates home/pricing/selector and opens its review view; no Create record or hibernation controls, pricing view-only. Automatically hibernated promotions offer Restore with a per-end-date exemption while retaining historical dates. No schema/direct production workspace writes. Full package verification/build passed; local SSMT browser checks 67/67 and independent safety review passed. Production verification pending. Rollback 1a53561 / dpl_55PoQotddNDurMioba6jbd9uLqm8. Evidence: workspace WORK_LOGS/SSMT_MRN_EXPERIENCE_2026_11_05.md.
-
 ## 2026-11-05
 
 - [Nov 5, 8:39 PM] Landing changelog fills the space beside recent items; daily release numbers continue across all publishers.

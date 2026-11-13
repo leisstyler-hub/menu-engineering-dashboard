@@ -536,7 +536,7 @@ export function grillOrderLinesForCafe(record = {}) {
 }
 
 export function grillPrepLinesForCafe(record = {}) {
-  return grillOrderLinesForCafe(record).flatMap((line) => filterCommissaryComponents(GRILL_LTO_PROGRAM.itemPrepComponents[line.mrn] || [], record.weekStart).filter(({ name }) => !isExcludedLoosePrepItem(name)).flatMap((component) => DELIVERY_KEYS.map((delivery) => ({
+  return grillOrderLinesForCafe(record).flatMap((line) => filterCommissaryComponents(GRILL_LTO_PROGRAM.itemPrepComponents[line.mrn] || [], record.weekStart).filter(({ name }) => !isExcludedLoosePrepItem(name) && !/\bbun\b/i.test(name)).flatMap((component) => DELIVERY_KEYS.map((delivery) => ({
     ...component,
     category: component.type === "subrecipe" ? "Grill sub-recipe" : "Grill ingredient",
     station: "Grill",
@@ -632,7 +632,7 @@ function componentTransferLines(orderLines, componentMap, weekStart, station) {
 }
 
 export function grillTransferLinesForCafe(record = {}) {
-  return componentTransferLines(grillOrderLinesForCafe(record), GRILL_LTO_PROGRAM.itemTransferComponents || {}, record.weekStart, "Grill");
+  return componentTransferLines(grillOrderLinesForCafe(record), GRILL_LTO_PROGRAM.itemTransferComponents || {}, record.weekStart, "Grill").filter(({ name }) => !/\bbun\b/i.test(name));
 }
 
 export function globalTransferLinesForCafe(record = {}) {
@@ -701,7 +701,9 @@ export function rolledUpPrepItems(records = [], options = {}) {
     ...(options.hub && !cafeRoutesToHub(record.cafe, COMMISSARY_STATIONS.GLOBAL, options.hub) ? [] : globalPrepLinesForCafe(record)),
     ...(options.hub && !cafeRoutesToHub(record.cafe, COMMISSARY_STATIONS.BREAKFAST, options.hub) ? [] : breakfastPrepLinesForCafe(record)),
   ]).forEach((line) => {
-    const key = `${line.station}|${String(line.name || "").trim().toLowerCase()}|${String(line.mrn || "").trim()}|${String(line.orderUnit || "").trim().toLowerCase()}`;
+    const mrn = String(line.mrn || "").trim();
+    const identity = mrn ? `mrn:${mrn}` : `name:${String(line.name || "").trim().toLowerCase()}`;
+    const key = `${line.station}|${identity}|${String(line.orderUnit || "").trim().toLowerCase()}`;
     const current = grillMap.get(key) || {
       id: line.id,
       name: line.name,
@@ -731,7 +733,9 @@ export function rolledUpPrepItems(records = [], options = {}) {
   if (!options.consolidateAcrossStations) return displayed;
   const consolidated = new Map();
   displayed.forEach((row) => {
-    const key = `${String(row.name || "").trim().toLowerCase()}|${String(row.mrn || "").trim()}|${String(row.orderUnit || "").trim().toLowerCase()}`;
+    const mrn = String(row.mrn || "").trim();
+    const identity = mrn ? `mrn:${mrn}` : `name:${String(row.name || "").trim().toLowerCase()}`;
+    const key = `${identity}|${String(row.orderUnit || "").trim().toLowerCase()}`;
     const current = consolidated.get(key) || { ...row, finishedDishes: new Set(), stations: new Set(), cafes: {}, ...Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, 0])), total: 0 };
     current.finishedDishes.add(row.finishedDish || row.name);
     current.stations.add(row.station);

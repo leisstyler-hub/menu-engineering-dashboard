@@ -23,7 +23,7 @@ import { COMMISSARY_CAFE_STATION_ACCESS, COMMISSARY_HUB_ROUTING, COMMISSARY_HUBS
 import { GLOBAL_UNIT_PREPARATION_NOTES } from "../features/commissary-ordering/commissaryModel.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 17;
+export const OPERATIONAL_METADATA_VERSION = 18;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -117,6 +117,7 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       setLayout: "two-column-desktop",
       deliveryControls: "always-visible",
       coreItems: "permanent-optional-whole-item-quantities",
+      sectionLayout: "single-section-lto-before-core",
     }),
     componentProductionPolicy: Object.freeze({
       version: 2,
@@ -143,6 +144,12 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       deliDeliveryMap: "finished-sandwich-counts",
       globalUnitPreparationNotes: GLOBAL_UNIT_PREPARATION_NOTES,
       globalMarinadePolicy: "six-week-reviewed-recipe-tree-minus-unit-protein",
+      workbookVersion: 2,
+      dailyPrepLists: Object.freeze({ friday: "Monday service", monday: "Tuesday-Wednesday service", wednesday: "Thursday-Friday service" }),
+      exactMrnRollup: true,
+      costsVisible: false,
+      deliveryMapGrouping: "cafe-station-item",
+      grillUnitSuppliedItems: Object.freeze(["brioche buns"]),
     }),
     packoutPacket: Object.freeze({
       version: 1,

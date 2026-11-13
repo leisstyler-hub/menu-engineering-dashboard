@@ -178,19 +178,19 @@ test("Commissary Ordering Tool requires cafe selection and saves separate delive
   const prepListFile = await bomDownload;
   expect(prepListFile.suggestedFilename()).toMatch(/Commissary Prep List.*\.xlsx/);
   const bomWorkbook = XLSX.readFile(await prepListFile.path(), { cellStyles: true });
-  expect(bomWorkbook.SheetNames).toEqual(["Consolidated Prep List", "Friday Delivery Map", "Monday Delivery Map", "Wednesday Delivery Map", "Power Automate"]);
-  expect(bomWorkbook.Sheets["Consolidated Prep List"].A1.s.fgColor.rgb).toBe("17365D");
-  const prepRows = XLSX.utils.sheet_to_json(bomWorkbook.Sheets["Consolidated Prep List"], { header: 1, defval: "" });
+  expect(bomWorkbook.SheetNames).toEqual(["Friday Prep List", "Monday Prep List", "Wednesday Prep List", "Friday Delivery Map", "Monday Delivery Map", "Wednesday Delivery Map", "Power Automate"]);
+  expect(bomWorkbook.Sheets["Monday Prep List"].A1.s.fgColor.rgb).toBe("17365D");
+  const prepRows = XLSX.utils.sheet_to_json(bomWorkbook.Sheets["Monday Prep List"], { header: 1, defval: "" });
   expect(prepRows[2].slice(0, 3)).toEqual(["Ingredient / item", "Total quantity", "Order unit"]);
   expect(bomWorkbook.Workbook.Sheets.find((sheet) => sheet.name === "Power Automate")?.Hidden).toBe(1);
   expect(bomWorkbook.Sheets["Monday Delivery Map"].A4.s.fgColor.rgb).toBe("D9EAF7");
   const fridayRows = XLSX.utils.sheet_to_json(bomWorkbook.Sheets["Friday Delivery Map"], { header: 1, defval: "" });
   const mondayRows = XLSX.utils.sheet_to_json(bomWorkbook.Sheets["Monday Delivery Map"], { header: 1, defval: "" });
   const wednesdayRows = XLSX.utils.sheet_to_json(bomWorkbook.Sheets["Wednesday Delivery Map"], { header: 1, defval: "" });
-  expect(fridayRows).toContainEqual(expect.arrayContaining(["Nessie", "Sliced Cucumber", cucumber.mrn, 1]));
-  expect(mondayRows).toContainEqual(expect.arrayContaining(["Nessie", "Sliced Cucumber", cucumber.mrn, 2]));
-  expect(mondayRows).toContainEqual(expect.arrayContaining(["Nessie", "Green Peas", "62341", 1.25]));
-  expect(wednesdayRows).toContainEqual(expect.arrayContaining(["Nessie", "Sliced Cucumber", cucumber.mrn, 1]));
+  expect(fridayRows).toContainEqual(expect.arrayContaining(["Nessie", "Salad Bar", "Sliced Cucumber", cucumber.mrn, 1]));
+  expect(mondayRows).toContainEqual(expect.arrayContaining(["Nessie", "Salad Bar", "Sliced Cucumber", cucumber.mrn, 2]));
+  expect(mondayRows).toContainEqual(expect.arrayContaining(["Nessie", "Salad Bar", "Green Peas", "62341", 1.25]));
+  expect(wednesdayRows).toContainEqual(expect.arrayContaining(["Nessie", "Salad Bar", "Sliced Cucumber", cucumber.mrn, 1]));
   await saveButton.click();
   await expect(page.getByText(/Nessie's order.*was saved/i)).toBeVisible();
   expect(writes).toHaveLength(1);
@@ -213,6 +213,7 @@ test("Commissary Ordering Tool requires cafe selection and saves separate delive
 
 test("Grill LTO starts Cycle Week 1 on November 16 with Set A and Set B whole-sandwich orders", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
+  await page.clock.install({ time: new Date("2026-11-10T20:00:00Z") });
   const writes = await mockOrders(page);
   await openTool(page, /open commissary ordering/i, /^Commissary Ordering Tool$/);
   await page.getByLabel("Your cafe").selectOption("Nessie");
@@ -241,12 +242,13 @@ test("Grill LTO starts Cycle Week 1 on November 16 with Set A and Set B whole-sa
   await expect(page.getByLabel("Grill Set B sandwich").locator("option")).toContainText(["Select sandwich", "Diablo Burger", "Southwest Burger"]);
   await page.getByLabel("Grill Set A sandwich").selectOption("77139.72");
   await page.getByLabel("Grill Set B sandwich").selectOption("77139.68");
-  const [grillBox, setABox, setBBox] = await Promise.all([
-    grill.boundingBox(),
+  const grillLto = page.getByTestId("commissary-grill-lto");
+  const [grillLtoBox, setABox, setBBox] = await Promise.all([
+    grillLto.boundingBox(),
     page.getByLabel("Grill Set A sandwich").locator("xpath=ancestor::section[1]").boundingBox(),
     page.getByLabel("Grill Set B sandwich").locator("xpath=ancestor::section[1]").boundingBox(),
   ]);
-  expect(grillBox?.height, "Grill ordering should remain compact while retaining both sets").toBeLessThan(420);
+  expect(grillLtoBox?.height, "Grill LTO ordering should remain compact while retaining both sets").toBeLessThan(420);
   expect(Math.abs((setABox?.y ?? 0) - (setBBox?.y ?? 0)), "Set A and Set B should share the desktop row").toBeLessThan(3);
   await expect(grill).toContainText("Item + Waste");
   await expect(grill).toContainText("Friday 11/13");
@@ -257,6 +259,12 @@ test("Grill LTO starts Cycle Week 1 on November 16 with Set A and Set B whole-sa
   await page.getByLabel("Set B Wednesday 11/18 sandwich quantity").fill("15");
   const core = page.getByTestId("commissary-grill-core");
   await expect(core).toContainText("Optional core sandwiches and sides");
+  await expect(core.locator("xpath=ancestor::*[@data-testid='commissary-grill-order']")).toHaveCount(1);
+  expect(await grill.evaluate((node) => {
+    const lto = node.querySelector('[data-testid="commissary-grill-lto"]');
+    const coreSection = node.querySelector('[data-testid="commissary-grill-core"]');
+    return Boolean(lto && coreSection && (lto.compareDocumentPosition(coreSection) & Node.DOCUMENT_POSITION_FOLLOWING));
+  })).toBe(true);
   await page.getByLabel("Smashburger Monday 11/16 quantity").fill("6");
   const deli = page.getByTestId("commissary-deli-order");
   await expect(deli.getByText(/Cycle Week 1/i)).toBeVisible();
@@ -284,14 +292,16 @@ test("Grill LTO starts Cycle Week 1 on November 16 with Set A and Set B whole-sa
   const prepDownload = page.waitForEvent("download");
   await page.getByRole("button", { name: /^prep list$/i }).click();
   const workbook = XLSX.readFile(await (await prepDownload).path());
-  const prepRows = XLSX.utils.sheet_to_json(workbook.Sheets["Consolidated Prep List"], { header: 1, defval: "" });
+  const prepRows = XLSX.utils.sheet_to_json(workbook.Sheets["Monday Prep List"], { header: 1, defval: "" });
+  const fridayPrepRows = XLSX.utils.sheet_to_json(workbook.Sheets["Friday Prep List"], { header: 1, defval: "" });
   expect(prepRows.some((row) => row[0] === "AMZ: Smashburger Patty")).toBe(false);
   expect(prepRows[2]).toEqual(["Ingredient / item", "Total quantity", "Order unit", "Production type", "Production family", "Finished dish"]);
-  expect(prepRows.some((row) => row[0] === "Piri Piri Marinade/Base" && row[5] === "Piri Piri Chicken")).toBe(true);
+  expect(fridayPrepRows.some((row) => row[0] === "Piri Piri Marinade/Base" && row[5] === "Piri Piri Chicken")).toBe(true);
   const mondayRows = XLSX.utils.sheet_to_json(workbook.Sheets["Monday Delivery Map"], { header: 1, defval: "" });
-  expect(mondayRows.some((row) => row[1] === "AMZ: Smashburger Patty")).toBe(false);
-  expect(mondayRows).toContainEqual(expect.arrayContaining(["Nessie", "Mediterranean Turkey Wrap", "190990", 12, "sandwich", "Mediterranean Turkey Wrap"]));
-  expect(mondayRows.some((row) => row[5] === "Mediterranean Turkey Wrap" && row[1] !== "Mediterranean Turkey Wrap")).toBe(false);
+  expect(mondayRows.some((row) => row[2] === "AMZ: Smashburger Patty")).toBe(false);
+  expect(mondayRows).toContainEqual(expect.arrayContaining(["Nessie", "Deli", "Mediterranean Turkey Wrap", "190990", 12, "sandwich", "Mediterranean Turkey Wrap"]));
+  expect(mondayRows.some((row) => row[6] === "Mediterranean Turkey Wrap" && row[2] !== "Mediterranean Turkey Wrap")).toBe(false);
+  expect(mondayRows.some((row) => /\bbun\b/i.test(String(row[2])))).toBe(false);
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
@@ -341,7 +351,8 @@ test("each cafe sees only its assigned commissary stations", async ({ page }) =>
   await expect(page.getByText("Salad bar", { exact: true })).toBeHidden();
   await page.getByLabel("Service week").selectOption("2026-11-09");
   await expect(page.getByTestId("commissary-grill-core")).toBeVisible();
-  await expect(page.getByTestId("commissary-grill-order")).toHaveCount(0);
+  await expect(page.getByTestId("commissary-grill-order")).toBeVisible();
+  await expect(page.getByTestId("commissary-grill-lto")).toHaveCount(0);
 
   await page.getByLabel("Service week").selectOption("2026-11-16");
   await page.getByLabel("Your cafe").selectOption("Frontier");
@@ -354,6 +365,7 @@ test("each cafe sees only its assigned commissary stations", async ({ page }) =>
 
 test("Salad whole-unit controls and the retired Ham Banh Mi roster are enforced", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
+  await page.clock.install({ time: new Date("2026-11-10T20:00:00Z") });
   const priorSpringMix = COMMISSARY_PREVIOUS_ORDER_ITEMS.find((row) => row.name === "Spring Mix");
   const standingQuantities = emptyQuantities("2026-12-28");
   standingQuantities[priorSpringMix.id] = { friday: 1, monday: 0, wednesday: 0 };
@@ -382,6 +394,7 @@ test("Salad whole-unit controls and the retired Ham Banh Mi roster are enforced"
 
 test("Zoka Coffee orders the Supabase-backed croissant through Cricket Breakfast and Deli routing", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
+  await page.clock.install({ time: new Date("2026-11-10T20:00:00Z") });
   const writes = await mockOrders(page);
   await openTool(page, /open commissary ordering/i, /^Commissary Ordering Tool$/);
   await page.getByLabel("Your cafe").selectOption("Zoka Coffee");
