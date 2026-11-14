@@ -14,7 +14,7 @@ export const COMMISSARY_GRILL_ORDER_VERSION = 2;
 export const COMMISSARY_DELI_ORDER_VERSION = 2;
 export const COMMISSARY_GLOBAL_ORDER_VERSION = 3;
 export const COMMISSARY_BREAKFAST_ORDER_VERSION = 1;
-export const COMMISSARY_PACKOUT_PACKET_VERSION = 1;
+export const COMMISSARY_PACKOUT_PACKET_VERSION = 2;
 export const COMMISSARY_STATION_ORDER = Object.freeze(["Salad Bar", "Breakfast", "Deli", "Grill", "Global"]);
 
 export const GLOBAL_UNIT_PREPARATION_NOTES = Object.freeze({
@@ -461,12 +461,8 @@ export function togglePrepCompleted(completed, delivery, itemId) {
 }
 
 export function orderValue(quantities = {}, grill = {}, deli = {}, global = {}, cafe = "", breakfast = {}, weekStart) {
-  const normalized = normalizeQuantities(quantities, { weekStart });
-  const saladItems = [...commissaryItemMapForWeek(weekStart, quantities).values()];
-  const saladValue = cafe && !isCafeStationEnabled(cafe, COMMISSARY_STATIONS.SALAD_BAR) ? 0 : saladItems.reduce((sum, row) => {
-    const delivery = normalized[row.id];
-    return sum + DELIVERY_KEYS.reduce((deliverySum, key) => deliverySum + sanitizeQuantity(delivery[key]), 0) * row.orderUnitCost;
-  }, 0);
+  const saladValue = cafe && !isCafeStationEnabled(cafe, COMMISSARY_STATIONS.SALAD_BAR) ? 0 : orderLinesForCafe({ cafe, weekStart, quantities })
+    .reduce((sum, line) => sum + roundedProductionEquivalentQuantity(line) * line.orderUnitCost, 0);
   const grillRecord = { cafe, weekStart, grill };
   const grillValue = cafe && !isCafeStationEnabled(cafe, COMMISSARY_STATIONS.GRILL) ? 0 : grillTransferLinesForCafe(grillRecord).reduce((sum, line) => sum + line.itemWasteCost * line.quantity, 0);
   const deliValue = cafe && !isCafeStationEnabled(cafe, COMMISSARY_STATIONS.DELI) ? 0 : Object.entries(deli?.quantities || {}).reduce((sum, [mrn, values]) => {
@@ -641,7 +637,7 @@ function componentTransferLines(orderLines, componentMap, weekStart, station) {
       name: component.name,
       finishedDish: line.name,
       mrn: component.mrn,
-      quantity: line.total,
+      quantity: roundedProductionEquivalentQuantity(line, component, station),
       itemWasteCost: Number(component.costPerPortion),
       glCode: component.glCode || "4111011",
       station,
@@ -661,7 +657,7 @@ export function globalTransferLinesForCafe(record = {}) {
       name: component.name,
       finishedDish: line.name,
       mrn: component.mrn,
-      quantity: line.total,
+      quantity: roundedProductionEquivalentQuantity(line, component, "Global"),
       itemWasteCost: Number(component.costPerPortion),
       glCode: component.glCode || "4111011",
       station: "Global",
@@ -744,12 +740,10 @@ export function rolledUpPrepItems(records = [], options = {}) {
     finishedDishes: undefined,
     total: DELIVERY_KEYS.reduce((sum, delivery) => sum + row[delivery], 0),
   }));
-  const displayed = [...salad, ...grill]
-    .filter((row) => row.total > 0)
-    .map(prepDisplayQuantity);
-  if (!options.consolidateAcrossStations) return displayed;
+  const prepRows = [...salad, ...grill].filter((row) => row.total > 0);
+  if (!options.consolidateAcrossStations) return prepRows.map(prepDisplayQuantity);
   const consolidated = new Map();
-  displayed.forEach((row) => {
+  prepRows.forEach((row) => {
     const mrn = String(row.mrn || "").trim();
     const identity = mrn ? `mrn:${mrn}` : `name:${String(row.name || "").trim().toLowerCase()}`;
     const key = `${identity}|${String(row.orderUnit || "").trim().toLowerCase()}`;
@@ -766,6 +760,7 @@ export function rolledUpPrepItems(records = [], options = {}) {
   });
   return [...consolidated.values()]
     .map((row) => ({ ...row, station: [...row.stations].sort().join("; "), stations: undefined, finishedDish: [...row.finishedDishes].sort().join("; "), finishedDishes: undefined }))
+    .map(prepDisplayQuantity)
     .map((row) => ({ ...row, productionType: prepProductionType(row), productionFamily: prepProductionFamily(row) }))
     .sort((a, b) => prepProductionTypeOrder(a.productionType) - prepProductionTypeOrder(b.productionType)
       || a.productionFamily.localeCompare(b.productionFamily)
@@ -773,7 +768,7 @@ export function rolledUpPrepItems(records = [], options = {}) {
       || a.orderUnit.localeCompare(b.orderUnit));
 }
 
-const SAUCE_NAME = /(?:sauce|aioli|dressing|relish|chutney|salsa|mayo|mayonnaise|vinaigrette|pesto|dip|glaze|marinade)/i;
+const SAUCE_NAME = /(?:sauce|aioli|dressing|relish|chutney|salsa|pico de gallo|mayo|mayonnaise|vinaigrette|pesto|dip|glaze|marinade)/i;
 const HOT_SAUCE_NAME = /(?:hot sauce|curry|masala|teriyaki|brais|queso|gravy|demi|piri piri|peri peri)/i;
 const VEGETABLE_NAME = /\b(tomato(?:es)?|cucumbers?|onions?|peppers?|carrots?|celery|broccoli|cauliflower|cabbage|lettuce|kale|spinach|arugula|spring mix|potato(?:es)?|squash|zucchini|mushrooms?|corn|beans?|peas?|avocado|scallions?|cilantro|parsley|vegetables?)\b/i;
 const PRODUCTION_TYPE_ORDER = Object.freeze(["Vegetable Production", "Cold Sauce Production", "Hot Sauce Production", "Other Production"]);
@@ -799,7 +794,55 @@ const VOLUME_TO_CUPS = Object.freeze({
   tbsp: 1 / 16,
   tablespoon: 1 / 16,
   tablespoons: 1 / 16,
+  tsp: 1 / 48,
+  teaspoon: 1 / 48,
+  teaspoons: 1 / 48,
 });
+
+const HALF_GALLON_CUPS = 8;
+
+const roundUpHalfGallonCups = (cups) => Number(cups) > 0
+  ? Math.ceil((Number(cups) / HALF_GALLON_CUPS) - 1e-9) * HALF_GALLON_CUPS
+  : 0;
+
+export function prepVolumeCupsPerUnit(row = {}) {
+  const unit = String(row.orderUnit || row.unit || "").trim().toLowerCase();
+  const name = String(row.name || "");
+  const grillCountPerQuart = row.station !== "Grill" ? 0
+    : /tomato/i.test(String(row.name || "")) && /slic/i.test(String(row.name || "")) && ["slice", "slices"].includes(unit) ? 26
+      : (String(row.mrn || "") === "166043" || /red onion/i.test(String(row.name || ""))) && ["slice", "slices"].includes(unit) ? 32
+        : /iceberg/i.test(String(row.name || "")) && ["each", "leaf", "leaves"].includes(unit) ? 10
+          : /pickle/i.test(String(row.name || "")) && ["each", "slice", "slices"].includes(unit) ? 75
+            : 0;
+  if (grillCountPerQuart) return 4 / grillCountPerQuart;
+  if (/avocado.*mash|mash.*avocado/i.test(`${name} ${row.finishedDish || ""}`) && /(?:#\s*16|no\.?\s*16).*scoop|scoop.*(?:#\s*16|no\.?\s*16)/i.test(unit)) return 1 / 4;
+  if (VOLUME_TO_CUPS[unit]) return VOLUME_TO_CUPS[unit];
+  if (!SAUCE_NAME.test(name)) return 0;
+  const ouncesPerCup = /pico de gallo/i.test(name) ? 7 : 8;
+  if (["ounce", "ounces", "oz"].includes(unit)) return 1 / ouncesPerCup;
+  if (["pound", "pounds", "lb", "lbs"].includes(unit)) return 16 / ouncesPerCup;
+  if (["gram", "grams", "g"].includes(unit)) return 1 / (28.349523125 * ouncesPerCup);
+  if (["kilogram", "kilograms", "kg"].includes(unit)) return 1000 / (28.349523125 * ouncesPerCup);
+  return 0;
+}
+
+export function roundedProductionEquivalentQuantity(line = {}, component = null, station = "") {
+  const quantityPerPortion = Number(component?.quantity ?? 1);
+  const cupsPerUnit = prepVolumeCupsPerUnit({
+    station,
+    name: component?.name || line.name,
+    finishedDish: line.name,
+    mrn: component?.mrn || line.mrn,
+    orderUnit: component?.unit || line.orderUnit,
+  });
+  if (!cupsPerUnit || quantityPerPortion <= 0) return Number(line.total || 0);
+  return Number(DELIVERY_KEYS.reduce((sum, delivery) => {
+    const portions = Number(line[delivery] || 0);
+    if (portions <= 0) return sum;
+    const rawCups = portions * quantityPerPortion * cupsPerUnit;
+    return sum + (portions * (roundUpHalfGallonCups(rawCups) / rawCups));
+  }, 0).toFixed(4));
+}
 
 export function prepProductionType(row = {}) {
   const value = `${row.name || ""} ${row.finishedDish || ""}`;
@@ -820,31 +863,30 @@ function prepProductionTypeOrder(type) {
 }
 
 export function prepDisplayQuantity(row = {}) {
+  if (row.productionVolumeRounded) return row;
   const unit = String(row.orderUnit || "").trim().toLowerCase();
-  const grillItemName = String(row.name || "");
-  const grillCountPerQuart = row.station !== "Grill" ? 0
-    : /tomato/i.test(grillItemName) && /slic/i.test(grillItemName) && ["slice", "slices"].includes(unit) ? 26
-      : (String(row.mrn || "") === "166043" || /red onion/i.test(grillItemName)) && ["slice", "slices"].includes(unit) ? 32
-        : /iceberg/i.test(grillItemName) && ["each", "leaf", "leaves"].includes(unit) ? 10
-          : /pickle/i.test(grillItemName) && ["each", "slice", "slices"].includes(unit) ? 75
-            : 0;
-  if (grillCountPerQuart) {
-    const toQuarts = (value) => Number((Number(value || 0) / grillCountPerQuart).toFixed(4));
-    const converted = {
-      ...row,
-      cafes: Object.fromEntries(Object.entries(row.cafes || {}).map(([cafe, values]) => [cafe, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, toQuarts(values?.[delivery])]))])),
-      ...Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, toQuarts(row[delivery])])),
-      total: toQuarts(row.total),
-      orderUnit: "quart",
-    };
-    if (converted.total < 4) return converted;
-    const toGallons = (value) => Number((Number(value || 0) / 4).toFixed(4));
+  const cupsPerUnit = prepVolumeCupsPerUnit(row);
+  if (cupsPerUnit) {
+    const cafeEntries = Object.entries(row.cafes || {});
+    const roundedCafes = Object.fromEntries(cafeEntries.map(([cafe, values]) => [cafe, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [
+      delivery,
+      Number((roundUpHalfGallonCups(Number(values?.[delivery] || 0) * cupsPerUnit) / 16).toFixed(4)),
+    ]))]));
+    const deliveryGallons = Object.fromEntries(DELIVERY_KEYS.map((delivery) => {
+      const cafeTotal = Object.values(roundedCafes).reduce((sum, values) => sum + Number(values?.[delivery] || 0), 0);
+      const gallons = cafeEntries.length
+        ? cafeTotal
+        : roundUpHalfGallonCups(Number(row[delivery] || 0) * cupsPerUnit) / 16;
+      return [delivery, Number(gallons.toFixed(4))];
+    }));
     return {
-      ...converted,
-      cafes: Object.fromEntries(Object.entries(converted.cafes).map(([cafe, values]) => [cafe, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, toGallons(values?.[delivery])]))])),
-      ...Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, toGallons(converted[delivery])])),
-      total: toGallons(converted.total),
+      ...row,
+      cafes: roundedCafes,
+      ...deliveryGallons,
+      total: Number(DELIVERY_KEYS.reduce((sum, delivery) => sum + deliveryGallons[delivery], 0).toFixed(4)),
       orderUnit: "gallon",
+      nativeOrderUnit: row.orderUnit,
+      productionVolumeRounded: true,
     };
   }
   if (["kilogram", "kilograms", "kg"].includes(unit)) {
@@ -857,40 +899,7 @@ export function prepDisplayQuantity(row = {}) {
       orderUnit: "pound",
     };
   }
-  if (/avocado.*mash|mash.*avocado/i.test(`${row.name || ""} ${row.finishedDish || ""}`) && /(?:#\s*16|no\.?\s*16).*scoop|scoop.*(?:#\s*16|no\.?\s*16)/i.test(unit)) {
-    const convert = (value) => Number((Number(value || 0) / 64).toFixed(4));
-    return {
-      ...row,
-      cafes: Object.fromEntries(Object.entries(row.cafes || {}).map(([cafe, values]) => [cafe, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, convert(values?.[delivery])]))])),
-      ...Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, convert(row[delivery])])),
-      total: convert(row.total),
-      orderUnit: "gallon",
-    };
-  }
-  const cupsPerUnit = VOLUME_TO_CUPS[unit];
-  const shouldConvertVolume = SAUCE_NAME.test(`${row.name || ""} ${row.finishedDish || ""}`)
-    || row.station === "Grill"
-    || ["tbsp", "tablespoon", "tablespoons"].includes(unit);
-  if (!cupsPerUnit || !shouldConvertVolume) return row;
-  const convert = (value) => Number((Number(value || 0) * cupsPerUnit).toFixed(4));
-  const converted = {
-    ...row,
-    cafes: Object.fromEntries(Object.entries(row.cafes || {}).map(([cafe, values]) => [cafe, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, convert(values?.[delivery])]))])),
-    ...Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, convert(row[delivery])])),
-    total: convert(row.total),
-    orderUnit: "cup",
-  };
-  const totalCups = converted.total;
-  const target = totalCups >= 16 ? { unit: "gallon", divisor: 16 } : totalCups >= 4 ? { unit: "quart", divisor: 4 } : { unit: "cup", divisor: 1 };
-  if (target.divisor === 1) return converted;
-  const divide = (value) => Number((Number(value || 0) / target.divisor).toFixed(4));
-  return {
-    ...converted,
-    cafes: Object.fromEntries(Object.entries(converted.cafes).map(([cafe, values]) => [cafe, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, divide(values?.[delivery])]))])),
-    ...Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, divide(converted[delivery])])),
-    total: divide(converted.total),
-    orderUnit: target.unit,
-  };
+  return row;
 }
 
 export function buildPackoutPacketRecord({ weekStart, records = [], packet = null, metadataVersion = 0, now = new Date() }) {

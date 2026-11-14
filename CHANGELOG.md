@@ -1,3 +1,7 @@
+## 2026-11-14
+
+- [Nov 14, 7:03 AM] Round volume prep up to half gallons, show all sauces in volume, use 7 oz per cup for pico, and carry extra yield into transfers.
+
 ## 2026-11-13
 
 - [Nov 13, 7:39 PM] Filter tablet prep by station, route Brazil Coffee to Cricket, send whole Garden Salads, and convert Grill mise to volume.

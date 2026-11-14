@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Languages } from "lucide-react";
 
-import { COMMISSARY_STATION_ORDER, prepDisplayQuantity, rolledUpPrepItems, weekLabel } from "./commissaryModel.js";
+import { COMMISSARY_STATION_ORDER, rolledUpPrepItems, weekLabel } from "./commissaryModel.js";
 import { DEFAULT_COMMISSARY_METADATA } from "./commissaryMetadata.js";
 import {
   commissarySpanishCategory,
@@ -76,7 +76,7 @@ export default function PrepListView({ records, weekStart, hub, hubs = [], onHub
   const [delivery, setDelivery] = useState(() => deliveries[0]?.key || "friday");
   const [spanish, setSpanish] = useState(false);
   const [station, setStation] = useState("all");
-  const rows = useMemo(() => rolledUpPrepItems(records, { hub }).map(prepDisplayQuantity).filter((row) => Number(row[delivery]) > 0), [delivery, hub, records]);
+  const rows = useMemo(() => rolledUpPrepItems(records, { hub }).filter((row) => Number(row[delivery]) > 0), [delivery, hub, records]);
   const availableStations = useMemo(() => COMMISSARY_STATION_ORDER.filter((stationName) => rows.some((row) => row.station === stationName)), [rows]);
   const visibleRows = useMemo(() => station === "all" ? rows : rows.filter((row) => row.station === station), [rows, station]);
   const stationGroups = useMemo(() => COMMISSARY_STATION_ORDER.flatMap((stationName) => {
@@ -187,7 +187,7 @@ export default function PrepListView({ records, weekStart, hub, hubs = [], onHub
               : (spanish ? commissarySpanishCategory(row.category) : row.category);
             const unit = compactUnit(row.orderUnit, spanish);
             return (
-              <article key={row.id} className={`flex min-h-24 items-center gap-4 px-4 py-4 transition md:px-6 ${checked ? "bg-emerald-50" : "bg-white"}`}>
+              <article key={row.id} className={`grid min-h-24 grid-cols-[3.5rem_minmax(0,1fr)] items-center gap-x-4 gap-y-2 px-4 py-4 transition sm:grid-cols-[3.5rem_minmax(0,1fr)_auto] md:px-6 ${checked ? "bg-emerald-50" : "bg-white"}`}>
                 <PrepCheck
                   checked={checked}
                   disabled={saving}
@@ -196,11 +196,11 @@ export default function PrepListView({ records, weekStart, hub, hubs = [], onHub
                 />
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-black uppercase tracking-[0.12em] text-sky-700">{category}</p>
-                  <p className={`mt-0.5 text-xl font-black leading-tight ${checked ? "text-emerald-900 line-through decoration-2" : "text-slate-950"}`}>{itemName}</p>
+                  <p className={`mt-0.5 break-words text-lg font-black leading-tight sm:text-xl ${checked ? "text-emerald-900 line-through decoration-2" : "text-slate-950"}`}>{itemName}</p>
                   {row.finishedDish && <p className="mt-1 text-xs font-bold text-slate-500">{spanish ? "Para" : "For"}: {row.finishedDish}</p>}
                 </div>
-                <div className="max-w-[45%] shrink-0 text-right" data-testid={`prep-quantity-${row.id}`}>
-                  <p className="whitespace-nowrap text-3xl font-black tabular-nums text-slate-950">{quantityText(row[delivery])} <span className="text-xl">{unit}</span></p>
+                <div className="col-start-2 min-w-0 text-left sm:col-start-3 sm:row-start-1 sm:max-w-[20rem] sm:text-right" data-testid={`prep-quantity-${row.id}`}>
+                  <p className="flex flex-wrap items-baseline gap-x-1 text-3xl font-black tabular-nums text-slate-950 sm:justify-end">{quantityText(row[delivery])} <span className="text-xl">{unit}</span></p>
                   <p className="mt-1 text-sm font-bold leading-tight text-slate-500" data-testid={`prep-cafes-${row.id}`}>{cafes}</p>
                 </div>
               </article>

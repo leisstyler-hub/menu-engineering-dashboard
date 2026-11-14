@@ -3,7 +3,7 @@ import XLSX from "xlsx-js-style";
 import { buildS4Workbook, transferExportFileName } from "../transfer-tool/transferExport.js";
 import { COMMISSARY_DEPARTING_UNIT } from "./commissaryCatalog.js";
 import { DEFAULT_COMMISSARY_METADATA } from "./commissaryMetadata.js";
-import { breakfastOrderLinesForCafe, breakfastPrepLinesForCafe, deliOrderLinesForCafe, deliveryDateForWeek, formatShortDate, globalPrepLinesForCafe, globalTransferLinesForCafe, grillPrepLinesForCafe, grillTransferLinesForCafe, orderLinesForCafe, prepDisplayQuantity, rolledUpPrepItems, transferPeriod, weekLabel } from "./commissaryModel.js";
+import { breakfastOrderLinesForCafe, breakfastPrepLinesForCafe, deliOrderLinesForCafe, deliveryDateForWeek, formatShortDate, globalPrepLinesForCafe, globalTransferLinesForCafe, grillPrepLinesForCafe, grillTransferLinesForCafe, orderLinesForCafe, prepDisplayQuantity, rolledUpPrepItems, roundedProductionEquivalentQuantity, transferPeriod, weekLabel } from "./commissaryModel.js";
 import { COMMISSARY_STATIONS, cafeRoutesToHub } from "./commissaryRouting.js";
 
 const S4_TEMPLATE_URL = "/templates/ExpenseTransfer_Between_PC_Template.xlsx";
@@ -77,12 +77,9 @@ function bodyStyle(fill, isGroupStart = false) {
 
 function buildDeliveryMapWorksheet(records, delivery, weekStart, options = {}) {
   const routed = (record, station) => !options.hub || cafeRoutesToHub(record.cafe, station, options.hub);
-  const prepLine = (line) => {
-    const display = prepDisplayQuantity({ ...line, total: line.quantity, [delivery.key]: line.quantity, cafes: {} });
-    return { cafe: line.cafe, station: line.station, name: display.name, mrn: display.mrn, quantity: display[delivery.key], unit: display.orderUnit, finishedDish: display.finishedDish, prepVolume: true };
-  };
+  const prepLine = (line) => ({ cafe: line.cafe, station: line.station, name: line.name, mrn: line.mrn, quantity: line.quantity, unit: line.orderUnit, finishedDish: line.finishedDish, prepVolume: true });
   const rawDeliveryLines = records.flatMap((record) => [
-    ...(routed(record, COMMISSARY_STATIONS.SALAD_BAR) ? orderLinesForCafe(record).filter((line) => Number(line[delivery.key]) > 0).map((line) => ({ cafe: record.cafe, station: "Salad Bar", name: line.name, mrn: line.mrn, quantity: line[delivery.key], unit: line.orderUnit, finishedDish: line.name })) : []),
+    ...(routed(record, COMMISSARY_STATIONS.SALAD_BAR) ? orderLinesForCafe(record).filter((line) => Number(line[delivery.key]) > 0).map((line) => ({ cafe: record.cafe, station: "Salad Bar", name: line.name, mrn: line.mrn, quantity: line[delivery.key], unit: line.orderUnit, finishedDish: line.name, prepVolume: true })) : []),
     ...(routed(record, COMMISSARY_STATIONS.GRILL) ? grillPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key && !GRILL_UNIT_SUPPLIED_BUN.test(line.name)).map(prepLine) : []),
     ...(routed(record, COMMISSARY_STATIONS.DELI) ? deliOrderLinesForCafe(record).filter((line) => Number(line[delivery.key]) > 0).map((line) => ({ cafe: record.cafe, station: "Deli", name: line.name, mrn: line.mrn, quantity: line[delivery.key], unit: "sandwich", finishedDish: line.name })) : []),
     ...(routed(record, COMMISSARY_STATIONS.GLOBAL) ? globalPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key).map(prepLine) : []),
@@ -259,20 +256,23 @@ export function buildCommissaryTransfer(record, metadata = DEFAULT_COMMISSARY_ME
     eventId: "",
     s4ExportVersion: 1,
     items: [
-      ...orderLinesForCafe(record).map((line) => ({
-      catalogId: line.id,
-      menu: "Commissary Salad Bar",
-      item: `${line.name} (${line.total} ${line.orderUnit}${line.total === 1 ? "" : "s"})`,
-      mrn: line.mrn,
-      quantity: line.total,
-      itemWasteCost: line.orderUnitCost,
-      ingredientAllocations: [{
-        ingredientName: line.transferGlCategory || "Prepared Foods",
-        ingredientMrn: line.mrn,
-        glCode: line.transferGlCode || PREPARED_FOODS_GL,
-        allocationPerPortion: line.orderUnitCost,
-      }],
-      })),
+      ...orderLinesForCafe(record).map((line) => {
+        const transferQuantity = roundedProductionEquivalentQuantity(line);
+        return {
+          catalogId: line.id,
+          menu: "Commissary Salad Bar",
+          item: `${line.name} (${transferQuantity} ${line.orderUnit}${transferQuantity === 1 ? "" : "s"})`,
+          mrn: line.mrn,
+          quantity: transferQuantity,
+          itemWasteCost: line.orderUnitCost,
+          ingredientAllocations: [{
+            ingredientName: line.transferGlCategory || "Prepared Foods",
+            ingredientMrn: line.mrn,
+            glCode: line.transferGlCode || PREPARED_FOODS_GL,
+            allocationPerPortion: line.orderUnitCost,
+          }],
+        };
+      }),
       ...grillTransferLinesForCafe(record).map((line) => ({
         catalogId: line.id,
         menu: line.menu,

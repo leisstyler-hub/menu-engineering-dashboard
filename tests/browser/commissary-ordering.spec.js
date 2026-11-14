@@ -172,7 +172,7 @@ test("Commissary Ordering Tool requires cafe selection and saves separate delive
   expect(transferFile.suggestedFilename()).toMatch(/Commissary Order Cricket.*Expense Transfer\.xlsx/);
   const transferWorkbook = XLSX.readFile(await transferFile.path());
   const transferRows = XLSX.utils.sheet_to_json(transferWorkbook.Sheets[transferWorkbook.SheetNames[0]], { header: 1, defval: "" });
-  expect(transferRows).toContainEqual(expect.arrayContaining(["4111009", "22472", "4111009", expect.stringContaining("Green Peas"), 11.82]));
+  expect(transferRows).toContainEqual(expect.arrayContaining(["4111009", "22472", "4111009", expect.stringContaining("Green Peas"), 14.18]));
   const bomDownload = page.waitForEvent("download");
   await page.getByRole("button", { name: /^prep list$/i }).click();
   const prepListFile = await bomDownload;
@@ -189,7 +189,7 @@ test("Commissary Ordering Tool requires cafe selection and saves separate delive
   const wednesdayRows = XLSX.utils.sheet_to_json(bomWorkbook.Sheets["Wednesday Delivery Map"], { header: 1, defval: "" });
   expect(fridayRows).toContainEqual(expect.arrayContaining(["Cricket", "Salad Bar", "Sliced Cucumber", cucumber.mrn, 1]));
   expect(mondayRows).toContainEqual(expect.arrayContaining(["Cricket", "Salad Bar", "Sliced Cucumber", cucumber.mrn, 2]));
-  expect(mondayRows).toContainEqual(expect.arrayContaining(["Cricket", "Salad Bar", "Green Peas", "62341", 1.25]));
+  expect(mondayRows).toContainEqual(expect.arrayContaining(["Cricket", "Salad Bar", "Green Peas", "62341", 1.5]));
   expect(wednesdayRows).toContainEqual(expect.arrayContaining(["Cricket", "Salad Bar", "Sliced Cucumber", cucumber.mrn, 1]));
   await saveButton.click();
   await expect(page.getByText(/Cricket's order.*was saved/i)).toBeVisible();
@@ -303,7 +303,7 @@ test("Grill LTO starts Cycle Week 1 on November 16 with Set A and Set B whole-sa
   expect(chowChowRows).toHaveLength(1);
   expect(chowChowRows[0]).toEqual(expect.arrayContaining(["Cricket", "Grill", "EUR: Upcycled Chow Chow Aioli", "168231"]));
   expect(chowChowRows[0][4]).toBeGreaterThan(0);
-  expect(chowChowRows[0][5]).toBe("cup");
+  expect(chowChowRows[0][5]).toBe("gallon");
   expect(chowChowRows[0][6]).toContain("ATX Burger");
   expect(chowChowRows[0][6]).toContain("Smashburger");
   expect(mondayRows).toContainEqual(expect.arrayContaining(["Cricket", "Deli", "Mediterranean Turkey Wrap", "190990", 12, "sandwich", "Mediterranean Turkey Wrap"]));
@@ -504,6 +504,14 @@ test("Prep List View is vertical, touch friendly, translated, and saves hold-to-
   expect(cafeBox.y).toBeGreaterThan(quantityBox.y);
   const overflow = await prepView.evaluate((node) => node.scrollWidth > node.clientWidth + 1);
   expect(overflow).toBe(false);
+  await page.setViewportSize({ width: 390, height: 844 });
+  const mobileItemBox = await prepView.getByText("Sliced Cucumber", { exact: true }).boundingBox();
+  const mobileQuantityBox = await quantityBlock.boundingBox();
+  const mobilePrepBox = await prepView.boundingBox();
+  expect(mobileQuantityBox.y).toBeGreaterThan(mobileItemBox.y);
+  expect(mobileItemBox.x + mobileItemBox.width).toBeLessThanOrEqual(mobilePrepBox.x + mobilePrepBox.width + 1);
+  expect(mobileQuantityBox.x + mobileQuantityBox.width).toBeLessThanOrEqual(mobilePrepBox.x + mobilePrepBox.width + 1);
+  expect(await prepView.evaluate((node) => node.scrollWidth > node.clientWidth + 1)).toBe(false);
 
   await page.getByRole("switch", { name: "Spanish translation" }).click();
   await expect(prepView.getByText(/^Viernes \d+\/\d+$/)).toBeVisible();

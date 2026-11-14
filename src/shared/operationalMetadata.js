@@ -23,7 +23,7 @@ import { COMMISSARY_CAFE_STATION_ACCESS, COMMISSARY_HUB_ROUTING, COMMISSARY_HUBS
 import { GLOBAL_UNIT_PREPARATION_NOTES } from "../features/commissary-ordering/commissaryModel.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 21;
+export const OPERATIONAL_METADATA_VERSION = 22;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -137,7 +137,15 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       stationTabletFilter: Object.freeze({ enabled: true, includesAllStationsView: true }),
       productionGrouping: Object.freeze(["Vegetable Production", "Cold Sauce Production", "Hot Sauce Production", "Other Production"]),
       familyAdjacency: true,
-      sauceVolumeDisplay: "cups-quarts-gallons-explicit-volume-units-only",
+      sauceVolumeDisplay: "all-sauces-in-gallons; weight-derived-at-8-ounces-per-cup-except-pico-de-gallo-at-7",
+      productionVolumeRounding: Object.freeze({
+        incrementGallons: 0.5,
+        direction: "up",
+        scope: "each-cafe-each-delivery",
+        appliesTo: "explicit-volume-units; approved-count-conversions; sauce-weight-conversions",
+        transferCosting: "salad-native-unit-and-priced-grill-global-components-scale-to-rounded-yield",
+        unpricedRecipeComponents: "display-rounded-without-invented-component-cost",
+      }),
       grillVolumeDisplay: Object.freeze({
         standardVolumeUnits: "cups-quarts-gallons",
         slicedTomatoesPerQuart: 26,
@@ -151,7 +159,7 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       deliDeliveryMap: "finished-sandwich-counts",
       globalUnitPreparationNotes: GLOBAL_UNIT_PREPARATION_NOTES,
       globalMarinadePolicy: "six-week-reviewed-recipe-tree-minus-unit-protein",
-      workbookVersion: 2,
+      workbookVersion: 3,
       dailyPrepLists: Object.freeze({ friday: "Monday service", monday: "Tuesday-Wednesday service", wednesday: "Thursday-Friday service" }),
       exactMrnRollup: true,
       deliveryMapExactMrnRollup: "cafe-station-compatible-unit",
@@ -163,7 +171,7 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       grillUnitSuppliedItems: Object.freeze(["brioche buns"]),
     }),
     packoutPacket: Object.freeze({
-      version: 2,
+      version: 3,
       format: "pdf",
       source: "saved-supabase-commissary-orders",
       grouping: "cafe-delivery-station",
