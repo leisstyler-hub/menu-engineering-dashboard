@@ -23,7 +23,7 @@ import { COMMISSARY_CAFE_STATION_ACCESS, COMMISSARY_HUB_ROUTING, COMMISSARY_HUBS
 import { GLOBAL_UNIT_PREPARATION_NOTES } from "../features/commissary-ordering/commissaryModel.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 20;
+export const OPERATIONAL_METADATA_VERSION = 21;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -134,11 +134,17 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
     }),
     prepInterface: Object.freeze({
       stationOrder: Object.freeze(["Salad Bar", "Breakfast", "Deli", "Grill", "Global"]),
-      stationJumpNavigation: true,
+      stationTabletFilter: Object.freeze({ enabled: true, includesAllStationsView: true }),
       productionGrouping: Object.freeze(["Vegetable Production", "Cold Sauce Production", "Hot Sauce Production", "Other Production"]),
       familyAdjacency: true,
       sauceVolumeDisplay: "cups-quarts-gallons-explicit-volume-units-only",
-      grillVolumeDisplay: "cups-quarts-gallons",
+      grillVolumeDisplay: Object.freeze({
+        standardVolumeUnits: "cups-quarts-gallons",
+        slicedTomatoesPerQuart: 26,
+        slicedRedOnionsPerQuart: 32,
+        icebergLeavesPerQuart: 10,
+        pickleSlicesPerQuart: 75,
+      }),
       massDisplay: "kilograms-converted-to-pounds",
       avocadoMashDisplay: "number-16-scoops-converted-to-gallons",
       looseStaples: "canola-kosher-salt-black-pepper-dried-spices-excluded-or-bundled-as-recipes",
@@ -149,13 +155,15 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       dailyPrepLists: Object.freeze({ friday: "Monday service", monday: "Tuesday-Wednesday service", wednesday: "Thursday-Friday service" }),
       exactMrnRollup: true,
       deliveryMapExactMrnRollup: "cafe-station-compatible-unit",
+      packoutExactMrnRollup: "cafe-station-compatible-unit",
+      grillGardenSalad: "whole-composed-salad-count",
       vegetableProductionNames: "singular-and-plural-produce-names",
       costsVisible: false,
       deliveryMapGrouping: "cafe-station-item",
       grillUnitSuppliedItems: Object.freeze(["brioche buns"]),
     }),
     packoutPacket: Object.freeze({
-      version: 1,
+      version: 2,
       format: "pdf",
       source: "saved-supabase-commissary-orders",
       grouping: "cafe-delivery-station",

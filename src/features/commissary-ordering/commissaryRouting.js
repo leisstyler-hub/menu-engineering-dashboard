@@ -49,9 +49,9 @@ export const COMMISSARY_HUB_ROUTING = Object.freeze({
   Cricket: Object.freeze({
     saladBar: Object.freeze(["Cricket", "Nessie", "Dawson", "Frontier"]),
     grill: Object.freeze(["Cricket", "Nessie", "Dawson", "Atlas"]),
-    deli: Object.freeze(["Cricket", "Nessie", "Dawson", "Zoka Coffee"]),
+    deli: Object.freeze(["Cricket", "Nessie", "Dawson", "Brazil Coffee", "Zoka Coffee"]),
     global: Object.freeze(["Cricket", "Nessie", "Dawson", "Frontier"]),
-    breakfast: Object.freeze(["Zoka Coffee"]),
+    breakfast: Object.freeze(["Brazil Coffee", "Zoka Coffee"]),
   }),
   Sonic: Object.freeze({
     saladBar: Object.freeze(["Bingo", "Sonic", "Blueshift", "105", "Everest", "Astra"]),
@@ -63,9 +63,9 @@ export const COMMISSARY_HUB_ROUTING = Object.freeze({
   Blueshift: Object.freeze({
     saladBar: Object.freeze(["Doppler", "Day 1", "Nitro", "Re:Invent"]),
     grill: Object.freeze(["Day 1", "Nitro", "Re:Invent"]),
-    deli: Object.freeze(["Doppler", "Day 1", "Re:Invent", "Brazil Coffee", "Roxanne Coffee", "Arizona Coffee"]),
+    deli: Object.freeze(["Doppler", "Day 1", "Re:Invent", "Roxanne Coffee", "Arizona Coffee"]),
     global: Object.freeze(["Bingo", "Grace", "Sonic", "Blueshift", "105", "Everest", "Gemini", "Astra", "Doppler", "Day 1", "Nitro", "Re:Invent"]),
-    breakfast: Object.freeze(["Brazil Coffee", "Roxanne Coffee", "Arizona Coffee"]),
+    breakfast: Object.freeze(["Roxanne Coffee", "Arizona Coffee"]),
   }),
 });
 

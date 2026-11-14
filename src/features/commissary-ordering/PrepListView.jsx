@@ -75,17 +75,24 @@ const compactUnit = (unit, spanish) => {
 export default function PrepListView({ records, weekStart, hub, hubs = [], onHubChange, completed, saving, onToggle, deliveries = DEFAULT_COMMISSARY_METADATA.deliveries }) {
   const [delivery, setDelivery] = useState(() => deliveries[0]?.key || "friday");
   const [spanish, setSpanish] = useState(false);
+  const [station, setStation] = useState("all");
   const rows = useMemo(() => rolledUpPrepItems(records, { hub }).map(prepDisplayQuantity).filter((row) => Number(row[delivery]) > 0), [delivery, hub, records]);
-  const stationGroups = useMemo(() => COMMISSARY_STATION_ORDER.flatMap((station) => {
-    const stationRows = rows.filter((row) => row.station === station);
-    return stationRows.length ? [{ station, rows: stationRows }] : [];
-  }), [rows]);
+  const availableStations = useMemo(() => COMMISSARY_STATION_ORDER.filter((stationName) => rows.some((row) => row.station === stationName)), [rows]);
+  const visibleRows = useMemo(() => station === "all" ? rows : rows.filter((row) => row.station === station), [rows, station]);
+  const stationGroups = useMemo(() => COMMISSARY_STATION_ORDER.flatMap((stationName) => {
+    const stationRows = visibleRows.filter((row) => row.station === stationName);
+    return stationRows.length ? [{ station: stationName, rows: stationRows }] : [];
+  }), [visibleRows]);
   const completedIds = new Set(completed?.[delivery] || []);
-  const completedCount = rows.filter((row) => completedIds.has(row.id)).length;
+  const completedCount = visibleRows.filter((row) => completedIds.has(row.id)).length;
 
   useEffect(() => {
     if (!deliveries.some(({ key }) => key === delivery)) setDelivery(deliveries[0]?.key || "friday");
   }, [deliveries, delivery]);
+
+  useEffect(() => {
+    if (station !== "all" && !availableStations.includes(station)) setStation("all");
+  }, [availableStations, station]);
 
   const text = spanish ? {
     title: "Lista de preparación",
@@ -150,17 +157,17 @@ export default function PrepListView({ records, weekStart, hub, hubs = [], onHub
       </div>
 
       <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 text-sm font-black md:px-6">
-        <span>{completedCount} / {rows.length} {text.complete}</span>
+        <span>{completedCount} / {visibleRows.length} {text.complete}</span>
         <span className="text-slate-500">{text.hold}</span>
       </div>
 
-      {stationGroups.length > 1 && (
-        <nav aria-label="Jump to prep station" className="sticky top-0 z-20 flex gap-2 overflow-x-auto border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur md:px-6">
-          {stationGroups.map(({ station }) => <a key={station} href={`#prep-station-${station.toLowerCase().replace(/\s+/g, "-")}`} className="whitespace-nowrap rounded-full border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-black text-sky-900">{station}</a>)}
+      {availableStations.length > 1 && (
+        <nav aria-label="Select prep station" className="sticky top-0 z-20 flex gap-2 overflow-x-auto border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur md:px-6">
+          {["all", ...availableStations].map((stationName) => <button key={stationName} type="button" aria-pressed={station === stationName} onClick={() => setStation(stationName)} className={`min-h-11 whitespace-nowrap rounded-full border px-4 py-2 text-xs font-black transition ${station === stationName ? "border-sky-700 bg-sky-700 text-white" : "border-sky-200 bg-sky-50 text-sky-900"}`}>{stationName === "all" ? (spanish ? "Todas las estaciones" : "All stations") : stationName}</button>)}
         </nav>
       )}
 
-      {rows.length === 0 ? (
+      {visibleRows.length === 0 ? (
         <p className="p-10 text-center text-lg font-bold text-slate-500">{text.empty}</p>
       ) : (
         <div>

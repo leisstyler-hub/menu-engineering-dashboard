@@ -536,7 +536,23 @@ export function grillOrderLinesForCafe(record = {}) {
 }
 
 export function grillPrepLinesForCafe(record = {}) {
-  return grillOrderLinesForCafe(record).flatMap((line) => filterCommissaryComponents(GRILL_LTO_PROGRAM.itemPrepComponents[line.mrn] || [], record.weekStart).filter(({ name }) => !isExcludedLoosePrepItem(name) && !/\bbun\b/i.test(name)).flatMap((component) => DELIVERY_KEYS.map((delivery) => ({
+  return grillOrderLinesForCafe(record).flatMap((line) => {
+    if (String(line.mrn) === "16811") {
+      return DELIVERY_KEYS.map((delivery) => ({
+        id: "grill-finished|16811",
+        type: "finished",
+        mrn: "16811",
+        name: "Garden Salad",
+        category: "Grill composed item",
+        station: "Grill",
+        orderUnit: "salad",
+        cafe: record.cafe,
+        finishedDish: line.name,
+        delivery,
+        quantity: Number(line[delivery] || 0),
+      })).filter(({ quantity }) => quantity > 0);
+    }
+    return filterCommissaryComponents(GRILL_LTO_PROGRAM.itemPrepComponents[line.mrn] || [], record.weekStart).filter(({ name }) => !isExcludedLoosePrepItem(name) && !/\bbun\b/i.test(name)).flatMap((component) => DELIVERY_KEYS.map((delivery) => ({
     ...component,
     category: component.type === "subrecipe" ? "Grill sub-recipe" : "Grill ingredient",
     station: "Grill",
@@ -545,7 +561,8 @@ export function grillPrepLinesForCafe(record = {}) {
     finishedDish: line.name,
     delivery,
     quantity: Number((component.quantity * line[delivery]).toFixed(4)),
-  })).filter(({ quantity }) => quantity > 0)));
+    })).filter(({ quantity }) => quantity > 0));
+  });
 }
 
 export function deliOrderLinesForCafe(record = {}) {
@@ -804,6 +821,32 @@ function prepProductionTypeOrder(type) {
 
 export function prepDisplayQuantity(row = {}) {
   const unit = String(row.orderUnit || "").trim().toLowerCase();
+  const grillItemName = String(row.name || "");
+  const grillCountPerQuart = row.station !== "Grill" ? 0
+    : /tomato/i.test(grillItemName) && /slic/i.test(grillItemName) && ["slice", "slices"].includes(unit) ? 26
+      : (String(row.mrn || "") === "166043" || /red onion/i.test(grillItemName)) && ["slice", "slices"].includes(unit) ? 32
+        : /iceberg/i.test(grillItemName) && ["each", "leaf", "leaves"].includes(unit) ? 10
+          : /pickle/i.test(grillItemName) && ["each", "slice", "slices"].includes(unit) ? 75
+            : 0;
+  if (grillCountPerQuart) {
+    const toQuarts = (value) => Number((Number(value || 0) / grillCountPerQuart).toFixed(4));
+    const converted = {
+      ...row,
+      cafes: Object.fromEntries(Object.entries(row.cafes || {}).map(([cafe, values]) => [cafe, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, toQuarts(values?.[delivery])]))])),
+      ...Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, toQuarts(row[delivery])])),
+      total: toQuarts(row.total),
+      orderUnit: "quart",
+    };
+    if (converted.total < 4) return converted;
+    const toGallons = (value) => Number((Number(value || 0) / 4).toFixed(4));
+    return {
+      ...converted,
+      cafes: Object.fromEntries(Object.entries(converted.cafes).map(([cafe, values]) => [cafe, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, toGallons(values?.[delivery])]))])),
+      ...Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, toGallons(converted[delivery])])),
+      total: toGallons(converted.total),
+      orderUnit: "gallon",
+    };
+  }
   if (["kilogram", "kilograms", "kg"].includes(unit)) {
     const convert = (value) => Number((Number(value || 0) * 2.2046226218).toFixed(4));
     return {

@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import XLSX from "xlsx";
 
-import { buildOrderRecord, emptyQuantities, firstOpenWeek } from "../../src/features/commissary-ordering/commissaryModel.js";
+import { buildOrderRecord, emptyGrillOrder, emptyQuantities, firstOpenWeek } from "../../src/features/commissary-ordering/commissaryModel.js";
 import { COMMISSARY_ORDER_ITEMS, COMMISSARY_PREVIOUS_ORDER_ITEMS } from "../../src/features/commissary-ordering/commissaryCatalog.js";
 import { buildCommissaryMetadataRecord } from "../../src/features/commissary-ordering/commissaryMetadata.js";
 import { GRILL_LTO_PROGRAM } from "../../src/features/commissary-ordering/grillLtoCatalog.js";
@@ -426,26 +426,34 @@ test("Zoka Coffee orders the Supabase-backed croissant through Cricket Breakfast
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
-test("locked non-hub cafe remains read-only and exposes only its exact-template S4 export", async ({ page }) => {
+test("locked Dawson recalls its ATX Burger order read-only and exposes only its exact-template S4 export", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   await page.clock.install({ time: new Date("2026-11-12T20:00:00Z") });
   const lockedWeek = "2026-11-16";
   const quantities = emptyQuantities(lockedWeek);
   quantities[COMMISSARY_ORDER_ITEMS.find((row) => row.name === "Sliced Cucumber").id] = { friday: 1, monday: 2, wednesday: 1 };
-  const record = buildOrderRecord({ cafe: "Nessie", weekStart: lockedWeek, quantities, now: new Date(`${lockedWeek}T12:00:00Z`) });
+  const lockedGrill = emptyGrillOrder(lockedWeek);
+  lockedGrill.selections.A = "77139.72";
+  lockedGrill.items.A = { mrn: "77139.72", item: "ATX Burger", portion: "1 each", itemWasteCost: 3.3634 };
+  lockedGrill.quantities.A = { friday: 10, monday: 14, wednesday: 8 };
+  const record = buildOrderRecord({ cafe: "Dawson", weekStart: lockedWeek, quantities, grill: lockedGrill, now: new Date(`${lockedWeek}T12:00:00Z`) });
   await mockOrders(page, [record]);
   await openTool(page, /open commissary ordering/i, /^Commissary Ordering Tool$/);
-  await page.getByLabel("Your cafe").selectOption("Nessie");
+  await page.getByLabel("Your cafe").selectOption("Dawson");
   await page.getByLabel("Service week").selectOption(lockedWeek);
   await expect(page.getByText("Ordering closed")).toBeVisible();
   await expect(page.getByText(/please contact commissary executive chef to adjust pars/i)).toBeVisible();
   await expect(page.getByLabel(/^Monday \d+\/\d+ Sliced Cucumber quantity$/)).toBeDisabled();
   await expect(page.getByLabel(/^Friday \d+\/\d+ Sliced Cucumber quantity$/)).toBeDisabled();
+  await expect(page.getByLabel("Grill Set A sandwich")).toHaveValue("77139.72");
+  await expect(page.getByLabel(/^Set A Friday \d+\/\d+ sandwich quantity$/)).toHaveValue("10");
+  await expect(page.getByLabel(/^Set A Monday \d+\/\d+ sandwich quantity$/)).toHaveValue("14");
+  await expect(page.getByLabel(/^Set A Wednesday \d+\/\d+ sandwich quantity$/)).toHaveValue("8");
   await expect(page.getByRole("button", { name: /download combined prep list/i })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Prep List View" })).toHaveCount(0);
   const transferDownload = page.waitForEvent("download");
-  await page.getByRole("button", { name: /download nessie s4 transfer/i }).click();
-  expect((await transferDownload).suggestedFilename()).toMatch(/Commissary Order Nessie.*Expense Transfer\.xlsx/);
+  await page.getByRole("button", { name: /download dawson s4 transfer/i }).click();
+  expect((await transferDownload).suggestedFilename()).toMatch(/Commissary Order Dawson.*Expense Transfer\.xlsx/);
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
@@ -458,7 +466,11 @@ test("Prep List View is vertical, touch friendly, translated, and saves hold-to-
   const quantities = emptyQuantities(lockedWeek);
   quantities[cucumber.id] = { friday: 2, monday: 2, wednesday: 1 };
   quantities[COMMISSARY_ORDER_ITEMS.find((row) => row.name === "Green Peas").id] = { friday: 1.25, monday: 1.25, wednesday: 0 };
-  const record = buildOrderRecord({ cafe: "Nessie", weekStart: lockedWeek, quantities, now: new Date(`${lockedWeek}T12:00:00Z`) });
+  const prepGrill = emptyGrillOrder(lockedWeek);
+  prepGrill.selections.A = "77139.72";
+  prepGrill.items.A = { mrn: "77139.72", item: "ATX Burger", portion: "1 each", itemWasteCost: 3.3634 };
+  prepGrill.quantities.A = { friday: 4, monday: 0, wednesday: 0 };
+  const record = buildOrderRecord({ cafe: "Nessie", weekStart: lockedWeek, quantities, grill: prepGrill, now: new Date(`${lockedWeek}T12:00:00Z`) });
   const bingoQuantities = emptyQuantities(lockedWeek);
   bingoQuantities[cucumber.id] = { friday: 3, monday: 0, wednesday: 0 };
   const bingoRecord = buildOrderRecord({ cafe: "Bingo", weekStart: lockedWeek, quantities: bingoQuantities, now: new Date(`${lockedWeek}T12:00:00Z`) });
@@ -476,6 +488,12 @@ test("Prep List View is vertical, touch friendly, translated, and saves hold-to-
   await expect(prepView.getByRole("button", { name: "Sonic", exact: true })).toHaveCount(0);
   await expect(prepView.getByRole("button", { name: "Blueshift", exact: true })).toHaveCount(0);
   await expect(page.getByLabel("Your cafe")).toHaveCount(0);
+  const stationSelector = prepView.getByRole("navigation", { name: "Select prep station" });
+  await expect(stationSelector.getByRole("button", { name: "All stations" })).toHaveAttribute("aria-pressed", "true");
+  await stationSelector.getByRole("button", { name: "Grill", exact: true }).click();
+  await expect(prepView.getByText("Sliced Cucumber", { exact: true })).toHaveCount(0);
+  await expect(prepView.getByText(/Upcycled Chow Chow Aioli/i)).toBeVisible();
+  await stationSelector.getByRole("button", { name: "Salad Bar", exact: true }).click();
   await expect(prepView.getByText("Sliced Cucumber", { exact: true })).toBeVisible();
   const quantityBlock = prepView.getByTestId(`prep-quantity-${cucumber.id}`);
   const cafeBreakdown = prepView.getByTestId(`prep-cafes-${cucumber.id}`);

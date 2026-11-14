@@ -81,7 +81,9 @@ function scopePackoutLines(lines, cafe, selectedCafe) {
 function rollupPackoutLines(lines = [], delivery) {
   const map = new Map();
   lines.forEach((line) => {
-    const key = `${line.station}|${line.id}|${line.orderUnit}`;
+    const mrn = String(line.mrn || "").trim();
+    const identity = mrn ? `mrn:${mrn}` : `name:${String(line.name || "").trim().toLowerCase()}`;
+    const key = `${line.station}|${identity}|${String(line.orderUnit || "").trim().toLowerCase()}`;
     const current = map.get(key) || {
       id: line.id,
       station: line.station,

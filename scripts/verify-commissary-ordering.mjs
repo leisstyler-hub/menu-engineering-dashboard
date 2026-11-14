@@ -18,7 +18,7 @@ import { DELI_ORDERING_ITEM_MRNS, DELI_ORDERING_PREP_ITEM_IDS, DELI_ORDERING_PRO
 import { GLOBAL_ORDERING_ITEM_IDS, GLOBAL_ORDERING_PREP_ITEM_IDS, GLOBAL_ORDERING_PROGRAM } from "../src/features/commissary-ordering/globalCycleCatalog.js";
 import { BREAKFAST_ORDERING_ITEM_IDS, BREAKFAST_ORDERING_PREP_ITEM_IDS, BREAKFAST_ORDERING_PROGRAM } from "../src/features/commissary-ordering/breakfastCatalog.js";
 import { COMMISSARY_SPANISH } from "../src/features/commissary-ordering/commissaryTranslations.js";
-import { COMMISSARY_STATIONS, commissaryHubFor, isCafeStationEnabled, isCommissaryHub } from "../src/features/commissary-ordering/commissaryRouting.js";
+import { COMMISSARY_STATIONS, cafeRoutesToHub, cafeRoutesToPackoutHub, commissaryHubFor, isCafeStationEnabled, isCommissaryHub } from "../src/features/commissary-ordering/commissaryRouting.js";
 import { filterCommissaryComponents, isRawAnimalProteinComponent } from "../src/features/commissary-ordering/commissaryPrepPolicy.js";
 
 function validateBeforeCutoff(records, context = { tool: "commissaryOrders" }) {
@@ -294,6 +294,26 @@ assert.equal(grillBomRows.some((row) => row[0] === "AMZ: Smashburger Patty"), fa
 assert.equal(grillBomRows.some((row) => /\bbun\b/i.test(String(row[0]))), false, "Unit-purchased Grill buns must not enter prep lists.");
 const consolidatedRedOnion = rolledUpPrepItems([grillRecord], { consolidateAcrossStations: true }).filter((row) => String(row.mrn) === "166043");
 assert.equal(consolidatedRedOnion.length, 1, "Exact MRN matches must consolidate to one prep row.");
+assert.equal(cafeRoutesToHub("Brazil Coffee", COMMISSARY_STATIONS.DELI, "Cricket"), true);
+assert.equal(cafeRoutesToHub("Brazil Coffee", COMMISSARY_STATIONS.BREAKFAST, "Cricket"), true);
+assert.equal(cafeRoutesToHub("Brazil Coffee", COMMISSARY_STATIONS.DELI, "Blueshift"), false);
+assert.equal(cafeRoutesToPackoutHub("Brazil Coffee", COMMISSARY_STATIONS.BREAKFAST, "Cricket"), true);
+
+const gardenGrill = emptyGrillOrder("2026-11-16");
+gardenGrill.core.items["16811"] = { mrn: "16811", item: "Garden Salad", portion: "1 each", itemWasteCost: 1.25 };
+gardenGrill.core.quantities["16811"] = { friday: 5, monday: 10, wednesday: 15 };
+const gardenRecord = buildOrderRecord({ cafe: "Nessie", weekStart: "2026-11-16", quantities: emptyQuantities(), grill: gardenGrill, now: new Date("2026-11-10T12:00:00Z") });
+const gardenPrep = grillPrepLinesForCafe(gardenRecord);
+assert.equal(gardenPrep.length, 3);
+assert.ok(gardenPrep.every((line) => line.mrn === "16811" && line.name === "Garden Salad" && line.orderUnit === "salad"));
+assert.deepEqual(gardenPrep.map(({ quantity }) => quantity), [5, 10, 15]);
+assert.equal(gardenPrep.some((line) => /carrot|cucumber|tomato/i.test(line.name)), false, "Garden Salad must move as a composed salad, not mise.");
+const gardenPacket = buildPackoutPacket([gardenRecord], "2026-11-16", DEFAULT_COMMISSARY_METADATA, { selectedCafe: "Cricket" });
+assert.ok(gardenPacket.pages.flatMap(({ stations }) => stations.flatMap(({ lines }) => lines)).every((line) => line.name === "Garden Salad" && line.orderUnit === "salad"));
+const gardenWorkbook = buildCommissaryBomWorkbook([gardenRecord], "2026-11-16", DEFAULT_COMMISSARY_METADATA, { hub: "Cricket" });
+const gardenDeliveryRows = XLSX.utils.sheet_to_json(gardenWorkbook.Sheets["Monday Delivery Map"], { header: 1, defval: "" });
+assert.ok(gardenDeliveryRows.some((row) => row[0] === "Nessie" && row[1] === "Grill" && row[2] === "Garden Salad" && row[3] === "16811" && row[4] === 10 && row[5] === "salad"));
+assert.equal(gardenDeliveryRows.some((row) => row[1] === "Grill" && /carrot|cucumber|tomato/i.test(String(row[2]))), false);
 const atlasEarlyGrill = emptyGrillOrder("2026-11-09");
 atlasEarlyGrill.core.items["147955.17"] = { mrn: "147955.17", item: "Smashburger", portion: "1 sandwich", itemWasteCost: 2.9983 };
 atlasEarlyGrill.core.quantities["147955.17"] = { friday: 2, monday: 4, wednesday: 6 };
@@ -363,6 +383,11 @@ assert.equal(breakfastTransfer.receivingProfitCenter, "28671");
 assert.equal(breakfastTransfer.items[0].ingredientAllocations[0].glCode, "4111011");
 assert.ok(buildPackoutPacket([breakfastRecord], "2026-11-16").pages.every((page) => page.stations.every(({ station }) => station === "Breakfast")));
 assert.match(validateBeforeCutoff([{ ...breakfastRecord, breakfast: { ...breakfastRecord.breakfast, quantities: { ...breakfastRecord.breakfast.quantities, [breakfastOption.id]: { friday: 0.5, monday: 0, wednesday: 0 } } } }]), /whole items/i);
+const brazilRecord = buildOrderRecord({ cafe: "Brazil Coffee", weekStart: "2026-11-16", breakfast, now: new Date("2026-11-10T12:00:00Z") });
+assert.ok(rolledUpPrepItems([brazilRecord], { hub: "Cricket" }).some((line) => line.category.startsWith("Breakfast")));
+assert.equal(rolledUpPrepItems([brazilRecord], { hub: "Blueshift" }).length, 0);
+const brazilCricketPacket = buildPackoutPacket([brazilRecord], "2026-11-16", DEFAULT_COMMISSARY_METADATA, { selectedCafe: "Cricket" });
+assert.ok(brazilCricketPacket.pages.length > 0 && brazilCricketPacket.pages.every((page) => page.cafe === "Brazil Coffee"));
 
 const global = emptyGlobalOrder("2026-11-16");
 const globalOption = globalCycleForWeek("2026-11-16").menus[0].items[0];
@@ -476,6 +501,18 @@ assert.equal(weightedSauce.orderUnit, "ounce", "Weight ounces must never be trea
 const grillTablespoons = prepDisplayQuantity({ station: "Grill", name: "Burger Sauce", orderUnit: "tbsp", total: 64, friday: 64, monday: 0, wednesday: 0, cafes: {} });
 assert.equal(grillTablespoons.orderUnit, "quart");
 assert.equal(grillTablespoons.total, 1);
+const slicedTomatoes = prepDisplayQuantity({ station: "Grill", mrn: "56055", name: "Tomatoes, 5x6, Fresh, Sliced", orderUnit: "slice", total: 104, friday: 104, monday: 0, wednesday: 0, cafes: { Dawson: { friday: 104, monday: 0, wednesday: 0 } } });
+assert.equal(slicedTomatoes.orderUnit, "gallon");
+assert.equal(slicedTomatoes.total, 1);
+const slicedRedOnions = prepDisplayQuantity({ station: "Grill", mrn: "166043", name: "Onions, Red, Fresh, Each Slice, 1/4\"", orderUnit: "slice", total: 32, friday: 32, monday: 0, wednesday: 0, cafes: {} });
+assert.equal(slicedRedOnions.orderUnit, "quart");
+assert.equal(slicedRedOnions.total, 1);
+const icebergLeaves = prepDisplayQuantity({ station: "Grill", mrn: "3764", name: "Lettuce, Iceberg, Individual Leaf, Fresh", orderUnit: "each", total: 40, friday: 40, monday: 0, wednesday: 0, cafes: {} });
+assert.equal(icebergLeaves.orderUnit, "gallon");
+assert.equal(icebergLeaves.total, 1);
+const pickleSlices = prepDisplayQuantity({ station: "Grill", mrn: "225846", name: "Pickles, Dill Chips, Kosher", orderUnit: "each", total: 75, friday: 75, monday: 0, wednesday: 0, cafes: {} });
+assert.equal(pickleSlices.orderUnit, "quart");
+assert.equal(pickleSlices.total, 1);
 const kilograms = prepDisplayQuantity({ name: "Tomatoes", orderUnit: "kg", total: 2, friday: 2, monday: 0, wednesday: 0, cafes: {} });
 assert.equal(kilograms.orderUnit, "pound");
 assert.equal(kilograms.total, 4.4092);
@@ -497,7 +534,7 @@ const sonicHubPacket = buildPackoutPacket([globalRecord], "2026-11-16", DEFAULT_
 assert.equal(sonicHubPacket.pages.length, 3, "Sonic hub packout must include routed Everest Global work.");
 const cricketHubPacket = buildPackoutPacket([globalRecord], "2026-11-16", DEFAULT_COMMISSARY_METADATA, { selectedCafe: "Cricket" });
 assert.equal(cricketHubPacket.pages.length, 0, "Cricket hub packout must not include Everest Global work.");
-const packetRecord = { ...buildPackoutPacketRecord({ weekStart: "2026-11-16", records: [globalRecord], packet, metadataVersion: 20, now: new Date("2026-11-12T01:00:00Z") }), packet };
+const packetRecord = { ...buildPackoutPacketRecord({ weekStart: "2026-11-16", records: [globalRecord], packet, metadataVersion: 21, now: new Date("2026-11-12T01:00:00Z") }), packet };
 assert.equal(commissaryWriteValidation([packetRecord], { tool: "commissaryOrders" }), "");
 assert.match(commissaryWriteValidation([{ ...packetRecord, packet: { ...packet, pages: [{ ...packet.pages[0], cafe: "Unknown Cafe" }] } }], { tool: "commissaryOrders" }), /scope|invalid cafe/i);
 assert.match(commissaryWriteValidation([{ ...packetRecord, orderRecordIds: [`commissaryOrder|nessie|${packetRecord.weekStart}`] }], { tool: "commissaryOrders" }), /order-reference scope/i);
