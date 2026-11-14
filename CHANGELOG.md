@@ -1,5 +1,7 @@
 ## 2026-11-14
 
+- [Nov 14, 7:32 AM] Keep unit-supplied Grill items off prep and transfers, and show Deli protein quantities in pounds.
+
 - [Nov 14, 7:03 AM] Round volume prep up to half gallons, show all sauces in volume, use 7 oz per cup for pico, and carry extra yield into transfers.
 
 ## 2026-11-13

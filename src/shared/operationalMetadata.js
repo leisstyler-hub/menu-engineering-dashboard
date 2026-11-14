@@ -23,7 +23,7 @@ import { COMMISSARY_CAFE_STATION_ACCESS, COMMISSARY_HUB_ROUTING, COMMISSARY_HUBS
 import { GLOBAL_UNIT_PREPARATION_NOTES } from "../features/commissary-ordering/commissaryModel.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 22;
+export const OPERATIONAL_METADATA_VERSION = 23;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -121,11 +121,12 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       sectionLayout: "single-section-lto-before-core",
     }),
     componentProductionPolicy: Object.freeze({
-      version: 2,
+      version: 3,
       effectiveDate: "2026-11-16",
       stations: Object.freeze(["Grill", "Global"]),
       rawAnimalProteins: "unit-supplied-excluded-from-prep-and-transfer",
       explicitlyPrecookedProteins: "commissary-generated-included",
+      grillUnitSuppliedComponents: Object.freeze(["170538", "144591.1", "7411"]),
       transferValuation: "priced-retained-recipe-components-only",
       unresolvedComponentCost: "excluded-no-invented-allocation",
       globalRecipeResolution: "reviewed-nested-recipe-output-with-direct-component-fallback",
@@ -153,7 +154,7 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
         icebergLeavesPerQuart: 10,
         pickleSlicesPerQuart: 75,
       }),
-      massDisplay: "kilograms-converted-to-pounds",
+      massDisplay: "kilograms-converted-to-pounds; deli-protein-ounces-converted-to-pounds",
       avocadoMashDisplay: "number-16-scoops-converted-to-gallons",
       looseStaples: "canola-kosher-salt-black-pepper-dried-spices-excluded-or-bundled-as-recipes",
       deliDeliveryMap: "finished-sandwich-counts",
@@ -168,7 +169,7 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       vegetableProductionNames: "singular-and-plural-produce-names",
       costsVisible: false,
       deliveryMapGrouping: "cafe-station-item",
-      grillUnitSuppliedItems: Object.freeze(["brioche buns"]),
+      grillUnitSuppliedItems: Object.freeze(["brioche buns", "black bean burgers", "grilled chicken breast", "salt kosher"]),
     }),
     packoutPacket: Object.freeze({
       version: 3,

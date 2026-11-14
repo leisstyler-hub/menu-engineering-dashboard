@@ -5,6 +5,15 @@ import { GLOBAL_COMMISSARY_PRODUCTION } from "./globalProductionCatalog.js";
 const excludedLoosePrepItem = /\b(canola(?: oil)?|kosher salt|black pepper)\b|^spice,/i;
 const PORTO_POTATO_WEDGE_ID = "global|amz-porto|121015|4-oz-portion";
 
+export const GRILL_UNIT_SUPPLIED_COMPONENTS = Object.freeze([
+  Object.freeze({ mrn: "170538", name: "Burger, Meatless, Black Bean" }),
+  Object.freeze({ mrn: "144591.1", name: "AMZ: Grilled Chicken Breast" }),
+  Object.freeze({ mrn: "7411", name: "Salt, Kosher" }),
+]);
+
+const grillUnitSuppliedMrns = new Set(GRILL_UNIT_SUPPLIED_COMPONENTS.map(({ mrn }) => mrn));
+const grillUnitSuppliedNames = /\b(?:black bean burger|grilled chicken breast|salt,?\s*kosher|kosher salt)\b/i;
+
 const animalProtein = /\b(chicken|beef|steak|brisket|pork|bacon|ham|turkey|lamb|duck|goat|salmon|tuna|shrimp|prawn|cod|steelhead|fish|seafood|crab|lobster|tilapia|mahi|pollock|trout|anchov|sausage|pepperoni|salami|mortadella|prosciutto|patty)\b/i;
 const explicitlyPrepared = /\b(pre[- ]?cooked|fully cooked|cooked|roasted|grilled|braised|smoked|cured|canned|pouch|deli|rotisserie|confit|pulled)\b/i;
 const plantBased = /\b(plant[- ]?based|meatless|vegan|tofu|tempeh|bean|lentil)\b/i;
@@ -23,6 +32,12 @@ export function isRawAnimalProteinComponent(name = "") {
 export function filterCommissaryComponents(components = [], weekStart = "") {
   if (!weekStart || weekStart < COMMISSARY_COMPONENT_SCOPE_EFFECTIVE_DATE) return components;
   return components.filter(({ name }) => !isRawAnimalProteinComponent(name));
+}
+
+export function filterGrillCommissaryComponents(components = [], weekStart = "") {
+  const scoped = filterCommissaryComponents(components, weekStart);
+  if (!weekStart || weekStart < COMMISSARY_COMPONENT_SCOPE_EFFECTIVE_DATE) return scoped;
+  return scoped.filter(({ mrn, name }) => !grillUnitSuppliedMrns.has(String(mrn || "")) && !grillUnitSuppliedNames.test(String(name || "")));
 }
 
 export function prepareCommissaryComponents(components = [], weekStart = "", sourceId = "") {

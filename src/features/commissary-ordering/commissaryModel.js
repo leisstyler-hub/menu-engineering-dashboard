@@ -5,7 +5,7 @@ import { DELI_ORDERING_PREP_ITEM_IDS, DELI_ORDERING_PROGRAM } from "./deliCycleC
 import { GLOBAL_ORDERING_PREP_ITEM_IDS, GLOBAL_ORDERING_PROGRAM } from "./globalCycleCatalog.js";
 import { BREAKFAST_ORDERING_ITEM_IDS, BREAKFAST_ORDERING_PREP_ITEM_IDS, BREAKFAST_ORDERING_PROGRAM } from "./breakfastCatalog.js";
 import { COMMISSARY_STATIONS, cafeRoutesToHub, isCafeStationEnabled } from "./commissaryRouting.js";
-import { filterCommissaryComponents, isExcludedLoosePrepItem, prepareCommissaryComponents, prepareGlobalCommissaryComponents, prepareGlobalTransferComponents } from "./commissaryPrepPolicy.js";
+import { filterCommissaryComponents, filterGrillCommissaryComponents, isExcludedLoosePrepItem, prepareCommissaryComponents, prepareGlobalCommissaryComponents, prepareGlobalTransferComponents } from "./commissaryPrepPolicy.js";
 
 export const PACIFIC_TIME_ZONE = "America/Los_Angeles";
 export const DELIVERY_KEYS = Object.freeze(DEFAULT_COMMISSARY_METADATA.deliveries.map(({ key }) => key));
@@ -548,7 +548,7 @@ export function grillPrepLinesForCafe(record = {}) {
         quantity: Number(line[delivery] || 0),
       })).filter(({ quantity }) => quantity > 0);
     }
-    return filterCommissaryComponents(GRILL_LTO_PROGRAM.itemPrepComponents[line.mrn] || [], record.weekStart).filter(({ name }) => !isExcludedLoosePrepItem(name) && !/\bbun\b/i.test(name)).flatMap((component) => DELIVERY_KEYS.map((delivery) => ({
+    return filterGrillCommissaryComponents(GRILL_LTO_PROGRAM.itemPrepComponents[line.mrn] || [], record.weekStart).filter(({ name }) => !isExcludedLoosePrepItem(name) && !/\bbun\b/i.test(name)).flatMap((component) => DELIVERY_KEYS.map((delivery) => ({
     ...component,
     category: component.type === "subrecipe" ? "Grill sub-recipe" : "Grill ingredient",
     station: "Grill",
@@ -629,7 +629,8 @@ export function globalPrepLinesForCafe(record = {}) {
 }
 
 function componentTransferLines(orderLines, componentMap, weekStart, station) {
-  return orderLines.flatMap((line) => filterCommissaryComponents(componentMap[line.id] || componentMap[line.mrn] || [], weekStart)
+  const componentFilter = station === "Grill" ? filterGrillCommissaryComponents : filterCommissaryComponents;
+  return orderLines.flatMap((line) => componentFilter(componentMap[line.id] || componentMap[line.mrn] || [], weekStart)
     .filter(({ costPerPortion }) => Number(costPerPortion) > 0)
     .map((component) => ({
       id: `${line.id}|${component.id}`,
@@ -800,6 +801,7 @@ const VOLUME_TO_CUPS = Object.freeze({
 });
 
 const HALF_GALLON_CUPS = 8;
+const DELI_PROTEIN_NAME = /\b(?:beef|brisket|chicken|turkey|ham|bacon|pork|salami|pepperoni|mortadella|prosciutto|tuna|shrimp|prawn|crab|lobster|salmon|cod|steelhead|fish|seafood)\b/i;
 
 const roundUpHalfGallonCups = (cups) => Number(cups) > 0
   ? Math.ceil((Number(cups) / HALF_GALLON_CUPS) - 1e-9) * HALF_GALLON_CUPS
@@ -897,6 +899,17 @@ export function prepDisplayQuantity(row = {}) {
       ...Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, convert(row[delivery])])),
       total: convert(row.total),
       orderUnit: "pound",
+    };
+  }
+  if (row.station === "Deli" && ["ounce", "ounces", "oz"].includes(unit) && DELI_PROTEIN_NAME.test(String(row.name || ""))) {
+    const convert = (value) => Number((Number(value || 0) / 16).toFixed(4));
+    return {
+      ...row,
+      cafes: Object.fromEntries(Object.entries(row.cafes || {}).map(([cafe, values]) => [cafe, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, convert(values?.[delivery])]))])),
+      ...Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, convert(row[delivery])])),
+      total: convert(row.total),
+      orderUnit: "pound",
+      nativeOrderUnit: row.orderUnit,
     };
   }
   return row;

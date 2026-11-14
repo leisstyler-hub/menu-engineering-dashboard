@@ -266,6 +266,9 @@ test("Grill LTO starts Cycle Week 1 on November 16 with Set A and Set B whole-sa
     return Boolean(lto && coreSection && (lto.compareDocumentPosition(coreSection) & Node.DOCUMENT_POSITION_FOLLOWING));
   })).toBe(true);
   await page.getByLabel("Smashburger Monday 11/16 quantity").fill("6");
+  await page.getByLabel("Santa Fe Black Bean Burger Monday 11/16 quantity").fill("6");
+  await page.getByLabel("Grilled Chicken Sandwich Monday 11/16 quantity").fill("6");
+  await page.getByLabel("Grilled Vegetables Monday 11/16 quantity").fill("6");
   const deli = page.getByTestId("commissary-deli-order");
   await expect(deli.getByText(/Cycle Week 1/i)).toBeVisible();
   await expect(deli.locator("section")).toHaveCount(5);
@@ -295,6 +298,8 @@ test("Grill LTO starts Cycle Week 1 on November 16 with Set A and Set B whole-sa
   const prepRows = XLSX.utils.sheet_to_json(workbook.Sheets["Monday Prep List"], { header: 1, defval: "" });
   const fridayPrepRows = XLSX.utils.sheet_to_json(workbook.Sheets["Friday Prep List"], { header: 1, defval: "" });
   expect(prepRows.some((row) => row[0] === "AMZ: Smashburger Patty")).toBe(false);
+  expect(prepRows.some((row) => /black bean burger|grilled chicken breast|salt,?\s*kosher/i.test(String(row[0])))).toBe(false);
+  expect(prepRows).toContainEqual(expect.arrayContaining(["Turkey, Breast, Deli, Smoked, Butterball", 3, "pound"]));
   expect(prepRows[2]).toEqual(["Ingredient / item", "Total quantity", "Order unit", "Production type", "Production family", "Finished dish"]);
   expect(fridayPrepRows.some((row) => row[0] === "Piri Piri Marinade/Base" && row[5] === "Piri Piri Chicken")).toBe(true);
   const mondayRows = XLSX.utils.sheet_to_json(workbook.Sheets["Monday Delivery Map"], { header: 1, defval: "" });
