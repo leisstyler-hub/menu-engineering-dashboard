@@ -3,7 +3,7 @@ import XLSX from "xlsx-js-style";
 import { buildS4Workbook, transferExportFileName } from "../transfer-tool/transferExport.js";
 import { COMMISSARY_DEPARTING_UNIT } from "./commissaryCatalog.js";
 import { DEFAULT_COMMISSARY_METADATA } from "./commissaryMetadata.js";
-import { breakfastOrderLinesForCafe, breakfastPrepLinesForCafe, deliOrderLinesForCafe, deliveryDateForWeek, formatShortDate, globalPrepLinesForCafe, globalTransferLinesForCafe, grillPrepLinesForCafe, grillTransferLinesForCafe, orderLinesForCafe, prepDisplayQuantity, rolledUpPrepItems, roundedProductionEquivalentQuantity, transferPeriod, weekLabel } from "./commissaryModel.js";
+import { PRODUCTION_SECTION_ORDER, breakfastOrderLinesForCafe, breakfastPrepLinesForCafe, deliOrderLinesForCafe, deliveryDateForWeek, formatShortDate, globalPrepLinesForCafe, globalTransferLinesForCafe, grillPrepLinesForCafe, grillTransferLinesForCafe, orderLinesForCafe, prepDisplayQuantity, rolledUpPrepItems, roundedProductionEquivalentQuantity, transferPeriod, weekLabel } from "./commissaryModel.js";
 import { COMMISSARY_STATIONS, cafeRoutesToHub } from "./commissaryRouting.js";
 
 const S4_TEMPLATE_URL = "/templates/ExpenseTransfer_Between_PC_Template.xlsx";
@@ -146,35 +146,39 @@ function buildDeliveryMapWorksheet(records, delivery, weekStart, options = {}) {
 function buildPrepListWorksheet(rows, delivery, weekStart) {
   const dayRows = rows.filter((row) => Number(row[delivery.key]) > 0);
   const worksheetRows = [
-    [`${delivery.day} Prep List`, "", "", "", "", ""],
-    [`${delivery.detail} · ${delivery.day} ${formatShortDate(deliveryDateForWeek(weekStart, delivery.key))}`, "", "", "", "", ""],
-    ["Ingredient / item", "Total quantity", "Order unit", "Production type", "Production family", "Finished dish"],
-    ...dayRows.map((row) => [row.name, row[delivery.key], row.orderUnit, row.productionType, row.productionFamily, row.finishedDish || row.name]),
+    [`${delivery.day} Prep List`, "", "", "", ""],
+    [`${delivery.detail} · ${delivery.day} ${formatShortDate(deliveryDateForWeek(weekStart, delivery.key))}`, "", "", "", ""],
+    ["Ingredient / item", "Total quantity", "Order unit", "Production section", "Finished dish"],
   ];
+  const sectionRows = new Set();
+  PRODUCTION_SECTION_ORDER.forEach((section) => {
+    const items = dayRows.filter((row) => row.productionType === section);
+    if (!items.length) return;
+    sectionRows.add(worksheetRows.length);
+    worksheetRows.push([section, "", "", "", ""]);
+    worksheetRows.push(...items.map((row) => [row.name, row[delivery.key], row.orderUnit, row.productionType, row.finishedDish || row.name]));
+  });
   const worksheet = XLSX.utils.aoa_to_sheet(worksheetRows);
-  worksheet["!merges"] = [XLSX.utils.decode_range("A1:F1"), XLSX.utils.decode_range("A2:F2")];
-  worksheet["!cols"] = [30, 14, 18, 24, 22, 28].map((wch) => ({ wch }));
+  worksheet["!merges"] = [XLSX.utils.decode_range("A1:E1"), XLSX.utils.decode_range("A2:E2"), ...[...sectionRows].map((row) => ({ s: { r: row, c: 0 }, e: { r: row, c: 4 } }))];
+  worksheet["!cols"] = [32, 14, 18, 24, 30].map((wch) => ({ wch }));
   worksheet["!freeze"] = { xSplit: 0, ySplit: 3, topLeftCell: "A4", activePane: "bottomLeft", state: "frozen" };
-  worksheet["!autofilter"] = { ref: `A3:F${Math.max(worksheetRows.length, 3)}` };
+  worksheet["!autofilter"] = { ref: `A3:E${Math.max(worksheetRows.length, 3)}` };
   worksheet["!margins"] = { left: 0.25, right: 0.25, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 };
-  worksheet["!rows"] = worksheetRows.map((_, row) => ({ hpt: row === 0 ? 28 : row === 1 ? 22 : row === 2 ? 34 : 25 }));
-  let previousCategory = null;
-  let categoryBand = -1;
+  worksheet["!rows"] = worksheetRows.map((_, row) => ({ hpt: row === 0 ? 28 : row === 1 ? 22 : row === 2 ? 34 : sectionRows.has(row) ? 27 : 25 }));
+  let sectionBand = -1;
   for (let row = 0; row < worksheetRows.length; row += 1) {
-    const category = row > 2 ? worksheetRows[row][3] : null;
-    const isGroupStart = row > 2 && category !== previousCategory;
-    if (isGroupStart) categoryBand += 1;
-    const fill = isGroupStart ? PREP_LIST_COLORS.section : categoryBand % 2 === 0 ? PREP_LIST_COLORS.detailAlt : PREP_LIST_COLORS.detail;
-    for (let column = 0; column < 6; column += 1) {
+    const isSection = sectionRows.has(row);
+    if (isSection) sectionBand += 1;
+    const fill = sectionBand % 2 === 0 ? PREP_LIST_COLORS.detailAlt : PREP_LIST_COLORS.detail;
+    for (let column = 0; column < 5; column += 1) {
       let style;
       if (row === 0) style = titleStyle();
       else if (row === 1) style = { font: { name: "Arial", sz: 10, italic: true, color: { rgb: PREP_LIST_COLORS.muted } }, fill: { patternType: "solid", fgColor: { rgb: PREP_LIST_COLORS.detail } }, alignment: { vertical: "center" }, border: border(PREP_LIST_COLORS.section) };
       else if (row === 2) style = headerStyle;
-      else style = bodyStyle(fill, isGroupStart);
-      if (row > 2 && isGroupStart && [0, 3].includes(column)) style = { ...style, font: { ...style.font, bold: true, color: { rgb: PREP_LIST_COLORS.navy } } };
+      else if (isSection) style = { font: { name: "Arial", sz: 11, bold: true, color: { rgb: PREP_LIST_COLORS.navy } }, fill: { patternType: "solid", fgColor: { rgb: PREP_LIST_COLORS.section } }, alignment: { vertical: "center" }, border: { ...border(), top: { style: "medium", color: { rgb: PREP_LIST_COLORS.blue } }, bottom: { style: "medium", color: { rgb: PREP_LIST_COLORS.blue } } } };
+      else style = bodyStyle(fill);
       setCellStyle(worksheet, row, column, style);
     }
-    if (row > 2) previousCategory = category;
   }
   return worksheet;
 }

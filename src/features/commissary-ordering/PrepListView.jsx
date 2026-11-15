@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Languages } from "lucide-react";
 
-import { COMMISSARY_STATION_ORDER, rolledUpPrepItems, weekLabel } from "./commissaryModel.js";
+import { COMMISSARY_STATION_ORDER, rolledUpFinishedPrepItems, rolledUpPrepItems, weekLabel } from "./commissaryModel.js";
 import { DEFAULT_COMMISSARY_METADATA } from "./commissaryMetadata.js";
 import {
   commissarySpanishCategory,
@@ -77,14 +77,17 @@ export default function PrepListView({ records, weekStart, hub, hubs = [], onHub
   const [spanish, setSpanish] = useState(false);
   const [station, setStation] = useState("all");
   const rows = useMemo(() => rolledUpPrepItems(records, { hub }).filter((row) => Number(row[delivery]) > 0), [delivery, hub, records]);
-  const availableStations = useMemo(() => COMMISSARY_STATION_ORDER.filter((stationName) => rows.some((row) => row.station === stationName)), [rows]);
+  const finishedRows = useMemo(() => rolledUpFinishedPrepItems(records, { hub }).filter((row) => Number(row[delivery]) > 0), [delivery, hub, records]);
+  const availableStations = useMemo(() => COMMISSARY_STATION_ORDER.filter((stationName) => rows.some((row) => row.station === stationName) || finishedRows.some((row) => row.station === stationName)), [finishedRows, rows]);
   const visibleRows = useMemo(() => station === "all" ? rows : rows.filter((row) => row.station === station), [rows, station]);
+  const visibleFinishedRows = useMemo(() => station === "all" ? finishedRows : finishedRows.filter((row) => row.station === station), [finishedRows, station]);
   const stationGroups = useMemo(() => COMMISSARY_STATION_ORDER.flatMap((stationName) => {
     const stationRows = visibleRows.filter((row) => row.station === stationName);
     return stationRows.length ? [{ station: stationName, rows: stationRows }] : [];
   }), [visibleRows]);
   const completedIds = new Set(completed?.[delivery] || []);
-  const completedCount = visibleRows.filter((row) => completedIds.has(row.id)).length;
+  const completedCount = [...visibleFinishedRows, ...visibleRows].filter((row) => completedIds.has(row.id)).length;
+  const visibleCount = visibleFinishedRows.length + visibleRows.length;
 
   useEffect(() => {
     if (!deliveries.some(({ key }) => key === delivery)) setDelivery(deliveries[0]?.key || "friday");
@@ -157,7 +160,7 @@ export default function PrepListView({ records, weekStart, hub, hubs = [], onHub
       </div>
 
       <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 text-sm font-black md:px-6">
-        <span>{completedCount} / {visibleRows.length} {text.complete}</span>
+        <span>{completedCount} / {visibleCount} {text.complete}</span>
         <span className="text-slate-500">{text.hold}</span>
       </div>
 
@@ -167,10 +170,34 @@ export default function PrepListView({ records, weekStart, hub, hubs = [], onHub
         </nav>
       )}
 
-      {visibleRows.length === 0 ? (
+      {visibleCount === 0 ? (
         <p className="p-10 text-center text-lg font-bold text-slate-500">{text.empty}</p>
       ) : (
         <div>
+          {visibleFinishedRows.length > 0 && <section className="border-b-4 border-orange-300 bg-orange-50/40" data-testid="finished-prep-counts">
+            <div className="border-b border-orange-200 bg-orange-100 px-4 py-3 md:px-6">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-orange-900">{spanish ? "Conteos de artículos terminados" : "Finished sandwich and breakfast counts"}</p>
+              <p className="mt-1 text-xs font-bold text-orange-800">{spanish ? "Complete estos conteos antes de preparar los componentes de abajo." : "Complete these cafe totals first, then use the component prep sections below."}</p>
+            </div>
+            <div className="divide-y divide-orange-200">{visibleFinishedRows.map((row) => {
+              const checked = completedIds.has(row.id);
+              const cafes = Object.entries(row.cafes)
+                .filter(([, quantities]) => Number(quantities[delivery]) > 0)
+                .map(([cafe, quantities]) => `${cafe} ${quantityText(quantities[delivery])}`)
+                .join(" · ");
+              return <article key={row.id} className={`grid min-h-24 grid-cols-[3.5rem_minmax(0,1fr)] items-center gap-x-4 gap-y-2 px-4 py-4 transition sm:grid-cols-[3.5rem_minmax(0,1fr)_auto] md:px-6 ${checked ? "bg-emerald-50" : "bg-white"}`}>
+                <PrepCheck checked={checked} disabled={saving} label={`${text.hold}: ${row.name}`} onToggle={() => onToggle(delivery, row.id)} />
+                <div className="min-w-0">
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-orange-700">{row.station}</p>
+                  <p className={`mt-0.5 break-words text-lg font-black leading-tight sm:text-xl ${checked ? "text-emerald-900 line-through decoration-2" : "text-slate-950"}`}>{row.name}</p>
+                </div>
+                <div className="col-start-2 min-w-0 text-left sm:col-start-3 sm:row-start-1 sm:max-w-[22rem] sm:text-right" data-testid={`finished-prep-quantity-${row.id}`}>
+                  <p className="flex flex-wrap items-baseline gap-x-1 text-3xl font-black tabular-nums text-slate-950 sm:justify-end">{quantityText(row[delivery])} <span className="text-xl">{row.orderUnit}</span></p>
+                  <p className="mt-1 text-sm font-bold leading-tight text-slate-500" data-testid={`finished-prep-cafes-${row.id}`}>{cafes}</p>
+                </div>
+              </article>;
+            })}</div>
+          </section>}
           {stationGroups.map(({ station, rows: stationRows }) => <section key={station} id={`prep-station-${station.toLowerCase().replace(/\s+/g, "-")}`} className="scroll-mt-24">
             <div className="border-b border-sky-200 bg-sky-50 px-4 py-3 md:px-6"><p className="text-xs font-black uppercase tracking-[0.16em] text-sky-800">{station}</p></div>
             <div className="divide-y divide-slate-200">{stationRows.map((row) => {

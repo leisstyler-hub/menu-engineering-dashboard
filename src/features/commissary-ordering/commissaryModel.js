@@ -16,6 +16,11 @@ export const COMMISSARY_GLOBAL_ORDER_VERSION = 3;
 export const COMMISSARY_BREAKFAST_ORDER_VERSION = 1;
 export const COMMISSARY_PACKOUT_PACKET_VERSION = 2;
 export const COMMISSARY_STATION_ORDER = Object.freeze(["Salad Bar", "Breakfast", "Deli", "Grill", "Global"]);
+export const COMMISSARY_FINISHED_PREP_ITEM_IDS = Object.freeze([
+  ...new Set(DELI_ORDERING_PROGRAM.cycleWeeks.flatMap(({ items }) => items.map(({ mrn }) => `prep-finished|deli|${mrn}`))
+    .concat((DELI_ORDERING_PROGRAM.standingOrderItemMrns || []).map((mrn) => `prep-finished|deli|${mrn}`))),
+  ...BREAKFAST_ORDERING_ITEM_IDS.map((id) => `prep-finished|breakfast|${id}`),
+]);
 
 export const GLOBAL_UNIT_PREPARATION_NOTES = Object.freeze({
   "AMZ: Balti": "Rice and naan purchased and prepared in unit.",
@@ -429,7 +434,7 @@ export function buildOrderRecord({ cafe, weekStart, quantities, grill, deli, glo
 }
 
 export function normalizePrepCompleted(completed = {}) {
-  const allowedPrepIds = new Set([...COMMISSARY_ITEM_BY_ID.keys(), ...GRILL_LTO_PREP_ITEM_IDS, ...DELI_ORDERING_PREP_ITEM_IDS, ...GLOBAL_ORDERING_PREP_ITEM_IDS, ...BREAKFAST_ORDERING_PREP_ITEM_IDS]);
+  const allowedPrepIds = new Set([...COMMISSARY_ITEM_BY_ID.keys(), ...GRILL_LTO_PREP_ITEM_IDS, ...DELI_ORDERING_PREP_ITEM_IDS, ...GLOBAL_ORDERING_PREP_ITEM_IDS, ...BREAKFAST_ORDERING_PREP_ITEM_IDS, ...COMMISSARY_FINISHED_PREP_ITEM_IDS]);
   return Object.fromEntries(DELIVERY_KEYS.map((delivery) => [
     delivery,
     [...new Set(Array.isArray(completed?.[delivery]) ? completed[delivery] : [])]
@@ -453,7 +458,7 @@ export function buildPrepProgressRecord({ weekStart, hub = "Cricket", completed,
 
 export function togglePrepCompleted(completed, delivery, itemId) {
   const normalized = normalizePrepCompleted(completed);
-  if (!DELIVERY_KEYS.includes(delivery) || (!COMMISSARY_ITEM_BY_ID.has(itemId) && !GRILL_LTO_PREP_ITEM_IDS.includes(itemId) && !DELI_ORDERING_PREP_ITEM_IDS.includes(itemId) && !GLOBAL_ORDERING_PREP_ITEM_IDS.includes(itemId) && !BREAKFAST_ORDERING_PREP_ITEM_IDS.includes(itemId))) return normalized;
+  if (!DELIVERY_KEYS.includes(delivery) || (!COMMISSARY_ITEM_BY_ID.has(itemId) && !GRILL_LTO_PREP_ITEM_IDS.includes(itemId) && !DELI_ORDERING_PREP_ITEM_IDS.includes(itemId) && !GLOBAL_ORDERING_PREP_ITEM_IDS.includes(itemId) && !BREAKFAST_ORDERING_PREP_ITEM_IDS.includes(itemId) && !COMMISSARY_FINISHED_PREP_ITEM_IDS.includes(itemId))) return normalized;
   const current = new Set(normalized[delivery]);
   if (current.has(itemId)) current.delete(itemId);
   else current.add(itemId);
@@ -706,6 +711,38 @@ export function hasCommissaryOrder(record = {}) {
     || breakfastOrderLinesForCafe(record).length > 0;
 }
 
+export function rolledUpFinishedPrepItems(records = [], options = {}) {
+  const rows = new Map();
+  records.flatMap((record) => [
+    ...(options.hub && !cafeRoutesToHub(record.cafe, COMMISSARY_STATIONS.DELI, options.hub) ? [] : deliOrderLinesForCafe(record).map((line) => ({ ...line, station: "Deli", completionId: `prep-finished|deli|${line.mrn}`, cafe: record.cafe }))),
+    ...(options.hub && !cafeRoutesToHub(record.cafe, COMMISSARY_STATIONS.BREAKFAST, options.hub) ? [] : breakfastOrderLinesForCafe(record).map((line) => ({ ...line, station: "Breakfast", completionId: `prep-finished|breakfast|${line.id}`, cafe: record.cafe }))),
+  ]).forEach((line) => {
+    const key = `${line.station}|${line.completionId}`;
+    const current = rows.get(key) || {
+      id: line.completionId,
+      name: line.name,
+      mrn: line.mrn,
+      station: line.station,
+      orderUnit: line.orderUnit,
+      cafes: {},
+      ...Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, 0])),
+    };
+    DELIVERY_KEYS.forEach((delivery) => {
+      const quantity = Number(line[delivery] || 0);
+      current[delivery] += quantity;
+      current.cafes[line.cafe] ||= Object.fromEntries(DELIVERY_KEYS.map((keyName) => [keyName, 0]));
+      current.cafes[line.cafe][delivery] += quantity;
+    });
+    rows.set(key, current);
+  });
+  return [...rows.values()].map((row) => ({
+    ...row,
+    ...Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, Number(row[delivery].toFixed(4))])),
+    cafes: Object.fromEntries(Object.entries(row.cafes).map(([cafe, quantities]) => [cafe, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, Number(quantities[delivery].toFixed(4))]))])),
+    total: Number(DELIVERY_KEYS.reduce((sum, delivery) => sum + row[delivery], 0).toFixed(4)),
+  })).filter(({ total }) => total > 0).sort((a, b) => a.station.localeCompare(b.station) || a.name.localeCompare(b.name));
+}
+
 export function rolledUpPrepItems(records = [], options = {}) {
   const salad = rolledUpItems(records, options);
   const grillMap = new Map();
@@ -769,10 +806,12 @@ export function rolledUpPrepItems(records = [], options = {}) {
       || a.orderUnit.localeCompare(b.orderUnit));
 }
 
-const SAUCE_NAME = /(?:sauce|aioli|dressing|relish|chutney|salsa|pico de gallo|mayo|mayonnaise|vinaigrette|pesto|dip|glaze|marinade)/i;
-const HOT_SAUCE_NAME = /(?:hot sauce|curry|masala|teriyaki|brais|queso|gravy|demi|piri piri|peri peri)/i;
-const VEGETABLE_NAME = /\b(tomato(?:es)?|cucumbers?|onions?|peppers?|carrots?|celery|broccoli|cauliflower|cabbage|lettuce|kale|spinach|arugula|spring mix|potato(?:es)?|squash|zucchini|mushrooms?|corn|beans?|peas?|avocado|scallions?|cilantro|parsley|vegetables?)\b/i;
-const PRODUCTION_TYPE_ORDER = Object.freeze(["Vegetable Production", "Cold Sauce Production", "Hot Sauce Production", "Other Production"]);
+const SAUCE_NAME = /(?:sauce|aioli|dressing|relish|chutney|salsa|pico de gallo|mayo|mayonnaise|vinaigrette|pesto|dip|glaze|marinade|hummus|tapenade|gravy|curry|masala|rub|seasoning|spice mix|brine|broth|stock)/i;
+const MEAT_PRODUCTION_NAME = /\b(beef|brisket|chicken|turkey|ham|bacon|pork|salami|pepperoni|mortadella|prosciutto|tuna|shrimp|prawn|crab|lobster|salmon|cod|steelhead|fish|seafood|sausage|kielbasa|lamb|egg)\b/i;
+const STOCKING_CATEGORY = /^(?:leafy greens|cheeses|crunchy toppers)$/i;
+const STOCKING_NAME = /\b(cheese|feta|cheddar|mozzarella|provolone|parmesan|brie|lettuce|arugula|spinach|spring mix|kale|cranberr|raisin|dried fruit|nuts?|walnuts?|almonds?|seeds?|pepitas|croutons?|chips?|crackers?|bread|bun|roll|bagel|croissant|tortilla|wrap|olives?|pickles?)\b|\b(canned|pouch|pre[- ]?sliced|pre[- ]?shredded|ready[- ]?to[- ]?serve)\b/i;
+const VEGETABLE_NAME = /\b(tomato(?:es)?|cucumbers?|onions?|peppers?|carrots?|celery|broccoli|cauliflower|cabbage|potato(?:es)?|squash|zucchini|mushrooms?|corn|beans?|peas?|avocado|scallions?|cilantro|parsley|eggplant|asparagus|fennel|apples?|pears?|papaya|slaw|vegetables?)\b/i;
+export const PRODUCTION_SECTION_ORDER = Object.freeze(["Vegetable Production", "Sauces", "Meat Production", "Stocking"]);
 const VOLUME_TO_CUPS = Object.freeze({
   "fluid ounce": 1 / 8,
   "fluid ounces": 1 / 8,
@@ -848,9 +887,12 @@ export function roundedProductionEquivalentQuantity(line = {}, component = null,
 
 export function prepProductionType(row = {}) {
   const value = `${row.name || ""} ${row.finishedDish || ""}`;
+  const category = String(row.category || "");
+  if (SAUCE_NAME.test(value)) return "Sauces";
+  if (MEAT_PRODUCTION_NAME.test(String(row.name || ""))) return "Meat Production";
+  if (STOCKING_CATEGORY.test(category) || STOCKING_NAME.test(String(row.name || ""))) return "Stocking";
   if (VEGETABLE_NAME.test(String(row.name || ""))) return "Vegetable Production";
-  if (SAUCE_NAME.test(value)) return HOT_SAUCE_NAME.test(value) ? "Hot Sauce Production" : "Cold Sauce Production";
-  return "Other Production";
+  return "Stocking";
 }
 
 export function prepProductionFamily(row = {}) {
@@ -860,8 +902,8 @@ export function prepProductionFamily(row = {}) {
 }
 
 function prepProductionTypeOrder(type) {
-  const index = PRODUCTION_TYPE_ORDER.indexOf(type);
-  return index < 0 ? PRODUCTION_TYPE_ORDER.length : index;
+  const index = PRODUCTION_SECTION_ORDER.indexOf(type);
+  return index < 0 ? PRODUCTION_SECTION_ORDER.length : index;
 }
 
 export function prepDisplayQuantity(row = {}) {

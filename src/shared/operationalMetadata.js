@@ -23,7 +23,7 @@ import { COMMISSARY_CAFE_STATION_ACCESS, COMMISSARY_HUB_ROUTING, COMMISSARY_HUBS
 import { GLOBAL_UNIT_PREPARATION_NOTES } from "../features/commissary-ordering/commissaryModel.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 23;
+export const OPERATIONAL_METADATA_VERSION = 24;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -136,7 +136,7 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
     prepInterface: Object.freeze({
       stationOrder: Object.freeze(["Salad Bar", "Breakfast", "Deli", "Grill", "Global"]),
       stationTabletFilter: Object.freeze({ enabled: true, includesAllStationsView: true }),
-      productionGrouping: Object.freeze(["Vegetable Production", "Cold Sauce Production", "Hot Sauce Production", "Other Production"]),
+      productionGrouping: Object.freeze(["Vegetable Production", "Sauces", "Meat Production", "Stocking"]),
       familyAdjacency: true,
       sauceVolumeDisplay: "all-sauces-in-gallons; weight-derived-at-8-ounces-per-cup-except-pico-de-gallo-at-7",
       productionVolumeRounding: Object.freeze({
@@ -160,7 +160,7 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       deliDeliveryMap: "finished-sandwich-counts",
       globalUnitPreparationNotes: GLOBAL_UNIT_PREPARATION_NOTES,
       globalMarinadePolicy: "six-week-reviewed-recipe-tree-minus-unit-protein",
-      workbookVersion: 3,
+      workbookVersion: 4,
       dailyPrepLists: Object.freeze({ friday: "Monday service", monday: "Tuesday-Wednesday service", wednesday: "Thursday-Friday service" }),
       exactMrnRollup: true,
       deliveryMapExactMrnRollup: "cafe-station-compatible-unit",
@@ -170,6 +170,8 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       costsVisible: false,
       deliveryMapGrouping: "cafe-station-item",
       grillUnitSuppliedItems: Object.freeze(["brioche buns", "black bean burgers", "grilled chicken breast", "salt kosher"]),
+      finishedItemTabletCounts: Object.freeze({ stations: Object.freeze(["Deli", "Breakfast"]), placement: "before-component-prep", completion: "shared-touch-check" }),
+      visibleWorkbookColumns: Object.freeze(["Ingredient / item", "Total quantity", "Order unit", "Production section", "Finished dish"]),
     }),
     packoutPacket: Object.freeze({
       version: 3,

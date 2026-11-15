@@ -1,3 +1,7 @@
+## 2026-11-15
+
+- [Nov 15, 7:46 AM] Group daily prep into four production sections and show Deli and Breakfast item counts above tablet component prep.
+
 ## 2026-11-14
 
 - [Nov 14, 7:32 AM] Keep unit-supplied Grill items off prep and transfers, and show Deli protein quantities in pounds.
