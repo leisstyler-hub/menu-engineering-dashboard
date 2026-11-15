@@ -11,7 +11,7 @@ import {
 
 const HOLD_MS = 600;
 
-function PrepCheck({ checked, disabled, label, onToggle }) {
+export function PrepCheck({ checked, disabled, label, onToggle }) {
   const timerRef = useRef(null);
   const pointerTypeRef = useRef("");
   const suppressClickRef = useRef(false);

@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import XLSX from "xlsx";
 
-import { buildOrderRecord, emptyDeliOrder, emptyGrillOrder, emptyQuantities, firstOpenWeek } from "../../src/features/commissary-ordering/commissaryModel.js";
+import { COMMISSARY_PREP_BOARD_PILOT_WEEK, buildOrderRecord, deliCycleForWeek, emptyDeliOrder, emptyGrillOrder, emptyQuantities, firstOpenWeek } from "../../src/features/commissary-ordering/commissaryModel.js";
 import { COMMISSARY_ORDER_ITEMS, COMMISSARY_PREVIOUS_ORDER_ITEMS } from "../../src/features/commissary-ordering/commissaryCatalog.js";
 import { buildCommissaryMetadataRecord } from "../../src/features/commissary-ordering/commissaryMetadata.js";
 import { GRILL_LTO_PROGRAM } from "../../src/features/commissary-ordering/grillLtoCatalog.js";
@@ -552,6 +552,56 @@ test("Prep List View is vertical, touch friendly, translated, and saves hold-to-
   expect(writes[1].records[0].hub).toBe("Cricket");
   expect(writes[1].records[0].completed.friday).toContain(cucumber.id);
 
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("January 4 draft opens the tabbed Production, Assembly, and Pack Out board without waiting for cutoff", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await page.clock.install({ time: new Date("2026-11-15T20:00:00Z") });
+  const deliOption = deliCycleForWeek(COMMISSARY_PREP_BOARD_PILOT_WEEK).items[0];
+  const nessieDeli = emptyDeliOrder(COMMISSARY_PREP_BOARD_PILOT_WEEK);
+  nessieDeli.items[deliOption.mrn] = { mrn: deliOption.mrn, item: deliOption.name, portion: "1 sandwich", itemWasteCost: 3.25 };
+  nessieDeli.quantities[deliOption.mrn] = { friday: 5, monday: 4, wednesday: 3 };
+  const dawsonDeli = emptyDeliOrder(COMMISSARY_PREP_BOARD_PILOT_WEEK);
+  dawsonDeli.items[deliOption.mrn] = { mrn: deliOption.mrn, item: deliOption.name, portion: "1 sandwich", itemWasteCost: 3.25 };
+  dawsonDeli.quantities[deliOption.mrn] = { friday: 2, monday: 2, wednesday: 2 };
+  const records = [
+    buildOrderRecord({ cafe: "Nessie", weekStart: COMMISSARY_PREP_BOARD_PILOT_WEEK, quantities: emptyQuantities(COMMISSARY_PREP_BOARD_PILOT_WEEK), deli: nessieDeli, now: new Date("2026-11-15T20:00:00Z") }),
+    buildOrderRecord({ cafe: "Dawson", weekStart: COMMISSARY_PREP_BOARD_PILOT_WEEK, quantities: emptyQuantities(COMMISSARY_PREP_BOARD_PILOT_WEEK), deli: dawsonDeli, now: new Date("2026-11-15T20:00:00Z") }),
+  ];
+  const writes = await mockOrders(page, records);
+  await page.setViewportSize({ width: 820, height: 1180 });
+  await openTool(page, /open commissary ordering/i, /^Commissary Ordering Tool$/);
+  await page.getByLabel("Your cafe").selectOption("Cricket");
+  await page.getByLabel("Service week").selectOption(COMMISSARY_PREP_BOARD_PILOT_WEEK);
+  await page.getByRole("button", { name: "Draft Prep Board" }).click();
+
+  const board = page.getByTestId("tabbed-prep-board");
+  await expect(board).toBeVisible();
+  await expect(board.getByText("Draft pilot", { exact: true })).toBeVisible();
+  await expect(board.getByText("Week 1/4–1/8", { exact: true })).toBeVisible();
+  const phaseNav = board.getByRole("navigation", { name: "Prep board phases" });
+  await expect(phaseNav.getByRole("button", { name: /Production/ })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByText("Draft tabbed board ready", { exact: true })).toBeVisible();
+  const productionRow = board.locator('[data-testid^="prep-board-row-prep-board|production|"]').first();
+  await expect(productionRow).toBeVisible();
+  await productionRow.getByRole("button").click();
+  await expect.poll(() => writes.length).toBe(1);
+  expect(writes[0].records[0].weekStart).toBe(COMMISSARY_PREP_BOARD_PILOT_WEEK);
+  expect(writes[0].records[0].completed.friday.some((id) => id.startsWith("prep-board|production|"))).toBe(true);
+
+  await phaseNav.getByRole("button", { name: /Assembly/ }).click();
+  await expect(board.getByText(deliOption.name, { exact: true })).toBeVisible();
+  await expect(board.getByText(/inputs ready|waiting on production|ready/i)).toBeVisible();
+  await phaseNav.getByRole("button", { name: /Pack Out/ }).click();
+  await expect(board.getByText("Nessie · Deli", { exact: true }).first()).toBeVisible();
+  await expect(board.getByText("Dawson · Deli", { exact: true }).first()).toBeVisible();
+  await expect(board).toContainText("5 sandwich");
+  expect(await board.evaluate((node) => node.scrollWidth > node.clientWidth + 1)).toBe(false);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(board).toBeVisible();
+  expect(await board.evaluate((node) => node.scrollWidth > node.clientWidth + 1)).toBe(false);
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });

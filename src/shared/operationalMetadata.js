@@ -23,7 +23,7 @@ import { COMMISSARY_CAFE_STATION_ACCESS, COMMISSARY_HUB_ROUTING, COMMISSARY_HUBS
 import { GLOBAL_UNIT_PREPARATION_NOTES } from "../features/commissary-ordering/commissaryModel.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 24;
+export const OPERATIONAL_METADATA_VERSION = 25;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -172,6 +172,13 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       grillUnitSuppliedItems: Object.freeze(["brioche buns", "black bean burgers", "grilled chicken breast", "salt kosher"]),
       finishedItemTabletCounts: Object.freeze({ stations: Object.freeze(["Deli", "Breakfast"]), placement: "before-component-prep", completion: "shared-touch-check" }),
       visibleWorkbookColumns: Object.freeze(["Ingredient / item", "Total quantity", "Order unit", "Production section", "Finished dish"]),
+      tabbedBoardPilot: Object.freeze({
+        weekStart: "2027-01-04",
+        status: "draft",
+        phases: Object.freeze(["Production", "Assembly", "Pack Out"]),
+        completionStorage: "commissary-prep-progress",
+        currentWeekIsolation: true,
+      }),
     }),
     packoutPacket: Object.freeze({
       version: 3,

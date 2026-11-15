@@ -16,6 +16,8 @@ export const COMMISSARY_GLOBAL_ORDER_VERSION = 3;
 export const COMMISSARY_BREAKFAST_ORDER_VERSION = 1;
 export const COMMISSARY_PACKOUT_PACKET_VERSION = 2;
 export const COMMISSARY_STATION_ORDER = Object.freeze(["Salad Bar", "Breakfast", "Deli", "Grill", "Global"]);
+export const COMMISSARY_PREP_BOARD_PILOT_WEEK = "2027-01-04";
+export const COMMISSARY_PREP_BOARD_PHASES = Object.freeze(["production", "assembly", "packout"]);
 export const COMMISSARY_FINISHED_PREP_ITEM_IDS = Object.freeze([
   ...new Set(DELI_ORDERING_PROGRAM.cycleWeeks.flatMap(({ items }) => items.map(({ mrn }) => `prep-finished|deli|${mrn}`))
     .concat((DELI_ORDERING_PROGRAM.standingOrderItemMrns || []).map((mrn) => `prep-finished|deli|${mrn}`))),
@@ -30,7 +32,21 @@ export const GLOBAL_UNIT_PREPARATION_NOTES = Object.freeze({
 });
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const PREP_BOARD_COMPLETION_ID = /^prep-board\|(production|assembly|packout)\|[a-z0-9]{7}$/;
 const pad = (value) => String(value).padStart(2, "0");
+
+export function isPrepBoardCompletionId(value) {
+  return PREP_BOARD_COMPLETION_ID.test(String(value || ""));
+}
+
+function prepBoardCompletionId(phase, value) {
+  let hash = 2166136261;
+  for (const character of String(value || "")) {
+    hash ^= character.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  return `prep-board|${phase}|${(hash >>> 0).toString(36).padStart(7, "0").slice(-7)}`;
+}
 
 export function isoDate(date) {
   return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`;
@@ -438,7 +454,7 @@ export function normalizePrepCompleted(completed = {}) {
   return Object.fromEntries(DELIVERY_KEYS.map((delivery) => [
     delivery,
     [...new Set(Array.isArray(completed?.[delivery]) ? completed[delivery] : [])]
-      .filter((itemId) => allowedPrepIds.has(itemId)),
+      .filter((itemId) => allowedPrepIds.has(itemId) || isPrepBoardCompletionId(itemId)),
   ]));
 }
 
@@ -458,7 +474,7 @@ export function buildPrepProgressRecord({ weekStart, hub = "Cricket", completed,
 
 export function togglePrepCompleted(completed, delivery, itemId) {
   const normalized = normalizePrepCompleted(completed);
-  if (!DELIVERY_KEYS.includes(delivery) || (!COMMISSARY_ITEM_BY_ID.has(itemId) && !GRILL_LTO_PREP_ITEM_IDS.includes(itemId) && !DELI_ORDERING_PREP_ITEM_IDS.includes(itemId) && !GLOBAL_ORDERING_PREP_ITEM_IDS.includes(itemId) && !BREAKFAST_ORDERING_PREP_ITEM_IDS.includes(itemId) && !COMMISSARY_FINISHED_PREP_ITEM_IDS.includes(itemId))) return normalized;
+  if (!DELIVERY_KEYS.includes(delivery) || (!COMMISSARY_ITEM_BY_ID.has(itemId) && !GRILL_LTO_PREP_ITEM_IDS.includes(itemId) && !DELI_ORDERING_PREP_ITEM_IDS.includes(itemId) && !GLOBAL_ORDERING_PREP_ITEM_IDS.includes(itemId) && !BREAKFAST_ORDERING_PREP_ITEM_IDS.includes(itemId) && !COMMISSARY_FINISHED_PREP_ITEM_IDS.includes(itemId) && !isPrepBoardCompletionId(itemId))) return normalized;
   const current = new Set(normalized[delivery]);
   if (current.has(itemId)) current.delete(itemId);
   else current.add(itemId);
@@ -804,6 +820,99 @@ export function rolledUpPrepItems(records = [], options = {}) {
       || a.productionFamily.localeCompare(b.productionFamily)
       || a.name.localeCompare(b.name)
       || a.orderUnit.localeCompare(b.orderUnit));
+}
+
+function prepBoardIdentity(row = {}) {
+  const mrn = String(row.mrn || "").trim();
+  return mrn ? `mrn:${mrn}` : `id:${String(row.id || row.name || "").trim().toLowerCase()}`;
+}
+
+function prepBoardOrderLinesForRecord(record, hub) {
+  const stationLines = [
+    ["Salad Bar", COMMISSARY_STATIONS.SALAD_BAR, orderLinesForCafe],
+    ["Breakfast", COMMISSARY_STATIONS.BREAKFAST, breakfastOrderLinesForCafe],
+    ["Deli", COMMISSARY_STATIONS.DELI, deliOrderLinesForCafe],
+    ["Grill", COMMISSARY_STATIONS.GRILL, grillOrderLinesForCafe],
+    ["Global", COMMISSARY_STATIONS.GLOBAL, globalOrderLinesForCafe],
+  ];
+  return stationLines.flatMap(([station, stationKey, lineBuilder]) => {
+    if (hub && !cafeRoutesToHub(record.cafe, stationKey, hub)) return [];
+    return lineBuilder(record).map((line) => ({ ...line, station, cafe: record.cafe }));
+  });
+}
+
+export function buildTabbedPrepBoard(records = [], options = {}) {
+  const production = rolledUpPrepItems(records, { hub: options.hub, consolidateAcrossStations: true }).map((row) => {
+    const productionKey = `${prepBoardIdentity(row)}|${String(row.orderUnit || "").toLowerCase()}`;
+    return {
+      ...row,
+      id: prepBoardCompletionId("production", productionKey),
+      productionKey,
+      phase: "production",
+      uses: String(row.finishedDish || "").split(";").map((value) => value.trim()).filter(Boolean),
+    };
+  });
+  const productionIdByKey = new Map(production.map((row) => [row.productionKey, row.id]));
+  const dependencyIdsByDish = new Map();
+  rolledUpPrepItems(records, { hub: options.hub }).forEach((row) => {
+    const productionId = productionIdByKey.get(`${prepBoardIdentity(row)}|${String(row.orderUnit || "").toLowerCase()}`);
+    if (!productionId) return;
+    String(row.finishedDish || row.name || "").split(";").map((value) => value.trim()).filter(Boolean).forEach((dish) => {
+      const key = `${row.station}|${dish}`;
+      if (!dependencyIdsByDish.has(key)) dependencyIdsByDish.set(key, new Set());
+      dependencyIdsByDish.get(key).add(productionId);
+    });
+  });
+
+  const assemblyMap = new Map();
+  const packoutMap = new Map();
+  records.flatMap((record) => prepBoardOrderLinesForRecord(record, options.hub)).forEach((line) => {
+    const identity = prepBoardIdentity(line);
+    const assemblyKey = `${line.station}|${identity}|${String(line.orderUnit || "").toLowerCase()}`;
+    const assembly = assemblyMap.get(assemblyKey) || {
+      id: prepBoardCompletionId("assembly", assemblyKey),
+      phase: "assembly",
+      name: line.name,
+      mrn: line.mrn,
+      station: line.station,
+      orderUnit: line.orderUnit,
+      cafes: {},
+      dependencyIds: [...(dependencyIdsByDish.get(`${line.station}|${line.name}`) || [])],
+      ...Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, 0])),
+    };
+    DELIVERY_KEYS.forEach((delivery) => {
+      const quantity = Number(line[delivery] || 0);
+      assembly[delivery] = Number((assembly[delivery] + quantity).toFixed(4));
+      assembly.cafes[line.cafe] ||= Object.fromEntries(DELIVERY_KEYS.map((key) => [key, 0]));
+      assembly.cafes[line.cafe][delivery] = Number((assembly.cafes[line.cafe][delivery] + quantity).toFixed(4));
+    });
+    assemblyMap.set(assemblyKey, assembly);
+
+    const packoutKey = `${line.cafe}|${assemblyKey}`;
+    const packout = packoutMap.get(packoutKey) || {
+      id: prepBoardCompletionId("packout", packoutKey),
+      phase: "packout",
+      name: line.name,
+      mrn: line.mrn,
+      cafe: line.cafe,
+      station: line.station,
+      orderUnit: line.orderUnit,
+      ...Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, 0])),
+    };
+    DELIVERY_KEYS.forEach((delivery) => { packout[delivery] = Number((packout[delivery] + Number(line[delivery] || 0)).toFixed(4)); });
+    packoutMap.set(packoutKey, packout);
+  });
+
+  const stationIndex = (station) => {
+    const index = COMMISSARY_STATION_ORDER.indexOf(station);
+    return index < 0 ? COMMISSARY_STATION_ORDER.length : index;
+  };
+  const withTotal = (row) => ({ ...row, total: Number(DELIVERY_KEYS.reduce((sum, delivery) => sum + Number(row[delivery] || 0), 0).toFixed(4)) });
+  return {
+    production: production.map(withTotal),
+    assembly: [...assemblyMap.values()].map(withTotal).filter(({ total }) => total > 0).sort((a, b) => stationIndex(a.station) - stationIndex(b.station) || a.name.localeCompare(b.name)),
+    packout: [...packoutMap.values()].map(withTotal).filter(({ total }) => total > 0).sort((a, b) => a.cafe.localeCompare(b.cafe) || stationIndex(a.station) - stationIndex(b.station) || a.name.localeCompare(b.name)),
+  };
 }
 
 const SAUCE_NAME = /(?:sauce|aioli|dressing|relish|chutney|salsa|pico de gallo|mayo|mayonnaise|vinaigrette|pesto|dip|glaze|marinade|hummus|tapenade|gravy|curry|masala|rub|seasoning|spice mix|brine|broth|stock)/i;

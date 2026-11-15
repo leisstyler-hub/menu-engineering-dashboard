@@ -7,6 +7,7 @@ import { refreshTransferCatalogCosts } from "../transfer-tool/transferStorage.js
 import PlatformSettings from "../../shared/ui/PlatformSettings.jsx";
 import VersionStamp from "../../shared/ui/VersionStamp.jsx";
 import PrepListView from "./PrepListView.jsx";
+import TabbedPrepBoard from "./TabbedPrepBoard.jsx";
 import { SALAD_BAR_CATEGORY_ORDER, commissaryItemMapForWeek } from "./commissaryCatalog.js";
 import { exportCommissaryBom, exportCommissaryTransfer } from "./commissaryExport.js";
 import { DEFAULT_COMMISSARY_METADATA, resolveCommissaryMetadata } from "./commissaryMetadata.js";
@@ -36,6 +37,7 @@ import {
   buildPrepProgressRecord,
   togglePrepCompleted,
   buildPackoutPacketRecord,
+  COMMISSARY_PREP_BOARD_PILOT_WEEK,
   grillCycleForWeek,
   isGrillEligibleCafe,
   isGrillCoreAvailable,
@@ -170,6 +172,7 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
 
   const weeks = useMemo(() => weekOptions(), []);
   const locked = isWeekLocked(weekStart, now);
+  const prepBoardPilot = weekStart === COMMISSARY_PREP_BOARD_PILOT_WEEK;
   const currentRecord = useMemo(() => orders.find((row) => recordKey(row.cafe, row.weekStart) === recordKey(cafe, weekStart)), [cafe, orders, weekStart]);
   const weekRecords = useMemo(() => orders.filter((row) => row.weekStart === weekStart && metadata.receivingCafes.some(({ name }) => name === row.cafe)), [metadata.receivingCafes, orders, weekStart]);
   const prepProgressRecord = useMemo(() => prepProgressRecords.find((row) => row.weekStart === weekStart && row.hub === prepHub)
@@ -433,13 +436,13 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
     if (!hubSiteSelected) return setError("Select Cricket, Sonic, or Blueshift to open its routed Prep List.");
     setPrepHub(cafe);
     setActiveView("prep");
-    setWeekStart(latestPrepWeek());
+    if (!prepBoardPilot) setWeekStart(latestPrepWeek());
     setNotice("");
     setError("");
   };
 
   const togglePrepItem = async (delivery, itemId) => {
-    if (!locked || prepSaving) return;
+    if ((!locked && !prepBoardPilot) || prepSaving) return;
     const previous = prepProgressRecord || buildPrepProgressRecord({ weekStart, hub: prepHub, completed: {} });
     const next = buildPrepProgressRecord({ weekStart, hub: prepHub, completed: togglePrepCompleted(previous.completed, delivery, itemId) });
     setPrepProgressRecords((current) => [...current.filter((row) => !(row.weekStart === weekStart && (row.hub || "Cricket") === prepHub)), next]);
@@ -481,18 +484,20 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
 
         <nav className={`grid ${hubSiteSelected ? "grid-cols-2" : "grid-cols-1"} gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm`} aria-label="Commissary tool views">
           <button type="button" aria-pressed={activeView === "orders"} onClick={() => setActiveView("orders")} className={`min-h-12 rounded-xl px-4 py-3 text-sm font-black ${activeView === "orders" ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-slate-100"}`}>Cafe Orders</button>
-          {hubSiteSelected && <button type="button" aria-pressed={activeView === "prep"} onClick={openPrepView} className={`min-h-12 rounded-xl px-4 py-3 text-sm font-black ${activeView === "prep" ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-slate-100"}`}>Prep List View</button>}
+          {hubSiteSelected && <button type="button" aria-pressed={activeView === "prep"} onClick={openPrepView} className={`min-h-12 rounded-xl px-4 py-3 text-sm font-black ${activeView === "prep" ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-slate-100"}`}>{prepBoardPilot ? "Draft Prep Board" : "Prep List View"}</button>}
         </nav>
 
         <section className={`rounded-2xl border p-4 ${locked ? "border-slate-300 bg-slate-200 text-slate-700" : "border-emerald-200 bg-emerald-50 text-emerald-950"}`}>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-start gap-3">{locked ? <LockKeyhole className="mt-0.5" size={21} /> : <PackageCheck className="mt-0.5" size={21} />}<div><p className="font-black">{activeView === "prep" ? (locked ? "Prep list ready" : "Waiting for order cutoff") : (locked ? "Ordering closed" : `Ordering open for week ${weekLabel(weekStart)}`)}</p><p className="text-sm font-semibold">Cutoff: {cutoffLabelForWeek(weekStart)}.</p>{activeView === "orders" && locked && <p className="mt-1 font-black">Please contact commissary executive chef to adjust pars.</p>}</div></div>
+            <div className="flex items-start gap-3">{locked ? <LockKeyhole className="mt-0.5" size={21} /> : <PackageCheck className="mt-0.5" size={21} />}<div><p className="font-black">{activeView === "prep" ? (prepBoardPilot ? "Draft tabbed board ready" : locked ? "Prep list ready" : "Waiting for order cutoff") : (locked ? "Ordering closed" : `Ordering open for week ${weekLabel(weekStart)}`)}</p><p className="text-sm font-semibold">Cutoff: {cutoffLabelForWeek(weekStart)}.</p>{activeView === "prep" && prepBoardPilot && <p className="mt-1 font-black">Pilot workspace — January 4–8 orders and completion checks only.</p>}{activeView === "orders" && locked && <p className="mt-1 font-black">Please contact commissary executive chef to adjust pars.</p>}</div></div>
             <div className="text-right"><p className="text-xs font-black uppercase tracking-[0.12em]">{activeView === "prep" ? "Shared production view" : "Transfer period"}</p><p className="font-black">{activeView === "prep" ? datedDeliveries.map(({ title }) => title).join(" · ") : `Friday ${formatShortDate(period.start)} – Thursday ${formatShortDate(period.end)}`}</p></div>
           </div>
         </section>
 
         {activeView === "prep" ? (
-          <PrepListView records={weekRecords} weekStart={weekStart} hub={prepHub} hubs={COMMISSARY_HUBS.filter(({ key }) => key === prepHub)} onHubChange={setPrepHub} completed={prepCompleted} saving={prepSaving || !locked} onToggle={togglePrepItem} deliveries={datedDeliveries} />
+          prepBoardPilot
+            ? <TabbedPrepBoard records={weekRecords} weekStart={weekStart} hub={prepHub} completed={prepCompleted} saving={prepSaving} onToggle={togglePrepItem} deliveries={datedDeliveries} />
+            : <PrepListView records={weekRecords} weekStart={weekStart} hub={prepHub} hubs={COMMISSARY_HUBS.filter(({ key }) => key === prepHub)} onHubChange={setPrepHub} completed={prepCompleted} saving={prepSaving || !locked} onToggle={togglePrepItem} deliveries={datedDeliveries} />
         ) : !cafe ? (
           <section className="rounded-2xl border-2 border-dashed border-sky-200 bg-white p-10 text-center"><Truck className="mx-auto text-sky-600" size={34} /><h2 className="mt-3 text-2xl font-black">Select your cafe to begin</h2><p className="mt-1 text-sm font-semibold text-slate-600">The cafe-first step prevents an order from being entered on another unit’s line.</p></section>
         ) : (

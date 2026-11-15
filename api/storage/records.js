@@ -6,7 +6,7 @@ import {
   normalizeBackboneRows,
 } from "../../src/integrations/storage/backboneRecords.js";
 import { isApprovedCommissaryMetadataRecord } from "../../src/features/commissary-ordering/commissaryMetadata.js";
-import { COMMISSARY_BREAKFAST_ORDER_VERSION, COMMISSARY_DELI_ORDER_VERSION, COMMISSARY_FINISHED_PREP_ITEM_IDS, COMMISSARY_GLOBAL_ORDER_VERSION, COMMISSARY_GRILL_ORDER_VERSION, COMMISSARY_ORDER_UNIT_VERSION, COMMISSARY_PACKOUT_PACKET_VERSION, COMMISSARY_STATION_ORDER, DELIVERY_KEYS, deliCycleForWeek, deliveryDateForWeek, globalCycleForWeek, grillCycleForWeek, invalidWholeUnitSaladQuantities, isBreakfastEligibleCafe, isDeliEligibleCafe, isGlobalEligibleCafe, isGrillCoreAvailable, isGrillEligibleCafe, isWeekLocked, standingOrderReductions } from "../../src/features/commissary-ordering/commissaryModel.js";
+import { COMMISSARY_BREAKFAST_ORDER_VERSION, COMMISSARY_DELI_ORDER_VERSION, COMMISSARY_FINISHED_PREP_ITEM_IDS, COMMISSARY_GLOBAL_ORDER_VERSION, COMMISSARY_GRILL_ORDER_VERSION, COMMISSARY_ORDER_UNIT_VERSION, COMMISSARY_PACKOUT_PACKET_VERSION, COMMISSARY_PREP_BOARD_PILOT_WEEK, COMMISSARY_STATION_ORDER, DELIVERY_KEYS, deliCycleForWeek, deliveryDateForWeek, globalCycleForWeek, grillCycleForWeek, invalidWholeUnitSaladQuantities, isBreakfastEligibleCafe, isDeliEligibleCafe, isGlobalEligibleCafe, isGrillCoreAvailable, isGrillEligibleCafe, isPrepBoardCompletionId, isWeekLocked, standingOrderReductions } from "../../src/features/commissary-ordering/commissaryModel.js";
 import { GRILL_LTO_PREP_ITEM_IDS, GRILL_LTO_PROGRAM } from "../../src/features/commissary-ordering/grillLtoCatalog.js";
 import { DELI_ORDERING_PREP_ITEM_IDS, DELI_ORDERING_PROGRAM } from "../../src/features/commissary-ordering/deliCycleCatalog.js";
 import { GLOBAL_ORDERING_PREP_ITEM_IDS } from "../../src/features/commissary-ordering/globalCycleCatalog.js";
@@ -107,12 +107,13 @@ export function commissaryWriteValidation(records = [], context = {}) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(String(record.weekStart || ""))) return "The commissary prep week is invalid.";
     if (!COMMISSARY_HUBS.some(({ key }) => key === record.hub)) return "The commissary prep hub is invalid.";
     if (record["Record ID"] !== `commissaryOrder|prepProgress|${record.hub.toLowerCase()}|${record.weekStart}`) return "The commissary prep progress identity is invalid.";
-    if (!isWeekLocked(record.weekStart, new Date())) return "Prep progress is available after the commissary order cutoff.";
+    const prepBoardPilot = record.weekStart === COMMISSARY_PREP_BOARD_PILOT_WEEK;
+    if (!isWeekLocked(record.weekStart, new Date()) && !prepBoardPilot) return "Prep progress is available after the commissary order cutoff.";
     if (!record.completed || typeof record.completed !== "object" || Array.isArray(record.completed)) return "Commissary prep completion data is required.";
     if (Object.keys(record.completed).some((delivery) => !DELIVERY_KEYS.includes(delivery))) return "The commissary prep delivery is invalid.";
     for (const delivery of DELIVERY_KEYS) {
       const itemIds = record.completed[delivery];
-      if (!Array.isArray(itemIds) || new Set(itemIds).size !== itemIds.length || itemIds.some((itemId) => !COMMISSARY_PREP_IDS.has(itemId))) {
+      if (!Array.isArray(itemIds) || new Set(itemIds).size !== itemIds.length || itemIds.some((itemId) => !COMMISSARY_PREP_IDS.has(itemId) && !(prepBoardPilot && isPrepBoardCompletionId(itemId)))) {
         return "Commissary prep completion contains an invalid or duplicate item.";
       }
     }

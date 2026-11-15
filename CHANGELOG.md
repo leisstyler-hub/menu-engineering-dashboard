@@ -1,5 +1,7 @@
 ## 2026-11-15
 
+- [Nov 15, 9:28 AM] Try a three-tab Production, Assembly and Pack Out board in the January 4–8 Commissary pilot week.
+
 - [Nov 15, 7:46 AM] Group daily prep into four production sections and show Deli and Breakfast item counts above tablet component prep.
 
 ## 2026-11-14
