@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Download, FileDown, FileSpreadsheet, LockKeyhole, PackageCheck, Save, Truck } from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeft, CheckCircle2, Cloud, Download, FileDown, FileSpreadsheet, LoaderCircle, LockKeyhole, PackageCheck, Truck } from "lucide-react";
 
 import { money } from "../../shared/formatting.js";
 import { loadOperationalMetadata } from "../../shared/operationalMetadataStorage.js";
@@ -162,18 +162,32 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [autosaveStatus, setAutosaveStatus] = useState({ state: "ready", message: "Autosave ready" });
+  const [editRevision, setEditRevision] = useState(0);
+  const [hydrationRevision, setHydrationRevision] = useState(0);
   const [prepSaving, setPrepSaving] = useState(false);
+  const autosaveTimerRef = useRef(null);
+  const pendingAutosaveRef = useRef(null);
+  const autosaveQueueRef = useRef(Promise.resolve());
+  const latestRevisionByOrderRef = useRef(new Map());
+  const mountedRef = useRef(true);
+  const activeEditorKeyRef = useRef("");
 
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
   const weeks = useMemo(() => weekOptions(), []);
   const locked = isWeekLocked(weekStart, now);
   const prepBoardPilot = weekStart === COMMISSARY_PREP_BOARD_PILOT_WEEK;
   const currentRecord = useMemo(() => orders.find((row) => recordKey(row.cafe, row.weekStart) === recordKey(cafe, weekStart)), [cafe, orders, weekStart]);
+  activeEditorKeyRef.current = recordKey(cafe, weekStart);
   const weekRecords = useMemo(() => orders.filter((row) => row.weekStart === weekStart && metadata.receivingCafes.some(({ name }) => name === row.cafe)), [metadata.receivingCafes, orders, weekStart]);
   const prepProgressRecord = useMemo(() => prepProgressRecords.find((row) => row.weekStart === weekStart && row.hub === prepHub)
     || (prepHub === "Cricket" ? prepProgressRecords.find((row) => row.weekStart === weekStart && !row.hub) : null), [prepHub, prepProgressRecords, weekStart]);
@@ -269,11 +283,16 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
     }));
     setBreakfast(normalizedBreakfast);
     setBreakfastAddId("");
-  }, [breakfastCatalogByKey, cafe, currentRecord, deliCatalogByMrn, globalCatalogByKey, globalCycle, grillCatalogByMrn, saladBarAvailable, weekStart]);
+  }, [breakfastCatalogByKey, cafe, currentRecord, deliCatalogByMrn, globalCatalogByKey, globalCycle, grillCatalogByMrn, hydrationRevision, saladBarAvailable, weekStart]);
 
   useEffect(() => {
     if (activeView === "prep" && !hubSiteSelected) setActiveView("orders");
   }, [activeView, hubSiteSelected]);
+
+  const markOrderEdited = () => {
+    setAutosaveStatus({ state: "pending", message: "Changes pending…" });
+    setEditRevision((revision) => revision + 1);
+  };
 
   const updateQuantity = (itemId, delivery, value) => {
     const item = saladBarItems.find((row) => row.id === itemId);
@@ -282,6 +301,7 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
       ...current,
       [itemId]: { ...current[itemId], [delivery]: normalized },
     }));
+    markOrderEdited();
   };
 
   const selectGrillItem = (setKey, mrn) => {
@@ -291,6 +311,7 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
       selections: { ...current.selections, [setKey]: mrn },
       items: { ...current.items, [setKey]: item ? { mrn, item: item.item, portion: item.portion, itemWasteCost: item.itemWasteCost } : null },
     }));
+    markOrderEdited();
   };
 
   const updateGrillQuantity = (setKey, delivery, value) => {
@@ -298,18 +319,23 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
       ...current,
       quantities: { ...current.quantities, [setKey]: { ...current.quantities[setKey], [delivery]: value === "" ? "" : Math.max(0, Math.floor(Number(value))) } },
     }));
+    markOrderEdited();
   };
 
-  const updateGrillCoreQuantity = (mrn, delivery, value) => setGrill((current) => ({
-    ...current,
-    core: { ...current.core, quantities: { ...current.core.quantities, [mrn]: { ...current.core.quantities[mrn], [delivery]: value === "" ? "" : Math.max(0, Math.floor(Number(value))) } } },
-  }));
+  const updateGrillCoreQuantity = (mrn, delivery, value) => {
+    setGrill((current) => ({
+      ...current,
+      core: { ...current.core, quantities: { ...current.core.quantities, [mrn]: { ...current.core.quantities[mrn], [delivery]: value === "" ? "" : Math.max(0, Math.floor(Number(value))) } } },
+    }));
+    markOrderEdited();
+  };
 
   const updateDeliQuantity = (mrn, delivery, value) => {
     setDeli((current) => ({
       ...current,
       quantities: { ...current.quantities, [mrn]: { ...current.quantities[mrn], [delivery]: value === "" ? "" : Math.max(0, Math.floor(Number(value))) } },
     }));
+    markOrderEdited();
   };
 
   const updateGlobalQuantity = (id, delivery, value) => {
@@ -317,6 +343,7 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
       ...current,
       quantities: { ...current.quantities, [id]: { ...current.quantities[id], [delivery]: value === "" ? "" : Math.max(0, Math.floor(Number(value))) } },
     }));
+    markOrderEdited();
   };
 
   const selectGlobalMenu = (menu) => {
@@ -325,6 +352,7 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
       items: current.items,
       menu,
     }));
+    markOrderEdited();
   };
 
   const selectGlobalItem = (group, index, id) => {
@@ -341,6 +369,7 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
       if (previousId && !stillSelected.has(previousId)) nextQuantities[previousId] = { friday: 0, monday: 0, wednesday: 0 };
       return { ...current, selections: nextSelections, quantities: nextQuantities, legacyReviewRequired: false };
     });
+    markOrderEdited();
   };
 
   const addBreakfastItem = (id) => {
@@ -353,48 +382,99 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
       items: live ? { ...current.items, [id]: { id, menu: BREAKFAST_ORDERING_PROGRAM.menu, mrn: option.mrn, item: live.item || option.name, portion: option.portion, itemWasteCost: Number(live.itemWasteCost) } } : current.items,
     }));
     setBreakfastAddId("");
+    markOrderEdited();
   };
 
-  const removeBreakfastItem = (id) => setBreakfast((current) => ({
-    ...current,
-    selections: current.selections.filter((selected) => selected !== id),
-    quantities: { ...current.quantities, [id]: Object.fromEntries(metadata.deliveries.map(({ key }) => [key, 0])) },
-    items: Object.fromEntries(Object.entries(current.items).filter(([itemId]) => itemId !== id)),
-  }));
+  const removeBreakfastItem = (id) => {
+    setBreakfast((current) => ({
+      ...current,
+      selections: current.selections.filter((selected) => selected !== id),
+      quantities: { ...current.quantities, [id]: Object.fromEntries(metadata.deliveries.map(({ key }) => [key, 0])) },
+      items: Object.fromEntries(Object.entries(current.items).filter(([itemId]) => itemId !== id)),
+    }));
+    markOrderEdited();
+  };
 
-  const updateBreakfastQuantity = (id, delivery, value) => setBreakfast((current) => ({
-    ...current,
-    quantities: { ...current.quantities, [id]: { ...current.quantities[id], [delivery]: value === "" ? "" : Math.max(0, Math.floor(Number(value))) } },
-  }));
+  const updateBreakfastQuantity = (id, delivery, value) => {
+    setBreakfast((current) => ({
+      ...current,
+      quantities: { ...current.quantities, [id]: { ...current.quantities[id], [delivery]: value === "" ? "" : Math.max(0, Math.floor(Number(value))) } },
+    }));
+    markOrderEdited();
+  };
 
-  const saveOrder = async () => {
-    if (!cafe) return setError("Select your cafe before entering an order.");
-    if (locked) return setError("This order is locked. Please contact commissary executive chef to adjust pars.");
-    if (global.legacyReviewRequired) return setError("Choose one Global menu to replace the preserved legacy Global quantities before saving this order.");
-    if (grillAvailable && (!grill.selections.A || !grill.selections.B)) return setError("Choose one Grill LTO sandwich from Set A and one from Set B before saving.");
-    setSaving(true);
-    setError("");
-    setNotice("");
-    let record = buildOrderRecord({ cafe, weekStart, quantities, grill, deli, global, breakfast });
-    const reductions = currentRecord ? standingOrderReductions(currentRecord, record) : [];
-    if (reductions.length) {
-      const approved = window.confirm(`This will reduce or remove ${reductions.length} saved standing-order quantit${reductions.length === 1 ? "y" : "ies"} for ${cafe}, week ${weekLabel(weekStart)}.\n\nOK: apply the changes.\nCancel: keep every standing order unchanged.`);
-      if (!approved) {
-        setSaving(false);
-        return setNotice("Standing orders were kept unchanged. No update was saved.");
+  const enqueueAutosave = (job) => {
+    autosaveQueueRef.current = autosaveQueueRef.current.catch(() => {}).then(async () => {
+      if (latestRevisionByOrderRef.current.get(job.key) !== job.revision) return;
+      let record = job.record;
+      const reductions = job.baseline ? standingOrderReductions(job.baseline, record) : [];
+      if (reductions.length) {
+        const approved = window.confirm(`This will reduce or remove ${reductions.length} saved standing-order quantit${reductions.length === 1 ? "y" : "ies"} for ${job.cafe}, week ${weekLabel(job.weekStart)}.\n\nOK: apply the changes.\nCancel: keep every standing order unchanged.`);
+        if (!approved) {
+          if (mountedRef.current && activeEditorKeyRef.current === job.key) {
+            setHydrationRevision((revision) => revision + 1);
+            setAutosaveStatus({ state: "ready", message: "Standing order kept unchanged" });
+            setNotice("Standing orders were kept unchanged. The edited values were restored.");
+          }
+          return;
+        }
+        record = {
+          ...record,
+          standingOrderChangeApproval: {
+            baselineUpdatedAt: job.baseline.updatedAt,
+            reductionCount: reductions.length,
+            confirmedAt: new Date().toISOString(),
+          },
+        };
       }
-      record = buildOrderRecord({ cafe, weekStart, quantities, grill, deli, global, breakfast, standingOrderChangeApproval: { baselineUpdatedAt: currentRecord.updatedAt, reductionCount: reductions.length, confirmedAt: new Date().toISOString() } });
-    }
-    try {
-      await saveCommissaryOrder(record);
-      setOrders((current) => [...current.filter((row) => recordKey(row.cafe, row.weekStart) !== recordKey(cafe, weekStart)), record]);
-      setNotice(`${cafe}'s order for week ${weekLabel(weekStart)} was saved.`);
-    } catch (saveError) {
-      setError(saveError.message);
-    } finally {
-      setSaving(false);
-    }
+      const isActive = activeEditorKeyRef.current === job.key;
+      if (mountedRef.current && isActive) {
+        setSaving(true);
+        setError("");
+        setAutosaveStatus({ state: "saving", message: "Saving automatically…" });
+      }
+      try {
+        await saveCommissaryOrder(record);
+        if (latestRevisionByOrderRef.current.get(job.key) === job.revision && mountedRef.current) {
+          setOrders((current) => [...current.filter((row) => recordKey(row.cafe, row.weekStart) !== job.key), record]);
+          if (activeEditorKeyRef.current === job.key) setAutosaveStatus({ state: "saved", message: "Saved automatically" });
+        }
+      } catch (saveError) {
+        if (mountedRef.current && activeEditorKeyRef.current === job.key) {
+          setError(saveError.message);
+          setAutosaveStatus({ state: "error", message: "Autosave needs attention" });
+        }
+      } finally {
+        if (mountedRef.current && activeEditorKeyRef.current === job.key && latestRevisionByOrderRef.current.get(job.key) === job.revision) setSaving(false);
+      }
+    });
   };
+
+  useEffect(() => {
+    if (!editRevision || loading || !cafe || locked) return;
+    if (global.legacyReviewRequired) {
+      setAutosaveStatus({ state: "error", message: "Choose one Global menu to resume autosave" });
+      return;
+    }
+    const key = recordKey(cafe, weekStart);
+    const job = {
+      key,
+      cafe,
+      weekStart,
+      revision: editRevision,
+      baseline: currentRecord,
+      record: buildOrderRecord({ cafe, weekStart, quantities, grill, deli, global, breakfast }),
+    };
+    latestRevisionByOrderRef.current.set(key, editRevision);
+    const previous = pendingAutosaveRef.current;
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    if (previous && previous.key !== key) enqueueAutosave(previous);
+    pendingAutosaveRef.current = job;
+    autosaveTimerRef.current = setTimeout(() => {
+      if (pendingAutosaveRef.current === job) pendingAutosaveRef.current = null;
+      enqueueAutosave(job);
+    }, 500);
+  }, [editRevision]);
 
   const runExport = async (work) => {
     setError("");
@@ -473,11 +553,11 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
             <div>
               <div className="flex flex-wrap items-center gap-2"><p className="text-xs font-black uppercase tracking-[0.18em] text-sky-700">Commissary production</p><span className="rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-amber-900">Draft</span></div>
               <h1 className="mt-2 text-3xl font-black md:text-5xl">Commissary Ordering Tool</h1>
-              <p className="mt-2 max-w-3xl text-sm font-semibold text-slate-600">Choose your cafe, then enter each delivery quantity. Orders lock at 5:00 PM local Pacific time on the Wednesday before service.</p>
+              <p className="mt-2 max-w-3xl text-sm font-semibold text-slate-600">Choose your cafe, then enter each delivery quantity. Every edit saves automatically. Orders lock at 5:00 PM local Pacific time on the Wednesday before service.</p>
             </div>
             <div className={`grid w-full grid-cols-1 gap-3 xl:w-auto ${activeView === "orders" ? "sm:grid-cols-2 xl:min-w-[30rem]" : "xl:min-w-[15rem]"}`}>
-              {activeView === "orders" && <label className="min-w-0 text-xs font-black uppercase tracking-[0.12em] text-slate-600">Your cafe<select aria-label="Your cafe" value={cafe} onChange={(event) => { setCafe(event.target.value); setNotice(""); setError(""); }} className="mt-1 block w-full min-w-0 max-w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-black text-slate-950"><option value="">Select cafe</option>{metadata.receivingCafes.map((row) => <option key={row.name} value={row.name}>{row.displayName} {row.profitCenter}</option>)}</select></label>}
-              <label className="min-w-0 text-xs font-black uppercase tracking-[0.12em] text-slate-600">Service week<select aria-label="Service week" value={weekStart} onChange={(event) => { setWeekStart(event.target.value); setNotice(""); setError(""); }} className="mt-1 block w-full min-w-0 max-w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-black text-slate-950">{weeks.map((week) => <option key={week} value={week}>Week {weekLabel(week)}{isWeekLocked(week) ? " · locked" : ""}</option>)}</select></label>
+              {activeView === "orders" && <label className="min-w-0 text-xs font-black uppercase tracking-[0.12em] text-slate-600">Your cafe<select aria-label="Your cafe" value={cafe} onChange={(event) => { setCafe(event.target.value); setNotice(""); setError(""); setAutosaveStatus({ state: "ready", message: "Autosave ready" }); }} className="mt-1 block w-full min-w-0 max-w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-black text-slate-950"><option value="">Select cafe</option>{metadata.receivingCafes.map((row) => <option key={row.name} value={row.name}>{row.displayName} {row.profitCenter}</option>)}</select></label>}
+              <label className="min-w-0 text-xs font-black uppercase tracking-[0.12em] text-slate-600">Service week<select aria-label="Service week" value={weekStart} onChange={(event) => { setWeekStart(event.target.value); setNotice(""); setError(""); setAutosaveStatus({ state: "ready", message: "Autosave ready" }); }} className="mt-1 block w-full min-w-0 max-w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-black text-slate-950">{weeks.map((week) => <option key={week} value={week}>Week {weekLabel(week)}{isWeekLocked(week) ? " · locked" : ""}</option>)}</select></label>
             </div>
           </div>
         </section>
@@ -502,12 +582,12 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
           <section className="rounded-2xl border-2 border-dashed border-sky-200 bg-white p-10 text-center"><Truck className="mx-auto text-sky-600" size={34} /><h2 className="mt-3 text-2xl font-black">Select your cafe to begin</h2><p className="mt-1 text-sm font-semibold text-slate-600">The cafe-first step prevents an order from being entered on another unit’s line.</p></section>
         ) : (
           <section className={`min-w-0 max-w-full overflow-hidden rounded-2xl border border-sky-200 bg-white shadow-sm ${locked ? "opacity-75" : ""}`}>
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-sky-200 px-4 py-3"><div><p className="text-xs font-black uppercase tracking-[0.14em] text-sky-700">{cafe} Cafe</p><h2 className="text-xl font-black">Week {weekLabel(weekStart)} order</h2></div><div className="text-right"><p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Estimated transfer</p><p className="text-2xl font-black">{money(currentValue)}</p></div></div>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-sky-200 px-4 py-3"><div><p className="text-xs font-black uppercase tracking-[0.14em] text-sky-700">{cafe} Cafe</p><h2 className="text-xl font-black">Week {weekLabel(weekStart)} order</h2><p role="status" className={`mt-1 inline-flex items-center gap-1.5 text-xs font-black ${autosaveStatus.state === "error" ? "text-rose-700" : autosaveStatus.state === "saved" ? "text-emerald-700" : "text-slate-500"}`}>{autosaveStatus.state === "saving" ? <LoaderCircle className="animate-spin" size={14} /> : autosaveStatus.state === "saved" ? <CheckCircle2 size={14} /> : <Cloud size={14} />}{autosaveStatus.message}</p></div><div className="text-right"><p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Estimated transfer</p><p className="text-2xl font-black">{money(currentValue)}</p></div></div>
             {!loading && globalAvailable && <div className="border-b-4 border-violet-500 bg-violet-50/40 p-3 md:p-4" data-testid="commissary-global-order"><div className="mb-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,32rem)] lg:items-end"><div><p className="text-[11px] font-black uppercase tracking-[0.16em] text-violet-800">Global · Cycle Week {globalCycle.week}</p><h3 className="text-xl font-black">Build the weekly Global order</h3><p className="mt-1 text-xs font-semibold text-slate-600">Choose one menu, then up to three entrees, four sides and two optional sauces. Reviewed recipe preparations flow to the Prep List and transfers automatically.</p></div><label className="text-xs font-black uppercase tracking-[0.12em] text-violet-800">Global menu<select aria-label="Global menu" value={global.menu || ""} disabled={locked} onChange={(event) => selectGlobalMenu(event.target.value)} className="mt-1 block w-full rounded-xl border-2 border-violet-200 bg-white px-3 py-3 text-sm font-black normal-case tracking-normal text-slate-950 disabled:bg-slate-100"><option value="">Select menu</option>{globalCycle.menus.map((menu) => <option key={menu.menu} value={menu.menu}>{menu.label}</option>)}</select></label></div>{global.legacyReviewRequired && <p role="alert" className="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm font-black text-amber-950">This legacy order exceeds the new one-menu slot rules. Its quantities remain intact in value, prep, transfers and packout output. {locked ? "This locked order remains read-only." : "Choose one menu to replace its Global quantities before saving."}</p>}{GLOBAL_UNIT_PREPARATION_NOTES[global.menu] && <p className="mb-4 rounded-xl border border-violet-200 bg-white px-3 py-2 text-xs font-bold text-violet-950">{GLOBAL_UNIT_PREPARATION_NOTES[global.menu]}</p>}{global.menu ? (() => { const selectedMenu = globalCycle.menus.find((menu) => menu.menu === global.menu); const entreeOptions = selectedMenu?.items.filter(({ category }) => category === "entree") || []; const sideOptions = selectedMenu?.items.filter(({ category }) => category === "side") || []; const sauceOptions = selectedMenu?.items.filter(({ category }) => category === "subRecipe") || []; return <div className="grid gap-4 xl:grid-cols-2"><GlobalSelectionGroup title="Entrees" slots={global.selections.entrees} options={entreeOptions} items={global.items} quantities={global.quantities} deliveries={datedDeliveries} disabled={locked} onSelect={(index, id) => selectGlobalItem("entrees", index, id)} onQuantity={updateGlobalQuantity} /><GlobalSelectionGroup title="Sides" slots={global.selections.sides} options={sideOptions} items={global.items} quantities={global.quantities} deliveries={datedDeliveries} disabled={locked} onSelect={(index, id) => selectGlobalItem("sides", index, id)} onQuantity={updateGlobalQuantity} />{sauceOptions.length > 0 && <GlobalSelectionGroup title="Optional sauces" slots={global.selections.sauces} options={sauceOptions} items={global.items} quantities={global.quantities} deliveries={datedDeliveries} disabled={locked} onSelect={(index, id) => selectGlobalItem("sauces", index, id)} onQuantity={updateGlobalQuantity} />}</div>; })() : <p className="rounded-xl border border-dashed border-violet-300 bg-white p-5 text-center text-sm font-bold text-slate-500">Select the Global menu to reveal its entree, side and optional sauce slots.</p>}</div>}
             {!loading && breakfastAvailable && <div className="border-b-4 border-orange-500 bg-orange-50/40 p-3 md:p-4" data-testid="commissary-breakfast-order"><div className="mb-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,32rem)] lg:items-end"><div><p className="text-[11px] font-black uppercase tracking-[0.16em] text-orange-800">Breakfast · AMZ: Breakfast</p><h3 className="text-xl font-black">Order breakfast sandwiches, croissants, bagels and burritos</h3><p className="mt-1 text-xs font-semibold text-slate-600">Add only the items you need, enter whole finished-item quantities, and the Prep List will roll them into exact recipe components.</p></div><label className="text-xs font-black uppercase tracking-[0.12em] text-orange-800">Add breakfast item<select aria-label="Add breakfast item" value={breakfastAddId} disabled={locked} onChange={(event) => { setBreakfastAddId(event.target.value); addBreakfastItem(event.target.value); }} className="mt-1 block w-full rounded-xl border-2 border-orange-200 bg-white px-3 py-3 text-sm font-black normal-case tracking-normal text-slate-950 disabled:bg-slate-100"><option value="">Select an item</option>{BREAKFAST_ORDERING_PROGRAM.items.filter(({ id }) => !breakfast.selections.includes(id)).map((option) => <option key={option.id} value={option.id}>{option.name} · MRN {option.mrn}</option>)}</select></label></div>{breakfast.selections.length ? <div className="grid gap-3 xl:grid-cols-2">{breakfast.selections.map((id) => { const option = BREAKFAST_ORDERING_PROGRAM.items.find((row) => row.id === id); return option ? <BreakfastItemOrder key={id} option={option} item={breakfast.items[id]} quantities={breakfast.quantities[id]} deliveries={datedDeliveries} disabled={locked} onQuantity={updateBreakfastQuantity} onRemove={() => removeBreakfastItem(id)} /> : null; })}</div> : <p className="rounded-xl border border-dashed border-orange-300 bg-white p-4 text-center text-sm font-bold text-slate-500">Add a sandwich, croissant, bagel or burrito to begin. Plates, sides and cereals are excluded.</p>}</div>}
             {loading ? <p className="p-8 text-center font-bold text-slate-600">Loading shared order…</p> : <><div className={`${saladBarAvailable ? "" : "hidden"} border-b border-slate-200 px-4 py-3`}><p className="text-xs font-black uppercase tracking-[0.14em] text-sky-700">Salad bar</p><p className="text-sm font-semibold text-slate-600">Grouped as leafy greens, vegetables, proteins, cheeses, crunchy toppers and dressings. Whole-package items must be ordered as complete bags or containers.</p></div><div className={`${saladBarAvailable ? "" : "hidden"} w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain`}><table className="min-w-max border-collapse text-sm"><thead><tr><th className="sticky left-0 z-20 w-52 border-b border-r border-slate-200 bg-slate-950 px-4 py-3 text-left text-white">Delivery</th>{saladBarItems.map((row) => <th key={row.id} className="w-44 max-w-44 border-b border-r border-slate-700 bg-slate-950 px-3 py-3 align-top text-left text-white"><span className="block text-[10px] font-black uppercase tracking-[0.1em] text-sky-300">{row.category}</span><span className="mt-1 block leading-5">{row.name}</span><span className="mt-1 block text-[11px] font-semibold text-slate-300">MRN {row.mrn} · {row.orderUnit}</span><span className="block text-[11px] font-semibold text-emerald-300">{money(row.orderUnitCost)} / {row.orderUnit}</span>{row.retired && <span className="mt-1 block text-[10px] font-black uppercase tracking-wide text-amber-300">Saved standing unit</span>}</th>)}</tr></thead><tbody>{datedDeliveries.map((delivery) => <tr key={delivery.key}><th className="sticky left-0 z-10 border-b border-r border-slate-200 bg-sky-50 px-4 py-4 text-left"><span className="block font-black">{delivery.title}</span><span className="block text-xs font-semibold text-slate-500">{delivery.detail}</span></th>{saladBarItems.map((row) => <td key={row.id} className="border-b border-r border-slate-200 p-2"><input aria-label={`${delivery.title} ${row.name} quantity`} type="number" min="0" step={row.quantityIncrement || 0.25} disabled={locked} value={quantities[row.id]?.[delivery.key] ?? 0} onChange={(event) => updateQuantity(row.id, delivery.key, event.target.value)} className="w-full rounded-lg border border-slate-300 px-2 py-2 text-center font-black disabled:cursor-not-allowed disabled:bg-slate-200" /></td>)}</tr>)}</tbody></table></div><GrillOrderingSection grillAvailable={grillAvailable} grillCoreAvailable={grillCoreAvailable} grillCycle={grillCycle} grill={grill} catalogByMrn={grillCatalogByMrn} deliveries={datedDeliveries} disabled={locked} density={metadata.grillInterface?.density} onSelectLto={selectGrillItem} onLtoQuantity={updateGrillQuantity} onCoreQuantity={updateGrillCoreQuantity} />{deliAvailable && <div className="border-t-4 border-sky-500 bg-sky-50/40 p-3 md:p-4" data-testid="commissary-deli-order"><div className="mb-3 grid gap-1 lg:grid-cols-[auto_minmax(0,1fr)] lg:items-end lg:gap-x-4"><div><p className="text-[11px] font-black uppercase tracking-[0.16em] text-sky-800">Deli Core · Cycle Week {deliCycle.week}</p><h3 className="text-xl font-black">Order weekly Deli sandwiches</h3></div><p className="text-xs font-semibold text-slate-600 lg:pb-0.5">Enter whole finished-sandwich quantities for each delivery. The Prep List converts them into direct recipe ingredients and immediate sub-recipes.</p></div><div className="grid gap-3 xl:grid-cols-2">{deliCycle.items.map((option) => <DeliItemOrder key={option.mrn} option={option} item={deli.items[option.mrn] || deliCatalogByMrn.get(option.mrn)} quantities={deli.quantities[option.mrn]} deliveries={datedDeliveries} disabled={locked} onQuantity={updateDeliQuantity} />)}</div></div>}</>}
             {!loading && deliAvailable && Boolean(deli.standingOrderMrns?.length) && <div className="border-t border-amber-300 bg-amber-50/60 p-3 md:p-4" data-testid="commissary-deli-standing-orders"><p className="mb-3 text-xs font-black text-amber-950">Saved standing orders are preserved. Change a quantity only if you intend to revise this week.</p><div className="grid gap-3 xl:grid-cols-2">{deli.standingOrderMrns.map((mrn) => <DeliItemOrder key={mrn} option={{ mrn, name: deli.items[mrn]?.item || `MRN ${mrn}`, standing: true }} item={deli.items[mrn]} quantities={deli.quantities[mrn]} deliveries={datedDeliveries} disabled={locked} onQuantity={updateDeliQuantity} />)}</div></div>}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 p-4"><p className="text-xs font-semibold text-slate-600">Most gallon items may be ordered in 0.25-gallon increments. Dressings, vinaigrettes, leafy-green bags and cheese containers are whole units only. Saved standing orders retain their original units and are never changed without confirmation.</p><div className={`grid w-full gap-2 sm:grid-cols-2 xl:w-auto ${hubSiteSelected ? "xl:grid-cols-4" : "xl:grid-cols-2"}`}><button type="button" onClick={saveOrder} disabled={locked || saving || loading} className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-slate-400"><Save size={17} />{saving ? "Saving…" : "Save order"}</button><button type="button" onClick={generateCurrentTransfer} disabled={loading || !currentHasOrder} className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-slate-400"><Download size={17} /> Generate transfers</button>{hubSiteSelected && <><button type="button" onClick={generateCurrentBom} disabled={loading || !currentHasOrder} className="inline-flex items-center justify-center gap-2 rounded-lg border border-sky-300 bg-sky-50 px-4 py-3 text-sm font-black text-sky-950 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-200 disabled:text-slate-500"><FileSpreadsheet size={17} /> Prep List</button><button type="button" onClick={generatePackoutPacket} disabled={loading || !weekRecords.length} className="inline-flex items-center justify-center gap-2 rounded-lg border border-violet-300 bg-violet-50 px-4 py-3 text-sm font-black text-violet-950 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-200 disabled:text-slate-500"><FileDown size={17} /> Packout Packet</button></>}</div></div>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 p-4"><div><p className="text-xs font-semibold text-slate-600">Most gallon items may be ordered in 0.25-gallon increments. Dressings, vinaigrettes, leafy-green bags and cheese containers are whole units only. Saved standing orders retain their original units and are never changed without confirmation.</p><p className="mt-1 inline-flex items-center gap-1.5 text-xs font-black text-emerald-700"><Cloud size={14} /> No Save button needed — every selection and quantity autosaves.</p></div><div className={`grid w-full gap-2 sm:grid-cols-2 xl:w-auto ${hubSiteSelected ? "xl:grid-cols-3" : "xl:grid-cols-1"}`}><button type="button" onClick={generateCurrentTransfer} disabled={loading || !currentHasOrder} className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-slate-400"><Download size={17} /> Generate transfers</button>{hubSiteSelected && <><button type="button" onClick={generateCurrentBom} disabled={loading || !currentHasOrder} className="inline-flex items-center justify-center gap-2 rounded-lg border border-sky-300 bg-sky-50 px-4 py-3 text-sm font-black text-sky-950 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-200 disabled:text-slate-500"><FileSpreadsheet size={17} /> Prep List</button><button type="button" onClick={generatePackoutPacket} disabled={loading || !weekRecords.length} className="inline-flex items-center justify-center gap-2 rounded-lg border border-violet-300 bg-violet-50 px-4 py-3 text-sm font-black text-violet-950 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-200 disabled:text-slate-500"><FileDown size={17} /> Packout Packet</button></>}</div></div>
           </section>
         )}
 

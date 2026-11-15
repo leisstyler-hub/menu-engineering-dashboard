@@ -171,11 +171,16 @@ export function commissaryWriteValidation(records = [], context = {}) {
     if (Number(record.grill?.version) !== COMMISSARY_GRILL_ORDER_VERSION || Number(record.grill?.cycleWeek) !== grillCycle.week) return "The Grill LTO cycle is invalid.";
     for (const [setKey, options] of [["A", grillCycle.setA], ["B", grillCycle.setB]]) {
       const selected = String(record.grill?.selections?.[setKey] || "");
+      const delivery = record.grill?.quantities?.[setKey];
+      if (!delivery || DELIVERY_KEYS.some((key) => !Number.isInteger(Number(delivery[key] ?? 0)) || Number(delivery[key] ?? 0) < 0)) return "Grill LTO quantities must be zero or positive whole sandwiches.";
+      const count = DELIVERY_KEYS.reduce((sum, key) => sum + Number(delivery[key] || 0), 0);
+      if (!selected) {
+        if (count > 0) return `Choose one Grill LTO sandwich from Set ${setKey}.`;
+        continue;
+      }
       if (!options.some(({ mrn }) => mrn === selected)) return `Choose one Grill LTO sandwich from Set ${setKey}.`;
       const item = record.grill?.items?.[setKey];
       if (!item || String(item.mrn) !== selected || !item.item || !(Number(item.itemWasteCost) > 0)) return `The Grill LTO Set ${setKey} cost snapshot is invalid.`;
-      const delivery = record.grill?.quantities?.[setKey];
-      if (!delivery || DELIVERY_KEYS.some((key) => !Number.isInteger(Number(delivery[key] ?? 0)) || Number(delivery[key] ?? 0) < 0)) return "Grill LTO quantities must be zero or positive whole sandwiches.";
     }
   } else if (Object.values(record.grill?.quantities || {}).some((delivery) => DELIVERY_KEYS.some((key) => Number(delivery?.[key] || 0) > 0))) {
     return "Grill LTO ordering is not enabled for this cafe and week.";
@@ -220,11 +225,12 @@ export function commissaryWriteValidation(records = [], context = {}) {
     const menu = String(record.global?.menu || "");
     if (menu && !menuNames.has(menu)) return "The selected Global menu is invalid.";
     const selections = record.global?.selections;
-    if (!selections || !Array.isArray(selections.entrees) || selections.entrees.length !== 3 || !Array.isArray(selections.sides) || selections.sides.length !== 4) return "The Global entree and side slots are invalid.";
-    const selectedIds = [...selections.entrees, ...selections.sides].filter(Boolean);
+    if (!selections || !Array.isArray(selections.entrees) || selections.entrees.length !== 3 || !Array.isArray(selections.sides) || selections.sides.length !== 4 || !Array.isArray(selections.sauces) || selections.sauces.length !== 2) return "The Global entree, side, and sauce slots are invalid.";
+    const selectedIds = [...selections.entrees, ...selections.sides, ...selections.sauces].filter(Boolean);
     if (new Set(selectedIds).size !== selectedIds.length) return "Global selections must be distinct.";
     if (selections.entrees.some((id) => id && (allowed.get(id)?.menu !== menu || allowed.get(id)?.category !== "entree"))) return "A Global entree is outside the selected menu.";
     if (selections.sides.some((id) => id && (allowed.get(id)?.menu !== menu || allowed.get(id)?.category !== "side"))) return "A Global side is outside the selected menu.";
+    if (selections.sauces.some((id) => id && (allowed.get(id)?.menu !== menu || allowed.get(id)?.category !== "subRecipe"))) return "A Global sauce is outside the selected menu.";
     if (!menu && selectedIds.length) return "Choose a Global menu before selecting items.";
     const selected = new Set(selectedIds);
     if (Object.keys(record.global?.quantities || {}).some((id) => !allowed.has(id))) return "The Global order contains an item outside the current cycle.";

@@ -842,7 +842,7 @@ function prepBoardOrderLinesForRecord(record, hub) {
 }
 
 export function buildTabbedPrepBoard(records = [], options = {}) {
-  const production = rolledUpPrepItems(records, { hub: options.hub, consolidateAcrossStations: true }).map((row) => {
+  const production = rolledUpPrepItems(records, { hub: options.hub, consolidateAcrossStations: true }).map(prepDisplayQuantity).map((row) => {
     const productionKey = `${prepBoardIdentity(row)}|${String(row.orderUnit || "").toLowerCase()}`;
     return {
       ...row,
@@ -1018,6 +1018,12 @@ function prepProductionTypeOrder(type) {
 export function prepDisplayQuantity(row = {}) {
   if (row.productionVolumeRounded) return row;
   const unit = String(row.orderUnit || "").trim().toLowerCase();
+  const nativeQuantities = {
+    orderUnit: row.orderUnit,
+    total: Number(row.total || 0),
+    ...Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, Number(row[delivery] || 0)])),
+    cafes: Object.fromEntries(Object.entries(row.cafes || {}).map(([cafe, values]) => [cafe, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, Number(values?.[delivery] || 0)]))])),
+  };
   const cupsPerUnit = prepVolumeCupsPerUnit(row);
   if (cupsPerUnit) {
     const cafeEntries = Object.entries(row.cafes || {});
@@ -1039,6 +1045,7 @@ export function prepDisplayQuantity(row = {}) {
       total: Number(DELIVERY_KEYS.reduce((sum, delivery) => sum + deliveryGallons[delivery], 0).toFixed(4)),
       orderUnit: "gallon",
       nativeOrderUnit: row.orderUnit,
+      nativeQuantities,
       productionVolumeRounded: true,
     };
   }
@@ -1050,6 +1057,8 @@ export function prepDisplayQuantity(row = {}) {
       ...Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, convert(row[delivery])])),
       total: convert(row.total),
       orderUnit: "pound",
+      nativeOrderUnit: row.orderUnit,
+      nativeQuantities,
     };
   }
   if (row.station === "Deli" && ["ounce", "ounces", "oz"].includes(unit) && DELI_PROTEIN_NAME.test(String(row.name || ""))) {
@@ -1061,6 +1070,7 @@ export function prepDisplayQuantity(row = {}) {
       total: convert(row.total),
       orderUnit: "pound",
       nativeOrderUnit: row.orderUnit,
+      nativeQuantities,
     };
   }
   return row;

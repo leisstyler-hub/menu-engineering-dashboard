@@ -23,7 +23,7 @@ import { COMMISSARY_CAFE_STATION_ACCESS, COMMISSARY_HUB_ROUTING, COMMISSARY_HUBS
 import { GLOBAL_UNIT_PREPARATION_NOTES } from "../features/commissary-ordering/commissaryModel.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 25;
+export const OPERATIONAL_METADATA_VERSION = 26;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -178,6 +178,9 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
         phases: Object.freeze(["Production", "Assembly", "Pack Out"]),
         completionStorage: "commissary-prep-progress",
         currentWeekIsolation: true,
+        productionDisplay: "prep-list-rounded-volume-and-weight-conversions",
+        nativeQuantitiesPreserved: true,
+        roundedCostingPreserved: true,
       }),
     }),
     packoutPacket: Object.freeze({
@@ -190,6 +193,14 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       emailDelivery: false,
     }),
     cutoff: Object.freeze({ dayOffsetFromMonday: -5, hour: 17, timeZone: "America/Los_Angeles" }),
+    orderPersistence: Object.freeze({
+      mode: "autosave",
+      debounceMs: 500,
+      trigger: "every-selection-and-quantity-edit",
+      partialDrafts: true,
+      standingOrderReductionConfirmation: true,
+      manualSaveRequired: false,
+    }),
     transferToolContract: Object.freeze({
       glAccountSource: "transferTool.glAccounts",
       profitCenterSource: "transferTool.units",

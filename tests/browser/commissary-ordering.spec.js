@@ -119,7 +119,7 @@ test("ordering grid is the only horizontal slider and stops at the final item", 
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
-test("Commissary Ordering Tool requires cafe selection and saves separate delivery quantities", async ({ page }) => {
+test("Commissary Ordering Tool autosaves separate delivery quantities without a Save button", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   const writes = await mockOrders(page, [buildCommissaryMetadataRecord()]);
   await openTool(page, /open commissary ordering/i, /^Commissary Ordering Tool$/);
@@ -163,7 +163,8 @@ test("Commissary Ordering Tool requires cafe selection and saves separate delive
   await page.getByLabel(/^Wednesday \d+\/\d+ Sliced Cucumber quantity$/).fill("1");
   await page.getByLabel(/^Monday \d+\/\d+ Green Peas quantity$/).fill("1.25");
   const cucumber = COMMISSARY_ORDER_ITEMS.find((row) => row.name === "Sliced Cucumber");
-  const saveButton = page.getByRole("button", { name: /^save order$/i });
+  await expect(page.getByRole("button", { name: /^save order$/i })).toHaveCount(0);
+  await expect(page.getByText("Saved automatically", { exact: true })).toBeVisible();
   const generateButton = page.getByRole("button", { name: /generate transfer/i });
   await expect(generateButton).toBeEnabled();
   const transferDownload = page.waitForEvent("download");
@@ -191,8 +192,6 @@ test("Commissary Ordering Tool requires cafe selection and saves separate delive
   expect(mondayRows).toContainEqual(expect.arrayContaining(["Cricket", "Salad Bar", "Sliced Cucumber", cucumber.mrn, 2]));
   expect(mondayRows).toContainEqual(expect.arrayContaining(["Cricket", "Salad Bar", "Green Peas", "62341", 1.5]));
   expect(wednesdayRows).toContainEqual(expect.arrayContaining(["Cricket", "Salad Bar", "Sliced Cucumber", cucumber.mrn, 1]));
-  await saveButton.click();
-  await expect(page.getByText(/Cricket's order.*was saved/i)).toBeVisible();
   expect(writes).toHaveLength(1);
   expect(writes[0].context.tool).toBe("commissaryOrders");
   expect(writes[0].records[0].orderUnitVersion).toBe(2);
@@ -207,6 +206,24 @@ test("Commissary Ordering Tool requires cafe selection and saves separate delive
   expect(writes[1].records[0]["Record Type"]).toBe("Commissary Packout Packet");
   expect(writes[1].records[0].packet.pages.length).toBeGreaterThan(0);
   expect(writes[1].records[0].packet.pages.every(({ cafe }) => cafe === "Cricket")).toBe(true);
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("an edited order keeps autosaving after the operator navigates to the draft prep board", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const writes = await mockOrders(page, [buildCommissaryMetadataRecord()]);
+  await openTool(page, /open commissary ordering/i, /^Commissary Ordering Tool$/);
+  await page.getByLabel("Your cafe").selectOption("Cricket");
+  await page.getByLabel("Service week").selectOption(COMMISSARY_PREP_BOARD_PILOT_WEEK);
+  await page.getByLabel(/^Friday \d+\/\d+ Sliced Cucumber quantity$/).fill("3");
+  await page.getByRole("button", { name: "Draft Prep Board" }).click();
+  await expect.poll(() => writes.filter((write) => write.records?.[0]?.["Record Type"] === "Commissary Order").length).toBe(1);
+  const orderWrite = writes.find((write) => write.records?.[0]?.["Record Type"] === "Commissary Order");
+  const cucumber = COMMISSARY_ORDER_ITEMS.find((row) => row.name === "Sliced Cucumber");
+  expect(orderWrite.records[0].weekStart).toBe(COMMISSARY_PREP_BOARD_PILOT_WEEK);
+  expect(orderWrite.records[0].quantities[cucumber.id].friday).toBe(3);
+  await expect(page.getByTestId("tabbed-prep-board").getByText("Sliced Cucumber", { exact: true })).toBeVisible();
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
@@ -275,8 +292,8 @@ test("Grill LTO starts Cycle Week 1 on November 16 with Set A and Set B whole-sa
   await expect(deli).toContainText("Mediterranean Turkey Wrap");
   await expect(deli).not.toContainText("Shrimp Avocado Corn Wrap");
   await page.getByLabel("Mediterranean Turkey Wrap Monday 11/16 sandwich quantity").fill("12");
-  await page.getByRole("button", { name: /^save order$/i }).click();
-  await expect(page.getByText(/Cricket's order.*was saved/i)).toBeVisible();
+  await page.clock.runFor(600);
+  await expect(page.getByText("Saved automatically", { exact: true })).toBeVisible();
   expect(writes).toHaveLength(1);
   expect(writes[0].records[0].grill.cycleWeek).toBe(1);
   expect(writes[0].records[0].grill.selections).toEqual({ A: "77139.72", B: "77139.68" });
@@ -422,8 +439,8 @@ test("Zoka Coffee orders the Supabase-backed croissant through Cricket Breakfast
   await expect(breakfast).toContainText(option.name);
   await expect(breakfast).toContainText("Item + Waste");
   await page.getByLabel(`${option.name} Monday 11/16 breakfast quantity`).fill("12");
-  await page.getByRole("button", { name: /^save order$/i }).click();
-  await expect(page.getByText(/Zoka Coffee's order.*was saved/i)).toBeVisible();
+  await page.clock.runFor(600);
+  await expect(page.getByText("Saved automatically", { exact: true })).toBeVisible();
   expect(writes).toHaveLength(1);
   expect(writes[0].records[0].cafe).toBe("Zoka Coffee");
   expect(writes[0].records[0].breakfast.selections).toEqual([option.id]);
@@ -566,8 +583,11 @@ test("January 4 draft opens the tabbed Production, Assembly, and Pack Out board 
   const dawsonDeli = emptyDeliOrder(COMMISSARY_PREP_BOARD_PILOT_WEEK);
   dawsonDeli.items[deliOption.mrn] = { mrn: deliOption.mrn, item: deliOption.name, portion: "1 sandwich", itemWasteCost: 3.25 };
   dawsonDeli.quantities[deliOption.mrn] = { friday: 2, monday: 2, wednesday: 2 };
+  const nessieSalad = emptyQuantities(COMMISSARY_PREP_BOARD_PILOT_WEEK);
+  const cucumber = COMMISSARY_ORDER_ITEMS.find((row) => row.name === "Sliced Cucumber");
+  nessieSalad[cucumber.id] = { friday: 0.25, monday: 0.25, wednesday: 0.25 };
   const records = [
-    buildOrderRecord({ cafe: "Nessie", weekStart: COMMISSARY_PREP_BOARD_PILOT_WEEK, quantities: emptyQuantities(COMMISSARY_PREP_BOARD_PILOT_WEEK), deli: nessieDeli, now: new Date("2026-11-15T20:00:00Z") }),
+    buildOrderRecord({ cafe: "Nessie", weekStart: COMMISSARY_PREP_BOARD_PILOT_WEEK, quantities: nessieSalad, deli: nessieDeli, now: new Date("2026-11-15T20:00:00Z") }),
     buildOrderRecord({ cafe: "Dawson", weekStart: COMMISSARY_PREP_BOARD_PILOT_WEEK, quantities: emptyQuantities(COMMISSARY_PREP_BOARD_PILOT_WEEK), deli: dawsonDeli, now: new Date("2026-11-15T20:00:00Z") }),
   ];
   const writes = await mockOrders(page, records);
@@ -584,6 +604,9 @@ test("January 4 draft opens the tabbed Production, Assembly, and Pack Out board 
   const phaseNav = board.getByRole("navigation", { name: "Prep board phases" });
   await expect(phaseNav.getByRole("button", { name: /Production/ })).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByText("Draft tabbed board ready", { exact: true })).toBeVisible();
+  const roundedCucumber = board.getByText("Sliced Cucumber", { exact: true }).locator("xpath=ancestor::article");
+  await expect(roundedCucumber).toContainText("0.5 gallon");
+  await expect(roundedCucumber).toContainText("Rounded prep volume");
   const productionRow = board.locator('[data-testid^="prep-board-row-prep-board|production|"]').first();
   await expect(productionRow).toBeVisible();
   await productionRow.getByRole("button").click();
@@ -593,7 +616,7 @@ test("January 4 draft opens the tabbed Production, Assembly, and Pack Out board 
 
   await phaseNav.getByRole("button", { name: /Assembly/ }).click();
   await expect(board.getByText(deliOption.name, { exact: true })).toBeVisible();
-  await expect(board.getByText(/inputs ready|waiting on production|ready/i)).toBeVisible();
+  await expect(board.getByText(/inputs ready|waiting on production|ready/i).first()).toBeVisible();
   await phaseNav.getByRole("button", { name: /Pack Out/ }).click();
   await expect(board.getByText("Nessie · Deli", { exact: true }).first()).toBeVisible();
   await expect(board.getByText("Dawson · Deli", { exact: true }).first()).toBeVisible();
@@ -614,13 +637,13 @@ test("one-week reopening closes an already open tab at Thursday 5 PM and preserv
   await page.getByLabel("Your cafe").selectOption("Nessie");
   await page.getByLabel("Service week").selectOption("2026-11-02");
   await expect(page.getByText("Cutoff: Thursday 10/29 at 5:00 PM Pacific.", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Save order", exact: true })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Save order", exact: true })).toHaveCount(0);
+  await expect(page.getByLabel(/^Friday \d+\/\d+ Sliced Cucumber quantity$/)).toBeEnabled();
   await page.clock.fastForward(3000);
   await expect(page.getByText("Ordering closed", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Save order", exact: true })).toBeDisabled();
   await expect(page.getByLabel(/^Friday \d+\/\d+ Sliced Cucumber quantity$/)).toBeDisabled();
   await page.getByLabel("Service week").selectOption("2026-11-09");
   await expect(page.getByText("Cutoff: Wednesday 11/4 at 5:00 PM Pacific.", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Save order", exact: true })).toBeEnabled();
+  await expect(page.getByLabel(/^Friday \d+\/\d+ Sliced Cucumber quantity$/)).toBeEnabled();
   expect(writes).toHaveLength(0);
 });

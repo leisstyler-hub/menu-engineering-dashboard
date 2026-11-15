@@ -5,7 +5,7 @@ import { COMMISSARY_STATION_ORDER, PRODUCTION_SECTION_ORDER, buildTabbedPrepBoar
 import { PrepCheck } from "./PrepListView.jsx";
 
 const PHASES = Object.freeze([
-  { key: "production", label: "Production", icon: Factory, description: "Consolidated prep shared across every station." },
+  { key: "production", label: "Production", icon: Factory, description: "Consolidated prep in rounded production volumes." },
   { key: "assembly", label: "Assembly", icon: Boxes, description: "Build finished components from completed production work." },
   { key: "packout", label: "Pack Out", icon: PackageCheck, description: "Pack clean cafe and station allocations for delivery." },
 ]);
@@ -43,6 +43,7 @@ function BoardRow({ row, delivery, checked, disabled, onToggle, productionById, 
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-xs font-black uppercase tracking-[0.12em] text-sky-700">{row.cafe ? `${row.cafe} · ${row.station}` : row.station}</p>
           {row.phase === "assembly" && <span className={`rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.1em] ${badge.style}`}>{badge.label}</span>}
+          {row.phase === "production" && row.productionVolumeRounded && <span className="rounded-full bg-violet-100 px-2 py-1 text-[10px] font-black uppercase tracking-[0.1em] text-violet-900">Rounded prep volume</span>}
         </div>
         <p className={`mt-1 break-words text-lg font-black leading-tight sm:text-xl ${checked ? "text-emerald-900 line-through decoration-2" : "text-slate-950"}`}>{row.name}</p>
         {uses.length > 0 && <p className="mt-1 text-xs font-bold text-slate-500">Used by: {uses.join(" · ")}</p>}

@@ -197,6 +197,12 @@ quantities[COMMISSARY_ORDER_ITEMS.find((row) => row.name === "Balsamic Vinegar")
 quantities[greenPeas.id] = { friday: 0.25, monday: 1.25, wednesday: 0.75 };
 const record = buildOrderRecord({ cafe: "Nessie", weekStart: "2026-11-16", quantities, now: new Date("2026-11-10T12:00:00Z") });
 assert.equal(record.orderUnitVersion, COMMISSARY_ORDER_UNIT_VERSION);
+assert.equal(validateBeforeCutoff([record]), "", "Autosave must accept a partial draft before Grill selections are made.");
+const saladBoard = buildTabbedPrepBoard([record], { hub: "Cricket" });
+const boardGreenPeas = saladBoard.production.find(({ mrn }) => mrn === greenPeas.mrn);
+assert.equal(boardGreenPeas.friday, 0.5, "The draft board must display the same rounded half-gallon production quantity as the Prep List.");
+assert.equal(boardGreenPeas.orderUnit, "gallon");
+assert.equal(boardGreenPeas.nativeQuantities.friday, 0.25, "The draft board must retain the native quantity behind its display conversion.");
 const transfer = buildCommissaryTransfer(record);
 const s4Rows = buildS4Rows(transfer);
 assert.equal(s4Rows.length, 3, "All three deliveries must consolidate to one S4 row per ordered item.");
@@ -461,6 +467,7 @@ for (const option of [portoChicken, portoPotatoes, portoDippingSauce]) {
   porto.quantities[option.id] = { friday: 8, monday: 0, wednesday: 0 };
 }
 const portoRecord = buildOrderRecord({ cafe: "Everest", weekStart: "2026-11-16", global: porto, now: new Date("2026-11-10T12:00:00Z") });
+assert.equal(validateBeforeCutoff([portoRecord]), "", "Autosave must accept a selected optional Global sauce.");
 const portoPrep = globalPrepLinesForCafe(portoRecord);
 assert.ok(portoPrep.some(({ name }) => name === "Piri Piri Potato Wedge Spice Mix"));
 assert.equal(portoPrep.some(({ name }) => /canola|kosher salt|black pepper|^spice,/i.test(name)), false);
@@ -581,7 +588,7 @@ const sonicHubPacket = buildPackoutPacket([globalRecord], "2026-11-16", DEFAULT_
 assert.equal(sonicHubPacket.pages.length, 3, "Sonic hub packout must include routed Everest Global work.");
 const cricketHubPacket = buildPackoutPacket([globalRecord], "2026-11-16", DEFAULT_COMMISSARY_METADATA, { selectedCafe: "Cricket" });
 assert.equal(cricketHubPacket.pages.length, 0, "Cricket hub packout must not include Everest Global work.");
-const packetRecord = { ...buildPackoutPacketRecord({ weekStart: "2026-11-16", records: [globalRecord], packet, metadataVersion: 25, now: new Date("2026-11-12T01:00:00Z") }), packet };
+const packetRecord = { ...buildPackoutPacketRecord({ weekStart: "2026-11-16", records: [globalRecord], packet, metadataVersion: 26, now: new Date("2026-11-12T01:00:00Z") }), packet };
 assert.equal(commissaryWriteValidation([packetRecord], { tool: "commissaryOrders" }), "");
 assert.match(commissaryWriteValidation([{ ...packetRecord, packet: { ...packet, pages: [{ ...packet.pages[0], cafe: "Unknown Cafe" }] } }], { tool: "commissaryOrders" }), /scope|invalid cafe/i);
 assert.match(commissaryWriteValidation([{ ...packetRecord, orderRecordIds: [`commissaryOrder|nessie|${packetRecord.weekStart}`] }], { tool: "commissaryOrders" }), /order-reference scope/i);
