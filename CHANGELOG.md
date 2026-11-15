@@ -1,6 +1,6 @@
 ## 2026-11-15
 
-- [Nov 15, 12:47 PM] Autosave every Commissary order edit and show Prep List-equivalent rounded production volumes on the January draft board.
+- [Nov 15, 12:47 PM] Autosave every Commissary order edit, show Prep List-equivalent rounded volumes on the January draft board, and cost the higher rounded production yield.
 
 - [Nov 15, 9:28 AM] Try a three-tab Production, Assembly and Pack Out board in the January 4–8 Commissary pilot week.
 
