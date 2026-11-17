@@ -9,6 +9,7 @@ import { GRILL_LTO_PROGRAM } from "../../src/features/commissary-ordering/grillL
 import { DELI_ORDERING_PROGRAM } from "../../src/features/commissary-ordering/deliCycleCatalog.js";
 import { GLOBAL_ORDERING_PROGRAM } from "../../src/features/commissary-ordering/globalCycleCatalog.js";
 import { BREAKFAST_ORDERING_PROGRAM } from "../../src/features/commissary-ordering/breakfastCatalog.js";
+import { DAILY_GLOBAL_PROGRAM } from "../../src/features/commissary-ordering/dailyGlobalCatalog.js";
 import { collectUnexpectedPageErrors, expectNoAppProtection, expectNoUnexpectedPageErrors, openTool } from "./smoke-helpers.js";
 
 async function mockOrders(page, records = []) {
@@ -35,7 +36,8 @@ async function mockOrders(page, records = []) {
     trueCost: Number((1.5 + index / 100).toFixed(4)),
   }])).values()];
   const breakfastItems = BREAKFAST_ORDERING_PROGRAM.items.map((item, index) => ({ menu: BREAKFAST_ORDERING_PROGRAM.menu, item: item.name, mrn: item.mrn, portion: item.portion, trueCost: Number((2 + index / 10).toFixed(4)) }));
-  await page.route("**/api/recipe-library?scope=all", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, source: "supabase-recipe-items", rows: [...grillItems, ...deliItems, ...globalItems, ...breakfastItems] }) }));
+  const dailyGlobalItems = [...new Map(DAILY_GLOBAL_PROGRAM.cycleWeeks.flatMap(({ days }) => days.flatMap((day) => [day.animal, day.vegetarian].map((item) => ({ menu: day.menu, item: item.name, mrn: item.mrn, portion: item.portion, trueCost: 4.25 })))).map((item) => [`${item.menu}|${item.mrn}`, item])).values()];
+  await page.route("**/api/recipe-library?scope=all", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, source: "supabase-recipe-items", rows: [...grillItems, ...deliItems, ...globalItems, ...breakfastItems, ...dailyGlobalItems] }) }));
   await page.route("**/api/storage/records**", async (route) => {
     if (route.request().method() === "GET") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, records }) });
     writes.push(route.request().postDataJSON());
@@ -389,6 +391,30 @@ test("each cafe sees only its assigned commissary stations", async ({ page }) =>
   await expect(page.getByTestId("commissary-global-order")).toBeVisible();
   await expect(page.getByText("Salad bar", { exact: true })).toBeVisible();
   await expect(page.getByTestId("commissary-grill-order")).toHaveCount(0);
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("Eclipse and Gemini use fixed two-week Daily Global plate forecasts", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const writes = await mockOrders(page);
+  await openTool(page, /open commissary ordering/i, /^Commissary Ordering Tool$/);
+  await page.getByLabel("Service week").selectOption("2026-11-23");
+  await page.getByLabel("Your cafe").selectOption("Gemini");
+  await expect(page.getByTestId("commissary-daily-global-order")).toBeVisible();
+  await expect(page.getByTestId("commissary-global-order")).toHaveCount(0);
+  await expect(page.getByText("House of Teriyaki", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("Balti", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("Porto", { exact: true }).first()).toBeVisible();
+  await page.getByLabel("Monday animal plate quantity").fill("12");
+  await expect.poll(() => writes.length).toBeGreaterThan(0);
+  const record = writes.at(-1).records[0];
+  expect(record.dailyGlobal.cycleWeek).toBe(1);
+  expect(record.dailyGlobal.quantities.monday).toEqual({ animal: 12, vegetarian: 0 });
+  expect(record.global.menu).toBe("");
+  await page.getByLabel("Your cafe").selectOption("Eclipse");
+  await expect(page.getByTestId("commissary-daily-global-order")).toBeVisible();
+  await expect(page.getByTestId("commissary-deli-order")).toBeVisible();
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });

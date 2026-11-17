@@ -1,3 +1,7 @@
+## 2026-11-16
+
+- [Nov 16, 6:20 PM] Give Eclipse and Gemini fixed Daily Global plate forecasts, route complete production to Blueshift, and move Roxanne prep to Cricket.
+
 ## 2026-11-15
 
 - [Nov 15, 12:47 PM] Autosave every Commissary order edit, show Prep List-equivalent rounded volumes on the January draft board, and cost the higher rounded production yield.

@@ -3,7 +3,7 @@ import XLSX from "xlsx-js-style";
 import { buildS4Workbook, transferExportFileName } from "../transfer-tool/transferExport.js";
 import { COMMISSARY_DEPARTING_UNIT } from "./commissaryCatalog.js";
 import { DEFAULT_COMMISSARY_METADATA } from "./commissaryMetadata.js";
-import { PRODUCTION_SECTION_ORDER, breakfastOrderLinesForCafe, breakfastPrepLinesForCafe, deliOrderLinesForCafe, deliveryDateForWeek, formatShortDate, globalPrepLinesForCafe, globalTransferLinesForCafe, grillPrepLinesForCafe, grillTransferLinesForCafe, orderLinesForCafe, prepDisplayQuantity, rolledUpPrepItems, roundedProductionEquivalentQuantity, transferPeriod, weekLabel } from "./commissaryModel.js";
+import { PRODUCTION_SECTION_ORDER, breakfastOrderLinesForCafe, breakfastPrepLinesForCafe, dailyGlobalPrepLinesForCafe, dailyGlobalTransferLinesForCafe, deliOrderLinesForCafe, deliveryDateForWeek, formatShortDate, globalPrepLinesForCafe, globalTransferLinesForCafe, grillPrepLinesForCafe, grillTransferLinesForCafe, orderLinesForCafe, prepDisplayQuantity, rolledUpPrepItems, roundedProductionEquivalentQuantity, transferPeriod, weekLabel } from "./commissaryModel.js";
 import { COMMISSARY_STATIONS, cafeRoutesToHub } from "./commissaryRouting.js";
 
 const S4_TEMPLATE_URL = "/templates/ExpenseTransfer_Between_PC_Template.xlsx";
@@ -83,6 +83,7 @@ function buildDeliveryMapWorksheet(records, delivery, weekStart, options = {}) {
     ...(routed(record, COMMISSARY_STATIONS.GRILL) ? grillPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key && !GRILL_UNIT_SUPPLIED_BUN.test(line.name)).map(prepLine) : []),
     ...(routed(record, COMMISSARY_STATIONS.DELI) ? deliOrderLinesForCafe(record).filter((line) => Number(line[delivery.key]) > 0).map((line) => ({ cafe: record.cafe, station: "Deli", name: line.name, mrn: line.mrn, quantity: line[delivery.key], unit: "sandwich", finishedDish: line.name })) : []),
     ...(routed(record, COMMISSARY_STATIONS.GLOBAL) ? globalPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key).map(prepLine) : []),
+    ...(routed(record, COMMISSARY_STATIONS.DAILY_GLOBAL) ? dailyGlobalPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key).map(prepLine) : []),
     ...(routed(record, COMMISSARY_STATIONS.BREAKFAST) ? breakfastPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key).map(prepLine) : []),
   ]);
   const consolidatedLines = new Map();
@@ -316,6 +317,20 @@ export function buildCommissaryTransfer(record, metadata = DEFAULT_COMMISSARY_ME
           ingredientName: line.name,
           ingredientMrn: line.mrn,
           glCode: line.glCode,
+          allocationPerPortion: line.itemWasteCost,
+        }],
+      })),
+      ...dailyGlobalTransferLinesForCafe(record).map((line) => ({
+        catalogId: line.id,
+        menu: line.menu,
+        item: `${line.name} (${line.quantity} plate${line.quantity === 1 ? "" : "s"})`,
+        mrn: line.mrn,
+        quantity: line.quantity,
+        itemWasteCost: line.itemWasteCost,
+        ingredientAllocations: [{
+          ingredientName: "Prepared Foods",
+          ingredientMrn: line.mrn,
+          glCode: PREPARED_FOODS_GL,
           allocationPerPortion: line.itemWasteCost,
         }],
       })),

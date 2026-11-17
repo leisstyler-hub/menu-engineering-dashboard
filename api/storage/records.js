@@ -6,11 +6,12 @@ import {
   normalizeBackboneRows,
 } from "../../src/integrations/storage/backboneRecords.js";
 import { isApprovedCommissaryMetadataRecord } from "../../src/features/commissary-ordering/commissaryMetadata.js";
-import { COMMISSARY_BREAKFAST_ORDER_VERSION, COMMISSARY_DELI_ORDER_VERSION, COMMISSARY_FINISHED_PREP_ITEM_IDS, COMMISSARY_GLOBAL_ORDER_VERSION, COMMISSARY_GRILL_ORDER_VERSION, COMMISSARY_ORDER_UNIT_VERSION, COMMISSARY_PACKOUT_PACKET_VERSION, COMMISSARY_PREP_BOARD_PILOT_WEEK, COMMISSARY_STATION_ORDER, DELIVERY_KEYS, deliCycleForWeek, deliveryDateForWeek, globalCycleForWeek, grillCycleForWeek, invalidWholeUnitSaladQuantities, isBreakfastEligibleCafe, isDeliEligibleCafe, isGlobalEligibleCafe, isGrillCoreAvailable, isGrillEligibleCafe, isPrepBoardCompletionId, isWeekLocked, standingOrderReductions } from "../../src/features/commissary-ordering/commissaryModel.js";
+import { COMMISSARY_BREAKFAST_ORDER_VERSION, COMMISSARY_DELI_ORDER_VERSION, COMMISSARY_FINISHED_PREP_ITEM_IDS, COMMISSARY_GLOBAL_ORDER_VERSION, COMMISSARY_GRILL_ORDER_VERSION, COMMISSARY_ORDER_UNIT_VERSION, COMMISSARY_PACKOUT_PACKET_VERSION, COMMISSARY_PREP_BOARD_PILOT_WEEK, COMMISSARY_STATION_ORDER, DELIVERY_KEYS, dailyGlobalCycleForWeek, deliCycleForWeek, deliveryDateForWeek, globalCycleForWeek, grillCycleForWeek, invalidWholeUnitSaladQuantities, isBreakfastEligibleCafe, isDailyGlobalEligibleCafe, isDeliEligibleCafe, isGlobalEligibleCafe, isGrillCoreAvailable, isGrillEligibleCafe, isPrepBoardCompletionId, isWeekLocked, standingOrderReductions } from "../../src/features/commissary-ordering/commissaryModel.js";
 import { GRILL_LTO_PREP_ITEM_IDS, GRILL_LTO_PROGRAM } from "../../src/features/commissary-ordering/grillLtoCatalog.js";
 import { DELI_ORDERING_PREP_ITEM_IDS, DELI_ORDERING_PROGRAM } from "../../src/features/commissary-ordering/deliCycleCatalog.js";
 import { GLOBAL_ORDERING_PREP_ITEM_IDS } from "../../src/features/commissary-ordering/globalCycleCatalog.js";
 import { BREAKFAST_ORDERING_ITEM_IDS, BREAKFAST_ORDERING_PREP_ITEM_IDS, BREAKFAST_ORDERING_PROGRAM } from "../../src/features/commissary-ordering/breakfastCatalog.js";
+import { DAILY_GLOBAL_ORDER_VERSION, DAILY_GLOBAL_PREP_ITEM_IDS } from "../../src/features/commissary-ordering/dailyGlobalCatalog.js";
 import { COMMISSARY_HUBS, COMMISSARY_STATIONS, isCafeStationEnabled } from "../../src/features/commissary-ordering/commissaryRouting.js";
 import { DEFAULT_OPERATIONAL_METADATA, isApprovedOperationalMetadataRecord, OPERATIONAL_METADATA_RECORD_ID } from "../../src/shared/operationalMetadata.js";
 import { gzipSync, gunzipSync } from "node:zlib";
@@ -94,7 +95,7 @@ const COMMISSARY_ITEM_IDS = new Set([
   ...DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.orderItems,
   ...(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.retiredOrderItems || []),
 ].map(({ id }) => id));
-const COMMISSARY_PREP_IDS = new Set([...COMMISSARY_ITEM_IDS, ...GRILL_LTO_PREP_ITEM_IDS, ...DELI_ORDERING_PREP_ITEM_IDS, ...GLOBAL_ORDERING_PREP_ITEM_IDS, ...BREAKFAST_ORDERING_PREP_ITEM_IDS, ...COMMISSARY_FINISHED_PREP_ITEM_IDS]);
+const COMMISSARY_PREP_IDS = new Set([...COMMISSARY_ITEM_IDS, ...GRILL_LTO_PREP_ITEM_IDS, ...DELI_ORDERING_PREP_ITEM_IDS, ...GLOBAL_ORDERING_PREP_ITEM_IDS, ...BREAKFAST_ORDERING_PREP_ITEM_IDS, ...DAILY_GLOBAL_PREP_ITEM_IDS, ...COMMISSARY_FINISHED_PREP_ITEM_IDS]);
 
 export function commissaryWriteValidation(records = [], context = {}) {
   if (getBackboneToolFromContext(context) !== "commissaryOrders") return "";
@@ -246,6 +247,23 @@ export function commissaryWriteValidation(records = [], context = {}) {
     }
   } else if (Object.values(record.global?.quantities || {}).some((delivery) => DELIVERY_KEYS.some((key) => Number(delivery?.[key] || 0) > 0))) {
     return "Global ordering is not enabled for this cafe.";
+  }
+  const dailyGlobalCycle = dailyGlobalCycleForWeek(record.weekStart);
+  if (dailyGlobalCycle && isDailyGlobalEligibleCafe(record.cafe)) {
+    if (Number(record.dailyGlobal?.version) !== DAILY_GLOBAL_ORDER_VERSION || Number(record.dailyGlobal?.cycleWeek) !== dailyGlobalCycle.week) return "The Daily Global cycle is invalid.";
+    const allowedDays = new Set(dailyGlobalCycle.days.map(({ key }) => key));
+    if (Object.keys(record.dailyGlobal?.quantities || {}).some((dayKey) => !allowedDays.has(dayKey))) return "The Daily Global order contains an invalid service day.";
+    for (const dayDefinition of dailyGlobalCycle.days) {
+      for (const proteinType of ["animal", "vegetarian"]) {
+        const quantity = Number(record.dailyGlobal?.quantities?.[dayDefinition.key]?.[proteinType] ?? 0);
+        if (!Number.isInteger(quantity) || quantity < 0) return "Daily Global quantities must be zero or positive whole plates.";
+        const item = record.dailyGlobal?.items?.[`${dayDefinition.key}|${proteinType}`];
+        const option = dayDefinition[proteinType];
+        if (quantity > 0 && (!item || item.menu !== dayDefinition.menu || String(item.mrn) !== option.mrn || item.portion !== option.portion || !(Number(item.itemWasteCost) > 0))) return `The Daily Global cost snapshot for ${dayDefinition.label} ${option.name} is invalid.`;
+      }
+    }
+  } else if (Object.values(record.dailyGlobal?.quantities || {}).some((values) => Number(values?.animal || 0) > 0 || Number(values?.vegetarian || 0) > 0)) {
+    return "Daily Global ordering is not enabled for this cafe and week.";
   }
   const breakfastIds = new Set(BREAKFAST_ORDERING_ITEM_IDS);
   if (isBreakfastEligibleCafe(record.cafe)) {

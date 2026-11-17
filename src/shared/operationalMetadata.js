@@ -19,11 +19,12 @@ import { DELI_ORDERING_PROGRAM } from "../features/commissary-ordering/deliCycle
 import { GLOBAL_ORDERING_PROGRAM } from "../features/commissary-ordering/globalCycleCatalog.js";
 import { GLOBAL_COMMISSARY_PRODUCTION } from "../features/commissary-ordering/globalProductionCatalog.js";
 import { BREAKFAST_ORDERING_PROGRAM } from "../features/commissary-ordering/breakfastCatalog.js";
+import { DAILY_GLOBAL_PROGRAM } from "../features/commissary-ordering/dailyGlobalCatalog.js";
 import { COMMISSARY_CAFE_STATION_ACCESS, COMMISSARY_HUB_ROUTING, COMMISSARY_HUBS, COMMISSARY_PACKOUT_HUB_ROUTING } from "../features/commissary-ordering/commissaryRouting.js";
 import { GLOBAL_UNIT_PREPARATION_NOTES } from "../features/commissary-ordering/commissaryModel.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 26;
+export const OPERATIONAL_METADATA_VERSION = 27;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -89,6 +90,7 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
     deliCatalog: DELI_CORE_SELECTED_CATALOG,
     deliProgram: DELI_ORDERING_PROGRAM,
     globalProgram: GLOBAL_ORDERING_PROGRAM,
+    dailyGlobalProgram: DAILY_GLOBAL_PROGRAM,
     globalProductionPolicy: GLOBAL_COMMISSARY_PRODUCTION,
     breakfastProgram: BREAKFAST_ORDERING_PROGRAM,
     breakfastInterface: Object.freeze({
@@ -106,6 +108,16 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       sauceSlots: 2,
       subrecipes: "automatic-from-recipe",
       deliveryQuantities: "whole-portions",
+    }),
+    dailyGlobalInterface: Object.freeze({
+      eligibleCafes: Object.freeze(["Eclipse", "Gemini"]),
+      cycleAnchor: "2026-11-23",
+      cycleLengthWeeks: 2,
+      selectionMode: "fixed-weekday-animal-or-vegetarian-plate-counts",
+      productionScope: "complete-commissary-hot-and-cold-plate-including-garnish",
+      prepHub: "Blueshift",
+      deliHub: "Sonic",
+      transferValuation: "finished-plate-item-plus-waste",
     }),
     stationAccess: COMMISSARY_CAFE_STATION_ACCESS,
     prepHubs: COMMISSARY_HUBS,
@@ -134,7 +146,7 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       globalExcludedSubrecipes: Object.freeze(["60487"]),
     }),
     prepInterface: Object.freeze({
-      stationOrder: Object.freeze(["Salad Bar", "Breakfast", "Deli", "Grill", "Global"]),
+      stationOrder: Object.freeze(["Salad Bar", "Breakfast", "Deli", "Grill", "Daily Global", "Global"]),
       stationTabletFilter: Object.freeze({ enabled: true, includesAllStationsView: true }),
       productionGrouping: Object.freeze(["Vegetable Production", "Sauces", "Meat Production", "Stocking"]),
       familyAdjacency: true,

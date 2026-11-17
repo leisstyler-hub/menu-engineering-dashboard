@@ -7,6 +7,7 @@ import {
   deliveryDateForWeek,
   formatShortDate,
   globalPrepLinesForCafe,
+  dailyGlobalPrepLinesForCafe,
   grillPrepLinesForCafe,
   orderLinesForCafe,
   prepDisplayQuantity,
@@ -59,6 +60,7 @@ function packoutSourceLines(record, delivery) {
     })),
     ...grillPrepLinesForCafe(record).filter((line) => line.delivery === delivery),
     ...globalPrepLinesForCafe(record).filter((line) => line.delivery === delivery),
+    ...dailyGlobalPrepLinesForCafe(record).filter((line) => line.delivery === delivery),
     ...breakfastPrepLinesForCafe(record).filter((line) => line.delivery === delivery),
   ];
 }
@@ -69,6 +71,7 @@ const STATION_KEY_BY_LABEL = Object.freeze({
   Deli: COMMISSARY_STATIONS.DELI,
   Grill: COMMISSARY_STATIONS.GRILL,
   Global: COMMISSARY_STATIONS.GLOBAL,
+  "Daily Global": COMMISSARY_STATIONS.DAILY_GLOBAL,
 });
 
 function scopePackoutLines(lines, cafe, selectedCafe) {
