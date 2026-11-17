@@ -403,6 +403,12 @@ test("Eclipse and Gemini use fixed two-week Daily Global plate forecasts", async
   await page.getByLabel("Your cafe").selectOption("Gemini");
   await expect(page.getByTestId("commissary-daily-global-order")).toBeVisible();
   await expect(page.getByTestId("commissary-global-order")).toHaveCount(0);
+  await expect(page.getByTestId("commissary-daily-global-order").getByText("Comes with:")).toHaveCount(10);
+  await expect(page.getByLabel("Monday animal plate quantity").locator("..")).toContainText("Jasmine Rice");
+  await expect(page.getByLabel("Monday animal plate quantity").locator("..")).toContainText("Teriyaki Sauce");
+  const weeklyOrderBox = await page.getByRole("heading", { name: "Week 11/23–11/27 order" }).boundingBox();
+  const dailyGlobalBox = await page.getByTestId("commissary-daily-global-order").boundingBox();
+  expect(weeklyOrderBox.y).toBeLessThan(dailyGlobalBox.y);
   await expect(page.getByText("House of Teriyaki", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("Balti", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("Porto", { exact: true }).first()).toBeVisible();

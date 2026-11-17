@@ -24,7 +24,7 @@ import { COMMISSARY_CAFE_STATION_ACCESS, COMMISSARY_HUB_ROUTING, COMMISSARY_HUBS
 import { GLOBAL_UNIT_PREPARATION_NOTES } from "../features/commissary-ordering/commissaryModel.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 27;
+export const OPERATIONAL_METADATA_VERSION = 28;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -114,6 +114,8 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       cycleAnchor: "2026-11-23",
       cycleLengthWeeks: 2,
       selectionMode: "fixed-weekday-animal-or-vegetarian-plate-counts",
+      plateContentsVisibility: "shown-beneath-each-protein-option",
+      weeklyOrderPlacement: "before-all-stations",
       productionScope: "complete-commissary-hot-and-cold-plate-including-garnish",
       prepHub: "Blueshift",
       deliHub: "Sonic",

@@ -1,3 +1,11 @@
+## Daily Global plate details and weekly-order placement - 2026-11-16
+
+Release candidate `2026.11.16.002-daily-global-plate-details` shows the complete static plate contents directly beneath both the animal and vegetarian protein option on every Daily Global weekday card. The visible `Comes with` line uses the same component and garnish definitions that drive Blueshift prep and packout, so the operator sees rice, sides, sauces, chutney/raita-style accompaniments and garnish without gaining item-selection controls.
+
+The weekly order summary is now visually ordered before every station. Daily Global remains the first station for Eclipse and Gemini, immediately after the summary; all other cafe layouts retain their existing summary-first order. Saved-order schema and quantities are unchanged. Operational metadata version 28 publishes `plateContentsVisibility: shown-beneath-each-protein-option` and `weeklyOrderPlacement: before-all-stations`. No Commissary Order, menu item, recipe or culinary profile mutation is required, so Culinary Tags shared-profile persistence is not applicable.
+
+Pre-release checks: focused Commissary model and operational-metadata verification passed, the production build passed, and focused Commissary browser acceptance passed 13/13 with explicit plate-content and vertical-placement assertions. Production commit, deployment, metadata seed/readback and standing-order preservation evidence remain to be recorded after release.
+
 ## Daily Global cycle and Roxanne hub routing - 2026-11-16
 
 LIVE `2026.11.16.001-daily-global-two-week-cycle` replaces standard Global for Eclipse and Gemini with a distinct Daily Global station. Its two-week cycle begins Monday `2026-11-23` and repeats every two weeks. Each weekday is fixed to the reviewed menu and exposes only animal-protein and vegetarian-protein whole-plate quantities. Week 1 is Teriyaki Monday-Tuesday, Balti Wednesday-Thursday and Porto Friday; Week 2 is Porto Monday, Cypress Tuesday-Wednesday and Bibimbap Thursday-Friday. The operator never selects sides or garnish.

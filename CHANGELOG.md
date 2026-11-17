@@ -1,5 +1,7 @@
 ## 2026-11-16
 
+- [Nov 16, 6:34 PM] Show complete plate accompaniments beneath every Daily Global protein and keep the weekly order summary above every station.
+
 - [Nov 16, 6:20 PM] Give Eclipse and Gemini fixed Daily Global plate forecasts, route complete production to Blueshift, and move Roxanne prep to Cricket.
 
 ## 2026-11-15
