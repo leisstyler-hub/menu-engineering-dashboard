@@ -1,10 +1,12 @@
 ## Daily Global plate details and weekly-order placement - 2026-11-16
 
-Release candidate `2026.11.16.002-daily-global-plate-details` shows the complete static plate contents directly beneath both the animal and vegetarian protein option on every Daily Global weekday card. The visible `Comes with` line uses the same component and garnish definitions that drive Blueshift prep and packout, so the operator sees rice, sides, sauces, chutney/raita-style accompaniments and garnish without gaining item-selection controls.
+LIVE `2026.11.16.002-daily-global-plate-details` shows the complete static plate contents directly beneath both the animal and vegetarian protein option on every Daily Global weekday card. The visible `Comes with` line uses the same component and garnish definitions that drive Blueshift prep and packout, so the operator sees rice, sides, sauces, chutney/raita-style accompaniments and garnish without gaining item-selection controls.
 
 The weekly order summary is now visually ordered before every station. Daily Global remains the first station for Eclipse and Gemini, immediately after the summary; all other cafe layouts retain their existing summary-first order. Saved-order schema and quantities are unchanged. Operational metadata version 28 publishes `plateContentsVisibility: shown-beneath-each-protein-option` and `weeklyOrderPlacement: before-all-stations`. No Commissary Order, menu item, recipe or culinary profile mutation is required, so Culinary Tags shared-profile persistence is not applicable.
 
-Pre-release checks: focused Commissary model and operational-metadata verification passed, the production build passed, and focused Commissary browser acceptance passed 13/13 with explicit plate-content and vertical-placement assertions. Production commit, deployment, metadata seed/readback and standing-order preservation evidence remain to be recorded after release.
+Application commit `be7868187b52e6b2067e126763764d7753510a9e` reached successful Vercel production target `4hCdZLWmyYaZXUqGonroB1NzfKys`; canonical asset `/assets/index-DkxQ8z6y.js` contains the exact release version. Full repository verification/build passed. Focused Commissary browser acceptance passed 13/13 locally and 13/13 against production with explicit plate-content and vertical-placement assertions.
+
+The production seed upserted only `platformMetadata|operations|current`; Supabase readback returned metadata version 28 and both interface contracts. Production retained 27 Commissary Order rows before and after the seed. Dawson's November 16 standing-order timestamp remained `2026-11-10T01:33:43.17Z`. Rollback is application commit `7e471e4` plus reseeding operational metadata version 27. Buzz Changelog posting remains outstanding because no Buzz connector is available in this environment; the matching app changelog entry is present.
 
 ## Daily Global cycle and Roxanne hub routing - 2026-11-16
 
