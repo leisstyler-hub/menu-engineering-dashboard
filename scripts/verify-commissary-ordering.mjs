@@ -16,6 +16,7 @@ import { buildPackoutPacket, buildPackoutPdfBytes } from "../src/features/commis
 import { GRILL_LTO_ITEM_MRNS, GRILL_LTO_PREP_ITEM_IDS, GRILL_LTO_PROGRAM } from "../src/features/commissary-ordering/grillLtoCatalog.js";
 import { DELI_ORDERING_ITEM_MRNS, DELI_ORDERING_PREP_ITEM_IDS, DELI_ORDERING_PROGRAM } from "../src/features/commissary-ordering/deliCycleCatalog.js";
 import { GLOBAL_ORDERING_ITEM_IDS, GLOBAL_ORDERING_PREP_ITEM_IDS, GLOBAL_ORDERING_PROGRAM } from "../src/features/commissary-ordering/globalCycleCatalog.js";
+import { GLOBAL_PREP_DISPLAY_POLICY } from "../src/features/commissary-ordering/globalPrepDisplayPolicy.js";
 import { BREAKFAST_ORDERING_ITEM_IDS, BREAKFAST_ORDERING_PREP_ITEM_IDS, BREAKFAST_ORDERING_PROGRAM } from "../src/features/commissary-ordering/breakfastCatalog.js";
 import { COMMISSARY_SPANISH } from "../src/features/commissary-ordering/commissaryTranslations.js";
 import { COMMISSARY_STATIONS, cafeRoutesToHub, cafeRoutesToPackoutHub, commissaryHubFor, isCafeStationEnabled, isCommissaryHub } from "../src/features/commissary-ordering/commissaryRouting.js";
@@ -588,6 +589,42 @@ assert.equal(new Set(grillPrepVolumeRows.map(({ mrn }) => String(mrn))).size, gr
 assert.ok(grillPrepVolumeRows.every((component) => prepDisplayQuantity({ station: "Grill", ...component, orderUnit: component.unit, total: component.quantity, friday: component.quantity, monday: 0, wednesday: 0, cafes: {} }).orderUnit === "gallon"), "Every approved Grill Core/LTO vegetable mise row must display as rounded volume.");
 assert.equal(roundedProductionEquivalentQuantity({ name: "Santa Fe Black Bean Burger", friday: 70, monday: 0, wednesday: 0, total: 70 }, { mrn: "179508", name: "Avocado, Hand Scooped, Wholly Avocado, Fresh", quantity: 2, unit: "scoop #16" }, "Grill"), 70, "Prep-only avocado display conversion must not change transfer portions.");
 assert.equal(roundedProductionEquivalentQuantity({ name: "Santa Fe Black Bean Burger", friday: 43, monday: 0, wednesday: 0, total: 43 }, { mrn: "77960.2", name: "EUR: Pickled Red Onions", quantity: 2, unit: "ounce" }, "Grill"), 43, "Prep-only vegetable display conversion must not change transfer portions.");
+const globalVolumeCases = [
+  ["96597", "Onions, White, Fresh, Diced, Medium", "pound", 4],
+  ["143669.1", "Chiang Mai: Crispy Fried Soba Noodles", "ounce", 0.5],
+  ["78541", "Pickled Cucumbers", "ounce", 0.5],
+  ["165741.26", "Vegetable Kurma (With Cashews)", "ounce", 0.5],
+  ["15323", "Oil, Olive, Extra Virgin", "ounce", 0.5],
+  ["83591", "Classic Coleslaw", "ounce", 0.5],
+];
+for (const [mrn, name, orderUnit, expectedGallons] of globalVolumeCases) {
+  const display = prepDisplayQuantity({ station: "Global", mrn, name, orderUnit, total: 16, friday: 16, monday: 0, wednesday: 0, cafes: {} });
+  assert.equal(display.orderUnit, "gallon", `${name} must display as Prep List volume.`);
+  assert.equal(display.total, expectedGallons, `${name} must use its approved density and half-gallon rounding.`);
+}
+const approvedBlankMrnVegetable = prepDisplayQuantity({ station: "Global", mrn: "", name: "Cabbage, Red, Fresh, Shredded", orderUnit: "ounce", total: 8, friday: 8, monday: 0, wednesday: 0, cafes: {} });
+assert.equal(approvedBlankMrnVegetable.orderUnit, "gallon");
+assert.equal(approvedBlankMrnVegetable.total, 0.5);
+const cutWhiteOnionsByEach = prepDisplayQuantity({ station: "Global", mrn: "96597", name: "Onions, White, Fresh, Diced, Medium", orderUnit: "each", total: 8, friday: 8, monday: 0, wednesday: 0, cafes: {} });
+assert.equal(cutWhiteOnionsByEach.orderUnit, "gallon");
+assert.equal(cutWhiteOnionsByEach.total, 1);
+const cutFresnoPeppersByEach = prepDisplayQuantity({ station: "Global", mrn: "53211", name: "Peppers, Chili, Fresno, Red, Fresh, Sliced, Thin", orderUnit: "each", total: 8, friday: 8, monday: 0, wednesday: 0, cafes: {} });
+assert.equal(cutFresnoPeppersByEach.orderUnit, "gallon");
+assert.equal(cutFresnoPeppersByEach.total, 0.5);
+const globalSpinachBags = prepDisplayQuantity({ station: "Global", mrn: "8061", name: "Spinach, Baby, Fresh", orderUnit: "ounce", total: 41, friday: 41, monday: 0, wednesday: 0, cafes: {} });
+assert.equal(globalSpinachBags.orderUnit, "2.5-pound bag");
+assert.equal(globalSpinachBags.total, 2);
+assert.equal(globalSpinachBags.packageTrueCostEach, 6);
+assert.equal(prepDisplayQuantity(globalSpinachBags).total, 2, "Package-rounded rows must be idempotent across workbook and tablet projections.");
+const globalKaleBags = prepDisplayQuantity({ station: "Global", mrn: "95860", name: "Kale, Lacinato (Dinosaur), Fresh", orderUnit: "pound", total: 5, friday: 5, monday: 0, wednesday: 0, cafes: {} });
+assert.equal(globalKaleBags.orderUnit, "2.5-pound bag");
+assert.equal(globalKaleBags.total, 2);
+for (const [mrn, name] of [["84052", "Murga Tikka"], ["49473", "Peppers, Chili, Arbol Pods, D'Allesandro"], ["76662", "Peppers, Chili, Bird's Eye, Dried"]]) {
+  assert.equal(prepDisplayQuantity({ station: "Global", mrn, name, orderUnit: "ounce", total: 16, friday: 16, monday: 0, wednesday: 0, cafes: {} }).orderUnit, "ounce", `${name} must remain weight-based for in-hub production.`);
+}
+assert.equal(roundedProductionEquivalentQuantity({ name: "Beef Barbacoa", friday: 12, monday: 0, wednesday: 0, total: 12 }, { mrn: "96597", name: "Onions, White, Fresh, Diced, Medium", quantity: 1, unit: "pound" }, "Global"), 12, "Global Prep List volume display must not alter transfer portions.");
+assert.equal(GLOBAL_PREP_DISPLAY_POLICY.scope, "prep-list-only");
+assert.equal(GLOBAL_PREP_DISPLAY_POLICY.transferAndGlQuantities, "recipe-native-unchanged");
 const cafeRoundedSauce = prepDisplayQuantity({ name: "Sriracha Mayo", orderUnit: "cup", total: 2, friday: 2, monday: 0, wednesday: 0, cafes: { Nessie: { friday: 1, monday: 0, wednesday: 0 }, Dawson: { friday: 1, monday: 0, wednesday: 0 } } });
 assert.equal(cafeRoundedSauce.friday, 1, "Each cafe allocation must round to a shippable half gallon before hub rollup.");
 assert.deepEqual(Object.values(cafeRoundedSauce.cafes).map(({ friday }) => friday), [0.5, 0.5]);
@@ -627,7 +664,7 @@ const sonicHubPacket = buildPackoutPacket([globalRecord], "2026-11-16", DEFAULT_
 assert.equal(sonicHubPacket.pages.length, 3, "Sonic hub packout must include routed Everest Global work.");
 const cricketHubPacket = buildPackoutPacket([globalRecord], "2026-11-16", DEFAULT_COMMISSARY_METADATA, { selectedCafe: "Cricket" });
 assert.equal(cricketHubPacket.pages.length, 0, "Cricket hub packout must not include Everest Global work.");
-const packetRecord = { ...buildPackoutPacketRecord({ weekStart: "2026-11-16", records: [globalRecord], packet, metadataVersion: 29, now: new Date("2026-11-12T01:00:00Z") }), packet };
+const packetRecord = { ...buildPackoutPacketRecord({ weekStart: "2026-11-16", records: [globalRecord], packet, metadataVersion: 30, now: new Date("2026-11-12T01:00:00Z") }), packet };
 assert.equal(commissaryWriteValidation([packetRecord], { tool: "commissaryOrders" }), "");
 assert.match(commissaryWriteValidation([{ ...packetRecord, packet: { ...packet, pages: [{ ...packet.pages[0], cafe: "Unknown Cafe" }] } }], { tool: "commissaryOrders" }), /scope|invalid cafe/i);
 assert.match(commissaryWriteValidation([{ ...packetRecord, orderRecordIds: [`commissaryOrder|nessie|${packetRecord.weekStart}`] }], { tool: "commissaryOrders" }), /order-reference scope/i);

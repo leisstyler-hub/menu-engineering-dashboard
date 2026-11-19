@@ -5,6 +5,7 @@ import { DELI_ORDERING_PREP_ITEM_IDS, DELI_ORDERING_PROGRAM } from "./deliCycleC
 import { GLOBAL_ORDERING_PREP_ITEM_IDS, GLOBAL_ORDERING_PROGRAM } from "./globalCycleCatalog.js";
 import { BREAKFAST_ORDERING_ITEM_IDS, BREAKFAST_ORDERING_PREP_ITEM_IDS, BREAKFAST_ORDERING_PROGRAM } from "./breakfastCatalog.js";
 import { DAILY_GLOBAL_ORDER_VERSION, DAILY_GLOBAL_PREP_ITEM_IDS, DAILY_GLOBAL_PROGRAM } from "./dailyGlobalCatalog.js";
+import { globalPrepCupsPerUnit, globalPrepPackageRule } from "./globalPrepDisplayPolicy.js";
 import { COMMISSARY_STATIONS, cafeRoutesToHub, isCafeStationEnabled } from "./commissaryRouting.js";
 import { filterCommissaryComponents, filterGrillCommissaryComponents, isExcludedLoosePrepItem, prepareCommissaryComponents, prepareGlobalCommissaryComponents, prepareGlobalTransferComponents } from "./commissaryPrepPolicy.js";
 
@@ -1115,6 +1116,8 @@ export function prepVolumeCupsPerUnit(row = {}, { displayOnly = false } = {}) {
     ? GRILL_PREP_OUNCE_TO_VOLUME[String(row.mrn || "")]
     : 0;
   if (grillPrepOuncesPerCup && ["ounce", "ounces", "oz"].includes(unit)) return 1 / grillPrepOuncesPerCup;
+  const globalPrepCups = displayOnly ? globalPrepCupsPerUnit(row) : 0;
+  if (globalPrepCups) return globalPrepCups;
   if (!SAUCE_NAME.test(name)) return 0;
   const ouncesPerCup = /pico de gallo/i.test(name) ? 7 : 8;
   if (["ounce", "ounces", "oz"].includes(unit)) return 1 / ouncesPerCup;
@@ -1164,7 +1167,7 @@ function prepProductionTypeOrder(type) {
 }
 
 export function prepDisplayQuantity(row = {}) {
-  if (row.productionVolumeRounded) return row;
+  if (row.productionVolumeRounded || row.productionPackageRounded) return row;
   const unit = String(row.orderUnit || "").trim().toLowerCase();
   const nativeQuantities = {
     orderUnit: row.orderUnit,
@@ -1172,6 +1175,29 @@ export function prepDisplayQuantity(row = {}) {
     ...Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, Number(row[delivery] || 0)])),
     cafes: Object.fromEntries(Object.entries(row.cafes || {}).map(([cafe, values]) => [cafe, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, Number(values?.[delivery] || 0)]))])),
   };
+  const packageRule = globalPrepPackageRule(row);
+  if (packageRule) {
+    const unitsPerPackage = ["ounce", "ounces", "oz"].includes(unit)
+      ? packageRule.poundsPerPackage * 16
+      : packageRule.poundsPerPackage;
+    const packages = (value) => Number(value) > 0 ? Math.ceil((Number(value) / unitsPerPackage) - 1e-9) : 0;
+    const roundedCafes = Object.fromEntries(Object.entries(row.cafes || {}).map(([cafe, values]) => [cafe, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, packages(values?.[delivery])]))]));
+    const deliveryPackages = Object.fromEntries(DELIVERY_KEYS.map((delivery) => {
+      const cafeEntries = Object.values(roundedCafes);
+      return [delivery, cafeEntries.length ? cafeEntries.reduce((sum, values) => sum + Number(values?.[delivery] || 0), 0) : packages(row[delivery])];
+    }));
+    return {
+      ...row,
+      cafes: roundedCafes,
+      ...deliveryPackages,
+      total: DELIVERY_KEYS.reduce((sum, delivery) => sum + deliveryPackages[delivery], 0),
+      orderUnit: packageRule.displayUnit,
+      packageTrueCostEach: packageRule.trueCostEach,
+      nativeOrderUnit: row.orderUnit,
+      nativeQuantities,
+      productionPackageRounded: true,
+    };
+  }
   const cupsPerUnit = prepVolumeCupsPerUnit(row, { displayOnly: true });
   if (cupsPerUnit) {
     const cafeEntries = Object.entries(row.cafes || {});

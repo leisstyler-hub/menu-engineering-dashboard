@@ -341,6 +341,31 @@ test("Grill LTO starts Cycle Week 1 on November 16 with Set A and Set B whole-sa
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
+test("Global Taco prep displays approved cut produce as rounded volume", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await page.clock.install({ time: new Date("2026-11-10T20:00:00Z") });
+  await mockOrders(page);
+  await openTool(page, /open commissary ordering/i, /^Commissary Ordering Tool$/);
+  await page.getByLabel("Your cafe").selectOption("Cricket");
+  await page.getByLabel("Service week").selectOption("2026-11-16");
+  const tacoMenu = GLOBAL_ORDERING_PROGRAM.cycleWeeks[0].menus.find(({ menu }) => menu === "AMZ: Taco Total");
+  const pico = tacoMenu.items.find(({ name }) => name === "Pico De Gallo");
+  await page.getByLabel("Global menu").selectOption(tacoMenu.menu);
+  await page.getByLabel("Optional sauces 1").selectOption(pico.id);
+  await page.getByLabel("Pico De Gallo Friday 11/13 portion quantity").fill("24");
+  await page.clock.runFor(600);
+  await expect(page.getByText("Saved automatically", { exact: true })).toBeVisible();
+  const prepDownload = page.waitForEvent("download");
+  await page.getByRole("button", { name: /^prep list$/i }).click();
+  const workbook = XLSX.readFile(await (await prepDownload).path());
+  const rows = XLSX.utils.sheet_to_json(workbook.Sheets["Friday Prep List"], { header: 1, defval: "" });
+  expect(rows).toContainEqual(expect.arrayContaining(["Onions, Yellow, Fresh, Chopped, Fine", expect.any(Number), "gallon"]));
+  expect(rows).toContainEqual(expect.arrayContaining(["Peppers, Chili, Jalapeno, Fresh, Chopped", expect.any(Number), "gallon"]));
+  expect(rows).toContainEqual(expect.arrayContaining(["Tomatoes, Roma, Fresh, Small Diced, 1/4\"", expect.any(Number), "gallon"]));
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
 test("each cafe sees only its assigned commissary stations", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   await mockOrders(page);

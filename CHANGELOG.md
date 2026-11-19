@@ -1,5 +1,7 @@
 ## 2026-11-19
 
+- [Nov 19, 5:25 AM] Show approved Global prep vegetables, sides and liquids as rounded volume, and round spinach and kale to whole bags.
+
 - [Nov 19, 4:48 AM] Show Grill avocado, pickled vegetables and other prepared mise as rounded volume without changing transfers.
 
 ## 2026-11-16

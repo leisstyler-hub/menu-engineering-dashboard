@@ -11,7 +11,7 @@ assert.equal(isApprovedOperationalMetadataRecord(record), true);
 assert.equal(resolveOperationalMetadata([record]).source, "supabase");
 assert.equal(resolveOperationalMetadata([]).source, "fallback");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.orderItems.length, 41);
-assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 29);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 30);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.items.length, 41);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.legacyItems.length, 41);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.source.effectiveDate, "2026-11-16");
@@ -72,7 +72,7 @@ assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globalInterface
   subrecipes: "automatic-from-recipe",
   deliveryQuantities: "whole-portions",
 });
-assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 29);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 30);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globalProductionPolicy.version, 1);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globalProductionPolicy.rules["global|amz-porto|121026|1-piece"].outputs[0].mrn, "120715");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globalProductionPolicy.rules["global|amz-smokehouse-bbq|5365.6|5-ounce"].mode, "in-unit");
@@ -81,7 +81,7 @@ assert.equal(Object.values(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globa
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.packoutPacket.format, "pdf");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.packoutPacket.emailDelivery, false);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.stationOrder, ["Salad Bar", "Breakfast", "Deli", "Grill", "Daily Global", "Global"]);
-assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.workbookVersion, 4);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.workbookVersion, 5);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.productionGrouping, ["Vegetable Production", "Sauces", "Meat Production", "Stocking"]);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.visibleWorkbookColumns, ["Ingredient / item", "Total quantity", "Order unit", "Production section", "Finished dish"]);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.finishedItemTabletCounts, { stations: ["Deli", "Breakfast"], placement: "before-component-prep", completion: "shared-touch-check" });
@@ -91,8 +91,8 @@ assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.p
   incrementGallons: 0.5,
   direction: "up",
   scope: "each-cafe-each-delivery",
-  appliesTo: "explicit-volume-units; approved-count-conversions; sauce-weight-conversions",
-  transferCosting: "salad-native-unit-and-priced-grill-global-components-scale-to-rounded-yield",
+  appliesTo: "explicit-volume-units; approved-count-conversions; sauce-weight-conversions; approved-global-prep-display-conversions",
+  transferCosting: "salad-native-unit-and-existing-priced-volume-components-scale; reviewed-global-display-policy-remains-recipe-native",
   unpricedRecipeComponents: "display-rounded-without-invented-component-cost",
 });
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.grillVolumeDisplay.handScoopedAvocado, "4-number-16-scoops-per-cup");
@@ -102,7 +102,15 @@ assert.ok(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.grillVol
 assert.ok(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.grillVolumeDisplay.preparedVegetableMrns.includes("19294.11"));
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.grillVolumeDisplay.displayScope, "prep-list-only");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.grillVolumeDisplay.transferAndGlQuantities, "recipe-native-unchanged");
-assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.packoutPacket.version, 3);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.globalPrepDisplayPolicy.version, 1);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.globalPrepDisplayPolicy.scope, "prep-list-only");
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.globalPrepDisplayPolicy.transferAndGlQuantities, "recipe-native-unchanged");
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.globalPrepDisplayPolicy.packageRules.find(({ mrn }) => mrn === "8061").trueCostEach, 6);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.globalPrepDisplayPolicy.packageRules.find(({ mrn }) => mrn === "8061").poundsPerPackage, 2.5);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.globalPrepDisplayPolicy.cutProduceCupsPerEach["96597"], 2);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.globalPrepDisplayPolicy.cutProduceCupsPerEach["50595"], 4);
+assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.globalPrepDisplayPolicy.conditionalNativeWeightMrns, ["84052", "49473", "76662"]);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.packoutPacket.version, 4);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.dailyPrepLists, { friday: "Monday service", monday: "Tuesday-Wednesday service", wednesday: "Thursday-Friday service" });
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.exactMrnRollup, true);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.deliveryMapExactMrnRollup, "cafe-station-compatible-unit");

@@ -20,11 +20,12 @@ import { GLOBAL_ORDERING_PROGRAM } from "../features/commissary-ordering/globalC
 import { GLOBAL_COMMISSARY_PRODUCTION } from "../features/commissary-ordering/globalProductionCatalog.js";
 import { BREAKFAST_ORDERING_PROGRAM } from "../features/commissary-ordering/breakfastCatalog.js";
 import { DAILY_GLOBAL_PROGRAM } from "../features/commissary-ordering/dailyGlobalCatalog.js";
+import { GLOBAL_PREP_DISPLAY_POLICY } from "../features/commissary-ordering/globalPrepDisplayPolicy.js";
 import { COMMISSARY_CAFE_STATION_ACCESS, COMMISSARY_HUB_ROUTING, COMMISSARY_HUBS, COMMISSARY_PACKOUT_HUB_ROUTING } from "../features/commissary-ordering/commissaryRouting.js";
 import { GLOBAL_UNIT_PREPARATION_NOTES } from "../features/commissary-ordering/commissaryModel.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 29;
+export const OPERATIONAL_METADATA_VERSION = 30;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -157,8 +158,8 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
         incrementGallons: 0.5,
         direction: "up",
         scope: "each-cafe-each-delivery",
-        appliesTo: "explicit-volume-units; approved-count-conversions; sauce-weight-conversions",
-        transferCosting: "salad-native-unit-and-priced-grill-global-components-scale-to-rounded-yield",
+        appliesTo: "explicit-volume-units; approved-count-conversions; sauce-weight-conversions; approved-global-prep-display-conversions",
+        transferCosting: "salad-native-unit-and-existing-priced-volume-components-scale; reviewed-global-display-policy-remains-recipe-native",
         unpricedRecipeComponents: "display-rounded-without-invented-component-cost",
       }),
       grillVolumeDisplay: Object.freeze({
@@ -176,11 +177,12 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       massDisplay: "kilograms-converted-to-pounds; deli-protein-ounces-converted-to-pounds",
       avocadoMashDisplay: "number-16-scoops-converted-to-gallons",
       grillHandScoopedAvocadoDisplay: "number-16-scoops-converted-to-gallons-for-prep-only",
+      globalPrepDisplayPolicy: GLOBAL_PREP_DISPLAY_POLICY,
       looseStaples: "canola-kosher-salt-black-pepper-dried-spices-excluded-or-bundled-as-recipes",
       deliDeliveryMap: "finished-sandwich-counts",
       globalUnitPreparationNotes: GLOBAL_UNIT_PREPARATION_NOTES,
       globalMarinadePolicy: "six-week-reviewed-recipe-tree-minus-unit-protein",
-      workbookVersion: 4,
+      workbookVersion: 5,
       dailyPrepLists: Object.freeze({ friday: "Monday service", monday: "Tuesday-Wednesday service", wednesday: "Thursday-Friday service" }),
       exactMrnRollup: true,
       deliveryMapExactMrnRollup: "cafe-station-compatible-unit",
@@ -204,7 +206,7 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       }),
     }),
     packoutPacket: Object.freeze({
-      version: 3,
+      version: 4,
       format: "pdf",
       source: "saved-supabase-commissary-orders",
       grouping: "cafe-delivery-station",
