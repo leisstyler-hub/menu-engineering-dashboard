@@ -1,5 +1,7 @@
 ## 2026-11-19
 
+- [Nov 19, 2:12 PM] Build weighted TACT guidance, ingredient-fit comparisons and printable pan plans with daily selling and limited premium offers.
+
 - [Nov 19, 11:45 AM] Name modifier groups clearly, skip N/A recipe lookup, and fill Remove MRNs with N/A on selection.
 - [Nov 19, 11:45 AM] Move between modifier fields with arrow keys and paste an Excel column down the rows.
 

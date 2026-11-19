@@ -65,3 +65,21 @@ test('menu source carries catalog sensory evidence and reviewed profile through 
  assert.equal(dish.description,'Crispy and smoky');assert.deepEqual(dish.culinaryProfile,culinaryProfile);
  assert.equal(profileFor(dish).tact.texture.values[0],'Crisp/Crunchy');
 });
+
+import {weightedTact, buildTactBalance} from '../src/features/menu-engineering/wpTactBalance.js';
+test('weighted TACT normalizes tag count, honors scenario intensity and excludes unknown mass',()=>{
+ const f={key:'a',name:'Crispy lemon chicken',mrn:'0001'};
+ const before=JSON.stringify(f),weighted=weightedTact(f,{tactWeights:{taste:{Umami:{importance:3,intensity:3},'Sour/Acidic':{importance:1,intensity:1}}}});
+ assert.ok(weighted.taste.find(t=>t.tag==='Umami').share>.8);
+ assert.ok(Math.abs(weighted.taste.reduce((s,t)=>s+t.share,0)-1)<1e-9);
+ const b=buildTactBalance([{key:'a',food:f,pounds:null}], 'mass');
+ assert.equal(b.coverage.included,0);assert.equal(b.coverage.missingMass,1);
+ assert.equal(JSON.stringify(f),before);
+});
+
+test('mild Neutral contributes less than strong defining taste and scenario tags never certify review',()=>{
+ const neutral={key:'n',name:'Plain rice'},spicy={key:'s',name:'Hot sauce'};
+ const rows=[{key:'n',food:neutral,tactTags:{taste:['Neutral']},tactWeights:{taste:{Neutral:{importance:3,intensity:1}}}},{key:'s',food:spicy,tactTags:{taste:['Spicy']},tactWeights:{taste:{Spicy:{importance:3,intensity:3}}}}];
+ const b=buildTactBalance(rows);assert.ok(b.dimensions.taste.find(t=>t.tag==='Neutral').value<b.dimensions.taste.find(t=>t.tag==='Spicy').value);
+ assert.equal(b.coverage.proposed,2);
+});

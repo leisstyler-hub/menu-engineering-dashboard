@@ -51,3 +51,12 @@ test('runtime reapplies pantry exclusions before recomputing stored release scor
  data.menus[0].matchKeys.push('recipe-name:salt');data.ingredientLabels['recipe-name:salt']='Salt';
  const projected=projectRecipePresence(data);assert.deepEqual(projected.menus[0].matchKeys,['recipe-name:carrots']);
 });
+
+import {affinityPartners,affinitySummary} from '../src/shared/conceptAffinity.js';
+test('ingredient fit uses exact cohort identities and shared/union counts without cuisine reassignment',()=>{
+ const data={source:'recipe-ingredient-presence',releaseVersion:'v',menus:[{name:'Andes',hasIngredientData:true,matchKeys:['x','y']},{name:'AMZ: Anisa',hasIngredientData:true,matchKeys:['x','z']},{name:'Missing',hasIngredientData:false,matchKeys:[]}]};
+ const before=JSON.stringify(data),partners=affinityPartners(data,'AMZ: Andes');
+ assert.equal(partners[0].shared,1);assert.equal(partners[0].union,3);assert.equal(partners[0].score,1/3);
+ assert.equal(partners.length,1);assert.equal(affinitySummary(data,['Andes','AMZ: Anisa']).minimum,1/3);
+ assert.equal(JSON.stringify(data),before);
+});

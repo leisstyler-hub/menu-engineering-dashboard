@@ -125,3 +125,26 @@ test('recognized seafood without recipe evidence never retains Ambient',()=>{
   assert.deepEqual(profileFor(f).placements,[]);assert.equal(suggestSpread([f],[],{hot:0,cold:0,ambient:1}).entries.length,0);
  }
 });
+
+import {planogramLayout,planogramWarnings, sellMethod} from '../src/features/menu-engineering/wpPlanningModel.js';
+test('pan arrangement preserves chosen footprints and exact MRNs and detects collisions',()=>{
+ const entries=[{key:'a',name:'A',mrn:'0001.20',panSize:'full',bay:1,panPosition:1},{key:'b',name:'B',mrn:'0001.2',panSize:'half',bay:1,panPosition:1}];
+ const before=JSON.stringify(entries),layout=planogramLayout(entries,2);
+ assert.equal(layout[0].cells.length,12);assert.equal(layout[0].mrn,'0001.20');
+ assert.ok(planogramWarnings(layout).some(x=>x.includes('overlap')));
+ assert.equal(JSON.stringify(entries),before);assert.equal(sellMethod({}),'Sell by Weight');
+});
+
+test('mixed daily sales use explicit fixed prices without changing weight qualification',()=>{
+ const f={key:'a',name:'Roasted carrots',mrn:'0001',menus:['Test'],category:'Vegetables',cost:1,costPerLb:4,massOz:4,portion:'4 oz'};
+ const entries=[{key:'a',quantityMode:'portions',expectedPortions:'4',sellMethod:'Scan and Pay',scanPayPrice:'5',scanPayBoxes:'3',scanPayPortionsPerBox:'1'}];
+ const p=projectStation(entries,[f],10,'100',true);assert.equal(p.sales,15);assert.equal(p.cost,4);
+ assert.equal(projectStation([{...entries[0],scanPayPrice:''}],[f],10,'100',true).sales,null);
+});
+
+test('Scan and Pay cannot project boxes beyond compatible prepared source portions',()=>{
+ const f={key:'a',name:'Roasted carrots',mrn:'0001',menus:['Test'],category:'Vegetables',cost:1,costPerLb:4,massOz:4,portion:'4 oz'};
+ const e={key:'a',quantityMode:'portions',expectedPortions:'4',sellMethod:'Scan and Pay',scanPayPrice:'5',scanPayBoxes:'10000',scanPayPortionsPerBox:'1'};
+ assert.equal(projectStation([e],[f],10,'100',true).sales,null);
+ assert.equal(projectStation([{...e,scanPayBoxes:'3',scanPayPortionsPerBox:''}],[f],10,'100',true).sales,null);
+});

@@ -1,3 +1,5 @@
+import {fitsDiet} from './wpPlanningModel.js';
+import {tactContrast} from './wpTactBalance.js';
 import serviceEvidence from '../../data/wpServiceEvidence.json' with {type:'json'};
 import {serviceProfile} from './wpServiceProfile.js';
 import {tactProfile} from './wpTactProfile.js';
@@ -42,12 +44,12 @@ export function capacityIssues(entries,capacity) {
   if(!Object.hasOwn(counts,e.placement)){issues.push('Service Tag needs review to check equipment fit.');continue;}
   let footprint=1,count=1;
   if(e.totalPans!==undefined){
-   count=1;footprint=e.placement==='Ambient'?1:e.panSize==='half'?.5:e.panSize==='bullet'?1/6:1;
+   count=1;footprint=e.placement==='Ambient'?1:['half','longhalf'].includes(e.panSize)?.5:e.panSize==='bullet'?1/6:1;
   }else if(e.quantityMode==='pan'){
    count=Number(e.openingPans);
    if(!Number.isInteger(count)||count<0){issues.push('Enter whole opening pan counts to check equipment fit.');continue;}
    if(e.placement!=='Ambient'){
-    footprint=e.panSize==='half'?.5:e.panSize==='full'?1:e.totalPans!==undefined&&e.panSize==='bullet'?1/6:Number(e.footprint);
+    footprint=['half','longhalf'].includes(e.panSize)?.5:e.panSize==='full'?1:e.totalPans!==undefined&&e.panSize==='bullet'?1/6:Number(e.footprint);
     if(!Number.isFinite(footprint)||footprint<=0){issues.push('Confirm the bullet pan footprint in full-pan spaces.');continue;}
    }
   }
@@ -58,8 +60,8 @@ export function capacityIssues(entries,capacity) {
 }
 export function displayFootprint(entry) {
  if(entry.quantityMode==='portions'||entry.quantityMode==='cups')return 0;
- if(entry.totalPans!==undefined)return entry.placement==='Ambient'?1:entry.panSize==='half'?.5:entry.panSize==='bullet'?1/6:1;
- return entry.quantityMode==='pan'?Number(entry.openingPans)*(entry.panSize==='half'?.5:entry.panSize==='full'?1:Number(entry.footprint)):1;
+ if(entry.totalPans!==undefined)return entry.placement==='Ambient'?1:['half','longhalf'].includes(entry.panSize)?.5:entry.panSize==='bullet'?1/6:1;
+ return entry.quantityMode==='pan'?Number(entry.openingPans)*(['half','longhalf'].includes(entry.panSize)?.5:entry.panSize==='full'?1:Number(entry.footprint)):1;
 }
 export function spreadProgress(entries,foods,capacity) {
  const used={Hot:0,Cold:0,Ambient:0,individual:0},issues=[],quantityIssues=[];
@@ -88,7 +90,7 @@ export function suggestSpread(foods,entries,capacity) {
  const remaining=Object.fromEntries(Object.keys(progress.used).map(k=>[k,progress.targets[k]-progress.used[k]]));
  for(const placement of ['Hot','Cold','Ambient','individual']){
   while(remaining[placement]>1e-8){
-   const candidates=foods.filter(eligible).filter(f=>{
+   const candidates=foods.filter(eligible).filter(f=>fitsDiet(f,capacity.dietary||'All')).filter(f=>{
     const p=profileFor(f);
     return p.foodType!=='Dessert'&&!(p.role==='Sauces / dressings'&&chosen.some(e=>profileFor((capacity.catalog||foods).find(c=>c.key===e.key)||{}).role==='Sauces / dressings'))&&!(p.premium&&chosen.some(e=>profileFor((capacity.catalog||foods).find(c=>c.key===e.key)||{}).premium))&&!chosen.some(e=>e.key===f.key)&&!p.conflicts?.length&&(placement==='individual'?p.serviceFormat==='Individual'&&p.placements.length===1:p.placements.length===1&&p.placements[0]===placement&&(p.serviceFormat!=='Individual'||p.foodType==='Salad'));
    });
@@ -99,7 +101,7 @@ export function suggestSpread(foods,entries,capacity) {
     let goal=p.role==='Proteins'?(roleCount===0?90:roleCount===1?80:0):p.role==='Vegetables'&&!roleCount?75:p.role==='Starches / grains'&&!roleCount?65:p.role==='Sauces / dressings'&&!roleCount?10:0;
     if(p.foodType==='Noodle'&&!profiles.some(c=>c.foodType==='Noodle'))goal+=85;
     if(p.foodType==='Salad'&&!profiles.some(c=>c.foodType==='Salad'))goal+=90;
-    return goal+(!profiles.some(c=>c.foodType===p.foodType)?10:0)+(!roleCount?10:0)+(p.proteinFamily!=='Unknown'&&!profiles.some(c=>c.proteinFamily===p.proteinFamily)?10:0)+(p.premium&&!premiumCount?100:0)+Math.min(9,p.textures.filter(t=>!profiles.some(c=>c.textures.includes(t))).length*3)+Math.min(5,p.ingredientKeys.filter(k=>profiles.some(c=>c.ingredientKeys?.includes(k))).length)-(Number.isFinite(f.foodCost)?Math.min(10,f.foodCost*10):12);
+    return goal+(p.seasons.includes(capacity.season)?2:0)+(!profiles.some(c=>c.foodType===p.foodType)?10:0)+(!roleCount?10:0)+(p.proteinFamily!=='Unknown'&&!profiles.some(c=>c.proteinFamily===p.proteinFamily)?10:0)+(p.premium&&!premiumCount?25:0)+tactContrast(f,chosen.map(e=>(capacity.catalog||foods).find(x=>x.key===e.key)||{}))*12+Math.min(9,p.textures.filter(t=>!profiles.some(c=>c.textures.includes(t))).length*3)+Math.min(5,p.ingredientKeys.filter(k=>profiles.some(c=>c.ingredientKeys?.includes(k))).length)-(Number.isFinite(f.foodCost)?Math.min(10,f.foodCost*10):12);
    };
    candidates.sort((a,b)=>score(b)-score(a)||a.name.localeCompare(b.name));
    const f=candidates[0];if(!f)break;
@@ -122,7 +124,7 @@ export function suggestSwaps(entries,foods,options) {
  for(const entry of entries.filter(e=>!e.locked)){
   const from=catalog.find(f=>f.key===entry.key);if(!from)continue;
   const fp=profileFor(from),placement=entry.placement||fp.placements[0];
-  const candidates=foods.filter(f=>!selected.has(f.key)&&eligible(f)&&f.category===from.category&&placement&&profileFor(f).placements.includes(placement));
+  const candidates=foods.filter(f=>fitsDiet(f,options.dietary||'All')&&!selected.has(f.key)&&eligible(f)&&f.category===from.category&&placement&&profileFor(f).placements.includes(placement));
   for(const to of candidates){
    const tp=profileFor(to),reasons=[];
    const other=entries.filter(e=>e.key!==entry.key).map(e=>profileFor(catalog.find(f=>f.key===e.key)||{}));
@@ -134,7 +136,7 @@ export function suggestSwaps(entries,foods,options) {
    if(!reasons.length)continue;
    const before=projectStation(entries,catalog,options.rate,options.sellThrough,options.trusted);
    const after=projectStation(applySwap(entries,entry.key,to),catalog,options.rate,options.sellThrough,options.trusted);
-   results.push({from,to,reasons,placement,before,after,score:reasons.length});
+   results.push({from,to,reasons,placement,before,after,score:tactContrast(to,entries.filter(e=>e.key!==entry.key).map(e=>catalog.find(f=>f.key===e.key)||{}))*5+reasons.filter(r=>!r.includes('season')).length*3+(reasons.some(r=>r.includes('season'))?1:0)});
   }
  }
  return results.sort((a,b)=>b.score-a.score||a.to.name.localeCompare(b.to.name)).slice(0,5);

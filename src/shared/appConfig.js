@@ -1,1 +1,1 @@
-export const APP_VERSION_STAMP = "2026.11.19.006-ssmt-modifier-spreadsheet";
+export const APP_VERSION_STAMP = "2026.11.19.007-wp-tact-planogram";

@@ -104,7 +104,7 @@ export default function WeighPayView() {
     {data.state === 'ready' && <>
       <EnterpriseOverview projections={projections} trusted={trusted} rate={rate}/>
       <label className="block rounded-xl border bg-white p-3 text-sm font-semibold"><input type="checkbox" checked={includeRa} onChange={e=>setIncludeRa(e.target.checked)}/> Include RA menus</label>
-      <WpMenuPicker projections={projections} selectedMenus={activeMenus} trusted={trusted} onChange={names=>{setSelectedMenus(names);setEditing(false);setApprovalFilter('all');}}/>
+      <WpMenuPicker includeRa={includeRa} projections={projections} selectedMenus={activeMenus} trusted={trusted} onChange={names=>{setSelectedMenus(names);setEditing(false);setApprovalFilter('all');}}/>
       <WpPortfolio catalogProjections={projections} projections={projections.filter(p=>!activeMenus.length||activeMenus.includes(p.menu))} trusted={trusted} rate={rate} onExport={exportPortfolio} exporting={exporting}/>
       {selected&&<p className="text-sm text-slate-600">{selected.menu} - {selected.allowed}/{selected.total} allowed components - {percent(selected.passRate)} - {selected.status}</p>}
       {selected && conceptSources[selected.menu] && <div className="space-y-3"><button className={button} disabled={exporting||!rate} onClick={()=>exportPackage(menus.filter(m=>m.menu===selected.menu))}>Export menu package</button></div>}

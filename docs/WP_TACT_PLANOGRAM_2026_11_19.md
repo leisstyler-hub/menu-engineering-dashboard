@@ -1,0 +1,13 @@
+# W&P sensory planning and pan arrangement
+
+The main build keeps menu selection, selected foods/quantities and all four TACT dimensions together. Importance and intensity are ordinal 1-3 proposals, not measured sensory values or food weight. Each dimension allows up to three planning tags. Existing profiles remain unchanged; chef adjustments are held in the current build and never become verified training targets automatically. Default weights remain Proposed even where source tags were reviewed. Prepared-pound representation excludes missing mass instead of guessing it.
+
+Ingredient-fit planning groups use the same exact source ingredient sets and source version in Pairwise and W&P. Shared/union percentages are descriptive overlap, not approval scores. Approved cuisine pillars remain intact. RA inclusion changes the cohort explicitly; Mediterranean has two default concepts plus two RA concepts. Dietary eligibility uses source tags; absent tags do not qualify. Seasonality is a smaller guidance preference than dietary/TACT fit.
+
+The separate planogram arranges one displayed pan per selected food. Full pans retain their size; halves stack, lengthwise halves pair, and legacy bullets remain one-sixth capacity. Reserve/prepared quantities remain separate. Exact MRNs remain text. Collisions, out-of-bounds positions and missing placement are visible. Colors are proposed illustrative bands, not measured portions. Workbook and printable layout carry a content revision and LTO validation. Email opens a draft for manual attachment; PDF uses the browser print dialog.
+
+Sell by Weight remains the default. Scan and Pay is an explicit daily method independent of display-pan size. Revenue requires a price, whole-box count, compatible source prepared yield and source portions per box. Boxes cannot exceed that yield; missing/incompatible values leave revenue unresolved. These are planning forecasts, not sales or food-safety authorization.
+
+Freshness, frequent turnover, inviting full displays and deliberate replenishment are SOP principles. Lightning LTO records a launch time/timezone, limited pans and replenishment notes; it does not authorize cooling, repacking or holding practices. Chefs follow approved food-safety procedures. Limited premium pans stay distinct from continuous replenishment.
+
+Fresh Andes inference and Chief review were delivered in the originating Buzz thread before these app edits. Those private Proposed profiles were not imported into the catalog or training data. No operational menu data migration, baseline initialization or production workspace test writes are included.

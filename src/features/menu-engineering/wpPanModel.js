@@ -1,4 +1,4 @@
-export const PAN_SIZES = ['bullet','half','full'];
+export const PAN_SIZES = ['bullet','half','longhalf','full'];
 export const whole = value => String(value??'').trim()!=='' && Number.isInteger(Number(value)) && Number(value)>=0;
 export function entryPounds(entry) {
   if(entry.quantityMode!=='pan')return String(entry.pounds??'').trim()!==''&&Number.isFinite(Number(entry.pounds))&&Number(entry.pounds)>0?Number(entry.pounds):null;

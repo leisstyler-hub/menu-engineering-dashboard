@@ -1,3 +1,4 @@
+import ConceptAffinity from '../../shared/ui/ConceptAffinity.jsx';
 import {scopePairwise} from './pairwiseScope.js';
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Grid3x3, Info, LayoutList, Maximize2, Minimize2, Search } from "lucide-react";
@@ -190,6 +191,7 @@ export default function MenuCrossUtilizationTool({ onBackToPlatform, onOpenSmart
         {!available ? <div role="status" className="rounded-lg border border-amber-200 bg-white p-5">{loadError || "Loading recipe ingredient records..."}</div> : view === "overview" ? (
           <>
             <PillarStrategy pillars={DATA.pillars} menus={menus} />
+            <ConceptAffinity data={DATA} includeRa={includeRa}/>
             <MenuTable
               menus={filteredMenus}
               search={search}

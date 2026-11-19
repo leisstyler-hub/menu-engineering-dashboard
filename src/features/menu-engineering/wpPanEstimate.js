@@ -1,7 +1,7 @@
 import evidence from '../../data/wpPanEvidence.json' with {type:'json'};
 
 // Reference four-inch pans; 80% usable fill is a planning assumption, not a measurement.
-export const PAN_REFERENCE={full:{quarts:14.2,footprint:1,label:'Full'},half:{quarts:6.7,footprint:.5,label:'Half'},bullet:{quarts:1.8,footprint:1/6,label:'Bullet (sixth-size estimate)'}};
+export const PAN_REFERENCE={longhalf:{quarts:6.7,footprint:.5,label:'Lengthwise half (half-pan volume reference)'},full:{quarts:14.2,footprint:1,label:'Full'},half:{quarts:6.7,footprint:.5,label:'Half'},bullet:{quarts:1.8,footprint:1/6,label:'Bullet (sixth-size estimate)'}};
 export const PAN_FILL=.8;
 const normalized=v=>String(v??'').trim().toLowerCase().replace(/\s+/g,' ');
 const menu=v=>normalized(v).replace(/^amz:\s*/,'');

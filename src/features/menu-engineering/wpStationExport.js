@@ -1,3 +1,4 @@
+import {sellMethod} from './wpPlanningModel.js';
 import * as XLSX from 'xlsx';
 import {profileFor} from './wpSmartModel.js';
 import {tactColumns} from './wpTactProfile.js';
@@ -15,6 +16,9 @@ export function buildStationWorkbook(projection, {rate, sellThrough, trusted}) {
     'Cost source':row.estimate?.basis?.startsWith('Planning assumption')?'Unknown; serving-volume assumption only':row.estimate?'Menu Item Index source-file estimate':row.food?.costBasis||'', 'Weight source':row.estimate?.basis?.startsWith('Planning assumption')?'Unknown; serving-volume assumption only':row.estimate?'Menu Item Index portion weight and reference pan':row.food?.weightSource||'',
     'Pan size (4-inch deep)':row.panSize||'',
     'Total pans to prepare':row.totalPans??'',
+    'Daily sell method':sellMethod(row), 'Scan and Pay price':row.scanPayPrice||'', 'Scan and Pay boxes':row.scanPayBoxes||'','Source portions per box':row.scanPayPortionsPerBox||'',
+    'Lightning LTO':row.lightning?'Limited':'No','Lightning launch':row.launchAt||'','Lightning timezone':row.timezone||'','Lightning pan limit':row.ltoPanLimit||'',
+    'Replenishment plan':row.replenishmentNote||'', 'TACT scenario tags':JSON.stringify(row.tactTags||{}),'TACT scenario weights':JSON.stringify(row.tactWeights||{}),
     'Quantity mode':row.quantityMode||'', 'Expected portions':row.expectedPortions??'', 'Expected cups':row.expectedCups??'',
     'Reference low lb':row.referenceRange?.low??'', 'Reference high lb':row.referenceRange?.high??'', 'Reference basis':row.referenceRange?.basis||'',
     'Estimated source servings':row.servings??'Unavailable',

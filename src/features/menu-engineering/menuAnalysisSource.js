@@ -1,3 +1,4 @@
+import {dietaryTags} from './wpPlanningModel.js';
 import {measure} from './andesAnalysisModel.js';
 import {portionWeightOz} from './weighPayModel.js';
 import evidence from '../../data/wpSourceReconciliation.json' with {type:'json'};
@@ -33,7 +34,7 @@ export function buildMenuAnalysisSource(menu,rows,library,trusted=false) {
     const id=`menu-item-${index}`;
     if(match)for(const edge of match.components||[])include(edge.childId);
     dishes.push({...match,id,mrn:String(row.mrn??''),name:String(row.item||row.displayName||'Unnamed item'),portion:String(row.portion||''),
-      description:row.description??'',ingredients:row.ingredients??[],culinaryProfile:row.culinaryProfile,
+      description:row.description??'',ingredients:row.ingredients??[],culinaryProfile:row.culinaryProfile,dietTags:dietaryTags(row),
       cost:match?.cost??(trusted?sharedCost:null),costBasis:match?.cost!=null?'Recipe snapshot':'Shared item data',
       massOz:sharedMass??match?.massOz??null,massBasis:sharedMass?'Shared item data':match?.massBasis||'Recipe snapshot',
       weightApproximate:sharedMass?false:Boolean(match?.weightApproximate),sourceRecipeId:match?.id,

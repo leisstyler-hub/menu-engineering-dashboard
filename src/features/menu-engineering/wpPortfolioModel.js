@@ -1,3 +1,4 @@
+import {dietaryTags} from './wpPlanningModel.js';
 import {tierFor} from './panReadyModel.js';
 import {isRetiredConcept} from '../../shared/conceptPillars.js';
 // Retired concepts remain in source records, outside active planning.
@@ -22,7 +23,7 @@ export function buildPortfolio(projections) {
     const portfolioStatus=!valid?'Needs information':serviceReasons.length?'Service review':foodCost<=.4+1e-12?'Within 40%':'Above 40%';
     const informationReasons=[...new Set(variants.flatMap(r=>r.informationReasons||[]))];
     if(conflict)informationReasons.push('Conflicting source variants; no single cost per pound established');
-    return {...first,...(conflict?{cost:null,massOz:null}:{}),key,menus,variants,informationReasons,weightApproximate:variants.some(r=>r.weightApproximate),serviceReasons:conflict?[...serviceReasons,'Conflicting source variants require review']:serviceReasons,foodCost,tier:tierFor(foodCost),costPerLb:conflict?null:perLb(first),portfolioStatus,conflict};
+    return {...first,dietTags:dietaryTags(first).filter(tag=>variants.every(v=>dietaryTags(v).includes(tag))),...(conflict?{cost:null,massOz:null}:{}),key,menus,variants,informationReasons,weightApproximate:variants.some(r=>r.weightApproximate),serviceReasons:conflict?[...serviceReasons,'Conflicting source variants require review']:serviceReasons,foodCost,tier:tierFor(foodCost),costPerLb:conflict?null:perLb(first),portfolioStatus,conflict};
   }).sort((a,b)=>a.category.localeCompare(b.category)||a.name.localeCompare(b.name));
 }
 

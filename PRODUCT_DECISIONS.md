@@ -1,3 +1,7 @@
+## 2026-11-19 - W&P sensory and display planning
+
+Tyler authorized weighted TACT guidance, daily sales methods, a separate pan planogram and limited timed premium pans in W&P. Ingredient-fit planning groups supplement approved cuisine pillars in both Pairwise and W&P; they do not silently reassign menus to improve percentages. Source dietary eligibility precedes TACT guidance; seasonality is secondary. Proposed planning weights remain distinct from reviewed tags and training approval. See [behavior and SOP](docs/WP_TACT_PLANOGRAM_2026_11_19.md). No recipe/catalog or operational workspace conversion is authorized by this code release.
+
 ## PILLARS-2026-11-03: One current mapping and retired concepts
 
 Tyler request 7999c6ed07a8b1908c60a2a6febff89f0b95a082508c02dbbadff3a7bef71c25 supersedes the selector-only scope: use current pillar assignments throughout Pairwise, W&P selection, smart builds and profile/export presentation. Balti Pilot belongs with Balti in South Asian. Complete remaining assignment Chickle as American Grill & Smokehouse based on its chicken-led source menu. Keep approved Core Stations Pillar and Harvest Co. membership. Follow-up 7f60f119aaf2a986c74d3eb632fc6341f95beedfd1cb2462930e52d0bc081e58 retires MTO Deli and WP Salad Bar from active planning/comparisons/exports; retain source and history. No culinary reviewed-profile rewrite or operational data write. Ingredient identities and pairwise pair scores remain unchanged; within-pillar statistics intentionally reflect current membership.

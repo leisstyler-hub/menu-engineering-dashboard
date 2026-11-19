@@ -1,3 +1,6 @@
+import {projectStation} from './wpStationModel.js';
+import {exclusionHelp,fitsDiet} from './wpPlanningModel.js';
+import WpTactWheel from './WpTactWheel.jsx';
 import WpCapacity from './WpCapacity.jsx';
 import {profileFor} from './wpSmartModel.js';
 import React,{useMemo,useState} from 'react';
@@ -28,21 +31,24 @@ export function EnterpriseOverview({projections,trusted,rate}) {
 
 export default function WpPortfolio({projections,catalogProjections=projections,trusted,rate,onExport,exporting}) {
   const [entries,setEntries]=useState([]);
-  const [capacity,setCapacity]=useState({hot:'4',cold:'4',ambient:'2',individual:'0'});
+  const [capacity,setCapacity]=useState({hot:'4',cold:'4',ambient:'2',individual:'0',dietary:'All',season:'None'});
   const [sellThrough,setSellThrough]=useState('100');
   const catalog=useMemo(()=>buildPlanningPortfolio(catalogProjections),[catalogProjections]);
   const [category,setCategory]=useState('All'),[search,setSearch]=useState('');
   const rows=useMemo(()=>buildPlanningPortfolio(projections),[projections]);
   const passing=trusted?rows.filter(r=>r.portfolioStatus==='Within 40%'):[];
   const counts=CATEGORIES.map(label=>({label,count:passing.filter(r=>r.category===label).length}));
-  const visible=rows.filter(r=>(category==='All'||r.category===category)&&`${r.name} ${r.mrn} ${r.menus.join(' ')}`.toLowerCase().includes(search.toLowerCase()));
+  const visible=rows.filter(r=>fitsDiet(r,capacity.dietary||'All')&&(category==='All'||r.category===category)&&`${r.name} ${r.mrn} ${r.menus.join(' ')}`.toLowerCase().includes(search.toLowerCase()));
   const heldOut=projections.flatMap(p=>(p.excluded||[]).map(r=>({...r,menu:p.menu})));
   const toggleFood = r => setEntries(previous=>previous.some(entry=>entry.key===r.key)?previous.filter(entry=>entry.key!==r.key):[...previous,{key:r.key,name:r.name,mrn:r.mrn,menus:r.menus,quantityMode:'pan',panSize:'half',totalPans:'1',...(profileFor(r).serviceFormat==='Individual'?{quantityMode:'portions',totalPans:undefined,expectedPortions:''}:{})}]);
   return <section aria-label="W&P qualifying portfolio" className="wp-workbench space-y-5 rounded-2xl border p-4 md:p-6">
     <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-wide text-teal-700">Working selection | {projections.length} menus</p><h2 className="mt-1 text-2xl font-bold text-teal-950">Plan your W&amp;P station</h2><p className="mt-1 text-sm text-slate-600">Unique servable components | ${((rate||0)/16).toFixed(2)}/oz | each food counted once across menus</p></div><button className="wp-menu-export rounded-xl border bg-white px-4 py-2 text-sm font-semibold disabled:opacity-50" disabled={exporting||!rate||!trusted||!visible.length} onClick={()=>onExport(visible)}>Export browse results</button></div>
     {!trusted&&<p className="text-sm text-amber-900">Load current shared data before using qualifying portfolio counts.</p>}
+    <div className="flex flex-wrap gap-3 rounded-xl border bg-white p-3"><label className="min-w-40 flex-1 text-xs font-bold">Dietary priority<select aria-label="Dietary priority" className="mt-1 w-full rounded-lg border p-2" value={capacity.dietary} onChange={e=>setCapacity({...capacity,dietary:e.target.value})}>{['All','Vegan','Vegetarian'].map(v=><option key={v}>{v}</option>)}</select></label><label className="min-w-40 flex-1 text-xs font-bold">Season preference (secondary)<select aria-label="Season preference" className="mt-1 w-full rounded-lg border p-2" value={capacity.season} onChange={e=>setCapacity({...capacity,season:e.target.value})}>{['None','Spring','Summer','Fall','Winter'].map(v=><option key={v}>{v}</option>)}</select></label><p className="w-full text-xs text-slate-500">Pillar/menu selection and source dietary tags guide eligible choices; TACT adds contrast, seasonality is a small preference. Unknown dietary information is excluded from a specific dietary filter. Existing selections remain visible for review; tags do not certify allergens.</p></div>
+    {capacity.dietary!=='All'&&entries.some(e=>!fitsDiet(catalog.find(f=>f.key===e.key),capacity.dietary))&&<p role="alert" className="text-xs font-bold text-amber-900">Existing selections include foods without the required source dietary tag. Review those before service; your choices have been preserved.</p>}
+    <WpTactWheel rows={projectStation(entries,catalog,rate,sellThrough,trusted).rows} entries={entries} onChange={setEntries}/>
     <WpCapacity entries={entries} catalog={catalog} capacity={capacity} onChange={setCapacity}/>
-    <details className="rounded-xl border bg-white p-4 text-sm"><summary className="cursor-pointer font-semibold">Foods held out of this W&amp;P pool ({heldOut.length} source memberships)</summary><p className="mt-2 text-xs text-slate-500">Service-format and plain-food exclusions apply only to W&amp;P guidance. Source records remain available to other tools. High cost alone does not omit a food.</p><ul className="mt-3 space-y-2">{heldOut.map((r,i)=><li key={`${r.menu}:${r.id}:${i}`} className="break-words"><strong>{r.name}</strong><span className="block text-xs text-slate-500">MRN {r.mrn} · {r.menu} · {r.classificationReason}</span></li>)}</ul></details>
+    <details className="rounded-xl border bg-white p-4 text-sm"><summary className="cursor-pointer font-semibold">Foods held out of this W&amp;P pool ({heldOut.length} source memberships)</summary><p className="mt-2 text-xs text-slate-500">Service-format and plain-food exclusions apply only to W&amp;P guidance. Source records remain available to other tools. High cost alone does not omit a food.</p><ul className="mt-3 space-y-2">{heldOut.map((r,i)=><li key={`${r.menu}:${r.id}:${i}`} className="break-words"><strong>{r.name}</strong><span className="block text-xs text-slate-500">MRN {r.mrn} · {r.menu} · {r.classificationReason}</span><span className="block text-xs text-teal-900">{exclusionHelp(r.classificationReason)}</span></li>)}</ul></details>
     <button type="button" className="wp-station-jump xl:hidden" onClick={()=>{const station=document.getElementById('wp-station');station?.scrollIntoView({block:'start'});station?.focus({preventScroll:true});}}>View your station <span>{entries.length} selected &darr;</span></button>
     <div className="wp-workspace grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"><div className="wp-browse min-w-0 rounded-2xl border bg-white">
     <div className="wp-browse-heading"><p className="wp-step">01 / Choose your foods</p><h3 className="text-xl font-bold">Browse foods</h3><p className="mt-1 text-sm text-slate-500">Click a food to select it. Click again to unselect.</p></div>

@@ -1,3 +1,4 @@
+import {sellMethod,scanPayRevenue} from './wpPlanningModel.js';
 import {serviceProfile} from './wpServiceProfile.js';
 import {estimatePans,portionCups} from './wpPanEstimate.js';
 import {entryPounds} from './wpPanModel.js';
@@ -25,8 +26,11 @@ export function projectStation(entries, catalog, rate, sellThrough, trusted) {
   const cost = rows.length && rows.every(row => row.cost != null) ? finite(rows.reduce((sum, row) => sum + row.cost, 0)) : null;
   const sellValid = String(sellThrough).trim() !== '' && Number.isFinite(Number(sellThrough)) && Number(sellThrough) >= 0 && Number(sellThrough) <= 100;
   const soldPounds = pounds != null && sellValid ? finite(pounds * (Number(sellThrough) / 100)) : null;
-  const sales = !rows.some(row=>row.food?.planningOnly) && soldPounds != null && positive(rate) ? finite(soldPounds * Number(rate)) : null;
-  return {rows, pounds, cost, soldPounds, sales, foodCost: cost != null && sales > 0 ? cost / sales : null,
+  const rowSales=rows.map(row=>sellMethod(row)==='Scan and Pay'?
+    scanPayRevenue(row).sales:
+    !row.food?.planningOnly&&row.pounds!=null&&sellValid&&positive(rate)?finite(row.pounds*Number(sellThrough)/100*Number(rate)):null);
+  const sales=rows.length&&rowSales.every(value=>value!=null)?finite(rowSales.reduce((sum,value)=>sum+value,0)):null;
+  return {rows, pounds, cost, soldPounds, sales,salesReasons:rows.filter(row=>sellMethod(row)==='Scan and Pay').map(row=>({name:row.name,...scanPayRevenue(row)})).filter(row=>row.reason), foodCost: cost != null && sales > 0 ? cost / sales : null,
     contribution: cost != null && sales != null ? sales - cost : null,
     reviewCount: rows.filter(row => row.food?.serviceReasons?.length).length,
     approximate: rows.some(row => row.estimate || row.food?.weightApproximate)};

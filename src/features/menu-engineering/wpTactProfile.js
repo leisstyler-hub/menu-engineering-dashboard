@@ -1,10 +1,10 @@
 // Sensory proposals only. These rules never establish dietary or holding safety.
-export const TACT_VERSION=1;
+export const TACT_VERSION=2;
 export const TACT_VOCABULARY=Object.freeze({
- taste:Object.freeze(['Sweet','Sour/Acidic','Salty','Bitter','Umami']),
- aroma:Object.freeze(['Herbal','Citrus','Floral','Toasted','Roasted','Smoky','Warm Spice']),
- color:Object.freeze(['Green','Red','Orange','Yellow','Purple','Brown','White/Cream']),
- texture:Object.freeze(['Crisp/Crunchy','Creamy','Tender','Chewy','Firm','Soft','Juicy'])
+ taste:Object.freeze(['Sweet','Sour/Acidic','Salty','Bitter','Umami','Neutral','Spicy']),
+ aroma:Object.freeze(['Herbal','Citrus','Floral','Toasted','Roasted','Smoky','Warm Spice','Earthy','Meaty','No aroma']),
+ color:Object.freeze(['Green','Red','Orange','Yellow','Purple','Brown','White/Cream','Bright','Muted']),
+ texture:Object.freeze(['Crisp/Crunchy','Creamy','Tender','Chewy','Firm','Soft','Juicy','Brothy'])
 });
 const rules={
  taste:[['Sweet',/\b(sweet|honey|maple|sugar|caramel)\b/i],['Sour/Acidic',/\b(lemon|lime|vinegar|pickled|acidic|sour)\b/i],['Salty',/\b(salty|salted|brined)\b/i],['Bitter',/\b(bitter|radicchio|endive)\b/i],['Umami',/\b(umami|miso|mushrooms?|beef|chicken|soy sauce|parmesan)\b/i]],
@@ -26,7 +26,7 @@ export function tactProfile(food={}) {
   const saved=stored?.[dimension];
   if(saved?.status==='Reviewed'&&Array.isArray(saved.values)){
    const issues=[];
-   if(stored.version!==TACT_VERSION)issues.push('Sensory vocabulary version needs review.');
+   if(![1,TACT_VERSION].includes(stored.version))issues.push('Sensory vocabulary version needs review.');
    if(saved.values.some(value=>!TACT_VOCABULARY[dimension].includes(value)))issues.push('Saved sensory value is outside the current vocabulary; preserved for review.');
    if(!saved.reviewer||!saved.reviewedAt)issues.push('Reviewer and review date are required.');
    result[dimension]={...saved,values:[...saved.values],evidence:[...(saved.evidence||[])],status:issues.length?'Needs review':'Reviewed',issues};
@@ -38,7 +38,7 @@ export function tactProfile(food={}) {
    if(!values.includes(label))values.push(label);
    evidence.push({tag:label,source,phrase:match[0]});break;
   }
-  result[dimension]={values,status:values.length?'Proposed':'Needs review',evidence,
+  result[dimension]={values:values.slice(0,3),status:values.length?'Proposed':'Needs review',evidence,
    basis:'Text-derived proposal; verify the finished food.',issues:[]};
  }
  return result;
