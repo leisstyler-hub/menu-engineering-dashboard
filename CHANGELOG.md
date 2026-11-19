@@ -1,5 +1,10 @@
 ## 2026-11-19
 
+- [Nov 19, 10:40 AM] Protect open menu drafts when sessions expire, save before known logout when possible, and guide chefs through safe sign-in recovery.
+
+- [Nov 19, 10:23 AM] Hide hibernated assignments by default and return clean review to assignments with simpler controls and clearer blue styling.
+- [Nov 19, 10:23 AM] Correct recognizable damaged words in review displays while preserving saved descriptions and flagging uncertain text.
+
 - [Nov 19, 10:07 AM] Track every menu in a compact assignment table and open a clean review with PDF and email sharing controls.
 - [Nov 19, 10:07 AM] Use Building Code for unit openings, keep FIXY at station level, and hide rotation controls on other menu types.
 

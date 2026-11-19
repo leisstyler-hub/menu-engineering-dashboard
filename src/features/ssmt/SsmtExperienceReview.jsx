@@ -1,3 +1,4 @@
+import {reviewText} from "./ssmtReviewText.js";
 import { noExperienceReviewNeeded } from "./ssmtReuse.js";
 import React, { useState } from "react";
 import {stationRows,reviewState,OPENING_TYPE} from "./ssmtOpening.js";
@@ -38,7 +39,7 @@ export default function SsmtExperienceReview({ ticketForm, menus, menu, groupsFo
   const nextPhase = menu.phase === "Culinary draft" ? "Experience review" : "IT programming";
   const canAdvance = ["Culinary draft", "Experience review"].includes(menu.phase) && allItemsLocked;
   const copyAll = async () => {
-    const text = items.map(item => `${item.label || item.name || "Unnamed item"}\n${item.description ?? ""}`).join("\n\n");
+    const text = items.map(item => `${item.label || item.name || "Unnamed item"}\n${reviewText(item.description)}`).join("\n\n");
     try {
       await navigator.clipboard.writeText(text);
       setCopyFallback("");
@@ -83,7 +84,7 @@ export default function SsmtExperienceReview({ ticketForm, menus, menu, groupsFo
               const modifiersOpen = !!expandedModifiers[modifierKey];
               return <React.Fragment key={item.id}><tr data-testid="ssmt-experience-item-row" className="align-top [&>td]:border-b [&>td]:border-slate-100 [&>td]:px-3 [&>td]:py-3 last:[&>td]:border-b-0 hover:bg-slate-50/70">
                 <td className="break-words"><h4 className="text-[16px] font-bold leading-6">{item.label || item.name}</h4><details><summary className="cursor-pointer text-xs">Edit names / FIXY</summary>{[["name","Item name"],["label","Item label"],["fohColumn","FIXY name"]].map(([field,label])=><label key={field} className="block text-xs">{label}<input aria-label={`${label} for ${item.id}`} className="my-1 w-full rounded border p-2" value={item[field] || ""} onChange={e=>onItemChange(item.id,{[field]:e.target.value})}/></label>)}</details>{reviewState(item)==="Needs review"&&<span className="text-xs font-bold text-amber-800">* Needs review</span>}<p className="mt-2 font-mono text-[13px] text-slate-600">MRN: {displayValue(item.mrn)}</p>{noExperienceReviewNeeded(item, menus) && <span className="mt-2 inline-flex rounded bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-800">No Review Needed</span>}</td>
-                <td><textarea aria-label={`Description for ${item.label || item.name}`} value={item.description || ""} onChange={event => onDescriptionChange(item.id, event.target.value)} spellCheck={spellcheck} lang="en-US" rows={3} className="block min-h-20 w-full resize-y rounded-md border border-slate-300 bg-white px-3 py-2 text-[16px] leading-6 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100" /></td>
+                <td><textarea aria-label={`Description for ${item.label || item.name}`} value={reviewText(item.description)} onChange={event => onDescriptionChange(item.id, event.target.value)} spellCheck={spellcheck} lang="en-US" rows={3} className="block min-h-20 w-full resize-y rounded-md border border-slate-300 bg-white px-3 py-2 text-[16px] leading-6 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100" /></td>
                 <td className="break-words text-[14px] leading-6 text-slate-700">{["Vegan", "Vegetarian"].includes(item.dietaryPreference) && <span className="mb-2 inline-flex rounded-full border border-emerald-300 bg-emerald-50 px-2 py-1 font-semibold text-emerald-900">{item.dietaryPreference}</span>}<span className="block">{displayValue(item.calories) !== "Not available" ? `${item.calories} calories` : "Calories not available"}</span></td>
                 <td className="break-words text-[14px]">
                   {groups.length ? <button type="button" aria-expanded={modifiersOpen} aria-controls={`review-modifiers-${item.id}`} onClick={() => setExpandedModifiers(current => ({...current, [modifierKey]: !current[modifierKey]}))} className="min-h-11 rounded-lg border border-violet-300 bg-violet-50 px-3 py-2 text-left font-bold text-violet-950">{modifiersOpen ? "Hide" : "View"} modifiers ({groups.length})</button> : <p className="text-sm text-slate-600">No linked modifier groups.</p>}

@@ -10,6 +10,7 @@ export function useSsmtDialog(onClose) {
     ];
     focusable()[0]?.focus();
     const keydown = (event) => {
+      if (!ref.current || ref.current.closest("[hidden],[inert]")) return;
       if (event.key === "Escape") {
         event.preventDefault();
         event.stopPropagation();

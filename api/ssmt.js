@@ -6,6 +6,7 @@ import {
   publicMember,
   assertOrigin,
   sessionCookie,
+  sessionExpiresAt,
   storedWorkspace,
   pack,
 } from "../lib/ssmtServer.js";
@@ -59,7 +60,7 @@ export default async function handler(req, res) {
       });
       const member = await identity(req, session.access_token);
       sessionCookie(res, session.access_token, session.expires_in);
-      return res.status(200).json({ ok: true, member: publicMember(member) });
+      return res.status(200).json({ ok: true, member: publicMember(member), expiresAt: sessionExpiresAt(member.token, session.expires_in) });
     }
     if (action === "exchange") {
       let accessToken = req.body.accessToken;
@@ -74,7 +75,7 @@ export default async function handler(req, res) {
       }
       const member = await identity(req, accessToken);
       sessionCookie(res, member.token, 900);
-      return res.status(200).json({ ok: true, member: publicMember(member) });
+      return res.status(200).json({ ok: true, member: publicMember(member), expiresAt: sessionExpiresAt(member.token,900) });
     }
     if (action === "logout") {
       sessionCookie(res, "", 0);
@@ -116,7 +117,7 @@ export default async function handler(req, res) {
     }
     const actor = await identity(req);
     if (action === "session")
-      return res.status(200).json({ ok: true, member: publicMember(actor) });
+      return res.status(200).json({ ok: true, member: publicMember(actor), expiresAt: sessionExpiresAt(actor.token) });
     if (action === "password") {
       const password = req.body.password;
       if (
@@ -247,6 +248,11 @@ export default async function handler(req, res) {
       return res.status(200).json({ok:true,revision:revision(packed),approvals});
     }
     if (action === "save") {
+      // Updated editors bind each save to their original verified account and permissions.
+      // Legacy clients omit the hint and retain existing server authorization checks.
+      const expected=req.body.expectedIdentity;
+      if(expected && (expected.id!==actor.user_id || expected.role!==actor.work_role || expected.isAdmin!==actor.is_admin))
+        throw failure("The signed-in account or permissions changed. Resume with the original account before saving this draft.",403);
       const stored = await storedWorkspace();
       if (req.body.revision !== stored.revision)
         throw failure(

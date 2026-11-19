@@ -1,3 +1,5 @@
+import useSsmtSessionGuard from "./useSsmtSessionGuard.js";
+import SsmtSessionRecovery from "./SsmtSessionRecovery.jsx";
 import { useSsmtDialog } from "./ssmtDialog.js";
 import {
   getSsmtRedirectToken,
@@ -19,6 +21,8 @@ export default function SsmtAccessGate({ children, onBack }) {
     [setup, setSetup] = useState(false),
     [panel, setPanel] = useState(""),
     [recovery, setRecovery] = useState(() => new URLSearchParams(window.location.search).get("ssmt") === "setup");
+  const [sessionExpiry,setSessionExpiry]=useState(null);
+  const guard=useSsmtSessionGuard(member,state==="ready"&&!setup,sessionExpiry);
   useEffect(() => {
     let active = true;
     (async () => {
@@ -59,6 +63,7 @@ export default function SsmtAccessGate({ children, onBack }) {
           clearSsmtRedirectToken();
           if (active) {
             setMember(result.member);
+            setSessionExpiry(result.expiresAt);
             setSetup(true);
             setState("ready");
           }
@@ -73,6 +78,7 @@ export default function SsmtAccessGate({ children, onBack }) {
           const result = await ssmtRequest("session");
           if (active) {
             setMember(result.member);
+            setSessionExpiry(result.expiresAt);
             setState("ready");
           }
         } catch (e) {
@@ -109,11 +115,13 @@ export default function SsmtAccessGate({ children, onBack }) {
         const session = await ssmtRequest("exchange", recoveryLink);
         clearSsmtRedirectToken();
         setMember(session.member);
+        setSessionExpiry(session.expiresAt);
       }
       const result = await ssmtRequest(action, { email, password });
       setPassword("");
       if (action === "login") {
         setMember(result.member);
+            setSessionExpiry(result.expiresAt);
         setState("ready");
       } else if (action === "password") {
         clearRecoveryRoute();
@@ -195,6 +203,7 @@ export default function SsmtAccessGate({ children, onBack }) {
     );
   return (
     <>
+      <div hidden={!!guard.block} inert={guard.block?"":undefined}>
       <div className="flex flex-wrap items-center gap-3 border-b bg-white px-4 py-2 text-sm text-slate-900">
         <strong>{member.name || member.email}</strong>
         <span>
@@ -209,27 +218,24 @@ export default function SsmtAccessGate({ children, onBack }) {
             Manage access
           </button>
         )}
-        <button className={cls} onClick={() => setSetup(true)}>
+        <button className={cls} onClick={async()=>{if(await guard.canChangePassword())setSetup(true);else setMessage("Save was not confirmed. Your menu is still open; save or download your draft before changing password.");}}>
           Change password
         </button>
         <button
           className={cls}
           onClick={async () => {
-            if (
-              !window.confirm("Sign out? Unsaved edits will not be submitted.")
-            )
-              return;
-            await ssmtRequest("logout", {});
-            setMember(null);
-            setState("login");
+            await guard.pause();
           }}
         >
           Sign out
         </button>
       </div>
       {message && <p role="status" className="px-4 py-2 text-sm">{message}</p>}
-      {children(member, member.isAdmin ? () => setPanel("members") : undefined)}
+      {guard.notice&&<p role="status" className="px-4 py-2 text-sm">{guard.notice}</p>}
+      {children(member, member.isAdmin ? () => setPanel("members") : undefined,guard.bridge)}
       {panel && <AccountPanel type={panel} onClose={() => setPanel("")} />}
+      </div>
+      {guard.block&&<SsmtSessionRecovery guard={guard} email={member.email}/>}
     </>
   );
 }

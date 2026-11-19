@@ -44,7 +44,7 @@ import {ssmtRequest} from "./ssmtClient.js";
 import { ssmtTicketForPhase } from "./ssmtTicketForms.js";
 
 export default function SsmtTool(props) {
-  return <SsmtAccessGate onBack={props.onBackToPlatform}>{(member, onOpenUserAdmin) => <SsmtEditor key={member?.id || "legacy"} {...props} accountMember={member} onOpenUserAdmin={onOpenUserAdmin} />}</SsmtAccessGate>;
+  return <SsmtAccessGate onBack={props.onBackToPlatform}>{(member, onOpenUserAdmin,sessionGuard) => <SsmtEditor key={member?.id || "legacy"} {...props} accountMember={member} sessionGuard={sessionGuard} onBackToPlatform={()=>sessionGuard?sessionGuard.leave(props.onBackToPlatform):props.onBackToPlatform()} onOpenUserAdmin={onOpenUserAdmin} onOpenSmartsheetHealth={()=>sessionGuard?sessionGuard.leave(props.onOpenSmartsheetHealth):props.onOpenSmartsheetHealth()} />}</SsmtAccessGate>;
 }
 
 const PASSCODE = "0411";
@@ -727,11 +727,10 @@ function createBlankModifierGroup(item, areaOrder) {
   };
 }
 
-function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, onOpenUserAdmin }) {
+function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, onOpenUserAdmin,sessionGuard }) {
   const [activeStationId,setActiveStationId] = useState("");
   const [rotationWeek,setRotationWeek] = useState(0);
   const [cleanReview,setCleanReview] = useState(false);
-  const [approvalMessage,setApprovalMessage] = useState("");
   const [showHibernated,setShowHibernated] = useState(false);
   const [reusePanel, setReusePanel] = useState(null);
   const [newFixyDesignation, setNewFixyDesignation] = useState("");
@@ -827,20 +826,23 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
   });
 
   latestWorkspaceRef.current = buildWorkspaceSnapshot();
-  const manualSaveWorkspace = async (label = "SSMT workspace") => {
+  const saveSettledRef=useRef(Promise.resolve());
+  const manualSaveWorkspace = async (label = "SSMT workspace",sessionPermit=null) => {
+    if(accountMode&&((sessionPermit!==null&&!sessionGuard?.isProtectionValid(sessionPermit))||(sessionGuard?.blocked&&!sessionGuard?.isProtectionValid(sessionPermit))))return false;
     if (dataStatus !== "ready" || !mountedRef.current || conflictRef.current) return false;
     if (saveInFlightRef.current) { saveRequestedRef.current = true; return false; }
     const timers = pendingSharedSaveTimersRef.current;
     if (timers.debounce) window.clearTimeout(timers.debounce);
     if (timers.save) window.clearTimeout(timers.save);
     saveInFlightRef.current = true;
+    let settleSave;saveSettledRef.current=new Promise(resolve=>{settleSave=resolve;});
     const workspace = latestWorkspaceRef.current;
     const submittedSignature = workspaceSharedSignature(workspace);
     if (!accountMode) writeLocalStorageJson(WORKSPACE_STORAGE_KEY, workspace, { clearOnQuota: true });
     setWorkspaceSync(current => ({...current,state:"saving",message:`Saving ${label} now...`}));
     let saved = false;
     try {
-      const result = await saveSsmtWorkspaceToSharedStorage(workspace, {accounts:accountMode,revision:accountRevisionRef.current});
+      const result = await saveSsmtWorkspaceToSharedStorage(workspace, {accounts:accountMode,revision:accountRevisionRef.current,expectedIdentity:accountMember?{id:accountMember.id,role:accountMember.role,isAdmin:accountMember.isAdmin}:null});
       if (accountMode) accountRevisionRef.current = result.revision;
       lastSharedSaveSignatureRef.current = submittedSignature;
       setLastSavedAt(workspace.updatedAt);
@@ -849,16 +851,26 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
       return true;
     } catch (error) {
       if (error.status === 409) conflictRef.current = true;
+      if(error.status===403&&accountMode)window.dispatchEvent(new CustomEvent("ssmt-session-recheck"));
       setWorkspaceSync({state:"fallback",source:accountMode?"unsaved":"local",message:`${error.message || "Shared save failed."} ${accountMode ? "Your unsaved draft remains in this tab. Copy your changes before reloading or signing out." : "This browser kept a local cache; press Save again after recovery."}`});
       return false;
     } finally {
       saveInFlightRef.current = false;
-      if (saved && mountedRef.current && !conflictRef.current && (saveRequestedRef.current || workspaceSharedSignature(latestWorkspaceRef.current) !== submittedSignature)) {
+      settleSave();
+      if (saved && !sessionGuard?.blocked && mountedRef.current && !conflictRef.current && (saveRequestedRef.current || workspaceSharedSignature(latestWorkspaceRef.current) !== submittedSignature)) {
         timers.save = window.setTimeout(()=>manualSaveWorkspace("pending edits"),1000);
       }
       saveRequestedRef.current = false;
     }
   };
+
+  const recoveryBridgeRef=useRef(null);
+  recoveryBridgeRef.current={
+   info:()=>({loaded:dataStatus==="ready",dirty:workspaceSharedSignature(latestWorkspaceRef.current)!==lastSharedSaveSignatureRef.current,inFlight:saveInFlightRef.current,name:latestWorkspaceRef.current.menus?.find(m=>m.id===latestWorkspaceRef.current.selectedMenuId)?.name||"Menu",lastSavedAt}),
+   save:async(permit=null)=>{if(saveInFlightRef.current)await saveSettledRef.current;if((permit!==null&&!sessionGuard?.isProtectionValid(permit))||(sessionGuard?.blocked&&!sessionGuard?.isProtectionValid(permit)))return false;if(workspaceSharedSignature(latestWorkspaceRef.current)===lastSharedSaveSignatureRef.current)return true;return manualSaveWorkspace("session protection",permit);},
+   download:()=>{const content={format:"ssmt-private-unsaved-draft-v1",ownerId:accountMember?.id,baseRevision:accountRevisionRef.current,exportedAt:new Date().toISOString(),workspace:latestWorkspaceRef.current};const url=URL.createObjectURL(new Blob([JSON.stringify(content,null,2)],{type:"application/json"}));const link=document.createElement("a");link.href=url;link.download=`SSMT_PRIVATE_DRAFT_${Date.now()}.json`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+  };
+  useEffect(()=>{if(!sessionGuard)return;return sessionGuard.register({info:()=>recoveryBridgeRef.current.info(),save:permit=>recoveryBridgeRef.current.save(permit),download:()=>recoveryBridgeRef.current.download()});},[sessionGuard]);
 
   useEffect(() => {
     let cancelled = false;
@@ -915,7 +927,8 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
           priceBookArchives: workspace.priceBookArchives || [],
           modifierGroups,
           modifierClipboardSlots: clipboardSlots,
-          seedMenuTypeCorrectionsApplied: true,
+          deletedMenuKeys: workspace.deletedMenuKeys || [],
+          seedMenuTypeCorrectionsApplied: accountMode ? workspace.seedMenuTypeCorrectionsApplied : true,
         });
         setSsmtData({
           ...payload,
@@ -1000,7 +1013,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
   const pricedModifierGroups = useMemo(() => resolveSsmtModifierPrices(ssmtData.modifierGroups, ssmtData.priceBook), [ssmtData.modifierGroups, ssmtData.priceBook]);
   useEffect(() => {
     if (dataStatus !== "ready" || accountMember?.role === "Experience" || !ssmtData.plannedPriceBook?.effectiveDate) return;
-    const activate = () => setSsmtData(current => activateDuePricing(current));
+    const activate = () => {if(!sessionGuard?.blocked)setSsmtData(current => activateDuePricing(current));};
     activate();
     const timer = window.setInterval(activate, 30_000);
     return () => window.clearInterval(timer);
@@ -2046,11 +2059,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
     lastSharedSaveSignatureRef.current=workspaceSharedSignature(result.workspace);
     setMenus(result.workspace.menus);
   };
-  const approveMenu = async () => {
-    try {if(!await manualSaveWorkspace()) throw new Error("Save the current edits successfully before approving."); const result=await ssmtRequest("approve",{menuId:selectedMenu.id,revision:accountRevisionRef.current});accountRevisionRef.current=result.revision;setMenus(current=>current.map(m=>m.id===selectedMenu.id?{...m,reviewApprovals:result.approvals}:m));setApprovalMessage("Approval recorded for the saved revision.");}
-    catch(e){setApprovalMessage(e.message);}
-  };
-  if (cleanReview) return <CleanMenuReview key={selectedMenu.id} menu={selectedMenu} menus={menus} groups={ssmtData.modifierGroups} onBack={()=>setCleanReview(false)} onApprove={approveMenu} canApprove={!!accountMember?.isAdmin || accountMember?.role==="Experience"} message={approvalMessage}/>;
+  if (cleanReview) return <CleanMenuReview key={selectedMenu.id} menu={selectedMenu} menus={menus} groups={ssmtData.modifierGroups} onBack={()=>{setCleanReview(false);setActiveView(accountMember?.isAdmin?"assignments":"menus");}} backLabel={accountMember?.isAdmin?"Back to Menu Assignments":"Back to Menu Selector"}/>;
   if (activeView === "assignments" && accountMember?.isAdmin) return <div className="mx-auto max-w-6xl p-4"><SsmtAssignments isPast={m=>!!m.hidden||m.phase==="Hibernated"||menuIsAutoHibernated(m)} onReview={id=>{setSelectedMenuId(id);setActiveView("editor");setCleanReview(id);}} menus={menus} onBaseline={initializeReviewBaseline} baselineRecorded={!!loadedWorkspaceRef.current.reviewBaseline} onOpen={id=>{setSelectedMenuId(id);setActiveView("editor");}} onAssign={assignMenu} onCreate={createAssignedMenu} onBack={()=>setActiveView("home")}/><button className="rounded border bg-sky-700 p-3 text-white" onClick={()=>manualSaveWorkspace()}>Save SSMT workspace</button></div>;
   if (accountMember?.role === "Experience" && activeView === "menus") {
     return <div className="mx-auto max-w-[1800px] space-y-4 p-4 text-slate-950"><button type="button" onClick={onBackToPlatform}>Back to Platform</button><h1 className="text-2xl font-black">SSMT - Experience</h1><nav aria-label="SSMT sections" className="flex flex-wrap gap-3"><button type="button" onClick={()=>setActiveView("home")}>Back to SSMT</button><button type="button" onClick={()=>setActiveView("pricing")}>Pricing Structure</button><button type="button" onClick={()=>setActiveView("menus")}>Menu Selector</button></nav>{dataStatus === "ready" ? menuSelector : <p role="status">{dataStatus === "error" ? "Shared workspace could not be loaded." : "Loading shared SSMT workspace..."}</p>}</div>;
@@ -2167,7 +2176,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
         </div>}
 
         {dataStatus === "ready" && workspaceSync.state === "fallback" && (
-          <p role="alert" className="text-sm font-bold text-amber-900">{workspaceSync.message}</p>
+          <div><p role="alert" className="text-sm font-bold text-amber-900">{workspaceSync.message}</p>{accountMode&&<button type="button" className="mt-2 rounded border bg-white p-2 font-bold" onClick={()=>recoveryBridgeRef.current.download()}>Download private draft</button>}</div>
         )}
 
         {activeView !== "home" && <nav aria-label="SSMT sections" className={`grid grid-cols-1 gap-2 rounded-xl border border-slate-200 bg-white shadow-sm sm:grid-cols-3 ${activeView === "editor" ? "p-2" : "p-3"}`}>

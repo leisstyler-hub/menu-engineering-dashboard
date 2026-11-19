@@ -97,10 +97,11 @@ export async function loadSsmtWorkspaceFromSharedStorage({ accounts = false } = 
   };
 }
 
-export async function saveSsmtWorkspaceToSharedStorage(workspace = {}, { accounts = false, revision = "" } = {}) {
+export async function saveSsmtWorkspaceToSharedStorage(workspace = {}, { accounts = false, revision = "", expectedIdentity = null } = {}) {
   if (accounts) {
     if (!revision) throw new Error("Load the shared workspace successfully before saving.");
-    const result = await ssmtRequest("save", { workspace, revision });
+    const result = await ssmtRequest("save", { workspace, revision, ...(expectedIdentity?{expectedIdentity}:{}) });
+    if(typeof result.revision!=="string"||!result.revision.trim())throw new Error("Save acknowledgment did not include a revision. Your draft remains unsaved in this tab.");
     return { ...result, source: "supabase" };
   }
   const record = buildSsmtWorkspaceRecord(workspace);
