@@ -1,5 +1,8 @@
 ## 2026-11-19
 
+- [Nov 19, 10:07 AM] Track every menu in a compact assignment table and open a clean review with PDF and email sharing controls.
+- [Nov 19, 10:07 AM] Use Building Code for unit openings, keep FIXY at station level, and hide rotation controls on other menu types.
+
 - [Nov 19, 9:40 AM] Build unit openings by station and week, assign menu owners, and review or print the complete menu.
 - [Nov 19, 9:40 AM] Track item review separately from signage gaps and open hibernated menus in a popup.
 

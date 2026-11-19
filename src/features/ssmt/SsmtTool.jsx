@@ -1006,9 +1006,9 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
     return () => window.clearInterval(timer);
   }, [dataStatus, accountMember?.role, ssmtData.plannedPriceBook]);
   const activeStation = selectedMenu.stations?.find(s=>s.id === activeStationId);
-  const builderItems = stationRows(selectedMenu,activeStationId,rotationWeek);
+  const builderItems = stationRows(selectedMenu,activeStationId,selectedMenu.type===OPENING_TYPE?rotationWeek:0);
   const reuseDestination = {...selectedMenu,fixyDesignation:activeStation?.fixyDesignation || selectedMenu.fixyDesignation,items:selectedMenu.items.filter(row=>(!activeStation || row.stationId === activeStation.id) && row.id !== reusePanel?.replaceItemId)};
-  useEffect(()=>{setActiveStationId("");setRotationWeek(0);setCleanReview(false);},[selectedMenuId]);
+  useEffect(()=>{setActiveStationId("");setRotationWeek(0);setCleanReview(current=>current===selectedMenuId?current:false);},[selectedMenuId]);
   const selectedPrice = ssmtData.priceBook.find((row) => row.id === selectedPriceId) || ssmtData.priceBook[0];
   const priceToDelete = ssmtData.priceBook.find(row => row.id === deletePriceId);
   const deletePriceUsage = priceRowUsage(latestWorkspaceRef.current, deletePriceId);
@@ -1237,7 +1237,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
 
   const exportSelectedMenuForCentric = () => {
     if (selectedMenu.type === OPENING_TYPE && !activeStation) {setPhaseBlocker("Select one station before exporting SSMT.");return;}
-    if (selectedMenu.items.some(item=>item.weeks?.length) && !rotationWeek) {setPhaseBlocker("Select a rotation week before exporting SSMT.");return;}
+    if (selectedMenu.type===OPENING_TYPE && selectedMenu.items.some(item=>item.weeks?.length) && !rotationWeek) {setPhaseBlocker("Select a rotation week before exporting SSMT.");return;}
     if (activeStation?.globalMenus?.length) {setPhaseBlocker("This station contains participating Global references. Use Review Menu to print the complete station; Centric export of Global references requires separate validation.");return;}
     downloadCentricExport({
       selectedMenu: {...selectedMenu,items:builderItems,fixyDesignation:activeStation?.fixyDesignation || selectedMenu.fixyDesignation},
@@ -1441,8 +1441,8 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
     isCreatingMenuRef.current = true;
     setIsCreatingMenu(true);
     setNewMenuNotice("");
-    if ((newMenuType !== OPENING_TYPE && !newFixyDesignation.trim()) || /[|\r\n]/.test(newFixyDesignation)) { setNewMenuNotice("Enter a valid FIXY designation for the new menu."); isCreatingMenuRef.current = false; setIsCreatingMenu(false); return; }
-    const menu = { ...createMenuRecord(name, newMenuType, ssmtData.areaOrder), fixyDesignation: newFixyDesignation.trim().toUpperCase(), ...(newMenuType === OPENING_TYPE ? {items:[]} : {}) };
+    if (newMenuType !== OPENING_TYPE && (!newFixyDesignation.trim() || /[|\r\n]/.test(newFixyDesignation))) { setNewMenuNotice("Enter a valid FIXY designation for the new menu."); isCreatingMenuRef.current = false; setIsCreatingMenu(false); return; }
+    const menu = { ...createMenuRecord(name, newMenuType, ssmtData.areaOrder), fixyDesignation: newMenuType === OPENING_TYPE ? "" : newFixyDesignation.trim().toUpperCase(), ...(newMenuType === OPENING_TYPE ? {items:[]} : {}) };
     setNewFixyDesignation("");
     setDeletedMenuKeys((current) => current.filter((key) => key !== menuKey(menu)));
     setMenus((current) => [...current, menu]);
@@ -1925,6 +1925,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                   <h2 className="mt-1 text-2xl font-black">Menu Selector</h2>
                 </div>
                 <div className="flex w-full flex-col gap-2 md:max-w-xl md:flex-row md:items-center">
+                  {accountMember?.isAdmin&&<button type="button" className="rounded-lg border border-indigo-300 bg-indigo-50 px-3 py-2 text-sm font-bold" onClick={()=>setActiveView("assignments")}>Menu Assignments</button>}
                   <label className="relative block flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                     <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search menus..." className="w-full rounded-lg border border-slate-300 bg-white py-3 pl-10 pr-3 text-sm font-bold outline-none focus:border-emerald-500" />
@@ -2050,7 +2051,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
     catch(e){setApprovalMessage(e.message);}
   };
   if (cleanReview) return <CleanMenuReview key={selectedMenu.id} menu={selectedMenu} menus={menus} groups={ssmtData.modifierGroups} onBack={()=>setCleanReview(false)} onApprove={approveMenu} canApprove={!!accountMember?.isAdmin || accountMember?.role==="Experience"} message={approvalMessage}/>;
-  if (activeView === "assignments" && accountMember?.isAdmin) return <div className="mx-auto max-w-6xl p-4"><SsmtAssignments menus={menus} onBaseline={initializeReviewBaseline} baselineRecorded={!!loadedWorkspaceRef.current.reviewBaseline} onOpen={id=>{setSelectedMenuId(id);setActiveView("editor");}} onAssign={assignMenu} onCreate={createAssignedMenu} onBack={()=>setActiveView("home")}/><button className="rounded border bg-sky-700 p-3 text-white" onClick={()=>manualSaveWorkspace()}>Save SSMT workspace</button></div>;
+  if (activeView === "assignments" && accountMember?.isAdmin) return <div className="mx-auto max-w-6xl p-4"><SsmtAssignments isPast={m=>!!m.hidden||m.phase==="Hibernated"||menuIsAutoHibernated(m)} onReview={id=>{setSelectedMenuId(id);setActiveView("editor");setCleanReview(id);}} menus={menus} onBaseline={initializeReviewBaseline} baselineRecorded={!!loadedWorkspaceRef.current.reviewBaseline} onOpen={id=>{setSelectedMenuId(id);setActiveView("editor");}} onAssign={assignMenu} onCreate={createAssignedMenu} onBack={()=>setActiveView("home")}/><button className="rounded border bg-sky-700 p-3 text-white" onClick={()=>manualSaveWorkspace()}>Save SSMT workspace</button></div>;
   if (accountMember?.role === "Experience" && activeView === "menus") {
     return <div className="mx-auto max-w-[1800px] space-y-4 p-4 text-slate-950"><button type="button" onClick={onBackToPlatform}>Back to Platform</button><h1 className="text-2xl font-black">SSMT - Experience</h1><nav aria-label="SSMT sections" className="flex flex-wrap gap-3"><button type="button" onClick={()=>setActiveView("home")}>Back to SSMT</button><button type="button" onClick={()=>setActiveView("pricing")}>Pricing Structure</button><button type="button" onClick={()=>setActiveView("menus")}>Menu Selector</button></nav>{dataStatus === "ready" ? menuSelector : <p role="status">{dataStatus === "error" ? "Shared workspace could not be loaded." : "Loading shared SSMT workspace..."}</p>}</div>;
   }
@@ -2213,7 +2214,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
               <Metric icon={ShieldCheck} label="IT complete eligible" value={metricValue(downstreamReadyCount)} />
             </section>
 
-            <section className="grid gap-4 lg:grid-cols-2">
+            <section data-testid="ssmt-home-actions" className={`grid gap-4 ${accountMember?.isAdmin ? "lg:grid-cols-3" : "lg:grid-cols-2"}`}>
               <button type="button" onClick={() => setActiveView("pricing")} aria-label="Pricing Structure" className="rounded-xl border-2 border-emerald-700 bg-emerald-700 p-6 text-left text-white shadow-md transition-colors hover:border-emerald-900 hover:bg-emerald-800 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-emerald-500">
                 <DollarSign size={30} aria-hidden="true" />
                 <h2 className="mt-4 text-2xl font-black">Pricing Structure</h2>
@@ -2224,9 +2225,9 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                 <h2 className="mt-4 text-2xl font-black">Menu Selector / New Menu</h2>
                 <p className="mt-2 text-sm font-semibold leading-6 text-white/90">Open an existing menu or create a new record by selecting the menu type first.</p>
               </button>
+              {accountMember?.isAdmin && <button type="button" className="rounded-xl border-2 border-indigo-700 bg-indigo-700 p-6 text-left text-white" onClick={()=>setActiveView("assignments")}><h2 className="text-2xl font-black">Menu Assignments</h2><p>Create, assign and track menu progress.</p></button>}
             </section>
 
-            {accountMember?.isAdmin && <button type="button" className="rounded-xl border-2 border-indigo-700 bg-indigo-700 p-6 text-left text-white" onClick={()=>setActiveView("assignments")}><h2 className="text-2xl font-black">Menu Assignments</h2><p>Create, assign and track menu progress.</p></button>}
             <PromotionCalendar menus={menus} onOpenMenu={openMenu} />
 
             <section className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm font-bold leading-6 text-amber-950">
@@ -2354,18 +2355,20 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
               <h2 className="mt-1 text-2xl font-black">New Menu</h2>
               <div className="mt-4 space-y-3">
                 <label className="grid gap-1 text-sm font-bold text-slate-700">
-                  <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">FIXY Designation</span>
-                  <input aria-label="New menu FIXY designation" placeholder="e.g. MFP Test" value={newFixyDesignation} onChange={e=>setNewFixyDesignation(e.target.value)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 font-bold" />
-                </label>
-                <label className="grid gap-1 text-sm font-bold text-slate-700">
-                  <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Menu Name</span>
-                  <input aria-label="New menu name" placeholder="Menu Name" value={newMenuName} onChange={(event) => { setNewMenuName(event.target.value); setNewMenuNotice(""); }} className="rounded-lg border border-slate-300 bg-white px-3 py-2 font-bold outline-none focus:border-emerald-500" />
-                </label>
-                <label className="grid gap-1 text-sm font-bold text-slate-700">
                   <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">New menu type</span>
                   <select aria-label="New menu type" value={newMenuType} onChange={(event) => setNewMenuType(event.target.value)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 font-bold">
                     {menuTypes.map((type) => <option key={type} value={type}>{type}</option>)}
                   </select>
+                </label>
+                {newMenuType!==OPENING_TYPE&&<>
+                <label className="grid gap-1 text-sm font-bold text-slate-700">
+                  <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">FIXY Designation</span>
+                  <input aria-label="New menu FIXY designation" placeholder="e.g. MFP Test" value={newFixyDesignation} onChange={e=>setNewFixyDesignation(e.target.value)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 font-bold" />
+                </label>
+                </>}
+                <label className="grid gap-1 text-sm font-bold text-slate-700">
+                  <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">{newMenuType===OPENING_TYPE?"Building Code":"Menu Name"}</span>
+                  <input aria-label={newMenuType===OPENING_TYPE?"Building Code":"New menu name"} placeholder={newMenuType===OPENING_TYPE?"Building Code":"Menu Name"} value={newMenuName} onChange={(event) => { setNewMenuName(event.target.value); setNewMenuNotice(""); }} className="rounded-lg border border-slate-300 bg-white px-3 py-2 font-bold outline-none focus:border-emerald-500" />
                 </label>
                 {newMenuNotice && <p role="alert" className="text-sm font-bold text-rose-700">{newMenuNotice}</p>}
                 <button type="button" onClick={createNewMenu} disabled={isCreatingMenu} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 py-3 text-sm font-black text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60">
@@ -2425,7 +2428,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
               <details open={selectedMenu.type !== OPENING_TYPE}><summary className="cursor-pointer font-bold">Menu details</summary><div aria-label="Menu details" className="grid gap-2 md:grid-cols-2">
                 <label className="grid gap-1 text-sm font-bold text-slate-700">
                   <span className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Menu name</span>
+                    <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">{selectedMenu.type===OPENING_TYPE?"Building Code":"Menu name"}</span>
                     <button
                       type="button"
                       aria-label={menuNameEditing ? "Done editing menu name" : "Edit menu name"}
@@ -2437,7 +2440,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                     </button>
                   </span>
                   <input
-                    aria-label="Menu name"
+                    aria-label={selectedMenu.type===OPENING_TYPE?"Building Code":"Menu name"}
                     value={selectedMenu.name || ""}
                     readOnly={!menuNameEditing}
                     onChange={(event) => updateSelectedMenu({ name: event.target.value })}
@@ -2551,13 +2554,13 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
               )}
             </details></section>
 
-            <section data-testid="ssmt-fixy-setup" aria-label="FIXY setup" className="rounded-lg border border-indigo-300 bg-indigo-50 p-2 shadow-sm">
+            {(selectedMenu.type!==OPENING_TYPE||!!activeStation)&&<section data-testid="ssmt-fixy-setup" aria-label="FIXY setup" className="rounded-lg border border-indigo-300 bg-indigo-50 p-2 shadow-sm">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
                   <label className="grid w-full gap-1 text-sm font-black text-indigo-950 sm:max-w-md">FIXY designation<input aria-label="Menu FIXY designation" placeholder="Required for FIXY/import" value={activeStation?.fixyDesignation || selectedMenu.fixyDesignation || ""} onChange={e=>activeStation ? updateSelectedMenu({stations:selectedMenu.stations.map(station=>station.id===activeStation.id?{...station,fixyDesignation:e.target.value}:station)}) : updateSelectedMenu({fixyDesignation:e.target.value})} className="min-h-11 w-full rounded-lg border border-indigo-300 bg-white px-3 py-2 text-base font-bold text-slate-950" /></label>
                   <button type="button" className="min-h-11 rounded-lg border-2 border-indigo-700 bg-indigo-700 px-5 py-2 text-sm font-black text-white shadow-sm hover:bg-indigo-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" onClick={()=>{if(!(activeStation?.fixyDesignation || selectedMenu.fixyDesignation)?.trim()){setPhaseBlocker("Enter this menu’s FIXY designation before generating.");return;}if(!reuseDestination.items.length){setPhaseBlocker("This menu has zero items. Add an item before generating FIXY.");return;}const eligible = reuseDestination.items.find(item => !String(item.fohColumn || "").trim() && !item.lockedForCentric); if (!eligible) { setPhaseBlocker("All items already have FIXY or are locked. Add an item without FIXY or unlock it first."); return; } setReusePanel({mode:"fixy",item:eligible});}}>Generate FIXY</button>
               </div>
               {!(activeStation?.fixyDesignation || selectedMenu.fixyDesignation)?.trim() && <p className="mt-2 text-sm font-bold text-indigo-900">Enter a FIXY designation before generating FIXY or importing items.</p>}
-            </section>
+            </section>}
 
             <section data-testid="ssmt-builder-sections" className="overflow-hidden rounded-lg border border-sky-300 bg-white shadow-sm shadow-sky-100">
               <div data-testid="ssmt-builder-section-main" className="m-2 flex flex-col gap-2 rounded-lg border border-sky-300 bg-gradient-to-r from-sky-50 to-white p-2 md:flex-row md:items-center md:justify-between">

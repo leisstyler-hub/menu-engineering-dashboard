@@ -2,9 +2,10 @@ import {test,expect} from "@playwright/test";
 import {validateOpeningChange} from "../../src/features/ssmt/ssmtOpening.js";
 import {validateExperienceChange} from "../../src/features/ssmt/ssmtAudit.js";
 const oldItem={id:"old",name:"Burger",label:"BURGER",description:"Beef burger",mrn:"00042.10",fohColumn:"R FBB | GRILL | BURGER ENT BF",calories:"540",lockedForCentric:false,modifierGroups:[],reviewBasis:{source:"baseline",mrn:"00042.10",description:"Beef burger"}};
-async function isolated(page,{role="Chef",admin=true}={}) {
+async function isolated(page,{role="Chef",admin=true,promo=false}={}) {
  let shared={menus:[{id:"opening",name:"Test Opening",type:"New Unit Openings",phase:"Culinary draft",stations:[{id:"grill",name:"Grill",fixyDesignation:"UNIT GRILL",globalMenus:[]}],owners:[{id:"one",email:"chef@example.test",name:"Test Chef"}],items:[{...oldItem,stationId:"grill"},{...oldItem,id:"lto",label:"LTO",mrn:"00042.11",stationId:"grill",weeks:[2],reviewBasis:{source:"new"}}]},{id:"core",name:"Grill Core",type:"Core",phase:"IT complete",items:[oldItem]},{id:"global",name:"Global One",type:"Global",phase:"IT complete",items:[{...oldItem,id:"global-item"}]}],modifierGroups:[],priceBook:[],priceBookArchives:[],deletedMenuKeys:[],seedMenuTypeCorrectionsApplied:true,selectedMenuId:"opening"};
- if(role==="Experience"){shared.menus[0].phase="Experience review";shared.menus[0].items.forEach(i=>i.lockedForCentric=true);}
+ if(promo)shared.menus[0]={...shared.menus[0],type:"Promotion",activeEnd:"2020-01-01"};
+ if(role==="Experience"){if(promo)shared.menus[0].activeEnd="2099-01-01";shared.menus[0].phase="Experience review";shared.menus[0].items.forEach(i=>i.lockedForCentric=true);}
  const saves=[];const member={id:"one",name:"Test Chef",email:"chef@example.test",role,isAdmin:admin};
  const members=[{user_id:"one",display_name:"Test Chef",email:member.email,active:true},{user_id:"two",display_name:"Second Owner",email:"second@example.test",active:true}];
  await page.route("**/api/storage/records**",r=>r.fulfill({json:{ok:true,records:[]}}));
@@ -45,7 +46,7 @@ test("station/week builder and clean review preserve all underlying data",async(
  await expect(page.getByTestId("ssmt-clean-review")).toBeVisible();
  await expect(page.getByText("Participating: Global One")).toBeVisible();
  await expect(page.getByRole("button",{name:"Print menu"})).toBeVisible();
- await page.screenshot({path:"C:/Users/leiss/.buzz/WORK_LOGS/SSMT_OPENING_REVIEW_2026_11_19.png",fullPage:true});
+ await page.screenshot({path:"C:/Users/leiss/.buzz/WORK_LOGS/SSMT_ASSIGNMENT_REVIEW_LOCAL_2026_11_19.png",fullPage:true});
 });
 test("station port inherits FIXY by default and leaves source rows intact",async({page})=>{
  const state=await isolated(page);await page.getByRole("button",{name:"Menu Selector / New Menu",exact:true}).click();await page.locator('[data-menu-name="Test Opening"]').click();
@@ -64,9 +65,9 @@ test("Experience edits station FIXY and returns menu to draft with owners and hi
 test("admin creates a multi-owner assigned opening without changing existing records",async({page})=>{
  const state=await isolated(page);
  await page.getByRole("button",{name:/Menu Assignments/}).click();
- await page.getByLabel("Assignment menu name").fill("New Cafe");
  await page.getByLabel("Assignment menu type").selectOption("New Unit Openings");
- await page.getByLabel("Test Chef",{exact:true}).check();await page.getByLabel("Second Owner",{exact:true}).check();
+ await page.getByLabel("Assignment Building Code").fill("New Cafe");
+ await page.getByRole("button",{name:"Select owners",exact:true}).click();await page.getByLabel("Test Chef",{exact:true}).check();await page.getByLabel("Second Owner",{exact:true}).check();
  await page.getByRole("button",{name:"Create assigned menu"}).click();
  await page.getByRole("button",{name:"Save SSMT workspace",exact:true}).click();
  await expect.poll(()=>state.get().menus.length).toBe(4);
@@ -79,5 +80,27 @@ test("phone review fits viewport and non-admin has no assignment controls",async
  await page.getByRole("button",{name:"Menu Selector / New Menu",exact:true}).click();await page.locator('[data-menu-name="Test Opening"]').click();
  await page.getByRole("button",{name:"Review Menu",exact:true}).click();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
- await page.screenshot({path:"C:/Users/leiss/.buzz/WORK_LOGS/SSMT_OPENING_REVIEW_PHONE_2026_11_19.png",fullPage:true});
+ await page.screenshot({path:"C:/Users/leiss/.buzz/WORK_LOGS/SSMT_ASSIGNMENT_REVIEW_PHONE_LOCAL_2026_11_19.png",fullPage:true});
+});
+
+ test("compact admin assignments and opening labels preserve menu data",async({page})=>{
+ const state=await isolated(page);await page.setViewportSize({width:1440,height:1000});
+ const cards=page.getByTestId("ssmt-home-actions");await expect(cards).toBeVisible();const boxes=await cards.locator(":scope > button").evaluateAll(nodes=>nodes.map(n=>({x:n.getBoundingClientRect().x,y:n.getBoundingClientRect().y,w:n.getBoundingClientRect().width})));
+ expect(boxes).toHaveLength(3);expect(new Set(boxes.map(b=>b.y)).size).toBe(1);expect(Math.max(...boxes.map(b=>b.w))-Math.min(...boxes.map(b=>b.w))).toBeLessThan(2);
+ await page.getByRole("button",{name:"Menu Selector / New Menu",exact:true}).click();
+ await page.getByLabel("New menu type").selectOption("New Unit Openings");await expect(page.getByLabel("Building Code",{exact:true})).toBeVisible();await expect(page.getByLabel("New menu FIXY designation")).toHaveCount(0);
+ await page.getByRole("button",{name:"Menu Assignments",exact:true}).click();
+ const table=page.getByRole("table",{name:"Menu assignment progress"});await expect(table).toContainText("Grill Core");await expect(table).toContainText("Legacy / no owner needed");
+ await expect(page.getByLabel("Assignment FIXY designation")).toBeVisible();await page.getByLabel("Assignment menu type").selectOption("New Unit Openings");await expect(page.getByLabel("Assignment Building Code")).toBeVisible();await expect(page.getByLabel("Assignment FIXY designation")).toHaveCount(0);
+ await table.getByRole("row").filter({hasText:"Test Opening"}).getByRole("button",{name:"Review Menu",exact:true}).click();await expect(page.getByTestId("ssmt-clean-review")).toBeVisible();await expect(page.getByRole("button",{name:"Export PDF",exact:true})).toBeVisible();await expect(page.getByRole("link",{name:"Email menu",exact:true})).toHaveAttribute("href",/^mailto:/);expect(state.saves).toHaveLength(0);
+ await page.evaluate(()=>{window.print=()=>{window.__printed=true;};});await page.getByRole("button",{name:"Export PDF",exact:true}).click();expect(await page.evaluate(()=>window.__printed)).toBe(true);await expect(page.getByRole("status")).toContainText("Save as PDF");
+ await page.evaluate(()=>{navigator.canShare=()=>true;navigator.share=async data=>{window.__sharedName=data.files[0].name;};});await page.getByLabel("PDF to share by email").setInputFiles({name:"review.pdf",mimeType:"application/pdf",buffer:Buffer.from("%PDF-1.4 test")});await expect.poll(()=>page.evaluate(()=>window.__sharedName)).toBe("review.pdf");
+ await page.screenshot({path:"C:/Users/leiss/.buzz/WORK_LOGS/SSMT_ASSIGNMENT_COMPACT_REVIEW_2026_11_19.png",fullPage:true});
+ });
+
+test("promo Experience and review have no rotation and past assignments stay visible",async({page})=>{
+ const state=await isolated(page,{promo:true});await page.getByRole("button",{name:/Menu Assignments/}).click();const row=page.getByRole("table",{name:"Menu assignment progress"}).getByRole("row").filter({hasText:"Test Opening"});await expect(row).toContainText("Past / hibernated");await expect(row).toContainText("Test Chef");await row.getByRole("button",{name:"Review Menu",exact:true}).click();await expect(page.getByTestId("ssmt-clean-review")).toBeVisible();await expect(page.getByLabel("Rotation week",{exact:true})).toHaveCount(0);await expect(page.getByText("LTO",{exact:true})).toBeVisible();expect(state.saves).toHaveLength(0);
+});
+test("promo Experience has no week selector",async({page})=>{
+ await isolated(page,{promo:true,role:"Experience",admin:false});await page.locator('[data-menu-name="Test Opening"]').click();await expect(page.getByTestId("ssmt-experience-table-scroll")).toBeVisible();await expect(page.getByLabel("Rotation week",{exact:true})).toHaveCount(0);
 });

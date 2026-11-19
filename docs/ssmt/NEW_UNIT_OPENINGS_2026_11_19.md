@@ -39,3 +39,13 @@ Application rollback baseline: `f2d1743b74c5d0c794d099605e6a124368907b01`, produ
 ## Production evidence
 
 Application `4260bab74b285a6acb02e51af9b711e2d95e0130`, version `2026.11.19.003-ssmt-unit-openings`, reached READY `dpl_9B8v7MA6my5BhAjjtcBhy8ookrQB` at the canonical alias. Public HTTP 200 and `/assets/index-Dpz0Zn0M.js` version verified at 2026-11-19T17:47:16Z. New production UI acceptance passed 5/5 with fixture interception; no real account save or baseline initialization was tested. Final legacy tool tests: 26 passed, two unchanged-base failures. Full committed package verification/build passed in publication. Chief testing and production verification, with independent code/risk review. Baseline remains unapplied and Global-reference Centric export remains guarded.
+
+## Assignment and review follow-up (.004)
+
+Tyler's follow-up requires a compact shared data listing across Promo, New Unit Openings, Thompson, Global and Core. Admin landing actions share one equal-width desktop row; Menu Selector also links to assignments. The table includes item counts, current owners/status, assignment/due dates and visible phase dates, plus builder/review access. Past automatically hibernated promotions remain visible; viewing them does not restore or rewrite them. Core and Global are legacy and may remain without owners. Selected owners use a multi-select dropdown with identity details below it.
+
+Menu type appears first in create forms. New Unit Openings uses Building Code as the name label and has no opening-level FIXY input; existing stored values are retained. Stations keep their own FIXY. Rotation controls and week filtering apply only to New Unit Openings, including Experience and clean review; no existing week metadata is erased.
+
+Clean review uses a read-only Experience-style table with descriptions, MRNs/FIXY, calories and modifier choices. Export PDF opens the browser print dialog: choose Save as PDF. Email menu opens a draft, not an automatic send. Share PDF accepts a user-selected PDF and opens native file sharing if supported; other browsers explain manual attachment and open the email draft. Neither a mailto link nor browser code silently attaches or sends a file. Access remains authenticated; this does not create public menu sharing.
+
+The existing reviewed baseline remains NOT APPLIED. The only production mutation in this follow-up is Tyler's explicitly requested account display-name correction, preserving access fields and operational menu data.
