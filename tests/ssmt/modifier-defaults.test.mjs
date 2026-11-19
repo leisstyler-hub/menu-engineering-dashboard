@@ -8,7 +8,7 @@ test('Remove defaults zero prices and all areas while preserving identifiers', (
   assert.equal(result.name, 'Customize (Burger)');
   assert.equal(result.minQty, '0');
   assert.equal(result.maxQty, '2');
-  assert.equal(result.choices[0].mrn, '0001');
+  assert.equal(result.choices[0].mrn, 'N/A');
   assert.equal(result.choices[0].price, '0.00');
   assert.deepEqual(result.choices[0].areaPrices, { SEA: '0.00', AUS: '0.00' });
   assert.equal(group.choices[0].price, '2');
@@ -29,4 +29,13 @@ test('Custom starts blank and does not acquire automatic counts', () => {
   assert.equal(result.choices[0].price, '');
   assert.equal(result.choices[0].mrn, '0001');
   assert.equal(resizeModifierGroup(result, ['SEA']).maxQty, '');
+});
+
+test('Forced selection supplies the item-specific Make It Mine name', () => {
+  assert.equal(selectModifierType(group, 'Force', 'Burger', []).name, 'Make It Mine (Burger)');
+});
+test('N/A is not a recipe identity for reuse lookup', async () => {
+  const { exactMrnMatches } = await import('../../src/features/ssmt/ssmtReuse.js');
+  const menus = [{id:'source',phase:'IT complete',items:[{id:'i',mrn:'N/A'}]}];
+  assert.deepEqual(exactMrnMatches(' N/A ',menus,'target'), []);
 });

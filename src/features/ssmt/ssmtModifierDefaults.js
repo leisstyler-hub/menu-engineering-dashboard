@@ -4,6 +4,7 @@ const freeChoice = (choice, areas) => ({ ...choice, priceSelectorId: FREE_MODIFI
 
 // Apply only on an explicit type selection, never while loading historical groups.
 export function selectModifierType(group, type, itemName, areas) {
+  if (type === 'Force') return { ...group, modifierType: type, name: `Make It Mine (${itemName})` };
   if (type === 'Custom') return {
     ...group, modifierType: type, name: '', minQty: '', maxQty: '',
     choices: (group.choices || []).map(choice => ({ ...choice, priceSelectorId: '', price: '', areaPrices: emptyAreas(areas) })),
@@ -12,13 +13,13 @@ export function selectModifierType(group, type, itemName, areas) {
   return resizeModifierGroup({
     ...group, modifierType: type,
     name: `${type === 'Remove' ? 'Customize' : 'Make It Better'} (${itemName})`, minQty: '0',
-    choices: type === 'Remove' ? (group.choices || []).map(choice => freeChoice(choice, areas)) : group.choices,
+    choices: type === 'Remove' ? (group.choices || []).map(choice => freeChoice({ ...choice, mrn: 'N/A' }, areas)) : group.choices,
   }, areas);
 }
 
 export function resizeModifierGroup(group, areas) {
   if (!['Remove', 'Addition'].includes(group.modifierType)) return group;
   return { ...group, maxQty: String((group.choices || []).length * (group.modifierType === 'Addition' ? 2 : 1)),
-    choices: group.modifierType === 'Remove' ? (group.choices || []).map(choice => choice.priceSelectorId ? choice : freeChoice(choice, areas)) : group.choices,
+    choices: group.modifierType === 'Remove' ? (group.choices || []).map(choice => choice.priceSelectorId ? choice : freeChoice({ ...choice, mrn: choice.mrn || 'N/A' }, areas)) : group.choices,
   };
 }

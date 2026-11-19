@@ -181,7 +181,7 @@ export function importItems(
 }
 export function exactMrnMatches(mrn, menus, destinationId) {
   const exact = text(mrn);
-  if (!exact) return [];
+  if (!exact || /^n\s*\/\s*a$/i.test(exact)) return [];
   return menus.filter(menu => menu.id !== destinationId && menu.phase === "IT complete")
     .flatMap(menu => (menu.items || []).filter(item => isMenuItem(item) && text(item.mrn) === exact)
       .map(item => ({ menuId: menu.id, menuName: menu.name, item })));

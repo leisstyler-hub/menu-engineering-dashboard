@@ -649,6 +649,9 @@ test("modifier type defaults follow line counts, Custom stays blank, and saves s
   await page.getByRole('button', { name: /View modifiers Mods \(0\)/ }).click();
   let dialog = page.getByRole('dialog', { name: 'Modifier detail', exact: true });
   await dialog.getByRole('button', { name: 'Add modifier group', exact: true }).click();
+  await dialog.getByLabel('Modifier group type').selectOption('Force');
+  await expect(dialog.getByLabel('Modifier group name')).toHaveValue('Make It Mine (NEW ITEM)');
+  await expect(dialog.getByLabel('Modifier group type').locator('option')).toHaveText(['Make It Mine (Forced)', 'Customize (Remove)', 'Make It Better (Addition)', 'Custom']);
   await dialog.getByLabel('Modifier group type').selectOption('Remove');
   await expect(dialog.getByLabel('Modifier group name')).toHaveValue('Customize (NEW ITEM)');
   await expect(dialog.getByLabel('Minimum selections')).toHaveValue('0');
@@ -656,6 +659,17 @@ test("modifier type defaults follow line counts, Custom stays blank, and saves s
   await expect(dialog.getByLabel('Modifier price')).toHaveValue('ssmt-modifier-zero');
   await dialog.getByRole('button', { name: 'Add modifier item line', exact: true }).click();
   await expect(dialog.getByLabel('Maximum selections')).toHaveValue('2');
+  await expect(dialog.getByLabel('Modifier MRN').first()).toHaveValue('N/A');
+  await expect(dialog.getByLabel('Modifier MRN').last()).toHaveValue('N/A');
+  await dialog.getByLabel('Modifier name').first().evaluate(el => {
+    const clipboardData = new DataTransfer(); clipboardData.setData('text/plain', 'No onion\nNo tomato');
+    el.dispatchEvent(new ClipboardEvent('paste', {clipboardData, bubbles:true,cancelable:true}));
+  });
+  await expect(dialog.getByLabel('Modifier name').last()).toHaveValue('no tomato');
+  await dialog.getByLabel('Modifier name').first().focus();
+  await page.keyboard.press('ArrowDown');
+  await expect(dialog.getByLabel('Modifier name').last()).toBeFocused();
+
   await expect(dialog.getByLabel('Modifier price').last()).toHaveValue('ssmt-modifier-zero');
   await dialog.getByLabel('Modifier group type').selectOption('Addition');
   await expect(dialog.getByLabel('Modifier group name')).toHaveValue('Make It Better (NEW ITEM)');
@@ -1183,3 +1197,37 @@ test("Experience ticket never opens for a locked-out phase transition",async({pa
   await expect(page.getByRole("button",{name:"Move to Experience review",exact:true})).toBeDisabled();
   expect(await page.evaluate(()=>window.ticketOpens)).toEqual([]);
 });
+
+ test("modifier spreadsheet paste appends exact MRNs and preserves other fields", async ({page}) => {
+  const fixture = await isolated(page);
+  await openTarget(page);
+  await page.getByRole('button', {name:'Add item',exact:true}).click();
+  await page.getByRole('button', {name:/View modifiers Mods \(0\)/}).click();
+  const dialog = page.getByRole('dialog',{name:'Modifier detail',exact:true});
+  await dialog.getByRole('button',{name:'Add modifier group',exact:true}).click();
+  await dialog.getByLabel('Modifier group type').selectOption('Force');
+  await dialog.getByLabel('Modifier group name').fill('Keep this name');
+  await dialog.getByLabel('Modifier name').first().fill('Keep this label');
+  await dialog.getByLabel('Modifier MRN').first().evaluate(el => {
+    const clipboardData = new DataTransfer(); clipboardData.setData('text/plain', Array.from({length:10},(_,i)=>`000${i}.10`).join('\n')+'\n');
+    el.dispatchEvent(new ClipboardEvent('paste',{clipboardData,bubbles:true,cancelable:true}));
+  });
+  await expect(dialog.getByLabel('Modifier MRN')).toHaveCount(10);
+  await expect(dialog.getByLabel('Modifier MRN').last()).toHaveValue('0009.10');
+  await expect(dialog.getByLabel('Modifier name').first()).toHaveValue('keep this label');
+  await expect(dialog.getByLabel('Modifier group name')).toHaveValue('Keep this name');
+  await dialog.getByLabel('Modifier MRN').first().evaluate(el => {
+    const clipboardData = new DataTransfer(); clipboardData.setData('text/plain', 'bad\tcolumns\nnot allowed');
+    el.dispatchEvent(new ClipboardEvent('paste',{clipboardData,bubbles:true,cancelable:true}));
+  });
+  await expect(dialog.getByLabel('Modifier MRN').first()).toHaveValue('0000.10');
+  await dialog.getByRole('button',{name:'Lock modifier group Keep this name',exact:true}).click();
+  await dialog.getByLabel('Modifier MRN').first().evaluate(el => {
+    const clipboardData = new DataTransfer(); clipboardData.setData('text/plain', 'overwrite\nwrong');
+    el.dispatchEvent(new ClipboardEvent('paste',{clipboardData,bubbles:true,cancelable:true}));
+  });
+  await expect(dialog.getByLabel('Modifier MRN').first()).toHaveValue('0000.10');
+  await dialog.getByRole('button',{name:'Save modifiers',exact:true}).click();
+  await expect.poll(()=>fixture.getWorkspace().modifierGroups.at(-1)?.choices.length).toBe(10);
+  expect(fixture.getWorkspace().modifierGroups.at(-1).choices[0].mrn).toBe('0000.10');
+ });
