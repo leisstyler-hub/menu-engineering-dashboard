@@ -11,7 +11,7 @@ assert.equal(isApprovedOperationalMetadataRecord(record), true);
 assert.equal(resolveOperationalMetadata([record]).source, "supabase");
 assert.equal(resolveOperationalMetadata([]).source, "fallback");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.orderItems.length, 41);
-assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 28);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 29);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.items.length, 41);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.legacyItems.length, 41);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.source.effectiveDate, "2026-11-16");
@@ -72,7 +72,7 @@ assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globalInterface
   subrecipes: "automatic-from-recipe",
   deliveryQuantities: "whole-portions",
 });
-assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 28);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 29);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globalProductionPolicy.version, 1);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globalProductionPolicy.rules["global|amz-porto|121026|1-piece"].outputs[0].mrn, "120715");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globalProductionPolicy.rules["global|amz-smokehouse-bbq|5365.6|5-ounce"].mode, "in-unit");
@@ -95,6 +95,13 @@ assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.p
   transferCosting: "salad-native-unit-and-priced-grill-global-components-scale-to-rounded-yield",
   unpricedRecipeComponents: "display-rounded-without-invented-component-cost",
 });
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.grillVolumeDisplay.handScoopedAvocado, "4-number-16-scoops-per-cup");
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.grillVolumeDisplay.preparedVegetableOuncesPerCup, 4);
+assert.ok(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.grillVolumeDisplay.preparedVegetableMrns.includes("77960.2"));
+assert.ok(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.grillVolumeDisplay.preparedVegetableMrns.includes("81315"));
+assert.ok(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.grillVolumeDisplay.preparedVegetableMrns.includes("19294.11"));
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.grillVolumeDisplay.displayScope, "prep-list-only");
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.grillVolumeDisplay.transferAndGlQuantities, "recipe-native-unchanged");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.packoutPacket.version, 3);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.dailyPrepLists, { friday: "Monday service", monday: "Tuesday-Wednesday service", wednesday: "Thursday-Friday service" });
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.exactMrnRollup, true);

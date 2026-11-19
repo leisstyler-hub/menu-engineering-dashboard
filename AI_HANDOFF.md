@@ -1,3 +1,9 @@
+## Grill Prep List volume conversions - 2026-11-19
+
+CANDIDATE `2026.11.19.001-grill-prep-volume-conversions` fixes the Grill Core hand-scooped avocado mismatch by recognizing MRN `179508` with either `#16 scoop` or `scoop #16`; four scoops equal one cup. The Prep List now projects this and the reviewed Grill Core/LTO prepared-vegetable MRNs for pickled, grilled and roasted peppers, pickled onions, sauteed mushrooms and sliced vegetable mise into gallons, rounded upward to the established half-gallon increment per cafe and delivery. Pico de Gallo retains its approved seven-ounce-per-cup density; the other reviewed prepared vegetable rows use four ounces per cup.
+
+These additions are display-only. S4 transfers and ingredient G/L breakdowns retain recipe-native units, quantities and costing; existing approved transfer yield rules for explicit volume and sauce components remain unchanged. Operational metadata version 29 publishes the conversion MRNs, densities, display scope and native-transfer contract. No saved or locked Commissary Order row is migrated or rewritten. No menu item, recipe or shared culinary profile row changes, so Culinary Tags shared-profile persistence is not applicable. Production verification is pending.
+
 ## Daily Global plate details and weekly-order placement - 2026-11-16
 
 LIVE `2026.11.16.002-daily-global-plate-details` shows the complete static plate contents directly beneath both the animal and vegetarian protein option on every Daily Global weekday card. The visible `Comes with` line uses the same component and garnish definitions that drive Blueshift prep and packout, so the operator sees rice, sides, sauces, chutney/raita-style accompaniments and garnish without gaining item-selection controls.

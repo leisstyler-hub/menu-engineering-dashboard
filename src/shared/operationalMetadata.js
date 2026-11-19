@@ -24,7 +24,7 @@ import { COMMISSARY_CAFE_STATION_ACCESS, COMMISSARY_HUB_ROUTING, COMMISSARY_HUBS
 import { GLOBAL_UNIT_PREPARATION_NOTES } from "../features/commissary-ordering/commissaryModel.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 28;
+export const OPERATIONAL_METADATA_VERSION = 29;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -167,9 +167,15 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
         slicedRedOnionsPerQuart: 32,
         icebergLeavesPerQuart: 10,
         pickleSlicesPerQuart: 75,
+        handScoopedAvocado: "4-number-16-scoops-per-cup",
+        preparedVegetableOuncesPerCup: 4,
+        preparedVegetableMrns: Object.freeze(["78123.7", "62183.1", "77960.2", "81315", "19294.11", "76326", "1247", "53124", "4123", "4253", "8065", "77960.1", "55272", "7462"]),
+        displayScope: "prep-list-only",
+        transferAndGlQuantities: "recipe-native-unchanged",
       }),
       massDisplay: "kilograms-converted-to-pounds; deli-protein-ounces-converted-to-pounds",
       avocadoMashDisplay: "number-16-scoops-converted-to-gallons",
+      grillHandScoopedAvocadoDisplay: "number-16-scoops-converted-to-gallons-for-prep-only",
       looseStaples: "canola-kosher-salt-black-pepper-dried-spices-excluded-or-bundled-as-recipes",
       deliDeliveryMap: "finished-sandwich-counts",
       globalUnitPreparationNotes: GLOBAL_UNIT_PREPARATION_NOTES,

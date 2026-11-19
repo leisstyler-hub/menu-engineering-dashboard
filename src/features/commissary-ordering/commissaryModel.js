@@ -1076,12 +1076,29 @@ const VOLUME_TO_CUPS = Object.freeze({
 
 const HALF_GALLON_CUPS = 8;
 const DELI_PROTEIN_NAME = /\b(?:beef|brisket|chicken|turkey|ham|bacon|pork|salami|pepperoni|mortadella|prosciutto|tuna|shrimp|prawn|crab|lobster|salmon|cod|steelhead|fish|seafood)\b/i;
+const GRILL_PREP_OUNCE_TO_VOLUME = Object.freeze({
+  "78123.7": 4, // Pickled habanero peppers
+  "62183.1": 4, // Grilled poblano peppers
+  "77960.2": 4, // Pickled red onions
+  "11315": 7, // Pico de gallo (approved existing density)
+  "81315": 4, // Pickled jalapenos
+  "19294.11": 4, // Roasted jalapeno peppers
+  "76326": 4, // Sauteed mushrooms
+  "1247": 4, // Carrots
+  "53124": 4, // Sliced English cucumbers
+  "4123": 4, // Portobello mushrooms
+  "4253": 4, // Red onion rings
+  "8065": 4, // Red bell peppers
+  "77960.1": 4, // Pickled onions
+  "55272": 4, // Yellow squash
+  "7462": 4, // Zucchini
+});
 
 const roundUpHalfGallonCups = (cups) => Number(cups) > 0
   ? Math.ceil((Number(cups) / HALF_GALLON_CUPS) - 1e-9) * HALF_GALLON_CUPS
   : 0;
 
-export function prepVolumeCupsPerUnit(row = {}) {
+export function prepVolumeCupsPerUnit(row = {}, { displayOnly = false } = {}) {
   const unit = String(row.orderUnit || row.unit || "").trim().toLowerCase();
   const name = String(row.name || "");
   const grillCountPerQuart = row.station !== "Grill" ? 0
@@ -1092,7 +1109,12 @@ export function prepVolumeCupsPerUnit(row = {}) {
             : 0;
   if (grillCountPerQuart) return 4 / grillCountPerQuart;
   if (/avocado.*mash|mash.*avocado/i.test(`${name} ${row.finishedDish || ""}`) && /(?:#\s*16|no\.?\s*16).*scoop|scoop.*(?:#\s*16|no\.?\s*16)/i.test(unit)) return 1 / 4;
+  if (displayOnly && row.station === "Grill" && String(row.mrn || "") === "179508" && /(?:#\s*16|no\.?\s*16).*scoop|scoop.*(?:#\s*16|no\.?\s*16)/i.test(unit)) return 1 / 4;
   if (VOLUME_TO_CUPS[unit]) return VOLUME_TO_CUPS[unit];
+  const grillPrepOuncesPerCup = displayOnly && row.station === "Grill"
+    ? GRILL_PREP_OUNCE_TO_VOLUME[String(row.mrn || "")]
+    : 0;
+  if (grillPrepOuncesPerCup && ["ounce", "ounces", "oz"].includes(unit)) return 1 / grillPrepOuncesPerCup;
   if (!SAUCE_NAME.test(name)) return 0;
   const ouncesPerCup = /pico de gallo/i.test(name) ? 7 : 8;
   if (["ounce", "ounces", "oz"].includes(unit)) return 1 / ouncesPerCup;
@@ -1150,7 +1172,7 @@ export function prepDisplayQuantity(row = {}) {
     ...Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, Number(row[delivery] || 0)])),
     cafes: Object.fromEntries(Object.entries(row.cafes || {}).map(([cafe, values]) => [cafe, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, Number(values?.[delivery] || 0)]))])),
   };
-  const cupsPerUnit = prepVolumeCupsPerUnit(row);
+  const cupsPerUnit = prepVolumeCupsPerUnit(row, { displayOnly: true });
   if (cupsPerUnit) {
     const cafeEntries = Object.entries(row.cafes || {});
     const roundedCafes = Object.fromEntries(cafeEntries.map(([cafe, values]) => [cafe, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [

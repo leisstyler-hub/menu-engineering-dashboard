@@ -1,3 +1,7 @@
+## 2026-11-19
+
+- [Nov 19, 4:48 AM] Show Grill avocado, pickled vegetables and other prepared mise as rounded volume without changing transfers.
+
 ## 2026-11-16
 
 - [Nov 16, 6:34 PM] Show complete plate accompaniments beneath every Daily Global protein and keep the weekly order summary above every station.

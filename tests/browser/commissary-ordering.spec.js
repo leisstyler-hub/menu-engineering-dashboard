@@ -318,6 +318,9 @@ test("Grill LTO starts Cycle Week 1 on November 16 with Set A and Set B whole-sa
   const fridayPrepRows = XLSX.utils.sheet_to_json(workbook.Sheets["Friday Prep List"], { header: 1, defval: "" });
   expect(prepRows.some((row) => row[0] === "AMZ: Smashburger Patty")).toBe(false);
   expect(prepRows.some((row) => /black bean burger|grilled chicken breast|salt,?\s*kosher/i.test(String(row[0])))).toBe(false);
+  expect(prepRows).toContainEqual(expect.arrayContaining(["Avocado, Hand Scooped, Wholly Avocado, Fresh", 0.5, "gallon"]));
+  expect(prepRows).toContainEqual(expect.arrayContaining(["EUR: Pickled Red Onions", 0.5, "gallon"]));
+  expect(prepRows).toContainEqual(expect.arrayContaining(["EURNA: Pickled Jalapenos", 0.5, "gallon"]));
   expect(prepRows).toContainEqual(expect.arrayContaining(["Turkey, Breast, Deli, Smoked, Butterball", 3, "pound"]));
   expect(prepRows[2]).toEqual(["Ingredient / item", "Total quantity", "Order unit", "Production section", "Finished dish"]);
   expect(prepRows.some((row) => row.includes("Production family"))).toBe(false);
