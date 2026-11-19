@@ -113,7 +113,7 @@ export function auditChanges(before, after) {
   return events;
 }
 export function validateExperienceChange(before, after) {
-  const allowedMenu = ["phase", "status", "phaseTimestamps", "flags", "editSignal"];
+  const allowedMenu = ["phase", "status", "phaseTimestamps", "phaseHistory", "flags", "editSignal", "fixyDesignation"];
   const clean = (workspace) => ({
     priceBook: [],
     deletedMenuKeys: [],
@@ -128,8 +128,15 @@ export function validateExperienceChange(before, after) {
     ]),
     menus: (workspace.menus || []).map((menu) => ({
       ...without(menu, allowedMenu),
+      ...(menu.stations ? {stations:menu.stations.map(station=>without(station,["fixyDesignation"]))} : {}),
       items: (menu.items || []).map((item) => {
-        const cleaned = without(item, ["description"]);
+        const cleaned = without(item, ["description", "name", "label", "fohColumn"]);
+        const priorMenu=before.menus?.find(entry=>entry.id===menu.id);
+        if (priorMenu?.phase === "Experience review" && menu.phase === "IT programming" && item.reviewBasis?.source === "experience" && item.reviewBasis.mrn === item.mrn && item.reviewBasis.description === (item.description || "")) {
+          const priorItem=priorMenu.items?.find(entry=>entry.id===item.id);
+          if(priorItem?.reviewBasis) cleaned.reviewBasis=priorItem.reviewBasis; else delete cleaned.reviewBasis;
+          if(priorItem?.reviewInvalidated && item.reviewInvalidated === false) cleaned.reviewInvalidated=true;
+        }
         const previous = before.menus?.find(entry => entry.id === menu.id)?.items?.find(entry => entry.id === item.id);
         // A legacy import can capture its own unchanged prior description once.
         // This never permits changing provenance or an existing snapshot.
@@ -184,7 +191,7 @@ export function validateExperienceChange(before, after) {
     if (
       menu.phase !== previous.phase &&
       !(
-        phases.indexOf(menu.phase) === phases.indexOf(previous.phase) + 1 &&
+        ((phases.indexOf(menu.phase) === phases.indexOf(previous.phase) + 1) || (previous.phase === "Experience review" && menu.phase === "Culinary draft")) &&
         menu.phase !== "IT complete"
       )
     )
@@ -207,6 +214,7 @@ export function validateWorkspaceShape(workspace) {
   if (!unique(workspace.menus) || !unique(workspace.modifierGroups))
     return "Menu and modifier IDs must be present and unique.";
   for (const menu of workspace.menus) {
+    if(menu.stations !== undefined && (!Array.isArray(menu.stations) || !unique(menu.stations))) return "Station IDs must be present and unique.";
     if (!Array.isArray(menu.items) || !unique(menu.items))
       return "Item IDs must be present and unique within each menu.";
     if (
@@ -215,6 +223,7 @@ export function validateWorkspaceShape(workspace) {
       )
     )
       return "MRNs must remain exact text.";
+    if(menu.items.some(item=>item.weeks !== undefined && (!Array.isArray(item.weeks) || new Set(item.weeks).size !== item.weeks.length || item.weeks.some(w=>!Number.isInteger(w)||w<1||w>6)))) return "Rotation weeks must be unique whole numbers from 1 through 6.";
   }
   for (const group of workspace.modifierGroups) {
     if (!Array.isArray(group.choices) || !unique(group.choices))

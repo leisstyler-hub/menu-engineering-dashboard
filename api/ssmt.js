@@ -15,6 +15,7 @@ import {
   validateWorkspaceShape,
 } from "../src/features/ssmt/ssmtAudit.js";
 import { publicCalendarMenus } from "../lib/ssmtCalendarPreview.js";
+import {validateOpeningChange,menuRevision} from "../src/features/ssmt/ssmtOpening.js";
 const roles = new Set(["Chef", "Experience", "IT"]);
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "private, no-store");
@@ -217,6 +218,34 @@ export default async function handler(req, res) {
         revision: stored.revision,
       });
     }
+    if (action === "review-baseline") {
+      if (!actor.is_admin) throw failure("Admin access is required.",403);
+      const stored=await storedWorkspace();
+      if(req.body.revision!==stored.revision) throw failure("The shared workspace changed. Reload before initializing review history.",409);
+      if(stored.workspace.reviewBaseline) throw failure("The review baseline is already recorded.");
+      const excluded=stored.workspace.menus.find(m=>m.id===req.body.excludedMenuId);
+      if(!excluded || req.body.confirm!=="INITIALIZE REVIEW BASELINE") throw failure("Select the exact Winter Promo menu and confirm baseline initialization.");
+      const at=new Date().toISOString();
+      const next={...stored.workspace,reviewBaseline:{at,actorId:actor.user_id,excludedMenuId:excluded.id,authority:"Tyler existing-item review baseline 2026-11-19"},menus:stored.workspace.menus.map(m=>({...m,reviewTrackingVersion:1,items:m.items.map(item=>item.recordType==="divider" || item.rowType==="divider" ? item : {...item,reviewBasis:m.id===excluded.id?{source:"new"}:{source:"baseline",mrn:item.mrn,description:item.description || "",attestedBy:actor.user_id,recordedAt:at}})})),updatedAt:at};
+      const packed=pack(next);
+      await service("rpc/ssmt_commit_workspace",{method:"POST",body:JSON.stringify({p_actor:actor.user_id,p_expected:stored.payload,p_next:packed,p_events:auditChanges(stored.workspace,next),p_role:actor.work_role})});
+      const {revision}=await import("../lib/ssmtServer.js");
+      return res.status(200).json({ok:true,revision:revision(packed),workspace:next});
+    }
+    if (action === "approve") {
+      if (!actor.is_admin && actor.work_role !== "Experience") throw failure("An admin or Experience reviewer must approve menus.",403);
+      const stored = await storedWorkspace();
+      if (req.body.revision !== stored.revision) throw failure("The menu changed. Reload and review the current revision.",409);
+      const menu=stored.workspace.menus?.find(m=>m.id === req.body.menuId);
+      if (!menu) throw failure("Select an existing menu.");
+      const approval={actorId:actor.user_id,actorName:actor.display_name || actor.email,at:new Date().toISOString(),revision:menuRevision(menu,stored.workspace.modifierGroups)};
+      const approvals=[...(menu.reviewApprovals || []),approval];
+      const next={...stored.workspace,menus:stored.workspace.menus.map(m=>m.id===menu.id?{...m,reviewApprovals:approvals}:m),updatedAt:approval.at};
+      const packed=pack(next);
+      await service("rpc/ssmt_commit_workspace",{method:"POST",body:JSON.stringify({p_actor:actor.user_id,p_expected:stored.payload,p_next:packed,p_events:auditChanges(stored.workspace,next),p_role:actor.work_role})});
+      const {revision}=await import("../lib/ssmtServer.js");
+      return res.status(200).json({ok:true,revision:revision(packed),approvals});
+    }
     if (action === "save") {
       const stored = await storedWorkspace();
       if (req.body.revision !== stored.revision)
@@ -234,6 +263,13 @@ export default async function handler(req, res) {
         throw failure("Refusing an empty or malformed workspace.");
       const shapeError = validateWorkspaceShape(draft);
       if (shapeError) throw failure(shapeError);
+      const assignmentsChanged=draft.menus.some(menu=>{
+        const old=stored.workspace.menus?.find(m=>m.id===menu.id);
+        return JSON.stringify(old?.owners || [])!==JSON.stringify(menu.owners || []) || old?.leadOwnerId!==menu.leadOwnerId || old?.dueDate!==menu.dueDate;
+      });
+      const members=assignmentsChanged && actor.is_admin ? await service("ssmt_members?select=user_id,email,active") : [];
+      const openingError=validateOpeningChange(stored.workspace,draft,actor,members);
+      if(openingError) throw failure(openingError,403);
       const next = {
         ...stored.workspace,
         ...draft,

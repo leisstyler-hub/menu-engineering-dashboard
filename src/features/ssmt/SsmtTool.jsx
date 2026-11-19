@@ -37,6 +37,10 @@ import SsmtAccessGate from "./SsmtAccessGate.jsx";
 import SsmtReusePanel from "./SsmtReusePanel.jsx";
 import { exactMrnMatches } from "./ssmtReuse.js";
 import SsmtExperienceReview, { TicketFormNotice } from "./SsmtExperienceReview.jsx";
+import SsmtOpeningPanel, {ItemRotationDetails, CleanMenuReview} from "./SsmtOpeningPanel.jsx";
+import SsmtAssignments from "./SsmtAssignments.jsx";
+import {OPENING_TYPE, stationRows, transitionMenu, patchOpeningItem} from "./ssmtOpening.js";
+import {ssmtRequest} from "./ssmtClient.js";
 import { ssmtTicketForPhase } from "./ssmtTicketForms.js";
 
 export default function SsmtTool(props) {
@@ -46,7 +50,7 @@ export default function SsmtTool(props) {
 const PASSCODE = "0411";
 const UNLOCKED_KEY = "culinaryToolsSsmtUnlocked";
 const WORKSPACE_STORAGE_KEY = "culinaryToolsSsmtWorkspace_v1";
-const DEFAULT_MENU_TYPES = ["Core", "Global", "Thompson Hospitality", "Promotion"];
+const DEFAULT_MENU_TYPES = ["Core", "Global", "Thompson Hospitality", "Promotion", OPENING_TYPE];
 const ACTIVE_DATE_MENU_TYPES = ["Promotion", "Thompson Hospitality"];
 const SECONDARY_CATEGORY_OPTIONS = ["Entr\u00e9e", "Side", "Extension", "A La Carte"];
 const PROMOTION_WEEKDAYS = [
@@ -58,7 +62,7 @@ const PROMOTION_WEEKDAYS = [
   { value: 5, label: "Friday" },
   { value: 6, label: "Saturday" },
 ];
-const MENU_TYPE_ORDER = ["Core", "Global", "Promotion", "Thompson Hospitality"];
+const MENU_TYPE_ORDER = ["Core", "Global", "Promotion", "Thompson Hospitality", OPENING_TYPE];
 const MODIFIER_TYPES = ["Force", "Remove", "Addition", "Custom"];
 const TIER_2_AREAS = new Set(["AUS", "BNA", "YVR", "YYZ"]);
 const MODIFIER_TYPE_STYLES = {
@@ -101,6 +105,7 @@ const EMPTY_MODIFIER_CLIPBOARD_SLOTS = Array.from({ length: MODIFIER_CLIPBOARD_S
   savedAt: "",
 }));
 const MENU_TYPE_STYLES = {
+  [OPENING_TYPE]: {label: OPENING_TYPE,groupClass:"border-indigo-300 bg-indigo-50",badgeClass:"bg-indigo-700 text-white",itemClass:"border-indigo-200 hover:bg-indigo-100"},
   Core: {
     label: "Core",
     groupClass: "border-emerald-400 bg-emerald-100/80",
@@ -633,6 +638,7 @@ function menuIsVisible(menu, showHidden) {
 
 function createBlankItem(menuId, areaOrder, index = 1) {
   return {
+    reviewBasis: {source:"new"},
     id: `${menuId}-item-${Date.now()}-${index}`,
     label: "NEW ITEM",
     name: "NEW ITEM",
@@ -664,6 +670,9 @@ function createMenuRecord(name, type, areaOrder) {
     name,
     centricMenuName: "",
     webtritionMasterMenuName: "",
+    reviewTrackingVersion: 1,
+    createdAt: new Date().toISOString(),
+    stations: [],
     sourceSheet: "Created in SSMT",
     includeReason: "Created in SSMT",
     type,
@@ -719,6 +728,11 @@ function createBlankModifierGroup(item, areaOrder) {
 }
 
 function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, onOpenUserAdmin }) {
+  const [activeStationId,setActiveStationId] = useState("");
+  const [rotationWeek,setRotationWeek] = useState(0);
+  const [cleanReview,setCleanReview] = useState(false);
+  const [approvalMessage,setApprovalMessage] = useState("");
+  const [showHibernated,setShowHibernated] = useState(false);
   const [reusePanel, setReusePanel] = useState(null);
   const [newFixyDesignation, setNewFixyDesignation] = useState("");
   const accountMode = Boolean(accountMember);
@@ -991,6 +1005,10 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
     const timer = window.setInterval(activate, 30_000);
     return () => window.clearInterval(timer);
   }, [dataStatus, accountMember?.role, ssmtData.plannedPriceBook]);
+  const activeStation = selectedMenu.stations?.find(s=>s.id === activeStationId);
+  const builderItems = stationRows(selectedMenu,activeStationId,rotationWeek);
+  const reuseDestination = {...selectedMenu,fixyDesignation:activeStation?.fixyDesignation || selectedMenu.fixyDesignation,items:selectedMenu.items.filter(row=>(!activeStation || row.stationId === activeStation.id) && row.id !== reusePanel?.replaceItemId)};
+  useEffect(()=>{setActiveStationId("");setRotationWeek(0);setCleanReview(false);},[selectedMenuId]);
   const selectedPrice = ssmtData.priceBook.find((row) => row.id === selectedPriceId) || ssmtData.priceBook[0];
   const priceToDelete = ssmtData.priceBook.find(row => row.id === deletePriceId);
   const deletePriceUsage = priceRowUsage(latestWorkspaceRef.current, deletePriceId);
@@ -1034,7 +1052,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
     if (!query) return availableMenus;
     return availableMenus.filter((menu) => `${menu.name} ${menu.type}`.toLowerCase().includes(query));
   }, [menus, search, showHiddenMenus]);
-  const menuGroups = useMemo(() => groupMenusByType(visibleMenus, showHiddenMenus), [visibleMenus, showHiddenMenus]);
+  const menuGroups = useMemo(() => groupMenusByType(visibleMenus, false), [visibleMenus, showHiddenMenus]);
 
   const downstreamReadyCount = menus.filter((menu) => ["Core", "Global"].includes(menu.type) && menu.phase === "IT complete").length;
   const promotionCount = menus.filter((menu) => menu.type === "Promotion").length;
@@ -1076,7 +1094,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
   const selectedFlagReportHref = buildFlagReportMailto({
     menu: selectedMenu,
     flags: selectedMenuFlags,
-    recipients: ssmtData.reportRecipients,
+    recipients: [...new Set([...ssmtData.reportRecipients,...(selectedMenu.owners || []).map(o=>o.email).filter(Boolean)])],
   });
   const lockedItemCount = selectedItemRows.filter((item) => item.lockedForCentric).length;
   const allItemRowsLocked = selectedItemRows.length === 0 || lockedItemCount === selectedItemRows.length;
@@ -1103,7 +1121,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
       if (menu.id !== selectedMenu.id) return menu;
       return {
         ...menu,
-        items: menu.items.map((item) => (item.id === itemId ? { ...item, ...(Object.hasOwn(patch, "description") && item.importSource && item.importSource.description === undefined ? {importSource:{...item.importSource, description:item.description || ""}} : {}), ...patch } : item)),
+        items: menu.items.map((item) => (item.id === itemId ? { ...patchOpeningItem(item,patch), ...(Object.hasOwn(patch, "description") && item.importSource && item.importSource.description === undefined ? {importSource:{...item.importSource, description:item.description || ""}} : {}), ...patch } : item)),
       };
     }));
   };
@@ -1187,7 +1205,10 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
     }
     const timestamp = new Date().toISOString();
     setPhaseBlocker("");
+    if (phase === selectedMenu.phase) return;
     updateSelectedMenu({
+      ...transitionMenu(selectedMenu,phase,timestamp,accountMember?.id || "legacy"),
+      ...(selectedMenu.phase === "Experience review" && phase === "IT programming" && (accountMember?.isAdmin || accountMember?.role === "Experience") ? {items:selectedMenu.items.map(item=>item.recordType === "divider" ? item : {...item,...(item.reviewInvalidated?{reviewInvalidated:false}:{}),reviewBasis:{source:"experience",mrn:item.mrn,description:item.description || "",at:timestamp,actorId:accountMember?.id || "legacy"}})} : {}),
       phase,
       status: phase === "IT complete" ? "IT complete / Centric ready" : phase,
       completedAt: phase === "IT complete" ? (selectedMenu.completedAt || timestamp) : selectedMenu.completedAt,
@@ -1215,8 +1236,11 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
   };
 
   const exportSelectedMenuForCentric = () => {
+    if (selectedMenu.type === OPENING_TYPE && !activeStation) {setPhaseBlocker("Select one station before exporting SSMT.");return;}
+    if (selectedMenu.items.some(item=>item.weeks?.length) && !rotationWeek) {setPhaseBlocker("Select a rotation week before exporting SSMT.");return;}
+    if (activeStation?.globalMenus?.length) {setPhaseBlocker("This station contains participating Global references. Use Review Menu to print the complete station; Centric export of Global references requires separate validation.");return;}
     downloadCentricExport({
-      selectedMenu,
+      selectedMenu: {...selectedMenu,items:builderItems,fixyDesignation:activeStation?.fixyDesignation || selectedMenu.fixyDesignation},
       areaOrder: ssmtData.areaOrder,
       modifierGroups: ssmtData.modifierGroups,
       priceBook: ssmtData.priceBook,
@@ -1417,8 +1441,8 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
     isCreatingMenuRef.current = true;
     setIsCreatingMenu(true);
     setNewMenuNotice("");
-    if (!newFixyDesignation.trim() || /[|\r\n]/.test(newFixyDesignation)) { setNewMenuNotice("Enter a valid FIXY designation for the new menu."); isCreatingMenuRef.current = false; setIsCreatingMenu(false); return; }
-    const menu = { ...createMenuRecord(name, newMenuType, ssmtData.areaOrder), fixyDesignation: newFixyDesignation.trim().toUpperCase() };
+    if ((newMenuType !== OPENING_TYPE && !newFixyDesignation.trim()) || /[|\r\n]/.test(newFixyDesignation)) { setNewMenuNotice("Enter a valid FIXY designation for the new menu."); isCreatingMenuRef.current = false; setIsCreatingMenu(false); return; }
+    const menu = { ...createMenuRecord(name, newMenuType, ssmtData.areaOrder), fixyDesignation: newFixyDesignation.trim().toUpperCase(), ...(newMenuType === OPENING_TYPE ? {items:[]} : {}) };
     setNewFixyDesignation("");
     setDeletedMenuKeys((current) => current.filter((key) => key !== menuKey(menu)));
     setMenus((current) => [...current, menu]);
@@ -1437,21 +1461,22 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
   const addDivider = () => {
     setMenus((current) => current.map((menu) => {
       if (menu.id !== selectedMenu.id) return menu;
-      return { ...menu, items: [...menu.items, createDivider(menu.id)] };
+      return { ...menu, items: [...menu.items, {...createDivider(menu.id),stationId:activeStation?.id || ""}] };
     }));
   };
 
   const addSubmenuDivider = () => {
     setMenus((current) => current.map((menu) => {
       if (menu.id !== selectedMenu.id) return menu;
-      return { ...menu, items: [...menu.items, createDivider(menu.id, "submenu")] };
+      return { ...menu, items: [...menu.items, {...createDivider(menu.id, "submenu"),stationId:activeStation?.id || ""}] };
     }));
   };
 
   const addItem = () => {
+    if (selectedMenu.type === OPENING_TYPE && !activeStation) {setPhaseBlocker("Select or create a station before adding items.");return;}
     setMenus((current) => current.map((menu) => {
       if (menu.id !== selectedMenu.id) return menu;
-      return { ...menu, items: [...menu.items, createBlankItem(menu.id, ssmtData.areaOrder, menu.items.length + 1)] };
+      return { ...menu, items: [...menu.items, {...createBlankItem(menu.id, ssmtData.areaOrder, menu.items.length + 1),stationId:activeStation?.id || "",weeks:rotationWeek?[rotationWeek]:[]}] };
     }));
   };
 
@@ -1905,8 +1930,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                     <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search menus..." className="w-full rounded-lg border border-slate-300 bg-white py-3 pl-10 pr-3 text-sm font-bold outline-none focus:border-emerald-500" />
                   </label>
                   <label className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-xs font-black text-slate-700">
-                    <input type="checkbox" checked={showHiddenMenus} onChange={(event) => setShowHiddenMenus(event.target.checked)} aria-label="Show hibernated menus" />
-                    Show hibernated
+                    <button type="button" aria-label="Hibernated menus" onClick={()=>setShowHibernated(true)}>Hibernated menus</button>
                   </label>
                 </div>
               </div>
@@ -1918,6 +1942,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                   IT Department: {flaggedMenus.length} menu{flaggedMenus.length === 1 ? " has" : "s have"} been flagged for edit.
                 </div>
               )}
+              {accountMember && menus.some(m=>m.owners?.some(o=>o.id===accountMember.id)) && <section aria-label="My menu assignments" className="mt-3 rounded-lg border-2 border-amber-400 bg-amber-50 p-3"><h3 className="font-black">My Assignments</h3><div className="flex flex-wrap gap-2">{menus.filter(m=>m.owners?.some(o=>o.id===accountMember.id)).map(m=><button key={m.id} className="rounded border bg-white p-2 text-sm" onClick={()=>openMenu(m.id)}>{m.name} / {m.phase}</button>)}</div></section>}
               <div className="mt-4 grid gap-3 lg:grid-cols-2">
                 {handoffQueues.map((queue) => {
                   const QueueIcon = queue.icon;
@@ -1999,6 +2024,33 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
             </section>
   );
 
+  const assignMenu = (id, assignment) => {
+    if (!accountMember?.isAdmin) return;
+    const at = new Date().toISOString();
+    setMenus(current=>current.map(m=>m.id===id?{...m,...assignment,assignedAt:m.assignedAt || at,assignmentHistory:[...(m.assignmentHistory || []),{at,actorId:accountMember.id,...assignment}]}:m));
+  };
+  const createAssignedMenu = data => {
+    if (!accountMember?.isAdmin) return;
+    if (menus.some(m=>menuKey(m)===menuKey(data))) throw new Error("A menu with this name already exists.");
+    if (/[|\r\n]/.test(data.fixyDesignation)) throw new Error("Enter a valid FIXY designation.");
+    const at=new Date().toISOString();
+    const record={...createMenuRecord(data.name,data.type,ssmtData.areaOrder),...data,assignedAt:at,assignmentHistory:[{at,actorId:accountMember.id,owners:data.owners}],...(data.type===OPENING_TYPE?{items:[]}: {})};
+    setMenus(current=>[...current,record]);setSelectedMenuId(record.id);setActiveView("editor");
+  };
+  const initializeReviewBaseline = async excludedMenuId => {
+    if(!await manualSaveWorkspace()) throw new Error("Save current edits before recording the baseline.");
+    const result=await ssmtRequest("review-baseline",{excludedMenuId,revision:accountRevisionRef.current,confirm:"INITIALIZE REVIEW BASELINE"});
+    accountRevisionRef.current=result.revision;
+    loadedWorkspaceRef.current=result.workspace;
+    lastSharedSaveSignatureRef.current=workspaceSharedSignature(result.workspace);
+    setMenus(result.workspace.menus);
+  };
+  const approveMenu = async () => {
+    try {if(!await manualSaveWorkspace()) throw new Error("Save the current edits successfully before approving."); const result=await ssmtRequest("approve",{menuId:selectedMenu.id,revision:accountRevisionRef.current});accountRevisionRef.current=result.revision;setMenus(current=>current.map(m=>m.id===selectedMenu.id?{...m,reviewApprovals:result.approvals}:m));setApprovalMessage("Approval recorded for the saved revision.");}
+    catch(e){setApprovalMessage(e.message);}
+  };
+  if (cleanReview) return <CleanMenuReview key={selectedMenu.id} menu={selectedMenu} menus={menus} groups={ssmtData.modifierGroups} onBack={()=>setCleanReview(false)} onApprove={approveMenu} canApprove={!!accountMember?.isAdmin || accountMember?.role==="Experience"} message={approvalMessage}/>;
+  if (activeView === "assignments" && accountMember?.isAdmin) return <div className="mx-auto max-w-6xl p-4"><SsmtAssignments menus={menus} onBaseline={initializeReviewBaseline} baselineRecorded={!!loadedWorkspaceRef.current.reviewBaseline} onOpen={id=>{setSelectedMenuId(id);setActiveView("editor");}} onAssign={assignMenu} onCreate={createAssignedMenu} onBack={()=>setActiveView("home")}/><button className="rounded border bg-sky-700 p-3 text-white" onClick={()=>manualSaveWorkspace()}>Save SSMT workspace</button></div>;
   if (accountMember?.role === "Experience" && activeView === "menus") {
     return <div className="mx-auto max-w-[1800px] space-y-4 p-4 text-slate-950"><button type="button" onClick={onBackToPlatform}>Back to Platform</button><h1 className="text-2xl font-black">SSMT - Experience</h1><nav aria-label="SSMT sections" className="flex flex-wrap gap-3"><button type="button" onClick={()=>setActiveView("home")}>Back to SSMT</button><button type="button" onClick={()=>setActiveView("pricing")}>Pricing Structure</button><button type="button" onClick={()=>setActiveView("menus")}>Menu Selector</button></nav>{dataStatus === "ready" ? menuSelector : <p role="status">{dataStatus === "error" ? "Shared workspace could not be loaded." : "Loading shared SSMT workspace..."}</p>}</div>;
   }
@@ -2008,7 +2060,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
       flagModals={flagModals} flagReportHref={selectedFlagReportHref}
       existingFlagForItem={existingFlagForItem} onFlagItem={openFlagForItem}
       groupsForItem={item => matchedModifierGroupsForItem(item, pricedModifierGroups)}
-      onSelectMenu={setSelectedMenuId} onDescriptionChange={(id, description) => updateItem(id, { description })}
+      onSelectMenu={setSelectedMenuId} onItemChange={updateItem} onMenuChange={updateSelectedMenu} onReview={()=>setCleanReview(true)} onDescriptionChange={(id, description) => updateItem(id, { description })}
       onSave={() => manualSaveWorkspace()} onAdvance={updateSelectedMenuPhase}
       allItemsLocked={allItemRowsLocked} syncMessage={workspaceSync.message}
       phaseBlocker={phaseBlocker} dataStatus={dataStatus}
@@ -2174,6 +2226,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
               </button>
             </section>
 
+            {accountMember?.isAdmin && <button type="button" className="rounded-xl border-2 border-indigo-700 bg-indigo-700 p-6 text-left text-white" onClick={()=>setActiveView("assignments")}><h2 className="text-2xl font-black">Menu Assignments</h2><p>Create, assign and track menu progress.</p></button>}
             <PromotionCalendar menus={menus} onOpenMenu={openMenu} />
 
             <section className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm font-bold leading-6 text-amber-950">
@@ -2325,6 +2378,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
 
         {activeView === "editor" && (
           <main className="space-y-3">
+            <SsmtOpeningPanel menu={selectedMenu} menus={menus} groups={ssmtData.modifierGroups} stationId={activeStationId} onStation={setActiveStationId} week={rotationWeek} onWeek={setRotationWeek} onChange={updateSelectedMenu} onReview={()=>setCleanReview(true)}/>
             <section className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm">
               <div className="min-w-0">
                 <h2 className="text-xl font-black">{selectedMenu.name || "Unnamed menu"}</h2>
@@ -2368,7 +2422,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
             </section>
 
             <section className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-              <div aria-label="Menu details" className="grid gap-2 md:grid-cols-2">
+              <details open={selectedMenu.type !== OPENING_TYPE}><summary className="cursor-pointer font-bold">Menu details</summary><div aria-label="Menu details" className="grid gap-2 md:grid-cols-2">
                 <label className="grid gap-1 text-sm font-bold text-slate-700">
                   <span className="flex items-center justify-between gap-2">
                     <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Menu name</span>
@@ -2495,14 +2549,14 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                   </div>
                 </div>
               )}
-            </section>
+            </details></section>
 
             <section data-testid="ssmt-fixy-setup" aria-label="FIXY setup" className="rounded-lg border border-indigo-300 bg-indigo-50 p-2 shadow-sm">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-                  <label className="grid w-full gap-1 text-sm font-black text-indigo-950 sm:max-w-md">FIXY designation<input aria-label="Menu FIXY designation" placeholder="Required for FIXY/import" value={selectedMenu.fixyDesignation || ""} onChange={e=>updateSelectedMenu({fixyDesignation:e.target.value})} className="min-h-11 w-full rounded-lg border border-indigo-300 bg-white px-3 py-2 text-base font-bold text-slate-950" /></label>
-                  <button type="button" className="min-h-11 rounded-lg border-2 border-indigo-700 bg-indigo-700 px-5 py-2 text-sm font-black text-white shadow-sm hover:bg-indigo-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" onClick={()=>{if(!selectedMenu.fixyDesignation?.trim()){setPhaseBlocker("Enter this menu’s FIXY designation before generating.");return;}if(!selectedItemRows.length){setPhaseBlocker("This menu has zero items. Add an item before generating FIXY.");return;}const eligible = selectedItemRows.find(item => !String(item.fohColumn || "").trim() && !item.lockedForCentric); if (!eligible) { setPhaseBlocker("All items already have FIXY or are locked. Add an item without FIXY or unlock it first."); return; } setReusePanel({mode:"fixy",item:eligible});}}>Generate FIXY</button>
+                  <label className="grid w-full gap-1 text-sm font-black text-indigo-950 sm:max-w-md">FIXY designation<input aria-label="Menu FIXY designation" placeholder="Required for FIXY/import" value={activeStation?.fixyDesignation || selectedMenu.fixyDesignation || ""} onChange={e=>activeStation ? updateSelectedMenu({stations:selectedMenu.stations.map(station=>station.id===activeStation.id?{...station,fixyDesignation:e.target.value}:station)}) : updateSelectedMenu({fixyDesignation:e.target.value})} className="min-h-11 w-full rounded-lg border border-indigo-300 bg-white px-3 py-2 text-base font-bold text-slate-950" /></label>
+                  <button type="button" className="min-h-11 rounded-lg border-2 border-indigo-700 bg-indigo-700 px-5 py-2 text-sm font-black text-white shadow-sm hover:bg-indigo-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" onClick={()=>{if(!(activeStation?.fixyDesignation || selectedMenu.fixyDesignation)?.trim()){setPhaseBlocker("Enter this menu’s FIXY designation before generating.");return;}if(!reuseDestination.items.length){setPhaseBlocker("This menu has zero items. Add an item before generating FIXY.");return;}const eligible = reuseDestination.items.find(item => !String(item.fohColumn || "").trim() && !item.lockedForCentric); if (!eligible) { setPhaseBlocker("All items already have FIXY or are locked. Add an item without FIXY or unlock it first."); return; } setReusePanel({mode:"fixy",item:eligible});}}>Generate FIXY</button>
               </div>
-              {!selectedMenu.fixyDesignation?.trim() && <p className="mt-2 text-sm font-bold text-indigo-900">Enter a FIXY designation before generating FIXY or importing items.</p>}
+              {!(activeStation?.fixyDesignation || selectedMenu.fixyDesignation)?.trim() && <p className="mt-2 text-sm font-bold text-indigo-900">Enter a FIXY designation before generating FIXY or importing items.</p>}
             </section>
 
             <section data-testid="ssmt-builder-sections" className="overflow-hidden rounded-lg border border-sky-300 bg-white shadow-sm shadow-sky-100">
@@ -2563,7 +2617,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                   </thead>
                   <tbody data-testid="ssmt-builder-body">
                     {(() => {
-                      const visibleBuilderRows = builderRowsWithSharedMembership(selectedMenu.items.slice(0, 80));
+                      const visibleBuilderRows = builderRowsWithSharedMembership(builderItems);
                       let activeSectionTone = "main";
                       let activePalette = SSMT_BUILDER_MAIN_PALETTE;
                       let sectionColorIndex = 0;
@@ -2666,7 +2720,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                               readOnly={Boolean(item.lockedForCentric)}
                               className={`w-full rounded-md border border-slate-300 px-2 py-1 text-xs font-black outline-none focus:border-emerald-500 ${item.lockedForCentric ? "cursor-copy bg-emerald-50 text-slate-950" : "bg-white"}`}
                             />
-                          </td>
+                          <ItemRotationDetails item={item} menu={selectedMenu} onChange={patch=>updateItem(item.id,patch)}/></td>
                           <td className={builderCellClass}>
                             <textarea
                               aria-label="Description"
@@ -2892,11 +2946,12 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
         </Modal>
       )}
 
-      {reusePanel && <SsmtReusePanel key={`${reusePanel.item?.id || reusePanel.mode}-${reusePanel.initialSourceId || ""}-${reusePanel.initialItemId || ""}`} {...reusePanel} onChooseItem={item=>setReusePanel({mode:"fixy",item})} menus={menus} menu={reusePanel.replaceItemId ? {...selectedMenu, items:selectedMenu.items.filter(item=>item.id !== reusePanel.replaceItemId)} : selectedMenu} groups={ssmtData.modifierGroups} onClose={()=>setReusePanel(null)} onApply={result=>{
+      {showHibernated && <Modal title="Hibernated menus" onClose={()=>setShowHibernated(false)}><div className="space-y-2">{menus.filter(m=>m.hidden||menuIsAutoHibernated(m)).map(m=><div key={m.id} className="flex flex-wrap gap-2 rounded border p-2"><button className="underline" data-menu-name={m.name} onClick={()=>{openMenu(m.id);setShowHibernated(false);}}>{m.name}</button><button className="rounded border p-2" onClick={()=>setMenus(current=>current.map(candidate=>candidate.id===m.id?{...candidate,hidden:false,restoredActiveEnd:candidate.activeEnd || ""}:candidate))}>Restore</button></div>)}</div></Modal>}
+      {reusePanel && <SsmtReusePanel key={`${reusePanel.item?.id || reusePanel.mode}-${reusePanel.initialSourceId || ""}-${reusePanel.initialItemId || ""}`} {...reusePanel} onChooseItem={item=>setReusePanel({mode:"fixy",item})} station={activeStation} menus={menus} menu={reuseDestination} groups={ssmtData.modifierGroups} onClose={()=>setReusePanel(null)} onApply={result=>{
         if (result.fixy) updateItem(reusePanel.item.id, {fohColumn:result.fixy});
         else {
           setSsmtData(current=>({...current,modifierGroups:[...current.modifierGroups,...result.groups]}));
-          if(result.items) updateSelectedMenu({items:reusePanel.replaceItemId ? selectedMenu.items.flatMap(item=>item.id === reusePanel.replaceItemId ? result.items.map((copy,index)=>index === 0 ? {...copy,id:item.id,additionalSubmenuIds:item.additionalSubmenuIds || []} : copy) : [item]) : [...selectedMenu.items,...result.items]});
+          if(result.items) { result.items=result.items.map(copy=>({...copy,weeks:rotationWeek?[rotationWeek]:copy.weeks || []})); updateSelectedMenu({items:reusePanel.replaceItemId ? selectedMenu.items.flatMap(item=>item.id === reusePanel.replaceItemId ? result.items.map((copy,index)=>index === 0 ? {...copy,id:item.id,reviewInvalidated:!!item.reviewInvalidated || copy.mrn!==item.mrn,additionalSubmenuIds:item.additionalSubmenuIds || []} : copy) : [item]) : [...selectedMenu.items,...result.items]}); }
           else {
             updateItem(reusePanel.item.id,{modifierGroups:[...(reusePanel.item.modifierGroups||[]),...result.groups.map(g=>g.id)]});
             setModifierDialog(current=>current?{...current,item:{...current.item,modifierGroups:[...(current.item.modifierGroups||[]),...result.groups.map(g=>g.id)]},groups:[...current.groups,...result.groups]}:current);

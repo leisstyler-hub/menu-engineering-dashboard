@@ -137,10 +137,11 @@ export function importItems(
   itemIds,
   groups,
   allowCopies = false,
+  options = {},
 ) {
   if (source.phase !== "IT complete")
     throw new Error("Only IT complete menus can supply imported items.");
-  if (!text(destination.fixyDesignation))
+  if (options.inheritFixy !== false && !text(destination.fixyDesignation))
     throw new Error("Enter the destination FIXY designation first.");
   const items = [],
     copies = [];
@@ -158,7 +159,7 @@ export function importItems(
     const issue = importItemIssue(original, groups, source);
     if (issue) throw new Error(`${original.label || original.name}: ${issue} No items were imported.`);
     const item = clone(original);
-    item.fohColumn = replaceConcept(
+    if (options.inheritFixy !== false) item.fohColumn = replaceConcept(
       item.fohColumn,
       destination.fixyDesignation,
     );
@@ -168,7 +169,11 @@ export function importItems(
     const matched = groupsForItem(original, groups, source);
     const attached = loadGroups(matched, [], true);
     item.modifierGroups = attached.map((g) => g.id);
-    item.importSource = { menuId: source.id, itemId: original.id, description: original.description || "" };
+    item.importSource = { menuId: source.id, itemId: original.id, mrn:original.mrn, description: original.description || "" };
+    if (original.reviewBasis) item.reviewBasis = clone(original.reviewBasis);
+    else if (source.reviewTrackingVersion) item.reviewBasis = {source:"new"};
+    // Existing source evidence is not silently promoted into a fabricated review.
+    item.stationId = options.stationId || "";
     items.push(item);
     copies.push(...attached);
   }
@@ -237,9 +242,11 @@ export function generateFixy(item, menu, facts) {
 
 
 export function noExperienceReviewNeeded(item) {
+  if(item.reviewInvalidated) return false;
+  if (item.reviewBasis) return item.reviewBasis.source !== "new" && item.reviewBasis.mrn === item.mrn && item.reviewBasis.description === (item.description || "");
   const source = item.importSource;
   if (!source?.menuId || !source?.itemId) return false;
   // Legacy imports predate the snapshot. Their existing provenance qualifies;
   // updateItem captures their current description before its first edit.
-  return source.description === undefined || String(item.description || "") === String(source.description);
+  return (source.mrn === undefined || source.mrn === item.mrn) && (source.description === undefined || String(item.description || "") === String(source.description));
 }

@@ -1,5 +1,7 @@
 import { noExperienceReviewNeeded } from "./ssmtReuse.js";
 import React, { useState } from "react";
+import {stationRows,reviewState,OPENING_TYPE} from "./ssmtOpening.js";
+import {WeekSelector} from "./SsmtOpeningPanel.jsx";
 
 const displayValue = (value) => value === undefined || value === null || String(value).trim() === "" ? "Not available" : String(value);
 
@@ -8,7 +10,10 @@ export function TicketFormNotice({ ticket }) {
   return <aside role="status" className="rounded-lg border border-sky-300 bg-sky-50 p-3 text-sm text-sky-950"><p className="font-bold">Finish the {ticket.label} ticket in Smartsheet.</p><p>Review the menu details, enter requester information, and submit the form.</p><a href={ticket.href} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex min-h-11 items-center rounded-lg border border-sky-700 bg-sky-700 px-4 py-2 font-bold text-white">Open {ticket.label} ticket form</a></aside>;
 }
 
-export default function SsmtExperienceReview({ ticketForm, menus, menu, groupsForItem, onSelectMenu, onDescriptionChange, onSave, onAdvance, allItemsLocked, syncMessage, phaseBlocker, dataStatus, onBack, backLabel = "Back to Platform", preview = false, flagModals, flagReportHref, existingFlagForItem, onFlagItem }) {
+export default function SsmtExperienceReview({ ticketForm, menus, menu, groupsForItem, onSelectMenu, onDescriptionChange, onItemChange, onMenuChange, onReview, onSave, onAdvance, allItemsLocked, syncMessage, phaseBlocker, dataStatus, onBack, backLabel = "Back to Platform", preview = false, flagModals, flagReportHref, existingFlagForItem, onFlagItem }) {
+  const [stationId,setStation] = useState("");
+  const [week,setWeek] = useState(0);
+  const visibleRows=stationRows(menu,stationId,week);
   const [expandedModifiers, setExpandedModifiers] = useState({});
   const [spellcheck, setSpellcheck] = useState(true);
   const [copyStatus, setCopyStatus] = useState("");
@@ -18,7 +23,7 @@ export default function SsmtExperienceReview({ ticketForm, menus, menu, groupsFo
   const isDivider = item => item.recordType === "divider" || item.rowType === "divider";
   const sections = [];
   let section = { id: "leading", title: "", rows: [] };
-  for (const row of menu.items || []) {
+  for (const row of visibleRows) {
     if (isDivider(row) && row.dividerKind === "submenu") {
       if (section.rows.length || section.title) sections.push(section);
       section = {id: row.id, title: row.title || row.name || "Untitled submenu", rows: []};
@@ -46,6 +51,7 @@ export default function SsmtExperienceReview({ ticketForm, menus, menu, groupsFo
   return <div className="mx-auto w-full max-w-screen-2xl min-w-0 space-y-3 p-3 pb-28 text-slate-950 md:p-5 md:pb-5">
     <button type="button" onClick={onBack} className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-sky-700 bg-sky-700 px-4 py-2 text-base font-bold text-white shadow-sm hover:bg-sky-800"><span aria-hidden="true">←</span>{backLabel}</button>
     {preview && <p data-testid="ssmt-experience-preview" className="rounded border border-indigo-700 bg-indigo-50 p-3 font-bold">Experience preview: {menu.name}. Description edits and flags apply to this shared menu.</p>}
+    <div className="flex flex-wrap gap-3"><button className="rounded border p-2" onClick={onReview}>Review Menu</button>{menu.type===OPENING_TYPE&&<label>Station <select aria-label="Experience station" value={stationId} onChange={e=>setStation(e.target.value)}><option value="">All stations</option>{menu.stations?.map(s=><option key={s.id} value={s.id}>{s.name} / {s.fixyDesignation}</option>)}<option value="unassigned">Unassigned</option></select></label>}<WeekSelector value={week} onChange={setWeek}/>{menu.type===OPENING_TYPE ? stationId&&stationId!=="unassigned"&&<label>Station FIXY designation<input aria-label="Experience station FIXY designation" className="rounded border p-2" value={menu.stations?.find(s=>s.id===stationId)?.fixyDesignation || ""} onChange={e=>onMenuChange({stations:menu.stations.map(s=>s.id===stationId?{...s,fixyDesignation:e.target.value}:s)})}/></label> : <label>FIXY designation<input aria-label="Experience FIXY designation" className="rounded border p-2" value={menu.fixyDesignation || ""} onChange={e=>onMenuChange({fixyDesignation:e.target.value})}/></label>}</div>
     <h1 className="text-xl font-black tracking-tight">SSMT - Experience review</h1>
     <p className="text-sm text-slate-600">Review descriptions, save your changes, then send the menu to IT.</p>
     <p role="status" className="text-xs text-slate-600">{syncMessage}</p>
@@ -76,7 +82,7 @@ export default function SsmtExperienceReview({ ticketForm, menus, menu, groupsFo
               const modifierKey = `${menu.id}:${item.id}`;
               const modifiersOpen = !!expandedModifiers[modifierKey];
               return <React.Fragment key={item.id}><tr data-testid="ssmt-experience-item-row" className="align-top [&>td]:border-b [&>td]:border-slate-100 [&>td]:px-3 [&>td]:py-3 last:[&>td]:border-b-0 hover:bg-slate-50/70">
-                <td className="break-words"><h4 className="text-[16px] font-bold leading-6">{item.label || item.name}</h4><p className="mt-2 font-mono text-[13px] text-slate-600">MRN: {displayValue(item.mrn)}</p>{noExperienceReviewNeeded(item, menus) && <span className="mt-2 inline-flex rounded bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-800">No Review Needed</span>}</td>
+                <td className="break-words"><h4 className="text-[16px] font-bold leading-6">{item.label || item.name}</h4><details><summary className="cursor-pointer text-xs">Edit names / FIXY</summary>{[["name","Item name"],["label","Item label"],["fohColumn","FIXY name"]].map(([field,label])=><label key={field} className="block text-xs">{label}<input aria-label={`${label} for ${item.id}`} className="my-1 w-full rounded border p-2" value={item[field] || ""} onChange={e=>onItemChange(item.id,{[field]:e.target.value})}/></label>)}</details>{reviewState(item)==="Needs review"&&<span className="text-xs font-bold text-amber-800">* Needs review</span>}<p className="mt-2 font-mono text-[13px] text-slate-600">MRN: {displayValue(item.mrn)}</p>{noExperienceReviewNeeded(item, menus) && <span className="mt-2 inline-flex rounded bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-800">No Review Needed</span>}</td>
                 <td><textarea aria-label={`Description for ${item.label || item.name}`} value={item.description || ""} onChange={event => onDescriptionChange(item.id, event.target.value)} spellCheck={spellcheck} lang="en-US" rows={3} className="block min-h-20 w-full resize-y rounded-md border border-slate-300 bg-white px-3 py-2 text-[16px] leading-6 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100" /></td>
                 <td className="break-words text-[14px] leading-6 text-slate-700">{["Vegan", "Vegetarian"].includes(item.dietaryPreference) && <span className="mb-2 inline-flex rounded-full border border-emerald-300 bg-emerald-50 px-2 py-1 font-semibold text-emerald-900">{item.dietaryPreference}</span>}<span className="block">{displayValue(item.calories) !== "Not available" ? `${item.calories} calories` : "Calories not available"}</span></td>
                 <td className="break-words text-[14px]">
@@ -91,7 +97,7 @@ export default function SsmtExperienceReview({ ticketForm, menus, menu, groupsFo
         </section>)}
       </div>
       {!items.length && <p>No item rows in this menu.</p>}
-      <div className="z-20 flex flex-wrap items-center justify-end gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-sm"><button type="button" className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold" onClick={onSave}>Save SSMT workspace</button><button type="button" className="rounded-md bg-emerald-800 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50" disabled={!canAdvance} onClick={() => onAdvance(nextPhase)}>{nextPhase === "IT programming" ? "Send to IT programming" : "Move to Experience review"}</button></div>
+      <div className="z-20 flex flex-wrap items-center justify-end gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">{menu.phase === "Experience review"&&<button className="rounded border p-2" onClick={()=>onAdvance("Culinary draft")}>Return to Culinary draft</button>}<button type="button" className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold" onClick={onSave}>Save SSMT workspace</button><button type="button" className="rounded-md bg-emerald-800 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50" disabled={!canAdvance} onClick={() => onAdvance(nextPhase)}>{nextPhase === "IT programming" ? "Send to IT programming" : "Move to Experience review"}</button></div>
       {!allItemsLocked && <p>All item rows must be locked by Culinary before the menu can advance.</p>}
       {phaseBlocker && <p role="alert">{phaseBlocker}</p>}
     </> : <p>{dataStatus === "error" ? "Shared workspace could not be loaded. No edits or saves are allowed." : "Loading shared SSMT workspace..."}</p>}

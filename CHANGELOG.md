@@ -1,5 +1,8 @@
 ## 2026-11-19
 
+- [Nov 19, 9:40 AM] Build unit openings by station and week, assign menu owners, and review or print the complete menu.
+- [Nov 19, 9:40 AM] Track item review separately from signage gaps and open hibernated menus in a popup.
+
 - [Nov 19, 5:25 AM] Show approved Global prep vegetables, sides and liquids as rounded volume, and round spinach and kale to whole bags.
 
 - [Nov 19, 4:48 AM] Show Grill avocado, pickled vegetables and other prepared mise as rounded volume without changing transfers.

@@ -33,7 +33,9 @@ export default function SsmtReusePanel({
   initialSourceId = "",
   initialItemId = "",
   replaceItemId,
+  station,
 }) {
+  const [inheritFixy, setInheritFixy] = useState(true);
   const dialogRef = useSsmtDialog(onClose);
   const [sourceId, setSourceId] = useState(initialSourceId),
     [sourceItemId, setSourceItemId] = useState(""),
@@ -112,7 +114,7 @@ export default function SsmtReusePanel({
           throw new Error("Select a source menu and at least one item.");
         if (selectedIssues.length)
           throw new Error(selectedIssues.map(({item, issue}) => `${item.label || item.name}: ${issue}`).join(" ") + " No items were imported. Uncheck these items to copy the ready selection, or correct their source menu first.");
-        const result = importItems(source, menu, selected, groups, allowCopies);
+        const result = importItems(source, {...menu,fixyDesignation:station?.fixyDesignation || menu.fixyDesignation}, selected, groups, allowCopies, {inheritFixy,stationId:station?.id});
         if (!result.items.length) throw new Error("Selected items are already in the destination menu. Choose other items or explicitly allow additional copies.");
         setPreview(result);
       } else if (mode === "groups") {
@@ -319,6 +321,7 @@ export default function SsmtReusePanel({
               />{" "}
               Explicitly add additional copies of duplicates
             </label>
+            {mode === "items" && station && <label className="block font-bold"><input type="checkbox" checked={inheritFixy} onChange={e=>{setInheritFixy(e.target.checked);setPreview(null);}}/> Use this station's FIXY designation</label>}
           </>
         )}
         {mode === "fixy" && (

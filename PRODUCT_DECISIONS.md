@@ -469,3 +469,10 @@ Tyler explicitly simplified review tracking (2af11719bd845cae2905fed2387a905b024
 ## Menu Projects and Menu Audit hibernation - 2026-11-06
 
 Tyler approval 5f92cd18eb8fb45989bb59b680a31e091c89dce3bf1dd7c94b0fdd38f9a6ec12: remove only Menu Projects and Menu Audit Tool from landing cards and mobile navigation. Preserve routes, implementations, records and history for later reactivation. SSMT, Lean Tool and Cafe Tasting remain active.
+
+
+## SSMT stations, assignments and review evidence - 2026-11-19
+
+Tyler's scope in SSMT thread `5979fb8f`, editing approval `58a58921`, preserves all saved data and defers Menu Library. New Unit Openings has stations with independent FIXY; imports default to station designation with an explicit opt-out. Global participation uses references with review snapshots. Items support weeks 1-6; no selection means core/all weeks. Menus support multiple whole-menu owners, admin assignments and persistent phase history/personal buckets. Experience can edit names, labels and FIXY fields; calories are needed for promo/opening signage.
+
+This narrowly extends the November 5 review rule: exact MRN edits require re-review, even if reverted. Modifier changes still do not reset item review. Existing description-change behavior remains. Prior items are reviewed except Winter Promo, but baseline initialization must be explicit, revision-guarded and non-destructive; it never runs on app load/deployment. Leadership approval is a separate authenticated revision record, not a replacement for Experience/IT workflow or signage completeness. Details and export limits: `docs/ssmt/NEW_UNIT_OPENINGS_2026_11_19.md`.

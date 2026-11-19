@@ -1,3 +1,9 @@
+## SSMT unit openings candidate - 2026-11-19
+
+Candidate `2026.11.19.003-ssmt-unit-openings`, Chief on `chief/ssmt-unit-openings`, baseline `f2d1743`. Adds stations with independent FIXY, six-week item membership, Global participation snapshots, admin multi-owner assignment/history, owner flag recipients, personal buckets, clean printable review and authenticated revision approval. Experience adds narrow FIXY/name/label editing and return to draft. Hibernation is a popup. Menu Library is deferred. See [implementation and preservation contract](docs/ssmt/NEW_UNIT_OPENINGS_2026_11_19.md).
+
+No production operational writes or baseline initialization have run. Existing reviewed-baseline initialization is a separate explicit admin action with an exact Winter Promo exclusion and revision/backup/audit protection. Ordinary saves cannot forge baseline authority or approvals. MRN changes require sticky re-review; modifiers do not reset item review. Global-reference Centric export remains guarded pending mapping validation. Chief delivery/testing with independent risk review; release evidence is not yet recorded.
+
 ## Six-week Global Prep List display policy - 2026-11-19
 
 CANDIDATE `2026.11.19.002-global-prep-volume-policy` applies Alex's completed week-by-week review to the cook-facing Global Prep List. The approved cut and prepared vegetables, slaws, pickles, cooked sides, dry volumetric toppings, liquids and pastes now project into gallons and round upward to the existing half-gallon increment per cafe and delivery. Cut onions and peppers are future-proofed by preparation descriptor, while whole uncut produce and the explicitly retained weight items stay native. Murga Tikka plus dried Arbol and Bird's Eye chilies remain weight-based for current in-hub production.

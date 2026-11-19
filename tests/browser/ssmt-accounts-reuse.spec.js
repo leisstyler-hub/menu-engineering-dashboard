@@ -1036,11 +1036,11 @@ test("passive exact MRN guide imports explicitly and Experience labels reused it
 test("auto hibernated promotion offers Restore and preserves its historical dates", async ({page}) => {
   const fixture = await isolated(page, {expiredPromotion:true});
   await page.getByRole("button", {name:"Menu Selector / New Menu",exact:true}).click();
-  await page.getByLabel("Show hibernated menus").check();
+  await page.getByRole("button",{name:"Hibernated menus",exact:true}).click();
   const card = page.locator('[data-menu-name="Source Menu"]').locator('..');
   await expect(card.getByRole("button", {name:"Restore",exact:true})).toBeVisible();
   await card.getByRole("button", {name:"Restore",exact:true}).click();
-  await page.getByLabel("Show hibernated menus").uncheck();
+  await page.getByRole("button",{name:"Close Hibernated menus",exact:true}).click();
   await expect(page.locator('[data-menu-name="Source Menu"]')).toBeVisible();
   await page.getByRole("button", {name:"Save SSMT workspace",exact:true}).click();
   await expect.poll(()=>fixture.saves.length).toBe(1);

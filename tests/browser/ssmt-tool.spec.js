@@ -109,7 +109,7 @@ test("SSMT uses a deliberate dark palette without changing light mode", async ({
   await expect(calendar.getByTestId(`ssmt-calendar-day-${rangeWeekdayKey}`)).toContainText("Current Month Promo");
   await expect(calendar.getByTestId(`ssmt-calendar-day-${rangeWeekendKey}`)).not.toContainText("Current Month Promo");
   await page.getByRole("button", { name: "Menu Selector / New Menu", exact: true }).click();
-  await expect(page.getByTestId(/ssmt-menu-group-/)).toHaveCount(4);
+  await expect(page.getByTestId(/ssmt-menu-group-/)).toHaveCount(5);
   await expect(page.getByTestId("ssmt-menu-group-Menu Library")).toHaveCount(0);
   await expect(page.getByLabel(/New menu type/i).locator('option[value="Menu Library"]')).toHaveCount(0);
   await expect(page.getByTestId("ssmt-menu-group-Core")).toHaveClass(/max-h-\[76vh\]/);
@@ -504,7 +504,7 @@ test("SSMT groups menus by type and supports row editing, ordering, and saved ph
   await expect(thompsonGroup).toHaveClass(/border-fuchsia-400/);
 
   const groupOrder = await page.getByTestId(/ssmt-menu-group-/).evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-menu-type")));
-  expect(groupOrder).toEqual(["Core", "Global", "Promotion", "Thompson Hospitality"]);
+  expect(groupOrder).toEqual(["Core", "Global", "Promotion", "Thompson Hospitality", "New Unit Openings"]);
 
   const coreNames = await firstCoreGroup.locator("[data-menu-name]").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-menu-name")));
   expect([...coreNames].sort((a, b) => a.localeCompare(b))).toEqual(coreNames);
@@ -1926,14 +1926,14 @@ test("SSMT collects hibernated menus into a separate bucket shown on demand", as
 
   // Turning on "Show hibernated" reveals a dedicated bucket holding it,
   // and it no longer bleeds into the Core bucket.
-  await page.getByRole("checkbox", { name: /Show hibernated menus/i }).check();
-  const hibernatedGroup = page.getByTestId("ssmt-menu-group-Hibernated");
+  await page.getByRole("button", { name: "Hibernated menus",exact:true }).click();
+  const hibernatedGroup = page.getByRole("dialog",{name:"Hibernated menus",exact:true});
   await expect(hibernatedGroup).toBeVisible();
   await expect(hibernatedGroup.locator(`[data-menu-name="${menuName}"]`)).toBeVisible();
   await expect(coreGroup.locator(`[data-menu-name="${menuName}"]`)).toHaveCount(0);
 
   const order = await page.getByTestId(/ssmt-menu-group-/).evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-menu-type")));
-  expect(order[order.length - 1]).toBe("Hibernated");
+  expect(order).not.toContain("Hibernated");
 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
