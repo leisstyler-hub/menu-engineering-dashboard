@@ -50,3 +50,17 @@
 .wp-category[aria-pressed=true] strong { background: #283e31; }
 .wp-projection { border: 2px solid #607b68; background: #dce8d8; }
 .wp-assumption { background: #fff4d6; border-color: #9b6c1b; color: #594012; }
+
+/* One planning surface: equipment, priorities and sensory balance. */
+.wp-workbench { --wp-capacity-height: 0px; }
+.wp-bar-plan.wp-capacity { position: static; display: grid; gap: 24px; background: linear-gradient(125deg,#e8f0e5,#f7faf4); border: 1px solid #bed0bd; box-shadow: none; }
+.wp-bar-settings,.wp-bar-sensory { min-width: 0; }
+.wp-bar-sensory { padding-top: 20px; border-top: 1px solid #c7d7c5; }
+.wp-bar-settings > .mt-5 > .flex { padding: 0; border: 0; background: transparent; }
+.wp-tact-display { display: grid; align-items: center; gap: 20px; margin-top: 12px; }
+.wp-tact-graphic { display: block; width: min(100%,340px); margin: 0 auto; filter: drop-shadow(0 8px 14px #294e3520); }
+.wp-tact-panel h4 { letter-spacing: .04em; }
+.wp-tact-panel > details:last-child { padding-top: 12px; border-top: 1px solid #d2dfcf; }
+@media (min-width: 768px) { .wp-tact-display { grid-template-columns: minmax(260px,1fr) minmax(200px,1fr); } }
+@media (min-width: 1180px) { .wp-bar-plan.wp-capacity { grid-template-columns: minmax(260px,.75fr) minmax(0,2fr); } .wp-bar-sensory { border-top: 0; border-left: 1px solid #c7d7c5; padding: 0 0 0 24px; } }
+@media (max-width: 767px) { .wp-tact-graphic { width: min(100%,320px); } .wp-tact-display { gap: 12px; } }

@@ -1,3 +1,7 @@
+## W&P integrated bar layout - 2026-11-19
+
+Version `2026.11.19.008-wp-bar-layout` moves TACT into the Plan your W&P Bar panel beside capacity and dietary priorities. Wheel canvas expands from 180px to up to 340px; mobile stacks within the same panel. Weight explanations stay collapsed. The combined panel is not sticky, preventing a tall panel from consuming the food workspace viewport. Planning calculations, weights and source records are unchanged. Solo UI delivery/self-review; browser fixture acceptance covers desktop/mobile integration and minimum wheel width. Release evidence: workspace WORK_LOGS/WP_BAR_LAYOUT_2026_11_19.md.
+
 ## W&P TACT planning and planogram candidate - 2026-11-19
 
 Candidate version `2026.11.19.007-wp-tact-planogram`, branch `chief/weigh-pay`, base `a0ae1894b2ccce2d646fb03ef1d175df497a4596`. See [planning behavior and SOP](docs/WP_TACT_PLANOGRAM_2026_11_19.md). Adds shared ingredient-fit views to Pairwise/W&P without reclassifying approved cuisine pillars, proposed weighted TACT, source dietary filtering, separate pan arrangement/export/print/email, explicit daily selling and limited premium offers. Existing source tags, exact MRNs and catalog remain unchanged. Scan and Pay is capped to compatible prepared portions; unresolved yields have no revenue forecast. Chief delivery with independent source/financial risk review cleared; final committed and production verification must be recorded before claiming LIVE. No production menu writes or training changes.
