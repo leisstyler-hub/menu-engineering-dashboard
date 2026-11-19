@@ -35,3 +35,7 @@ Chief implemented and tested; independent risk review cleared the recorded sourc
 Initial acceptance: 42/42 account/opening browser workflows passed. Broader browser failures for the legacy Promotion layout, ambiguous flag-email text locator and hibernated Menu Audit navigation reproduced on unchanged `f2d1743`. Current release checks and exact commit/deployment evidence are tracked in workspace `WORK_LOGS/SSMT_UNIT_OPENINGS_2026_11_19.md`.
 
 Application rollback baseline: `f2d1743b74c5d0c794d099605e6a124368907b01`, production `dpl_BrxrLbxiQufCZVVbMR4cYkwNwc6U`. This is an application rollback, not data restoration. Added metadata remains in saved records; a data change requires its own fresh revision guard and verified recovery evidence.
+
+## Production evidence
+
+Application `4260bab74b285a6acb02e51af9b711e2d95e0130`, version `2026.11.19.003-ssmt-unit-openings`, reached READY `dpl_9B8v7MA6my5BhAjjtcBhy8ookrQB` at the canonical alias. Public HTTP 200 and `/assets/index-Dpz0Zn0M.js` version verified at 2026-11-19T17:47:16Z. New production UI acceptance passed 5/5 with fixture interception; no real account save or baseline initialization was tested. Final legacy tool tests: 26 passed, two unchanged-base failures. Full committed package verification/build passed in publication. Chief testing and production verification, with independent code/risk review. Baseline remains unapplied and Global-reference Centric export remains guarded.
