@@ -101,7 +101,7 @@ const REFERENCE_MENU_BY_STATION = {
   soup: "AMZ: Cafe Express Soup",
 };
 
-const MOBY_POP_UP_START_WEEK = "2026-08-31";
+const DAWSON_MOBY_POP_UP_RETIRED = true;
 const MOBY_POP_UP_DAYS = ["Tuesday", "Wednesday", "Thursday"];
 const CRICKET_DELI_MIN_SELECTIONS = 3;
 const NESSIE_GLOBAL_PLATE_COST_PILOT_WEEK = "2026-08-17";
@@ -162,7 +162,9 @@ const usesNessieReferencePicker = (district = "", cafe = "", week = "", menu = "
   isNessieGlobalPlateCostPilot(district, cafe, week) && isFoodCostReferenceMenu(menu);
 const usesReferenceGlobalPlanner = (week = "", menu = "") =>
   isReferencePlateCostRolloutWeek(week) && isFoodCostReferenceMenu(menu);
-const isMobyPopUpActive = (cafe = "", week = "") => cafe === "Dawson" && parseWeekStart(week) >= MOBY_POP_UP_START_WEEK;
+// Keep the legacy state/read paths so prior records remain recoverable, but never
+// add the retired station to a current planner or project it into Moby.
+const isMobyPopUpActive = () => !DAWSON_MOBY_POP_UP_RETIRED;
 const cafeStationsForWeek = (cafe = "", week = "") => {
   const stations = CAFE_STATION_CONFIG[cafe] || ["global"];
   const activeStations = isMobyPopUpActive(cafe, week) && !stations.includes("mobyPopUp") ? [...stations, "mobyPopUp"] : [...stations];

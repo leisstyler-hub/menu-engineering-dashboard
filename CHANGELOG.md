@@ -1,3 +1,7 @@
+## 2026-11-20
+
+- [Nov 20, 5:07 AM] Retire Dawson's Moby Pop-Up station from every Neighborhood Rotation week while preserving historical records and the separate Roxanne Pop-Up and Composed Salad copy-over.
+
 ## 2026-11-19
 
 - [Nov 19, 7:09 PM] Connect submitted Dawson Pop-Up and Salad selections to Roxanne ordering and separate Cricket and Dawson transfers.

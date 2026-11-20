@@ -11,7 +11,7 @@ assert.equal(isApprovedOperationalMetadataRecord(record), true);
 assert.equal(resolveOperationalMetadata([record]).source, "supabase");
 assert.equal(resolveOperationalMetadata([]).source, "fallback");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.orderItems.length, 41);
-assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 31);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 32);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.items.length, 41);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.legacyItems.length, 41);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.source.effectiveDate, "2026-11-16");
@@ -72,7 +72,7 @@ assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globalInterface
   subrecipes: "automatic-from-recipe",
   deliveryQuantities: "whole-portions",
 });
-assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 31);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 32);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globalProductionPolicy.version, 1);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globalProductionPolicy.rules["global|amz-porto|121026|1-piece"].outputs[0].mrn, "120715");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globalProductionPolicy.rules["global|amz-smokehouse-bbq|5365.6|5-ounce"].mode, "in-unit");
@@ -114,6 +114,15 @@ assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.gener
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.roxanneDawsonIntegration.effectiveWeek, "2026-11-30");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.roxanneDawsonIntegration.prepProjection, "excluded; Dawson is not a commissary prep hub");
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.roxanneDawsonIntegration.transferWorkbook, { cricketSheet: "SEA20 Cricket", dawsonSheet: "SEA27 Dawson" });
+assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.neighborhoodRotations.dawsonMobyPopUp, {
+  status: "retired",
+  retiredVersion: "2026.11.20.001-dawson-moby-popup-retired",
+  plannerVisibility: "removed-all-weeks",
+  submissionRequirement: false,
+  mobyCafeProjection: false,
+  historicalRecords: "preserved-read-only",
+  roxannePopUpIntegration: "preserved",
+});
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.globalPrepDisplayPolicy.conditionalNativeWeightMrns, ["84052", "49473", "76662"]);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.packoutPacket.version, 4);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.dailyPrepLists, { friday: "Monday service", monday: "Tuesday-Wednesday service", wednesday: "Thursday-Friday service" });

@@ -561,7 +561,7 @@ test("reference plate cost rolls out by menu across current and future planners 
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
-test("reference plate cost covers split, Nitro, Moby Pop-Up, and LAX planner paths", async ({ page }) => {
+test("reference plate cost covers split, Nitro, and LAX planner paths", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   const rolloutWeek = "Aug 31, 2026 - Sep 4, 2026";
   await stubEmptyRotationBackbone(page);
@@ -581,14 +581,6 @@ test("reference plate cost covers split, Nitro, Moby Pop-Up, and LAX planner pat
   global = page.getByRole("heading", { name: "Global Station" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
   await global.locator("select").first().selectOption("AMZ: Ohana");
   await expect(global.locator('[data-reference-plate-cost="true"]')).toHaveCount(1);
-
-  await page.getByRole("button", { name: exactName("North") }).click();
-  await page.getByRole("button", { name: exactName("Dawson") }).click();
-  const moby = page.getByRole("heading", { name: "Moby Pop-Up" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
-  await moby.getByLabel("Moby Pop-Up Menu").selectOption("AMZ: Carvery");
-  await expect(moby.getByTestId("nessie-global-reference-plate-cost")).toBeVisible();
-  await moby.getByLabel("Promotion Override").check();
-  await expect(moby.getByTestId("nessie-global-reference-plate-cost")).toHaveCount(0);
 
   await page.getByRole("button", { name: exactName("LAX") }).click();
   await page.getByRole("button", { name: exactName("LAX22") }).click();
@@ -1087,7 +1079,7 @@ test("Dawson Carvery promotion override replaces normal Carvery fields and saves
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
-test("Dawson Moby Pop-Up starts Aug 31, uses Global or Carvery menus, and recalls an isolated day promo", async ({ page }) => {
+test.skip("historical: Dawson Moby Pop-Up starts Aug 31, uses Global or Carvery menus, and recalls an isolated day promo", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   const storageWrites = [];
   let storedRecords = [];
@@ -1192,7 +1184,7 @@ test("Dawson Moby Pop-Up starts Aug 31, uses Global or Carvery menus, and recall
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
-test("submitted Dawson Moby Pop-Up replaces only Moby Global presentation without persisting the projection", async ({ page }) => {
+test.skip("historical: submitted Dawson Moby Pop-Up replaces only Moby Global presentation without persisting the projection", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   const storageWrites = [];
   const normalWeek = "Aug 31, 2026 - Sep 4, 2026";
@@ -1580,7 +1572,7 @@ test("East 108th tower cafes still block the same non-Balti Global Menu", async 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
-test("Dawson persists separate Roxanne Pop-Up flags for Global and Carvery beginning November 30", async ({ page }) => {
+test("Dawson retires Moby Pop-Up while preserving separate Roxanne Pop-Up controls", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   await page.clock.setFixedTime(new Date("2026-11-19T20:00:00Z"));
   const storageWrites = [];
@@ -1590,6 +1582,9 @@ test("Dawson persists separate Roxanne Pop-Up flags for Global and Carvery begin
   await page.locator("select").first().selectOption({ label: "Nov 30, 2026 - Dec 4, 2026" });
   await page.getByRole("button", { name: exactName("North") }).click();
   await page.getByRole("button", { name: exactName("Dawson") }).click();
+
+  await expect(page.getByRole("heading", { name: "Moby Pop-Up", exact: true })).toHaveCount(0);
+  await expect(page.getByLabel("Planner Remote Control").getByRole("button", { name: "Submit", exact: true })).not.toHaveAttribute("title", /Moby Pop-Up/);
 
   const globalStation = page.getByRole("heading", { name: "Global Station" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
   const carveryStation = page.getByRole("heading", { name: "Carvery Rotations" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
@@ -1602,6 +1597,25 @@ test("Dawson persists separate Roxanne Pop-Up flags for Global and Carvery begin
   await expect.poll(() => storageWrites.length).toBeGreaterThan(0);
   const header = storageWrites.at(-1).records.find((record) => record["Record Type"] === "Rotation Header" && record["Café / Unit"] === "Dawson");
   expect(header).toMatchObject({ "Roxanne Pop-Up Global": true, "Roxanne Pop-Up Carvery": true, Status: "Draft" });
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("retired Dawson Moby records no longer replace Moby's native Global station", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const week = "Nov 30, 2026 - Dec 4, 2026";
+  const records = submittedProjectionRecords({ week, mobyStatus: "Draft" });
+  await stubEmptyRotationBackbone(page, { getStorageRecords: () => records });
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.locator("select").first().selectOption({ label: week });
+  await page.getByRole("button", { name: exactName("North") }).click();
+  await page.getByRole("button", { name: exactName("Moby") }).click();
+
+  const globalStation = page.getByRole("heading", { name: "Global Station", exact: true }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await expect(globalStation).not.toContainText("Automatically supplied by Dawson");
+  await expect(globalStation).not.toContainText("Dawson override active");
+  await expect(globalStation.locator("select")).not.toHaveCount(0);
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });

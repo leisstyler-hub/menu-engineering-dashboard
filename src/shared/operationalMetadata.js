@@ -25,7 +25,7 @@ import { COMMISSARY_CAFE_STATION_ACCESS, COMMISSARY_HUB_ROUTING, COMMISSARY_HUBS
 import { GLOBAL_UNIT_PREPARATION_NOTES } from "../features/commissary-ordering/commissaryModel.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 31;
+export const OPERATIONAL_METADATA_VERSION = 32;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -42,6 +42,17 @@ const commissaryReceivingCafes = DEFAULT_COMMISSARY_METADATA.receivingCafes.map(
 
 export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
   metadataVersion: OPERATIONAL_METADATA_VERSION,
+  neighborhoodRotations: Object.freeze({
+    dawsonMobyPopUp: Object.freeze({
+      status: "retired",
+      retiredVersion: "2026.11.20.001-dawson-moby-popup-retired",
+      plannerVisibility: "removed-all-weeks",
+      submissionRequirement: false,
+      mobyCafeProjection: false,
+      historicalRecords: "preserved-read-only",
+      roxannePopUpIntegration: "preserved",
+    }),
+  }),
   transferTool: Object.freeze({
     units: Object.freeze(transferUnits),
     glAccounts: S4_GL_ACCOUNTS,
@@ -252,6 +263,7 @@ const canonicalize = (value) => {
 
 const comparable = (record = {}) => ({
   metadataVersion: Number(record.metadataVersion),
+  neighborhoodRotations: record.neighborhoodRotations,
   transferTool: record.transferTool,
   commissaryOrdering: record.commissaryOrdering,
 });

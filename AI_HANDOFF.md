@@ -1,3 +1,9 @@
+## Dawson Moby Pop-Up retirement - 2026-11-20
+
+Candidate `2026.11.20.001-dawson-moby-popup-retired` removes Moby Pop-Up from Dawson's planner, submission requirements, recap/export surfaces and the former Moby-cafe Global projection for every week. Existing `mobyPopUp` and `mobyPopUpPromotion` Supabase records are preserved: legacy parsing remains available, no migration or deletion runs, and ordinary planner saves no longer emit those retired station rows. The separate Roxanne Pop-Up controls on Dawson Global and Carvery, submitted-week projection, automatic Salad LTO to Composed Salad copy-over, Roxanne quantities, source-split transfer workbook and hub-only Prep List boundary remain unchanged.
+
+Operational metadata version 32 publishes the retirement, preserved-history and preserved-Roxanne contracts for cross-tool use. No culinary item/profile row changes; Culinary Tags shared-profile persistence is not applicable. Production commit, metadata seed and live verification remain pending.
+
 ## Dawson-to-Roxanne ordering and hub Prep reliability - 2026-11-19
 
 LIVE `2026.11.19.009-roxanne-dawson-orders` begins with service week `2026-11-30`. Dawson Global and Carvery each expose a separate `Roxanne Pop-Up` flag below Promotion Override. The flags persist on the rotation header, reset the edited rotation to Draft, and become an ordering roster only after that Dawson week is Submitted. Submitted Dawson Salad LTO rows flow automatically as Roxanne Composed Salad items without an opt-in flag. Roxanne Coffee owns whole-item Friday/Monday/Wednesday quantities under the established cutoff and autosave rules.

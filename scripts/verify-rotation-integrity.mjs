@@ -537,12 +537,8 @@ if (/placeholder="Type if not listed"\s+className="mt-3 w-full rounded-2xl borde
   fail("Carvery selectors must not render an always-visible duplicate write-in input below the dropdown.");
 }
 
-if (!/const MOBY_POP_UP_START_WEEK = "2026-08-31";/.test(source) || !/const MOBY_POP_UP_DAYS = \["Tuesday", "Wednesday", "Thursday"\];/.test(source)) {
-  fail("Dawson Moby Pop-Up must start with the Aug 31 week and only expose Tuesday through Thursday promo days.");
-}
-
-if (!/const cafeStationsForWeek = \(cafe = "", week = ""\) =>/.test(source) || !/isMobyPopUpActive\(cafe, week\)/.test(source) || !/const stationKeys = cafeStationsForWeek\(cafe, week\);/.test(source)) {
-  fail("Dawson Moby Pop-Up must be week-gated and included in weekly submission requirements.");
+if (!/const DAWSON_MOBY_POP_UP_RETIRED = true;/.test(source) || !/const isMobyPopUpActive = \(\) => !DAWSON_MOBY_POP_UP_RETIRED;/.test(source)) {
+  fail("Dawson Moby Pop-Up must remain retired from every planner week and Moby projection.");
 }
 
 if (!/mobyPopUp: normalizeMobyPopUp\(\)/.test(source) || !/mobyPopUpPromotionOverride: normalizeMobyPopUpPromotionOverride\(\)/.test(source)) {
@@ -553,12 +549,8 @@ if (!/mobyStationKey = useMobyPromo \? "mobyPopUpPromotion" : "mobyPopUp"/.test(
   fail("Moby Pop-Up normal and promotion records must save and recall through isolated station keys.");
 }
 
-if (!/<CollapsibleStation title="Moby Pop-Up" eyebrow="Dawson · Tuesday–Thursday"/.test(source) || !/mobyPopUpMenuOptions\(menuOptions\)/.test(source) || !/Replace all normal Moby selections for this saved week/.test(source)) {
-  fail("Moby Pop-Up must expose the Dawson UI, Global/Carvery menu choices, and whole-week promotion replacement behavior.");
-}
-
-if (!/function projectDawsonMobyGlobal\(/.test(source) || !/__dawsonMobyGlobalOverride/.test(source) || !/Global Station - Dawson Moby Pop-Up/.test(source)) {
-  fail("Submitted Dawson Moby Pop-Up data must project into Moby's visible Global station.");
+if (!/roxannePopUp: \{/.test(source) || !/Roxanne Pop-Up/.test(source)) {
+  fail("Retiring Dawson Moby Pop-Up must preserve the separate Roxanne Pop-Up controls.");
 }
 
 if (!/function DawsonMobyGlobalProjectionSection\(/.test(source) || !/Automatically supplied by Dawson/.test(source) || !/Dawson override active/.test(source)) {
