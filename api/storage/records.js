@@ -6,13 +6,14 @@ import {
   normalizeBackboneRows,
 } from "../../src/integrations/storage/backboneRecords.js";
 import { isApprovedCommissaryMetadataRecord } from "../../src/features/commissary-ordering/commissaryMetadata.js";
-import { COMMISSARY_BREAKFAST_ORDER_VERSION, COMMISSARY_DELI_ORDER_VERSION, COMMISSARY_FINISHED_PREP_ITEM_IDS, COMMISSARY_GLOBAL_ORDER_VERSION, COMMISSARY_GRILL_ORDER_VERSION, COMMISSARY_ORDER_UNIT_VERSION, COMMISSARY_PACKOUT_PACKET_VERSION, COMMISSARY_PREP_BOARD_PILOT_WEEK, COMMISSARY_STATION_ORDER, DELIVERY_KEYS, dailyGlobalCycleForWeek, deliCycleForWeek, deliveryDateForWeek, globalCycleForWeek, grillCycleForWeek, invalidWholeUnitSaladQuantities, isBreakfastEligibleCafe, isDailyGlobalEligibleCafe, isDeliEligibleCafe, isGlobalEligibleCafe, isGrillCoreAvailable, isGrillEligibleCafe, isPrepBoardCompletionId, isWeekLocked, standingOrderReductions } from "../../src/features/commissary-ordering/commissaryModel.js";
+import { COMMISSARY_BREAKFAST_ORDER_VERSION, COMMISSARY_DELI_ORDER_VERSION, COMMISSARY_FINISHED_PREP_ITEM_IDS, COMMISSARY_GLOBAL_ORDER_VERSION, COMMISSARY_GRILL_ORDER_VERSION, COMMISSARY_ORDER_UNIT_VERSION, COMMISSARY_PACKOUT_PACKET_VERSION, COMMISSARY_PREP_BOARD_PILOT_WEEK, COMMISSARY_STATION_ORDER, DELIVERY_KEYS, dailyGlobalCycleForWeek, deliCycleForWeek, deliveryDateForWeek, globalCycleForWeek, grillCycleForWeek, invalidWholeUnitSaladQuantities, isBreakfastEligibleCafe, isDailyGlobalEligibleCafe, isDeliEligibleCafe, isGeneratedPrepCompletionId, isGlobalEligibleCafe, isGrillCoreAvailable, isGrillEligibleCafe, isPrepBoardCompletionId, isWeekLocked, standingOrderReductions } from "../../src/features/commissary-ordering/commissaryModel.js";
 import { GRILL_LTO_PREP_ITEM_IDS, GRILL_LTO_PROGRAM } from "../../src/features/commissary-ordering/grillLtoCatalog.js";
 import { DELI_ORDERING_PREP_ITEM_IDS, DELI_ORDERING_PROGRAM } from "../../src/features/commissary-ordering/deliCycleCatalog.js";
 import { GLOBAL_ORDERING_PREP_ITEM_IDS } from "../../src/features/commissary-ordering/globalCycleCatalog.js";
 import { BREAKFAST_ORDERING_ITEM_IDS, BREAKFAST_ORDERING_PREP_ITEM_IDS, BREAKFAST_ORDERING_PROGRAM } from "../../src/features/commissary-ordering/breakfastCatalog.js";
 import { DAILY_GLOBAL_ORDER_VERSION, DAILY_GLOBAL_PREP_ITEM_IDS } from "../../src/features/commissary-ordering/dailyGlobalCatalog.js";
 import { COMMISSARY_HUBS, COMMISSARY_STATIONS, isCafeStationEnabled } from "../../src/features/commissary-ordering/commissaryRouting.js";
+import { ROXANNE_DAWSON_EFFECTIVE_WEEK, ROXANNE_DAWSON_ORDER_VERSION } from "../../src/features/commissary-ordering/roxanneDawsonProjection.js";
 import { DEFAULT_OPERATIONAL_METADATA, isApprovedOperationalMetadataRecord, OPERATIONAL_METADATA_RECORD_ID } from "../../src/shared/operationalMetadata.js";
 import { gzipSync, gunzipSync } from "node:zlib";
 
@@ -114,7 +115,7 @@ export function commissaryWriteValidation(records = [], context = {}) {
     if (Object.keys(record.completed).some((delivery) => !DELIVERY_KEYS.includes(delivery))) return "The commissary prep delivery is invalid.";
     for (const delivery of DELIVERY_KEYS) {
       const itemIds = record.completed[delivery];
-      if (!Array.isArray(itemIds) || new Set(itemIds).size !== itemIds.length || itemIds.some((itemId) => !COMMISSARY_PREP_IDS.has(itemId) && !(prepBoardPilot && isPrepBoardCompletionId(itemId)))) {
+      if (!Array.isArray(itemIds) || new Set(itemIds).size !== itemIds.length || itemIds.some((itemId) => !COMMISSARY_PREP_IDS.has(itemId) && !isGeneratedPrepCompletionId(itemId) && !(prepBoardPilot && isPrepBoardCompletionId(itemId)))) {
         return "Commissary prep completion contains an invalid or duplicate item.";
       }
     }
@@ -284,6 +285,22 @@ export function commissaryWriteValidation(records = [], context = {}) {
     }
   } else if (Object.values(record.breakfast?.quantities || {}).some((delivery) => DELIVERY_KEYS.some((key) => Number(delivery?.[key] || 0) > 0))) {
     return "Breakfast ordering is not enabled for this cafe.";
+  }
+  const roxanneOrder = record.roxanneDawson || {};
+  const roxanneQuantities = roxanneOrder.quantities || {};
+  const hasRoxanneQuantity = Object.values(roxanneQuantities).some((delivery) => DELIVERY_KEYS.some((key) => Number(delivery?.[key] || 0) > 0));
+  if (hasRoxanneQuantity && (record.cafe !== "Roxanne Coffee" || record.weekStart < ROXANNE_DAWSON_EFFECTIVE_WEEK)) return "Dawson Pop-Up ordering is not enabled for this cafe and week.";
+  if (record.cafe === "Roxanne Coffee" && record.weekStart >= ROXANNE_DAWSON_EFFECTIVE_WEEK) {
+    if (Number(roxanneOrder.version) !== ROXANNE_DAWSON_ORDER_VERSION) return "The Dawson Pop-Up order version is invalid.";
+    if (!roxanneOrder.items || typeof roxanneOrder.items !== "object" || Array.isArray(roxanneOrder.items) || !roxanneQuantities || typeof roxanneQuantities !== "object" || Array.isArray(roxanneQuantities)) return "The Dawson Pop-Up order is invalid.";
+    if (Object.keys(roxanneQuantities).some((id) => !roxanneOrder.items[id])) return "The Dawson Pop-Up order contains an unknown item.";
+    for (const [id, item] of Object.entries(roxanneOrder.items)) {
+      if (!String(id).startsWith("roxanne-dawson|") || !["global", "carvery", "composedSalad"].includes(item.source) || !String(item.name || "").trim()) return "The Dawson Pop-Up item identity is invalid.";
+      const delivery = roxanneQuantities[id] || {};
+      if (DELIVERY_KEYS.some((key) => !Number.isInteger(Number(delivery[key] || 0)) || Number(delivery[key] || 0) < 0)) return "Dawson Pop-Up quantities must be zero or positive whole items.";
+      const count = DELIVERY_KEYS.reduce((sum, key) => sum + Number(delivery[key] || 0), 0);
+      if (count > 0 && !(Number(item.itemWasteCost) > 0)) return `The Dawson Pop-Up cost snapshot for ${item.name} is invalid.`;
+    }
   }
   if (isWeekLocked(record.weekStart, new Date())) return "This order is locked. Please contact commissary executive chef to adjust pars.";
   return "";

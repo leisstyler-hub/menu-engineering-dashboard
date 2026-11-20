@@ -25,7 +25,7 @@ import { COMMISSARY_CAFE_STATION_ACCESS, COMMISSARY_HUB_ROUTING, COMMISSARY_HUBS
 import { GLOBAL_UNIT_PREPARATION_NOTES } from "../features/commissary-ordering/commissaryModel.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 30;
+export const OPERATIONAL_METADATA_VERSION = 31;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -122,6 +122,17 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       deliHub: "Sonic",
       transferValuation: "finished-plate-item-plus-waste",
     }),
+    roxanneDawsonIntegration: Object.freeze({
+      version: 1,
+      effectiveWeek: "2026-11-30",
+      source: "submitted North/Dawson Neighborhood Rotation",
+      popUpSources: Object.freeze(["Global", "Carvery"]),
+      composedSaladSource: "Salad LTO automatic",
+      quantityOwner: "Roxanne Coffee",
+      quantityUnit: "whole items",
+      prepProjection: "excluded; Dawson is not a commissary prep hub",
+      transferWorkbook: Object.freeze({ cricketSheet: "SEA20 Cricket", dawsonSheet: "SEA27 Dawson" }),
+    }),
     stationAccess: COMMISSARY_CAFE_STATION_ACCESS,
     prepHubs: COMMISSARY_HUBS,
     prepAccess: Object.freeze({ hubSitesOnly: true, selectedCafeBindsHub: true, allowedSites: Object.freeze(COMMISSARY_HUBS.map(({ key }) => key)) }),
@@ -178,6 +189,8 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       avocadoMashDisplay: "number-16-scoops-converted-to-gallons",
       grillHandScoopedAvocadoDisplay: "number-16-scoops-converted-to-gallons-for-prep-only",
       globalPrepDisplayPolicy: GLOBAL_PREP_DISPLAY_POLICY,
+      autoReload: Object.freeze({ intervalSeconds: 15, onWindowFocus: true, onVisibilityRestore: true }),
+      generatedCompletionIds: "validated dynamic prep identifiers persisted for all hubs",
       looseStaples: "canola-kosher-salt-black-pepper-dried-spices-excluded-or-bundled-as-recipes",
       deliDeliveryMap: "finished-sandwich-counts",
       globalUnitPreparationNotes: GLOBAL_UNIT_PREPARATION_NOTES,

@@ -12,7 +12,7 @@ import { BREAKFAST_ORDERING_PROGRAM } from "../../src/features/commissary-orderi
 import { DAILY_GLOBAL_PROGRAM } from "../../src/features/commissary-ordering/dailyGlobalCatalog.js";
 import { collectUnexpectedPageErrors, expectNoAppProtection, expectNoUnexpectedPageErrors, openTool } from "./smoke-helpers.js";
 
-async function mockOrders(page, records = []) {
+async function mockOrders(page, records = [], rotationRecords = []) {
   const writes = [];
   const grillItems = [...new Map([...GRILL_LTO_PROGRAM.cycleWeeks.flatMap((week) => [...week.setA, ...week.setB]), ...GRILL_LTO_PROGRAM.coreItems].map((item, index) => [item.mrn, {
     menu: GRILL_LTO_PROGRAM.menu,
@@ -39,7 +39,10 @@ async function mockOrders(page, records = []) {
   const dailyGlobalItems = [...new Map(DAILY_GLOBAL_PROGRAM.cycleWeeks.flatMap(({ days }) => days.flatMap((day) => [day.animal, day.vegetarian].map((item) => ({ menu: day.menu, item: item.name, mrn: item.mrn, portion: item.portion, trueCost: 4.25 })))).map((item) => [`${item.menu}|${item.mrn}`, item])).values()];
   await page.route("**/api/recipe-library?scope=all", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, source: "supabase-recipe-items", rows: [...grillItems, ...deliItems, ...globalItems, ...breakfastItems, ...dailyGlobalItems] }) }));
   await page.route("**/api/storage/records**", async (route) => {
-    if (route.request().method() === "GET") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, records }) });
+    if (route.request().method() === "GET") {
+      const requestedRecords = new URL(route.request().url()).searchParams.get("tool") === "rotation" ? rotationRecords : records;
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, records: requestedRecords }) });
+    }
     writes.push(route.request().postDataJSON());
     return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, synced: 1 }) });
   });
@@ -160,11 +163,11 @@ test("Commissary Ordering Tool autosaves separate delivery quantities without a 
   await expect(page.getByRole("button", { name: /generate transfer/i })).toBeDisabled();
   await page.getByLabel("Grill Set A sandwich").selectOption({ index: 1 });
   await page.getByLabel("Grill Set B sandwich").selectOption({ index: 1 });
-  await page.getByLabel(/^Friday \d+\/\d+ Sliced Cucumber quantity$/).fill("1");
-  await page.getByLabel(/^Monday \d+\/\d+ Sliced Cucumber quantity$/).fill("2");
-  await page.getByLabel(/^Wednesday \d+\/\d+ Sliced Cucumber quantity$/).fill("1");
+  await page.getByLabel(/^Friday \d+\/\d+ English Cucumbers, Fresh, Sliced, Half quantity$/).fill("1");
+  await page.getByLabel(/^Monday \d+\/\d+ English Cucumbers, Fresh, Sliced, Half quantity$/).fill("2");
+  await page.getByLabel(/^Wednesday \d+\/\d+ English Cucumbers, Fresh, Sliced, Half quantity$/).fill("1");
   await page.getByLabel(/^Monday \d+\/\d+ Green Peas quantity$/).fill("1.25");
-  const cucumber = COMMISSARY_ORDER_ITEMS.find((row) => row.name === "Sliced Cucumber");
+  const cucumber = COMMISSARY_ORDER_ITEMS.find((row) => row.name === "English Cucumbers, Fresh, Sliced, Half");
   await expect(page.getByRole("button", { name: /^save order$/i })).toHaveCount(0);
   await expect(page.getByText("Saved automatically", { exact: true })).toBeVisible();
   const generateButton = page.getByRole("button", { name: /generate transfer/i });
@@ -190,14 +193,14 @@ test("Commissary Ordering Tool autosaves separate delivery quantities without a 
   const fridayRows = XLSX.utils.sheet_to_json(bomWorkbook.Sheets["Friday Delivery Map"], { header: 1, defval: "" });
   const mondayRows = XLSX.utils.sheet_to_json(bomWorkbook.Sheets["Monday Delivery Map"], { header: 1, defval: "" });
   const wednesdayRows = XLSX.utils.sheet_to_json(bomWorkbook.Sheets["Wednesday Delivery Map"], { header: 1, defval: "" });
-  expect(fridayRows).toContainEqual(expect.arrayContaining(["Cricket", "Salad Bar", "Sliced Cucumber", cucumber.mrn, 1]));
-  expect(mondayRows).toContainEqual(expect.arrayContaining(["Cricket", "Salad Bar", "Sliced Cucumber", cucumber.mrn, 2]));
+  expect(fridayRows).toContainEqual(expect.arrayContaining(["Cricket", "Salad Bar", "English Cucumbers, Fresh, Sliced, Half", cucumber.mrn, 1]));
+  expect(mondayRows).toContainEqual(expect.arrayContaining(["Cricket", "Salad Bar", "English Cucumbers, Fresh, Sliced, Half", cucumber.mrn, 2]));
   expect(mondayRows).toContainEqual(expect.arrayContaining(["Cricket", "Salad Bar", "Green Peas", "62341", 1.5]));
-  expect(wednesdayRows).toContainEqual(expect.arrayContaining(["Cricket", "Salad Bar", "Sliced Cucumber", cucumber.mrn, 1]));
+  expect(wednesdayRows).toContainEqual(expect.arrayContaining(["Cricket", "Salad Bar", "English Cucumbers, Fresh, Sliced, Half", cucumber.mrn, 1]));
   expect(writes).toHaveLength(1);
   expect(writes[0].context.tool).toBe("commissaryOrders");
   expect(writes[0].records[0].orderUnitVersion).toBe(2);
-  expect(writes[0].records[0].commissaryMetadataVersion).toBe(5);
+  expect(writes[0].records[0].commissaryMetadataVersion).toBe(6);
   expect(writes[0].records[0].quantities[cucumber.id]).toEqual({ friday: 1, monday: 2, wednesday: 1 });
   const packetDownload = page.waitForEvent("download");
   await page.getByRole("button", { name: /packout packet/i }).click();
@@ -212,20 +215,64 @@ test("Commissary Ordering Tool autosaves separate delivery quantities without a 
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
+test("Roxanne receives submitted Dawson Pop-Up and Salad items and exports separate source sheets", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  const parent = "rotation|2026-11-30|North|Dawson";
+  const breakfastItem = BREAKFAST_ORDERING_PROGRAM.items.find(({ mrn }) => mrn === "17350.24");
+  const savedRoxanneOrder = buildOrderRecord({
+    cafe: "Roxanne Coffee",
+    weekStart: "2026-11-30",
+    quantities: emptyQuantities("2026-11-30"),
+    breakfast: {
+      selections: [breakfastItem.id],
+      quantities: { [breakfastItem.id]: { friday: 3, monday: 0, wednesday: 0 } },
+      items: { [breakfastItem.id]: { ...breakfastItem, item: breakfastItem.name, itemWasteCost: 2.75 } },
+    },
+    now: new Date("2026-11-19T18:00:00.000Z"),
+  });
+  const rotationRecords = [
+    { "Record ID": parent, "Record Type": "Rotation Header", Status: "Submitted", "Submitted At": "2026-11-24T18:00:00.000Z", "Roxanne Pop-Up Global": true, "Roxanne Pop-Up Carvery": true },
+    { "Record ID": `${parent}|global|entree|1`, "Parent Record ID": parent, "Record Type": "Global Selection", Status: "Submitted", "Station Key": "global", "Selection Type": "Entrée", "Menu / Concept": "AMZ: Porto", "Menu Item / Selection": "Piri Piri Chicken", MRN: "121026", Portion: "1 piece", "True Cost": 3.25 },
+    { "Record ID": `${parent}|carvery|protein|1`, "Parent Record ID": parent, "Record Type": "Station Selection", Status: "Submitted", "Station Key": "carvery", "Selection Type": "Rotating Protein", "Menu / Concept": "AMZ: Carvery", "Menu Item / Selection": "Herb Roasted Turkey", MRN: "9631", Portion: "5 oz portion", "True Cost": 3.8 },
+    { "Record ID": `${parent}|salad|lto|1`, "Parent Record ID": parent, "Record Type": "Station Selection", Status: "Submitted", "Station Key": "salad", "Selection Type": "LTO", "Menu / Concept": "AMZ: Cafe Express Salad", "Menu Item / Selection": "Greek Salad", MRN: "144662", Portion: "1 salad", "True Cost": 4.1 },
+  ];
+  const writes = await mockOrders(page, [savedRoxanneOrder], rotationRecords);
+  await openTool(page, /open commissary ordering/i, /^Commissary Ordering Tool$/);
+  await page.getByLabel("Your cafe").selectOption("Roxanne Coffee");
+  await page.getByLabel("Service week").selectOption("2026-11-30");
+  await expect(page.getByTestId("roxanne-dawson-order")).toContainText("Piri Piri Chicken");
+  await expect(page.getByTestId("roxanne-dawson-order")).toContainText("Herb Roasted Turkey");
+  await expect(page.getByTestId("roxanne-dawson-order")).toContainText("Greek Salad");
+  await page.getByLabel(/Piri Piri Chicken Friday .* Roxanne quantity/).fill("4");
+  await page.getByLabel(/Greek Salad Monday .* Roxanne quantity/).fill("2");
+  await expect.poll(() => writes.filter((write) => write.records?.[0]?.["Record Type"] === "Commissary Order").length).toBe(1);
+  const saved = writes.find((write) => write.records?.[0]?.["Record Type"] === "Commissary Order").records[0];
+  expect(Object.values(saved.roxanneDawson.quantities).some(({ friday }) => friday === 4)).toBe(true);
+  expect(Object.values(saved.roxanneDawson.quantities).some(({ monday }) => monday === 2)).toBe(true);
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: /generate transfers/i }).click();
+  const download = await downloadPromise;
+  const workbook = XLSX.read(await readFile(await download.path()), { type: "buffer", cellStyles: true });
+  expect(workbook.SheetNames).toEqual(["SEA20 Cricket", "SEA27 Dawson"]);
+  await expect(page.getByRole("button", { name: "Prep List View" })).toHaveCount(0);
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
 test("an edited order keeps autosaving after the operator navigates to the draft prep board", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   const writes = await mockOrders(page, [buildCommissaryMetadataRecord()]);
   await openTool(page, /open commissary ordering/i, /^Commissary Ordering Tool$/);
   await page.getByLabel("Your cafe").selectOption("Cricket");
   await page.getByLabel("Service week").selectOption(COMMISSARY_PREP_BOARD_PILOT_WEEK);
-  await page.getByLabel(/^Friday \d+\/\d+ Sliced Cucumber quantity$/).fill("3");
+  await page.getByLabel(/^Friday \d+\/\d+ English Cucumbers, Fresh, Sliced, Half quantity$/).fill("3");
   await page.getByRole("button", { name: "Draft Prep Board" }).click();
   await expect.poll(() => writes.filter((write) => write.records?.[0]?.["Record Type"] === "Commissary Order").length).toBe(1);
   const orderWrite = writes.find((write) => write.records?.[0]?.["Record Type"] === "Commissary Order");
-  const cucumber = COMMISSARY_ORDER_ITEMS.find((row) => row.name === "Sliced Cucumber");
+  const cucumber = COMMISSARY_ORDER_ITEMS.find((row) => row.name === "English Cucumbers, Fresh, Sliced, Half");
   expect(orderWrite.records[0].weekStart).toBe(COMMISSARY_PREP_BOARD_PILOT_WEEK);
   expect(orderWrite.records[0].quantities[cucumber.id].friday).toBe(3);
-  await expect(page.getByTestId("tabbed-prep-board").getByText("Sliced Cucumber", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("tabbed-prep-board").getByText("English Cucumbers, Fresh, Sliced, Half", { exact: true })).toBeVisible();
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
@@ -425,6 +472,7 @@ test("each cafe sees only its assigned commissary stations", async ({ page }) =>
 
 test("Eclipse and Gemini use fixed two-week Daily Global plate forecasts", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
+  await page.clock.install({ time: new Date("2026-11-10T20:00:00Z") });
   const writes = await mockOrders(page);
   await openTool(page, /open commissary ordering/i, /^Commissary Ordering Tool$/);
   await page.getByLabel("Service week").selectOption("2026-11-23");
@@ -514,7 +562,7 @@ test("locked Dawson recalls its ATX Burger order read-only and exposes only its 
   await page.clock.install({ time: new Date("2026-11-12T20:00:00Z") });
   const lockedWeek = "2026-11-16";
   const quantities = emptyQuantities(lockedWeek);
-  quantities[COMMISSARY_ORDER_ITEMS.find((row) => row.name === "Sliced Cucumber").id] = { friday: 1, monday: 2, wednesday: 1 };
+  quantities[COMMISSARY_ORDER_ITEMS.find((row) => row.name === "English Cucumbers, Fresh, Sliced, Half").id] = { friday: 1, monday: 2, wednesday: 1 };
   const lockedGrill = emptyGrillOrder(lockedWeek);
   lockedGrill.selections.A = "77139.72";
   lockedGrill.items.A = { mrn: "77139.72", item: "ATX Burger", portion: "1 each", itemWasteCost: 3.3634 };
@@ -526,8 +574,8 @@ test("locked Dawson recalls its ATX Burger order read-only and exposes only its 
   await page.getByLabel("Service week").selectOption(lockedWeek);
   await expect(page.getByText("Ordering closed")).toBeVisible();
   await expect(page.getByText(/please contact commissary executive chef to adjust pars/i)).toBeVisible();
-  await expect(page.getByLabel(/^Monday \d+\/\d+ Sliced Cucumber quantity$/)).toBeDisabled();
-  await expect(page.getByLabel(/^Friday \d+\/\d+ Sliced Cucumber quantity$/)).toBeDisabled();
+  await expect(page.getByLabel(/^Monday \d+\/\d+ English Cucumbers, Fresh, Sliced, Half quantity$/)).toBeDisabled();
+  await expect(page.getByLabel(/^Friday \d+\/\d+ English Cucumbers, Fresh, Sliced, Half quantity$/)).toBeDisabled();
   await expect(page.getByLabel("Grill Set A sandwich")).toHaveValue("77139.72");
   await expect(page.getByLabel(/^Set A Friday \d+\/\d+ sandwich quantity$/)).toHaveValue("10");
   await expect(page.getByLabel(/^Set A Monday \d+\/\d+ sandwich quantity$/)).toHaveValue("14");
@@ -545,7 +593,7 @@ test("Prep List View is vertical, touch friendly, translated, and saves hold-to-
   const pageErrors = collectUnexpectedPageErrors(page);
   await page.clock.install({ time: new Date("2026-11-12T20:00:00Z") });
   const lockedWeek = "2026-11-16";
-  const cucumber = COMMISSARY_ORDER_ITEMS.find((row) => row.name === "Sliced Cucumber");
+  const cucumber = COMMISSARY_ORDER_ITEMS.find((row) => row.name === "English Cucumbers, Fresh, Sliced, Half");
   const quantities = emptyQuantities(lockedWeek);
   quantities[cucumber.id] = { friday: 2, monday: 2, wednesday: 1 };
   quantities[COMMISSARY_ORDER_ITEMS.find((row) => row.name === "Green Peas").id] = { friday: 1.25, monday: 1.25, wednesday: 0 };
@@ -592,10 +640,10 @@ test("Prep List View is vertical, touch friendly, translated, and saves hold-to-
   await expect.poll(() => writes.length).toBe(1);
   expect(writes[0].records[0].completed.friday).toContain("prep-finished|deli|190990");
   await stationSelector.getByRole("button", { name: "Grill", exact: true }).click();
-  await expect(prepView.getByText("Sliced Cucumber", { exact: true })).toHaveCount(0);
+  await expect(prepView.getByText("English Cucumbers, Fresh, Sliced, Half", { exact: true })).toHaveCount(0);
   await expect(prepView.getByText(/Upcycled Chow Chow Aioli/i)).toBeVisible();
   await stationSelector.getByRole("button", { name: "Salad Bar", exact: true }).click();
-  await expect(prepView.getByText("Sliced Cucumber", { exact: true })).toBeVisible();
+  await expect(prepView.getByText("English Cucumbers, Fresh, Sliced, Half", { exact: true })).toBeVisible();
   const quantityBlock = prepView.getByTestId(`prep-quantity-${cucumber.id}`);
   const cafeBreakdown = prepView.getByTestId(`prep-cafes-${cucumber.id}`);
   await expect(quantityBlock).toContainText("2 gal");
@@ -606,7 +654,7 @@ test("Prep List View is vertical, touch friendly, translated, and saves hold-to-
   const overflow = await prepView.evaluate((node) => node.scrollWidth > node.clientWidth + 1);
   expect(overflow).toBe(false);
   await page.setViewportSize({ width: 390, height: 844 });
-  const mobileItemBox = await prepView.getByText("Sliced Cucumber", { exact: true }).boundingBox();
+  const mobileItemBox = await prepView.getByText("English Cucumbers, Fresh, Sliced, Half", { exact: true }).boundingBox();
   const mobileQuantityBox = await quantityBlock.boundingBox();
   const mobilePrepBox = await prepView.boundingBox();
   expect(mobileQuantityBox.y).toBeGreaterThan(mobileItemBox.y);
@@ -617,8 +665,8 @@ test("Prep List View is vertical, touch friendly, translated, and saves hold-to-
   await page.getByRole("switch", { name: "Spanish translation" }).click();
   await expect(prepView.getByText(/^Viernes \d+\/\d+$/)).toBeVisible();
   await expect(prepView.getByText("Lista de preparación", { exact: true })).toBeVisible();
-  await expect(prepView.getByText("Pepino en rodajas", { exact: true })).toBeVisible();
-  const checkbox = page.getByRole("button", { name: /mantenga presionado.*pepino en rodajas/i });
+  await expect(prepView.getByText("Pepinos ingleses frescos, cortados por la mitad", { exact: true })).toBeVisible();
+  const checkbox = page.getByRole("button", { name: /mantenga presionado.*pepinos ingleses frescos, cortados por la mitad/i });
   await checkbox.dispatchEvent("pointerdown", { pointerType: "touch", button: 0 });
   await page.waitForTimeout(650);
   await checkbox.dispatchEvent("pointerup", { pointerType: "touch", button: 0 });
@@ -644,7 +692,7 @@ test("January 4 draft opens the tabbed Production, Assembly, and Pack Out board 
   dawsonDeli.items[deliOption.mrn] = { mrn: deliOption.mrn, item: deliOption.name, portion: "1 sandwich", itemWasteCost: 3.25 };
   dawsonDeli.quantities[deliOption.mrn] = { friday: 2, monday: 2, wednesday: 2 };
   const nessieSalad = emptyQuantities(COMMISSARY_PREP_BOARD_PILOT_WEEK);
-  const cucumber = COMMISSARY_ORDER_ITEMS.find((row) => row.name === "Sliced Cucumber");
+  const cucumber = COMMISSARY_ORDER_ITEMS.find((row) => row.name === "English Cucumbers, Fresh, Sliced, Half");
   nessieSalad[cucumber.id] = { friday: 0.25, monday: 0.25, wednesday: 0.25 };
   const records = [
     buildOrderRecord({ cafe: "Nessie", weekStart: COMMISSARY_PREP_BOARD_PILOT_WEEK, quantities: nessieSalad, deli: nessieDeli, now: new Date("2026-11-15T20:00:00Z") }),
@@ -664,7 +712,7 @@ test("January 4 draft opens the tabbed Production, Assembly, and Pack Out board 
   const phaseNav = board.getByRole("navigation", { name: "Prep board phases" });
   await expect(phaseNav.getByRole("button", { name: /Production/ })).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByText("Draft tabbed board ready", { exact: true })).toBeVisible();
-  const roundedCucumber = board.getByText("Sliced Cucumber", { exact: true }).locator("xpath=ancestor::article");
+  const roundedCucumber = board.getByText("English Cucumbers, Fresh, Sliced, Half", { exact: true }).locator("xpath=ancestor::article");
   await expect(roundedCucumber).toContainText("0.5 gallon");
   await expect(roundedCucumber).toContainText("Rounded prep volume");
   const productionRow = board.locator('[data-testid^="prep-board-row-prep-board|production|"]').first();
@@ -698,12 +746,12 @@ test("one-week reopening closes an already open tab at Thursday 5 PM and preserv
   await page.getByLabel("Service week").selectOption("2026-11-02");
   await expect(page.getByText("Cutoff: Thursday 10/29 at 5:00 PM Pacific.", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Save order", exact: true })).toHaveCount(0);
-  await expect(page.getByLabel(/^Friday \d+\/\d+ Sliced Cucumber quantity$/)).toBeEnabled();
+  await expect(page.getByLabel(/^Friday \d+\/\d+ English Cucumbers, Fresh, Sliced, Half quantity$/)).toBeEnabled();
   await page.clock.fastForward(3000);
   await expect(page.getByText("Ordering closed", { exact: true })).toBeVisible();
-  await expect(page.getByLabel(/^Friday \d+\/\d+ Sliced Cucumber quantity$/)).toBeDisabled();
+  await expect(page.getByLabel(/^Friday \d+\/\d+ English Cucumbers, Fresh, Sliced, Half quantity$/)).toBeDisabled();
   await page.getByLabel("Service week").selectOption("2026-11-09");
   await expect(page.getByText("Cutoff: Wednesday 11/4 at 5:00 PM Pacific.", { exact: true })).toBeVisible();
-  await expect(page.getByLabel(/^Friday \d+\/\d+ Sliced Cucumber quantity$/)).toBeEnabled();
+  await expect(page.getByLabel(/^Friday \d+\/\d+ English Cucumbers, Fresh, Sliced, Half quantity$/)).toBeEnabled();
   expect(writes).toHaveLength(0);
 });

@@ -109,7 +109,7 @@ const SOURCE_ROWS = [
   ["Shredded Cheddar Cheese", "62344", "1 gallon", 11.555209, 0, 11.555209],
   ["Shredded Red Cabbage", "71070.2", "1 gallon", 2.384749, 0, 2.384749],
   ["Sliced Black Olives", "62339", "1 gallon", 10.847001, 0, 10.847001],
-  ["Sliced Cucumber", "68562.2", "1 gallon", 7.91221, 0.04, 8.228698],
+  ["English Cucumbers, Fresh, Sliced, Half", "68562.2", "1 gallon", 7.91221, 0.04, 8.228698],
   ["Sliced Radishes", "71070.1", "1 gallon", 17.401422, 0.04, 18.097479],
   ["Sliced Red Bell Pepper", "64055", "1 gallon", 16.60615, 0.04, 17.270396],
   ["Sliced Red Onion", "46017.23", "1 gallon", 5.911296, 0.04, 6.147748],
@@ -174,7 +174,7 @@ const legacyItem = (category, name, mrn, itemWasteCost, orderUnit, orderUnitCost
 // Exact ordering roster and costs that were in production before the 2026-11-16 workbook refresh.
 // Saved weeks before the effective date must continue to render, total and export against this catalog.
 export const COMMISSARY_LEGACY_ORDER_ITEMS = Object.freeze([
-  legacyItem("Toppings", "Sliced Cucumber", "68562.2", 0.15839, "quart", 0.15839 * 32, "Requires mixing"),
+  legacyItem("Toppings", "English Cucumbers, Fresh, Sliced, Half", "68562.2", 0.15839, "quart", 0.15839 * 32, "Requires mixing"),
   legacyItem("Toppings", "Sliced Green Bell Pepper", "62342", 0.123716, "quart", 0.123716 * 32),
   legacyItem("Toppings", "Sliced Red Onion", "46017.23", 0.093527, "quart", 0.093527 * 32),
   legacyItem("Toppings", "Shredded Red Cabbage", "71070.2", 0.068369, "quart", 0.068369 * 32),

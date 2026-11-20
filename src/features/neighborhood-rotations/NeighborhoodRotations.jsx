@@ -369,6 +369,7 @@ const EMPTY_ROTATION = {
   customStations: blankCustomStations(),
   uploadedLtos: {},
   promotionOverride: { enabled: false, name: "", days: [], selections: defaultPromotionSelections() },
+  roxannePopUp: { global: false, carvery: false },
   globalBlocks: {},
   status: "Draft",
   submittedBy: "",
@@ -488,6 +489,8 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
     [SMARTSHEET_COLUMNS.foodCostRangeLowPct]: fcRange.low == null ? "" : Number((fcRange.low * 100).toFixed(1)),
     [SMARTSHEET_COLUMNS.foodCostRangeHighPct]: fcRange.high == null ? "" : Number((fcRange.high * 100).toFixed(1)),
     [SMARTSHEET_COLUMNS.historyInclude]: true,
+    "Roxanne Pop-Up Global": Boolean(rotation.roxannePopUp?.global),
+    "Roxanne Pop-Up Carvery": Boolean(rotation.roxannePopUp?.carvery),
   };
 
   const cycleConfig = globalCycleConfig(cafe, week);
@@ -921,6 +924,8 @@ function normalizeLoadedRotationRecord(record = {}) {
     promotionOverrideEnabled: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.promotionOverrideEnabled, "promotionOverrideEnabled"])).toLowerCase() === "true" || firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.promotionOverrideEnabled, "promotionOverrideEnabled"]) === true,
     promotionName: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.promotionName, "promotionName"])),
     promotionDays: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.promotionDays, "promotionDays"])).split(",").map((value) => value.trim()).filter(Boolean),
+    roxannePopUpGlobal: firstLoadedRecordValue(record, ["Roxanne Pop-Up Global", "roxannePopUpGlobal"]) === true || String(firstLoadedRecordValue(record, ["Roxanne Pop-Up Global", "roxannePopUpGlobal"])).toLowerCase() === "true",
+    roxannePopUpCarvery: firstLoadedRecordValue(record, ["Roxanne Pop-Up Carvery", "roxannePopUpCarvery"]) === true || String(firstLoadedRecordValue(record, ["Roxanne Pop-Up Carvery", "roxannePopUpCarvery"])).toLowerCase() === "true",
     cycleSourceCafeUnit: String(cycleSourceCafeUnit),
     copiedFromCafeUnit: String(copiedFromCafeUnit),
     returnToCycleDays: [],
@@ -980,6 +985,7 @@ function recordsToRotations(records = []) {
         customStations: cloneCustomStations(),
         uploadedLtos: {},
         promotionOverride: normalizePromotionOverride(EMPTY_ROTATION.promotionOverride),
+        roxannePopUp: { ...EMPTY_ROTATION.roxannePopUp },
         globalBlocks: {},
       };
     }
@@ -1206,6 +1212,10 @@ function recordsToRotations(records = []) {
       rotation.submittedBy = record.submittedBy || rotation.submittedBy || "";
       rotation.submittedAt = record.submittedAt || rotation.submittedAt || "";
       rotation.updatedAt = record.updatedAt || rotation.updatedAt || "";
+      rotation.roxannePopUp = {
+        global: Boolean(record.roxannePopUpGlobal),
+        carvery: Boolean(record.roxannePopUpCarvery),
+      };
       return;
     }
 
@@ -5679,6 +5689,13 @@ function GlobalSection({ district, cafe, week, rotation, previousRotation, previ
   const cycle = globalCycleConfig(cafe, week);
   const promo = normalizePromotionOverride(rotation.promotionOverride || EMPTY_ROTATION.promotionOverride);
   const updatePromo = (patch) => updateRotation({ promotionOverride: normalizePromotionOverride({ ...promo, ...patch }) });
+  const roxanneEffective = cafe === "Dawson" && String(parseWeekStart(week) || "") >= "2026-11-30";
+  const updateRoxannePopUp = (enabled) => updateRotation({
+    roxannePopUp: { ...(rotation.roxannePopUp || EMPTY_ROTATION.roxannePopUp), global: enabled },
+    status: "Draft",
+    submittedAt: "",
+    updatedAt: nowStamp(),
+  });
   const referencePilotScope = isNessieGlobalPlateCostPilot(district, cafe, week);
   const referencePilot = usesNessieReferencePicker(district, cafe, week, rotation.menu);
   const referenceAnalytics = usesReferenceGlobalPlanner(week, rotation.menu);
@@ -5775,14 +5792,20 @@ function GlobalSection({ district, cafe, week, rotation, previousRotation, previ
               ))}
             </div>
           </div>
-          <label className="inline-flex items-center gap-3 rounded-2xl border border-purple-200 bg-purple-50 px-4 py-3 text-sm font-bold text-purple-900 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={Boolean(promo.enabled)}
-              onChange={(e) => updatePromo({ enabled: e.target.checked })}
-            />
-            Promotion Override
-          </label>
+          <div className="grid gap-2">
+            <label className="inline-flex items-center gap-3 rounded-2xl border border-purple-200 bg-purple-50 px-4 py-3 text-sm font-bold text-purple-900 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={Boolean(promo.enabled)}
+                onChange={(e) => updatePromo({ enabled: e.target.checked })}
+              />
+              Promotion Override
+            </label>
+            {roxanneEffective && <label className="inline-flex items-center gap-3 rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-950 cursor-pointer">
+              <input type="checkbox" checked={Boolean(rotation.roxannePopUp?.global)} onChange={(event) => updateRoxannePopUp(event.target.checked)} />
+              Roxanne Pop-Up
+            </label>}
+          </div>
         </div>
       </div>
 
@@ -6963,6 +6986,7 @@ function CarverySection({ cafe, week, rotation, updateCarvery, updateRotation })
     ["coldSide2", "Cold Side 2", carveryColdSides()]
   ];
   const promo = normalizeCarveryPromotionOverride(rotation.carveryPromotionOverride || EMPTY_ROTATION.carveryPromotionOverride);
+  const roxanneEffective = cafe === "Dawson" && String(parseWeekStart(week) || "") >= "2026-11-30";
   const updatePromo = (patch) => updateRotation({
     carveryPromotionOverride: normalizeCarveryPromotionOverride({ ...promo, ...patch })
   });
@@ -6980,12 +7004,16 @@ function CarverySection({ cafe, week, rotation, updateCarvery, updateRotation })
     <CollapsibleStation title="Carvery Rotations" eyebrow="Carvery Station" complete={stationComplete(rotation, "carvery", cafe, week)}>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <p className="text-sm text-slate-500">Carvery dropdowns follow MenuWorks notes: charred vegetable options, hot side choices, and cold side choices.</p>
-        {cafe === "Dawson" && (
+        {cafe === "Dawson" && <div className="grid gap-2">
           <label className="inline-flex cursor-pointer items-center gap-3 rounded-2xl border border-purple-200 bg-purple-50 px-4 py-3 text-sm font-bold text-purple-900">
             <input type="checkbox" checked={promo.enabled} onChange={(event) => updatePromo({ enabled: event.target.checked })} />
             Promotion Override
           </label>
-        )}
+          {roxanneEffective && <label className="inline-flex cursor-pointer items-center gap-3 rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-950">
+            <input type="checkbox" checked={Boolean(rotation.roxannePopUp?.carvery)} onChange={(event) => updateRotation({ roxannePopUp: { ...(rotation.roxannePopUp || EMPTY_ROTATION.roxannePopUp), carvery: event.target.checked }, status: "Draft", submittedAt: "", updatedAt: nowStamp() })} />
+            Roxanne Pop-Up
+          </label>}
+        </div>}
       </div>
 
       {cafe === "Dawson" && promo.enabled && (

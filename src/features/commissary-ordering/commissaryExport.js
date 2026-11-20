@@ -5,6 +5,7 @@ import { COMMISSARY_DEPARTING_UNIT } from "./commissaryCatalog.js";
 import { DEFAULT_COMMISSARY_METADATA } from "./commissaryMetadata.js";
 import { PRODUCTION_SECTION_ORDER, breakfastOrderLinesForCafe, breakfastPrepLinesForCafe, dailyGlobalPrepLinesForCafe, dailyGlobalTransferLinesForCafe, deliOrderLinesForCafe, deliveryDateForWeek, formatShortDate, globalPrepLinesForCafe, globalTransferLinesForCafe, grillPrepLinesForCafe, grillTransferLinesForCafe, orderLinesForCafe, prepDisplayQuantity, rolledUpPrepItems, roundedProductionEquivalentQuantity, transferPeriod, weekLabel } from "./commissaryModel.js";
 import { COMMISSARY_STATIONS, cafeRoutesToHub } from "./commissaryRouting.js";
+import { roxanneDawsonOrderLines } from "./roxanneDawsonProjection.js";
 
 const S4_TEMPLATE_URL = "/templates/ExpenseTransfer_Between_PC_Template.xlsx";
 const PREPARED_FOODS_GL = "4111011";
@@ -352,10 +353,58 @@ export function buildCommissaryTransfer(record, metadata = DEFAULT_COMMISSARY_ME
   };
 }
 
+export function buildRoxanneDawsonTransfer(record, metadata = DEFAULT_COMMISSARY_METADATA) {
+  const receiver = metadata.receivingCafes.find(({ name }) => name === record.cafe);
+  const period = transferPeriod(record.weekStart);
+  return {
+    title: `Dawson Pop-Up Order ${record.cafe} ${period.start} to ${period.end}`,
+    departingUnit: "SEA27 - Dawson Cafe",
+    departingProfitCenter: "28675",
+    receivingUnit: record.cafe,
+    receivingProfitCenter: receiver?.profitCenter || "",
+    transferDate: period.end,
+    eventId: "",
+    s4ExportVersion: 1,
+    items: roxanneDawsonOrderLines(record).map((line) => ({
+      catalogId: line.id,
+      menu: line.menu || (line.source === "composedSalad" ? "Dawson Composed Salad" : "Dawson Pop-Up"),
+      item: `${line.name} (${line.total} item${line.total === 1 ? "" : "s"})`,
+      mrn: line.mrn,
+      quantity: line.total,
+      itemWasteCost: line.orderUnitCost,
+      ingredientAllocations: [{
+        ingredientName: "Prepared Foods",
+        ingredientMrn: line.mrn,
+        glCode: PREPARED_FOODS_GL,
+        allocationPerPortion: line.orderUnitCost,
+      }],
+    })),
+  };
+}
+
+async function buildSourceSeparatedRoxanneWorkbook(templateBytes, cricketTransfer, dawsonTransfer) {
+  const sources = [
+    ["SEA20 Cricket", cricketTransfer],
+    ["SEA27 Dawson", dawsonTransfer],
+  ].filter(([, transfer]) => transfer.items.length > 0);
+  const workbook = XLSX.utils.book_new();
+  for (const [sheetName, transfer] of sources) {
+    const bytes = await buildS4Workbook(templateBytes, transfer);
+    const sourceWorkbook = XLSX.read(bytes, { type: "array", cellStyles: true });
+    const worksheet = sourceWorkbook.Sheets[sourceWorkbook.SheetNames[0]];
+    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+  }
+  return XLSX.write(workbook, { type: "array", bookType: "xlsx", cellStyles: true });
+}
+
 export async function exportCommissaryTransfer(record, metadata = DEFAULT_COMMISSARY_METADATA) {
   const response = await fetch(S4_TEMPLATE_URL);
   if (!response.ok) throw new Error("The required S4 transfer template is unavailable.");
   const transfer = buildCommissaryTransfer(record, metadata);
-  const bytes = await buildS4Workbook(await response.arrayBuffer(), transfer);
+  const templateBytes = await response.arrayBuffer();
+  const dawsonTransfer = buildRoxanneDawsonTransfer(record, metadata);
+  const bytes = record.cafe === "Roxanne Coffee" && dawsonTransfer.items.length
+    ? await buildSourceSeparatedRoxanneWorkbook(templateBytes, transfer, dawsonTransfer)
+    : await buildS4Workbook(templateBytes, transfer);
   downloadBytes(bytes, transferExportFileName(transfer.title), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 }

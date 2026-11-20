@@ -14,7 +14,7 @@ export const COMMISSARY_SPANISH = Object.freeze({
     "32-ounce bottle": "botella de 32 onzas",
   }),
   items: Object.freeze({
-    "Sliced Cucumber": "Pepino en rodajas",
+    "English Cucumbers, Fresh, Sliced, Half": "Pepinos ingleses frescos, cortados por la mitad",
     "Baby Arugula": "Rúcula baby",
     "Black Beans": "Frijoles negros",
     "Chopped Kale": "Col rizada picada",

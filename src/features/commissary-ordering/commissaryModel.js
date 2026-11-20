@@ -8,6 +8,7 @@ import { DAILY_GLOBAL_ORDER_VERSION, DAILY_GLOBAL_PREP_ITEM_IDS, DAILY_GLOBAL_PR
 import { globalPrepCupsPerUnit, globalPrepPackageRule } from "./globalPrepDisplayPolicy.js";
 import { COMMISSARY_STATIONS, cafeRoutesToHub, isCafeStationEnabled } from "./commissaryRouting.js";
 import { filterCommissaryComponents, filterGrillCommissaryComponents, isExcludedLoosePrepItem, prepareCommissaryComponents, prepareGlobalCommissaryComponents, prepareGlobalTransferComponents } from "./commissaryPrepPolicy.js";
+import { normalizeRoxanneDawsonOrder, roxanneDawsonOrderLines } from "./roxanneDawsonProjection.js";
 
 export const PACIFIC_TIME_ZONE = "America/Los_Angeles";
 export const DELIVERY_KEYS = Object.freeze(DEFAULT_COMMISSARY_METADATA.deliveries.map(({ key }) => key));
@@ -39,6 +40,12 @@ const pad = (value) => String(value).padStart(2, "0");
 
 export function isPrepBoardCompletionId(value) {
   return PREP_BOARD_COMPLETION_ID.test(String(value || ""));
+}
+
+export function isGeneratedPrepCompletionId(value) {
+  const id = String(value || "").trim();
+  return id.length <= 240
+    && /^(?:global-prep|global-production|grill-prep|deli-prep|breakfast-prep|daily-global)\|[a-z0-9.|_-]+$/i.test(id);
 }
 
 function prepBoardCompletionId(phase, value) {
@@ -470,7 +477,7 @@ export function invalidWholeUnitSaladQuantities(quantities = {}, weekStart) {
   });
 }
 
-export function buildOrderRecord({ cafe, weekStart, quantities, grill, deli, global, breakfast, dailyGlobal, standingOrderChangeApproval = null, now = new Date() }) {
+export function buildOrderRecord({ cafe, weekStart, quantities, grill, deli, global, breakfast, dailyGlobal, roxanneDawson, standingOrderChangeApproval = null, now = new Date() }) {
   const normalized = isCafeStationEnabled(cafe, COMMISSARY_STATIONS.SALAD_BAR) ? normalizeQuantities(quantities, { weekStart }) : emptyQuantities(weekStart);
   const normalizedGrill = normalizeGrillOrder(grill, weekStart, cafe);
   const normalizedDeli = normalizeDeliOrder(deli, weekStart, cafe);
@@ -495,6 +502,7 @@ export function buildOrderRecord({ cafe, weekStart, quantities, grill, deli, glo
     global: normalizedGlobal,
     breakfast: normalizedBreakfast,
     dailyGlobal: normalizedDailyGlobal,
+    roxanneDawson: normalizeRoxanneDawsonOrder(roxanneDawson),
     ...(standingOrderChangeApproval ? { standingOrderChangeApproval } : {}),
     updatedAt: now.toISOString(),
   };
@@ -505,7 +513,7 @@ export function normalizePrepCompleted(completed = {}) {
   return Object.fromEntries(DELIVERY_KEYS.map((delivery) => [
     delivery,
     [...new Set(Array.isArray(completed?.[delivery]) ? completed[delivery] : [])]
-      .filter((itemId) => allowedPrepIds.has(itemId) || isPrepBoardCompletionId(itemId)),
+      .filter((itemId) => allowedPrepIds.has(itemId) || isPrepBoardCompletionId(itemId) || isGeneratedPrepCompletionId(itemId)),
   ]));
 }
 
@@ -525,14 +533,14 @@ export function buildPrepProgressRecord({ weekStart, hub = "Cricket", completed,
 
 export function togglePrepCompleted(completed, delivery, itemId) {
   const normalized = normalizePrepCompleted(completed);
-  if (!DELIVERY_KEYS.includes(delivery) || (!COMMISSARY_ITEM_BY_ID.has(itemId) && !GRILL_LTO_PREP_ITEM_IDS.includes(itemId) && !DELI_ORDERING_PREP_ITEM_IDS.includes(itemId) && !GLOBAL_ORDERING_PREP_ITEM_IDS.includes(itemId) && !BREAKFAST_ORDERING_PREP_ITEM_IDS.includes(itemId) && !DAILY_GLOBAL_PREP_ITEM_IDS.includes(itemId) && !COMMISSARY_FINISHED_PREP_ITEM_IDS.includes(itemId) && !isPrepBoardCompletionId(itemId))) return normalized;
+  if (!DELIVERY_KEYS.includes(delivery) || (!COMMISSARY_ITEM_BY_ID.has(itemId) && !GRILL_LTO_PREP_ITEM_IDS.includes(itemId) && !DELI_ORDERING_PREP_ITEM_IDS.includes(itemId) && !GLOBAL_ORDERING_PREP_ITEM_IDS.includes(itemId) && !BREAKFAST_ORDERING_PREP_ITEM_IDS.includes(itemId) && !DAILY_GLOBAL_PREP_ITEM_IDS.includes(itemId) && !COMMISSARY_FINISHED_PREP_ITEM_IDS.includes(itemId) && !isPrepBoardCompletionId(itemId) && !isGeneratedPrepCompletionId(itemId))) return normalized;
   const current = new Set(normalized[delivery]);
   if (current.has(itemId)) current.delete(itemId);
   else current.add(itemId);
   return { ...normalized, [delivery]: [...current] };
 }
 
-export function orderValue(quantities = {}, grill = {}, deli = {}, global = {}, cafe = "", breakfast = {}, weekStart, dailyGlobal = {}) {
+export function orderValue(quantities = {}, grill = {}, deli = {}, global = {}, cafe = "", breakfast = {}, weekStart, dailyGlobal = {}, roxanneDawson = {}) {
   const saladValue = cafe && !isCafeStationEnabled(cafe, COMMISSARY_STATIONS.SALAD_BAR) ? 0 : orderLinesForCafe({ cafe, weekStart, quantities })
     .reduce((sum, line) => sum + roundedProductionEquivalentQuantity(line) * line.orderUnitCost, 0);
   const grillRecord = { cafe, weekStart, grill };
@@ -550,7 +558,8 @@ export function orderValue(quantities = {}, grill = {}, deli = {}, global = {}, 
     return sum + (Number(item?.itemWasteCost) > 0 ? Number(item.itemWasteCost) * count : 0);
   }, 0);
   const dailyGlobalValue = dailyGlobalTransferLinesForCafe({ cafe, weekStart, dailyGlobal }).reduce((sum, line) => sum + line.itemWasteCost * line.quantity, 0);
-  return saladValue + grillValue + deliValue + globalValue + breakfastValue + dailyGlobalValue;
+  const roxanneDawsonValue = roxanneDawsonOrderLines({ cafe, weekStart, roxanneDawson }).reduce((sum, line) => sum + line.total * line.orderUnitCost, 0);
+  return saladValue + grillValue + deliValue + globalValue + breakfastValue + dailyGlobalValue + roxanneDawsonValue;
 }
 
 export function rolledUpItems(records = [], options = {}) {
@@ -849,7 +858,8 @@ export function hasCommissaryOrder(record = {}) {
     || deliOrderLinesForCafe(record).length > 0
     || globalOrderLinesForCafe(record).length > 0
     || dailyGlobalOrderLinesForCafe(record).length > 0
-    || breakfastOrderLinesForCafe(record).length > 0;
+    || breakfastOrderLinesForCafe(record).length > 0
+    || roxanneDawsonOrderLines(record).length > 0;
 }
 
 export function rolledUpFinishedPrepItems(records = [], options = {}) {

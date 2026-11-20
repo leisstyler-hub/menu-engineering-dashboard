@@ -1,5 +1,8 @@
 ## 2026-11-19
 
+- [Nov 19, 7:09 PM] Connect submitted Dawson Pop-Up and Salad selections to Roxanne ordering and separate Cricket and Dawson transfers.
+- [Nov 19, 7:09 PM] Refresh hub Prep Lists automatically, restore Global subrecipe completion checks, and clarify the English cucumber name.
+
 - [Nov 19, 2:31 PM] Enlarge the TACT wheel and blend sensory balance, capacity and priorities into one W&P Bar planning panel.
 
 - [Nov 19, 2:12 PM] Build weighted TACT guidance, ingredient-fit comparisons and printable pan plans with daily selling and limited premium offers.

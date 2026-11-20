@@ -1580,3 +1580,28 @@ test("East 108th tower cafes still block the same non-Balti Global Menu", async 
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });
+test("Dawson persists separate Roxanne Pop-Up flags for Global and Carvery beginning November 30", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await page.clock.setFixedTime(new Date("2026-11-19T20:00:00Z"));
+  const storageWrites = [];
+  await stubEmptyRotationBackbone(page, { onStorageWrite: (payload) => storageWrites.push(payload) });
+
+  await openTool(page, /open rotations/i, /^Neighborhood Rotations$/);
+  await page.locator("select").first().selectOption({ label: "Nov 30, 2026 - Dec 4, 2026" });
+  await page.getByRole("button", { name: exactName("North") }).click();
+  await page.getByRole("button", { name: exactName("Dawson") }).click();
+
+  const globalStation = page.getByRole("heading", { name: "Global Station" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  const carveryStation = page.getByRole("heading", { name: "Carvery Rotations" }).locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
+  await expect(globalStation.getByText("Roxanne Pop-Up", { exact: true })).toBeVisible();
+  await expect(carveryStation.getByText("Roxanne Pop-Up", { exact: true })).toBeVisible();
+  await globalStation.getByText("Roxanne Pop-Up", { exact: true }).click();
+  await carveryStation.getByText("Roxanne Pop-Up", { exact: true }).click();
+  await page.getByRole("button", { name: "Save Draft", exact: true }).click();
+
+  await expect.poll(() => storageWrites.length).toBeGreaterThan(0);
+  const header = storageWrites.at(-1).records.find((record) => record["Record Type"] === "Rotation Header" && record["Café / Unit"] === "Dawson");
+  expect(header).toMatchObject({ "Roxanne Pop-Up Global": true, "Roxanne Pop-Up Carvery": true, Status: "Draft" });
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
