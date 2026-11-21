@@ -7,7 +7,7 @@ import { BREAKFAST_ORDERING_ITEM_IDS, BREAKFAST_ORDERING_PREP_ITEM_IDS, BREAKFAS
 import { DAILY_GLOBAL_ORDER_VERSION, DAILY_GLOBAL_PREP_ITEM_IDS, DAILY_GLOBAL_PROGRAM } from "./dailyGlobalCatalog.js";
 import { globalPrepCupsPerUnit, globalPrepPackageRule } from "./globalPrepDisplayPolicy.js";
 import { COMMISSARY_STATIONS, cafeRoutesToHub, isCafeStationEnabled } from "./commissaryRouting.js";
-import { filterCommissaryComponents, filterGrillCommissaryComponents, isExcludedLoosePrepItem, prepareCommissaryComponents, prepareGlobalCommissaryComponents, prepareGlobalTransferComponents } from "./commissaryPrepPolicy.js";
+import { filterCommissaryComponents, filterGrillCommissaryComponents, isExcludedLoosePrepItem, isGlobalInUnitRiceComponent, prepareCommissaryComponents, prepareGlobalCommissaryComponents, prepareGlobalTransferComponents } from "./commissaryPrepPolicy.js";
 import { normalizeRoxanneDawsonOrder, roxanneDawsonOrderLines } from "./roxanneDawsonProjection.js";
 
 export const PACIFIC_TIME_ZONE = "America/Los_Angeles";
@@ -790,7 +790,7 @@ export function dailyGlobalPrepLinesForCafe(record = {}) {
       { id: `${line.id}|protein`, name: protein.name, mrn: protein.mrn, quantity: 1, unit: "plate portion", type: "protein" },
       ...dayDefinition.components,
       dayDefinition.garnish,
-    ];
+    ].filter((component) => !isGlobalInUnitRiceComponent(component));
     return components.map((component) => ({
       ...component,
       id: component.id,
@@ -948,9 +948,27 @@ export function rolledUpPrepItems(records = [], options = {}) {
     current.total = Number((current.total + Number(row.total || 0)).toFixed(4));
     consolidated.set(key, current);
   });
-  return [...consolidated.values()]
+  const displayed = [...consolidated.values()]
     .map((row) => ({ ...row, station: [...row.stations].sort().join("; "), stations: undefined, finishedDish: [...row.finishedDishes].sort().join("; "), finishedDishes: undefined }))
-    .map(prepDisplayQuantity)
+    .map(prepDisplayQuantity);
+  const displayConsolidated = new Map();
+  displayed.forEach((row) => {
+    const mrn = String(row.mrn || "").trim();
+    const identity = mrn ? `mrn:${mrn}` : `name:${String(row.name || "").trim().toLowerCase()}`;
+    const key = `${identity}|${String(row.orderUnit || "").trim().toLowerCase()}`;
+    const current = displayConsolidated.get(key) || { ...row, stations: new Set(), finishedDishes: new Set(), cafes: {}, ...Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, 0])), total: 0 };
+    String(row.station || "").split(";").map((value) => value.trim()).filter(Boolean).forEach((station) => current.stations.add(station));
+    String(row.finishedDish || row.name || "").split(";").map((value) => value.trim()).filter(Boolean).forEach((dish) => current.finishedDishes.add(dish));
+    DELIVERY_KEYS.forEach((delivery) => { current[delivery] = Number((current[delivery] + Number(row[delivery] || 0)).toFixed(4)); });
+    Object.entries(row.cafes || {}).forEach(([cafe, values]) => {
+      current.cafes[cafe] ||= Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, 0]));
+      DELIVERY_KEYS.forEach((delivery) => { current.cafes[cafe][delivery] = Number((current.cafes[cafe][delivery] + Number(values?.[delivery] || 0)).toFixed(4)); });
+    });
+    current.total = Number((current.total + Number(row.total || 0)).toFixed(4));
+    displayConsolidated.set(key, current);
+  });
+  return [...displayConsolidated.values()]
+    .map((row) => ({ ...row, station: [...row.stations].sort().join("; "), stations: undefined, finishedDish: [...row.finishedDishes].sort().join("; "), finishedDishes: undefined }))
     .map((row) => ({ ...row, productionType: prepProductionType(row), productionFamily: prepProductionFamily(row) }))
     .sort((a, b) => prepProductionTypeOrder(a.productionType) - prepProductionTypeOrder(b.productionType)
       || a.productionFamily.localeCompare(b.productionFamily)
@@ -1006,24 +1024,27 @@ export function buildTabbedPrepBoard(records = [], options = {}) {
   records.flatMap((record) => prepBoardOrderLinesForRecord(record, options.hub)).forEach((line) => {
     const identity = prepBoardIdentity(line);
     const assemblyKey = `${line.station}|${identity}|${String(line.orderUnit || "").toLowerCase()}`;
-    const assembly = assemblyMap.get(assemblyKey) || {
-      id: prepBoardCompletionId("assembly", assemblyKey),
-      phase: "assembly",
-      name: line.name,
-      mrn: line.mrn,
-      station: line.station,
-      orderUnit: line.orderUnit,
-      cafes: {},
-      dependencyIds: [...(dependencyIdsByDish.get(`${line.station}|${line.name}`) || [])],
-      ...Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, 0])),
-    };
-    DELIVERY_KEYS.forEach((delivery) => {
-      const quantity = Number(line[delivery] || 0);
-      assembly[delivery] = Number((assembly[delivery] + quantity).toFixed(4));
-      assembly.cafes[line.cafe] ||= Object.fromEntries(DELIVERY_KEYS.map((key) => [key, 0]));
-      assembly.cafes[line.cafe][delivery] = Number((assembly.cafes[line.cafe][delivery] + quantity).toFixed(4));
-    });
-    assemblyMap.set(assemblyKey, assembly);
+    const dependencyIds = [...(dependencyIdsByDish.get(`${line.station}|${line.name}`) || [])];
+    if (dependencyIds.length >= 2) {
+      const assembly = assemblyMap.get(assemblyKey) || {
+        id: prepBoardCompletionId("assembly", assemblyKey),
+        phase: "assembly",
+        name: line.name,
+        mrn: line.mrn,
+        station: line.station,
+        orderUnit: line.orderUnit,
+        cafes: {},
+        dependencyIds,
+        ...Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, 0])),
+      };
+      DELIVERY_KEYS.forEach((delivery) => {
+        const quantity = Number(line[delivery] || 0);
+        assembly[delivery] = Number((assembly[delivery] + quantity).toFixed(4));
+        assembly.cafes[line.cafe] ||= Object.fromEntries(DELIVERY_KEYS.map((key) => [key, 0]));
+        assembly.cafes[line.cafe][delivery] = Number((assembly.cafes[line.cafe][delivery] + quantity).toFixed(4));
+      });
+      assemblyMap.set(assemblyKey, assembly);
+    }
 
     const packoutKey = `${line.cafe}|${assemblyKey}`;
     const packout = packoutMap.get(packoutKey) || {
@@ -1034,6 +1055,8 @@ export function buildTabbedPrepBoard(records = [], options = {}) {
       cafe: line.cafe,
       station: line.station,
       orderUnit: line.orderUnit,
+      assemblyKey,
+      directProductionDependencyIds: dependencyIds,
       ...Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, 0])),
     };
     DELIVERY_KEYS.forEach((delivery) => { packout[delivery] = Number((packout[delivery] + Number(line[delivery] || 0)).toFixed(4)); });
@@ -1048,7 +1071,10 @@ export function buildTabbedPrepBoard(records = [], options = {}) {
   return {
     production: production.map(withTotal),
     assembly: [...assemblyMap.values()].map(withTotal).filter(({ total }) => total > 0).sort((a, b) => stationIndex(a.station) - stationIndex(b.station) || a.name.localeCompare(b.name)),
-    packout: [...packoutMap.values()].map(withTotal).filter(({ total }) => total > 0).sort((a, b) => a.cafe.localeCompare(b.cafe) || stationIndex(a.station) - stationIndex(b.station) || a.name.localeCompare(b.name)),
+    packout: [...packoutMap.values()].map((row) => {
+      const assembly = assemblyMap.get(row.assemblyKey);
+      return { ...row, dependencyIds: assembly ? [assembly.id] : row.directProductionDependencyIds, assemblyKey: undefined, directProductionDependencyIds: undefined };
+    }).map(withTotal).filter(({ total }) => total > 0).sort((a, b) => a.cafe.localeCompare(b.cafe) || stationIndex(a.station) - stationIndex(b.station) || a.name.localeCompare(b.name)),
   };
 }
 

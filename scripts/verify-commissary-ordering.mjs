@@ -22,6 +22,7 @@ import { COMMISSARY_SPANISH } from "../src/features/commissary-ordering/commissa
 import { COMMISSARY_STATIONS, cafeRoutesToHub, cafeRoutesToPackoutHub, commissaryHubFor, isCafeStationEnabled, isCommissaryHub } from "../src/features/commissary-ordering/commissaryRouting.js";
 import { filterCommissaryComponents, isRawAnimalProteinComponent } from "../src/features/commissary-ordering/commissaryPrepPolicy.js";
 import { buildRoxanneDawsonProjection, normalizeRoxanneDawsonOrder, roxanneDawsonOrderLines } from "../src/features/commissary-ordering/roxanneDawsonProjection.js";
+import { mergePendingPrepProgress, prepProgressKey } from "../src/features/commissary-ordering/commissaryStorage.js";
 
 function validateBeforeCutoff(records, context = { tool: "commissaryOrders" }) {
   mock.timers.enable({ apis: ["Date"], now: new Date("2026-11-10T12:00:00Z") });
@@ -195,6 +196,14 @@ const progressRecord = buildPrepProgressRecord({ weekStart: "2026-10-12", comple
 assert.equal(progressRecord["Record ID"], "commissaryOrder|prepProgress|cricket|2026-10-12");
 assert.equal(progressRecord.hub, "Cricket");
 assert.equal(progressRecord["Record Type"], "Commissary Prep Progress");
+const pendingProgress = buildPrepProgressRecord({ weekStart: "2026-10-12", hub: "Sonic", completed, now: new Date("2026-10-13T18:00:00Z") });
+const staleServerProgress = buildPrepProgressRecord({ weekStart: "2026-10-12", hub: "Sonic", completed: {}, now: new Date("2026-10-13T17:59:00Z") });
+const pendingProgressMap = new Map([[prepProgressKey(pendingProgress), pendingProgress]]);
+assert.deepEqual(mergePendingPrepProgress([staleServerProgress], pendingProgressMap)[0].completed, pendingProgress.completed, "Auto reload must not replace a newer tablet completion save with stale server data.");
+assert.equal(pendingProgressMap.size, 1, "A pending completion remains protected until server readback acknowledges it.");
+const acknowledgedServerProgress = { ...pendingProgress, updatedAt: "2026-10-13T18:00:01.000Z" };
+assert.deepEqual(mergePendingPrepProgress([acknowledgedServerProgress], pendingProgressMap)[0], acknowledgedServerProgress);
+assert.equal(pendingProgressMap.size, 0, "Acknowledged prep progress must clear the reload protection entry.");
 const currentLockedProgress = buildPrepProgressRecord({ weekStart: latestPrepWeek(), completed });
 assert.equal(commissaryWriteValidation([currentLockedProgress], { tool: "commissaryOrders" }), "");
 assert.match(commissaryWriteValidation([{ ...currentLockedProgress, completed: { friday: [], monday: [firstPrepItem, firstPrepItem], wednesday: [] } }], { tool: "commissaryOrders" }), /invalid or duplicate item/i);
@@ -213,6 +222,8 @@ const boardGreenPeas = saladBoard.production.find(({ mrn }) => mrn === greenPeas
 assert.equal(boardGreenPeas.friday, 0.5, "The draft board must display the same rounded half-gallon production quantity as the Prep List.");
 assert.equal(boardGreenPeas.orderUnit, "gallon");
 assert.equal(boardGreenPeas.nativeQuantities.friday, 0.25, "The draft board must retain the native quantity behind its display conversion.");
+assert.equal(saladBoard.assembly.some(({ mrn }) => mrn === greenPeas.mrn), false, "A single-component Salad Bar item must skip Assembly.");
+assert.ok(saladBoard.packout.some(({ mrn, dependencyIds }) => mrn === greenPeas.mrn && dependencyIds.includes(boardGreenPeas.id)), "A single-component item must flow directly from Production to Pack Out.");
 const transfer = buildCommissaryTransfer(record);
 const s4Rows = buildS4Rows(transfer);
 assert.equal(s4Rows.length, 3, "All three deliveries must consolidate to one S4 row per ordered item.");
@@ -499,6 +510,55 @@ assert.ok(baltiPrep.some(({ name }) => name === "Butter Chicken Sauce"));
 assert.equal(baltiPrep.some(({ name }) => /Chicken, Thigh/i.test(name)), false);
 assert.ok(globalTransferLinesForCafe(baltiRecord).some(({ name }) => name === "Butter Chicken Sauce"));
 
+const chiangMai = emptyGlobalOrder("2026-11-23");
+const chiangMaiMenu = globalCycleForWeek("2026-11-23").menus.find(({ menu }) => menu === "AMZ: Chiang Mai");
+const chickenKhaoSoi = chiangMaiMenu.items.find(({ mrn }) => mrn === "176857.1");
+const vegetableKhaoSoi = chiangMaiMenu.items.find(({ mrn }) => mrn === "176857");
+const chickenLaarb = chiangMaiMenu.items.find(({ mrn }) => mrn === "176858.3");
+const jasmineRice = chiangMaiMenu.items.find(({ mrn }) => mrn === "5354.11");
+chiangMai.menu = chiangMaiMenu.menu;
+chiangMai.selections.entrees = [chickenKhaoSoi.id, vegetableKhaoSoi.id, chickenLaarb.id];
+chiangMai.selections.sides[0] = jasmineRice.id;
+for (const option of [chickenKhaoSoi, vegetableKhaoSoi, chickenLaarb, jasmineRice]) {
+  chiangMai.items[option.id] = { ...option, item: option.name, itemWasteCost: 2.5 };
+  chiangMai.quantities[option.id] = { friday: 8, monday: 0, wednesday: 0 };
+}
+const chiangMaiRecord = buildOrderRecord({ cafe: "Everest", weekStart: "2026-11-23", global: chiangMai, now: new Date("2026-11-17T12:00:00Z") });
+const chiangMaiPrep = globalPrepLinesForCafe(chiangMaiRecord);
+const chiangMaiTransfer = globalTransferLinesForCafe(chiangMaiRecord);
+for (const [mrn, description] of [["8189", "lime wedges"], ["80489", "julienned shallots"], ["65839", "Khao Soi noodles"], ["81037.2", "blanched green beans"]]) {
+  assert.ok(chiangMaiPrep.some((line) => String(line.mrn) === mrn), `Chiang Mai ${description} must reach Prep Lists.`);
+  assert.ok(chiangMaiTransfer.some((line) => String(line.mrn) === mrn), `Chiang Mai ${description} must reach transfers.`);
+}
+assert.equal(chiangMaiPrep.some(({ name }) => /jasmine\s+rice|rice,\s*jasmine/i.test(name)), false, "Jasmine rice is unit-prepared and must not reach Global prep.");
+assert.equal(chiangMaiTransfer.some(({ name }) => /jasmine\s+rice|rice,\s*jasmine/i.test(name)), false, "Jasmine rice is unit-prepared and must not reach Global transfers.");
+const chiangGreenBeans = rolledUpPrepItems([chiangMaiRecord], { hub: "Blueshift" }).find(({ mrn }) => String(mrn) === "81037.2");
+assert.equal(chiangGreenBeans.orderUnit, "gallon", "Chiang Mai green beans must use the approved prepared-vegetable volume conversion.");
+const chiangBoard = buildTabbedPrepBoard([chiangMaiRecord], { hub: "Blueshift" });
+assert.equal(chiangBoard.production.filter(({ mrn }) => String(mrn) === "8189").length, 1, "Exact MRN matches must render as one Production task.");
+assert.ok(chiangBoard.production.find(({ mrn }) => String(mrn) === "8189").uses.some((dish) => dish === "Chicken Khao Soi")
+  && chiangBoard.production.find(({ mrn }) => String(mrn) === "8189").uses.some((dish) => dish === "Vegetable Khao Soi"), "A consolidated Production task must retain its dish breakdown.");
+
+const lemongrass = emptyGlobalOrder("2026-11-23");
+const lemongrassMenu = globalCycleForWeek("2026-11-23").menus.find(({ menu }) => menu === "AMZ: Lemongrass + Lime");
+const redCurryChicken = lemongrassMenu.items.find(({ mrn }) => mrn === "193354");
+lemongrass.menu = lemongrassMenu.menu;
+lemongrass.selections.entrees[0] = redCurryChicken.id;
+lemongrass.items[redCurryChicken.id] = { ...redCurryChicken, item: redCurryChicken.name, itemWasteCost: 3 };
+lemongrass.quantities[redCurryChicken.id] = { friday: 4, monday: 0, wednesday: 0 };
+const lemongrassRecord = buildOrderRecord({ cafe: "Everest", weekStart: "2026-11-23", global: lemongrass, now: new Date("2026-11-17T12:00:00Z") });
+assert.ok(globalPrepLinesForCafe(lemongrassRecord).some(({ mrn }) => String(mrn) === "354"), "Bamboo shoots belong to Lemongrass + Lime and must reach Prep Lists.");
+
+const roam = emptyGlobalOrder("2026-12-21");
+const roamMenu = globalCycleForWeek("2026-12-21").menus.find(({ menu }) => menu === "AMZ: Roam BBQ");
+const gochujangEggplant = roamMenu.items.find(({ mrn }) => mrn === "191760");
+roam.menu = roamMenu.menu;
+roam.selections.entrees[0] = gochujangEggplant.id;
+roam.items[gochujangEggplant.id] = { ...gochujangEggplant, item: gochujangEggplant.name, itemWasteCost: 2.75 };
+roam.quantities[gochujangEggplant.id] = { friday: 4, monday: 0, wednesday: 0 };
+const roamRecord = buildOrderRecord({ cafe: "Everest", weekStart: "2026-12-21", global: roam, now: new Date("2026-12-15T12:00:00Z") });
+assert.ok(globalPrepLinesForCafe(roamRecord).some(({ mrn }) => String(mrn) === "76965"), "Recipe-linked eggplant must remain visible as vegetable production, not be mistaken for unit-supplied protein.");
+
 const smokehouse = emptyGlobalOrder("2026-12-21");
 const smokehouseMenu = globalCycleForWeek("2026-12-21").menus.find(({ menu }) => menu === "AMZ: Smokehouse BBQ");
 const kielbasa = smokehouseMenu.items.find(({ mrn }) => mrn === "5365.6");
@@ -653,6 +713,7 @@ const dailyGlobalRecord = buildOrderRecord({ cafe: "Gemini", weekStart: "2026-11
 assert.equal(dailyGlobalOrderLinesForCafe(dailyGlobalRecord).length, 2);
 assert.ok(dailyGlobalPrepLinesForCafe(dailyGlobalRecord).some(({ name, delivery }) => name === "Scallion garnish" && delivery === "friday"));
 assert.ok(dailyGlobalPrepLinesForCafe(dailyGlobalRecord).some(({ name, delivery }) => name === "Teriyaki Sauce" && delivery === "monday"));
+assert.equal(dailyGlobalPrepLinesForCafe(dailyGlobalRecord).some(({ name }) => /jasmine\s+rice|rice,\s*jasmine/i.test(name)), false, "Daily Global also keeps Jasmine rice in-unit.");
 assert.equal(dailyGlobalTransferLinesForCafe(dailyGlobalRecord).reduce((sum, line) => sum + line.quantity, 0), 7);
 assert.equal(validateBeforeCutoff([dailyGlobalRecord]), "");
 assert.ok(rolledUpPrepItems([dailyGlobalRecord], { hub: "Blueshift" }).some(({ station }) => station === "Daily Global"));
@@ -670,7 +731,7 @@ const sonicHubPacket = buildPackoutPacket([globalRecord], "2026-11-16", DEFAULT_
 assert.equal(sonicHubPacket.pages.length, 3, "Sonic hub packout must include routed Everest Global work.");
 const cricketHubPacket = buildPackoutPacket([globalRecord], "2026-11-16", DEFAULT_COMMISSARY_METADATA, { selectedCafe: "Cricket" });
 assert.equal(cricketHubPacket.pages.length, 0, "Cricket hub packout must not include Everest Global work.");
-const packetRecord = { ...buildPackoutPacketRecord({ weekStart: "2026-11-16", records: [globalRecord], packet, metadataVersion: 32, now: new Date("2026-11-12T01:00:00Z") }), packet };
+const packetRecord = { ...buildPackoutPacketRecord({ weekStart: "2026-11-16", records: [globalRecord], packet, metadataVersion: 33, now: new Date("2026-11-12T01:00:00Z") }), packet };
 assert.equal(commissaryWriteValidation([packetRecord], { tool: "commissaryOrders" }), "");
 assert.match(commissaryWriteValidation([{ ...packetRecord, packet: { ...packet, pages: [{ ...packet.pages[0], cafe: "Unknown Cafe" }] } }], { tool: "commissaryOrders" }), /scope|invalid cafe/i);
 assert.match(commissaryWriteValidation([{ ...packetRecord, orderRecordIds: [`commissaryOrder|nessie|${packetRecord.weekStart}`] }], { tool: "commissaryOrders" }), /order-reference scope/i);

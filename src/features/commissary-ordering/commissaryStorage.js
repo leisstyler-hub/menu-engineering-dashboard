@@ -1,5 +1,19 @@
 const readJson = (response) => response.json().catch(() => ({}));
 
+export const prepProgressKey = (record = {}) => `${record.hub || "Cricket"}|${record.weekStart || ""}`;
+
+export function mergePendingPrepProgress(serverRecords = [], pendingRecords = new Map()) {
+  const merged = new Map(serverRecords.map((record) => [prepProgressKey(record), record]));
+  pendingRecords.forEach((pending, key) => {
+    const server = merged.get(key);
+    const serverUpdatedAt = Date.parse(server?.updatedAt || "") || 0;
+    const pendingUpdatedAt = Date.parse(pending.updatedAt || "") || 0;
+    if (server && serverUpdatedAt >= pendingUpdatedAt) pendingRecords.delete(key);
+    else merged.set(key, pending);
+  });
+  return [...merged.values()];
+}
+
 export async function loadCommissaryRecords() {
   const response = await fetch("/api/storage/records?tool=commissaryOrders&includeHidden=1");
   const payload = await readJson(response);

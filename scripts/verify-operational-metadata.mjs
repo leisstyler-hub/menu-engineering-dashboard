@@ -11,7 +11,7 @@ assert.equal(isApprovedOperationalMetadataRecord(record), true);
 assert.equal(resolveOperationalMetadata([record]).source, "supabase");
 assert.equal(resolveOperationalMetadata([]).source, "fallback");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.orderItems.length, 41);
-assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 32);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 33);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.items.length, 41);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.legacyItems.length, 41);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.source.effectiveDate, "2026-11-16");
@@ -72,7 +72,7 @@ assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globalInterface
   subrecipes: "automatic-from-recipe",
   deliveryQuantities: "whole-portions",
 });
-assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 32);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 33);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globalProductionPolicy.version, 1);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globalProductionPolicy.rules["global|amz-porto|121026|1-piece"].outputs[0].mrn, "120715");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globalProductionPolicy.rules["global|amz-smokehouse-bbq|5365.6|5-ounce"].mode, "in-unit");
@@ -85,7 +85,7 @@ assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.workb
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.productionGrouping, ["Vegetable Production", "Sauces", "Meat Production", "Stocking"]);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.visibleWorkbookColumns, ["Ingredient / item", "Total quantity", "Order unit", "Production section", "Finished dish"]);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.finishedItemTabletCounts, { stations: ["Deli", "Breakfast"], placement: "before-component-prep", completion: "shared-touch-check" });
-assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.tabbedBoardPilot, { weekStart: "2027-01-04", status: "draft", phases: ["Production", "Assembly", "Pack Out"], completionStorage: "commissary-prep-progress", currentWeekIsolation: true, productionDisplay: "prep-list-rounded-volume-and-weight-conversions", nativeQuantitiesPreserved: true, roundedCostingPreserved: true });
+assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.tabbedBoardPilot, { weekStart: "2027-01-04", status: "draft", phases: ["Production", "Assembly", "Pack Out"], completionStorage: "commissary-prep-progress", currentWeekIsolation: true, productionDisplay: "prep-list-rounded-volume-and-weight-conversions", nativeQuantitiesPreserved: true, roundedCostingPreserved: true, productionExactMatchRollup: "mrn-and-display-unit-with-dish-breakdown", assemblyRule: "two-or-more-distinct-production-inputs", singleComponentFlow: "production-direct-to-packout" });
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.orderPersistence, { mode: "autosave", debounceMs: 500, trigger: "every-selection-and-quantity-edit", partialDrafts: true, standingOrderReductionConfirmation: true, manualSaveRequired: false });
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.productionVolumeRounding, {
   incrementGallons: 0.5,
@@ -110,6 +110,9 @@ assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.globa
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.globalPrepDisplayPolicy.cutProduceCupsPerEach["96597"], 2);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.globalPrepDisplayPolicy.cutProduceCupsPerEach["50595"], 4);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.autoReload.intervalSeconds, 15);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.autoReload.pendingWriteProtection, "newer-local-progress-until-supabase-readback");
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.componentProductionPolicy.version, 4);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.componentProductionPolicy.globalInUnitRice, "all-jasmine-rice-excluded-from-prep-and-transfer");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.generatedCompletionIds, "validated dynamic prep identifiers persisted for all hubs");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.roxanneDawsonIntegration.effectiveWeek, "2026-11-30");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.roxanneDawsonIntegration.prepProjection, "excluded; Dawson is not a commissary prep hub");
@@ -140,7 +143,7 @@ assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.hubRouting.Blue
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.hubRouting.Blueshift.dailyGlobal, ["Gemini", "Eclipse"]);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.dailyGlobalProgram.anchorWeekStart, "2026-11-23");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.dailyGlobalProgram.cycleLengthWeeks, 2);
-assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.dailyGlobalInterface.productionScope, "complete-commissary-hot-and-cold-plate-including-garnish");
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.dailyGlobalInterface.productionScope, "complete-commissary-hot-and-cold-plate-including-garnish-except-unit-prepared-jasmine-rice");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.dailyGlobalInterface.plateContentsVisibility, "shown-beneath-each-protein-option");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.dailyGlobalInterface.weeklyOrderPlacement, "before-all-stations");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.breakfastProgram.items.length, 28);

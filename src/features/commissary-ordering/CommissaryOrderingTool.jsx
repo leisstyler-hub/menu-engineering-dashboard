@@ -56,7 +56,7 @@ import {
   standingOrderReductions,
   GLOBAL_UNIT_PREPARATION_NOTES,
 } from "./commissaryModel.js";
-import { loadCommissaryRecords, saveCommissaryOrder, saveCommissaryPackoutPacket, saveCommissaryPrepProgress } from "./commissaryStorage.js";
+import { loadCommissaryRecords, mergePendingPrepProgress, prepProgressKey, saveCommissaryOrder, saveCommissaryPackoutPacket, saveCommissaryPrepProgress } from "./commissaryStorage.js";
 import { COMMISSARY_HUBS, COMMISSARY_STATIONS, isCafeStationEnabled, isCommissaryHub } from "./commissaryRouting.js";
 import { buildPackoutPacket, buildPackoutPdfBytes, downloadPackoutPdf } from "./commissaryPackout.js";
 import { BREAKFAST_ORDERING_PROGRAM } from "./breakfastCatalog.js";
@@ -205,6 +205,7 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
   const pendingAutosaveRef = useRef(null);
   const autosaveQueueRef = useRef(Promise.resolve());
   const latestRevisionByOrderRef = useRef(new Map());
+  const pendingPrepProgressRef = useRef(new Map());
   const mountedRef = useRef(true);
   const activeEditorKeyRef = useRef("");
 
@@ -259,7 +260,7 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
     Promise.all([loadCommissaryRecords(), loadOperationalMetadata(), liveGrillCatalog, loadRecordsFromBackbone({ tool: "rotation" })]).then(([records, operationalMetadata, liveCatalog, rotationPayload]) => {
       if (mounted) {
         setOrders(records.filter((record) => record["Record Type"] === "Commissary Order"));
-        setPrepProgressRecords(records.filter((record) => record["Record Type"] === "Commissary Prep Progress"));
+        setPrepProgressRecords(mergePendingPrepProgress(records.filter((record) => record["Record Type"] === "Commissary Prep Progress"), pendingPrepProgressRef.current));
         setRotationRecords(rotationPayload.records || []);
         const legacyMetadata = resolveCommissaryMetadata(records);
         const shared = operationalMetadata.commissaryOrdering;
@@ -596,7 +597,7 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
         const records = await loadCommissaryRecords();
         if (cancelled) return;
         setOrders(records.filter((record) => record["Record Type"] === "Commissary Order"));
-        setPrepProgressRecords(records.filter((record) => record["Record Type"] === "Commissary Prep Progress"));
+        setPrepProgressRecords(mergePendingPrepProgress(records.filter((record) => record["Record Type"] === "Commissary Prep Progress"), pendingPrepProgressRef.current));
         setPrepReloadedAt(new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }));
       } catch (reloadError) {
         if (!cancelled) setError(`Prep List auto-refresh needs attention: ${reloadError.message}`);
@@ -619,12 +620,15 @@ export default function CommissaryOrderingTool({ onBackToPlatform, onOpenSmartsh
     if ((!locked && !prepBoardPilot) || prepSaving) return;
     const previous = prepProgressRecord || buildPrepProgressRecord({ weekStart, hub: prepHub, completed: {} });
     const next = buildPrepProgressRecord({ weekStart, hub: prepHub, completed: togglePrepCompleted(previous.completed, delivery, itemId) });
+    const progressKey = prepProgressKey(next);
+    pendingPrepProgressRef.current.set(progressKey, next);
     setPrepProgressRecords((current) => [...current.filter((row) => !(row.weekStart === weekStart && (row.hub || "Cricket") === prepHub)), next]);
     setPrepSaving(true);
     setError("");
     try {
       await saveCommissaryPrepProgress(next);
     } catch (saveError) {
+      pendingPrepProgressRef.current.delete(progressKey);
       setPrepProgressRecords((current) => [...current.filter((row) => !(row.weekStart === weekStart && (row.hub || "Cricket") === prepHub)), ...(prepProgressRecord ? [prepProgressRecord] : [])]);
       setError(saveError.message);
     } finally {

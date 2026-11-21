@@ -4,6 +4,7 @@ import { GLOBAL_COMMISSARY_PRODUCTION } from "./globalProductionCatalog.js";
 
 const excludedLoosePrepItem = /\b(canola(?: oil)?|kosher salt|black pepper)\b|^spice,/i;
 const PORTO_POTATO_WEDGE_ID = "global|amz-porto|121015|4-oz-portion";
+const globalInUnitJasmineRice = /\b(?:brown\s+|spiced\s+|steamed\s+)?jasmine\s+rice\b|\brice,\s*jasmine\b/i;
 
 export const GRILL_UNIT_SUPPLIED_COMPONENTS = Object.freeze([
   Object.freeze({ mrn: "170538", name: "Burger, Meatless, Black Bean" }),
@@ -19,7 +20,7 @@ const explicitlyPrepared = /\b(pre[- ]?cooked|fully cooked|cooked|roasted|grille
 const plantBased = /\b(plant[- ]?based|meatless|vegan|tofu|tempeh|bean|lentil)\b/i;
 const preparedFlavorComponent = /\b(sauce|broth|stock|bouillon|base|seasoning|extract|gelatin)\b/i;
 const rawCut = /\b(breast|thigh|fillet|ground|patty|tenderloin|loin|shoulder|chop|rib|wing|drumstick)\b/i;
-const unitPlantProtein = /\b(plant[- ]?based|meatless|tofu|tempeh|paneer|jackfruit|portobello|eggplant)\b/i;
+const unitPlantProtein = /\b(plant[- ]?based|meatless|tofu|tempeh|paneer|jackfruit|portobello)\b/i;
 
 export function isRawAnimalProteinComponent(name = "") {
   const value = String(name || "");
@@ -73,20 +74,41 @@ function isUnitProteinComponent(name = "", sourceId = "") {
   return isRawAnimalProteinComponent(name) || (sourceUsesPlantProtein(sourceId) && unitPlantProtein.test(String(name || "")));
 }
 
+export function isGlobalInUnitRiceComponent(component = {}) {
+  return globalInUnitJasmineRice.test(String(component.name || ""));
+}
+
+function filteredGlobalDirectComponents(components = [], sourceId = "", { excludeLoose = true } = {}) {
+  return components.filter((component) => !isUnitProteinComponent(component.name, sourceId)
+    && !isGlobalInUnitRiceComponent(component)
+    && (!excludeLoose || !excludedLoosePrepItem.test(String(component.name || ""))));
+}
+
+function mergeGlobalProductionOutputs(outputs = [], directComponents = []) {
+  const merged = new Map();
+  [...outputs, ...directComponents].forEach((component) => {
+    const mrn = String(component.mrn || "").trim();
+    const identity = mrn ? `mrn:${mrn}` : `name:${String(component.name || "").trim().toLowerCase()}`;
+    const key = `${identity}|${String(component.unit || "").trim().toLowerCase()}`;
+    if (!merged.has(key)) merged.set(key, component);
+  });
+  return [...merged.values()];
+}
+
 export function prepareGlobalCommissaryComponents(components = [], weekStart = "", sourceId = "") {
-  if (!weekStart || weekStart < GLOBAL_COMMISSARY_PRODUCTION.effectiveDate) return components;
+  if (!weekStart || weekStart < GLOBAL_COMMISSARY_PRODUCTION.effectiveDate) return components.filter((component) => !isGlobalInUnitRiceComponent(component));
   const rule = globalRule(sourceId);
   if (rule?.mode === "in-unit") return [];
-  if (rule?.outputs?.length) return rule.outputs;
-  if (!rule) return prepareCommissaryComponents(components, weekStart, sourceId);
-  return components.filter(({ name }) => !isUnitProteinComponent(name, sourceId) && !excludedLoosePrepItem.test(String(name || "")));
+  if (rule?.outputs?.length) return mergeGlobalProductionOutputs(rule.outputs, filteredGlobalDirectComponents(components, sourceId));
+  if (!rule) return prepareCommissaryComponents(components, weekStart, sourceId).filter((component) => !isGlobalInUnitRiceComponent(component));
+  return filteredGlobalDirectComponents(components, sourceId);
 }
 
 export function prepareGlobalTransferComponents(components = [], weekStart = "", sourceId = "") {
-  if (!weekStart || weekStart < GLOBAL_COMMISSARY_PRODUCTION.effectiveDate) return components;
+  if (!weekStart || weekStart < GLOBAL_COMMISSARY_PRODUCTION.effectiveDate) return components.filter((component) => !isGlobalInUnitRiceComponent(component));
   const rule = globalRule(sourceId);
   if (rule?.mode === "in-unit") return [];
-  if (rule?.outputs?.length) return rule.outputs.map((output) => ({
+  const outputTransferComponents = (rule?.outputs || []).map((output) => ({
     id: `global-transfer|production|${output.mrn || output.id}`,
     mrn: output.mrn,
     name: output.name,
@@ -95,7 +117,8 @@ export function prepareGlobalTransferComponents(components = [], weekStart = "",
     costPerPortion: output.costPerPortion,
     glCode: output.glCode || "4111011",
   }));
-  return components.filter(({ name }) => !isUnitProteinComponent(name, sourceId));
+  if (outputTransferComponents.length) return mergeGlobalProductionOutputs(outputTransferComponents, filteredGlobalDirectComponents(components, sourceId));
+  return filteredGlobalDirectComponents(components, sourceId, { excludeLoose: false });
 }
 
 export function isExcludedLoosePrepItem(name = "") {

@@ -25,7 +25,7 @@ import { COMMISSARY_CAFE_STATION_ACCESS, COMMISSARY_HUB_ROUTING, COMMISSARY_HUBS
 import { GLOBAL_UNIT_PREPARATION_NOTES } from "../features/commissary-ordering/commissaryModel.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 32;
+export const OPERATIONAL_METADATA_VERSION = 33;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -128,7 +128,7 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       selectionMode: "fixed-weekday-animal-or-vegetarian-plate-counts",
       plateContentsVisibility: "shown-beneath-each-protein-option",
       weeklyOrderPlacement: "before-all-stations",
-      productionScope: "complete-commissary-hot-and-cold-plate-including-garnish",
+      productionScope: "complete-commissary-hot-and-cold-plate-including-garnish-except-unit-prepared-jasmine-rice",
       prepHub: "Blueshift",
       deliHub: "Sonic",
       transferValuation: "finished-plate-item-plus-waste",
@@ -158,7 +158,7 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       sectionLayout: "single-section-lto-before-core",
     }),
     componentProductionPolicy: Object.freeze({
-      version: 3,
+      version: 4,
       effectiveDate: "2026-11-16",
       stations: Object.freeze(["Grill", "Global"]),
       rawAnimalProteins: "unit-supplied-excluded-from-prep-and-transfer",
@@ -166,7 +166,8 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       grillUnitSuppliedComponents: Object.freeze(["170538", "144591.1", "7411"]),
       transferValuation: "priced-retained-recipe-components-only",
       unresolvedComponentCost: "excluded-no-invented-allocation",
-      globalRecipeResolution: "reviewed-nested-recipe-output-with-direct-component-fallback",
+      globalRecipeResolution: "reviewed-nested-recipe-output-plus-required-direct-components",
+      globalInUnitRice: "all-jasmine-rice-excluded-from-prep-and-transfer",
       globalInUnitExceptions: Object.freeze(["5365.6"]),
       globalExcludedSubrecipes: Object.freeze(["60487"]),
     }),
@@ -200,7 +201,7 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       avocadoMashDisplay: "number-16-scoops-converted-to-gallons",
       grillHandScoopedAvocadoDisplay: "number-16-scoops-converted-to-gallons-for-prep-only",
       globalPrepDisplayPolicy: GLOBAL_PREP_DISPLAY_POLICY,
-      autoReload: Object.freeze({ intervalSeconds: 15, onWindowFocus: true, onVisibilityRestore: true }),
+      autoReload: Object.freeze({ intervalSeconds: 15, onWindowFocus: true, onVisibilityRestore: true, pendingWriteProtection: "newer-local-progress-until-supabase-readback" }),
       generatedCompletionIds: "validated dynamic prep identifiers persisted for all hubs",
       looseStaples: "canola-kosher-salt-black-pepper-dried-spices-excluded-or-bundled-as-recipes",
       deliDeliveryMap: "finished-sandwich-counts",
@@ -227,6 +228,9 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
         productionDisplay: "prep-list-rounded-volume-and-weight-conversions",
         nativeQuantitiesPreserved: true,
         roundedCostingPreserved: true,
+        productionExactMatchRollup: "mrn-and-display-unit-with-dish-breakdown",
+        assemblyRule: "two-or-more-distinct-production-inputs",
+        singleComponentFlow: "production-direct-to-packout",
       }),
     }),
     packoutPacket: Object.freeze({

@@ -1,5 +1,8 @@
 ## 2026-11-20
 
+- [Nov 20, 5:42 PM] Protect Prep Board completion saves during auto reload, restore Global recipe components, and simplify January production flow.
+- [Nov 20, 5:42 PM] Show missing Chiang Mai and Lemongrass prep, convert green beans to volume, and keep jasmine rice in-unit.
+
 - [Nov 20, 5:07 AM] Retire Dawson's Moby Pop-Up station from every Neighborhood Rotation week while preserving historical records and the separate Roxanne Pop-Up and Composed Salad copy-over.
 
 ## 2026-11-19
