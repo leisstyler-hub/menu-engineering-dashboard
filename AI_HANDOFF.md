@@ -1,3 +1,7 @@
+## SSMT MRN search and FIXY launcher repair - 2026-11-23
+
+Candidate `2026.11.23.003-ssmt-mrn-fixy-repair`, Chief on `chief/ssmt-unit-openings`, baseline/rollback `e2908538553791582bda3587d2ed7c1e6ee0563d`. Tyler request `309b13fd` authorizes a data-preserving app repair. Add from Menu search now includes stored MRN text without rewriting identifiers. FIXY launcher uses the same real-item predicate as its dropdown, excluding submenu dividers that previously produced a heading-based FIXY while the dropdown displayed a dish. Both regressions failed before fixes in isolated browser tests. Existing FIXYs, MRNs, menus and history are not migrated. Evidence: workspace `WORK_LOGS/SSMT_MRN_FIXY_REPAIR_2026_11_23.md`. No production workspace writes authorized or performed. Independent static data-integrity review approved; checks and deployment tracked separately.
+
 ## Commissary prep reliability and Global recipe completion - 2026-11-20
 
 LIVE `2026.11.20.002-commissary-prep-reliability` protects every hub's tablet completion state from a stale 15-second/focus/visibility reload until Supabase readback acknowledges the newer save. The January 4–8 draft board now consolidates exact MRN/display-unit Production work into one task with every destination dish in subtext. Finished dishes with one Production input skip Assembly and flow directly to Pack Out; Assembly is reserved for two or more distinct Production inputs.

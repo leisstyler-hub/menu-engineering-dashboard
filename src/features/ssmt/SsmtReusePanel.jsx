@@ -59,7 +59,7 @@ export default function SsmtReusePanel({
   const sourceItems = useMemo(() => (source?.items || []).filter(isMenuItem).sort(alphabetically).map(candidate => ({
     item: candidate, issue: importItemIssue(candidate, groups, source),
   })), [source, groups]);
-  const visibleItems = sourceItems.filter(({item}) => `${item.label || item.name || ""} ${item.fohColumn || ""}`.toLowerCase().includes(search.toLowerCase()));
+  const visibleItems = sourceItems.filter(({item}) => `${item.label || item.name || ""} ${item.fohColumn || ""} ${item.mrn ?? ""}`.toLowerCase().includes(search.toLowerCase()));
   const readyItems = sourceItems.filter(({item, issue}) => !issue && (allowCopies || !isDuplicateItem(item, menu)));
   const blockedCount = sourceItems.filter(({issue}) => issue).length;
   const selectedItems = sourceItems.filter(({item}) => selected.includes(item.id));
@@ -216,7 +216,7 @@ export default function SsmtReusePanel({
             </label>
             {mode === "items" && <div className="space-y-3 text-sm">
               <p>Copy items from an IT complete menu into <strong>{menu.name}</strong>. Destination designation: <strong>{menu.fixyDesignation || "Enter it on the destination menu"}</strong>.</p>
-              <label className="block font-bold">Search items<input aria-label="Search items" className={input} value={search} onChange={e => setSearch(e.target.value)} placeholder="Item name or FIXY" /></label>
+              <label className="block font-bold">Search items<input aria-label="Search items" className={input} value={search} onChange={e => setSearch(e.target.value)} placeholder="Item name, MRN or FIXY" /></label>
               {source && <p className="text-slate-600">{sourceItems.length} items / {readyItems.length} ready / {selected.length} selected{blockedCount > 0 && ` / ${blockedCount} need source corrections`}</p>}
               {source && <p role="status" className="font-bold">{selected.length} selected / {selectedReadyCount} ready / {selectedIssues.length} need source corrections / {selectedDuplicates.length} duplicates skipped</p>}
               {source && <p className="text-slate-600">Select any item to review it. Items with source errors cannot be copied until corrected; uncheck them to copy the ready items. Source menus and modifiers are never changed here.</p>}

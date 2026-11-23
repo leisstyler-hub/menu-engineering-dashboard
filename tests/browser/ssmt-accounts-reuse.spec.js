@@ -59,6 +59,7 @@ async function isolated(
     failLoad = false,
     extraGroups = false,
     missingFixy = false,
+    leadingDivider = false,
     chiang = false,
     duplicateTarget = false,
     sourceWithoutFixy = false,
@@ -103,6 +104,7 @@ async function isolated(
   }
   if (duplicateTarget) shared.menus[1].items = [{ ...structuredClone(shared.menus[0].items.find(i => i.id === "banana")), id: "existing-banana" }];
   if (sourceWithoutFixy) shared.menus[0].items[0].fohColumn = "";
+  if (leadingDivider) shared.menus[0].items.unshift({id:"section-first",recordType:"divider",dividerKind:"submenu",name:"Grill section",modifierGroups:[]});
   if (lockedSource) shared.menus[0].items[0].lockedForCentric = true;
   if (culinaryDraftSource) shared.menus[0].phase = "Culinary draft";
   if (alphabeticalFixtures) {
@@ -1231,3 +1233,43 @@ test("Experience ticket never opens for a locked-out phase transition",async({pa
   await expect.poll(()=>fixture.getWorkspace().modifierGroups.at(-1)?.choices.length).toBe(10);
   expect(fixture.getWorkspace().modifierGroups.at(-1).choices[0].mrn).toBe('0000.10');
  });
+
+
+test("repair MRN search finds exact text without changing source records", async ({page}) => {
+  const fixture = await isolated(page);
+  const before = structuredClone(fixture.getWorkspace());
+  await openTarget(page);
+  await page.getByRole('button', {name:'Add from Menu',exact:true}).click();
+  const panel = page.getByRole('dialog', {name:'Add from Menu',exact:true});
+  await panel.getByLabel('Source menu').selectOption('source');
+  await panel.getByLabel('Search items').fill('00083821.10');
+  await expect(panel.getByLabel('Import Smash Burger', {exact:true})).toBeVisible();
+  await panel.getByLabel('Search items').fill('00083821.11');
+  await expect(panel.getByLabel('Import Smash Burger', {exact:true})).toHaveCount(0);
+  await panel.getByRole('button', {name:'Close',exact:true}).click();
+  expect(fixture.getWorkspace()).toEqual(before);
+  expect(fixture.saves).toHaveLength(0);
+});
+
+test("repair FIXY launcher skips submenu dividers and applies only to item", async ({page}) => {
+  const fixture = await isolated(page, {sourceWithoutFixy:true,leadingDivider:true});
+  const before = structuredClone(fixture.getWorkspace());
+  await page.getByRole('button', {name:'Menu Selector / New Menu',exact:true}).click();
+  await page.locator('[data-menu-name="Source Menu"]').click();
+  await page.getByRole('button', {name:'Generate FIXY',exact:true}).click();
+  const panel = page.getByRole('dialog', {name:'Generate FIXY',exact:true});
+  await expect(panel.getByLabel('FIXY item')).toHaveValue('source-item');
+  await panel.getByLabel('Food type', {exact:true}).selectOption('FBB');
+  await panel.getByLabel('Serving role', {exact:true}).selectOption('ENT');
+  await panel.getByLabel('Protein', {exact:true}).selectOption('BF');
+  await panel.getByRole('button', {name:'Preview FIXY'}).click();
+  await expect(panel).toContainText('R FBB | GRILL | SMASH BURGER ENT BF');
+  await panel.getByRole('button', {name:'Apply FIXY'}).click();
+  await expect(page.getByLabel('Fixy for Smash Burger',{exact:true})).toHaveValue('R FBB | GRILL | SMASH BURGER ENT BF');
+  await page.getByRole('button', {name:'Save SSMT workspace',exact:true}).click();
+  await expect.poll(()=>fixture.saves.length).toBe(1);
+  const after=fixture.getWorkspace();
+  expect(after.menus[0].items[0]).toEqual(before.menus[0].items[0]);
+  expect(after.menus[0].items[1]).toEqual({...before.menus[0].items[1],fohColumn:'R FBB | GRILL | SMASH BURGER ENT BF'});
+  expect(after.modifierGroups).toEqual(before.modifierGroups);
+});
