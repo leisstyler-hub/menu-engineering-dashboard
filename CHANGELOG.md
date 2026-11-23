@@ -1,5 +1,7 @@
 ## 2026-11-23
 
+- [Nov 23, 2:03 PM] Restore category pricing choices while retaining existing individual grill links for review.
+
 - [Nov 23, 12:18 PM] Find items by MRN in Add from Menu and keep submenu headings out of FIXY generation.
 
 ## 2026-11-20

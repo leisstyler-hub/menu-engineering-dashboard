@@ -1,3 +1,4 @@
+import { isLegacyGrillPrice, categoryPriceOptions, categoryPriceLabel } from "./ssmtPriceCategories.js";
 import { FREE_MODIFIER_PRICE_ID, selectModifierType, resizeModifierGroup } from "./ssmtModifierDefaults.js";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -1053,6 +1054,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
     setDeletePriceId("");
   };
 
+  const [showLegacyGrillPrices, setShowLegacyGrillPrices] = useState(false);
   const itemPriceOptions = useMemo(() => sortPricesForItemSelector(ssmtData.priceBook), [ssmtData.priceBook]);
   const modifierPriceOptions = useMemo(() => sortPricesForModifierSelector(ssmtData.priceBook), [ssmtData.priceBook]);
   const displayedPriceBook = pricingPlanMode && ssmtData.plannedPriceBook ? ssmtData.plannedPriceBook.priceBook : ssmtData.priceBook;
@@ -2311,6 +2313,9 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                   <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600">SEA price + category</p>
                   <h2 className="mt-1 text-2xl font-black">Pricing Structure</h2>
                   <p className="mt-2 text-sm font-semibold text-slate-600">{ssmtData.areaOrder.join(", ")}</p>
+                  <p className="mt-3 text-sm font-semibold text-slate-700">Deli and grill guidance: no included sides. Existing side-inclusive prices remain until the no-side price update is approved.</p>
+                  <p className="mt-2 text-xs text-slate-600">Category choices are shown first. Existing individual grill price links are retained for review; menu dish names stay on menus.</p>
+                  <label className="mt-3 flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={showLegacyGrillPrices} onChange={event => setShowLegacyGrillPrices(event.target.checked)} />Show legacy individual grill prices ({displayedPriceOptions.filter(isLegacyGrillPrice).length})</label>
                   <button type="button" onClick={exportPricingAudit} disabled={dataStatus !== "ready"} className="mt-3 inline-flex items-center gap-2 rounded-lg border border-emerald-700 bg-emerald-700 px-4 py-2 text-sm font-black text-white hover:bg-emerald-800 disabled:opacity-50">
                     <Download size={16} aria-hidden="true" /> Export Pricing Audit
                   </button>
@@ -2355,7 +2360,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                     </tr>
                   </thead>
                   <tbody>
-                    {displayedPriceOptions.map((price) => (
+                    {(showLegacyGrillPrices ? displayedPriceOptions : categoryPriceOptions(displayedPriceOptions)).map((price) => (
                       <tr key={price.id} className="odd:bg-white even:bg-slate-50/70">
                         <td className="border-b border-slate-100 px-4 py-3 font-black text-slate-950">
                           <span className="inline-flex items-center gap-3"><span>{price.selectorLabel}</span><span aria-label={`${priceMenuItemCounts.get(price.id) || 0} linked menu items for ${price.selectorLabel}`} title="Linked menu items across all menus, including hidden and historical menus" className="text-xs font-normal tabular-nums text-slate-500">{priceMenuItemCounts.get(price.id) || 0}</span></span>
@@ -2821,8 +2826,8 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                               className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-black text-slate-900"
                             >
                               <option value="">Select SEA price</option>
-                              {itemPriceOptions.map((price) => (
-                                <option key={price.id} value={price.id}>{price.selectorLabel}</option>
+                              {categoryPriceOptions(itemPriceOptions, item.priceSelectorId).map((price) => (
+                                <option key={price.id} value={price.id}>{categoryPriceLabel(price)}</option>
                               ))}
                             </select>
                             {item.workbookSeaPrice && item.priceReviewStatus === "Needs pricing structure match" && (
@@ -3200,8 +3205,8 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                             >
                               <option value="">Select price</option>
                               <option value={FREE_MODIFIER_PRICE_ID} data-price-kind="modifier">$0.00 - Modifier Free</option>
-                              {modifierPriceOptions.map((price) => (
-                                <option key={price.id} value={price.id} data-price-kind={price.modifierOnly ? "modifier" : "standard"}>{price.selectorLabel}</option>
+                              {categoryPriceOptions(modifierPriceOptions, choice.priceSelectorId).map((price) => (
+                                <option key={price.id} value={price.id} data-price-kind={price.modifierOnly ? "modifier" : "standard"}>{categoryPriceLabel(price)}</option>
                               ))}
                             </select>
                             <p className="mt-0.5 text-[10px] font-bold leading-3 text-slate-500">{choice.price || "TBD"}</p>

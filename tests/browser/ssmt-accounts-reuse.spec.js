@@ -72,6 +72,7 @@ async function isolated(
     mrnDraft = false,
     reviewSections = false,
     selectorGroups = false,
+    categoryFixtures = false,
   } = {},
 ) {
   let shared = workspace();
@@ -123,6 +124,20 @@ async function isolated(
     {id:"empty",recordType:"divider",dividerKind:"category",title:"Coming soon"},
     {id:"dinner",recordType:"divider",dividerKind:"submenu",title:"Dinner"},
   ];
+  if (categoryFixtures) {
+    shared.priceBook = [
+      {id:"price-1-base-burger-w-side",category:"Base Burger w/ side",selectorLabel:"$11.25 - Base Burger w/ side",areas:{SEA:"11.25"}},
+      {id:"price-guide-2026-row-46",category:"Brunch Burger",selectorLabel:"$9.20 - Brunch Burger",areas:{SEA:"9.20"}},
+      {id:"price-guide-2026-row-40",category:"Chicken Chesapeake Sandwich",selectorLabel:"$9.20 - Chicken Chesapeake Sandwich",areas:{SEA:"9.20"}},
+      {id:"price-guide-2026-row-82",category:"Deli Sandwich - Meat  No Side",selectorLabel:"$9.20 - Deli Sandwich - Meat  No Side",areas:{SEA:"9.20"}},
+    ];
+    shared.plannedPriceBook = {effectiveDate:"",priceBook:structuredClone(shared.priceBook)};
+    shared.menus[1].items = [
+      {...structuredClone(item),id:"linked",label:"Legacy linked dish",fohColumn:"",priceSelectorId:"price-guide-2026-row-46"},
+      {...structuredClone(item),id:"unlinked",label:"Unlinked dish",fohColumn:"",priceSelectorId:""},
+    ];
+    shared.modifierGroups[0].choices[0].priceSelectorId = "price-guide-2026-row-40";
+  }
   const saves = [];
   const member = {
     id: "test-user",
@@ -1272,4 +1287,40 @@ test("repair FIXY launcher skips submenu dividers and applies only to item", asy
   expect(after.menus[0].items[0]).toEqual(before.menus[0].items[0]);
   expect(after.menus[0].items[1]).toEqual({...before.menus[0].items[1],fohColumn:'R FBB | GRILL | SMASH BURGER ENT BF'});
   expect(after.modifierGroups).toEqual(before.modifierGroups);
+});
+
+
+test("category pricing hides individual grill choices and preserves saved links and plans", async ({page}, testInfo) => {
+  const fixture = await isolated(page,{categoryFixtures:true});
+  const before = structuredClone(fixture.getWorkspace());
+  await openTarget(page);
+  const linked = page.getByLabel('SEA price for Legacy linked dish',{exact:true});
+  const unlinked = page.getByLabel('SEA price for Unlinked dish',{exact:true});
+  await expect(linked).toHaveValue('price-guide-2026-row-46');
+  await expect(linked.locator('option:checked')).toContainText('legacy dish price');
+  await expect(unlinked.locator('option[value="price-guide-2026-row-46"]')).toHaveCount(0);
+  await expect(unlinked.locator('option[value="price-1-base-burger-w-side"]')).toHaveCount(1);
+  await expect(unlinked.locator('option[value="price-guide-2026-row-82"]')).toHaveCount(1);
+  await page.getByRole('button',{name:/mods \(1\)/i}).first().click();
+  const dialog = page.getByRole('dialog',{name:/modifier/i});
+  const modifier = dialog.getByLabel(/Modifier price/i).first();
+  await expect(modifier).toHaveValue('price-guide-2026-row-40');
+  await expect(modifier.locator('option:checked')).toContainText('legacy dish price');
+  await expect(modifier.locator('option[value="price-guide-2026-row-46"]')).toHaveCount(0);
+  await dialog.getByRole('button',{name:/^Close /}).click();
+  await page.getByRole('button',{name:'Pricing Structure',exact:true}).click();
+  const bracket = page.getByTestId('ssmt-price-bracket');
+  await expect(bracket.getByText('$9.20 - Brunch Burger',{exact:true})).toHaveCount(0);
+  await expect(page.getByText(/Deli and grill guidance: no included sides/)).toBeVisible();
+  await page.screenshot({path:testInfo.outputPath("category-pricing.png"),fullPage:true});
+  await page.getByLabel(/Show legacy individual grill prices/).check();
+  await expect(bracket.getByText('$9.20 - Brunch Burger',{exact:true})).toBeVisible();
+  await page.getByRole('button',{name:/Edit Planned Prices/}).click();
+  await expect(bracket.getByText('$9.20 - Brunch Burger',{exact:true})).toBeVisible();
+  await page.getByLabel(/Show legacy individual grill prices/).uncheck();
+  await expect(bracket.getByText('$9.20 - Brunch Burger',{exact:true})).toHaveCount(0);
+  await page.getByRole('button',{name:'Save SSMT workspace',exact:true}).click();
+  await expect.poll(()=>fixture.saves.length).toBe(1);
+  const after = fixture.getWorkspace();
+  for (const key of ['priceBook','plannedPriceBook','priceBookArchives','menus','modifierGroups']) expect(after[key]).toEqual(before[key]);
 });
