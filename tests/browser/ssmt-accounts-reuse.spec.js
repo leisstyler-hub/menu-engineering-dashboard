@@ -1448,3 +1448,25 @@ test("FIXY proteins sort by name and builder review label appears once", async (
   await expect(panel.getByLabel('Protein',{exact:true})).toBeVisible();
   await page.screenshot({path:testInfo.outputPath('fixy-phone.png'),fullPage:true});
 });
+
+
+test("Experience simplified titles and permanent report button", async ({page},testInfo) => {
+  const fixture=await isolated(page,{role:'Experience'});
+  const before=structuredClone(fixture.getWorkspace());
+  const row=page.getByTestId('ssmt-experience-item-row').first();
+  await expect(row.getByText('Edit FIXY',{exact:true})).toHaveCount(0);
+  await expect(row.getByRole('heading',{name:'Smash Burger',exact:true})).toHaveCount(0);
+  await expect(row.getByLabel('Item name for source-item',{exact:true})).toHaveValue('Smash Burger');
+  const report=page.getByRole('button',{name:'Report flags (0)',exact:true});
+  await expect(report).toBeVisible();await expect(report).toBeDisabled();
+  await page.getByRole('button',{name:'Flag for change',exact:true}).first().click();
+  await page.getByRole('textbox',{name:'Note',exact:true}).fill('Check description');
+  await page.getByRole('button',{name:'Save flag and report',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Report flags (1)',exact:true})).toBeEnabled();
+  await expect(page.getByRole('button',{name:/Report flags/})).toHaveCount(1);
+  expect(fixture.getWorkspace()).toEqual(before);
+  await page.screenshot({path:testInfo.outputPath('experience-desktop.png'),fullPage:true});
+  await page.setViewportSize({width:390,height:844});
+  await expect(page.getByRole('button',{name:'Report flags (1)',exact:true})).toBeInViewport();
+  await page.screenshot({path:testInfo.outputPath('experience-phone.png'),fullPage:true});
+});

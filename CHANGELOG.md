@@ -1,5 +1,7 @@
 ## 2026-11-24
 
+- [Nov 24, 2:15 PM] Simplify Experience item titles, remove per-item Edit FIXY, and keep Report flags at the top right.
+
 - [Nov 24, 2:07 PM] Alphabetize Generate FIXY proteins by name and show Needs review once per Menu Builder item.
 
 - [Nov 24, 2:07 PM] Alphabetize Generate FIXY proteins by name and show Needs review once per Menu Builder item.

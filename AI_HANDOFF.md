@@ -1,3 +1,7 @@
+## SSMT Experience review cleanup - 2026-11-24
+
+Candidate `2026.11.24.010-ssmt-experience-cleanup`, Chief solo on `chief/ssmt-unit-openings`, baseline/rollback `5de4d210fc6ed99d837054f1f3ac211cba05a04d`. Tyler `a6401a64` requests removing per-item Edit FIXY, duplicate item titles, and a permanent top-right Report flags button. Retain one editable item name and top-level designation, uppercase/name propagation and existing flag mailto; Report flags remains visible at zero and disabled until flags exist. No canonical writes, migration, or permission changes. Release evidence: workspace `WORK_LOGS/SSMT_EXPERIENCE_CLEANUP_2026_11_24.md`.
+
 ## SSMT FIXY and review display - 2026-11-24
 
 Candidate `2026.11.24.009-ssmt-fixy-review`, Chief solo on `chief/ssmt-unit-openings`, baseline/rollback `eea1310dab29a2acbc285db736d5fa81498237b3`. Tyler event `6c749be8` requests alphabetic protein names and one Needs review badge per item. Protein options sort by human-readable name, retaining codes and confirmation placeholder. Non-opening rotation details no longer render the same status already owned by the builder cell. Opening week/station controls and review state rules remain unchanged. No canonical data writes or migration. Acceptance and release evidence: workspace `WORK_LOGS/SSMT_FIXY_REVIEW_2026_11_24.md`.
