@@ -4,7 +4,7 @@ const text = (value) => String(value ?? "").trim();
 const key = (value) => text(value).toLocaleLowerCase("en-US");
 const newId = (prefix) => `${prefix}-${globalThis.crypto.randomUUID()}`;
 export const FOOD_TYPES = {
-  FSK: "Baked",
+  FSK: "Baked (Baked Goods)",
   FKB: "Breakfast Plate",
   FKS: "Breakfast Side",
   FBB: "Burger",
@@ -46,6 +46,7 @@ export const FOOD_TYPES = {
   FSY: "Yogurt",
 };
 export const PROTEINS = {
+  FSH: "Fish",
   "": "None (confirmed)",
   LAM: "Lamb",
   VEG: "Meat Alternative",
@@ -242,6 +243,7 @@ export function generateFixy(item, menu, facts) {
 
 
 export function noExperienceReviewNeeded(item) {
+  if (!text(item.mrn)) return false;
   if(item.reviewInvalidated) return false;
   if (item.reviewBasis) return item.reviewBasis.source !== "new" && item.reviewBasis.mrn === item.mrn && item.reviewBasis.description === (item.description || "");
   const source = item.importSource;

@@ -12,8 +12,8 @@ test("MRN suggestions require exact identifiers and completed source menus", () 
   assert.deepEqual(exactMrnMatches("00012.1", menus, "target"), []);
 });
 
-test("only description changes remove an imported item's No Review Needed label", () => {
-  const item = {description:"Original",importSource:{menuId:"source",itemId:"a",description:"Original"}};
+test("unrelated edits preserve imported review while description changes require review", () => {
+  const item = {mrn:"00012.10",description:"Original",importSource:{menuId:"source",itemId:"a",description:"Original"}};
   assert.equal(noExperienceReviewNeeded(item, []), true);
   assert.equal(noExperienceReviewNeeded({...item,seaPrice:7,calories:"12",dietaryPreference:"Vegan",modifierGroups:["new"]}, []), true);
   assert.equal(noExperienceReviewNeeded({...item,description:"Changed"}, []), false);

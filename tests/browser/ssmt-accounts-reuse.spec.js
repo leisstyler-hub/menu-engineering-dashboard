@@ -54,6 +54,8 @@ async function isolated(
   {
     role = "Chef",
     tyler = false,
+    workflowFixtures = false,
+    stationSideFixtures = false,
     dietaryFixtures = false,
     conflict = false,
     failLoad = false,
@@ -84,6 +86,18 @@ async function isolated(
   if (mrnDraft) { shared.menus[1].items = [{...structuredClone(item),id:"draft-match",label:"Draft dish",fohColumn:"",description:"Draft description",modifierGroups:[],additionalSubmenuIds:[]}]; shared.menus[1].flags = [{id:"draft-flag",itemId:"draft-match",itemName:"Draft dish",reason:"Description correction",note:"Keep this flag",createdAt:"2026-11-05T17:00:00Z"}]; }
   if (expiredPromotion) Object.assign(shared.menus[0], {type:"Promotion", activeEnd:"2020-01-01", hidden:false});
   if (missingFixy) shared.menus[0].items.push({ ...structuredClone(item), id: "missing-fixy", label: "Missing Code Dish", name: "Missing Code Dish", fohColumn: "", mrn: "00999" });
+  if(workflowFixtures) shared.menus[1]={...shared.menus[1],fixyDesignation:"TARGET",items:[
+    {...structuredClone(item),id:"new1",name:"NEW FISH",label:"NEW FISH",mrn:"",fohColumn:"",modifierGroups:[]},
+    {...structuredClone(item),id:"new2",name:"NEW BAKED",label:"NEW BAKED",mrn:"",fohColumn:"",modifierGroups:[]},
+    {...structuredClone(item),id:"side1",name:"CHIPS",label:"CHIPS",mrn:"000111.10",fohColumn:"R FSX | TARGET | CHIPS SNK",dietaryPreference:"Vegan",modifierGroups:[]},
+    {...structuredClone(item),id:"side2",name:"FRIES",label:"FRIES",mrn:"000222.10",fohColumn:"R FFF | TARGET | FRIES SNK",dietaryPreference:"Vegetarian",modifierGroups:[]},
+  ]};
+  if(stationSideFixtures) shared.menus[1]={...shared.menus[1],type:"New Unit Openings",stations:[{id:"grill",name:"Grill",fixyDesignation:"GRILL",globalMenus:[]}],items:[
+    {...structuredClone(item),id:"parent",label:"PARENT",modifierGroups:[]},
+    {...structuredClone(item),id:"unassigned-side",label:"UNASSIGNED SIDE",secondaryCategory:"Side",fohColumn:"",modifierGroups:[],mrn:"0001.10"},
+    {...structuredClone(item),id:"grill-side",label:"GRILL SIDE",secondaryCategory:"Side",stationId:"grill",modifierGroups:[]},
+    {...structuredClone(item),id:"week-side",label:"WEEK TWO SIDE",secondaryCategory:"Side",weeks:[2],modifierGroups:[]}
+  ]};
   if (extraGroups) {
     shared.modifierGroups.push({
       id: "cheese",
@@ -1321,4 +1335,99 @@ test("category pricing hides individual grill choices and preserves saved links 
   await expect.poll(()=>fixture.saves.length).toBe(1);
   const after = fixture.getWorkspace();
   for (const key of ['priceBook','plannedPriceBook','priceBookArchives','menus','modifierGroups']) expect(after[key]).toEqual(before[key]);
+});
+
+
+test("workflow builder arrows and automatic MRN swap retain draft",async({page})=>{
+  await isolated(page,{workflowFixtures:true});await openTarget(page);
+  const labels=page.getByLabel('Item label',{exact:true});
+  await labels.nth(0).focus();await page.keyboard.press('ArrowDown');await expect(labels.nth(1)).toBeFocused();
+  await page.getByLabel('MRN for NEW FISH',{exact:true}).fill('00083821.10');
+  const prompt=page.getByRole('dialog',{name:'Existing MRN found'});
+  await expect(prompt).toContainText('Smash Burger');await prompt.getByRole('button',{name:'Keep new item'}).click();
+  await expect(labels.nth(0)).toHaveValue('NEW FISH');
+  await page.getByLabel('MRN for NEW FISH',{exact:true}).fill('');
+  await expect(labels.nth(0).locator('xpath=..')).toContainText('Needs review');
+});
+test("workflow FIXY batch stays open and applies fish and baked goods together",async({page})=>{
+  await isolated(page,{workflowFixtures:true});await openTarget(page);
+  await page.getByRole('button',{name:'Generate FIXY',exact:true}).click();
+  const panel=page.getByRole('dialog',{name:'Generate FIXY',exact:true});
+  await panel.getByLabel('Food type',{exact:true}).selectOption('FBS');
+  await panel.getByLabel('Serving role',{exact:true}).selectOption('ENT');
+  await panel.getByLabel('Protein',{exact:true}).selectOption('FSH');
+  await panel.getByRole('button',{name:'Preview FIXY'}).click();
+  await panel.getByRole('button',{name:'Stage FIXY and next'}).click();
+  await expect(panel).toBeVisible();await expect(panel.getByLabel('FIXY item')).toHaveValue('new2');
+  await panel.getByLabel('Food type',{exact:true}).selectOption('FSK');
+  await panel.getByLabel('Serving role',{exact:true}).selectOption('SNK');
+  await panel.getByLabel('Protein',{exact:true}).selectOption('');
+  await panel.getByRole('button',{name:'Preview FIXY'}).click();await panel.getByRole('button',{name:'Stage FIXY and next'}).click();
+  await panel.getByRole('button',{name:'Apply all FIXYs'}).click();
+  await expect(page.getByLabel('Fixy for NEW FISH',{exact:true})).toHaveValue('R FBS | TARGET | NEW FISH ENT FSH');
+  await expect(page.getByLabel('Fixy for NEW BAKED',{exact:true})).toHaveValue('R FSK | TARGET | NEW BAKED SNK');
+});
+test("workflow Experience uppercase name and designation synchronize existing FIXY",async({page})=>{
+  const fixture=await isolated(page,{role:'Experience'});
+  await page.getByLabel('Item name for source-item',{exact:true}).fill('fish burger');
+  await page.getByLabel('Experience FIXY designation',{exact:true}).fill('New Grill');
+  await expect(page.getByLabel('Item name for source-item',{exact:true})).toHaveValue('FISH BURGER');
+  await page.screenshot({path:'C:/Users/leiss/.buzz/WORK_LOGS/SSMT_BUILDER_WORKFLOW_2026_11_24/EXPERIENCE_DESKTOP.png'});
+  await page.getByRole('button',{name:'Save SSMT workspace',exact:true}).first().click();
+  await expect.poll(()=>fixture.saves.length).toBeGreaterThan(0);
+  const saved=fixture.getWorkspace().menus[0].items[0];expect(saved.fohColumn).toBe('R FBB | NEW GRILL | FISH BURGER ENT BF');expect(saved.mrn).toBe('00083821.10');
+});
+test("workflow sides import creates one blank Force group and preserves source items",async({page})=>{
+  const fixture=await isolated(page,{workflowFixtures:true});await openTarget(page);
+  await page.getByRole('button',{name:/View modifiers Mods \(0\)/}).first().click();
+  await page.getByRole('button',{name:'Import Sides as Modifier Group',exact:true}).click();
+  const panel=page.getByRole('dialog',{name:'Import Sides as Modifier Group',exact:true});
+  await expect(panel).toContainText('chips (vn)');await expect(panel).toContainText('fries (v)');
+  await page.setViewportSize({width:390,height:844});
+  await panel.screenshot({path:'C:/Users/leiss/.buzz/WORK_LOGS/SSMT_BUILDER_WORKFLOW_2026_11_24/SIDES_PHONE.png'});
+  await panel.getByRole('button',{name:'Import sides',exact:true}).click();
+  const detail=page.getByRole('dialog',{name:'Modifier detail',exact:true});
+  await expect(detail.getByLabel('Modifier group name',{exact:true})).toHaveValue('');
+  await expect(detail.getByLabel('Minimum selections')).toHaveValue('');
+  await expect(detail.getByLabel('Maximum selections')).toHaveValue('');
+  await expect(detail.getByLabel('Modifier MRN',{exact:true}).first()).toHaveValue('000111.10');
+  await detail.getByRole('button',{name:'Save modifiers',exact:true}).click();
+  await expect.poll(()=>fixture.saves.length).toBeGreaterThan(0);
+  expect(fixture.getWorkspace().menus[1].items.find(i=>i.id==='side1').mrn).toBe('000111.10');
+});
+
+
+test("workflow focus keeps caret and scroll while checking and expired access retains draft",async({page})=>{
+  await isolated(page,{workflowFixtures:true});await openTarget(page);
+  let expired=false,checks=0;
+  await page.route('**/api/ssmt**',async route=>{
+    const action=new URL(route.request().url()).searchParams.get('action');
+    if(action!=='session')return route.fallback();
+    checks++;await new Promise(resolve=>setTimeout(resolve,200));
+    return route.fulfill({status:expired?401:200,json:expired?{ok:false,message:'Expired'}:{ok:true,member:{id:'test-user',name:'Test Chef',email:'chef@example.test',role:'Chef',isAdmin:true}}});
+  });
+  const input=page.getByLabel('Item label',{exact:true}).first();await input.fill('KEPT DRAFT');
+  await input.evaluate(element=>{element.focus();element.setSelectionRange(3,3);element.closest('[data-testid="ssmt-builder-body"]').parentElement.parentElement.scrollLeft=200;});
+  const before=await input.evaluate(element=>({caret:element.selectionStart,scroll:element.closest('[data-testid="ssmt-builder-body"]').parentElement.parentElement.scrollLeft}));
+  await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+  await expect(page.getByRole('heading',{name:'Protecting your open menu'})).toHaveCount(0);
+  await expect(input).toBeFocused();await expect.poll(()=>checks).toBe(1);
+  await expect.poll(()=>input.evaluate(e=>e.selectionStart)).toBe(before.caret);
+  await expect.poll(()=>input.evaluate(e=>e.closest('[data-testid="ssmt-builder-body"]').parentElement.parentElement.scrollLeft)).toBe(before.scroll);
+  expired=true;await expect.poll(async()=>{await page.evaluate(()=>window.dispatchEvent(new Event('focus')));return page.getByRole('heading',{name:"You've been logged out"}).count();}).toBe(1);
+  await page.getByLabel('Session password').fill('private password');await page.getByRole('button',{name:'Sign in and resume draft'}).click();
+  await expect(input).toHaveValue('KEPT DRAFT');
+});
+
+test("workflow side import respects unassigned station and selected week without requiring FIXY",async({page})=>{
+  await isolated(page,{stationSideFixtures:true});await openTarget(page);
+  await page.getByLabel('Opening station',{exact:true}).selectOption('unassigned');
+  await page.getByLabel('Rotation week',{exact:true}).selectOption('1');
+  await page.getByRole('button',{name:/View modifiers Mods \(0\)/}).first().click();
+  await page.getByRole('button',{name:'Import Sides as Modifier Group',exact:true}).click();
+  const panel=page.getByRole('dialog',{name:'Import Sides as Modifier Group',exact:true});
+  await expect(panel).toContainText('unassigned side (v)');
+  await expect(panel).not.toContainText('grill side');await expect(panel).not.toContainText('week two side');
+  await panel.getByRole('button',{name:'Import sides',exact:true}).click();
+  await expect(page.getByRole('dialog',{name:'Modifier detail'}).getByLabel('Modifier MRN',{exact:true})).toHaveValue('0001.10');
 });

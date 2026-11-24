@@ -38,6 +38,8 @@ import { loadSsmtWorkspaceFromSharedStorage, saveSsmtWorkspaceToSharedStorage } 
 import SsmtAccessGate from "./SsmtAccessGate.jsx";
 import SsmtReusePanel from "./SsmtReusePanel.jsx";
 import { exactMrnMatches, isMenuItem } from "./ssmtReuse.js";
+import {renameItem, changeDesignation, sidesModifierGroup} from "./ssmtWorkflow.js";
+import {reviewState} from "./ssmtOpening.js";
 import SsmtExperienceReview, { TicketFormNotice } from "./SsmtExperienceReview.jsx";
 import SsmtOpeningPanel, {ItemRotationDetails, CleanMenuReview} from "./SsmtOpeningPanel.jsx";
 import SsmtAssignments from "./SsmtAssignments.jsx";
@@ -735,6 +737,9 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
   const [cleanReview,setCleanReview] = useState(false);
   const [showHibernated,setShowHibernated] = useState(false);
   const [reusePanel, setReusePanel] = useState(null);
+  const [mrnLookup, setMrnLookup] = useState(null);
+  const [mrnPrompt, setMrnPrompt] = useState(null);
+  const [sidesPreview, setSidesPreview] = useState(null);
   const [newFixyDesignation, setNewFixyDesignation] = useState("");
   const accountMode = Boolean(accountMember);
   const saveInFlightRef = useRef(false);
@@ -1000,11 +1005,11 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
   useEffect(() => {
     if (!modifierDialog) return undefined;
     const closeOnEscape = (event) => {
-      if (event.key === "Escape") setModifierDialog(null);
+      if (event.key === "Escape") {if(sidesPreview)setSidesPreview(null);else setModifierDialog(null);}
     };
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [modifierDialog]);
+  }, [modifierDialog,sidesPreview]);
 
   useEffect(() => {
     setMenuNameEditing(false);
@@ -1023,6 +1028,17 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
   const activeStation = selectedMenu.stations?.find(s=>s.id === activeStationId);
   const builderItems = stationRows(selectedMenu,activeStationId,selectedMenu.type===OPENING_TYPE?rotationWeek:0);
   const reuseDestination = {...selectedMenu,fixyDesignation:activeStation?.fixyDesignation || selectedMenu.fixyDesignation,items:selectedMenu.items.filter(row=>(!activeStation || row.stationId === activeStation.id) && row.id !== reusePanel?.replaceItemId)};
+  useEffect(() => {
+    if (!mrnLookup || mrnLookup.menuId !== selectedMenu.id) return;
+    const timer=setTimeout(()=>{
+      const item=selectedMenu.items.find(row=>row.id===mrnLookup.itemId);
+      if (!item || item.lockedForCentric || item.mrn!==mrnLookup.mrn) return;
+      const matches=exactMrnMatches(item.mrn,menus,selectedMenu.id);
+      if(matches.length) setMrnPrompt({item,matches});
+      setMrnLookup(null);
+    },450);
+    return ()=>clearTimeout(timer);
+  },[mrnLookup,selectedMenu,menus]);
   useEffect(()=>{setActiveStationId("");setRotationWeek(0);setCleanReview(current=>current===selectedMenuId?current:false);},[selectedMenuId]);
   const selectedPrice = ssmtData.priceBook.find((row) => row.id === selectedPriceId) || ssmtData.priceBook[0];
   const priceToDelete = ssmtData.priceBook.find(row => row.id === deletePriceId);
@@ -1181,6 +1197,13 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
 
   const updateSelectedMenu = (patch) => {
     setMenus((current) => current.map((menu) => (menu.id === selectedMenu.id ? { ...menu, ...patch } : menu)));
+  };
+  const updateExperienceName = (itemId, patch) => {
+    const item=selectedMenu.items.find(row=>row.id===itemId);
+    updateItem(itemId, Object.hasOwn(patch,'name') || Object.hasOwn(patch,'label') ? renameItem(item,patch.label ?? patch.name) : patch);
+  };
+  const updateExperienceDesignation = (value, stationId='') => {
+    setMenus(current=>current.map(menu=>menu.id===selectedMenu.id ? changeDesignation(menu,value,stationId) : menu));
   };
 
   const updatePromotionSchedule = (patch) => {
@@ -1709,6 +1732,21 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
   };
 
   // Spreadsheet actions stay inside the current group and never edit locked groups.
+  const builderGridKeyDown = event => {
+    const field=event.target;
+    if(!field.matches('input, textarea') || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    const row=field.closest('tr'), cell=field.closest('td');
+    const fields=[...row.querySelectorAll('td > input, td > textarea, td > select')];
+    let target;
+    if(['ArrowUp','ArrowDown'].includes(event.key)) {
+      if(field.tagName==='TEXTAREA' && field.selectionStart !== (event.key==='ArrowUp'?0:field.value.length)) return;
+      const rows=[...row.parentElement.children].filter(r=>r.querySelector('input[aria-label="Item label"]'));
+      const next=rows[rows.indexOf(row)+(event.key==='ArrowDown'?1:-1)];
+      target=next?.children[cell.cellIndex]?.querySelector('input,textarea,select');
+    } else if(event.key==='ArrowLeft' && field.selectionStart===0 && field.selectionEnd===0) target=fields[fields.indexOf(field)-1];
+    else if(event.key==='ArrowRight' && field.selectionStart===field.value.length && field.selectionEnd===field.value.length) target=fields[fields.indexOf(field)+1];
+    if(target && !target.disabled){event.preventDefault();target.focus();target.select?.();}
+  };
   const modifierGridKeyDown = (event) => {
     const field = event.target;
     if (!field.matches('input, textarea') || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
@@ -2118,7 +2156,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
       flagModals={flagModals} flagReportHref={selectedFlagReportHref}
       existingFlagForItem={existingFlagForItem} onFlagItem={openFlagForItem}
       groupsForItem={item => matchedModifierGroupsForItem(item, pricedModifierGroups)}
-      onSelectMenu={setSelectedMenuId} onItemChange={updateItem} onMenuChange={updateSelectedMenu} onReview={()=>setCleanReview(true)} onDescriptionChange={(id, description) => updateItem(id, { description })}
+      onSelectMenu={setSelectedMenuId} onItemChange={updateExperienceName} onDesignationChange={updateExperienceDesignation} onMenuChange={updateSelectedMenu} onReview={()=>setCleanReview(true)} onDescriptionChange={(id, description) => updateItem(id, { description })}
       onSave={() => manualSaveWorkspace()} onAdvance={updateSelectedMenuPhase}
       allItemsLocked={allItemRowsLocked} syncMessage={workspaceSync.message}
       phaseBlocker={phaseBlocker} dataStatus={dataStatus}
@@ -2687,7 +2725,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                       ))}
                     </tr>
                   </thead>
-                  <tbody data-testid="ssmt-builder-body">
+                  <tbody data-testid="ssmt-builder-body" onKeyDown={builderGridKeyDown}>
                     {(() => {
                       const visibleBuilderRows = builderRowsWithSharedMembership(builderItems);
                       let activeSectionTone = "main";
@@ -2792,7 +2830,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                               readOnly={Boolean(item.lockedForCentric)}
                               className={`w-full rounded-md border border-slate-300 px-2 py-1 text-xs font-black outline-none focus:border-emerald-500 ${item.lockedForCentric ? "cursor-copy bg-emerald-50 text-slate-950" : "bg-white"}`}
                             />
-                          <ItemRotationDetails item={item} menu={selectedMenu} onChange={patch=>updateItem(item.id,patch)}/></td>
+                          {reviewState(item)==="Needs review" && <span className="text-xs font-bold text-amber-800">Needs review</span>}<ItemRotationDetails item={item} menu={selectedMenu} onChange={patch=>updateItem(item.id,patch)}/></td>
                           <td className={builderCellClass}>
                             <textarea
                               aria-label="Description"
@@ -2807,7 +2845,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                             <input
                               aria-label={`MRN for ${item.label || item.name || "item"}`}
                               value={item.mrn || ""}
-                              onChange={(event) => updateItem(item.id, { mrn: event.target.value })}
+                              onChange={(event) => {updateItem(item.id, { mrn: event.target.value });setMrnPrompt(null);setMrnLookup({menuId:selectedMenu.id,itemId:item.id,mrn:event.target.value});}}
                               onClick={() => copyLockedField(item, item.mrn, "MRN")}
                               readOnly={Boolean(item.lockedForCentric)}
                               className={`w-full rounded-md border border-slate-300 px-2 py-1 font-mono text-xs font-bold outline-none focus:border-emerald-500 ${item.lockedForCentric ? "cursor-copy bg-emerald-50 text-slate-950" : "bg-white"}`}
@@ -3019,8 +3057,11 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
       )}
 
       {showHibernated && <Modal title="Hibernated menus" onClose={()=>setShowHibernated(false)}><div className="space-y-2">{menus.filter(m=>m.hidden||menuIsAutoHibernated(m)).map(m=><div key={m.id} className="flex flex-wrap gap-2 rounded border p-2"><button className="underline" data-menu-name={m.name} onClick={()=>{openMenu(m.id);setShowHibernated(false);}}>{m.name}</button><button className="rounded border p-2" onClick={()=>setMenus(current=>current.map(candidate=>candidate.id===m.id?{...candidate,hidden:false,restoredActiveEnd:candidate.activeEnd || ""}:candidate))}>Restore</button></div>)}</div></Modal>}
-      {reusePanel && <SsmtReusePanel key={`${reusePanel.item?.id || reusePanel.mode}-${reusePanel.initialSourceId || ""}-${reusePanel.initialItemId || ""}`} {...reusePanel} onChooseItem={item=>setReusePanel({mode:"fixy",item})} station={activeStation} menus={menus} menu={reuseDestination} groups={ssmtData.modifierGroups} onClose={()=>setReusePanel(null)} onApply={result=>{
-        if (result.fixy) updateItem(reusePanel.item.id, {fohColumn:result.fixy});
+      {mrnPrompt && <Modal title="Existing MRN found" onClose={()=>setMrnPrompt(null)}><p>MRN {mrnPrompt.item.mrn} matches an existing item. Review a swap or keep this new entry.</p>{mrnPrompt.matches.map(match=><button key={`${match.menuId}-${match.item.id}`} className="m-2 rounded border p-3" onClick={()=>{setReusePanel({mode:"items",item:mrnPrompt.item,replaceItemId:mrnPrompt.item.id,initialSourceId:match.menuId,initialItemId:match.item.id});setMrnPrompt(null);}}>Review swap: {match.item.label || match.item.name} from {match.menuName}</button>)}<button className="rounded border p-3" onClick={()=>setMrnPrompt(null)}>Keep new item</button></Modal>}
+      {sidesPreview && <Modal title="Import Sides as Modifier Group" onClose={()=>setSidesPreview(null)}><p>Copy {sidesPreview.choices.length} sides into one new Force group. Title, minimum and maximum stay blank. All prices are zero.</p>{sidesPreview.choices.map(choice=><p key={choice.id}>{choice.label} | MRN {choice.mrn}</p>)}<button className="rounded border p-3" disabled={!sidesPreview.choices.length || modifierDialog?.item.lockedForCentric || modifierDialog?.groups.length>=MAX_MODIFIER_GROUPS_PER_ITEM} onClick={()=>{if(!modifierDialog || modifierDialog.item.lockedForCentric || modifierDialog.groups.length>=MAX_MODIFIER_GROUPS_PER_ITEM)return;const group=sidesPreview;setSsmtData(current=>({...current,modifierGroups:[...current.modifierGroups,group]}));updateItem(modifierDialog.item.id,{modifierGroups:[...(modifierDialog.item.modifierGroups || []),group.id]});setModifierDialog(current=>({...current,item:{...current.item,modifierGroups:[...(current.item.modifierGroups || []),group.id]},groups:[...current.groups,group]}));setSidesPreview(null);}}>Import sides</button></Modal>}
+      {reusePanel && <SsmtReusePanel key={reusePanel.mode==="fixy" ? "fixy-batch" : `${reusePanel.item?.id || reusePanel.mode}-${reusePanel.initialSourceId || ""}-${reusePanel.initialItemId || ""}`} {...reusePanel} onChooseItem={item=>setReusePanel({mode:"fixy",item})} station={activeStation} menus={menus} menu={reuseDestination} groups={ssmtData.modifierGroups} onClose={()=>setReusePanel(null)} onApply={result=>{
+        if(result.fixys){setMenus(current=>current.map(menu=>menu.id===selectedMenu.id?{...menu,items:menu.items.map(item=>result.fixys[item.id] && !item.lockedForCentric && isMenuItem(item)?{...item,fohColumn:result.fixys[item.id]}:item)}:menu));}
+        else if (result.fixy) updateItem(reusePanel.item.id, {fohColumn:result.fixy});
         else {
           setSsmtData(current=>({...current,modifierGroups:[...current.modifierGroups,...result.groups]}));
           if(result.items) { result.items=result.items.map(copy=>({...copy,weeks:rotationWeek?[rotationWeek]:copy.weeks || []})); updateSelectedMenu({items:reusePanel.replaceItemId ? selectedMenu.items.flatMap(item=>item.id === reusePanel.replaceItemId ? result.items.map((copy,index)=>index === 0 ? {...copy,id:item.id,reviewInvalidated:!!item.reviewInvalidated || copy.mrn!==item.mrn,additionalSubmenuIds:item.additionalSubmenuIds || []} : copy) : [item]) : [...selectedMenu.items,...result.items]}); }
@@ -3031,7 +3072,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
         }
       }}/>}
 
-      {modifierDialog && (
+      {modifierDialog && !sidesPreview && (
         <Modal title="Modifier detail" size="wide" onClose={() => setModifierDialog(null)}>
           <div className="space-y-3">
             <h3 data-testid="modifier-item-heading" className="text-lg font-black text-slate-900">{modifierDialog.item.label || modifierDialog.item.name} <span className="break-all text-sm font-bold text-slate-600">MRN: {modifierDialog.item.mrn || "Not available"}</span></h3>
@@ -3050,7 +3091,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                 )}
                 <button type="button" onClick={addModifierGroup} disabled={modifierDialog.groups.length >= MAX_MODIFIER_GROUPS_PER_ITEM} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-black text-slate-800 hover:bg-slate-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400">
                   <Plus size={14} /> Add modifier group
-                </button>
+                </button><button type="button" className="rounded border bg-white p-2 text-xs font-bold disabled:opacity-40" disabled={modifierDialog.item.lockedForCentric || modifierDialog.groups.length>=MAX_MODIFIER_GROUPS_PER_ITEM} onClick={()=>setSidesPreview(sidesModifierGroup(builderItems,ssmtData.areaOrder))}>Import Sides as Modifier Group</button>
               </div>
             </div>
             <div className="grid gap-2 md:grid-cols-4">

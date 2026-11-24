@@ -1,5 +1,7 @@
 ## 2026-11-24
 
+- [Nov 24, 1:53 PM] Keep your SSMT place on tab return, navigate with arrows, review MRN swaps, batch FIXYs and import sides as modifiers.
+
 - [Nov 24, 1:16 PM] Add starred no-side burger and chicken price brackets and restore workbook brackets to their original source names.
 
 - [Nov 24, 9:44 AM] Simplify workbook price markers to a star in price dropdowns and bracket badges.

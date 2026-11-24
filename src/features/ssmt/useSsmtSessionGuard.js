@@ -51,7 +51,7 @@ export default function useSsmtSessionGuard(member,enabled,initialExpiry) {
   if(!enabled||!member)return;
   setDeadline(initialExpiry,true);
   const expired=()=>stop("expired","Your session expired. Unsaved changes are retained in this tab; sign in again to continue.");
-  const focus=()=>{if(!bridge.current.blocked)verify(true);};
+  const focus=()=>{if(!bridge.current.blocked)verify(false);};
   const recheck=()=>{stop("checking","Verifying your account and permissions. Your draft is retained.");checking.current=false;verify(true);};
   const visibility=()=>{if(document.visibilityState==="visible")focus();};
   const unload=event=>{if(info().dirty||info().inFlight){event.preventDefault();event.returnValue="";}};

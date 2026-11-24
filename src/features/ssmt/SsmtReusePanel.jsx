@@ -35,6 +35,7 @@ export default function SsmtReusePanel({
   replaceItemId,
   station,
 }) {
+  const [staged, setStaged] = useState({});
   const [inheritFixy, setInheritFixy] = useState(true);
   const dialogRef = useSsmtDialog(onClose);
   const [sourceId, setSourceId] = useState(initialSourceId),
@@ -333,7 +334,7 @@ export default function SsmtReusePanel({
                 className={input}
                 value={item?.id || ""}
                 onChange={(e) =>
-                  onChooseItem(menu.items.find((i) => i.id === e.target.value))
+                  {setPreview(null);setMatchIndex("");setFacts({business:"R",type:"",service:"",protein:"unknown",cafeSoup12Fo:false});onChooseItem(menu.items.find((i) => i.id === e.target.value));}
                 }
               >
                 {menu.items
@@ -436,6 +437,7 @@ export default function SsmtReusePanel({
             </p>
           </>
         )}
+        {mode === "fixy" && Object.keys(staged).length>0 && <div className="rounded border p-3"><p>{Object.keys(staged).length} FIXYs ready to apply</p>{Object.entries(staged).map(([id,value])=><p key={id}>{value}<button className={button} onClick={()=>setStaged(current=>{const next={...current};delete next[id];return next;})}>Remove staged FIXY</button></p>)}<button className={button} onClick={()=>{onApply({fixys:staged});onClose();}}>Apply all FIXYs</button></div>}
         {error && (
           <p role="alert" className="font-bold text-red-700">
             {error}
@@ -447,6 +449,7 @@ export default function SsmtReusePanel({
         {preview && (
           <div className="space-y-3 rounded border border-emerald-300 bg-emerald-50 p-3">
             <h3 className="font-black">Review before applying</h3>
+            {preview.fixy && <button className={button} onClick={()=>{onApply({fixys:{...staged,[item.id]:preview.fixy}});onClose();}}>Apply FIXY</button>}
             {preview.fixy ? (
               <p>{preview.fixy}</p>
             ) : (
@@ -476,11 +479,14 @@ export default function SsmtReusePanel({
                 !preview.groups?.length
               }
               onClick={() => {
-                onApply(preview);
-                onClose();
+                if(mode === "fixy") {
+                  setStaged(current=>({...current,[item.id]:preview.fixy}));setPreview(null);
+                  const next=menu.items.find(candidate=>isMenuItem(candidate) && !candidate.lockedForCentric && !String(candidate.fohColumn || "").trim() && candidate.id!==item.id && !staged[candidate.id]);
+                  if(next){setMatchIndex("");setFacts({business:"R",type:"",service:"",protein:"unknown",cafeSoup12Fo:false});onChooseItem(next);}
+                } else {onApply(preview);onClose();}
               }}
             >
-              Apply {mode === "fixy" ? "FIXY" : "copies"}
+              {mode === "fixy" ? "Stage FIXY and next" : "Apply copies"}
             </button>
           </div>
         )}

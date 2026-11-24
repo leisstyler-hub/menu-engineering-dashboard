@@ -9,6 +9,7 @@ export function stationRows(menu, stationId = "", week = 0) {
     (!Number(week) || !row.weeks?.length || row.weeks.includes(Number(week))));
 }
 export function reviewState(item) {
+  if (!String(item.mrn ?? "").trim()) return "Needs review";
   if(item.reviewInvalidated) return "Needs review";
   const basis = item.reviewBasis;
   if (!basis) return "Unknown";
