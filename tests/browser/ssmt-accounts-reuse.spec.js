@@ -1310,15 +1310,13 @@ test("category pricing hides individual grill choices and preserves saved links 
   await dialog.getByRole('button',{name:/^Close /}).click();
   await page.getByRole('button',{name:'Pricing Structure',exact:true}).click();
   const bracket = page.getByTestId('ssmt-price-bracket');
-  await expect(bracket.getByText('$9.20 - Brunch Burger',{exact:true})).toHaveCount(0);
+  await expect(bracket.getByText('$9.20 - Brunch Burger',{exact:true})).toBeVisible();
   await expect(page.getByText(/Deli and grill guidance: no included sides/)).toBeVisible();
   await page.screenshot({path:testInfo.outputPath("category-pricing.png"),fullPage:true});
-  await page.getByLabel(/Show legacy individual grill prices/).check();
   await expect(bracket.getByText('$9.20 - Brunch Burger',{exact:true})).toBeVisible();
   await page.getByRole('button',{name:/Edit Planned Prices/}).click();
   await expect(bracket.getByText('$9.20 - Brunch Burger',{exact:true})).toBeVisible();
-  await page.getByLabel(/Show legacy individual grill prices/).uncheck();
-  await expect(bracket.getByText('$9.20 - Brunch Burger',{exact:true})).toHaveCount(0);
+  await expect(bracket.getByText('$9.20 - Brunch Burger',{exact:true})).toBeVisible();
   await page.getByRole('button',{name:'Save SSMT workspace',exact:true}).click();
   await expect.poll(()=>fixture.saves.length).toBe(1);
   const after = fixture.getWorkspace();

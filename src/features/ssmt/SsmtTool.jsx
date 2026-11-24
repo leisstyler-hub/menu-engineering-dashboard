@@ -1,5 +1,5 @@
-import { isLegacyGrillPrice, categoryPriceOptions, categoryPriceLabel } from "./ssmtPriceCategories.js";
-import SsmtPriceGuide from "./SsmtPriceGuide.jsx";
+import { categoryPriceOptions, categoryPriceLabel } from "./ssmtPriceCategories.js";
+import { GUIDE_COLUMNS, isWorkbookPrice, guideColumnLabel } from "./ssmtPriceGuide.js";
 import { FREE_MODIFIER_PRICE_ID, selectModifierType, resizeModifierGroup } from "./ssmtModifierDefaults.js";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -1055,11 +1055,16 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
     setDeletePriceId("");
   };
 
-  const [showLegacyGrillPrices, setShowLegacyGrillPrices] = useState(false);
+  const [priceBracketQuery, setPriceBracketQuery] = useState("");
+  const [unstarredPricesOnly, setUnstarredPricesOnly] = useState(false);
   const itemPriceOptions = useMemo(() => sortPricesForItemSelector(ssmtData.priceBook), [ssmtData.priceBook]);
   const modifierPriceOptions = useMemo(() => sortPricesForModifierSelector(ssmtData.priceBook), [ssmtData.priceBook]);
   const displayedPriceBook = pricingPlanMode && ssmtData.plannedPriceBook ? ssmtData.plannedPriceBook.priceBook : ssmtData.priceBook;
   const displayedPriceOptions = useMemo(() => sortPricesForItemSelector(displayedPriceBook), [displayedPriceBook]);
+  const priceBracketColumns = [...GUIDE_COLUMNS, ...ssmtData.areaOrder.filter(area => !GUIDE_COLUMNS.includes(area))];
+  const filteredPriceOptions = displayedPriceOptions.filter(price =>
+    (!unstarredPricesOnly || !isWorkbookPrice(price)) &&
+    `${price.category} ${price.selectorLabel} ${price.sourceGuide?.sourceName || ""}`.toLowerCase().includes(priceBracketQuery.trim().toLowerCase()));
   const plannedPricingNotice = ssmtData.plannedPriceBook ? `New pricing launches ${ssmtData.plannedPriceBook.effectiveDate || "after a date is set"}${ssmtData.plannedPriceBook.effectiveDate ? ` � ${pricingCountdown(ssmtData.plannedPriceBook.effectiveDate)}` : ""}.` : "";
   const modifierGroupIndex = useMemo(() => buildModifierGroupIndex(pricedModifierGroups), [pricedModifierGroups]);
   const visibleMenus = useMemo(() => {
@@ -2315,8 +2320,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                   <h2 className="mt-1 text-2xl font-black">Pricing Structure</h2>
                   <p className="mt-2 text-sm font-semibold text-slate-600">{ssmtData.areaOrder.join(", ")}</p>
                   <p className="mt-3 text-sm font-semibold text-slate-700">Deli and grill guidance: no included sides. The workbook guide retains its exact source names and values.</p>
-                  <p className="mt-2 text-xs text-slate-600">Category choices are shown first. Existing individual grill price links are retained for review; menu dish names stay on menus.</p>
-                  <label className="mt-3 flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={showLegacyGrillPrices} onChange={event => setShowLegacyGrillPrices(event.target.checked)} />Show legacy individual grill prices ({displayedPriceOptions.filter(isLegacyGrillPrice).length})</label>
+                  <p className="mt-2 text-xs text-slate-600">All brackets appear in one table. ★ E-S identifies a bracket from your workbook; unstarred brackets are retained for reassignment and removal.</p>
                   <button type="button" onClick={exportPricingAudit} disabled={dataStatus !== "ready"} className="mt-3 inline-flex items-center gap-2 rounded-lg border border-emerald-700 bg-emerald-700 px-4 py-2 text-sm font-black text-white hover:bg-emerald-800 disabled:opacity-50">
                     <Download size={16} aria-hidden="true" /> Export Pricing Audit
                   </button>
@@ -2342,7 +2346,6 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
               </div>
             </section>
 
-            <SsmtPriceGuide priceBook={ssmtData.priceBook} />
             <section data-testid="ssmt-price-bracket" className={`overflow-hidden rounded-xl bg-white shadow-sm ${pricingPlanMode && ssmtData.plannedPriceBook ? "border-4 border-purple-500 ring-4 ring-purple-100" : "border-2 border-slate-300"}`}>
               <div className={`flex flex-col gap-1 border-b px-5 py-4 sm:flex-row sm:items-center sm:justify-between ${pricingPlanMode && ssmtData.plannedPriceBook ? "border-purple-300 bg-purple-50" : "border-slate-200 bg-slate-50"}`}>
                 <div>
@@ -2351,21 +2354,29 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                 </div>
                 <span className={`w-fit rounded-full px-4 py-2 text-sm font-black uppercase tracking-[0.12em] ${pricingPlanMode && ssmtData.plannedPriceBook ? "bg-purple-700 text-white" : "bg-slate-800 text-white"}`}>{pricingPlanMode && ssmtData.plannedPriceBook ? "Not active yet" : "Active now"}</span>
               </div>
-              <div className="overflow-x-auto">
-                <table className="min-w-[1320px] w-full border-collapse text-left text-sm">
-                  <thead className="bg-slate-50 text-xs font-black uppercase tracking-[0.12em] text-slate-500">
+              <div className="flex flex-wrap items-end gap-4 border-b border-slate-200 px-5 py-3">
+                <label className="grid gap-1 text-sm font-bold">Find pricing bracket<input type="search" aria-label="Find pricing bracket" value={priceBracketQuery} onChange={event => setPriceBracketQuery(event.target.value)} className="rounded-lg border border-slate-300 px-3 py-2" /></label>
+                <label className="flex items-center gap-2 py-2 text-sm font-bold"><input type="checkbox" checked={unstarredPricesOnly} onChange={event => setUnstarredPricesOnly(event.target.checked)} />Show unstarred brackets only</label>
+                <p className="py-2 text-sm text-slate-600">{displayedPriceOptions.filter(isWorkbookPrice).length} starred · {displayedPriceOptions.filter(price => !isWorkbookPrice(price)).length} unstarred · {filteredPriceOptions.length} shown</p>
+                <p className="w-full text-xs text-slate-600">E-S labels match workbook columns. File values stay visible below campus inputs; Missing means the file is blank. Tier and Canada values are source references, not campus assignments. Canada is CAD; other source columns are USD.</p>
+              </div>
+              <div className="max-h-[65vh] overflow-auto" role="region" aria-label="All pricing brackets" tabIndex={0}>
+                <table className="min-w-[1800px] w-full border-collapse text-left text-sm">
+                  <thead className="sticky top-0 z-10 bg-slate-50 text-xs font-black uppercase tracking-[0.12em] text-slate-500">
                     <tr>
-                      <th className="border-b border-slate-200 px-4 py-3">SEA price + category</th>
+                      <th className="min-w-[280px] border-b border-slate-200 px-4 py-3">SEA price + category</th>
                       <th className="border-b border-slate-200 px-4 py-3">Modifier only</th>
                       <th className="border-b border-slate-200 px-4 py-3">Tier pricing</th>
-                      {ssmtData.areaOrder.map((area) => <th key={area} className="border-b border-slate-200 px-4 py-3">{area}</th>)}
+                      {priceBracketColumns.map((area) => <th key={area} className="whitespace-nowrap border-b border-slate-200 px-4 py-3">{guideColumnLabel(area)}</th>)}
                     </tr>
                   </thead>
                   <tbody>
-                    {(showLegacyGrillPrices ? displayedPriceOptions : categoryPriceOptions(displayedPriceOptions)).map((price) => (
+                    {filteredPriceOptions.map((price) => (
                       <tr key={price.id} className="odd:bg-white even:bg-slate-50/70">
-                        <td className="border-b border-slate-100 px-4 py-3 font-black text-slate-950">
+                        <td className="min-w-[280px] border-b border-slate-100 px-4 py-3 font-black text-slate-950">
+                          {isWorkbookPrice(price) && <span aria-label="Workbook E-S source bracket" title="From workbook columns E through S" className="mb-1 block text-xs font-black text-emerald-800">★ E-S</span>}
                           <span className="inline-flex items-center gap-3"><span>{price.selectorLabel}</span><span aria-label={`${priceMenuItemCounts.get(price.id) || 0} linked menu items for ${price.selectorLabel}`} title="Linked menu items across all menus, including hidden and historical menus" className="text-xs font-normal tabular-nums text-slate-500">{priceMenuItemCounts.get(price.id) || 0}</span></span>
+                          {isWorkbookPrice(price) && <p className="mt-1 text-xs font-normal text-slate-500">{price.sourceGuide.sourceName} · source row {price.sourceGuide.sourceRow}</p>}
                           {!pricingPlanMode && <button type="button" aria-label={`Delete price row ${price.selectorLabel}`} onClick={() => setDeletePriceId(price.id)} className="mt-2 flex items-center gap-1 rounded border border-red-300 bg-red-50 px-2 py-1 text-xs font-bold text-red-800 hover:bg-red-100"><Trash2 size={13} /> Delete</button>}
                         </td>
                         <td className="border-b border-slate-100 px-4 py-3">
@@ -2380,16 +2391,17 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                           <input type="checkbox" checked={Boolean(price.tierPricing)} onChange={(event) => toggleTierPricing(price.id, event.target.checked)} disabled={pricingPlanMode} aria-label={`Tier pricing for ${price.selectorLabel}`} />
                         </td>
                         {price.tierPricing ? (
-                          <td colSpan={ssmtData.areaOrder.length} className="border-b border-slate-100 px-3 py-2">
+                          <td colSpan={priceBracketColumns.length} className="border-b border-slate-100 px-3 py-2">
                             <div className="grid gap-2 sm:grid-cols-[160px_160px_minmax(320px,1fr)] sm:items-end">
                               <label className="grid gap-1 text-xs font-black text-slate-700">Tier 1 price<input aria-label={`Tier 1 price for ${price.selectorLabel}`} value={price.tier1Price || ""} onChange={(event) => pricingPlanMode ? updatePlannedTierPrice(price.id, 1, event.target.value) : updateTierPrice(price.id, 1, event.target.value)} placeholder="0.00" className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-semibold outline-none focus:border-emerald-500" /></label>
                               <label className="grid gap-1 text-xs font-black text-slate-700">Tier 2 price<input aria-label={`Tier 2 price for ${price.selectorLabel}`} value={price.tier2Price || ""} onChange={(event) => pricingPlanMode ? updatePlannedTierPrice(price.id, 2, event.target.value) : updateTierPrice(price.id, 2, event.target.value)} placeholder="0.00" className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-semibold outline-none focus:border-emerald-500" /></label>
                               <p className="pb-1 text-xs font-bold text-slate-500">Tier 2: AUS, BNA, YVR, YYZ. All other areas use Tier 1.</p>
                             </div>
                           </td>
-                        ) : ssmtData.areaOrder.map((area) => (
+                        ) : priceBracketColumns.map((area) => (
                           <td key={area} className="border-b border-slate-100 px-2 py-2">
-                            <input aria-label={`${area} price for ${price.selectorLabel}`} value={price.areas?.[area] || ""} onChange={(event) => pricingPlanMode ? updatePlannedPricing(price.id, area, event.target.value) : updatePricingArea(price.id, area, event.target.value)} placeholder="0.00" className={`w-full min-w-[72px] rounded-md border px-2 py-1 text-xs font-semibold text-slate-700 outline-none focus:border-emerald-500 ${pricingPlanMode && (price.areas?.[area] || "") !== (ssmtData.priceBook.find((active) => active.id === price.id)?.areas?.[area] || "") ? "border-emerald-500 bg-emerald-100" : pricingPlanMode ? "border-slate-300 bg-slate-100" : "border-slate-300 bg-white"}`} />
+                            {ssmtData.areaOrder.includes(area) && <input aria-label={`${area} price for ${price.selectorLabel}`} value={price.areas?.[area] ?? ""} onChange={(event) => pricingPlanMode ? updatePlannedPricing(price.id, area, event.target.value) : updatePricingArea(price.id, area, event.target.value)} placeholder="0.00" className={`w-full min-w-[72px] rounded-md border px-2 py-1 text-xs font-semibold text-slate-700 outline-none focus:border-emerald-500 ${pricingPlanMode && (price.areas?.[area] || "") !== (ssmtData.priceBook.find((active) => active.id === price.id)?.areas?.[area] || "") ? "border-emerald-500 bg-emerald-100" : pricingPlanMode ? "border-slate-300 bg-slate-100" : "border-slate-300 bg-white"}`} />}
+                            {isWorkbookPrice(price) && GUIDE_COLUMNS.includes(area) ? <span data-source-column={area} className="mt-1 block whitespace-nowrap text-xs text-slate-600" title={`Original workbook ${guideColumnLabel(area)} value`}>{ssmtData.areaOrder.includes(area) && "File: "}{price.sourceGuide.prices?.[area] == null ? "Missing" : `$${Number(price.sourceGuide.prices[area]).toFixed(2)}`}</span> : !ssmtData.areaOrder.includes(area) && <span className="text-xs text-slate-400">—</span>}
                           </td>
                         ))}
                       </tr>
@@ -3256,7 +3268,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
           <label className="grid gap-2 font-bold">Replacement pricing row
             <select aria-label="Replacement pricing row" value={replacementPriceId} onChange={event => setReplacementPriceId(event.target.value)} className="w-full min-w-0 rounded-lg border border-slate-300 bg-white p-2">
               <option value="">{deletePriceUsage.total > 0 ? "Choose a replacement before deleting" : "No replacement needed (unused row)"}</option>
-              {ssmtData.priceBook.filter(row => row.id !== deletePriceId && ssmtData.priceBook.filter(candidate => candidate.id === row.id).length === 1).sort(comparePricesHighToLow).map(row => <option key={row.id} value={row.id}>{row.selectorLabel || row.category}</option>)}
+              {ssmtData.priceBook.filter(row => row.id !== deletePriceId && ssmtData.priceBook.filter(candidate => candidate.id === row.id).length === 1).sort(comparePricesHighToLow).map(row => <option key={row.id} value={row.id}>{isWorkbookPrice(row) ? "★ E-S · " : ""}{row.selectorLabel || row.category}</option>)}
             </select>
           </label>
           {deletePriceUsage.total > 0 && <p role="alert" className="font-bold text-red-800">Reassign these links before deleting. This includes historical or hidden menus. The selected replacement prices will apply to every linked item and modifier.</p>}
