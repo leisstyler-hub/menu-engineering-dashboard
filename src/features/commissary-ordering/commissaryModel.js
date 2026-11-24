@@ -4,7 +4,7 @@ import { GRILL_LTO_PREP_ITEM_IDS, GRILL_LTO_PROGRAM } from "./grillLtoCatalog.js
 import { DELI_ORDERING_PREP_ITEM_IDS, DELI_ORDERING_PROGRAM } from "./deliCycleCatalog.js";
 import { GLOBAL_ORDERING_PREP_ITEM_IDS, GLOBAL_ORDERING_PROGRAM } from "./globalCycleCatalog.js";
 import { BREAKFAST_ORDERING_ITEM_IDS, BREAKFAST_ORDERING_PREP_ITEM_IDS, BREAKFAST_ORDERING_PROGRAM } from "./breakfastCatalog.js";
-import { DAILY_GLOBAL_ORDER_VERSION, DAILY_GLOBAL_PREP_ITEM_IDS, DAILY_GLOBAL_PROGRAM } from "./dailyGlobalCatalog.js";
+import { DAILY_GLOBAL_ORDER_VERSION, DAILY_GLOBAL_PREP_ITEM_IDS, DAILY_GLOBAL_PROGRAM, dailyGlobalProgramForCafe } from "./dailyGlobalCatalog.js";
 import { globalPrepCupsPerUnit, globalPrepPackageRule } from "./globalPrepDisplayPolicy.js";
 import { COMMISSARY_STATIONS, cafeRoutesToHub, isCafeStationEnabled } from "./commissaryRouting.js";
 import { filterCommissaryComponents, filterGrillCommissaryComponents, isExcludedLoosePrepItem, isGlobalInUnitRiceComponent, prepareCommissaryComponents, prepareGlobalCommissaryComponents, prepareGlobalTransferComponents } from "./commissaryPrepPolicy.js";
@@ -25,7 +25,18 @@ export const COMMISSARY_FINISHED_PREP_ITEM_IDS = Object.freeze([
   ...new Set(DELI_ORDERING_PROGRAM.cycleWeeks.flatMap(({ items }) => items.map(({ mrn }) => `prep-finished|deli|${mrn}`))
     .concat((DELI_ORDERING_PROGRAM.standingOrderItemMrns || []).map((mrn) => `prep-finished|deli|${mrn}`))),
   ...BREAKFAST_ORDERING_ITEM_IDS.map((id) => `prep-finished|breakfast|${id}`),
+  "leo-hand-fruit|1638.1",
 ]);
+export const LEO_SITE_CAFES = Object.freeze(["Gemini", "Odyssey", "Eclipse"]);
+export const LEO_HAND_FRUIT = Object.freeze({
+  id: "leo-hand-fruit|1638.1",
+  menu: "AMZ: Deli Core",
+  name: "Acey Mac Apple",
+  mrn: "1638.1",
+  portion: "1 each",
+  itemWasteCost: 0.421,
+  glCode: "4111012",
+});
 
 export const GLOBAL_UNIT_PREPARATION_NOTES = Object.freeze({
   "AMZ: Balti": "Rice and naan purchased and prepared in unit.",
@@ -194,19 +205,20 @@ export function isGlobalEligibleCafe(cafe) {
   return GLOBAL_ORDERING_PROGRAM.eligibleCafes.includes(cafe) && isCafeStationEnabled(cafe, COMMISSARY_STATIONS.GLOBAL);
 }
 
-export function dailyGlobalCycleForWeek(weekStart) {
-  if (!ISO_DATE.test(String(weekStart || "")) || weekStart < DAILY_GLOBAL_PROGRAM.anchorWeekStart) return null;
-  const elapsedDays = Math.round((new Date(`${weekStart}T00:00:00Z`) - new Date(`${DAILY_GLOBAL_PROGRAM.anchorWeekStart}T00:00:00Z`)) / 86400000);
-  const cycleIndex = Math.floor(elapsedDays / 7) % DAILY_GLOBAL_PROGRAM.cycleLengthWeeks;
-  return DAILY_GLOBAL_PROGRAM.cycleWeeks[cycleIndex] || null;
+export function dailyGlobalCycleForWeek(weekStart, cafe = "") {
+  const program = dailyGlobalProgramForCafe(cafe);
+  if (!ISO_DATE.test(String(weekStart || "")) || weekStart < program.anchorWeekStart) return null;
+  const elapsedDays = Math.round((new Date(`${weekStart}T00:00:00Z`) - new Date(`${program.anchorWeekStart}T00:00:00Z`)) / 86400000);
+  const cycleIndex = Math.floor(elapsedDays / 7) % program.cycleLengthWeeks;
+  return program.cycleWeeks[cycleIndex] || null;
 }
 
 export function isDailyGlobalEligibleCafe(cafe) {
-  return DAILY_GLOBAL_PROGRAM.eligibleCafes.includes(cafe) && isCafeStationEnabled(cafe, COMMISSARY_STATIONS.DAILY_GLOBAL);
+  return dailyGlobalProgramForCafe(cafe).eligibleCafes.includes(cafe) && isCafeStationEnabled(cafe, COMMISSARY_STATIONS.DAILY_GLOBAL);
 }
 
-export function emptyDailyGlobalOrder(weekStart) {
-  const cycle = dailyGlobalCycleForWeek(weekStart);
+export function emptyDailyGlobalOrder(weekStart, cafe = "") {
+  const cycle = dailyGlobalCycleForWeek(weekStart, cafe);
   return {
     version: DAILY_GLOBAL_ORDER_VERSION,
     cycleWeek: cycle?.week || null,
@@ -216,8 +228,8 @@ export function emptyDailyGlobalOrder(weekStart) {
 }
 
 export function normalizeDailyGlobalOrder(dailyGlobal = {}, weekStart, cafe = "") {
-  const empty = emptyDailyGlobalOrder(weekStart);
-  const cycle = dailyGlobalCycleForWeek(weekStart);
+  const empty = emptyDailyGlobalOrder(weekStart, cafe);
+  const cycle = dailyGlobalCycleForWeek(weekStart, cafe);
   if (!cycle || !isDailyGlobalEligibleCafe(cafe)) return empty;
   const quantities = Object.fromEntries(cycle.days.map(({ key }) => [key, {
     animal: wholeQuantity(dailyGlobal?.quantities?.[key]?.animal),
@@ -662,8 +674,22 @@ export function deliOrderLinesForCafe(record = {}) {
   }).filter((line) => line && line.total > 0);
 }
 
+export function leoFreshFruitLinesForCafe(record = {}) {
+  if (!LEO_SITE_CAFES.includes(record.cafe)) return [];
+  const deliLines = deliOrderLinesForCafe(record);
+  const values = Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, deliLines.reduce((sum, line) => sum + Number(line[delivery] || 0), 0)]));
+  const total = DELIVERY_KEYS.reduce((sum, delivery) => sum + values[delivery], 0);
+  return total > 0 ? [{
+    ...LEO_HAND_FRUIT,
+    orderUnit: "each",
+    orderUnitCost: LEO_HAND_FRUIT.itemWasteCost,
+    ...values,
+    total,
+  }] : [];
+}
+
 export function deliPrepLinesForCafe(record = {}) {
-  return deliOrderLinesForCafe(record).flatMap((line) => (DELI_ORDERING_PROGRAM.itemPrepComponents[line.mrn] || []).filter(({ name }) => !isExcludedLoosePrepItem(name)).flatMap((component) => DELIVERY_KEYS.map((delivery) => ({
+  const sandwichPrep = deliOrderLinesForCafe(record).flatMap((line) => (DELI_ORDERING_PROGRAM.itemPrepComponents[line.mrn] || []).filter(({ name }) => !isExcludedLoosePrepItem(name)).flatMap((component) => DELIVERY_KEYS.map((delivery) => ({
     ...component,
     category: component.type === "subrecipe" ? "Deli sub-recipe" : "Deli ingredient",
     station: "Deli",
@@ -673,6 +699,20 @@ export function deliPrepLinesForCafe(record = {}) {
     delivery,
     quantity: Number((component.quantity * line[delivery]).toFixed(4)),
   })).filter(({ quantity }) => quantity > 0)));
+  const fruitPrep = leoFreshFruitLinesForCafe(record).flatMap((line) => DELIVERY_KEYS.map((delivery) => ({
+    id: LEO_HAND_FRUIT.id,
+    type: "finished",
+    mrn: LEO_HAND_FRUIT.mrn,
+    name: LEO_HAND_FRUIT.name,
+    category: "Deli stocking",
+    station: "Deli",
+    orderUnit: "each",
+    cafe: record.cafe,
+    finishedDish: "Leo fresh hand fruit",
+    delivery,
+    quantity: Number(line[delivery] || 0),
+  })).filter(({ quantity }) => quantity > 0));
+  return [...sandwichPrep, ...fruitPrep];
 }
 
 export function globalOrderLinesForCafe(record = {}) {
@@ -720,7 +760,9 @@ function componentTransferLines(orderLines, componentMap, weekStart, station) {
       name: component.name,
       finishedDish: line.name,
       mrn: component.mrn,
-      quantity: roundedProductionEquivalentQuantity(line, component, station),
+      // S4 transfers follow the recipe-native cost per finished portion. Prep
+      // display conversions and production rounding never change accounting.
+      quantity: Number(line.total || 0),
       itemWasteCost: Number(component.costPerPortion),
       glCode: component.glCode || "4111011",
       station,
@@ -740,7 +782,9 @@ export function globalTransferLinesForCafe(record = {}) {
       name: component.name,
       finishedDish: line.name,
       mrn: component.mrn,
-      quantity: roundedProductionEquivalentQuantity(line, component, "Global"),
+      // Global transfers remain recipe-native; Prep List volume projection is
+      // an operational display layer only.
+      quantity: Number(line.total || 0),
       itemWasteCost: Number(component.costPerPortion),
       glCode: component.glCode || "4111011",
       station: "Global",
@@ -750,7 +794,7 @@ export function globalTransferLinesForCafe(record = {}) {
 const DAILY_GLOBAL_DELIVERY_BY_DAY = Object.freeze({ monday: "friday", tuesday: "monday", wednesday: "monday", thursday: "wednesday", friday: "wednesday" });
 
 export function dailyGlobalOrderLinesForCafe(record = {}) {
-  const cycle = dailyGlobalCycleForWeek(record.weekStart);
+  const cycle = dailyGlobalCycleForWeek(record.weekStart, record.cafe);
   const dailyGlobal = normalizeDailyGlobalOrder(record.dailyGlobal, record.weekStart, record.cafe);
   if (!cycle) return [];
   return cycle.days.flatMap((dayDefinition) => ["animal", "vegetarian"].flatMap((proteinType) => {
@@ -777,7 +821,7 @@ export function dailyGlobalOrderLinesForCafe(record = {}) {
 }
 
 export function dailyGlobalPrepLinesForCafe(record = {}) {
-  const cycle = dailyGlobalCycleForWeek(record.weekStart);
+  const cycle = dailyGlobalCycleForWeek(record.weekStart, record.cafe);
   if (!cycle) return [];
   const dayByKey = new Map(cycle.days.map((dayDefinition) => [dayDefinition.key, dayDefinition]));
   return dailyGlobalOrderLinesForCafe(record).flatMap((line) => {

@@ -23,10 +23,10 @@ export const COMMISSARY_CAFE_STATION_ACCESS = Object.freeze({
   Cricket: ALL_CURRENT_STATIONS,
   Nessie: ALL_CURRENT_STATIONS,
   Dawson: ALL_CURRENT_STATIONS,
-  Bingo: Object.freeze([COMMISSARY_STATIONS.GLOBAL, COMMISSARY_STATIONS.SALAD_BAR, COMMISSARY_STATIONS.GRILL]),
-  Grace: Object.freeze([COMMISSARY_STATIONS.GLOBAL, COMMISSARY_STATIONS.GRILL]),
-  Sonic: ALL_CURRENT_STATIONS,
-  Blueshift: ALL_CURRENT_STATIONS,
+  Bingo: Object.freeze([COMMISSARY_STATIONS.GLOBAL, COMMISSARY_STATIONS.DAILY_GLOBAL, COMMISSARY_STATIONS.SALAD_BAR, COMMISSARY_STATIONS.GRILL]),
+  Grace: Object.freeze([COMMISSARY_STATIONS.GLOBAL, COMMISSARY_STATIONS.DAILY_GLOBAL, COMMISSARY_STATIONS.GRILL]),
+  Sonic: Object.freeze([COMMISSARY_STATIONS.GLOBAL, COMMISSARY_STATIONS.SALAD_BAR, COMMISSARY_STATIONS.GRILL, COMMISSARY_STATIONS.DELI, COMMISSARY_STATIONS.DAILY_GLOBAL]),
+  Blueshift: Object.freeze([COMMISSARY_STATIONS.GLOBAL, COMMISSARY_STATIONS.SALAD_BAR, COMMISSARY_STATIONS.GRILL, COMMISSARY_STATIONS.DELI, COMMISSARY_STATIONS.DAILY_GLOBAL]),
   "105": ALL_CURRENT_STATIONS,
   Everest: Object.freeze([COMMISSARY_STATIONS.GLOBAL, COMMISSARY_STATIONS.SALAD_BAR]),
   Dynamo: Object.freeze([COMMISSARY_STATIONS.DELI]),
@@ -44,6 +44,18 @@ export const COMMISSARY_CAFE_STATION_ACCESS = Object.freeze({
   "Zoka Coffee": Object.freeze([COMMISSARY_STATIONS.BREAKFAST, COMMISSARY_STATIONS.DELI]),
   Atlas: Object.freeze([COMMISSARY_STATIONS.GRILL]),
   Frontier: Object.freeze([COMMISSARY_STATIONS.GLOBAL, COMMISSARY_STATIONS.SALAD_BAR]),
+});
+
+// Capability is published for rapid activation but deliberately excluded from
+// isCafeStationEnabled until Alex enables the Leo salad-bar pilot.
+export const COMMISSARY_HIDDEN_CAFE_STATION_ACCESS = Object.freeze({
+  Gemini: Object.freeze([COMMISSARY_STATIONS.SALAD_BAR]),
+  Eclipse: Object.freeze([COMMISSARY_STATIONS.SALAD_BAR]),
+  Odyssey: Object.freeze([COMMISSARY_STATIONS.SALAD_BAR]),
+});
+
+export const COMMISSARY_HIDDEN_HUB_ROUTING = Object.freeze({
+  Sonic: Object.freeze({ saladBar: Object.freeze(["Gemini", "Eclipse", "Odyssey"]) }),
 });
 
 export const COMMISSARY_HUB_ROUTING = Object.freeze({
@@ -69,7 +81,7 @@ export const COMMISSARY_HUB_ROUTING = Object.freeze({
     deli: Object.freeze(["Doppler", "Day 1", "Re:Invent", "Arizona Coffee"]),
     global: Object.freeze(["Bingo", "Grace", "Sonic", "Blueshift", "105", "Everest", "Astra", "Doppler", "Day 1", "Nitro", "Re:Invent"]),
     breakfast: Object.freeze(["Arizona Coffee"]),
-    dailyGlobal: Object.freeze(["Gemini", "Eclipse"]),
+    dailyGlobal: Object.freeze(["Gemini", "Eclipse", "Sonic", "Bingo", "Grace", "Blueshift"]),
   }),
 });
 

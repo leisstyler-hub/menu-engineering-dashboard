@@ -38,7 +38,16 @@ export function filterCommissaryComponents(components = [], weekStart = "") {
 export function filterGrillCommissaryComponents(components = [], weekStart = "") {
   const scoped = filterCommissaryComponents(components, weekStart);
   if (!weekStart || weekStart < COMMISSARY_COMPONENT_SCOPE_EFFECTIVE_DATE) return scoped;
-  return scoped.filter(({ mrn, name }) => !grillUnitSuppliedMrns.has(String(mrn || "")) && !grillUnitSuppliedNames.test(String(name || "")));
+  return scoped.filter(({ mrn, name }) => {
+    const value = String(name || "");
+    const grillProtein = animalProtein.test(value) && !preparedFlavorComponent.test(value);
+    const unitBread = /\b(?:bun|sandwich roll)\b/i.test(value);
+    return !grillUnitSuppliedMrns.has(String(mrn || ""))
+      && !grillUnitSuppliedNames.test(value)
+      && !grillProtein
+      && !unitBread
+      && !excludedLoosePrepItem.test(value);
+  });
 }
 
 export function prepareCommissaryComponents(components = [], weekStart = "", sourceId = "") {

@@ -11,7 +11,7 @@ assert.equal(isApprovedOperationalMetadataRecord(record), true);
 assert.equal(resolveOperationalMetadata([record]).source, "supabase");
 assert.equal(resolveOperationalMetadata([]).source, "fallback");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.orderItems.length, 41);
-assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 33);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 34);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.items.length, 41);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.legacyItems.length, 41);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.source.effectiveDate, "2026-11-16");
@@ -53,7 +53,10 @@ assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarWholeUnitPo
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.deliProgram.eligibleCafes, ["Cricket", "Nessie", "Dawson", "Blueshift", "Sonic", "Dynamo", "Gemini", "Eclipse", "Odyssey", "Doppler", "Day 1", "Re:Invent", "Brazil Coffee", "Roxanne Coffee", "Arizona Coffee", "Zoka Coffee"]);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepHubs.map(({ key }) => key), ["Cricket", "Sonic", "Blueshift"]);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepAccess, { hubSitesOnly: true, selectedCafeBindsHub: true, allowedSites: ["Cricket", "Sonic", "Blueshift"] });
-assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.stationAccess.Grace, ["global", "grill"]);
+assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.stationAccess.Grace, ["global", "dailyGlobal", "grill"]);
+assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.hiddenStationAccess, { Gemini: ["saladBar"], Eclipse: ["saladBar"], Odyssey: ["saladBar"] });
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.leoSites.hiddenSaladBar.active, false);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.leoSites.includedHandFruit.mrn, "1638.1");
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.stationAccess.Dynamo, ["deli"]);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.hubRouting.Cricket.saladBar, ["Cricket", "Nessie", "Dawson", "Frontier"]);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.hubRouting.Cricket.deli, ["Cricket", "Nessie", "Dawson", "Brazil Coffee", "Roxanne Coffee", "Zoka Coffee"]);
@@ -72,7 +75,7 @@ assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globalInterface
   subrecipes: "automatic-from-recipe",
   deliveryQuantities: "whole-portions",
 });
-assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 33);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 34);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globalProductionPolicy.version, 1);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globalProductionPolicy.rules["global|amz-porto|121026|1-piece"].outputs[0].mrn, "120715");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globalProductionPolicy.rules["global|amz-smokehouse-bbq|5365.6|5-ounce"].mode, "in-unit");
@@ -92,7 +95,7 @@ assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.p
   direction: "up",
   scope: "each-cafe-each-delivery",
   appliesTo: "explicit-volume-units; approved-count-conversions; sauce-weight-conversions; approved-global-prep-display-conversions",
-  transferCosting: "salad-native-unit-and-existing-priced-volume-components-scale; reviewed-global-display-policy-remains-recipe-native",
+  transferCosting: "prep-display-only; Grill and Global transfer quantities remain recipe-native",
   unpricedRecipeComponents: "display-rounded-without-invented-component-cost",
 });
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.grillVolumeDisplay.handScoopedAvocado, "4-number-16-scoops-per-cup");
@@ -140,9 +143,12 @@ assert.match(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.prepInterface.massD
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.hubRouting.Cricket.global, ["Cricket", "Nessie", "Dawson", "Frontier"]);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.hubRouting.Sonic.global, []);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.hubRouting.Blueshift.global, ["Bingo", "Grace", "Sonic", "Blueshift", "105", "Everest", "Astra", "Doppler", "Day 1", "Nitro", "Re:Invent"]);
-assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.hubRouting.Blueshift.dailyGlobal, ["Gemini", "Eclipse"]);
+assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.hubRouting.Blueshift.dailyGlobal, ["Gemini", "Eclipse", "Sonic", "Bingo", "Grace", "Blueshift"]);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.dailyGlobalProgram.anchorWeekStart, "2026-11-23");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.dailyGlobalProgram.cycleLengthWeeks, 2);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.twoTwoTwoGlobalProgram.anchorWeekStart, "2026-11-30");
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.twoTwoTwoGlobalProgram.cycleLengthWeeks, 12);
+assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.twoTwoTwoGlobalProgram.menuSequence, ["AMZ: Taco Total", "AMZ: Balti", "AMZ: House of Teriyaki", "AMZ: Porto", "AMZ: Cypress", "AMZ: Bibimbowl"]);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.dailyGlobalInterface.productionScope, "complete-commissary-hot-and-cold-plate-including-garnish-except-unit-prepared-jasmine-rice");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.dailyGlobalInterface.plateContentsVisibility, "shown-beneath-each-protein-option");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.dailyGlobalInterface.weeklyOrderPlacement, "before-all-stations");

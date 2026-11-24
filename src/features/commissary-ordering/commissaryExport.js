@@ -3,7 +3,7 @@ import XLSX from "xlsx-js-style";
 import { buildS4Workbook, transferExportFileName } from "../transfer-tool/transferExport.js";
 import { COMMISSARY_DEPARTING_UNIT } from "./commissaryCatalog.js";
 import { DEFAULT_COMMISSARY_METADATA } from "./commissaryMetadata.js";
-import { PRODUCTION_SECTION_ORDER, breakfastOrderLinesForCafe, breakfastPrepLinesForCafe, dailyGlobalPrepLinesForCafe, dailyGlobalTransferLinesForCafe, deliOrderLinesForCafe, deliveryDateForWeek, formatShortDate, globalPrepLinesForCafe, globalTransferLinesForCafe, grillPrepLinesForCafe, grillTransferLinesForCafe, orderLinesForCafe, prepDisplayQuantity, rolledUpPrepItems, roundedProductionEquivalentQuantity, transferPeriod, weekLabel } from "./commissaryModel.js";
+import { PRODUCTION_SECTION_ORDER, breakfastOrderLinesForCafe, breakfastPrepLinesForCafe, dailyGlobalPrepLinesForCafe, dailyGlobalTransferLinesForCafe, deliOrderLinesForCafe, deliveryDateForWeek, formatShortDate, globalPrepLinesForCafe, globalTransferLinesForCafe, grillPrepLinesForCafe, grillTransferLinesForCafe, leoFreshFruitLinesForCafe, orderLinesForCafe, prepDisplayQuantity, rolledUpPrepItems, roundedProductionEquivalentQuantity, transferPeriod, weekLabel } from "./commissaryModel.js";
 import { COMMISSARY_STATIONS, cafeRoutesToHub } from "./commissaryRouting.js";
 import { roxanneDawsonOrderLines } from "./roxanneDawsonProjection.js";
 
@@ -304,6 +304,20 @@ export function buildCommissaryTransfer(record, metadata = DEFAULT_COMMISSARY_ME
           ingredientName: "Prepared Foods",
           ingredientMrn: line.mrn,
           glCode: PREPARED_FOODS_GL,
+          allocationPerPortion: line.orderUnitCost,
+        }],
+      })),
+      ...leoFreshFruitLinesForCafe(record).map((line) => ({
+        catalogId: line.id,
+        menu: line.menu,
+        item: `${line.name} (${line.total} each)`,
+        mrn: line.mrn,
+        quantity: line.total,
+        itemWasteCost: line.orderUnitCost,
+        ingredientAllocations: [{
+          ingredientName: line.name,
+          ingredientMrn: line.mrn,
+          glCode: line.glCode,
           allocationPerPortion: line.orderUnitCost,
         }],
       })),

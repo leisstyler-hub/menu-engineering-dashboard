@@ -8,6 +8,18 @@ const plate = (menu, animal, vegetarian, components, garnish) => Object.freeze({
   garnish: Object.freeze(garnish),
 });
 
+const tacoTotal = plate("AMZ: Taco Total",
+  { name: "Chicken Tinga Burrito Bowl", mrn: "41742.6", portion: "1/2 cup" },
+  { name: "Al Pastor Cauliflower Burrito Bowl", mrn: "175362.2", portion: "1/2 cup" },
+  [
+    { id: "daily-taco-rice", name: "Cilantro Lime Rice", mrn: "41689.9", quantity: 1, unit: "plate portion", type: "subrecipe" },
+    { id: "daily-taco-beans", name: "Seasoned Black Beans", mrn: "76908.2", quantity: 1, unit: "plate portion", type: "subrecipe" },
+    { id: "daily-taco-romaine", name: "Shredded Romaine", mrn: "81493", quantity: 1, unit: "plate portion", type: "subrecipe" },
+    { id: "daily-taco-pico", name: "Pico de Gallo", mrn: "11315", quantity: 1, unit: "plate portion", type: "subrecipe" },
+    { id: "daily-taco-cotija", name: "Cotija Cheese", mrn: "226776", quantity: 1, unit: "plate portion", type: "ingredient" },
+  ],
+  { id: "daily-taco-garnish", name: "Cilantro garnish", quantity: 1, unit: "plate garnish", type: "ingredient" });
+
 const porto = plate("AMZ: Porto",
   { name: "Piri Piri Chicken (bone-in)", mrn: "121026", portion: "1 plate" },
   { name: "Piri Piri Tofu", mrn: "121022.2", portion: "1 plate" },
@@ -53,10 +65,10 @@ const bibimbap = plate("AMZ: Bibimbowl",
 
 const day = (key, label, plateDefinition) => Object.freeze({ key, label, ...plateDefinition });
 
-export const DAILY_GLOBAL_PROGRAM = Object.freeze({
+export const GEMINI_DAILY_GLOBAL_PROGRAM = Object.freeze({
   anchorWeekStart: "2026-11-23",
   cycleLengthWeeks: 2,
-  eligibleCafes: Object.freeze(["Eclipse", "Gemini"]),
+  eligibleCafes: Object.freeze(["Gemini"]),
   orderUnit: "plate",
   cycleWeeks: Object.freeze([
     Object.freeze({ week: 1, days: Object.freeze([
@@ -70,4 +82,28 @@ export const DAILY_GLOBAL_PROGRAM = Object.freeze({
   ]),
 });
 
-export const DAILY_GLOBAL_PREP_ITEM_IDS = Object.freeze([...new Set(DAILY_GLOBAL_PROGRAM.cycleWeeks.flatMap(({ days }) => days.flatMap(({ components, garnish }) => [...components.map(({ id }) => id), garnish.id])))]);
+const continuousBlocks = Object.freeze([tacoTotal, balti, teriyaki, porto, cypress, bibimbap]);
+const weekdayLabels = Object.freeze(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]);
+const continuousCycleWeeks = Object.freeze(Array.from({ length: 12 }, (_, weekIndex) => Object.freeze({
+  week: weekIndex + 1,
+  days: Object.freeze(weekdayLabels.map((label, dayIndex) => day(label.toLowerCase(), label, continuousBlocks[Math.floor((weekIndex * 5 + dayIndex) / 2) % continuousBlocks.length]))),
+})));
+
+export const TWO_TWO_TWO_DAILY_GLOBAL_PROGRAM = Object.freeze({
+  anchorWeekStart: "2026-11-30",
+  cycleLengthWeeks: 12,
+  eligibleCafes: Object.freeze(["Eclipse", "Sonic", "Bingo", "Grace", "Blueshift"]),
+  orderUnit: "plate",
+  rotationModel: "continuous-two-service-day-blocks",
+  menuSequence: Object.freeze(["AMZ: Taco Total", "AMZ: Balti", "AMZ: House of Teriyaki", "AMZ: Porto", "AMZ: Cypress", "AMZ: Bibimbowl"]),
+  cycleWeeks: continuousCycleWeeks,
+});
+
+// Kept as the compatibility/default program for existing Gemini orders.
+export const DAILY_GLOBAL_PROGRAM = GEMINI_DAILY_GLOBAL_PROGRAM;
+export const DAILY_GLOBAL_PROGRAMS = Object.freeze({ gemini: GEMINI_DAILY_GLOBAL_PROGRAM, twoTwoTwo: TWO_TWO_TWO_DAILY_GLOBAL_PROGRAM });
+export function dailyGlobalProgramForCafe(cafe = "") {
+  return TWO_TWO_TWO_DAILY_GLOBAL_PROGRAM.eligibleCafes.includes(cafe) ? TWO_TWO_TWO_DAILY_GLOBAL_PROGRAM : GEMINI_DAILY_GLOBAL_PROGRAM;
+}
+
+export const DAILY_GLOBAL_PREP_ITEM_IDS = Object.freeze([...new Set(Object.values(DAILY_GLOBAL_PROGRAMS).flatMap((program) => program.cycleWeeks.flatMap(({ days }) => days.flatMap(({ components, garnish }) => [...components.map(({ id }) => id), garnish.id]))))]);

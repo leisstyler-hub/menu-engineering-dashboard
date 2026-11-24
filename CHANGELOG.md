@@ -1,3 +1,7 @@
+## 2026-11-24
+
+- [Nov 24, 5:06 AM] Add the 2,2,2 Daily Global rotation, hidden Leo Salad Bar readiness, Mac Apples, and recipe-native Grill and Global transfers.
+
 ## 2026-11-23
 
 - [Nov 23, 2:03 PM] Restore category pricing choices while retaining existing individual grill links for review.

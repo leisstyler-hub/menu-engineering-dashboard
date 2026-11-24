@@ -249,7 +249,7 @@ export function commissaryWriteValidation(records = [], context = {}) {
   } else if (Object.values(record.global?.quantities || {}).some((delivery) => DELIVERY_KEYS.some((key) => Number(delivery?.[key] || 0) > 0))) {
     return "Global ordering is not enabled for this cafe.";
   }
-  const dailyGlobalCycle = dailyGlobalCycleForWeek(record.weekStart);
+  const dailyGlobalCycle = dailyGlobalCycleForWeek(record.weekStart, record.cafe);
   if (dailyGlobalCycle && isDailyGlobalEligibleCafe(record.cafe)) {
     if (Number(record.dailyGlobal?.version) !== DAILY_GLOBAL_ORDER_VERSION || Number(record.dailyGlobal?.cycleWeek) !== dailyGlobalCycle.week) return "The Daily Global cycle is invalid.";
     const allowedDays = new Set(dailyGlobalCycle.days.map(({ key }) => key));

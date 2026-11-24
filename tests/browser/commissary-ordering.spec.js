@@ -9,7 +9,7 @@ import { GRILL_LTO_PROGRAM } from "../../src/features/commissary-ordering/grillL
 import { DELI_ORDERING_PROGRAM } from "../../src/features/commissary-ordering/deliCycleCatalog.js";
 import { GLOBAL_ORDERING_PROGRAM } from "../../src/features/commissary-ordering/globalCycleCatalog.js";
 import { BREAKFAST_ORDERING_PROGRAM } from "../../src/features/commissary-ordering/breakfastCatalog.js";
-import { DAILY_GLOBAL_PROGRAM } from "../../src/features/commissary-ordering/dailyGlobalCatalog.js";
+import { DAILY_GLOBAL_PROGRAMS } from "../../src/features/commissary-ordering/dailyGlobalCatalog.js";
 import { collectUnexpectedPageErrors, expectNoAppProtection, expectNoUnexpectedPageErrors, openTool } from "./smoke-helpers.js";
 
 async function mockOrders(page, records = [], rotationRecords = []) {
@@ -36,7 +36,7 @@ async function mockOrders(page, records = [], rotationRecords = []) {
     trueCost: Number((1.5 + index / 100).toFixed(4)),
   }])).values()];
   const breakfastItems = BREAKFAST_ORDERING_PROGRAM.items.map((item, index) => ({ menu: BREAKFAST_ORDERING_PROGRAM.menu, item: item.name, mrn: item.mrn, portion: item.portion, trueCost: Number((2 + index / 10).toFixed(4)) }));
-  const dailyGlobalItems = [...new Map(DAILY_GLOBAL_PROGRAM.cycleWeeks.flatMap(({ days }) => days.flatMap((day) => [day.animal, day.vegetarian].map((item) => ({ menu: day.menu, item: item.name, mrn: item.mrn, portion: item.portion, trueCost: 4.25 })))).map((item) => [`${item.menu}|${item.mrn}`, item])).values()];
+  const dailyGlobalItems = [...new Map(Object.values(DAILY_GLOBAL_PROGRAMS).flatMap((program) => program.cycleWeeks.flatMap(({ days }) => days.flatMap((day) => [day.animal, day.vegetarian].map((item) => ({ menu: day.menu, item: item.name, mrn: item.mrn, portion: item.portion, trueCost: 4.25 }))))).map((item) => [`${item.menu}|${item.mrn}`, item])).values()];
   await page.route("**/api/recipe-library?scope=all", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, source: "supabase-recipe-items", rows: [...grillItems, ...deliItems, ...globalItems, ...breakfastItems, ...dailyGlobalItems] }) }));
   await page.route("**/api/storage/records**", async (route) => {
     if (route.request().method() === "GET") {
@@ -470,7 +470,7 @@ test("each cafe sees only its assigned commissary stations", async ({ page }) =>
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
-test("Eclipse and Gemini use fixed two-week Daily Global plate forecasts", async ({ page }) => {
+test("Gemini keeps its forecast while Eclipse and new sites use the continuous 2,2,2 Global rotation", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   await page.clock.install({ time: new Date("2026-11-10T20:00:00Z") });
   const writes = await mockOrders(page);
@@ -494,9 +494,16 @@ test("Eclipse and Gemini use fixed two-week Daily Global plate forecasts", async
   expect(record.dailyGlobal.cycleWeek).toBe(1);
   expect(record.dailyGlobal.quantities.monday).toEqual({ animal: 12, vegetarian: 0 });
   expect(record.global.menu).toBe("");
+  await page.getByLabel("Service week").selectOption("2026-11-30");
   await page.getByLabel("Your cafe").selectOption("Eclipse");
   await expect(page.getByTestId("commissary-daily-global-order")).toBeVisible();
   await expect(page.getByTestId("commissary-deli-order")).toBeVisible();
+  await expect(page.getByText("Taco Total", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("Balti", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("House of Teriyaki", { exact: true }).first()).toBeVisible();
+  await page.getByLabel("Your cafe").selectOption("Sonic");
+  await expect(page.getByTestId("commissary-daily-global-order")).toBeVisible();
+  await expect(page.getByTestId("commissary-global-order")).toHaveCount(0);
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });

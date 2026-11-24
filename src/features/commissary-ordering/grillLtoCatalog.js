@@ -1497,7 +1497,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
   "itemTransferComponents": {
     "16811": [
       {
-        "id": "grill-transfer|1247",
+        "id": "grill-transfer|ingredient|1247",
         "mrn": "1247",
         "name": "Carrots, Fresh",
         "quantity": 1,
@@ -1506,7 +1506,16 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111005"
       },
       {
-        "id": "grill-transfer|7557",
+        "id": "grill-transfer|ingredient|53124",
+        "mrn": "53124",
+        "name": "Cucumbers, English, Fresh, Sliced",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|ingredient|7557",
         "mrn": "7557",
         "name": "Tomatoes, Grape, Fresh",
         "quantity": 5,
@@ -1515,18 +1524,18 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111012"
       },
       {
-        "id": "grill-transfer|53124",
-        "mrn": "53124",
-        "name": "Cucumbers, English, Fresh, Sliced",
+        "id": "grill-transfer|subrecipe|34052.3",
+        "mrn": "34052.3",
+        "name": "EUR: Signature Salad Blend",
         "quantity": 1,
-        "unit": "ounce",
-        "costPerPortion": 0,
-        "glCode": "4111005"
+        "unit": "cup",
+        "costPerPortion": 0.38,
+        "glCode": "4111011"
       }
     ],
     "77139.72": [
       {
-        "id": "grill-transfer|31228",
+        "id": "grill-transfer|ingredient|31228",
         "mrn": "31228",
         "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
         "quantity": 1,
@@ -1535,7 +1544,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111010"
       },
       {
-        "id": "grill-transfer|1675",
+        "id": "grill-transfer|ingredient|1675",
         "mrn": "1675",
         "name": "Cheese, Pepper Jack, Loaf, Great Lakes, Sliced, .75 oz",
         "quantity": 1,
@@ -1544,7 +1553,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111006"
       },
       {
-        "id": "grill-transfer|3764",
+        "id": "grill-transfer|ingredient|3764",
         "mrn": "3764",
         "name": "Lettuce, Iceberg, Individual Leaf, Fresh",
         "quantity": 1,
@@ -1553,7 +1562,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111012"
       },
       {
-        "id": "grill-transfer|169286",
+        "id": "grill-transfer|ingredient|169286",
         "mrn": "169286",
         "name": "Oil, Canola, 100%",
         "quantity": 0.25,
@@ -1562,18 +1571,63 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111005"
       },
       {
-        "id": "grill-transfer|56055",
+        "id": "grill-transfer|ingredient|56055",
         "mrn": "56055",
         "name": "Tomatoes, 5x6, Fresh, Sliced",
         "quantity": 2,
         "unit": "slice",
         "costPerPortion": 0.12,
         "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|subrecipe|78123.7",
+        "mrn": "78123.7",
+        "name": "AMZ: Pickled Habanero Peppers",
+        "quantity": 0.5,
+        "unit": "ounce",
+        "costPerPortion": 0.21,
+        "glCode": "4111011"
+      },
+      {
+        "id": "grill-transfer|subrecipe|147955.16",
+        "mrn": "147955.16",
+        "name": "AMZ: Smashburger Patty",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 1.55,
+        "glCode": "4111011"
+      },
+      {
+        "id": "grill-transfer|subrecipe|19294.5",
+        "mrn": "19294.5",
+        "name": "EUR: Grilled Jalapeno Peppers",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": null,
+        "glCode": "4111011"
+      },
+      {
+        "id": "grill-transfer|subrecipe|62183.1",
+        "mrn": "62183.1",
+        "name": "EUR: Grilled Poblano Peppers",
+        "quantity": 0.5,
+        "unit": "ounce",
+        "costPerPortion": 0.085,
+        "glCode": "4111011"
+      },
+      {
+        "id": "grill-transfer|subrecipe|168231",
+        "mrn": "168231",
+        "name": "EUR: Upcycled Chow Chow Aioli",
+        "quantity": 2,
+        "unit": "tbsp",
+        "costPerPortion": 0.14,
+        "glCode": "4111011"
       }
     ],
     "13773.6": [
       {
-        "id": "grill-transfer|31228",
+        "id": "grill-transfer|ingredient|31228",
         "mrn": "31228",
         "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
         "quantity": 1,
@@ -1582,7 +1636,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111010"
       },
       {
-        "id": "grill-transfer|1688",
+        "id": "grill-transfer|ingredient|1688",
         "mrn": "1688",
         "name": "Cheese, Swiss, Pre-Sliced, .75 oz, Great Lakes",
         "quantity": 1,
@@ -1591,7 +1645,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111006"
       },
       {
-        "id": "grill-transfer|3764",
+        "id": "grill-transfer|ingredient|3764",
         "mrn": "3764",
         "name": "Lettuce, Iceberg, Individual Leaf, Fresh",
         "quantity": 1,
@@ -1600,7 +1654,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111012"
       },
       {
-        "id": "grill-transfer|169286",
+        "id": "grill-transfer|ingredient|169286",
         "mrn": "169286",
         "name": "Oil, Canola, 100%",
         "quantity": 1,
@@ -1609,18 +1663,45 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111005"
       },
       {
-        "id": "grill-transfer|56055",
+        "id": "grill-transfer|ingredient|56055",
         "mrn": "56055",
         "name": "Tomatoes, 5x6, Fresh, Sliced",
         "quantity": 2,
         "unit": "slice",
         "costPerPortion": 0.12,
         "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|subrecipe|147955.16",
+        "mrn": "147955.16",
+        "name": "AMZ: Smashburger Patty",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 1.55,
+        "glCode": "4111011"
+      },
+      {
+        "id": "grill-transfer|subrecipe|14681.3",
+        "mrn": "14681.3",
+        "name": "EUR: Roasted Garlic Aioli (Vegan Mayo)",
+        "quantity": 2,
+        "unit": "tbsp",
+        "costPerPortion": 0.22,
+        "glCode": "4111011"
+      },
+      {
+        "id": "grill-transfer|subrecipe|76476.2",
+        "mrn": "76476.2",
+        "name": "EUR: Roasted Mushrooms",
+        "quantity": 3,
+        "unit": "tbsp",
+        "costPerPortion": 0.7875,
+        "glCode": "4111011"
       }
     ],
     "77139.68": [
       {
-        "id": "grill-transfer|31228",
+        "id": "grill-transfer|ingredient|31228",
         "mrn": "31228",
         "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
         "quantity": 1,
@@ -1629,7 +1710,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111010"
       },
       {
-        "id": "grill-transfer|1675",
+        "id": "grill-transfer|ingredient|1675",
         "mrn": "1675",
         "name": "Cheese, Pepper Jack, Loaf, Great Lakes, Sliced, .75 oz",
         "quantity": 1,
@@ -1638,7 +1719,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111006"
       },
       {
-        "id": "grill-transfer|3764",
+        "id": "grill-transfer|ingredient|3764",
         "mrn": "3764",
         "name": "Lettuce, Iceberg, Individual Leaf, Fresh",
         "quantity": 1,
@@ -1647,18 +1728,54 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111012"
       },
       {
-        "id": "grill-transfer|169286",
+        "id": "grill-transfer|ingredient|169286",
         "mrn": "169286",
         "name": "Oil, Canola, 100%",
         "quantity": 1,
         "unit": "tbsp",
         "costPerPortion": 0.055,
         "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|subrecipe|147955.16",
+        "mrn": "147955.16",
+        "name": "AMZ: Smashburger Patty",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 1.55,
+        "glCode": "4111011"
+      },
+      {
+        "id": "grill-transfer|subrecipe|11315",
+        "mrn": "11315",
+        "name": "EUR: Pico de Gallo",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": null,
+        "glCode": "4111011"
+      },
+      {
+        "id": "grill-transfer|subrecipe|77137.1",
+        "mrn": "77137.1",
+        "name": "EURNA: Diablo Sauce",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.22,
+        "glCode": "4111011"
+      },
+      {
+        "id": "grill-transfer|subrecipe|81169.1",
+        "mrn": "81169.1",
+        "name": "EURNA: Sriracha Mayonnaise, Vegan",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.18,
+        "glCode": "4111011"
       }
     ],
     "64908.6": [
       {
-        "id": "grill-transfer|31228",
+        "id": "grill-transfer|ingredient|31228",
         "mrn": "31228",
         "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
         "quantity": 1,
@@ -1667,7 +1784,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111010"
       },
       {
-        "id": "grill-transfer|1675",
+        "id": "grill-transfer|ingredient|1675",
         "mrn": "1675",
         "name": "Cheese, Pepper Jack, Loaf, Great Lakes, Sliced, .75 oz",
         "quantity": 1,
@@ -1676,7 +1793,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111006"
       },
       {
-        "id": "grill-transfer|1755",
+        "id": "grill-transfer|ingredient|1755",
         "mrn": "1755",
         "name": "Cilantro, Fresh",
         "quantity": 1,
@@ -1685,18 +1802,54 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111012"
       },
       {
-        "id": "grill-transfer|169286",
+        "id": "grill-transfer|ingredient|169286",
         "mrn": "169286",
         "name": "Oil, Canola, 100%",
         "quantity": 1,
         "unit": "tbsp",
         "costPerPortion": 0.055,
         "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|subrecipe|147955.16",
+        "mrn": "147955.16",
+        "name": "AMZ: Smashburger Patty",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 1.55,
+        "glCode": "4111011"
+      },
+      {
+        "id": "grill-transfer|subrecipe|22403.7",
+        "mrn": "22403.7",
+        "name": "EUR: Chipotle Mayonnaise",
+        "quantity": 2,
+        "unit": "tbsp",
+        "costPerPortion": 0.2,
+        "glCode": "4111011"
+      },
+      {
+        "id": "grill-transfer|subrecipe|77960.2",
+        "mrn": "77960.2",
+        "name": "EUR: Pickled Red Onions",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": null,
+        "glCode": "4111011"
+      },
+      {
+        "id": "grill-transfer|subrecipe|19294.11",
+        "mrn": "19294.11",
+        "name": "EURNA: Roasted Jalapeno Peppers",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.16,
+        "glCode": "4111011"
       }
     ],
     "107045.1": [
       {
-        "id": "grill-transfer|183006",
+        "id": "grill-transfer|ingredient|183006",
         "mrn": "183006",
         "name": "Bacon, Applewood, Sliced, 14/18 Ct, Hatfield, Raw",
         "quantity": 2,
@@ -1705,7 +1858,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111003"
       },
       {
-        "id": "grill-transfer|31228",
+        "id": "grill-transfer|ingredient|31228",
         "mrn": "31228",
         "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
         "quantity": 1,
@@ -1714,7 +1867,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111010"
       },
       {
-        "id": "grill-transfer|1605",
+        "id": "grill-transfer|ingredient|1605",
         "mrn": "1605",
         "name": "Cheese, American, Pre-Sliced, .5 oz, Great Lakes",
         "quantity": 1,
@@ -1723,7 +1876,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111006"
       },
       {
-        "id": "grill-transfer|162575",
+        "id": "grill-transfer|ingredient|162575",
         "mrn": "162575",
         "name": "Egg, Fresh, Large, Cage Free, HFAC, Wilcox",
         "quantity": 1,
@@ -1732,18 +1885,54 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111005"
       },
       {
-        "id": "grill-transfer|3764",
+        "id": "grill-transfer|ingredient|3764",
         "mrn": "3764",
         "name": "Lettuce, Iceberg, Individual Leaf, Fresh",
         "quantity": 1,
         "unit": "each",
         "costPerPortion": 0.03,
         "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|subrecipe|147955.16",
+        "mrn": "147955.16",
+        "name": "AMZ: Smashburger Patty",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 1.55,
+        "glCode": "4111011"
+      },
+      {
+        "id": "grill-transfer|subrecipe|144065",
+        "mrn": "144065",
+        "name": "EUR: Bloody Mary Ketchup",
+        "quantity": 1,
+        "unit": "floz",
+        "costPerPortion": 0.09,
+        "glCode": "4111011"
+      },
+      {
+        "id": "grill-transfer|subrecipe|77960.1",
+        "mrn": "77960.1",
+        "name": "Pickled Onions",
+        "quantity": 2,
+        "unit": "ounce",
+        "costPerPortion": 0.3,
+        "glCode": "4111011"
       }
     ],
     "91861.2": [
       {
-        "id": "grill-transfer|31228",
+        "id": "grill-transfer|ingredient|36857",
+        "mrn": "36857",
+        "name": "Beef, Brisket, BBQ, Sliced, Austin Blues, FC",
+        "quantity": 2,
+        "unit": "ounce",
+        "costPerPortion": 0,
+        "glCode": "4111003"
+      },
+      {
+        "id": "grill-transfer|ingredient|31228",
         "mrn": "31228",
         "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
         "quantity": 1,
@@ -1752,7 +1941,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111010"
       },
       {
-        "id": "grill-transfer|1667",
+        "id": "grill-transfer|ingredient|1667",
         "mrn": "1667",
         "name": "Cheese, Cheddar, Mild, Great Lakes, Pre-Sliced, .75 oz",
         "quantity": 1,
@@ -1761,7 +1950,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111006"
       },
       {
-        "id": "grill-transfer|169286",
+        "id": "grill-transfer|ingredient|169286",
         "mrn": "169286",
         "name": "Oil, Canola, 100%",
         "quantity": 1,
@@ -1770,18 +1959,45 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111005"
       },
       {
-        "id": "grill-transfer|36857",
-        "mrn": "36857",
-        "name": "Beef, Brisket, BBQ, Sliced, Austin Blues, FC",
+        "id": "grill-transfer|subrecipe|147955.16",
+        "mrn": "147955.16",
+        "name": "AMZ: Smashburger Patty",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 1.55,
+        "glCode": "4111011"
+      },
+      {
+        "id": "grill-transfer|subrecipe|78836",
+        "mrn": "78836",
+        "name": "EUR: Bourbon BBQ Sauce",
         "quantity": 2,
+        "unit": "tbsp",
+        "costPerPortion": 0.33,
+        "glCode": "4111011"
+      },
+      {
+        "id": "grill-transfer|subrecipe|17142.4",
+        "mrn": "17142.4",
+        "name": "EURNA: Crispy Fried Onions",
+        "quantity": 1,
         "unit": "ounce",
-        "costPerPortion": 0,
-        "glCode": "4111003"
+        "costPerPortion": 0.1,
+        "glCode": "4111011"
+      },
+      {
+        "id": "grill-transfer|subrecipe|76326",
+        "mrn": "76326",
+        "name": "EURNA: Sauteed Mushrooms",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.35,
+        "glCode": "4111011"
       }
     ],
     "63517.3": [
       {
-        "id": "grill-transfer|183006",
+        "id": "grill-transfer|ingredient|183006",
         "mrn": "183006",
         "name": "Bacon, Applewood, Sliced, 14/18 Ct, Hatfield, Raw",
         "quantity": 2,
@@ -1790,7 +2006,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111003"
       },
       {
-        "id": "grill-transfer|31228",
+        "id": "grill-transfer|ingredient|31228",
         "mrn": "31228",
         "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
         "quantity": 1,
@@ -1799,7 +2015,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111010"
       },
       {
-        "id": "grill-transfer|148538",
+        "id": "grill-transfer|ingredient|148538",
         "mrn": "148538",
         "name": "Cheese, Provolone, Pre-Sliced, .5 oz, Great Lakes",
         "quantity": 1,
@@ -1808,7 +2024,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111006"
       },
       {
-        "id": "grill-transfer|3764",
+        "id": "grill-transfer|ingredient|3764",
         "mrn": "3764",
         "name": "Lettuce, Iceberg, Individual Leaf, Fresh",
         "quantity": 1,
@@ -1817,7 +2033,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111012"
       },
       {
-        "id": "grill-transfer|169286",
+        "id": "grill-transfer|ingredient|169286",
         "mrn": "169286",
         "name": "Oil, Canola, 100%",
         "quantity": 1,
@@ -1826,7 +2042,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111005"
       },
       {
-        "id": "grill-transfer|225846",
+        "id": "grill-transfer|ingredient|225846",
         "mrn": "225846",
         "name": "Pickles, Dill Chips, Kosher, Block & Barrel, Bulk",
         "quantity": 3,
@@ -1835,7 +2051,16 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111012"
       },
       {
-        "id": "grill-transfer|56055",
+        "id": "grill-transfer|ingredient|8262",
+        "mrn": "8262",
+        "name": "Pineapple, Fresh, Sliced",
+        "quantity": 1,
+        "unit": "slice",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|ingredient|56055",
         "mrn": "56055",
         "name": "Tomatoes, 5x6, Fresh, Sliced",
         "quantity": 2,
@@ -1844,18 +2069,36 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111005"
       },
       {
-        "id": "grill-transfer|8262",
-        "mrn": "8262",
-        "name": "Pineapple, Fresh, Sliced",
+        "id": "grill-transfer|subrecipe|147955.16",
+        "mrn": "147955.16",
+        "name": "AMZ: Smashburger Patty",
         "quantity": 1,
-        "unit": "slice",
-        "costPerPortion": 0,
-        "glCode": "4111012"
+        "unit": "each",
+        "costPerPortion": 1.55,
+        "glCode": "4111011"
+      },
+      {
+        "id": "grill-transfer|subrecipe|22403.7",
+        "mrn": "22403.7",
+        "name": "EUR: Chipotle Mayonnaise",
+        "quantity": 2,
+        "unit": "tbsp",
+        "costPerPortion": 0.2,
+        "glCode": "4111011"
+      },
+      {
+        "id": "grill-transfer|subrecipe|83233",
+        "mrn": "83233",
+        "name": "EURNA: Teriyaki Sauce",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": null,
+        "glCode": "4111011"
       }
     ],
     "63329.3": [
       {
-        "id": "grill-transfer|31228",
+        "id": "grill-transfer|ingredient|31228",
         "mrn": "31228",
         "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
         "quantity": 1,
@@ -1864,7 +2107,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111010"
       },
       {
-        "id": "grill-transfer|9165",
+        "id": "grill-transfer|ingredient|9165",
         "mrn": "9165",
         "name": "Cheese, Cheddar, Mild, Loaf, Great Lakes, Sliced, .5 oz",
         "quantity": 2,
@@ -1873,7 +2116,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111006"
       },
       {
-        "id": "grill-transfer|3764",
+        "id": "grill-transfer|ingredient|3764",
         "mrn": "3764",
         "name": "Lettuce, Iceberg, Individual Leaf, Fresh",
         "quantity": 1,
@@ -1882,7 +2125,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111012"
       },
       {
-        "id": "grill-transfer|4183",
+        "id": "grill-transfer|ingredient|4183",
         "mrn": "4183",
         "name": "Onions, French Fried, Dried",
         "quantity": 0.5,
@@ -1891,18 +2134,36 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111005"
       },
       {
-        "id": "grill-transfer|225846",
+        "id": "grill-transfer|ingredient|225846",
         "mrn": "225846",
         "name": "Pickles, Dill Chips, Kosher, Block & Barrel, Bulk",
         "quantity": 3,
         "unit": "each",
         "costPerPortion": 0.03,
         "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|subrecipe|147955.16",
+        "mrn": "147955.16",
+        "name": "AMZ: Smashburger Patty",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 1.55,
+        "glCode": "4111011"
+      },
+      {
+        "id": "grill-transfer|subrecipe|76857",
+        "mrn": "76857",
+        "name": "EURNA: Carolina Gold  BBQ Sauce",
+        "quantity": 2,
+        "unit": "tbsp",
+        "costPerPortion": null,
+        "glCode": "4111011"
       }
     ],
     "78211.2": [
       {
-        "id": "grill-transfer|31228",
+        "id": "grill-transfer|ingredient|31228",
         "mrn": "31228",
         "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
         "quantity": 1,
@@ -1911,7 +2172,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111010"
       },
       {
-        "id": "grill-transfer|3764",
+        "id": "grill-transfer|ingredient|3764",
         "mrn": "3764",
         "name": "Lettuce, Iceberg, Individual Leaf, Fresh",
         "quantity": 1,
@@ -1920,7 +2181,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111012"
       },
       {
-        "id": "grill-transfer|166043",
+        "id": "grill-transfer|ingredient|166043",
         "mrn": "166043",
         "name": "Onions, Red, Fresh, Each Slice, 1/4\"",
         "quantity": 1,
@@ -1929,7 +2190,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111012"
       },
       {
-        "id": "grill-transfer|225846",
+        "id": "grill-transfer|ingredient|225846",
         "mrn": "225846",
         "name": "Pickles, Dill Chips, Kosher, Block & Barrel, Bulk",
         "quantity": 3,
@@ -1938,18 +2199,36 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111012"
       },
       {
-        "id": "grill-transfer|56055",
+        "id": "grill-transfer|ingredient|56055",
         "mrn": "56055",
         "name": "Tomatoes, 5x6, Fresh, Sliced",
         "quantity": 2,
         "unit": "slice",
         "costPerPortion": 0.12,
         "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|subrecipe|191368",
+        "mrn": "191368",
+        "name": "AMZ: Blackened Steelhead Trout, 4.5oz",
+        "quantity": 1,
+        "unit": "serving(s)",
+        "costPerPortion": null,
+        "glCode": "4111011"
+      },
+      {
+        "id": "grill-transfer|subrecipe|168231",
+        "mrn": "168231",
+        "name": "EUR: Upcycled Chow Chow Aioli",
+        "quantity": 2,
+        "unit": "tbsp",
+        "costPerPortion": 0.14,
+        "glCode": "4111011"
       }
     ],
     "165740.2": [
       {
-        "id": "grill-transfer|31228",
+        "id": "grill-transfer|ingredient|31228",
         "mrn": "31228",
         "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
         "quantity": 1,
@@ -1958,7 +2237,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111010"
       },
       {
-        "id": "grill-transfer|3764",
+        "id": "grill-transfer|ingredient|3764",
         "mrn": "3764",
         "name": "Lettuce, Iceberg, Individual Leaf, Fresh",
         "quantity": 1,
@@ -1967,7 +2246,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111012"
       },
       {
-        "id": "grill-transfer|169286",
+        "id": "grill-transfer|ingredient|169286",
         "mrn": "169286",
         "name": "Oil, Canola, 100%",
         "quantity": 0.5,
@@ -1976,7 +2255,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111005"
       },
       {
-        "id": "grill-transfer|225846",
+        "id": "grill-transfer|ingredient|225846",
         "mrn": "225846",
         "name": "Pickles, Dill Chips, Kosher, Block & Barrel, Bulk",
         "quantity": 3,
@@ -1985,18 +2264,45 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111012"
       },
       {
-        "id": "grill-transfer|56055",
+        "id": "grill-transfer|ingredient|56055",
         "mrn": "56055",
         "name": "Tomatoes, 5x6, Fresh, Sliced",
         "quantity": 2,
         "unit": "slice",
         "costPerPortion": 0.12,
         "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|subrecipe|136560.2",
+        "mrn": "136560.2",
+        "name": "AMZ: Fresno Chile Hot Sauce",
+        "quantity": 1,
+        "unit": "tbsp",
+        "costPerPortion": 0.21,
+        "glCode": "4111011"
+      },
+      {
+        "id": "grill-transfer|subrecipe|32208.2",
+        "mrn": "32208.2",
+        "name": "AMZ: Fried Cod",
+        "quantity": 1,
+        "unit": "serving(s)",
+        "costPerPortion": null,
+        "glCode": "4111011"
+      },
+      {
+        "id": "grill-transfer|subrecipe|187430.1",
+        "mrn": "187430.1",
+        "name": "AMZ: Tarragon Aioli",
+        "quantity": 2,
+        "unit": "tbsp",
+        "costPerPortion": 0.23,
+        "glCode": "4111011"
       }
     ],
     "77139.70": [
       {
-        "id": "grill-transfer|31228",
+        "id": "grill-transfer|ingredient|31228",
         "mrn": "31228",
         "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
         "quantity": 1,
@@ -2005,7 +2311,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111010"
       },
       {
-        "id": "grill-transfer|1712",
+        "id": "grill-transfer|ingredient|1712",
         "mrn": "1712",
         "name": "Chicken, Breast, Boneless, Skinless, 5 oz, Tyson, Raw",
         "quantity": 1,
@@ -2014,7 +2320,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111003"
       },
       {
-        "id": "grill-transfer|3764",
+        "id": "grill-transfer|ingredient|3764",
         "mrn": "3764",
         "name": "Lettuce, Iceberg, Individual Leaf, Fresh",
         "quantity": 1,
@@ -2023,7 +2329,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111012"
       },
       {
-        "id": "grill-transfer|169286",
+        "id": "grill-transfer|ingredient|169286",
         "mrn": "169286",
         "name": "Oil, Canola, 100%",
         "quantity": 1,
@@ -2032,7 +2338,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111005"
       },
       {
-        "id": "grill-transfer|166043",
+        "id": "grill-transfer|ingredient|166043",
         "mrn": "166043",
         "name": "Onions, Red, Fresh, Each Slice, 1/4\"",
         "quantity": 2,
@@ -2041,18 +2347,45 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111012"
       },
       {
-        "id": "grill-transfer|56055",
+        "id": "grill-transfer|ingredient|56055",
         "mrn": "56055",
         "name": "Tomatoes, 5x6, Fresh, Sliced",
         "quantity": 2,
         "unit": "slice",
         "costPerPortion": 0.12,
         "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|subrecipe|145477.1",
+        "mrn": "145477.1",
+        "name": "AMZ: Chesapeake Aioli",
+        "quantity": 2,
+        "unit": "tbsp",
+        "costPerPortion": 0.21,
+        "glCode": "4111011"
+      },
+      {
+        "id": "grill-transfer|subrecipe|101533.5",
+        "mrn": "101533.5",
+        "name": "AMZ: Chesapeake Chicken Marinade",
+        "quantity": 0.25,
+        "unit": "cup",
+        "costPerPortion": 0.2875,
+        "glCode": "4111011"
+      },
+      {
+        "id": "grill-transfer|subrecipe|191493",
+        "mrn": "191493",
+        "name": "AMZ: Waste Not Salt",
+        "quantity": 0.5,
+        "unit": "tsp",
+        "costPerPortion": 0.01,
+        "glCode": "4111011"
       }
     ],
     "77139.69": [
       {
-        "id": "grill-transfer|31228",
+        "id": "grill-transfer|ingredient|31228",
         "mrn": "31228",
         "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
         "quantity": 1,
@@ -2061,7 +2394,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111010"
       },
       {
-        "id": "grill-transfer|7775",
+        "id": "grill-transfer|ingredient|7775",
         "mrn": "7775",
         "name": "Cheese, Havarti, Roth Kase",
         "quantity": 0.75,
@@ -2070,7 +2403,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111006"
       },
       {
-        "id": "grill-transfer|3764",
+        "id": "grill-transfer|ingredient|3764",
         "mrn": "3764",
         "name": "Lettuce, Iceberg, Individual Leaf, Fresh",
         "quantity": 1,
@@ -2079,7 +2412,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111012"
       },
       {
-        "id": "grill-transfer|169286",
+        "id": "grill-transfer|ingredient|169286",
         "mrn": "169286",
         "name": "Oil, Canola, 100%",
         "quantity": 1,
@@ -2088,7 +2421,16 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111005"
       },
       {
-        "id": "grill-transfer|166043",
+        "id": "grill-transfer|ingredient|85770",
+        "mrn": "85770",
+        "name": "Oil, Canola, Liquid Frying, Frilite",
+        "quantity": 15.666667,
+        "unit": "g",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|ingredient|166043",
         "mrn": "166043",
         "name": "Onions, Red, Fresh, Each Slice, 1/4\"",
         "quantity": 2,
@@ -2097,7 +2439,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111012"
       },
       {
-        "id": "grill-transfer|15372",
+        "id": "grill-transfer|ingredient|15372",
         "mrn": "15372",
         "name": "Potatoes, Hash Brown, Shredded, McCain, Frozen",
         "quantity": 4,
@@ -2106,7 +2448,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111005"
       },
       {
-        "id": "grill-transfer|82193",
+        "id": "grill-transfer|ingredient|82193",
         "mrn": "82193",
         "name": "Seasoning, Mesquite, BBQ, McCormick",
         "quantity": 1,
@@ -2115,7 +2457,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111005"
       },
       {
-        "id": "grill-transfer|56055",
+        "id": "grill-transfer|ingredient|56055",
         "mrn": "56055",
         "name": "Tomatoes, 5x6, Fresh, Sliced",
         "quantity": 2,
@@ -2124,18 +2466,27 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111005"
       },
       {
-        "id": "grill-transfer|85770",
-        "mrn": "85770",
-        "name": "Oil, Canola, Liquid Frying, Frilite",
-        "quantity": 15.666667,
-        "unit": "g",
-        "costPerPortion": 0,
-        "glCode": "4111005"
+        "id": "grill-transfer|subrecipe|147955.16",
+        "mrn": "147955.16",
+        "name": "AMZ: Smashburger Patty",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 1.55,
+        "glCode": "4111011"
+      },
+      {
+        "id": "grill-transfer|subrecipe|77537.1",
+        "mrn": "77537.1",
+        "name": "EURNA: Sweet and Smoky Sauce",
+        "quantity": 2,
+        "unit": "ounce",
+        "costPerPortion": 0.413333,
+        "glCode": "4111011"
       }
     ],
     "147955.17": [
       {
-        "id": "grill-transfer|31228",
+        "id": "grill-transfer|ingredient|31228",
         "mrn": "31228",
         "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
         "quantity": 1,
@@ -2144,7 +2495,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111010"
       },
       {
-        "id": "grill-transfer|3764",
+        "id": "grill-transfer|ingredient|3764",
         "mrn": "3764",
         "name": "Lettuce, Iceberg, Individual Leaf, Fresh",
         "quantity": 1,
@@ -2153,7 +2504,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111012"
       },
       {
-        "id": "grill-transfer|169286",
+        "id": "grill-transfer|ingredient|169286",
         "mrn": "169286",
         "name": "Oil, Canola, 100%",
         "quantity": 1,
@@ -2162,7 +2513,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111005"
       },
       {
-        "id": "grill-transfer|166043",
+        "id": "grill-transfer|ingredient|166043",
         "mrn": "166043",
         "name": "Onions, Red, Fresh, Each Slice, 1/4\"",
         "quantity": 2,
@@ -2171,7 +2522,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111012"
       },
       {
-        "id": "grill-transfer|225846",
+        "id": "grill-transfer|ingredient|225846",
         "mrn": "225846",
         "name": "Pickles, Dill Chips, Kosher, Block & Barrel, Bulk",
         "quantity": 3,
@@ -2180,18 +2531,36 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111012"
       },
       {
-        "id": "grill-transfer|56055",
+        "id": "grill-transfer|ingredient|56055",
         "mrn": "56055",
         "name": "Tomatoes, 5x6, Fresh, Sliced",
         "quantity": 2,
         "unit": "slice",
         "costPerPortion": 0.12,
         "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|subrecipe|147955.16",
+        "mrn": "147955.16",
+        "name": "AMZ: Smashburger Patty",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 1.55,
+        "glCode": "4111011"
+      },
+      {
+        "id": "grill-transfer|subrecipe|168231",
+        "mrn": "168231",
+        "name": "EUR: Upcycled Chow Chow Aioli",
+        "quantity": 2,
+        "unit": "tbsp",
+        "costPerPortion": 0.14,
+        "glCode": "4111011"
       }
     ],
     "77139.66": [
       {
-        "id": "grill-transfer|31228",
+        "id": "grill-transfer|ingredient|31228",
         "mrn": "31228",
         "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
         "quantity": 1,
@@ -2200,7 +2569,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111010"
       },
       {
-        "id": "grill-transfer|1605",
+        "id": "grill-transfer|ingredient|1605",
         "mrn": "1605",
         "name": "Cheese, American, Pre-Sliced, .5 oz, Great Lakes",
         "quantity": 1,
@@ -2209,7 +2578,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111006"
       },
       {
-        "id": "grill-transfer|3764",
+        "id": "grill-transfer|ingredient|3764",
         "mrn": "3764",
         "name": "Lettuce, Iceberg, Individual Leaf, Fresh",
         "quantity": 1,
@@ -2218,7 +2587,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111012"
       },
       {
-        "id": "grill-transfer|169286",
+        "id": "grill-transfer|ingredient|169286",
         "mrn": "169286",
         "name": "Oil, Canola, 100%",
         "quantity": 1,
@@ -2227,7 +2596,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111005"
       },
       {
-        "id": "grill-transfer|166043",
+        "id": "grill-transfer|ingredient|166043",
         "mrn": "166043",
         "name": "Onions, Red, Fresh, Each Slice, 1/4\"",
         "quantity": 2,
@@ -2236,7 +2605,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111012"
       },
       {
-        "id": "grill-transfer|225846",
+        "id": "grill-transfer|ingredient|225846",
         "mrn": "225846",
         "name": "Pickles, Dill Chips, Kosher, Block & Barrel, Bulk",
         "quantity": 3,
@@ -2245,18 +2614,45 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111012"
       },
       {
-        "id": "grill-transfer|56055",
+        "id": "grill-transfer|ingredient|56055",
         "mrn": "56055",
         "name": "Tomatoes, 5x6, Fresh, Sliced",
         "quantity": 2,
         "unit": "slice",
         "costPerPortion": 0.12,
         "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|subrecipe|147955.16",
+        "mrn": "147955.16",
+        "name": "AMZ: Smashburger Patty",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 1.55,
+        "glCode": "4111011"
+      },
+      {
+        "id": "grill-transfer|subrecipe|168231",
+        "mrn": "168231",
+        "name": "EUR: Upcycled Chow Chow Aioli",
+        "quantity": 2,
+        "unit": "tbsp",
+        "costPerPortion": 0.14,
+        "glCode": "4111011"
       }
     ],
     "83088.1": [
       {
-        "id": "grill-transfer|31228",
+        "id": "grill-transfer|ingredient|179508",
+        "mrn": "179508",
+        "name": "Avocado, Hand Scooped, Wholly Avocado, Fresh",
+        "quantity": 2,
+        "unit": "scoop #16",
+        "costPerPortion": 0,
+        "glCode": "4111012"
+      },
+      {
+        "id": "grill-transfer|ingredient|31228",
         "mrn": "31228",
         "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
         "quantity": 1,
@@ -2265,7 +2661,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111010"
       },
       {
-        "id": "grill-transfer|170538",
+        "id": "grill-transfer|ingredient|170538",
         "mrn": "170538",
         "name": "Burger, Meatless, Black Bean, Actual Veggies, 4 oz, Frozen",
         "quantity": 1,
@@ -2274,7 +2670,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111003"
       },
       {
-        "id": "grill-transfer|3762",
+        "id": "grill-transfer|ingredient|3762",
         "mrn": "3762",
         "name": "Lettuce, Leaf, Individual Leaf, Fresh",
         "quantity": 1,
@@ -2283,7 +2679,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111012"
       },
       {
-        "id": "grill-transfer|169286",
+        "id": "grill-transfer|ingredient|169286",
         "mrn": "169286",
         "name": "Oil, Canola, 100%",
         "quantity": 1,
@@ -2292,7 +2688,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111005"
       },
       {
-        "id": "grill-transfer|56055",
+        "id": "grill-transfer|ingredient|56055",
         "mrn": "56055",
         "name": "Tomatoes, 5x6, Fresh, Sliced",
         "quantity": 2,
@@ -2301,18 +2697,27 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111005"
       },
       {
-        "id": "grill-transfer|179508",
-        "mrn": "179508",
-        "name": "Avocado, Hand Scooped, Wholly Avocado, Fresh",
+        "id": "grill-transfer|subrecipe|77960.2",
+        "mrn": "77960.2",
+        "name": "EUR: Pickled Red Onions",
         "quantity": 2,
-        "unit": "scoop #16",
-        "costPerPortion": 0,
-        "glCode": "4111012"
+        "unit": "ounce",
+        "costPerPortion": null,
+        "glCode": "4111011"
+      },
+      {
+        "id": "grill-transfer|subrecipe|81315",
+        "mrn": "81315",
+        "name": "EURNA: Pickled Jalapenos",
+        "quantity": 1,
+        "unit": "ounce",
+        "costPerPortion": 0.64,
+        "glCode": "4111011"
       }
     ],
     "107374.35": [
       {
-        "id": "grill-transfer|31228",
+        "id": "grill-transfer|ingredient|31228",
         "mrn": "31228",
         "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
         "quantity": 1,
@@ -2321,7 +2726,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111010"
       },
       {
-        "id": "grill-transfer|191189",
+        "id": "grill-transfer|ingredient|191189",
         "mrn": "191189",
         "name": "Chicken, Breast, Fillet, Breaded, Spicy, 4oz, Koch, Frozen",
         "quantity": 1,
@@ -2330,7 +2735,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111003"
       },
       {
-        "id": "grill-transfer|108406",
+        "id": "grill-transfer|ingredient|108406",
         "mrn": "108406",
         "name": "Mayo, Vegan, Hellmann's, Bulk",
         "quantity": 2,
@@ -2339,7 +2744,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111005"
       },
       {
-        "id": "grill-transfer|169286",
+        "id": "grill-transfer|ingredient|169286",
         "mrn": "169286",
         "name": "Oil, Canola, 100%",
         "quantity": 1,
@@ -2348,7 +2753,16 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111005"
       },
       {
-        "id": "grill-transfer|225846",
+        "id": "grill-transfer|ingredient|85770",
+        "mrn": "85770",
+        "name": "Oil, Canola, Liquid Frying, Frilite",
+        "quantity": 1,
+        "unit": "g",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|ingredient|225846",
         "mrn": "225846",
         "name": "Pickles, Dill Chips, Kosher, Block & Barrel, Bulk",
         "quantity": 3,
@@ -2357,18 +2771,27 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111012"
       },
       {
-        "id": "grill-transfer|85770",
-        "mrn": "85770",
-        "name": "Oil, Canola, Liquid Frying, Frilite",
-        "quantity": 1,
-        "unit": "g",
-        "costPerPortion": 0,
-        "glCode": "4111005"
+        "id": "grill-transfer|subrecipe|120180.3",
+        "mrn": "120180.3",
+        "name": "EUR: Nashville Hot Sauce for Chicken",
+        "quantity": 3,
+        "unit": "tbsp",
+        "costPerPortion": 0.33,
+        "glCode": "4111011"
+      },
+      {
+        "id": "grill-transfer|subrecipe|18179.1",
+        "mrn": "18179.1",
+        "name": "EURNA: Vinegar Coleslaw",
+        "quantity": 0.5,
+        "unit": "cup",
+        "costPerPortion": 0.26,
+        "glCode": "4111011"
       }
     ],
     "77139.67": [
       {
-        "id": "grill-transfer|31228",
+        "id": "grill-transfer|ingredient|31228",
         "mrn": "31228",
         "name": "Bun, Brioche, Vegan, 2.57 oz, La Brea, Frozen",
         "quantity": 1,
@@ -2377,7 +2800,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111010"
       },
       {
-        "id": "grill-transfer|3764",
+        "id": "grill-transfer|ingredient|3764",
         "mrn": "3764",
         "name": "Lettuce, Iceberg, Individual Leaf, Fresh",
         "quantity": 1,
@@ -2386,7 +2809,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111012"
       },
       {
-        "id": "grill-transfer|169286",
+        "id": "grill-transfer|ingredient|169286",
         "mrn": "169286",
         "name": "Oil, Canola, 100%",
         "quantity": 1,
@@ -2395,7 +2818,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111005"
       },
       {
-        "id": "grill-transfer|166043",
+        "id": "grill-transfer|ingredient|166043",
         "mrn": "166043",
         "name": "Onions, Red, Fresh, Each Slice, 1/4\"",
         "quantity": 2,
@@ -2404,7 +2827,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111012"
       },
       {
-        "id": "grill-transfer|225846",
+        "id": "grill-transfer|ingredient|225846",
         "mrn": "225846",
         "name": "Pickles, Dill Chips, Kosher, Block & Barrel, Bulk",
         "quantity": 3,
@@ -2413,18 +2836,36 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111012"
       },
       {
-        "id": "grill-transfer|56055",
+        "id": "grill-transfer|ingredient|56055",
         "mrn": "56055",
         "name": "Tomatoes, 5x6, Fresh, Sliced",
         "quantity": 2,
         "unit": "slice",
         "costPerPortion": 0.12,
         "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|subrecipe|144591.1",
+        "mrn": "144591.1",
+        "name": "AMZ: Grilled Chicken Breast",
+        "quantity": 1,
+        "unit": "each",
+        "costPerPortion": 1.38,
+        "glCode": "4111011"
+      },
+      {
+        "id": "grill-transfer|subrecipe|168231",
+        "mrn": "168231",
+        "name": "EUR: Upcycled Chow Chow Aioli",
+        "quantity": 2,
+        "unit": "tbsp",
+        "costPerPortion": 0.14,
+        "glCode": "4111011"
       }
     ],
     "5294.29": [
       {
-        "id": "grill-transfer|4123",
+        "id": "grill-transfer|ingredient|4123",
         "mrn": "4123",
         "name": "Mushrooms, Portobello, Fresh",
         "quantity": 1,
@@ -2433,7 +2874,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111005"
       },
       {
-        "id": "grill-transfer|169286",
+        "id": "grill-transfer|ingredient|169286",
         "mrn": "169286",
         "name": "Oil, Canola, 100%",
         "quantity": 0.166667,
@@ -2442,7 +2883,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111005"
       },
       {
-        "id": "grill-transfer|4253",
+        "id": "grill-transfer|ingredient|4253",
         "mrn": "4253",
         "name": "Onions, Red, Fresh, Each Ring, 1/4\"",
         "quantity": 0.666667,
@@ -2451,7 +2892,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111012"
       },
       {
-        "id": "grill-transfer|8065",
+        "id": "grill-transfer|ingredient|8065",
         "mrn": "8065",
         "name": "Peppers, Bell, Red, Fresh",
         "quantity": 1,
@@ -2460,7 +2901,7 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111012"
       },
       {
-        "id": "grill-transfer|7411",
+        "id": "grill-transfer|ingredient|7411",
         "mrn": "7411",
         "name": "Salt, Kosher",
         "quantity": 0.027778,
@@ -2469,7 +2910,16 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111005"
       },
       {
-        "id": "grill-transfer|55272",
+        "id": "grill-transfer|ingredient|7390",
+        "mrn": "7390",
+        "name": "Spice, Pepper, Black, Ground",
+        "quantity": 0.027778,
+        "unit": "tsp",
+        "costPerPortion": 0,
+        "glCode": "4111005"
+      },
+      {
+        "id": "grill-transfer|ingredient|55272",
         "mrn": "55272",
         "name": "Squash, Yellow, Fresh, Bias Cut, Halved, 1/2\"",
         "quantity": 1,
@@ -2478,22 +2928,13 @@ export const GRILL_LTO_PROGRAM = Object.freeze({
         "glCode": "4111012"
       },
       {
-        "id": "grill-transfer|7462",
+        "id": "grill-transfer|ingredient|7462",
         "mrn": "7462",
         "name": "Squash, Zucchini, Fresh, Bias Cut, Halved, 1/2\"",
         "quantity": 1.083333,
         "unit": "ounce",
         "costPerPortion": 0.3611,
         "glCode": "4111012"
-      },
-      {
-        "id": "grill-transfer|7390",
-        "mrn": "7390",
-        "name": "Spice, Pepper, Black, Ground",
-        "quantity": 0.027778,
-        "unit": "tsp",
-        "costPerPortion": 0,
-        "glCode": "4111005"
       }
     ]
   }

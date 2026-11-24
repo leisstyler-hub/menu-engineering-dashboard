@@ -19,13 +19,13 @@ import { DELI_ORDERING_PROGRAM } from "../features/commissary-ordering/deliCycle
 import { GLOBAL_ORDERING_PROGRAM } from "../features/commissary-ordering/globalCycleCatalog.js";
 import { GLOBAL_COMMISSARY_PRODUCTION } from "../features/commissary-ordering/globalProductionCatalog.js";
 import { BREAKFAST_ORDERING_PROGRAM } from "../features/commissary-ordering/breakfastCatalog.js";
-import { DAILY_GLOBAL_PROGRAM } from "../features/commissary-ordering/dailyGlobalCatalog.js";
+import { DAILY_GLOBAL_PROGRAM, TWO_TWO_TWO_DAILY_GLOBAL_PROGRAM } from "../features/commissary-ordering/dailyGlobalCatalog.js";
 import { GLOBAL_PREP_DISPLAY_POLICY } from "../features/commissary-ordering/globalPrepDisplayPolicy.js";
-import { COMMISSARY_CAFE_STATION_ACCESS, COMMISSARY_HUB_ROUTING, COMMISSARY_HUBS, COMMISSARY_PACKOUT_HUB_ROUTING } from "../features/commissary-ordering/commissaryRouting.js";
-import { GLOBAL_UNIT_PREPARATION_NOTES } from "../features/commissary-ordering/commissaryModel.js";
+import { COMMISSARY_CAFE_STATION_ACCESS, COMMISSARY_HIDDEN_CAFE_STATION_ACCESS, COMMISSARY_HIDDEN_HUB_ROUTING, COMMISSARY_HUB_ROUTING, COMMISSARY_HUBS, COMMISSARY_PACKOUT_HUB_ROUTING } from "../features/commissary-ordering/commissaryRouting.js";
+import { GLOBAL_UNIT_PREPARATION_NOTES, LEO_HAND_FRUIT, LEO_SITE_CAFES } from "../features/commissary-ordering/commissaryModel.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 33;
+export const OPERATIONAL_METADATA_VERSION = 34;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -103,6 +103,7 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
     deliProgram: DELI_ORDERING_PROGRAM,
     globalProgram: GLOBAL_ORDERING_PROGRAM,
     dailyGlobalProgram: DAILY_GLOBAL_PROGRAM,
+    twoTwoTwoGlobalProgram: TWO_TWO_TWO_DAILY_GLOBAL_PROGRAM,
     globalProductionPolicy: GLOBAL_COMMISSARY_PRODUCTION,
     breakfastProgram: BREAKFAST_ORDERING_PROGRAM,
     breakfastInterface: Object.freeze({
@@ -122,16 +123,24 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       deliveryQuantities: "whole-portions",
     }),
     dailyGlobalInterface: Object.freeze({
-      eligibleCafes: Object.freeze(["Eclipse", "Gemini"]),
-      cycleAnchor: "2026-11-23",
-      cycleLengthWeeks: 2,
+      eligibleCafes: Object.freeze(["Eclipse", "Gemini", "Sonic", "Bingo", "Grace", "Blueshift"]),
+      cycleAnchor: "2026-11-30",
+      cycleLengthWeeks: 12,
       selectionMode: "fixed-weekday-animal-or-vegetarian-plate-counts",
+      rotationModel: "continuous-two-service-day-blocks",
+      rotationSequence: Object.freeze(["Taco Total Burrito Bowl", "Balti", "Teriyaki", "Porto", "Cypress", "Bibimbap"]),
       plateContentsVisibility: "shown-beneath-each-protein-option",
       weeklyOrderPlacement: "before-all-stations",
       productionScope: "complete-commissary-hot-and-cold-plate-including-garnish-except-unit-prepared-jasmine-rice",
       prepHub: "Blueshift",
       deliHub: "Sonic",
       transferValuation: "finished-plate-item-plus-waste",
+    }),
+    leoSites: Object.freeze({
+      cafes: LEO_SITE_CAFES,
+      sandwichHub: "Sonic",
+      includedHandFruit: LEO_HAND_FRUIT,
+      hiddenSaladBar: Object.freeze({ stationAccess: COMMISSARY_HIDDEN_CAFE_STATION_ACCESS, hubRouting: COMMISSARY_HIDDEN_HUB_ROUTING, active: false }),
     }),
     roxanneDawsonIntegration: Object.freeze({
       version: 1,
@@ -145,6 +154,7 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       transferWorkbook: Object.freeze({ cricketSheet: "SEA20 Cricket", dawsonSheet: "SEA27 Dawson" }),
     }),
     stationAccess: COMMISSARY_CAFE_STATION_ACCESS,
+    hiddenStationAccess: COMMISSARY_HIDDEN_CAFE_STATION_ACCESS,
     prepHubs: COMMISSARY_HUBS,
     prepAccess: Object.freeze({ hubSitesOnly: true, selectedCafeBindsHub: true, allowedSites: Object.freeze(COMMISSARY_HUBS.map(({ key }) => key)) }),
     hubRouting: COMMISSARY_HUB_ROUTING,
@@ -164,7 +174,7 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       rawAnimalProteins: "unit-supplied-excluded-from-prep-and-transfer",
       explicitlyPrecookedProteins: "commissary-generated-included",
       grillUnitSuppliedComponents: Object.freeze(["170538", "144591.1", "7411"]),
-      transferValuation: "priced-retained-recipe-components-only",
+      transferValuation: "recipe-native-priced-retained-components; prep-display-volume-and-rounding-never-change-accounting",
       unresolvedComponentCost: "excluded-no-invented-allocation",
       globalRecipeResolution: "reviewed-nested-recipe-output-plus-required-direct-components",
       globalInUnitRice: "all-jasmine-rice-excluded-from-prep-and-transfer",
@@ -182,7 +192,7 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
         direction: "up",
         scope: "each-cafe-each-delivery",
         appliesTo: "explicit-volume-units; approved-count-conversions; sauce-weight-conversions; approved-global-prep-display-conversions",
-        transferCosting: "salad-native-unit-and-existing-priced-volume-components-scale; reviewed-global-display-policy-remains-recipe-native",
+        transferCosting: "prep-display-only; Grill and Global transfer quantities remain recipe-native",
         unpricedRecipeComponents: "display-rounded-without-invented-component-cost",
       }),
       grillVolumeDisplay: Object.freeze({

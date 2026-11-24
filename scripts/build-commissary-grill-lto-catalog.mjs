@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import XLSX from "xlsx";
 import COSTING from "../api/data/ingredientCosting91926.json" with { type: "json" };
+import RECIPE_ANALYSIS from "../src/data/allMenusWpAnalysis.json" with { type: "json" };
 
 const root = resolve(import.meta.dirname, "..");
 const sourcePath = resolve(root, "public/resources/Ingredient_Costing_9.19.26.xlsx");
@@ -100,16 +101,49 @@ const itemPrepComponents = Object.fromEntries([...componentsByRecipe].map(([reci
   recipeMrn,
   [...components.values()].sort((a, b) => a.type.localeCompare(b.type) || a.name.localeCompare(b.name)),
 ]));
+const recipeAnalysisByMrn = new Map((RECIPE_ANALYSIS.recipes || []).filter(({ mrn: value, cost }) => value && Number.isFinite(Number(cost))).map((recipe) => [mrn(recipe.mrn), recipe]));
+const normalizedUnit = (value) => {
+  const unit = text(value).toLowerCase().replace(/s$/, "");
+  return ({ oz: "ounce", floz: "floz", lb: "pound", g: "gram" })[unit] || unit;
+};
+const measure = (quantity, unit) => {
+  const normalized = normalizedUnit(unit);
+  const volume = { cup: 1, tbsp: 1 / 16, tsp: 1 / 48, floz: 1 / 8 };
+  const mass = { ounce: 1, pound: 16, gram: 1 / 28.349523125 };
+  if (volume[normalized]) return { family: "volume", value: quantity * volume[normalized] };
+  if (mass[normalized]) return { family: "mass", value: quantity * mass[normalized] };
+  return { family: normalized, value: quantity };
+};
+const portionMeasure = (value) => {
+  const match = text(value).match(/^(.+?)\s+(cup|tbsp|tsp|floz|fl oz|ounce|oz|pound|lb|gram|g|each|slice|scoop)/i);
+  if (!match) return null;
+  const quantity = parseNumber(match[1]);
+  return quantity > 0 ? measure(quantity, match[2].replace(/\s+/g, "")) : null;
+};
+const pricedSubrecipe = (component) => {
+  const recipe = recipeAnalysisByMrn.get(component.mrn);
+  const componentMeasure = measure(component.quantity, component.unit);
+  const recipeMeasure = portionMeasure(recipe?.portion);
+  if (!recipe || !recipeMeasure || componentMeasure.family !== recipeMeasure.family || !(recipeMeasure.value > 0)) return null;
+  return Number((Number(recipe.cost) * componentMeasure.value / recipeMeasure.value).toFixed(6));
+};
 const itemTransferComponents = Object.fromEntries([...targets].map((recipeMrn) => {
   const recipe = COSTING.recipes[recipeMrn];
-  return [recipeMrn, [...(recipe?.components || []), ...(recipe?.unpricedComponents || [])].map((component) => ({
-    id: `grill-transfer|${mrn(component.ingredientMrn) || text(component.ingredientName).toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
-    mrn: mrn(component.ingredientMrn), name: text(component.ingredientName),
-    quantity: Number((Number(component.quantity) / Number(component.recipeYield || 1)).toFixed(6)),
-    unit: text(component.unit).toLowerCase(),
-    costPerPortion: Number.isFinite(Number(component.allocationPerPortion)) ? Number(component.allocationPerPortion) : null,
-    glCode: text(component.glCode) || "4111011",
-  }))];
+  const pricedIngredients = new Map([...(recipe?.components || []), ...(recipe?.unpricedComponents || [])].map((component) => [mrn(component.ingredientMrn), component]));
+  return [recipeMrn, itemPrepComponents[recipeMrn].map((component) => {
+    const priced = pricedIngredients.get(component.mrn);
+    return {
+      id: `grill-transfer|${component.type}|${component.mrn}`,
+      mrn: component.mrn,
+      name: component.name,
+      quantity: component.quantity,
+      unit: component.unit,
+      costPerPortion: component.type === "subrecipe"
+        ? pricedSubrecipe(component)
+        : Number.isFinite(Number(priced?.allocationPerPortion)) ? Number(priced.allocationPerPortion) : null,
+      glCode: component.type === "subrecipe" ? "4111011" : text(priced?.glCode) || "4111011",
+    };
+  })];
 }));
 
 const rendered = `// Generated from public/resources/Ingredient_Costing_9.19.26.xlsx.\n// Run node scripts/build-commissary-grill-lto-catalog.mjs after the source workbook changes.\n\nexport const GRILL_LTO_PROGRAM = Object.freeze(${JSON.stringify({
