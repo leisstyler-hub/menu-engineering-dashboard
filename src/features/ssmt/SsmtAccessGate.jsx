@@ -198,7 +198,7 @@ export default function SsmtAccessGate({ children, onBack }) {
             )}
           </form>
         )}
-        {message && <p role="status">{message}</p>}
+        {message && <p role="status" className="rounded-lg border border-sky-200 bg-sky-50 p-3 text-sm font-bold">{message}</p>}
       </main>
     );
   return (
@@ -244,6 +244,7 @@ function AccountPanel({ type, onClose }) {
   const [data, setData] = useState([]),
     [message, setMessage] = useState(""),
     [search, setSearch] = useState(""),
+    [showRemoved, setShowRemoved] = useState(false),
     [offset, setOffset] = useState(0),
     [busy, setBusy] = useState(false),
     [form, setForm] = useState({
@@ -317,10 +318,10 @@ function AccountPanel({ type, onClose }) {
       role="dialog"
       aria-modal="true"
       aria-label={type === "history" ? "SSMT Change Log" : "Manage access"}
-      className="fixed inset-0 z-[100] overflow-y-auto bg-slate-950/60 p-4"
+      className="fixed inset-0 z-[100] overflow-y-auto bg-slate-950/60 p-2 sm:p-4"
     >
-      <section className="mx-auto my-6 max-w-5xl space-y-4 rounded-xl bg-white p-5 text-slate-950">
-        <div className="flex justify-between">
+      <section className={`mx-auto my-3 max-w-5xl space-y-4 rounded-xl bg-white p-4 text-slate-950 shadow-2xl sm:p-6 ${type === "members" ? "max-h-[90dvh] overflow-y-auto" : ""}`}>
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 bg-white py-2">
           <h2 className="text-xl font-black">
             {type === "history" ? "SSMT Change Log" : "Manage access"}
           </h2>
@@ -328,7 +329,7 @@ function AccountPanel({ type, onClose }) {
             Close
           </button>
         </div>
-        {message && <p role="status">{message}</p>}
+        {message && <p role="status" className="sticky top-14 z-10 rounded-lg border border-sky-200 bg-sky-50 p-3 text-sm font-bold">{message}</p>}
         {type === "history" ? (
           <>
             <label>
@@ -384,8 +385,11 @@ function AccountPanel({ type, onClose }) {
           </>
         ) : (
           <>
+            <p className="text-sm text-slate-600">Invite someone new, or find an existing person to send a setup/reset email. Removing access preserves their history.</p>
+            <details className="rounded-xl border bg-slate-50 p-4">
+            <summary className="cursor-pointer font-black">Invite a new person</summary>
             <form
-              className="grid gap-3 sm:grid-cols-2"
+              className="mt-4 grid gap-3 rounded-xl border bg-slate-50 p-4 sm:grid-cols-2"
               onSubmit={(e) => {
                 e.preventDefault();
                 write("invite", form);
@@ -436,13 +440,20 @@ function AccountPanel({ type, onClose }) {
                 Send invitation
               </button>
             </form>
+            </details>
+            <div className="flex flex-wrap items-end gap-3 rounded-lg border p-3">
+              <label className="min-w-[12rem] flex-1 text-sm font-bold">Find a person<input type="search" className={`${cls} mt-1 block w-full`} value={search} onChange={e=>setSearch(e.target.value)}/></label>
+              <label className="text-sm"><input type="checkbox" checked={showRemoved} onChange={e=>setShowRemoved(e.target.checked)}/> Show removed accounts</label>
+              <span className="text-sm text-slate-600">{data.filter(m=>m.active).length} active</span>
+            </div>
             <div className="space-y-3">
-              {data.map((m) => (
+              {data.filter(m=>(showRemoved || m.active) && `${m.display_name} ${m.email}`.toLowerCase().includes(search.toLowerCase())).map((m) => (
                 <MemberRow
-                  key={m.user_id}
+                  key={`${m.user_id}-${m.work_role}-${m.is_admin}-${m.active}`}
                   member={m}
                   busy={busy}
                   onSave={(body) => write("member", body)}
+                  onEmail={() => write("resend", {userId:m.user_id})}
                 />
               ))}
             </div>
@@ -452,19 +463,24 @@ function AccountPanel({ type, onClose }) {
     </div>
   );
 }
-function MemberRow({ member: m, busy, onSave }) {
+function MemberRow({ member: m, busy, onSave, onEmail }) {
   const [role, setRole] = useState(m.work_role),
     [admin, setAdmin] = useState(m.is_admin);
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded border p-3">
+    <div role="group" aria-label={`Account for ${m.email}`} className="grid min-w-0 gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-2">
+      <div className="min-w-0 space-y-1 break-words">
       <strong>{m.display_name || m.email}</strong>
-      <span className="text-sm">
+      <span className="block text-sm text-slate-500">
         Last sign-in: {m.last_sign_in_unavailable ? "Unavailable" : m.last_sign_in_at ? new Date(m.last_sign_in_at).toLocaleString() : "Never signed in"}
       </span>
-      <span>
-        {m.email} • {m.active ? "Active" : "Revoked"}
+      <span className="block text-sm">
+        {m.email} • {m.active ? "Active" : "Removed"}
       </span>
+      </div>
+      <div className="flex flex-wrap items-center gap-3 rounded-lg bg-slate-50 p-3">
+      <span className="w-full text-xs font-black uppercase text-slate-500">Permissions</span>
       <select
+        disabled={busy || !m.active}
         aria-label={`Role for ${m.email}`}
         className={cls}
         value={role}
@@ -477,6 +493,7 @@ function MemberRow({ member: m, busy, onSave }) {
       <label>
         <input
           type="checkbox"
+          disabled={busy || !m.active}
           checked={admin}
           onChange={(e) => setAdmin(e.target.checked)}
         />{" "}
@@ -484,7 +501,7 @@ function MemberRow({ member: m, busy, onSave }) {
       </label>
       <button
         className={cls}
-        disabled={busy}
+        disabled={busy || !m.active}
         onClick={() =>
           onSave({
             userId: m.user_id,
@@ -497,26 +514,30 @@ function MemberRow({ member: m, busy, onSave }) {
       >
         Save permissions
       </button>
+      </div>
+      <div className="flex flex-wrap gap-2 border-t pt-3 sm:col-span-2">
+      <button className={cls} disabled={busy || !m.active} onClick={onEmail}>Send setup/reset email</button>
       <button
         className={cls}
         disabled={busy}
         onClick={() => {
           if (
             window.confirm(
-              `${m.active ? "Revoke" : "Restore"} SSMT access for ${m.email}?`,
+              `${m.active ? "Remove" : "Restore"} SSMT access for ${m.email}? Their history will remain. No email will be sent.`,
             )
           )
             onSave({
               userId: m.user_id,
               name: m.display_name,
-              role,
-              isAdmin: admin,
+              role: m.work_role,
+              isAdmin: m.is_admin,
               active: !m.active,
             });
         }}
       >
-        {m.active ? "Revoke access" : "Restore access"}
+        {m.active ? "Remove" : "Restore access"}
       </button>
+      </div>
     </div>
   );
 }

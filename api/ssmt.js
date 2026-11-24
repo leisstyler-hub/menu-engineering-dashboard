@@ -18,6 +18,19 @@ import {
 import { publicCalendarMenus } from "../lib/ssmtCalendarPreview.js";
 import {validateOpeningChange,menuRevision} from "../src/features/ssmt/ssmtOpening.js";
 const roles = new Set(["Chef", "Experience", "IT"]);
+async function requestSetupEmail(email) {
+  await service(
+    `recover?redirect_to=${encodeURIComponent(`${process.env.SSMT_APP_ORIGIN}/?ssmt=setup`)}`,
+    { method: "POST", body: JSON.stringify({ email }) }, true,
+  ).catch(error => {
+    const message = error.statusCode === 429
+      ? error.providerCode === "over_email_send_rate_limit"
+        ? "The email service has reached its sending limit. Another click cannot send mail until capacity is available. Contact your SSMT administrator."
+        : "Password reset is temporarily rate limited. Please wait before requesting another email."
+      : "Password reset email is temporarily unavailable. Please try again later.";
+    throw failure(message, error.statusCode === 429 ? 429 : 503);
+  });
+}
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "private, no-store");
   res.setHeader("Vary", "Cookie");
@@ -89,19 +102,7 @@ export default async function handler(req, res) {
       const matches = await service(
         `ssmt_members?email=eq.${encodeURIComponent(email.trim().toLowerCase())}&active=eq.true&select=user_id&limit=1`,
       );
-      if (matches?.length)
-        await service(
-          `recover?redirect_to=${encodeURIComponent(`${process.env.SSMT_APP_ORIGIN}/?ssmt=setup`)}`,
-          { method: "POST", body: JSON.stringify({ email }) },
-          true,
-        ).catch((error) => {
-          throw failure(
-            error.statusCode === 429
-              ? "Password reset is temporarily rate limited. Please wait before requesting another email."
-              : "Password reset email is temporarily unavailable. Please try again later.",
-            error.statusCode === 429 ? 429 : 503,
-          );
-        });
+      if (matches?.length) await requestSetupEmail(email);
       return res.status(200).json({
         ok: true,
         message:
@@ -169,6 +170,16 @@ export default async function handler(req, res) {
         members: withSignIn,
       });
     }
+    if (action === "resend") {
+      if (!actor.is_admin) throw failure("Admin access is required.", 403);
+      const target = req.body.userId;
+      if (typeof target !== "string" || !/^[0-9a-f-]{36}$/.test(target))
+        throw failure("Select a valid account.");
+      const [member] = await service(`ssmt_members?user_id=eq.${encodeURIComponent(target)}&select=email,active&limit=1`);
+      if (!member?.active || !member.email) throw failure("Email can only be sent to an active SSMT account.", 409);
+      await requestSetupEmail(member.email);
+      return res.status(200).json({ok:true,message:"Setup/reset email requested. Check inbox and spam; delivery may be delayed. Access and permissions are unchanged."});
+    }
     if (action === "invite" || action === "member") {
       if (!actor.is_admin) throw failure("Admin access is required.", 403);
       const body = req.body;
@@ -183,6 +194,11 @@ export default async function handler(req, res) {
           !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
         )
           throw failure("Enter a valid email.");
+        email = email.trim().toLowerCase();
+        const existing = await service(`ssmt_members?email=eq.${encodeURIComponent(email)}&select=user_id,active&limit=1`);
+        if (existing?.length) throw failure(existing[0].active
+          ? "This person already has SSMT access. Find their account below and use Send setup/reset email."
+          : "This person is in Removed accounts. Restore access there before sending a setup/reset email.", 409);
         const user = await service(
           `invite?redirect_to=${encodeURIComponent(`${process.env.SSMT_APP_ORIGIN}/?ssmt=setup`)}`,
           { method: "POST", body: JSON.stringify({ email }) },
