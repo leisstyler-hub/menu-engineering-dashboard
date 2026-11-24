@@ -21,7 +21,7 @@ test('unrelated custom prices, deli categories and changed identities are preser
 test('selector labels star exact E-S provenance and leave old/custom labels and source rows intact', () => {
  const source = {...category, selectorLabel:'$11.25 - Base Burger', sourceGuide:{range:'E:S'}};
  const before = structuredClone(source);
- assert.equal(categoryPriceLabel(source), '\u2605 E-S - $11.25 - Base Burger');
+ assert.equal(categoryPriceLabel(source), '\u2605 $11.25 - Base Burger');
  assert.equal(categoryPriceLabel(category), category.category);
  assert.equal(categoryPriceLabel({...source,sourceGuide:{range:'A:D'}}), source.selectorLabel);
  assert.match(categoryPriceLabel(legacy), /legacy dish price - review category/);

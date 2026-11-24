@@ -59,6 +59,6 @@ export function categoryPriceOptions(rows = [], selectedId = "") {
 
 export function categoryPriceLabel(row) {
   const label = row.selectorLabel || row.category;
-  if (isWorkbookPrice(row)) return `\u2605 E-S - ${label}`;
+  if (isWorkbookPrice(row)) return `\u2605 ${label}`;
   return isLegacyGrillPrice(row) ? `${label} (legacy dish price - review category)` : label;
 }

@@ -19,7 +19,7 @@ test('one bracket exposes all rows and identifies E-S source values without savi
  await expect(page.getByTestId('ssmt-source-price-guide')).toHaveCount(0);
  const bracket=page.getByTestId('ssmt-price-bracket');
  await expect(bracket.locator('tbody tr')).toHaveCount(3);
- await expect(bracket.getByLabel('Workbook E-S source bracket',{exact:true})).toHaveCount(1);
+ await expect(bracket.getByLabel('Workbook E-S source bracket',{exact:true})).toHaveText('\u2605');
  await expect(bracket.getByRole('columnheader',{name:'E · Tier 1',exact:true})).toBeVisible();
  await expect(bracket.getByRole('columnheader',{name:'S · Canada (CAD)',exact:true})).toHaveCount(1);
  await expect(bracket.locator('[data-source-column="SAN"]').first()).toContainText('Missing');
@@ -30,7 +30,7 @@ test('one bracket exposes all rows and identifies E-S source values without savi
  await expect(bracket.locator('tbody tr')).toHaveCount(2);
  await bracket.getByRole('button',{name:'Delete price row $4.00 - Smashburger',exact:true}).click();
  const dialog=page.getByRole('dialog',{name:'Delete current pricing row',exact:true});
- await expect(dialog.getByLabel('Replacement pricing row').locator('option').filter({hasText:'★ E-S'})).toHaveCount(1);
+ await expect(dialog.getByLabel('Replacement pricing row').locator('option').filter({hasText:'★'})).toHaveCount(1);
  await dialog.getByRole('button',{name:'Cancel',exact:true}).click();
  await page.setViewportSize({width:390,height:844});
  await bracket.scrollIntoViewIfNeeded();

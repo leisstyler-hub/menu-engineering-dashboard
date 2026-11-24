@@ -291,11 +291,11 @@ test('menu and modifier selectors star E-S workbook brackets while keeping old s
  await openMenu(page);
  const item=page.getByLabel('SEA price for Linked Burger',{exact:true});
  await expect(item).toHaveValue('burger');
- await expect(item.locator('option[value="workbook-source"]')).toHaveText('\u2605 E-S - $8.00 - New workbook');
+ await expect(item.locator('option[value="workbook-source"]')).toHaveText('\u2605 $8.00 - New workbook');
  await expect(item.locator('option[value="burger"]')).toHaveText('$12.00 - Burger');
  await page.getByRole('button',{name:/View modifiers Mods/}).first().click();
  const modifier=page.getByLabel('Modifier price',{exact:true}).first();
- await expect(modifier.locator('option[value="workbook-source"]')).toHaveText('\u2605 E-S - $8.00 - New workbook');
+ await expect(modifier.locator('option[value="workbook-source"]')).toHaveText('\u2605 $8.00 - New workbook');
  await expect(modifier.locator('option[value="ssmt-modifier-zero"]')).toHaveText('$0.00 - Modifier Free');
  expect(saves).toHaveLength(0);
 });
