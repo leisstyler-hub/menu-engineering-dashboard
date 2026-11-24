@@ -1,4 +1,5 @@
 import { isLegacyGrillPrice, categoryPriceOptions, categoryPriceLabel } from "./ssmtPriceCategories.js";
+import SsmtPriceGuide from "./SsmtPriceGuide.jsx";
 import { FREE_MODIFIER_PRICE_ID, selectModifierType, resizeModifierGroup } from "./ssmtModifierDefaults.js";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -2313,7 +2314,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                   <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600">SEA price + category</p>
                   <h2 className="mt-1 text-2xl font-black">Pricing Structure</h2>
                   <p className="mt-2 text-sm font-semibold text-slate-600">{ssmtData.areaOrder.join(", ")}</p>
-                  <p className="mt-3 text-sm font-semibold text-slate-700">Deli and grill guidance: no included sides. Existing side-inclusive prices remain until the no-side price update is approved.</p>
+                  <p className="mt-3 text-sm font-semibold text-slate-700">Deli and grill guidance: no included sides. The workbook guide retains its exact source names and values.</p>
                   <p className="mt-2 text-xs text-slate-600">Category choices are shown first. Existing individual grill price links are retained for review; menu dish names stay on menus.</p>
                   <label className="mt-3 flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={showLegacyGrillPrices} onChange={event => setShowLegacyGrillPrices(event.target.checked)} />Show legacy individual grill prices ({displayedPriceOptions.filter(isLegacyGrillPrice).length})</label>
                   <button type="button" onClick={exportPricingAudit} disabled={dataStatus !== "ready"} className="mt-3 inline-flex items-center gap-2 rounded-lg border border-emerald-700 bg-emerald-700 px-4 py-2 text-sm font-black text-white hover:bg-emerald-800 disabled:opacity-50">
@@ -2341,6 +2342,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
               </div>
             </section>
 
+            <SsmtPriceGuide priceBook={ssmtData.priceBook} />
             <section data-testid="ssmt-price-bracket" className={`overflow-hidden rounded-xl bg-white shadow-sm ${pricingPlanMode && ssmtData.plannedPriceBook ? "border-4 border-purple-500 ring-4 ring-purple-100" : "border-2 border-slate-300"}`}>
               <div className={`flex flex-col gap-1 border-b px-5 py-4 sm:flex-row sm:items-center sm:justify-between ${pricingPlanMode && ssmtData.plannedPriceBook ? "border-purple-300 bg-purple-50" : "border-slate-200 bg-slate-50"}`}>
                 <div>

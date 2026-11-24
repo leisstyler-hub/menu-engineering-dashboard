@@ -1,3 +1,7 @@
+## SSMT-2026-11-24: Workbook E through S price authority
+
+Tyler approval `77a710927b920a235b408e028ad2af3293781cf2ffea359ccd42e59c07d91d0a` establishes every supplied Prepared Foods Guide E:S price as authority, superseding the proposed lower retained individual-item schedule. Keep no-side deli/grill service guidance, exact workbook values and original source names visible together; do not deduct an assumed side charge. Preserve source blanks explicitly, all 15 columns in source order and Canada CAD. Operational campus mapping is exact only; Tier/Canada references do not silently assign campus prices. Retain old pricing rows, exact MRNs, source history and the existing planned table. Reviewed mapping and immediate backed-up approval govern any canonical workspace write; this decision alone is not evidence of application.
+
 ## 2026-11-19 - W&P sensory and display planning
 
 Tyler authorized weighted TACT guidance, daily sales methods, a separate pan planogram and limited timed premium pans in W&P. Ingredient-fit planning groups supplement approved cuisine pillars in both Pairwise and W&P; they do not silently reassign menus to improve percentages. Source dietary eligibility precedes TACT guidance; seasonality is secondary. Proposed planning weights remain distinct from reviewed tags and training approval. See [behavior and SOP](docs/WP_TACT_PLANOGRAM_2026_11_19.md). No recipe/catalog or operational workspace conversion is authorized by this code release.

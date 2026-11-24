@@ -1,5 +1,7 @@
 ## 2026-11-24
 
+- [Nov 24, 8:54 AM] Show all workbook E–S pricing columns in SSMT with source categories, explicit missing prices and Canada currency.
+
 - [Nov 24, 8:31 AM] Manage SSMT access with a compact searchable list, history-preserving removal, and separate setup/reset email requests.
 
 - [Nov 24, 5:06 AM] Add the 2,2,2 Daily Global rotation, hidden Leo Salad Bar readiness, Mac Apples, and recipe-native Grill and Global transfers.
