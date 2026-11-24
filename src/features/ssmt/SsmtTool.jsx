@@ -37,9 +37,8 @@ import { loadSsmtWorkspaceFromSharedStorage, saveSsmtWorkspaceToSharedStorage } 
 
 import SsmtAccessGate from "./SsmtAccessGate.jsx";
 import SsmtReusePanel from "./SsmtReusePanel.jsx";
-import { exactMrnMatches, isMenuItem } from "./ssmtReuse.js";
+import { matchingMrnItems, noExperienceReviewNeeded, isMenuItem } from "./ssmtReuse.js";
 import {renameItem, changeDesignation, sidesModifierGroup} from "./ssmtWorkflow.js";
-import {reviewState} from "./ssmtOpening.js";
 import SsmtExperienceReview, { TicketFormNotice } from "./SsmtExperienceReview.jsx";
 import SsmtOpeningPanel, {ItemRotationDetails, CleanMenuReview} from "./SsmtOpeningPanel.jsx";
 import SsmtAssignments from "./SsmtAssignments.jsx";
@@ -737,8 +736,6 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
   const [cleanReview,setCleanReview] = useState(false);
   const [showHibernated,setShowHibernated] = useState(false);
   const [reusePanel, setReusePanel] = useState(null);
-  const [mrnLookup, setMrnLookup] = useState(null);
-  const [mrnPrompt, setMrnPrompt] = useState(null);
   const [sidesPreview, setSidesPreview] = useState(null);
   const [newFixyDesignation, setNewFixyDesignation] = useState("");
   const accountMode = Boolean(accountMember);
@@ -1028,17 +1025,6 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
   const activeStation = selectedMenu.stations?.find(s=>s.id === activeStationId);
   const builderItems = stationRows(selectedMenu,activeStationId,selectedMenu.type===OPENING_TYPE?rotationWeek:0);
   const reuseDestination = {...selectedMenu,fixyDesignation:activeStation?.fixyDesignation || selectedMenu.fixyDesignation,items:selectedMenu.items.filter(row=>(!activeStation || row.stationId === activeStation.id) && row.id !== reusePanel?.replaceItemId)};
-  useEffect(() => {
-    if (!mrnLookup || mrnLookup.menuId !== selectedMenu.id) return;
-    const timer=setTimeout(()=>{
-      const item=selectedMenu.items.find(row=>row.id===mrnLookup.itemId);
-      if (!item || item.lockedForCentric || item.mrn!==mrnLookup.mrn) return;
-      const matches=exactMrnMatches(item.mrn,menus,selectedMenu.id);
-      if(matches.length) setMrnPrompt({item,matches});
-      setMrnLookup(null);
-    },450);
-    return ()=>clearTimeout(timer);
-  },[mrnLookup,selectedMenu,menus]);
   useEffect(()=>{setActiveStationId("");setRotationWeek(0);setCleanReview(current=>current===selectedMenuId?current:false);},[selectedMenuId]);
   const selectedPrice = ssmtData.priceBook.find((row) => row.id === selectedPriceId) || ssmtData.priceBook[0];
   const priceToDelete = ssmtData.priceBook.find(row => row.id === deletePriceId);
@@ -2830,7 +2816,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                               readOnly={Boolean(item.lockedForCentric)}
                               className={`w-full rounded-md border border-slate-300 px-2 py-1 text-xs font-black outline-none focus:border-emerald-500 ${item.lockedForCentric ? "cursor-copy bg-emerald-50 text-slate-950" : "bg-white"}`}
                             />
-                          {reviewState(item)==="Needs review" && <span className="text-xs font-bold text-amber-800">Needs review</span>}<ItemRotationDetails item={item} menu={selectedMenu} onChange={patch=>updateItem(item.id,patch)}/></td>
+                          <ItemRotationDetails item={item} menu={selectedMenu} onChange={patch=>updateItem(item.id,patch)}/></td>
                           <td className={builderCellClass}>
                             <textarea
                               aria-label="Description"
@@ -2840,19 +2826,20 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                               readOnly={Boolean(item.lockedForCentric)}
                               className={`h-14 w-full resize-y rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold leading-4 outline-none focus:border-emerald-500 ${item.lockedForCentric ? "cursor-copy bg-emerald-50 text-slate-950" : "bg-white"}`}
                             />
+                            {!noExperienceReviewNeeded(item, menus, selectedMenu.id) && <span className="text-xs font-bold text-amber-800">Needs review</span>}
                           </td>
                           <td className={builderCellClass}>
                             <input
                               aria-label={`MRN for ${item.label || item.name || "item"}`}
                               value={item.mrn || ""}
-                              onChange={(event) => {updateItem(item.id, { mrn: event.target.value });setMrnPrompt(null);setMrnLookup({menuId:selectedMenu.id,itemId:item.id,mrn:event.target.value});}}
+                              onChange={(event) => updateItem(item.id, { mrn: event.target.value })}
                               onClick={() => copyLockedField(item, item.mrn, "MRN")}
                               readOnly={Boolean(item.lockedForCentric)}
                               className={`w-full rounded-md border border-slate-300 px-2 py-1 font-mono text-xs font-bold outline-none focus:border-emerald-500 ${item.lockedForCentric ? "cursor-copy bg-emerald-50 text-slate-950" : "bg-white"}`}
                             />
-                            {!item.lockedForCentric && !item.importSource && exactMrnMatches(item.mrn, menus, selectedMenu.id).length > 0 && <div className="mt-1 space-y-1 text-xs text-sky-900">
+                            {!item.lockedForCentric && matchingMrnItems(item.mrn, menus, selectedMenu.id, item.id).length > 0 && <div className="mt-1 space-y-1 text-xs text-sky-900">
                               <p className="font-bold">Existing item found</p>
-                              {exactMrnMatches(item.mrn, menus, selectedMenu.id).map(match => <button key={`${match.menuId}-${match.item.id}`} type="button" className="block text-left underline" onClick={() => setReusePanel({mode:"items", item, replaceItemId:item.id, initialSourceId:match.menuId, initialItemId:match.item.id})}>Import {match.item.label || match.item.name} from {match.menuName}</button>)}
+                              {matchingMrnItems(item.mrn, menus, selectedMenu.id, item.id).map(match => <button key={`${match.menuId}-${match.item.id}`} type="button" className="block text-left underline" onClick={() => setReusePanel({mode:"items", item, replaceItemId:item.id, matchMrn:item.mrn, initialSourceId:match.menuId, initialItemId:match.item.id})}>Import {match.item.label || match.item.name} from {match.menuName}</button>)}
                             </div>}
                           </td>
                           <td className={`${builderCellClass} font-bold text-slate-700`}>
@@ -3057,7 +3044,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
       )}
 
       {showHibernated && <Modal title="Hibernated menus" onClose={()=>setShowHibernated(false)}><div className="space-y-2">{menus.filter(m=>m.hidden||menuIsAutoHibernated(m)).map(m=><div key={m.id} className="flex flex-wrap gap-2 rounded border p-2"><button className="underline" data-menu-name={m.name} onClick={()=>{openMenu(m.id);setShowHibernated(false);}}>{m.name}</button><button className="rounded border p-2" onClick={()=>setMenus(current=>current.map(candidate=>candidate.id===m.id?{...candidate,hidden:false,restoredActiveEnd:candidate.activeEnd || ""}:candidate))}>Restore</button></div>)}</div></Modal>}
-      {mrnPrompt && <Modal title="Existing MRN found" onClose={()=>setMrnPrompt(null)}><p>MRN {mrnPrompt.item.mrn} matches an existing item. Review a swap or keep this new entry.</p>{mrnPrompt.matches.map(match=><button key={`${match.menuId}-${match.item.id}`} className="m-2 rounded border p-3" onClick={()=>{setReusePanel({mode:"items",item:mrnPrompt.item,replaceItemId:mrnPrompt.item.id,initialSourceId:match.menuId,initialItemId:match.item.id});setMrnPrompt(null);}}>Review swap: {match.item.label || match.item.name} from {match.menuName}</button>)}<button className="rounded border p-3" onClick={()=>setMrnPrompt(null)}>Keep new item</button></Modal>}
+
       {sidesPreview && <Modal title="Import Sides as Modifier Group" onClose={()=>setSidesPreview(null)}><p>Copy {sidesPreview.choices.length} sides into one new Force group. Title, minimum and maximum stay blank. All prices are zero.</p>{sidesPreview.choices.map(choice=><p key={choice.id}>{choice.label} | MRN {choice.mrn}</p>)}<button className="rounded border p-3" disabled={!sidesPreview.choices.length || modifierDialog?.item.lockedForCentric || modifierDialog?.groups.length>=MAX_MODIFIER_GROUPS_PER_ITEM} onClick={()=>{if(!modifierDialog || modifierDialog.item.lockedForCentric || modifierDialog.groups.length>=MAX_MODIFIER_GROUPS_PER_ITEM)return;const group=sidesPreview;setSsmtData(current=>({...current,modifierGroups:[...current.modifierGroups,group]}));updateItem(modifierDialog.item.id,{modifierGroups:[...(modifierDialog.item.modifierGroups || []),group.id]});setModifierDialog(current=>({...current,item:{...current.item,modifierGroups:[...(current.item.modifierGroups || []),group.id]},groups:[...current.groups,group]}));setSidesPreview(null);}}>Import sides</button></Modal>}
       {reusePanel && <SsmtReusePanel key={reusePanel.mode==="fixy" ? "fixy-batch" : `${reusePanel.item?.id || reusePanel.mode}-${reusePanel.initialSourceId || ""}-${reusePanel.initialItemId || ""}`} {...reusePanel} onChooseItem={item=>setReusePanel({mode:"fixy",item})} station={activeStation} menus={menus} menu={reuseDestination} groups={ssmtData.modifierGroups} onClose={()=>setReusePanel(null)} onApply={result=>{
         if(result.fixys){setMenus(current=>current.map(menu=>menu.id===selectedMenu.id?{...menu,items:menu.items.map(item=>result.fixys[item.id] && !item.lockedForCentric && isMenuItem(item)?{...item,fohColumn:result.fixys[item.id]}:item)}:menu));}

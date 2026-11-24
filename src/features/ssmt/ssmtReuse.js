@@ -140,7 +140,7 @@ export function importItems(
   allowCopies = false,
   options = {},
 ) {
-  if (source.phase !== "IT complete")
+  if (source.phase !== "IT complete" && !(options.matchMrn && !/^n\s*\/\s*a$/i.test(text(options.matchMrn)) && itemIds.length === 1 && source.items.some(row => row.id === itemIds[0] && isMenuItem(row) && text(row.mrn) === text(options.matchMrn))))
     throw new Error("Only IT complete menus can supply imported items.");
   if (options.inheritFixy !== false && !text(destination.fixyDesignation))
     throw new Error("Enter the destination FIXY designation first.");
@@ -186,6 +186,15 @@ export function exactMrnMatches(mrn, menus, destinationId) {
   return menus.filter(menu => menu.id !== destinationId && menu.phase === "IT complete")
     .flatMap(menu => (menu.items || []).filter(item => isMenuItem(item) && text(item.mrn) === exact)
       .map(item => ({ menuId: menu.id, menuName: menu.name, item })));
+}
+// Passive lookup across all menus; never count the row being edited as its own match.
+export function matchingMrnItems(mrn, menus = [], menuId, itemId) {
+  const exact = text(mrn);
+  if (!exact || /^n\s*\/\s*a$/i.test(exact)) return [];
+  return menus.flatMap(menu => (menu.items || [])
+    .filter(candidate => isMenuItem(candidate) && text(candidate.mrn) === exact &&
+      !(candidate.id === itemId && (menuId === undefined || menu.id === menuId)))
+    .map(item => ({menuId:menu.id, menuName:menu.name, item})));
 }
 export function approvedMatches(item, menus) {
   return menus
@@ -242,8 +251,9 @@ export function generateFixy(item, menu, facts) {
 }
 
 
-export function noExperienceReviewNeeded(item) {
-  if (!text(item.mrn)) return false;
+export function noExperienceReviewNeeded(item, menus = [], menuId) {
+  if (!text(item.mrn) || /^n\s*\/\s*a$/i.test(text(item.mrn))) return false;
+  if (matchingMrnItems(item.mrn, menus, menuId, item.id).length) return true;
   if(item.reviewInvalidated) return false;
   if (item.reviewBasis) return item.reviewBasis.source !== "new" && item.reviewBasis.mrn === item.mrn && item.reviewBasis.description === (item.description || "");
   const source = item.importSource;

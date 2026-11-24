@@ -1072,7 +1072,7 @@ test("passive exact MRN guide imports explicitly and Experience labels reused it
   await page.locator('[data-menu-name="Target Menu"]').click();
   await expect(page.getByText("No Review Needed", {exact:true})).toHaveCount(1);
   await page.getByLabel("Description for Smash Burger", {exact:true}).fill("Changed description needs review");
-  await expect(page.getByText("No Review Needed", {exact:true})).toHaveCount(0);
+  await expect(page.getByText("No Review Needed", {exact:true})).toHaveCount(1);
   await page.getByRole("button",{name:"Save SSMT workspace",exact:true}).click();
   await expect.poll(()=>fixture.saves.length).toBe(2);
 });
@@ -1338,16 +1338,16 @@ test("category pricing hides individual grill choices and preserves saved links 
 });
 
 
-test("workflow builder arrows and automatic MRN swap retain draft",async({page})=>{
+test("workflow builder arrows and passive MRN links retain draft",async({page})=>{
   await isolated(page,{workflowFixtures:true});await openTarget(page);
   const labels=page.getByLabel('Item label',{exact:true});
   await labels.nth(0).focus();await page.keyboard.press('ArrowDown');await expect(labels.nth(1)).toBeFocused();
   await page.getByLabel('MRN for NEW FISH',{exact:true}).fill('00083821.10');
   const prompt=page.getByRole('dialog',{name:'Existing MRN found'});
-  await expect(prompt).toContainText('Smash Burger');await prompt.getByRole('button',{name:'Keep new item'}).click();
+  await expect(prompt).toHaveCount(0);await expect(page.getByRole('button',{name:'Import Smash Burger from Source Menu',exact:true})).toBeVisible();
   await expect(labels.nth(0)).toHaveValue('NEW FISH');
   await page.getByLabel('MRN for NEW FISH',{exact:true}).fill('');
-  await expect(labels.nth(0).locator('xpath=..')).toContainText('Needs review');
+  await expect(labels.nth(0).locator('xpath=ancestor::tr[1]').getByLabel('Description',{exact:true}).locator('xpath=..')).toContainText('Needs review');
 });
 test("workflow FIXY batch stays open and applies fish and baked goods together",async({page})=>{
   await isolated(page,{workflowFixtures:true});await openTarget(page);
@@ -1435,7 +1435,7 @@ test("workflow side import respects unassigned station and selected week without
 
 test("FIXY proteins sort by name and builder review label appears once", async ({page}, testInfo) => {
   await isolated(page,{workflowFixtures:true}); await openTarget(page);
-  const row = page.getByLabel('Item label',{exact:true}).first().locator('xpath=..');
+  const row = page.getByLabel('Item label',{exact:true}).first().locator('xpath=ancestor::tr[1]');
   await expect(row.getByText(/^(?:\* )?Needs review$/)).toHaveCount(1);
   await page.getByRole('button',{name:'Generate FIXY',exact:true}).click();
   const panel=page.getByRole('dialog',{name:'Generate FIXY',exact:true});
@@ -1469,4 +1469,42 @@ test("Experience simplified titles and permanent report button", async ({page},t
   await page.setViewportSize({width:390,height:844});
   await expect(page.getByRole('button',{name:'Report flags (1)',exact:true})).toBeInViewport();
   await page.screenshot({path:testInfo.outputPath('experience-phone.png'),fullPage:true});
+});
+
+test("MRN matches clear description review status live and import stays beneath MRN",async({page})=>{
+ await isolated(page,{workflowFixtures:true,tyler:true});await openTarget(page);
+ const mrn=page.getByLabel('MRN for NEW FISH',{exact:true});
+ const row=mrn.locator('xpath=ancestor::tr[1]');
+ const description=row.getByLabel('Description',{exact:true}).locator('xpath=..');
+ await expect(description).toContainText('Needs review');
+ await expect(row.getByLabel('Item label',{exact:true}).locator('xpath=..')).not.toContainText('Needs review');
+ await mrn.fill('00083821.10');
+ await expect(mrn.locator('xpath=..').getByRole('button',{name:'Import Smash Burger from Source Menu',exact:true})).toBeVisible();
+ await expect(description).not.toContainText('Needs review');
+ await expect(page.getByRole('dialog',{name:'Existing MRN found'})).toHaveCount(0);
+ await mrn.fill('000111.10');
+ await expect(description).not.toContainText('Needs review');
+ await expect(mrn.locator('xpath=..').getByRole('button',{name:'Import CHIPS from Target Menu',exact:true})).toBeVisible();
+ await mrn.fill('000111.1');await expect(description).toContainText('Needs review');
+ await page.getByRole('button',{name:'View as Experience',exact:true}).click();
+ const experience=page.getByTestId('ssmt-experience-item-row').first();
+ await expect(experience.locator('td').nth(0)).not.toContainText('Needs review');
+ await expect(experience.locator('td').nth(1)).toContainText('Needs review');
+});
+
+test("exact MRN link previews an unfinished source and preserves explicit apply",async({page},testInfo)=>{
+ const fixture=await isolated(page,{mrnDraft:true,culinaryDraftSource:true,tyler:true});await openTarget(page);
+ await page.getByLabel('Menu FIXY designation',{exact:true}).fill('TARGET');
+ const mrn=page.getByRole('textbox',{name:/MRN for/}).last();await mrn.fill('00083821.10');
+ await mrn.locator('xpath=..').getByRole('button',{name:'Import Smash Burger from Source Menu',exact:true}).click();
+ const panel=page.getByRole('dialog',{name:'Add from Menu',exact:true});
+ await panel.getByRole('button',{name:'Preview copies',exact:true}).click();
+ expect(fixture.getWorkspace().menus[1].items[0].description).toBe('Draft description');
+ await panel.getByRole('button',{name:'Apply copies',exact:true}).click();
+ await expect(page.getByLabel('Description',{exact:true}).first()).toHaveValue('Beef burger');
+ await page.getByRole('button',{name:'View as Experience',exact:true}).click();
+ await expect(page.getByTestId('ssmt-experience-item-row').first().locator('td').nth(1)).toContainText('No Review Needed');
+ await page.screenshot({path:testInfo.outputPath('mrn-review-desktop.png'),fullPage:true});
+ await page.setViewportSize({width:390,height:844});
+ await page.screenshot({path:testInfo.outputPath('mrn-review-phone.png'),fullPage:true});
 });

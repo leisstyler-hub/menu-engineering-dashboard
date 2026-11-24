@@ -1,3 +1,7 @@
+## SSMT exact MRN review - 2026-11-24
+
+Candidate `2026.11.24.011-ssmt-mrn-review`, Chief on `chief/ssmt-unit-openings`, baseline/rollback `c1e121a3347af5de6da4ba3bace465dda76bcf61`. Tyler bd07c7e requests description-adjacent review status, live exact MRN lookup, explicit import links under MRN and any-match review exemption. See PRODUCT_DECISIONS latest exception. General import remains completed-source-only; targeted single exact-MRN replacements retain preview/apply and source content checks. No persisted review evidence fabrication, permission/schema change or production workspace write. Release evidence: workspace `WORK_LOGS/SSMT_MRN_REVIEW_2026_11_24.md`.
+
 ## SSMT Experience review cleanup - 2026-11-24
 
 Candidate `2026.11.24.010-ssmt-experience-cleanup`, Chief solo on `chief/ssmt-unit-openings`, baseline/rollback `5de4d210fc6ed99d837054f1f3ac211cba05a04d`. Tyler `a6401a64` requests removing per-item Edit FIXY, duplicate item titles, and a permanent top-right Report flags button. Retain one editable item name and top-level designation, uppercase/name propagation and existing flag mailto; Report flags remains visible at zero and disabled until flags exist. No canonical writes, migration, or permission changes. Release evidence: workspace `WORK_LOGS/SSMT_EXPERIENCE_CLEANUP_2026_11_24.md`.

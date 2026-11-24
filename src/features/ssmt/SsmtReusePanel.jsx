@@ -33,6 +33,7 @@ export default function SsmtReusePanel({
   initialSourceId = "",
   initialItemId = "",
   replaceItemId,
+  matchMrn,
   station,
 }) {
   const [staged, setStaged] = useState({});
@@ -54,7 +55,7 @@ export default function SsmtReusePanel({
   });
   const [matchIndex, setMatchIndex] = useState("");
   const alphabetically = (a, b) => String(a.label || a.name || "").localeCompare(String(b.label || b.name || ""), undefined, { sensitivity: "base", numeric: true });
-  const sourceMenus = [...(mode === "items" ? menus.filter(m => m.phase === "IT complete") : menus)].sort(alphabetically);
+  const sourceMenus = [...(mode === "items" ? menus.filter(m => m.phase === "IT complete" || (matchMrn && replaceItemId && m.id === initialSourceId)) : menus)].sort(alphabetically);
   const source = menus.find((m) => m.id === sourceId),
     sourceItem = source?.items.find((i) => i.id === sourceItemId);
   const sourceItems = useMemo(() => (source?.items || []).filter(isMenuItem).sort(alphabetically).map(candidate => ({
@@ -115,7 +116,7 @@ export default function SsmtReusePanel({
           throw new Error("Select a source menu and at least one item.");
         if (selectedIssues.length)
           throw new Error(selectedIssues.map(({item, issue}) => `${item.label || item.name}: ${issue}`).join(" ") + " No items were imported. Uncheck these items to copy the ready selection, or correct their source menu first.");
-        const result = importItems(source, {...menu,fixyDesignation:station?.fixyDesignation || menu.fixyDesignation}, selected, groups, allowCopies, {inheritFixy,stationId:station?.id});
+        const result = importItems(source, {...menu,fixyDesignation:station?.fixyDesignation || menu.fixyDesignation}, selected, groups, allowCopies, {inheritFixy,stationId:station?.id,matchMrn:replaceItemId ? matchMrn : undefined});
         if (!result.items.length) throw new Error("Selected items are already in the destination menu. Choose other items or explicitly allow additional copies.");
         setPreview(result);
       } else if (mode === "groups") {
@@ -216,7 +217,7 @@ export default function SsmtReusePanel({
               </select>
             </label>
             {mode === "items" && <div className="space-y-3 text-sm">
-              <p>Copy items from an IT complete menu into <strong>{menu.name}</strong>. Destination designation: <strong>{menu.fixyDesignation || "Enter it on the destination menu"}</strong>.</p>
+              <p>Copy items from {matchMrn ? "the selected exact-MRN source" : "an IT complete menu"} into <strong>{menu.name}</strong>. Destination designation: <strong>{menu.fixyDesignation || "Enter it on the destination menu"}</strong>.</p>
               <label className="block font-bold">Search items<input aria-label="Search items" className={input} value={search} onChange={e => setSearch(e.target.value)} placeholder="Item name, MRN or FIXY" /></label>
               {source && <p className="text-slate-600">{sourceItems.length} items / {readyItems.length} ready / {selected.length} selected{blockedCount > 0 && ` / ${blockedCount} need source corrections`}</p>}
               {source && <p role="status" className="font-bold">{selected.length} selected / {selectedReadyCount} ready / {selectedIssues.length} need source corrections / {selectedDuplicates.length} duplicates skipped</p>}

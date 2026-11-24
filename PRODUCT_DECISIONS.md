@@ -493,3 +493,10 @@ Tyler event `1b302bf974a681a1cebaf690b517a88bbb8d0f146077b0757776f34dd6b81d11` a
 ## SSMT-2026-11-24: Separate approved no-side schedule
 
 Tyler `629ee5ffa84df57fc07ff3bc84143fdee63369101ed5aa3044378780e2fb8874`, resumed by `4e33b1565a4d6f0fd9dfe09d81692470a4c59025c78db98a51eabcc86d189bbf`, requests adding the five retained-market no-side schedules with stars alongside workbook prices. This supersedes the earlier inference that workbook authority replaces the retained no-side proposal. Workbook prices retain original source names, with-side labels and values. No guessed deductions or automatic menu relinks. Preserve current cleanup, history and planned pricing. See workspace WORK_LOGS/SSMT_NO_SIDE_ADDITION_2026_11_24/PREVIEW_RESUMED.json and REVIEW.md.
+
+
+## 2026-11-24 - Exact MRN match review exemption
+
+Tyler bd07c7e8413de75db04cd43150c77f6afa2c1d00beadf4900441aca923019846 supersedes earlier MRN/description invalidation display rules when another exact MRN exists. Search all existing menus and other rows in the current menu; exclude self, dividers, blank and N/A. Any match clears Needs review even before importing and regardless of description differences. A fresh item without a match needs review. Preserve genuine historical review/import evidence for previously reviewed rows when no match remains; do not rewrite stored reviewBasis or invalidation history to implement this display exemption. Review status belongs by the description.
+
+Matching links under MRN open existing explicit preview/apply. The targeted replacement can copy one exact-MRN row from an unfinished source, with existing FIXY/modifier validation and duplicate safeguards. General Add from Menu remains IT-complete-only. Matching does not establish reviewed FIXY facts, trigger automatic copying, alter permissions or change canonical data.
