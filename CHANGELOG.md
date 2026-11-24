@@ -1,5 +1,7 @@
 ## 2026-11-24
 
+- [Nov 24, 9:37 AM] Star E-S workbook brackets in menu-building and modifier price dropdowns so new source brackets are easy to identify.
+
 - [Nov 24, 9:25 AM] Combine all pricing brackets in one table, star workbook E-S rows, and filter unstarred rows for reassignment and removal.
 
 - [Nov 24, 8:54 AM] Show all workbook E–S pricing columns in SSMT with source categories, explicit missing prices and Canada currency.

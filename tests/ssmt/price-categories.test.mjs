@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { isLegacyGrillPrice, categoryPriceOptions } from '../../src/features/ssmt/ssmtPriceCategories.js';
+import { isLegacyGrillPrice, categoryPriceOptions, categoryPriceLabel } from '../../src/features/ssmt/ssmtPriceCategories.js';
 const legacy = {id:'price-guide-2026-row-46',category:'Brunch Burger',areas:{SEA:'9.20'}};
 const category = {id:'price-1-base-burger-w-side',category:'Base Burger w/ side',areas:{SEA:'11.25'}};
 test('category choices exclude known individual grill rows but retain the current selection without mutation', () => {
@@ -16,4 +16,14 @@ test('unrelated custom prices, deli categories and changed identities are preser
  }
  assert.equal(isLegacyGrillPrice(legacy),true);
  assert.equal(isLegacyGrillPrice({id:'price-guide-2026-row-40',category:'Chicken Chesapeake Sandwich'}),true);
+});
+
+test('selector labels star exact E-S provenance and leave old/custom labels and source rows intact', () => {
+ const source = {...category, selectorLabel:'$11.25 - Base Burger', sourceGuide:{range:'E:S'}};
+ const before = structuredClone(source);
+ assert.equal(categoryPriceLabel(source), '\u2605 E-S - $11.25 - Base Burger');
+ assert.equal(categoryPriceLabel(category), category.category);
+ assert.equal(categoryPriceLabel({...source,sourceGuide:{range:'A:D'}}), source.selectorLabel);
+ assert.match(categoryPriceLabel(legacy), /legacy dish price - review category/);
+ assert.deepEqual(source,before);
 });

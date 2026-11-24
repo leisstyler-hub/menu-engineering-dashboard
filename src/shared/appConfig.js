@@ -1,1 +1,1 @@
-export const APP_VERSION_STAMP = "2026.11.24.004-ssmt-single-price-bracket";
+export const APP_VERSION_STAMP = "2026.11.24.005-ssmt-selector-stars";

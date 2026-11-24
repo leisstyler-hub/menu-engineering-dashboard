@@ -284,3 +284,18 @@ test('finance workbook presentation is legible and preserves styled summary head
   await page.screenshot({path:`.scratch/SSMT_AUDIT_${name.replaceAll(' ','_')}.png`,fullPage:false});
  }
 });
+
+test('menu and modifier selectors star E-S workbook brackets while keeping old selections',async({page})=>{
+ const source={id:'workbook-source',category:'New workbook',selectorLabel:'$8.00 - New workbook',areas:{SEA:'$8.00'},sourceGuide:{range:'E:S'}};
+ const {saves}=await fixture(page,false,false,[source]);
+ await openMenu(page);
+ const item=page.getByLabel('SEA price for Linked Burger',{exact:true});
+ await expect(item).toHaveValue('burger');
+ await expect(item.locator('option[value="workbook-source"]')).toHaveText('\u2605 E-S - $8.00 - New workbook');
+ await expect(item.locator('option[value="burger"]')).toHaveText('$12.00 - Burger');
+ await page.getByRole('button',{name:/View modifiers Mods/}).first().click();
+ const modifier=page.getByLabel('Modifier price',{exact:true}).first();
+ await expect(modifier.locator('option[value="workbook-source"]')).toHaveText('\u2605 E-S - $8.00 - New workbook');
+ await expect(modifier.locator('option[value="ssmt-modifier-zero"]')).toHaveText('$0.00 - Modifier Free');
+ expect(saves).toHaveLength(0);
+});

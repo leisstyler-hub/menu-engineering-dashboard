@@ -1,3 +1,5 @@
+import { isWorkbookPrice } from "./ssmtPriceGuide.js";
+
 // Exact legacy guide identities from the read-only 2026-11-23 mapping.
 // Presentation only: no saved row, price, reference or plan is rewritten.
 const LEGACY_GRILL_ROWS = {
@@ -57,5 +59,6 @@ export function categoryPriceOptions(rows = [], selectedId = "") {
 
 export function categoryPriceLabel(row) {
   const label = row.selectorLabel || row.category;
+  if (isWorkbookPrice(row)) return `\u2605 E-S - ${label}`;
   return isLegacyGrillPrice(row) ? `${label} (legacy dish price - review category)` : label;
 }

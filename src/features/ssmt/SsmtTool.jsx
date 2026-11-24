@@ -2839,7 +2839,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                               disabled={Boolean(item.lockedForCentric)}
                               className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-black text-slate-900"
                             >
-                              <option value="">Select SEA price</option>
+                              <option value="">Select SEA price (star = E-S workbook)</option>
                               {categoryPriceOptions(itemPriceOptions, item.priceSelectorId).map((price) => (
                                 <option key={price.id} value={price.id}>{categoryPriceLabel(price)}</option>
                               ))}
@@ -3217,7 +3217,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                               disabled={Boolean(group.lockedForCentric)}
                               className="w-full min-w-0 rounded-md border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-900"
                             >
-                              <option value="">Select price</option>
+                              <option value="">Select price (star = E-S workbook)</option>
                               <option value={FREE_MODIFIER_PRICE_ID} data-price-kind="modifier">$0.00 - Modifier Free</option>
                               {categoryPriceOptions(modifierPriceOptions, choice.priceSelectorId).map((price) => (
                                 <option key={price.id} value={price.id} data-price-kind={price.modifierOnly ? "modifier" : "standard"}>{categoryPriceLabel(price)}</option>
