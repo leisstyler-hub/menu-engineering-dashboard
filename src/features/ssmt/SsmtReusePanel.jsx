@@ -409,7 +409,7 @@ export default function SsmtReusePanel({
                           Confirm {label.toLowerCase()}
                         </option>
                       )}
-                      {Object.entries(options).map(([code, name]) => (
+                      {Object.entries(options).sort(([, nameA], [, nameB]) => field === "protein" ? nameA.localeCompare(nameB, "en-US") : 0).map(([code, name]) => (
                         <option key={code} value={code}>
                           {code} {name}
                         </option>

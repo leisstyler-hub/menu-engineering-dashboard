@@ -25,7 +25,7 @@ export default function SsmtOpeningPanel({menu,menus,groups,stationId,onStation,
  </section>;
 }
 export function ItemRotationDetails({item,menu,onChange}) {
- if(menu.type!==OPENING_TYPE)return reviewState(item)==="Needs review"?<span className="text-xs text-amber-800">* Needs review</span>:null;
+ if(menu.type!==OPENING_TYPE)return null;
  return <details className="mt-1 text-xs"><summary className="cursor-pointer">{item.reviewBasis?.source==="new"||reviewState(item)==="Needs review"?"* ":""}{item.weeks?.length?`Weeks ${item.weeks.join(", ")}`:"Core / all weeks"}</summary>
  <fieldset disabled={!!item.lockedForCentric}><legend>Participating weeks (none = all)</legend><div className="flex flex-wrap gap-2">{[1,2,3,4,5,6].map(w=><label key={w}><input aria-label={`Week ${w} for ${item.label || item.name}`} type="checkbox" checked={!!item.weeks?.includes(w)} onChange={e=>onChange({weeks:e.target.checked?[...(item.weeks || []),w].sort():(item.weeks || []).filter(n=>n!==w)})}/>{w}</label>)}</div>
  {menu.type===OPENING_TYPE&&<label>Station<select aria-label={`Station for ${item.label || item.name}`} className="w-full rounded border p-1" value={item.stationId || ""} onChange={e=>onChange({stationId:e.target.value})}><option value="">Unassigned</option>{menu.stations?.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label>}</fieldset></details>;

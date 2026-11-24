@@ -1431,3 +1431,20 @@ test("workflow side import respects unassigned station and selected week without
   await panel.getByRole('button',{name:'Import sides',exact:true}).click();
   await expect(page.getByRole('dialog',{name:'Modifier detail'}).getByLabel('Modifier MRN',{exact:true})).toHaveValue('0001.10');
 });
+
+
+test("FIXY proteins sort by name and builder review label appears once", async ({page}, testInfo) => {
+  await isolated(page,{workflowFixtures:true}); await openTarget(page);
+  const row = page.getByLabel('Item label',{exact:true}).first().locator('xpath=..');
+  await expect(row.getByText(/^(?:\* )?Needs review$/)).toHaveCount(1);
+  await page.getByRole('button',{name:'Generate FIXY',exact:true}).click();
+  const panel=page.getByRole('dialog',{name:'Generate FIXY',exact:true});
+  const options=await panel.getByLabel('Protein',{exact:true}).locator('option').evaluateAll(options => options.filter(o=>o.value!=='unknown').map(o=>({value:o.value,label:o.textContent.trim()})));
+  const names=options.map(o=>o.label.replace(new RegExp('^'+o.value+'\\s*'),''));
+  expect(names).toEqual([...names].sort((a,b)=>a.localeCompare(b,'en-US')));
+  expect(options.find(o=>o.value==='FSH').label).toContain('Fish');
+  await page.screenshot({path:testInfo.outputPath('fixy-desktop.png'),fullPage:true});
+  await page.setViewportSize({width:390,height:844});
+  await expect(panel.getByLabel('Protein',{exact:true})).toBeVisible();
+  await page.screenshot({path:testInfo.outputPath('fixy-phone.png'),fullPage:true});
+});
