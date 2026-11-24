@@ -1,5 +1,7 @@
 ## 2026-11-24
 
+- [Nov 24, 1:16 PM] Add starred no-side burger and chicken price brackets and restore workbook brackets to their original source names.
+
 - [Nov 24, 9:44 AM] Simplify workbook price markers to a star in price dropdowns and bracket badges.
 
 - [Nov 24, 9:37 AM] Star E-S workbook brackets in menu-building and modifier price dropdowns so new source brackets are easy to identify.

@@ -27,3 +27,10 @@ test('selector labels star exact E-S provenance and leave old/custom labels and 
  assert.match(categoryPriceLabel(legacy), /legacy dish price - review category/);
  assert.deepEqual(source,before);
 });
+
+test('approved no-side prices get a star without pretending to be workbook rows', () => {
+ const row={...category,sourceSchedule:{kind:'approved-no-side',approvalEventId:'629ee5ffa84df57fc07ff3bc84143fdee63369101ed5aa3044378780e2fb8874',sourcePriceId:'price-guide-2026-row-16'}};
+ assert.equal(categoryPriceLabel(row), '\u2605 '+category.category);
+ assert.equal(categoryPriceLabel({...row,sourceSchedule:{kind:'approved-no-side'}}), category.category);
+ assert.equal(categoryPriceLabel({...row,sourceSchedule:{...row.sourceSchedule,kind:'unreviewed'}}), category.category);
+});

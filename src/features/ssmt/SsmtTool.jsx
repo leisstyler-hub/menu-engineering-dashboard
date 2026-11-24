@@ -1,5 +1,5 @@
 import { categoryPriceOptions, categoryPriceLabel } from "./ssmtPriceCategories.js";
-import { GUIDE_COLUMNS, isWorkbookPrice, guideColumnLabel } from "./ssmtPriceGuide.js";
+import { GUIDE_COLUMNS, isWorkbookPrice, isStarredPrice, guideColumnLabel } from "./ssmtPriceGuide.js";
 import { FREE_MODIFIER_PRICE_ID, selectModifierType, resizeModifierGroup } from "./ssmtModifierDefaults.js";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -1063,7 +1063,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
   const displayedPriceOptions = useMemo(() => sortPricesForItemSelector(displayedPriceBook), [displayedPriceBook]);
   const priceBracketColumns = [...GUIDE_COLUMNS, ...ssmtData.areaOrder.filter(area => !GUIDE_COLUMNS.includes(area))];
   const filteredPriceOptions = displayedPriceOptions.filter(price =>
-    (!unstarredPricesOnly || !isWorkbookPrice(price)) &&
+    (!unstarredPricesOnly || !isStarredPrice(price)) &&
     `${price.category} ${price.selectorLabel} ${price.sourceGuide?.sourceName || ""}`.toLowerCase().includes(priceBracketQuery.trim().toLowerCase()));
   const plannedPricingNotice = ssmtData.plannedPriceBook ? `New pricing launches ${ssmtData.plannedPriceBook.effectiveDate || "after a date is set"}${ssmtData.plannedPriceBook.effectiveDate ? ` � ${pricingCountdown(ssmtData.plannedPriceBook.effectiveDate)}` : ""}.` : "";
   const modifierGroupIndex = useMemo(() => buildModifierGroupIndex(pricedModifierGroups), [pricedModifierGroups]);
@@ -2320,7 +2320,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                   <h2 className="mt-1 text-2xl font-black">Pricing Structure</h2>
                   <p className="mt-2 text-sm font-semibold text-slate-600">{ssmtData.areaOrder.join(", ")}</p>
                   <p className="mt-3 text-sm font-semibold text-slate-700">Deli and grill guidance: no included sides. The workbook guide retains its exact source names and values.</p>
-                  <p className="mt-2 text-xs text-slate-600">All brackets appear in one table. ★ identifies a bracket from your workbook; unstarred brackets are retained for reassignment and removal.</p>
+                  <p className="mt-2 text-xs text-slate-600">All brackets appear in one table. ★ identifies a workbook bracket or an approved no-side bracket. No-side brackets use the approved retained market schedule; workbook brackets keep their original source prices. Unstarred brackets are retained for reassignment and removal.</p>
                   <button type="button" onClick={exportPricingAudit} disabled={dataStatus !== "ready"} className="mt-3 inline-flex items-center gap-2 rounded-lg border border-emerald-700 bg-emerald-700 px-4 py-2 text-sm font-black text-white hover:bg-emerald-800 disabled:opacity-50">
                     <Download size={16} aria-hidden="true" /> Export Pricing Audit
                   </button>
@@ -2374,7 +2374,8 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                     {filteredPriceOptions.map((price) => (
                       <tr key={price.id} className="odd:bg-white even:bg-slate-50/70">
                         <td className="min-w-[280px] border-b border-slate-100 px-4 py-3 font-black text-slate-950">
-                          {isWorkbookPrice(price) && <span aria-label="Workbook E-S source bracket" title="From workbook columns E through S" className="mb-1 block text-xs font-black text-emerald-800">★</span>}
+                          {isStarredPrice(price) && <span aria-label={isWorkbookPrice(price) ? "Workbook E-S source bracket" : "Approved no-side bracket"} title={isWorkbookPrice(price) ? "From workbook columns E through S" : "Approved no-side price from retained market schedule"} className="mb-1 block text-xs font-black text-emerald-800">★</span>}
+                          {!isWorkbookPrice(price) && isStarredPrice(price) && <p className="mt-1 text-xs font-normal text-slate-500">Approved no-side market schedule</p>}
                           <span className="inline-flex items-center gap-3"><span>{price.selectorLabel}</span><span aria-label={`${priceMenuItemCounts.get(price.id) || 0} linked menu items for ${price.selectorLabel}`} title="Linked menu items across all menus, including hidden and historical menus" className="text-xs font-normal tabular-nums text-slate-500">{priceMenuItemCounts.get(price.id) || 0}</span></span>
                           {isWorkbookPrice(price) && <p className="mt-1 text-xs font-normal text-slate-500">{price.sourceGuide.sourceName} · source row {price.sourceGuide.sourceRow}</p>}
                           {!pricingPlanMode && <button type="button" aria-label={`Delete price row ${price.selectorLabel}`} onClick={() => setDeletePriceId(price.id)} className="mt-2 flex items-center gap-1 rounded border border-red-300 bg-red-50 px-2 py-1 text-xs font-bold text-red-800 hover:bg-red-100"><Trash2 size={13} /> Delete</button>}
@@ -2839,7 +2840,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                               disabled={Boolean(item.lockedForCentric)}
                               className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-black text-slate-900"
                             >
-                              <option value="">Select SEA price (star = workbook)</option>
+                              <option value="">Select SEA price (star = workbook or approved no-side)</option>
                               {categoryPriceOptions(itemPriceOptions, item.priceSelectorId).map((price) => (
                                 <option key={price.id} value={price.id}>{categoryPriceLabel(price)}</option>
                               ))}
@@ -3217,7 +3218,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
                               disabled={Boolean(group.lockedForCentric)}
                               className="w-full min-w-0 rounded-md border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-900"
                             >
-                              <option value="">Select price (star = workbook)</option>
+                              <option value="">Select price (star = workbook or approved no-side)</option>
                               <option value={FREE_MODIFIER_PRICE_ID} data-price-kind="modifier">$0.00 - Modifier Free</option>
                               {categoryPriceOptions(modifierPriceOptions, choice.priceSelectorId).map((price) => (
                                 <option key={price.id} value={price.id} data-price-kind={price.modifierOnly ? "modifier" : "standard"}>{categoryPriceLabel(price)}</option>
@@ -3268,7 +3269,7 @@ function SsmtEditor({ onBackToPlatform, onOpenSmartsheetHealth, accountMember, o
           <label className="grid gap-2 font-bold">Replacement pricing row
             <select aria-label="Replacement pricing row" value={replacementPriceId} onChange={event => setReplacementPriceId(event.target.value)} className="w-full min-w-0 rounded-lg border border-slate-300 bg-white p-2">
               <option value="">{deletePriceUsage.total > 0 ? "Choose a replacement before deleting" : "No replacement needed (unused row)"}</option>
-              {ssmtData.priceBook.filter(row => row.id !== deletePriceId && ssmtData.priceBook.filter(candidate => candidate.id === row.id).length === 1).sort(comparePricesHighToLow).map(row => <option key={row.id} value={row.id}>{isWorkbookPrice(row) ? "★ " : ""}{row.selectorLabel || row.category}</option>)}
+              {ssmtData.priceBook.filter(row => row.id !== deletePriceId && ssmtData.priceBook.filter(candidate => candidate.id === row.id).length === 1).sort(comparePricesHighToLow).map(row => <option key={row.id} value={row.id}>{isStarredPrice(row) ? "★ " : ""}{row.selectorLabel || row.category}</option>)}
             </select>
           </label>
           {deletePriceUsage.total > 0 && <p role="alert" className="font-bold text-red-800">Reassign these links before deleting. This includes historical or hidden menus. The selected replacement prices will apply to every linked item and modifier.</p>}
