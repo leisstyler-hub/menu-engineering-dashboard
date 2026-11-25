@@ -1,3 +1,7 @@
+## Promotion preview MRNs - 2026-11-25
+
+Candidate `2026.11.25.004-promotion-preview-mrn`, Chief solo on `chief/promo-preview-mrn`, base/rollback `090c4d96435152a75ef496c3f99a179c6820b097`. Tyler Pebble request `617d04eda13e146af66e1cc0da7d0db11216ebe2b7f0762f736252ee141d6bcc` requests item name, description and MRN in the landing calendar popup. Public calendar projection adds only the string MRN field, preserving exact text and excluding private properties; shared popup displays MRN after description, with Not supplied for absent MRNs. No persistence, schema, pricing, auth or canonical data writes. Desktop/mobile browser fixtures intercept APIs and assert zero writes. Production publication pending scoped release authorization; evidence in workspace WORK_LOGS/PROMOTION_PREVIEW_MRN_2026_11_25.md.
+
 ## SSMT Beef FIXY code - 2026-11-25
 
 Candidate `2026.11.25.003-ssmt-beef-fixy` changes the Generate FIXY Beef choice from BF to BEF. New previews and explicitly applied FIXYs use BEF; existing saved FIXYs and other fields are preserved. Chief solo; Tyler request b065f65b; baseline/rollback d6849ee70d0367f1ce287641a443b05f0e8164e2. Isolated generation/apply tests and full verification required. Evidence: workspace WORK_LOGS/SSMT_BEEF_FIXY_2026_11_25.md.

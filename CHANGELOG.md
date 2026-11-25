@@ -1,5 +1,7 @@
 ## 2026-11-25
 
+- [Nov 25, 12:08 PM] Show each promotion item's name, description and exact MRN in the calendar popup.
+
 - [Nov 25, 11:36 AM] Generate Beef FIXYs with BEF instead of BF while preserving existing saved records.
 
 - [Nov 25, 7:20 AM] Preserve modifier MRNs, prices and entered group values when switching modifier types.

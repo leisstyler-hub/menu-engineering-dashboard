@@ -7,13 +7,13 @@ import {pack} from '../../lib/ssmtServer.js';
 test('calendar projection returns only approved display fields and excludes hidden/divider records',()=>{
   const secret={password:'secret',recipeUrl:'private',photoLink:'private',price:9,modifierGroups:['private']};
   const menu={id:'promo',name:'BYPTWD',type:'Promotion',phase:'IT complete',activeStart:'2026-10-09',activeEnd:'2026-10-09',fixyDesignation:' B Y P ',...secret,promotionSchedule:{mode:'weekly',weekdays:[4,0,'5'],skippedDates:['2026-10-08'],secret},items:[
-    {label:'Trout',description:'Grilled trout',calories:0,category:'Entree',...secret},
+    {label:'Trout',description:'Grilled trout',mrn:'00083821.10',calories:0,category:'Entree',...secret},
     {recordType:'divider',label:'Divider'}, {rowType:'divider',name:'Divider 2'}, {hidden:true,label:'Hidden'}, {hiddenFromDownstream:true,label:'Hidden 2'}
   ]};
   const before=JSON.stringify(menu);
   const result=publicCalendarMenus([menu,{...menu,id:'hidden',hidden:true},{...menu,id:'hidden2',hiddenFromDownstream:true}]);
   assert.equal(result.length,1);
-  assert.deepEqual(result[0].items,[{label:'Trout',description:'Grilled trout',calories:0,category:'Entree'}]);
+  assert.deepEqual(result[0].items,[{label:'Trout',description:'Grilled trout',mrn:'00083821.10',calories:0,category:'Entree'}]);
   assert.equal(result[0].fixyDesignation,' B Y P ');
   assert.deepEqual(result[0].promotionSchedule,{mode:'weekly',weekdays:[4],skippedDates:['2026-10-08']});
   assert.equal(JSON.stringify(result).includes('private'),false);
@@ -23,8 +23,8 @@ test('calendar projection returns only approved display fields and excludes hidd
 
 test('calendar projection does not serialize object fields or add item details to non-promotion menus',()=>{
   const object={private:'must not escape'};
-  const [promo,core]=publicCalendarMenus([{id:'one',name:'One',type:'Promotion',fixyDesignation:object,items:[{label:object,name:'Safe fallback',description:object,calories:object,category:object},{label:object,name:object}]},{id:'core',name:'Core',type:'Core',items:[{label:'Private core item'}],fixyDesignation:'CORE'}]);
-  assert.equal(promo.fixyDesignation,'');assert.deepEqual(promo.items,[{label:'Safe fallback',description:'',category:''}]);
+  const [promo,core]=publicCalendarMenus([{id:'one',name:'One',type:'Promotion',fixyDesignation:object,items:[{label:object,name:'Safe fallback',description:object,mrn:object,calories:object,category:object},{label:object,name:object}]},{id:'core',name:'Core',type:'Core',items:[{label:'Private core item'}],fixyDesignation:'CORE'}]);
+  assert.equal(promo.fixyDesignation,'');assert.deepEqual(promo.items,[{label:'Safe fallback',description:'',mrn:'',category:''}]);
   assert.equal('items' in core,false);assert.equal('fixyDesignation' in core,false);
   assert.equal(JSON.stringify([promo,core]).includes('must not escape'),false);
 });
