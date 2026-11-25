@@ -5,6 +5,13 @@ import { GLOBAL_COMMISSARY_PRODUCTION } from "./globalProductionCatalog.js";
 const excludedLoosePrepItem = /\b(canola(?: oil)?|kosher salt|black pepper)\b|^spice,/i;
 const PORTO_POTATO_WEDGE_ID = "global|amz-porto|121015|4-oz-portion";
 const globalInUnitJasmineRice = /\b(?:brown\s+|spiced\s+|steamed\s+)?jasmine\s+rice\b|\brice,\s*jasmine\b/i;
+const CYPRESS_UNIT_PREP_EFFECTIVE_WEEK = "2026-11-30";
+const CYPRESS_UNIT_PREP_BY_SOURCE = Object.freeze({
+  "global|amz-cypress|132544.1|1-each": new Set(["81224.2"]),
+  "global|amz-cypress|213388.1|1-each": new Set(["81224.2"]),
+  "global|amz-cypress|132544.3|1-each": new Set(["76476.2"]),
+  "global|amz-cypress|213388.2|1-each": new Set(["76476.2"]),
+});
 
 export const GRILL_UNIT_SUPPLIED_COMPONENTS = Object.freeze([
   Object.freeze({ mrn: "170538", name: "Burger, Meatless, Black Bean" }),
@@ -104,13 +111,19 @@ function mergeGlobalProductionOutputs(outputs = [], directComponents = []) {
   return [...merged.values()];
 }
 
+function withoutCypressUnitPrep(components = [], weekStart = "", sourceId = "") {
+  if (String(weekStart || "") < CYPRESS_UNIT_PREP_EFFECTIVE_WEEK) return components;
+  const excludedMrns = CYPRESS_UNIT_PREP_BY_SOURCE[sourceId];
+  return excludedMrns ? components.filter(({ mrn }) => !excludedMrns.has(String(mrn || ""))) : components;
+}
+
 export function prepareGlobalCommissaryComponents(components = [], weekStart = "", sourceId = "") {
   if (!weekStart || weekStart < GLOBAL_COMMISSARY_PRODUCTION.effectiveDate) return components.filter((component) => !isGlobalInUnitRiceComponent(component));
   const rule = globalRule(sourceId);
   if (rule?.mode === "in-unit") return [];
-  if (rule?.outputs?.length) return mergeGlobalProductionOutputs(rule.outputs, filteredGlobalDirectComponents(components, sourceId));
+  if (rule?.outputs?.length) return withoutCypressUnitPrep(mergeGlobalProductionOutputs(rule.outputs, filteredGlobalDirectComponents(components, sourceId)), weekStart, sourceId);
   if (!rule) return prepareCommissaryComponents(components, weekStart, sourceId).filter((component) => !isGlobalInUnitRiceComponent(component));
-  return filteredGlobalDirectComponents(components, sourceId);
+  return withoutCypressUnitPrep(filteredGlobalDirectComponents(components, sourceId), weekStart, sourceId);
 }
 
 export function prepareGlobalTransferComponents(components = [], weekStart = "", sourceId = "") {
@@ -126,8 +139,8 @@ export function prepareGlobalTransferComponents(components = [], weekStart = "",
     costPerPortion: output.costPerPortion,
     glCode: output.glCode || "4111011",
   }));
-  if (outputTransferComponents.length) return mergeGlobalProductionOutputs(outputTransferComponents, filteredGlobalDirectComponents(components, sourceId));
-  return filteredGlobalDirectComponents(components, sourceId, { excludeLoose: false });
+  if (outputTransferComponents.length) return withoutCypressUnitPrep(mergeGlobalProductionOutputs(outputTransferComponents, filteredGlobalDirectComponents(components, sourceId)), weekStart, sourceId);
+  return withoutCypressUnitPrep(filteredGlobalDirectComponents(components, sourceId, { excludeLoose: false }), weekStart, sourceId);
 }
 
 export function isExcludedLoosePrepItem(name = "") {

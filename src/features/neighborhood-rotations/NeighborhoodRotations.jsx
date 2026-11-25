@@ -1817,7 +1817,7 @@ function stationPool(stationKey) {
     ...freshFiveStationRows("Hibernate").filter((row) => isEntree(row))
   ]);
   const freshFiveSides = uniqueOptionRows(freshFiveStationRows("Sides").filter((row) => isSide(row)));
-  const cafeExpressSoups = uniqueOptionRows(all.filter((row) => getMenuName(row) === "AMZ: Cafe Express Soup"));
+  const cafeExpressSoups = uniqueOptionRows(all.filter((row) => getMenuName(row) === "AMZ: Cafe Express Soup" && getTrueCost(row) > 0));
   const asianGlobalRows = scoped(
     [
       ...byMenuPattern(/asia|asian|bibimb|korean|japanese|thai|wok|lotus|pho|ramen|teriyaki|curry|indian|tikka|gochujang|xahn/i),

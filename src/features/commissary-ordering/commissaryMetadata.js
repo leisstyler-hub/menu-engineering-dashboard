@@ -1,5 +1,5 @@
 export const COMMISSARY_METADATA_RECORD_ID = "commissaryOrder|metadata|current";
-export const COMMISSARY_METADATA_VERSION = 6;
+export const COMMISSARY_METADATA_VERSION = 7;
 
 const RECEIVING_CAFES = Object.freeze([
   Object.freeze({ name: "Nessie", displayName: "Nessie", profitCenter: "30159" }),
@@ -45,6 +45,15 @@ export const DEFAULT_COMMISSARY_METADATA = Object.freeze({
     prepListScope: "none-dawson-is-not-a-commissary-hub",
     transferSources: Object.freeze(["SEA20 Cricket 22472", "SEA27 Dawson 28675"]),
   }),
+  roxanneCricketPrograms: Object.freeze({
+    effectiveWeek: "2026-11-30",
+    sourceCafe: "Cricket",
+    receivingCafe: "Roxanne Coffee",
+    stations: Object.freeze(["Soups", "Flatbreads"]),
+    soupRule: "costed-only-whole-12-ounce-portions",
+    flatbreadCycle: "six-weeks-starting-2026-11-30",
+    prepAndTransferHub: "Cricket",
+  }),
 });
 
 const comparableMetadata = (record = {}) => ({
@@ -52,6 +61,7 @@ const comparableMetadata = (record = {}) => ({
   receivingCafes: record.receivingCafes,
   deliveries: record.deliveries,
   roxanneDawsonIntegration: record.roxanneDawsonIntegration,
+  roxanneCricketPrograms: record.roxanneCricketPrograms,
 });
 
 const canonicalize = (value) => {

@@ -1,5 +1,8 @@
 ## 2026-11-24
 
+- [Nov 24, 5:55 PM] Add costed Cricket soups and six-week Flatbreads to Roxanne ordering, prep, packout and transfers.
+- [Nov 24, 5:55 PM] Hide minor Prep Board ingredients, keep Cypress falafel and mushrooms in-unit, and clarify S4 item, dish and MRN descriptions.
+
 - [Nov 24, 2:41 PM] Show review status by descriptions and offer exact MRN imports as you type; any matching item clears Needs review.
 
 - [Nov 24, 2:15 PM] Simplify Experience item titles, remove per-item Edit FIXY, and keep Report flags at the top right.

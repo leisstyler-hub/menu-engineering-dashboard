@@ -23,9 +23,10 @@ import { DAILY_GLOBAL_PROGRAM, TWO_TWO_TWO_DAILY_GLOBAL_PROGRAM } from "../featu
 import { GLOBAL_PREP_DISPLAY_POLICY } from "../features/commissary-ordering/globalPrepDisplayPolicy.js";
 import { COMMISSARY_CAFE_STATION_ACCESS, COMMISSARY_HIDDEN_CAFE_STATION_ACCESS, COMMISSARY_HIDDEN_HUB_ROUTING, COMMISSARY_HUB_ROUTING, COMMISSARY_HUBS, COMMISSARY_PACKOUT_HUB_ROUTING } from "../features/commissary-ordering/commissaryRouting.js";
 import { GLOBAL_UNIT_PREPARATION_NOTES, LEO_HAND_FRUIT, LEO_SITE_CAFES } from "../features/commissary-ordering/commissaryModel.js";
+import { ROXANNE_CRICKET_EFFECTIVE_WEEK, ROXANNE_CRICKET_ORDER_VERSION, ROXANNE_FLATBREAD_PROGRAM } from "../features/commissary-ordering/roxanneCricketPrograms.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 34;
+export const OPERATIONAL_METADATA_VERSION = 35;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -153,6 +154,23 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       prepProjection: "excluded; Dawson is not a commissary prep hub",
       transferWorkbook: Object.freeze({ cricketSheet: "SEA20 Cricket", dawsonSheet: "SEA27 Dawson" }),
     }),
+    roxanneCricketPrograms: Object.freeze({
+      version: ROXANNE_CRICKET_ORDER_VERSION,
+      effectiveWeek: ROXANNE_CRICKET_EFFECTIVE_WEEK,
+      receivingCafe: "Roxanne Coffee",
+      prepHub: "Cricket",
+      soup: Object.freeze({
+        source: "submitted North/Cricket Neighborhood Rotation Soup station",
+        menu: "AMZ: Cafe Express Soup",
+        selectionRule: "two-definitively-costed-soups-per-service-day",
+        excludedUncostedMrns: Object.freeze(["62071.1", "62082.2"]),
+        orderingUnit: "whole-12-ounce-portions",
+        deliveryMapping: Object.freeze({ monday: "friday", tuesday: "monday", wednesday: "monday", thursday: "wednesday", friday: "wednesday" }),
+      }),
+      flatbread: ROXANNE_FLATBREAD_PROGRAM,
+      prepProjection: "finished-item-counts-routed-to-cricket",
+      transferValuation: "authoritative-item-plus-waste",
+    }),
     stationAccess: COMMISSARY_CAFE_STATION_ACCESS,
     hiddenStationAccess: COMMISSARY_HIDDEN_CAFE_STATION_ACCESS,
     prepHubs: COMMISSARY_HUBS,
@@ -182,7 +200,7 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       globalExcludedSubrecipes: Object.freeze(["60487"]),
     }),
     prepInterface: Object.freeze({
-      stationOrder: Object.freeze(["Salad Bar", "Breakfast", "Deli", "Grill", "Daily Global", "Global"]),
+      stationOrder: Object.freeze(["Salad Bar", "Soups", "Flatbreads", "Breakfast", "Deli", "Grill", "Daily Global", "Global"]),
       stationTabletFilter: Object.freeze({ enabled: true, includesAllStationsView: true }),
       productionGrouping: Object.freeze(["Vegetable Production", "Sauces", "Meat Production", "Stocking"]),
       familyAdjacency: true,
@@ -241,6 +259,8 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
         productionExactMatchRollup: "mrn-and-display-unit-with-dish-breakdown",
         assemblyRule: "two-or-more-distinct-production-inputs",
         singleComponentFlow: "production-direct-to-packout",
+        hiddenMinorIngredients: Object.freeze(["pan grilling spray", "kosher salt", "lemon juice", "lime juice"]),
+        hiddenIngredientScope: "prep-board-only; transfer recipe quantities unchanged",
       }),
     }),
     packoutPacket: Object.freeze({
@@ -265,6 +285,7 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       glAccountSource: "transferTool.glAccounts",
       profitCenterSource: "transferTool.units",
       exportVersionSource: "transferTool.s4ExportVersion",
+      s4Description: "item for finished dish MRN, concise to 50 characters",
     }),
   }),
 });

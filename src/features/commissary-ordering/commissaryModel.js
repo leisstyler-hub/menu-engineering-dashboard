@@ -9,6 +9,7 @@ import { globalPrepCupsPerUnit, globalPrepPackageRule } from "./globalPrepDispla
 import { COMMISSARY_STATIONS, cafeRoutesToHub, isCafeStationEnabled } from "./commissaryRouting.js";
 import { filterCommissaryComponents, filterGrillCommissaryComponents, isExcludedLoosePrepItem, isGlobalInUnitRiceComponent, prepareCommissaryComponents, prepareGlobalCommissaryComponents, prepareGlobalTransferComponents } from "./commissaryPrepPolicy.js";
 import { normalizeRoxanneDawsonOrder, roxanneDawsonOrderLines } from "./roxanneDawsonProjection.js";
+import { normalizeRoxanneFlatbreadOrder, normalizeRoxanneSoupOrder, roxanneFlatbreadOrderLines, roxanneSoupOrderLines } from "./roxanneCricketPrograms.js";
 
 export const PACIFIC_TIME_ZONE = "America/Los_Angeles";
 export const DELIVERY_KEYS = Object.freeze(DEFAULT_COMMISSARY_METADATA.deliveries.map(({ key }) => key));
@@ -18,7 +19,7 @@ export const COMMISSARY_DELI_ORDER_VERSION = 2;
 export const COMMISSARY_GLOBAL_ORDER_VERSION = 3;
 export const COMMISSARY_BREAKFAST_ORDER_VERSION = 1;
 export const COMMISSARY_PACKOUT_PACKET_VERSION = 2;
-export const COMMISSARY_STATION_ORDER = Object.freeze(["Salad Bar", "Breakfast", "Deli", "Grill", "Daily Global", "Global"]);
+export const COMMISSARY_STATION_ORDER = Object.freeze(["Salad Bar", "Soups", "Flatbreads", "Breakfast", "Deli", "Grill", "Daily Global", "Global"]);
 export const COMMISSARY_PREP_BOARD_PILOT_WEEK = "2027-01-04";
 export const COMMISSARY_PREP_BOARD_PHASES = Object.freeze(["production", "assembly", "packout"]);
 export const COMMISSARY_FINISHED_PREP_ITEM_IDS = Object.freeze([
@@ -56,7 +57,7 @@ export function isPrepBoardCompletionId(value) {
 export function isGeneratedPrepCompletionId(value) {
   const id = String(value || "").trim();
   return id.length <= 240
-    && /^(?:global-prep|global-production|grill-prep|deli-prep|breakfast-prep|daily-global)\|[a-z0-9.|_-]+$/i.test(id);
+    && /^(?:global-prep|global-production|grill-prep|deli-prep|breakfast-prep|daily-global|prep-finished\|(?:soup|flatbread))\|[a-z0-9.|_-]+$/i.test(id);
 }
 
 function prepBoardCompletionId(phase, value) {
@@ -471,6 +472,8 @@ function quantityLeaves(record = {}) {
     });
   });
   collect("breakfast", record.breakfast?.quantities);
+  collect("roxanne-soup", record.roxanneSoup?.quantities);
+  collect("roxanne-flatbread", record.roxanneFlatbreads?.quantities);
   return leaves;
 }
 
@@ -489,7 +492,7 @@ export function invalidWholeUnitSaladQuantities(quantities = {}, weekStart) {
   });
 }
 
-export function buildOrderRecord({ cafe, weekStart, quantities, grill, deli, global, breakfast, dailyGlobal, roxanneDawson, standingOrderChangeApproval = null, now = new Date() }) {
+export function buildOrderRecord({ cafe, weekStart, quantities, grill, deli, global, breakfast, dailyGlobal, roxanneDawson, roxanneSoup, roxanneFlatbreads, standingOrderChangeApproval = null, now = new Date() }) {
   const normalized = isCafeStationEnabled(cafe, COMMISSARY_STATIONS.SALAD_BAR) ? normalizeQuantities(quantities, { weekStart }) : emptyQuantities(weekStart);
   const normalizedGrill = normalizeGrillOrder(grill, weekStart, cafe);
   const normalizedDeli = normalizeDeliOrder(deli, weekStart, cafe);
@@ -515,6 +518,8 @@ export function buildOrderRecord({ cafe, weekStart, quantities, grill, deli, glo
     breakfast: normalizedBreakfast,
     dailyGlobal: normalizedDailyGlobal,
     roxanneDawson: normalizeRoxanneDawsonOrder(roxanneDawson),
+    roxanneSoup: normalizeRoxanneSoupOrder(roxanneSoup),
+    roxanneFlatbreads: normalizeRoxanneFlatbreadOrder(roxanneFlatbreads, weekStart),
     ...(standingOrderChangeApproval ? { standingOrderChangeApproval } : {}),
     updatedAt: now.toISOString(),
   };
@@ -552,7 +557,7 @@ export function togglePrepCompleted(completed, delivery, itemId) {
   return { ...normalized, [delivery]: [...current] };
 }
 
-export function orderValue(quantities = {}, grill = {}, deli = {}, global = {}, cafe = "", breakfast = {}, weekStart, dailyGlobal = {}, roxanneDawson = {}) {
+export function orderValue(quantities = {}, grill = {}, deli = {}, global = {}, cafe = "", breakfast = {}, weekStart, dailyGlobal = {}, roxanneDawson = {}, roxanneSoup = {}, roxanneFlatbreads = {}) {
   const saladValue = cafe && !isCafeStationEnabled(cafe, COMMISSARY_STATIONS.SALAD_BAR) ? 0 : orderLinesForCafe({ cafe, weekStart, quantities })
     .reduce((sum, line) => sum + roundedProductionEquivalentQuantity(line) * line.orderUnitCost, 0);
   const grillRecord = { cafe, weekStart, grill };
@@ -571,7 +576,9 @@ export function orderValue(quantities = {}, grill = {}, deli = {}, global = {}, 
   }, 0);
   const dailyGlobalValue = dailyGlobalTransferLinesForCafe({ cafe, weekStart, dailyGlobal }).reduce((sum, line) => sum + line.itemWasteCost * line.quantity, 0);
   const roxanneDawsonValue = roxanneDawsonOrderLines({ cafe, weekStart, roxanneDawson }).reduce((sum, line) => sum + line.total * line.orderUnitCost, 0);
-  return saladValue + grillValue + deliValue + globalValue + breakfastValue + dailyGlobalValue + roxanneDawsonValue;
+  const roxanneSoupValue = roxanneSoupOrderLines({ cafe, weekStart, roxanneSoup }).reduce((sum, line) => sum + line.total * line.orderUnitCost, 0);
+  const roxanneFlatbreadValue = roxanneFlatbreadOrderLines({ cafe, weekStart, roxanneFlatbreads }).reduce((sum, line) => sum + line.total * line.orderUnitCost, 0);
+  return saladValue + grillValue + deliValue + globalValue + breakfastValue + dailyGlobalValue + roxanneDawsonValue + roxanneSoupValue + roxanneFlatbreadValue;
 }
 
 export function rolledUpItems(records = [], options = {}) {
@@ -759,6 +766,7 @@ function componentTransferLines(orderLines, componentMap, weekStart, station) {
       menu: line.menu,
       name: component.name,
       finishedDish: line.name,
+      finishedMrn: line.mrn,
       mrn: component.mrn,
       // S4 transfers follow the recipe-native cost per finished portion. Prep
       // display conversions and production rounding never change accounting.
@@ -781,6 +789,7 @@ export function globalTransferLinesForCafe(record = {}) {
       menu: line.menu,
       name: component.name,
       finishedDish: line.name,
+      finishedMrn: line.mrn,
       mrn: component.mrn,
       // Global transfers remain recipe-native; Prep List volume projection is
       // an operational display layer only.
@@ -896,6 +905,38 @@ export function breakfastPrepLinesForCafe(record = {}) {
   })).filter(({ quantity }) => quantity > 0)));
 }
 
+export function roxanneSoupPrepLinesForCafe(record = {}) {
+  return roxanneSoupOrderLines(record).flatMap((line) => DELIVERY_KEYS.map((delivery) => ({
+    id: `prep-finished|soup|${line.id}`,
+    type: "finished",
+    mrn: line.mrn,
+    name: line.name,
+    category: "Soup finished item",
+    station: "Soups",
+    orderUnit: line.orderUnit,
+    cafe: record.cafe,
+    finishedDish: `${line.serviceDayLabel} Soup ${line.slot}`,
+    delivery,
+    quantity: Number(line[delivery] || 0),
+  })).filter(({ quantity }) => quantity > 0));
+}
+
+export function roxanneFlatbreadPrepLinesForCafe(record = {}) {
+  return roxanneFlatbreadOrderLines(record).flatMap((line) => DELIVERY_KEYS.map((delivery) => ({
+    id: `prep-finished|flatbread|${line.mrn}`,
+    type: "finished",
+    mrn: line.mrn,
+    name: line.name,
+    category: "Flatbread finished item",
+    station: "Flatbreads",
+    orderUnit: line.orderUnit,
+    cafe: record.cafe,
+    finishedDish: line.name,
+    delivery,
+    quantity: Number(line[delivery] || 0),
+  })).filter(({ quantity }) => quantity > 0));
+}
+
 export function hasCommissaryOrder(record = {}) {
   return orderLinesForCafe(record).length > 0
     || grillOrderLinesForCafe(record).length > 0
@@ -903,7 +944,9 @@ export function hasCommissaryOrder(record = {}) {
     || globalOrderLinesForCafe(record).length > 0
     || dailyGlobalOrderLinesForCafe(record).length > 0
     || breakfastOrderLinesForCafe(record).length > 0
-    || roxanneDawsonOrderLines(record).length > 0;
+    || roxanneDawsonOrderLines(record).length > 0
+    || roxanneSoupOrderLines(record).length > 0
+    || roxanneFlatbreadOrderLines(record).length > 0;
 }
 
 export function rolledUpFinishedPrepItems(records = [], options = {}) {
@@ -947,6 +990,8 @@ export function rolledUpPrepItems(records = [], options = {}) {
     ...(options.hub && !cafeRoutesToHub(record.cafe, COMMISSARY_STATIONS.GLOBAL, options.hub) ? [] : globalPrepLinesForCafe(record)),
     ...(options.hub && !cafeRoutesToHub(record.cafe, COMMISSARY_STATIONS.DAILY_GLOBAL, options.hub) ? [] : dailyGlobalPrepLinesForCafe(record)),
     ...(options.hub && !cafeRoutesToHub(record.cafe, COMMISSARY_STATIONS.BREAKFAST, options.hub) ? [] : breakfastPrepLinesForCafe(record)),
+    ...(options.hub && !cafeRoutesToHub(record.cafe, COMMISSARY_STATIONS.SOUPS, options.hub) ? [] : roxanneSoupPrepLinesForCafe(record)),
+    ...(options.hub && !cafeRoutesToHub(record.cafe, COMMISSARY_STATIONS.FLATBREADS, options.hub) ? [] : roxanneFlatbreadPrepLinesForCafe(record)),
   ]).forEach((line) => {
     const mrn = String(line.mrn || "").trim();
     const identity = mrn ? `mrn:${mrn}` : `name:${String(line.name || "").trim().toLowerCase()}`;
@@ -1033,6 +1078,8 @@ function prepBoardOrderLinesForRecord(record, hub) {
     ["Grill", COMMISSARY_STATIONS.GRILL, grillOrderLinesForCafe],
     ["Global", COMMISSARY_STATIONS.GLOBAL, globalOrderLinesForCafe],
     ["Daily Global", COMMISSARY_STATIONS.DAILY_GLOBAL, dailyGlobalOrderLinesForCafe],
+    ["Soups", COMMISSARY_STATIONS.SOUPS, roxanneSoupOrderLines],
+    ["Flatbreads", COMMISSARY_STATIONS.FLATBREADS, roxanneFlatbreadOrderLines],
   ];
   return stationLines.flatMap(([station, stationKey, lineBuilder]) => {
     if (hub && !cafeRoutesToHub(record.cafe, stationKey, hub)) return [];
@@ -1040,8 +1087,10 @@ function prepBoardOrderLinesForRecord(record, hub) {
   });
 }
 
+const PREP_BOARD_NUISANCE = /\b(?:pan (?:grilling|coating) spray|grill(?:ing)? spray|kosher salt|salt,? kosher|lemon juice|lime juice|juice,? lemon|juice,? lime)\b/i;
+
 export function buildTabbedPrepBoard(records = [], options = {}) {
-  const production = rolledUpPrepItems(records, { hub: options.hub, consolidateAcrossStations: true }).map(prepDisplayQuantity).map((row) => {
+  const production = rolledUpPrepItems(records, { hub: options.hub, consolidateAcrossStations: true }).filter((row) => !PREP_BOARD_NUISANCE.test(String(row.name || ""))).map(prepDisplayQuantity).map((row) => {
     const productionKey = `${prepBoardIdentity(row)}|${String(row.orderUnit || "").toLowerCase()}`;
     return {
       ...row,

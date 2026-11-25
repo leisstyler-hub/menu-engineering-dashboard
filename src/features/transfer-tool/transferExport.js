@@ -32,7 +32,7 @@ export function buildS4Rows(transfer = {}) {
       fromGlAccount: String(allocation.glCode),
       receivingProfitCenter: String(transfer.receivingProfitCenter),
       toGlAccount: String(allocation.glCode),
-      description: defaultTransferDescription(`${line.item} ${allocation.ingredientName}`, transfer.title),
+      description: line.description ? trimToLength(line.description, 50) : defaultTransferDescription(`${line.item} ${allocation.ingredientName}`, transfer.title),
       transferAmount,
       eventId: trimToLength(transfer.eventId, 18),
     }))

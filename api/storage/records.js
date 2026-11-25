@@ -14,6 +14,7 @@ import { BREAKFAST_ORDERING_ITEM_IDS, BREAKFAST_ORDERING_PREP_ITEM_IDS, BREAKFAS
 import { DAILY_GLOBAL_ORDER_VERSION, DAILY_GLOBAL_PREP_ITEM_IDS } from "../../src/features/commissary-ordering/dailyGlobalCatalog.js";
 import { COMMISSARY_HUBS, COMMISSARY_STATIONS, isCafeStationEnabled } from "../../src/features/commissary-ordering/commissaryRouting.js";
 import { ROXANNE_DAWSON_EFFECTIVE_WEEK, ROXANNE_DAWSON_ORDER_VERSION } from "../../src/features/commissary-ordering/roxanneDawsonProjection.js";
+import { ROXANNE_CRICKET_EFFECTIVE_WEEK, ROXANNE_CRICKET_ORDER_VERSION, roxanneFlatbreadCycleForWeek } from "../../src/features/commissary-ordering/roxanneCricketPrograms.js";
 import { DEFAULT_OPERATIONAL_METADATA, isApprovedOperationalMetadataRecord, OPERATIONAL_METADATA_RECORD_ID } from "../../src/shared/operationalMetadata.js";
 import { gzipSync, gunzipSync } from "node:zlib";
 
@@ -300,6 +301,39 @@ export function commissaryWriteValidation(records = [], context = {}) {
       if (DELIVERY_KEYS.some((key) => !Number.isInteger(Number(delivery[key] || 0)) || Number(delivery[key] || 0) < 0)) return "Dawson Pop-Up quantities must be zero or positive whole items.";
       const count = DELIVERY_KEYS.reduce((sum, key) => sum + Number(delivery[key] || 0), 0);
       if (count > 0 && !(Number(item.itemWasteCost) > 0)) return `The Dawson Pop-Up cost snapshot for ${item.name} is invalid.`;
+    }
+  }
+  const soupOrder = record.roxanneSoup || {};
+  const hasSoupPayload = record.roxanneSoup !== undefined && record.roxanneSoup !== null;
+  const soupQuantities = soupOrder.quantities || {};
+  const hasSoupQuantity = Object.values(soupQuantities).some((delivery) => DELIVERY_KEYS.some((key) => Number(delivery?.[key] || 0) > 0));
+  const flatbreadOrder = record.roxanneFlatbreads || {};
+  const hasFlatbreadPayload = record.roxanneFlatbreads !== undefined && record.roxanneFlatbreads !== null;
+  const flatbreadQuantities = flatbreadOrder.quantities || {};
+  const hasFlatbreadQuantity = Object.values(flatbreadQuantities).some((delivery) => DELIVERY_KEYS.some((key) => Number(delivery?.[key] || 0) > 0));
+  if ((hasSoupQuantity || hasFlatbreadQuantity) && (record.cafe !== "Roxanne Coffee" || record.weekStart < ROXANNE_CRICKET_EFFECTIVE_WEEK)) return "Roxanne Soup and Flatbread ordering is not enabled for this cafe and week.";
+  if (record.cafe === "Roxanne Coffee" && record.weekStart >= ROXANNE_CRICKET_EFFECTIVE_WEEK) {
+    if (hasSoupPayload) {
+      if (Number(soupOrder.version) !== ROXANNE_CRICKET_ORDER_VERSION || !soupOrder.items || typeof soupOrder.items !== "object" || Array.isArray(soupOrder.items) || !soupQuantities || typeof soupQuantities !== "object" || Array.isArray(soupQuantities)) return "The Roxanne Soup order is invalid.";
+      if (Object.keys(soupQuantities).some((id) => !soupOrder.items[id])) return "The Roxanne Soup order contains an unknown item.";
+      for (const [id, item] of Object.entries(soupOrder.items)) {
+        if (!String(id).startsWith("roxanne-soup|") || item.menu !== "AMZ: Cafe Express Soup" || !String(item.name || "").trim() || !String(item.mrn || "").trim() || !(Number(item.itemWasteCost) > 0) || !/^12\s*(?:fl\s*)?oz$/i.test(String(item.portion || "").trim())) return "Roxanne Soup items require a definitive 12-ounce cost snapshot.";
+        const delivery = soupQuantities[id] || {};
+        if (DELIVERY_KEYS.some((key) => !Number.isInteger(Number(delivery[key] || 0)) || Number(delivery[key] || 0) < 0)) return "Roxanne Soup quantities must be zero or positive whole 12-ounce portions.";
+        if (DELIVERY_KEYS.some((key) => key !== item.delivery && Number(delivery[key] || 0) > 0)) return "Roxanne Soup quantities must use the delivery mapped from the service day.";
+      }
+    }
+    if (hasFlatbreadPayload) {
+      const flatbreadCycle = roxanneFlatbreadCycleForWeek(record.weekStart);
+      const allowedFlatbreads = new Map((flatbreadCycle?.items || []).map((item) => [item.id, item]));
+      if (Number(flatbreadOrder.version) !== ROXANNE_CRICKET_ORDER_VERSION || Number(flatbreadOrder.cycleWeek) !== Number(flatbreadCycle?.week) || !flatbreadOrder.items || typeof flatbreadOrder.items !== "object" || Array.isArray(flatbreadOrder.items) || !flatbreadQuantities || typeof flatbreadQuantities !== "object" || Array.isArray(flatbreadQuantities)) return "The Roxanne Flatbread order is invalid.";
+      if (Object.keys(flatbreadQuantities).some((id) => !allowedFlatbreads.has(id))) return "The Roxanne Flatbread order contains an item outside the current cycle.";
+      for (const [id, expected] of allowedFlatbreads) {
+        const item = flatbreadOrder.items[id];
+        const delivery = flatbreadQuantities[id] || {};
+        if (!item || String(item.mrn) !== expected.mrn || item.name !== expected.name || Number(item.itemWasteCost) !== Number(expected.itemWasteCost)) return "The Roxanne Flatbread cost snapshot is invalid.";
+        if (DELIVERY_KEYS.some((key) => !Number.isInteger(Number(delivery[key] || 0)) || Number(delivery[key] || 0) < 0)) return "Roxanne Flatbread quantities must be zero or positive whole items.";
+      }
     }
   }
   if (isWeekLocked(record.weekStart, new Date())) return "This order is locked. Please contact commissary executive chef to adjust pars.";

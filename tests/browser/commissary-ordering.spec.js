@@ -200,7 +200,7 @@ test("Commissary Ordering Tool autosaves separate delivery quantities without a 
   expect(writes).toHaveLength(1);
   expect(writes[0].context.tool).toBe("commissaryOrders");
   expect(writes[0].records[0].orderUnitVersion).toBe(2);
-  expect(writes[0].records[0].commissaryMetadataVersion).toBe(6);
+  expect(writes[0].records[0].commissaryMetadataVersion).toBe(7);
   expect(writes[0].records[0].quantities[cucumber.id]).toEqual({ friday: 1, monday: 2, wednesday: 1 });
   const packetDownload = page.waitForEvent("download");
   await page.getByRole("button", { name: /packout packet/i }).click();
@@ -255,6 +255,37 @@ test("Roxanne receives submitted Dawson Pop-Up and Salad items and exports separ
   const workbook = XLSX.read(await readFile(await download.path()), { type: "buffer", cellStyles: true });
   expect(workbook.SheetNames).toEqual(["SEA20 Cricket", "SEA27 Dawson"]);
   await expect(page.getByRole("button", { name: "Prep List View" })).toHaveCount(0);
+  await expectNoAppProtection(page);
+  expectNoUnexpectedPageErrors(pageErrors);
+});
+
+test("Roxanne receives only costed Cricket soups and the current Flatbread cycle", async ({ page }) => {
+  const pageErrors = collectUnexpectedPageErrors(page);
+  await page.clock.install({ time: new Date("2026-11-24T20:00:00Z") });
+  const parent = "rotation|2026-11-30|North|Cricket";
+  const rotationRecords = [
+    { "Record ID": parent, "Record Type": "Rotation Header", Status: "Submitted", "Submitted At": "2026-11-24T19:00:00.000Z" },
+    { "Record ID": `${parent}|soup|1`, "Parent Record ID": parent, "Record Type": "Station Selection", Status: "Submitted", "Station Key": "soup", "Slot Number": 1, "Menu Item / Selection": "Chicken Noodle Soup", MRN: "1001", Portion: "12 fl oz", "True Cost": 2.25 },
+    { "Record ID": `${parent}|soup|2`, "Parent Record ID": parent, "Record Type": "Station Selection", Status: "Submitted", "Station Key": "soup", "Slot Number": 2, "Menu Item / Selection": "Tomato Basil Soup", MRN: "1002", Portion: "12 oz", "True Cost": 1.75 },
+    { "Record ID": `${parent}|soup|3`, "Parent Record ID": parent, "Record Type": "Station Selection", Status: "Submitted", "Station Key": "soup", "Slot Number": 3, "Menu Item / Selection": "Uncosted Soup", MRN: "62071.1", Portion: "12 oz", "True Cost": 0 },
+  ];
+  const writes = await mockOrders(page, [], rotationRecords);
+  await openTool(page, /open commissary ordering/i, /^Commissary Ordering Tool$/);
+  await page.getByLabel("Your cafe").selectOption("Roxanne Coffee");
+  await page.getByLabel("Service week").selectOption("2026-11-30");
+  const soups = page.getByTestId("roxanne-soup-order");
+  const flatbreads = page.getByTestId("roxanne-flatbread-order");
+  await expect(soups).toContainText("Chicken Noodle Soup");
+  await expect(soups).toContainText("Tomato Basil Soup");
+  await expect(soups.getByText("Uncosted Soup", { exact: true })).toHaveCount(0);
+  await expect(flatbreads.getByText("Chicken Pesto Flatbread", { exact: true })).toBeVisible();
+  await expect(flatbreads.getByText("Quattro Formaggi Flatbread", { exact: true })).toBeVisible();
+  await page.getByLabel("Monday Soup 1 quantity").fill("8");
+  await page.getByLabel(/Chicken Pesto Flatbread Monday .* quantity/).fill("5");
+  await expect.poll(() => writes.length).toBeGreaterThan(0);
+  const saved = writes.at(-1).records[0];
+  expect(Object.values(saved.roxanneSoup.items).map(({ mrn }) => mrn).sort()).toEqual(["1001", "1002"]);
+  expect(saved.roxanneFlatbreads.cycleWeek).toBe(1);
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);
 });

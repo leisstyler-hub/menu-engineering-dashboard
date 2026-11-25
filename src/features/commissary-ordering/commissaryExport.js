@@ -1,11 +1,13 @@
 import XLSX from "xlsx-js-style";
 
 import { buildS4Workbook, transferExportFileName } from "../transfer-tool/transferExport.js";
+import { conciseS4Description } from "../transfer-tool/transferModel.js";
 import { COMMISSARY_DEPARTING_UNIT } from "./commissaryCatalog.js";
 import { DEFAULT_COMMISSARY_METADATA } from "./commissaryMetadata.js";
-import { PRODUCTION_SECTION_ORDER, breakfastOrderLinesForCafe, breakfastPrepLinesForCafe, dailyGlobalPrepLinesForCafe, dailyGlobalTransferLinesForCafe, deliOrderLinesForCafe, deliveryDateForWeek, formatShortDate, globalPrepLinesForCafe, globalTransferLinesForCafe, grillPrepLinesForCafe, grillTransferLinesForCafe, leoFreshFruitLinesForCafe, orderLinesForCafe, prepDisplayQuantity, rolledUpPrepItems, roundedProductionEquivalentQuantity, transferPeriod, weekLabel } from "./commissaryModel.js";
+import { PRODUCTION_SECTION_ORDER, breakfastOrderLinesForCafe, breakfastPrepLinesForCafe, dailyGlobalPrepLinesForCafe, dailyGlobalTransferLinesForCafe, deliOrderLinesForCafe, deliveryDateForWeek, formatShortDate, globalPrepLinesForCafe, globalTransferLinesForCafe, grillPrepLinesForCafe, grillTransferLinesForCafe, leoFreshFruitLinesForCafe, orderLinesForCafe, prepDisplayQuantity, rolledUpPrepItems, roundedProductionEquivalentQuantity, roxanneFlatbreadPrepLinesForCafe, roxanneSoupPrepLinesForCafe, transferPeriod, weekLabel } from "./commissaryModel.js";
 import { COMMISSARY_STATIONS, cafeRoutesToHub } from "./commissaryRouting.js";
 import { roxanneDawsonOrderLines } from "./roxanneDawsonProjection.js";
+import { roxanneFlatbreadOrderLines, roxanneSoupOrderLines } from "./roxanneCricketPrograms.js";
 
 const S4_TEMPLATE_URL = "/templates/ExpenseTransfer_Between_PC_Template.xlsx";
 const PREPARED_FOODS_GL = "4111011";
@@ -86,6 +88,8 @@ function buildDeliveryMapWorksheet(records, delivery, weekStart, options = {}) {
     ...(routed(record, COMMISSARY_STATIONS.GLOBAL) ? globalPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key).map(prepLine) : []),
     ...(routed(record, COMMISSARY_STATIONS.DAILY_GLOBAL) ? dailyGlobalPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key).map(prepLine) : []),
     ...(routed(record, COMMISSARY_STATIONS.BREAKFAST) ? breakfastPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key).map(prepLine) : []),
+    ...(routed(record, COMMISSARY_STATIONS.SOUPS) ? roxanneSoupPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key).map(prepLine) : []),
+    ...(routed(record, COMMISSARY_STATIONS.FLATBREADS) ? roxanneFlatbreadPrepLinesForCafe(record).filter((line) => line.delivery === delivery.key).map(prepLine) : []),
   ]);
   const consolidatedLines = new Map();
   rawDeliveryLines.forEach((line) => {
@@ -286,6 +290,7 @@ export function buildCommissaryTransfer(record, metadata = DEFAULT_COMMISSARY_ME
         mrn: line.mrn,
         quantity: line.quantity,
         itemWasteCost: line.itemWasteCost,
+        description: conciseS4Description(line.name, line.finishedDish, line.finishedMrn),
         ingredientAllocations: [{
           ingredientName: line.name,
           ingredientMrn: line.mrn,
@@ -328,6 +333,7 @@ export function buildCommissaryTransfer(record, metadata = DEFAULT_COMMISSARY_ME
         mrn: line.mrn,
         quantity: line.quantity,
         itemWasteCost: line.itemWasteCost,
+        description: conciseS4Description(line.name, line.finishedDish, line.finishedMrn),
         ingredientAllocations: [{
           ingredientName: line.name,
           ingredientMrn: line.mrn,
@@ -362,6 +368,26 @@ export function buildCommissaryTransfer(record, metadata = DEFAULT_COMMISSARY_ME
           glCode: PREPARED_FOODS_GL,
           allocationPerPortion: line.orderUnitCost,
         }],
+      })),
+      ...roxanneSoupOrderLines(record).map((line) => ({
+        catalogId: line.id,
+        menu: line.menu,
+        item: `${line.name} (${line.total} × 12 oz)`,
+        mrn: line.mrn,
+        quantity: line.total,
+        itemWasteCost: line.orderUnitCost,
+        description: conciseS4Description(line.name, `${line.serviceDayLabel} soup`, line.mrn),
+        ingredientAllocations: [{ ingredientName: "Prepared Foods", ingredientMrn: line.mrn, glCode: PREPARED_FOODS_GL, allocationPerPortion: line.orderUnitCost }],
+      })),
+      ...roxanneFlatbreadOrderLines(record).map((line) => ({
+        catalogId: line.id,
+        menu: line.menu,
+        item: `${line.name} (${line.total} each)`,
+        mrn: line.mrn,
+        quantity: line.total,
+        itemWasteCost: line.orderUnitCost,
+        description: conciseS4Description(line.name, "Roxanne Flatbread", line.mrn),
+        ingredientAllocations: [{ ingredientName: "Prepared Foods", ingredientMrn: line.mrn, glCode: PREPARED_FOODS_GL, allocationPerPortion: line.orderUnitCost }],
       })),
     ],
   };

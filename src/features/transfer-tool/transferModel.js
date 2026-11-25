@@ -26,6 +26,32 @@ export const defaultTransferDescription = (itemName = "", reference = "") => {
   return `${trimToLength(item, itemLimit)} - ${suffix}`;
 };
 
+const compactS4Words = (value = "") => String(value || "")
+  .replace(/^\s*(?:EURNA?|AMZ|RA|EXC|Ingredient):\s*/i, "")
+  .replace(/Onions?,\s*Red,\s*Fresh,?\s*/gi, "Red Onion ")
+  .replace(/\bFresh\b,?\s*/gi, "")
+  .replace(/\bMushrooms?\b/gi, "Mushr")
+  .replace(/\bChicken\b/gi, "Chkn")
+  .replace(/\bVegetable\b/gi, "Veg")
+  .replace(/\bFlatbread\b/gi, "Flatbrd")
+  .replace(/\bJulienned?\b/gi, "Julienne")
+  .replace(/\s+/g, " ")
+  .replace(/\s+,/g, ",")
+  .trim();
+
+export const conciseS4Description = (itemName = "", finishedDish = "", mrn = "") => {
+  const item = compactS4Words(itemName);
+  const context = compactS4Words(finishedDish).replace(/\bPlate\b/gi, "").replace(/\s+/g, " ").trim();
+  const mrnSuffix = mrn ? ` MRN ${String(mrn).trim()}` : "";
+  if (!context && !mrnSuffix) return trimToLength(item, 50);
+  const joiner = context ? " for " : "";
+  const available = Math.max(0, 50 - mrnSuffix.length - joiner.length);
+  const contextLimit = context ? Math.min(context.length, Math.max(8, Math.floor(available * 0.42))) : 0;
+  const compactContext = trimToLength(context, contextLimit);
+  const itemLimit = Math.max(8, 50 - mrnSuffix.length - (compactContext ? joiner.length + compactContext.length : 0));
+  return `${trimToLength(item, itemLimit)}${compactContext ? `${joiner}${compactContext}` : ""}${mrnSuffix}`.slice(0, 50);
+};
+
 export const transferTotal = (items = []) => items.reduce((sum, item) => {
   const quantity = Number(item.quantity);
   // The menu card's current Item + Waste Cost is the transfer value. Ingredient

@@ -7,11 +7,12 @@ import BOM_XLSX from "xlsx-js-style";
 
 import { commissaryWriteValidation } from "../api/storage/records.js";
 import { buildS4Rows, buildS4Workbook } from "../src/features/transfer-tool/transferExport.js";
+import { conciseS4Description } from "../src/features/transfer-tool/transferModel.js";
 import { COMMISSARY_LEGACY_ORDER_ITEMS, COMMISSARY_ORDER_ITEMS, COMMISSARY_PREVIOUS_ORDER_ITEMS, COMMISSARY_RETIRED_ORDER_ITEMS, SALAD_BAR_COST_SOURCE, commissaryItemMapForWeek, commissaryOrderItemsForWeek } from "../src/features/commissary-ordering/commissaryCatalog.js";
 import { buildCommissaryBomWorkbook, buildCommissaryTransfer, buildRoxanneDawsonTransfer } from "../src/features/commissary-ordering/commissaryExport.js";
 import { buildCommissaryMetadataRecord, DEFAULT_COMMISSARY_METADATA, isApprovedCommissaryMetadataRecord, resolveCommissaryMetadata } from "../src/features/commissary-ordering/commissaryMetadata.js";
 import { COMMISSARY_BREAKFAST_ORDER_VERSION, COMMISSARY_DELI_ORDER_VERSION, COMMISSARY_FINISHED_PREP_ITEM_IDS, COMMISSARY_GLOBAL_ORDER_VERSION, COMMISSARY_GRILL_ORDER_VERSION, COMMISSARY_ORDER_UNIT_VERSION, COMMISSARY_PACKOUT_PACKET_VERSION, COMMISSARY_PREP_BOARD_PILOT_WEEK, DELIVERY_KEYS, GLOBAL_UNIT_PREPARATION_NOTES, PRODUCTION_SECTION_ORDER, addDays, breakfastOrderLinesForCafe, breakfastPrepLinesForCafe, buildOrderRecord, buildPackoutPacketRecord, buildPrepProgressRecord, buildTabbedPrepBoard, dailyGlobalCycleForWeek, dailyGlobalOrderLinesForCafe, dailyGlobalPrepLinesForCafe, dailyGlobalTransferLinesForCafe, deliCycleForWeek, deliOrderLinesForCafe, deliPrepLinesForCafe, deliveriesForWeek, emptyBreakfastOrder, emptyDailyGlobalOrder, emptyDeliOrder, emptyGlobalOrder, emptyGrillOrder, emptyQuantities, firstOpenWeek, globalCycleForWeek, globalOrderLinesForCafe, globalPrepLinesForCafe, globalTransferLinesForCafe, grillCycleForWeek, grillOrderLinesForCafe, grillPrepLinesForCafe, grillTransferLinesForCafe, isGeneratedPrepCompletionId, isGrillCoreAvailable, isPrepBoardCompletionId, isWeekLocked, latestPrepWeek, leoFreshFruitLinesForCafe, normalizeDeliOrder, normalizePrepCompleted, normalizeQuantities, orderValue, prepDisplayQuantity, prepProductionType, rolledUpFinishedPrepItems, rolledUpPrepItems, roundedProductionEquivalentQuantity, standingOrderReductions, togglePrepCompleted, transferPeriod } from "../src/features/commissary-ordering/commissaryModel.js";
-import { prepareGlobalCommissaryComponents } from "../src/features/commissary-ordering/commissaryPrepPolicy.js";
+import { prepareGlobalCommissaryComponents, prepareGlobalTransferComponents } from "../src/features/commissary-ordering/commissaryPrepPolicy.js";
 import { buildPackoutPacket, buildPackoutPdfBytes } from "../src/features/commissary-ordering/commissaryPackout.js";
 import { GRILL_LTO_ITEM_MRNS, GRILL_LTO_PREP_ITEM_IDS, GRILL_LTO_PROGRAM } from "../src/features/commissary-ordering/grillLtoCatalog.js";
 import { DELI_ORDERING_ITEM_MRNS, DELI_ORDERING_PREP_ITEM_IDS, DELI_ORDERING_PROGRAM } from "../src/features/commissary-ordering/deliCycleCatalog.js";
@@ -22,6 +23,7 @@ import { COMMISSARY_SPANISH } from "../src/features/commissary-ordering/commissa
 import { COMMISSARY_STATIONS, cafeRoutesToHub, cafeRoutesToPackoutHub, commissaryHubFor, isCafeStationEnabled, isCommissaryHub } from "../src/features/commissary-ordering/commissaryRouting.js";
 import { filterCommissaryComponents, isRawAnimalProteinComponent } from "../src/features/commissary-ordering/commissaryPrepPolicy.js";
 import { buildRoxanneDawsonProjection, normalizeRoxanneDawsonOrder, roxanneDawsonOrderLines } from "../src/features/commissary-ordering/roxanneDawsonProjection.js";
+import { buildRoxanneCricketSoupProjection, normalizeRoxanneFlatbreadOrder, normalizeRoxanneSoupOrder, roxanneFlatbreadCycleForWeek, roxanneFlatbreadOrderLines, roxanneSoupOrderLines } from "../src/features/commissary-ordering/roxanneCricketPrograms.js";
 import { mergePendingPrepProgress, prepProgressKey } from "../src/features/commissary-ordering/commissaryStorage.js";
 
 function validateBeforeCutoff(records, context = { tool: "commissaryOrders" }) {
@@ -755,7 +757,7 @@ const sonicHubPacket = buildPackoutPacket([globalRecord], "2026-11-16", DEFAULT_
 assert.equal(sonicHubPacket.pages.length, 3, "Sonic hub packout must include routed Everest Global work.");
 const cricketHubPacket = buildPackoutPacket([globalRecord], "2026-11-16", DEFAULT_COMMISSARY_METADATA, { selectedCafe: "Cricket" });
 assert.equal(cricketHubPacket.pages.length, 0, "Cricket hub packout must not include Everest Global work.");
-const packetRecord = { ...buildPackoutPacketRecord({ weekStart: "2026-11-16", records: [globalRecord], packet, metadataVersion: 34, now: new Date("2026-11-12T01:00:00Z") }), packet };
+const packetRecord = { ...buildPackoutPacketRecord({ weekStart: "2026-11-16", records: [globalRecord], packet, metadataVersion: 35, now: new Date("2026-11-12T01:00:00Z") }), packet };
 assert.equal(commissaryWriteValidation([packetRecord], { tool: "commissaryOrders" }), "");
 assert.match(commissaryWriteValidation([{ ...packetRecord, packet: { ...packet, pages: [{ ...packet.pages[0], cafe: "Unknown Cafe" }] } }], { tool: "commissaryOrders" }), /scope|invalid cafe/i);
 assert.match(commissaryWriteValidation([{ ...packetRecord, orderRecordIds: [`commissaryOrder|nessie|${packetRecord.weekStart}`] }], { tool: "commissaryOrders" }), /order-reference scope/i);
@@ -795,5 +797,43 @@ assert.equal(dawsonTransfer.departingProfitCenter, "28675");
 assert.equal(dawsonTransfer.receivingProfitCenter, "28671");
 assert.equal(dawsonTransfer.items.length, 3);
 assert.equal(buildCommissaryTransfer(roxanneRecord).departingProfitCenter, "22472");
+
+const cricketParent = "rotation|2026-11-30|North|Cricket";
+const cricketSoupRecords = [
+  { "Record ID": cricketParent, "Record Type": "Rotation Header", Status: "Submitted", "Submitted At": "2026-11-24T19:00:00.000Z" },
+  { "Record ID": `${cricketParent}|soup|1`, "Parent Record ID": cricketParent, "Record Type": "Station Selection", Status: "Submitted", "Station Key": "soup", "Slot Number": 1, "Menu Item / Selection": "Chicken Noodle Soup", MRN: "1001", Portion: "12 fl oz", "True Cost": 2.25 },
+  { "Record ID": `${cricketParent}|soup|2`, "Parent Record ID": cricketParent, "Record Type": "Station Selection", Status: "Submitted", "Station Key": "soup", "Slot Number": 2, "Menu Item / Selection": "Tomato Basil Soup", MRN: "1002", Portion: "12 oz", "True Cost": 1.75 },
+  { "Record ID": `${cricketParent}|soup|3`, "Parent Record ID": cricketParent, "Record Type": "Station Selection", Status: "Submitted", "Station Key": "soup", "Slot Number": 3, "Menu Item / Selection": "Uncosted Soup", MRN: "62071.1", Portion: "12 oz", "True Cost": 0 },
+];
+const soupProjection = buildRoxanneCricketSoupProjection(cricketSoupRecords, "2026-11-30");
+assert.deepEqual(soupProjection.items.map(({ mrn }) => mrn), ["1001", "1002"], "Only definitively costed submitted soups may project into Roxanne ordering.");
+const soupOrder = normalizeRoxanneSoupOrder({}, soupProjection);
+soupOrder.quantities[soupProjection.items[0].id].friday = 7;
+const flatbreadCycle = roxanneFlatbreadCycleForWeek("2026-11-30");
+assert.deepEqual(flatbreadCycle.items.map(({ mrn }) => mrn), ["153945.26", "118557.16"]);
+const flatbreadOrder = normalizeRoxanneFlatbreadOrder({}, "2026-11-30");
+flatbreadOrder.quantities[flatbreadCycle.items[0].id].monday = 5;
+const roxanneCricketRecord = buildOrderRecord({ cafe: "Roxanne Coffee", weekStart: "2026-11-30", roxanneSoup: soupOrder, roxanneFlatbreads: flatbreadOrder, now: new Date("2026-11-24T20:00:00Z") });
+assert.equal(validateBeforeCutoff([roxanneCricketRecord]), "");
+assert.equal(roxanneSoupOrderLines(roxanneCricketRecord)[0].orderUnit, "12 oz portion");
+assert.equal(roxanneFlatbreadOrderLines(roxanneCricketRecord)[0].total, 5);
+assert.equal(rolledUpPrepItems([roxanneCricketRecord], { hub: "Cricket" }).filter(({ station }) => ["Soups", "Flatbreads"].includes(station)).length, 2);
+assert.equal(rolledUpPrepItems([roxanneCricketRecord], { hub: "Sonic" }).some(({ station }) => ["Soups", "Flatbreads"].includes(station)), false);
+const roxanneCricketTransfer = buildCommissaryTransfer(roxanneCricketRecord);
+assert.equal(roxanneCricketTransfer.departingProfitCenter, "22472");
+assert.equal(roxanneCricketTransfer.items.filter(({ menu }) => ["AMZ: Cafe Express Soup", "AMZ: Pizzas & Flatbreads"].includes(menu)).length, 2);
+
+const cypressFalafelSource = "global|amz-cypress|132544.1|1-each";
+const cypressKoftaSource = "global|amz-cypress|213388.2|1-each";
+const cypressComponents = [{ mrn: "81224.2", name: "Green Garbanzo Falafel", quantity: 1, unit: "each", costPerPortion: 1 }, { mrn: "76476.2", name: "Roasted Mushrooms", quantity: 1, unit: "oz", costPerPortion: 1 }];
+assert.equal(prepareGlobalCommissaryComponents(cypressComponents, "2026-11-30", cypressFalafelSource).some(({ mrn }) => mrn === "81224.2"), false);
+assert.equal(prepareGlobalTransferComponents(cypressComponents, "2026-11-30", cypressKoftaSource).some(({ mrn }) => mrn === "76476.2"), false);
+assert.equal(prepareGlobalTransferComponents(cypressComponents, "2026-11-23", cypressKoftaSource).some(({ mrn }) => mrn === "76476.2"), true, "Cypress historical weeks must remain unchanged.");
+
+const s4Description = conciseS4Description("Onions, Red, Fresh, Julienne", "Lamb Mushroom Kofta Plate", "213388.2");
+assert.ok(s4Description.length <= 50);
+assert.match(s4Description, /Red Onion/);
+assert.match(s4Description, /Lamb/);
+assert.match(s4Description, /MRN 213388\.2/);
 
 console.log("Commissary Ordering Tool verified: immutable saved orders, day-specific prep lists, exact-MRN rollups, whole-sandwich Deli delivery maps, station-grouped cost-free delivery maps, unified Grill ordering, and Friday-Thursday S4 consolidation.");
