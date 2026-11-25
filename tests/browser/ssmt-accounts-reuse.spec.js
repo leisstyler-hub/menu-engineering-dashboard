@@ -379,9 +379,9 @@ test("FIXY preview requires explicit facts and applies only after confirmation",
   await expect(dialog.getByRole("alert")).toContainText("food type");
   await dialog.getByLabel("Food type", { exact: true }).selectOption("FBB");
   await dialog.getByLabel("Serving role", { exact: true }).selectOption("ENT");
-  await dialog.getByLabel("Protein", { exact: true }).selectOption("BF");
+  await dialog.getByLabel("Protein", { exact: true }).selectOption("BEF");
   await dialog.getByRole("button", { name: "Preview FIXY" }).click();
-  await expect(dialog).toContainText("R FBB | GRILL | SMASH BURGER ENT BF");
+  await expect(dialog).toContainText("R FBB | GRILL | SMASH BURGER ENT BEF");
   await dialog.getByRole("button", { name: "Apply FIXY" }).click();
   await expect(dialog).toHaveCount(0);
 });
@@ -1249,16 +1249,16 @@ test("repair FIXY launcher skips submenu dividers and applies only to item", asy
   await expect(panel.getByLabel('FIXY item')).toHaveValue('source-item');
   await panel.getByLabel('Food type', {exact:true}).selectOption('FBB');
   await panel.getByLabel('Serving role', {exact:true}).selectOption('ENT');
-  await panel.getByLabel('Protein', {exact:true}).selectOption('BF');
+  await panel.getByLabel('Protein', {exact:true}).selectOption('BEF');
   await panel.getByRole('button', {name:'Preview FIXY'}).click();
-  await expect(panel).toContainText('R FBB | GRILL | SMASH BURGER ENT BF');
+  await expect(panel).toContainText('R FBB | GRILL | SMASH BURGER ENT BEF');
   await panel.getByRole('button', {name:'Apply FIXY'}).click();
-  await expect(page.getByLabel('Fixy for Smash Burger',{exact:true})).toHaveValue('R FBB | GRILL | SMASH BURGER ENT BF');
+  await expect(page.getByLabel('Fixy for Smash Burger',{exact:true})).toHaveValue('R FBB | GRILL | SMASH BURGER ENT BEF');
   await page.getByRole('button', {name:'Save SSMT workspace',exact:true}).click();
   await expect.poll(()=>fixture.saves.length).toBe(1);
   const after=fixture.getWorkspace();
   expect(after.menus[0].items[0]).toEqual(before.menus[0].items[0]);
-  expect(after.menus[0].items[1]).toEqual({...before.menus[0].items[1],fohColumn:'R FBB | GRILL | SMASH BURGER ENT BF'});
+  expect(after.menus[0].items[1]).toEqual({...before.menus[0].items[1],fohColumn:'R FBB | GRILL | SMASH BURGER ENT BEF'});
   expect(after.modifierGroups).toEqual(before.modifierGroups);
 });
 

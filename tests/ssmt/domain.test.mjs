@@ -86,7 +86,7 @@ test("FIXY rules require designation, item presence and explicit unknown facts",
       generateFixy(
         item,
         { ...target, fixyDesignation: "" },
-        { type: "FBB", service: "ENT", protein: "BF" },
+        { type: "FBB", service: "ENT", protein: "BEF" },
       ),
     /designation/i,
   );
@@ -97,8 +97,8 @@ test("FIXY rules require designation, item presence and explicit unknown facts",
     /protein/i,
   );
   assert.equal(
-    generateFixy(item, menu, { type: "FBB", service: "ENT", protein: "BF" }),
-    "R FBB | MFP DAY | SMASH BURGER ENT BF",
+    generateFixy(item, menu, { type: "FBB", service: "ENT", protein: "BEF" }),
+    "R FBB | MFP DAY | SMASH BURGER ENT BEF",
   );
   assert.equal(
     generateFixy({ ...item, label: "Roasted Vegetable Plate" }, menu, {

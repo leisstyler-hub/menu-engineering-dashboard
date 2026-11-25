@@ -1,3 +1,7 @@
+## SSMT Beef FIXY code - 2026-11-25
+
+Candidate `2026.11.25.003-ssmt-beef-fixy` changes the Generate FIXY Beef choice from BF to BEF. New previews and explicitly applied FIXYs use BEF; existing saved FIXYs and other fields are preserved. Chief solo; Tyler request b065f65b; baseline/rollback d6849ee70d0367f1ce287641a443b05f0e8164e2. Isolated generation/apply tests and full verification required. Evidence: workspace WORK_LOGS/SSMT_BEEF_FIXY_2026_11_25.md.
+
 ## SSMT modifier type preservation - 2026-11-25
 
 Candidate `2026.11.25.002-ssmt-modifier-preservation` changes only modifier type on selection, retaining group fields and choice values. Row resize retains choices; explicit blank prices survive normalization. Isolated tests cover exact MRNs, linked prices, blanks, zero, switches, row addition and save/reload. No canonical production writes or historical repair. Release evidence: workspace WORK_LOGS/SSMT_MODIFIER_PRESERVATION_2026_11_25.md.

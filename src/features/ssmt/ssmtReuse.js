@@ -54,7 +54,7 @@ export const PROTEINS = {
   PRK: "Pork",
   SAU: "Sausage",
   SHF: "Shellfish",
-  BF: "Beef",
+  BEF: "Beef",
   CHK: "Chicken",
   TUR: "Turkey",
 };
