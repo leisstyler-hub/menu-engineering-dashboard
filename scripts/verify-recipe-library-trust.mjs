@@ -36,7 +36,7 @@ const statusCounts = rows.reduce((acc, row) => {
 const reviewCount = statusCounts["Needs Review"] || 0;
 const watchCount = statusCounts.Watch || 0;
 
-assert(reviewCount > 40 && reviewCount < 160, `Needs Review count should be useful but not noisy; found ${reviewCount}.`);
+assert(reviewCount > 40 && reviewCount < 220, `Needs Review count should be useful but not noisy after authoritative source expansion; found ${reviewCount}.`);
 assert(watchCount <= 80, `Watch count should not overwhelm the library; found ${watchCount}.`);
 
 console.log(`Menu Library trust verification passed: ${reviewCount} needs review, ${watchCount} watch.`);

@@ -299,6 +299,7 @@ export function commissaryWriteValidation(records = [], context = {}) {
       if (!String(id).startsWith("roxanne-dawson|") || !["global", "carvery", "composedSalad"].includes(item.source) || !String(item.name || "").trim()) return "The Dawson Pop-Up item identity is invalid.";
       const delivery = roxanneQuantities[id] || {};
       if (DELIVERY_KEYS.some((key) => !Number.isInteger(Number(delivery[key] || 0)) || Number(delivery[key] || 0) < 0)) return "Dawson Pop-Up quantities must be zero or positive whole items.";
+      if (item.source !== "composedSalad" && roxanneOrder.popUpSchedule === "tuesday-wednesday-thursday" && Number(delivery.friday || 0) > 0) return "Roxanne Pop-Up Friday delivery quantities must be resolved before saving the Tuesday–Thursday schedule.";
       const count = DELIVERY_KEYS.reduce((sum, key) => sum + Number(delivery[key] || 0), 0);
       if (count > 0 && !(Number(item.itemWasteCost) > 0)) return `The Dawson Pop-Up cost snapshot for ${item.name} is invalid.`;
     }
@@ -317,10 +318,12 @@ export function commissaryWriteValidation(records = [], context = {}) {
       if (Number(soupOrder.version) !== ROXANNE_CRICKET_ORDER_VERSION || !soupOrder.items || typeof soupOrder.items !== "object" || Array.isArray(soupOrder.items) || !soupQuantities || typeof soupQuantities !== "object" || Array.isArray(soupQuantities)) return "The Roxanne Soup order is invalid.";
       if (Object.keys(soupQuantities).some((id) => !soupOrder.items[id])) return "The Roxanne Soup order contains an unknown item.";
       for (const [id, item] of Object.entries(soupOrder.items)) {
-        if (!String(id).startsWith("roxanne-soup|") || item.menu !== "AMZ: Cafe Express Soup" || !String(item.name || "").trim() || !String(item.mrn || "").trim() || !(Number(item.itemWasteCost) > 0) || !/^12\s*(?:fl\s*)?oz$/i.test(String(item.portion || "").trim())) return "Roxanne Soup items require a definitive 12-ounce cost snapshot.";
+        if (!String(id).startsWith("roxanne-soup|") || item.menu !== "AMZ: Cafe Express Soup" || !String(item.name || "").trim() || !String(item.mrn || "").trim() || !/^12\s*(?:fl\s*)?oz$/i.test(String(item.portion || "").trim())) return "Roxanne Soup items require an exact 12-ounce source identity.";
         const delivery = soupQuantities[id] || {};
         if (DELIVERY_KEYS.some((key) => !Number.isInteger(Number(delivery[key] || 0)) || Number(delivery[key] || 0) < 0)) return "Roxanne Soup quantities must be zero or positive whole 12-ounce portions.";
         if (DELIVERY_KEYS.some((key) => key !== item.delivery && Number(delivery[key] || 0) > 0)) return "Roxanne Soup quantities must use the delivery mapped from the service day.";
+        const soupCount = DELIVERY_KEYS.reduce((sum, key) => sum + Number(delivery[key] || 0), 0);
+        if (soupCount > 0 && !(Number(item.itemWasteCost) > 0)) return `Roxanne Soup ${item.name} cannot be ordered until definitive cost is available.`;
       }
     }
     if (hasFlatbreadPayload) {

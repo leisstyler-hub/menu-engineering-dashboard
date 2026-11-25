@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "version": "menuworks-authoritative-2026-11-25",
+  "authority": "Alex: each supplied export is the complete authoritative menu set; missing rows are intentional deletions.",
+  "menus": [
+    {
+      "menu": "AMZ: Deli Core",
+      "source": {
+        "version": "menuworks-authoritative-2026-11-25",
+        "fileName": "MenuWorks_AMZ_Deli_Core_2026-11-25.csv",
+        "sha256": "47a313bbc0e914cabdd13ce9530ece29dc9d6d5f11a3748ad0662d90323b2d33"
+      },
+      "previousCount": 165,
+      "replacementCount": 165,
+      "removedCount": 0,
+      "removed": [],
+      "uncosted": [
+        {
+          "item_key": "menuworks:amz-deli-core:curated-sandwiches:134362.15:1-sandwich:1",
+          "mrn": "134362.15",
+          "item": "Grilled Vegetables, Balsamic Glaze & Hummus Sandwich",
+          "portion": "1 sandwich"
+        }
+      ],
+      "profiles": {
+        "rows": 165,
+        "storedProfiles": 165,
+        "reviewedProfilesPreserved": 0,
+        "needsReviewProfiles": 165,
+        "missingProfiles": 0
+      }
+    },
+    {
+      "menu": "AMZ: Cafe Express Curated Sandwiches",
+      "source": {
+        "version": "menuworks-authoritative-2026-11-25",
+        "fileName": "MenuWorks_AMZ_Cafe_Express_Curated_Sandwiches_2026-11-25.csv",
+        "sha256": "1847e2122693aae0ee78dab26164bf37a08ac93e3b9b3c678d7f5480c41873ed"
+      },
+      "previousCount": 57,
+      "replacementCount": 57,
+      "removedCount": 0,
+      "removed": [],
+      "uncosted": [],
+      "profiles": {
+        "rows": 57,
+        "storedProfiles": 57,
+        "reviewedProfilesPreserved": 0,
+        "needsReviewProfiles": 57,
+        "missingProfiles": 0
+      }
+    },
+    {
+      "menu": "AMZ: Cafe Express Soup",
+      "source": {
+        "version": "menuworks-authoritative-2026-11-25",
+        "fileName": "MenuWorks_AMZ_Cafe_Express_Soup_2026-11-25.csv",
+        "sha256": "c75efbe48387ebb00fd12b5637beaa9f8002d2fa13a20a3e29dd3834c2465c43"
+      },
+      "previousCount": 70,
+      "replacementCount": 70,
+      "removedCount": 0,
+      "removed": [],
+      "uncosted": [
+        {
+          "item_key": "menuworks:amz-cafe-express-soup:soup:62071.1:12-floz:1",
+          "mrn": "62071.1",
+          "item": "Tomato Lentil",
+          "portion": "12 floz"
+        },
+        {
+          "item_key": "menuworks:amz-cafe-express-soup:soup:62082.2:12-floz:1",
+          "mrn": "62082.2",
+          "item": "Vegetable Minestrone Soup",
+          "portion": "12 floz"
+        }
+      ],
+      "profiles": {
+        "rows": 70,
+        "storedProfiles": 70,
+        "reviewedProfilesPreserved": 0,
+        "needsReviewProfiles": 70,
+        "missingProfiles": 0
+      }
+    }
+  ],
+  "totalRows": 292,
+  "profilePersistence": "Every replacement row carries a culinaryProfile in its shared recipe-item source payload; existing reviewed profiles are preserved and all other fields are explicit Needs review/Unknown."
+}

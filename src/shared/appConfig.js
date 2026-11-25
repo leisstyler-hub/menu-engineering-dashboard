@@ -1,1 +1,1 @@
-export const APP_VERSION_STAMP = "2026.11.24.012-roxanne-soup-flatbread";
+export const APP_VERSION_STAMP = "2026.11.25.001-menu-source-roxanne-schedule";

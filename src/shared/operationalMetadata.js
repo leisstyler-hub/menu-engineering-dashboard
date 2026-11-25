@@ -26,7 +26,7 @@ import { GLOBAL_UNIT_PREPARATION_NOTES, LEO_HAND_FRUIT, LEO_SITE_CAFES } from ".
 import { ROXANNE_CRICKET_EFFECTIVE_WEEK, ROXANNE_CRICKET_ORDER_VERSION, ROXANNE_FLATBREAD_PROGRAM } from "../features/commissary-ordering/roxanneCricketPrograms.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 35;
+export const OPERATIONAL_METADATA_VERSION = 36;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -43,6 +43,20 @@ const commissaryReceivingCafes = DEFAULT_COMMISSARY_METADATA.receivingCafes.map(
 
 export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
   metadataVersion: OPERATIONAL_METADATA_VERSION,
+  sharedMenuSource: Object.freeze({
+    version: "menuworks-authoritative-2026-11-25",
+    authority: "complete-menu-replacement",
+    primaryStore: "supabase.recipe_items",
+    crossUtility: Object.freeze(["Neighborhood Rotations", "Commissary Ordering", "Transfer Tool", "Recipe Library", "Menu Engineering"]),
+    menus: Object.freeze([
+      Object.freeze({ menu: "AMZ: Deli Core", rows: 165, sha256: "47a313bbc0e914cabdd13ce9530ece29dc9d6d5f11a3748ad0662d90323b2d33" }),
+      Object.freeze({ menu: "AMZ: Cafe Express Curated Sandwiches", rows: 57, sha256: "1847e2122693aae0ee78dab26164bf37a08ac93e3b9b3c678d7f5480c41873ed" }),
+      Object.freeze({ menu: "AMZ: Cafe Express Soup", rows: 70, sha256: "c75efbe48387ebb00fd12b5637beaa9f8002d2fa13a20a3e29dd3834c2465c43" }),
+    ]),
+    missingItemPolicy: "delete-from-shared-menu-scope",
+    uncostedItemPolicy: "visible-as-cost-unavailable; never invent transfer value",
+    culinaryProfilePersistence: "recipe-item-source-payload; reviewed profiles preserved; unresolved fields Needs review/Unknown",
+  }),
   neighborhoodRotations: Object.freeze({
     dawsonMobyPopUp: Object.freeze({
       status: "retired",
@@ -52,6 +66,13 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       mobyCafeProjection: false,
       historicalRecords: "preserved-read-only",
       roxannePopUpIntegration: "preserved",
+    }),
+    roxannePopUp: Object.freeze({
+      effectiveWeek: "2026-11-30",
+      serviceDays: Object.freeze(["Tuesday", "Wednesday", "Thursday"]),
+      deliveryMapping: Object.freeze({ monday: Object.freeze(["Tuesday", "Wednesday"]), wednesday: Object.freeze(["Thursday"]) }),
+      stationOrder: "before-composed-salad",
+      standingFridayPolicy: "preserve-until-operator-selects-move-or-clear",
     }),
   }),
   transferTool: Object.freeze({
@@ -162,8 +183,9 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       soup: Object.freeze({
         source: "submitted North/Cricket Neighborhood Rotation Soup station",
         menu: "AMZ: Cafe Express Soup",
-        selectionRule: "two-definitively-costed-soups-per-service-day",
-        excludedUncostedMrns: Object.freeze(["62071.1", "62082.2"]),
+        selectionRule: "two-authoritative-source-soups-per-service-day",
+        costUnavailableMrns: Object.freeze(["62071.1", "62082.2"]),
+        costUnavailableBehavior: "visible-but-order-disabled; no invented transfer value",
         orderingUnit: "whole-12-ounce-portions",
         deliveryMapping: Object.freeze({ monday: "friday", tuesday: "monday", wednesday: "monday", thursday: "wednesday", friday: "wednesday" }),
       }),
@@ -298,6 +320,7 @@ const canonicalize = (value) => {
 
 const comparable = (record = {}) => ({
   metadataVersion: Number(record.metadataVersion),
+  sharedMenuSource: record.sharedMenuSource,
   neighborhoodRotations: record.neighborhoodRotations,
   transferTool: record.transferTool,
   commissaryOrdering: record.commissaryOrdering,

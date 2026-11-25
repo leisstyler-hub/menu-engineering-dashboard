@@ -1,3 +1,8 @@
+## 2026-11-25
+
+- [Nov 25, 4:52 AM] Replace Deli Core, Curated Sandwiches and Soup everywhere from complete MenuWorks source sets.
+- [Nov 25, 4:52 AM] Run Roxanne Pop-Up Tuesday–Thursday above Composed Salad with delivery-aware standing-order protection.
+
 ## 2026-11-24
 
 - [Nov 24, 6:15 PM] Verify Roxanne Soup and Flatbread programs live with shared metadata and standing orders preserved.

@@ -108,8 +108,8 @@ function inferImportedCategory(row, price) {
 
   if (price == null) return "subRecipe";
   if (/extension/.test(notes) || /cookie|cake|dessert|pastry|beverage|smoothie|chips|salsa|guacamole|queso/.test(itemText)) return "extension";
-  if (/a la carte|side choice/.test(notes) || /hot side/.test(productionArea) || /starch\/grain|vegetable/.test(recipeCategory)) return "side";
   if (/entree/.test(notes) || /main entree|breakfast|sandwich\/wrap/.test(recipeCategory) || price >= 9) return "entree";
+  if (/a la carte|side choice/.test(notes) || /hot side/.test(productionArea) || /starch\/grain|vegetable/.test(recipeCategory)) return "side";
   if (/side/.test(station)) return "side";
   return price >= 5 ? "entree" : "side";
 }

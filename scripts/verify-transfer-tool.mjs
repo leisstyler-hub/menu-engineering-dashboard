@@ -19,7 +19,7 @@ if (saladBarTransferItems.length !== 41 || saladBarTransferItems.some((item) => 
 const saladBarGreenPeas = saladBarTransferItems.find((item) => item.mrn === "62341");
 if (saladBarGreenPeas?.itemWasteCost !== 9.455573 || saladBarGreenPeas?.defaultGlCode !== "4111009") fail("shared Salad Bar Green Peas costing/G/L mapping is incorrect");
 
-if (CATALOG.menus.length !== 54 || CATALOG.items.length !== 1497) fail("catalog does not cover the current menu/item source");
+if (CATALOG.menus.length !== 54 || CATALOG.items.length !== 1620) fail("catalog does not cover the current menu/item source");
 if (!CATALOG.items.every((item) => item.menu && item.item && Object.hasOwn(item, "itemWasteCost") && !Object.hasOwn(item, "glGroups"))) fail("catalog contains malformed or legacy G/L rows");
 const caprese = INGREDIENT_COSTING_LOOKUP.recipes["34303.45"];
 const capreseMozzarella = caprese?.components?.find((component) => component.ingredientMrn === "7776");
@@ -31,10 +31,9 @@ const caesarRomaine = caesar?.components?.find((component) => component.ingredie
 const blta = INGREDIENT_COSTING_LOOKUP.recipes["9182.8"];
 const bltaAvocado = blta?.components?.find((component) => component.ingredientMrn === "276");
 const arcadianComponents = Object.values(INGREDIENT_COSTING_LOOKUP.recipes).flatMap((recipe) => recipe.components || []).filter((component) => component.ingredientMrn === "118307");
-const buffalo = INGREDIENT_COSTING_LOOKUP.recipes["9282.10"];
+const buffalo = INGREDIENT_COSTING_LOOKUP.recipes["9282.7"];
 const buffaloBlueCheese = buffalo?.components?.find((component) => component.ingredientMrn === "1614");
 const buffaloFranks = buffalo?.components?.find((component) => component.ingredientMrn === "7179");
-const buffaloCelery = buffalo?.unpricedComponents?.find((component) => component.ingredientMrn === "1378");
 const brisketSandwich = INGREDIENT_COSTING_LOOKUP.recipes["10379.3"];
 const brisketProtein = brisketSandwich?.unpricedComponents?.find((component) => component.ingredientMrn === "36857");
 const brisketPepperoncini = brisketSandwich?.components?.find((component) => component.ingredientMrn === "7400");
@@ -48,13 +47,13 @@ if (!substituteComponents.length || substituteComponents.some((component) => !/S
 if (!arcadianComponents.length || arcadianComponents.some((component) => component.priceSourceMrn !== "3753" || component.unitPrice !== 0.59 || !/approved.*Spring \(Mesclun\).*1 cup = 1 ounce/i.test(component.priceSourceNote || "")) || arcadianComponents.some((component) => component.priceSourceMrn === "87650")) {
   fail("Arcadian Classic Mix must use the approved Spring Mesclun source MRN 3753 and never Spam");
 }
-if (buffaloBlueCheese?.priceSourceMrn !== "1639" || !/approved dairy substitute/i.test(buffaloBlueCheese.priceSourceNote || "") || buffaloFranks?.priceSourceMrn !== "7179" || buffaloFranks?.priceSourceUnit !== "floz" || buffaloFranks?.allocationPerPortion !== 0.18 || !/1 fluid ounce = 1 ounce/i.test(buffaloFranks.priceSourceNote || "") || !buffaloCelery) {
+if (buffaloBlueCheese?.priceSourceMrn !== "1639" || !/approved dairy substitute/i.test(buffaloBlueCheese.priceSourceNote || "") || buffaloFranks?.priceSourceMrn !== "7179" || buffaloFranks?.priceSourceUnit !== "floz" || buffaloFranks?.allocationPerPortion !== 0.18 || !/1 fluid ounce = 1 ounce/i.test(buffaloFranks.priceSourceNote || "")) {
   fail("approved Blue Cheese substitution, Frank's exact price conversion, and category-safe substitute matching are not enforced");
 }
 if (!brisketProtein?.residualAttributionEligible || brisketSandwich.components.some((component) => component.priceSourceMrn === "76270") || brisketPepperoncini?.priceSourceMrn !== "7400" || brisketPepperoncini?.allocationPerPortion !== 0.04) {
   fail("brisket must reject beef-pho broth pricing while pepperoncini uses its exact MRN and approved unit conversion");
 }
-const brisketCatalogItem = CATALOG.items.find((item) => item.mrn === "10379.3");
+const brisketCatalogItem = CATALOG.items.find((item) => item.menu === "AMZ: Carvery" && item.mrn === "10379.3");
 const brisketBalanced = balanceIngredientAllocations({
   components: brisketSandwich.components,
   unpricedComponents: brisketSandwich.unpricedComponents,

@@ -1,26 +1,26 @@
 {
   "generatedFrom": "src/data/menuItems.json",
-  "totalItems": 1531,
+  "totalItems": 1653,
   "menuCount": 54,
-  "costedItems": 1475,
-  "complimentaryItems": 1062,
-  "priceRequiredItems": 469,
-  "pricedRequiredItems": 439,
+  "costedItems": 1596,
+  "complimentaryItems": 1132,
+  "priceRequiredItems": 521,
+  "pricedRequiredItems": 491,
   "proteinPriceGaps": 24,
   "allergenCoverage": 92,
   "detailCoverage": 100,
-  "costCoverage": 96,
+  "costCoverage": 97,
   "priceCoverage": 94,
   "dietCounts": {
-    "Vegan": 461,
-    "Vegetarian": 425,
-    "Regular": 645
+    "Vegan": 516,
+    "Vegetarian": 470,
+    "Regular": 667
   },
   "categoryCounts": {
-    "entree": 864,
-    "extension": 105,
-    "side": 273,
-    "subRecipe": 289
+    "entree": 879,
+    "extension": 116,
+    "side": 329,
+    "subRecipe": 329
   },
   "recentItems": [
     {
@@ -31,70 +31,74 @@
       "price": 5
     },
     {
-      "id": 1648,
-      "item": "Tuna Salad on Croissant, Dill Pickle Aioli",
-      "menu": "AMZ: Deli Core",
-      "station": "Curated Sandwiches",
-      "price": 9.9
-    },
-    {
-      "id": 1647,
-      "item": "Roast Beef, Brie Sandwich",
-      "menu": "AMZ: Deli Core",
-      "station": "Curated Sandwiches",
-      "price": 9.9
-    },
-    {
-      "id": 1646,
-      "item": "Roast Beef Sandwich, Muenster, Horseradish Cream, Onion Roll",
-      "menu": "AMZ: Deli Core",
-      "station": "Curated Sandwiches",
-      "price": 9.9
-    },
-    {
-      "id": 1645,
-      "item": "Muffaletta",
+      "id": 1610,
+      "item": "Crispy Buffalo Chicken Wrap",
       "menu": "AMZ: Deli Core",
       "station": "Regional Spotlights - Deli",
       "price": 10.55
     },
     {
-      "id": 1644,
-      "item": "Green California Crunch Sandwich",
-      "menu": "AMZ: Deli Core",
-      "station": "Curated Sandwiches",
-      "price": 8.95
-    },
-    {
-      "id": 1643,
-      "item": "Chicken Artichoke Pesto Sandwich",
+      "id": 1609,
+      "item": "Chicken Caesar Wrap",
       "menu": "AMZ: Deli Core",
       "station": "Curated Sandwiches",
       "price": 9.9
     },
     {
-      "id": 1642,
-      "item": "Charred Eggplant, Shaved Parmesan, Arugula, Smoky Romesco on Rustico Ciabatta",
+      "id": 1608,
+      "item": "Vegetable Cuban Style Hoagie",
       "menu": "AMZ: Deli Core",
       "station": "Curated Sandwiches",
       "price": 8.95
     },
     {
-      "id": 1641,
-      "item": "Banh Mi Ham Sandwich",
-      "menu": "AMZ: Deli Core",
-      "station": "Regional Spotlights - Deli",
-      "price": 10.55
+      "id": 1607,
+      "item": "Tuna Avocado Roll, Sesame",
+      "menu": "AMZ+RA: Sushi",
+      "station": "Sushi",
+      "price": null
     },
     {
-      "id": 1640,
-      "item": "Waldorf Chicken Salad Croissant",
-      "menu": "AMZ: Deli Core",
-      "station": "Curated Sandwiches",
-      "price": 9.9
+      "id": 1606,
+      "item": "Falafel Kale Salad",
+      "menu": "AMZ: Fresh Five",
+      "station": "Salad",
+      "price": 5
+    },
+    {
+      "id": 1605,
+      "item": "Strawberry Farro Salad",
+      "menu": "AMZ: Fresh Five",
+      "station": "Salad",
+      "price": 5
+    },
+    {
+      "id": 1602,
+      "item": "Peanut Butter Jelly and Banana Sandwich",
+      "menu": "AMZ: Fresh Five",
+      "station": "Deli",
+      "price": 5
+    },
+    {
+      "id": 1599,
+      "item": "Edamame Cucumber Sandwich",
+      "menu": "AMZ: Fresh Five",
+      "station": "Deli",
+      "price": 5
+    },
+    {
+      "id": 1598,
+      "item": "Yakisoba Crunch Salad",
+      "menu": "AMZ: Fresh Five",
+      "station": "Salad",
+      "price": 5
     }
   ],
   "topMenus": [
+    [
+      "AMZ: Deli Core",
+      165
+    ],
     [
       "AMZ: Carvery",
       122
@@ -113,11 +117,7 @@
     ],
     [
       "AMZ: Cafe Express Curated Sandwiches",
-      59
-    ],
-    [
-      "AMZ: Fish Market",
-      51
+      57
     ]
   ]
 }

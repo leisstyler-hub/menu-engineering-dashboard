@@ -243,12 +243,15 @@ test("Roxanne receives submitted Dawson Pop-Up and Salad items and exports separ
   await expect(page.getByTestId("roxanne-dawson-order")).toContainText("Piri Piri Chicken");
   await expect(page.getByTestId("roxanne-dawson-order")).toContainText("Herb Roasted Turkey");
   await expect(page.getByTestId("roxanne-dawson-order")).toContainText("Greek Salad");
-  await page.getByLabel(/Piri Piri Chicken Friday .* Roxanne quantity/).fill("4");
+  await expect(page.getByTestId("roxanne-dawson-order").locator("h4")).toHaveText(["Pop-Up", "Composed Salad"]);
+  await expect(page.getByLabel(/Piri Piri Chicken Friday .* Roxanne quantity/)).toHaveCount(0);
+  await page.getByLabel(/Piri Piri Chicken Monday .* Roxanne quantity/).fill("4");
   await page.getByLabel(/Greek Salad Monday .* Roxanne quantity/).fill("2");
   await expect.poll(() => writes.filter((write) => write.records?.[0]?.["Record Type"] === "Commissary Order").length).toBe(1);
   const saved = writes.find((write) => write.records?.[0]?.["Record Type"] === "Commissary Order").records[0];
-  expect(Object.values(saved.roxanneDawson.quantities).some(({ friday }) => friday === 4)).toBe(true);
+  expect(Object.values(saved.roxanneDawson.quantities).some(({ monday }) => monday === 4)).toBe(true);
   expect(Object.values(saved.roxanneDawson.quantities).some(({ monday }) => monday === 2)).toBe(true);
+  expect(Object.values(saved.roxanneDawson.quantities).every(({ friday }) => !friday)).toBe(true);
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: /generate transfers/i }).click();
   const download = await downloadPromise;
@@ -259,7 +262,7 @@ test("Roxanne receives submitted Dawson Pop-Up and Salad items and exports separ
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
-test("Roxanne receives only costed Cricket soups and the current Flatbread cycle", async ({ page }) => {
+test("Roxanne shows source-present soups, disables uncosted ordering, and keeps the current Flatbread cycle", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   await page.clock.install({ time: new Date("2026-11-24T20:00:00Z") });
   const parent = "rotation|2026-11-30|North|Cricket";
@@ -277,14 +280,18 @@ test("Roxanne receives only costed Cricket soups and the current Flatbread cycle
   const flatbreads = page.getByTestId("roxanne-flatbread-order");
   await expect(soups).toContainText("Chicken Noodle Soup");
   await expect(soups).toContainText("Tomato Basil Soup");
-  await expect(soups.getByText("Uncosted Soup", { exact: true })).toHaveCount(0);
+  await expect(soups).toContainText("Uncosted Soup");
+  await expect(soups).toContainText("Cost unavailable");
   await expect(flatbreads.getByText("Chicken Pesto Flatbread", { exact: true })).toBeVisible();
   await expect(flatbreads.getByText("Quattro Formaggi Flatbread", { exact: true })).toBeVisible();
   await page.getByLabel("Monday Soup 1 quantity").fill("8");
   await page.getByLabel(/Chicken Pesto Flatbread Monday .* quantity/).fill("5");
   await expect.poll(() => writes.length).toBeGreaterThan(0);
   const saved = writes.at(-1).records[0];
-  expect(Object.values(saved.roxanneSoup.items).map(({ mrn }) => mrn).sort()).toEqual(["1001", "1002"]);
+  expect(Object.values(saved.roxanneSoup.items).map(({ mrn }) => mrn).sort()).toEqual(["1001", "1002", "62071.1"]);
+  const uncostedId = Object.entries(saved.roxanneSoup.items).find(([, item]) => item.mrn === "62071.1")?.[0];
+  expect(uncostedId).toBeTruthy();
+  expect(Object.values(saved.roxanneSoup.quantities[uncostedId]).every((quantity) => quantity === 0)).toBe(true);
   expect(saved.roxanneFlatbreads.cycleWeek).toBe(1);
   await expectNoAppProtection(page);
   expectNoUnexpectedPageErrors(pageErrors);

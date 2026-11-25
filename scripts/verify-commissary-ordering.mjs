@@ -22,7 +22,7 @@ import { BREAKFAST_ORDERING_ITEM_IDS, BREAKFAST_ORDERING_PREP_ITEM_IDS, BREAKFAS
 import { COMMISSARY_SPANISH } from "../src/features/commissary-ordering/commissaryTranslations.js";
 import { COMMISSARY_STATIONS, cafeRoutesToHub, cafeRoutesToPackoutHub, commissaryHubFor, isCafeStationEnabled, isCommissaryHub } from "../src/features/commissary-ordering/commissaryRouting.js";
 import { filterCommissaryComponents, isRawAnimalProteinComponent } from "../src/features/commissary-ordering/commissaryPrepPolicy.js";
-import { buildRoxanneDawsonProjection, normalizeRoxanneDawsonOrder, roxanneDawsonOrderLines } from "../src/features/commissary-ordering/roxanneDawsonProjection.js";
+import { buildRoxanneDawsonProjection, normalizeRoxanneDawsonOrder, resolveRoxannePopUpLegacyFriday, roxanneDawsonDeliveryKeysForItem, roxanneDawsonOrderLines, roxannePopUpLegacyFridayQuantities } from "../src/features/commissary-ordering/roxanneDawsonProjection.js";
 import { buildRoxanneCricketSoupProjection, normalizeRoxanneFlatbreadOrder, normalizeRoxanneSoupOrder, roxanneFlatbreadCycleForWeek, roxanneFlatbreadOrderLines, roxanneSoupOrderLines } from "../src/features/commissary-ordering/roxanneCricketPrograms.js";
 import { mergePendingPrepProgress, prepProgressKey } from "../src/features/commissary-ordering/commissaryStorage.js";
 
@@ -78,8 +78,8 @@ assert.equal(grillCycleForWeek("2026-11-09"), null, "The Grill cycle must not ap
 assert.equal(isGrillCoreAvailable("Atlas", "2026-11-09"), true, "Atlas Grill Core must begin one week before the general Grill program.");
 assert.equal(isGrillCoreAvailable("Nessie", "2026-11-09"), false);
 assert.equal(DELI_ORDERING_PROGRAM.cycleLengthWeeks, 4);
-assert.deepEqual(DELI_ORDERING_PROGRAM.cycleWeeks.map(({ items }) => items.length), [5, 5, 5, 6]);
-assert.equal(DELI_ORDERING_ITEM_MRNS.length, 19);
+assert.deepEqual(DELI_ORDERING_PROGRAM.cycleWeeks.map(({ items }) => items.length), [5, 6, 5, 6]);
+assert.equal(DELI_ORDERING_ITEM_MRNS.length, 20);
 assert.deepEqual(DELI_ORDERING_PROGRAM.standingOrderItemMrns, ["37394.7"]);
 assert.ok(DELI_ORDERING_PREP_ITEM_IDS.length > 100);
 assert.equal(deliCycleForWeek("2026-11-16").week, 1);
@@ -757,7 +757,7 @@ const sonicHubPacket = buildPackoutPacket([globalRecord], "2026-11-16", DEFAULT_
 assert.equal(sonicHubPacket.pages.length, 3, "Sonic hub packout must include routed Everest Global work.");
 const cricketHubPacket = buildPackoutPacket([globalRecord], "2026-11-16", DEFAULT_COMMISSARY_METADATA, { selectedCafe: "Cricket" });
 assert.equal(cricketHubPacket.pages.length, 0, "Cricket hub packout must not include Everest Global work.");
-const packetRecord = { ...buildPackoutPacketRecord({ weekStart: "2026-11-16", records: [globalRecord], packet, metadataVersion: 35, now: new Date("2026-11-12T01:00:00Z") }), packet };
+const packetRecord = { ...buildPackoutPacketRecord({ weekStart: "2026-11-16", records: [globalRecord], packet, metadataVersion: 36, now: new Date("2026-11-12T01:00:00Z") }), packet };
 assert.equal(commissaryWriteValidation([packetRecord], { tool: "commissaryOrders" }), "");
 assert.match(commissaryWriteValidation([{ ...packetRecord, packet: { ...packet, pages: [{ ...packet.pages[0], cafe: "Unknown Cafe" }] } }], { tool: "commissaryOrders" }), /scope|invalid cafe/i);
 assert.match(commissaryWriteValidation([{ ...packetRecord, orderRecordIds: [`commissaryOrder|nessie|${packetRecord.weekStart}`] }], { tool: "commissaryOrders" }), /order-reference scope/i);
@@ -790,6 +790,14 @@ roxanneOrder.quantities[roxanneProjection.items[1].id].monday = 3;
 roxanneOrder.quantities[roxanneProjection.items[2].id].wednesday = 2;
 const roxanneRecord = buildOrderRecord({ cafe: "Roxanne Coffee", weekStart: "2026-11-30", roxanneDawson: roxanneOrder, now: new Date("2026-11-20T12:00:00Z") });
 assert.equal(roxanneDawsonOrderLines(roxanneRecord).length, 3);
+assert.deepEqual(roxanneDawsonDeliveryKeysForItem(roxanneProjection.items.find(({ source }) => source === "global")), ["monday", "wednesday"]);
+assert.deepEqual(roxanneDawsonDeliveryKeysForItem(roxanneProjection.items.find(({ source }) => source === "composedSalad")), ["friday", "monday", "wednesday"]);
+assert.equal(roxannePopUpLegacyFridayQuantities(roxanneOrder).reduce((sum, row) => sum + row.quantity, 0), 4, "Saved Pop-Up Friday quantities must remain visible for operator resolution.");
+const resolvedRoxanneOrder = resolveRoxannePopUpLegacyFriday(roxanneOrder, "move-to-monday");
+assert.equal(roxannePopUpLegacyFridayQuantities(resolvedRoxanneOrder).length, 0);
+assert.equal(resolvedRoxanneOrder.popUpSchedule, "tuesday-wednesday-thursday");
+assert.equal(Object.values(resolvedRoxanneOrder.items).filter(({ source }) => source !== "composedSalad").reduce((sum, item) => sum + resolvedRoxanneOrder.quantities[item.id].friday, 0), 0);
+assert.equal(Object.values(resolvedRoxanneOrder.items).filter(({ source }) => source !== "composedSalad").reduce((sum, item) => sum + resolvedRoxanneOrder.quantities[item.id].monday, 0), 7, "Moving legacy Friday quantities must preserve standing totals in Monday delivery.");
 assert.equal(validateBeforeCutoff([roxanneRecord]), "");
 assert.equal(rolledUpPrepItems([roxanneRecord], { hub: "Cricket" }).some(({ station }) => /Pop-Up|Composed/.test(station)), false, "Dawson-supplied Roxanne items must never enter hub Prep Lists.");
 const dawsonTransfer = buildRoxanneDawsonTransfer(roxanneRecord);
@@ -806,7 +814,7 @@ const cricketSoupRecords = [
   { "Record ID": `${cricketParent}|soup|3`, "Parent Record ID": cricketParent, "Record Type": "Station Selection", Status: "Submitted", "Station Key": "soup", "Slot Number": 3, "Menu Item / Selection": "Uncosted Soup", MRN: "62071.1", Portion: "12 oz", "True Cost": 0 },
 ];
 const soupProjection = buildRoxanneCricketSoupProjection(cricketSoupRecords, "2026-11-30");
-assert.deepEqual(soupProjection.items.map(({ mrn }) => mrn), ["1001", "1002"], "Only definitively costed submitted soups may project into Roxanne ordering.");
+assert.deepEqual(soupProjection.items.map(({ mrn }) => mrn), ["1001", "1002", "62071.1"], "Every authoritative submitted soup remains visible; cost-unavailable items cannot be ordered or transferred.");
 const soupOrder = normalizeRoxanneSoupOrder({}, soupProjection);
 soupOrder.quantities[soupProjection.items[0].id].friday = 7;
 const flatbreadCycle = roxanneFlatbreadCycleForWeek("2026-11-30");

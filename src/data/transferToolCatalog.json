@@ -1985,7 +1985,7 @@
       "item": "Artichoke Chicken Sandwich",
       "mrn": "191178",
       "portion": "1 sandwich",
-      "itemWasteCost": 3.358
+      "itemWasteCost": 3.0971
     },
     {
       "id": "amz: cafe express curated sandwiches|balsamic mushroom caprese|174949|1 sandwich",
@@ -1993,7 +1993,7 @@
       "item": "Balsamic Mushroom Caprese",
       "mrn": "174949",
       "portion": "1 sandwich",
-      "itemWasteCost": 3.834
+      "itemWasteCost": 4.6873
     },
     {
       "id": "amz: cafe express curated sandwiches|bbq pulled pork sandwich|44956.1|1 sandwich",
@@ -2001,7 +2001,7 @@
       "item": "Bbq Pulled Pork Sandwich",
       "mrn": "44956.1",
       "portion": "1 sandwich",
-      "itemWasteCost": 2.161
+      "itemWasteCost": 2.1143
     },
     {
       "id": "amz: cafe express curated sandwiches|beef brisket sandwich|10379.3|1 sandwich",
@@ -2009,47 +2009,39 @@
       "item": "Beef Brisket Sandwich",
       "mrn": "10379.3",
       "portion": "1 sandwich",
-      "itemWasteCost": 5.111
+      "itemWasteCost": 5.5422
     },
     {
       "id": "amz: cafe express curated sandwiches|black forest ham and brie panini|33674.5|1 sandwich",
       "menu": "AMZ: Cafe Express Curated Sandwiches",
-      "item": "Black Forest Ham and Brie Panini",
+      "item": "Black Forest Ham And Brie Panini",
       "mrn": "33674.5",
       "portion": "1 sandwich",
-      "itemWasteCost": 2.245
+      "itemWasteCost": 2.6624
     },
     {
       "id": "amz: cafe express curated sandwiches|blta|9182.8|1 sandwich",
       "menu": "AMZ: Cafe Express Curated Sandwiches",
-      "item": "Blta",
+      "item": "BLTA",
       "mrn": "9182.8",
       "portion": "1 sandwich",
-      "itemWasteCost": 4.178
+      "itemWasteCost": 4.3878
     },
     {
       "id": "amz: cafe express curated sandwiches|broccoli and cheddar salad|81534|4 ounce",
       "menu": "AMZ: Cafe Express Curated Sandwiches",
-      "item": "Broccoli and Cheddar Salad",
+      "item": "Broccoli And Cheddar Salad",
       "mrn": "81534",
       "portion": "4 ounce",
-      "itemWasteCost": 0.593
-    },
-    {
-      "id": "amz: cafe express curated sandwiches|buffalo chicken wrap|9282.10|1 each",
-      "menu": "AMZ: Cafe Express Curated Sandwiches",
-      "item": "Buffalo Chicken Wrap",
-      "mrn": "9282.10",
-      "portion": "1 each",
-      "itemWasteCost": 2.788
+      "itemWasteCost": 0.7155
     },
     {
       "id": "amz: cafe express curated sandwiches|caprese chicken on telera|104208.27|1 sandwich",
       "menu": "AMZ: Cafe Express Curated Sandwiches",
-      "item": "Caprese Chicken on Telera",
+      "item": "Caprese Chicken On Telera",
       "mrn": "104208.27",
       "portion": "1 sandwich",
-      "itemWasteCost": 3.097
+      "itemWasteCost": 3.1044
     },
     {
       "id": "amz: cafe express curated sandwiches|caprese sandwich|34303.45|1 sandwich",
@@ -2057,7 +2049,7 @@
       "item": "Caprese Sandwich",
       "mrn": "34303.45",
       "portion": "1 sandwich",
-      "itemWasteCost": 2.854
+      "itemWasteCost": 3.2094
     },
     {
       "id": "amz: cafe express curated sandwiches|carne asada torta|157816|1 each",
@@ -2065,7 +2057,7 @@
       "item": "Carne Asada Torta",
       "mrn": "157816",
       "portion": "1 each",
-      "itemWasteCost": 3.502
+      "itemWasteCost": 4.9098
     },
     {
       "id": "amz: cafe express curated sandwiches|chicken caesar wrap|37311.43|1 wrap",
@@ -2073,7 +2065,7 @@
       "item": "Chicken Caesar Wrap",
       "mrn": "37311.43",
       "portion": "1 wrap",
-      "itemWasteCost": 4.106
+      "itemWasteCost": 4.4502
     },
     {
       "id": "amz: cafe express curated sandwiches|chimichurri steak sandwich|105146.3|1 sandwich",
@@ -2081,23 +2073,23 @@
       "item": "Chimichurri Steak Sandwich",
       "mrn": "105146.3",
       "portion": "1 sandwich",
-      "itemWasteCost": 3.618
+      "itemWasteCost": 3.5662
     },
     {
       "id": "amz: cafe express curated sandwiches|chips, multigrain, garden salsa, sunchips, 1.5 oz|85357|1 each",
       "menu": "AMZ: Cafe Express Curated Sandwiches",
-      "item": "Chips, Multigrain, Garden Salsa, Sunchips, 1.5 Oz",
+      "item": "Chips, Multigrain, Garden Salsa, SunChips, 1.5 Oz",
       "mrn": "85357",
       "portion": "1 each",
-      "itemWasteCost": 0.752
+      "itemWasteCost": 0.7748
     },
     {
       "id": "amz: cafe express curated sandwiches|chips, multigrain, harvest cheddar, sunchips, 1.5 oz|85349|1 each",
       "menu": "AMZ: Cafe Express Curated Sandwiches",
-      "item": "Chips, Multigrain, Harvest Cheddar, Sunchips, 1.5 Oz",
+      "item": "Chips, Multigrain, Harvest Cheddar, SunChips, 1.5 Oz",
       "mrn": "85349",
       "portion": "1 each",
-      "itemWasteCost": 0.754
+      "itemWasteCost": 0.7748
     },
     {
       "id": "amz: cafe express curated sandwiches|chips, potato, kettle, barbeque, miss vickies, 1.38 oz|174424|1 each",
@@ -2105,7 +2097,7 @@
       "item": "Chips, Potato, Kettle, Barbeque, Miss Vickies, 1.38 Oz",
       "mrn": "174424",
       "portion": "1 each",
-      "itemWasteCost": 0.674
+      "itemWasteCost": 0.7748
     },
     {
       "id": "amz: cafe express curated sandwiches|chips, potato, kettle, jalapeno, miss vickies, 1.375 oz|85838|1 each",
@@ -2113,7 +2105,7 @@
       "item": "Chips, Potato, Kettle, Jalapeno, Miss Vickies, 1.375 Oz",
       "mrn": "85838",
       "portion": "1 each",
-      "itemWasteCost": 0.764
+      "itemWasteCost": 0.7748
     },
     {
       "id": "amz: cafe express curated sandwiches|chips, potato, kettle, salt & vinegar, miss vickies, 1.375 oz|85360|1 each",
@@ -2121,7 +2113,7 @@
       "item": "Chips, Potato, Kettle, Salt & Vinegar, Miss Vickies, 1.375 Oz",
       "mrn": "85360",
       "portion": "1 each",
-      "itemWasteCost": 0.754
+      "itemWasteCost": 0.7748
     },
     {
       "id": "amz: cafe express curated sandwiches|chips, potato, kettle, sea salt, miss vickies, 1.375 oz|85362|1 each",
@@ -2129,7 +2121,7 @@
       "item": "Chips, Potato, Kettle, Sea Salt, Miss Vickies, 1.375 Oz",
       "mrn": "85362",
       "portion": "1 each",
-      "itemWasteCost": 0.754
+      "itemWasteCost": 0.7748
     },
     {
       "id": "amz: cafe express curated sandwiches|classic coleslaw|83591|4 ounce",
@@ -2137,7 +2129,7 @@
       "item": "Classic Coleslaw",
       "mrn": "83591",
       "portion": "4 ounce",
-      "itemWasteCost": 0.402
+      "itemWasteCost": 0.4368
     },
     {
       "id": "amz: cafe express curated sandwiches|classic macaroni salad|18177|1/2 cup",
@@ -2145,7 +2137,7 @@
       "item": "Classic Macaroni Salad",
       "mrn": "18177",
       "portion": "1/2 cup",
-      "itemWasteCost": 0.187
+      "itemWasteCost": 0.2579
     },
     {
       "id": "amz: cafe express curated sandwiches|crispy chicken ranch wrap|68606|1 sandwich",
@@ -2153,7 +2145,7 @@
       "item": "Crispy Chicken Ranch Wrap",
       "mrn": "68606",
       "portion": "1 sandwich",
-      "itemWasteCost": 2.854
+      "itemWasteCost": 2.9359
     },
     {
       "id": "amz: cafe express curated sandwiches|crispy chicken sandwich|77139.22|1 sandwich",
@@ -2161,7 +2153,7 @@
       "item": "Crispy Chicken Sandwich",
       "mrn": "77139.22",
       "portion": "1 sandwich",
-      "itemWasteCost": 2.625
+      "itemWasteCost": 2.7092
     },
     {
       "id": "amz: cafe express curated sandwiches|cubano|161990|1 serving(s)",
@@ -2169,15 +2161,15 @@
       "item": "Cubano",
       "mrn": "161990",
       "portion": "1 serving(s)",
-      "itemWasteCost": 1.82
+      "itemWasteCost": 2.2651
     },
     {
       "id": "amz: cafe express curated sandwiches|egg salad with bacon sandwich|9134.2|1 sandwich",
       "menu": "AMZ: Cafe Express Curated Sandwiches",
-      "item": "Egg Salad with Bacon Sandwich",
+      "item": "Egg Salad With Bacon Sandwich",
       "mrn": "9134.2",
       "portion": "1 sandwich",
-      "itemWasteCost": 2.264
+      "itemWasteCost": 2.445
     },
     {
       "id": "amz: cafe express curated sandwiches|fingerling potato salad|44855|4 ounce",
@@ -2185,7 +2177,7 @@
       "item": "Fingerling Potato Salad",
       "mrn": "44855",
       "portion": "4 ounce",
-      "itemWasteCost": 0.716
+      "itemWasteCost": 0.8216
     },
     {
       "id": "amz: cafe express curated sandwiches|fried fish sandwich|84329|1 sandwich",
@@ -2193,7 +2185,7 @@
       "item": "Fried Fish Sandwich",
       "mrn": "84329",
       "portion": "1 sandwich",
-      "itemWasteCost": 4.597
+      "itemWasteCost": 5.7668
     },
     {
       "id": "amz: cafe express curated sandwiches|garden salad|16811.6|1 each",
@@ -2201,23 +2193,23 @@
       "item": "Garden Salad",
       "mrn": "16811.6",
       "portion": "1 each",
-      "itemWasteCost": 1.239
+      "itemWasteCost": 2.1996
     },
     {
       "id": "amz: cafe express curated sandwiches|garden salad with balsamic dressing|16811.5|1 each",
       "menu": "AMZ: Cafe Express Curated Sandwiches",
-      "item": "Garden Salad with Balsamic Dressing",
+      "item": "Garden Salad With Balsamic Dressing",
       "mrn": "16811.5",
       "portion": "1 each",
-      "itemWasteCost": 1.369
+      "itemWasteCost": 2.3379
     },
     {
       "id": "amz: cafe express curated sandwiches|garden salad with italian dressing|16811.7|1 each",
       "menu": "AMZ: Cafe Express Curated Sandwiches",
-      "item": "Garden Salad with Italian Dressing",
+      "item": "Garden Salad With Italian Dressing",
       "mrn": "16811.7",
       "portion": "1 each",
-      "itemWasteCost": 1.147
+      "itemWasteCost": 2.0675
     },
     {
       "id": "amz: cafe express curated sandwiches|gourmet pomodoro grilled cheese|15832.4|1 sandwich",
@@ -2225,7 +2217,7 @@
       "item": "Gourmet Pomodoro Grilled Cheese",
       "mrn": "15832.4",
       "portion": "1 sandwich",
-      "itemWasteCost": 1.55
+      "itemWasteCost": 1.6058
     },
     {
       "id": "amz: cafe express curated sandwiches|greek pasta salad|35069.5|1/2 cup",
@@ -2233,7 +2225,7 @@
       "item": "Greek Pasta Salad",
       "mrn": "35069.5",
       "portion": "1/2 cup",
-      "itemWasteCost": 0.316
+      "itemWasteCost": 0.3921
     },
     {
       "id": "amz: cafe express curated sandwiches|grilled chicken chimichurri sandwich|76319|1 sandwich",
@@ -2241,23 +2233,23 @@
       "item": "Grilled Chicken Chimichurri Sandwich",
       "mrn": "76319",
       "portion": "1 sandwich",
-      "itemWasteCost": 3.606
+      "itemWasteCost": 4.1059
     },
     {
       "id": "amz: cafe express curated sandwiches|ham and brie sandwich|142454|1 sandwich",
       "menu": "AMZ: Cafe Express Curated Sandwiches",
-      "item": "Ham and Brie Sandwich",
+      "item": "Ham And Brie Sandwich",
       "mrn": "142454",
       "portion": "1 sandwich",
-      "itemWasteCost": 2.484
+      "itemWasteCost": 2.8454
     },
     {
       "id": "amz: cafe express curated sandwiches|ham and swiss sandwich on telera|131168.13|1 sandwich",
       "menu": "AMZ: Cafe Express Curated Sandwiches",
-      "item": "Ham and Swiss Sandwich on Telera",
+      "item": "Ham And Swiss Sandwich On Telera",
       "mrn": "131168.13",
       "portion": "1 sandwich",
-      "itemWasteCost": 2.219
+      "itemWasteCost": 2.8517
     },
     {
       "id": "amz: cafe express curated sandwiches|italian grinder|76623.4|1 sandwich",
@@ -2265,7 +2257,7 @@
       "item": "Italian Grinder",
       "mrn": "76623.4",
       "portion": "1 sandwich",
-      "itemWasteCost": 3.261
+      "itemWasteCost": 4.4075
     },
     {
       "id": "amz: cafe express curated sandwiches|jackfruit barbecue sandwich|135703|1 sandwich",
@@ -2273,7 +2265,7 @@
       "item": "Jackfruit Barbecue Sandwich",
       "mrn": "135703",
       "portion": "1 sandwich",
-      "itemWasteCost": 1.629
+      "itemWasteCost": 1.663
     },
     {
       "id": "amz: cafe express curated sandwiches|mediterranean falafel wrap|102969|1 serving(s)",
@@ -2281,7 +2273,7 @@
       "item": "Mediterranean Falafel Wrap",
       "mrn": "102969",
       "portion": "1 serving(s)",
-      "itemWasteCost": 2.753
+      "itemWasteCost": 4.0726
     },
     {
       "id": "amz: cafe express curated sandwiches|mediterranean turkey wrap|190990|1 wrap",
@@ -2289,7 +2281,7 @@
       "item": "Mediterranean Turkey Wrap",
       "mrn": "190990",
       "portion": "1 wrap",
-      "itemWasteCost": 2.838
+      "itemWasteCost": 3.0982
     },
     {
       "id": "amz: cafe express curated sandwiches|monte cristo|2394.1|1 sandwich",
@@ -2297,7 +2289,7 @@
       "item": "Monte Cristo",
       "mrn": "2394.1",
       "portion": "1 sandwich",
-      "itemWasteCost": 1.332
+      "itemWasteCost": 1.3468
     },
     {
       "id": "amz: cafe express curated sandwiches|peppy panini|9171|1 sandwich",
@@ -2305,7 +2297,7 @@
       "item": "Peppy Panini",
       "mrn": "9171",
       "portion": "1 sandwich",
-      "itemWasteCost": 2.35
+      "itemWasteCost": 2.5927
     },
     {
       "id": "amz: cafe express curated sandwiches|pistachio herb couscous salad|120641|1/2 cup",
@@ -2313,7 +2305,7 @@
       "item": "Pistachio Herb Couscous Salad",
       "mrn": "120641",
       "portion": "1/2 cup",
-      "itemWasteCost": 0.771
+      "itemWasteCost": 1.2854
     },
     {
       "id": "amz: cafe express curated sandwiches|pistachio mortadella burrata sandwich|191049|1 sandwich",
@@ -2321,7 +2313,7 @@
       "item": "Pistachio Mortadella Burrata Sandwich",
       "mrn": "191049",
       "portion": "1 sandwich",
-      "itemWasteCost": 4.461
+      "itemWasteCost": 5.1532
     },
     {
       "id": "amz: cafe express curated sandwiches|porchetta sandwich|78027.1|1 sandwich",
@@ -2329,15 +2321,15 @@
       "item": "Porchetta Sandwich",
       "mrn": "78027.1",
       "portion": "1 sandwich",
-      "itemWasteCost": 2.411
+      "itemWasteCost": 2.6728
     },
     {
       "id": "amz: cafe express curated sandwiches|pork bahn mi with spicy mayo|70355.1|1 sandwich",
       "menu": "AMZ: Cafe Express Curated Sandwiches",
-      "item": "Pork Bahn Mi with Spicy Mayo",
+      "item": "Pork Bahn Mi With Spicy Mayo",
       "mrn": "70355.1",
       "portion": "1 sandwich",
-      "itemWasteCost": 0.375
+      "itemWasteCost": 0.4295
     },
     {
       "id": "amz: cafe express curated sandwiches|portobello philly sandwich|84264.2|1 sandwich",
@@ -2345,23 +2337,23 @@
       "item": "Portobello Philly Sandwich",
       "mrn": "84264.2",
       "portion": "1 sandwich",
-      "itemWasteCost": 2.055
+      "itemWasteCost": 3.4393
     },
     {
       "id": "amz: cafe express curated sandwiches|quinoa and roasted vegetable wrap|83064.3|1 sandwich",
       "menu": "AMZ: Cafe Express Curated Sandwiches",
-      "item": "Quinoa and Roasted Vegetable Wrap",
+      "item": "Quinoa And Roasted Vegetable Wrap",
       "mrn": "83064.3",
       "portion": "1 sandwich",
-      "itemWasteCost": 2.388
+      "itemWasteCost": 2.4513
     },
     {
       "id": "amz: cafe express curated sandwiches|roast beef and cheddar sandwich|34303.46|1 sandwich",
       "menu": "AMZ: Cafe Express Curated Sandwiches",
-      "item": "Roast Beef and Cheddar Sandwich",
+      "item": "Roast Beef And Cheddar Sandwich",
       "mrn": "34303.46",
       "portion": "1 sandwich",
-      "itemWasteCost": 3.298
+      "itemWasteCost": 3.3987
     },
     {
       "id": "amz: cafe express curated sandwiches|shrimp po' boy|81246|1 sandwich",
@@ -2369,7 +2361,7 @@
       "item": "Shrimp Po' Boy",
       "mrn": "81246",
       "portion": "1 sandwich",
-      "itemWasteCost": 4.532
+      "itemWasteCost": 4.2484
     },
     {
       "id": "amz: cafe express curated sandwiches|shrimp scampi panini|119106|1 sandwich",
@@ -2377,7 +2369,7 @@
       "item": "Shrimp Scampi Panini",
       "mrn": "119106",
       "portion": "1 sandwich",
-      "itemWasteCost": 3.675
+      "itemWasteCost": 3.2042
     },
     {
       "id": "amz: cafe express curated sandwiches|thai peanut tofu wrap|190996|1 wrap",
@@ -2385,23 +2377,23 @@
       "item": "Thai Peanut Tofu Wrap",
       "mrn": "190996",
       "portion": "1 wrap",
-      "itemWasteCost": 4.302
+      "itemWasteCost": 3.9416
     },
     {
       "id": "amz: cafe express curated sandwiches|the rachel|84262|1 sandwich",
       "menu": "AMZ: Cafe Express Curated Sandwiches",
-      "item": "the Rachel",
+      "item": "The Rachel",
       "mrn": "84262",
       "portion": "1 sandwich",
-      "itemWasteCost": 2.355
+      "itemWasteCost": 2.8101
     },
     {
       "id": "amz: cafe express curated sandwiches|tuna melt on sourdough|106974.2|1 sandwich",
       "menu": "AMZ: Cafe Express Curated Sandwiches",
-      "item": "Tuna Melt on Sourdough",
+      "item": "Tuna Melt On Sourdough",
       "mrn": "106974.2",
       "portion": "1 sandwich",
-      "itemWasteCost": 3.189
+      "itemWasteCost": 3.2084
     },
     {
       "id": "amz: cafe express curated sandwiches|turkey avocado club|148838.3|1 sandwich",
@@ -2409,7 +2401,7 @@
       "item": "Turkey Avocado Club",
       "mrn": "148838.3",
       "portion": "1 sandwich",
-      "itemWasteCost": 4.963
+      "itemWasteCost": 4.1257
     },
     {
       "id": "amz: cafe express curated sandwiches|turkey bacon chipotle panini|64199|1 sandwich",
@@ -2417,7 +2409,7 @@
       "item": "Turkey Bacon Chipotle Panini",
       "mrn": "64199",
       "portion": "1 sandwich",
-      "itemWasteCost": 3.13
+      "itemWasteCost": 3.1481
     },
     {
       "id": "amz: cafe express curated sandwiches|turkey swiss wrap|8324.13|1 sandwich",
@@ -2425,7 +2417,7 @@
       "item": "Turkey Swiss Wrap",
       "mrn": "8324.13",
       "portion": "1 sandwich",
-      "itemWasteCost": 2.196
+      "itemWasteCost": 3.0722
     },
     {
       "id": "amz: cafe express curated sandwiches|tuscan vegetable sandwich|108987|1 sandwich",
@@ -2433,7 +2425,7 @@
       "item": "Tuscan Vegetable Sandwich",
       "mrn": "108987",
       "portion": "1 sandwich",
-      "itemWasteCost": 1.801
+      "itemWasteCost": 2.2786
     },
     {
       "id": "amz: cafe express curated sandwiches|vegetable samosa wrap|212749|1 each",
@@ -2441,7 +2433,7 @@
       "item": "Vegetable Samosa Wrap",
       "mrn": "212749",
       "portion": "1 each",
-      "itemWasteCost": 0.816
+      "itemWasteCost": 1.0379
     },
     {
       "id": "amz: cafe express soup|baked stuffed potato soup|3505|12 floz",
@@ -2449,7 +2441,7 @@
       "item": "Baked Stuffed Potato Soup",
       "mrn": "3505",
       "portion": "12 floz",
-      "itemWasteCost": 2.065
+      "itemWasteCost": 2.0862
     },
     {
       "id": "amz: cafe express soup|beef barley soup|57584.2|12 floz",
@@ -2457,7 +2449,7 @@
       "item": "Beef Barley Soup",
       "mrn": "57584.2",
       "portion": "12 floz",
-      "itemWasteCost": 0.982
+      "itemWasteCost": 1.2147
     },
     {
       "id": "amz: cafe express soup|beef chili|163498|12 ounce",
@@ -2465,7 +2457,7 @@
       "item": "Beef Chili",
       "mrn": "163498",
       "portion": "12 ounce",
-      "itemWasteCost": 1.808
+      "itemWasteCost": 2.1039
     },
     {
       "id": "amz: cafe express soup|black bean cuban-style soup|177600|12 floz",
@@ -2473,23 +2465,23 @@
       "item": "Black Bean Cuban-Style Soup",
       "mrn": "177600",
       "portion": "12 floz",
-      "itemWasteCost": 2.282
+      "itemWasteCost": 2.288
     },
     {
       "id": "amz: cafe express soup|black bean soup with cilantro cream|11376.2|12 floz",
       "menu": "AMZ: Cafe Express Soup",
-      "item": "Black Bean Soup with Cilantro Cream",
+      "item": "Black Bean Soup With Cilantro Cream",
       "mrn": "11376.2",
       "portion": "12 floz",
-      "itemWasteCost": 0.836
+      "itemWasteCost": 1.248
     },
     {
       "id": "amz: cafe express soup|broccoli and cheddar cheese soup|57668.3|12 floz",
       "menu": "AMZ: Cafe Express Soup",
-      "item": "Broccoli and Cheddar Cheese Soup",
+      "item": "Broccoli And Cheddar Cheese Soup",
       "mrn": "57668.3",
       "portion": "12 floz",
-      "itemWasteCost": 1.285
+      "itemWasteCost": 1.6671
     },
     {
       "id": "amz: cafe express soup|broccoli cheddar soup|4456|12 floz",
@@ -2497,7 +2489,7 @@
       "item": "Broccoli Cheddar Soup",
       "mrn": "4456",
       "portion": "12 floz",
-      "itemWasteCost": 2.044
+      "itemWasteCost": 2.0654
     },
     {
       "id": "amz: cafe express soup|butternut ginger|207678|12 floz",
@@ -2505,7 +2497,7 @@
       "item": "Butternut Ginger",
       "mrn": "207678",
       "portion": "12 floz",
-      "itemWasteCost": 3.818
+      "itemWasteCost": 3.223
     },
     {
       "id": "amz: cafe express soup|chana masala cauliflower soup|149692.3|12 floz",
@@ -2521,7 +2513,7 @@
       "item": "Cheeseburger Soup",
       "mrn": "193152",
       "portion": "12 floz",
-      "itemWasteCost": 1.142
+      "itemWasteCost": 1.3343
     },
     {
       "id": "amz: cafe express soup|chicken & dumpling soup|19167|12 floz",
@@ -2529,15 +2521,15 @@
       "item": "Chicken & Dumpling Soup",
       "mrn": "19167",
       "portion": "12 floz",
-      "itemWasteCost": 2.025
+      "itemWasteCost": 2.0738
     },
     {
       "id": "amz: cafe express soup|chicken and orzo soup|77046.6|12 floz",
       "menu": "AMZ: Cafe Express Soup",
-      "item": "Chicken and Orzo Soup",
+      "item": "Chicken And Orzo Soup",
       "mrn": "77046.6",
       "portion": "12 floz",
-      "itemWasteCost": 0.561
+      "itemWasteCost": 0.8611
     },
     {
       "id": "amz: cafe express soup|chicken baja enchilada soup|213075|12 floz",
@@ -2545,7 +2537,7 @@
       "item": "Chicken Baja Enchilada Soup",
       "mrn": "213075",
       "portion": "12 floz",
-      "itemWasteCost": 2.448
+      "itemWasteCost": 2.4586
     },
     {
       "id": "amz: cafe express soup|chicken lentil mulligatawny|131877|12 floz",
@@ -2553,7 +2545,7 @@
       "item": "Chicken Lentil Mulligatawny",
       "mrn": "131877",
       "portion": "12 floz",
-      "itemWasteCost": 1.844
+      "itemWasteCost": 2.054
     },
     {
       "id": "amz: cafe express soup|chicken noodle soup|3501|12 floz",
@@ -2561,7 +2553,7 @@
       "item": "Chicken Noodle Soup",
       "mrn": "3501",
       "portion": "12 floz",
-      "itemWasteCost": 1.523
+      "itemWasteCost": 1.5194
     },
     {
       "id": "amz: cafe express soup|chicken noodle soup|57600.4|12 floz",
@@ -2569,7 +2561,7 @@
       "item": "Chicken Noodle Soup",
       "mrn": "57600.4",
       "portion": "12 floz",
-      "itemWasteCost": 0.65
+      "itemWasteCost": 0.9849
     },
     {
       "id": "amz: cafe express soup|chicken tortilla soup|77046.4|12 floz",
@@ -2577,7 +2569,7 @@
       "item": "Chicken Tortilla Soup",
       "mrn": "77046.4",
       "portion": "12 floz",
-      "itemWasteCost": 0.846
+      "itemWasteCost": 1.0348
     },
     {
       "id": "amz: cafe express soup|clam andouille gumbo|131398|12 floz",
@@ -2585,7 +2577,7 @@
       "item": "Clam Andouille Gumbo",
       "mrn": "131398",
       "portion": "12 floz",
-      "itemWasteCost": 1.847
+      "itemWasteCost": 2.599
     },
     {
       "id": "amz: cafe express soup|clam chowder|4462|12 floz",
@@ -2593,7 +2585,7 @@
       "item": "Clam Chowder",
       "mrn": "4462",
       "portion": "12 floz",
-      "itemWasteCost": 2.555
+      "itemWasteCost": 2.4679
     },
     {
       "id": "amz: cafe express soup|clam chowder|57709|12 floz",
@@ -2601,7 +2593,7 @@
       "item": "Clam Chowder",
       "mrn": "57709",
       "portion": "12 floz",
-      "itemWasteCost": 1.494
+      "itemWasteCost": 1.9906
     },
     {
       "id": "amz: cafe express soup|clam chowder|57709.5|12 floz",
@@ -2609,15 +2601,15 @@
       "item": "Clam Chowder",
       "mrn": "57709.5",
       "portion": "12 floz",
-      "itemWasteCost": 2.464
+      "itemWasteCost": 3.0826
     },
     {
       "id": "amz: cafe express soup|corn and green chili bisque|57614|12 floz",
       "menu": "AMZ: Cafe Express Soup",
-      "item": "Corn and Green Chili Bisque",
+      "item": "Corn And Green Chili Bisque",
       "mrn": "57614",
       "portion": "12 floz",
-      "itemWasteCost": 0.563
+      "itemWasteCost": 0.987
     },
     {
       "id": "amz: cafe express soup|corn chowder|3502|12 floz",
@@ -2625,7 +2617,7 @@
       "item": "Corn Chowder",
       "mrn": "3502",
       "portion": "12 floz",
-      "itemWasteCost": 2.117
+      "itemWasteCost": 2.1778
     },
     {
       "id": "amz: cafe express soup|corn chowder|57623|12 floz",
@@ -2633,31 +2625,31 @@
       "item": "Corn Chowder",
       "mrn": "57623",
       "portion": "12 floz",
-      "itemWasteCost": 0.584
+      "itemWasteCost": 0.8102
     },
     {
       "id": "amz: cafe express soup|crab and sweet corn chowder|4469.6|12 floz",
       "menu": "AMZ: Cafe Express Soup",
-      "item": "Crab and Sweet Corn Chowder",
+      "item": "Crab And Sweet Corn Chowder",
       "mrn": "4469.6",
       "portion": "12 floz",
-      "itemWasteCost": 3.462
+      "itemWasteCost": 3.5651
     },
     {
       "id": "amz: cafe express soup|cream of asparagus soup|193539|12 floz",
       "menu": "AMZ: Cafe Express Soup",
-      "item": "Cream of Asparagus Soup",
+      "item": "Cream Of Asparagus Soup",
       "mrn": "193539",
       "portion": "12 floz",
-      "itemWasteCost": 0.791
+      "itemWasteCost": 1.0494
     },
     {
       "id": "amz: cafe express soup|cream of cauliflower soup|57668.8|12 floz",
       "menu": "AMZ: Cafe Express Soup",
-      "item": "Cream of Cauliflower Soup",
+      "item": "Cream Of Cauliflower Soup",
       "mrn": "57668.8",
       "portion": "12 floz",
-      "itemWasteCost": 0.818
+      "itemWasteCost": 1.195
     },
     {
       "id": "amz: cafe express soup|creamed corn soup|70145|12 floz",
@@ -2665,7 +2657,7 @@
       "item": "Creamed Corn Soup",
       "mrn": "70145",
       "portion": "12 floz",
-      "itemWasteCost": 1.067
+      "itemWasteCost": 1.2906
     },
     {
       "id": "amz: cafe express soup|creamy mushroom soup|131388|12 floz",
@@ -2673,7 +2665,7 @@
       "item": "Creamy Mushroom Soup",
       "mrn": "131388",
       "portion": "12 floz",
-      "itemWasteCost": 1.232
+      "itemWasteCost": 1.7732
     },
     {
       "id": "amz: cafe express soup|curried rice & lentil soup|13840|12 floz",
@@ -2681,15 +2673,15 @@
       "item": "Curried Rice & Lentil Soup",
       "mrn": "13840",
       "portion": "12 floz",
-      "itemWasteCost": 1.532
+      "itemWasteCost": 1.5798
     },
     {
       "id": "amz: cafe express soup|fagioli napoli with pasta soup|192864|12 ounce",
       "menu": "AMZ: Cafe Express Soup",
-      "item": "Fagioli Napoli with Pasta Soup",
+      "item": "Fagioli Napoli With Pasta Soup",
       "mrn": "192864",
       "portion": "12 ounce",
-      "itemWasteCost": 0.547
+      "itemWasteCost": 0.6469
     },
     {
       "id": "amz: cafe express soup|fiery veggie chili|149692|12 floz",
@@ -2697,7 +2689,7 @@
       "item": "Fiery Veggie Chili",
       "mrn": "149692",
       "portion": "12 floz",
-      "itemWasteCost": 2.252
+      "itemWasteCost": 2.2516
     },
     {
       "id": "amz: cafe express soup|firefly chili|4843.45|12 floz",
@@ -2705,7 +2697,7 @@
       "item": "Firefly Chili",
       "mrn": "4843.45",
       "portion": "12 floz",
-      "itemWasteCost": 1.54
+      "itemWasteCost": 1.6765
     },
     {
       "id": "amz: cafe express soup|french onion|77088|12 floz",
@@ -2713,7 +2705,7 @@
       "item": "French Onion",
       "mrn": "77088",
       "portion": "12 floz",
-      "itemWasteCost": 0.826
+      "itemWasteCost": 0.9578
     },
     {
       "id": "amz: cafe express soup|garden vegetable soup|4467|12 floz",
@@ -2721,7 +2713,7 @@
       "item": "Garden Vegetable Soup",
       "mrn": "4467",
       "portion": "12 floz",
-      "itemWasteCost": 1.544
+      "itemWasteCost": 1.5434
     },
     {
       "id": "amz: cafe express soup|green chile posole|207682|12 floz",
@@ -2729,7 +2721,7 @@
       "item": "Green Chile Posole",
       "mrn": "207682",
       "portion": "12 floz",
-      "itemWasteCost": 3.935
+      "itemWasteCost": 3.3342
     },
     {
       "id": "amz: cafe express soup|italian wedding soup|4465|12 floz",
@@ -2737,7 +2729,7 @@
       "item": "Italian Wedding Soup",
       "mrn": "4465",
       "portion": "12 floz",
-      "itemWasteCost": 1.587
+      "itemWasteCost": 1.6006
     },
     {
       "id": "amz: cafe express soup|lemon orzo chicken soup|75665|12 floz",
@@ -2745,7 +2737,7 @@
       "item": "Lemon Orzo Chicken Soup",
       "mrn": "75665",
       "portion": "12 floz",
-      "itemWasteCost": 1.203
+      "itemWasteCost": 1.9625
     },
     {
       "id": "amz: cafe express soup|manhattan clam chowder|57684|12 floz",
@@ -2753,7 +2745,7 @@
       "item": "Manhattan Clam Chowder",
       "mrn": "57684",
       "portion": "12 floz",
-      "itemWasteCost": 2.019
+      "itemWasteCost": 2.2214
     },
     {
       "id": "amz: cafe express soup|mexican street corn soup|180689|12 floz",
@@ -2761,7 +2753,7 @@
       "item": "Mexican Street Corn Soup",
       "mrn": "180689",
       "portion": "12 floz",
-      "itemWasteCost": 2.055
+      "itemWasteCost": 2.4669
     },
     {
       "id": "amz: cafe express soup|miso soup|74499.2|12 floz",
@@ -2769,15 +2761,15 @@
       "item": "Miso Soup",
       "mrn": "74499.2",
       "portion": "12 floz",
-      "itemWasteCost": 0.388
+      "itemWasteCost": 0.8278
     },
     {
       "id": "amz: cafe express soup|moroccan tomato soup with lentils, farro and kale|108481.1|12 floz",
       "menu": "AMZ: Cafe Express Soup",
-      "item": "Moroccan Tomato Soup with Lentils, Farro and Kale",
+      "item": "Moroccan Tomato Soup With Lentils, Farro And Kale",
       "mrn": "108481.1",
       "portion": "12 floz",
-      "itemWasteCost": 0.986
+      "itemWasteCost": 1.0639
     },
     {
       "id": "amz: cafe express soup|native three sisters soup|149692.4|12 floz",
@@ -2785,7 +2777,7 @@
       "item": "Native Three Sisters Soup",
       "mrn": "149692.4",
       "portion": "12 floz",
-      "itemWasteCost": 2.166
+      "itemWasteCost": 2.1663
     },
     {
       "id": "amz: cafe express soup|poblano quinoa corn soup|38660.4|12 floz",
@@ -2793,7 +2785,7 @@
       "item": "Poblano Quinoa Corn Soup",
       "mrn": "38660.4",
       "portion": "12 floz",
-      "itemWasteCost": 0.888
+      "itemWasteCost": 1.2022
     },
     {
       "id": "amz: cafe express soup|pomodoro soup|74774.4|12 floz",
@@ -2801,7 +2793,7 @@
       "item": "Pomodoro Soup",
       "mrn": "74774.4",
       "portion": "12 floz",
-      "itemWasteCost": 0.884
+      "itemWasteCost": 0.9402
     },
     {
       "id": "amz: cafe express soup|pork caldo verde|213068|12 floz",
@@ -2809,7 +2801,7 @@
       "item": "Pork Caldo Verde",
       "mrn": "213068",
       "portion": "12 floz",
-      "itemWasteCost": 2.325
+      "itemWasteCost": 2.3254
     },
     {
       "id": "amz: cafe express soup|pork pozole verde|61369.7|12 floz",
@@ -2817,7 +2809,7 @@
       "item": "Pork Pozole Verde",
       "mrn": "61369.7",
       "portion": "12 floz",
-      "itemWasteCost": 1.597
+      "itemWasteCost": 2.2058
     },
     {
       "id": "amz: cafe express soup|ribollita soup|193239|12 floz",
@@ -2825,15 +2817,15 @@
       "item": "Ribollita Soup",
       "mrn": "193239",
       "portion": "12 floz",
-      "itemWasteCost": 0.619
+      "itemWasteCost": 0.9755
     },
     {
       "id": "amz: cafe express soup|roasted poblano and cheddar soup|4469.2|12 floz",
       "menu": "AMZ: Cafe Express Soup",
-      "item": "Roasted Poblano and Cheddar Soup",
+      "item": "Roasted Poblano And Cheddar Soup",
       "mrn": "4469.2",
       "portion": "12 floz",
-      "itemWasteCost": 2.964
+      "itemWasteCost": 2.9786
     },
     {
       "id": "amz: cafe express soup|santa fe tortilla soup|149692.5|12 floz",
@@ -2841,7 +2833,7 @@
       "item": "Santa Fe Tortilla Soup",
       "mrn": "149692.5",
       "portion": "12 floz",
-      "itemWasteCost": 2.147
+      "itemWasteCost": 2.1466
     },
     {
       "id": "amz: cafe express soup|southwest tortilla soup|4469|12 floz",
@@ -2849,7 +2841,7 @@
       "item": "Southwest Tortilla Soup",
       "mrn": "4469",
       "portion": "12 floz",
-      "itemWasteCost": 1.605
+      "itemWasteCost": 1.7014
     },
     {
       "id": "amz: cafe express soup|spiced carrot soup|182450|12 ounce",
@@ -2857,7 +2849,7 @@
       "item": "Spiced Carrot Soup",
       "mrn": "182450",
       "portion": "12 ounce",
-      "itemWasteCost": 3.652
+      "itemWasteCost": 3.2136
     },
     {
       "id": "amz: cafe express soup|spicy harissa white bean soup|4469.7|12 floz",
@@ -2865,7 +2857,7 @@
       "item": "Spicy Harissa White Bean Soup",
       "mrn": "4469.7",
       "portion": "12 floz",
-      "itemWasteCost": 2.121
+      "itemWasteCost": 2.495
     },
     {
       "id": "amz: cafe express soup|spicy italian kale & chorizo soup|84847|12 floz",
@@ -2873,7 +2865,7 @@
       "item": "Spicy Italian Kale & Chorizo Soup",
       "mrn": "84847",
       "portion": "12 floz",
-      "itemWasteCost": 0.6
+      "itemWasteCost": 0.649
     },
     {
       "id": "amz: cafe express soup|spicy lentil vegetable soup|182460|12 ounce",
@@ -2881,7 +2873,7 @@
       "item": "Spicy Lentil Vegetable Soup",
       "mrn": "182460",
       "portion": "12 ounce",
-      "itemWasteCost": 3.316
+      "itemWasteCost": 2.9411
     },
     {
       "id": "amz: cafe express soup|spicy thai lentil soup|131393|12 floz",
@@ -2889,15 +2881,15 @@
       "item": "Spicy Thai Lentil Soup",
       "mrn": "131393",
       "portion": "12 floz",
-      "itemWasteCost": 2.24
+      "itemWasteCost": 2.3275
     },
     {
       "id": "amz: cafe express soup|split pea soup with ham|62013|12 floz",
       "menu": "AMZ: Cafe Express Soup",
-      "item": "Split Pea Soup with Ham",
+      "item": "Split Pea Soup With Ham",
       "mrn": "62013",
       "portion": "12 floz",
-      "itemWasteCost": 1.609
+      "itemWasteCost": 2.107
     },
     {
       "id": "amz: cafe express soup|steelhead trout chowder|131437.1|12 floz",
@@ -2905,7 +2897,7 @@
       "item": "Steelhead Trout Chowder",
       "mrn": "131437.1",
       "portion": "12 floz",
-      "itemWasteCost": 1.71
+      "itemWasteCost": 2.3057
     },
     {
       "id": "amz: cafe express soup|thai coconut curry soup|62032.2|12 floz",
@@ -2913,15 +2905,15 @@
       "item": "Thai Coconut Curry Soup",
       "mrn": "62032.2",
       "portion": "12 floz",
-      "itemWasteCost": 1.557
+      "itemWasteCost": 1.7919
     },
     {
       "id": "amz: cafe express soup|thai red curry soup with lentils|190407|12 floz",
       "menu": "AMZ: Cafe Express Soup",
-      "item": "Thai Red Curry Soup with Lentils",
+      "item": "Thai Red Curry Soup With Lentils",
       "mrn": "190407",
       "portion": "12 floz",
-      "itemWasteCost": 2.184
+      "itemWasteCost": 1.6879
     },
     {
       "id": "amz: cafe express soup|tomato basil bisque|3506|12 floz",
@@ -2929,7 +2921,7 @@
       "item": "Tomato Basil Bisque",
       "mrn": "3506",
       "portion": "12 floz",
-      "itemWasteCost": 1.568
+      "itemWasteCost": 1.5423
     },
     {
       "id": "amz: cafe express soup|tomato lentil|62071.1|12 floz",
@@ -2945,7 +2937,7 @@
       "item": "Turkey Barley Soup",
       "mrn": "62074",
       "portion": "12 floz",
-      "itemWasteCost": 0.92
+      "itemWasteCost": 1.4102
     },
     {
       "id": "amz: cafe express soup|turkey chili|149692.1|12 floz",
@@ -2961,7 +2953,15 @@
       "item": "Vegetable Beef Barley Soup",
       "mrn": "4461",
       "portion": "12 floz",
-      "itemWasteCost": 1.966
+      "itemWasteCost": 1.9781
+    },
+    {
+      "id": "amz: cafe express soup|vegetable minestrone|3504|12 floz",
+      "menu": "AMZ: Cafe Express Soup",
+      "item": "Vegetable Minestrone",
+      "mrn": "3504",
+      "portion": "12 floz",
+      "itemWasteCost": 1.7389
     },
     {
       "id": "amz: cafe express soup|vegetable minestrone soup|62082.2|12 floz",
@@ -2972,20 +2972,12 @@
       "itemWasteCost": null
     },
     {
-      "id": "amz: cafe express soup|vegetarian minestrone|3504|12 floz",
+      "id": "amz: cafe express soup|vegetable pozole|175213|12 floz",
       "menu": "AMZ: Cafe Express Soup",
-      "item": "Vegetarian Minestrone",
-      "mrn": "3504",
-      "portion": "12 floz",
-      "itemWasteCost": 1.74
-    },
-    {
-      "id": "amz: cafe express soup|vegetarian pozole|175213|12 floz",
-      "menu": "AMZ: Cafe Express Soup",
-      "item": "Vegetarian Pozole",
+      "item": "Vegetable Pozole",
       "mrn": "175213",
       "portion": "12 floz",
-      "itemWasteCost": 1.329
+      "itemWasteCost": 2.2433
     },
     {
       "id": "amz: cafe express soup|wild mushroom bisque|4464|12 floz",
@@ -2993,7 +2985,7 @@
       "item": "Wild Mushroom Bisque",
       "mrn": "4464",
       "portion": "12 floz",
-      "itemWasteCost": 0.91
+      "itemWasteCost": 1.9042
     },
     {
       "id": "amz: cafe express soup|wild rice & mushroom soup|11076.6|12 floz",
@@ -3001,7 +2993,7 @@
       "item": "Wild Rice & Mushroom Soup",
       "mrn": "11076.6",
       "portion": "12 floz",
-      "itemWasteCost": 0.874
+      "itemWasteCost": 1.2438
     },
     {
       "id": "amz: carvery|1000 island dressing|62351|2 ounce",
@@ -4724,12 +4716,100 @@
       "itemWasteCost": 0.506
     },
     {
+      "id": "amz: deli core|12\" flour tortilla|34825|1 each",
+      "menu": "AMZ: Deli Core",
+      "item": "12\" Flour Tortilla",
+      "mrn": "34825",
+      "portion": "1 each",
+      "itemWasteCost": 0.3609
+    },
+    {
+      "id": "amz: deli core|12\" spinach herb tortilla|63510|1 each",
+      "menu": "AMZ: Deli Core",
+      "item": "12\" Spinach Herb Tortilla",
+      "mrn": "63510",
+      "portion": "1 each",
+      "itemWasteCost": 0.4482
+    },
+    {
+      "id": "amz: deli core|12\" tomato basil flour tortilla|62273.4|1 each",
+      "menu": "AMZ: Deli Core",
+      "item": "12\" Tomato Basil Flour Tortilla",
+      "mrn": "62273.4",
+      "portion": "1 each",
+      "itemWasteCost": 0.4586
+    },
+    {
+      "id": "amz: deli core|6\" sub roll|34825.4|2 each",
+      "menu": "AMZ: Deli Core",
+      "item": "6\" Sub Roll",
+      "mrn": "34825.4",
+      "portion": "2 each",
+      "itemWasteCost": 0.7696
+    },
+    {
+      "id": "amz: deli core|acey mac apple|1638.1|1 each",
+      "menu": "AMZ: Deli Core",
+      "item": "Acey Mac Apple",
+      "mrn": "1638.1",
+      "portion": "1 each",
+      "itemWasteCost": 0.421
+    },
+    {
+      "id": "amz: deli core|artichoke hearts|61230|1 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Artichoke Hearts",
+      "mrn": "61230",
+      "portion": "1 ounce",
+      "itemWasteCost": 0.1893
+    },
+    {
+      "id": "amz: deli core|baby arugula|62323|1/2 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Baby Arugula",
+      "mrn": "62323",
+      "portion": "1/2 ounce",
+      "itemWasteCost": 0.287
+    },
+    {
+      "id": "amz: deli core|baby spinach|47960.1|1/2 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Baby Spinach",
+      "mrn": "47960.1",
+      "portion": "1/2 ounce",
+      "itemWasteCost": 0.1799
+    },
+    {
+      "id": "amz: deli core|bacon|147718|2 slice",
+      "menu": "AMZ: Deli Core",
+      "item": "Bacon",
+      "mrn": "147718",
+      "portion": "2 slice",
+      "itemWasteCost": 0.4545
+    },
+    {
       "id": "amz: deli core|balsamic mushroom caprese|174949|1 sandwich",
       "menu": "AMZ: Deli Core",
       "item": "Balsamic Mushroom Caprese",
       "mrn": "174949",
       "portion": "1 sandwich",
-      "itemWasteCost": 4.441
+      "itemWasteCost": 4.6873
+    },
+    {
+      "id": "amz: deli core|balsamic vinegar glace|62296|2 tbsp",
+      "menu": "AMZ: Deli Core",
+      "item": "Balsamic Vinegar Glace",
+      "mrn": "62296",
+      "portion": "2 tbsp",
+      "itemWasteCost": 0.3754
+    },
+    {
+      "id": "amz: deli core|banana pepper rings|46017.25|1/2 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Banana Pepper Rings",
+      "mrn": "46017.25",
+      "portion": "1/2 ounce",
+      "itemWasteCost": 0.1009
     },
     {
       "id": "amz: deli core|banh mi ham sandwich|37394.7|1 sandwich",
@@ -4737,7 +4817,7 @@
       "item": "Banh Mi Ham Sandwich",
       "mrn": "37394.7",
       "portion": "1 sandwich",
-      "itemWasteCost": 3.0518
+      "itemWasteCost": 3.0607
     },
     {
       "id": "amz: deli core|blackend shrimp po boy|77597.9|1 each",
@@ -4745,7 +4825,39 @@
       "item": "Blackend Shrimp Po Boy",
       "mrn": "77597.9",
       "portion": "1 each",
-      "itemWasteCost": 2.621
+      "itemWasteCost": 2.7092
+    },
+    {
+      "id": "amz: deli core|blue cheese crumbles|47711.1|1 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Blue Cheese Crumbles",
+      "mrn": "47711.1",
+      "portion": "1 ounce",
+      "itemWasteCost": 0.2527
+    },
+    {
+      "id": "amz: deli core|breaded chicken tender|1084.7|4 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Breaded Chicken Tender",
+      "mrn": "1084.7",
+      "portion": "4 ounce",
+      "itemWasteCost": 0.8923
+    },
+    {
+      "id": "amz: deli core|brioche bun|1646.8|1 each",
+      "menu": "AMZ: Deli Core",
+      "item": "Brioche Bun",
+      "mrn": "1646.8",
+      "portion": "1 each",
+      "itemWasteCost": 0.7041
+    },
+    {
+      "id": "amz: deli core|broccoli and cheddar salad|81534|4 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Broccoli And Cheddar Salad",
+      "mrn": "81534",
+      "portion": "4 ounce",
+      "itemWasteCost": 0.688
     },
     {
       "id": "amz: deli core|buffalo chicken wrap|9282.7|1 each",
@@ -4753,7 +4865,23 @@
       "item": "Buffalo Chicken Wrap",
       "mrn": "9282.7",
       "portion": "1 each",
-      "itemWasteCost": 3.084
+      "itemWasteCost": 3.0711
+    },
+    {
+      "id": "amz: deli core|cajun blackened shrimp|95621.1|4 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Cajun Blackened Shrimp",
+      "mrn": "95621.1",
+      "portion": "4 ounce",
+      "itemWasteCost": 1.6858
+    },
+    {
+      "id": "amz: deli core|cajun mayonnaise|31504.4|2 tbsp",
+      "menu": "AMZ: Deli Core",
+      "item": "Cajun Mayonnaise",
+      "mrn": "31504.4",
+      "portion": "2 tbsp",
+      "itemWasteCost": 0.2278
     },
     {
       "id": "amz: deli core|cajun turkey|76682.6|1 sandwich",
@@ -4761,23 +4889,39 @@
       "item": "Cajun Turkey",
       "mrn": "76682.6",
       "portion": "1 sandwich",
-      "itemWasteCost": 3.806
+      "itemWasteCost": 3.9073
     },
     {
       "id": "amz: deli core|caprese chicken on telera|104208.27|1 each",
       "menu": "AMZ: Deli Core",
-      "item": "Caprese Chicken on Telera",
+      "item": "Caprese Chicken On Telera",
       "mrn": "104208.27",
       "portion": "1 each",
-      "itemWasteCost": 3.1073
+      "itemWasteCost": 3.1044
+    },
+    {
+      "id": "amz: deli core|caramelized onions|17140.6|1 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Caramelized Onions",
+      "mrn": "17140.6",
+      "portion": "1 ounce",
+      "itemWasteCost": 0.0603
     },
     {
       "id": "amz: deli core|charred eggplant, shaved parmesan, arugula, smoky romesco on rustico ciabatta|134036.4|1 sandwich",
       "menu": "AMZ: Deli Core",
-      "item": "Charred Eggplant, Shaved Parmesan, Arugula, Smoky Romesco on Rustico Ciabatta",
+      "item": "Charred Eggplant, Shaved Parmesan, Arugula, Smoky Romesco On Rustico Ciabatta",
       "mrn": "134036.4",
       "portion": "1 sandwich",
-      "itemWasteCost": 1.2989
+      "itemWasteCost": 1.2958
+    },
+    {
+      "id": "amz: deli core|chef's garlic sauce|226072|2 tbsp",
+      "menu": "AMZ: Deli Core",
+      "item": "Chef's Garlic Sauce",
+      "mrn": "226072",
+      "portion": "2 tbsp",
+      "itemWasteCost": 0.183
     },
     {
       "id": "amz: deli core|chicken artichoke pesto sandwich|37007.1|1 sandwich",
@@ -4785,7 +4929,7 @@
       "item": "Chicken Artichoke Pesto Sandwich",
       "mrn": "37007.1",
       "portion": "1 sandwich",
-      "itemWasteCost": 2.8956
+      "itemWasteCost": 2.8756
     },
     {
       "id": "amz: deli core|chicken caesar wrap|37311.43|1 wrap",
@@ -4793,7 +4937,7 @@
       "item": "Chicken Caesar Wrap",
       "mrn": "37311.43",
       "portion": "1 wrap",
-      "itemWasteCost": 4.5852
+      "itemWasteCost": 4.4502
     },
     {
       "id": "amz: deli core|chimichurri steak sandwich|105146.3|1 sandwich",
@@ -4801,7 +4945,103 @@
       "item": "Chimichurri Steak Sandwich",
       "mrn": "105146.3",
       "portion": "1 sandwich",
-      "itemWasteCost": 3.858
+      "itemWasteCost": 3.5662
+    },
+    {
+      "id": "amz: deli core|chipotle aioli|112986.7|2 tbsp",
+      "menu": "AMZ: Deli Core",
+      "item": "Chipotle Aioli",
+      "mrn": "112986.7",
+      "portion": "2 tbsp",
+      "itemWasteCost": 0.1976
+    },
+    {
+      "id": "amz: deli core|chips, multigrain, harvest cheddar, sunchips, 1.5 oz|85349|1 each",
+      "menu": "AMZ: Deli Core",
+      "item": "Chips, Multigrain, Harvest Cheddar, SunChips, 1.5 Oz",
+      "mrn": "85349",
+      "portion": "1 each",
+      "itemWasteCost": 0.745
+    },
+    {
+      "id": "amz: deli core|chips, potato, kettle, barbeque, miss vickies, 1.38 oz|174424|1 each",
+      "menu": "AMZ: Deli Core",
+      "item": "Chips, Potato, Kettle, Barbeque, Miss Vickies, 1.38 Oz",
+      "mrn": "174424",
+      "portion": "1 each",
+      "itemWasteCost": 0.745
+    },
+    {
+      "id": "amz: deli core|chips, potato, kettle, jalapeno, miss vickies, 1.375 oz|85838|1 each",
+      "menu": "AMZ: Deli Core",
+      "item": "Chips, Potato, Kettle, Jalapeno, Miss Vickies, 1.375 Oz",
+      "mrn": "85838",
+      "portion": "1 each",
+      "itemWasteCost": 0.745
+    },
+    {
+      "id": "amz: deli core|chips, potato, kettle, salt & vinegar, miss vickies, 1.375 oz|85360|1 each",
+      "menu": "AMZ: Deli Core",
+      "item": "Chips, Potato, Kettle, Salt & Vinegar, Miss Vickies, 1.375 Oz",
+      "mrn": "85360",
+      "portion": "1 each",
+      "itemWasteCost": 0.745
+    },
+    {
+      "id": "amz: deli core|chips, potato, kettle, sea salt, miss vickies, 1.375 oz|85362|1 each",
+      "menu": "AMZ: Deli Core",
+      "item": "Chips, Potato, Kettle, Sea Salt, Miss Vickies, 1.375 Oz",
+      "mrn": "85362",
+      "portion": "1 each",
+      "itemWasteCost": 0.745
+    },
+    {
+      "id": "amz: deli core|ciabatta roll|230079|1 each",
+      "menu": "AMZ: Deli Core",
+      "item": "Ciabatta Roll",
+      "mrn": "230079",
+      "portion": "1 each",
+      "itemWasteCost": 0.7571
+    },
+    {
+      "id": "amz: deli core|classic caesar dressing|111748.7|2 tbsp",
+      "menu": "AMZ: Deli Core",
+      "item": "Classic Caesar Dressing",
+      "mrn": "111748.7",
+      "portion": "2 tbsp",
+      "itemWasteCost": 0.2278
+    },
+    {
+      "id": "amz: deli core|classic chicken salad|36215.34|4 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Classic Chicken Salad",
+      "mrn": "36215.34",
+      "portion": "4 ounce",
+      "itemWasteCost": 1.1315
+    },
+    {
+      "id": "amz: deli core|classic coleslaw|83591|4 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Classic Coleslaw",
+      "mrn": "83591",
+      "portion": "4 ounce",
+      "itemWasteCost": 0.42
+    },
+    {
+      "id": "amz: deli core|classic macaroni salad|18177|1/2 cup",
+      "menu": "AMZ: Deli Core",
+      "item": "Classic Macaroni Salad",
+      "mrn": "18177",
+      "portion": "1/2 cup",
+      "itemWasteCost": 0.248
+    },
+    {
+      "id": "amz: deli core|cooked italian sausage|145065|4 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Cooked Italian Sausage",
+      "mrn": "145065",
+      "portion": "4 ounce",
+      "itemWasteCost": 1.2116
     },
     {
       "id": "amz: deli core|corned beef, pastrami & swiss melt|70178|1 sandwich",
@@ -4809,7 +5049,31 @@
       "item": "Corned Beef, Pastrami & Swiss Melt",
       "mrn": "70178",
       "portion": "1 sandwich",
-      "itemWasteCost": 3.349
+      "itemWasteCost": 3.3498
+    },
+    {
+      "id": "amz: deli core|country coleslaw|18183|1 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Country Coleslaw",
+      "mrn": "18183",
+      "portion": "1 ounce",
+      "itemWasteCost": 0.105
+    },
+    {
+      "id": "amz: deli core|creole mustard|226614|2 tbsp",
+      "menu": "AMZ: Deli Core",
+      "item": "Creole Mustard",
+      "mrn": "226614",
+      "portion": "2 tbsp",
+      "itemWasteCost": 0.131
+    },
+    {
+      "id": "amz: deli core|crispy buffalo chicken tenders|146675|4 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Crispy Buffalo Chicken Tenders",
+      "mrn": "146675",
+      "portion": "4 ounce",
+      "itemWasteCost": 0.9724
     },
     {
       "id": "amz: deli core|crispy buffalo chicken wrap|132547.5|1 sandwich",
@@ -4817,7 +5081,15 @@
       "item": "Crispy Buffalo Chicken Wrap",
       "mrn": "132547.5",
       "portion": "1 sandwich",
-      "itemWasteCost": 3.026
+      "itemWasteCost": 3.0482
+    },
+    {
+      "id": "amz: deli core|crumbled feta cheese|62345|1 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Crumbled Feta Cheese",
+      "mrn": "62345",
+      "portion": "1 ounce",
+      "itemWasteCost": 0.2111
     },
     {
       "id": "amz: deli core|cuban|32415|1 sandwich",
@@ -4825,7 +5097,135 @@
       "item": "Cuban",
       "mrn": "32415",
       "portion": "1 sandwich",
-      "itemWasteCost": 2.34
+      "itemWasteCost": 2.315
+    },
+    {
+      "id": "amz: deli core|dijon mustard|57714|2 tbsp",
+      "menu": "AMZ: Deli Core",
+      "item": "Dijon Mustard",
+      "mrn": "57714",
+      "portion": "2 tbsp",
+      "itemWasteCost": 0.3078
+    },
+    {
+      "id": "amz: deli core|dijonnaise|60194|2 tbsp",
+      "menu": "AMZ: Deli Core",
+      "item": "Dijonnaise",
+      "mrn": "60194",
+      "portion": "2 tbsp",
+      "itemWasteCost": 0.2766
+    },
+    {
+      "id": "amz: deli core|dill pickle slices|63438|1 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Dill Pickle Slices",
+      "mrn": "63438",
+      "portion": "1 ounce",
+      "itemWasteCost": 0.1061
+    },
+    {
+      "id": "amz: deli core|fad-free tuna salad|59323|4 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Fad-free Tuna Salad",
+      "mrn": "59323",
+      "portion": "4 ounce",
+      "itemWasteCost": 0.9682
+    },
+    {
+      "id": "amz: deli core|fat free italian dressing|16693|2 tbsp",
+      "menu": "AMZ: Deli Core",
+      "item": "Fat Free Italian Dressing",
+      "mrn": "16693",
+      "portion": "2 tbsp",
+      "itemWasteCost": 0.0863
+    },
+    {
+      "id": "amz: deli core|fingerling potato salad|44855|4 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Fingerling Potato Salad",
+      "mrn": "44855",
+      "portion": "4 ounce",
+      "itemWasteCost": 0.79
+    },
+    {
+      "id": "amz: deli core|firecracker mayo sauce|157405|2 tbsp",
+      "menu": "AMZ: Deli Core",
+      "item": "Firecracker Mayo Sauce",
+      "mrn": "157405",
+      "portion": "2 tbsp",
+      "itemWasteCost": 0.1955
+    },
+    {
+      "id": "amz: deli core|flank steak|94006.1|4 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Flank Steak",
+      "mrn": "94006.1",
+      "portion": "4 ounce",
+      "itemWasteCost": 2.6052
+    },
+    {
+      "id": "amz: deli core|frank's buffalo sauce|62298|2 tbsp",
+      "menu": "AMZ: Deli Core",
+      "item": "Frank's Buffalo Sauce",
+      "mrn": "62298",
+      "portion": "2 tbsp",
+      "itemWasteCost": 0.1206
+    },
+    {
+      "id": "amz: deli core|french roll|126480.18|1 serving(s)",
+      "menu": "AMZ: Deli Core",
+      "item": "French Roll",
+      "mrn": "126480.18",
+      "portion": "1 serving(s)",
+      "itemWasteCost": 0.2361
+    },
+    {
+      "id": "amz: deli core|fresh mozzarella cheese|62290|1 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Fresh Mozzarella Cheese",
+      "mrn": "62290",
+      "portion": "1 ounce",
+      "itemWasteCost": 0.3338
+    },
+    {
+      "id": "amz: deli core|garden salad|16811.6|1 each",
+      "menu": "AMZ: Deli Core",
+      "item": "Garden Salad",
+      "mrn": "16811.6",
+      "portion": "1 each",
+      "itemWasteCost": 2.115
+    },
+    {
+      "id": "amz: deli core|garden salad with balsamic dressing|16811.5|1 each",
+      "menu": "AMZ: Deli Core",
+      "item": "Garden Salad With Balsamic Dressing",
+      "mrn": "16811.5",
+      "portion": "1 each",
+      "itemWasteCost": 2.248
+    },
+    {
+      "id": "amz: deli core|garden salad with italian dressing|16811.7|1 each",
+      "menu": "AMZ: Deli Core",
+      "item": "Garden Salad With Italian Dressing",
+      "mrn": "16811.7",
+      "portion": "1 each",
+      "itemWasteCost": 1.988
+    },
+    {
+      "id": "amz: deli core|garlic herb marinated tofu|167505|4 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Garlic Herb Marinated Tofu",
+      "mrn": "167505",
+      "portion": "4 ounce",
+      "itemWasteCost": 1.0098
+    },
+    {
+      "id": "amz: deli core|greek pasta salad|35069.5|1/2 cup",
+      "menu": "AMZ: Deli Core",
+      "item": "Greek Pasta Salad",
+      "mrn": "35069.5",
+      "portion": "1/2 cup",
+      "itemWasteCost": 0.377
     },
     {
       "id": "amz: deli core|green california crunch sandwich|142803|1 sandwich",
@@ -4833,7 +5233,103 @@
       "item": "Green California Crunch Sandwich",
       "mrn": "142803",
       "portion": "1 sandwich",
-      "itemWasteCost": 3.7141
+      "itemWasteCost": 3.6941
+    },
+    {
+      "id": "amz: deli core|green garbanzo bean falafel|81224.2|4 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Green Garbanzo Bean Falafel",
+      "mrn": "81224.2",
+      "portion": "4 ounce",
+      "itemWasteCost": 1.0785
+    },
+    {
+      "id": "amz: deli core|grilled chicken breast|144591.1|4 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Grilled Chicken Breast",
+      "mrn": "144591.1",
+      "portion": "4 ounce",
+      "itemWasteCost": 1.5579
+    },
+    {
+      "id": "amz: deli core|grilled shrimp|12989.16|4 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Grilled Shrimp",
+      "mrn": "12989.16",
+      "portion": "4 ounce",
+      "itemWasteCost": 1.561
+    },
+    {
+      "id": "amz: deli core|grilled steak|83161|4 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Grilled Steak",
+      "mrn": "83161",
+      "portion": "4 ounce",
+      "itemWasteCost": 4.421
+    },
+    {
+      "id": "amz: deli core|grilled vegetables|5294.29|4 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Grilled Vegetables",
+      "mrn": "5294.29",
+      "portion": "4 ounce",
+      "itemWasteCost": 0.7509
+    },
+    {
+      "id": "amz: deli core|grilled vegetables|5294.29|1 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Grilled Vegetables",
+      "mrn": "5294.29",
+      "portion": "1 ounce",
+      "itemWasteCost": 0.1882
+    },
+    {
+      "id": "amz: deli core|grilled vegetables, balsamic glaze & hummus sandwich|134362.15|1 sandwich",
+      "menu": "AMZ: Deli Core",
+      "item": "Grilled Vegetables, Balsamic Glaze & Hummus Sandwich",
+      "mrn": "134362.15",
+      "portion": "1 sandwich",
+      "itemWasteCost": null
+    },
+    {
+      "id": "amz: deli core|herb focaccia roll|128011|1 each",
+      "menu": "AMZ: Deli Core",
+      "item": "Herb Focaccia Roll",
+      "mrn": "128011",
+      "portion": "1 each",
+      "itemWasteCost": 0.571
+    },
+    {
+      "id": "amz: deli core|homemade meatballs|36007.3|4 each",
+      "menu": "AMZ: Deli Core",
+      "item": "Homemade Meatballs",
+      "mrn": "36007.3",
+      "portion": "4 each",
+      "itemWasteCost": 1.9375
+    },
+    {
+      "id": "amz: deli core|horseradish spread|9164.5|2 tbsp",
+      "menu": "AMZ: Deli Core",
+      "item": "Horseradish Spread",
+      "mrn": "9164.5",
+      "portion": "2 tbsp",
+      "itemWasteCost": 0.1622
+    },
+    {
+      "id": "amz: deli core|hummus|70065|2 tbsp",
+      "menu": "AMZ: Deli Core",
+      "item": "Hummus",
+      "mrn": "70065",
+      "portion": "2 tbsp",
+      "itemWasteCost": 0.2694
+    },
+    {
+      "id": "amz: deli core|iceburge lettuce wraps|93430|1 serving(s)",
+      "menu": "AMZ: Deli Core",
+      "item": "Iceburge Lettuce Wraps",
+      "mrn": "93430",
+      "portion": "1 serving(s)",
+      "itemWasteCost": 0.2059
     },
     {
       "id": "amz: deli core|italian grinder|76623.4|1 sandwich",
@@ -4841,7 +5337,31 @@
       "item": "Italian Grinder",
       "mrn": "76623.4",
       "portion": "1 sandwich",
-      "itemWasteCost": 4.4738
+      "itemWasteCost": 4.4075
+    },
+    {
+      "id": "amz: deli core|kalamata olives|228188|1/2 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Kalamata Olives",
+      "mrn": "228188",
+      "portion": "1/2 ounce",
+      "itemWasteCost": 0.1674
+    },
+    {
+      "id": "amz: deli core|lemon tahini dressing|142581.1|2 tbsp",
+      "menu": "AMZ: Deli Core",
+      "item": "Lemon Tahini Dressing",
+      "mrn": "142581.1",
+      "portion": "2 tbsp",
+      "itemWasteCost": 0.1674
+    },
+    {
+      "id": "amz: deli core|med tuna salad on wheat roll|141826.1|1 each",
+      "menu": "AMZ: Deli Core",
+      "item": "Med Tuna Salad On Wheat Roll",
+      "mrn": "141826.1",
+      "portion": "1 each",
+      "itemWasteCost": 2.4534
     },
     {
       "id": "amz: deli core|mediterranean falafel wrap|102969|1 serving(s)",
@@ -4849,7 +5369,7 @@
       "item": "Mediterranean Falafel Wrap",
       "mrn": "102969",
       "portion": "1 serving(s)",
-      "itemWasteCost": 3.515
+      "itemWasteCost": 4.0726
     },
     {
       "id": "amz: deli core|mediterranean sandwich|174951|1 sandwich",
@@ -4857,7 +5377,7 @@
       "item": "Mediterranean Sandwich",
       "mrn": "174951",
       "portion": "1 sandwich",
-      "itemWasteCost": 2.7876
+      "itemWasteCost": 2.8142
     },
     {
       "id": "amz: deli core|mediterranean turkey wrap|190990|1 wrap",
@@ -4865,7 +5385,7 @@
       "item": "Mediterranean Turkey Wrap",
       "mrn": "190990",
       "portion": "1 wrap",
-      "itemWasteCost": 3.1242
+      "itemWasteCost": 3.0982
     },
     {
       "id": "amz: deli core|muffaletta|144636|1 sandwich",
@@ -4873,7 +5393,63 @@
       "item": "Muffaletta",
       "mrn": "144636",
       "portion": "1 sandwich",
-      "itemWasteCost": 2.5305
+      "itemWasteCost": 2.523
+    },
+    {
+      "id": "amz: deli core|multigrain bread|1646.16|2 slice",
+      "menu": "AMZ: Deli Core",
+      "item": "Multigrain Bread",
+      "mrn": "1646.16",
+      "portion": "2 slice",
+      "itemWasteCost": 0.4888
+    },
+    {
+      "id": "amz: deli core|oil and vinegar|131333|2 tbsp",
+      "menu": "AMZ: Deli Core",
+      "item": "Oil And Vinegar",
+      "mrn": "131333",
+      "portion": "2 tbsp",
+      "itemWasteCost": 0.1092
+    },
+    {
+      "id": "amz: deli core|olive tapenade|26649.5|2 tbsp",
+      "menu": "AMZ: Deli Core",
+      "item": "Olive Tapenade",
+      "mrn": "26649.5",
+      "portion": "2 tbsp",
+      "itemWasteCost": 0.6084
+    },
+    {
+      "id": "amz: deli core|onion brioche bun|145411.2|1 each",
+      "menu": "AMZ: Deli Core",
+      "item": "Onion Brioche Bun",
+      "mrn": "145411.2",
+      "portion": "1 each",
+      "itemWasteCost": 0.6188
+    },
+    {
+      "id": "amz: deli core|peanut sauce|23113.4|2 tbsp",
+      "menu": "AMZ: Deli Core",
+      "item": "Peanut Sauce",
+      "mrn": "23113.4",
+      "portion": "2 tbsp",
+      "itemWasteCost": 0.0582
+    },
+    {
+      "id": "amz: deli core|perfect straight croissant|134109|1 each",
+      "menu": "AMZ: Deli Core",
+      "item": "Perfect Straight Croissant",
+      "mrn": "134109",
+      "portion": "1 each",
+      "itemWasteCost": 0.78
+    },
+    {
+      "id": "amz: deli core|pesto mayo|66851.5|2 tbsp",
+      "menu": "AMZ: Deli Core",
+      "item": "Pesto Mayo",
+      "mrn": "66851.5",
+      "portion": "2 tbsp",
+      "itemWasteCost": 0.3931
     },
     {
       "id": "amz: deli core|philly cheesesteak|63749.12|1 sandwich",
@@ -4881,7 +5457,23 @@
       "item": "Philly Cheesesteak",
       "mrn": "63749.12",
       "portion": "1 sandwich",
-      "itemWasteCost": 3.068
+      "itemWasteCost": 3.0763
+    },
+    {
+      "id": "amz: deli core|pickled red onions|77960.2|1 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Pickled Red Onions",
+      "mrn": "77960.2",
+      "portion": "1 ounce",
+      "itemWasteCost": 0.2798
+    },
+    {
+      "id": "amz: deli core|pistachio herb couscous salad|120641|1/2 cup",
+      "menu": "AMZ: Deli Core",
+      "item": "Pistachio Herb Couscous Salad",
+      "mrn": "120641",
+      "portion": "1/2 cup",
+      "itemWasteCost": 1.236
     },
     {
       "id": "amz: deli core|portobello provolone wrap|16392|1 each",
@@ -4889,7 +5481,7 @@
       "item": "Portobello Provolone Wrap",
       "mrn": "16392",
       "portion": "1 each",
-      "itemWasteCost": 2.6653
+      "itemWasteCost": 2.6489
     },
     {
       "id": "amz: deli core|portobello reuben|38489.4|1 each",
@@ -4897,15 +5489,47 @@
       "item": "Portobello Reuben",
       "mrn": "38489.4",
       "portion": "1 each",
-      "itemWasteCost": 3.786
+      "itemWasteCost": 3.8615
+    },
+    {
+      "id": "amz: deli core|pulled pork|87588.8|4 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Pulled Pork",
+      "mrn": "87588.8",
+      "portion": "4 ounce",
+      "itemWasteCost": 1.1679
+    },
+    {
+      "id": "amz: deli core|red onion ring|14918.2|1 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Red Onion Ring",
+      "mrn": "14918.2",
+      "portion": "1 ounce",
+      "itemWasteCost": 0.0946
+    },
+    {
+      "id": "amz: deli core|red wine vinaigrette|128785|2 tbsp",
+      "menu": "AMZ: Deli Core",
+      "item": "Red Wine Vinaigrette",
+      "mrn": "128785",
+      "portion": "2 tbsp",
+      "itemWasteCost": 0.1882
+    },
+    {
+      "id": "amz: deli core|roast beef|227531|4 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Roast Beef",
+      "mrn": "227531",
+      "portion": "4 ounce",
+      "itemWasteCost": 2.3951
     },
     {
       "id": "amz: deli core|roast beef and cheddar sandwich|34303.46|1 sandwich",
       "menu": "AMZ: Deli Core",
-      "item": "Roast Beef and Cheddar Sandwich",
+      "item": "Roast Beef And Cheddar Sandwich",
       "mrn": "34303.46",
       "portion": "1 sandwich",
-      "itemWasteCost": 3.3985
+      "itemWasteCost": 3.3987
     },
     {
       "id": "amz: deli core|roast beef florentine sandwich|37154.1|1 sandwich",
@@ -4913,7 +5537,7 @@
       "item": "Roast Beef Florentine Sandwich",
       "mrn": "37154.1",
       "portion": "1 sandwich",
-      "itemWasteCost": 3.0254
+      "itemWasteCost": 2.887
     },
     {
       "id": "amz: deli core|roast beef sandwich, muenster, horseradish cream, onion roll|136164.1|1 sandwich",
@@ -4921,7 +5545,7 @@
       "item": "Roast Beef Sandwich, Muenster, Horseradish Cream, Onion Roll",
       "mrn": "136164.1",
       "portion": "1 sandwich",
-      "itemWasteCost": 4.462
+      "itemWasteCost": 4.7091
     },
     {
       "id": "amz: deli core|roast beef, brie sandwich|134362.37|1 sandwich",
@@ -4929,15 +5553,111 @@
       "item": "Roast Beef, Brie Sandwich",
       "mrn": "134362.37",
       "portion": "1 sandwich",
-      "itemWasteCost": 3.973
+      "itemWasteCost": 4.0654
+    },
+    {
+      "id": "amz: deli core|roasted garlic aioli|14681.3|2 tbsp",
+      "menu": "AMZ: Deli Core",
+      "item": "Roasted Garlic Aioli",
+      "mrn": "14681.3",
+      "portion": "2 tbsp",
+      "itemWasteCost": 0.2267
+    },
+    {
+      "id": "amz: deli core|roasted portobello mushroom|17175.19|4 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Roasted Portobello Mushroom",
+      "mrn": "17175.19",
+      "portion": "4 ounce",
+      "itemWasteCost": 1.2043
+    },
+    {
+      "id": "amz: deli core|roasted red pepper strips|62295|1 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Roasted Red Pepper Strips",
+      "mrn": "62295",
+      "portion": "1 ounce",
+      "itemWasteCost": 0.1529
+    },
+    {
+      "id": "amz: deli core|roasted turkey|62331.20|4 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Roasted Turkey",
+      "mrn": "62331.20",
+      "portion": "4 ounce",
+      "itemWasteCost": 1.5194
+    },
+    {
+      "id": "amz: deli core|russian dressing|16695|2 tbsp",
+      "menu": "AMZ: Deli Core",
+      "item": "Russian Dressing",
+      "mrn": "16695",
+      "portion": "2 tbsp",
+      "itemWasteCost": 0.1508
+    },
+    {
+      "id": "amz: deli core|rye bread|228864|1 slice",
+      "menu": "AMZ: Deli Core",
+      "item": "Rye Bread",
+      "mrn": "228864",
+      "portion": "1 slice",
+      "itemWasteCost": 0.4763
+    },
+    {
+      "id": "amz: deli core|sauerkraut|83180|1 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Sauerkraut",
+      "mrn": "83180",
+      "portion": "1 ounce",
+      "itemWasteCost": 0.1123
     },
     {
       "id": "amz: deli core|sausage and peppers hoagie|18714.1|1 sandwich",
       "menu": "AMZ: Deli Core",
-      "item": "Sausage and Peppers Hoagie",
+      "item": "Sausage And Peppers Hoagie",
       "mrn": "18714.1",
       "portion": "1 sandwich",
-      "itemWasteCost": 2.818
+      "itemWasteCost": 2.8246
+    },
+    {
+      "id": "amz: deli core|seared ahi tuna|157652|4 oz portion",
+      "menu": "AMZ: Deli Core",
+      "item": "Seared Ahi Tuna",
+      "mrn": "157652",
+      "portion": "4 oz portion",
+      "itemWasteCost": 2.3462
+    },
+    {
+      "id": "amz: deli core|shaved parmesan cheese|65278|1 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Shaved Parmesan Cheese",
+      "mrn": "65278",
+      "portion": "1 ounce",
+      "itemWasteCost": 0.3214
+    },
+    {
+      "id": "amz: deli core|shredded iceberg lettuce|13404|1/2 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Shredded Iceberg Lettuce",
+      "mrn": "13404",
+      "portion": "1/2 ounce",
+      "itemWasteCost": 0.0957
+    },
+    {
+      "id": "amz: deli core|shredded monterey jack cheese|75797.2|1 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Shredded Monterey Jack Cheese",
+      "mrn": "75797.2",
+      "portion": "1 ounce",
+      "itemWasteCost": 0.1758
+    },
+    {
+      "id": "amz: deli core|shredded romaine|81493|1/2 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Shredded Romaine",
+      "mrn": "81493",
+      "portion": "1/2 ounce",
+      "itemWasteCost": 0.1331
     },
     {
       "id": "amz: deli core|shrimp salad sandwich|129693.5|1 each",
@@ -4945,7 +5665,159 @@
       "item": "Shrimp Salad Sandwich",
       "mrn": "129693.5",
       "portion": "1 each",
-      "itemWasteCost": 2.3503
+      "itemWasteCost": 2.3348
+    },
+    {
+      "id": "amz: deli core|sliced american cheese|1748.7|1 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Sliced American Cheese",
+      "mrn": "1748.7",
+      "portion": "1 ounce",
+      "itemWasteCost": 0.181
+    },
+    {
+      "id": "amz: deli core|sliced apples|63114|1 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Sliced Apples",
+      "mrn": "63114",
+      "portion": "1 ounce",
+      "itemWasteCost": 0.0666
+    },
+    {
+      "id": "amz: deli core|sliced avocado|63635|2 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Sliced Avocado",
+      "mrn": "63635",
+      "portion": "2 ounce",
+      "itemWasteCost": 0.3318
+    },
+    {
+      "id": "amz: deli core|sliced black forest ham|48144.11|4 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Sliced Black Forest Ham",
+      "mrn": "48144.11",
+      "portion": "4 ounce",
+      "itemWasteCost": 1.1627
+    },
+    {
+      "id": "amz: deli core|sliced black olives|62339|1/2 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Sliced Black Olives",
+      "mrn": "62339",
+      "portion": "1/2 ounce",
+      "itemWasteCost": 0.0718
+    },
+    {
+      "id": "amz: deli core|sliced brie cheese|45467.4|1 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Sliced Brie Cheese",
+      "mrn": "45467.4",
+      "portion": "1 ounce",
+      "itemWasteCost": 0.3983
+    },
+    {
+      "id": "amz: deli core|sliced cucumber|68562.2|1 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Sliced Cucumber",
+      "mrn": "68562.2",
+      "portion": "1 ounce",
+      "itemWasteCost": 0.183
+    },
+    {
+      "id": "amz: deli core|sliced deli corned beef|48143.2|4 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Sliced Deli Corned Beef",
+      "mrn": "48143.2",
+      "portion": "4 ounce",
+      "itemWasteCost": 2.6593
+    },
+    {
+      "id": "amz: deli core|sliced mild cheddar cheese|1748.15|1 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Sliced Mild Cheddar Cheese",
+      "mrn": "1748.15",
+      "portion": "1 ounce",
+      "itemWasteCost": 0.1945
+    },
+    {
+      "id": "amz: deli core|sliced mortadella|13404.16|4 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Sliced Mortadella",
+      "mrn": "13404.16",
+      "portion": "4 ounce",
+      "itemWasteCost": 1.8855
+    },
+    {
+      "id": "amz: deli core|sliced muenster cheese|43035.1|1 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Sliced Muenster Cheese",
+      "mrn": "43035.1",
+      "portion": "1 ounce",
+      "itemWasteCost": 0.1726
+    },
+    {
+      "id": "amz: deli core|sliced pastrami|48144.12|4 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Sliced Pastrami",
+      "mrn": "48144.12",
+      "portion": "4 ounce",
+      "itemWasteCost": 2.5605
+    },
+    {
+      "id": "amz: deli core|sliced pepper jack cheese|43037.2|1 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Sliced Pepper Jack Cheese",
+      "mrn": "43037.2",
+      "portion": "1 ounce",
+      "itemWasteCost": 0.2142
+    },
+    {
+      "id": "amz: deli core|sliced provolone cheese|228019|1 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Sliced Provolone Cheese",
+      "mrn": "228019",
+      "portion": "1 ounce",
+      "itemWasteCost": 0.2184
+    },
+    {
+      "id": "amz: deli core|sliced smoked gouda cheese|75797|1 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Sliced Smoked Gouda Cheese",
+      "mrn": "75797",
+      "portion": "1 ounce",
+      "itemWasteCost": 0.245
+    },
+    {
+      "id": "amz: deli core|sliced swiss cheese|228725|2 slice",
+      "menu": "AMZ: Deli Core",
+      "item": "Sliced Swiss Cheese",
+      "mrn": "228725",
+      "portion": "2 slice",
+      "itemWasteCost": 0.2257
+    },
+    {
+      "id": "amz: deli core|sliced tomatoes|47955.4|1 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Sliced Tomatoes",
+      "mrn": "47955.4",
+      "portion": "1 ounce",
+      "itemWasteCost": 0.2101
+    },
+    {
+      "id": "amz: deli core|soft whole wheat roll|126480.27|1 serving(s)",
+      "menu": "AMZ: Deli Core",
+      "item": "Soft Whole Wheat Roll",
+      "mrn": "126480.27",
+      "portion": "1 serving(s)",
+      "itemWasteCost": 0.2007
+    },
+    {
+      "id": "amz: deli core|sourdough roll|126480.28|1 serving(s)",
+      "menu": "AMZ: Deli Core",
+      "item": "Sourdough Roll",
+      "mrn": "126480.28",
+      "portion": "1 serving(s)",
+      "itemWasteCost": 0.2933
     },
     {
       "id": "amz: deli core|southwest chipotle steak sandwich|16992|1 sandwich",
@@ -4953,7 +5825,7 @@
       "item": "Southwest Chipotle Steak Sandwich",
       "mrn": "16992",
       "portion": "1 sandwich",
-      "itemWasteCost": 7.249
+      "itemWasteCost": 7.2394
     },
     {
       "id": "amz: deli core|southwest grilled chicken wrap|85656.3|1 each",
@@ -4961,7 +5833,39 @@
       "item": "Southwest Grilled Chicken Wrap",
       "mrn": "85656.3",
       "portion": "1 each",
-      "itemWasteCost": 2.8013
+      "itemWasteCost": 2.8194
+    },
+    {
+      "id": "amz: deli core|spring mix|47795.1|1 cup",
+      "menu": "AMZ: Deli Core",
+      "item": "Spring Mix",
+      "mrn": "47795.1",
+      "portion": "1 cup",
+      "itemWasteCost": 0.6167
+    },
+    {
+      "id": "amz: deli core|sriracha mayonnaise|81169.1|2 tbsp",
+      "menu": "AMZ: Deli Core",
+      "item": "Sriracha Mayonnaise",
+      "mrn": "81169.1",
+      "portion": "2 tbsp",
+      "itemWasteCost": 0.0978
+    },
+    {
+      "id": "amz: deli core|sweet thai chili sauce|85896|1 tbsp",
+      "menu": "AMZ: Deli Core",
+      "item": "Sweet Thai Chili Sauce",
+      "mrn": "85896",
+      "portion": "1 tbsp",
+      "itemWasteCost": 0.1342
+    },
+    {
+      "id": "amz: deli core|telera roll|62281.1|1 each",
+      "menu": "AMZ: Deli Core",
+      "item": "Telera Roll",
+      "mrn": "62281.1",
+      "portion": "1 each",
+      "itemWasteCost": 0.6178
     },
     {
       "id": "amz: deli core|thai eggplant sub|195115|1 each",
@@ -4969,31 +5873,31 @@
       "item": "Thai Eggplant Sub",
       "mrn": "195115",
       "portion": "1 each",
-      "itemWasteCost": 2.558
+      "itemWasteCost": 2.6208
     },
     {
       "id": "amz: deli core|the rachel|84262|1 sandwich",
       "menu": "AMZ: Deli Core",
-      "item": "the Rachel",
+      "item": "The Rachel",
       "mrn": "84262",
       "portion": "1 sandwich",
-      "itemWasteCost": 2.787
+      "itemWasteCost": 2.8101
     },
     {
       "id": "amz: deli core|the reuben|84262.1|1 sandwich",
       "menu": "AMZ: Deli Core",
-      "item": "the Reuben",
+      "item": "The Reuben",
       "mrn": "84262.1",
       "portion": "1 sandwich",
-      "itemWasteCost": 4.482
+      "itemWasteCost": 4.4845
     },
     {
       "id": "amz: deli core|tuna salad on croissant, dill pickle aioli|170114|1 sandwich",
       "menu": "AMZ: Deli Core",
-      "item": "Tuna Salad on Croissant, Dill Pickle Aioli",
+      "item": "Tuna Salad On Croissant, Dill Pickle Aioli",
       "mrn": "170114",
       "portion": "1 sandwich",
-      "itemWasteCost": 2.454
+      "itemWasteCost": 2.6146
     },
     {
       "id": "amz: deli core|turkey apple brie sandwich|37001.21|1 sandwich",
@@ -5001,7 +5905,7 @@
       "item": "Turkey Apple Brie Sandwich",
       "mrn": "37001.21",
       "portion": "1 sandwich",
-      "itemWasteCost": 2.7783
+      "itemWasteCost": 2.757
     },
     {
       "id": "amz: deli core|turkey avocado club|148838.3|1 sandwich",
@@ -5009,15 +5913,15 @@
       "item": "Turkey Avocado Club",
       "mrn": "148838.3",
       "portion": "1 sandwich",
-      "itemWasteCost": 4.4165
+      "itemWasteCost": 4.1257
     },
     {
       "id": "amz: deli core|turkey bacon and brie croissant|135023|1 sandwich",
       "menu": "AMZ: Deli Core",
-      "item": "Turkey Bacon and Brie Croissant",
+      "item": "Turkey Bacon And Brie Croissant",
       "mrn": "135023",
       "portion": "1 sandwich",
-      "itemWasteCost": 6.053
+      "itemWasteCost": 6.031
     },
     {
       "id": "amz: deli core|turkey bacon chipotle panini|64199|1 each",
@@ -5025,7 +5929,7 @@
       "item": "Turkey Bacon Chipotle Panini",
       "mrn": "64199",
       "portion": "1 each",
-      "itemWasteCost": 3.338
+      "itemWasteCost": 3.1481
     },
     {
       "id": "amz: deli core|tuscan vegetable sandwich|108987|1 sandwich",
@@ -5033,7 +5937,47 @@
       "item": "Tuscan Vegetable Sandwich",
       "mrn": "108987",
       "portion": "1 sandwich",
-      "itemWasteCost": 2.2925
+      "itemWasteCost": 2.2786
+    },
+    {
+      "id": "amz: deli core|tzatziki sauce|211747.7|2 floz",
+      "menu": "AMZ: Deli Core",
+      "item": "Tzatziki Sauce",
+      "mrn": "211747.7",
+      "portion": "2 floz",
+      "itemWasteCost": 0.4794
+    },
+    {
+      "id": "amz: deli core|udi's hamburger bun|1390.5|1 each",
+      "menu": "AMZ: Deli Core",
+      "item": "Udi's Hamburger Bun",
+      "mrn": "1390.5",
+      "portion": "1 each",
+      "itemWasteCost": 1.6255
+    },
+    {
+      "id": "amz: deli core|udi's whole grain bun|1390.7|1 each",
+      "menu": "AMZ: Deli Core",
+      "item": "Udi's Whole Grain Bun",
+      "mrn": "1390.7",
+      "portion": "1 each",
+      "itemWasteCost": 1.6255
+    },
+    {
+      "id": "amz: deli core|vegan cheddar cheese|221077|1 ounce",
+      "menu": "AMZ: Deli Core",
+      "item": "Vegan Cheddar Cheese",
+      "mrn": "221077",
+      "portion": "1 ounce",
+      "itemWasteCost": 0.6146
+    },
+    {
+      "id": "amz: deli core|vegan mayo|108718|2 tbsp",
+      "menu": "AMZ: Deli Core",
+      "item": "Vegan Mayo",
+      "mrn": "108718",
+      "portion": "2 tbsp",
+      "itemWasteCost": 0.2163
     },
     {
       "id": "amz: deli core|vegetable cuban style hoagie|32415.12|1 sandwich",
@@ -5041,7 +5985,7 @@
       "item": "Vegetable Cuban Style Hoagie",
       "mrn": "32415.12",
       "portion": "1 sandwich",
-      "itemWasteCost": 1.903
+      "itemWasteCost": 1.8897
     },
     {
       "id": "amz: deli core|waldorf chicken salad croissant|161945|1 serving(s)",
@@ -5049,7 +5993,47 @@
       "item": "Waldorf Chicken Salad Croissant",
       "mrn": "161945",
       "portion": "1 serving(s)",
-      "itemWasteCost": 3.1567
+      "itemWasteCost": 3.093
+    },
+    {
+      "id": "amz: deli core|wheat bread|1390.10|2 slice",
+      "menu": "AMZ: Deli Core",
+      "item": "Wheat Bread",
+      "mrn": "1390.10",
+      "portion": "2 slice",
+      "itemWasteCost": 0.364
+    },
+    {
+      "id": "amz: deli core|white pita bread|62266.1|1 each",
+      "menu": "AMZ: Deli Core",
+      "item": "White Pita Bread",
+      "mrn": "62266.1",
+      "portion": "1 each",
+      "itemWasteCost": 0.2777
+    },
+    {
+      "id": "amz: deli core|whole grain mustard|62300.1|2 tbsp",
+      "menu": "AMZ: Deli Core",
+      "item": "Whole Grain Mustard",
+      "mrn": "62300.1",
+      "portion": "2 tbsp",
+      "itemWasteCost": 0.1269
+    },
+    {
+      "id": "amz: deli core|whole wheat tortilla|128057|1 each",
+      "menu": "AMZ: Deli Core",
+      "item": "Whole Wheat Tortilla",
+      "mrn": "128057",
+      "portion": "1 each",
+      "itemWasteCost": 0.1778
+    },
+    {
+      "id": "amz: deli core|yogurt dressing|88370|2 tbsp",
+      "menu": "AMZ: Deli Core",
+      "item": "Yogurt Dressing",
+      "mrn": "88370",
+      "portion": "2 tbsp",
+      "itemWasteCost": 0.0073
     },
     {
       "id": "amz: fish market|baja grilled fish taco|84484.1|2 each",

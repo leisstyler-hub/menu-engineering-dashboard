@@ -2,6 +2,7 @@ export const ROXANNE_DAWSON_EFFECTIVE_WEEK = "2026-11-30";
 export const ROXANNE_DAWSON_ORDER_VERSION = 1;
 
 const DELIVERY_KEYS = Object.freeze(["friday", "monday", "wednesday"]);
+export const ROXANNE_POPUP_DELIVERY_KEYS = Object.freeze(["monday", "wednesday"]);
 const ROXANNE_CAFE = "Roxanne Coffee";
 const DAWSON_PARENT_PREFIX = "rotation|";
 
@@ -98,6 +99,9 @@ export function normalizeRoxanneDawsonOrder(source = {}, projection = null) {
     sourceSubmittedAt: projection?.submittedAt || existing.sourceSubmittedAt || "",
     includeGlobal: projection?.includeGlobal ?? Boolean(existing.includeGlobal),
     includeCarvery: projection?.includeCarvery ?? Boolean(existing.includeCarvery),
+    popUpSchedule: existing.popUpSchedule || "",
+    legacyFridayResolvedAt: existing.legacyFridayResolvedAt || "",
+    legacyFridayResolution: existing.legacyFridayResolution || "",
     items,
     quantities,
   };
@@ -111,6 +115,32 @@ export function roxanneDawsonOrderLines(record = {}) {
     const total = DELIVERY_KEYS.reduce((sum, delivery) => sum + Number(quantities[delivery] || 0), 0);
     return { ...item, ...quantities, total, orderUnit: "item", orderUnitCost: Number(item.itemWasteCost || 0) };
   }).filter((line) => line.total > 0);
+}
+
+export function roxanneDawsonDeliveryKeysForItem(item = {}) {
+  return item.source === "composedSalad" ? DELIVERY_KEYS : ROXANNE_POPUP_DELIVERY_KEYS;
+}
+
+export function roxannePopUpLegacyFridayQuantities(order = {}) {
+  return Object.values(order.items || {}).filter((item) => item.source !== "composedSalad").map((item) => ({
+    item,
+    quantity: Number(order.quantities?.[item.id]?.friday || 0),
+  })).filter(({ quantity }) => quantity > 0);
+}
+
+export function resolveRoxannePopUpLegacyFriday(order = {}, strategy = "move-to-monday") {
+  if (!["move-to-monday", "clear"].includes(strategy)) throw new Error("Unsupported Roxanne Pop-Up schedule resolution.");
+  const normalized = normalizeRoxanneDawsonOrder(order);
+  const quantities = Object.fromEntries(Object.entries(normalized.quantities).map(([id, delivery]) => {
+    const item = normalized.items[id];
+    if (!item || item.source === "composedSalad" || !(Number(delivery.friday) > 0)) return [id, delivery];
+    return [id, {
+      ...delivery,
+      friday: 0,
+      monday: strategy === "move-to-monday" ? Number(delivery.monday || 0) + Number(delivery.friday || 0) : Number(delivery.monday || 0),
+    }];
+  }));
+  return { ...normalized, quantities, popUpSchedule: "tuesday-wednesday-thursday", legacyFridayResolvedAt: new Date().toISOString(), legacyFridayResolution: strategy };
 }
 
 export function hasRoxanneDawsonProjection(cafe, weekStart) {

@@ -23,7 +23,7 @@ function assertNameMrn(name, expectedMrn) {
   assert(String(row.mrn) === expectedMrn, `Expected ${name} MRN ${expectedMrn}, found ${row.mrn}.`);
 }
 
-assert(masterRows.length === 1469, `Expected 1469 retained Master Menus rows after the Fresh Five replacement, found ${masterRows.length}.`);
+assert(masterRows.length === 1340, `Expected 1340 retained Master Menus rows after the Fresh Five and three authoritative menu replacements, found ${masterRows.length}.`);
 assert(rows.every((row) => /^AMZ(\+RA)?:/.test(String(row.menu || ""))), "Menu item data includes non-menu legal/footer rows.");
 assert(rows.every((row) => !String(row.mrn || "").includes("/")), "Recipe numbers were parsed as dates. CSV must be read in raw mode.");
 assert(rows.every((row) => !String(row.mrn || "").startsWith("'")), "Recipe numbers should not retain the MenuWorks leading apostrophe.");

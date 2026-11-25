@@ -399,13 +399,13 @@ function postgrestQuotedList(values = []) {
     .join(",");
 }
 
-async function loadSupabaseRecipeItemRefs() {
+async function loadSupabaseRecipeItemRefs({ visibleOnly = true } = {}) {
   const refs = [];
   for (let offset = 0; offset < 50000; offset += SUPABASE_READ_PAGE_SIZE) {
     const params = new URLSearchParams({
       select: "item_key,menu",
-      visible_in_library: "eq.true",
     });
+    if (visibleOnly) params.set("visible_in_library", "eq.true");
     const page = await supabaseFetch(`recipe_items?${params.toString()}`, {
       headers: {
         "Range-Unit": "items",
@@ -419,6 +419,35 @@ async function loadSupabaseRecipeItemRefs() {
     if (pageRows.length < SUPABASE_READ_PAGE_SIZE) break;
   }
   return refs;
+}
+
+function sameStringSet(left = [], right = []) {
+  const a = [...new Set(left.map(String))].sort();
+  const b = [...new Set(right.map(String))].sort();
+  return a.length === b.length && a.every((value, index) => value === b[index]);
+}
+
+async function guardedStaleSupabaseRecipeItemKeys(activeItemKeys = new Set(), menuScope = [], expectedCurrentKeys = []) {
+  const scopedMenus = new Set(menuScope.filter(Boolean));
+  const currentRefs = (await loadSupabaseRecipeItemRefs({ visibleOnly: false })).filter((ref) => scopedMenus.has(ref.menu));
+  const currentKeys = currentRefs.map(({ itemKey }) => itemKey);
+  if (!sameStringSet(currentKeys, expectedCurrentKeys)) {
+    const error = new Error("The Recipe Library menu scope changed after the replacement was prepared. Refresh the snapshot before retrying.");
+    error.status = 409;
+    error.payload = { expectedCount: new Set(expectedCurrentKeys).size, currentCount: new Set(currentKeys).size };
+    throw error;
+  }
+  return currentKeys.filter((itemKey) => !activeItemKeys.has(itemKey));
+}
+
+async function deleteRecipeItemsByKey(staleKeys = []) {
+  for (let index = 0; index < staleKeys.length; index += 100) {
+    const batch = staleKeys.slice(index, index + 100);
+    await supabaseFetch(`recipe_items?item_key=in.(${postgrestQuotedList(batch)})`, {
+      method: "DELETE",
+      headers: { Prefer: "return=minimal" },
+    });
+  }
 }
 
 async function hideStaleSupabaseRecipeItems(activeItemKeys = new Set(), menuScope = []) {
@@ -442,9 +471,12 @@ async function hideStaleSupabaseRecipeItems(activeItemKeys = new Set(), menuScop
   return staleKeys.length;
 }
 
-async function writeRecipeRowsToSupabase(sourceRows = [], menuScope = []) {
+async function writeRecipeRowsToSupabase(sourceRows = [], menuScope = [], options = {}) {
   const rows = sourceRows.map(recipeItemPayload);
   const activeItemKeys = new Set(rows.map((row) => row.item_key).filter(Boolean));
+  const deletedKeys = options.replaceMissing
+    ? await guardedStaleSupabaseRecipeItemKeys(activeItemKeys, menuScope, options.expectedCurrentKeys || [])
+    : [];
   for (let index = 0; index < rows.length; index += SUPABASE_BATCH_SIZE) {
     const batch = rows.slice(index, index + SUPABASE_BATCH_SIZE);
     await supabaseFetch("recipe_items?on_conflict=item_key", {
@@ -453,8 +485,12 @@ async function writeRecipeRowsToSupabase(sourceRows = [], menuScope = []) {
       body: JSON.stringify(batch),
     });
   }
+  if (options.replaceMissing) {
+    await deleteRecipeItemsByKey(deletedKeys);
+    return { rowsWritten: rows.length, rowsHidden: 0, rowsDeleted: deletedKeys.length, deletedKeys, activeItemKeys };
+  }
   const rowsHidden = await hideStaleSupabaseRecipeItems(activeItemKeys, menuScope);
-  return { rowsWritten: rows.length, rowsHidden, activeItemKeys };
+  return { rowsWritten: rows.length, rowsHidden, rowsDeleted: 0, deletedKeys: [], activeItemKeys };
 }
 
 function attachDocumentsToRows(rows = [], documents = []) {
@@ -768,14 +804,26 @@ async function handleAcceptMenuWorksImport(req, res, body) {
       rowCount: sourceRows.length,
       menuCount: menuScope.length,
     };
-    const { rowsWritten, rowsHidden } = await writeRecipeRowsToSupabase(sourceRows, menuScope);
+    const replaceMissing = body?.replaceMissing === true;
+    if (replaceMissing && String(body?.replacementAuthority || "").trim() !== "authoritative-complete-menu-set") {
+      sendJson(res, 400, { ok: false, message: "A hard menu replacement requires explicit authoritative-complete-menu-set authority." });
+      return;
+    }
+    const expectedCurrentKeys = Array.isArray(body?.expectedCurrentKeys) ? body.expectedCurrentKeys.map(String) : [];
+    if (replaceMissing && !expectedCurrentKeys.length) {
+      sendJson(res, 400, { ok: false, message: "A hard menu replacement requires the exact pre-change item-key snapshot." });
+      return;
+    }
+    const { rowsWritten, rowsHidden, rowsDeleted, deletedKeys } = await writeRecipeRowsToSupabase(sourceRows, menuScope, { replaceMissing, expectedCurrentKeys });
 
     sendJson(res, 200, {
       ok: true,
       source: "supabase-recipe-items",
-      message: `Accepted import batch ${importBatch.id || "MenuWorks"}: wrote ${rowsWritten.toLocaleString()} rows and hid ${rowsHidden.toLocaleString()} stale rows in ${menuScope.length.toLocaleString()} menus.`,
+      message: `Accepted import batch ${importBatch.id || "MenuWorks"}: wrote ${rowsWritten.toLocaleString()} rows, hid ${rowsHidden.toLocaleString()} stale rows, and deleted ${rowsDeleted.toLocaleString()} explicitly removed rows in ${menuScope.length.toLocaleString()} menus.`,
       rowsWritten,
       rowsHidden,
+      rowsDeleted,
+      deletedKeys,
       menus: menuScope.length,
       importBatch,
     });

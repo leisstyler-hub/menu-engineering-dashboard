@@ -82,7 +82,7 @@ export function buildRoxanneCricketSoupProjection(rotationRecords = [], weekStar
       const mrn = text(record, ["MRN", "mrn"]);
       const name = text(record, ["Menu Item / Selection", "Menu Item Selection", "itemName", "menuItemSelection"]);
       const itemWasteCost = number(record, ["True Cost", "trueCost", "Item + Waste Cost", "itemWasteCost"]);
-      if (!name || !mrn || !(itemWasteCost > 0)) return null;
+      if (!name || !mrn) return null;
       return {
         id: `roxanne-soup|${day.key}|${((slot - 1) % 2) + 1}|${mrn}`,
         station: "Soups",

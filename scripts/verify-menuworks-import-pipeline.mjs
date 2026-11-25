@@ -129,5 +129,8 @@ const api = await import("node:fs").then(({ readFileSync }) => readFileSync("api
 assert(api.includes("acceptMenuWorksImport"), "Recipe Library API must expose acceptMenuWorksImport.");
 assert(api.includes("hideStaleSupabaseRecipeItems(activeItemKeys"), "Accepted imports must hide stale Supabase rows.");
 assert(api.includes("importBatch"), "Accepted imports should return import batch metadata.");
+assert(api.includes("authoritative-complete-menu-set"), "Hard replacements must require explicit complete-menu authority.");
+assert(api.includes("expectedCurrentKeys"), "Hard replacements must compare the exact pre-change key snapshot before writing.");
+assert(api.includes("deleteRecipeItemsByKey"), "Explicitly missing authoritative rows must be deleted from shared metadata after the guarded upsert.");
 
 console.log("MenuWorks import pipeline verification passed.");

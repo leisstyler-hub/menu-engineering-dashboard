@@ -11,7 +11,10 @@ assert.equal(isApprovedOperationalMetadataRecord(record), true);
 assert.equal(resolveOperationalMetadata([record]).source, "supabase");
 assert.equal(resolveOperationalMetadata([]).source, "fallback");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.orderItems.length, 41);
-assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 35);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 36);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.sharedMenuSource.version, "menuworks-authoritative-2026-11-25");
+assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.sharedMenuSource.menus.map(({ rows }) => rows), [165, 57, 70]);
+assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.neighborhoodRotations.roxannePopUp.serviceDays, ["Tuesday", "Wednesday", "Thursday"]);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.items.length, 41);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.legacyItems.length, 41);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarCosting.source.effectiveDate, "2026-11-16");
@@ -36,17 +39,17 @@ assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.grillInterface,
   sectionLayout: "single-section-lto-before-core",
 });
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.deliCatalog.menu, "AMZ: Deli Core");
-assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.deliCatalog.items.length, 20);
-assert.equal(new Set(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.deliCatalog.items.map(({ mrn }) => mrn)).size, 20);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.deliCatalog.items.length, 21);
+assert.equal(new Set(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.deliCatalog.items.map(({ mrn }) => mrn)).size, 21);
 assert.deepEqual(
   DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.deliCatalog.unsupported.map(({ mrn }) => mrn),
-  ["234913", "141826.1"],
+  ["234913"],
 );
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.deliCatalog.itemSource, "supabase.recipe_items");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.deliCatalog.recipeDocumentSource, "supabase.recipe_item_documents");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.deliProgram.anchorWeekStart, "2026-11-16");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.deliProgram.cycleLengthWeeks, 4);
-assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.deliProgram.cycleWeeks.map(({ items }) => items.length), [5, 5, 5, 6]);
+assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.deliProgram.cycleWeeks.map(({ items }) => items.length), [5, 6, 5, 6]);
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.deliProgram.standingOrderItemMrns, ["37394.7"]);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.standingOrderPolicy.catalogUpdatesNeverRewriteSavedOrders, true);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.saladBarWholeUnitPolicy.grandfatherExistingSplitQuantities, true);
@@ -75,7 +78,7 @@ assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globalInterface
   subrecipes: "automatic-from-recipe",
   deliveryQuantities: "whole-portions",
 });
-assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 35);
+assert.equal(DEFAULT_OPERATIONAL_METADATA.metadataVersion, 36);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globalProductionPolicy.version, 1);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globalProductionPolicy.rules["global|amz-porto|121026|1-piece"].outputs[0].mrn, "120715");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.globalProductionPolicy.rules["global|amz-smokehouse-bbq|5365.6|5-ounce"].mode, "in-unit");
@@ -122,7 +125,8 @@ assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.roxanneDawsonIntegr
 assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.roxanneDawsonIntegration.transferWorkbook, { cricketSheet: "SEA20 Cricket", dawsonSheet: "SEA27 Dawson" });
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.roxanneCricketPrograms.effectiveWeek, "2026-11-30");
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.roxanneCricketPrograms.soup.orderingUnit, "whole-12-ounce-portions");
-assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.roxanneCricketPrograms.soup.excludedUncostedMrns, ["62071.1", "62082.2"]);
+assert.deepEqual(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.roxanneCricketPrograms.soup.costUnavailableMrns, ["62071.1", "62082.2"]);
+assert.match(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.roxanneCricketPrograms.soup.costUnavailableBehavior, /visible.*disabled/i);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.roxanneCricketPrograms.flatbread.cycleLengthWeeks, 6);
 assert.equal(Object.keys(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.roxanneCricketPrograms.flatbread.items).length, 12);
 assert.equal(DEFAULT_OPERATIONAL_METADATA.commissaryOrdering.transferToolContract.s4Description, "item for finished dish MRN, concise to 50 characters");

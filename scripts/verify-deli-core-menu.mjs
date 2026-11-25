@@ -7,7 +7,6 @@ const menuItems = JSON.parse(readFileSync("src/data/menuItems.json", "utf8"));
 const transferCatalog = JSON.parse(readFileSync("src/data/transferToolCatalog.json", "utf8"));
 const rawArchive = JSON.parse(readFileSync("public/data/deli-core-raw-2026-09-30.json", "utf8"));
 const menu = "AMZ: Deli Core";
-const omitted = new Set(["134362.15", "141826"]);
 const refreshedMrns = new Set(DELI_CORE_SELECTED_CATALOG.items.map(({ mrn }) => mrn));
 
 function fail(message) {
@@ -16,28 +15,22 @@ function fail(message) {
 }
 
 const rows = menuItems.filter((row) => row.menu === menu);
-if (rows.length !== 41) fail(`Expected 41 ${menu} rows, found ${rows.length}.`);
-if (new Set(rows.map((row) => row.mrn)).size !== 41) fail("Deli Core MRNs are not unique within the menu.");
-if (rows.some((row) => omitted.has(row.mrn))) fail("An explicitly omitted uncosted Deli Core item is present.");
-if (rows.some((row) => !Number.isFinite(row.trueCost) || row.trueCost <= 0)) fail("Every Deli Core row must have a positive Item + Waste Cost.");
-if (rows.some((row) => !row.enticingDescription || !String(row.primaryDescriptionSource).startsWith("ssmt-reference:"))) fail("Every Deli Core row must have an SSMT description.");
-if (rows.some((row) => row.item_key !== `mrn:${menu.toLowerCase()}:${row.mrn}`)) fail("Every Deli Core row must use a stable menu-scoped MRN item key.");
+if (rows.length !== 165) fail(`Expected 165 authoritative ${menu} rows, found ${rows.length}.`);
+if (new Set(rows.map((row) => row.item_key)).size !== 165) fail("Deli Core item keys must remain unique, including portion variants.");
+if (rows.filter((row) => !(Number(row.trueCost) > 0)).map(({ mrn }) => mrn).join(",") !== "134362.15") fail("Only source-declared uncosted Deli MRN 134362.15 may remain cost unavailable.");
+if (rows.some((row) => row.sourceDataVersion !== "menuworks-authoritative-2026-11-25")) fail("Every Deli Core row must carry the authoritative replacement provenance.");
+if (rows.some((row) => !row.culinaryProfile || !row.culinaryProfile.identity?.itemKey || !row.culinaryProfile.provenance?.sourceSha256)) fail("Every Deli Core row must carry its persisted Culinary Tags profile.");
 if (rows.some((row) => recipeLibraryItemKey(row) !== row.item_key)) fail("Recipe Library normalization must preserve the explicit Deli Core item key.");
-if (rows.filter((row) => row.station === "Curated Sandwiches").length !== 27) fail("Curated Sandwiches count must be 27 after omissions.");
+if (rows.filter((row) => row.station === "Curated Sandwiches").length !== 29) fail("Curated Sandwiches count must match the authoritative replacement.");
 if (rows.filter((row) => row.station === "Regional Spotlights - Deli").length !== 14) fail("Regional Spotlights - Deli count must be 14.");
-if (rows.some((row) => row.category !== "entree")) fail("Deli Core sandwich rows must remain entree selections.");
-if (rows.find((row) => row.mrn === "105146.3")?.primaryDescriptionSource !== "ssmt-reference:CAFE EXPRESS") fail("Chimichurri Steak must use its exact-MRN CAFE EXPRESS SSMT fallback.");
-if (refreshedMrns.size !== 20) fail("The selected Deli refresh must contain 20 unique exact MRNs.");
-if (rows.filter((row) => refreshedMrns.has(row.mrn)).length !== 20) fail("Every selected Deli refresh MRN must remain in the shared menu.");
-if (rows.filter((row) => refreshedMrns.has(row.mrn)).some((row) => row.sourceDataVersion !== "deli-core-selected-refresh-2026-10-29")) fail("Selected Deli rows must carry the reviewed refresh provenance.");
-if (rows.filter((row) => refreshedMrns.has(row.mrn)).some((row) => !row.recipeEvidence?.exactMrn || !Number.isInteger(row.recipeEvidence?.page))) fail("Selected Deli rows must carry exact-MRN recipe-page evidence.");
-if (rows.filter((row) => refreshedMrns.has(row.mrn)).some((row) => !(row.itemCost > 0) || !(row.trueCost > row.itemCost) || !(row.price > 0))) fail("Selected Deli rows must carry positive item, waste-inclusive and sell-price values.");
-if (Math.abs(rows.find((row) => row.mrn === "37311.43")?.trueCost - 4.585226) > 0.000001) fail("Chicken Caesar Wrap must use the reviewed Item + Waste Cost.");
-if (Math.abs(rows.find((row) => row.mrn === "134036.4")?.trueCost - 1.298942) > 0.000001) fail("Charred Eggplant Ciabatta must use the reviewed Item + Waste Cost.");
+if (refreshedMrns.size !== 21) fail("The selected Deli operating catalog must contain 21 exact MRNs after the source-authority update.");
+if (!refreshedMrns.has("141826.1") || !refreshedMrns.has("9282.7")) fail("The operating catalog must include source-present exact MRNs 141826.1 and 9282.7.");
+if (!rows.some((row) => row.mrn === "141826.1" && Number(row.trueCost) > 0)) fail("Mediterranean Tuna Salad Sandwich must be available with source costing.");
+if (!rows.some((row) => row.mrn === "9282.7" && Number(row.trueCost) > 0)) fail("Source-present Buffalo Chicken Wrap MRN 9282.7 must remain available with source costing.");
 
 const catalogRows = transferCatalog.items.filter((row) => row.menu === menu);
-if (catalogRows.length !== 41) fail(`Transfer Tool expected 41 ${menu} rows, found ${catalogRows.length}.`);
-if (catalogRows.some((row) => !Number.isFinite(row.itemWasteCost) || row.itemWasteCost <= 0)) fail("Transfer Tool Deli Core rows must all carry Item + Waste Cost.");
+if (catalogRows.length !== 165) fail(`Transfer Tool expected 165 ${menu} rows, found ${catalogRows.length}.`);
+if (catalogRows.filter((row) => !(Number(row.itemWasteCost) > 0)).map(({ mrn }) => mrn).join(",") !== "134362.15") fail("Transfer Tool must expose the one uncosted source item explicitly without inventing a value.");
 if (rawArchive.length !== 41) fail(`Deli Core raw archive expected 41 rows, found ${rawArchive.length}.`);
 
 for (const consumer of [
@@ -115,4 +108,4 @@ try {
   else process.env.RECIPE_LIBRARY_ADMIN_CODE = originalAdminCode;
 }
 
-console.log("Deli Core import verified: 41 costed, described rows feed shared tools; the protected Supabase audit includes hidden rows; 2 uncosted MRNs remain omitted.");
+console.log("Deli Core authoritative replacement verified: 165 source rows feed shared tools; the protected Supabase audit includes hidden rows; exact additions/deletions and Culinary Tags profiles are enforced.");
