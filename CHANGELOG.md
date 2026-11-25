@@ -1,5 +1,7 @@
 ## 2026-11-25
 
+- [Nov 25, 7:20 AM] Preserve modifier MRNs, prices and entered group values when switching modifier types.
+
 - [Nov 25, 4:52 AM] Replace Deli Core, Curated Sandwiches and Soup everywhere from complete MenuWorks source sets.
 - [Nov 25, 4:52 AM] Run Roxanne Pop-Up Tuesday–Thursday above Composed Salad with delivery-aware standing-order protection.
 

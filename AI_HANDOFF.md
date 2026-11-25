@@ -1,3 +1,7 @@
+## SSMT modifier type preservation - 2026-11-25
+
+Candidate `2026.11.25.002-ssmt-modifier-preservation` changes only modifier type on selection, retaining group fields and choice values. Row resize retains choices; explicit blank prices survive normalization. Isolated tests cover exact MRNs, linked prices, blanks, zero, switches, row addition and save/reload. No canonical production writes or historical repair. Release evidence: workspace WORK_LOGS/SSMT_MODIFIER_PRESERVATION_2026_11_25.md.
+
 ## Authoritative menu replacements and Roxanne schedule - 2026-11-25
 
 Candidate `2026.11.25.001-menu-source-roxanne-schedule` treats Alex's three MenuWorks exports as complete authoritative replacements: Deli Core 165 rows, Curated Sandwiches 57 and Cafe Express Soup 70. Raw source files, SHA-256 hashes, normalized candidate rows and a profile/replacement manifest are under `docs/menu-data`. `scripts/prepare-authoritative-menu-replacement.mjs` deterministically rebuilds the local fallback, Transfer Tool input and Deli operating projection. The protected Recipe Library action accepts hard replacement only with the exact pre-change item-key snapshot and explicit `authoritative-complete-menu-set` authority; stale rows are physically deleted after guarded upsert. `scripts/publish-authoritative-menu-replacement.mjs` takes sanitized before/after evidence and verifies exact counts, zero hidden rows and Culinary Tags readback.

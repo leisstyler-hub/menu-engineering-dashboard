@@ -673,69 +673,28 @@ test("SSMT change log and primary navigation are prominent and identify the acti
 });
 
 
-test("modifier type defaults follow line counts, Custom stays blank, and saves survive reload", async ({ page }) => {
-  const fixture = await isolated(page);
-  await openTarget(page);
-  await page.getByRole('button', { name: 'Add item', exact: true }).click();
-  await page.getByRole('button', { name: /View modifiers Mods \(0\)/ }).click();
-  let dialog = page.getByRole('dialog', { name: 'Modifier detail', exact: true });
-  await dialog.getByRole('button', { name: 'Add modifier group', exact: true }).click();
-  await dialog.getByLabel('Modifier group type').selectOption('Force');
-  await expect(dialog.getByLabel('Modifier group name')).toHaveValue('Make It Mine (NEW ITEM)');
-  await expect(dialog.getByLabel('Modifier group type').locator('option')).toHaveText(['Make It Mine (Forced)', 'Customize (Remove)', 'Make It Better (Addition)', 'Custom']);
-  await dialog.getByLabel('Modifier group type').selectOption('Remove');
-  await expect(dialog.getByLabel('Modifier group name')).toHaveValue('Customize (NEW ITEM)');
-  await expect(dialog.getByLabel('Minimum selections')).toHaveValue('0');
-  await expect(dialog.getByLabel('Maximum selections')).toHaveValue('1');
-  await expect(dialog.getByLabel('Modifier price')).toHaveValue('ssmt-modifier-zero');
-  await dialog.getByRole('button', { name: 'Add modifier item line', exact: true }).click();
-  await expect(dialog.getByLabel('Maximum selections')).toHaveValue('2');
-  await expect(dialog.getByLabel('Modifier MRN').first()).toHaveValue('N/A');
-  await expect(dialog.getByLabel('Modifier MRN').last()).toHaveValue('N/A');
-  await dialog.getByLabel('Modifier name').first().evaluate(el => {
-    const clipboardData = new DataTransfer(); clipboardData.setData('text/plain', 'No onion\nNo tomato');
-    el.dispatchEvent(new ClipboardEvent('paste', {clipboardData, bubbles:true,cancelable:true}));
-  });
-  await expect(dialog.getByLabel('Modifier name').last()).toHaveValue('no tomato');
-  await dialog.getByLabel('Modifier name').first().focus();
-  await page.keyboard.press('ArrowDown');
-  await expect(dialog.getByLabel('Modifier name').last()).toBeFocused();
-
-  await expect(dialog.getByLabel('Modifier price').last()).toHaveValue('ssmt-modifier-zero');
-  await dialog.getByLabel('Modifier group type').selectOption('Addition');
-  await expect(dialog.getByLabel('Modifier group name')).toHaveValue('Make It Better (NEW ITEM)');
-  await expect(dialog.getByLabel('Maximum selections')).toHaveValue('4');
-  await dialog.getByRole('button', { name: 'Delete modifier item line', exact: true }).last().click();
-  const deletion = page.getByRole('dialog', { name: 'Delete modifier item', exact: true });
-  await deletion.getByRole('checkbox').check();
-  await deletion.getByRole('button', { name: 'Delete modifier item', exact: true }).click();
-  await expect(dialog.getByLabel('Maximum selections')).toHaveValue('2');
-  await dialog.getByRole('button', { name: 'Add modifier item line', exact: true }).click();
-  await expect(dialog.getByLabel('Maximum selections')).toHaveValue('4');
-  await dialog.getByLabel('Modifier group type').selectOption('Custom');
-  await expect(dialog.getByLabel('Modifier group name')).toHaveValue('');
-  await expect(dialog.getByLabel('Minimum selections')).toHaveValue('');
-  await expect(dialog.getByLabel('Maximum selections')).toHaveValue('');
-  await expect(dialog.getByLabel('Modifier price').first()).toHaveValue('');
-  await dialog.getByLabel('Modifier group type').selectOption('Remove');
-  await dialog.getByRole('button', { name: 'Save modifiers', exact: true }).click();
-  await expect.poll(() => fixture.saves.length).toBeGreaterThan(0);
-  const savedGroup = fixture.getWorkspace().modifierGroups.at(-1);
-  expect(savedGroup.choices.every(choice => choice.price === '0.00')).toBe(true);
-  expect(fixture.getWorkspace().menus[0].items[0]).toMatchObject(item);
-  await page.reload();
-  await page.getByRole('button', { name: /open ssmt/i }).click();
-  await page.getByLabel('Email', { exact: true }).fill('chef@example.test');
-  await page.getByLabel('Password', { exact: true }).fill('a private test password');
-  await page.getByRole('button', { name: 'Sign in to SSMT', exact: true }).click();
-  await openTarget(page);
-  await page.getByRole('button', { name: /View modifiers/ }).click();
-  dialog = page.getByRole('dialog', { name: 'Modifier detail', exact: true });
-  await expect(dialog.getByLabel('Modifier group type')).toHaveValue('Remove');
-  await expect(dialog.getByLabel('Maximum selections')).toHaveValue('2');
-  await expect(dialog.getByLabel('Modifier price').first()).toHaveValue('ssmt-modifier-zero');
-  await page.screenshot({ path: 'C:/Users/leiss/.buzz/WORK_LOGS/SSMT_MODIFIER_DEFAULTS_DESKTOP.png' });
+test('modifier type switches preserve entered group and choice values after save', async ({page}) => {
+ const fixture=await isolated(page);await openTarget(page);
+ await page.getByRole('button',{name:'Add item',exact:true}).click();
+ await page.getByRole('button',{name:/View modifiers Mods \(0\)/}).click();
+ const dialog=page.getByRole('dialog',{name:'Modifier detail',exact:true});
+ await dialog.getByRole('button',{name:'Add modifier group',exact:true}).click();
+ await dialog.getByLabel('Modifier group name').fill('keep my group');
+ await dialog.getByLabel('Minimum selections').fill('1');
+ await dialog.getByLabel('Maximum selections').fill('7');
+ await dialog.getByLabel('Modifier MRN').fill('000123.70');
+ for(const type of ['Remove','Custom','Force','Addition']) {
+  await dialog.getByLabel('Modifier group type').selectOption(type);
+  await expect(dialog.getByLabel('Modifier group name')).toHaveValue('keep my group');
+  await expect(dialog.getByLabel('Minimum selections')).toHaveValue('1');
+  await expect(dialog.getByLabel('Maximum selections')).toHaveValue('7');
+  await expect(dialog.getByLabel('Modifier MRN')).toHaveValue('000123.70');
+ }
+ await dialog.getByRole('button',{name:'Save modifiers',exact:true}).click();
+ await expect.poll(()=>fixture.saves.length).toBeGreaterThan(0);
+ expect(fixture.getWorkspace().modifierGroups.at(-1)).toMatchObject({name:'keep my group',minQty:'1',maxQty:'7',choices:[{mrn:'000123.70',price:''}]});
 });
+
 
 test("FIXY excludes coded items and hides the single NEW choice", async ({ page }) => {
   await isolated(page, { missingFixy: true });

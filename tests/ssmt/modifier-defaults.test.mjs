@@ -2,40 +2,33 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { selectModifierType, resizeModifierGroup } from '../../src/features/ssmt/ssmtModifierDefaults.js';
 
-const group = { name: 'Old', minQty: '1', maxQty: '1', choices: [{ id: 'a', price: '2', mrn: '0001' }, { id: 'b', price: '3' }] };
-test('Remove defaults zero prices and all areas while preserving identifiers', () => {
-  const result = selectModifierType(group, 'Remove', 'Burger', ['SEA', 'AUS'], []);
-  assert.equal(result.name, 'Customize (Burger)');
-  assert.equal(result.minQty, '0');
-  assert.equal(result.maxQty, '2');
-  assert.equal(result.choices[0].mrn, 'N/A');
-  assert.equal(result.choices[0].price, '0.00');
-  assert.deepEqual(result.choices[0].areaPrices, { SEA: '0.00', AUS: '0.00' });
-  assert.equal(group.choices[0].price, '2');
+const group = { name: 'Old', minQty: '1', maxQty: '1', choices: [
+ { id: 'a', label:'sauce', description:'retain', price: '2.50', mrn: '0001.00', priceSelectorId:'linked', areaPrices:{SEA:'2.50',AUS:'',BOS:0}},
+ { id: 'b', price: '', mrn:'', priceSelectorId:'', areaPrices:{SEA:'',AUS:'0.00'} },
+ { id: 'c', price: 0, mrn:'0000', priceSelectorId:'', areaPrices:{SEA:0} },
+] };
+for (const type of ['Remove','Custom','Addition','Force']) test(`${type} selection preserves every existing choice value`,()=>{
+ const original=structuredClone(group);
+ const result=selectModifierType(group,type,'Burger',['SEA','AUS','BOS']);
+ assert.deepEqual(result.choices,original.choices);
+ assert.deepEqual(group,original);
+ assert.equal(result.modifierType,type);
+ assert.deepEqual(result,{...original,modifierType:type});
 });
-test('Addition doubles line count and preserves prices', () => {
-  const result = selectModifierType(group, 'Addition', 'Burger', [], []);
-  assert.equal(result.name, 'Make It Better (Burger)');
-  assert.equal(result.minQty, '0');
-  assert.equal(result.maxQty, '4');
-  assert.equal(result.choices[0].price, '2');
-  assert.equal(resizeModifierGroup({ ...result, choices: [result.choices[0]] }, []).maxQty, '2');
+test('switching through every type and resizing cannot erase saved entries',()=>{
+ let result=structuredClone(group);
+ for(const type of ['Remove','Custom','Addition','Force','Remove']){
+  result=resizeModifierGroup(selectModifierType(result,type,'Burger',['SEA','AUS']),['SEA','AUS']);
+  assert.deepEqual(result.choices,group.choices);
+ }
 });
-test('Custom starts blank and does not acquire automatic counts', () => {
-  const result = selectModifierType(group, 'Custom', 'Burger', ['SEA'], []);
-  assert.equal(result.name, '');
-  assert.equal(result.minQty, '');
-  assert.equal(result.maxQty, '');
-  assert.equal(result.choices[0].price, '');
-  assert.equal(result.choices[0].mrn, '0001');
-  assert.equal(resizeModifierGroup(result, ['SEA']).maxQty, '');
+test('Remove resizing preserves unlinked prices and identifiers',()=>{
+ const result=resizeModifierGroup({...group,modifierType:'Remove'},['SEA']);
+ assert.deepEqual(result.choices,group.choices);
+ assert.equal(result.maxQty,'3');
 });
 
-test('Forced selection supplies the item-specific Make It Mine name', () => {
-  assert.equal(selectModifierType(group, 'Force', 'Burger', []).name, 'Make It Mine (Burger)');
-});
-test('N/A is not a recipe identity for reuse lookup', async () => {
-  const { exactMrnMatches } = await import('../../src/features/ssmt/ssmtReuse.js');
-  const menus = [{id:'source',phase:'IT complete',items:[{id:'i',mrn:'N/A'}]}];
-  assert.deepEqual(exactMrnMatches(' N/A ',menus,'target'), []);
+test('N/A is not a recipe identity for reuse lookup', async()=>{
+ const {exactMrnMatches}=await import('../../src/features/ssmt/ssmtReuse.js');
+ assert.deepEqual(exactMrnMatches(' N/A ',[{id:'source',phase:'IT complete',items:[{id:'i',mrn:'N/A'}]}],'target'),[]);
 });

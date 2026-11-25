@@ -563,7 +563,7 @@ function normalizeModifierChoice(choice = {}, areaOrder = [], priceBook = []) {
     mrn: choice.mrn || "",
     calories: choice.calories || "",
     priceSelectorId,
-    price: [choice.price, priceRow?.areas?.SEA, choice.priceSelector].find(value => value !== undefined && value !== null && value !== "") ?? "",
+    price: choice.price ?? priceRow?.areas?.SEA ?? choice.priceSelector ?? "",
     areaPrices: choice.areaPrices || priceRow?.areas || blankAreaPrices(areaOrder),
   };
 }
