@@ -1,5 +1,7 @@
 ## 2026-11-24
 
+- [Nov 24, 6:15 PM] Verify Roxanne Soup and Flatbread programs live with shared metadata and standing orders preserved.
+
 - [Nov 24, 5:55 PM] Add costed Cricket soups and six-week Flatbreads to Roxanne ordering, prep, packout and transfers.
 - [Nov 24, 5:55 PM] Hide minor Prep Board ingredients, keep Cypress falafel and mushrooms in-unit, and clarify S4 item, dish and MRN descriptions.
 
