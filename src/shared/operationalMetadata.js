@@ -22,11 +22,12 @@ import { BREAKFAST_ORDERING_PROGRAM } from "../features/commissary-ordering/brea
 import { DAILY_GLOBAL_PROGRAM, TWO_TWO_TWO_DAILY_GLOBAL_PROGRAM } from "../features/commissary-ordering/dailyGlobalCatalog.js";
 import { GLOBAL_PREP_DISPLAY_POLICY } from "../features/commissary-ordering/globalPrepDisplayPolicy.js";
 import { COMMISSARY_CAFE_STATION_ACCESS, COMMISSARY_HIDDEN_CAFE_STATION_ACCESS, COMMISSARY_HIDDEN_HUB_ROUTING, COMMISSARY_HUB_ROUTING, COMMISSARY_HUBS, COMMISSARY_PACKOUT_HUB_ROUTING } from "../features/commissary-ordering/commissaryRouting.js";
-import { GLOBAL_UNIT_PREPARATION_NOTES, LEO_HAND_FRUIT, LEO_SITE_CAFES } from "../features/commissary-ordering/commissaryModel.js";
-import { ROXANNE_CRICKET_EFFECTIVE_WEEK, ROXANNE_CRICKET_ORDER_VERSION, ROXANNE_FLATBREAD_PROGRAM } from "../features/commissary-ordering/roxanneCricketPrograms.js";
+import { COMMISSARY_PREP_BOARD_START_WEEK, GLOBAL_UNIT_PREPARATION_NOTES, LEO_HAND_FRUIT, LEO_SITE_CAFES } from "../features/commissary-ordering/commissaryModel.js";
+import { CRICKET_SOUP_ROUTING_EFFECTIVE_WEEK, ROXANNE_CRICKET_EFFECTIVE_WEEK, ROXANNE_CRICKET_ORDER_VERSION, ROXANNE_FLATBREAD_PROGRAM, SOUP_BAIN_FL_OZ } from "../features/commissary-ordering/roxanneCricketPrograms.js";
+import { FRESH_FIVE_EFFECTIVE_WEEK, FRESH_FIVE_ITEMS, FRESH_FIVE_ORDER_VERSION } from "../features/commissary-ordering/freshFiveCatalog.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 36;
+export const OPERATIONAL_METADATA_VERSION = 37;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -145,10 +146,10 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       deliveryQuantities: "whole-portions",
     }),
     dailyGlobalInterface: Object.freeze({
-      eligibleCafes: Object.freeze(["Eclipse", "Gemini", "Sonic", "Bingo", "Grace", "Blueshift"]),
-      cycleAnchor: "2026-11-30",
+      eligibleCafes: Object.freeze(["Eclipse", "Gemini", "Odyssey", "Sonic", "Bingo", "Grace", "Blueshift", "Astra"]),
+      cycleAnchor: "2026-12-07",
       cycleLengthWeeks: 12,
-      selectionMode: "fixed-weekday-animal-or-vegetarian-plate-counts",
+      selectionMode: "selectable-proteins-sides-and-extensions-for-sonic-blueshift-grace-bingo-astra; prescribed-plates-for-gemini-eclipse-odyssey",
       rotationModel: "continuous-two-service-day-blocks",
       rotationSequence: Object.freeze(["Taco Total Burrito Bowl", "Balti", "Teriyaki", "Porto", "Cypress", "Bibimbap"]),
       plateContentsVisibility: "shown-beneath-each-protein-option",
@@ -157,6 +158,8 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       prepHub: "Blueshift",
       deliHub: "Sonic",
       transferValuation: "finished-plate-item-plus-waste",
+      serviceDays: Object.freeze(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]),
+      mealHandling: Object.freeze({ prepAndTransfer: "consolidated", packout: "separate-lunch-dinner-pastel-coded", weekendDelivery: "friday-for-saturday-and-sunday" }),
     }),
     leoSites: Object.freeze({
       cafes: LEO_SITE_CAFES,
@@ -178,21 +181,26 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
     roxanneCricketPrograms: Object.freeze({
       version: ROXANNE_CRICKET_ORDER_VERSION,
       effectiveWeek: ROXANNE_CRICKET_EFFECTIVE_WEEK,
-      receivingCafe: "Roxanne Coffee",
+      receivingCafes: Object.freeze(["Roxanne Coffee", "Brazil Coffee"]),
+      destinationRoutingEffectiveWeek: CRICKET_SOUP_ROUTING_EFFECTIVE_WEEK,
       prepHub: "Cricket",
       soup: Object.freeze({
         source: "submitted North/Cricket Neighborhood Rotation Soup station",
         menu: "AMZ: Cafe Express Soup",
-        selectionRule: "two-authoritative-source-soups-per-service-day",
+        selectionRule: "two-authoritative-source-soups-per-service-day-with-independent-roxanne-and-brazil-routing",
         costUnavailableMrns: Object.freeze(["62071.1", "62082.2"]),
         costUnavailableBehavior: "visible-but-order-disabled; no invented transfer value",
-        orderingUnit: "whole-12-ounce-portions",
+        orderingUnit: "whole-6-quart-bains",
+        bainFluidOunces: SOUP_BAIN_FL_OZ,
+        costRule: "recipe-native-item-plus-waste-scaled-to-190-fl-oz",
         deliveryMapping: Object.freeze({ monday: "friday", tuesday: "monday", wednesday: "monday", thursday: "wednesday", friday: "wednesday" }),
       }),
       flatbread: ROXANNE_FLATBREAD_PROGRAM,
       prepProjection: "finished-item-counts-routed-to-cricket",
       transferValuation: "authoritative-item-plus-waste",
     }),
+    freshFiveProgram: Object.freeze({ version: FRESH_FIVE_ORDER_VERSION, effectiveWeek: FRESH_FIVE_EFFECTIVE_WEEK, receivingCafe: "Roxanne Coffee", prepHub: "Cricket", sandwichesRouteTo: "Deli", saladsRouteTo: "Salad Bar", items: FRESH_FIVE_ITEMS }),
+    prepBoard: Object.freeze({ version: 2, activeFromServiceWeek: COMMISSARY_PREP_BOARD_START_WEEK, hubs: Object.freeze(["Cricket", "Sonic", "Blueshift"]), completionPersistence: "supabase-shared" }),
     stationAccess: COMMISSARY_CAFE_STATION_ACCESS,
     hiddenStationAccess: COMMISSARY_HIDDEN_CAFE_STATION_ACCESS,
     prepHubs: COMMISSARY_HUBS,
@@ -222,7 +230,7 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       globalExcludedSubrecipes: Object.freeze(["60487"]),
     }),
     prepInterface: Object.freeze({
-      stationOrder: Object.freeze(["Salad Bar", "Soups", "Flatbreads", "Breakfast", "Deli", "Grill", "Daily Global", "Global"]),
+      stationOrder: Object.freeze(["Salad Bar", "Fresh Five", "Soups", "Flatbreads", "Breakfast", "Deli", "Grill", "Daily Global", "Global"]),
       stationTabletFilter: Object.freeze({ enabled: true, includesAllStationsView: true }),
       productionGrouping: Object.freeze(["Vegetable Production", "Sauces", "Meat Production", "Stocking"]),
       familyAdjacency: true,
@@ -269,12 +277,12 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       grillUnitSuppliedItems: Object.freeze(["brioche buns", "black bean burgers", "grilled chicken breast", "salt kosher"]),
       finishedItemTabletCounts: Object.freeze({ stations: Object.freeze(["Deli", "Breakfast"]), placement: "before-component-prep", completion: "shared-touch-check" }),
       visibleWorkbookColumns: Object.freeze(["Ingredient / item", "Total quantity", "Order unit", "Production section", "Finished dish"]),
-      tabbedBoardPilot: Object.freeze({
-        weekStart: "2027-01-04",
-        status: "draft",
+      tabbedBoard: Object.freeze({
+        activeFromServiceWeek: COMMISSARY_PREP_BOARD_START_WEEK,
+        status: "live",
         phases: Object.freeze(["Production", "Assembly", "Pack Out"]),
         completionStorage: "commissary-prep-progress",
-        currentWeekIsolation: true,
+        currentAndFutureWeeks: true,
         productionDisplay: "prep-list-rounded-volume-and-weight-conversions",
         nativeQuantitiesPreserved: true,
         roundedCostingPreserved: true,

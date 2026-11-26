@@ -9,6 +9,9 @@ import {
   globalPrepLinesForCafe,
   dailyGlobalPrepLinesForCafe,
   grillPrepLinesForCafe,
+  roxanneSoupPrepLinesForCafe,
+  roxanneFlatbreadPrepLinesForCafe,
+  freshFivePrepLinesForCafe,
   orderLinesForCafe,
   prepDisplayQuantity,
   weekLabel,
@@ -62,6 +65,9 @@ function packoutSourceLines(record, delivery) {
     ...globalPrepLinesForCafe(record).filter((line) => line.delivery === delivery),
     ...dailyGlobalPrepLinesForCafe(record).filter((line) => line.delivery === delivery),
     ...breakfastPrepLinesForCafe(record).filter((line) => line.delivery === delivery),
+    ...roxanneSoupPrepLinesForCafe(record).filter((line) => line.delivery === delivery),
+    ...roxanneFlatbreadPrepLinesForCafe(record).filter((line) => line.delivery === delivery),
+    ...freshFivePrepLinesForCafe(record).filter((line) => line.delivery === delivery),
   ];
 }
 
@@ -72,13 +78,15 @@ const STATION_KEY_BY_LABEL = Object.freeze({
   Grill: COMMISSARY_STATIONS.GRILL,
   Global: COMMISSARY_STATIONS.GLOBAL,
   "Daily Global": COMMISSARY_STATIONS.DAILY_GLOBAL,
+  Soups: COMMISSARY_STATIONS.SOUPS,
+  Flatbreads: COMMISSARY_STATIONS.FLATBREADS,
 });
 
 function scopePackoutLines(lines, cafe, selectedCafe) {
   if (!selectedCafe || selectedCafe === cafe && !COMMISSARY_HUBS.some(({ key }) => key === selectedCafe)) return selectedCafe && selectedCafe !== cafe ? [] : lines;
   const isHub = COMMISSARY_HUBS.some(({ key }) => key === selectedCafe);
   if (!isHub) return selectedCafe === cafe ? lines : [];
-  return lines.filter((line) => cafeRoutesToPackoutHub(cafe, STATION_KEY_BY_LABEL[line.station], selectedCafe));
+  return lines.filter((line) => cafeRoutesToPackoutHub(cafe, String(line.id || "").includes("fresh-five") ? COMMISSARY_STATIONS.FRESH_FIVE : STATION_KEY_BY_LABEL[line.station], selectedCafe));
 }
 
 function rollupPackoutLines(lines = [], delivery) {
@@ -86,7 +94,8 @@ function rollupPackoutLines(lines = [], delivery) {
   lines.forEach((line) => {
     const mrn = String(line.mrn || "").trim();
     const identity = mrn ? `mrn:${mrn}` : `name:${String(line.name || "").trim().toLowerCase()}`;
-    const key = `${line.station}|${identity}|${String(line.orderUnit || "").trim().toLowerCase()}`;
+    const mealIdentity = line.station === "Daily Global" ? `${line.serviceDay || ""}|${line.meal || ""}` : "";
+    const key = `${line.station}|${identity}|${String(line.orderUnit || "").trim().toLowerCase()}|${mealIdentity}`;
     const current = map.get(key) || {
       id: line.id,
       station: line.station,
@@ -95,6 +104,8 @@ function rollupPackoutLines(lines = [], delivery) {
       orderUnit: line.orderUnit,
       finishedDishes: new Set(),
       quantity: 0,
+      meal: line.meal || "",
+      serviceDay: line.serviceDay || "",
     };
     current.finishedDishes.add(line.finishedDish || line.name);
     current.quantity = Number((current.quantity + Number(line.quantity || 0)).toFixed(4));
@@ -116,6 +127,8 @@ function rollupPackoutLines(lines = [], delivery) {
       orderUnit: display.orderUnit,
       quantity: display[delivery],
       finishedDish: display.finishedDish,
+      meal: line.meal,
+      serviceDay: line.serviceDay,
     };
   }).sort((a, b) => COMMISSARY_STATION_ORDER.indexOf(a.station) - COMMISSARY_STATION_ORDER.indexOf(b.station)
     || a.name.localeCompare(b.name));
@@ -247,7 +260,9 @@ function drawRows(commands, rows) {
       return;
     }
     y -= ROW_HEIGHT;
-    if (index % 2) commands += fillRect(MARGIN, y, PAGE_WIDTH - (MARGIN * 2), ROW_HEIGHT, "0.97 0.98 0.99");
+    if (row.meal === "lunch") commands += fillRect(MARGIN, y, PAGE_WIDTH - (MARGIN * 2), ROW_HEIGHT, "1 0.97 0.86");
+    else if (row.meal === "dinner") commands += fillRect(MARGIN, y, PAGE_WIDTH - (MARGIN * 2), ROW_HEIGHT, "0.88 0.95 1");
+    else if (index % 2) commands += fillRect(MARGIN, y, PAGE_WIDTH - (MARGIN * 2), ROW_HEIGHT, "0.97 0.98 0.99");
     commands += strokeRect(MARGIN + 8, y + 9, 10, 10, "0.35 0.45 0.55");
     const itemLines = wrap(`${row.name}${row.mrn ? ` - ${row.mrn}` : ""}`, 40).slice(0, 2);
     const usedIn = wrap(row.finishedDish || row.name, 24).slice(0, 2);

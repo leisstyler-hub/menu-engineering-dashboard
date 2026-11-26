@@ -4,7 +4,7 @@ import { buildS4Workbook, transferExportFileName } from "../transfer-tool/transf
 import { conciseS4Description } from "../transfer-tool/transferModel.js";
 import { COMMISSARY_DEPARTING_UNIT } from "./commissaryCatalog.js";
 import { DEFAULT_COMMISSARY_METADATA } from "./commissaryMetadata.js";
-import { PRODUCTION_SECTION_ORDER, breakfastOrderLinesForCafe, breakfastPrepLinesForCafe, dailyGlobalPrepLinesForCafe, dailyGlobalTransferLinesForCafe, deliOrderLinesForCafe, deliveryDateForWeek, formatShortDate, globalPrepLinesForCafe, globalTransferLinesForCafe, grillPrepLinesForCafe, grillTransferLinesForCafe, leoFreshFruitLinesForCafe, orderLinesForCafe, prepDisplayQuantity, rolledUpPrepItems, roundedProductionEquivalentQuantity, roxanneFlatbreadPrepLinesForCafe, roxanneSoupPrepLinesForCafe, transferPeriod, weekLabel } from "./commissaryModel.js";
+import { PRODUCTION_SECTION_ORDER, breakfastOrderLinesForCafe, breakfastPrepLinesForCafe, dailyGlobalPrepLinesForCafe, dailyGlobalTransferLinesForCafe, deliOrderLinesForCafe, deliveryDateForWeek, formatShortDate, freshFiveOrderLinesForCafe, globalPrepLinesForCafe, globalTransferLinesForCafe, grillPrepLinesForCafe, grillTransferLinesForCafe, leoFreshFruitLinesForCafe, orderLinesForCafe, prepDisplayQuantity, rolledUpPrepItems, roundedProductionEquivalentQuantity, roxanneFlatbreadPrepLinesForCafe, roxanneSoupPrepLinesForCafe, transferPeriod, weekLabel } from "./commissaryModel.js";
 import { COMMISSARY_STATIONS, cafeRoutesToHub } from "./commissaryRouting.js";
 import { roxanneDawsonOrderLines } from "./roxanneDawsonProjection.js";
 import { roxanneFlatbreadOrderLines, roxanneSoupOrderLines } from "./roxanneCricketPrograms.js";
@@ -372,7 +372,7 @@ export function buildCommissaryTransfer(record, metadata = DEFAULT_COMMISSARY_ME
       ...roxanneSoupOrderLines(record).map((line) => ({
         catalogId: line.id,
         menu: line.menu,
-        item: `${line.name} (${line.total} × 12 oz)`,
+        item: `${line.name} (${line.total} × 6 qt bain)`,
         mrn: line.mrn,
         quantity: line.total,
         itemWasteCost: line.orderUnitCost,
@@ -387,6 +387,16 @@ export function buildCommissaryTransfer(record, metadata = DEFAULT_COMMISSARY_ME
         quantity: line.total,
         itemWasteCost: line.orderUnitCost,
         description: conciseS4Description(line.name, "Roxanne Flatbread", line.mrn),
+        ingredientAllocations: [{ ingredientName: "Prepared Foods", ingredientMrn: line.mrn, glCode: PREPARED_FOODS_GL, allocationPerPortion: line.orderUnitCost }],
+      })),
+      ...freshFiveOrderLinesForCafe(record).map((line) => ({
+        catalogId: line.id,
+        menu: line.menu,
+        item: `${line.name} (${line.total} each)`,
+        mrn: line.mrn,
+        quantity: line.total,
+        itemWasteCost: line.orderUnitCost,
+        description: conciseS4Description(line.name, `Fresh Five ${line.family}`, line.mrn),
         ingredientAllocations: [{ ingredientName: "Prepared Foods", ingredientMrn: line.mrn, glCode: PREPARED_FOODS_GL, allocationPerPortion: line.orderUnitCost }],
       })),
     ],

@@ -217,6 +217,7 @@ test("Commissary Ordering Tool autosaves separate delivery quantities without a 
 
 test("Roxanne receives submitted Dawson Pop-Up and Salad items and exports separate source sheets", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
+  await page.clock.install({ time: new Date("2026-11-24T20:00:00Z") });
   const parent = "rotation|2026-11-30|North|Dawson";
   const breakfastItem = BREAKFAST_ORDERING_PROGRAM.items.find(({ mrn }) => mrn === "17350.24");
   const savedRoxanneOrder = buildOrderRecord({
@@ -284,7 +285,7 @@ test("Roxanne shows source-present soups, disables uncosted ordering, and keeps 
   await expect(soups).toContainText("Cost unavailable");
   await expect(flatbreads.getByText("Chicken Pesto Flatbread", { exact: true })).toBeVisible();
   await expect(flatbreads.getByText("Quattro Formaggi Flatbread", { exact: true })).toBeVisible();
-  await page.getByLabel("Monday Soup 1 quantity").fill("8");
+  await page.getByLabel("Monday Soup 1 bain quantity").fill("8");
   await page.getByLabel(/Chicken Pesto Flatbread Monday .* quantity/).fill("5");
   await expect.poll(() => writes.length).toBeGreaterThan(0);
   const saved = writes.at(-1).records[0];
@@ -297,14 +298,14 @@ test("Roxanne shows source-present soups, disables uncosted ordering, and keeps 
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
-test("an edited order keeps autosaving after the operator navigates to the draft prep board", async ({ page }) => {
+test("an edited order keeps autosaving after the operator navigates to the live prep board", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   const writes = await mockOrders(page, [buildCommissaryMetadataRecord()]);
   await openTool(page, /open commissary ordering/i, /^Commissary Ordering Tool$/);
   await page.getByLabel("Your cafe").selectOption("Cricket");
   await page.getByLabel("Service week").selectOption(COMMISSARY_PREP_BOARD_PILOT_WEEK);
   await page.getByLabel(/^Friday \d+\/\d+ English Cucumbers, Fresh, Sliced, Half quantity$/).fill("3");
-  await page.getByRole("button", { name: "Draft Prep Board" }).click();
+  await page.getByRole("button", { name: "Prep Board" }).click();
   await expect.poll(() => writes.filter((write) => write.records?.[0]?.["Record Type"] === "Commissary Order").length).toBe(1);
   const orderWrite = writes.find((write) => write.records?.[0]?.["Record Type"] === "Commissary Order");
   const cucumber = COMMISSARY_ORDER_ITEMS.find((row) => row.name === "English Cucumbers, Fresh, Sliced, Half");
@@ -460,7 +461,7 @@ test("each cafe sees only its assigned commissary stations", async ({ page }) =>
   await page.getByLabel("Your cafe").selectOption("Grace");
   await expect(page.getByTestId("commissary-global-order")).toBeVisible();
   await expect(page.getByTestId("commissary-grill-order")).toBeVisible();
-  await expect(page.getByTestId("commissary-deli-order")).toHaveCount(0);
+  await expect(page.getByTestId("commissary-deli-order")).toBeVisible();
   await expect(page.getByText("Salad bar", { exact: true })).toBeHidden();
 
   await page.getByLabel("Your cafe").selectOption("Dynamo");
@@ -508,37 +509,37 @@ test("each cafe sees only its assigned commissary stations", async ({ page }) =>
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
-test("Gemini keeps its forecast while Eclipse and new sites use the continuous 2,2,2 Global rotation", async ({ page }) => {
+test("Gemini, Eclipse and selectable sites use the seven-day continuous 2,2,2 Global rotation", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   await page.clock.install({ time: new Date("2026-11-10T20:00:00Z") });
   const writes = await mockOrders(page);
   await openTool(page, /open commissary ordering/i, /^Commissary Ordering Tool$/);
-  await page.getByLabel("Service week").selectOption("2026-11-23");
+  await page.getByLabel("Service week").selectOption("2026-12-07");
   await page.getByLabel("Your cafe").selectOption("Gemini");
   await expect(page.getByTestId("commissary-daily-global-order")).toBeVisible();
   await expect(page.getByTestId("commissary-global-order")).toHaveCount(0);
-  await expect(page.getByTestId("commissary-daily-global-order").getByText("Comes with:")).toHaveCount(10);
-  await expect(page.getByLabel("Monday animal plate quantity").locator("..")).toContainText("Jasmine Rice");
-  await expect(page.getByLabel("Monday animal plate quantity").locator("..")).toContainText("Teriyaki Sauce");
-  const weeklyOrderBox = await page.getByRole("heading", { name: "Week 11/23–11/27 order" }).boundingBox();
+  await expect(page.getByTestId("commissary-daily-global-order").getByText("Comes with:")).toHaveCount(14);
+  await expect(page.getByLabel("Monday lunch animal plate quantity").locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]")).toContainText("Jasmine Rice");
+  await expect(page.getByLabel("Monday lunch animal plate quantity").locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]")).toContainText("Teriyaki Sauce");
+  const weeklyOrderBox = await page.getByRole("heading", { name: "Week 12/7–12/11 order" }).boundingBox();
   const dailyGlobalBox = await page.getByTestId("commissary-daily-global-order").boundingBox();
   expect(weeklyOrderBox.y).toBeLessThan(dailyGlobalBox.y);
   await expect(page.getByText("House of Teriyaki", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText("Balti", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("Porto", { exact: true }).first()).toBeVisible();
-  await page.getByLabel("Monday animal plate quantity").fill("12");
+  await expect(page.getByText("Cypress", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("Bibimbowl", { exact: true }).first()).toBeVisible();
+  await page.getByLabel("Monday lunch animal plate quantity").fill("12");
+  await page.getByLabel("Monday dinner animal plate quantity").fill("7");
   await expect.poll(() => writes.length).toBeGreaterThan(0);
   const record = writes.at(-1).records[0];
   expect(record.dailyGlobal.cycleWeek).toBe(1);
-  expect(record.dailyGlobal.quantities.monday).toEqual({ animal: 12, vegetarian: 0 });
+  expect(record.dailyGlobal.quantities.monday).toEqual({ lunch: { animal: 12, vegetarian: 0 }, dinner: { animal: 7, vegetarian: 0 } });
   expect(record.global.menu).toBe("");
-  await page.getByLabel("Service week").selectOption("2026-11-30");
   await page.getByLabel("Your cafe").selectOption("Eclipse");
   await expect(page.getByTestId("commissary-daily-global-order")).toBeVisible();
   await expect(page.getByTestId("commissary-deli-order")).toBeVisible();
-  await expect(page.getByText("Taco Total", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText("Balti", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("House of Teriyaki", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("Porto", { exact: true }).first()).toBeVisible();
   await page.getByLabel("Your cafe").selectOption("Sonic");
   await expect(page.getByTestId("commissary-daily-global-order")).toBeVisible();
   await expect(page.getByTestId("commissary-global-order")).toHaveCount(0);
@@ -726,7 +727,7 @@ test("Prep List View is vertical, touch friendly, translated, and saves hold-to-
   expectNoUnexpectedPageErrors(pageErrors);
 });
 
-test("January 4 draft opens the tabbed Production, Assembly, and Pack Out board without waiting for cutoff", async ({ page }) => {
+test("January 4 opens the live tabbed Production, Assembly, and Pack Out board without waiting for cutoff", async ({ page }) => {
   const pageErrors = collectUnexpectedPageErrors(page);
   await page.clock.install({ time: new Date("2026-11-15T20:00:00Z") });
   const deliOption = deliCycleForWeek(COMMISSARY_PREP_BOARD_PILOT_WEEK).items[0];
@@ -748,15 +749,15 @@ test("January 4 draft opens the tabbed Production, Assembly, and Pack Out board 
   await openTool(page, /open commissary ordering/i, /^Commissary Ordering Tool$/);
   await page.getByLabel("Your cafe").selectOption("Cricket");
   await page.getByLabel("Service week").selectOption(COMMISSARY_PREP_BOARD_PILOT_WEEK);
-  await page.getByRole("button", { name: "Draft Prep Board" }).click();
+  await page.getByRole("button", { name: "Prep Board" }).click();
 
   const board = page.getByTestId("tabbed-prep-board");
   await expect(board).toBeVisible();
-  await expect(board.getByText("Draft pilot", { exact: true })).toBeVisible();
+  await expect(board.getByText("Live production", { exact: true })).toBeVisible();
   await expect(board.getByText("Week 1/4–1/8", { exact: true })).toBeVisible();
   const phaseNav = board.getByRole("navigation", { name: "Prep board phases" });
   await expect(phaseNav.getByRole("button", { name: /Production/ })).toHaveAttribute("aria-pressed", "true");
-  await expect(page.getByText("Draft tabbed board ready", { exact: true })).toBeVisible();
+  await expect(page.getByText("Tabbed Prep Board ready", { exact: true })).toBeVisible();
   const roundedCucumber = board.getByText("English Cucumbers, Fresh, Sliced, Half", { exact: true }).locator("xpath=ancestor::article");
   await expect(roundedCucumber).toContainText("0.5 gallon");
   await expect(roundedCucumber).toContainText("Rounded prep volume");

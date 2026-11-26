@@ -349,6 +349,7 @@ const EMPTY_ROTATION = {
     wokBase: [""],
     wokSubRecipes: ["", ""]
   },
+  soupRouting: Array.from({ length: 10 }, () => ({ roxanne: false, brazil: false })),
   carvery: {
     protein1: "",
     protein2: "",
@@ -549,6 +550,10 @@ function buildDatabaseRecordsForRotation({ week, district, cafe, rotation }) {
       if (blockId) {
         rec[SMARTSHEET_COLUMNS.globalBlockId] = makeDatabaseRecordId(parentId, "global", blockId);
         rec[SMARTSHEET_COLUMNS.menuBlockLabel] = blockId;
+      }
+      if (stationKey === "soup" && cafe === "Cricket" && week >= "2026-12-07") {
+        rec["Roxanne Soup"] = Boolean(rotation.soupRouting?.[index]?.roxanne);
+        rec["Brazil Soup"] = Boolean(rotation.soupRouting?.[index]?.brazil);
       }
       selectionRows.push(rec);
     });
@@ -928,6 +933,8 @@ function normalizeLoadedRotationRecord(record = {}) {
     promotionDays: String(firstLoadedRecordValue(record, [SMARTSHEET_COLUMNS.promotionDays, "promotionDays"])).split(",").map((value) => value.trim()).filter(Boolean),
     roxannePopUpGlobal: firstLoadedRecordValue(record, ["Roxanne Pop-Up Global", "roxannePopUpGlobal"]) === true || String(firstLoadedRecordValue(record, ["Roxanne Pop-Up Global", "roxannePopUpGlobal"])).toLowerCase() === "true",
     roxannePopUpCarvery: firstLoadedRecordValue(record, ["Roxanne Pop-Up Carvery", "roxannePopUpCarvery"]) === true || String(firstLoadedRecordValue(record, ["Roxanne Pop-Up Carvery", "roxannePopUpCarvery"])).toLowerCase() === "true",
+    roxanneSoup: firstLoadedRecordValue(record, ["Roxanne Soup", "roxanneSoup"]) === true || String(firstLoadedRecordValue(record, ["Roxanne Soup", "roxanneSoup"])).toLowerCase() === "true",
+    brazilSoup: firstLoadedRecordValue(record, ["Brazil Soup", "brazilSoup"]) === true || String(firstLoadedRecordValue(record, ["Brazil Soup", "brazilSoup"])).toLowerCase() === "true",
     cycleSourceCafeUnit: String(cycleSourceCafeUnit),
     copiedFromCafeUnit: String(copiedFromCafeUnit),
     returnToCycleDays: [],
@@ -980,6 +987,7 @@ function recordsToRotations(records = []) {
         extensions: [...EMPTY_ROTATION.extensions],
         grill: { ...EMPTY_ROTATION.grill },
         ltos: Object.fromEntries(Object.entries(EMPTY_ROTATION.ltos).map(([station, values]) => [station, [...values]])),
+        soupRouting: EMPTY_ROTATION.soupRouting.map((route) => ({ ...route })),
         carvery: { ...EMPTY_ROTATION.carvery },
         carveryPromotionOverride: normalizeCarveryPromotionOverride(EMPTY_ROTATION.carveryPromotionOverride),
         mobyPopUp: normalizeMobyPopUp(EMPTY_ROTATION.mobyPopUp),
@@ -1423,6 +1431,7 @@ function recordsToRotations(records = []) {
 
     if (rotation.ltos[record.stationKey]) {
       putSlot(rotation.ltos[record.stationKey], index, record.itemName);
+      if (record.stationKey === "soup") rotation.soupRouting[index] = { roxanne: Boolean(record.roxanneSoup), brazil: Boolean(record.brazilSoup) };
     }
   });
 
@@ -3837,7 +3846,19 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, presentati
     const current = rotation.ltos?.[stationKey] || EMPTY_ROTATION.ltos[stationKey] || [];
     const next = [...current];
     next[index] = value;
-    updateRotation({ ltos: { ...(rotation.ltos || EMPTY_ROTATION.ltos), [stationKey]: next } });
+    const patch = { ltos: { ...(rotation.ltos || EMPTY_ROTATION.ltos), [stationKey]: next } };
+    if (stationKey === "soup" && !value) {
+      const routes = (rotation.soupRouting || EMPTY_ROTATION.soupRouting).map((route) => ({ ...route }));
+      routes[index] = { roxanne: false, brazil: false };
+      patch.soupRouting = routes;
+    }
+    updateRotation(patch);
+  };
+  const updateSoupRouting = (index, destination, checked) => {
+    if (lockedForEditing) return;
+    const routes = (rotation.soupRouting || EMPTY_ROTATION.soupRouting).map((route) => ({ ...route }));
+    routes[index] = { ...routes[index], [destination]: checked };
+    updateRotation({ soupRouting: routes });
   };
   const updateCarvery = (field, value) => {
     if (lockedForEditing) return;
@@ -3972,6 +3993,7 @@ function RotationPlannerCard({ cafe, district, menuOptions, rotation, presentati
               updateSlot={updateSlot}
               updateGrill={updateGrill}
               updateLto={updateLto}
+              updateSoupRouting={updateSoupRouting}
               updateCarvery={updateCarvery}
               updateCustomStation={updateCustomStation}
               summary={summary}
@@ -5560,7 +5582,7 @@ function StationPills({ cafe, stations }) {
 }
 
 function CafeStationSection(props) {
-  const { stationKey, district, cafe, week, rotation, previousRotation, previousWeek, menuOptions, stationOptions, categorized, updateRotation, updateSlot, updateGrill, updateLto, updateCarvery, updateCustomStation, summary, selectedItems, dawsonMobyGlobalOverride } = props;
+  const { stationKey, district, cafe, week, rotation, previousRotation, previousWeek, menuOptions, stationOptions, categorized, updateRotation, updateSlot, updateGrill, updateLto, updateSoupRouting, updateCarvery, updateCustomStation, summary, selectedItems, dawsonMobyGlobalOverride } = props;
   let content = null;
   if (stationKey === "global") content = dawsonMobyGlobalOverride
     ? <DawsonMobyGlobalProjectionSection rotation={rotation} override={dawsonMobyGlobalOverride} week={week} />
@@ -5574,7 +5596,7 @@ function CafeStationSection(props) {
   if (stationKey === "freshFive") content = <SimpleLTOSection cafe={cafe} week={week} stationKey="freshFive" title="Fresh $5" slots={Array.from({ length: stationSlots(cafe, "freshFive") }, (_, i) => `Fresh $5 Option ${i + 1}`)} values={rotation.ltos?.freshFive || EMPTY_ROTATION.ltos.freshFive} uploaded={rotation.uploadedLtos?.freshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "freshFive")} />;
   if (stationKey === "grillFreshFive") content = <SimpleLTOSection cafe={cafe} week={week} stationKey="grillFreshFive" title="Grill Fresh $5" slots={Array.from({ length: stationSlots(cafe, "grillFreshFive") }, (_, i) => `Grill Fresh $5 ${i + 1}`)} values={rotation.ltos?.grillFreshFive || EMPTY_ROTATION.ltos.grillFreshFive} uploaded={rotation.uploadedLtos?.grillFreshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "grillFreshFive")} poolOverride={stationPool("grillFreshFive")} />;
   if (stationKey === "saladFreshFive") content = <SimpleLTOSection cafe={cafe} week={week} stationKey="saladFreshFive" title="Salad Fresh $5" slots={["Salad Fresh $5"]} values={rotation.ltos?.saladFreshFive || EMPTY_ROTATION.ltos.saladFreshFive} uploaded={rotation.uploadedLtos?.saladFreshFive || []} updateLto={updateLto} complete={stationComplete(rotation, "saladFreshFive")} poolOverride={stationPool("saladFreshFive")} />;
-  if (stationKey === "soup") content = <SoupSection values={rotation.ltos?.soup || EMPTY_ROTATION.ltos.soup} uploaded={rotation.uploadedLtos?.soup || []} updateLto={updateLto} />;
+  if (stationKey === "soup") content = <SoupSection cafe={cafe} week={week} values={rotation.ltos?.soup || EMPTY_ROTATION.ltos.soup} routing={rotation.soupRouting || EMPTY_ROTATION.soupRouting} uploaded={rotation.uploadedLtos?.soup || []} updateLto={updateLto} updateSoupRouting={updateSoupRouting} />;
   if (stationKey === "wok") content = <WokSection cafe={cafe} week={week} rotation={rotation} updateLto={updateLto} />;
   if (stationKey === "carvery") content = <CarverySection cafe={cafe} week={week} rotation={rotation} updateCarvery={updateCarvery} updateRotation={updateRotation} />;
   if (stationKey === "mobyPopUp") content = <MobyPopUpSection week={week} rotation={rotation} menuOptions={menuOptions} updateRotation={updateRotation} />;
@@ -6846,7 +6868,7 @@ function SoupPortionEconomics({ items }) {
   );
 }
 
-function SoupSection({ values = [], uploaded = [], updateLto }) {
+function SoupSection({ cafe, week, values = [], routing = EMPTY_ROTATION.soupRouting, uploaded = [], updateLto, updateSoupRouting }) {
   const pool = stationPool("soup");
   const selected = ltoSelectedRows({ ltos: { soup: values }, uploadedLtos: { soup: uploaded } }, "soup", { unique: true });
   return (
@@ -6863,7 +6885,7 @@ function SoupSection({ values = [], uploaded = [], updateLto }) {
               {[0, 1].map((dailyIndex) => {
                 const slotIndex = dayIndex * 2 + dailyIndex;
                 return (
-                  <label key={slotIndex} className="block text-xs font-bold text-slate-600">
+                  <div key={slotIndex} className="block text-xs font-bold text-slate-600">
                     Soup {dailyIndex + 1}
                     <span className="mt-1 block">
                       <ItemPickerSlot
@@ -6876,7 +6898,10 @@ function SoupSection({ values = [], uploaded = [], updateLto }) {
                         inputClassName="w-full min-w-0 rounded-lg border-2 border-emerald-200 bg-white px-2 py-2 text-sm font-semibold outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
                       />
                     </span>
-                  </label>
+                    {cafe === "Cricket" && week >= "2026-12-07" && Boolean(values[slotIndex] || uploaded[slotIndex]) && <div className="mt-2 grid grid-cols-2 gap-2" aria-label={`${day} Soup ${dailyIndex + 1} commissary destinations`}>
+                      {[{ key: "roxanne", label: "Roxanne Soup" }, { key: "brazil", label: "Brazil Soup" }].map((destination) => <label key={destination.key} className={`flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-lg border px-2 py-2 text-center text-[11px] font-black ${routing[slotIndex]?.[destination.key] ? "border-emerald-400 bg-emerald-100 text-emerald-950" : "border-slate-200 bg-white text-slate-600"}`}><input type="checkbox" checked={Boolean(routing[slotIndex]?.[destination.key])} onChange={(event) => updateSoupRouting(slotIndex, destination.key, event.target.checked)} />{destination.label}</label>)}
+                    </div>}
+                  </div>
                 );
               })}
             </div>

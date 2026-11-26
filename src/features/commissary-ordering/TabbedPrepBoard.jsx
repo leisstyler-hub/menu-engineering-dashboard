@@ -102,7 +102,7 @@ export default function TabbedPrepBoard({ records, weekStart, hub, completed, sa
     <section className="overflow-hidden rounded-2xl border-2 border-violet-300 bg-white shadow-sm" data-testid="tabbed-prep-board">
       <header className="bg-slate-950 px-4 py-5 text-white md:px-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <div><div className="flex flex-wrap items-center gap-2"><p className="text-xs font-black uppercase tracking-[0.16em] text-violet-300">Week {weekLabel(weekStart)}</p><span className="rounded-full bg-amber-300 px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-slate-950">Draft pilot</span></div><h2 className="mt-1 text-3xl font-black">Tabbed Commissary Board</h2><p className="mt-1 text-sm font-semibold text-slate-300">Production → Assembly → Pack Out. This draft is isolated to January 4–8.</p></div>
+          <div><div className="flex flex-wrap items-center gap-2"><p className="text-xs font-black uppercase tracking-[0.16em] text-violet-300">Week {weekLabel(weekStart)}</p><span className="rounded-full bg-emerald-300 px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-slate-950">Live production</span></div><h2 className="mt-1 text-3xl font-black">Tabbed Commissary Board</h2><p className="mt-1 text-sm font-semibold text-slate-300">Production → Assembly → Pack Out. Shared completion state is available at every commissary hub.</p></div>
           <div className="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-right"><p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Commissary hub</p><p className="text-lg font-black">{hub}</p></div>
         </div>
       </header>

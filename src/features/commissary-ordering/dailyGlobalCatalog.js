@@ -1,4 +1,5 @@
-export const DAILY_GLOBAL_ORDER_VERSION = 1;
+export const DAILY_GLOBAL_ORDER_VERSION = 2;
+export const SELECTABLE_DAILY_GLOBAL_CAFES = Object.freeze(["Sonic", "Blueshift", "Grace", "Bingo", "Astra"]);
 
 const plate = (menu, animal, vegetarian, components, garnish) => Object.freeze({
   menu,
@@ -83,21 +84,26 @@ export const GEMINI_DAILY_GLOBAL_PROGRAM = Object.freeze({
 });
 
 const continuousBlocks = Object.freeze([tacoTotal, balti, teriyaki, porto, cypress, bibimbap]);
-const weekdayLabels = Object.freeze(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]);
+const weekdayLabels = Object.freeze(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]);
+const legacyWeekdayLabels = Object.freeze(weekdayLabels.slice(0, 5));
+const legacyContinuousCycleWeeks = Object.freeze(Array.from({ length: 12 }, (_, weekIndex) => Object.freeze({ week: weekIndex + 1, days: Object.freeze(legacyWeekdayLabels.map((label, dayIndex) => day(label.toLowerCase(), label, continuousBlocks[Math.floor((weekIndex * 5 + dayIndex) / 2) % continuousBlocks.length]))) })));
 const continuousCycleWeeks = Object.freeze(Array.from({ length: 12 }, (_, weekIndex) => Object.freeze({
   week: weekIndex + 1,
-  days: Object.freeze(weekdayLabels.map((label, dayIndex) => day(label.toLowerCase(), label, continuousBlocks[Math.floor((weekIndex * 5 + dayIndex) / 2) % continuousBlocks.length]))),
+  // 2026-12-07 begins the Teriyaki block (sequence index 2). Every later
+  // calendar day advances the same continuous two-day production cadence.
+  days: Object.freeze(weekdayLabels.map((label, dayIndex) => day(label.toLowerCase(), label, continuousBlocks[(2 + Math.floor((weekIndex * 7 + dayIndex) / 2)) % continuousBlocks.length]))),
 })));
 
 export const TWO_TWO_TWO_DAILY_GLOBAL_PROGRAM = Object.freeze({
-  anchorWeekStart: "2026-11-30",
+  anchorWeekStart: "2026-12-07",
   cycleLengthWeeks: 12,
-  eligibleCafes: Object.freeze(["Eclipse", "Sonic", "Bingo", "Grace", "Blueshift"]),
+  eligibleCafes: Object.freeze(["Gemini", "Eclipse", "Odyssey", "Sonic", "Bingo", "Grace", "Blueshift", "Astra"]),
   orderUnit: "plate",
   rotationModel: "continuous-two-service-day-blocks",
   menuSequence: Object.freeze(["AMZ: Taco Total", "AMZ: Balti", "AMZ: House of Teriyaki", "AMZ: Porto", "AMZ: Cypress", "AMZ: Bibimbowl"]),
   cycleWeeks: continuousCycleWeeks,
 });
+export const LEGACY_TWO_TWO_TWO_DAILY_GLOBAL_PROGRAM = Object.freeze({ anchorWeekStart: "2026-11-30", cycleLengthWeeks: 12, eligibleCafes: Object.freeze(["Eclipse", "Sonic", "Bingo", "Grace", "Blueshift"]), orderUnit: "plate", cycleWeeks: legacyContinuousCycleWeeks });
 
 // Kept as the compatibility/default program for existing Gemini orders.
 export const DAILY_GLOBAL_PROGRAM = GEMINI_DAILY_GLOBAL_PROGRAM;

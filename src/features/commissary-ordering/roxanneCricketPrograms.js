@@ -1,5 +1,7 @@
 export const ROXANNE_CRICKET_EFFECTIVE_WEEK = "2026-11-30";
-export const ROXANNE_CRICKET_ORDER_VERSION = 1;
+export const CRICKET_SOUP_ROUTING_EFFECTIVE_WEEK = "2026-12-07";
+export const ROXANNE_CRICKET_ORDER_VERSION = 2;
+export const SOUP_BAIN_FL_OZ = 190;
 export const ROXANNE_FLATBREAD_CYCLE_ANCHOR = "2026-11-30";
 
 const DELIVERY_KEYS = Object.freeze(["friday", "monday", "wednesday"]);
@@ -43,6 +45,7 @@ const parentRecordId = (record) => text(record, ["Parent Record ID", "parentReco
 const freshness = (record) => Date.parse(text(record, ["Updated At", "Submitted At", "updatedAt", "submittedAt", "__supabaseUpdatedAt"])) || 0;
 const emptyDelivery = () => Object.fromEntries(DELIVERY_KEYS.map((key) => [key, 0]));
 const whole = (value) => Math.max(0, Math.floor(Number(value || 0)));
+const truthy = (entry) => entry === true || String(entry || "").toLowerCase() === "true";
 
 function latestRecords(records = []) {
   const latest = new Map();
@@ -66,8 +69,21 @@ export function roxanneFlatbreadCycleForWeek(weekStart = "") {
   return { week: index + 1, items: FLATBREAD_WEEKS[index].map((mrn) => ({ ...FLATBREADS[mrn], id: `roxanne-flatbread|${mrn}` })) };
 }
 
-export function buildRoxanneCricketSoupProjection(rotationRecords = [], weekStart = "") {
+const SOUP_DESTINATIONS = Object.freeze({
+  "Roxanne Coffee": Object.freeze({ flag: "Roxanne Soup", id: "roxanne" }),
+  "Brazil Coffee": Object.freeze({ flag: "Brazil Soup", id: "brazil" }),
+});
+
+const portionFluidOunces = (portion = "") => Number(String(portion).match(/([\d.]+)\s*(?:fl\s*)?oz/i)?.[1] || 0);
+const bainCost = (cost, portion) => {
+  const ounces = portionFluidOunces(portion);
+  return ounces > 0 ? Number((Number(cost || 0) * SOUP_BAIN_FL_OZ / ounces).toFixed(6)) : 0;
+};
+
+export function buildCricketSoupProjection(rotationRecords = [], weekStart = "", receivingCafe = "Roxanne Coffee") {
   if (String(weekStart) < ROXANNE_CRICKET_EFFECTIVE_WEEK) return null;
+  const destination = SOUP_DESTINATIONS[receivingCafe];
+  if (!destination || (receivingCafe === "Brazil Coffee" && String(weekStart) < CRICKET_SOUP_ROUTING_EFFECTIVE_WEEK)) return null;
   const parentId = `rotation|${weekStart}|North|Cricket`;
   const records = latestRecords(rotationRecords);
   const header = records.find((record) => recordId(record) === parentId && text(record, ["Record Type", "recordType"]) === "Rotation Header");
@@ -81,16 +97,23 @@ export function buildRoxanneCricketSoupProjection(rotationRecords = [], weekStar
       const day = SERVICE_DAYS[Math.min(SERVICE_DAYS.length - 1, Math.floor((slot - 1) / 2))];
       const mrn = text(record, ["MRN", "mrn"]);
       const name = text(record, ["Menu Item / Selection", "Menu Item Selection", "itemName", "menuItemSelection"]);
-      const itemWasteCost = number(record, ["True Cost", "trueCost", "Item + Waste Cost", "itemWasteCost"]);
-      if (!name || !mrn) return null;
+      const sourceItemWasteCost = number(record, ["True Cost", "trueCost", "Item + Waste Cost", "itemWasteCost"]);
+      const sourcePortion = text(record, ["Portion", "portion"]) || "12 fl oz";
+      const routed = String(weekStart) < CRICKET_SOUP_ROUTING_EFFECTIVE_WEEK && receivingCafe === "Roxanne Coffee"
+        ? true
+        : truthy(value(record, [destination.flag, destination.flag.replace(" ", ""), destination.flag.toLowerCase().replace(" ", "_")]));
+      if (!name || !mrn || !routed) return null;
       return {
-        id: `roxanne-soup|${day.key}|${((slot - 1) % 2) + 1}|${mrn}`,
+        id: `${destination.id}-soup|${day.key}|${((slot - 1) % 2) + 1}|${mrn}`,
         station: "Soups",
         menu: "AMZ: Cafe Express Soup",
         name,
         mrn,
-        portion: text(record, ["Portion", "portion"]) || "12 floz",
-        itemWasteCost,
+        portion: `${SOUP_BAIN_FL_OZ} fl oz`,
+        orderUnit: "6 qt bain",
+        sourcePortion,
+        sourceItemWasteCost,
+        itemWasteCost: bainCost(sourceItemWasteCost, sourcePortion),
         serviceDay: day.key,
         serviceDayLabel: day.label,
         delivery: day.delivery,
@@ -99,7 +122,11 @@ export function buildRoxanneCricketSoupProjection(rotationRecords = [], weekStar
     })
     .filter(Boolean)
     .sort((left, right) => SERVICE_DAYS.findIndex(({ key }) => key === left.serviceDay) - SERVICE_DAYS.findIndex(({ key }) => key === right.serviceDay) || left.slot - right.slot);
-  return { version: ROXANNE_CRICKET_ORDER_VERSION, sourceCafe: "Cricket", receivingCafe: "Roxanne Coffee", weekStart, submittedAt: text(header, ["Submitted At", "submittedAt"]), items };
+  return { version: ROXANNE_CRICKET_ORDER_VERSION, sourceCafe: "Cricket", receivingCafe, weekStart, submittedAt: text(header, ["Submitted At", "submittedAt"]), items };
+}
+
+export function buildRoxanneCricketSoupProjection(rotationRecords = [], weekStart = "", receivingCafe = "Roxanne Coffee") {
+  return buildCricketSoupProjection(rotationRecords, weekStart, receivingCafe);
 }
 
 export function emptyRoxanneSoupOrder() {
@@ -129,17 +156,17 @@ export function normalizeRoxanneFlatbreadOrder(source = {}, weekStart = "") {
 }
 
 export function roxanneSoupOrderLines(record = {}) {
-  if (record.cafe !== "Roxanne Coffee" || String(record.weekStart || "") < ROXANNE_CRICKET_EFFECTIVE_WEEK) return [];
+  if (!SOUP_DESTINATIONS[record.cafe] || String(record.weekStart || "") < ROXANNE_CRICKET_EFFECTIVE_WEEK) return [];
   const order = normalizeRoxanneSoupOrder(record.roxanneSoup);
   return Object.values(order.items).map((item) => {
     const quantities = order.quantities[item.id] || emptyDelivery();
     const total = DELIVERY_KEYS.reduce((sum, delivery) => sum + whole(quantities[delivery]), 0);
-    return { ...item, ...quantities, total, orderUnit: "12 oz portion", orderUnitCost: Number(item.itemWasteCost || 0) };
+    return { ...item, ...quantities, total, orderUnit: "6 qt bain", orderUnitCost: Number(item.itemWasteCost || 0) };
   }).filter(({ total }) => total > 0);
 }
 
 export function roxanneFlatbreadOrderLines(record = {}) {
-  if (record.cafe !== "Roxanne Coffee" || String(record.weekStart || "") < ROXANNE_CRICKET_EFFECTIVE_WEEK) return [];
+  if (!SOUP_DESTINATIONS[record.cafe] || String(record.weekStart || "") < ROXANNE_CRICKET_EFFECTIVE_WEEK) return [];
   const order = normalizeRoxanneFlatbreadOrder(record.roxanneFlatbreads, record.weekStart);
   return Object.values(order.items).map((item) => {
     const quantities = order.quantities[item.id] || emptyDelivery();

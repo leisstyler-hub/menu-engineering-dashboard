@@ -1,5 +1,8 @@
 ## 2026-11-25
 
+- [Nov 25, 6:19 PM] Route costed 6-qt soups to Brazil or Roxanne and launch the shared Prep Board for December service.
+- [Nov 25, 6:19 PM] Add Roxanne Fresh Five, Grace Deli and seven-day Global lunch/dinner packouts across all three hubs.
+
 - [Nov 25, 12:08 PM] Show each promotion item's name, description and exact MRN in the calendar popup.
 
 - [Nov 25, 11:36 AM] Generate Beef FIXYs with BEF instead of BF while preserving existing saved records.
