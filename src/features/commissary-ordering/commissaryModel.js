@@ -10,7 +10,8 @@ import { COMMISSARY_STATIONS, cafeRoutesToHub, isCafeStationEnabled } from "./co
 import { filterCommissaryComponents, filterGrillCommissaryComponents, isExcludedLoosePrepItem, isGlobalInUnitRiceComponent, prepareCommissaryComponents, prepareGlobalCommissaryComponents, prepareGlobalTransferComponents } from "./commissaryPrepPolicy.js";
 import { normalizeRoxanneDawsonOrder, roxanneDawsonOrderLines } from "./roxanneDawsonProjection.js";
 import { normalizeRoxanneFlatbreadOrder, normalizeRoxanneSoupOrder, roxanneFlatbreadOrderLines, roxanneSoupOrderLines } from "./roxanneCricketPrograms.js";
-import { FRESH_FIVE_EFFECTIVE_WEEK, FRESH_FIVE_ITEMS, FRESH_FIVE_ORDER_VERSION } from "./freshFiveCatalog.js";
+import { FRESH_FIVE_ORDER_VERSION, freshFiveCycleForWeek, isFreshFiveEligibleCafe } from "./freshFiveCatalog.js";
+import { EVEREST_COMPOSED_SALAD_ORDER_VERSION, everestComposedSaladCycleForWeek } from "./everestComposedSaladCatalog.js";
 
 export const PACIFIC_TIME_ZONE = "America/Los_Angeles";
 export const DELIVERY_KEYS = Object.freeze(DEFAULT_COMMISSARY_METADATA.deliveries.map(({ key }) => key));
@@ -20,9 +21,9 @@ export const COMMISSARY_DELI_ORDER_VERSION = 2;
 export const COMMISSARY_GLOBAL_ORDER_VERSION = 3;
 export const COMMISSARY_BREAKFAST_ORDER_VERSION = 1;
 export const COMMISSARY_PACKOUT_PACKET_VERSION = 2;
-export const COMMISSARY_STATION_ORDER = Object.freeze(["Salad Bar", "Fresh Five", "Soups", "Flatbreads", "Breakfast", "Deli", "Grill", "Daily Global", "Global"]);
+export const COMMISSARY_STATION_ORDER = Object.freeze(["Salad Bar", "Everest Composed Salads", "Fresh Five", "Soups", "Flatbreads", "Breakfast", "Deli", "Grill", "Daily Global", "Global"]);
 export const COMMISSARY_PREP_BOARD_PILOT_WEEK = "2027-01-04";
-export const COMMISSARY_PREP_BOARD_START_WEEK = "2026-12-07";
+export const COMMISSARY_PREP_BOARD_START_WEEK = "2026-11-30";
 export const COMMISSARY_PREP_BOARD_PHASES = Object.freeze(["production", "assembly", "packout"]);
 export const COMMISSARY_FINISHED_PREP_ITEM_IDS = Object.freeze([
   ...new Set(DELI_ORDERING_PROGRAM.cycleWeeks.flatMap(({ items }) => items.map(({ mrn }) => `prep-finished|deli|${mrn}`))
@@ -59,7 +60,7 @@ export function isPrepBoardCompletionId(value) {
 export function isGeneratedPrepCompletionId(value) {
   const id = String(value || "").trim();
   return id.length <= 240
-    && /^(?:global-prep|global-production|grill-prep|deli-prep|breakfast-prep|daily-global|prep-finished\|(?:soup|flatbread))\|[a-z0-9.|_-]+$/i.test(id);
+    && /^(?:global-prep|global-production|grill-prep|deli-prep|breakfast-prep|daily-global|prep-finished\|(?:soup|flatbread|fresh-five|everest-composed-salad))\|[a-z0-9.|_-]+$/i.test(id);
 }
 
 function prepBoardCompletionId(phase, value) {
@@ -265,24 +266,55 @@ export function isBreakfastEligibleCafe(cafe) {
   return BREAKFAST_ORDERING_PROGRAM.eligibleCafes.includes(cafe) && isCafeStationEnabled(cafe, COMMISSARY_STATIONS.BREAKFAST);
 }
 
-export function emptyFreshFiveOrder() {
-  return { version: FRESH_FIVE_ORDER_VERSION, quantities: Object.fromEntries(FRESH_FIVE_ITEMS.map(({ id }) => [id, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, 0]))])), items: Object.fromEntries(FRESH_FIVE_ITEMS.map((item) => [item.id, item])) };
+export function emptyFreshFiveOrder(cafe = "", weekStart = "") {
+  const items = freshFiveCycleForWeek(cafe, weekStart)?.items || [];
+  return { version: FRESH_FIVE_ORDER_VERSION, quantities: Object.fromEntries(items.map(({ id }) => [id, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, 0]))])), items: Object.fromEntries(items.map((item) => [item.id, item])) };
 }
 
 export function normalizeFreshFiveOrder(source = {}, cafe = "", weekStart = "") {
-  const empty = emptyFreshFiveOrder();
-  if (cafe !== "Roxanne Coffee" || String(weekStart) < FRESH_FIVE_EFFECTIVE_WEEK) return empty;
-  return { ...empty, quantities: Object.fromEntries(FRESH_FIVE_ITEMS.map(({ id }) => [id, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, wholeQuantity(source?.quantities?.[id]?.[delivery])]))])) };
+  const empty = emptyFreshFiveOrder(cafe, weekStart);
+  if (!isFreshFiveEligibleCafe(cafe, weekStart)) return empty;
+  return { ...empty, quantities: Object.fromEntries(Object.keys(empty.items).map((id) => [id, Object.fromEntries(DELIVERY_KEYS.map((delivery) => [delivery, wholeQuantity(source?.quantities?.[id]?.[delivery])]))])) };
 }
 
 export function freshFiveOrderLinesForCafe(record = {}) {
   const order = normalizeFreshFiveOrder(record.freshFive, record.cafe, record.weekStart);
-  if (record.cafe !== "Roxanne Coffee" || String(record.weekStart) < FRESH_FIVE_EFFECTIVE_WEEK) return [];
-  return FRESH_FIVE_ITEMS.map((item) => {
+  if (!isFreshFiveEligibleCafe(record.cafe, record.weekStart)) return [];
+  return Object.values(order.items).map((item) => {
     const quantities = order.quantities[item.id];
     const total = DELIVERY_KEYS.reduce((sum, delivery) => sum + quantities[delivery], 0);
     return { ...item, ...quantities, total, orderUnit: item.family === "sandwich" ? "sandwich" : "finished salad", orderUnitCost: item.itemWasteCost, station: item.family === "sandwich" ? "Deli" : "Salad Bar" };
   }).filter(({ total }) => total > 0);
+}
+
+const everestDeliveryForDay = (day) => day === "monday" ? "friday" : ["tuesday", "wednesday"].includes(day) ? "monday" : "wednesday";
+
+export function emptyEverestComposedSaladOrder(weekStart = "", cafe = "") {
+  const cycle = cafe === "Everest" ? everestComposedSaladCycleForWeek(weekStart) : null;
+  const entries = (cycle?.days || []).flatMap((day) => day.items.map((item) => [`${day.key}|${item.id}`, { day: day.key, dayLabel: day.label, item }]));
+  return {
+    version: EVEREST_COMPOSED_SALAD_ORDER_VERSION,
+    cycleWeek: cycle?.week || null,
+    quantities: Object.fromEntries(entries.map(([id]) => [id, 0])),
+    items: Object.fromEntries(entries.map(([id, value]) => [id, { ...value.item, day: value.day, dayLabel: value.dayLabel }])),
+  };
+}
+
+export function normalizeEverestComposedSaladOrder(source = {}, weekStart = "", cafe = "") {
+  const empty = emptyEverestComposedSaladOrder(weekStart, cafe);
+  return { ...empty, quantities: Object.fromEntries(Object.keys(empty.items).map((id) => [id, wholeQuantity(source?.quantities?.[id])])) };
+}
+
+export function everestComposedSaladOrderLinesForCafe(record = {}) {
+  const order = normalizeEverestComposedSaladOrder(record.everestComposedSalads, record.weekStart, record.cafe);
+  return Object.entries(order.items).map(([id, item]) => ({
+    ...item,
+    id,
+    delivery: everestDeliveryForDay(item.day),
+    quantity: Number(order.quantities[id] || 0),
+    total: Number(order.quantities[id] || 0),
+    orderUnitCost: item.itemWasteCost,
+  })).filter(({ quantity }) => quantity > 0);
 }
 
 export function emptyBreakfastOrder() {
@@ -507,6 +539,10 @@ function quantityLeaves(record = {}) {
   collect("breakfast", record.breakfast?.quantities);
   collect("roxanne-soup", record.roxanneSoup?.quantities);
   collect("roxanne-flatbread", record.roxanneFlatbreads?.quantities);
+  collect("fresh-five", record.freshFive?.quantities);
+  Object.entries(record.everestComposedSalads?.quantities || {}).forEach(([id, value]) => {
+    if (Number(value) > 0) leaves.set(`everest-composed-salad|${id}`, Number(value));
+  });
   return leaves;
 }
 
@@ -525,7 +561,7 @@ export function invalidWholeUnitSaladQuantities(quantities = {}, weekStart) {
   });
 }
 
-export function buildOrderRecord({ cafe, weekStart, quantities, grill, deli, global, breakfast, dailyGlobal, freshFive, roxanneDawson, roxanneSoup, roxanneFlatbreads, standingOrderChangeApproval = null, now = new Date() }) {
+export function buildOrderRecord({ cafe, weekStart, quantities, grill, deli, global, breakfast, dailyGlobal, freshFive, everestComposedSalads, roxanneDawson, roxanneSoup, roxanneFlatbreads, standingOrderChangeApproval = null, now = new Date() }) {
   const normalized = isCafeStationEnabled(cafe, COMMISSARY_STATIONS.SALAD_BAR) ? normalizeQuantities(quantities, { weekStart }) : emptyQuantities(weekStart);
   const normalizedGrill = normalizeGrillOrder(grill, weekStart, cafe);
   const normalizedDeli = normalizeDeliOrder(deli, weekStart, cafe);
@@ -551,6 +587,7 @@ export function buildOrderRecord({ cafe, weekStart, quantities, grill, deli, glo
     breakfast: normalizedBreakfast,
     dailyGlobal: normalizedDailyGlobal,
     freshFive: normalizeFreshFiveOrder(freshFive, cafe, weekStart),
+    everestComposedSalads: normalizeEverestComposedSaladOrder(everestComposedSalads, weekStart, cafe),
     roxanneDawson: normalizeRoxanneDawsonOrder(roxanneDawson),
     roxanneSoup: normalizeRoxanneSoupOrder(roxanneSoup),
     roxanneFlatbreads: normalizeRoxanneFlatbreadOrder(roxanneFlatbreads, weekStart),
@@ -591,7 +628,7 @@ export function togglePrepCompleted(completed, delivery, itemId) {
   return { ...normalized, [delivery]: [...current] };
 }
 
-export function orderValue(quantities = {}, grill = {}, deli = {}, global = {}, cafe = "", breakfast = {}, weekStart, dailyGlobal = {}, roxanneDawson = {}, roxanneSoup = {}, roxanneFlatbreads = {}, freshFive = {}) {
+export function orderValue(quantities = {}, grill = {}, deli = {}, global = {}, cafe = "", breakfast = {}, weekStart, dailyGlobal = {}, roxanneDawson = {}, roxanneSoup = {}, roxanneFlatbreads = {}, freshFive = {}, everestComposedSalads = {}) {
   const saladValue = cafe && !isCafeStationEnabled(cafe, COMMISSARY_STATIONS.SALAD_BAR) ? 0 : orderLinesForCafe({ cafe, weekStart, quantities })
     .reduce((sum, line) => sum + roundedProductionEquivalentQuantity(line) * line.orderUnitCost, 0);
   const grillRecord = { cafe, weekStart, grill };
@@ -613,7 +650,8 @@ export function orderValue(quantities = {}, grill = {}, deli = {}, global = {}, 
   const roxanneSoupValue = roxanneSoupOrderLines({ cafe, weekStart, roxanneSoup }).reduce((sum, line) => sum + line.total * line.orderUnitCost, 0);
   const roxanneFlatbreadValue = roxanneFlatbreadOrderLines({ cafe, weekStart, roxanneFlatbreads }).reduce((sum, line) => sum + line.total * line.orderUnitCost, 0);
   const freshFiveValue = freshFiveOrderLinesForCafe({ cafe, weekStart, freshFive }).reduce((sum, line) => sum + line.total * line.orderUnitCost, 0);
-  return saladValue + grillValue + deliValue + globalValue + breakfastValue + dailyGlobalValue + roxanneDawsonValue + roxanneSoupValue + roxanneFlatbreadValue + freshFiveValue;
+  const everestSaladValue = everestComposedSaladOrderLinesForCafe({ cafe, weekStart, everestComposedSalads }).reduce((sum, line) => sum + line.total * line.orderUnitCost, 0);
+  return saladValue + grillValue + deliValue + globalValue + breakfastValue + dailyGlobalValue + roxanneDawsonValue + roxanneSoupValue + roxanneFlatbreadValue + freshFiveValue + everestSaladValue;
 }
 
 export function rolledUpItems(records = [], options = {}) {
@@ -994,6 +1032,22 @@ export function freshFivePrepLinesForCafe(record = {}) {
   })).filter(({ quantity }) => quantity > 0));
 }
 
+export function everestComposedSaladPrepLinesForCafe(record = {}) {
+  return everestComposedSaladOrderLinesForCafe(record).map((line) => ({
+    id: `prep-finished|everest-composed-salad|${line.mrn}`,
+    type: "finished",
+    mrn: line.mrn,
+    name: line.name,
+    category: "Everest composed salad",
+    station: "Everest Composed Salads",
+    orderUnit: "finished salad",
+    cafe: record.cafe,
+    finishedDish: `${line.dayLabel} ${line.name}`,
+    delivery: line.delivery,
+    quantity: line.quantity,
+  }));
+}
+
 export function hasCommissaryOrder(record = {}) {
   return orderLinesForCafe(record).length > 0
     || grillOrderLinesForCafe(record).length > 0
@@ -1004,7 +1058,8 @@ export function hasCommissaryOrder(record = {}) {
     || roxanneDawsonOrderLines(record).length > 0
     || roxanneSoupOrderLines(record).length > 0
     || roxanneFlatbreadOrderLines(record).length > 0
-    || freshFiveOrderLinesForCafe(record).length > 0;
+    || freshFiveOrderLinesForCafe(record).length > 0
+    || everestComposedSaladOrderLinesForCafe(record).length > 0;
 }
 
 export function rolledUpFinishedPrepItems(records = [], options = {}) {
@@ -1051,6 +1106,7 @@ export function rolledUpPrepItems(records = [], options = {}) {
     ...(options.hub && !cafeRoutesToHub(record.cafe, COMMISSARY_STATIONS.SOUPS, options.hub) ? [] : roxanneSoupPrepLinesForCafe(record)),
     ...(options.hub && !cafeRoutesToHub(record.cafe, COMMISSARY_STATIONS.FLATBREADS, options.hub) ? [] : roxanneFlatbreadPrepLinesForCafe(record)),
     ...(options.hub && !cafeRoutesToHub(record.cafe, COMMISSARY_STATIONS.FRESH_FIVE, options.hub) ? [] : freshFivePrepLinesForCafe(record)),
+    ...(options.hub && !cafeRoutesToHub(record.cafe, COMMISSARY_STATIONS.EVEREST_COMPOSED_SALADS, options.hub) ? [] : everestComposedSaladPrepLinesForCafe(record)),
   ]).forEach((line) => {
     const mrn = String(line.mrn || "").trim();
     const identity = mrn ? `mrn:${mrn}` : `name:${String(line.name || "").trim().toLowerCase()}`;

@@ -11,7 +11,7 @@ import { conciseS4Description } from "../src/features/transfer-tool/transferMode
 import { COMMISSARY_LEGACY_ORDER_ITEMS, COMMISSARY_ORDER_ITEMS, COMMISSARY_PREVIOUS_ORDER_ITEMS, COMMISSARY_RETIRED_ORDER_ITEMS, SALAD_BAR_COST_SOURCE, commissaryItemMapForWeek, commissaryOrderItemsForWeek } from "../src/features/commissary-ordering/commissaryCatalog.js";
 import { buildCommissaryBomWorkbook, buildCommissaryTransfer, buildRoxanneDawsonTransfer } from "../src/features/commissary-ordering/commissaryExport.js";
 import { buildCommissaryMetadataRecord, DEFAULT_COMMISSARY_METADATA, isApprovedCommissaryMetadataRecord, resolveCommissaryMetadata } from "../src/features/commissary-ordering/commissaryMetadata.js";
-import { COMMISSARY_BREAKFAST_ORDER_VERSION, COMMISSARY_DELI_ORDER_VERSION, COMMISSARY_FINISHED_PREP_ITEM_IDS, COMMISSARY_GLOBAL_ORDER_VERSION, COMMISSARY_GRILL_ORDER_VERSION, COMMISSARY_ORDER_UNIT_VERSION, COMMISSARY_PACKOUT_PACKET_VERSION, COMMISSARY_PREP_BOARD_PILOT_WEEK, DELIVERY_KEYS, GLOBAL_UNIT_PREPARATION_NOTES, PRODUCTION_SECTION_ORDER, addDays, breakfastOrderLinesForCafe, breakfastPrepLinesForCafe, buildOrderRecord, buildPackoutPacketRecord, buildPrepProgressRecord, buildTabbedPrepBoard, dailyGlobalCycleForWeek, dailyGlobalOrderLinesForCafe, dailyGlobalPrepLinesForCafe, dailyGlobalTransferLinesForCafe, deliCycleForWeek, deliOrderLinesForCafe, deliPrepLinesForCafe, deliveriesForWeek, emptyBreakfastOrder, emptyDailyGlobalOrder, emptyDeliOrder, emptyFreshFiveOrder, emptyGlobalOrder, emptyGrillOrder, emptyQuantities, firstOpenWeek, freshFiveOrderLinesForCafe, globalCycleForWeek, globalOrderLinesForCafe, globalPrepLinesForCafe, globalTransferLinesForCafe, grillCycleForWeek, grillOrderLinesForCafe, grillPrepLinesForCafe, grillTransferLinesForCafe, isGeneratedPrepCompletionId, isGrillCoreAvailable, isPrepBoardCompletionId, isWeekLocked, latestPrepWeek, leoFreshFruitLinesForCafe, normalizeDeliOrder, normalizePrepCompleted, normalizeQuantities, orderValue, prepDisplayQuantity, prepProductionType, rolledUpFinishedPrepItems, rolledUpPrepItems, roundedProductionEquivalentQuantity, standingOrderReductions, togglePrepCompleted, transferPeriod } from "../src/features/commissary-ordering/commissaryModel.js";
+import { COMMISSARY_BREAKFAST_ORDER_VERSION, COMMISSARY_DELI_ORDER_VERSION, COMMISSARY_FINISHED_PREP_ITEM_IDS, COMMISSARY_GLOBAL_ORDER_VERSION, COMMISSARY_GRILL_ORDER_VERSION, COMMISSARY_ORDER_UNIT_VERSION, COMMISSARY_PACKOUT_PACKET_VERSION, COMMISSARY_PREP_BOARD_PILOT_WEEK, DELIVERY_KEYS, GLOBAL_UNIT_PREPARATION_NOTES, PRODUCTION_SECTION_ORDER, addDays, breakfastOrderLinesForCafe, breakfastPrepLinesForCafe, buildOrderRecord, buildPackoutPacketRecord, buildPrepProgressRecord, buildTabbedPrepBoard, dailyGlobalCycleForWeek, dailyGlobalOrderLinesForCafe, dailyGlobalPrepLinesForCafe, dailyGlobalTransferLinesForCafe, deliCycleForWeek, deliOrderLinesForCafe, deliPrepLinesForCafe, deliveriesForWeek, emptyBreakfastOrder, emptyDailyGlobalOrder, emptyDeliOrder, emptyEverestComposedSaladOrder, emptyFreshFiveOrder, emptyGlobalOrder, emptyGrillOrder, emptyQuantities, everestComposedSaladOrderLinesForCafe, firstOpenWeek, freshFiveOrderLinesForCafe, globalCycleForWeek, globalOrderLinesForCafe, globalPrepLinesForCafe, globalTransferLinesForCafe, grillCycleForWeek, grillOrderLinesForCafe, grillPrepLinesForCafe, grillTransferLinesForCafe, isGeneratedPrepCompletionId, isGrillCoreAvailable, isPrepBoardCompletionId, isWeekLocked, latestPrepWeek, leoFreshFruitLinesForCafe, normalizeDeliOrder, normalizePrepCompleted, normalizeQuantities, orderValue, prepDisplayQuantity, prepProductionType, rolledUpFinishedPrepItems, rolledUpPrepItems, roundedProductionEquivalentQuantity, standingOrderReductions, togglePrepCompleted, transferPeriod } from "../src/features/commissary-ordering/commissaryModel.js";
 import { prepareGlobalCommissaryComponents, prepareGlobalTransferComponents } from "../src/features/commissary-ordering/commissaryPrepPolicy.js";
 import { buildPackoutPacket, buildPackoutPdfBytes } from "../src/features/commissary-ordering/commissaryPackout.js";
 import { GRILL_LTO_ITEM_MRNS, GRILL_LTO_PREP_ITEM_IDS, GRILL_LTO_PROGRAM } from "../src/features/commissary-ordering/grillLtoCatalog.js";
@@ -770,7 +770,7 @@ const sonicHubPacket = buildPackoutPacket([globalRecord], "2026-11-16", DEFAULT_
 assert.equal(sonicHubPacket.pages.length, 3, "Sonic hub packout must include routed Everest Global work.");
 const cricketHubPacket = buildPackoutPacket([globalRecord], "2026-11-16", DEFAULT_COMMISSARY_METADATA, { selectedCafe: "Cricket" });
 assert.equal(cricketHubPacket.pages.length, 0, "Cricket hub packout must not include Everest Global work.");
-const packetRecord = { ...buildPackoutPacketRecord({ weekStart: "2026-11-16", records: [globalRecord], packet, metadataVersion: 37, now: new Date("2026-11-12T01:00:00Z") }), packet };
+const packetRecord = { ...buildPackoutPacketRecord({ weekStart: "2026-11-16", records: [globalRecord], packet, metadataVersion: 38, now: new Date("2026-11-12T01:00:00Z") }), packet };
 assert.equal(commissaryWriteValidation([packetRecord], { tool: "commissaryOrders" }), "");
 assert.match(commissaryWriteValidation([{ ...packetRecord, packet: { ...packet, pages: [{ ...packet.pages[0], cafe: "Unknown Cafe" }] } }], { tool: "commissaryOrders" }), /scope|invalid cafe/i);
 assert.match(commissaryWriteValidation([{ ...packetRecord, orderRecordIds: [`commissaryOrder|nessie|${packetRecord.weekStart}`] }], { tool: "commissaryOrders" }), /order-reference scope/i);
@@ -854,7 +854,7 @@ const routedSoupRecords = [
 assert.deepEqual(buildRoxanneCricketSoupProjection(routedSoupRecords, "2026-12-07", "Roxanne Coffee").items.map(({ mrn }) => mrn), ["1001"]);
 assert.deepEqual(buildRoxanneCricketSoupProjection(routedSoupRecords, "2026-12-07", "Brazil Coffee").items.map(({ mrn }) => mrn), ["1002"]);
 
-const freshFive = emptyFreshFiveOrder();
+const freshFive = emptyFreshFiveOrder("Roxanne Coffee", "2026-12-07");
 const freshFiveSandwich = Object.values(freshFive.items).find(({ family }) => family === "sandwich");
 const freshFiveSalad = Object.values(freshFive.items).find(({ family }) => family === "salad");
 freshFive.quantities[freshFiveSandwich.id].friday = 4;
@@ -862,6 +862,20 @@ freshFive.quantities[freshFiveSalad.id].monday = 6;
 const freshFiveRecord = buildOrderRecord({ cafe: "Roxanne Coffee", weekStart: "2026-12-07", freshFive, now: new Date("2026-12-01T12:00:00Z") });
 assert.deepEqual(freshFiveOrderLinesForCafe(freshFiveRecord).map(({ station }) => station).sort(), ["Deli", "Salad Bar"]);
 assert.equal(buildCommissaryTransfer(freshFiveRecord).items.filter(({ menu }) => menu === "AMZ: Fresh Five").length, 2);
+
+const everestSalads = emptyEverestComposedSaladOrder("2026-12-07", "Everest");
+assert.equal(everestSalads.items[Object.keys(everestSalads.items).find((id) => id.includes("31447.8"))].scaledRecipe.components.length, 7, "Everest Caprese must retain the scaled recipe component evidence.");
+const everestWeekTwoSalads = emptyEverestComposedSaladOrder("2026-12-14", "Everest");
+assert.equal(everestWeekTwoSalads.items[Object.keys(everestWeekTwoSalads.items).find((id) => id.includes("22656.1"))].scaledRecipe.sourcePage, 97, "Everest cucumber salad must retain its exact PDF source page.");
+const everestMondayIds = Object.keys(everestSalads.items).filter((id) => id.startsWith("monday|"));
+assert.equal(everestMondayIds.length, 3, "Everest must offer fruit cut plus two composed salads every day.");
+everestSalads.quantities[everestMondayIds[0]] = 5;
+const everestSaladRecord = buildOrderRecord({ cafe: "Everest", weekStart: "2026-12-07", everestComposedSalads: everestSalads, now: new Date("2026-12-01T12:00:00Z") });
+assert.equal(everestComposedSaladOrderLinesForCafe(everestSaladRecord).length, 1);
+assert.equal(cafeRoutesToHub("Everest", COMMISSARY_STATIONS.EVEREST_COMPOSED_SALADS, "Blueshift"), true);
+assert.equal(rolledUpPrepItems([everestSaladRecord], { hub: "Blueshift" }).length, 1);
+assert.equal(rolledUpPrepItems([everestSaladRecord], { hub: "Sonic" }).length, 0);
+assert.equal(buildCommissaryTransfer(everestSaladRecord).items.some(({ menu }) => menu === "Everest MKT Composed Salads"), true);
 
 const cypressFalafelSource = "global|amz-cypress|132544.1|1-each";
 const cypressKoftaSource = "global|amz-cypress|213388.2|1-each";

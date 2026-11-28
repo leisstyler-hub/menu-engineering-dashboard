@@ -663,6 +663,7 @@ test("Prep List View is vertical, touch friendly, translated, and saves hold-to-
   await openTool(page, /open commissary ordering/i, /^Commissary Ordering Tool$/);
   await expect(page.getByRole("button", { name: "Prep List View" })).toHaveCount(0);
   await page.getByLabel("Your cafe").selectOption("Cricket");
+  await page.getByLabel("Service week").selectOption(lockedWeek);
   await page.getByRole("button", { name: "Prep List View" }).click();
 
   const prepView = page.getByTestId("commissary-prep-list-view");

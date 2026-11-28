@@ -15,7 +15,8 @@ import { DAILY_GLOBAL_ORDER_VERSION, DAILY_GLOBAL_PREP_ITEM_IDS } from "../../sr
 import { COMMISSARY_HUBS, COMMISSARY_STATIONS, isCafeStationEnabled } from "../../src/features/commissary-ordering/commissaryRouting.js";
 import { ROXANNE_DAWSON_EFFECTIVE_WEEK, ROXANNE_DAWSON_ORDER_VERSION } from "../../src/features/commissary-ordering/roxanneDawsonProjection.js";
 import { ROXANNE_CRICKET_EFFECTIVE_WEEK, ROXANNE_CRICKET_ORDER_VERSION, roxanneFlatbreadCycleForWeek } from "../../src/features/commissary-ordering/roxanneCricketPrograms.js";
-import { FRESH_FIVE_EFFECTIVE_WEEK, FRESH_FIVE_ITEMS, FRESH_FIVE_ORDER_VERSION } from "../../src/features/commissary-ordering/freshFiveCatalog.js";
+import { FRESH_FIVE_ORDER_VERSION, freshFiveCycleForWeek, isFreshFiveEligibleCafe } from "../../src/features/commissary-ordering/freshFiveCatalog.js";
+import { EVEREST_COMPOSED_SALAD_ORDER_VERSION, everestComposedSaladCycleForWeek } from "../../src/features/commissary-ordering/everestComposedSaladCatalog.js";
 import { DEFAULT_OPERATIONAL_METADATA, isApprovedOperationalMetadataRecord, OPERATIONAL_METADATA_RECORD_ID } from "../../src/shared/operationalMetadata.js";
 import { gzipSync, gunzipSync } from "node:zlib";
 
@@ -350,16 +351,31 @@ export function commissaryWriteValidation(records = [], context = {}) {
   }
   const freshFiveOrder = record.freshFive || {};
   const hasFreshFiveQuantity = Object.values(freshFiveOrder.quantities || {}).some((delivery) => DELIVERY_KEYS.some((key) => Number(delivery?.[key] || 0) > 0));
-  if (hasFreshFiveQuantity && (record.cafe !== "Roxanne Coffee" || record.weekStart < FRESH_FIVE_EFFECTIVE_WEEK)) return "Fresh Five ordering is not enabled for this cafe and week.";
-  if (record.cafe === "Roxanne Coffee" && record.weekStart >= FRESH_FIVE_EFFECTIVE_WEEK) {
+  if (hasFreshFiveQuantity && !isFreshFiveEligibleCafe(record.cafe, record.weekStart)) return "Fresh Five ordering is not enabled for this cafe and week.";
+  if (isFreshFiveEligibleCafe(record.cafe, record.weekStart)) {
     if (Number(freshFiveOrder.version) !== FRESH_FIVE_ORDER_VERSION) return "The Fresh Five order version is invalid.";
-    const allowed = new Map(FRESH_FIVE_ITEMS.map((item) => [item.id, item]));
+    const allowed = new Map((freshFiveCycleForWeek(record.cafe, record.weekStart)?.items || []).map((item) => [item.id, item]));
     if (Object.keys(freshFiveOrder.quantities || {}).some((id) => !allowed.has(id))) return "The Fresh Five order contains an unknown item.";
     for (const [id, expected] of allowed) {
       const item = freshFiveOrder.items?.[id];
       const delivery = freshFiveOrder.quantities?.[id] || {};
       if (!item || String(item.mrn) !== expected.mrn || item.name !== expected.name || Number(item.itemWasteCost) !== expected.itemWasteCost || item.family !== expected.family) return "The Fresh Five cost snapshot is invalid.";
       if (DELIVERY_KEYS.some((key) => !Number.isInteger(Number(delivery[key] || 0)) || Number(delivery[key] || 0) < 0)) return "Fresh Five quantities must be zero or positive whole items.";
+    }
+  }
+  const everestSaladOrder = record.everestComposedSalads || {};
+  const everestCycle = record.cafe === "Everest" ? everestComposedSaladCycleForWeek(record.weekStart) : null;
+  const hasEverestSaladQuantity = Object.values(everestSaladOrder.quantities || {}).some((value) => Number(value || 0) > 0);
+  if (hasEverestSaladQuantity && !everestCycle) return "Everest composed salads are not enabled for this cafe and week.";
+  if (everestCycle) {
+    if (Number(everestSaladOrder.version) !== EVEREST_COMPOSED_SALAD_ORDER_VERSION || Number(everestSaladOrder.cycleWeek) !== Number(everestCycle.week)) return "The Everest composed salad order version is invalid.";
+    const allowed = new Map(everestCycle.days.flatMap((day) => day.items.map((item) => [`${day.key}|${item.id}`, item])));
+    if (Object.keys(everestSaladOrder.quantities || {}).some((id) => !allowed.has(id))) return "The Everest composed salad order contains an item outside the current cycle.";
+    for (const [id, expected] of allowed) {
+      const item = everestSaladOrder.items?.[id];
+      const quantity = Number(everestSaladOrder.quantities?.[id] || 0);
+      if (!item || String(item.mrn) !== expected.mrn || item.name !== expected.name || Number(item.itemWasteCost) !== Number(expected.itemWasteCost)) return "The Everest composed salad cost snapshot is invalid.";
+      if (!Number.isInteger(quantity) || quantity < 0) return "Everest composed salad quantities must be zero or positive whole items.";
     }
   }
   if (isWeekLocked(record.weekStart, new Date())) return "This order is locked. Please contact commissary executive chef to adjust pars.";

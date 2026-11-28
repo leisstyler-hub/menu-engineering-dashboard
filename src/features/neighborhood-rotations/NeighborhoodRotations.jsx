@@ -1822,8 +1822,7 @@ function stationPool(stationKey) {
   const freshFiveEntrees = uniqueOptionRows([
     ...freshFiveStationRows("Deli").filter((row) => isEntree(row)),
     ...freshFiveStationRows("Grill").filter((row) => isEntree(row)),
-    ...freshFiveStationRows("Salad").filter((row) => isEntree(row)),
-    ...freshFiveStationRows("Hibernate").filter((row) => isEntree(row))
+    ...freshFiveStationRows("Salad").filter((row) => isEntree(row))
   ]);
   const freshFiveSides = uniqueOptionRows(freshFiveStationRows("Sides").filter((row) => isSide(row)));
   const cafeExpressSoups = uniqueOptionRows(all.filter((row) => getMenuName(row) === "AMZ: Cafe Express Soup"));

@@ -24,10 +24,11 @@ import { GLOBAL_PREP_DISPLAY_POLICY } from "../features/commissary-ordering/glob
 import { COMMISSARY_CAFE_STATION_ACCESS, COMMISSARY_HIDDEN_CAFE_STATION_ACCESS, COMMISSARY_HIDDEN_HUB_ROUTING, COMMISSARY_HUB_ROUTING, COMMISSARY_HUBS, COMMISSARY_PACKOUT_HUB_ROUTING } from "../features/commissary-ordering/commissaryRouting.js";
 import { COMMISSARY_PREP_BOARD_START_WEEK, GLOBAL_UNIT_PREPARATION_NOTES, LEO_HAND_FRUIT, LEO_SITE_CAFES } from "../features/commissary-ordering/commissaryModel.js";
 import { CRICKET_SOUP_ROUTING_EFFECTIVE_WEEK, ROXANNE_CRICKET_EFFECTIVE_WEEK, ROXANNE_CRICKET_ORDER_VERSION, ROXANNE_FLATBREAD_PROGRAM, SOUP_BAIN_FL_OZ } from "../features/commissary-ordering/roxanneCricketPrograms.js";
-import { FRESH_FIVE_EFFECTIVE_WEEK, FRESH_FIVE_ITEMS, FRESH_FIVE_ORDER_VERSION } from "../features/commissary-ordering/freshFiveCatalog.js";
+import { FRESH_FIVE_EFFECTIVE_WEEK, FRESH_FIVE_ITEMS, FRESH_FIVE_ORDER_VERSION, FRESH_FIVE_PROGRAMS } from "../features/commissary-ordering/freshFiveCatalog.js";
+import { EVEREST_COMPOSED_SALAD_ITEMS, EVEREST_COMPOSED_SALAD_ORDER_VERSION, EVEREST_COMPOSED_SALAD_PROGRAM } from "../features/commissary-ordering/everestComposedSaladCatalog.js";
 
 export const OPERATIONAL_METADATA_RECORD_ID = "platformMetadata|operations|current";
-export const OPERATIONAL_METADATA_VERSION = 37;
+export const OPERATIONAL_METADATA_VERSION = 38;
 
 const transferUnits = CAFE_UNITS.map(({ district, cafe }) => ({
   district,
@@ -199,7 +200,36 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       prepProjection: "finished-item-counts-routed-to-cricket",
       transferValuation: "authoritative-item-plus-waste",
     }),
-    freshFiveProgram: Object.freeze({ version: FRESH_FIVE_ORDER_VERSION, effectiveWeek: FRESH_FIVE_EFFECTIVE_WEEK, receivingCafe: "Roxanne Coffee", prepHub: "Cricket", sandwichesRouteTo: "Deli", saladsRouteTo: "Salad Bar", items: FRESH_FIVE_ITEMS }),
+    freshFiveProgram: Object.freeze({
+      version: FRESH_FIVE_ORDER_VERSION,
+      effectiveWeek: FRESH_FIVE_EFFECTIVE_WEEK,
+      sourceVersion: "menuworks-fresh-five-2026-11-27",
+      sourceSha256: "61855481d6a2eac946facf245c267e652779f493ada616d425ca2b7cef96e858",
+      inactiveSourceRule: "Hibernate and Do Not Use rows remain protected metadata references and are excluded from every user-facing picker and order surface",
+      sandwichesRouteTo: "Deli",
+      saladsRouteTo: "Salad Bar",
+      programs: FRESH_FIVE_PROGRAMS,
+      items: FRESH_FIVE_ITEMS,
+    }),
+    everestComposedSaladProgram: Object.freeze({
+      version: EVEREST_COMPOSED_SALAD_ORDER_VERSION,
+      source: "East Side Commissary Rotation plus EastSide Commissary Recipes",
+      sourceSha256: "c3b16e5424c01dcbd6f5a770589897a3d93bdb2707c05bc032f6301be92acc3f",
+      visibility: "Everest Commissary Ordering Tool only",
+      hub: "Blueshift",
+      finishedItemRule: "whole finished salads by each",
+      program: EVEREST_COMPOSED_SALAD_PROGRAM,
+      items: EVEREST_COMPOSED_SALAD_ITEMS,
+      culinaryProfiles: Object.freeze(EVEREST_COMPOSED_SALAD_ITEMS.map((item) => Object.freeze({
+        identity: Object.freeze({ menu: item.menu, mrn: item.mrn, name: item.name, portion: item.portion }),
+        placement: Object.freeze({ station: "Salad Bar", productionArea: "Cold Prep", mealPeriod: "Lunch" }),
+        menuFit: "Everest MKT composed salad rotation",
+        culinaryProfileStatus: "Needs review",
+        dietaryFit: "Unknown / Needs review",
+        allergenSummary: "Unknown / Needs review",
+        sourceEvidence: Object.freeze({ file: "EastSide Commissary Recipes.pdf", reportSha256: "c3b16e5424c01dcbd6f5a770589897a3d93bdb2707c05bc032f6301be92acc3f" }),
+      }))),
+    }),
     prepBoard: Object.freeze({ version: 2, activeFromServiceWeek: COMMISSARY_PREP_BOARD_START_WEEK, hubs: Object.freeze(["Cricket", "Sonic", "Blueshift"]), completionPersistence: "supabase-shared" }),
     stationAccess: COMMISSARY_CAFE_STATION_ACCESS,
     hiddenStationAccess: COMMISSARY_HIDDEN_CAFE_STATION_ACCESS,
@@ -230,7 +260,7 @@ export const DEFAULT_OPERATIONAL_METADATA = Object.freeze({
       globalExcludedSubrecipes: Object.freeze(["60487"]),
     }),
     prepInterface: Object.freeze({
-      stationOrder: Object.freeze(["Salad Bar", "Fresh Five", "Soups", "Flatbreads", "Breakfast", "Deli", "Grill", "Daily Global", "Global"]),
+      stationOrder: Object.freeze(["Salad Bar", "Everest Composed Salads", "Fresh Five", "Soups", "Flatbreads", "Breakfast", "Deli", "Grill", "Daily Global", "Global"]),
       stationTabletFilter: Object.freeze({ enabled: true, includesAllStationsView: true }),
       productionGrouping: Object.freeze(["Vegetable Production", "Sauces", "Meat Production", "Stocking"]),
       familyAdjacency: true,

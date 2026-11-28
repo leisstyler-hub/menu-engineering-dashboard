@@ -1,9 +1,9 @@
 {
   "generatedFrom": "src/data/menuItems.json",
-  "totalItems": 1653,
+  "totalItems": 1651,
   "menuCount": 54,
-  "costedItems": 1596,
-  "complimentaryItems": 1132,
+  "costedItems": 1594,
+  "complimentaryItems": 1130,
   "priceRequiredItems": 521,
   "pricedRequiredItems": 491,
   "proteinPriceGaps": 24,
@@ -12,23 +12,79 @@
   "costCoverage": 97,
   "priceCoverage": 94,
   "dietCounts": {
-    "Vegan": 516,
-    "Vegetarian": 470,
-    "Regular": 667
+    "Vegan": 515,
+    "Vegetarian": 468,
+    "Regular": 668
   },
   "categoryCounts": {
-    "entree": 879,
+    "entree": 877,
     "extension": 116,
     "side": 329,
     "subRecipe": 329
   },
   "recentItems": [
     {
-      "id": 1649,
-      "item": "Chipotle Chicken Salad Sliders",
-      "menu": "AMZ: Fresh Five",
-      "station": "Deli",
-      "price": 5
+      "id": 1619,
+      "item": "Caprese Chicken On Telera",
+      "menu": "AMZ: Deli Core",
+      "station": "Curated Sandwiches",
+      "price": 9.9
+    },
+    {
+      "id": 1618,
+      "item": "Blackend Shrimp Po Boy",
+      "menu": "AMZ: Deli Core",
+      "station": "Regional Spotlights - Deli",
+      "price": 10.55
+    },
+    {
+      "id": 1617,
+      "item": "Turkey Avocado Club",
+      "menu": "AMZ: Deli Core",
+      "station": "Curated Sandwiches",
+      "price": 9.9
+    },
+    {
+      "id": 1616,
+      "item": "Turkey Apple Brie Sandwich",
+      "menu": "AMZ: Deli Core",
+      "station": "Curated Sandwiches",
+      "price": 9.9
+    },
+    {
+      "id": 1615,
+      "item": "Thai Eggplant Sub",
+      "menu": "AMZ: Deli Core",
+      "station": "Curated Sandwiches",
+      "price": 8.95
+    },
+    {
+      "id": 1614,
+      "item": "Roast Beef And Cheddar Sandwich",
+      "menu": "AMZ: Deli Core",
+      "station": "Curated Sandwiches",
+      "price": 9.9
+    },
+    {
+      "id": 1613,
+      "item": "Philly Cheesesteak",
+      "menu": "AMZ: Deli Core",
+      "station": "Regional Spotlights - Deli",
+      "price": 10.55
+    },
+    {
+      "id": 1612,
+      "item": "Mediterranean Turkey Wrap",
+      "menu": "AMZ: Deli Core",
+      "station": "Curated Sandwiches",
+      "price": 9.9
+    },
+    {
+      "id": 1611,
+      "item": "Italian Grinder",
+      "menu": "AMZ: Deli Core",
+      "station": "Curated Sandwiches",
+      "price": 9.9
     },
     {
       "id": 1610,
@@ -36,62 +92,6 @@
       "menu": "AMZ: Deli Core",
       "station": "Regional Spotlights - Deli",
       "price": 10.55
-    },
-    {
-      "id": 1609,
-      "item": "Chicken Caesar Wrap",
-      "menu": "AMZ: Deli Core",
-      "station": "Curated Sandwiches",
-      "price": 9.9
-    },
-    {
-      "id": 1608,
-      "item": "Vegetable Cuban Style Hoagie",
-      "menu": "AMZ: Deli Core",
-      "station": "Curated Sandwiches",
-      "price": 8.95
-    },
-    {
-      "id": 1607,
-      "item": "Tuna Avocado Roll, Sesame",
-      "menu": "AMZ+RA: Sushi",
-      "station": "Sushi",
-      "price": null
-    },
-    {
-      "id": 1606,
-      "item": "Falafel Kale Salad",
-      "menu": "AMZ: Fresh Five",
-      "station": "Salad",
-      "price": 5
-    },
-    {
-      "id": 1605,
-      "item": "Strawberry Farro Salad",
-      "menu": "AMZ: Fresh Five",
-      "station": "Salad",
-      "price": 5
-    },
-    {
-      "id": 1602,
-      "item": "Peanut Butter Jelly and Banana Sandwich",
-      "menu": "AMZ: Fresh Five",
-      "station": "Deli",
-      "price": 5
-    },
-    {
-      "id": 1599,
-      "item": "Edamame Cucumber Sandwich",
-      "menu": "AMZ: Fresh Five",
-      "station": "Deli",
-      "price": 5
-    },
-    {
-      "id": 1598,
-      "item": "Yakisoba Crunch Salad",
-      "menu": "AMZ: Fresh Five",
-      "station": "Salad",
-      "price": 5
     }
   ],
   "topMenus": [

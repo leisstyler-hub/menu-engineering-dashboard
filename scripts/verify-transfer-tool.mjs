@@ -19,7 +19,7 @@ if (saladBarTransferItems.length !== 41 || saladBarTransferItems.some((item) => 
 const saladBarGreenPeas = saladBarTransferItems.find((item) => item.mrn === "62341");
 if (saladBarGreenPeas?.itemWasteCost !== 9.455573 || saladBarGreenPeas?.defaultGlCode !== "4111009") fail("shared Salad Bar Green Peas costing/G/L mapping is incorrect");
 
-if (CATALOG.menus.length !== 54 || CATALOG.items.length !== 1620) fail("catalog does not cover the current menu/item source");
+if (CATALOG.menus.length !== 54 || CATALOG.items.length !== 1618) fail("catalog does not cover the current menu/item source");
 if (!CATALOG.items.every((item) => item.menu && item.item && Object.hasOwn(item, "itemWasteCost") && !Object.hasOwn(item, "glGroups"))) fail("catalog contains malformed or legacy G/L rows");
 const caprese = INGREDIENT_COSTING_LOOKUP.recipes["34303.45"];
 const capreseMozzarella = caprese?.components?.find((component) => component.ingredientMrn === "7776");

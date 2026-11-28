@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "version": "menuworks-fresh-five-2026-11-27",
+  "authority": "Alex: supplied Fresh Five export is the complete authoritative active menu set; missing items are intentional removals from user-facing tools.",
+  "menu": "AMZ: Fresh Five",
+  "source": {
+    "version": "menuworks-fresh-five-2026-11-27",
+    "fileName": "MenuWorks_AMZ_Fresh_Five_2026-11-27.csv",
+    "sha256": "61855481d6a2eac946facf245c267e652779f493ada616d425ca2b7cef96e858"
+  },
+  "previousCount": 21,
+  "replacementCount": 19,
+  "removedCount": 10,
+  "removed": [
+    {
+      "item_key": "row:1590",
+      "mrn": "191329.1",
+      "station": "Salad",
+      "portion": "1 each",
+      "item": "Cucumber Fennel Salad"
+    },
+    {
+      "item_key": "row:1606",
+      "mrn": "29091.10",
+      "station": "Salad",
+      "portion": "3/4 cup",
+      "item": "Falafel Kale Salad"
+    },
+    {
+      "item_key": "row:1591",
+      "mrn": "132011.3",
+      "station": "Salad",
+      "portion": "1/2 cup",
+      "item": "Hominy Confetti Salad"
+    },
+    {
+      "item_key": "row:1592",
+      "mrn": "140744.1",
+      "station": "Salad",
+      "portion": "8 ounce",
+      "item": "Summer Squash Salad"
+    },
+    {
+      "item_key": "row:1594",
+      "mrn": "135643.15",
+      "station": "Salad",
+      "portion": "1 bowl",
+      "item": "Thai Fruit Salad"
+    },
+    {
+      "item_key": "row:1596",
+      "mrn": "9888.16",
+      "station": "Salad",
+      "portion": "1/2 cup",
+      "item": "Vegetable Quinoa Salad"
+    },
+    {
+      "item_key": "row:1598",
+      "mrn": "78426.3",
+      "station": "Salad",
+      "portion": "1 cup",
+      "item": "Yakisoba Crunch Salad"
+    },
+    {
+      "item_key": "row:1388",
+      "mrn": "198596",
+      "station": "Salad",
+      "portion": "1/2 cup",
+      "item": "California Pasta Salad"
+    },
+    {
+      "item_key": "row:1391",
+      "mrn": "198522",
+      "station": "Salad",
+      "portion": "1/2 cup",
+      "item": "Lemon Pepper Bean and Pea Salad"
+    },
+    {
+      "item_key": "row:1605",
+      "mrn": "122676.3",
+      "station": "Salad",
+      "portion": "1 each",
+      "item": "Strawberry Farro Salad"
+    }
+  ],
+  "profiles": {
+    "rows": 19,
+    "storedProfiles": 19,
+    "reviewedProfilesPreserved": 0,
+    "needsReviewProfiles": 19,
+    "missingProfiles": 0
+  },
+  "hiddenReferencePolicy": "Rows absent from the authoritative active export remain available only through protected audit history; they are excluded from user-facing catalog reads and ordering programs.",
+  "profilePersistence": "Every active replacement row carries a Culinary Tags profile in its shared Supabase recipe-item payload."
+}

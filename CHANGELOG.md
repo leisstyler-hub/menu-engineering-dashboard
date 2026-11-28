@@ -1,3 +1,8 @@
+## 2026-11-27
+
+- [Nov 27, 4:50 PM] Replace Fresh Five everywhere from the latest MenuWorks report and hide every source-deleted item.
+- [Nov 27, 4:50 PM] Add Everest’s three daily composed salads with exact costs and Blueshift-only prep, packout and transfers.
+
 ## 2026-11-25
 
 - [Nov 25, 6:19 PM] Route costed 6-qt soups to Brazil or Roxanne and launch the shared Prep Board for December service.

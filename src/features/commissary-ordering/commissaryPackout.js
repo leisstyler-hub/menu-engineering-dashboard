@@ -12,6 +12,7 @@ import {
   roxanneSoupPrepLinesForCafe,
   roxanneFlatbreadPrepLinesForCafe,
   freshFivePrepLinesForCafe,
+  everestComposedSaladPrepLinesForCafe,
   orderLinesForCafe,
   prepDisplayQuantity,
   weekLabel,
@@ -68,6 +69,7 @@ function packoutSourceLines(record, delivery) {
     ...roxanneSoupPrepLinesForCafe(record).filter((line) => line.delivery === delivery),
     ...roxanneFlatbreadPrepLinesForCafe(record).filter((line) => line.delivery === delivery),
     ...freshFivePrepLinesForCafe(record).filter((line) => line.delivery === delivery),
+    ...everestComposedSaladPrepLinesForCafe(record).filter((line) => line.delivery === delivery),
   ];
 }
 
@@ -80,6 +82,7 @@ const STATION_KEY_BY_LABEL = Object.freeze({
   "Daily Global": COMMISSARY_STATIONS.DAILY_GLOBAL,
   Soups: COMMISSARY_STATIONS.SOUPS,
   Flatbreads: COMMISSARY_STATIONS.FLATBREADS,
+  "Everest Composed Salads": COMMISSARY_STATIONS.EVEREST_COMPOSED_SALADS,
 });
 
 function scopePackoutLines(lines, cafe, selectedCafe) {

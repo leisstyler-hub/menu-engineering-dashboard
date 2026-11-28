@@ -8,6 +8,7 @@ export const COMMISSARY_STATIONS = Object.freeze({
   SOUPS: "soups",
   FLATBREADS: "flatbreads",
   FRESH_FIVE: "freshFive",
+  EVEREST_COMPOSED_SALADS: "everestComposedSalads",
 });
 
 export const COMMISSARY_HUBS = Object.freeze([
@@ -31,7 +32,7 @@ export const COMMISSARY_CAFE_STATION_ACCESS = Object.freeze({
   Sonic: Object.freeze([COMMISSARY_STATIONS.GLOBAL, COMMISSARY_STATIONS.SALAD_BAR, COMMISSARY_STATIONS.GRILL, COMMISSARY_STATIONS.DELI, COMMISSARY_STATIONS.DAILY_GLOBAL]),
   Blueshift: Object.freeze([COMMISSARY_STATIONS.GLOBAL, COMMISSARY_STATIONS.SALAD_BAR, COMMISSARY_STATIONS.GRILL, COMMISSARY_STATIONS.DELI, COMMISSARY_STATIONS.DAILY_GLOBAL]),
   "105": ALL_CURRENT_STATIONS,
-  Everest: Object.freeze([COMMISSARY_STATIONS.GLOBAL, COMMISSARY_STATIONS.SALAD_BAR]),
+  Everest: Object.freeze([COMMISSARY_STATIONS.GLOBAL, COMMISSARY_STATIONS.SALAD_BAR, COMMISSARY_STATIONS.FRESH_FIVE, COMMISSARY_STATIONS.EVEREST_COMPOSED_SALADS]),
   Dynamo: Object.freeze([COMMISSARY_STATIONS.DELI]),
   Gemini: Object.freeze([COMMISSARY_STATIONS.DAILY_GLOBAL, COMMISSARY_STATIONS.DELI]),
   Astra: Object.freeze([COMMISSARY_STATIONS.GLOBAL, COMMISSARY_STATIONS.DAILY_GLOBAL, COMMISSARY_STATIONS.SALAD_BAR, COMMISSARY_STATIONS.GRILL]),
@@ -41,11 +42,11 @@ export const COMMISSARY_CAFE_STATION_ACCESS = Object.freeze({
   "Day 1": ALL_CURRENT_STATIONS,
   Nitro: Object.freeze([COMMISSARY_STATIONS.SALAD_BAR, COMMISSARY_STATIONS.GRILL, COMMISSARY_STATIONS.GLOBAL]),
   "Re:Invent": ALL_CURRENT_STATIONS,
-  "Brazil Coffee": Object.freeze([COMMISSARY_STATIONS.BREAKFAST, COMMISSARY_STATIONS.DELI, COMMISSARY_STATIONS.SOUPS, COMMISSARY_STATIONS.FLATBREADS]),
+  "Brazil Coffee": Object.freeze([COMMISSARY_STATIONS.BREAKFAST, COMMISSARY_STATIONS.DELI, COMMISSARY_STATIONS.SOUPS, COMMISSARY_STATIONS.FLATBREADS, COMMISSARY_STATIONS.FRESH_FIVE]),
   "Roxanne Coffee": Object.freeze([COMMISSARY_STATIONS.BREAKFAST, COMMISSARY_STATIONS.DELI, COMMISSARY_STATIONS.SOUPS, COMMISSARY_STATIONS.FLATBREADS, COMMISSARY_STATIONS.FRESH_FIVE]),
   "Arizona Coffee": Object.freeze([COMMISSARY_STATIONS.BREAKFAST, COMMISSARY_STATIONS.DELI]),
   "Zoka Coffee": Object.freeze([COMMISSARY_STATIONS.BREAKFAST, COMMISSARY_STATIONS.DELI]),
-  Atlas: Object.freeze([COMMISSARY_STATIONS.GRILL]),
+  Atlas: Object.freeze([COMMISSARY_STATIONS.GRILL, COMMISSARY_STATIONS.FRESH_FIVE]),
   Frontier: Object.freeze([COMMISSARY_STATIONS.GLOBAL, COMMISSARY_STATIONS.SALAD_BAR]),
 });
 
@@ -70,7 +71,8 @@ export const COMMISSARY_HUB_ROUTING = Object.freeze({
     breakfast: Object.freeze(["Brazil Coffee", "Roxanne Coffee", "Zoka Coffee"]),
     soups: Object.freeze(["Roxanne Coffee", "Brazil Coffee"]),
     flatbreads: Object.freeze(["Roxanne Coffee", "Brazil Coffee"]),
-    freshFive: Object.freeze(["Roxanne Coffee"]),
+    freshFive: Object.freeze(["Brazil Coffee", "Roxanne Coffee", "Atlas"]),
+    everestComposedSalads: Object.freeze([]),
     dailyGlobal: Object.freeze([]),
   }),
   Sonic: Object.freeze({
@@ -81,7 +83,8 @@ export const COMMISSARY_HUB_ROUTING = Object.freeze({
     breakfast: Object.freeze([]),
     soups: Object.freeze([]),
     flatbreads: Object.freeze([]),
-    freshFive: Object.freeze([]),
+    freshFive: Object.freeze(["Sonic", "Blueshift", "Bingo", "Grace", "Everest", "Gemini", "Astra", "Odyssey", "Eclipse"]),
+    everestComposedSalads: Object.freeze([]),
     dailyGlobal: Object.freeze([]),
   }),
   Blueshift: Object.freeze({
@@ -94,6 +97,7 @@ export const COMMISSARY_HUB_ROUTING = Object.freeze({
     flatbreads: Object.freeze([]),
     dailyGlobal: Object.freeze(["Gemini", "Eclipse", "Odyssey", "Sonic", "Bingo", "Grace", "Blueshift", "Astra"]),
     freshFive: Object.freeze([]),
+    everestComposedSalads: Object.freeze(["Everest"]),
   }),
 });
 

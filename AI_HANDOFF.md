@@ -1,3 +1,13 @@
+## Fresh Five replacement and Everest composed salads - 2026-11-27
+
+Candidate `2026.11.27.001-fresh-five-everest` replaces `AMZ: Fresh Five` with the complete 19-row MenuWorks export dated 2026-11-27. Every active row carries exact MRN, portion, $5 sell price, Item + Waste cost, nutrition, ingredients, allergen evidence and a Culinary Tags profile with source hash `61855481d6a2eac946facf245c267e652779f493ada616d425ca2b7cef96e858`. Items absent from the complete replacement are removed from active metadata and all user-facing tools. Any future Hibernate / Do Not Use source row remains protected internal metadata and is excluded from every picker and order surface.
+
+Fresh Five is effective-dated and cycle-scoped. Brazil Coffee, Roxanne Coffee and Atlas route finished sandwiches to Cricket Deli and finished salads to Cricket Salad Bar beginning 2026-11-30. Sonic, Blueshift, Bingo, Grace, Everest, Gemini, Astra, Odyssey and Eclipse use the four-week Eastside cycle beginning 2026-12-07 and route to Sonic. Transfers use each finished item’s authoritative Item + Waste cost.
+
+Everest receives a separate three-finished-salad-per-day program beginning 2026-12-07: one fruit cut and two composed salads following the East Side rotation. The three previously missing recipes—G&G Caprese Salad MRN 31447.8, Cucumber Tomato Parsley Salad MRN 22656.1 and Farro Tomato Cucumber Arugula Salad MRN 32591.2—are stored in operational metadata with exact scaled identity, cost and source evidence. This station is visible only on Everest’s Commissary Ordering page and routes only to Blueshift prep, packout and Prepared Foods transfers. The locked 2026-11-23 week is never rewritten.
+
+Operational metadata version 38 publishes both programs and the 2026-11-30 Prep Board activation. Opening a Prep Board now preserves the operator’s selected week instead of silently switching to the latest production week. Verification covers authoritative replacement, Culinary Tags persistence, route isolation, standing-order protection, S4 transfer valuation and production build.
+
 ## December commissary rollout - 2026-11-25
 
 Candidate `2026.11.25.005-commissary-december-rollout` makes a standard Soup order one whole 6-quart bain (190 fl oz) in ordering, Prep Board, Packout and S4 transfer output. Item + Waste remains recipe-native and scales to 190 fl oz from the source portion; cost-unavailable soups stay visible but disabled. Starting service week `2026-12-07`, each Cricket Soup selection has independent `Roxanne Soup` and `Brazil Soup` routing flags. Only checked rows from the submitted Cricket week project into the corresponding cafe. Both cafes also receive the existing six-week Flatbread cycle from Cricket.

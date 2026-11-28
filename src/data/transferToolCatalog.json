@@ -6436,12 +6436,20 @@
       "itemWasteCost": 3.488
     },
     {
+      "id": "amz: fresh five|balsamic tofu quinoa lentil salad|9888.16|1 serving(s)",
+      "menu": "AMZ: Fresh Five",
+      "item": "Balsamic Tofu Quinoa Lentil Salad",
+      "mrn": "9888.16",
+      "portion": "1 serving(s)",
+      "itemWasteCost": 2.6062
+    },
+    {
       "id": "amz: fresh five|black bean burger|159013.1|1 each",
       "menu": "AMZ: Fresh Five",
       "item": "Black Bean Burger",
       "mrn": "159013.1",
       "portion": "1 each",
-      "itemWasteCost": 2.5823
+      "itemWasteCost": 2.6749
     },
     {
       "id": "amz: fresh five|blackened chicken caesar wrap|9268.7|1 each",
@@ -6449,7 +6457,7 @@
       "item": "Blackened Chicken Caesar Wrap",
       "mrn": "9268.7",
       "portion": "1 each",
-      "itemWasteCost": 2.3504
+      "itemWasteCost": 2.3005
     },
     {
       "id": "amz: fresh five|california chicken pasta salad|217792|1 serving(s)",
@@ -6457,15 +6465,7 @@
       "item": "California Chicken Pasta Salad",
       "mrn": "217792",
       "portion": "1 serving(s)",
-      "itemWasteCost": 2.7914
-    },
-    {
-      "id": "amz: fresh five|california pasta salad|198596|1/2 cup",
-      "menu": "AMZ: Fresh Five",
-      "item": "California Pasta Salad",
-      "mrn": "198596",
-      "portion": "1/2 cup",
-      "itemWasteCost": 0.6739
+      "itemWasteCost": 2.7446
     },
     {
       "id": "amz: fresh five|chicken banh mi|119416.1|1 serving(s)",
@@ -6473,7 +6473,7 @@
       "item": "Chicken Banh Mi",
       "mrn": "119416.1",
       "portion": "1 serving(s)",
-      "itemWasteCost": 2.444
+      "itemWasteCost": 2.417
     },
     {
       "id": "amz: fresh five|chicken quinoa roasted beet salad|217792.1|1 serving(s)",
@@ -6481,7 +6481,7 @@
       "item": "Chicken Quinoa Roasted Beet Salad",
       "mrn": "217792.1",
       "portion": "1 serving(s)",
-      "itemWasteCost": 2.4378
+      "itemWasteCost": 2.3899
     },
     {
       "id": "amz: fresh five|chipotle chicken salad sliders|83821.10|1 each",
@@ -6489,15 +6489,15 @@
       "item": "Chipotle Chicken Salad Sliders",
       "mrn": "83821.10",
       "portion": "1 each",
-      "itemWasteCost": 2.3608
+      "itemWasteCost": 2.6374
     },
     {
-      "id": "amz: fresh five|cucumber fennel salad|191329.1|1 each",
+      "id": "amz: fresh five|cucumber fennel salad|191329.1|1 serving(s)",
       "menu": "AMZ: Fresh Five",
       "item": "Cucumber Fennel Salad",
       "mrn": "191329.1",
-      "portion": "1 each",
-      "itemWasteCost": 2.3421
+      "portion": "1 serving(s)",
+      "itemWasteCost": 2.3618
     },
     {
       "id": "amz: fresh five|edamame cucumber sandwich|79691.32|1 each",
@@ -6505,71 +6505,63 @@
       "item": "Edamame Cucumber Sandwich",
       "mrn": "79691.32",
       "portion": "1 each",
-      "itemWasteCost": 2.5688
+      "itemWasteCost": 2.2506
     },
     {
-      "id": "amz: fresh five|falafel kale salad|29091.10|3/4 cup",
+      "id": "amz: fresh five|falafel kale salad|29091.10|1 serving(s)",
       "menu": "AMZ: Fresh Five",
       "item": "Falafel Kale Salad",
       "mrn": "29091.10",
-      "portion": "3/4 cup",
-      "itemWasteCost": 0.7842
+      "portion": "1 serving(s)",
+      "itemWasteCost": 2.652
     },
     {
-      "id": "amz: fresh five|hominy confetti salad|132011.3|1/2 cup",
+      "id": "amz: fresh five|hominy confetti salad|132011.3|1 serving(s)",
       "menu": "AMZ: Fresh Five",
       "item": "Hominy Confetti Salad",
       "mrn": "132011.3",
-      "portion": "1/2 cup",
-      "itemWasteCost": 1.4872
+      "portion": "1 serving(s)",
+      "itemWasteCost": 1.7202
     },
     {
-      "id": "amz: fresh five|lemon pepper bean and pea salad|198522|1/2 cup",
+      "id": "amz: fresh five|lemon pepper bean and pea salad|198522|1 serving(s)",
       "menu": "AMZ: Fresh Five",
-      "item": "Lemon Pepper Bean and Pea Salad",
+      "item": "Lemon Pepper Bean And Pea Salad",
       "mrn": "198522",
-      "portion": "1/2 cup",
-      "itemWasteCost": 0.4857
+      "portion": "1 serving(s)",
+      "itemWasteCost": 1.9646
     },
     {
       "id": "amz: fresh five|peanut butter jelly and banana sandwich|1424.40|1 each",
       "menu": "AMZ: Fresh Five",
-      "item": "Peanut Butter Jelly and Banana Sandwich",
+      "item": "Peanut Butter Jelly And Banana Sandwich",
       "mrn": "1424.40",
       "portion": "1 each",
-      "itemWasteCost": 1.4726
+      "itemWasteCost": 2.0238
     },
     {
-      "id": "amz: fresh five|strawberry farro salad|122676.3|1 each",
+      "id": "amz: fresh five|strawberry farro salad|122676.3|1 serving(s)",
       "menu": "AMZ: Fresh Five",
       "item": "Strawberry Farro Salad",
       "mrn": "122676.3",
-      "portion": "1 each",
-      "itemWasteCost": 2.4846
+      "portion": "1 serving(s)",
+      "itemWasteCost": 2.8954
     },
     {
-      "id": "amz: fresh five|summer squash salad|140744.1|8 ounce",
+      "id": "amz: fresh five|summer squash salad|140744.1|1 serving(s)",
       "menu": "AMZ: Fresh Five",
       "item": "Summer Squash Salad",
       "mrn": "140744.1",
-      "portion": "8 ounce",
-      "itemWasteCost": 1.689
+      "portion": "1 serving(s)",
+      "itemWasteCost": 2.3046
     },
     {
-      "id": "amz: fresh five|thai cucumber salad with peanuts|10908.11|1 serving(s)",
+      "id": "amz: fresh five|thai chicken rice noodle salad with peanuts|10908.11|1 serving(s)",
       "menu": "AMZ: Fresh Five",
-      "item": "Thai Cucumber Salad with Peanuts",
+      "item": "Thai Chicken Rice Noodle Salad With Peanuts",
       "mrn": "10908.11",
       "portion": "1 serving(s)",
-      "itemWasteCost": 1.3478
-    },
-    {
-      "id": "amz: fresh five|thai fruit salad|135643.15|1 bowl",
-      "menu": "AMZ: Fresh Five",
-      "item": "Thai Fruit Salad",
-      "mrn": "135643.15",
-      "portion": "1 bowl",
-      "itemWasteCost": 5.8406
+      "itemWasteCost": 2.7352
     },
     {
       "id": "amz: fresh five|tuscan tuna sandwich|64175.3|1 sandwich",
@@ -6577,15 +6569,7 @@
       "item": "Tuscan Tuna Sandwich",
       "mrn": "64175.3",
       "portion": "1 sandwich",
-      "itemWasteCost": 1.585
-    },
-    {
-      "id": "amz: fresh five|vegetable quinoa salad|9888.16|1/2 cup",
-      "menu": "AMZ: Fresh Five",
-      "item": "Vegetable Quinoa Salad",
-      "mrn": "9888.16",
-      "portion": "1/2 cup",
-      "itemWasteCost": 2.055
+      "itemWasteCost": 2.5542
     },
     {
       "id": "amz: fresh five|white bean hummus veggie wrap|133954.1|1 each",
@@ -6593,15 +6577,15 @@
       "item": "White Bean Hummus Veggie Wrap",
       "mrn": "133954.1",
       "portion": "1 each",
-      "itemWasteCost": 2.4939
+      "itemWasteCost": 2.6312
     },
     {
-      "id": "amz: fresh five|yakisoba crunch salad|78426.3|1 cup",
+      "id": "amz: fresh five|yakisoba crunch salad|78426.3|1 serving(s)",
       "menu": "AMZ: Fresh Five",
       "item": "Yakisoba Crunch Salad",
       "mrn": "78426.3",
-      "portion": "1 cup",
-      "itemWasteCost": 1.3021
+      "portion": "1 serving(s)",
+      "itemWasteCost": 2.0228
     },
     {
       "id": "amz: greens & grains|apple farro arugula salad|200784|1 serving(s)",
